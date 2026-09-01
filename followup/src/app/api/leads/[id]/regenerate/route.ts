@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
+import { composeFollowUpEmail } from "@/lib/sender";
 import type { Message } from "@/lib/types";
 
 // POST /api/leads/[id]/regenerate — asks the AI for a fresh draft against
@@ -30,7 +31,8 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   );
 
   try {
-    const newMessage = await generateFollowUpMessage({ name: lead.name, conversation });
+    const draftBody = await generateFollowUpMessage({ name: lead.name, conversation });
+    const newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draftBody);
     await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: newMessage } });
     return NextResponse.json({ success: true, message: newMessage });
   } catch (err) {

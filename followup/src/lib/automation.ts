@@ -13,6 +13,7 @@
 
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
+import { composeFollowUpEmail } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
 import type { Message } from "@/lib/types";
 
@@ -55,7 +56,13 @@ export async function runAutomation(): Promise<{ checked: number; sent: number; 
         }))
       );
 
-      const message = lead.suggestedMessage || (await generateFollowUpMessage({ name: lead.name, conversation }));
+      const message =
+        lead.suggestedMessage ||
+        (await composeFollowUpEmail(
+          lead.name.split(" ")[0],
+          lead.businessId,
+          await generateFollowUpMessage({ name: lead.name, conversation })
+        ));
       const result = await sendFollowUpToLead(lead.id, message, { automated: true });
       if (result.success) {
         sent++;

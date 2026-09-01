@@ -8,6 +8,7 @@
 
 import { prisma } from "@/lib/db";
 import { scoreLead, generateFollowUpMessage } from "@/lib/integrations/openai";
+import { composeFollowUpEmail } from "@/lib/sender";
 import type { Message } from "@/lib/types";
 import type { Priority as DbPriority, Prisma } from "@prisma/client";
 
@@ -40,7 +41,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   );
   if (conversation.length === 0) return false;
 
-  const [scoreResult, suggestedMessage] = await Promise.all([
+  const [scoreResult, draftBody] = await Promise.all([
     scoreLead({
       conversation,
       dealValue: lead.dealValue,
@@ -48,6 +49,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     }),
     generateFollowUpMessage({ name: lead.name, conversation }),
   ]);
+  const suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draftBody);
 
   await prisma.lead.update({
     where: { id: lead.id },

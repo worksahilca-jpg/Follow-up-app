@@ -103,6 +103,12 @@ export async function scoreLead(
   };
 }
 
+/**
+ * Drafts only the body paragraph of a follow-up — no greeting, no
+ * sign-off. Those get added by the caller (src/lib/sender.ts +
+ * whoever calls this) using the real sender's name, so the email always
+ * has an actual signature instead of the AI guessing or omitting one.
+ */
 export async function generateFollowUpMessage(
   lead: Pick<Lead, "name" | "conversation">
 ): Promise<string> {
@@ -114,10 +120,14 @@ export async function generateFollowUpMessage(
       {
         role: "system",
         content:
-          "You draft short follow-up messages for a small-business owner to send to a sales lead, in their " +
-          "voice. Reference something concrete from the conversation so it doesn't read as generic. Under 3 " +
-          "sentences, warm but not pushy, no corporate jargon, no 'Dear ...' greeting and no sign-off/signature " +
-          "— just the message body, ready to review and send.",
+          "You draft the body of a follow-up email. You represent the business that was CONTACTED — the person " +
+          "in this conversation reached out about the business's services. You are not the one requesting " +
+          "anything; never write as if you're the one who needs a vendor, contractor, or service. Reference " +
+          "something concrete and specific from the conversation so it doesn't read as generic. Write 2-4 " +
+          "complete sentences: proper capitalization, no sentence fragments, no trailing off mid-thought, no run-on " +
+          "clauses joined by a dash. Warm but professional — not stiff corporate jargon, but not overly casual " +
+          "either. Do not include a greeting ('Hi ...', 'Dear ...') or a sign-off/signature of any kind — output " +
+          "only the body paragraph itself.",
       },
       {
         role: "user",

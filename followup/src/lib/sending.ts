@@ -19,7 +19,7 @@ export async function sendFollowUpToLead(
 
   const result = await sendEmail({
     to: lead.email,
-    subject: "Following up",
+    subject: `Following up, ${lead.name.split(" ")[0]}`,
     body,
   });
   if (!result.success) {

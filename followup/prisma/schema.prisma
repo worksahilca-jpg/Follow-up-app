@@ -1,15 +1,18 @@
 // FollowUp — production data model.
-// Not connected in this sandbox (no live database here). Point DATABASE_URL
-// at a real Postgres instance (e.g. Supabase) and run `npx prisma migrate dev`
-// to create these tables for real.
+//
+// DATABASE_URL: pooled connection (e.g. Supabase's port-6543 pgbouncer URL) —
+//   used by the running app.
+// DIRECT_URL: direct connection (e.g. Supabase's port-5432 URL) — used only
+//   by `prisma migrate` / `prisma db push`, which can't run through a pooler.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {

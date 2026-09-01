@@ -1,13 +1,16 @@
 import { notFound } from "next/navigation";
-import { getLeadById, formatCurrency, formatDate, PIPELINE_STAGES } from "@/lib/demo-data";
+import { getLeadById } from "@/lib/leads-data";
+import { formatCurrency, formatDate, PIPELINE_STAGES } from "@/lib/demo-data";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
 import MessageComposer from "@/components/MessageComposer";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const lead = getLeadById(id);
+  const lead = await getLeadById(id);
   if (!lead) notFound();
 
   const stageLabel = PIPELINE_STAGES.find((s) => s.id === lead.stage)?.label ?? lead.stage;

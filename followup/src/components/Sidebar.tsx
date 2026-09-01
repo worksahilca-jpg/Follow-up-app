@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -19,6 +20,15 @@ const nav = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [gmailStatus, setGmailStatus] = useState<{ connected: boolean; email?: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/integrations/gmail/status")
+      .then((r) => r.json())
+      .then(setGmailStatus)
+      .catch(() => setGmailStatus({ connected: false }));
+  }, [pathname]); // re-check on navigation so it updates right after connecting
+
   return (
     <aside className="w-60 shrink-0 border-r border-line bg-card flex flex-col h-screen sticky top-0">
       <div className="px-5 pt-6 pb-5">
@@ -28,7 +38,9 @@ export default function Sidebar() {
             FollowUp
           </span>
         </Link>
-        <p className="text-xs text-ink-soft mt-1">Demo workspace</p>
+        <p className="text-xs text-ink-soft mt-1">
+          {gmailStatus?.connected ? gmailStatus.email : "Not connected"}
+        </p>
       </div>
       <nav className="flex-1 px-3 space-y-0.5">
         {nav.map(({ href, label, icon: Icon }) => {
@@ -50,14 +62,16 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      <div className="p-4 mx-3 mb-4 rounded-lg" style={{ backgroundColor: "var(--slate-soft)" }}>
-        <p className="text-xs font-medium" style={{ color: "var(--slate)" }}>
-          Demo mode
-        </p>
-        <p className="text-xs mt-1 text-ink-soft">
-          Showing sample data. Connect Gmail in Settings to use your real inbox.
-        </p>
-      </div>
+      {gmailStatus && !gmailStatus.connected && (
+        <div className="p-4 mx-3 mb-4 rounded-lg" style={{ backgroundColor: "var(--slate-soft)" }}>
+          <p className="text-xs font-medium" style={{ color: "var(--slate)" }}>
+            Gmail not connected
+          </p>
+          <p className="text-xs mt-1 text-ink-soft">
+            Connect Gmail in Settings to pull in your real leads.
+          </p>
+        </div>
+      )}
     </aside>
   );
 }

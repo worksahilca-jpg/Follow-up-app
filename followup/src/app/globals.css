@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f5f5f0;
+  --ink: #191c22;
+  --ink-soft: #4b4f58;
+  --line: #dedad0;
+  --rust: #b8471f;
+  --rust-soft: #f3e0d5;
+  --slate: #45607e;
+  --slate-soft: #dfe6ec;
+  --sage: #5c7a56;
+  --sage-soft: #e2e8dd;
+  --gold: #a9791f;
+  --card: #fdfdfb;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-rust: var(--rust);
+  --color-rust-soft: var(--rust-soft);
+  --color-slate: var(--slate);
+  --color-slate-soft: var(--slate-soft);
+  --color-sage: var(--sage);
+  --color-sage-soft: var(--sage-soft);
+  --color-gold: var(--gold);
+  --color-card: var(--card);
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+  --font-body: "Public Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+* {
+  border-color: var(--line);
+}

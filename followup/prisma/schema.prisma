@@ -1,0 +1,184 @@
+// FollowUp — production data model.
+// Not connected in this sandbox (no live database here). Point DATABASE_URL
+// at a real Postgres instance (e.g. Supabase) and run `npx prisma migrate dev`
+// to create these tables for real.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  createdAt     DateTime @default(now())
+  business      Business? @relation(fields: [businessId], references: [id])
+  businessId    String?
+  role          TeamRole  @default(ADMIN)
+  assignedLeads Lead[]    @relation("AssignedLeads")
+  integrations  Integration[]
+  notifications Notification[]
+}
+
+enum TeamRole {
+  ADMIN
+  SALES
+}
+
+model Business {
+  id               String   @id @default(cuid())
+  name             String
+  industry         String?
+  teamSize         Int?
+  avgDealValue     Float?
+  primaryChannels  String[]
+  createdAt        DateTime @default(now())
+  users            User[]
+  leads            Lead[]
+  automations      Automation[]
+}
+
+enum PipelineStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+}
+
+model Lead {
+  id             String   @id @default(cuid())
+  business       Business @relation(fields: [businessId], references: [id])
+  businessId     String
+  name           String
+  company        String?
+  email          String?
+  phone          String?
+  source         String?
+  stage          PipelineStage @default(NEW)
+  dealValue      Float    @default(0)
+  score          Int      @default(0)
+  scoreReason    String?
+  priority       Priority @default(NONE)
+  lastContacted  DateTime?
+  nextFollowUp   DateTime?
+  notes          String?
+  automationOn   Boolean  @default(false)
+  assignedTo     User?    @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  assignedToId   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  conversations  Conversation[]
+  deals          Deal[]
+  followUps      FollowUp[]
+  tasks          Task[]
+  insights       AIInsight[]
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  leadId    String
+  channel   String   // email | call | text
+  messages  Message[]
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+  direction      String       // inbound | outbound
+  body           String
+  opened         Boolean      @default(false)
+  sentAt         DateTime     @default(now())
+}
+
+model Deal {
+  id         String   @id @default(cuid())
+  lead       Lead     @relation(fields: [leadId], references: [id])
+  leadId     String
+  value      Float
+  stage      PipelineStage
+  wonAt      DateTime?
+  lostAt     DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model FollowUp {
+  id          String   @id @default(cuid())
+  lead        Lead     @relation(fields: [leadId], references: [id])
+  leadId      String
+  channel     String   // email | call | text
+  message     String?
+  status      String   @default("pending") // pending | sent | dismissed | snoozed
+  automated   Boolean  @default(false)
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  leadId    String
+  type      String   // call | email | text | meeting | custom
+  title     String
+  dueAt     DateTime?
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Integration {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  provider    String   // gmail | google_calendar | outlook | instagram | ...
+  status      String   @default("disconnected") // connected | disconnected | error
+  accessToken String?
+  refreshToken String?
+  connectedAt DateTime?
+}
+
+model Automation {
+  id          String   @id @default(cuid())
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String
+  name        String
+  triggerDays Int      // e.g. "after 5 days of no response"
+  action      String   // create_reminder | ai_email_suggestion | auto_send
+  enabled     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model AIInsight {
+  id        String   @id @default(cuid())
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  leadId    String
+  summary   String
+  createdAt DateTime @default(now())
+}

@@ -6,7 +6,8 @@ import { Lead } from "@/lib/types";
 import { formatCurrency, formatDate, daysSince } from "@/lib/demo-data";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
-import { Search } from "lucide-react";
+import AddLeadForm from "@/components/AddLeadForm";
+import { Search, Plus } from "lucide-react";
 
 const filters = [
   { id: "all", label: "All" },
@@ -23,6 +24,7 @@ type FilterId = (typeof filters)[number]["id"];
 export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
   const [filter, setFilter] = useState<FilterId>("all");
   const [query, setQuery] = useState("");
+  const [showAddLead, setShowAddLead] = useState(false);
 
   const filtered = useMemo(() => {
     let list = [...leads];
@@ -55,8 +57,22 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
 
   return (
     <div>
-      <h1 className="font-display text-3xl">Leads</h1>
-      <p className="text-ink-soft mt-1">{leads.length} total, sorted by follow-up priority.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl">Leads</h1>
+          <p className="text-ink-soft mt-1">{leads.length} total, sorted by follow-up priority.</p>
+        </div>
+        <button
+          onClick={() => setShowAddLead(true)}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white"
+          style={{ backgroundColor: "var(--ink)" }}
+        >
+          <Plus className="h-4 w-4" />
+          Add lead
+        </button>
+      </div>
+
+      {showAddLead && <AddLeadForm onClose={() => setShowAddLead(false)} />}
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1.5">
@@ -114,7 +130,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
         )}
         {leads.length === 0 && (
           <p className="px-5 py-8 text-center text-sm text-ink-soft">
-            No leads yet — connect Gmail in Settings and sync your inbox to get started.
+            No leads yet — connect Gmail in Settings to sync your inbox, or add one manually above.
           </p>
         )}
       </div>

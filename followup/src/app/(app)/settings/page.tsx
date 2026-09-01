@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { team, formatCurrency } from "@/lib/demo-data";
-import { Mail, Calendar, Check, RefreshCw } from "lucide-react";
+import { Mail, Calendar, Check, RefreshCw, Zap } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -25,6 +25,10 @@ function SettingsPageInner() {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [autoAfterDays, setAutoAfterDays] = useState(5);
   const [automationOn, setAutomationOn] = useState(false);
+  const [automationLoaded, setAutomationLoaded] = useState(false);
+  const [automationSaving, setAutomationSaving] = useState(false);
+  const [runningNow, setRunningNow] = useState(false);
+  const [runResult, setRunResult] = useState<string | null>(null);
 
   // Real connection state, fetched from the DB via the API route — not
   // local/demo state.
@@ -37,6 +41,49 @@ function SettingsPageInner() {
       })
       .finally(() => setGmailStatusLoaded(true));
   }, []);
+
+  // Real automation settings (business-level master switch + delay).
+  useEffect(() => {
+    fetch("/api/automation/settings")
+      .then((r) => r.json())
+      .then((data: { enabled: boolean; triggerDays: number }) => {
+        setAutomationOn(data.enabled);
+        setAutoAfterDays(data.triggerDays);
+      })
+      .finally(() => setAutomationLoaded(true));
+  }, []);
+
+  async function saveAutomationSettings(enabled: boolean, triggerDays: number) {
+    setAutomationSaving(true);
+    try {
+      await fetch("/api/automation/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled, triggerDays }),
+      });
+    } finally {
+      setAutomationSaving(false);
+    }
+  }
+
+  async function handleRunAutomationNow() {
+    setRunningNow(true);
+    setRunResult(null);
+    try {
+      const res = await fetch("/api/automation/run", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Automation run failed.");
+      setRunResult(
+        data.checked === 0
+          ? "Checked — no leads are opted in and overdue right now."
+          : `Checked ${data.checked} opted-in lead${data.checked === 1 ? "" : "s"}, sent ${data.sent}.`
+      );
+    } catch (err) {
+      setRunResult(err instanceof Error ? err.message : "Automation run failed.");
+    } finally {
+      setRunningNow(false);
+    }
+  }
 
   // Surface the outcome of the OAuth redirect (?gmail=connected|error) —
   // pure derivation from the URL, no state needed.
@@ -117,7 +164,7 @@ function SettingsPageInner() {
         </div>
         {!gmailConnected && (
           <p className="text-xs text-ink-soft mt-2">
-            Without Gmail connected, FollowUp runs in demo mode using sample leads so you can explore the product.
+            Connect Gmail to start pulling in your real leads — until then the dashboard stays empty.
           </p>
         )}
       </section>
@@ -129,12 +176,18 @@ function SettingsPageInner() {
             <div>
               <p className="font-medium text-sm">Auto follow-up on silence</p>
               <p className="text-xs text-ink-soft mt-1">
-                When a lead hasn&apos;t responded for a set number of days, automatically send an AI-drafted check-in.
+                Master switch. When on, leads that are individually opted in (toggle on each lead&apos;s page) get an
+                AI-drafted check-in sent automatically after this many days of no response.
               </p>
             </div>
             <button
-              onClick={() => setAutomationOn((v) => !v)}
-              className="relative w-11 h-6 rounded-full transition-colors shrink-0"
+              onClick={() => {
+                const next = !automationOn;
+                setAutomationOn(next);
+                saveAutomationSettings(next, autoAfterDays);
+              }}
+              disabled={!automationLoaded || automationSaving}
+              className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
               style={{ backgroundColor: automationOn ? "var(--rust)" : "var(--line)" }}
             >
               <span
@@ -152,14 +205,36 @@ function SettingsPageInner() {
                 max={30}
                 value={autoAfterDays}
                 onChange={(e) => setAutoAfterDays(Number(e.target.value))}
+                onBlur={() => saveAutomationSettings(automationOn, autoAfterDays)}
                 className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
               />
               <span>days of no response</span>
             </div>
           )}
           <p className="text-xs text-ink-soft mt-3">
-            Every automated message is still logged in the lead&apos;s conversation history, and you can turn this off per-lead any time.
+            Off by default for every lead. Every automated message is still logged in the lead&apos;s conversation
+            history, and you can turn this off per-lead any time.
           </p>
+          {automationOn && (
+            <div className="mt-4 pt-4 border-t border-line flex items-center gap-3">
+              <button
+                onClick={handleRunAutomationNow}
+                disabled={runningNow}
+                className="text-sm font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
+                style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
+              >
+                <Zap className={`h-3.5 w-3.5 ${runningNow ? "animate-pulse" : ""}`} />
+                {runningNow ? "Checking…" : "Run automation check now"}
+              </button>
+              {runResult && <span className="text-xs text-ink-soft">{runResult}</span>}
+            </div>
+          )}
+          {automationOn && (
+            <p className="text-xs text-ink-soft mt-2">
+              This button runs the check manually — nothing runs on a schedule yet. A production deploy needs a
+              real scheduler (e.g. a daily Vercel Cron job) hitting this same check.
+            </p>
+          )}
         </div>
       </section>
 

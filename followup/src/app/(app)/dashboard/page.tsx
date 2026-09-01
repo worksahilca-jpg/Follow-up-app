@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   const stats = getStats(leads);
   const today = getTodaysFollowUps(leads);
   const cold = getColdLeads(leads);
-  const weeklyReport = getWeeklyReport(leads);
+  const weeklyReport = await getWeeklyReport(leads);
 
   return (
     <div>

@@ -125,17 +125,26 @@ export function getPipelineData(leads: Lead[]) {
 /**
  * Only counts things we can actually verify happened for real right now.
  * followUpsSent/repliesReceived stay honest at 0 until the Send button is
- * wired to really send (and log) messages instead of just updating local
- * component state.
+ * wired to really send (and log) messages — followUpsSent now counts real
+ * FollowUp rows from the last 7 days. repliesReceived stays honest at 0;
+ * inferring "this inbound message was a reply to us" reliably needs more
+ * than we track yet, so it's not worth faking.
  */
-export function getWeeklyReport(leads: Lead[]) {
+export async function getWeeklyReport(leads: Lead[]) {
   const closed = leads.filter((l) => l.stage === "won");
   const revenueGenerated = closed.reduce((sum, l) => sum + l.dealValue, 0);
   const hot = leads.filter((l) => l.priority === "high" && l.stage !== "won" && l.stage !== "lost");
 
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const followUpsSent = leads.length
+    ? await prisma.followUp.count({
+        where: { status: "sent", sentAt: { gte: sevenDaysAgo }, leadId: { in: leads.map((l) => l.id) } },
+      })
+    : 0;
+
   return {
     conversationsAnalyzed: leads.length,
-    followUpsSent: 0,
+    followUpsSent,
     repliesReceived: 0,
     dealsClosed: closed.length,
     revenueGenerated,

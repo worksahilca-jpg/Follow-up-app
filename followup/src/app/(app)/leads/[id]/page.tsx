@@ -4,6 +4,7 @@ import { formatCurrency, formatDate, PIPELINE_STAGES } from "@/lib/demo-data";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
 import MessageComposer from "@/components/MessageComposer";
+import LeadAutomationToggle from "@/components/LeadAutomationToggle";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -90,7 +91,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             </div>
           </section>
 
-          <MessageComposer initialMessage={lead.suggestedMessage} leadName={lead.name} />
+          <MessageComposer leadId={lead.id} initialMessage={lead.suggestedMessage} leadName={lead.name} />
         </div>
 
         <aside className="space-y-6">
@@ -119,16 +120,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <h3 className="text-sm font-semibold">Notes</h3>
             <p className="text-sm text-ink-soft mt-2 leading-relaxed">{lead.notes}</p>
           </div>
-          <div className="rounded-xl p-4" style={{ backgroundColor: "var(--slate-soft)" }}>
-            <h3 className="text-sm font-semibold" style={{ color: "var(--slate)" }}>
-              Automation
-            </h3>
-            <p className="text-xs mt-1 text-ink-soft">
-              {lead.automationEnabled
-                ? "FollowUp will auto-send a check-in if this lead goes quiet for 5 days."
-                : "Automation is off for this lead — every follow-up needs your approval first."}
-            </p>
-          </div>
+          <LeadAutomationToggle leadId={lead.id} initialEnabled={lead.automationEnabled} />
         </aside>
       </div>
     </div>

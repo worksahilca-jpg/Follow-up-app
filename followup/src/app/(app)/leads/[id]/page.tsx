@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { getLeadById } from "@/lib/leads-data";
-import { formatCurrency, formatDate, PIPELINE_STAGES } from "@/lib/demo-data";
+import { formatCurrency, formatDate } from "@/lib/demo-data";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
+import StageSelector from "@/components/StageSelector";
 import MessageComposer from "@/components/MessageComposer";
 import LeadAutomationToggle from "@/components/LeadAutomationToggle";
 import { Mail, Phone, MessageSquare } from "lucide-react";
@@ -13,8 +14,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const lead = await getLeadById(id);
   if (!lead) notFound();
-
-  const stageLabel = PIPELINE_STAGES.find((s) => s.id === lead.stage)?.label ?? lead.stage;
 
   return (
     <div>
@@ -28,7 +27,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <PriorityPill priority={lead.priority} />
-        <span className="text-sm rounded-full border border-line px-2.5 py-1">{stageLabel}</span>
+        <StageSelector leadId={lead.id} stage={lead.stage} />
         <span className="text-sm font-medium" style={{ color: "var(--gold)" }}>
           {formatCurrency(lead.dealValue)} potential
         </span>

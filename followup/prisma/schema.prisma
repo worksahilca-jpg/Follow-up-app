@@ -91,15 +91,18 @@ model Lead {
   followUps      FollowUp[]
   tasks          Task[]
   insights       AIInsight[]
+
+  @@unique([businessId, email])
 }
 
 model Conversation {
-  id        String   @id @default(cuid())
-  lead      Lead     @relation(fields: [leadId], references: [id])
-  leadId    String
-  channel   String   // email | call | text
-  messages  Message[]
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  lead       Lead     @relation(fields: [leadId], references: [id])
+  leadId     String
+  channel    String   // email | call | text
+  externalId String?  @unique // Gmail thread id, for idempotent sync
+  messages   Message[]
+  createdAt  DateTime @default(now())
 }
 
 model Message {
@@ -109,6 +112,7 @@ model Message {
   direction      String       // inbound | outbound
   body           String
   opened         Boolean      @default(false)
+  externalId     String?      @unique // Gmail message id, for idempotent sync
   sentAt         DateTime     @default(now())
 }
 
@@ -165,6 +169,8 @@ model Integration {
   accessToken String?
   refreshToken String?
   connectedAt DateTime?
+
+  @@unique([userId, provider])
 }
 
 model Automation {

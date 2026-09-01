@@ -50,11 +50,12 @@ function SettingsPageInner() {
       const res = await fetch("/api/integrations/gmail/sync", { method: "POST" });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Sync failed");
-      setSyncResult(
-        data.count === 0
-          ? "Synced — no new sales conversations found in your recent inbox."
-          : `Synced ${data.count} lead${data.count === 1 ? "" : "s"} from your inbox.`
-      );
+      if (data.count === 0) {
+        setSyncResult("Synced — no new sales conversations found in your recent inbox.");
+      } else {
+        const scoredNote = data.scored > 0 ? `, AI-scored ${data.scored}` : "";
+        setSyncResult(`Synced ${data.count} lead${data.count === 1 ? "" : "s"} from your inbox${scoredNote}.`);
+      }
     } catch (err) {
       setSyncResult(err instanceof Error ? err.message : "Sync failed.");
     } finally {

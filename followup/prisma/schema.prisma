@@ -76,6 +76,8 @@ model Lead {
   dealValue      Float    @default(0)
   score          Int      @default(0)
   scoreReason    String?
+  scoreFactors   Json?    // ScoreFactor[] — [{ label, weight }], from AI scoring
+  suggestedMessage String? // AI-drafted follow-up, edited/approved before sending
   priority       Priority @default(NONE)
   lastContacted  DateTime?
   nextFollowUp   DateTime?

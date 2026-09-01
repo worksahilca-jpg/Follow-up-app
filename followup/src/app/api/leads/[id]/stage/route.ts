@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import type { PipelineStage } from "@prisma/client";
 
@@ -18,8 +17,8 @@ const VALID_STAGES: PipelineStage[] = [
 // on WON or LOST also logs a real Deal record (win/loss + value + date),
 // so the Deal table actually gets used instead of sitting empty.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  const ctx = await getSessionContext();
+  if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
 
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
@@ -29,7 +28,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const lead = await prisma.lead.findUnique({ where: { id } });
-  if (!lead) return NextResponse.json({ success: false, message: "Lead not found." }, { status: 404 });
+  if (!lead || lead.businessId !== ctx.businessId) {
+    return NextResponse.json({ success: false, message: "Lead not found." }, { status: 404 });
+  }
 
   const updated = await prisma.lead.update({
     where: { id },

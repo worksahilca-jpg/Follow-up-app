@@ -6,9 +6,12 @@
  *   2. That specific Lead has automationOn = true (opted in individually,
  *      via the toggle on its detail page) — off by default.
  *
- * Nothing runs this on a schedule by itself — see the "Run automation
- * check now" button in Settings for manual testing, and the note in
- * README about wiring a real scheduler (e.g. Vercel Cron) once deployed.
+ * Multi-tenant: runAutomationForBusiness() takes an explicit businessId —
+ * the "Run automation check now" button in Settings only ever runs it for
+ * the signed-in user's own business (see the API route). Nothing runs this
+ * on a schedule by itself; runAutomationForAllBusinesses() is what a real
+ * scheduler (e.g. Vercel Cron) would call once deployed, looping over
+ * every business that has automation enabled.
  */
 
 import { prisma } from "@/lib/db";
@@ -17,12 +20,15 @@ import { composeFollowUpEmail } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
 import type { Message } from "@/lib/types";
 
-export async function runAutomation(): Promise<{ checked: number; sent: number; skipped: string[] }> {
-  const business = await prisma.business.findFirst();
-  if (!business) return { checked: 0, sent: 0, skipped: [] };
+interface AutomationResult {
+  checked: number;
+  sent: number;
+  skipped: string[];
+}
 
+export async function runAutomationForBusiness(businessId: string): Promise<AutomationResult> {
   const automation = await prisma.automation.findFirst({
-    where: { businessId: business.id, action: "auto_send" },
+    where: { businessId, action: "auto_send" },
   });
   if (!automation || !automation.enabled) {
     return { checked: 0, sent: 0, skipped: [] };
@@ -32,7 +38,7 @@ export async function runAutomation(): Promise<{ checked: number; sent: number; 
 
   const eligible = await prisma.lead.findMany({
     where: {
-      businessId: business.id,
+      businessId,
       automationOn: true,
       stage: { notIn: ["WON", "LOST"] },
       lastContacted: { lte: cutoff },
@@ -75,4 +81,21 @@ export async function runAutomation(): Promise<{ checked: number; sent: number; 
   }
 
   return { checked: eligible.length, sent, skipped };
+}
+
+/** What a real scheduler calls: every business with automation on, in one pass. */
+export async function runAutomationForAllBusinesses(): Promise<AutomationResult> {
+  const enabled = await prisma.automation.findMany({
+    where: { action: "auto_send", enabled: true },
+    select: { businessId: true },
+  });
+
+  const totals: AutomationResult = { checked: 0, sent: 0, skipped: [] };
+  for (const { businessId } of enabled) {
+    const result = await runAutomationForBusiness(businessId);
+    totals.checked += result.checked;
+    totals.sent += result.sent;
+    totals.skipped.push(...result.skipped);
+  }
+  return totals;
 }

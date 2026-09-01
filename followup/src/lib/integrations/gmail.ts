@@ -1,9 +1,13 @@
 /**
  * Gmail integration — real implementation.
  *
- * Single-tenant for now: there's one connected Gmail account, stored as the
- * `Integration` row with provider "gmail". Step 5 (real login) will scope
- * this per signed-in user instead of assuming "the one connected account".
+ * Multi-tenant: every function that touches a Gmail connection takes an
+ * explicit businessId (or userId, for the token exchange) — never "find
+ * the one connected account," which would leak one business's inbox into
+ * another's. Callers (API routes) resolve that id from the signed-in
+ * session; this file stays decoupled from NextAuth on purpose, since
+ * automation.ts calls into it from a background-job context with no
+ * active session at all.
  *
  * OAuth flow:
  *   1. startGmailOAuth() builds the Google consent URL.
@@ -52,15 +56,18 @@ export interface GmailConnectionStatus {
   email?: string;
 }
 
-async function getGmailIntegration() {
+// The business's Gmail connection — whichever of its users connected one.
+// Scoped by business, not a global findFirst, so one tenant's inbox can
+// never leak into another's.
+async function getGmailIntegration(businessId: string) {
   return prisma.integration.findFirst({
-    where: { provider: "gmail", status: "connected" },
+    where: { provider: "gmail", status: "connected", user: { businessId } },
     include: { user: true },
   });
 }
 
-export async function getGmailStatus(): Promise<GmailConnectionStatus> {
-  const integration = await getGmailIntegration();
+export async function getGmailStatus(businessId: string): Promise<GmailConnectionStatus> {
+  const integration = await getGmailIntegration(businessId);
   if (!integration) return { connected: false };
   return { connected: true, email: integration.user.email };
 }
@@ -77,15 +84,12 @@ export async function startGmailOAuth(): Promise<{ redirectUrl: string }> {
 
 /**
  * Called by the OAuth callback route once Google redirects back with a
- * `code`. Exchanges it for tokens, figures out which Gmail account it is,
- * and upserts the User/Business/Integration rows that own the connection.
- *
- * Single-tenant assumption: reuses the first Business row if one exists
- * (creating one on first connect), and finds-or-creates a User by the
- * connected Gmail address. Step 5 replaces this with real session-based
- * user resolution.
+ * `code`. Exchanges it for tokens and stores them against the ALREADY
+ * signed-in user (userId comes from the session, not guessed) — sign-in
+ * is what creates the User/Business rows now (see src/lib/auth.ts); this
+ * only ever attaches an Integration to an existing user.
  */
-export async function exchangeCodeForTokens(code: string): Promise<{ email: string }> {
+export async function exchangeCodeForTokens(code: string, userId: string): Promise<{ email: string }> {
   const oauth2Client = getOAuthClient();
   const { tokens } = await oauth2Client.getToken(code);
   if (!tokens.refresh_token && !tokens.access_token) {
@@ -98,19 +102,8 @@ export async function exchangeCodeForTokens(code: string): Promise<{ email: stri
   const email = profile.data.emailAddress;
   if (!email) throw new Error("Couldn't determine the connected Gmail address.");
 
-  let business = await prisma.business.findFirst();
-  if (!business) {
-    business = await prisma.business.create({ data: { name: "My Business" } });
-  }
-
-  const user = await prisma.user.upsert({
-    where: { email },
-    update: { businessId: business.id },
-    create: { email, businessId: business.id, role: "ADMIN" },
-  });
-
   const existing = await prisma.integration.findUnique({
-    where: { userId_provider: { userId: user.id, provider: "gmail" } },
+    where: { userId_provider: { userId, provider: "gmail" } },
   });
 
   // A re-connect may omit refresh_token (Google only issues it the first
@@ -119,7 +112,7 @@ export async function exchangeCodeForTokens(code: string): Promise<{ email: stri
   const refreshToken = tokens.refresh_token ?? existing?.refreshToken ?? null;
 
   await prisma.integration.upsert({
-    where: { userId_provider: { userId: user.id, provider: "gmail" } },
+    where: { userId_provider: { userId, provider: "gmail" } },
     update: {
       status: "connected",
       accessToken: tokens.access_token ?? null,
@@ -127,7 +120,7 @@ export async function exchangeCodeForTokens(code: string): Promise<{ email: stri
       connectedAt: new Date(),
     },
     create: {
-      userId: user.id,
+      userId,
       provider: "gmail",
       status: "connected",
       accessToken: tokens.access_token ?? null,
@@ -139,8 +132,8 @@ export async function exchangeCodeForTokens(code: string): Promise<{ email: stri
   return { email };
 }
 
-async function getAuthedGmailClient() {
-  const integration = await getGmailIntegration();
+async function getAuthedGmailClient(businessId: string) {
+  const integration = await getGmailIntegration(businessId);
   if (!integration || !integration.refreshToken) return null;
 
   const oauth2Client = getOAuthClient();
@@ -205,13 +198,11 @@ function isAutomatedSender(email: string): boolean {
  * conversation. Real scoring/prioritization comes from the AI layer
  * (src/lib/integrations/openai.ts), not from this sync step.
  */
-export async function fetchSalesConversations(): Promise<Lead[]> {
-  const authed = await getAuthedGmailClient();
+export async function fetchSalesConversations(businessId: string): Promise<Lead[]> {
+  const authed = await getAuthedGmailClient(businessId);
   if (!authed) return [];
   const { gmail, integration } = authed;
   const selfEmail = integration.user.email.toLowerCase();
-  const businessId = integration.user.businessId;
-  if (!businessId) return [];
 
   const { data: listData } = await gmail.users.threads.list({
     userId: "me",
@@ -317,12 +308,11 @@ export async function fetchSalesConversations(): Promise<Lead[]> {
   return touchedLeads;
 }
 
-export async function sendEmail(params: {
-  to: string;
-  subject: string;
-  body: string;
-}): Promise<{ success: boolean; messageId?: string }> {
-  const authed = await getAuthedGmailClient();
+export async function sendEmail(
+  businessId: string,
+  params: { to: string; subject: string; body: string }
+): Promise<{ success: boolean; messageId?: string }> {
+  const authed = await getAuthedGmailClient(businessId);
   if (!authed) return { success: false };
   const { gmail, integration } = authed;
 

@@ -17,7 +17,7 @@ export async function sendFollowUpToLead(
   if (!lead) return { success: false, message: "Lead not found." };
   if (!lead.email) return { success: false, message: "This lead has no email address on file." };
 
-  const result = await sendEmail({
+  const result = await sendEmail(lead.businessId, {
     to: lead.email,
     subject: `Following up, ${lead.name.split(" ")[0]}`,
     body,

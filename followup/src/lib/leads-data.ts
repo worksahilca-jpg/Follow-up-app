@@ -5,13 +5,20 @@
  * need much rework, but these operate on real Lead[] fetched from Prisma
  * instead of a closed-over static array.
  *
- * Single-tenant for now: getLeads()/getLeadById() assume one Business (the
- * first row) — same assumption src/lib/integrations/gmail.ts makes. Step 5
- * (real login) replaces this with per-session scoping.
+ * Multi-tenant: getLeads()/getLeadById() resolve the caller's businessId
+ * from the current session and scope every query to it — this is always
+ * called from Server Components under the (app) layout, which already
+ * requires a session, so resolving it here (instead of threading
+ * businessId through every page) is safe and keeps page code unchanged.
+ * getLeadById() double-checks the fetched lead actually belongs to that
+ * business (not just "does this id exist anywhere") — that ownership
+ * check is the whole point; without it any signed-in user could view any
+ * other business's lead just by guessing its id.
  */
 
 import { prisma } from "@/lib/db";
 import { PIPELINE_STAGES } from "@/lib/demo-data";
+import { getSessionContext } from "@/lib/session";
 import { Lead, Message, ScoreFactor } from "@/lib/types";
 import type { Prisma } from "@prisma/client";
 
@@ -62,10 +69,10 @@ const leadInclude = {
 } satisfies Prisma.LeadInclude;
 
 export async function getLeads(): Promise<Lead[]> {
-  const business = await prisma.business.findFirst();
-  if (!business) return [];
+  const ctx = await getSessionContext();
+  if (!ctx) return [];
   const dbLeads = await prisma.lead.findMany({
-    where: { businessId: business.id },
+    where: { businessId: ctx.businessId },
     include: leadInclude,
     orderBy: { score: "desc" },
   });
@@ -73,8 +80,11 @@ export async function getLeads(): Promise<Lead[]> {
 }
 
 export async function getLeadById(id: string): Promise<Lead | undefined> {
+  const ctx = await getSessionContext();
+  if (!ctx) return undefined;
   const dbLead = await prisma.lead.findUnique({ where: { id }, include: leadInclude });
-  return dbLead ? mapDbLeadToUiLead(dbLead) : undefined;
+  if (!dbLead || dbLead.businessId !== ctx.businessId) return undefined;
+  return mapDbLeadToUiLead(dbLead);
 }
 
 export function isDueToday(lead: Lead): boolean {

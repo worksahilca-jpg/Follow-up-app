@@ -1,18 +1,22 @@
 /**
- * NextAuth configuration — Google sign-in.
+ * NextAuth configuration — Google sign-in, and the actual multi-tenant
+ * signup moment.
  *
  * This is a separate concern from Gmail *data* access
  * (src/lib/integrations/gmail.ts): this only proves who's signing into the
  * app. It reuses the same Google OAuth client (same GOOGLE_CLIENT_ID/
  * SECRET) since we already have one, but requests only basic profile/email
- * scopes — no Gmail scopes here. Uses JWT sessions (no database
- * Account/Session tables) and upserts into our own existing User/Business
- * tables on sign-in, the same find-or-create pattern gmail.ts's OAuth
- * callback already uses.
+ * scopes — no Gmail scopes here.
  *
- * ALLOWED_EMAILS gates who can sign in at all — without it, anyone with a
- * Google account could log into your app and see your real leads. Set it
- * to a comma-separated list of the email(s) allowed to sign in.
+ * Multi-tenancy: a brand-new email signing in gets its OWN new Business —
+ * that's the real "signup." A returning email is attached to whatever
+ * business it already belongs to. businessId + userId are embedded in the
+ * JWT here so every server-side request can scope its data without an
+ * extra DB round-trip — see src/lib/session.ts.
+ *
+ * ALLOWED_EMAILS gates who can sign in AT ALL, across every business —
+ * useful while this is still private/in testing. Leave it empty once
+ * you're ready for real strangers to sign up as their own tenants.
  */
 
 import type { NextAuthOptions } from "next-auth";
@@ -44,25 +48,44 @@ export const authOptions: NextAuthOptions = {
         return false; // not on the allowlist — reject the sign-in
       }
 
-      let business = await prisma.business.findFirst();
-      if (!business) {
-        business = await prisma.business.create({ data: { name: "My Business" } });
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing) {
+        // Returning user — nothing to create. If their name changed on
+        // Google's side, keep it fresh.
+        if (user.name && user.name !== existing.name) {
+          await prisma.user.update({ where: { id: existing.id }, data: { name: user.name } });
+        }
+        return true;
       }
 
-      await prisma.user.upsert({
-        where: { email },
-        update: { name: user.name ?? undefined, businessId: business.id },
-        create: { email, name: user.name ?? undefined, businessId: business.id, role: "ADMIN" },
+      // Brand-new email: this IS the signup. Give them their own, isolated
+      // business — never attach a new user to someone else's.
+      const business = await prisma.business.create({
+        data: { name: user.name ? `${user.name}'s Business` : "My Business" },
+      });
+      await prisma.user.create({
+        data: { email, name: user.name ?? undefined, businessId: business.id, role: "ADMIN" },
       });
 
       return true;
     },
-    async session({ session }) {
-      if (session.user?.email) {
-        const dbUser = await prisma.user.findUnique({ where: { email: session.user.email } });
-        if (dbUser) {
-          (session.user as typeof session.user & { id: string }).id = dbUser.id;
+    async jwt({ token, user }) {
+      // `user` is only present right after sign-in; on later requests we
+      // reuse whatever's already in the token instead of hitting the DB
+      // every time.
+      if (user?.email) {
+        const dbUser = await prisma.user.findUnique({ where: { email: user.email.toLowerCase() } });
+        if (dbUser?.businessId) {
+          token.userId = dbUser.id;
+          token.businessId = dbUser.businessId;
         }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token.userId && token.businessId) {
+        session.user.id = token.userId;
+        session.user.businessId = token.businessId;
       }
       return session;
     },

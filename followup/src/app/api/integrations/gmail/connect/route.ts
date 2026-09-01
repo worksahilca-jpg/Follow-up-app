@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSessionContext } from "@/lib/session";
 import { startGmailOAuth } from "@/lib/integrations/gmail";
 
 // GET /api/integrations/gmail/connect — kicks off the Google OAuth consent
 // screen. Linked from the "Connect" button on Settings.
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.redirect(new URL("/signin", request.url));
+  const ctx = await getSessionContext();
+  if (!ctx) return NextResponse.redirect(new URL("/signin", request.url));
 
   try {
     const { redirectUrl } = await startGmailOAuth();

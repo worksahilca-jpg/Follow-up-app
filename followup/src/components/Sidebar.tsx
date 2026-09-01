@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Users,
   GitBranch,
+  BarChart3,
   Settings,
   Sparkles,
   LogOut,
@@ -17,6 +18,7 @@ const nav = [
   { href: "/dashboard", label: "Today", icon: LayoutDashboard },
   { href: "/leads", label: "Leads", icon: Users },
   { href: "/pipeline", label: "Pipeline", icon: GitBranch },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

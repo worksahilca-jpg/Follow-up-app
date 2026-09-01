@@ -2,23 +2,29 @@ import Link from "next/link";
 import StatCard from "@/components/StatCard";
 import FollowUpCard from "@/components/FollowUpCard";
 import {
+  getLeads,
   getStats,
   getTodaysFollowUps,
   getColdLeads,
-  formatCurrency,
-  daysSince,
-  weeklyReport,
-} from "@/lib/demo-data";
+  getWeeklyReport,
+} from "@/lib/leads-data";
+import { formatCurrency, daysSince } from "@/lib/demo-data";
 import { AlertTriangle } from "lucide-react";
 
-export default function DashboardPage() {
-  const stats = getStats();
-  const today = getTodaysFollowUps();
-  const cold = getColdLeads();
+// This page reads live leads from the database on every request — never
+// bake a stale snapshot into the build.
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const leads = await getLeads();
+  const stats = getStats(leads);
+  const today = getTodaysFollowUps(leads);
+  const cold = getColdLeads(leads);
+  const weeklyReport = await getWeeklyReport(leads);
 
   return (
     <div>
-      <h1 className="font-display text-3xl">Good morning, Sahil</h1>
+      <h1 className="font-display text-3xl">Good morning</h1>
       <p className="text-ink-soft mt-1">Here&apos;s what needs your attention today.</p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
@@ -31,7 +37,16 @@ export default function DashboardPage() {
       <section className="mt-10">
         <h2 className="font-display text-xl">Today&apos;s follow-ups</h2>
         <div className="mt-4 space-y-3">
-          {today.length === 0 && (
+          {leads.length === 0 && (
+            <p className="text-sm text-ink-soft">
+              No leads yet — head to{" "}
+              <Link href="/settings" className="underline">
+                Settings
+              </Link>{" "}
+              to connect Gmail and sync your inbox.
+            </p>
+          )}
+          {leads.length > 0 && today.length === 0 && (
             <p className="text-sm text-ink-soft">Nothing due today — take a look at your pipeline instead.</p>
           )}
           {today.map((lead) => (

@@ -3,36 +3,61 @@
 import { useState } from "react";
 import { Sparkles, Send, RotateCcw } from "lucide-react";
 
-const regenerated = [
-  "just wanted to check back in — no rush at all, just didn't want this to slip through the cracks",
-  "circling back on this — happy to jump on a quick call if that's easier than email",
-  "following up in case this got buried — let me know if you have any questions",
-];
-
 export default function MessageComposer({
+  leadId,
   initialMessage,
   leadName,
 }: {
+  leadId: string;
   initialMessage: string;
   leadName: string;
 }) {
   const [message, setMessage] = useState(initialMessage);
   const [sent, setSent] = useState(false);
-  const [regenCount, setRegenCount] = useState(0);
+  const [sending, setSending] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const regenerate = () => {
-    const opener = message.split(",")[0] || `Hey ${leadName.split(" ")[0]}`;
-    const variant = regenerated[regenCount % regenerated.length];
-    setMessage(`${opener}, ${variant}.`);
-    setRegenCount((c) => c + 1);
-  };
+  async function regenerate() {
+    setRegenerating(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/leads/${leadId}/regenerate`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Regeneration failed.");
+      setMessage(data.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Regeneration failed.");
+    } finally {
+      setRegenerating(false);
+    }
+  }
+
+  async function send() {
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/leads/${leadId}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Send failed.");
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Send failed.");
+    } finally {
+      setSending(false);
+    }
+  }
 
   if (sent) {
     return (
       <section>
         <h2 className="font-display text-xl">AI-suggested follow-up</h2>
         <div className="mt-3 rounded-lg border border-line p-4 text-sm" style={{ backgroundColor: "var(--sage-soft)", color: "var(--sage)" }}>
-          Sent to {leadName}. FollowUp will let you know when they reply.
+          Sent to {leadName} for real, via Gmail.
         </div>
       </section>
     );
@@ -53,19 +78,27 @@ export default function MessageComposer({
         rows={4}
         className="mt-3 w-full rounded-lg border border-line bg-card p-3 text-sm leading-relaxed"
       />
+      {error && (
+        <p className="mt-2 text-xs" style={{ color: "var(--rust)" }}>
+          {error}
+        </p>
+      )}
       <div className="mt-3 flex flex-wrap gap-2">
         <button
-          onClick={() => setSent(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white"
+          onClick={send}
+          disabled={sending || regenerating || !message.trim()}
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60"
           style={{ backgroundColor: "var(--ink)" }}
         >
-          <Send className="h-3.5 w-3.5" /> Send now
+          <Send className="h-3.5 w-3.5" /> {sending ? "Sending…" : "Send now"}
         </button>
         <button
           onClick={regenerate}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium"
+          disabled={sending || regenerating}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-60"
         >
-          <RotateCcw className="h-3.5 w-3.5" /> Regenerate
+          <RotateCcw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
+          {regenerating ? "Regenerating…" : "Regenerate"}
         </button>
       </div>
     </section>

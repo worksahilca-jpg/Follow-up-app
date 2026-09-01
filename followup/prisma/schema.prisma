@@ -1,15 +1,18 @@
 // FollowUp — production data model.
-// Not connected in this sandbox (no live database here). Point DATABASE_URL
-// at a real Postgres instance (e.g. Supabase) and run `npx prisma migrate dev`
-// to create these tables for real.
+//
+// DATABASE_URL: pooled connection (e.g. Supabase's port-6543 pgbouncer URL) —
+//   used by the running app.
+// DIRECT_URL: direct connection (e.g. Supabase's port-5432 URL) — used only
+//   by `prisma migrate` / `prisma db push`, which can't run through a pooler.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -37,10 +40,20 @@ model Business {
   teamSize         Int?
   avgDealValue     Float?
   primaryChannels  String[]
+  onboarded        Boolean  @default(false)
   createdAt        DateTime @default(now())
   users            User[]
   leads            Lead[]
   automations      Automation[]
+
+  // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
+  // mirrors the Stripe Subscription.status string verbatim (active,
+  // trialing, past_due, canceled, unpaid, incomplete, ...); null means
+  // never subscribed. See src/lib/billing.ts for the access check.
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionStatus   String?
+  currentPeriodEnd     DateTime?
 }
 
 enum PipelineStage {
@@ -73,6 +86,8 @@ model Lead {
   dealValue      Float    @default(0)
   score          Int      @default(0)
   scoreReason    String?
+  scoreFactors   Json?    // ScoreFactor[] — [{ label, weight }], from AI scoring
+  suggestedMessage String? // AI-drafted follow-up, edited/approved before sending
   priority       Priority @default(NONE)
   lastContacted  DateTime?
   nextFollowUp   DateTime?
@@ -88,15 +103,18 @@ model Lead {
   followUps      FollowUp[]
   tasks          Task[]
   insights       AIInsight[]
+
+  @@unique([businessId, email])
 }
 
 model Conversation {
-  id        String   @id @default(cuid())
-  lead      Lead     @relation(fields: [leadId], references: [id])
-  leadId    String
-  channel   String   // email | call | text
-  messages  Message[]
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  lead       Lead     @relation(fields: [leadId], references: [id])
+  leadId     String
+  channel    String   // email | call | text
+  externalId String?  @unique // Gmail thread id, for idempotent sync
+  messages   Message[]
+  createdAt  DateTime @default(now())
 }
 
 model Message {
@@ -106,6 +124,7 @@ model Message {
   direction      String       // inbound | outbound
   body           String
   opened         Boolean      @default(false)
+  externalId     String?      @unique // Gmail message id, for idempotent sync
   sentAt         DateTime     @default(now())
 }
 
@@ -162,6 +181,8 @@ model Integration {
   accessToken String?
   refreshToken String?
   connectedAt DateTime?
+
+  @@unique([userId, provider])
 }
 
 model Automation {

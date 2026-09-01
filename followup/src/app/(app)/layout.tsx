@@ -1,6 +1,18 @@
+import { redirect } from "next/navigation";
+import { getSessionContext } from "@/lib/session";
+import { prisma } from "@/lib/db";
 import Sidebar from "@/components/Sidebar";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const ctx = await getSessionContext();
+  if (!ctx) redirect("/signin");
+
+  const business = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: { onboarded: true },
+  });
+  if (!business?.onboarded) redirect("/onboarding");
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />

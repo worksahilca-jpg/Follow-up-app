@@ -45,6 +45,15 @@ model Business {
   users            User[]
   leads            Lead[]
   automations      Automation[]
+
+  // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
+  // mirrors the Stripe Subscription.status string verbatim (active,
+  // trialing, past_due, canceled, unpaid, incomplete, ...); null means
+  // never subscribed. See src/lib/billing.ts for the access check.
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionStatus   String?
+  currentPeriodEnd     DateTime?
 }
 
 enum PipelineStage {

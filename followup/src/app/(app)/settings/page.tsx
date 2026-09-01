@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { team, formatCurrency } from "@/lib/demo-data";
-import { Mail, Calendar, Check, RefreshCw, Zap } from "lucide-react";
+import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -29,6 +29,14 @@ function SettingsPageInner() {
   const [automationSaving, setAutomationSaving] = useState(false);
   const [runningNow, setRunningNow] = useState(false);
   const [runResult, setRunResult] = useState<string | null>(null);
+  const [automationError, setAutomationError] = useState<string | null>(null);
+
+  const [billingActive, setBillingActive] = useState(false);
+  const [billingStatus, setBillingStatus] = useState<string | null>(null);
+  const [billingPeriodEnd, setBillingPeriodEnd] = useState<string | null>(null);
+  const [billingLoaded, setBillingLoaded] = useState(false);
+  const [billingBusy, setBillingBusy] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
 
   // Real connection state, fetched from the DB via the API route — not
   // local/demo state.
@@ -55,14 +63,60 @@ function SettingsPageInner() {
 
   async function saveAutomationSettings(enabled: boolean, triggerDays: number) {
     setAutomationSaving(true);
+    setAutomationError(null);
     try {
-      await fetch("/api/automation/settings", {
+      const res = await fetch("/api/automation/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled, triggerDays }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setAutomationOn(!enabled); // revert the optimistic flip
+        setAutomationError(data.message ?? "Couldn't save — try again.");
+      }
     } finally {
       setAutomationSaving(false);
+    }
+  }
+
+  // Real subscription state, fetched from the DB via the API route.
+  useEffect(() => {
+    fetch("/api/billing/status")
+      .then((r) => r.json())
+      .then((data: { active: boolean; status: string | null; currentPeriodEnd: string | null }) => {
+        setBillingActive(data.active);
+        setBillingStatus(data.status);
+        setBillingPeriodEnd(data.currentPeriodEnd);
+      })
+      .finally(() => setBillingLoaded(true));
+  }, []);
+
+  async function handleSubscribe() {
+    setBillingBusy(true);
+    setBillingError(null);
+    try {
+      const res = await fetch("/api/billing/checkout", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't start checkout.");
+      window.location.href = data.url;
+    } catch (err) {
+      setBillingError(err instanceof Error ? err.message : "Couldn't start checkout.");
+      setBillingBusy(false);
+    }
+  }
+
+  async function handleManageBilling() {
+    setBillingBusy(true);
+    setBillingError(null);
+    try {
+      const res = await fetch("/api/billing/portal", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't open billing portal.");
+      window.location.href = data.url;
+    } catch (err) {
+      setBillingError(err instanceof Error ? err.message : "Couldn't open billing portal.");
+      setBillingBusy(false);
     }
   }
 
@@ -89,6 +143,7 @@ function SettingsPageInner() {
   // pure derivation from the URL, no state needed.
   const gmailError =
     searchParams.get("gmail") === "error" ? searchParams.get("message") ?? "Couldn't connect Gmail." : null;
+  const billingRedirect = searchParams.get("billing"); // "success" | "canceled" | null
 
   async function handleGmailSync() {
     setSyncing(true);
@@ -196,6 +251,11 @@ function SettingsPageInner() {
               />
             </button>
           </div>
+          {automationError && (
+            <p className="mt-3 text-xs" style={{ color: "var(--rust)" }}>
+              {automationError}
+            </p>
+          )}
           {automationOn && (
             <div className="mt-4 flex items-center gap-2 text-sm">
               <span>Follow up automatically after</span>
@@ -265,10 +325,54 @@ function SettingsPageInner() {
 
       <section>
         <h2 className="font-display text-xl">Billing</h2>
-        <div className="mt-4 grid sm:grid-cols-3 gap-4">
-          <PlanCard name="Free" price="$0" features={["20 conversations/mo", "Basic AI suggestions"]} />
-          <PlanCard name="Pro" price="$19" features={["Unlimited conversations", "AI follow-ups & scoring", "Revenue tracking", "Weekly reports"]} current />
-          <PlanCard name="Business" price="$49" features={["Multiple users", "Advanced automation", "Team analytics", "More integrations"]} />
+        {billingRedirect === "success" && (
+          <p className="mt-2 text-sm" style={{ color: "var(--sage)" }}>
+            Subscription active — thanks! It may take a few seconds to reflect below.
+          </p>
+        )}
+        {billingRedirect === "canceled" && (
+          <p className="mt-2 text-sm text-ink-soft">Checkout canceled — no charge was made.</p>
+        )}
+        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+          <div className="flex items-center gap-4">
+            <div
+              className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
+            >
+              <CreditCard className="h-4 w-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">FollowUp — $29/month</p>
+              <p className="text-xs text-ink-soft mt-0.5">
+                {!billingLoaded
+                  ? "Checking your subscription…"
+                  : billingActive
+                  ? billingPeriodEnd
+                    ? `Active — renews ${new Date(billingPeriodEnd).toLocaleDateString()}.`
+                    : "Active."
+                  : billingStatus === "past_due"
+                  ? "Payment failed — update your card to keep your account active."
+                  : billingStatus === "canceled"
+                  ? "Subscription canceled — resubscribe to unlock leads, sync, and sending again."
+                  : "Not subscribed yet — you can view your existing data, but adding leads, syncing Gmail, and sending follow-ups are locked."}
+              </p>
+            </div>
+            {billingLoaded && (
+              <button
+                onClick={billingActive || billingStatus ? handleManageBilling : handleSubscribe}
+                disabled={billingBusy}
+                className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2 text-white disabled:opacity-60"
+                style={{ backgroundColor: "var(--ink)" }}
+              >
+                {billingBusy ? "One sec…" : billingActive || billingStatus ? "Manage billing" : "Subscribe"}
+              </button>
+            )}
+          </div>
+          {billingError && (
+            <p className="mt-3 text-xs" style={{ color: "var(--rust)" }}>
+              {billingError}
+            </p>
+          )}
         </div>
       </section>
     </div>
@@ -324,44 +428,6 @@ function IntegrationRow({
         <button onClick={onToggle} disabled={!onToggle} className="text-sm font-medium rounded-lg px-3 py-1.5 shrink-0" style={buttonStyle}>
           {label}
         </button>
-      )}
-    </div>
-  );
-}
-
-function PlanCard({
-  name,
-  price,
-  features,
-  current,
-}: {
-  name: string;
-  price: string;
-  features: string[];
-  current?: boolean;
-}) {
-  return (
-    <div
-      className="rounded-xl p-5"
-      style={{
-        border: current ? "2px solid var(--rust)" : "1px solid var(--line)",
-        backgroundColor: "var(--card)",
-      }}
-    >
-      <p className="text-sm font-semibold">{name}</p>
-      <p className="font-display text-2xl mt-1">
-        {price}
-        <span className="text-sm text-ink-soft font-body">/mo</span>
-      </p>
-      <ul className="mt-3 space-y-1.5 text-xs text-ink-soft">
-        {features.map((f) => (
-          <li key={f}>{f}</li>
-        ))}
-      </ul>
-      {current && (
-        <p className="mt-3 text-xs font-medium" style={{ color: "var(--rust)" }}>
-          Current plan (demo)
-        </p>
       )}
     </div>
   );

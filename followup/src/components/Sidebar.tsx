@@ -26,6 +26,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [gmailStatus, setGmailStatus] = useState<{ connected: boolean; email?: string } | null>(null);
+  const [billingActive, setBillingActive] = useState<boolean | null>(null);
 
   useEffect(() => {
     fetch("/api/integrations/gmail/status")
@@ -33,6 +34,13 @@ export default function Sidebar() {
       .then(setGmailStatus)
       .catch(() => setGmailStatus({ connected: false }));
   }, [pathname]); // re-check on navigation so it updates right after connecting
+
+  useEffect(() => {
+    fetch("/api/billing/status")
+      .then((r) => r.json())
+      .then((data: { active: boolean }) => setBillingActive(data.active))
+      .catch(() => setBillingActive(null));
+  }, [pathname]); // re-check on navigation so it updates right after subscribing
 
   return (
     <aside className="w-60 shrink-0 border-r border-line bg-card flex flex-col h-screen sticky top-0">
@@ -65,6 +73,20 @@ export default function Sidebar() {
           );
         })}
       </nav>
+      {billingActive === false && (
+        <Link
+          href="/settings"
+          className="block p-4 mx-3 mb-3 rounded-lg"
+          style={{ backgroundColor: "var(--rust-soft)" }}
+        >
+          <p className="text-xs font-medium" style={{ color: "var(--rust)" }}>
+            Not subscribed
+          </p>
+          <p className="text-xs mt-1 text-ink-soft">
+            Subscribe ($29/mo) to sync, add leads, and send follow-ups.
+          </p>
+        </Link>
+      )}
       {gmailStatus && !gmailStatus.connected && (
         <div className="p-4 mx-3 mb-3 rounded-lg" style={{ backgroundColor: "var(--slate-soft)" }}>
           <p className="text-xs font-medium" style={{ color: "var(--slate)" }}>

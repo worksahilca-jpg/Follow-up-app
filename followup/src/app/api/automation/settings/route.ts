@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
+import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 
 const AUTOMATION_NAME = "Auto follow-up on silence";
@@ -24,6 +25,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false }, { status: 401 });
+  if (!(await requireActiveBilling(ctx.businessId))) {
+    return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+  }
 
   const body = await request.json().catch(() => ({}));
   const enabled = Boolean(body.enabled);

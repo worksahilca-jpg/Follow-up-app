@@ -11,10 +11,12 @@ export default function LeadAutomationToggle({
 }) {
   const [enabled, setEnabled] = useState(initialEnabled);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function toggle() {
     const next = !enabled;
     setSaving(true);
+    setError(null);
     setEnabled(next); // optimistic — this is a low-stakes toggle
     try {
       const res = await fetch(`/api/leads/${leadId}/automation`, {
@@ -22,9 +24,11 @@ export default function LeadAutomationToggle({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: next }),
       });
-      if (!res.ok) throw new Error();
-    } catch {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't save — try again.");
+    } catch (err) {
       setEnabled(!next); // revert on failure
+      setError(err instanceof Error ? err.message : "Couldn't save — try again.");
     } finally {
       setSaving(false);
     }
@@ -53,6 +57,11 @@ export default function LeadAutomationToggle({
           ? "On — FollowUp will auto-send an AI-drafted check-in if this lead goes quiet, using your business's automation delay from Settings."
           : "Off — every follow-up for this lead needs your approval first."}
       </p>
+      {error && (
+        <p className="text-xs mt-2" style={{ color: "var(--rust)" }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -7,7 +7,8 @@ import { formatCurrency, formatDate, daysSince } from "@/lib/demo-data";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
 import AddLeadForm from "@/components/AddLeadForm";
-import { Search, Plus } from "lucide-react";
+import ImportLeadsForm from "@/components/ImportLeadsForm";
+import { Search, Plus, Upload } from "lucide-react";
 
 const filters = [
   { id: "all", label: "All" },
@@ -25,6 +26,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
   const [filter, setFilter] = useState<FilterId>("all");
   const [query, setQuery] = useState("");
   const [showAddLead, setShowAddLead] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const filtered = useMemo(() => {
     let list = [...leads];
@@ -62,17 +64,27 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           <h1 className="font-display text-3xl">Leads</h1>
           <p className="text-ink-soft mt-1">{leads.length} total, sorted by follow-up priority.</p>
         </div>
-        <button
-          onClick={() => setShowAddLead(true)}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white"
-          style={{ backgroundColor: "var(--ink)" }}
-        >
-          <Plus className="h-4 w-4" />
-          Add lead
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium border border-line"
+          >
+            <Upload className="h-4 w-4" />
+            Import CSV
+          </button>
+          <button
+            onClick={() => setShowAddLead(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white"
+            style={{ backgroundColor: "var(--ink)" }}
+          >
+            <Plus className="h-4 w-4" />
+            Add lead
+          </button>
+        </div>
       </div>
 
       {showAddLead && <AddLeadForm onClose={() => setShowAddLead(false)} />}
+      {showImport && <ImportLeadsForm onClose={() => setShowImport(false)} />}
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1.5">

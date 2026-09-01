@@ -16,7 +16,7 @@ export default function LandingPage() {
             <a href="#faq">FAQ</a>
           </nav>
           <Link
-            href="/dashboard"
+            href="/signin"
             className="rounded-lg px-4 py-2 text-sm font-medium text-white"
             style={{ backgroundColor: "var(--ink)" }}
           >
@@ -38,7 +38,7 @@ export default function LandingPage() {
           </p>
           <div className="mt-8 flex gap-3">
             <Link
-              href="/dashboard"
+              href="/signin"
               className="rounded-lg px-5 py-3 text-sm font-medium text-white"
               style={{ backgroundColor: "var(--rust)" }}
             >
@@ -194,7 +194,7 @@ export default function LandingPage() {
           />
           <Faq
             q="What if I don't connect Gmail right away?"
-            a="You can explore the full product in demo mode with realistic sample leads before connecting anything."
+            a="You can sign in and look around right away — the dashboard just stays empty until you connect Gmail and sync."
           />
         </div>
       </section>
@@ -204,7 +204,7 @@ export default function LandingPage() {
           Your next lost sale is sitting in your inbox right now.
         </h2>
         <Link
-          href="/dashboard"
+          href="/signin"
           className="inline-block mt-6 rounded-lg px-6 py-3 text-sm font-medium text-white"
           style={{ backgroundColor: "var(--rust)" }}
         >

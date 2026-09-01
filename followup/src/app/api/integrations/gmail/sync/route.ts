@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { fetchSalesConversations } from "@/lib/integrations/gmail";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 
@@ -7,6 +9,9 @@ import { scoreAndDraftForLead } from "@/lib/scoring";
 // set) scores each one and drafts a follow-up message. Triggered by the
 // "Sync now" button on Settings once Gmail is connected.
 export async function POST() {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+
   try {
     const leads = await fetchSalesConversations();
 

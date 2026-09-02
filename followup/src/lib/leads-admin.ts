@@ -19,6 +19,7 @@ export async function deleteLeadCascade(leadId: string): Promise<void> {
     prisma.deal.deleteMany({ where: { leadId } }),
     prisma.followUp.deleteMany({ where: { leadId } }),
     prisma.task.deleteMany({ where: { leadId } }),
+    prisma.booking.deleteMany({ where: { leadId } }),
     prisma.aIInsight.deleteMany({ where: { leadId } }),
     prisma.lead.delete({ where: { id: leadId } }),
   ]);

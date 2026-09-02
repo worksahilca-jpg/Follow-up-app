@@ -9,10 +9,11 @@ import {
   getColdLeads,
   getWeeklyReport,
   getPipelineData,
+  getUpcomingBookings,
 } from "@/lib/leads-data";
 import { formatCurrency, daysSince } from "@/lib/demo-data";
 import EmptyState from "@/components/EmptyState";
-import { AlertTriangle, Users, Flame, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox } from "lucide-react";
+import { AlertTriangle, Users, Flame, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox, CalendarClock } from "lucide-react";
 
 // This page reads live leads from the database on every request — never
 // bake a stale snapshot into the build.
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
   const cold = getColdLeads(leads);
   const weeklyReport = await getWeeklyReport(leads);
   const pipelineSnapshot = getPipelineData(leads).map((s) => ({ label: s.label, count: s.leads.length, value: s.value }));
+  const upcomingBookings = await getUpcomingBookings();
 
   return (
     <div>
@@ -118,6 +120,35 @@ export default async function DashboardPage() {
                   <span className="text-ink-soft"> — {daysSince(lead.lastContacted)} days inactive</span>
                 </span>
                 <span style={{ color: "var(--gold)" }}>{formatCurrency(lead.dealValue)}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {upcomingBookings.length > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display text-xl flex items-center gap-2">
+            <CalendarClock className="h-4 w-4" style={{ color: "var(--sage)" }} />
+            Upcoming calls
+          </h2>
+          <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line">
+            {upcomingBookings.map((b) => (
+              <Link
+                key={b.id}
+                href={`/leads/${b.leadId}`}
+                className="flex items-center justify-between px-5 py-3 text-sm hover:bg-paper"
+              >
+                <span className="font-medium">{b.leadName}</span>
+                <span className="text-ink-soft">
+                  {new Date(b.scheduledAt).toLocaleString(undefined, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </span>
               </Link>
             ))}
           </div>

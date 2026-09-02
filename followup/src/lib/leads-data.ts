@@ -173,3 +173,32 @@ export async function getWeeklyReport(leads: Lead[]) {
         : "No high-priority leads right now — nice and caught up.",
   };
 }
+
+export interface UpcomingBooking {
+  id: string;
+  leadId: string;
+  leadName: string;
+  scheduledAt: string; // ISO date
+  durationMinutes: number;
+}
+
+/** Calls leads have booked themselves through their booking link (see src/lib/booking.ts), soonest first. */
+export async function getUpcomingBookings(): Promise<UpcomingBooking[]> {
+  const ctx = await getSessionContext();
+  if (!ctx) return [];
+
+  const bookings = await prisma.booking.findMany({
+    where: { businessId: ctx.businessId, status: "confirmed", scheduledAt: { gte: new Date() } },
+    include: { lead: { select: { name: true } } },
+    orderBy: { scheduledAt: "asc" },
+    take: 5,
+  });
+
+  return bookings.map((b) => ({
+    id: b.id,
+    leadId: b.leadId,
+    leadName: b.lead.name,
+    scheduledAt: b.scheduledAt.toISOString(),
+    durationMinutes: b.durationMinutes,
+  }));
+}

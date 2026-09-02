@@ -24,6 +24,7 @@ import type { gmail_v1 } from "googleapis";
 import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
 import { classifyAsProspect } from "@/lib/integrations/openai";
+import { mapWithConcurrency } from "@/lib/concurrency";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -216,10 +217,15 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
   });
 
   const threadRefs = listData.threads ?? [];
-  const touchedLeads: Lead[] = [];
 
-  for (const ref of threadRefs) {
-    if (!ref.id) continue;
+  // Threads are independent of each other (each maps to at most one lead
+  // by counterpart email), so process several in parallel instead of one
+  // full Gmail-get + classify + DB-write round trip at a time — a 30-thread
+  // sync sequentially can easily run past a serverless function's time
+  // limit. Capped rather than unbounded so this doesn't also hammer the
+  // Gmail API and OpenAI past their own per-account rate limits.
+  const results = await mapWithConcurrency(threadRefs, 5, async (ref): Promise<Lead | null> => {
+    if (!ref.id) return null;
 
     const { data: thread } = await gmail.users.threads.get({
       userId: "me",
@@ -227,7 +233,7 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
       format: "full",
     });
     const gmailMessages = thread.messages ?? [];
-    if (gmailMessages.length === 0) continue;
+    if (gmailMessages.length === 0) return null;
 
     // Parse every message once — reused below both for the prospect check
     // and for the Message rows, instead of walking the thread twice.
@@ -244,14 +250,14 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
           sentAt: dateHeader ? new Date(dateHeader) : new Date(),
         };
       });
-    if (parsedMessages.length === 0) continue;
+    if (parsedMessages.length === 0) return null;
 
     // Find the external counterpart: the first sender in the thread who
     // isn't the connected account and isn't automated.
     const counterpart = parsedMessages.find(
       (m) => m.from.email !== selfEmail && !isAutomatedSender(m.from.email)
     )?.from;
-    if (!counterpart) continue;
+    if (!counterpart) return null;
 
     // Gate on the AI prospect check before writing anything for this
     // thread. Without an API key there's no classifier to ask, so fall
@@ -268,7 +274,7 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
           opened: false,
         }));
         const { isProspect } = await classifyAsProspect(transcript);
-        if (!isProspect) continue;
+        if (!isProspect) return null;
       } catch (err) {
         // Classification failing shouldn't block the sync — better to
         // include a thread than silently lose a real lead.
@@ -314,7 +320,7 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
       });
     }
 
-    touchedLeads.push({
+    return {
       id: lead.id,
       name: lead.name,
       company: lead.company ?? "",
@@ -333,10 +339,10 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
       conversation: [],
       suggestedMessage: "",
       automationEnabled: lead.automationOn,
-    });
-  }
+    };
+  });
 
-  return touchedLeads;
+  return results.filter((lead): lead is Lead => lead !== null);
 }
 
 export async function sendEmail(

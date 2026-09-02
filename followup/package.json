@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "(prisma migrate deploy || echo 'WARNING: prisma migrate deploy failed — continuing build without applying migrations. Run `npx prisma migrate deploy` manually against DATABASE_URL/DIRECT_URL to apply them.') && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"

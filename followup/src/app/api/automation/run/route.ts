@@ -3,6 +3,11 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { runAutomationForBusiness } from "@/lib/automation";
 
+// Same per-lead AI drafting + Gmail send work as the cron route, just
+// scoped to one business — can still take a while with a large opted-in
+// lead list.
+export const maxDuration = 120;
+
 // POST /api/automation/run — checks every automation-opted-in lead
 // belonging to the SIGNED-IN user's own business (never anyone else's) and
 // sends the ones that qualify. Wired to a manual "Run automation check

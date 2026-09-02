@@ -20,7 +20,7 @@ export default function LandingPage() {
             className="rounded-lg px-4 py-2 text-sm font-medium text-white"
             style={{ backgroundColor: "var(--ink)" }}
           >
-            Start free
+            Get started
           </Link>
         </div>
       </header>
@@ -42,13 +42,13 @@ export default function LandingPage() {
               className="rounded-lg px-5 py-3 text-sm font-medium text-white"
               style={{ backgroundColor: "var(--rust)" }}
             >
-              Start free
+              Get started
             </Link>
             <a href="#how-it-works" className="rounded-lg border border-line px-5 py-3 text-sm font-medium">
               See how it works
             </a>
           </div>
-          <p className="mt-4 text-xs text-ink-soft">No credit card. Free demo workspace included.</p>
+          <p className="mt-4 text-xs text-ink-soft">No credit card required to sign up.</p>
         </div>
 
         {/* Live-looking follow-up card mockup */}
@@ -167,16 +167,21 @@ export default function LandingPage() {
       {/* Pricing */}
       <section id="pricing" className="max-w-6xl mx-auto px-6 py-16 border-t border-line">
         <h2 className="font-display text-3xl">Pricing</h2>
-        <div className="mt-8 grid sm:grid-cols-3 gap-6">
-          <PriceCard name="Free" price="$0" tagline="Try it on a handful of conversations" features={["20 conversations/month", "Basic AI suggestions"]} />
+        <p className="mt-2 text-ink-soft">One plan. Everything included. Cancel any time.</p>
+        <div className="mt-8 max-w-sm">
           <PriceCard
-            name="Pro"
-            price="$19"
-            tagline="For freelancers and solo consultants"
-            features={["Unlimited conversations", "AI follow-ups & scoring", "Revenue tracking", "Weekly reports"]}
+            name="FollowUp"
+            price="$29"
+            tagline="For freelancers, consultants, and small teams"
+            features={[
+              "Unlimited leads and conversations",
+              "AI scoring & drafted follow-ups",
+              "Manual entry + CSV import",
+              "Analytics & weekly reports",
+              "Automation (opt-in per lead)",
+            ]}
             highlight
           />
-          <PriceCard name="Business" price="$49" tagline="For small teams and agencies" features={["Multiple users", "Advanced automation", "Team analytics", "More integrations"]} />
         </div>
       </section>
 
@@ -208,7 +213,7 @@ export default function LandingPage() {
           className="inline-block mt-6 rounded-lg px-6 py-3 text-sm font-medium text-white"
           style={{ backgroundColor: "var(--rust)" }}
         >
-          Start free
+          Get started
         </Link>
       </section>
 

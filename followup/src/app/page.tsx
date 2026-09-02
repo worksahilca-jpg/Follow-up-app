@@ -243,7 +243,16 @@ export default function LandingPage() {
       </section>
 
       <footer className="border-t border-line py-8 text-center text-xs text-ink-soft">
-        FollowUp — built to make sure no lead gets forgotten.
+        <p>FollowUp — built to make sure no lead gets forgotten.</p>
+        <p className="mt-2">
+          <Link href="/privacy" className="underline">
+            Privacy Policy
+          </Link>{" "}
+          ·{" "}
+          <Link href="/terms" className="underline">
+            Terms of Service
+          </Link>
+        </p>
       </footer>
     </div>
   );

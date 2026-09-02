@@ -22,7 +22,8 @@
 import { google } from "googleapis";
 import type { gmail_v1 } from "googleapis";
 import { prisma } from "@/lib/db";
-import { Lead } from "@/lib/types";
+import { Lead, Message } from "@/lib/types";
+import { classifyAsProspect } from "@/lib/integrations/openai";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -189,14 +190,18 @@ function isAutomatedSender(email: string): boolean {
 
 /**
  * Pulls recent inbox threads (excluding Gmail's promo/social/updates/forums
- * tabs and obviously-automated senders), and upserts them as Lead +
- * Conversation + Message rows. Returns the leads that were created or
- * touched by this sync.
+ * tabs and obviously-automated senders), and upserts the ones that pass
+ * classification as Lead + Conversation + Message rows. Returns the leads
+ * that were created or touched by this sync.
  *
- * This is a heuristic first pass, not a classifier — it treats "a real
- * back-and-forth thread with a human who isn't me" as a candidate sales
- * conversation. Real scoring/prioritization comes from the AI layer
- * (src/lib/integrations/openai.ts), not from this sync step.
+ * "Not promo/social/automated" is only a first pass — it still matches any
+ * real back-and-forth with a human who isn't me, which includes personal
+ * email, recruiters, vendors, and support threads with existing customers.
+ * Whether the counterpart is actually a sales prospect is a judgment call,
+ * so when AI is configured, classifyAsProspect() gates lead creation on it
+ * before anything is written to the DB. Real scoring/prioritization of the
+ * leads that do pass still comes from the AI layer's scoreLead(), not from
+ * this sync step.
  */
 export async function fetchSalesConversations(businessId: string): Promise<Lead[]> {
   const authed = await getAuthedGmailClient(businessId);
@@ -224,21 +229,54 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
     const gmailMessages = thread.messages ?? [];
     if (gmailMessages.length === 0) continue;
 
-    // Find the external counterpart: the first From/To address in the
-    // thread that isn't the connected account and isn't automated.
-    let counterpart: { name: string; email: string } | null = null;
-    for (const m of gmailMessages) {
-      const from = parseFromHeader(getHeader(m.payload?.headers, "From"));
-      if (from.email !== selfEmail && !isAutomatedSender(from.email)) {
-        counterpart = from;
-        break;
-      }
-    }
+    // Parse every message once — reused below both for the prospect check
+    // and for the Message rows, instead of walking the thread twice.
+    const parsedMessages = gmailMessages
+      .filter((m): m is typeof m & { id: string } => Boolean(m.id))
+      .map((m) => {
+        const from = parseFromHeader(getHeader(m.payload?.headers, "From"));
+        const dateHeader = getHeader(m.payload?.headers, "Date");
+        return {
+          id: m.id,
+          from,
+          direction: (from.email === selfEmail ? "outbound" : "inbound") as "outbound" | "inbound",
+          body: extractPlainTextBody(m.payload).slice(0, 5000),
+          sentAt: dateHeader ? new Date(dateHeader) : new Date(),
+        };
+      });
+    if (parsedMessages.length === 0) continue;
+
+    // Find the external counterpart: the first sender in the thread who
+    // isn't the connected account and isn't automated.
+    const counterpart = parsedMessages.find(
+      (m) => m.from.email !== selfEmail && !isAutomatedSender(m.from.email)
+    )?.from;
     if (!counterpart) continue;
 
-    const lastMessage = gmailMessages[gmailMessages.length - 1];
-    const lastDateHeader = getHeader(lastMessage.payload?.headers, "Date");
-    const lastContacted = lastDateHeader ? new Date(lastDateHeader) : new Date();
+    // Gate on the AI prospect check before writing anything for this
+    // thread. Without an API key there's no classifier to ask, so fall
+    // back to the older, broader heuristic rather than dropping every
+    // lead in demo/unconfigured environments.
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const transcript: Message[] = parsedMessages.map((m) => ({
+          id: m.id,
+          direction: m.direction,
+          channel: "email",
+          body: m.body,
+          date: m.sentAt.toISOString(),
+          opened: false,
+        }));
+        const { isProspect } = await classifyAsProspect(transcript);
+        if (!isProspect) continue;
+      } catch (err) {
+        // Classification failing shouldn't block the sync — better to
+        // include a thread than silently lose a real lead.
+        console.error(`Failed to classify thread ${ref.id}:`, err);
+      }
+    }
+
+    const lastContacted = parsedMessages[parsedMessages.length - 1].sentAt;
 
     const lead = await prisma.lead.upsert({
       where: { businessId_email: { businessId, email: counterpart.email } },
@@ -262,22 +300,15 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
       });
     }
 
-    for (const m of gmailMessages) {
-      if (!m.id) continue;
-      const from = parseFromHeader(getHeader(m.payload?.headers, "From"));
-      const direction = from.email === selfEmail ? "outbound" : "inbound";
-      const body = extractPlainTextBody(m.payload).slice(0, 5000);
-      const dateHeader = getHeader(m.payload?.headers, "Date");
-      const sentAt = dateHeader ? new Date(dateHeader) : new Date();
-
+    for (const m of parsedMessages) {
       await prisma.message.upsert({
         where: { externalId: m.id },
         update: {},
         create: {
           conversationId: conversation.id,
-          direction,
-          body,
-          sentAt,
+          direction: m.direction,
+          body: m.body,
+          sentAt: m.sentAt,
           externalId: m.id,
         },
       });

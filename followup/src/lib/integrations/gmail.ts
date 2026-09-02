@@ -32,6 +32,7 @@ import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
 import { classifyAsProspect } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { pickAssignee } from "@/lib/assignment";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -340,6 +341,17 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
 
     const lastContacted = parsedMessages[parsedMessages.length - 1].sentAt;
 
+    // upsert()'s `create` object is plain data, evaluated eagerly whether
+    // or not it ends up being the branch Prisma uses — so without this
+    // check, every resync of an already-existing lead would still run a
+    // wasted pickAssignee() query just to have its result thrown away.
+    // Checked here explicitly instead: only a brand-new lead gets routed;
+    // an existing one keeps whoever it's already assigned to.
+    const isNewLead = !(await prisma.lead.findUnique({
+      where: { businessId_email: { businessId, email: counterpart.email } },
+      select: { id: true },
+    }));
+
     const lead = await prisma.lead.upsert({
       where: { businessId_email: { businessId, email: counterpart.email } },
       update: { lastContacted },
@@ -350,6 +362,7 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
         source: "Gmail",
         stage: "NEW",
         lastContacted,
+        assignedToId: isNewLead ? await pickAssignee(businessId) : undefined,
       },
     });
 

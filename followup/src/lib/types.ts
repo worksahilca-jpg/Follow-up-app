@@ -46,7 +46,8 @@ export interface Lead {
   priority: Priority;
   lastContacted: string; // ISO date
   nextFollowUp: string | null; // ISO date
-  assignedTo: string; // team member name
+  assignedTo: string; // team member name, or "Unassigned"
+  assignedToId?: string | null;
   notes: string;
   conversation: Message[];
   suggestedMessage: string;

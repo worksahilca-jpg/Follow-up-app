@@ -4,6 +4,7 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { makeBatchAssigner } from "@/lib/assignment";
 
 const MAX_FILE_BYTES = 2 * 1024 * 1024; // 2MB — plenty for a few thousand rows of lead data
 const MAX_ROWS = 1000;
@@ -109,6 +110,9 @@ export async function POST(request: NextRequest) {
   const toInsert: Prisma.LeadCreateManyInput[] = [];
   const skipped: string[] = [];
   const seenEmailsInBatch = new Set<string>();
+  // Distributes the whole batch across the team in-memory (see
+  // src/lib/assignment.ts) rather than one auto-assign query per row.
+  const nextAssignee = await makeBatchAssigner(ctx.businessId);
 
   rows.forEach((row, i) => {
     const rowNum = i + 2; // +1 for header row, +1 for 1-indexing
@@ -141,6 +145,7 @@ export async function POST(request: NextRequest) {
       source: (columnMap.source ? cleanText(row[columnMap.source]) : "") || "CSV import",
       notes: columnMap.notes ? cleanText(row[columnMap.notes], 2000) || null : null,
       dealValue: Number.isFinite(dealValueNum) && dealValueNum > 0 ? dealValueNum : 0,
+      assignedToId: nextAssignee(),
     });
   });
 

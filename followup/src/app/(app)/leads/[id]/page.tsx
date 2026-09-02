@@ -7,6 +7,7 @@ import StageSelector from "@/components/StageSelector";
 import MessageComposer from "@/components/MessageComposer";
 import LeadAutomationToggle from "@/components/LeadAutomationToggle";
 import LeadWorkflowEnrollment from "@/components/LeadWorkflowEnrollment";
+import LeadAssignmentSelect from "@/components/LeadAssignmentSelect";
 import DeleteLeadButton from "@/components/DeleteLeadButton";
 import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
 import { Mail, Phone, MessageSquare } from "lucide-react";
@@ -105,9 +106,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 <dt className="text-ink-soft">Source</dt>
                 <dd>{lead.source}</dd>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-ink-soft">Assigned to</dt>
-                <dd>{lead.assignedTo}</dd>
+              <div className="flex justify-between items-start gap-3">
+                <dt className="text-ink-soft shrink-0">Assigned to</dt>
+                <dd>
+                  <LeadAssignmentSelect
+                    leadId={lead.id}
+                    initialAssignedToId={lead.assignedToId}
+                    initialAssignedToName={lead.assignedTo}
+                  />
+                </dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-ink-soft">Last contacted</dt>

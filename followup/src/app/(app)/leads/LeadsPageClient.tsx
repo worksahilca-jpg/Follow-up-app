@@ -74,8 +74,8 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           </button>
           <button
             onClick={() => setShowAddLead(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white"
-            style={{ backgroundColor: "var(--ink)" }}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium"
+            style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
             <Plus className="h-4 w-4" />
             Add lead
@@ -95,7 +95,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
               className="rounded-full px-3 py-1.5 text-sm font-medium transition-colors"
               style={{
                 backgroundColor: filter === f.id ? "var(--ink)" : "var(--card)",
-                color: filter === f.id ? "white" : "var(--ink-soft)",
+                color: filter === f.id ? "var(--paper)" : "var(--ink-soft)",
                 border: filter === f.id ? "none" : "1px solid var(--line)",
               }}
             >

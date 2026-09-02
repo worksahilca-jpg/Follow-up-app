@@ -53,8 +53,8 @@ export default function FollowUpCard({ lead }: { lead: Lead }) {
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
               href={`/leads/${lead.id}`}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white"
-              style={{ backgroundColor: "var(--ink)" }}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium"
+              style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
               <Mail className="h-3.5 w-3.5" /> Review &amp; send
             </Link>

@@ -361,8 +361,8 @@ function SettingsPageInner() {
               <button
                 onClick={billingActive || billingStatus ? handleManageBilling : handleSubscribe}
                 disabled={billingBusy}
-                className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2 text-white disabled:opacity-60"
-                style={{ backgroundColor: "var(--ink)" }}
+                className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
+                style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
               >
                 {billingBusy ? "One sec…" : billingActive || billingStatus ? "Manage billing" : "Subscribe"}
               </button>
@@ -399,7 +399,7 @@ function IntegrationRow({
 }) {
   const buttonStyle = {
     backgroundColor: connected ? "var(--sage-soft)" : "var(--ink)",
-    color: connected ? "var(--sage)" : "white",
+    color: connected ? "var(--sage)" : "var(--paper)",
   };
   const label = loading ? (
     "…"

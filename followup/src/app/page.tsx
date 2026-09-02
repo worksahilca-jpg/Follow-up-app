@@ -17,8 +17,8 @@ export default function LandingPage() {
           </nav>
           <Link
             href="/signin"
-            className="rounded-lg px-4 py-2 text-sm font-medium text-white"
-            style={{ backgroundColor: "var(--ink)" }}
+            className="rounded-lg px-4 py-2 text-sm font-medium"
+            style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
             Get started
           </Link>
@@ -72,7 +72,7 @@ export default function LandingPage() {
                   Asked about pricing, opened your proposal twice, no reply in 5 days.
                 </p>
                 <div className="mt-3 flex gap-2">
-                  <span className="rounded-lg px-3 py-1.5 text-xs font-medium text-white" style={{ backgroundColor: "var(--ink)" }}>
+                  <span className="rounded-lg px-3 py-1.5 text-xs font-medium" style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}>
                     Send email
                   </span>
                   <span className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium">Snooze</span>

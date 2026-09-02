@@ -56,6 +56,7 @@ model Business {
   automations     Automation[]
   bookings        Booking[]
   sequences       Sequence[]
+  invites         Invite[]
 
   // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
   // mirrors the Stripe Subscription.status string verbatim (active,
@@ -290,6 +291,24 @@ model SequenceStep {
   messageHint String? // optional steer for the AI draft when action is EMAIL
 
   @@unique([sequenceId, order])
+}
+
+// A pending invitation to join a business's team, by email — not yet a
+// User row (that only gets created the moment they actually sign in with
+// Google; see the signIn callback in src/lib/auth.ts, which checks for a
+// matching Invite before deciding whether a new email gets its own fresh
+// Business or joins this one at `role`). Consumed (deleted) the moment
+// that sign-in happens.
+model Invite {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id])
+  businessId String
+  email      String
+  role       TeamRole @default(SALES)
+  createdAt  DateTime @default(now())
+
+  @@unique([businessId, email])
+  @@index([businessId])
 }
 
 model Notification {

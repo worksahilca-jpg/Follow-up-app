@@ -61,7 +61,10 @@ export async function POST() {
     if (messages.length === 0) return undefined; // nothing to judge it by — leave it, and don't count it as checked
 
     try {
-      const { isProspect, reason } = await classifyAsProspect(messages);
+      const { isProspect, reason } = await classifyAsProspect(messages, {
+        name: lead.name,
+        email: lead.email ?? "unknown",
+      });
       if (!isProspect) {
         await deleteLeadCascade(lead.id);
         return { id: lead.id, name: lead.name, reason };

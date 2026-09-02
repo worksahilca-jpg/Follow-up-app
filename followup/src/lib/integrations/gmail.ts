@@ -330,7 +330,7 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
           date: m.sentAt.toISOString(),
           opened: false,
         }));
-        const { isProspect } = await classifyAsProspect(transcript);
+        const { isProspect } = await classifyAsProspect(transcript, counterpart);
         if (!isProspect) return null;
       } catch (err) {
         // Classification failing shouldn't block the sync — better to

@@ -3,6 +3,13 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { fetchSalesConversations } from "@/lib/integrations/gmail";
 import { scoreAndDraftForLead } from "@/lib/scoring";
+import { mapWithConcurrency } from "@/lib/concurrency";
+
+// A full sync (up to 30 Gmail threads, each possibly classified, plus two
+// OpenAI calls per resulting lead for scoring/drafting) comfortably exceeds
+// a default serverless timeout even with the concurrency below. Needs a
+// Vercel plan that honors maxDuration above the Hobby tier's 10s cap.
+export const maxDuration = 300;
 
 // POST /api/integrations/gmail/sync — pulls recent inbox threads for the
 // signed-in user's own business, upserts them as real Lead/Conversation/
@@ -19,15 +26,16 @@ export async function POST() {
   try {
     const leads = await fetchSalesConversations(ctx.businessId);
 
-    let scored = 0;
-    for (const lead of leads) {
+    const scoredFlags = await mapWithConcurrency(leads, 5, async (lead) => {
       try {
-        if (await scoreAndDraftForLead(lead.id)) scored++;
+        return await scoreAndDraftForLead(lead.id);
       } catch (err) {
         // One lead failing to score shouldn't fail the whole sync.
         console.error(`Failed to score lead ${lead.id}:`, err);
+        return false;
       }
-    }
+    });
+    const scored = scoredFlags.filter(Boolean).length;
 
     return NextResponse.json({ success: true, count: leads.length, scored, leads });
   } catch (err) {

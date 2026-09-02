@@ -19,6 +19,7 @@ import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
 import { requireActiveBilling } from "@/lib/billing";
+import { mapWithConcurrency } from "@/lib/concurrency";
 import type { Message } from "@/lib/types";
 
 interface AutomationResult {
@@ -59,10 +60,10 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
   });
 
-  let sent = 0;
-  const skipped: string[] = [];
-
-  for (const lead of eligible) {
+  // Kept modest (vs. the 5 used for sync/cleanup) — this loop calls Gmail's
+  // send API per lead, which has its own tighter per-account send quota,
+  // not just a "how fast can we finish" budget.
+  const outcomes = await mapWithConcurrency(eligible, 3, async (lead) => {
     try {
       const conversation: Message[] = lead.conversations.flatMap((c) =>
         c.messages.map((m) => ({
@@ -83,15 +84,16 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           await generateFollowUpMessage({ name: lead.name, conversation })
         ));
       const result = await sendFollowUpToLead(lead.id, message, { automated: true });
-      if (result.success) {
-        sent++;
-      } else {
-        skipped.push(`${lead.name}: ${result.message ?? "unknown error"}`);
-      }
+      return result.success
+        ? { sent: true as const }
+        : { sent: false as const, skipped: `${lead.name}: ${result.message ?? "unknown error"}` };
     } catch (err) {
-      skipped.push(`${lead.name}: ${err instanceof Error ? err.message : "unknown error"}`);
+      return { sent: false as const, skipped: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
     }
-  }
+  });
+
+  const sent = outcomes.filter((o) => o.sent).length;
+  const skipped = outcomes.flatMap((o) => (o.sent ? [] : [o.skipped]));
 
   return { checked: eligible.length, sent, skipped };
 }
@@ -103,9 +105,26 @@ export async function runAutomationForAllBusinesses(): Promise<AutomationResult>
     select: { businessId: true },
   });
 
+  // One business's automation blowing up (a bad token, a billing edge
+  // case, an unexpected API error) must not take down every other
+  // business's daily run — each is isolated and, at real tenant counts,
+  // a few running at once instead of strictly one-at-a-time keeps one
+  // cron invocation from running for hours.
+  const results = await mapWithConcurrency(enabled, 3, async ({ businessId }) => {
+    try {
+      return await runAutomationForBusiness(businessId);
+    } catch (err) {
+      console.error(`Automation run failed for business ${businessId}:`, err);
+      return {
+        checked: 0,
+        sent: 0,
+        skipped: [`Business ${businessId}: ${err instanceof Error ? err.message : "unknown error"}`],
+      } satisfies AutomationResult;
+    }
+  });
+
   const totals: AutomationResult = { checked: 0, sent: 0, skipped: [] };
-  for (const { businessId } of enabled) {
-    const result = await runAutomationForBusiness(businessId);
+  for (const result of results) {
     totals.checked += result.checked;
     totals.sent += result.sent;
     totals.skipped.push(...result.skipped);

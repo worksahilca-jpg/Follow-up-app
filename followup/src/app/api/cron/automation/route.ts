@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runAutomationForAllBusinesses } from "@/lib/automation";
 
+// One invocation covers every business with automation enabled — at real
+// tenant counts that's comfortably past a default serverless timeout even
+// with the concurrency in automation.ts. Needs a Vercel plan that honors
+// maxDuration above the Hobby tier's 10s cap; if the tenant count outgrows
+// even that, this needs to become a fan-out (one job enqueued per business)
+// rather than one function doing all of them.
+export const maxDuration = 300;
+
 // GET /api/cron/automation — invoked automatically once a day by Vercel
 // Cron (see vercel.json). Runs the auto-send check across every business
 // with automation enabled, in one pass, in place of the manual "Run

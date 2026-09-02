@@ -26,6 +26,10 @@ model User {
   assignedLeads Lead[]    @relation("AssignedLeads")
   integrations  Integration[]
   notifications Notification[]
+
+  // Every Gmail sync/automation lookup resolves the connected account via
+  // "the user(s) on this business" — without this, that's a table scan.
+  @@index([businessId])
 }
 
 enum TeamRole {
@@ -105,6 +109,12 @@ model Lead {
   insights       AIInsight[]
 
   @@unique([businessId, email])
+  // getLeads() and the cron/automation eligibility query both filter on
+  // businessId plus one of these — without a composite index each is a
+  // full scan of the business's leads once that list gets big.
+  @@index([businessId, stage])
+  @@index([businessId, score])
+  @@index([businessId, source])
 }
 
 model Conversation {
@@ -115,6 +125,8 @@ model Conversation {
   externalId String?  @unique // Gmail thread id, for idempotent sync
   messages   Message[]
   createdAt  DateTime @default(now())
+
+  @@index([leadId])
 }
 
 model Message {
@@ -126,6 +138,8 @@ model Message {
   opened         Boolean      @default(false)
   externalId     String?      @unique // Gmail message id, for idempotent sync
   sentAt         DateTime     @default(now())
+
+  @@index([conversationId])
 }
 
 model Deal {
@@ -137,6 +151,8 @@ model Deal {
   wonAt      DateTime?
   lostAt     DateTime?
   createdAt  DateTime @default(now())
+
+  @@index([leadId])
 }
 
 model FollowUp {
@@ -150,6 +166,10 @@ model FollowUp {
   scheduledAt DateTime?
   sentAt      DateTime?
   createdAt   DateTime @default(now())
+
+  @@index([leadId])
+  // getWeeklyReport's "sent in the last 7 days, for these leads" query.
+  @@index([status, sentAt])
 }
 
 model Task {
@@ -161,6 +181,8 @@ model Task {
   dueAt     DateTime?
   completed Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([leadId])
 }
 
 model Notification {
@@ -170,6 +192,8 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Integration {
@@ -194,6 +218,8 @@ model Automation {
   action      String   // create_reminder | ai_email_suggestion | auto_send
   enabled     Boolean  @default(false)
   createdAt   DateTime @default(now())
+
+  @@index([businessId])
 }
 
 model AIInsight {
@@ -202,4 +228,6 @@ model AIInsight {
   leadId    String
   summary   String
   createdAt DateTime @default(now())
+
+  @@index([leadId])
 }

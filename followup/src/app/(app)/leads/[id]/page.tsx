@@ -6,6 +6,7 @@ import PriorityPill from "@/components/PriorityPill";
 import StageSelector from "@/components/StageSelector";
 import MessageComposer from "@/components/MessageComposer";
 import LeadAutomationToggle from "@/components/LeadAutomationToggle";
+import LeadWorkflowEnrollment from "@/components/LeadWorkflowEnrollment";
 import DeleteLeadButton from "@/components/DeleteLeadButton";
 import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
 import { Mail, Phone, MessageSquare } from "lucide-react";
@@ -123,6 +124,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <p className="text-sm text-ink-soft mt-2 leading-relaxed">{lead.notes}</p>
           </div>
           <LeadAutomationToggle leadId={lead.id} initialTier={lead.automationTier} />
+          <LeadWorkflowEnrollment leadId={lead.id} />
           <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
         </aside>
       </div>

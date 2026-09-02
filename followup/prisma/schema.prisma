@@ -16,14 +16,14 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
+  id            String         @id @default(cuid())
+  email         String         @unique
   name          String?
-  createdAt     DateTime @default(now())
-  business      Business? @relation(fields: [businessId], references: [id])
+  createdAt     DateTime       @default(now())
+  business      Business?      @relation(fields: [businessId], references: [id])
   businessId    String?
-  role          TeamRole  @default(ADMIN)
-  assignedLeads Lead[]    @relation("AssignedLeads")
+  role          TeamRole       @default(ADMIN)
+  assignedLeads Lead[]         @relation("AssignedLeads")
   integrations  Integration[]
   notifications Notification[]
 
@@ -38,23 +38,24 @@ enum TeamRole {
 }
 
 model Business {
-  id               String   @id @default(cuid())
-  name             String
-  industry         String?
-  teamSize         Int?
-  avgDealValue     Float?
-  primaryChannels  String[]
-  onboarded        Boolean  @default(false)
-  createdAt        DateTime @default(now())
+  id              String       @id @default(cuid())
+  name            String
+  industry        String?
+  teamSize        Int?
+  avgDealValue    Float?
+  primaryChannels String[]
+  onboarded       Boolean      @default(false)
+  createdAt       DateTime     @default(now())
   // IANA name, e.g. "America/New_York" — drives which wall-clock hours
   // count as "business hours" when generating booking slots (see
   // src/lib/booking.ts). Not yet exposed in Settings; defaults to a
   // reasonable US timezone until it is.
-  timezone         String   @default("America/New_York")
-  users            User[]
-  leads            Lead[]
-  automations      Automation[]
-  bookings         Booking[]
+  timezone        String       @default("America/New_York")
+  users           User[]
+  leads           Lead[]
+  automations     Automation[]
+  bookings        Booking[]
+  sequences       Sequence[]
 
   // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
   // mirrors the Stripe Subscription.status string verbatim (active,
@@ -97,36 +98,49 @@ enum AutomationTier {
 }
 
 model Lead {
-  id             String   @id @default(cuid())
-  business       Business @relation(fields: [businessId], references: [id])
-  businessId     String
-  name           String
-  company        String?
-  email          String?
-  phone          String?
-  source         String?
-  stage          PipelineStage @default(NEW)
-  dealValue      Float    @default(0)
-  score          Int      @default(0)
-  scoreReason    String?
-  scoreFactors   Json?    // ScoreFactor[] — [{ label, weight }], from AI scoring
+  id               String         @id @default(cuid())
+  business         Business       @relation(fields: [businessId], references: [id])
+  businessId       String
+  name             String
+  company          String?
+  email            String?
+  phone            String?
+  source           String?
+  stage            PipelineStage  @default(NEW)
+  dealValue        Float          @default(0)
+  score            Int            @default(0)
+  scoreReason      String?
+  scoreFactors     Json? // ScoreFactor[] — [{ label, weight }], from AI scoring
   suggestedMessage String? // AI-drafted follow-up, edited/approved before sending
-  priority       Priority @default(NONE)
-  lastContacted  DateTime?
-  nextFollowUp   DateTime?
-  notes          String?
-  automationTier AutomationTier @default(OFF)
-  assignedTo     User?    @relation("AssignedLeads", fields: [assignedToId], references: [id])
-  assignedToId   String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  priority         Priority       @default(NONE)
+  lastContacted    DateTime?
+  nextFollowUp     DateTime?
+  notes            String?
+  automationTier   AutomationTier @default(OFF)
+  assignedTo       User?          @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  assignedToId     String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
-  conversations  Conversation[]
-  deals          Deal[]
-  followUps      FollowUp[]
-  tasks          Task[]
-  insights       AIInsight[]
-  bookings       Booking[]
+  // Workflow enrollment (see src/lib/sequences.ts). sequenceStepIndex is
+  // the index of the step that runs NEXT (0 before anything has run);
+  // sequenceStepDueAt is when that step is eligible to run — recomputed
+  // after each step executes, so the cron query is a plain "is it due"
+  // check instead of walking delays at read time. Both null means "not
+  // enrolled" — unrelated to automationTier's silence-based cadence above,
+  // and the two are mutually exclusive per lead (see sequences.ts) so they
+  // never both try to send on the same lead.
+  sequence          Sequence? @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
+  sequenceId        String?
+  sequenceStepIndex Int       @default(0)
+  sequenceStepDueAt DateTime?
+
+  conversations Conversation[]
+  deals         Deal[]
+  followUps     FollowUp[]
+  tasks         Task[]
+  insights      AIInsight[]
+  bookings      Booking[]
 
   @@unique([businessId, email])
   // getLeads() and the cron/automation eligibility query both filter on
@@ -135,16 +149,18 @@ model Lead {
   @@index([businessId, stage])
   @@index([businessId, score])
   @@index([businessId, source])
+  // The workflow cron's "which enrolled leads are due right now" scan.
+  @@index([businessId, sequenceStepDueAt])
 }
 
 model Conversation {
-  id         String   @id @default(cuid())
-  lead       Lead     @relation(fields: [leadId], references: [id])
+  id         String    @id @default(cuid())
+  lead       Lead      @relation(fields: [leadId], references: [id])
   leadId     String
-  channel    String   // email | call | text
-  externalId String?  @unique // Gmail thread id, for idempotent sync
+  channel    String // email | call | text
+  externalId String?   @unique // Gmail thread id, for idempotent sync
   messages   Message[]
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([leadId])
 }
@@ -153,7 +169,7 @@ model Message {
   id             String       @id @default(cuid())
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   conversationId String
-  direction      String       // inbound | outbound
+  direction      String // inbound | outbound
   body           String
   opened         Boolean      @default(false)
   externalId     String?      @unique // Gmail message id, for idempotent sync
@@ -163,26 +179,26 @@ model Message {
 }
 
 model Deal {
-  id         String   @id @default(cuid())
-  lead       Lead     @relation(fields: [leadId], references: [id])
-  leadId     String
-  value      Float
-  stage      PipelineStage
-  wonAt      DateTime?
-  lostAt     DateTime?
-  createdAt  DateTime @default(now())
+  id        String        @id @default(cuid())
+  lead      Lead          @relation(fields: [leadId], references: [id])
+  leadId    String
+  value     Float
+  stage     PipelineStage
+  wonAt     DateTime?
+  lostAt    DateTime?
+  createdAt DateTime      @default(now())
 
   @@index([leadId])
 }
 
 model FollowUp {
-  id          String   @id @default(cuid())
-  lead        Lead     @relation(fields: [leadId], references: [id])
+  id          String    @id @default(cuid())
+  lead        Lead      @relation(fields: [leadId], references: [id])
   leadId      String
-  channel     String   // email | call | text
+  channel     String // email | call | text
   message     String?
-  status      String   @default("pending") // pending | sent | dismissed | snoozed
-  automated   Boolean  @default(false)
+  status      String    @default("pending") // pending | sent | dismissed | snoozed
+  automated   Boolean   @default(false)
   scheduledAt DateTime?
   sentAt      DateTime?
   // Outcome tracking, first-class from day one per the product's own
@@ -190,7 +206,7 @@ model FollowUp {
   // replies to this specific follow-up. Null means "sent, no reply yet" —
   // distinct from never having sent one at all (sentAt null).
   repliedAt   DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([leadId])
   // getWeeklyReport's "sent in the last 7 days, for these leads" query.
@@ -201,14 +217,14 @@ model FollowUp {
 }
 
 model Task {
-  id        String   @id @default(cuid())
-  lead      Lead     @relation(fields: [leadId], references: [id])
+  id        String    @id @default(cuid())
+  lead      Lead      @relation(fields: [leadId], references: [id])
   leadId    String
-  type      String   // call | email | text | meeting | custom
+  type      String // call | email | text | meeting | custom
   title     String
   dueAt     DateTime?
-  completed Boolean  @default(false)
-  createdAt DateTime @default(now())
+  completed Boolean   @default(false)
+  createdAt DateTime  @default(now())
 
   @@index([leadId])
 }
@@ -235,6 +251,47 @@ model Booking {
   @@index([leadId])
 }
 
+// A multi-step automated follow-up workflow, built visually in
+// src/app/(app)/workflows — a business defines an ordered list of
+// SequenceSteps once, then enrolls individual leads into it. Distinct
+// from the single silence-triggered rule on Automation/automationTier:
+// a lead is enrolled in at most one Sequence at a time, and enrollment
+// takes over its automated cadence entirely while active (see
+// src/lib/sequences.ts for how the two stay mutually exclusive).
+model Sequence {
+  id         String         @id @default(cuid())
+  business   Business       @relation(fields: [businessId], references: [id])
+  businessId String
+  name       String
+  active     Boolean        @default(true)
+  steps      SequenceStep[]
+  leads      Lead[]
+  createdAt  DateTime       @default(now())
+
+  @@index([businessId])
+}
+
+enum SequenceAction {
+  EMAIL // AI-drafted (messageHint steers it) follow-up email, sent automatically
+  CHANGE_STAGE // moves the lead to stageTo with no message sent
+}
+
+model SequenceStep {
+  id          String         @id @default(cuid())
+  sequence    Sequence       @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  sequenceId  String
+  // 0-based position in the sequence — also how long a step waits: delayDays
+  // is measured from when the PREVIOUS step ran (or from enrollment, for
+  // step 0), not from a fixed start date.
+  order       Int
+  delayDays   Int
+  action      SequenceAction
+  stageTo     PipelineStage? // required (validated in sequences.ts) when action is CHANGE_STAGE
+  messageHint String? // optional steer for the AI draft when action is EMAIL
+
+  @@unique([sequenceId, order])
+}
+
 model Notification {
   id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id])
@@ -247,14 +304,14 @@ model Notification {
 }
 
 model Integration {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String
-  provider    String   // gmail | google_calendar | outlook | instagram | ...
-  status      String   @default("disconnected") // connected | disconnected | error
-  accessToken String?
+  id           String    @id @default(cuid())
+  user         User      @relation(fields: [userId], references: [id])
+  userId       String
+  provider     String // gmail | google_calendar | outlook | instagram | ...
+  status       String    @default("disconnected") // connected | disconnected | error
+  accessToken  String?
   refreshToken String?
-  connectedAt DateTime?
+  connectedAt  DateTime?
 
   @@unique([userId, provider])
 }
@@ -264,8 +321,8 @@ model Automation {
   business    Business @relation(fields: [businessId], references: [id])
   businessId  String
   name        String
-  triggerDays Int      // e.g. "after 5 days of no response"
-  action      String   // create_reminder | ai_email_suggestion | auto_send
+  triggerDays Int // e.g. "after 5 days of no response"
+  action      String // create_reminder | ai_email_suggestion | auto_send
   enabled     Boolean  @default(false)
   createdAt   DateTime @default(now())
 

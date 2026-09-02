@@ -242,10 +242,16 @@ export async function assessSendRisk(
  * formality, how they open/close a thought — never as content to copy
  * into this specific reply. Optional: with none, this falls back to the
  * same generic-but-competent tone it always used.
+ *
+ * `messageHint` is an optional steer for what this particular draft should
+ * be about — e.g. a workflow step's "mention our case studies" note (see
+ * src/lib/sequences.ts). Guidance, not a script: the draft still has to
+ * read as a real reply to the actual conversation above it.
  */
 export async function generateFollowUpMessage(
   lead: Pick<Lead, "name" | "conversation">,
-  voiceSamples: string[] = []
+  voiceSamples: string[] = [],
+  messageHint?: string
 ): Promise<string> {
   const client = getClient();
 
@@ -256,6 +262,10 @@ export async function generateFollowUpMessage(
         "specific wording or details:\n" +
         voiceSamples.map((s, i) => `--- sample ${i + 1} ---\n${s}`).join("\n")
       : "";
+
+  const hintBlock = messageHint?.trim()
+    ? `\n\nWhat this particular follow-up should focus on: ${messageHint.trim()}`
+    : "";
 
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -271,7 +281,8 @@ export async function generateFollowUpMessage(
           "clauses joined by a dash. Warm but professional — not stiff corporate jargon, but not overly casual " +
           "either. Do not include a greeting ('Hi ...', 'Dear ...') or a sign-off/signature of any kind — output " +
           "only the body paragraph itself." +
-          voiceBlock,
+          voiceBlock +
+          hintBlock,
       },
       {
         role: "user",

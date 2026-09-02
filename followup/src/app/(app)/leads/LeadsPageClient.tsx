@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Lead } from "@/lib/types";
 import { formatCurrency, formatDate, daysSince } from "@/lib/demo-data";
+import { urgencyColor } from "@/lib/urgency";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
 import AddLeadForm from "@/components/AddLeadForm";
@@ -141,6 +142,13 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
             className="flex items-center gap-4 px-5 py-4 hover:bg-paper transition-colors"
           >
             <ScoreBadge score={lead.score} size="sm" />
+            {lead.stage !== "won" && lead.stage !== "lost" && (
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{ backgroundColor: urgencyColor(daysSince(lead.lastContacted)) }}
+                title={`${daysSince(lead.lastContacted)} days since last contact`}
+              />
+            )}
             <div className="min-w-0 flex-1">
               <p className="font-medium truncate">{lead.name}</p>
               <p className="text-sm text-ink-soft truncate">{lead.company}</p>

@@ -134,11 +134,11 @@ export function getPipelineData(leads: Lead[]) {
 
 /**
  * Only counts things we can actually verify happened for real right now.
- * followUpsSent/repliesReceived stay honest at 0 until the Send button is
- * wired to really send (and log) messages — followUpsSent now counts real
- * FollowUp rows from the last 7 days. repliesReceived stays honest at 0;
- * inferring "this inbound message was a reply to us" reliably needs more
- * than we track yet, so it's not worth faking.
+ * followUpsSent counts real FollowUp rows from the last 7 days.
+ * repliesReceived counts FollowUps whose repliedAt (see src/lib/outcomes.ts
+ * — set by detectReplies() after a Gmail sync) falls in the same window —
+ * a real outcome, not a guess, though it only reflects what the last sync
+ * has caught up on.
  */
 export async function getWeeklyReport(leads: Lead[]) {
   const closed = leads.filter((l) => l.stage === "won");
@@ -146,16 +146,21 @@ export async function getWeeklyReport(leads: Lead[]) {
   const hot = leads.filter((l) => l.priority === "high" && l.stage !== "won" && l.stage !== "lost");
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const followUpsSent = leads.length
-    ? await prisma.followUp.count({
-        where: { status: "sent", sentAt: { gte: sevenDaysAgo }, leadId: { in: leads.map((l) => l.id) } },
-      })
-    : 0;
+  const [followUpsSent, repliesReceived] = leads.length
+    ? await Promise.all([
+        prisma.followUp.count({
+          where: { status: "sent", sentAt: { gte: sevenDaysAgo }, leadId: { in: leads.map((l) => l.id) } },
+        }),
+        prisma.followUp.count({
+          where: { status: "sent", repliedAt: { gte: sevenDaysAgo }, leadId: { in: leads.map((l) => l.id) } },
+        }),
+      ])
+    : [0, 0];
 
   return {
     conversationsAnalyzed: leads.length,
     followUpsSent,
-    repliesReceived: 0,
+    repliesReceived,
     dealsClosed: closed.length,
     revenueGenerated,
     insight:

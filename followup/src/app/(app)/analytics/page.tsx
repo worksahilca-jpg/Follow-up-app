@@ -17,12 +17,22 @@ export default async function AnalyticsPage() {
       <h1 className="font-display text-3xl">Analytics</h1>
       <p className="text-ink-soft mt-1">How your pipeline is performing.</p>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-6">
         <StatCard label="Total leads" value={String(data.totalLeads)} />
         <StatCard label="Conversion rate" value={`${data.conversionRate}%`} accent="var(--slate)" />
         <StatCard label="Revenue won" value={formatCurrency(data.totalRevenue)} accent="var(--gold)" />
         <StatCard label="Avg. deal value" value={formatCurrency(data.avgDealValue)} accent="var(--rust)" />
+        <StatCard
+          label="Reply rate"
+          value={data.followUpsSentTotal > 0 ? `${data.replyRate}%` : "—"}
+          accent="var(--sage)"
+        />
       </div>
+      {data.followUpsSentTotal > 0 && (
+        <p className="text-xs text-ink-soft mt-2">
+          {data.repliedCount} of {data.followUpsSentTotal} sent follow-ups have gotten a reply so far.
+        </p>
+      )}
 
       <div className="mt-10">
         <AnalyticsCharts data={data} />

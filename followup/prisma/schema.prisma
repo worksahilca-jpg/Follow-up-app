@@ -165,11 +165,19 @@ model FollowUp {
   automated   Boolean  @default(false)
   scheduledAt DateTime?
   sentAt      DateTime?
+  // Outcome tracking, first-class from day one per the product's own
+  // "core data moat" framing (see src/lib/outcomes.ts): set once the lead
+  // replies to this specific follow-up. Null means "sent, no reply yet" —
+  // distinct from never having sent one at all (sentAt null).
+  repliedAt   DateTime?
   createdAt   DateTime @default(now())
 
   @@index([leadId])
   // getWeeklyReport's "sent in the last 7 days, for these leads" query.
   @@index([status, sentAt])
+  // detectReplies()'s "sent, still waiting on a reply, for this business's
+  // leads" query.
+  @@index([status, repliedAt])
 }
 
 model Task {

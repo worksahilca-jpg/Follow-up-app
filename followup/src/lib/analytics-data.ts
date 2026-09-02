@@ -29,6 +29,9 @@ export interface AnalyticsData {
   sourceCounts: { source: string; count: number }[];
   leadsPerWeek: WeekBucket[];
   followUpsPerWeek: WeekBucket[];
+  followUpsSentTotal: number;
+  repliedCount: number;
+  replyRate: number; // 0-100, replied / sent — the outcome-tracking metric
 }
 
 const WEEKS = 8;
@@ -70,7 +73,7 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
     }),
     prisma.followUp.findMany({
       where: { status: "sent", sentAt: { not: null }, lead: { businessId: ctx.businessId } },
-      select: { sentAt: true },
+      select: { sentAt: true, repliedAt: true },
     }),
   ]);
 
@@ -98,6 +101,9 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 
+  const followUpsSentTotal = followUps.length;
+  const repliedCount = followUps.filter((f) => f.repliedAt).length;
+
   return {
     totalLeads,
     activeCount: totalLeads - closedCount,
@@ -110,5 +116,8 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
     sourceCounts,
     leadsPerWeek: bucketByWeek(leads.map((l) => l.createdAt), WEEKS),
     followUpsPerWeek: bucketByWeek(followUps.map((f) => f.sentAt as Date), WEEKS),
+    followUpsSentTotal,
+    repliedCount,
+    replyRate: followUpsSentTotal > 0 ? Math.round((repliedCount / followUpsSentTotal) * 100) : 0,
   };
 }

@@ -133,9 +133,18 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
  * (personal, recruiting, vendors, support, a person-signed newsletter).
  * Kept separate from scoreLead — that scores urgency for a thread already
  * accepted as a lead; this decides whether it should become one at all.
+ *
+ * `sender` (the counterpart's name + email, as Gmail sync parsed them) is
+ * passed in and shown to the model first — real-world testing found the
+ * classifier missing plainly-automated senders ("Microsoft Rewards", an
+ * HR/recruiting inbox, a SaaS tool's support address) when it only ever
+ * saw message body text. Who sent it is often the single strongest signal
+ * a human uses for exactly this judgment, and the body text alone doesn't
+ * carry it.
  */
 export async function classifyAsProspect(
-  conversation: Message[]
+  conversation: Message[],
+  sender: { name: string; email: string }
 ): Promise<{ isProspect: boolean; reason: string }> {
   const client = getClient();
 
@@ -149,12 +158,18 @@ export async function classifyAsProspect(
           "thread is a genuine sales conversation with a prospective customer, as opposed to personal " +
           "correspondence, a recruiter or job application, a vendor or supplier pitching the business, an " +
           "existing customer's support/logistics message unrelated to a new sale, or a newsletter/notification " +
-          "sent from a real-looking address. Lean toward true only for genuinely ambiguous business inquiries " +
-          "about the business's own product or service.",
+          "sent from a real-looking address. The sender's name and email address are often the strongest signal " +
+          "— a company/brand name instead of a person, an HR/recruiting-sounding name, a known platform or " +
+          "rewards/notification program, or a domain that belongs to a tool/vendor rather than an individual " +
+          "customer should all weigh heavily toward false, even if the message body reads politely or on-topic. " +
+          "Lean toward true only for genuinely ambiguous business inquiries about the business's own product or " +
+          "service, from what looks like an actual person.",
       },
       {
         role: "user",
-        content: `Conversation:\n${formatTranscript(conversation)}`,
+        content:
+          `Sender: ${sender.name} <${sender.email}>\n\n` +
+          `Conversation:\n${formatTranscript(conversation)}`,
       },
     ],
     response_format: { type: "json_schema", json_schema: PROSPECT_CLASSIFICATION_SCHEMA },

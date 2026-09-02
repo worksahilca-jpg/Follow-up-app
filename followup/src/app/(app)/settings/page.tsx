@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { team, formatCurrency } from "@/lib/demo-data";
+import TeamSection from "@/components/TeamSection";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard } from "lucide-react";
 
 export default function SettingsPage() {
@@ -309,27 +309,12 @@ function SettingsPageInner() {
 
       <section>
         <h2 className="font-display text-xl">Team</h2>
-        <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line">
-          {team.map((member) => (
-            <div key={member.id} className="flex items-center justify-between px-5 py-3 text-sm">
-              <div>
-                <p className="font-medium">{member.name}</p>
-                <p className="text-xs text-ink-soft">{member.role}</p>
-              </div>
-              <div className="hidden sm:flex gap-6 text-xs text-ink-soft">
-                <span>{member.assignedLeads} leads</span>
-                <span>{member.followUpsCompleted} completed</span>
-                <span>{member.overdueFollowUps} overdue</span>
-              </div>
-              <span className="font-medium" style={{ color: "var(--gold)" }}>
-                {formatCurrency(member.revenueGenerated)}
-              </span>
-            </div>
-          ))}
+        <p className="text-sm text-ink-soft mt-1">
+          Admins can invite teammates, change roles, and remove people. Everyone can see who&apos;s on the team.
+        </p>
+        <div className="mt-4">
+          <TeamSection />
         </div>
-        <button className="mt-3 text-sm font-medium" style={{ color: "var(--rust)" }}>
-          + Invite team member
-        </button>
       </section>
 
       <section>

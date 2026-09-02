@@ -9,10 +9,16 @@
  * scopes — no Gmail scopes here.
  *
  * Multi-tenancy: a brand-new email signing in gets its OWN new Business —
- * that's the real "signup." A returning email is attached to whatever
- * business it already belongs to. businessId + userId are embedded in the
- * JWT here so every server-side request can scope its data without an
- * extra DB round-trip — see src/lib/session.ts.
+ * that's the real "signup" — UNLESS someone already invited that exact
+ * email to their team (see the Invite model / src/lib/team.ts), in which
+ * case they join that business instead, at whatever role the invite named.
+ * A returning email is attached to whatever business it already belongs
+ * to; one that was removed from its team (businessId null — see
+ * removeMember() in team.ts) is re-checked for a pending invite the same
+ * way, and falls back to a fresh new business if there isn't one, so
+ * nobody is ever permanently locked out. businessId + userId are embedded
+ * in the JWT here so every server-side request can scope its data without
+ * an extra DB round-trip — see src/lib/session.ts.
  *
  * ALLOWED_EMAILS gates who can sign in AT ALL, across every business —
  * useful while this is still private/in testing. Leave it empty once
@@ -50,22 +56,49 @@ export const authOptions: NextAuthOptions = {
 
       const existing = await prisma.user.findUnique({ where: { email } });
       if (existing) {
-        // Returning user — nothing to create. If their name changed on
-        // Google's side, keep it fresh.
-        if (user.name && user.name !== existing.name) {
-          await prisma.user.update({ where: { id: existing.id }, data: { name: user.name } });
+        // Returning user with a business already — nothing to create. If
+        // their name changed on Google's side, keep it fresh.
+        if (existing.businessId) {
+          if (user.name && user.name !== existing.name) {
+            await prisma.user.update({ where: { id: existing.id }, data: { name: user.name } });
+          }
+          return true;
         }
-        return true;
+
+        // Existing but team-less (removed from a business — see
+        // removeMember() in team.ts): falls through to the invite check
+        // below, exactly like a brand-new signup, just updating the row
+        // instead of creating one.
       }
 
-      // Brand-new email: this IS the signup. Give them their own, isolated
-      // business — never attach a new user to someone else's.
-      const business = await prisma.business.create({
-        data: { name: user.name ? `${user.name}'s Business` : "My Business" },
-      });
-      await prisma.user.create({
-        data: { email, name: user.name ?? undefined, businessId: business.id, role: "ADMIN" },
-      });
+      // Either a brand-new email, or a returning one with no business.
+      // Someone may already have invited this exact email to their
+      // team — join that business at the invited role instead of
+      // spinning up a new one, and consume the invite either way.
+      const pendingInvite = await prisma.invite.findFirst({ where: { email } });
+
+      const businessId = pendingInvite
+        ? pendingInvite.businessId
+        : (
+            await prisma.business.create({
+              data: { name: user.name ? `${user.name}'s Business` : "My Business" },
+            })
+          ).id;
+      const role = pendingInvite ? pendingInvite.role : "ADMIN";
+
+      if (existing) {
+        await prisma.user.update({
+          where: { id: existing.id },
+          data: { businessId, role, name: user.name ?? existing.name },
+        });
+      } else {
+        await prisma.user.create({
+          data: { email, name: user.name ?? undefined, businessId, role },
+        });
+      }
+      if (pendingInvite) {
+        await prisma.invite.delete({ where: { id: pendingInvite.id } });
+      }
 
       return true;
     },

@@ -46,9 +46,15 @@ model Business {
   primaryChannels  String[]
   onboarded        Boolean  @default(false)
   createdAt        DateTime @default(now())
+  // IANA name, e.g. "America/New_York" — drives which wall-clock hours
+  // count as "business hours" when generating booking slots (see
+  // src/lib/booking.ts). Not yet exposed in Settings; defaults to a
+  // reasonable US timezone until it is.
+  timezone         String   @default("America/New_York")
   users            User[]
   leads            Lead[]
   automations      Automation[]
+  bookings         Booking[]
 
   // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
   // mirrors the Stripe Subscription.status string verbatim (active,
@@ -120,6 +126,7 @@ model Lead {
   followUps      FollowUp[]
   tasks          Task[]
   insights       AIInsight[]
+  bookings       Booking[]
 
   @@unique([businessId, email])
   // getLeads() and the cron/automation eligibility query both filter on
@@ -203,6 +210,28 @@ model Task {
   completed Boolean  @default(false)
   createdAt DateTime @default(now())
 
+  @@index([leadId])
+}
+
+// A call a lead booked themselves through their public booking link (see
+// src/lib/booking.ts and /book/[leadId]) — distinct from Task, which is an
+// internal to-do the business creates for itself.
+model Booking {
+  id              String   @id @default(cuid())
+  business        Business @relation(fields: [businessId], references: [id])
+  businessId      String
+  lead            Lead     @relation(fields: [leadId], references: [id])
+  leadId          String
+  scheduledAt     DateTime
+  durationMinutes Int      @default(30)
+  status          String   @default("confirmed") // confirmed | canceled
+  createdAt       DateTime @default(now())
+
+  // The real double-booking guard: two people confirming the same slot in
+  // the same instant race a findFirst-then-create check in application
+  // code, but not this constraint — the DB rejects the second insert
+  // outright. The lead's own detail page lists its bookings by leadId.
+  @@unique([businessId, scheduledAt])
   @@index([leadId])
 }
 

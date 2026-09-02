@@ -7,6 +7,7 @@ import StageSelector from "@/components/StageSelector";
 import MessageComposer from "@/components/MessageComposer";
 import LeadAutomationToggle from "@/components/LeadAutomationToggle";
 import DeleteLeadButton from "@/components/DeleteLeadButton";
+import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft">
           <MessageSquare className="h-3.5 w-3.5" /> Text
         </span>
+        <CopyBookingLinkButton leadId={lead.id} />
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 mt-8">

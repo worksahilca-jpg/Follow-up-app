@@ -28,6 +28,7 @@ import { composeFollowUpEmail } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
 import { requireActiveBilling } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { getVoiceSamples } from "@/lib/voice";
 import type { Message } from "@/lib/types";
 
 interface AutomationResult {
@@ -67,15 +68,20 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
 
   const cutoff = new Date(Date.now() - automation.triggerDays * 24 * 60 * 60 * 1000);
 
-  const eligible = await prisma.lead.findMany({
-    where: {
-      businessId,
-      automationOn: true,
-      stage: { notIn: ["WON", "LOST"] },
-      lastContacted: { lte: cutoff },
-    },
-    include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
-  });
+  const [eligible, voiceSamples] = await Promise.all([
+    prisma.lead.findMany({
+      where: {
+        businessId,
+        automationOn: true,
+        stage: { notIn: ["WON", "LOST"] },
+        lastContacted: { lte: cutoff },
+      },
+      include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+    }),
+    // Same voice sample set for every lead in this business — fetched once
+    // up front rather than inside the per-lead loop below.
+    getVoiceSamples(businessId),
+  ]);
 
   // Kept modest (vs. the 5 used for sync/cleanup) — this loop calls Gmail's
   // send API per lead, which has its own tighter per-account send quota,
@@ -98,7 +104,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         (await composeFollowUpEmail(
           lead.name.split(" ")[0],
           lead.businessId,
-          await generateFollowUpMessage({ name: lead.name, conversation })
+          await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples)
         ));
 
       let risk: { riskLevel: "low" | "medium" | "high"; reason: string };

@@ -4,6 +4,7 @@ import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail } from "@/lib/sender";
+import { getVoiceSamples } from "@/lib/voice";
 import type { Message } from "@/lib/types";
 
 // POST /api/leads/[id]/regenerate — asks the AI for a fresh draft against
@@ -36,7 +37,8 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   );
 
   try {
-    const draftBody = await generateFollowUpMessage({ name: lead.name, conversation });
+    const voiceSamples = await getVoiceSamples(lead.businessId);
+    const draftBody = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
     const newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draftBody);
     await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: newMessage } });
     return NextResponse.json({ success: true, message: newMessage });

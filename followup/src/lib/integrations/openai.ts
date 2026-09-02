@@ -236,11 +236,26 @@ export async function assessSendRisk(
  * sign-off. Those get added by the caller (src/lib/sender.ts +
  * whoever calls this) using the real sender's name, so the email always
  * has an actual signature instead of the AI guessing or omitting one.
+ *
+ * `voiceSamples` (see src/lib/voice.ts) are a few of the account's own
+ * past sent emails, used purely as a style reference — sentence length,
+ * formality, how they open/close a thought — never as content to copy
+ * into this specific reply. Optional: with none, this falls back to the
+ * same generic-but-competent tone it always used.
  */
 export async function generateFollowUpMessage(
-  lead: Pick<Lead, "name" | "conversation">
+  lead: Pick<Lead, "name" | "conversation">,
+  voiceSamples: string[] = []
 ): Promise<string> {
   const client = getClient();
+
+  const voiceBlock =
+    voiceSamples.length > 0
+      ? "\n\nHere are a few real emails this account has sent before — match their tone, formality, and " +
+        "sentence rhythm, but write entirely new content about the current conversation, never reuse their " +
+        "specific wording or details:\n" +
+        voiceSamples.map((s, i) => `--- sample ${i + 1} ---\n${s}`).join("\n")
+      : "";
 
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -255,7 +270,8 @@ export async function generateFollowUpMessage(
           "complete sentences: proper capitalization, no sentence fragments, no trailing off mid-thought, no run-on " +
           "clauses joined by a dash. Warm but professional — not stiff corporate jargon, but not overly casual " +
           "either. Do not include a greeting ('Hi ...', 'Dear ...') or a sign-off/signature of any kind — output " +
-          "only the body paragraph itself.",
+          "only the body paragraph itself." +
+          voiceBlock,
       },
       {
         role: "user",

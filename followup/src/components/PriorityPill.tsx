@@ -4,7 +4,7 @@ const config: Record<Priority, { label: string; bg: string; fg: string }> = {
   high: { label: "High priority", bg: "var(--rust-soft)", fg: "var(--rust)" },
   medium: { label: "Medium priority", bg: "var(--slate-soft)", fg: "var(--slate)" },
   low: { label: "Low priority", bg: "var(--sage-soft)", fg: "var(--sage)" },
-  none: { label: "No action needed", bg: "#eeece5", fg: "var(--ink-soft)" },
+  none: { label: "No action needed", bg: "#f4f4f5", fg: "var(--ink-soft)" },
 };
 
 export default function PriorityPill({ priority }: { priority: Priority }) {

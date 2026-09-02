@@ -1,18 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #f5f5f0;
-  --ink: #191c22;
-  --ink-soft: #4b4f58;
-  --line: #dedad0;
-  --rust: #b8471f;
-  --rust-soft: #f3e0d5;
-  --slate: #45607e;
-  --slate-soft: #dfe6ec;
-  --sage: #5c7a56;
-  --sage-soft: #e2e8dd;
-  --gold: #a9791f;
-  --card: #fdfdfb;
+  /* Neutrals — cool, near-white canvas with pure white surfaces, the
+     standard "light gray page, white card" pattern most modern SaaS UI
+     (Linear, Notion, Stripe) uses instead of a warm/editorial paper tone. */
+  --paper: #fafafa;
+  --ink: #18181b;
+  --ink-soft: #71717a;
+  --line: #e4e4e7;
+  --card: #ffffff;
+
+  /* Brand / primary — the one sharp accent color everything else stays
+     quieter than: CTAs, active nav state, high-priority indicators. */
+  --rust: #4f46e5;
+  --rust-soft: #eef2ff;
+
+  /* Secondary / informational — calendar, medium priority, neutral badges. */
+  --slate: #475569;
+  --slate-soft: #f1f5f9;
+
+  /* Success / positive — connected integrations, sent confirmations. */
+  --sage: #16a34a;
+  --sage-soft: #f0fdf4;
+
+  /* Money — deal values, revenue figures. */
+  --gold: #d97706;
+  --gold-soft: #fffbeb;
 }
 
 @theme inline {
@@ -27,9 +40,10 @@
   --color-sage: var(--sage);
   --color-sage-soft: var(--sage-soft);
   --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
   --color-card: var(--card);
-  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
-  --font-body: "Public Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
@@ -40,7 +54,8 @@ body {
 
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 * {

@@ -14,12 +14,12 @@ import {
 } from "recharts";
 import type { AnalyticsData } from "@/lib/analytics-data";
 
-const AXIS_COLOR = "#4b4f58"; // --ink-soft
-const GRID_COLOR = "#dedad0"; // --line
+const AXIS_COLOR = "#71717a"; // --ink-soft
+const GRID_COLOR = "#e4e4e7"; // --line
 
 const tooltipStyle = {
-  backgroundColor: "#fdfdfb",
-  border: "1px solid #dedad0",
+  backgroundColor: "#ffffff", // --card
+  border: "1px solid #e4e4e7", // --line
   borderRadius: 8,
   fontSize: 13,
 };
@@ -40,7 +40,7 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
                 <XAxis dataKey="label" tick={{ fontSize: 12, fill: AXIS_COLOR }} interval={0} angle={-20} textAnchor="end" height={50} />
                 <YAxis tick={{ fontSize: 12, fill: AXIS_COLOR }} allowDecimals={false} />
                 <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="count" name="Leads" fill="#b8471f" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" name="Leads" fill="#4f46e5" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -61,8 +61,8 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
                 <YAxis tick={{ fontSize: 12, fill: AXIS_COLOR }} allowDecimals={false} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Legend wrapperStyle={{ fontSize: 13 }} />
-                <Line type="monotone" dataKey="leads" name="New leads" stroke="#45607e" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="followUps" name="Follow-ups sent" stroke="#a9791f" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="leads" name="New leads" stroke="#475569" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="followUps" name="Follow-ups sent" stroke="#d97706" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           ) : (
@@ -82,7 +82,7 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
                 <XAxis type="number" tick={{ fontSize: 12, fill: AXIS_COLOR }} allowDecimals={false} />
                 <YAxis dataKey="source" type="category" tick={{ fontSize: 12, fill: AXIS_COLOR }} width={110} />
                 <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="count" name="Leads" fill="#191c22" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="count" name="Leads" fill="#18181b" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

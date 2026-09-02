@@ -10,7 +10,7 @@ import {
   GitBranch,
   BarChart3,
   Settings,
-  Sparkles,
+  Zap,
   LogOut,
 } from "lucide-react";
 
@@ -46,7 +46,7 @@ export default function Sidebar() {
     <aside className="w-60 shrink-0 border-r border-line bg-card flex flex-col h-screen sticky top-0">
       <div className="px-5 pt-6 pb-5">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5" style={{ color: "var(--rust)" }} />
+          <Zap className="h-5 w-5" style={{ color: "var(--rust)" }} />
           <span className="font-display text-lg" style={{ color: "var(--ink)" }}>
             FollowUp
           </span>

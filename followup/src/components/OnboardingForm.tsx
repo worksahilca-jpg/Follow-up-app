@@ -102,8 +102,8 @@ export default function OnboardingForm({ initialName }: { initialName: string })
           <button
             type="submit"
             disabled={saving}
-            className="w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
-            style={{ backgroundColor: "var(--ink)" }}
+            className="w-full rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+            style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
             {saving ? "Saving…" : "Continue to dashboard"}
           </button>

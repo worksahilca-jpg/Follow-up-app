@@ -87,8 +87,8 @@ export default function MessageComposer({
         <button
           onClick={send}
           disabled={sending || regenerating || !message.trim()}
-          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60"
-          style={{ backgroundColor: "var(--ink)" }}
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-60"
+          style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
         >
           <Send className="h-3.5 w-3.5" /> {sending ? "Sending…" : "Send now"}
         </button>

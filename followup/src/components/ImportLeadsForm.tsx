@@ -114,8 +114,8 @@ export default function ImportLeadsForm({ onClose }: { onClose: () => void }) {
             )}
             <button
               onClick={onClose}
-              className="w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white"
-              style={{ backgroundColor: "var(--ink)" }}
+              className="w-full rounded-lg px-4 py-2.5 text-sm font-medium"
+              style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
               Done
             </button>

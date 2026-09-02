@@ -34,7 +34,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       <div className="mt-4 flex gap-2">
-        <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white" style={{ backgroundColor: "var(--ink)" }}>
+        <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium" style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}>
           <Mail className="h-3.5 w-3.5" /> Email
         </a>
         {lead.phone && (

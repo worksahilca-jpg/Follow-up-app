@@ -1,31 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  /* Neutrals — cool, near-white canvas with pure white surfaces, the
-     standard "light gray page, white card" pattern most modern SaaS UI
-     (Linear, Notion, Stripe) uses instead of a warm/editorial paper tone. */
-  --paper: #fafafa;
-  --ink: #18181b;
-  --ink-soft: #71717a;
-  --line: #e4e4e7;
-  --card: #ffffff;
+  /* Neutrals — soft charcoal, not pure black, with cards a shade lighter
+     for separation. Dark, techy, AI-product feel without being harsh. */
+  --paper: #1c1c21;
+  --ink: #f4f4f5;
+  --ink-soft: #a1a1aa;
+  --line: #333338;
+  --card: #242429;
 
   /* Brand / primary — the one sharp accent color everything else stays
      quieter than: CTAs, active nav state, high-priority indicators. */
-  --rust: #4f46e5;
-  --rust-soft: #eef2ff;
+  --rust: #a78bfa;
+  --rust-soft: #2e2650;
 
   /* Secondary / informational — calendar, medium priority, neutral badges. */
-  --slate: #475569;
-  --slate-soft: #f1f5f9;
+  --slate: #38bdf8;
+  --slate-soft: #16303d;
 
   /* Success / positive — connected integrations, sent confirmations. */
-  --sage: #16a34a;
-  --sage-soft: #f0fdf4;
+  --sage: #4ade80;
+  --sage-soft: #163a24;
 
   /* Money — deal values, revenue figures. */
-  --gold: #d97706;
-  --gold-soft: #fffbeb;
+  --gold: #fbbf24;
+  --gold-soft: #3d2e0f;
 }
 
 @theme inline {

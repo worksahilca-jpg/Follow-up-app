@@ -120,7 +120,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <h3 className="text-sm font-semibold">Notes</h3>
             <p className="text-sm text-ink-soft mt-2 leading-relaxed">{lead.notes}</p>
           </div>
-          <LeadAutomationToggle leadId={lead.id} initialEnabled={lead.automationEnabled} />
+          <LeadAutomationToggle leadId={lead.id} initialTier={lead.automationTier} />
           <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
         </aside>
       </div>

@@ -46,7 +46,7 @@ export const leads: Lead[] = [
     ],
     suggestedMessage:
       "Hey Sarah, just checking in on the proposal I sent over for the 12-unit launch — happy to answer any questions or adjust the package if timing's changed. Let me know what you and your partner think!",
-    automationEnabled: false,
+    automationTier: "off",
   },
   {
     id: "mike-patel",
@@ -78,7 +78,7 @@ export const leads: Lead[] = [
     ],
     suggestedMessage:
       "Hi Mike, wanted to follow up on the seasonal package proposal — happy to walk through pricing on a quick call if that's easier. Let me know what works!",
-    automationEnabled: false,
+    automationTier: "off",
   },
   {
     id: "john-smith",
@@ -110,7 +110,7 @@ export const leads: Lead[] = [
     ],
     suggestedMessage:
       "Hi John, would tomorrow at 2pm or Thursday morning work for a quick call to go through the portfolio numbers?",
-    automationEnabled: true,
+    automationTier: "assisted",
   },
   {
     id: "priya-nair",
@@ -141,7 +141,7 @@ export const leads: Lead[] = [
     ],
     suggestedMessage:
       "Hi Priya, just following up on the content package breakdown — happy to tailor it if your scope or timeline has shifted.",
-    automationEnabled: false,
+    automationTier: "off",
   },
   {
     id: "derek-osei",
@@ -170,7 +170,7 @@ export const leads: Lead[] = [
     ],
     suggestedMessage:
       "Hi Derek, thanks for reaching out! I do have twilight slots open this month — what date is the listing going live so I can plan around golden hour?",
-    automationEnabled: false,
+    automationTier: "off",
   },
   {
     id: "amanda-cole",
@@ -199,7 +199,7 @@ export const leads: Lead[] = [
       { id: "m2", direction: "outbound", channel: "email", date: daysAgo(11), body: "Following up in case this got buried." },
     ],
     suggestedMessage: "Hi Amanda, no pressure at all — happy to reconnect whenever the timing's better on your end.",
-    automationEnabled: false,
+    automationTier: "off",
   },
   {
     id: "grace-liu",
@@ -223,7 +223,7 @@ export const leads: Lead[] = [
       { id: "m2", direction: "outbound", channel: "email", date: daysAgo(2), body: "Contract signed — excited to get started!" },
     ],
     suggestedMessage: "Hi Grace, thrilled to be working together! Once we wrap the shoot, would you be open to a quick testimonial?",
-    automationEnabled: false,
+    automationTier: "off",
   },
   {
     id: "victor-hall",
@@ -246,7 +246,7 @@ export const leads: Lead[] = [
       { id: "m2", direction: "inbound", channel: "email", date: daysAgo(20), body: "Going to go with another company this time, thanks anyway." },
     ],
     suggestedMessage: "Totally understand, Victor — wishing you the best with the listing. I'll check back in a few months in case timing works better.",
-    automationEnabled: false,
+    automationTier: "off",
   },
   {
     id: "natalie-brooks",
@@ -277,7 +277,7 @@ export const leads: Lead[] = [
     ],
     suggestedMessage:
       "Hi Natalie, sending over my availability now — with a 3-week launch, I'd suggest locking in a date this week to leave room for edits.",
-    automationEnabled: false,
+    automationTier: "off",
   },
   {
     id: "ray-thompson",
@@ -309,7 +309,7 @@ export const leads: Lead[] = [
     ],
     suggestedMessage:
       "Hi Ray, happy to work with a 50/50 split or milestone-based payments on a package this size — whichever's easier on your end. Want me to send an updated contract?",
-    automationEnabled: false,
+    automationTier: "off",
   },
   {
     id: "elena-vasquez",
@@ -335,7 +335,7 @@ export const leads: Lead[] = [
       { id: "m1", direction: "inbound", channel: "email", date: daysAgo(2), body: "Interested in listing photography for a condo launch, please reach out." },
     ],
     suggestedMessage: "Hi Elena, thanks for reaching out about the condo launch — happy to share packages and availability. When's your ideal shoot date?",
-    automationEnabled: false,
+    automationTier: "off",
   },
   {
     id: "tom-reilly",
@@ -362,7 +362,7 @@ export const leads: Lead[] = [
       { id: "m2", direction: "inbound", channel: "email", date: daysAgo(9), body: "Thanks, might need something in the new year." },
     ],
     suggestedMessage: "Hi Tom, just keeping the door open — happy to pick this back up whenever the new year planning starts.",
-    automationEnabled: false,
+    automationTier: "off",
   },
 ];
 

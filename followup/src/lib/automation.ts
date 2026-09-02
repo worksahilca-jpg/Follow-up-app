@@ -3,16 +3,21 @@
  * be CONSIDERED for an automated message:
  *   1. The business-level Automation row is enabled (Settings' "Auto
  *      follow-up on silence" toggle) — the master switch.
- *   2. That specific Lead has automationOn = true (opted in individually,
- *      via the toggle on its detail page) — off by default.
+ *   2. That specific Lead's automationTier is not OFF (opted in
+ *      individually, via the selector on its detail page) — OFF by
+ *      default.
  *
- * A third gate decides whether an eligible lead's draft actually gets sent
- * automatically, or held for a human: assessSendRisk() (see openai.ts).
- * "Opted in" means "send the safe stuff for me," not "send anything" —
- * a draft that touches pricing/terms/commitments, or follows a
- * conversation that's turned negative, is saved as the lead's
- * suggestedMessage and left for manual approval instead, the same as any
- * non-automated draft already is.
+ * Which tier decides what happens next:
+ *   - ASSISTED: the draft still passes assessSendRisk() (see openai.ts)
+ *     first. "Opted in" means "send the safe stuff for me," not "send
+ *     anything" — a draft that touches pricing/terms/commitments, or
+ *     follows a conversation that's turned negative, is saved as the
+ *     lead's suggestedMessage and left for manual approval instead, the
+ *     same as any non-automated draft already is.
+ *   - AUTONOMOUS: the risk check is skipped entirely and the draft is
+ *     sent regardless of what it says. This is the one place in the app
+ *     that sends without any review — real trust decision, opt-in per
+ *     lead, never a default.
  *
  * Multi-tenant: runAutomationForBusiness() takes an explicit businessId —
  * the "Run automation check now" button in Settings only ever runs it for
@@ -72,7 +77,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     prisma.lead.findMany({
       where: {
         businessId,
-        automationOn: true,
+        automationTier: { not: "OFF" },
         stage: { notIn: ["WON", "LOST"] },
         lastContacted: { lte: cutoff },
       },
@@ -107,29 +112,34 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples)
         ));
 
-      let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
-      if (process.env.OPENAI_API_KEY) {
-        try {
-          risk = await assessSendRisk({ conversation }, message);
-        } catch (err) {
-          // Can't tell if this one's safe — hold it rather than guess.
-          // Sending something autonomously that shouldn't have gone out
-          // is a worse failure mode than an unnecessary manual review.
-          console.error(`Risk assessment failed for lead ${lead.id}:`, err);
-          risk = { riskLevel: "medium", reason: "Couldn't assess risk automatically — held to be safe." };
+      // AUTONOMOUS skips the risk check entirely — that's the whole point
+      // of the tier. Every other opted-in lead (ASSISTED) still gets
+      // checked before anything goes out unreviewed.
+      if (lead.automationTier !== "AUTONOMOUS") {
+        let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
+        if (process.env.OPENAI_API_KEY) {
+          try {
+            risk = await assessSendRisk({ conversation }, message);
+          } catch (err) {
+            // Can't tell if this one's safe — hold it rather than guess.
+            // Sending something autonomously that shouldn't have gone out
+            // is a worse failure mode than an unnecessary manual review.
+            console.error(`Risk assessment failed for lead ${lead.id}:`, err);
+            risk = { riskLevel: "medium", reason: "Couldn't assess risk automatically — held to be safe." };
+          }
+        } else {
+          // No classifier available — fall back to the older, unguarded
+          // behavior rather than holding every automated lead forever in
+          // an unconfigured/demo environment.
+          risk = { riskLevel: "low", reason: "" };
         }
-      } else {
-        // No classifier available — fall back to the older, unguarded
-        // behavior rather than holding every automated lead forever in an
-        // unconfigured/demo environment.
-        risk = { riskLevel: "low", reason: "" };
-      }
 
-      if (risk.riskLevel !== "low") {
-        if (!lead.suggestedMessage) {
-          await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message } });
+        if (risk.riskLevel !== "low") {
+          if (!lead.suggestedMessage) {
+            await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message } });
+          }
+          return { kind: "held", note: `${lead.name}: ${risk.reason}` };
         }
-        return { kind: "held", note: `${lead.name}: ${risk.reason}` };
       }
 
       const result = await sendFollowUpToLead(lead.id, message, { automated: true });

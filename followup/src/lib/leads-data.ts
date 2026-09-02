@@ -59,7 +59,7 @@ function mapDbLeadToUiLead(dbLead: DbLead): Lead {
     notes: dbLead.notes ?? "",
     conversation,
     suggestedMessage: dbLead.suggestedMessage ?? "",
-    automationEnabled: dbLead.automationOn,
+    automationTier: dbLead.automationTier.toLowerCase() as Lead["automationTier"],
   };
 }
 

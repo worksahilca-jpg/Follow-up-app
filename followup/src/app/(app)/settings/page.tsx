@@ -127,10 +127,11 @@ function SettingsPageInner() {
       const res = await fetch("/api/automation/run", { method: "POST" });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Automation run failed.");
+      const heldNote = data.held > 0 ? `, held ${data.held} for review` : "";
       setRunResult(
         data.checked === 0
           ? "Checked — no leads are opted in and overdue right now."
-          : `Checked ${data.checked} opted-in lead${data.checked === 1 ? "" : "s"}, sent ${data.sent}.`
+          : `Checked ${data.checked} opted-in lead${data.checked === 1 ? "" : "s"}, sent ${data.sent}${heldNote}.`
       );
     } catch (err) {
       setRunResult(err instanceof Error ? err.message : "Automation run failed.");
@@ -232,7 +233,9 @@ function SettingsPageInner() {
               <p className="font-medium text-sm">Auto follow-up on silence</p>
               <p className="text-xs text-ink-soft mt-1">
                 Master switch. When on, leads that are individually opted in (toggle on each lead&apos;s page) get an
-                AI-drafted check-in sent automatically after this many days of no response.
+                AI-drafted check-in after this many days of no response — sent automatically if it&apos;s a safe,
+                low-stakes check-in, or held on the lead&apos;s page for your approval if it touches pricing, terms,
+                or the conversation has turned negative.
               </p>
             </div>
             <button

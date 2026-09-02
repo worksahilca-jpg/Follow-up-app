@@ -166,6 +166,71 @@ export async function classifyAsProspect(
   return JSON.parse(raw) as { isProspect: boolean; reason: string };
 }
 
+const SEND_RISK_SCHEMA = {
+  name: "send_risk_assessment",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      riskLevel: {
+        type: "string",
+        enum: ["low", "medium", "high"],
+        description:
+          "'low' only for a plain, low-stakes check-in that makes no new claims, promises, or commitments. " +
+          "'medium' or 'high' if the draft or the recent conversation mentions pricing, discounts, contract " +
+          "terms, deadlines, or any commitment, or if the lead's recent tone reads frustrated, upset, or like " +
+          "they're comparing competitors or pushing back.",
+      },
+      reason: {
+        type: "string",
+        description: "One short sentence a human can read in 3 seconds to decide whether to approve it.",
+      },
+    },
+    required: ["riskLevel", "reason"],
+    additionalProperties: false,
+  },
+} as const;
+
+/**
+ * Trust-tiered execution gate: "safe enough to send with no human in the
+ * loop, or does this need a human to look at it first." Separate from
+ * scoreLead (urgency, already-accepted lead) and classifyAsProspect
+ * (whether to become a lead at all) — this is the last check, run only
+ * right before an automated send, on the specific drafted message.
+ */
+export async function assessSendRisk(
+  lead: Pick<Lead, "conversation">,
+  draftMessage: string
+): Promise<{ riskLevel: "low" | "medium" | "high"; reason: string }> {
+  const client = getClient();
+
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You decide whether a drafted follow-up email is safe to send completely automatically, with no " +
+          "human review. When genuinely unsure, prefer 'medium' over 'low' — the cost of an unnecessary human " +
+          "review is much lower than an autonomous message that overpromises, quotes a number, or mishandles a " +
+          "sensitive moment with a real prospect.",
+      },
+      {
+        role: "user",
+        content:
+          `Conversation so far:\n${formatTranscript(lead.conversation)}\n\n` +
+          `Drafted follow-up (the message being considered for auto-send):\n${draftMessage}`,
+      },
+    ],
+    response_format: { type: "json_schema", json_schema: SEND_RISK_SCHEMA },
+  });
+
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("OpenAI returned no content for assessSendRisk.");
+
+  return JSON.parse(raw) as { riskLevel: "low" | "medium" | "high"; reason: string };
+}
+
 /**
  * Drafts only the body paragraph of a follow-up — no greeting, no
  * sign-off. Those get added by the caller (src/lib/sender.ts +

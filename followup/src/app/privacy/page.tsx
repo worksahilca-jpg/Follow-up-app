@@ -26,7 +26,7 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: [DATE]</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: September 2, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -35,8 +35,8 @@ export default function PrivacyPage() {
               FollowUp (&quot;FollowUp&quot;, &quot;we&quot;, &quot;us&quot;) provides an AI-assisted sales
               follow-up tool. This policy explains what data we collect, why, and how you can control it.
               Contact us at{" "}
-              <a href="mailto:[SUPPORT_EMAIL]" className="underline">
-                [SUPPORT_EMAIL]
+              <a href="mailto:work.sahilca@gmail.com" className="underline">
+                work.sahilca@gmail.com
               </a>{" "}
               with any questions.
             </p>
@@ -109,10 +109,10 @@ export default function PrivacyPage() {
               We keep your data for as long as your account is active. You can delete an individual lead (and
               its full conversation history) at any time from that lead&apos;s page. To delete your entire
               account and all associated data, email{" "}
-              <a href="mailto:[SUPPORT_EMAIL]" className="underline">
-                [SUPPORT_EMAIL]
+              <a href="mailto:work.sahilca@gmail.com" className="underline">
+                work.sahilca@gmail.com
               </a>{" "}
-              — we&apos;ll confirm deletion within [X] business days. Revoking FollowUp&apos;s Gmail access at{" "}
+              — we&apos;ll confirm deletion within 2 business days. Revoking FollowUp&apos;s Gmail access at{" "}
               <a
                 href="https://myaccount.google.com/permissions"
                 target="_blank"
@@ -142,8 +142,8 @@ export default function PrivacyPage() {
             <p className="mt-2">
               Depending on where you live, you may have rights to access, correct, export, or delete your
               personal data, and to object to certain processing. To exercise any of these, contact{" "}
-              <a href="mailto:[SUPPORT_EMAIL]" className="underline">
-                [SUPPORT_EMAIL]
+              <a href="mailto:work.sahilca@gmail.com" className="underline">
+                work.sahilca@gmail.com
               </a>
               .
             </p>

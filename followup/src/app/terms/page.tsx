@@ -22,7 +22,7 @@ export default function TermsPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Terms of Service</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: [DATE]</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: September 2, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -114,8 +114,8 @@ export default function TermsPage() {
             <h2 className="font-display text-lg text-ink">10. Contact</h2>
             <p className="mt-2">
               Questions about these terms:{" "}
-              <a href="mailto:[SUPPORT_EMAIL]" className="underline">
-                [SUPPORT_EMAIL]
+              <a href="mailto:work.sahilca@gmail.com" className="underline">
+                work.sahilca@gmail.com
               </a>
               .
             </p>

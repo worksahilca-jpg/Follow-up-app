@@ -291,8 +291,8 @@ function SettingsPageInner() {
           )}
           {automationOn && (
             <p className="text-xs text-ink-soft mt-2">
-              This button runs the check manually — nothing runs on a schedule yet. A production deploy needs a
-              real scheduler (e.g. a daily Vercel Cron job) hitting this same check.
+              This also runs automatically once a day — this button is just for checking sooner, or confirming
+              it&apos;s working.
             </p>
           )}
         </div>

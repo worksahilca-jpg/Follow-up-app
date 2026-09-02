@@ -18,6 +18,7 @@ import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
+import { requireActiveBilling } from "@/lib/billing";
 import type { Message } from "@/lib/types";
 
 interface AutomationResult {
@@ -31,6 +32,18 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     where: { businessId, action: "auto_send" },
   });
   if (!automation || !automation.enabled) {
+    return { checked: 0, sent: 0, skipped: [] };
+  }
+
+  // Automated sending is a paid feature like everything else that costs
+  // money to run — a business that lapsed or never subscribed shouldn't
+  // keep getting free automated sends just because the toggle was left on
+  // from before. The manual "Run automation check now" button already
+  // goes through requireActiveBilling() at the route level; this check
+  // makes the cron-driven path (which calls this function directly, for
+  // every business, with no route-level gate of its own) honor the same
+  // rule.
+  if (!(await requireActiveBilling(businessId))) {
     return { checked: 0, sent: 0, skipped: [] };
   }
 

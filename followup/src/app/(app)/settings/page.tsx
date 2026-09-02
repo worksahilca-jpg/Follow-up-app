@@ -22,7 +22,6 @@ function SettingsPageInner() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
 
-  const [calendarConnected, setCalendarConnected] = useState(false);
   const [autoAfterDays, setAutoAfterDays] = useState(5);
   const [automationOn, setAutomationOn] = useState(false);
   const [automationLoaded, setAutomationLoaded] = useState(false);
@@ -178,11 +177,11 @@ function SettingsPageInner() {
         <div className="mt-4 space-y-3">
           <IntegrationRow
             icon={<Mail className="h-4 w-4" />}
-            name="Gmail"
+            name="Gmail + Calendar"
             description={
               gmailConnected && gmailEmail
                 ? `Connected as ${gmailEmail}`
-                : "Required — FollowUp reads sales conversations from your inbox to score leads and draft replies."
+                : "Required — FollowUp reads sales conversations from your inbox to score leads and draft replies, and puts booked calls on your Google Calendar."
             }
             connected={gmailConnected}
             loading={!gmailStatusLoaded}
@@ -199,21 +198,28 @@ function SettingsPageInner() {
                 <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
                 {syncing ? "Syncing…" : "Sync now"}
               </button>
+              <a
+                href="/api/integrations/gmail/connect"
+                className="text-sm font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5"
+                style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                Reconnect
+              </a>
               {syncResult && <span className="text-xs text-ink-soft">{syncResult}</span>}
             </div>
+          )}
+          {gmailConnected && (
+            <p className="ml-[52px] text-xs text-ink-soft">
+              Booking links now create real events on your Google Calendar. If you connected Gmail before this
+              feature shipped, click <strong>Reconnect</strong> once to grant calendar access.
+            </p>
           )}
           {gmailError && (
             <p className="text-xs" style={{ color: "var(--rust)" }}>
               {gmailError}
             </p>
           )}
-          <IntegrationRow
-            icon={<Calendar className="h-4 w-4" />}
-            name="Google Calendar"
-            description="Optional — lets FollowUp see scheduled calls and avoid suggesting follow-ups during meetings."
-            connected={calendarConnected}
-            onToggle={() => setCalendarConnected((v) => !v)}
-          />
           <div className="rounded-lg border border-line px-4 py-3 text-sm text-ink-soft flex items-center justify-between opacity-60">
             <span>Outlook, Instagram, WhatsApp, SMS — coming soon</span>
           </div>

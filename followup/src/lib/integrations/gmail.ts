@@ -17,6 +17,13 @@
  *      stores them.
  *   3. fetchSalesConversations() and sendEmail() use the stored refresh
  *      token to call the Gmail API.
+ *
+ * Calendar rides on the same connection rather than a second OAuth flow:
+ * SCOPES includes calendar.events, and createCalendarEvent() below reuses
+ * this same Integration row's refresh token to call the Calendar API. One
+ * consequence: a token stored before calendar.events was added to SCOPES
+ * won't carry it yet — the user has to hit "Reconnect" once (see the
+ * connect route) to re-consent and pick up the new scope.
  */
 
 import { google } from "googleapis";
@@ -29,6 +36,7 @@ import { mapWithConcurrency } from "@/lib/concurrency";
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.send",
+  "https://www.googleapis.com/auth/calendar.events",
   "https://www.googleapis.com/auth/userinfo.email",
 ];
 
@@ -134,14 +142,62 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
   return { email };
 }
 
-async function getAuthedGmailClient(businessId: string) {
+// Shared by both the Gmail and Calendar clients — same stored refresh
+// token, same connected Integration row.
+async function getAuthedOAuthClient(businessId: string) {
   const integration = await getGmailIntegration(businessId);
   if (!integration || !integration.refreshToken) return null;
 
   const oauth2Client = getOAuthClient();
   oauth2Client.setCredentials({ refresh_token: integration.refreshToken });
-  const gmail = google.gmail({ version: "v1", auth: oauth2Client });
-  return { gmail, integration };
+  return { oauth2Client, integration };
+}
+
+async function getAuthedGmailClient(businessId: string) {
+  const authed = await getAuthedOAuthClient(businessId);
+  if (!authed) return null;
+  const gmail = google.gmail({ version: "v1", auth: authed.oauth2Client });
+  return { gmail, integration: authed.integration };
+}
+
+/**
+ * Creates a Google Calendar event for a confirmed booking, on the
+ * business's connected Gmail/Calendar account. Best-effort: no connection,
+ * a token that predates the calendar.events scope, or any API error just
+ * means no calendar event — the booking itself already succeeded and
+ * shouldn't be rolled back over a calendar sync failure.
+ */
+export async function createCalendarEvent(
+  businessId: string,
+  params: { summary: string; description?: string; startIso: string; durationMinutes: number; attendeeEmail?: string }
+): Promise<{ created: boolean; eventId?: string }> {
+  const authed = await getAuthedOAuthClient(businessId);
+  if (!authed) return { created: false };
+
+  const start = new Date(params.startIso);
+  const end = new Date(start.getTime() + params.durationMinutes * 60 * 1000);
+
+  try {
+    const calendar = google.calendar({ version: "v3", auth: authed.oauth2Client });
+    const res = await calendar.events.insert({
+      calendarId: "primary",
+      sendUpdates: "all",
+      requestBody: {
+        summary: params.summary,
+        description: params.description,
+        start: { dateTime: start.toISOString() },
+        end: { dateTime: end.toISOString() },
+        attendees: params.attendeeEmail ? [{ email: params.attendeeEmail }] : undefined,
+      },
+    });
+    return { created: true, eventId: res.data.id ?? undefined };
+  } catch (err) {
+    // Most commonly: the stored token predates the calendar.events scope.
+    // Not fatal — just means this booking won't show up on the business's
+    // calendar until they reconnect Gmail in Settings.
+    console.error(`Failed to create calendar event for business ${businessId}:`, err);
+    return { created: false };
+  }
 }
 
 function decodeBase64Url(data: string): string {

@@ -3,6 +3,7 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
+import { pickAssignee } from "@/lib/assignment";
 
 const MAX_TEXT = 200;
 
@@ -52,6 +53,10 @@ export async function POST(request: NextRequest) {
         source,
         notes: notes || null,
         dealValue,
+        // Auto-routed to whoever on the team currently has the fewest
+        // leads — see src/lib/assignment.ts. Reassignable afterward from
+        // the lead's own page.
+        assignedToId: await pickAssignee(ctx.businessId),
       },
     });
     return NextResponse.json({ success: true, id: lead.id });

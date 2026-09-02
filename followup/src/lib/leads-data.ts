@@ -56,6 +56,7 @@ function mapDbLeadToUiLead(dbLead: DbLead): Lead {
     lastContacted: (dbLead.lastContacted ?? dbLead.createdAt).toISOString(),
     nextFollowUp: dbLead.nextFollowUp ? dbLead.nextFollowUp.toISOString() : null,
     assignedTo: dbLead.assignedTo?.name ?? dbLead.assignedTo?.email ?? "Unassigned",
+    assignedToId: dbLead.assignedToId,
     notes: dbLead.notes ?? "",
     conversation,
     suggestedMessage: dbLead.suggestedMessage ?? "",

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Lead } from "@/lib/types";
 import { formatCurrency, formatDate, daysSince } from "@/lib/demo-data";
 import ScoreBadge from "@/components/ScoreBadge";
@@ -15,6 +16,7 @@ import { Search, Plus, Upload, Users, Flame, Snowflake, Trophy, Inbox } from "lu
 
 const filters = [
   { id: "all", label: "All" },
+  { id: "mine", label: "Mine" },
   { id: "new", label: "New" },
   { id: "hot", label: "Hot" },
   { id: "today", label: "Follow-up today" },
@@ -26,6 +28,7 @@ const filters = [
 type FilterId = (typeof filters)[number]["id"];
 
 export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
+  const { data: session } = useSession();
   const [filter, setFilter] = useState<FilterId>("all");
   const [query, setQuery] = useState("");
   const [showAddLead, setShowAddLead] = useState(false);
@@ -33,6 +36,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
 
   const filtered = useMemo(() => {
     let list = [...leads];
+    if (filter === "mine") list = list.filter((l) => l.assignedToId === session?.user?.id);
     if (filter === "new") list = list.filter((l) => l.stage === "new");
     if (filter === "hot") list = list.filter((l) => l.priority === "high");
     if (filter === "today") {
@@ -58,7 +62,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
     }
 
     return list.sort((a, b) => b.score - a.score);
-  }, [leads, filter, query]);
+  }, [leads, filter, query, session?.user?.id]);
 
   const hotCount = leads.filter((l) => l.priority === "high").length;
   const coldCount = leads.filter((l) => l.stage !== "won" && l.stage !== "lost" && daysSince(l.lastContacted) >= 7).length;
@@ -144,6 +148,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
             <div className="hidden sm:block">
               <PriorityPill priority={lead.priority} />
             </div>
+            <div className="text-sm text-ink-soft hidden lg:block w-28 truncate">{lead.assignedTo}</div>
             <div className="text-sm text-ink-soft hidden md:block w-24">
               {formatDate(lead.lastContacted)}
             </div>

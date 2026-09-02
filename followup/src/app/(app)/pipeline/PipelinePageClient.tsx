@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Lead } from "@/lib/types";
-import { formatCurrency } from "@/lib/demo-data";
+import { Lead, PipelineStage } from "@/lib/types";
+import { formatCurrency, daysSince } from "@/lib/demo-data";
 import { getPipelineData } from "@/lib/leads-data";
+import { urgencyColor } from "@/lib/urgency";
 import ScoreBadge from "@/components/ScoreBadge";
 import StatCard from "@/components/StatCard";
 import PipelineSnapshot from "@/components/PipelineSnapshot";
@@ -22,13 +23,30 @@ const STAGE_WEIGHT: Record<string, number> = {
   lost: 0,
 };
 
+const toDbStage = (s: PipelineStage) => s.toUpperCase();
+
 export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
   const { data: session } = useSession();
   const [mineOnly, setMineOnly] = useState(false);
+  // Local, optimistically-updated copy — a drag-and-drop move should feel
+  // instant, not wait on a round trip. Re-seeded whenever the server hands
+  // down fresh leads (e.g. after a real navigation) — adjusted during
+  // render (React's documented pattern for this) rather than an effect,
+  // so it doesn't cost an extra render pass.
+  const [localLeads, setLocalLeads] = useState(leads);
+  const [prevLeadsProp, setPrevLeadsProp] = useState(leads);
+  if (leads !== prevLeadsProp) {
+    setPrevLeadsProp(leads);
+    setLocalLeads(leads);
+  }
+
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<PipelineStage | null>(null);
+  const [moveError, setMoveError] = useState<string | null>(null);
 
   const visible = useMemo(
-    () => (mineOnly ? leads.filter((l) => l.assignedToId === session?.user?.id) : leads),
-    [leads, mineOnly, session?.user?.id]
+    () => (mineOnly ? localLeads.filter((l) => l.assignedToId === session?.user?.id) : localLeads),
+    [localLeads, mineOnly, session?.user?.id]
   );
 
   const stages = useMemo(() => getPipelineData(visible), [visible]);
@@ -36,12 +54,35 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
   const weightedValue = stages.reduce((sum, s) => sum + s.value * (STAGE_WEIGHT[s.id] ?? 0), 0);
   const valueSnapshot = stages.map((s) => ({ label: s.label, count: s.leads.length, value: s.value }));
 
+  async function moveLead(leadId: string, toStage: PipelineStage) {
+    const lead = localLeads.find((l) => l.id === leadId);
+    if (!lead || lead.stage === toStage) return;
+
+    const previousStage = lead.stage;
+    setLocalLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: toStage } : l)));
+    setMoveError(null);
+
+    try {
+      const res = await fetch(`/api/leads/${leadId}/stage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: toDbStage(toStage) }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setLocalLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: previousStage } : l)));
+      setMoveError(`Couldn't move ${lead.name} — try again.`);
+    }
+  }
+
   return (
     <div>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-display text-3xl">Pipeline</h1>
-          <p className="text-ink-soft mt-1">Where every deal stands, and what it&apos;s worth.</p>
+          <p className="text-ink-soft mt-1">
+            Where every deal stands, and what it&apos;s worth. Drag a card to move its stage.
+          </p>
         </div>
         <button
           onClick={() => setMineOnly((v) => !v)}
@@ -92,9 +133,35 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
         </section>
       )}
 
+      {moveError && (
+        <p className="mt-4 text-sm" style={{ color: "var(--rust)" }}>
+          {moveError}
+        </p>
+      )}
+
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stages.map((stage) => (
-          <div key={stage.id} className="rounded-xl border border-line bg-card p-4 min-h-[120px]">
+          <div
+            key={stage.id}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOverStage(stage.id);
+            }}
+            onDragLeave={() => setDragOverStage((s) => (s === stage.id ? null : s))}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOverStage(null);
+              const leadId = e.dataTransfer.getData("text/lead-id");
+              if (leadId) moveLead(leadId, stage.id);
+            }}
+            className="rounded-xl border p-4 min-h-[120px] transition-colors"
+            style={{
+              backgroundColor: "var(--card)",
+              borderColor: dragOverStage === stage.id ? "var(--rust)" : "var(--line)",
+              borderStyle: dragOverStage === stage.id ? "dashed" : "solid",
+              borderWidth: dragOverStage === stage.id ? 2 : 1,
+            }}
+          >
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">{stage.label}</h3>
               <span className="text-xs text-ink-soft">{stage.leads.length}</span>
@@ -107,10 +174,25 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                 <Link
                   key={lead.id}
                   href={`/leads/${lead.id}`}
-                  className="flex items-center gap-2 rounded-lg border border-line px-2.5 py-2 text-xs hover:bg-paper"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/lead-id", lead.id);
+                    e.dataTransfer.effectAllowed = "move";
+                    setDraggingId(lead.id);
+                  }}
+                  onDragEnd={() => setDraggingId(null)}
+                  className="flex items-center gap-2 rounded-lg border border-line px-2.5 py-2 text-xs hover:bg-paper cursor-grab active:cursor-grabbing"
+                  style={{ opacity: draggingId === lead.id ? 0.4 : 1 }}
                 >
                   <ScoreBadge score={lead.score} size="sm" />
                   <span className="truncate flex-1">{lead.name}</span>
+                  {stage.id !== "won" && stage.id !== "lost" && (
+                    <span
+                      className="h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: urgencyColor(daysSince(lead.lastContacted)) }}
+                      title={`${daysSince(lead.lastContacted)} days since last contact`}
+                    />
+                  )}
                 </Link>
               ))}
               {stage.leads.length === 0 && (

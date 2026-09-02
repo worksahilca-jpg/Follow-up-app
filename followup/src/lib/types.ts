@@ -9,6 +9,12 @@ export type PipelineStage =
 
 export type Priority = "high" | "medium" | "low" | "none";
 
+// off — every draft needs manual approval.
+// assisted — automated sends allowed, but each draft is risk-checked first;
+//   anything not low-risk is held for manual approval instead.
+// autonomous — risk check skipped; this lead's cadence is fully AI-owned.
+export type AutomationTier = "off" | "assisted" | "autonomous";
+
 export type MessageDirection = "inbound" | "outbound";
 
 export interface Message {
@@ -44,7 +50,7 @@ export interface Lead {
   notes: string;
   conversation: Message[];
   suggestedMessage: string;
-  automationEnabled: boolean;
+  automationTier: AutomationTier;
 }
 
 export interface TeamMember {

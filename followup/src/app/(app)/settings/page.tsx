@@ -232,10 +232,10 @@ function SettingsPageInner() {
             <div>
               <p className="font-medium text-sm">Auto follow-up on silence</p>
               <p className="text-xs text-ink-soft mt-1">
-                Master switch. When on, leads that are individually opted in (toggle on each lead&apos;s page) get an
-                AI-drafted check-in after this many days of no response — sent automatically if it&apos;s a safe,
-                low-stakes check-in, or held on the lead&apos;s page for your approval if it touches pricing, terms,
-                or the conversation has turned negative.
+                Master switch. When on, leads set to Assisted or Autonomous (on each lead&apos;s page) get an
+                AI-drafted check-in after this many days of no response. Assisted holds anything that touches
+                pricing, terms, or a negative-sounding conversation for your approval instead of sending it;
+                Autonomous sends every draft with no review at all.
               </p>
             </div>
             <button

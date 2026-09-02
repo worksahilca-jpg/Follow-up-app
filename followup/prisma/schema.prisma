@@ -77,6 +77,19 @@ enum Priority {
   NONE
 }
 
+// Per-lead trust tier for automated follow-ups (see src/lib/automation.ts):
+//   OFF        — never sent automatically; every draft needs manual approval.
+//   ASSISTED   — automated sends allowed, but each draft still passes
+//                assessSendRisk() first; anything not low-risk is held for
+//                manual approval instead of sent.
+//   AUTONOMOUS — the risk check is skipped entirely; this lead's cadence is
+//                fully AI-owned. Opt-in per lead, never a default.
+enum AutomationTier {
+  OFF
+  ASSISTED
+  AUTONOMOUS
+}
+
 model Lead {
   id             String   @id @default(cuid())
   business       Business @relation(fields: [businessId], references: [id])
@@ -96,7 +109,7 @@ model Lead {
   lastContacted  DateTime?
   nextFollowUp   DateTime?
   notes          String?
-  automationOn   Boolean  @default(false)
+  automationTier AutomationTier @default(OFF)
   assignedTo     User?    @relation("AssignedLeads", fields: [assignedToId], references: [id])
   assignedToId   String?
   createdAt      DateTime @default(now())

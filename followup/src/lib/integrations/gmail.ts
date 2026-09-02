@@ -338,7 +338,7 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
       notes: lead.notes ?? "",
       conversation: [],
       suggestedMessage: "",
-      automationEnabled: lead.automationOn,
+      automationTier: lead.automationTier.toLowerCase() as Lead["automationTier"],
     };
   });
 

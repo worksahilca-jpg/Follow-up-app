@@ -11,7 +11,8 @@ import {
   getPipelineData,
 } from "@/lib/leads-data";
 import { formatCurrency, daysSince } from "@/lib/demo-data";
-import { AlertTriangle, Users, Flame, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
+import { AlertTriangle, Users, Flame, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox } from "lucide-react";
 
 // This page reads live leads from the database on every request — never
 // bake a stale snapshot into the build.
@@ -66,13 +67,20 @@ export default async function DashboardPage() {
           <h2 className="font-display text-xl">Today&apos;s follow-ups</h2>
           <div className="mt-4 space-y-3">
             {leads.length === 0 && (
-              <p className="text-sm text-ink-soft">
-                No leads yet — head to{" "}
-                <Link href="/settings" className="underline">
-                  Settings
-                </Link>{" "}
-                to connect Gmail and sync your inbox.
-              </p>
+              <EmptyState
+                icon={Inbox}
+                title="No leads yet"
+                description="Connect Gmail in Settings and sync your inbox to pull in your real sales conversations."
+                action={
+                  <Link
+                    href="/settings"
+                    className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium"
+                    style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                  >
+                    Go to Settings
+                  </Link>
+                }
+              />
             )}
             {leads.length > 0 && today.length === 0 && (
               <p className="text-sm text-ink-soft">Nothing due today — take a look at your pipeline instead.</p>

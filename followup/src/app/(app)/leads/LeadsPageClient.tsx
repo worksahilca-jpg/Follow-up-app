@@ -9,7 +9,8 @@ import PriorityPill from "@/components/PriorityPill";
 import AddLeadForm from "@/components/AddLeadForm";
 import ImportLeadsForm from "@/components/ImportLeadsForm";
 import StatCard from "@/components/StatCard";
-import { Search, Plus, Upload, Users, Flame, Snowflake, Trophy } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
+import { Search, Plus, Upload, Users, Flame, Snowflake, Trophy, Inbox } from "lucide-react";
 
 const filters = [
   { id: "all", label: "All" },
@@ -153,9 +154,28 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           <p className="px-5 py-8 text-center text-sm text-ink-soft">No leads match this filter.</p>
         )}
         {leads.length === 0 && (
-          <p className="px-5 py-8 text-center text-sm text-ink-soft">
-            No leads yet — connect Gmail in Settings to sync your inbox, or add one manually above.
-          </p>
+          <EmptyState
+            icon={Inbox}
+            title="No leads yet"
+            description="Connect Gmail in Settings to sync your inbox, or add one manually to get started."
+            action={
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setShowAddLead(true)}
+                  className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium"
+                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                >
+                  Add a lead
+                </button>
+                <Link
+                  href="/settings"
+                  className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium border border-line"
+                >
+                  Go to Settings
+                </Link>
+              </div>
+            }
+          />
         )}
       </div>
     </div>

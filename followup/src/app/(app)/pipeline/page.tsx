@@ -4,7 +4,8 @@ import { formatCurrency } from "@/lib/demo-data";
 import ScoreBadge from "@/components/ScoreBadge";
 import StatCard from "@/components/StatCard";
 import PipelineSnapshot from "@/components/PipelineSnapshot";
-import { DollarSign, TrendingUp, Users } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
+import { DollarSign, TrendingUp, Users, Inbox } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -40,13 +41,20 @@ export default async function PipelinePage() {
       </div>
 
       {leads.length === 0 ? (
-        <p className="text-sm text-ink-soft mt-6">
-          No leads yet — head to{" "}
-          <Link href="/settings" className="underline">
-            Settings
-          </Link>{" "}
-          to connect Gmail and sync your inbox.
-        </p>
+        <EmptyState
+          icon={Inbox}
+          title="No leads yet"
+          description="Connect Gmail in Settings and sync your inbox to see your pipeline take shape."
+          action={
+            <Link
+              href="/settings"
+              className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium"
+              style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+            >
+              Go to Settings
+            </Link>
+          }
+        />
       ) : (
         <section className="mt-8">
           <h2 className="font-display text-xl">Value by stage</h2>

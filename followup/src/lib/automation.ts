@@ -1,10 +1,18 @@
 /**
  * The actual auto-send job. Two gates both have to be open for a lead to
- * get an automated message:
+ * be CONSIDERED for an automated message:
  *   1. The business-level Automation row is enabled (Settings' "Auto
  *      follow-up on silence" toggle) — the master switch.
  *   2. That specific Lead has automationOn = true (opted in individually,
  *      via the toggle on its detail page) — off by default.
+ *
+ * A third gate decides whether an eligible lead's draft actually gets sent
+ * automatically, or held for a human: assessSendRisk() (see openai.ts).
+ * "Opted in" means "send the safe stuff for me," not "send anything" —
+ * a draft that touches pricing/terms/commitments, or follows a
+ * conversation that's turned negative, is saved as the lead's
+ * suggestedMessage and left for manual approval instead, the same as any
+ * non-automated draft already is.
  *
  * Multi-tenant: runAutomationForBusiness() takes an explicit businessId —
  * the "Run automation check now" button in Settings only ever runs it for
@@ -15,7 +23,7 @@
  */
 
 import { prisma } from "@/lib/db";
-import { generateFollowUpMessage } from "@/lib/integrations/openai";
+import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { composeFollowUpEmail } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
 import { requireActiveBilling } from "@/lib/billing";
@@ -25,15 +33,24 @@ import type { Message } from "@/lib/types";
 interface AutomationResult {
   checked: number;
   sent: number;
-  skipped: string[];
+  held: number; // risk-gated: drafted and saved for manual approval instead of auto-sent
+  skipped: string[]; // real failures (send errors, exceptions)
+  heldReasons: string[]; // "{lead name}: {why it was held}", one per held lead
 }
+
+const EMPTY_RESULT: AutomationResult = { checked: 0, sent: 0, held: 0, skipped: [], heldReasons: [] };
+
+type LeadOutcome =
+  | { kind: "sent" }
+  | { kind: "held"; note: string }
+  | { kind: "skipped"; note: string };
 
 export async function runAutomationForBusiness(businessId: string): Promise<AutomationResult> {
   const automation = await prisma.automation.findFirst({
     where: { businessId, action: "auto_send" },
   });
   if (!automation || !automation.enabled) {
-    return { checked: 0, sent: 0, skipped: [] };
+    return EMPTY_RESULT;
   }
 
   // Automated sending is a paid feature like everything else that costs
@@ -45,7 +62,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // every business, with no route-level gate of its own) honor the same
   // rule.
   if (!(await requireActiveBilling(businessId))) {
-    return { checked: 0, sent: 0, skipped: [] };
+    return EMPTY_RESULT;
   }
 
   const cutoff = new Date(Date.now() - automation.triggerDays * 24 * 60 * 60 * 1000);
@@ -63,7 +80,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // Kept modest (vs. the 5 used for sync/cleanup) — this loop calls Gmail's
   // send API per lead, which has its own tighter per-account send quota,
   // not just a "how fast can we finish" budget.
-  const outcomes = await mapWithConcurrency(eligible, 3, async (lead) => {
+  const outcomes = await mapWithConcurrency(eligible, 3, async (lead): Promise<LeadOutcome> => {
     try {
       const conversation: Message[] = lead.conversations.flatMap((c) =>
         c.messages.map((m) => ({
@@ -83,19 +100,54 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           lead.businessId,
           await generateFollowUpMessage({ name: lead.name, conversation })
         ));
+
+      let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
+      if (process.env.OPENAI_API_KEY) {
+        try {
+          risk = await assessSendRisk({ conversation }, message);
+        } catch (err) {
+          // Can't tell if this one's safe — hold it rather than guess.
+          // Sending something autonomously that shouldn't have gone out
+          // is a worse failure mode than an unnecessary manual review.
+          console.error(`Risk assessment failed for lead ${lead.id}:`, err);
+          risk = { riskLevel: "medium", reason: "Couldn't assess risk automatically — held to be safe." };
+        }
+      } else {
+        // No classifier available — fall back to the older, unguarded
+        // behavior rather than holding every automated lead forever in an
+        // unconfigured/demo environment.
+        risk = { riskLevel: "low", reason: "" };
+      }
+
+      if (risk.riskLevel !== "low") {
+        if (!lead.suggestedMessage) {
+          await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message } });
+        }
+        return { kind: "held", note: `${lead.name}: ${risk.reason}` };
+      }
+
       const result = await sendFollowUpToLead(lead.id, message, { automated: true });
       return result.success
-        ? { sent: true as const }
-        : { sent: false as const, skipped: `${lead.name}: ${result.message ?? "unknown error"}` };
+        ? { kind: "sent" }
+        : { kind: "skipped", note: `${lead.name}: ${result.message ?? "unknown error"}` };
     } catch (err) {
-      return { sent: false as const, skipped: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
+      return { kind: "skipped", note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
     }
   });
 
-  const sent = outcomes.filter((o) => o.sent).length;
-  const skipped = outcomes.flatMap((o) => (o.sent ? [] : [o.skipped]));
+  const sent = outcomes.filter((o) => o.kind === "sent").length;
+  const heldOutcomes = outcomes.filter((o): o is { kind: "held"; note: string } => o.kind === "held");
+  const skipped = outcomes
+    .filter((o): o is { kind: "skipped"; note: string } => o.kind === "skipped")
+    .map((o) => o.note);
 
-  return { checked: eligible.length, sent, skipped };
+  return {
+    checked: eligible.length,
+    sent,
+    held: heldOutcomes.length,
+    skipped,
+    heldReasons: heldOutcomes.map((o) => o.note),
+  };
 }
 
 /** What a real scheduler calls: every business with automation on, in one pass. */
@@ -116,18 +168,19 @@ export async function runAutomationForAllBusinesses(): Promise<AutomationResult>
     } catch (err) {
       console.error(`Automation run failed for business ${businessId}:`, err);
       return {
-        checked: 0,
-        sent: 0,
+        ...EMPTY_RESULT,
         skipped: [`Business ${businessId}: ${err instanceof Error ? err.message : "unknown error"}`],
       } satisfies AutomationResult;
     }
   });
 
-  const totals: AutomationResult = { checked: 0, sent: 0, skipped: [] };
+  const totals: AutomationResult = { ...EMPTY_RESULT, skipped: [], heldReasons: [] };
   for (const result of results) {
     totals.checked += result.checked;
     totals.sent += result.sent;
+    totals.held += result.held;
     totals.skipped.push(...result.skipped);
+    totals.heldReasons.push(...result.heldReasons);
   }
   return totals;
 }

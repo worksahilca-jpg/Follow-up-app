@@ -8,7 +8,8 @@ import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
 import AddLeadForm from "@/components/AddLeadForm";
 import ImportLeadsForm from "@/components/ImportLeadsForm";
-import { Search, Plus, Upload } from "lucide-react";
+import StatCard from "@/components/StatCard";
+import { Search, Plus, Upload, Users, Flame, Snowflake, Trophy } from "lucide-react";
 
 const filters = [
   { id: "all", label: "All" },
@@ -57,6 +58,10 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
     return list.sort((a, b) => b.score - a.score);
   }, [leads, filter, query]);
 
+  const hotCount = leads.filter((l) => l.priority === "high").length;
+  const coldCount = leads.filter((l) => l.stage !== "won" && l.stage !== "lost" && daysSince(l.lastContacted) >= 7).length;
+  const wonCount = leads.filter((l) => l.stage === "won").length;
+
   return (
     <div>
       <div className="flex items-start justify-between gap-4">
@@ -85,6 +90,13 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
 
       {showAddLead && <AddLeadForm onClose={() => setShowAddLead(false)} />}
       {showImport && <ImportLeadsForm onClose={() => setShowImport(false)} />}
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+        <StatCard label="Total" value={String(leads.length)} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+        <StatCard label="Hot" value={String(hotCount)} icon={Flame} accent="var(--rust)" accentSoft="var(--rust-soft)" />
+        <StatCard label="Going cold" value={String(coldCount)} icon={Snowflake} accent="var(--gold)" accentSoft="var(--gold-soft)" />
+        <StatCard label="Won" value={String(wonCount)} icon={Trophy} accent="var(--sage)" accentSoft="var(--sage-soft)" />
+      </div>
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1.5">

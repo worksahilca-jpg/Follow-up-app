@@ -10,6 +10,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { createCalendarEvent } from "@/lib/integrations/gmail";
 
 const SLOT_MINUTES = 30;
 const BUSINESS_HOURS = { start: 9, end: 17 }; // 9am–5pm, exclusive end
@@ -101,7 +102,13 @@ type CreateBookingResult =
 export async function createBooking(leadId: string, scheduledAtIso: string): Promise<CreateBookingResult> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { id: true, businessId: true, business: { select: { timezone: true } } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      businessId: true,
+      business: { select: { name: true, timezone: true } },
+    },
   });
   if (!lead) return { success: false, message: "This booking link isn't valid." };
 
@@ -119,6 +126,22 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
     });
     // Surface it wherever the salesperson already looks for what's coming up.
     await prisma.lead.update({ where: { id: lead.id }, data: { nextFollowUp: scheduledAt } });
+
+    // Best-effort — the booking above has already succeeded regardless of
+    // whether this puts it on an actual Google Calendar. Awaited (rather
+    // than fire-and-forget) because this runs in a serverless function:
+    // the process can be frozen the instant the response is sent, so an
+    // un-awaited call here could simply never run. createCalendarEvent()
+    // already swallows its own errors and returns {created: false}, so
+    // this can't turn a real booking failure into a thrown error.
+    await createCalendarEvent(lead.businessId, {
+      summary: `Call with ${lead.name}`,
+      description: "Booked via FollowUp.",
+      startIso: booking.scheduledAt.toISOString(),
+      durationMinutes: SLOT_MINUTES,
+      attendeeEmail: lead.email ?? undefined,
+    });
+
     return { success: true, scheduledAt: booking.scheduledAt.toISOString() };
   } catch {
     // Unique constraint on (businessId, scheduledAt) — someone else just took this slot.

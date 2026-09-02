@@ -10,6 +10,7 @@ import AddLeadForm from "@/components/AddLeadForm";
 import ImportLeadsForm from "@/components/ImportLeadsForm";
 import StatCard from "@/components/StatCard";
 import EmptyState from "@/components/EmptyState";
+import CleanupLeadsButton from "@/components/CleanupLeadsButton";
 import { Search, Plus, Upload, Users, Flame, Snowflake, Trophy, Inbox } from "lucide-react";
 
 const filters = [
@@ -71,6 +72,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           <p className="text-ink-soft mt-1">{leads.length} total, sorted by follow-up priority.</p>
         </div>
         <div className="flex shrink-0 gap-2">
+          <CleanupLeadsButton />
           <button
             onClick={() => setShowImport(true)}
             className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium border border-line"

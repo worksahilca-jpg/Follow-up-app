@@ -6,10 +6,31 @@ import { Lead } from "@/lib/types";
 import ScoreBadge from "./ScoreBadge";
 import PriorityPill from "./PriorityPill";
 import { formatCurrency } from "@/lib/demo-data";
-import { Mail, Phone, MessageSquare, Clock, Check } from "lucide-react";
+import { Mail, Phone, Clock, Check } from "lucide-react";
 
 export default function FollowUpCard({ lead }: { lead: Lead }) {
   const [status, setStatus] = useState<"pending" | "done" | "snoozed">("pending");
+  const [busy, setBusy] = useState<"snooze" | "complete" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function act(action: "snooze" | "complete") {
+    setBusy(action);
+    setError(null);
+    try {
+      const res = await fetch(`/api/leads/${lead.id}/followup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message ?? "Couldn't update — try again.");
+      setStatus(action === "snooze" ? "snoozed" : "done");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't update — try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   if (status === "done") {
     return (
@@ -59,32 +80,33 @@ export default function FollowUpCard({ lead }: { lead: Lead }) {
               <Mail className="h-3.5 w-3.5" /> Review &amp; send
             </Link>
             {lead.phone && (
-              <button
-                onClick={() => setStatus("done")}
+              <a
+                href={`tel:${lead.phone}`}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium"
               >
                 <Phone className="h-3.5 w-3.5" /> Call
-              </button>
+              </a>
             )}
             <button
-              onClick={() => setStatus("done")}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium"
+              onClick={() => act("snooze")}
+              disabled={busy !== null}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft disabled:opacity-60"
             >
-              <MessageSquare className="h-3.5 w-3.5" /> Text
+              <Clock className="h-3.5 w-3.5" /> {busy === "snooze" ? "Snoozing…" : "Snooze until tomorrow"}
             </button>
             <button
-              onClick={() => setStatus("snoozed")}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft"
+              onClick={() => act("complete")}
+              disabled={busy !== null}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft disabled:opacity-60"
             >
-              <Clock className="h-3.5 w-3.5" /> Snooze
-            </button>
-            <button
-              onClick={() => setStatus("done")}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft"
-            >
-              <Check className="h-3.5 w-3.5" /> Mark complete
+              <Check className="h-3.5 w-3.5" /> {busy === "complete" ? "Marking…" : "Mark complete"}
             </button>
           </div>
+          {error && (
+            <p className="text-xs mt-2" style={{ color: "var(--rust)" }}>
+              {error}
+            </p>
+          )}
         </div>
       </div>
     </div>

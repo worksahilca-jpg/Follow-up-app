@@ -6,6 +6,7 @@ import PriorityPill from "@/components/PriorityPill";
 import StageSelector from "@/components/StageSelector";
 import MessageComposer from "@/components/MessageComposer";
 import LeadAutomationToggle from "@/components/LeadAutomationToggle";
+import DeleteLeadButton from "@/components/DeleteLeadButton";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -120,6 +121,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <p className="text-sm text-ink-soft mt-2 leading-relaxed">{lead.notes}</p>
           </div>
           <LeadAutomationToggle leadId={lead.id} initialEnabled={lead.automationEnabled} />
+          <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
         </aside>
       </div>
     </div>

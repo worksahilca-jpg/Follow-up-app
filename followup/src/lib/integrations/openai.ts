@@ -103,6 +103,69 @@ export async function scoreLead(
   };
 }
 
+const PROSPECT_CLASSIFICATION_SCHEMA = {
+  name: "prospect_classification",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      isProspect: {
+        type: "boolean",
+        description:
+          "True only if this is a genuine sales conversation with someone showing interest in buying the " +
+          "business's product or service. False for personal correspondence, recruiters and job applications, " +
+          "vendors/suppliers pitching the business, an existing customer's support or logistics message that " +
+          "isn't about a new purchase, or a newsletter/notification sent from a real-looking address.",
+      },
+      reason: {
+        type: "string",
+        description: "One short sentence explaining the call.",
+      },
+    },
+    required: ["isProspect", "reason"],
+    additionalProperties: false,
+  },
+} as const;
+
+/**
+ * Triage step for Gmail sync: "is this thread actually a sales conversation
+ * with a prospect" as opposed to any other real two-way email exchange
+ * (personal, recruiting, vendors, support, a person-signed newsletter).
+ * Kept separate from scoreLead — that scores urgency for a thread already
+ * accepted as a lead; this decides whether it should become one at all.
+ */
+export async function classifyAsProspect(
+  conversation: Message[]
+): Promise<{ isProspect: boolean; reason: string }> {
+  const client = getClient();
+
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You triage a small business owner's inbox before it reaches their CRM. Decide whether this email " +
+          "thread is a genuine sales conversation with a prospective customer, as opposed to personal " +
+          "correspondence, a recruiter or job application, a vendor or supplier pitching the business, an " +
+          "existing customer's support/logistics message unrelated to a new sale, or a newsletter/notification " +
+          "sent from a real-looking address. Lean toward true only for genuinely ambiguous business inquiries " +
+          "about the business's own product or service.",
+      },
+      {
+        role: "user",
+        content: `Conversation:\n${formatTranscript(conversation)}`,
+      },
+    ],
+    response_format: { type: "json_schema", json_schema: PROSPECT_CLASSIFICATION_SCHEMA },
+  });
+
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("OpenAI returned no content for classifyAsProspect.");
+
+  return JSON.parse(raw) as { isProspect: boolean; reason: string };
+}
+
 /**
  * Drafts only the body paragraph of a follow-up — no greeting, no
  * sign-off. Those get added by the caller (src/lib/sender.ts +

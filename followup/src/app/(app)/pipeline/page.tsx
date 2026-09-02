@@ -2,6 +2,10 @@ import Link from "next/link";
 import { getLeads, getPipelineData } from "@/lib/leads-data";
 import { formatCurrency } from "@/lib/demo-data";
 import ScoreBadge from "@/components/ScoreBadge";
+import StatCard from "@/components/StatCard";
+import PipelineSnapshot from "@/components/PipelineSnapshot";
+import EmptyState from "@/components/EmptyState";
+import { DollarSign, TrendingUp, Users, Inbox } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -23,30 +27,44 @@ export default async function PipelinePage() {
     };
     return sum + s.value * (weight[s.id] ?? 0);
   }, 0);
+  const valueSnapshot = stages.map((s) => ({ label: s.label, count: s.leads.length, value: s.value }));
 
   return (
     <div>
       <h1 className="font-display text-3xl">Pipeline</h1>
-      <div className="flex gap-8 mt-2 text-sm text-ink-soft">
-        <p>
-          Total pipeline value: <span className="font-medium" style={{ color: "var(--gold)" }}>{formatCurrency(totalValue)}</span>
-        </p>
-        <p>
-          Weighted value: <span className="font-medium" style={{ color: "var(--gold)" }}>{formatCurrency(Math.round(weightedValue))}</span>
-        </p>
+      <p className="text-ink-soft mt-1">Where every deal stands, and what it&apos;s worth.</p>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
+        <StatCard label="Active leads" value={String(leads.length)} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+        <StatCard label="Total pipeline value" value={formatCurrency(totalValue)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
+        <StatCard label="Weighted value" value={formatCurrency(Math.round(weightedValue))} icon={TrendingUp} accent="var(--rust)" accentSoft="var(--rust-soft)" />
       </div>
 
-      {leads.length === 0 && (
-        <p className="text-sm text-ink-soft mt-4">
-          No leads yet — head to{" "}
-          <Link href="/settings" className="underline">
-            Settings
-          </Link>{" "}
-          to connect Gmail and sync your inbox.
-        </p>
+      {leads.length === 0 ? (
+        <EmptyState
+          icon={Inbox}
+          title="No leads yet"
+          description="Connect Gmail in Settings and sync your inbox to see your pipeline take shape."
+          action={
+            <Link
+              href="/settings"
+              className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium"
+              style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+            >
+              Go to Settings
+            </Link>
+          }
+        />
+      ) : (
+        <section className="mt-8">
+          <h2 className="font-display text-xl">Value by stage</h2>
+          <div className="mt-4">
+            <PipelineSnapshot stages={valueSnapshot} metric="value" height={200} />
+          </div>
+        </section>
       )}
 
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stages.map((stage) => (
           <div key={stage.id} className="rounded-xl border border-line bg-card p-4 min-h-[120px]">
             <div className="flex items-center justify-between">

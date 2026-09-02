@@ -1,15 +1,18 @@
 import Link from "next/link";
 import StatCard from "@/components/StatCard";
 import FollowUpCard from "@/components/FollowUpCard";
+import PipelineSnapshot from "@/components/PipelineSnapshot";
 import {
   getLeads,
   getStats,
   getTodaysFollowUps,
   getColdLeads,
   getWeeklyReport,
+  getPipelineData,
 } from "@/lib/leads-data";
 import { formatCurrency, daysSince } from "@/lib/demo-data";
-import { AlertTriangle } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
+import { AlertTriangle, Users, Flame, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox } from "lucide-react";
 
 // This page reads live leads from the database on every request — never
 // bake a stale snapshot into the build.
@@ -21,6 +24,7 @@ export default async function DashboardPage() {
   const today = getTodaysFollowUps(leads);
   const cold = getColdLeads(leads);
   const weeklyReport = await getWeeklyReport(leads);
+  const pipelineSnapshot = getPipelineData(leads).map((s) => ({ label: s.label, count: s.leads.length, value: s.value }));
 
   return (
     <div>
@@ -28,32 +32,73 @@ export default async function DashboardPage() {
       <p className="text-ink-soft mt-1">Here&apos;s what needs your attention today.</p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-        <StatCard label="Total leads" value={String(stats.totalLeads)} />
-        <StatCard label="Hot leads" value={String(stats.hotLeads)} accent="var(--rust)" />
-        <StatCard label="Follow-ups today" value={String(stats.followUpsToday)} accent="var(--slate)" />
-        <StatCard label="Potential revenue" value={formatCurrency(stats.potentialRevenue)} accent="var(--gold)" />
+        <StatCard
+          label="Total leads"
+          value={String(stats.totalLeads)}
+          icon={Users}
+          accent="var(--slate)"
+          accentSoft="var(--slate-soft)"
+        />
+        <StatCard
+          label="Hot leads"
+          value={String(stats.hotLeads)}
+          icon={Flame}
+          accent="var(--rust)"
+          accentSoft="var(--rust-soft)"
+        />
+        <StatCard
+          label="Follow-ups today"
+          value={String(stats.followUpsToday)}
+          icon={Clock}
+          accent="var(--sage)"
+          accentSoft="var(--sage-soft)"
+        />
+        <StatCard
+          label="Potential revenue"
+          value={formatCurrency(stats.potentialRevenue)}
+          icon={DollarSign}
+          accent="var(--gold)"
+          accentSoft="var(--gold-soft)"
+        />
       </div>
 
-      <section className="mt-10">
-        <h2 className="font-display text-xl">Today&apos;s follow-ups</h2>
-        <div className="mt-4 space-y-3">
-          {leads.length === 0 && (
-            <p className="text-sm text-ink-soft">
-              No leads yet — head to{" "}
-              <Link href="/settings" className="underline">
-                Settings
-              </Link>{" "}
-              to connect Gmail and sync your inbox.
-            </p>
-          )}
-          {leads.length > 0 && today.length === 0 && (
-            <p className="text-sm text-ink-soft">Nothing due today — take a look at your pipeline instead.</p>
-          )}
-          {today.map((lead) => (
-            <FollowUpCard key={lead.id} lead={lead} />
-          ))}
-        </div>
-      </section>
+      <div className="grid lg:grid-cols-5 gap-6 mt-10">
+        <section className="lg:col-span-3">
+          <h2 className="font-display text-xl">Today&apos;s follow-ups</h2>
+          <div className="mt-4 space-y-3">
+            {leads.length === 0 && (
+              <EmptyState
+                icon={Inbox}
+                title="No leads yet"
+                description="Connect Gmail in Settings and sync your inbox to pull in your real sales conversations."
+                action={
+                  <Link
+                    href="/settings"
+                    className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium"
+                    style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                  >
+                    Go to Settings
+                  </Link>
+                }
+              />
+            )}
+            {leads.length > 0 && today.length === 0 && (
+              <p className="text-sm text-ink-soft">Nothing due today — take a look at your pipeline instead.</p>
+            )}
+            {today.map((lead) => (
+              <FollowUpCard key={lead.id} lead={lead} />
+            ))}
+          </div>
+        </section>
+
+        <section className="lg:col-span-2">
+          <h2 className="font-display text-xl">Pipeline snapshot</h2>
+          <p className="text-sm text-ink-soft mt-1">Leads by stage, right now.</p>
+          <div className="mt-4">
+            <PipelineSnapshot stages={pipelineSnapshot} />
+          </div>
+        </section>
+      </div>
 
       {cold.length > 0 && (
         <section className="mt-10">
@@ -81,31 +126,14 @@ export default async function DashboardPage() {
 
       <section className="mt-10 mb-6">
         <h2 className="font-display text-xl">This week&apos;s AI report</h2>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5 grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
-          <div>
-            <p className="text-ink-soft">Analyzed</p>
-            <p className="font-display text-xl mt-0.5">{weeklyReport.conversationsAnalyzed}</p>
-          </div>
-          <div>
-            <p className="text-ink-soft">Sent</p>
-            <p className="font-display text-xl mt-0.5">{weeklyReport.followUpsSent}</p>
-          </div>
-          <div>
-            <p className="text-ink-soft">Replies</p>
-            <p className="font-display text-xl mt-0.5">{weeklyReport.repliesReceived}</p>
-          </div>
-          <div>
-            <p className="text-ink-soft">Closed</p>
-            <p className="font-display text-xl mt-0.5">{weeklyReport.dealsClosed}</p>
-          </div>
-          <div>
-            <p className="text-ink-soft">Revenue</p>
-            <p className="font-display text-xl mt-0.5" style={{ color: "var(--gold)" }}>
-              {formatCurrency(weeklyReport.revenueGenerated)}
-            </p>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
+          <StatCard label="Analyzed" value={String(weeklyReport.conversationsAnalyzed)} icon={FileSearch} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+          <StatCard label="Sent" value={String(weeklyReport.followUpsSent)} icon={Send} accent="var(--rust)" accentSoft="var(--rust-soft)" />
+          <StatCard label="Replies" value={String(weeklyReport.repliesReceived)} icon={MessageCircle} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+          <StatCard label="Closed" value={String(weeklyReport.dealsClosed)} icon={Trophy} accent="var(--sage)" accentSoft="var(--sage-soft)" />
+          <StatCard label="Revenue" value={formatCurrency(weeklyReport.revenueGenerated)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
         </div>
-        <p className="text-sm text-ink-soft mt-3 leading-relaxed">{weeklyReport.insight}</p>
+        <p className="text-sm text-ink-soft mt-4 leading-relaxed">{weeklyReport.insight}</p>
       </section>
     </div>
   );

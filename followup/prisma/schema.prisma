@@ -66,6 +66,11 @@ model Business {
   stripeSubscriptionId String?   @unique
   subscriptionStatus   String?
   currentPeriodEnd     DateTime?
+
+  // Generic inbound lead-capture webhook (Zapier/Make/Google Forms bridge/
+  // raw script) — see src/app/api/webhooks/lead/route.ts. Generated lazily
+  // in Settings, not on every business.
+  webhookSecret String? @unique
 }
 
 enum PipelineStage {

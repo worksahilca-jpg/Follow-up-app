@@ -76,3 +76,30 @@ h1, h2, h3, .font-display {
 * {
   border-color: var(--line);
 }
+
+/* App-wide interaction polish, applied once here rather than per
+   component: most buttons/links/inputs across the authenticated app had
+   no focus ring at all (falling back to the browser's raw default) and
+   inconsistent hover transitions — some instant, some eased. This gives
+   every interactive element the same on-brand violet focus ring (the one
+   sanctioned non-button use of the accent) and a quiet, consistent
+   150ms transition, without touching each component's own classes. */
+a, button, input, select, textarea, [tabindex] {
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease,
+    box-shadow 150ms ease, opacity 150ms ease, transform 150ms ease;
+}
+
+/* A quiet default hover cue for the many flat colored buttons/links in
+   the app (e.g. Settings' "Sync now") that never had one — subtle
+   enough to just add on top of anything that already defines its own
+   hover: class (an opacity or scale change) without looking doubled. */
+button:not(:disabled):hover, a:hover, [tabindex]:hover {
+  filter: brightness(0.96);
+}
+
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--rust-soft), 0 0 0 1px var(--rust);
+  border-radius: 4px;
+}

@@ -103,11 +103,19 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user }) {
-      // `user` is only present right after sign-in; on later requests we
-      // reuse whatever's already in the token instead of hitting the DB
-      // every time.
-      if (user?.email) {
-        const dbUser = await prisma.user.findUnique({ where: { email: user.email.toLowerCase() } });
+      // Re-derived right after sign-in (when `user` is present) AND
+      // retried on every later request as long as businessId is still
+      // missing from the token — a token that never got it on that first
+      // pass (a transient DB hiccup, timing) used to be stuck that way for
+      // the token's whole lifetime, since this used to only ever run once:
+      // signed in with Google successfully, but permanently bounced back
+      // to /signin with no error, because getSessionContext() requires
+      // businessId and nothing ever gave it a second chance to appear.
+      // Once businessId is set, this is a no-op fast path on every future
+      // request, same as before — no extra DB hit for the common case.
+      const email = user?.email ?? token.email;
+      if (!token.businessId && email) {
+        const dbUser = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
         if (dbUser?.businessId) {
           token.userId = dbUser.id;
           token.businessId = dbUser.businessId;

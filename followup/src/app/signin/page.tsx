@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { Zap } from "lucide-react";
+import { Compass } from "lucide-react";
 
 export default function SignInPage() {
   return (
@@ -21,7 +21,7 @@ function SignInPageInner() {
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm text-center">
         <div className="flex items-center justify-center gap-2">
-          <Zap className="h-6 w-6" style={{ color: "var(--rust)" }} />
+          <Compass className="h-6 w-6" style={{ color: "var(--rust)" }} />
           <span className="font-display text-2xl">FollowUp</span>
         </div>
         <p className="text-ink-soft mt-2">Sign in to see your real leads and follow-ups.</p>
@@ -35,12 +35,12 @@ function SignInPageInner() {
         </button>
 
         {error === "AccessDenied" && (
-          <p className="mt-4 text-sm" style={{ color: "var(--rust)" }}>
+          <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
             That Google account isn&apos;t authorized for this workspace.
           </p>
         )}
         {error && error !== "AccessDenied" && (
-          <p className="mt-4 text-sm" style={{ color: "var(--rust)" }}>
+          <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
             Sign-in failed — please try again.
           </p>
         )}

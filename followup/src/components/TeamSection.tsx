@@ -159,7 +159,7 @@ export default function TeamSection() {
                   <option value="ADMIN">Admin</option>
                   <option value="SALES">Sales</option>
                 </select>
-                <button onClick={() => remove(m.id, m.name)} className="text-xs" style={{ color: "var(--rust)" }}>
+                <button onClick={() => remove(m.id, m.name)} className="text-xs" style={{ color: "var(--coral)" }}>
                   Remove
                 </button>
               </div>
@@ -179,7 +179,7 @@ export default function TeamSection() {
                 <span className="text-ink-soft">
                   {inv.email} · <span className="text-xs">{inv.role === "ADMIN" ? "Admin" : "Sales"}</span>
                 </span>
-                <button onClick={() => cancelInvite(inv.id)} aria-label="Cancel invite" style={{ color: "var(--rust)" }}>
+                <button onClick={() => cancelInvite(inv.id)} aria-label="Cancel invite" style={{ color: "var(--coral)" }}>
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -228,7 +228,7 @@ export default function TeamSection() {
         </p>
       )}
       {error && (
-        <p className="text-xs mt-3" style={{ color: "var(--rust)" }}>
+        <p className="text-xs mt-3" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

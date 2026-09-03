@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Sparkles,
-  Zap,
+  Compass,
   Mail,
   Clock,
   TrendingUp,
@@ -30,7 +30,7 @@ export default function LandingPage() {
       >
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5" style={{ color: "var(--rust)" }} />
+            <Compass className="h-5 w-5" style={{ color: "var(--rust)" }} />
             <span className="font-display text-lg">FollowUp</span>
           </div>
           <nav className="hidden sm:flex items-center gap-8 text-sm text-ink-soft">
@@ -52,10 +52,9 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative max-w-6xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-12 items-center">
         <FadeIn>
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
-            style={{ backgroundColor: "var(--rust-soft)", color: "var(--rust)" }}
-          >
+          {/* Neutral bordered chip, not a violet badge — violet stays on
+              buttons/links/focus states only, nowhere decorative. */}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft">
             <Sparkles className="h-3 w-3" /> AI-native, not AI-bolted-on
           </span>
           <h1 className="font-display text-5xl sm:text-6xl leading-[1.05] mt-5" style={{ letterSpacing: "-0.02em" }}>
@@ -69,8 +68,8 @@ export default function LandingPage() {
           <div className="mt-9 flex flex-wrap gap-3">
             <Link
               href="/signin"
-              className="inline-flex items-center gap-1.5 rounded-full px-5 py-3 text-sm font-medium text-ink transition-transform hover:scale-[1.03]"
-              style={{ backgroundColor: "var(--rust)" }}
+              className="inline-flex items-center gap-1.5 rounded-full px-5 py-3 text-sm font-medium transition-transform hover:scale-[1.03]"
+              style={{ backgroundColor: "var(--rust)", color: "var(--on-accent)" }}
             >
               Get started <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -95,7 +94,7 @@ export default function LandingPage() {
         <FadeIn delay={0.15}>
           <div
             className="rounded-2xl border border-line bg-card overflow-hidden"
-            style={{ boxShadow: "0 24px 60px -24px rgba(0,0,0,0.35), 0 0 0 1px color-mix(in srgb, var(--rust) 8%, transparent)" }}
+            style={{ boxShadow: "0 24px 60px -24px rgba(0,0,0,0.18)" }}
           >
             <div className="flex items-center gap-1.5 px-4 py-3 border-b border-line">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--line)" }} />
@@ -115,7 +114,7 @@ export default function LandingPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-display text-base">Sarah Johnson</p>
-                    <span className="text-sm font-medium shrink-0" style={{ color: "var(--gold)" }}>$3,500</span>
+                    <span className="text-sm font-semibold shrink-0">$3,500</span>
                   </div>
                   {/* Color-coded status pill — the one place on this page
                       color carries meaning (lead urgency), matching the
@@ -411,18 +410,20 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Closing CTA — the one deliberately bold-colored band on the page,
-          so it reads as the page's final word rather than another section. */}
-      <section style={{ backgroundColor: "var(--rust)" }}>
+      {/* Closing CTA — plain page background, not a bold color band. The
+          violet stays confined to the button itself, the page's final
+          word coming from restraint rather than a splash of color. Plain
+          (not bg-card) since FAQ right above it is already bg-card. */}
+      <section>
         <div className="max-w-6xl mx-auto px-6 py-24 text-center">
           <FadeIn>
-            <h2 className="font-display text-3xl sm:text-4xl max-w-lg mx-auto text-ink" style={{ textWrap: "balance" }}>
+            <h2 className="font-display text-3xl sm:text-4xl max-w-lg mx-auto" style={{ textWrap: "balance" }}>
               Your next lost sale is sitting in your inbox right now.
             </h2>
             <Link
               href="/signin"
               className="inline-flex items-center gap-1.5 mt-7 rounded-full px-6 py-3 text-sm font-medium transition-transform hover:scale-[1.03]"
-              style={{ backgroundColor: "var(--paper)", color: "var(--ink)" }}
+              style={{ backgroundColor: "var(--rust)", color: "var(--on-accent)" }}
             >
               Get started <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -446,16 +447,13 @@ export default function LandingPage() {
   );
 }
 
-// Bordered card, single accent — color-coding is reserved for the
-// lead-urgency status pills, so all four steps share one identity rather
-// than each claiming its own hue.
+// Bordered card, neutral icon chip — color-coding is reserved for the
+// lead-urgency status pills, so this reads as black/white/gray like the
+// rest of the page rather than reaching for the accent as decoration.
 function Step({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
     <div className="rounded-xl border border-line bg-card p-5">
-      <div
-        className="h-9 w-9 rounded-lg flex items-center justify-center"
-        style={{ backgroundColor: "var(--rust-soft)", color: "var(--rust)" }}
-      >
+      <div className="h-9 w-9 rounded-lg flex items-center justify-center border border-line text-ink-soft">
         {icon}
       </div>
       <h4 className="font-medium mt-3">{title}</h4>
@@ -464,12 +462,14 @@ function Step({ icon, title, body }: { icon: React.ReactNode; title: string; bod
   );
 }
 
+// Same neutral card treatment as everything else on the page — no violet
+// border or glow to mark this as "the" plan; with one plan on offer that
+// distinction has no work to do anyway.
 function PriceCard({
   name,
   price,
   tagline,
   features,
-  highlight,
 }: {
   name: string;
   price: string;
@@ -478,14 +478,7 @@ function PriceCard({
   highlight?: boolean;
 }) {
   return (
-    <div
-      className="rounded-2xl p-6"
-      style={{
-        border: highlight ? "2px solid var(--rust)" : "1px solid var(--line)",
-        backgroundColor: "var(--paper)",
-        boxShadow: highlight ? "0 20px 50px -24px color-mix(in srgb, var(--rust) 35%, transparent)" : undefined,
-      }}
-    >
+    <div className="rounded-2xl border border-line bg-card p-6">
       <p className="text-sm font-semibold">{name}</p>
       <p className="font-display text-3xl mt-1">
         {price}
@@ -495,15 +488,15 @@ function PriceCard({
       <ul className="mt-4 space-y-2 text-sm">
         {features.map((f) => (
           <li key={f} className="flex items-center gap-2">
-            <Check className="h-3.5 w-3.5" style={{ color: "var(--sage)" }} />
+            <Check className="h-3.5 w-3.5 text-ink-soft" />
             {f}
           </li>
         ))}
       </ul>
       <Link
         href="/signin"
-        className="mt-6 flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium text-ink transition-opacity hover:opacity-90"
-        style={{ backgroundColor: "var(--rust)" }}
+        className="mt-6 flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
+        style={{ backgroundColor: "var(--rust)", color: "var(--on-accent)" }}
       >
         Get started <ArrowRight className="h-3.5 w-3.5" />
       </Link>

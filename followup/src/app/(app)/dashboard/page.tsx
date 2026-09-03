@@ -45,8 +45,8 @@ export default async function DashboardPage() {
           label="Hot leads"
           value={String(stats.hotLeads)}
           icon={Flame}
-          accent="var(--rust)"
-          accentSoft="var(--rust-soft)"
+          accent="var(--coral)"
+          accentSoft="var(--coral-soft)"
         />
         <StatCard
           label="Follow-ups today"
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
       {cold.length > 0 && (
         <section className="mt-10">
           <h2 className="font-display text-xl flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" style={{ color: "var(--rust)" }} />
+            <AlertTriangle className="h-4 w-4" style={{ color: "var(--coral)" }} />
             Leads going cold
           </h2>
           <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line">
@@ -159,7 +159,7 @@ export default async function DashboardPage() {
         <h2 className="font-display text-xl">This week&apos;s AI report</h2>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
           <StatCard label="Analyzed" value={String(weeklyReport.conversationsAnalyzed)} icon={FileSearch} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-          <StatCard label="Sent" value={String(weeklyReport.followUpsSent)} icon={Send} accent="var(--rust)" accentSoft="var(--rust-soft)" />
+          <StatCard label="Sent" value={String(weeklyReport.followUpsSent)} icon={Send} accent="var(--sage)" accentSoft="var(--sage-soft)" />
           <StatCard label="Replies" value={String(weeklyReport.repliesReceived)} icon={MessageCircle} accent="var(--slate)" accentSoft="var(--slate-soft)" />
           <StatCard label="Closed" value={String(weeklyReport.dealsClosed)} icon={Trophy} accent="var(--sage)" accentSoft="var(--sage-soft)" />
           <StatCard label="Revenue" value={formatCurrency(weeklyReport.revenueGenerated)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />

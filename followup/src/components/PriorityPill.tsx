@@ -1,10 +1,13 @@
 import { Priority } from "@/lib/types";
 
+// The accent violet is reserved for buttons/links/focus states — priority
+// is a status, so it draws from the same low-saturation red/amber/gray
+// family as the rest of the urgency system, never the brand accent.
 const config: Record<Priority, { label: string; bg: string; fg: string }> = {
-  high: { label: "High priority", bg: "var(--rust-soft)", fg: "var(--rust)" },
+  high: { label: "High priority", bg: "var(--coral-soft)", fg: "var(--coral)" },
   medium: { label: "Medium priority", bg: "var(--slate-soft)", fg: "var(--slate)" },
   low: { label: "Low priority", bg: "var(--sage-soft)", fg: "var(--sage)" },
-  none: { label: "No action needed", bg: "#f4f4f5", fg: "var(--ink-soft)" },
+  none: { label: "No action needed", bg: "var(--line)", fg: "var(--ink-soft)" },
 };
 
 export default function PriorityPill({ priority }: { priority: Priority }) {

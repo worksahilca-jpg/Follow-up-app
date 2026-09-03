@@ -202,7 +202,7 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
           )}
 
           {error && (
-            <p className="text-sm" style={{ color: "var(--rust)" }}>
+            <p className="text-sm" style={{ color: "var(--coral)" }}>
               {error}
             </p>
           )}

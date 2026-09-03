@@ -66,7 +66,7 @@ export default function MessageComposer({
   return (
     <section>
       <h2 className="font-display text-xl flex items-center gap-2">
-        <Sparkles className="h-4 w-4" style={{ color: "var(--rust)" }} />
+        <Sparkles className="h-4 w-4 text-ink-soft" />
         AI-suggested follow-up
       </h2>
       <p className="text-xs text-ink-soft mt-1">
@@ -79,7 +79,7 @@ export default function MessageComposer({
         className="mt-3 w-full rounded-lg border border-line bg-card p-3 text-sm leading-relaxed"
       />
       {error && (
-        <p className="mt-2 text-xs" style={{ color: "var(--rust)" }}>
+        <p className="mt-2 text-xs" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

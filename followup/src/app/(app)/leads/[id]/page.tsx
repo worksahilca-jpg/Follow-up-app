@@ -61,7 +61,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               {lead.scoreFactors.map((f) => (
                 <div key={f.label} className="flex items-center justify-between text-sm">
                   <span className="text-ink-soft">{f.label}</span>
-                  <span className="font-medium tabular-nums" style={{ color: f.weight >= 0 ? "var(--sage)" : "var(--rust)" }}>
+                  <span className="font-medium tabular-nums" style={{ color: f.weight >= 0 ? "var(--sage)" : "var(--coral)" }}>
                     {f.weight >= 0 ? "+" : ""}
                     {f.weight}
                   </span>
@@ -89,7 +89,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                     <span>{formatDate(m.date)}</span>
                   </div>
                   <p>{m.body}</p>
-                  {m.opened && <p className="text-xs mt-1" style={{ color: "var(--rust)" }}>Opened</p>}
+                  {m.opened && <p className="text-xs mt-1" style={{ color: "var(--sage)" }}>Opened</p>}
                 </div>
               ))}
             </div>

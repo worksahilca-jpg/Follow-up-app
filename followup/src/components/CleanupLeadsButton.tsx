@@ -62,7 +62,7 @@ export default function CleanupLeadsButton() {
       {open && (
         <div
           className="absolute right-0 top-full mt-2 w-96 rounded-xl border border-line bg-card p-4 shadow-lg z-10"
-          style={result ? undefined : { borderColor: "var(--rust)", backgroundColor: "var(--rust-soft)" }}
+          style={result ? undefined : { borderColor: "var(--coral)", backgroundColor: "var(--coral-soft)" }}
         >
           {result ? (
             <>
@@ -103,7 +103,7 @@ export default function CleanupLeadsButton() {
             </>
           ) : (
             <>
-              <p className="text-sm" style={{ color: "var(--rust)" }}>
+              <p className="text-sm" style={{ color: "var(--coral)" }}>
                 This re-checks every Gmail-sourced lead against the AI and deletes the ones that aren&apos;t
                 real sales conversations. Can&apos;t be undone.
               </p>
@@ -112,7 +112,7 @@ export default function CleanupLeadsButton() {
                   onClick={run}
                   disabled={running}
                   className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60"
-                  style={{ backgroundColor: "var(--rust)" }}
+                  style={{ backgroundColor: "var(--coral)" }}
                 >
                   {running ? "Checking…" : "Yes, clean up"}
                 </button>
@@ -125,7 +125,7 @@ export default function CleanupLeadsButton() {
                 </button>
               </div>
               {error && (
-                <p className="text-xs mt-2" style={{ color: "var(--rust)" }}>
+                <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>
                   {error}
                 </p>
               )}

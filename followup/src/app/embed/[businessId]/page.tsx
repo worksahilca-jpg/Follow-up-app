@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Check, Send, Zap } from "lucide-react";
+import { Check, Send, Compass } from "lucide-react";
 
 // Public, unauthenticated, and deliberately meant to be iframed into a
 // stranger's own website (see the Website widget section in Settings) —
@@ -78,7 +78,7 @@ export default function EmbedLeadPage() {
           className="h-6 w-6 rounded-md flex items-center justify-center shrink-0"
           style={{ backgroundColor: "var(--rust)" }}
         >
-          <Zap className="h-3.5 w-3.5" style={{ color: "var(--paper)" }} />
+          <Compass className="h-3.5 w-3.5" style={{ color: "var(--paper)" }} />
         </div>
         <span className="text-xs font-semibold tracking-wide" style={{ color: "var(--rust)" }}>
           {businessName ?? " "}
@@ -136,7 +136,7 @@ export default function EmbedLeadPage() {
               </div>
 
               {submitError && (
-                <p className="text-xs" style={{ color: "var(--rust)" }}>
+                <p className="text-xs" style={{ color: "var(--coral)" }}>
                   {submitError}
                 </p>
               )}
@@ -181,7 +181,7 @@ export default function EmbedLeadPage() {
           rel="noopener"
           className="inline-flex items-center gap-1 hover:text-ink transition-colors"
         >
-          <Zap className="h-3 w-3" style={{ color: "var(--rust)" }} /> Powered by FollowUp
+          <Compass className="h-3 w-3" style={{ color: "var(--rust)" }} /> Powered by FollowUp
         </a>
       </p>
     </div>

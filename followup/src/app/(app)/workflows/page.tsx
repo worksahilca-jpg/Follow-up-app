@@ -82,7 +82,7 @@ export default function WorkflowsPage() {
       </div>
 
       {error && (
-        <p className="mt-4 text-sm" style={{ color: "var(--rust)" }}>
+        <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}
@@ -225,7 +225,7 @@ function WorkflowCard({
             onClick={remove}
             disabled={busy}
             className="text-xs font-medium rounded-lg px-2.5 py-1.5 disabled:opacity-60"
-            style={{ color: "var(--rust)" }}
+            style={{ color: "var(--coral)" }}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -370,7 +370,7 @@ function WorkflowEditor({
                   onClick={() => setSteps((prev) => prev.filter((_, idx) => idx !== i))}
                   disabled={steps.length === 1}
                   className="p-1 rounded disabled:opacity-30"
-                  style={{ color: "var(--rust)" }}
+                  style={{ color: "var(--coral)" }}
                   aria-label="Remove step"
                 >
                   <Trash2 className="h-3.5 w-3.5" />

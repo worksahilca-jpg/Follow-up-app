@@ -103,7 +103,7 @@ export default function FollowUpCard({ lead }: { lead: Lead }) {
             </button>
           </div>
           {error && (
-            <p className="text-xs mt-2" style={{ color: "var(--rust)" }}>
+            <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>
               {error}
             </p>
           )}

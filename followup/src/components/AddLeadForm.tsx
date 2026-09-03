@@ -130,7 +130,7 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
           </div>
 
           {error && (
-            <p className="text-sm" style={{ color: "var(--rust)" }}>
+            <p className="text-sm" style={{ color: "var(--coral)" }}>
               {error}
             </p>
           )}

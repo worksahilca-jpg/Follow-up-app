@@ -111,7 +111,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
         <StatCard label="Total" value={String(leads.length)} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-        <StatCard label="Hot" value={String(hotCount)} icon={Flame} accent="var(--rust)" accentSoft="var(--rust-soft)" />
+        <StatCard label="Hot" value={String(hotCount)} icon={Flame} accent="var(--coral)" accentSoft="var(--coral-soft)" />
         <StatCard label="Going cold" value={String(coldCount)} icon={Snowflake} accent="var(--gold)" accentSoft="var(--gold-soft)" />
         <StatCard label="Won" value={String(wonCount)} icon={Trophy} accent="var(--sage)" accentSoft="var(--sage-soft)" />
       </div>

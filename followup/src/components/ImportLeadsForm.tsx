@@ -84,7 +84,7 @@ export default function ImportLeadsForm({ onClose }: { onClose: () => void }) {
             </label>
 
             {error && (
-              <p className="text-sm mt-3" style={{ color: "var(--rust)" }}>
+              <p className="text-sm mt-3" style={{ color: "var(--coral)" }}>
                 {error}
               </p>
             )}

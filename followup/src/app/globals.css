@@ -1,35 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  /* Neutrals — soft charcoal, not pure black, with cards a shade lighter
-     for separation. Dark, techy, AI-product feel without being harsh. */
-  --paper: #1c1c21;
-  --ink: #f4f4f5;
-  --ink-soft: #a1a1aa;
-  --line: #333338;
-  --card: #242429;
+  /* Neutrals — plain off-white, not a tint, with cards a hair lighter
+     (near-white vs. off-white) for separation via contrast rather than
+     color. Near-black headline text, medium-gray secondary text — never
+     pure black on pure white. */
+  --paper: #fafafa;
+  --ink: #18181b;
+  --ink-soft: #71717a;
+  --line: #e4e4e7;
+  --card: #ffffff;
 
-  /* Brand / primary — the one sharp accent color everything else stays
-     quieter than: CTAs, active nav state, high-priority indicators. */
-  --rust: #a78bfa;
-  --rust-soft: #2e2650;
+  /* Brand / primary — the one accent color, used only on buttons, links,
+     active states, and focus rings. Never a background fill, an icon
+     color, or a border outside those interactive contexts. rust-soft is
+     for focus-ring halos only (see embed page), not badge/panel fills. */
+  --rust: #7c3aed;
+  --rust-soft: #ede9fe;
 
-  /* Secondary / informational — calendar, medium priority, neutral badges. */
-  --slate: #38bdf8;
-  --slate-soft: #16303d;
+  /* Text that sits ON the accent fill (button labels on a --rust
+     background). Deliberately independent of --ink: --ink tracks the
+     page's own text color and flips with the theme, but a button's label
+     only needs to contrast against --rust, which doesn't move with it. */
+  --on-accent: #fafafa;
 
-  /* Success / positive — connected integrations, sent confirmations. */
-  --sage: #4ade80;
-  --sage-soft: #163a24;
+  /* Lead-urgency status-pill system — the one place color variety is
+     allowed outside the accent. Flat, low-saturation: soft tint for the
+     pill background, the saturated shade for its text. */
+  --slate: #64748b;
+  --slate-soft: #f1f5f9;
 
-  /* Money — deal values, revenue figures. */
-  --gold: #fbbf24;
-  --gold-soft: #3d2e0f;
+  --sage: #16a34a;
+  --sage-soft: #dcfce7;
 
-  /* Urgent / at-risk — the fourth member of the lead-urgency status-pill
-     system (coral/slate/sage). Not used anywhere outside status pills. */
-  --coral: #f87171;
-  --coral-soft: #3d1f1f;
+  --gold: #d97706;
+  --gold-soft: #fef3c7;
+
+  --coral: #dc2626;
+  --coral-soft: #fee2e2;
 }
 
 @theme inline {
@@ -39,6 +47,7 @@
   --color-line: var(--line);
   --color-rust: var(--rust);
   --color-rust-soft: var(--rust-soft);
+  --color-on-accent: var(--on-accent);
   --color-slate: var(--slate);
   --color-slate-soft: var(--slate-soft);
   --color-sage: var(--sage);
@@ -66,15 +75,4 @@ h1, h2, h3, .font-display {
 
 * {
   border-color: var(--line);
-}
-
-/* Slow ambient drift for decorative background glows — subtle, not a
-   distraction, just keeps the hero from feeling static. */
-@keyframes float-slow {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(2%, -3%) scale(1.05); }
-}
-
-.animate-float-slow {
-  animation: float-slow 12s ease-in-out infinite;
 }

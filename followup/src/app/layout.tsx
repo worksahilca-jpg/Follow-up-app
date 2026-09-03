@@ -8,10 +8,30 @@ import AuthProvider from "@/components/AuthProvider";
 // SaaS UI (Linear, Notion, Stripe) rather than an editorial display font.
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
+// metadataBase makes every relative URL below (the OG image, icons) resolve
+// to an absolute one — required for social platforms that fetch the image
+// directly rather than rendering it in a browser with a known origin.
+const siteUrl = process.env.NEXTAUTH_URL ?? "https://follow-up-app-two.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "FollowUp — Never lose a lead to silence",
   description:
     "FollowUp is the AI teammate that watches your sales conversations and tells you who to follow up with today, why, and what to say.",
+  openGraph: {
+    title: "FollowUp — Never lose a lead to silence",
+    description:
+      "FollowUp is the AI teammate that watches your sales conversations and tells you who to follow up with today, why, and what to say.",
+    url: siteUrl,
+    siteName: "FollowUp",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FollowUp — Never lose a lead to silence",
+    description:
+      "FollowUp is the AI teammate that watches your sales conversations and tells you who to follow up with today, why, and what to say.",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -41,7 +41,8 @@ function SignInPageInner() {
         )}
         {error && error !== "AccessDenied" && (
           <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
-            Sign-in failed — please try again.
+            Sign-in failed — please try again.{" "}
+            <span className="text-ink-soft">({error})</span>
           </p>
         )}
       </div>

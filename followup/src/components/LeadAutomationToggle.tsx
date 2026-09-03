@@ -93,8 +93,8 @@ export default function LeadAutomationToggle({
       <p className="text-xs mt-2 text-ink-soft leading-relaxed">{DESCRIPTIONS[tier]}</p>
 
       {confirmingAutonomous && (
-        <div className="mt-3 rounded-lg p-3" style={{ backgroundColor: "var(--rust-soft)" }}>
-          <p className="text-xs" style={{ color: "var(--rust)" }}>
+        <div className="mt-3 rounded-lg p-3" style={{ backgroundColor: "var(--coral-soft)" }}>
+          <p className="text-xs" style={{ color: "var(--coral)" }}>
             This lead will send every automated follow-up with no review — including anything that mentions
             pricing or follows a tense conversation. Sure?
           </p>
@@ -103,7 +103,7 @@ export default function LeadAutomationToggle({
               onClick={() => save("autonomous")}
               disabled={saving}
               className="rounded-lg px-2.5 py-1 text-xs font-medium text-white disabled:opacity-60"
-              style={{ backgroundColor: "var(--rust)" }}
+              style={{ backgroundColor: "var(--coral)" }}
             >
               Yes, go autonomous
             </button>
@@ -119,7 +119,7 @@ export default function LeadAutomationToggle({
       )}
 
       {error && (
-        <p className="text-xs mt-2" style={{ color: "var(--rust)" }}>
+        <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

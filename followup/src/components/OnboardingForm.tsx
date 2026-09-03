@@ -94,7 +94,7 @@ export default function OnboardingForm({ initialName }: { initialName: string })
           </div>
 
           {error && (
-            <p className="text-sm" style={{ color: "var(--rust)" }}>
+            <p className="text-sm" style={{ color: "var(--coral)" }}>
               {error}
             </p>
           )}

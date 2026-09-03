@@ -35,12 +35,12 @@ function SignInPageInner() {
         </button>
 
         {error === "AccessDenied" && (
-          <p className="mt-4 text-sm" style={{ color: "var(--rust)" }}>
+          <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
             That Google account isn&apos;t authorized for this workspace.
           </p>
         )}
         {error && error !== "AccessDenied" && (
-          <p className="mt-4 text-sm" style={{ color: "var(--rust)" }}>
+          <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
             Sign-in failed — please try again.
           </p>
         )}

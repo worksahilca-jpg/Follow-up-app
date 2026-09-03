@@ -147,7 +147,7 @@ export default function BookingPage() {
               </div>
             )}
             {confirmError && (
-              <p className="text-sm mt-3" style={{ color: "var(--rust)" }}>
+              <p className="text-sm mt-3" style={{ color: "var(--coral)" }}>
                 {confirmError}
               </p>
             )}

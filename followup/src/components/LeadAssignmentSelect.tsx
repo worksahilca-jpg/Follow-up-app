@@ -73,7 +73,7 @@ export default function LeadAssignmentSelect({
         ))}
       </select>
       {error && (
-        <span className="text-xs mt-1" style={{ color: "var(--rust)" }}>
+        <span className="text-xs mt-1" style={{ color: "var(--coral)" }}>
           {error}
         </span>
       )}

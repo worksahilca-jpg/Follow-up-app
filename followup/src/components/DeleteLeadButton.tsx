@@ -28,8 +28,8 @@ export default function DeleteLeadButton({ leadId, leadName }: { leadId: string;
 
   if (confirming) {
     return (
-      <div className="rounded-xl border p-4" style={{ borderColor: "var(--rust)", backgroundColor: "var(--rust-soft)" }}>
-        <p className="text-sm" style={{ color: "var(--rust)" }}>
+      <div className="rounded-xl border p-4" style={{ borderColor: "var(--coral)", backgroundColor: "var(--coral-soft)" }}>
+        <p className="text-sm" style={{ color: "var(--coral)" }}>
           Delete {leadName}? This removes the lead and its whole conversation history. Can&apos;t be undone.
         </p>
         <div className="mt-3 flex gap-2">
@@ -37,7 +37,7 @@ export default function DeleteLeadButton({ leadId, leadName }: { leadId: string;
             onClick={handleDelete}
             disabled={deleting}
             className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60"
-            style={{ backgroundColor: "var(--rust)" }}
+            style={{ backgroundColor: "var(--coral)" }}
           >
             {deleting ? "Deleting…" : "Yes, delete"}
           </button>
@@ -62,7 +62,7 @@ export default function DeleteLeadButton({ leadId, leadName }: { leadId: string;
         <Trash2 className="h-3.5 w-3.5" /> Delete lead
       </button>
       {error && (
-        <p className="text-xs mt-2" style={{ color: "var(--rust)" }}>
+        <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

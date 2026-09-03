@@ -21,7 +21,7 @@ export default async function AnalyticsPage() {
         <StatCard label="Total leads" value={String(data.totalLeads)} />
         <StatCard label="Conversion rate" value={`${data.conversionRate}%`} accent="var(--slate)" />
         <StatCard label="Revenue won" value={formatCurrency(data.totalRevenue)} accent="var(--gold)" />
-        <StatCard label="Avg. deal value" value={formatCurrency(data.avgDealValue)} accent="var(--rust)" />
+        <StatCard label="Avg. deal value" value={formatCurrency(data.avgDealValue)} accent="var(--gold)" />
         <StatCard
           label="Reply rate"
           value={data.followUpsSentTotal > 0 ? `${data.replyRate}%` : "—"}

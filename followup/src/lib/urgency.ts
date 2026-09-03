@@ -8,5 +8,5 @@
 export function urgencyColor(daysSinceContact: number): string {
   if (daysSinceContact < 3) return "var(--sage)";
   if (daysSinceContact < 7) return "var(--gold)";
-  return "var(--rust)";
+  return "var(--coral)";
 }

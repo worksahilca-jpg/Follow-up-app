@@ -100,7 +100,7 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
         <StatCard label="Active leads" value={String(visible.length)} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
         <StatCard label="Total pipeline value" value={formatCurrency(totalValue)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
-        <StatCard label="Weighted value" value={formatCurrency(Math.round(weightedValue))} icon={TrendingUp} accent="var(--rust)" accentSoft="var(--rust-soft)" />
+        <StatCard label="Weighted value" value={formatCurrency(Math.round(weightedValue))} icon={TrendingUp} accent="var(--gold)" accentSoft="var(--gold-soft)" />
       </div>
 
       {visible.length === 0 ? (
@@ -134,7 +134,7 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
       )}
 
       {moveError && (
-        <p className="mt-4 text-sm" style={{ color: "var(--rust)" }}>
+        <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
           {moveError}
         </p>
       )}

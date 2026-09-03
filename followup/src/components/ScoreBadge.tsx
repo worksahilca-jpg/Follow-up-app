@@ -1,5 +1,7 @@
+// Score is a status, not an action — draws from the urgency-pill colors
+// (coral/slate/sage), not the accent violet reserved for buttons/links.
 function scoreColor(score: number) {
-  if (score >= 75) return { bg: "var(--rust-soft)", fg: "var(--rust)" };
+  if (score >= 75) return { bg: "var(--coral-soft)", fg: "var(--coral)" };
   if (score >= 45) return { bg: "var(--slate-soft)", fg: "var(--slate)" };
   return { bg: "var(--sage-soft)", fg: "var(--sage)" };
 }

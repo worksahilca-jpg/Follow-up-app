@@ -96,7 +96,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
             onClick={unenroll}
             disabled={saving}
             className="mt-2 text-xs font-medium disabled:opacity-60"
-            style={{ color: "var(--rust)" }}
+            style={{ color: "var(--coral)" }}
           >
             Remove from workflow
           </button>
@@ -135,7 +135,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
       )}
 
       {error && (
-        <p className="text-xs mt-2" style={{ color: "var(--rust)" }}>
+        <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

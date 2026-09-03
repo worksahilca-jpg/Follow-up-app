@@ -136,7 +136,7 @@ export default function EmbedLeadPage() {
               </div>
 
               {submitError && (
-                <p className="text-xs" style={{ color: "var(--rust)" }}>
+                <p className="text-xs" style={{ color: "var(--coral)" }}>
                   {submitError}
                 </p>
               )}

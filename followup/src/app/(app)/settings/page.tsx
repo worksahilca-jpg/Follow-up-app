@@ -217,7 +217,7 @@ function SettingsPageInner() {
             </p>
           )}
           {gmailError && (
-            <p className="text-xs" style={{ color: "var(--rust)" }}>
+            <p className="text-xs" style={{ color: "var(--coral)" }}>
               {gmailError}
             </p>
           )}
@@ -269,7 +269,7 @@ function SettingsPageInner() {
             </button>
           </div>
           {automationError && (
-            <p className="mt-3 text-xs" style={{ color: "var(--rust)" }}>
+            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
               {automationError}
             </p>
           )}
@@ -371,7 +371,7 @@ function SettingsPageInner() {
             )}
           </div>
           {billingError && (
-            <p className="mt-3 text-xs" style={{ color: "var(--rust)" }}>
+            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
               {billingError}
             </p>
           )}

@@ -33,6 +33,7 @@ import { Lead, Message } from "@/lib/types";
 import { classifyAsProspect } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
+import { notifyLeadEvent } from "@/lib/outboundWebhook";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -365,6 +366,7 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
         assignedToId: isNewLead ? await pickAssignee(businessId) : undefined,
       },
     });
+    if (isNewLead) void notifyLeadEvent(businessId, "lead.created", lead);
 
     let conversation = await prisma.conversation.findUnique({
       where: { externalId: thread.id! },

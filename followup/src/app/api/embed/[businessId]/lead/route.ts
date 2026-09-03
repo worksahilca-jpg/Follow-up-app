@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { pickAssignee } from "@/lib/assignment";
 import { scoreAndDraftForLead } from "@/lib/scoring";
+import { notifyLeadEvent } from "@/lib/outboundWebhook";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEXT = 200;
@@ -99,6 +100,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         assignedToId: await pickAssignee(businessId),
       },
     });
+    void notifyLeadEvent(businessId, "lead.created", lead);
 
     if (message) {
       const conversation = await prisma.conversation.create({

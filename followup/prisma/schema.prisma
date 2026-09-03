@@ -71,6 +71,13 @@ model Business {
   // raw script) — see src/app/api/webhooks/lead/route.ts. Generated lazily
   // in Settings, not on every business.
   webhookSecret String? @unique
+
+  // Outbound lead-event webhook — the reverse direction of webhookSecret
+  // above: a URL THIS business points at their own CRM/Zapier/Make step,
+  // so FollowUp can push lead.created / lead.stage_changed events out
+  // instead of only receiving them. See src/lib/outboundWebhook.ts and
+  // src/app/api/webhooks/outbound/route.ts. Null until they set one.
+  outboundWebhookUrl String?
 }
 
 enum PipelineStage {

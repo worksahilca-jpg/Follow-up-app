@@ -4,6 +4,7 @@ import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { pickAssignee } from "@/lib/assignment";
+import { notifyLeadEvent } from "@/lib/outboundWebhook";
 
 const MAX_TEXT = 200;
 
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
         assignedToId: await pickAssignee(ctx.businessId),
       },
     });
+    void notifyLeadEvent(ctx.businessId, "lead.created", lead);
     return NextResponse.json({ success: true, id: lead.id });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {

@@ -78,6 +78,16 @@ model Business {
   // instead of only receiving them. See src/lib/outboundWebhook.ts and
   // src/app/api/webhooks/outbound/route.ts. Null until they set one.
   outboundWebhookUrl String?
+
+  // Twilio SMS/voice capture — a separate secret from webhookSecret above
+  // on purpose: regenerating the generic Zapier-facing URL shouldn't
+  // silently break a phone number's webhook config in the Twilio console,
+  // which is far more annoying to notice and fix. twilioAuthToken is THIS
+  // business's own Twilio Auth Token (not FollowUp's), needed to validate
+  // that inbound requests actually came from Twilio — see
+  // src/lib/twilio.ts and src/app/api/twilio/**.
+  twilioSecret    String? @unique
+  twilioAuthToken String?
 }
 
 enum PipelineStage {

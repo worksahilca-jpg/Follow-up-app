@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -16,6 +17,12 @@ export default function SignInPage() {
 function SignInPageInner() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  // Google's PKCE/state verification cookies are set the instant signIn()
+  // fires and checked when Google redirects back — a second click before
+  // that redirect happens overwrites them, so the first round-trip comes
+  // back and fails verification (OAuthCallback). Disabling on first click
+  // makes that race impossible, not just less likely.
+  const [redirecting, setRedirecting] = useState(false);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
@@ -27,11 +34,15 @@ function SignInPageInner() {
         <p className="text-ink-soft mt-2">Sign in to see your real leads and follow-ups.</p>
 
         <button
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          className="mt-8 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-card px-4 py-3 text-sm font-medium hover:bg-paper transition-colors"
+          onClick={() => {
+            setRedirecting(true);
+            signIn("google", { callbackUrl: "/dashboard" });
+          }}
+          disabled={redirecting}
+          className="mt-8 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-card px-4 py-3 text-sm font-medium hover:bg-paper transition-colors disabled:opacity-60"
         >
           <GoogleIcon className="h-4 w-4" />
-          Continue with Google
+          {redirecting ? "Redirecting…" : "Continue with Google"}
         </button>
 
         {error === "AccessDenied" && (

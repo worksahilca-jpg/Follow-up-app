@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import type { PipelineStage } from "@prisma/client";
+import { notifyLeadEvent } from "@/lib/outboundWebhook";
 
 const VALID_STAGES: PipelineStage[] = [
   "NEW",
@@ -52,6 +53,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     });
   }
+
+  void notifyLeadEvent(ctx.businessId, "lead.stage_changed", updated, { previousStage: lead.stage });
 
   return NextResponse.json({ success: true, stage: updated.stage });
 }

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import TeamSection from "@/components/TeamSection";
 import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 import CopyWebhookUrl from "@/components/CopyWebhookUrl";
+import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard } from "lucide-react";
 
 export default function SettingsPage() {
@@ -244,6 +245,13 @@ function SettingsPageInner() {
         <h2 className="font-display text-xl">Lead webhook</h2>
         <div className="mt-4">
           <CopyWebhookUrl />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-display text-xl">Outbound webhook</h2>
+        <div className="mt-4">
+          <OutboundWebhookConfig />
         </div>
       </section>
 

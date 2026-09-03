@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Webhook } from "lucide-react";
+import { Check, ChevronDown, Webhook } from "lucide-react";
 
 /**
  * "Lead webhook" section of Settings — a generated, per-business URL that
@@ -17,6 +17,7 @@ export default function CopyWebhookUrl() {
   const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
 
   useEffect(() => {
     fetch("/api/webhooks/config")
@@ -67,6 +68,28 @@ export default function CopyWebhookUrl() {
             <code className="text-[11px]">email</code> or <code className="text-[11px]">phone</code>{" "}
             (one required), <code className="text-[11px]">message</code> (optional).
           </p>
+
+          <button
+            onClick={() => setShowExamples((v) => !v)}
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+          >
+            <ChevronDown className={`h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
+            What can I connect this to?
+          </button>
+          {showExamples && (
+            <div className="mt-2 rounded-lg bg-paper border border-line p-3 text-xs text-ink-soft space-y-1.5">
+              <p>
+                FollowUp doesn&apos;t talk to Instagram, WhatsApp, or Google Forms directly — <strong>Zapier or
+                Make</strong> already do, for free, and this URL is the address you give them to forward things to.
+              </p>
+              <p>
+                <strong>Example:</strong> in Zapier, pick &quot;New Instagram DM&quot; (or &quot;New Google Forms
+                response,&quot; or &quot;New Facebook Lead Ad&quot;) as the trigger, then &quot;Webhook&quot; as the
+                action, and paste this URL. From then on, every DM/form/lead shows up here automatically — scored,
+                with a reply drafted — no code, no manual entry.
+              </p>
+            </div>
+          )}
 
           {!webhookUrl && (
             <button

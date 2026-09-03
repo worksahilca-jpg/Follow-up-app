@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Send, X } from "lucide-react";
+import { Check, ChevronDown, Send, X } from "lucide-react";
 
 /**
  * "Send lead events out" section of Settings — the reverse direction of
@@ -20,6 +20,7 @@ export default function OutboundWebhookConfig() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<"ok" | "fail" | null>(null);
+  const [showExamples, setShowExamples] = useState(false);
 
   useEffect(() => {
     fetch("/api/webhooks/outbound")
@@ -99,6 +100,28 @@ export default function OutboundWebhookConfig() {
             webhook, and FollowUp will POST every new lead and every pipeline stage change there — the same
             events, live, wherever you actually run your business.
           </p>
+
+          <button
+            onClick={() => setShowExamples((v) => !v)}
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+          >
+            <ChevronDown className={`h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
+            What can I connect this to?
+          </button>
+          {showExamples && (
+            <div className="mt-2 rounded-lg bg-paper border border-line p-3 text-xs text-ink-soft space-y-1.5">
+              <p>
+                Already use a real CRM (HubSpot, Pipedrive, GoHighLevel, etc.)? Most of them have their own
+                &quot;inbound webhook&quot; or accept a Zapier trigger — paste that URL here and every FollowUp
+                lead gets pushed straight into it too, automatically.
+              </p>
+              <p>
+                No CRM yet? A free <a href="https://webhook.site" target="_blank" rel="noopener" className="underline">webhook.site</a> URL
+                or a Slack &quot;Incoming Webhook&quot; both work here for testing — or point it at a Zapier step
+                that adds a row to a Google Sheet, so every lead lands in a spreadsheet automatically.
+              </p>
+            </div>
+          )}
 
           {!url && !editing && (
             <button

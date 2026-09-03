@@ -88,6 +88,11 @@ model Business {
   // src/lib/twilio.ts and src/app/api/twilio/**.
   twilioSecret    String? @unique
   twilioAuthToken String?
+  // Needed for OUTBOUND sending (src/lib/twilio.ts sendSms) — not secret
+  // the way the Auth Token is (both are shown openly in the Twilio
+  // Console), so these are safe to echo back on GET, unlike the token.
+  twilioAccountSid   String?
+  twilioPhoneNumber  String?
 }
 
 enum PipelineStage {

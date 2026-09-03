@@ -16,6 +16,11 @@ export default function TwilioConfig() {
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
   const [hasAuthToken, setHasAuthToken] = useState(false);
   const [authTokenDraft, setAuthTokenDraft] = useState("");
+  const [accountSid, setAccountSid] = useState<string | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+  const [accountSidDraft, setAccountSidDraft] = useState("");
+  const [phoneNumberDraft, setPhoneNumberDraft] = useState("");
+  const [savingOutbound, setSavingOutbound] = useState(false);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState<"sms" | "voice" | null>(null);
   const [showExamples, setShowExamples] = useState(false);
@@ -23,13 +28,26 @@ export default function TwilioConfig() {
   useEffect(() => {
     fetch("/api/twilio/config")
       .then((r) => r.json())
-      .then((data: { success: boolean; smsUrl?: string | null; voiceUrl?: string | null; hasAuthToken?: boolean }) => {
-        if (data.success) {
-          setSmsUrl(data.smsUrl ?? null);
-          setVoiceUrl(data.voiceUrl ?? null);
-          setHasAuthToken(!!data.hasAuthToken);
+      .then(
+        (data: {
+          success: boolean;
+          smsUrl?: string | null;
+          voiceUrl?: string | null;
+          hasAuthToken?: boolean;
+          accountSid?: string | null;
+          phoneNumber?: string | null;
+        }) => {
+          if (data.success) {
+            setSmsUrl(data.smsUrl ?? null);
+            setVoiceUrl(data.voiceUrl ?? null);
+            setHasAuthToken(!!data.hasAuthToken);
+            setAccountSid(data.accountSid ?? null);
+            setPhoneNumber(data.phoneNumber ?? null);
+            setAccountSidDraft(data.accountSid ?? "");
+            setPhoneNumberDraft(data.phoneNumber ?? "");
+          }
         }
-      })
+      )
       .finally(() => setLoading(false));
   }, []);
 
@@ -63,6 +81,25 @@ export default function TwilioConfig() {
       }
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function saveOutbound() {
+    if (!accountSidDraft.trim() || !phoneNumberDraft.trim()) return;
+    setSavingOutbound(true);
+    try {
+      const res = await fetch("/api/twilio/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accountSid: accountSidDraft.trim(), phoneNumber: phoneNumberDraft.trim() }),
+      });
+      const data: { success: boolean } = await res.json();
+      if (data.success) {
+        setAccountSid(accountSidDraft.trim());
+        setPhoneNumber(phoneNumberDraft.trim());
+      }
+    } finally {
+      setSavingOutbound(false);
     }
   }
 
@@ -181,6 +218,49 @@ export default function TwilioConfig() {
                         style={{ backgroundColor: "var(--ink)" }}
                       >
                         {saving ? "Saving…" : "Save"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="pt-3 border-t border-line">
+                <p className="text-xs font-medium">Send text replies</p>
+                {accountSid && phoneNumber ? (
+                  <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "var(--sage)" }}>
+                    <Check className="h-3.5 w-3.5" /> Connected — replying to a text/call lead now sends a real SMS
+                    from {phoneNumber}.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-xs text-ink-soft mt-1">
+                      So &quot;Send now&quot; can actually text back a lead that only has a phone number, not just
+                      email. Both values are shown openly on your{" "}
+                      <a href="https://console.twilio.com" target="_blank" rel="noopener" className="underline">
+                        Twilio Console
+                      </a>{" "}
+                      home page.
+                    </p>
+                    <div className="mt-2 space-y-2">
+                      <input
+                        value={accountSidDraft}
+                        onChange={(e) => setAccountSidDraft(e.target.value)}
+                        placeholder="Account SID (starts with AC...)"
+                        className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                      />
+                      <input
+                        value={phoneNumberDraft}
+                        onChange={(e) => setPhoneNumberDraft(e.target.value)}
+                        placeholder="Your Twilio number, e.g. +18609358202"
+                        className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                      />
+                      <button
+                        onClick={saveOutbound}
+                        disabled={savingOutbound || !accountSidDraft.trim() || !phoneNumberDraft.trim()}
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                        style={{ backgroundColor: "var(--ink)" }}
+                      >
+                        {savingOutbound ? "Saving…" : "Save"}
                       </button>
                     </div>
                   </>

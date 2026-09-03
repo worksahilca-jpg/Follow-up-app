@@ -10,10 +10,11 @@ import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
 import AddLeadForm from "@/components/AddLeadForm";
 import ImportLeadsForm from "@/components/ImportLeadsForm";
+import LogCallForm from "@/components/LogCallForm";
 import StatCard from "@/components/StatCard";
 import EmptyState from "@/components/EmptyState";
 import CleanupLeadsButton from "@/components/CleanupLeadsButton";
-import { Search, Plus, Upload, Users, Flame, Snowflake, Trophy, Inbox } from "lucide-react";
+import { Search, Plus, Upload, Phone, Users, Flame, Snowflake, Trophy, Inbox } from "lucide-react";
 
 const filters = [
   { id: "all", label: "All" },
@@ -34,6 +35,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
   const [query, setQuery] = useState("");
   const [showAddLead, setShowAddLead] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showLogCall, setShowLogCall] = useState(false);
 
   const filtered = useMemo(() => {
     let list = [...leads];
@@ -79,6 +81,13 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
         <div className="flex shrink-0 gap-2">
           <CleanupLeadsButton />
           <button
+            onClick={() => setShowLogCall(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium border border-line"
+          >
+            <Phone className="h-4 w-4" />
+            Log a call
+          </button>
+          <button
             onClick={() => setShowImport(true)}
             className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium border border-line"
           >
@@ -98,6 +107,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
 
       {showAddLead && <AddLeadForm onClose={() => setShowAddLead(false)} />}
       {showImport && <ImportLeadsForm onClose={() => setShowImport(false)} />}
+      {showLogCall && <LogCallForm onClose={() => setShowLogCall(false)} />}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
         <StatCard label="Total" value={String(leads.length)} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />

@@ -127,6 +127,20 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
   },
 } as const;
 
+// Gmail's plain-text export re-quotes the entire prior thread inside every
+// reply ("On <date>, X wrote:" followed by ">"-prefixed lines) — so a real
+// 4-message thread sends the model the same paragraphs 3-4 times over.
+// That repetition dilutes the actual signal a small "mini" model needs to
+// catch an obvious case; cutting each body at its first quote marker
+// leaves just what that message actually added.
+function stripQuotedReply(body: string): string {
+  const onWroteMatch = body.match(/^On .+wrote:\s*$/im);
+  const quoteLineMatch = body.match(/^>/m);
+  const cutPoints = [onWroteMatch?.index, quoteLineMatch?.index].filter((i): i is number => i !== undefined);
+  const cut = cutPoints.length > 0 ? Math.min(...cutPoints) : body.length;
+  return body.slice(0, cut).trim();
+}
+
 /**
  * Triage step for Gmail sync: "is this thread actually a sales conversation
  * with a prospect" as opposed to any other real two-way email exchange
@@ -141,12 +155,24 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
  * saw message body text. Who sent it is often the single strongest signal
  * a human uses for exactly this judgment, and the body text alone doesn't
  * carry it.
+ *
+ * Only the first 3 messages (chronological — the ones that actually
+ * establish who this is and why they wrote) go to the model, each
+ * de-quoted and capped — not the whole thread. Same real-world testing
+ * found the classifier still missing an obvious case (an actual job offer,
+ * complete with "SIN number"/"work permit"/"employment agreement") on a
+ * long, heavily-requoted thread; trimming what it has to read fixes that
+ * without needing a bigger model.
  */
 export async function classifyAsProspect(
   conversation: Message[],
   sender: { name: string; email: string }
 ): Promise<{ isProspect: boolean; reason: string }> {
   const client = getClient();
+
+  const forClassification = conversation
+    .slice(0, 3)
+    .map((m) => ({ ...m, body: stripQuotedReply(m.body).slice(0, 1200) }));
 
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -162,6 +188,8 @@ export async function classifyAsProspect(
           "— a company/brand name instead of a person, an HR/recruiting-sounding name, a known platform or " +
           "rewards/notification program, or a domain that belongs to a tool/vendor rather than an individual " +
           "customer should all weigh heavily toward false, even if the message body reads politely or on-topic. " +
+          "Mentions of an offer letter, employment agreement, compensation/salary, SIN/SSN, work permit, or " +
+          "onboarding paperwork mean this is a job, not a sale — false, regardless of how warm the tone is. " +
           "Lean toward true only for genuinely ambiguous business inquiries about the business's own product or " +
           "service, from what looks like an actual person.",
       },
@@ -169,7 +197,7 @@ export async function classifyAsProspect(
         role: "user",
         content:
           `Sender: ${sender.name} <${sender.email}>\n\n` +
-          `Conversation:\n${formatTranscript(conversation)}`,
+          `Conversation (earliest messages only):\n${formatTranscript(forClassification)}`,
       },
     ],
     response_format: { type: "json_schema", json_schema: PROSPECT_CLASSIFICATION_SCHEMA },

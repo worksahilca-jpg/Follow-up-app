@@ -123,7 +123,7 @@ export default function LandingPage() {
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-xs text-ink-soft">ABC Marketing</p>
                     <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-ink"
+                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-on-accent"
                       style={{ backgroundColor: "var(--coral)" }}
                     >
                       Hot lead
@@ -154,7 +154,7 @@ export default function LandingPage() {
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-xs text-ink-soft">Requested a proposal 3 days ago</p>
                     <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-ink shrink-0"
+                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-on-accent shrink-0"
                       style={{ backgroundColor: "var(--slate)" }}
                     >
                       Warm
@@ -347,7 +347,7 @@ export default function LandingPage() {
                     <span className="text-sm font-medium flex-1 min-w-0 truncate">{row.name}</span>
                     <span className="text-xs text-ink-soft hidden sm:inline">{row.owner}</span>
                     <span
-                      className="rounded-full px-2.5 py-1 text-[10px] font-semibold text-ink shrink-0"
+                      className="rounded-full px-2.5 py-1 text-[10px] font-semibold text-on-accent shrink-0"
                       style={{ backgroundColor: row.color }}
                     >
                       {row.status}

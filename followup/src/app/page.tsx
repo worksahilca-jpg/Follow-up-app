@@ -1,5 +1,20 @@
 import Link from "next/link";
-import { Sparkles, Zap, Mail, Clock, TrendingUp, Users, Check, ArrowRight } from "lucide-react";
+import {
+  Sparkles,
+  Zap,
+  Mail,
+  Clock,
+  TrendingUp,
+  Users,
+  Check,
+  ArrowRight,
+  Home,
+  Briefcase,
+  Building2,
+  Eye,
+  PenLine,
+  BellOff,
+} from "lucide-react";
 import FadeIn from "@/components/motion/FadeIn";
 import FaqAccordion from "@/components/FaqAccordion";
 
@@ -20,6 +35,7 @@ export default function LandingPage() {
           </div>
           <nav className="hidden sm:flex items-center gap-8 text-sm text-ink-soft">
             <a href="#how-it-works" className="hover:text-ink transition-colors">How it works</a>
+            <a href="#who-its-for" className="hover:text-ink transition-colors">Who it&apos;s for</a>
             <a href="#pricing" className="hover:text-ink transition-colors">Pricing</a>
             <a href="#faq" className="hover:text-ink transition-colors">FAQ</a>
           </nav>
@@ -213,8 +229,83 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Team + analytics */}
+      {/* Use cases — makes the "wide range of visitors" framing concrete
+          instead of leaving everyone to project themselves onto vague
+          copy. Three real personas, same card language as How it works. */}
+      <section id="who-its-for" className="max-w-6xl mx-auto px-6 py-20">
+        <FadeIn className="max-w-2xl">
+          <h2 className="font-display text-3xl sm:text-4xl">Who it&apos;s for</h2>
+          <p className="mt-3 text-ink-soft">
+            If leads reach you before they reach a CRM, this is built for you.
+          </p>
+        </FadeIn>
+        <div className="mt-10 grid sm:grid-cols-3 gap-5">
+          {[
+            {
+              icon: <Home className="h-4 w-4" />,
+              title: "The realtor",
+              body: "Five open houses on Saturday. By Monday, three of those leads have already gone quiet in your inbox — FollowUp tells you which one to call first.",
+            },
+            {
+              icon: <Briefcase className="h-4 w-4" />,
+              title: "The freelance consultant",
+              body: "One inbox, a dozen open conversations, and no time to triage them by hand. FollowUp turns “I’ll get to it” into a short list you actually get to.",
+            },
+            {
+              icon: <Building2 className="h-4 w-4" />,
+              title: "The 4-person agency",
+              body: "You're doing client work and new business at the same time. FollowUp watches the pipeline in the background so nothing slips between calls.",
+            },
+          ].map((item, i) => (
+            <FadeIn key={item.title} delay={i * 0.1}>
+              <Step icon={item.icon} title={item.title} body={item.body} />
+            </FadeIn>
+          ))}
+        </div>
+      </section>
+
+      {/* Differentiation — "not another CRM reminder", made specific
+          instead of asserted. Same restrained icon-chip language as the
+          other list sections, single accent, no color-coding. */}
       <section className="bg-card">
+        <div className="max-w-6xl mx-auto px-6 py-20">
+          <FadeIn className="max-w-2xl">
+            <h2 className="font-display text-3xl sm:text-4xl">Why not just set a CRM reminder?</h2>
+            <p className="mt-3 text-ink-soft">
+              A reminder tells you it&apos;s time. It doesn&apos;t tell you why, or what to say.
+            </p>
+          </FadeIn>
+          <div className="mt-10 grid sm:grid-cols-3 gap-5">
+            {[
+              {
+                icon: <Eye className="h-4 w-4" />,
+                title: "Scores you can see through",
+                body: "Every urgency score comes with the reason behind it — the exact conversation detail that raised or lowered it. Never a black-box number.",
+              },
+              {
+                icon: <PenLine className="h-4 w-4" />,
+                title: "Drafts that sound like you",
+                body: "Follow-ups are drafted from how you actually write to that lead, not generic AI boilerplate you have to rewrite before sending.",
+              },
+              {
+                icon: <BellOff className="h-4 w-4" />,
+                title: "No nagging about handled leads",
+                body: "Closed the deal on a call? Mark it handled and FollowUp stops reminding you — it never assumes the inbox is the whole story.",
+              },
+            ].map((item, i) => (
+              <FadeIn key={item.title} delay={i * 0.1}>
+                <Step icon={item.icon} title={item.title} body={item.body} />
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Team + analytics — plain background rather than bg-card here,
+          since it now sits directly after the (also bg-card) Differentiation
+          section; keeps the alternating rhythm instead of merging into one
+          flat block. */}
+      <section>
         <div className="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-12 items-center">
           <div className="space-y-10">
             <FadeIn>
@@ -240,7 +331,7 @@ export default function LandingPage() {
               readable from across the room. Same status-color language as
               the hero card above, just at board scale. */}
           <FadeIn delay={0.15}>
-            <div className="rounded-2xl border border-line bg-[var(--paper)] p-5" style={{ boxShadow: "0 20px 50px -28px rgba(0,0,0,0.35)" }}>
+            <div className="rounded-2xl border border-line bg-card p-5" style={{ boxShadow: "0 20px 50px -28px rgba(0,0,0,0.35)" }}>
               <p className="text-xs text-ink-soft mb-3">Team pipeline</p>
               <div className="space-y-2">
                 {[

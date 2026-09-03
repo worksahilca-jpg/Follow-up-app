@@ -42,12 +42,17 @@ export async function POST() {
     include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
   });
 
-  type RemovedEntry = { id: string; name: string; reason: string } | null;
+  // Diagnostic-grade outcome for every checked lead, not just the removed
+  // ones — a run that removes nothing is ambiguous otherwise: did the AI
+  // genuinely judge each one a real prospect, or did every call quietly
+  // error and fall back to "kept" (see the catch below)? This is the only
+  // way to tell those apart from the API response alone.
+  type Outcome = { id: string; name: string; removed: boolean; reason: string } | undefined;
 
   // Each lead is classified and (if it fails) deleted independently, so
   // this is safe to run several at a time instead of one OpenAI round trip
   // at a time.
-  const outcomes = await mapWithConcurrency(leads, 5, async (lead): Promise<RemovedEntry | undefined> => {
+  const outcomes = await mapWithConcurrency(leads, 5, async (lead): Promise<Outcome> => {
     const messages = lead.conversations.flatMap((c) =>
       c.messages.map((m) => ({
         id: m.id,
@@ -67,19 +72,34 @@ export async function POST() {
       });
       if (!isProspect) {
         await deleteLeadCascade(lead.id);
-        return { id: lead.id, name: lead.name, reason };
+        return { id: lead.id, name: lead.name, removed: true, reason };
       }
-      return null; // checked, kept
+      return { id: lead.id, name: lead.name, removed: false, reason };
     } catch (err) {
       // One lead failing to classify shouldn't fail the whole clean-up —
       // and better to leave a lead in place than delete it on a guess.
+      // Still surfaced below (reason carries the actual error) instead of
+      // silently looking identical to a real "kept" judgment.
       console.error(`Failed to classify lead ${lead.id} during cleanup:`, err);
-      return null; // counts as checked, but not removed
+      return {
+        id: lead.id,
+        name: lead.name,
+        removed: false,
+        reason: `Classification error: ${err instanceof Error ? err.message : "unknown error"}`,
+      };
     }
   });
 
-  const checked = outcomes.filter((o) => o !== undefined).length;
-  const removed = outcomes.filter((o): o is { id: string; name: string; reason: string } => Boolean(o));
+  const checked = outcomes.filter((o): o is NonNullable<Outcome> => o !== undefined);
+  const removed = checked.filter((o) => o.removed);
 
-  return NextResponse.json({ success: true, checked, removedCount: removed.length, removed });
+  return NextResponse.json({
+    success: true,
+    checked: checked.length,
+    removedCount: removed.length,
+    removed,
+    // Every lead the AI looked at and kept, with its stated reason — the
+    // diagnostic trail for "why didn't this get removed."
+    kept: checked.filter((o) => !o.removed),
+  });
 }

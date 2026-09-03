@@ -8,6 +8,7 @@ interface CleanupResult {
   checked: number;
   removedCount: number;
   removed: { id: string; name: string; reason: string }[];
+  kept: { id: string; name: string; reason: string }[];
 }
 
 /**
@@ -39,7 +40,7 @@ export default function CleanupLeadsButton() {
       const res = await fetch("/api/leads/cleanup", { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.message ?? "Clean-up failed — try again.");
-      setResult({ checked: data.checked, removedCount: data.removedCount, removed: data.removed });
+      setResult({ checked: data.checked, removedCount: data.removedCount, removed: data.removed, kept: data.kept ?? [] });
       if (data.removedCount > 0) router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Clean-up failed — try again.");
@@ -60,7 +61,7 @@ export default function CleanupLeadsButton() {
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-line bg-card p-4 shadow-lg z-10"
+          className="absolute right-0 top-full mt-2 w-96 rounded-xl border border-line bg-card p-4 shadow-lg z-10"
           style={result ? undefined : { borderColor: "var(--rust)", backgroundColor: "var(--rust-soft)" }}
         >
           {result ? (
@@ -71,13 +72,30 @@ export default function CleanupLeadsButton() {
                   : `Removed ${result.removedCount} of ${result.checked} leads that weren't real sales conversations.`}
               </p>
               {result.removed.length > 0 && (
-                <ul className="mt-2 space-y-1 text-xs text-ink-soft max-h-40 overflow-y-auto">
-                  {result.removed.map((r) => (
-                    <li key={r.id}>
-                      <span className="font-medium">{r.name}</span> — {r.reason}
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <p className="text-xs font-medium text-ink-soft mt-3">Removed</p>
+                  <ul className="mt-1 space-y-1 text-xs text-ink-soft max-h-32 overflow-y-auto">
+                    {result.removed.map((r) => (
+                      <li key={r.id}>
+                        <span className="font-medium">{r.name}</span> — {r.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              {result.kept.length > 0 && (
+                <>
+                  <p className="text-xs font-medium text-ink-soft mt-3">
+                    Kept — the AI&apos;s reasoning for each, so you can judge if it&apos;s right
+                  </p>
+                  <ul className="mt-1 space-y-1 text-xs text-ink-soft max-h-40 overflow-y-auto">
+                    {result.kept.map((r) => (
+                      <li key={r.id}>
+                        <span className="font-medium">{r.name}</span> — {r.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
               <button onClick={close} className="mt-3 text-xs underline text-ink-soft">
                 Dismiss

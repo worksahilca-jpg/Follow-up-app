@@ -66,12 +66,19 @@ export default function LandingPage() {
             &quot;let me think about it&quot; turns into a lost sale.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
+            {/* The one element on the page allowed a little more weight than
+                "restrained" — this is the entire point of the hero, so it
+                earns a glow and some heft that nothing else on the page gets. */}
             <Link
               href="/signin"
-              className="inline-flex items-center gap-1.5 rounded-full px-5 py-3 text-sm font-medium transition-transform hover:scale-[1.03]"
-              style={{ backgroundColor: "var(--rust)", color: "var(--on-accent)" }}
+              className="inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-base font-semibold transition-transform hover:scale-[1.05]"
+              style={{
+                backgroundColor: "var(--rust)",
+                color: "var(--on-accent)",
+                boxShadow: "0 12px 28px -10px color-mix(in srgb, var(--rust) 55%, transparent)",
+              }}
             >
-              Get started <ArrowRight className="h-3.5 w-3.5" />
+              Get started <ArrowRight className="h-4 w-4" />
             </Link>
             <a href="#how-it-works" className="rounded-full border border-line px-5 py-3 text-sm font-medium transition-colors hover:bg-card">
               See how it works
@@ -422,10 +429,14 @@ export default function LandingPage() {
             </h2>
             <Link
               href="/signin"
-              className="inline-flex items-center gap-1.5 mt-7 rounded-full px-6 py-3 text-sm font-medium transition-transform hover:scale-[1.03]"
-              style={{ backgroundColor: "var(--rust)", color: "var(--on-accent)" }}
+              className="inline-flex items-center gap-2 mt-7 rounded-full px-6 py-3.5 text-base font-semibold transition-transform hover:scale-[1.05]"
+              style={{
+                backgroundColor: "var(--rust)",
+                color: "var(--on-accent)",
+                boxShadow: "0 12px 28px -10px color-mix(in srgb, var(--rust) 55%, transparent)",
+              }}
             >
-              Get started <ArrowRight className="h-3.5 w-3.5" />
+              Get started <ArrowRight className="h-4 w-4" />
             </Link>
           </FadeIn>
         </div>
@@ -495,8 +506,12 @@ function PriceCard({
       </ul>
       <Link
         href="/signin"
-        className="mt-6 flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
-        style={{ backgroundColor: "var(--rust)", color: "var(--on-accent)" }}
+        className="mt-6 flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition-transform hover:scale-[1.02]"
+        style={{
+          backgroundColor: "var(--rust)",
+          color: "var(--on-accent)",
+          boxShadow: "0 10px 22px -10px color-mix(in srgb, var(--rust) 50%, transparent)",
+        }}
       >
         Get started <ArrowRight className="h-3.5 w-3.5" />
       </Link>

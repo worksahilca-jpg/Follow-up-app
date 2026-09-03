@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, Mic, Square } from "lucide-react";
+import { X, Mic, Square, ShieldAlert } from "lucide-react";
 
 const inputClass = "w-full rounded-lg border border-line bg-card px-3 py-2 text-sm";
 
@@ -21,8 +21,17 @@ function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
  * Quick call logging — fewer fields than the full "Add lead" form, and a
  * mic button that dictates straight into the notes field using the
  * browser's free built-in speech recognition (no Twilio/paid transcription
- * needed). Built for the moment right after you hang up: name, number,
- * talk for ten seconds about what was said, done.
+ * needed). Works two ways: dictate a quick summary right after you hang
+ * up, or open this before/during a speakerphone or computer call (Zoom,
+ * Google Meet) and let it capture live — same button either way.
+ *
+ * Recording another person without their knowledge is illegal in a lot of
+ * places (many US states require every party's consent, not just yours),
+ * and the transcription itself isn't private/local — Chrome sends the
+ * audio to Google's speech service to turn it into text. So the mic stays
+ * gated behind an explicit, un-skippable consent checkbox, unchecked every
+ * time this form opens, and that disclosure is always visible, not just
+ * on first use.
  */
 export default function LogCallForm({ onClose }: { onClose: () => void }) {
   const router = useRouter();
@@ -33,6 +42,7 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   const [recording, setRecording] = useState(false);
+  const [hasConsent, setHasConsent] = useState(false);
   // This component only ever mounts client-side (shown after a button
   // click, never part of the server-rendered HTML), so reading the
   // feature-detect straight into the initializer is safe — no SSR/
@@ -49,6 +59,7 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
       setRecording(false);
       return;
     }
+    if (!hasConsent) return; // belt-and-suspenders — the button is also disabled until checked
 
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor) return;
@@ -122,7 +133,7 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
         </div>
         <p className="text-xs text-ink-soft -mt-2 mb-4">
           For leads that called instead of emailed — this doesn&apos;t get synced automatically, so log it
-          here right after you hang up.
+          here right after you hang up, or keep it open during the call.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -138,29 +149,13 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium">What was the call about?</label>
-              {micSupported && (
-                <button
-                  type="button"
-                  onClick={toggleRecording}
-                  className="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1"
-                  style={{
-                    backgroundColor: recording ? "var(--rust)" : "var(--slate-soft)",
-                    color: recording ? "white" : "var(--slate)",
-                  }}
-                >
-                  {recording ? <Square className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
-                  {recording ? "Stop" : "Dictate"}
-                </button>
-              )}
-            </div>
+            <label className="text-sm font-medium block mb-1.5">What was the call about?</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className={inputClass}
               rows={4}
-              placeholder={micSupported ? "Type, or hit Dictate and just talk" : "e.g. asked about the 4br on Maple St, wants a showing Saturday"}
+              placeholder={micSupported ? "Type, or use Dictate below" : "e.g. asked about the 4br on Maple St, wants a showing Saturday"}
             />
             {recording && (
               <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: "var(--rust)" }}>
@@ -169,6 +164,42 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
               </p>
             )}
           </div>
+
+          {micSupported && (
+            <div className="rounded-lg border border-line p-3" style={{ backgroundColor: "var(--paper)" }}>
+              <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasConsent}
+                  onChange={(e) => setHasConsent(e.target.checked)}
+                  disabled={recording}
+                  className="mt-0.5"
+                />
+                <span>
+                  <strong className="text-ink font-medium flex items-center gap-1">
+                    <ShieldAlert className="h-3 w-3" /> I have consent to record/transcribe this call.
+                  </strong>{" "}
+                  Recording someone without their knowledge is illegal in a lot of places — many US states
+                  require everyone on the call to agree, not just you. This also isn&apos;t fully private:
+                  Chrome sends the audio to Google to turn it into text, we only ever store the resulting
+                  words, not the recording itself.
+                </span>
+              </label>
+              <button
+                type="button"
+                onClick={toggleRecording}
+                disabled={!hasConsent && !recording}
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: recording ? "var(--rust)" : "var(--slate-soft)",
+                  color: recording ? "white" : "var(--slate)",
+                }}
+              >
+                {recording ? <Square className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+                {recording ? "Stop listening" : "Start dictating"}
+              </button>
+            </div>
+          )}
 
           {error && (
             <p className="text-sm" style={{ color: "var(--rust)" }}>

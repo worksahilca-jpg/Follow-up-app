@@ -25,6 +25,11 @@
   /* Money — deal values, revenue figures. */
   --gold: #fbbf24;
   --gold-soft: #3d2e0f;
+
+  /* Urgent / at-risk — the fourth member of the lead-urgency status-pill
+     system (coral/slate/sage). Not used anywhere outside status pills. */
+  --coral: #f87171;
+  --coral-soft: #3d1f1f;
 }
 
 @theme inline {
@@ -40,6 +45,8 @@
   --color-sage-soft: var(--sage-soft);
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
+  --color-coral: var(--coral);
+  --color-coral-soft: var(--coral-soft);
   --color-card: var(--card);
   --font-display: var(--font-inter), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-inter), "Segoe UI", ui-sans-serif, system-ui, sans-serif;

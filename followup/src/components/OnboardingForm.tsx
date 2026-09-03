@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Zap } from "lucide-react";
+import { Compass } from "lucide-react";
 
 const INDUSTRIES = [
   "Real estate",
@@ -50,7 +50,7 @@ export default function OnboardingForm({ initialName }: { initialName: string })
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <Zap className="h-6 w-6" style={{ color: "var(--rust)" }} />
+          <Compass className="h-6 w-6" style={{ color: "var(--rust)" }} />
           <span className="font-display text-2xl">FollowUp</span>
         </div>
         <p className="text-ink-soft text-center mt-2">A couple quick questions and you&apos;re set up.</p>

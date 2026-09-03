@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Zap, Calendar, Check } from "lucide-react";
+import { Compass, Calendar, Check } from "lucide-react";
 
 interface BookingData {
   leadName: string;
@@ -73,7 +73,7 @@ export default function BookingPage() {
     <div className="min-h-full flex flex-col">
       <header className="border-b border-line">
         <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-2">
-          <Zap className="h-5 w-5" style={{ color: "var(--rust)" }} />
+          <Compass className="h-5 w-5" style={{ color: "var(--rust)" }} />
           <span className="font-display text-lg">FollowUp</span>
         </div>
       </header>

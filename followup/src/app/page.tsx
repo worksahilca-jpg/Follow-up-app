@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Sparkles,
-  Zap,
+  Compass,
   Mail,
   Clock,
   TrendingUp,
@@ -30,7 +30,7 @@ export default function LandingPage() {
       >
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5" style={{ color: "var(--rust)" }} />
+            <Compass className="h-5 w-5" style={{ color: "var(--rust)" }} />
             <span className="font-display text-lg">FollowUp</span>
           </div>
           <nav className="hidden sm:flex items-center gap-8 text-sm text-ink-soft">

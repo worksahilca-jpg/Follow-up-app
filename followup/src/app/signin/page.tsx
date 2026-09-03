@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -14,6 +14,42 @@ export default function SignInPage() {
   );
 }
 
+// One retry of a failed Google callback is silently attempted before ever
+// showing an error — see readAutoRetry() below for why.
+const RETRY_KEY = "followup_oauth_retried";
+
+// OAuthCallback has shown up on a clean single click, with no double-click
+// involved — every check NextAuth runs before that error (state/PKCE cookie
+// presence) only needs OUR OWN cookie + secret, so it isn't cold-start-
+// sensitive. What IS in that same try/catch is the actual network round-trip
+// to Google's token endpoint, which on a serverless platform can flake on
+// the first (cold) invocation and succeed immediately after. Since manually
+// clicking "Continue with Google" again always works, we do that one retry
+// automatically instead of making the user see a scary error and do it
+// themselves. Runs once at mount (not in an effect) so it can decide
+// synchronously, before the first paint, whether to show the real UI or a
+// silent "Redirecting…" state; sessionStorage caps it at once per browser
+// session — a second real failure in a row still shows the actual error
+// rather than looping forever.
+function readAutoRetry(error: string | null): boolean {
+  if (typeof window === "undefined") return false;
+  if (error !== "OAuthCallback") {
+    // A clean landing (no error, or some other error) — a future
+    // OAuthCallback gets its own fresh one-time retry budget.
+    window.sessionStorage.removeItem(RETRY_KEY);
+    return false;
+  }
+  if (window.sessionStorage.getItem(RETRY_KEY)) {
+    // Already auto-retried once this session and failed again for real —
+    // clear the flag so a later, fresh sign-in attempt still gets its own
+    // one free retry, and let the actual error show.
+    window.sessionStorage.removeItem(RETRY_KEY);
+    return false;
+  }
+  window.sessionStorage.setItem(RETRY_KEY, "1");
+  return true;
+}
+
 function SignInPageInner() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
@@ -23,6 +59,11 @@ function SignInPageInner() {
   // back and fails verification (OAuthCallback). Disabling on first click
   // makes that race impossible, not just less likely.
   const [redirecting, setRedirecting] = useState(false);
+  const [autoRetrying] = useState(() => readAutoRetry(error));
+
+  useEffect(() => {
+    if (autoRetrying) signIn("google", { callbackUrl: "/dashboard" });
+  }, [autoRetrying]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
@@ -38,19 +79,22 @@ function SignInPageInner() {
             setRedirecting(true);
             signIn("google", { callbackUrl: "/dashboard" });
           }}
-          disabled={redirecting}
+          disabled={redirecting || autoRetrying}
           className="mt-8 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-card px-4 py-3 text-sm font-medium hover:bg-paper transition-colors disabled:opacity-60"
         >
           <GoogleIcon className="h-4 w-4" />
-          {redirecting ? "Redirecting…" : "Continue with Google"}
+          {redirecting || autoRetrying ? "Redirecting…" : "Continue with Google"}
         </button>
 
-        {error === "AccessDenied" && (
+        {/* A first-attempt OAuthCallback silently retries once (see the
+            effect above) — don't flash the scary error while that's
+            in flight; only show it if the retry fails too. */}
+        {!autoRetrying && error === "AccessDenied" && (
           <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
             That Google account isn&apos;t authorized for this workspace.
           </p>
         )}
-        {error && error !== "AccessDenied" && (
+        {!autoRetrying && error && error !== "AccessDenied" && (
           <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
             Sign-in failed — please try again.{" "}
             <span className="text-ink-soft">({error})</span>

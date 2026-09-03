@@ -110,3 +110,47 @@ export function twiml(xml: string): Response {
     headers: { "Content-Type": "text/xml" },
   });
 }
+
+/**
+ * Sends a real outbound SMS via Twilio's REST API — the reverse of
+ * everything else in this file, which only ever receives. Called from
+ * src/lib/sending.ts as the fallback for a lead that has a phone but no
+ * email. No `twilio` npm package here either: this is one plain
+ * form-encoded POST with HTTP Basic Auth (Account SID as the username,
+ * Auth Token as the password — Twilio's own REST API convention), not
+ * worth a dependency for.
+ */
+export async function sendSms(
+  businessId: string,
+  to: string,
+  body: string
+): Promise<{ success: boolean; message?: string; sid?: string }> {
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { twilioAccountSid: true, twilioAuthToken: true, twilioPhoneNumber: true },
+  });
+  if (!business?.twilioAccountSid || !business.twilioAuthToken || !business.twilioPhoneNumber) {
+    return { success: false, message: "Twilio isn't fully connected yet — check Settings → Phone (SMS + calls)." };
+  }
+
+  const params = new URLSearchParams({ To: to, From: business.twilioPhoneNumber, Body: body });
+  const auth = Buffer.from(`${business.twilioAccountSid}:${business.twilioAuthToken}`).toString("base64");
+
+  const res = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${business.twilioAccountSid}/Messages.json`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+    }
+  );
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { success: false, message: typeof data.message === "string" ? data.message : "Twilio rejected this message." };
+  }
+  return { success: true, sid: typeof data.sid === "string" ? data.sid : undefined };
+}

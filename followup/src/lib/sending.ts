@@ -3,10 +3,15 @@
  * user, or automated) and logging it for real — both as a Message in the
  * lead's conversation history, and as a FollowUp record (so "Sent" on the
  * weekly report can be a real count instead of a placeholder).
+ *
+ * Two real channels now: email (Gmail) when the lead has one, SMS
+ * (Twilio) as the fallback when they only have a phone — the same
+ * approval-first flow either way, just a different wire underneath.
  */
 
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/integrations/gmail";
+import { sendSms } from "@/lib/twilio";
 
 export async function sendFollowUpToLead(
   leadId: string,
@@ -15,23 +20,31 @@ export async function sendFollowUpToLead(
 ): Promise<{ success: boolean; message?: string }> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
   if (!lead) return { success: false, message: "Lead not found." };
-  if (!lead.email) return { success: false, message: "This lead has no email address on file." };
 
-  const result = await sendEmail(lead.businessId, {
-    to: lead.email,
-    subject: `Following up, ${lead.name.split(" ")[0]}`,
-    body,
-  });
-  if (!result.success) {
-    return { success: false, message: "Gmail didn't confirm this message sent." };
+  const channel = lead.email ? "email" : lead.phone ? "text" : null;
+  if (!channel) return { success: false, message: "This lead has no email or phone number on file." };
+
+  let externalId: string | undefined;
+  if (channel === "email") {
+    const result = await sendEmail(lead.businessId, {
+      to: lead.email!,
+      subject: `Following up, ${lead.name.split(" ")[0]}`,
+      body,
+    });
+    if (!result.success) return { success: false, message: "Gmail didn't confirm this message sent." };
+    externalId = result.messageId ?? undefined;
+  } else {
+    const result = await sendSms(lead.businessId, lead.phone!, body);
+    if (!result.success) return { success: false, message: result.message ?? "Twilio didn't confirm this message sent." };
+    externalId = result.sid;
   }
 
   let conversation = await prisma.conversation.findFirst({
-    where: { leadId: lead.id, channel: "email" },
+    where: { leadId: lead.id, channel },
     orderBy: { createdAt: "desc" },
   });
   if (!conversation) {
-    conversation = await prisma.conversation.create({ data: { leadId: lead.id, channel: "email" } });
+    conversation = await prisma.conversation.create({ data: { leadId: lead.id, channel } });
   }
 
   await prisma.message.create({
@@ -39,14 +52,14 @@ export async function sendFollowUpToLead(
       conversationId: conversation.id,
       direction: "outbound",
       body,
-      externalId: result.messageId ?? undefined,
+      externalId,
     },
   });
 
   await prisma.followUp.create({
     data: {
       leadId: lead.id,
-      channel: "email",
+      channel,
       message: body,
       status: "sent",
       automated: options.automated ?? false,

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Sparkles, Zap, Mail, Clock, TrendingUp, Users, Check, ArrowRight } from "lucide-react";
 import FadeIn from "@/components/motion/FadeIn";
 import FaqAccordion from "@/components/FaqAccordion";
-import HeroGlow from "@/components/HeroGlow";
 
 export default function LandingPage() {
   return (
@@ -36,7 +35,6 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="relative max-w-6xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-12 items-center">
-        <HeroGlow />
         <FadeIn>
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
@@ -55,7 +53,7 @@ export default function LandingPage() {
           <div className="mt-9 flex flex-wrap gap-3">
             <Link
               href="/signin"
-              className="inline-flex items-center gap-1.5 rounded-full px-5 py-3 text-sm font-medium text-white transition-transform hover:scale-[1.03]"
+              className="inline-flex items-center gap-1.5 rounded-full px-5 py-3 text-sm font-medium text-ink transition-transform hover:scale-[1.03]"
               style={{ backgroundColor: "var(--rust)" }}
             >
               Get started <ArrowRight className="h-3.5 w-3.5" />
@@ -66,26 +64,27 @@ export default function LandingPage() {
           </div>
           {/* Credibility line — a cited stat rather than a fabricated customer
               count or logo wall, which the app doesn't have yet and shouldn't
-              pretend to. */}
-          <p className="mt-5 text-xs text-ink-soft flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: "var(--sage)" }} />
+              pretend to. Plain text, no color-coding — that's reserved for
+              lead-urgency status pills only. */}
+          <p className="mt-5 text-xs text-ink-soft">
             Leads contacted within 5 minutes convert up to 21&times; more than those contacted after 30.
           </p>
           <p className="mt-1.5 text-xs text-ink-soft">No credit card required to sign up.</p>
         </FadeIn>
 
         {/* Live-looking follow-up card mockup, framed like a real screenshot
-            in a browser window rather than a bare panel — the small
-            traffic-light dots are the whole trick. */}
+            in a browser window rather than a bare panel. The window-chrome
+            dots are neutral, not colored traffic lights — color on this
+            page is reserved for the lead-urgency status pills below. */}
         <FadeIn delay={0.15}>
           <div
             className="rounded-2xl border border-line bg-card overflow-hidden"
             style={{ boxShadow: "0 24px 60px -24px rgba(0,0,0,0.35), 0 0 0 1px color-mix(in srgb, var(--rust) 8%, transparent)" }}
           >
             <div className="flex items-center gap-1.5 px-4 py-3 border-b border-line">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--rust)" }} />
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--gold)" }} />
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--sage)" }} />
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--line)" }} />
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--line)" }} />
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--line)" }} />
             </div>
             <div className="p-5">
             <p className="text-xs text-ink-soft mb-3">Today&apos;s follow-ups</p>
@@ -93,7 +92,7 @@ export default function LandingPage() {
               <div className="flex items-start gap-3">
                 <div
                   className="h-11 w-11 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
-                  style={{ backgroundColor: "var(--rust-soft)", color: "var(--rust)" }}
+                  style={{ backgroundColor: "var(--coral-soft)", color: "var(--coral)" }}
                 >
                   92
                 </div>
@@ -102,14 +101,15 @@ export default function LandingPage() {
                     <p className="font-display text-base">Sarah Johnson</p>
                     <span className="text-sm font-medium shrink-0" style={{ color: "var(--gold)" }}>$3,500</span>
                   </div>
-                  {/* Color-coded status pill — a glanceable "state at a glance"
-                      chip, the way a Monday.com board column reads status by
-                      color rather than making you read every card. */}
+                  {/* Color-coded status pill — the one place on this page
+                      color carries meaning (lead urgency), matching the
+                      score badge above it. Nowhere else on the page uses
+                      this coral/slate/sage system. */}
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-xs text-ink-soft">ABC Marketing</p>
                     <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white"
-                      style={{ backgroundColor: "var(--rust)" }}
+                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-ink"
+                      style={{ backgroundColor: "var(--coral)" }}
                     >
                       Hot lead
                     </span>
@@ -139,8 +139,8 @@ export default function LandingPage() {
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-xs text-ink-soft">Requested a proposal 3 days ago</p>
                     <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white shrink-0"
-                      style={{ backgroundColor: "var(--gold)" }}
+                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-ink shrink-0"
+                      style={{ backgroundColor: "var(--slate)" }}
                     >
                       Warm
                     </span>
@@ -189,29 +189,25 @@ export default function LandingPage() {
               icon: <Mail className="h-4 w-4" />,
               title: "Connect your inbox",
               body: "FollowUp reads your sales conversations in Gmail — nothing else.",
-              color: "var(--rust)",
             },
             {
               icon: <TrendingUp className="h-4 w-4" />,
               title: "It scores every lead",
               body: "Buying intent, response gaps, and deal value become a single follow-up score.",
-              color: "var(--gold)",
             },
             {
               icon: <Clock className="h-4 w-4" />,
               title: "You get a daily list",
               body: "A short, ranked list of who needs you today, and why — not a full CRM to dig through.",
-              color: "var(--sage)",
             },
             {
               icon: <Sparkles className="h-4 w-4" />,
               title: "It drafts the message",
               body: "Edit, regenerate, or send — or turn on automation once you trust it.",
-              color: "var(--slate)",
             },
           ].map((step, i) => (
             <FadeIn key={step.title} delay={i * 0.1}>
-              <Step icon={step.icon} title={step.title} body={step.body} color={step.color} />
+              <Step icon={step.icon} title={step.title} body={step.body} />
             </FadeIn>
           ))}
         </div>
@@ -222,7 +218,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-12 items-center">
           <div className="space-y-10">
             <FadeIn>
-              <Users className="h-5 w-5" style={{ color: "var(--slate)" }} />
+              <Users className="h-5 w-5 text-ink-soft" />
               <h3 className="font-display text-2xl mt-3">Works for a team, not just you</h3>
               <p className="mt-2 text-ink-soft leading-relaxed">
                 See who on your team has overdue follow-ups, how much revenue each person
@@ -230,7 +226,7 @@ export default function LandingPage() {
               </p>
             </FadeIn>
             <FadeIn delay={0.1}>
-              <TrendingUp className="h-5 w-5" style={{ color: "var(--gold)" }} />
+              <TrendingUp className="h-5 w-5 text-ink-soft" />
               <h3 className="font-display text-2xl mt-3">A pipeline you can actually see</h3>
               <p className="mt-2 text-ink-soft leading-relaxed">
                 Total pipeline value, weighted by how likely each deal is to close, plus a
@@ -249,8 +245,8 @@ export default function LandingPage() {
               <div className="space-y-2">
                 {[
                   { name: "Sarah Johnson", owner: "You", status: "On track", color: "var(--sage)" },
-                  { name: "Mike Patel", owner: "You", status: "At risk", color: "var(--gold)" },
-                  { name: "Devon Ruiz", owner: "Alex", status: "Stuck", color: "var(--rust)" },
+                  { name: "Mike Patel", owner: "You", status: "At risk", color: "var(--slate)" },
+                  { name: "Devon Ruiz", owner: "Alex", status: "Stuck", color: "var(--coral)" },
                   { name: "Priya Shah", owner: "Alex", status: "On track", color: "var(--sage)" },
                 ].map((row) => (
                   <div
@@ -261,7 +257,7 @@ export default function LandingPage() {
                     <span className="text-sm font-medium flex-1 min-w-0 truncate">{row.name}</span>
                     <span className="text-xs text-ink-soft hidden sm:inline">{row.owner}</span>
                     <span
-                      className="rounded-full px-2.5 py-1 text-[10px] font-semibold text-white shrink-0"
+                      className="rounded-full px-2.5 py-1 text-[10px] font-semibold text-ink shrink-0"
                       style={{ backgroundColor: row.color }}
                     >
                       {row.status}
@@ -329,7 +325,7 @@ export default function LandingPage() {
       <section style={{ backgroundColor: "var(--rust)" }}>
         <div className="max-w-6xl mx-auto px-6 py-24 text-center">
           <FadeIn>
-            <h2 className="font-display text-3xl sm:text-4xl max-w-lg mx-auto text-white" style={{ textWrap: "balance" }}>
+            <h2 className="font-display text-3xl sm:text-4xl max-w-lg mx-auto text-ink" style={{ textWrap: "balance" }}>
               Your next lost sale is sitting in your inbox right now.
             </h2>
             <Link
@@ -359,23 +355,20 @@ export default function LandingPage() {
   );
 }
 
-// A colored top edge per card turns four plain paragraphs into something
-// that reads as a sequence of board columns at a glance — each step gets
-// its own identity color, echoed in the icon chip below it.
-function Step({ icon, title, body, color }: { icon: React.ReactNode; title: string; body: string; color: string }) {
+// Bordered card, single accent — color-coding is reserved for the
+// lead-urgency status pills, so all four steps share one identity rather
+// than each claiming its own hue.
+function Step({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
-    <div className="rounded-xl border border-line bg-card overflow-hidden">
-      <div className="h-1" style={{ backgroundColor: color }} />
-      <div className="p-5">
-        <div
-          className="h-9 w-9 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: "color-mix(in srgb, " + color + " 16%, transparent)", color }}
-        >
-          {icon}
-        </div>
-        <h4 className="font-medium mt-3">{title}</h4>
-        <p className="text-sm text-ink-soft mt-1 leading-relaxed">{body}</p>
+    <div className="rounded-xl border border-line bg-card p-5">
+      <div
+        className="h-9 w-9 rounded-lg flex items-center justify-center"
+        style={{ backgroundColor: "var(--rust-soft)", color: "var(--rust)" }}
+      >
+        {icon}
       </div>
+      <h4 className="font-medium mt-3">{title}</h4>
+      <p className="text-sm text-ink-soft mt-1 leading-relaxed">{body}</p>
     </div>
   );
 }
@@ -418,7 +411,7 @@ function PriceCard({
       </ul>
       <Link
         href="/signin"
-        className="mt-6 flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+        className="mt-6 flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium text-ink transition-opacity hover:opacity-90"
         style={{ backgroundColor: "var(--rust)" }}
       >
         Get started <ArrowRight className="h-3.5 w-3.5" />

@@ -35,7 +35,7 @@ export default function FaqAccordion({ items }: { items: { q: string; a: string 
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  transition={{ duration: 0.12, ease: "easeOut" }}
                   style={{ overflow: "hidden" }}
                 >
                   <p className="text-sm text-ink-soft leading-relaxed pb-4">{item.a}</p>

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import TeamSection from "@/components/TeamSection";
+import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard } from "lucide-react";
 
 export default function SettingsPage() {
@@ -229,6 +230,13 @@ function SettingsPageInner() {
             Connect Gmail to start pulling in your real leads — until then the dashboard stays empty.
           </p>
         )}
+      </section>
+
+      <section>
+        <h2 className="font-display text-xl">Website widget</h2>
+        <div className="mt-4">
+          <CopyEmbedSnippet />
+        </div>
       </section>
 
       <section>

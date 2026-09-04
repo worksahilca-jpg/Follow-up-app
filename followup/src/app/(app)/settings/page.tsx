@@ -8,7 +8,7 @@ import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
 import InstagramConfig from "@/components/InstagramConfig";
-import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard } from "lucide-react";
+import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -26,6 +26,8 @@ function SettingsPageInner() {
   const [gmailStatusLoaded, setGmailStatusLoaded] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [scanningSpam, setScanningSpam] = useState(false);
+  const [spamScanResult, setSpamScanResult] = useState<string | null>(null);
 
   const [autoAfterDays, setAutoAfterDays] = useState(5);
   const [automationOn, setAutomationOn] = useState(false);
@@ -41,6 +43,11 @@ function SettingsPageInner() {
   const [billingLoaded, setBillingLoaded] = useState(false);
   const [billingBusy, setBillingBusy] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
+
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackSending, setFeedbackSending] = useState(false);
+  const [feedbackSent, setFeedbackSent] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   // Real connection state, fetched from the DB via the API route — not
   // local/demo state.
@@ -170,6 +177,46 @@ function SettingsPageInner() {
     }
   }
 
+  async function handleScanSpam() {
+    setScanningSpam(true);
+    setSpamScanResult(null);
+    try {
+      const res = await fetch("/api/integrations/gmail/scan-spam", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Spam scan failed");
+      setSpamScanResult(
+        data.count === 0
+          ? "Checked your spam folder — nothing back there looked like a real lead."
+          : `Found ${data.count} lead${data.count === 1 ? "" : "s"} sitting in spam — added to your list.`
+      );
+    } catch (err) {
+      setSpamScanResult(err instanceof Error ? err.message : "Spam scan failed.");
+    } finally {
+      setScanningSpam(false);
+    }
+  }
+
+  async function handleSendFeedback() {
+    if (!feedbackText.trim()) return;
+    setFeedbackSending(true);
+    setFeedbackError(null);
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: feedbackText.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't send — try again.");
+      setFeedbackText("");
+      setFeedbackSent(true);
+    } catch (err) {
+      setFeedbackError(err instanceof Error ? err.message : "Couldn't send — try again.");
+    } finally {
+      setFeedbackSending(false);
+    }
+  }
+
   return (
     <div className="space-y-10">
       <div>
@@ -219,6 +266,27 @@ function SettingsPageInner() {
               Booking links now create real events on your Google Calendar. If you connected Gmail before this
               feature shipped, click <strong>Reconnect</strong> once to grant calendar access.
             </p>
+          )}
+          {gmailConnected && (
+            <div className="ml-[52px] mt-2 rounded-lg border border-line px-4 py-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  onClick={handleScanSpam}
+                  disabled={scanningSpam}
+                  className="text-sm font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
+                  style={{ backgroundColor: "var(--gold-soft)", color: "var(--gold)" }}
+                >
+                  <Search className={`h-3.5 w-3.5 ${scanningSpam ? "animate-pulse" : ""}`} />
+                  {scanningSpam ? "Checking…" : "Scan spam for missed leads"}
+                </button>
+                {spamScanResult && <span className="text-xs text-ink-soft">{spamScanResult}</span>}
+              </div>
+              <p className="text-xs text-ink-soft mt-2">
+                A real lead&apos;s first message can land in spam by mistake — this checks that folder specifically
+                and adds anything that looks like a genuine prospect, tagged so you can tell where it came from.
+                Manual only; it never runs on its own.
+              </p>
+            </div>
           )}
           {gmailError && (
             <p className="text-xs" style={{ color: "var(--coral)" }}>
@@ -406,6 +474,50 @@ function SettingsPageInner() {
             <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
               {billingError}
             </p>
+          )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-display text-xl flex items-center gap-2">
+          <MessageSquareHeart className="h-4 w-4 text-ink-soft" />
+          Something we should know?
+        </h2>
+        <p className="text-sm text-ink-soft mt-1">
+          Not a support ticket — just a place to tell us what&apos;s working or what isn&apos;t. Entirely optional,
+          only here if you want it.
+        </p>
+        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+          {feedbackSent ? (
+            <p className="text-sm flex items-center gap-1.5" style={{ color: "var(--sage)" }}>
+              <Check className="h-4 w-4" /> Sent — thank you.
+            </p>
+          ) : (
+            <>
+              <textarea
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                placeholder="Whatever's on your mind about FollowUp…"
+                rows={3}
+                maxLength={2000}
+                className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm resize-none"
+              />
+              <div className="mt-2 flex items-center justify-between">
+                <button
+                  onClick={handleSendFeedback}
+                  disabled={feedbackSending || !feedbackText.trim()}
+                  className="text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
+                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                >
+                  {feedbackSending ? "Sending…" : "Send"}
+                </button>
+                {feedbackError && (
+                  <span className="text-xs" style={{ color: "var(--coral)" }}>
+                    {feedbackError}
+                  </span>
+                )}
+              </div>
+            </>
           )}
         </div>
       </section>

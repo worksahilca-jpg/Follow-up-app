@@ -85,12 +85,18 @@ export async function getGmailStatus(businessId: string): Promise<GmailConnectio
   return { connected: true, email: integration.user.email };
 }
 
-export async function startGmailOAuth(): Promise<{ redirectUrl: string }> {
+// `next` rides through Google's consent screen as the OAuth `state` param
+// and comes back verbatim on the callback — the only way to tell the
+// callback route where to send the user afterwards (onboarding vs.
+// Settings), since the redirect to Google is a real page navigation that
+// loses whatever page state we had.
+export async function startGmailOAuth(next?: string): Promise<{ redirectUrl: string }> {
   const oauth2Client = getOAuthClient();
   const redirectUrl = oauth2Client.generateAuthUrl({
     access_type: "offline", // required to get a refresh token
     prompt: "consent", // force the consent screen so we get a refresh token every time
     scope: SCOPES,
+    ...(next ? { state: next } : {}),
   });
   return { redirectUrl };
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Compass, Mail, Check, ArrowRight } from "lucide-react";
+import { Compass, Mail, Check, ArrowRight, Loader2 } from "lucide-react";
 
 const INDUSTRIES = [
   "Real estate",
@@ -56,6 +56,38 @@ function OnboardingFormInner({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
+
+  // Fires once, right when the "connected" state first renders — pulls the
+  // first batch of leads in immediately rather than leaving the dashboard
+  // empty until someone finds "Sync now" in Settings later. Silent on
+  // failure (most commonly: this business has no active subscription
+  // yet, which every brand-new signup doesn't) — an onboarding screen is
+  // the wrong place to surprise someone with a billing wall, and Settings
+  // already carries that message once they land in the app for real.
+  const [autoSyncState, setAutoSyncState] = useState<"idle" | "syncing" | "done">("idle");
+  const [autoSyncSummary, setAutoSyncSummary] = useState<string | null>(null);
+  const autoSyncStarted = useRef(false);
+
+  useEffect(() => {
+    if (!gmailConnected || autoSyncStarted.current) return;
+    autoSyncStarted.current = true;
+    setAutoSyncState("syncing");
+    fetch("/api/integrations/gmail/sync", { method: "POST" })
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (ok && data.success) {
+          setAutoSyncSummary(
+            data.count === 0
+              ? "No sales conversations found yet — that's normal for a quiet inbox."
+              : `Found ${data.count} lead${data.count === 1 ? "" : "s"} already${data.scored > 0 ? `, ${data.scored} scored` : ""}.`
+          );
+        }
+      })
+      .catch(() => {
+        // Silent — see comment above.
+      })
+      .finally(() => setAutoSyncState("done"));
+  }, [gmailConnected]);
 
   const gmailError = searchParams.get("gmail") === "error" ? searchParams.get("message") ?? "Couldn't connect Gmail." : null;
 
@@ -189,9 +221,28 @@ function OnboardingFormInner({
                 </div>
                 <h2 className="font-display text-xl text-center mt-4">Gmail connected</h2>
                 <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
-                  Connected as <span className="font-medium text-ink">{gmailEmail}</span>. FollowUp will start
-                  reading your sales conversations as soon as you sync from the dashboard.
+                  Connected as <span className="font-medium text-ink">{gmailEmail}</span>.
                 </p>
+
+                {/* Real-time status of the auto-sync kicked off in the
+                    effect above — replaces the old static "sync from the
+                    dashboard" copy with what's actually happening right
+                    now. Never blocks "Continue" — worst case (most
+                    commonly: no active subscription yet) this renders
+                    nothing at all and the dashboard behaves exactly as it
+                    always has. */}
+                {(autoSyncState === "syncing" || autoSyncSummary) && (
+                  <p className="text-sm text-ink-soft text-center mt-1 leading-relaxed flex items-center justify-center gap-1.5">
+                    {autoSyncState === "syncing" ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Pulling in your first leads…
+                      </>
+                    ) : (
+                      autoSyncSummary
+                    )}
+                  </p>
+                )}
+
                 <button
                   onClick={finishOnboarding}
                   disabled={finishing}

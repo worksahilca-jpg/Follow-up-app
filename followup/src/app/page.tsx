@@ -7,6 +7,7 @@ import {
   TrendingUp,
   Users,
   Check,
+  X,
   ArrowRight,
   Home,
   Briefcase,
@@ -17,6 +18,15 @@ import {
 } from "lucide-react";
 import FadeIn from "@/components/motion/FadeIn";
 import FaqAccordion from "@/components/FaqAccordion";
+
+// The one place this page departs from the app-wide Inter-only rule (see
+// layout.tsx) — a serif display face for this page's own headlines only.
+// Applied as an inline style (never the shared `.font-display` class) so
+// it can't leak into the 80+ other places `.font-display` is used across
+// the authenticated app.
+const display: React.CSSProperties = {
+  fontFamily: "var(--font-fraunces), Georgia, 'Times New Roman', serif",
+};
 
 export default function LandingPage() {
   return (
@@ -51,13 +61,33 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="relative max-w-6xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-12 items-center">
+        {/* A faint dot grid behind the copy only — evokes a signal grid /
+            timeline rather than decoration for its own sake, and fades out
+            via a mask so it never fights the text sitting on top of it.
+            Deliberately not a gradient blob: with the accent already
+            violet, a gradient hero here would read as the generic
+            AI-landing-page look rather than something considered. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 hidden sm:block"
+          style={{
+            backgroundImage:
+              "radial-gradient(color-mix(in srgb, var(--ink) 12%, transparent) 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
+            maskImage: "radial-gradient(ellipse 60% 55% at 22% 15%, black 0%, transparent 72%)",
+            WebkitMaskImage: "radial-gradient(ellipse 60% 55% at 22% 15%, black 0%, transparent 72%)",
+          }}
+        />
         <FadeIn>
           {/* Neutral bordered chip, not a violet badge — violet stays on
               buttons/links/focus states only, nowhere decorative. */}
           <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft">
             <Sparkles className="h-3 w-3" /> AI-native, not AI-bolted-on
           </span>
-          <h1 className="font-display text-5xl sm:text-6xl leading-[1.05] mt-5" style={{ letterSpacing: "-0.02em" }}>
+          <h1
+            className="text-5xl sm:text-6xl xl:text-7xl leading-[1.03] mt-5"
+            style={{ ...display, letterSpacing: "-0.02em", textWrap: "balance" }}
+          >
             Never lose a lead because you forgot to follow up.
           </h1>
           <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-md">
@@ -86,22 +116,28 @@ export default function LandingPage() {
           </div>
           {/* Credibility line — a cited stat rather than a fabricated customer
               count or logo wall, which the app doesn't have yet and shouldn't
-              pretend to. Plain text, no color-coding — that's reserved for
-              lead-urgency status pills only. */}
-          <p className="mt-5 text-xs text-ink-soft">
-            Leads contacted within 5 minutes convert up to 21&times; more than those contacted after 30.
-          </p>
-          <p className="mt-1.5 text-xs text-ink-soft">No credit card required to sign up.</p>
+              pretend to. The number itself gets real typographic weight
+              instead of hiding in a caption; still plain-colored, since
+              color-coding stays reserved for the lead-urgency pills. */}
+          <div className="mt-8 flex items-center gap-4">
+            <p className="text-3xl leading-none shrink-0" style={display}>21&times;</p>
+            <p className="text-xs text-ink-soft leading-relaxed max-w-[15rem]">
+              higher conversion when a lead is contacted within 5 minutes instead of
+              after 30 — no credit card required to see it for yourself.
+            </p>
+          </div>
         </FadeIn>
 
         {/* Live-looking follow-up card mockup, framed like a real screenshot
             in a browser window rather than a bare panel. The window-chrome
             dots are neutral, not colored traffic lights — color on this
-            page is reserved for the lead-urgency status pills below. */}
+            page is reserved for the lead-urgency status pills below. A
+            slight tilt (straightening on hover) gives it some presence
+            instead of sitting perfectly flush like a stock screenshot. */}
         <FadeIn delay={0.15}>
           <div
-            className="rounded-2xl border border-line bg-card overflow-hidden"
-            style={{ boxShadow: "0 24px 60px -24px rgba(0,0,0,0.18)" }}
+            className="rounded-2xl border border-line bg-card overflow-hidden rotate-[-1.5deg] transition-transform duration-300 hover:rotate-0"
+            style={{ boxShadow: "0 28px 64px -20px rgba(0,0,0,0.2)" }}
           >
             <div className="flex items-center gap-1.5 px-4 py-3 border-b border-line">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--line)" }} />
@@ -180,7 +216,7 @@ export default function LandingPage() {
       <section className="bg-card">
         <div className="max-w-6xl mx-auto px-6 py-20">
           <FadeIn className="max-w-2xl">
-            <h2 className="font-display text-3xl sm:text-4xl" style={{ textWrap: "balance" }}>
+            <h2 className="text-3xl sm:text-4xl" style={{ ...display, textWrap: "balance" }}>
               The gap between having leads and knowing who needs you
             </h2>
             <p className="mt-5 text-ink-soft leading-relaxed">
@@ -188,10 +224,16 @@ export default function LandingPage() {
               Automation tools send sequences. But none of them answer the one question
               that actually loses you money:
             </p>
-            <p className="mt-5 font-display text-xl sm:text-2xl italic" style={{ textWrap: "balance" }}>
+            {/* Set as a real pull quote — larger, italic serif, a rust rule
+                to the left — rather than just an italicized paragraph, so
+                it reads as the sentence the whole page is answering. */}
+            <p
+              className="mt-6 pl-5 text-2xl sm:text-3xl italic leading-snug border-l-2"
+              style={{ ...display, fontStyle: "italic", textWrap: "balance", borderColor: "var(--rust)" }}
+            >
               &quot;Which lead am I about to lose because I haven&apos;t followed up?&quot;
             </p>
-            <p className="mt-5 text-ink-soft leading-relaxed">
+            <p className="mt-6 text-ink-soft leading-relaxed">
               FollowUp sits on top of your existing inbox and turns messy conversations
               into a short, prioritized list of who to contact today — without asking you
               to maintain another system.
@@ -200,10 +242,80 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Positioning — the thesis the rest of the page has to earn. Most
+          of what's out there gets you the lead; almost nothing watches
+          what happens to it after that. Drawn as a real comparison, not
+          just asserted, so a skimming reader can see the difference
+          rather than take a claim on faith. */}
+      <section className="max-w-6xl mx-auto px-6 py-20">
+        <FadeIn className="max-w-2xl">
+          <span
+            className="inline-block text-xs font-semibold uppercase"
+            style={{ color: "var(--rust)", letterSpacing: "0.14em" }}
+          >
+            Why FollowUp exists
+          </span>
+          <h2 className="mt-3 text-3xl sm:text-4xl" style={{ ...display, textWrap: "balance" }}>
+            You don&apos;t have a lead-generation problem. You have a lead-conversion
+            problem.
+          </h2>
+          <p className="mt-4 text-ink-soft leading-relaxed">
+            Most tools stop the moment a name and an email land in your inbox. The
+            deal is actually lost or won in the weeks after that — the follow-up
+            nobody sent, the question that sat unanswered for four days, the lead
+            that quietly went cold while you were busy closing someone else.
+          </p>
+        </FadeIn>
+
+        <FadeIn delay={0.1} className="mt-10 grid sm:grid-cols-2 rounded-2xl border border-line overflow-hidden">
+          <div className="p-6 sm:p-7">
+            <p className="text-xs font-semibold uppercase text-ink-soft" style={{ letterSpacing: "0.1em" }}>
+              Lead generation tools
+            </p>
+            <ul className="mt-4 space-y-3 text-sm text-ink-soft">
+              <li className="flex items-start gap-2.5">
+                <X className="h-4 w-4 mt-0.5 shrink-0" />
+                Hands you a name and an email address
+              </li>
+              <li className="flex items-start gap-2.5">
+                <X className="h-4 w-4 mt-0.5 shrink-0" />
+                Calls the job done the moment the lead exists
+              </li>
+              <li className="flex items-start gap-2.5">
+                <X className="h-4 w-4 mt-0.5 shrink-0" />
+                Says nothing when that lead goes quiet for a week
+              </li>
+            </ul>
+          </div>
+          <div
+            className="p-6 sm:p-7 border-t sm:border-t-0 border-line"
+            style={{ borderLeft: "3px solid var(--rust)" }}
+          >
+            <p className="text-xs font-semibold uppercase" style={{ color: "var(--rust)", letterSpacing: "0.1em" }}>
+              FollowUp
+            </p>
+            <ul className="mt-4 space-y-3 text-sm text-ink">
+              <li className="flex items-start gap-2.5">
+                <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "var(--rust)" }} />
+                Reads what happens after the lead exists
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "var(--rust)" }} />
+                Flags exactly who&apos;s about to go cold, and why
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "var(--rust)" }} />
+                Drafts the message that keeps the conversation alive
+              </li>
+            </ul>
+          </div>
+        </FadeIn>
+      </section>
+
       {/* How it works */}
       <section id="how-it-works" className="max-w-6xl mx-auto px-6 py-20">
         <FadeIn>
-          <h2 className="font-display text-3xl sm:text-4xl">How it works</h2>
+          <h2 className="text-3xl sm:text-4xl" style={display}>How it works</h2>
         </FadeIn>
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
@@ -240,7 +352,7 @@ export default function LandingPage() {
           copy. Three real personas, same card language as How it works. */}
       <section id="who-its-for" className="max-w-6xl mx-auto px-6 py-20">
         <FadeIn className="max-w-2xl">
-          <h2 className="font-display text-3xl sm:text-4xl">Who it&apos;s for</h2>
+          <h2 className="text-3xl sm:text-4xl" style={display}>Who it&apos;s for</h2>
           <p className="mt-3 text-ink-soft">
             If leads reach you before they reach a CRM, this is built for you.
           </p>
@@ -276,7 +388,7 @@ export default function LandingPage() {
       <section className="bg-card">
         <div className="max-w-6xl mx-auto px-6 py-20">
           <FadeIn className="max-w-2xl">
-            <h2 className="font-display text-3xl sm:text-4xl">Why not just set a CRM reminder?</h2>
+            <h2 className="text-3xl sm:text-4xl" style={display}>Why not just set a CRM reminder?</h2>
             <p className="mt-3 text-ink-soft">
               A reminder tells you it&apos;s time. It doesn&apos;t tell you why, or what to say.
             </p>
@@ -316,7 +428,7 @@ export default function LandingPage() {
           <div className="space-y-10">
             <FadeIn>
               <Users className="h-5 w-5 text-ink-soft" />
-              <h3 className="font-display text-2xl mt-3">Works for a team, not just you</h3>
+              <h3 className="text-2xl mt-3" style={display}>Works for a team, not just you</h3>
               <p className="mt-2 text-ink-soft leading-relaxed">
                 See who on your team has overdue follow-ups, how much revenue each person
                 is sitting on, and which deals are at risk — without a single status meeting.
@@ -324,7 +436,7 @@ export default function LandingPage() {
             </FadeIn>
             <FadeIn delay={0.1}>
               <TrendingUp className="h-5 w-5 text-ink-soft" />
-              <h3 className="font-display text-2xl mt-3">A pipeline you can actually see</h3>
+              <h3 className="text-2xl mt-3" style={display}>A pipeline you can actually see</h3>
               <p className="mt-2 text-ink-soft leading-relaxed">
                 Total pipeline value, weighted by how likely each deal is to close, plus a
                 weekly report on what&apos;s working and what&apos;s slipping.
@@ -370,7 +482,7 @@ export default function LandingPage() {
       {/* Pricing */}
       <section id="pricing" className="max-w-6xl mx-auto px-6 py-20">
         <FadeIn>
-          <h2 className="font-display text-3xl sm:text-4xl">Pricing</h2>
+          <h2 className="text-3xl sm:text-4xl" style={display}>Pricing</h2>
           <p className="mt-2 text-ink-soft">One plan. Everything included. Cancel any time.</p>
           <div className="mt-10 max-w-sm">
             <PriceCard
@@ -394,7 +506,7 @@ export default function LandingPage() {
       <section id="faq" className="bg-card">
         <div className="max-w-6xl mx-auto px-6 py-20">
           <FadeIn>
-            <h2 className="font-display text-3xl sm:text-4xl">Questions</h2>
+            <h2 className="text-3xl sm:text-4xl" style={display}>Questions</h2>
           </FadeIn>
           <FadeIn delay={0.1} className="mt-8 max-w-2xl">
             <FaqAccordion
@@ -424,7 +536,10 @@ export default function LandingPage() {
       <section>
         <div className="max-w-6xl mx-auto px-6 py-24 text-center">
           <FadeIn>
-            <h2 className="font-display text-3xl sm:text-4xl max-w-lg mx-auto" style={{ textWrap: "balance" }}>
+            <h2
+              className="text-3xl sm:text-5xl max-w-xl mx-auto"
+              style={{ ...display, textWrap: "balance" }}
+            >
               Your next lost sale is sitting in your inbox right now.
             </h2>
             <Link
@@ -491,7 +606,7 @@ function PriceCard({
   return (
     <div className="rounded-2xl border border-line bg-card p-6">
       <p className="text-sm font-semibold">{name}</p>
-      <p className="font-display text-3xl mt-1">
+      <p className="text-4xl mt-1" style={display}>
         {price}
         <span className="text-sm text-ink-soft font-body">/mo</span>
       </p>

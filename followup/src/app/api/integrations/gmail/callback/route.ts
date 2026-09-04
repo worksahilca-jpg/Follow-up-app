@@ -12,28 +12,31 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const oauthError = searchParams.get("error");
-
-  const settingsUrl = new URL("/settings", request.url);
+  // Echoed back verbatim from the `state` we sent in startGmailOAuth() —
+  // the only signal for whether this round trip started from onboarding
+  // or from Settings, since the whole detour through Google's consent
+  // screen loses any client-side page state.
+  const returnTo = new URL(searchParams.get("state") === "onboarding" ? "/onboarding" : "/settings", request.url);
 
   if (oauthError) {
-    settingsUrl.searchParams.set("gmail", "error");
-    settingsUrl.searchParams.set("message", oauthError);
-    return NextResponse.redirect(settingsUrl);
+    returnTo.searchParams.set("gmail", "error");
+    returnTo.searchParams.set("message", oauthError);
+    return NextResponse.redirect(returnTo);
   }
   if (!code) {
-    settingsUrl.searchParams.set("gmail", "error");
-    settingsUrl.searchParams.set("message", "No authorization code returned by Google.");
-    return NextResponse.redirect(settingsUrl);
+    returnTo.searchParams.set("gmail", "error");
+    returnTo.searchParams.set("message", "No authorization code returned by Google.");
+    return NextResponse.redirect(returnTo);
   }
 
   try {
     const { email } = await exchangeCodeForTokens(code, ctx.userId);
-    settingsUrl.searchParams.set("gmail", "connected");
-    settingsUrl.searchParams.set("email", email);
+    returnTo.searchParams.set("gmail", "connected");
+    returnTo.searchParams.set("email", email);
   } catch (err) {
-    settingsUrl.searchParams.set("gmail", "error");
-    settingsUrl.searchParams.set("message", err instanceof Error ? err.message : "Gmail connection failed.");
+    returnTo.searchParams.set("gmail", "error");
+    returnTo.searchParams.set("message", err instanceof Error ? err.message : "Gmail connection failed.");
   }
 
-  return NextResponse.redirect(settingsUrl);
+  return NextResponse.redirect(returnTo);
 }

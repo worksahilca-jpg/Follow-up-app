@@ -7,6 +7,7 @@ import ScoreBadge from "./ScoreBadge";
 import PriorityPill from "./PriorityPill";
 import { formatCurrency } from "@/lib/demo-data";
 import { Mail, Phone, Clock, Check } from "lucide-react";
+import { isInstagramLeadId } from "@/lib/instagram";
 
 export default function FollowUpCard({ lead }: { lead: Lead }) {
   const [status, setStatus] = useState<"pending" | "done" | "snoozed">("pending");
@@ -79,7 +80,7 @@ export default function FollowUpCard({ lead }: { lead: Lead }) {
             >
               <Mail className="h-3.5 w-3.5" /> Review &amp; send
             </Link>
-            {lead.phone && (
+            {lead.phone && !isInstagramLeadId(lead.phone) && (
               <a
                 href={`tel:${lead.phone}`}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium"

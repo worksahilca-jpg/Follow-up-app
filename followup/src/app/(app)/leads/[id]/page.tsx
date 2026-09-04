@@ -11,6 +11,7 @@ import LeadAssignmentSelect from "@/components/LeadAssignmentSelect";
 import DeleteLeadButton from "@/components/DeleteLeadButton";
 import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
 import { Mail, Phone, MessageSquare } from "lucide-react";
+import { isInstagramLeadId } from "@/lib/instagram";
 
 export const dynamic = "force-dynamic";
 
@@ -41,14 +42,17 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium" style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}>
           <Mail className="h-3.5 w-3.5" /> Email
         </a>
-        {lead.phone && (
-          <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium">
-            <Phone className="h-3.5 w-3.5" /> {lead.phone}
-          </a>
+        {lead.phone && isInstagramLeadId(lead.phone) ? (
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft">
+            <MessageSquare className="h-3.5 w-3.5" /> Instagram DM
+          </span>
+        ) : (
+          lead.phone && (
+            <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium">
+              <Phone className="h-3.5 w-3.5" /> {lead.phone}
+            </a>
+          )
         )}
-        <span className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft">
-          <MessageSquare className="h-3.5 w-3.5" /> Text
-        </span>
         <CopyBookingLinkButton leadId={lead.id} />
       </div>
 

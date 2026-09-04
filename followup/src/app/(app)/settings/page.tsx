@@ -7,6 +7,7 @@ import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
+import InstagramConfig from "@/components/InstagramConfig";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard } from "lucide-react";
 
 export default function SettingsPage() {
@@ -260,6 +261,13 @@ function SettingsPageInner() {
         <h2 className="font-display text-xl">Phone (SMS + calls)</h2>
         <div className="mt-4">
           <TwilioConfig />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-display text-xl">Instagram</h2>
+        <div className="mt-4">
+          <InstagramConfig />
         </div>
       </section>
 

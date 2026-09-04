@@ -4,14 +4,16 @@
  * lead's conversation history, and as a FollowUp record (so "Sent" on the
  * weekly report can be a real count instead of a placeholder).
  *
- * Two real channels now: email (Gmail) when the lead has one, SMS
- * (Twilio) as the fallback when they only have a phone — the same
+ * Three real channels now: email (Gmail), SMS (Twilio) when the lead
+ * only has a phone, Instagram DM when the lead's "phone" is actually an
+ * Instagram-scoped sender ID (see src/lib/instagram.ts) — same
  * approval-first flow either way, just a different wire underneath.
  */
 
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/integrations/gmail";
 import { sendSms } from "@/lib/twilio";
+import { instagramRecipientId, isInstagramLeadId, sendInstagramMessage } from "@/lib/instagram";
 
 export async function sendFollowUpToLead(
   leadId: string,
@@ -21,7 +23,7 @@ export async function sendFollowUpToLead(
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
   if (!lead) return { success: false, message: "Lead not found." };
 
-  const channel = lead.email ? "email" : lead.phone ? "text" : null;
+  const channel = lead.email ? "email" : isInstagramLeadId(lead.phone) ? "instagram" : lead.phone ? "text" : null;
   if (!channel) return { success: false, message: "This lead has no email or phone number on file." };
 
   let externalId: string | undefined;
@@ -33,6 +35,9 @@ export async function sendFollowUpToLead(
     });
     if (!result.success) return { success: false, message: "Gmail didn't confirm this message sent." };
     externalId = result.messageId ?? undefined;
+  } else if (channel === "instagram") {
+    const result = await sendInstagramMessage(lead.businessId, instagramRecipientId(lead.phone!), body);
+    if (!result.success) return { success: false, message: result.message ?? "Instagram didn't confirm this message sent." };
   } else {
     const result = await sendSms(lead.businessId, lead.phone!, body);
     if (!result.success) return { success: false, message: result.message ?? "Twilio didn't confirm this message sent." };

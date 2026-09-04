@@ -93,6 +93,20 @@ model Business {
   // Console), so these are safe to echo back on GET, unlike the token.
   twilioAccountSid   String?
   twilioPhoneNumber  String?
+
+  // Instagram DM capture — instagramUserId is the Instagram-scoped ID of
+  // the business's own connected account (resolved automatically from the
+  // access token at save time via the Graph API, not typed in by hand);
+  // instagramAccessToken is the long-lived token generated in the Meta
+  // Developer Console (App ID 2713853435677364 for now — one shared
+  // FollowUp Meta app, not one per business). Unlike Twilio's per-business
+  // webhook URL, Instagram webhooks are configured once, app-wide, in the
+  // Meta console — inbound events arrive at the single shared endpoint
+  // src/app/api/instagram/webhook/route.ts and get routed to the right
+  // business by matching instagramUserId against the event's recipient
+  // ID. See src/lib/instagram.ts.
+  instagramUserId     String? @unique
+  instagramAccessToken String?
 }
 
 enum PipelineStage {

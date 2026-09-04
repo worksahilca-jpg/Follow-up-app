@@ -248,34 +248,22 @@ function isAutomatedSender(email: string): boolean {
 }
 
 /**
- * Pulls recent inbox threads (excluding Gmail's promo/social/updates/forums
- * tabs and obviously-automated senders), and upserts the ones that pass
- * classification as Lead + Conversation + Message rows. Returns the leads
- * that were created or touched by this sync.
- *
- * "Not promo/social/automated" is only a first pass — it still matches any
- * real back-and-forth with a human who isn't me, which includes personal
- * email, recruiters, vendors, and support threads with existing customers.
- * Whether the counterpart is actually a sales prospect is a judgment call,
- * so when AI is configured, classifyAsProspect() gates lead creation on it
- * before anything is written to the DB. Real scoring/prioritization of the
- * leads that do pass still comes from the AI layer's scoreLead(), not from
- * this sync step.
+ * Shared by fetchSalesConversations() and fetchSpamProspects() — everything
+ * from "fetch one thread's messages" through "upsert Lead/Conversation/
+ * Message rows" is identical between the two; the only real difference is
+ * which Gmail search query found the thread in the first place, and what
+ * source label a brand-new lead gets tagged with. Keeping that one
+ * distinction as a parameter instead of duplicating ~120 lines means a fix
+ * to the parsing/classification/upsert logic can't accidentally apply to
+ * only one of the two sync paths.
  */
-export async function fetchSalesConversations(businessId: string): Promise<Lead[]> {
-  const authed = await getAuthedGmailClient(businessId);
-  if (!authed) return [];
-  const { gmail, integration } = authed;
-  const selfEmail = integration.user.email.toLowerCase();
-
-  const { data: listData } = await gmail.users.threads.list({
-    userId: "me",
-    q: "-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d",
-    maxResults: 30,
-  });
-
-  const threadRefs = listData.threads ?? [];
-
+async function processThreadRefs(
+  businessId: string,
+  gmail: gmail_v1.Gmail,
+  selfEmail: string,
+  threadRefs: gmail_v1.Schema$Thread[],
+  sourceLabel: string
+): Promise<Lead[]> {
   // Threads are independent of each other (each maps to at most one lead
   // by counterpart email), so process several in parallel instead of one
   // full Gmail-get + classify + DB-write round trip at a time — a 30-thread
@@ -360,7 +348,7 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
         businessId,
         name: counterpart.name,
         email: counterpart.email,
-        source: "Gmail",
+        source: sourceLabel,
         stage: "NEW",
         lastContacted,
         assignedToId: isNewLead ? await pickAssignee(businessId) : undefined,
@@ -396,7 +384,7 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
       name: lead.name,
       company: lead.company ?? "",
       email: lead.email ?? "",
-      source: lead.source ?? "Gmail",
+      source: lead.source ?? sourceLabel,
       stage: "new",
       dealValue: lead.dealValue,
       score: lead.score,
@@ -414,6 +402,74 @@ export async function fetchSalesConversations(businessId: string): Promise<Lead[
   });
 
   return results.filter((lead): lead is Lead => lead !== null);
+}
+
+/**
+ * Pulls recent inbox threads (excluding Gmail's promo/social/updates/forums
+ * tabs and obviously-automated senders), and upserts the ones that pass
+ * classification as Lead + Conversation + Message rows. Returns the leads
+ * that were created or touched by this sync.
+ *
+ * "Not promo/social/automated" is only a first pass — it still matches any
+ * real back-and-forth with a human who isn't me, which includes personal
+ * email, recruiters, vendors, and support threads with existing customers.
+ * Whether the counterpart is actually a sales prospect is a judgment call,
+ * so when AI is configured, classifyAsProspect() gates lead creation on it
+ * before anything is written to the DB. Real scoring/prioritization of the
+ * leads that do pass still comes from the AI layer's scoreLead(), not from
+ * this sync step.
+ */
+export async function fetchSalesConversations(businessId: string): Promise<Lead[]> {
+  const authed = await getAuthedGmailClient(businessId);
+  if (!authed) return [];
+  const { gmail, integration } = authed;
+  const selfEmail = integration.user.email.toLowerCase();
+
+  const { data: listData } = await gmail.users.threads.list({
+    userId: "me",
+    q: "-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d",
+    maxResults: 30,
+  });
+
+  return processThreadRefs(businessId, gmail, selfEmail, listData.threads ?? [], "Gmail");
+}
+
+/**
+ * The spam-folder counterpart to fetchSalesConversations() — a legitimate
+ * lead's first message can land in spam by mistake (an unfamiliar sender,
+ * a link in the body, an overeager filter) and then just sit there,
+ * invisible, forever, since nothing else ever looks in that folder. This
+ * is the "dig through what already exists, including spam" half of "leads
+ * shouldn't go cold" — see the Why FollowUp Exists doc.
+ *
+ * Gmail's search API excludes spam and trash by default unless the query
+ * says otherwise, so this is a genuinely separate search, not a filter
+ * tweak on the inbox one — `in:spam` replaces the category exclusions
+ * above entirely, since Gmail's promo/social/updates/forums tabs don't
+ * apply inside spam.
+ *
+ * Deliberately NOT run as part of the regular sync or the daily automation
+ * cron: spam has a much higher false-positive rate than an inbox ever
+ * does, so this only runs when a business owner explicitly asks for it
+ * (the "Scan spam for missed leads" button in Settings) — surfacing what's
+ * back there is the point, but it shouldn't happen without them choosing
+ * to look. New leads found this way are tagged source: "Gmail (spam)" so
+ * they stay honestly distinguishable from ones that arrived normally,
+ * rather than blending in unlabeled.
+ */
+export async function fetchSpamProspects(businessId: string): Promise<Lead[]> {
+  const authed = await getAuthedGmailClient(businessId);
+  if (!authed) return [];
+  const { gmail, integration } = authed;
+  const selfEmail = integration.user.email.toLowerCase();
+
+  const { data: listData } = await gmail.users.threads.list({
+    userId: "me",
+    q: "in:spam -in:chats newer_than:180d",
+    maxResults: 30,
+  });
+
+  return processThreadRefs(businessId, gmail, selfEmail, listData.threads ?? [], "Gmail (spam)");
 }
 
 export async function sendEmail(

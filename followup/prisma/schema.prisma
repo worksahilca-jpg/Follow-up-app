@@ -57,6 +57,7 @@ model Business {
   bookings        Booking[]
   sequences       Sequence[]
   invites         Invite[]
+  feedback        ProductFeedback[]
 
   // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
   // mirrors the Stripe Subscription.status string verbatim (active,
@@ -397,4 +398,26 @@ model AIInsight {
   createdAt DateTime @default(now())
 
   @@index([leadId])
+}
+
+// Passive, optional feedback about FollowUp itself, from the people using
+// it — not customer feedback collected from leads. No `read`/`resolved`
+// state to manage here on purpose: this is a message in a bottle, not a
+// support ticket. userId/userName are a point-in-time snapshot (not a
+// relation) so a submission stays legible even if that user is later
+// removed from the team — see src/lib/team.ts's removeMember(), which
+// only detaches a User from a Business, this preserves who actually said
+// it regardless. See src/app/api/feedback/route.ts and the quiet form in
+// Settings — never a popup, never forced; nothing anywhere prompts for
+// this unprompted.
+model ProductFeedback {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id])
+  businessId String
+  userId     String
+  userName   String
+  message    String
+  createdAt  DateTime @default(now())
+
+  @@index([businessId])
 }

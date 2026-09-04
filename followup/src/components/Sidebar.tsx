@@ -14,6 +14,7 @@ import {
   Compass,
   LogOut,
 } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
 const nav = [
   { href: "/dashboard", label: "Today", icon: LayoutDashboard },
@@ -47,12 +48,15 @@ export default function Sidebar() {
   return (
     <aside className="w-60 shrink-0 border-r border-line bg-card flex flex-col h-screen sticky top-0">
       <div className="px-5 pt-6 pb-5">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <Compass className="h-5 w-5" style={{ color: "var(--rust)" }} />
-          <span className="font-display text-lg" style={{ color: "var(--ink)" }}>
-            FollowUp
-          </span>
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Compass className="h-5 w-5" style={{ color: "var(--rust)" }} />
+            <span className="font-display text-lg" style={{ color: "var(--ink)" }}>
+              FollowUp
+            </span>
+          </Link>
+          <NotificationBell />
+        </div>
         <p className="text-xs text-ink-soft mt-1 truncate">{session?.user?.email ?? ""}</p>
       </div>
       <nav className="flex-1 px-3 space-y-0.5">

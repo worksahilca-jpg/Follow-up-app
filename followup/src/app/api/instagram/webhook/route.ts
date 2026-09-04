@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
+import { checkRapidEngagement } from "@/lib/engagement";
 import { WEBHOOK_VERIFY_TOKEN, findOrCreateLeadByInstagram, validateMetaSignature } from "@/lib/instagram";
 
 /**
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
         data: { conversationId: conversation.id, direction: "inbound", body: text, sentAt: new Date() },
       });
       await scoreAndDraftForLead(lead.id);
+      await checkRapidEngagement(lead.id);
     }
   }
 

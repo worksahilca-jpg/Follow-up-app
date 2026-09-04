@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
+import { checkRapidEngagement } from "@/lib/engagement";
 import { canonicalRequestUrl, findBusinessByTwilioSecret, findOrCreateLeadByPhone, parseTwilioForm, twiml, validateTwilioSignature } from "@/lib/twilio";
 
 /**
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       data: { conversationId: conversation.id, direction: "inbound", body, sentAt: new Date() },
     });
     await scoreAndDraftForLead(lead.id);
+    await checkRapidEngagement(lead.id);
   }
 
   return twiml("<Response/>");

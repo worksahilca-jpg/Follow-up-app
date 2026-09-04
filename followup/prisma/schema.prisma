@@ -357,11 +357,19 @@ model Notification {
   id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id])
   userId    String
+  // Which lead this is about, so the bell dropdown can link straight to
+  // it — deliberately not a foreign-key relation to Lead: a notification
+  // should stay legible (and its dedup lookup still work) even after the
+  // lead it refers to is deleted, rather than being cascade-deleted or
+  // blocking the delete. leadId just goes stale in that case; the UI
+  // guards against a dead link.
+  leadId    String?
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([userId])
+  @@index([leadId])
 }
 
 model Integration {

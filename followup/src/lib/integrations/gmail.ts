@@ -34,6 +34,7 @@ import { classifyAsProspect } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
+import { checkRapidEngagement } from "@/lib/engagement";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -378,6 +379,11 @@ async function processThreadRefs(
         },
       });
     }
+    // Safe to call unconditionally, including on a resync of an old
+    // thread — checkRapidEngagement() only looks at messages from the
+    // last 15 minutes, so re-upserting historical mail (whose real sentAt
+    // is long past) never spuriously fires it.
+    await checkRapidEngagement(lead.id);
 
     return {
       id: lead.id,

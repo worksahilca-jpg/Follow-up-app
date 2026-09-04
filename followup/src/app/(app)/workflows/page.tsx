@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft, Workflow as WorkflowIcon } from "lucide-react";
+import { Plus, Sparkles, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft, Workflow as WorkflowIcon } from "lucide-react";
 
 type SequenceAction = "EMAIL" | "CHANGE_STAGE";
 
@@ -44,10 +44,49 @@ function blankStep(): StepDraft {
   return { delayDays: 3, action: "EMAIL", stageTo: null, messageHint: "" };
 }
 
+// A real bounded, escalating cadence rather than a blank sheet to fill in
+// — cumulative days 2 / 5 / 10 / 18, matching the "most conversions happen
+// 5-8 touches over 2-4 weeks" data (see the competitive research this was
+// built from). Loaded into the editor for review/editing, never saved
+// automatically — a business should see exactly what it's agreeing to
+// send before it goes near a real lead.
+const RECOMMENDED_CADENCE: { name: string; steps: StepDraft[] } = {
+  name: "Recommended follow-up cadence",
+  steps: [
+    {
+      delayDays: 2,
+      action: "EMAIL",
+      stageTo: null,
+      messageHint: "A light, low-pressure check-in — just making sure this didn't get buried, nothing pushy.",
+    },
+    {
+      delayDays: 3,
+      action: "EMAIL",
+      stageTo: null,
+      messageHint: "More direct — ask plainly if they're still interested and what would help them decide.",
+    },
+    {
+      delayDays: 5,
+      action: "EMAIL",
+      stageTo: null,
+      messageHint: "Offer something of real value — answer a likely objection or suggest a concrete next step, not another check-in.",
+    },
+    {
+      delayDays: 8,
+      action: "EMAIL",
+      stageTo: null,
+      messageHint: "A final, honest message — acknowledge the silence, ask once more, no pressure either way.",
+    },
+  ],
+};
+
 export default function WorkflowsPage() {
   const [sequences, setSequences] = useState<SequenceSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [creating, setCreating] = useState(false);
+  // Set only when "Use recommended cadence" started the editor — a plain
+  // "New workflow" click leaves this null and the editor opens blank.
+  const [template, setTemplate] = useState<{ name: string; steps: StepDraft[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function load() {
@@ -71,13 +110,27 @@ export default function WorkflowsPage() {
           </p>
         </div>
         {!creating && (
-          <button
-            onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium shrink-0"
-            style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-          >
-            <Plus className="h-4 w-4" /> New workflow
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                setTemplate(RECOMMENDED_CADENCE);
+                setCreating(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium border border-line"
+            >
+              <Sparkles className="h-4 w-4" style={{ color: "var(--rust)" }} /> Use recommended cadence
+            </button>
+            <button
+              onClick={() => {
+                setTemplate(null);
+                setCreating(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
+              style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+            >
+              <Plus className="h-4 w-4" /> New workflow
+            </button>
+          </div>
         )}
       </div>
 
@@ -89,11 +142,21 @@ export default function WorkflowsPage() {
 
       {creating && (
         <div className="mt-6">
+          {template && (
+            <p className="text-xs text-ink-soft mb-2">
+              Starting from our recommended 4-step cadence (day 2, 5, 10, 18) — edit anything below before saving.
+            </p>
+          )}
           <WorkflowEditor
-            onCancel={() => setCreating(false)}
+            template={template ?? undefined}
+            onCancel={() => {
+              setCreating(false);
+              setTemplate(null);
+            }}
             onSaved={(seq) => {
               setSequences((prev) => [...prev, seq]);
               setCreating(false);
+              setTemplate(null);
             }}
             onError={setError}
           />
@@ -105,8 +168,7 @@ export default function WorkflowsPage() {
           <div className="rounded-xl border border-line bg-card p-8 text-center">
             <WorkflowIcon className="h-6 w-6 mx-auto text-ink-soft" />
             <p className="text-sm text-ink-soft mt-3">
-              No workflows yet — build one to automate a whole follow-up cadence at once, instead of one message
-              at a time.
+              No workflows yet — try &quot;Use recommended cadence&quot; above, or build your own from scratch.
             </p>
           </div>
         )}
@@ -260,20 +322,25 @@ function WorkflowCard({
 
 function WorkflowEditor({
   sequence,
+  template,
   onCancel,
   onSaved,
   onError,
 }: {
   sequence?: SequenceSummary;
+  // Seeds a brand-new (unsaved) workflow's fields — distinct from
+  // `sequence`, which means "editing an existing one" and PATCHes instead
+  // of POSTing. Only one of the two is ever passed at once.
+  template?: { name: string; steps: StepDraft[] };
   onCancel: () => void;
   onSaved: (s: SequenceSummary) => void;
   onError: (msg: string | null) => void;
 }) {
-  const [name, setName] = useState(sequence?.name ?? "");
+  const [name, setName] = useState(sequence?.name ?? template?.name ?? "");
   const [steps, setSteps] = useState<StepDraft[]>(
     sequence
       ? sequence.steps.map((s) => ({ delayDays: s.delayDays, action: s.action, stageTo: s.stageTo, messageHint: s.messageHint ?? "" }))
-      : [blankStep()]
+      : (template?.steps ?? [blankStep()])
   );
   const [saving, setSaving] = useState(false);
 

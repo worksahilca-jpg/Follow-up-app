@@ -259,10 +259,11 @@ interface SequenceRunResult {
   checked: number;
   advanced: number; // steps that ran successfully (email sent or stage changed)
   completed: number; // leads that finished their last step
+  pausedForReply: number; // unenrolled because the lead replied and hasn't been answered yet
   skipped: string[]; // "{lead name}: {why}"
 }
 
-const EMPTY_RUN: SequenceRunResult = { checked: 0, advanced: 0, completed: 0, skipped: [] };
+const EMPTY_RUN: SequenceRunResult = { checked: 0, advanced: 0, completed: 0, pausedForReply: 0, skipped: [] };
 
 /** What a real scheduler calls for one business — see runSequencesForAllBusinesses() below for the fan-out. */
 export async function runSequencesForBusiness(businessId: string): Promise<SequenceRunResult> {
@@ -299,6 +300,34 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
       });
       return { kind: "completed" as const };
+    }
+
+    // Stop on reply — a sequence step that fires after the lead has
+    // already responded (and nobody's answered them yet) is exactly the
+    // tone-deaf automation failure this whole feature exists to avoid.
+    // "Replied" here means the single most recent message across every
+    // one of this lead's conversations is inbound — if a human (or the
+    // AI, on an AUTONOMOUS lead) already answered it, the last message is
+    // outbound again and the sequence is free to continue normally.
+    const allMessages = lead.conversations.flatMap((c) => c.messages);
+    const lastMessage =
+      allMessages.length > 0 ? allMessages.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest)) : null;
+
+    if (lastMessage?.direction === "inbound") {
+      await prisma.lead.update({
+        where: { id: lead.id },
+        data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+      });
+      if (lead.assignedToId) {
+        await prisma.notification.create({
+          data: {
+            userId: lead.assignedToId,
+            leadId: lead.id,
+            message: `${lead.name} replied mid-sequence — "${sequence.name}" stopped so you can take it from here.`,
+          },
+        });
+      }
+      return { kind: "paused" as const, note: `${lead.name}: replied — sequence stopped` };
     }
 
     try {
@@ -348,6 +377,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
     checked: due.length,
     advanced: outcomes.filter((o) => o.kind === "advanced" || o.kind === "completed").length,
     completed: outcomes.filter((o) => o.kind === "completed").length,
+    pausedForReply: outcomes.filter((o) => o.kind === "paused").length,
     skipped: outcomes.filter((o): o is { kind: "skipped"; note: string } => o.kind === "skipped").map((o) => o.note),
   };
 }
@@ -374,6 +404,7 @@ export async function runSequencesForAllBusinesses(): Promise<SequenceRunResult>
     totals.checked += r.checked;
     totals.advanced += r.advanced;
     totals.completed += r.completed;
+    totals.pausedForReply += r.pausedForReply;
     totals.skipped.push(...r.skipped);
   }
   return totals;

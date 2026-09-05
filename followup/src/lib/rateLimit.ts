@@ -26,3 +26,35 @@ export async function tooManyRecentLeads(
   });
   return count >= max;
 }
+
+/**
+ * Rate limit for authenticated, costly manual actions (Gmail sync, spam
+ * scan, AI draft regeneration) that have no natural table row to count
+ * the way tooManyRecentLeads() counts Lead rows — backed by RateLimitHit
+ * instead, one row per attempt. Same DB-backed reasoning as above (a
+ * serverless instance's memory isn't shared, so only a shared Postgres
+ * counter actually caps anything).
+ *
+ * This exists because OpenAI/Gmail API cost for these comes out of one
+ * shared platform key, not billed per-business — the billing gate alone
+ * only checks "is this business subscribed," not "how much have they
+ * asked for in the last few minutes," so a single compromised or careless
+ * signed-in account could otherwise run up a real bill against the
+ * platform owner's own key, not just their own account.
+ *
+ * Records the attempt whether or not it's within the limit — a caller
+ * that's over the limit should still short-circuit before doing the real
+ * work, so the recorded hit reflects "asked for it," not "actually ran."
+ */
+export async function tooManyRecentActions(
+  businessId: string,
+  action: string,
+  { windowMinutes, max }: { windowMinutes: number; max: number }
+): Promise<boolean> {
+  const since = new Date(Date.now() - windowMinutes * 60 * 1000);
+  const count = await prisma.rateLimitHit.count({
+    where: { businessId, action, createdAt: { gte: since } },
+  });
+  await prisma.rateLimitHit.create({ data: { businessId, action } });
+  return count >= max;
+}

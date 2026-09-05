@@ -59,6 +59,7 @@ model Business {
   sourceRules     SourceRule[]
   invites         Invite[]
   feedback        ProductFeedback[]
+  rateLimitHits   RateLimitHit[]
 
   // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
   // mirrors the Stripe Subscription.status string verbatim (active,
@@ -374,6 +375,24 @@ model SourceRule {
   updatedAt           DateTime        @updatedAt
 
   @@unique([businessId, source])
+}
+
+// One row per attempt at a rate-limited, authenticated action (Gmail sync,
+// spam scan, AI draft regeneration) — see tooManyRecentActions() in
+// src/lib/rateLimit.ts. Exists because OpenAI/Gmail API cost for these
+// comes out of one shared platform key, not billed per-business, so a
+// single compromised or careless signed-in account could otherwise run up
+// a real bill with nothing to stop it beyond the billing gate itself.
+// Deliberately not cleaned up automatically yet — rows are small and this
+// is new; worth revisiting if the table's growth ever actually matters.
+model RateLimitHit {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id])
+  businessId String
+  action     String
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, action, createdAt])
 }
 
 // A pending invitation to join a business's team, by email — not yet a

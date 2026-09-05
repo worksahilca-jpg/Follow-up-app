@@ -5,6 +5,7 @@ import { pickAssignee } from "@/lib/assignment";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { applySourceRouting } from "@/lib/sourceRouting";
+import { tooManyRecentLeads } from "@/lib/rateLimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEXT = 200;
@@ -44,6 +45,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json(
       { success: false, message: "This account isn't on an active plan — leads sent here won't be captured." },
       { status: 503 }
+    );
+  }
+
+  // 100 per 10 minutes — this is machine-to-machine (Zapier/Make/a script),
+  // so real usage can legitimately burst higher than a human-filled form
+  // ever would, but a misconfigured Zap that loops on itself (a genuinely
+  // common failure mode) still needs a ceiling before it turns into an
+  // unbounded pile of duplicate leads and OpenAI calls.
+  if (await tooManyRecentLeads(businessId, "Webhook", { windowMinutes: 10, max: 100 })) {
+    return NextResponse.json(
+      { success: false, message: "Too many requests right now — please try again in a few minutes." },
+      { status: 429 }
     );
   }
 

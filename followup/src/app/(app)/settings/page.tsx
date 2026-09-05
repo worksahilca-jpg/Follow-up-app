@@ -104,6 +104,35 @@ function SettingsPageInner() {
       .finally(() => setBillingLoaded(true));
   }, []);
 
+  // Stripe's webhook (the only thing that flips subscriptionStatus in the
+  // DB) can take a few seconds to land after Checkout redirects back here —
+  // the banner below already tells the user that, so back the promise with
+  // an actual poll instead of leaving them staring at a stale "Not
+  // subscribed" until they think to refresh. Stops itself the moment
+  // billing shows active, or after ~20s if something's actually wrong.
+  useEffect(() => {
+    if (searchParams.get("billing") !== "success" || !billingLoaded || billingActive) return;
+
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch("/api/billing/status");
+        const data: { active: boolean; status: string | null; currentPeriodEnd: string | null } = await res.json();
+        if (data.active) {
+          setBillingActive(data.active);
+          setBillingStatus(data.status);
+          setBillingPeriodEnd(data.currentPeriodEnd);
+        }
+      } catch {
+        // ignore — just try again next tick
+      }
+      if (attempts >= 10) clearInterval(interval);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [searchParams, billingLoaded, billingActive]);
+
   async function handleSubscribe() {
     setBillingBusy(true);
     setBillingError(null);
@@ -157,6 +186,11 @@ function SettingsPageInner() {
   const gmailError =
     searchParams.get("gmail") === "error" ? searchParams.get("message") ?? "Couldn't connect Gmail." : null;
   const billingRedirect = searchParams.get("billing"); // "success" | "canceled" | null
+  // Just paid, but the webhook hasn't landed yet — the poll above is
+  // already chasing it. Disable Subscribe during this window specifically
+  // so an impatient click can't start a second Checkout session (and a
+  // second charge) while the first one is still settling.
+  const awaitingActivation = billingRedirect === "success" && billingLoaded && !billingActive;
 
   async function handleGmailSync() {
     setSyncing(true);
@@ -478,11 +512,17 @@ function SettingsPageInner() {
             {billingLoaded && (
               <button
                 onClick={billingActive || billingStatus ? handleManageBilling : handleSubscribe}
-                disabled={billingBusy}
+                disabled={billingBusy || awaitingActivation}
                 className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
                 style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
               >
-                {billingBusy ? "One sec…" : billingActive || billingStatus ? "Manage billing" : "Subscribe"}
+                {billingBusy
+                  ? "One sec…"
+                  : awaitingActivation
+                  ? "Activating…"
+                  : billingActive || billingStatus
+                  ? "Manage billing"
+                  : "Subscribe"}
               </button>
             )}
           </div>

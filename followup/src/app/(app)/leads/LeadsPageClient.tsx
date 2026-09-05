@@ -21,6 +21,7 @@ import { Search, Plus, Upload, Phone, Users, Flame, Snowflake, Trophy, Inbox, Sl
 const filters = [
   { id: "all", label: "All" },
   { id: "mine", label: "Mine" },
+  { id: "unclaimed", label: "Unclaimed" },
   { id: "new", label: "New" },
   { id: "hot", label: "Hot" },
   { id: "today", label: "Follow-up today" },
@@ -90,6 +91,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
       list = list.filter((l) => matchesSavedFilter(l, customCriteria));
     } else {
       if (filter === "mine") list = list.filter((l) => l.assignedToId === session?.user?.id);
+      if (filter === "unclaimed") list = list.filter((l) => !l.assignedToId);
       if (filter === "new") list = list.filter((l) => l.stage === "new");
       if (filter === "hot") list = list.filter((l) => l.priority === "high");
       if (filter === "today") {
@@ -272,7 +274,12 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
             <div className="hidden sm:block">
               <PriorityPill priority={lead.priority} />
             </div>
-            <div className="text-sm text-ink-soft hidden lg:block w-28 truncate">{lead.assignedTo}</div>
+            <div
+              className="text-sm hidden lg:block w-28 truncate"
+              style={lead.assignedToId ? { color: "var(--ink-soft)" } : { color: "var(--gold)", fontWeight: 500 }}
+            >
+              {lead.assignedToId ? lead.assignedTo : "Up for grabs"}
+            </div>
             <div className="text-sm text-ink-soft hidden md:block w-24">
               {formatDate(lead.lastContacted)}
             </div>

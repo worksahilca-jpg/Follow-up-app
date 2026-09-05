@@ -380,6 +380,13 @@ model SequenceStep {
 // automation tier the lead starts on, same as picking it by hand on the
 // lead's own page. Both null is a real, valid state ("do nothing special")
 // so a rule can exist just to be edited later.
+//
+// routeToPool (see research/market/2026-09-05-competitor-feature-gaps.md
+// #1.1, "Ponds") is a third, equally-exclusive option: instead of the
+// normal least-loaded auto-assignment, a lead from this source is
+// unassigned right after creation so it sits in a shared pool until
+// someone on the team claims it — for a source where "whoever's
+// technically least busy" isn't who should actually work it.
 model SourceRule {
   id                  String          @id @default(cuid())
   business            Business        @relation(fields: [businessId], references: [id])
@@ -388,6 +395,7 @@ model SourceRule {
   sequence            Sequence?       @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
   sequenceId          String?
   automationTierDefault AutomationTier?
+  routeToPool         Boolean         @default(false)
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 

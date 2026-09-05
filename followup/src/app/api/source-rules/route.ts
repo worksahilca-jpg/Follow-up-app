@@ -27,6 +27,7 @@ export async function GET() {
       source,
       sequenceId: rule?.sequenceId ?? null,
       automationTierDefault: rule?.automationTierDefault ?? null,
+      routeToPool: rule?.routeToPool ?? false,
     };
   });
 
@@ -50,12 +51,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: "Unknown lead source." }, { status: 400 });
   }
 
-  // A rule is one or the other, never both — enrolling in a sequence
-  // already takes automationTier to OFF (see sequences.ts), so a saved
-  // tier default would just be dead data sitting next to it.
-  const sequenceId = typeof body.sequenceId === "string" && body.sequenceId ? body.sequenceId : null;
+  // A rule is exactly one of routeToPool / sequenceId / automationTierDefault,
+  // never more than one — enrolling in a sequence already takes
+  // automationTier to OFF (see sequences.ts), so a saved tier default would
+  // just be dead data sitting next to it, and a pool-routed lead isn't
+  // meant to also run a workflow or automation tier yet (see
+  // src/lib/sourceRouting.ts) until someone claims it.
+  const routeToPool = body.routeToPool === true;
+  const sequenceId = !routeToPool && typeof body.sequenceId === "string" && body.sequenceId ? body.sequenceId : null;
   const automationTierDefault: AutomationTier | null =
-    !sequenceId && TIERS.includes(body.automationTierDefault) ? body.automationTierDefault : null;
+    !routeToPool && !sequenceId && TIERS.includes(body.automationTierDefault) ? body.automationTierDefault : null;
 
   if (sequenceId) {
     const sequence = await prisma.sequence.findUnique({ where: { id: sequenceId } });
@@ -66,8 +71,8 @@ export async function POST(request: NextRequest) {
 
   await prisma.sourceRule.upsert({
     where: { businessId_source: { businessId: ctx.businessId, source } },
-    update: { sequenceId, automationTierDefault },
-    create: { businessId: ctx.businessId, source, sequenceId, automationTierDefault },
+    update: { sequenceId, automationTierDefault, routeToPool },
+    create: { businessId: ctx.businessId, source, sequenceId, automationTierDefault, routeToPool },
   });
 
   return NextResponse.json({ success: true });

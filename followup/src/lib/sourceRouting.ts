@@ -11,6 +11,15 @@
  * KIND of lead it is or who should work it — that's the more complex
  * "smart routing to the right salesperson" idea, parked until there's a
  * real team to route between. Per-source routing needs no team at all.
+ *
+ * routeToPool is the one exception worth calling out: it's not about
+ * automation at all, just who (if anyone) a new lead starts assigned to —
+ * see the shared claimable pool ("Ponds",
+ * research/market/2026-09-05-competitor-feature-gaps.md #1.1). Every
+ * creation call site already runs pickAssignee() before calling here, so
+ * rather than teaching each of them about pools too, this just undoes
+ * that assignment for a pool-routed source, in the one place all of them
+ * already funnel through.
  */
 
 import { prisma } from "@/lib/db";
@@ -24,6 +33,13 @@ export async function applySourceRouting(businessId: string, leadId: string, sou
   });
   if (!rule) return;
 
+  // routeToPool, sequenceId and automationTierDefault are mutually
+  // exclusive — the Settings UI only ever sets one of the three — so this
+  // early-returns the same way the sequence branch below does.
+  if (rule.routeToPool) {
+    await prisma.lead.update({ where: { id: leadId }, data: { assignedToId: null } });
+    return;
+  }
   // A sequence takes over the lead's automated cadence entirely (see
   // sequences.ts) — mutually exclusive with automationTier, so a rule
   // carrying both only ever acts on the sequence. The Settings UI never

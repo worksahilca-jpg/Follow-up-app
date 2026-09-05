@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
 interface Member {
   id: string;
   name: string;
 }
 
-/** Reassigns a lead to a team member, or unassigns it. Auto-assigned on creation (see src/lib/assignment.ts); this is how it changes after that. */
+/**
+ * Reassigns a lead to a team member, or unassigns it. Auto-assigned on
+ * creation (see src/lib/assignment.ts); this is how it changes after
+ * that — including claiming a lead a source rule left unassigned in the
+ * shared pool (see routeToPool in src/lib/sourceRouting.ts, "Ponds") or
+ * one a teammate deliberately unassigned. "Claim it" is just a shortcut
+ * for picking your own name from the same select below.
+ */
 export default function LeadAssignmentSelect({
   leadId,
   initialAssignedToId,
@@ -17,6 +25,7 @@ export default function LeadAssignmentSelect({
   initialAssignedToId: string | null | undefined;
   initialAssignedToName: string;
 }) {
+  const { data: session } = useSession();
   const [members, setMembers] = useState<Member[]>([]);
   const [current, setCurrent] = useState(initialAssignedToId ?? "");
   const [saving, setSaving] = useState(false);
@@ -57,6 +66,8 @@ export default function LeadAssignmentSelect({
     return <span>{initialAssignedToName}</span>;
   }
 
+  const canClaim = !current && !!session?.user?.id;
+
   return (
     <div className="flex flex-col items-end">
       <select
@@ -72,6 +83,16 @@ export default function LeadAssignmentSelect({
           </option>
         ))}
       </select>
+      {canClaim && (
+        <button
+          onClick={() => change(session!.user.id)}
+          disabled={saving}
+          className="text-xs mt-1 underline disabled:opacity-60"
+          style={{ color: "var(--gold)" }}
+        >
+          Claim it
+        </button>
+      )}
       {error && (
         <span className="text-xs mt-1" style={{ color: "var(--coral)" }}>
           {error}

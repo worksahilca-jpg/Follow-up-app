@@ -4,9 +4,12 @@
  * Per-source lead routing — one row per source the app actually creates
  * leads from (see src/lib/sourceRouting.ts), each with a single dropdown:
  * do nothing special, enroll new leads from that source straight into a
- * workflow, or just start them on a given automation tier. Saves per row
- * on change — there's no separate "Save" button, same as the automation
- * toggle elsewhere in Settings.
+ * workflow, start them on a given automation tier, or leave them
+ * unclaimed in a shared pool ("Ponds" — see
+ * research/market/2026-09-05-competitor-feature-gaps.md #1.1) instead of
+ * auto-assigning to whoever's least loaded. Saves per row on change —
+ * there's no separate "Save" button, same as the automation toggle
+ * elsewhere in Settings.
  */
 
 import { useEffect, useState } from "react";
@@ -16,6 +19,7 @@ interface Rule {
   source: string;
   sequenceId: string | null;
   automationTierDefault: "OFF" | "ASSISTED" | "AUTONOMOUS" | null;
+  routeToPool: boolean;
 }
 interface SequenceOption {
   id: string;
@@ -24,6 +28,7 @@ interface SequenceOption {
 }
 
 function encodeValue(rule: Rule): string {
+  if (rule.routeToPool) return "pool";
   if (rule.sequenceId) return `seq:${rule.sequenceId}`;
   if (rule.automationTierDefault) return `tier:${rule.automationTierDefault}`;
   return "";
@@ -50,17 +55,24 @@ export default function SourceRoutingSection() {
   }, []);
 
   async function handleChange(source: string, value: string) {
+    const routeToPool = value === "pool";
     const sequenceId = value.startsWith("seq:") ? value.slice(4) : null;
     const automationTierDefault = value.startsWith("tier:") ? value.slice(5) : null;
 
-    setRules((prev) => prev.map((r) => (r.source === source ? { ...r, sequenceId, automationTierDefault: automationTierDefault as Rule["automationTierDefault"] } : r)));
+    setRules((prev) =>
+      prev.map((r) =>
+        r.source === source
+          ? { ...r, routeToPool, sequenceId, automationTierDefault: automationTierDefault as Rule["automationTierDefault"] }
+          : r
+      )
+    );
     setSavingSource(source);
     setError(null);
     try {
       const res = await fetch("/api/source-rules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source, sequenceId, automationTierDefault }),
+        body: JSON.stringify({ source, sequenceId, automationTierDefault, routeToPool }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't save — try again.");
@@ -100,6 +112,7 @@ export default function SourceRoutingSection() {
                 className="rounded-lg border border-line bg-paper px-2.5 py-1.5 text-sm disabled:opacity-60"
               >
                 <option value="">No special handling</option>
+                <option value="pool">Leave unclaimed — first to grab it gets it</option>
                 {activeSequences.length > 0 && (
                   <optgroup label="Enroll in a workflow">
                     {activeSequences.map((seq) => (

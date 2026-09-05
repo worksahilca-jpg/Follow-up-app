@@ -4,6 +4,7 @@ import { requireActiveBilling } from "@/lib/billing";
 import { pickAssignee } from "@/lib/assignment";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
+import { applySourceRouting } from "@/lib/sourceRouting";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEXT = 200;
@@ -101,6 +102,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     });
     void notifyLeadEvent(businessId, "lead.created", lead);
+    await applySourceRouting(businessId, lead.id, "Website form");
 
     if (message) {
       const conversation = await prisma.conversation.create({

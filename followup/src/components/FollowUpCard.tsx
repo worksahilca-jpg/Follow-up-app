@@ -7,7 +7,7 @@ import ScoreBadge from "./ScoreBadge";
 import PriorityPill from "./PriorityPill";
 import { formatCurrency } from "@/lib/demo-data";
 import { Mail, Phone, Clock, Check } from "lucide-react";
-import { isInstagramLeadId } from "@/lib/instagram";
+import { isInstagramLeadId } from "@/lib/instagramId";
 
 export default function FollowUpCard({ lead }: { lead: Lead }) {
   const [status, setStatus] = useState<"pending" | "done" | "snoozed">("pending");

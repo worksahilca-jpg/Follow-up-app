@@ -1,6 +1,8 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/db";
 import { pickAssignee } from "@/lib/assignment";
+import { applySourceRouting } from "@/lib/sourceRouting";
+import { instagramLeadId } from "@/lib/instagramId";
 import type { Lead } from "@prisma/client";
 
 const GRAPH_API = "https://graph.instagram.com";
@@ -20,9 +22,11 @@ const GRAPH_API = "https://graph.instagram.com";
  * unique constraint and no format validation, so it's reused here the
  * same way Twilio reuses it for a real phone number, prefixed `ig:` so
  * the two can never collide and so it's obvious at a glance in the UI
- * where a given lead's "phone" field actually came from.
+ * where a given lead's "phone" field actually came from. The prefix logic
+ * itself lives in src/lib/instagramId.ts, a zero-dependency leaf module —
+ * see that file for why (a client component needs isInstagramLeadId
+ * without pulling in everything else this file imports).
  */
-const IG_ID_PREFIX = "ig:";
 
 /**
  * This app-wide handshake secret is intentionally a literal constant, not
@@ -95,27 +99,18 @@ export async function sendInstagramMessage(
   return { success: true };
 }
 
-/** True if a Lead's `phone` field actually holds an Instagram-scoped sender ID rather than a real phone number. */
-export function isInstagramLeadId(phone: string | null): phone is string {
-  return !!phone?.startsWith(IG_ID_PREFIX);
-}
-
-export function instagramRecipientId(phone: string): string {
-  return phone.slice(IG_ID_PREFIX.length);
-}
-
 /** Manual find-or-create, same shape as Twilio's phone lookup — a later DM from the same sender should update one lead, not create a new one each time. */
 export async function findOrCreateLeadByInstagram(
   businessId: string,
   senderId: string,
   senderUsername?: string
 ): Promise<Lead> {
-  const phone = `${IG_ID_PREFIX}${senderId}`;
+  const phone = instagramLeadId(senderId);
   const existing = await prisma.lead.findFirst({ where: { businessId, phone } });
   if (existing) {
     return prisma.lead.update({ where: { id: existing.id }, data: { lastContacted: new Date() } });
   }
-  return prisma.lead.create({
+  const lead = await prisma.lead.create({
     data: {
       businessId,
       name: senderUsername ? `@${senderUsername}` : "Instagram DM",
@@ -126,4 +121,6 @@ export async function findOrCreateLeadByInstagram(
       assignedToId: await pickAssignee(businessId),
     },
   });
+  await applySourceRouting(businessId, lead.id, "Instagram");
+  return lead;
 }

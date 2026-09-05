@@ -30,13 +30,16 @@ not re-audited against this and may still be demo interactions — see
 | Sending real emails | Same Gmail credentials | `src/lib/integrations/gmail.ts` (no code changes needed) |
 | Real AI scoring & message drafting | OpenAI API key | `src/lib/integrations/openai.ts` |
 | Persisting leads/users for real | A Postgres database (e.g. Supabase) | `prisma/schema.prisma`, then run `npx prisma migrate dev` |
-| Real login | NextAuth secret + Google OAuth | (not yet wired — currently no auth gate) |
+| Real login | Already wired — needs `NEXTAUTH_SECRET` + the same Google OAuth credentials Gmail uses | `src/lib/auth.ts` (no code changes needed) |
 
-Gmail is the one integration confirmed to already be a complete, real
-implementation rather than a mock (see `research/integrations/gmail.md`) —
-going live for it is a provisioning + Google-review problem, not a coding
-one. The other rows above haven't been re-verified the same way yet; treat
-"file to edit" for those as the working assumption, not a confirmed fact.
+Gmail and real login are both confirmed to already be complete, real
+implementations rather than mocks — going live for either is a provisioning
++ Google-review problem, not a coding one (see
+`research/integrations/gmail.md`). They also share the same underlying
+Google OAuth client, so the one Google Cloud project that unblocks Gmail
+unblocks real login too. The OpenAI/database rows above haven't been
+re-verified the same way yet; treat "file to edit" for those as the working
+assumption, not a confirmed fact.
 
 ## Running it
 

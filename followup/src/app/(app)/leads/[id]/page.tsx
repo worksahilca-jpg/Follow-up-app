@@ -11,7 +11,7 @@ import LeadAssignmentSelect from "@/components/LeadAssignmentSelect";
 import DeleteLeadButton from "@/components/DeleteLeadButton";
 import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
 import { Mail, Phone, MessageSquare } from "lucide-react";
-import { isInstagramLeadId } from "@/lib/instagram";
+import { isInstagramLeadId } from "@/lib/instagramId";
 
 export const dynamic = "force-dynamic";
 

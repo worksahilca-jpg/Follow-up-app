@@ -56,6 +56,7 @@ model Business {
   automations     Automation[]
   bookings        Booking[]
   sequences       Sequence[]
+  sourceRules     SourceRule[]
   invites         Invite[]
   feedback        ProductFeedback[]
 
@@ -309,6 +310,7 @@ model Sequence {
   active     Boolean        @default(true)
   steps      SequenceStep[]
   leads      Lead[]
+  sourceRules SourceRule[]
   createdAt  DateTime       @default(now())
 
   @@index([businessId])
@@ -333,6 +335,32 @@ model SequenceStep {
   messageHint String? // optional steer for the AI draft when action is EMAIL
 
   @@unique([sequenceId, order])
+}
+
+// Per-source routing — what happens automatically the moment a NEW lead is
+// created from a given source (Lead.source, e.g. "Gmail", "Gmail (spam)",
+// "SMS", "Phone call", "Webhook", "Manual entry", "CSV import", "Instagram",
+// "Website form"). Checked once, right after creation, by
+// src/lib/sourceRouting.ts — never on re-sync of an existing lead. A rule
+// with sequenceId set enrolls the lead into that workflow immediately
+// (mutually exclusive with automationTier per Lead's own rule, so setting
+// both here is meaningless — the UI only ever offers one or the other);
+// a rule with only automationTierDefault set just changes what silence-based
+// automation tier the lead starts on, same as picking it by hand on the
+// lead's own page. Both null is a real, valid state ("do nothing special")
+// so a rule can exist just to be edited later.
+model SourceRule {
+  id                  String          @id @default(cuid())
+  business            Business        @relation(fields: [businessId], references: [id])
+  businessId          String
+  source              String
+  sequence            Sequence?       @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
+  sequenceId          String?
+  automationTierDefault AutomationTier?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@unique([businessId, source])
 }
 
 // A pending invitation to join a business's team, by email — not yet a

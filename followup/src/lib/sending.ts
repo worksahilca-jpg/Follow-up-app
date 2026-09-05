@@ -13,7 +13,8 @@
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/integrations/gmail";
 import { sendSms } from "@/lib/twilio";
-import { instagramRecipientId, isInstagramLeadId, sendInstagramMessage } from "@/lib/instagram";
+import { sendInstagramMessage } from "@/lib/instagram";
+import { instagramRecipientId, isInstagramLeadId } from "@/lib/instagramId";
 
 export async function sendFollowUpToLead(
   leadId: string,

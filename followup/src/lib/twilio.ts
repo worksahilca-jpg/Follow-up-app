@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/db";
 import { pickAssignee } from "@/lib/assignment";
 import { appUrl } from "@/lib/stripe";
+import { applySourceRouting } from "@/lib/sourceRouting";
 import type { Lead } from "@prisma/client";
 
 /**
@@ -90,7 +91,7 @@ export async function findOrCreateLeadByPhone(
   if (existing) {
     return prisma.lead.update({ where: { id: existing.id }, data: { lastContacted: new Date() } });
   }
-  return prisma.lead.create({
+  const lead = await prisma.lead.create({
     data: {
       businessId,
       name: phone,
@@ -101,6 +102,8 @@ export async function findOrCreateLeadByPhone(
       assignedToId: await pickAssignee(businessId),
     },
   });
+  await applySourceRouting(businessId, lead.id, source);
+  return lead;
 }
 
 /** application/xml TwiML response — Twilio requires this content type for both SMS and Voice webhook replies. */

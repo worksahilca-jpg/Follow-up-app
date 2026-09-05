@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import TeamSection from "@/components/TeamSection";
+import SourceRoutingSection from "@/components/SourceRoutingSection";
 import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
@@ -412,6 +413,16 @@ function SettingsPageInner() {
               it&apos;s working.
             </p>
           )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-display text-xl">Lead routing</h2>
+        <p className="text-sm text-ink-soft mt-1">
+          Give a lead a head start based on where it came from — before anyone&apos;s looked at it.
+        </p>
+        <div className="mt-4">
+          <SourceRoutingSection />
         </div>
       </section>
 

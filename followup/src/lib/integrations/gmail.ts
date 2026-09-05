@@ -35,6 +35,7 @@ import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
+import { applySourceRouting } from "@/lib/sourceRouting";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -361,7 +362,10 @@ async function processThreadRefs(
         assignedToId: isNewLead ? await pickAssignee(businessId) : undefined,
       },
     });
-    if (isNewLead) void notifyLeadEvent(businessId, "lead.created", lead);
+    if (isNewLead) {
+      void notifyLeadEvent(businessId, "lead.created", lead);
+      await applySourceRouting(businessId, lead.id, sourceLabel);
+    }
 
     let conversation = await prisma.conversation.findUnique({
       where: { externalId: thread.id! },

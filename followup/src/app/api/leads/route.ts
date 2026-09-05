@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
+import { applySourceRouting } from "@/lib/sourceRouting";
 
 const MAX_TEXT = 200;
 
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
       },
     });
     void notifyLeadEvent(ctx.businessId, "lead.created", lead);
+    await applySourceRouting(ctx.businessId, lead.id, source);
     return NextResponse.json({ success: true, id: lead.id });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {

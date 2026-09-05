@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { canonicalRequestUrl, findBusinessByTwilioSecret, parseTwilioForm, validateTwilioSignature } from "@/lib/twilio";
 
@@ -26,6 +27,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ received: true }, { status: 403 });
     }
   }
+
+  // The call itself was already gated on active billing when the lead was
+  // created (src/app/api/twilio/voice/[secret]/route.ts) — but this
+  // callback fires later, after Twilio finishes transcribing, so a
+  // subscription that lapses in that gap shouldn't still trigger a real
+  // OpenAI call here. Matches every sibling route in this family (SMS,
+  // voice-inbound) re-checking billing right before its costly step.
+  if (!(await requireActiveBilling(business.id))) return NextResponse.json({ received: true });
 
   const from = formParams.From;
   const text = formParams.TranscriptionText?.trim();

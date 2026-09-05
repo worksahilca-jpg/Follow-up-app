@@ -147,12 +147,15 @@ export default function LandingPage() {
         {/* Live-looking follow-up card mockup, framed like a real screenshot
             in a browser window rather than a bare panel. The window-chrome
             dots are neutral, not colored traffic lights — color on this
-            page is reserved for the lead-urgency status pills below. A
-            slight tilt (straightening on hover) gives it some presence
-            instead of sitting perfectly flush like a stock screenshot. */}
+            page is reserved for the lead-urgency status pills below. Kept
+            flush rather than tilted — this is a mockup of the actual
+            product UI, and tilting it like a stylized graphic undercuts
+            the "this is real, not a rendering" credibility it's there
+            for. A small hover lift stands in for the presence the tilt
+            used to add. */}
         <FadeIn delay={0.15}>
           <div
-            className="rounded-2xl border border-line bg-card overflow-hidden rotate-[-1.5deg] transition-transform duration-300 hover:rotate-0"
+            className="rounded-2xl border border-line bg-card overflow-hidden transition-transform duration-300 hover:-translate-y-1"
             style={{ boxShadow: "0 28px 64px -20px rgba(0,0,0,0.2)" }}
           >
             <div className="flex items-center gap-1.5 px-4 py-3 border-b border-line">

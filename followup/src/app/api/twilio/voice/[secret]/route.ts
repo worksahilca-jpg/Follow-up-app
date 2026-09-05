@@ -1,7 +1,22 @@
 import { NextRequest } from "next/server";
 import { requireActiveBilling } from "@/lib/billing";
 import { appUrl } from "@/lib/stripe";
-import { canonicalRequestUrl, findBusinessByTwilioSecret, findOrCreateLeadByPhone, parseTwilioForm, sendSms, twiml, validateTwilioSignature } from "@/lib/twilio";
+import {
+  canonicalRequestUrl,
+  claimMissedCallTextBack,
+  findBusinessByTwilioSecret,
+  findOrCreateLeadByPhone,
+  parseTwilioForm,
+  sendSms,
+  twiml,
+  validateTwilioSignature,
+} from "@/lib/twilio";
+
+// A caller who doesn't get through often tries again within minutes —
+// this is how long to wait before a repeat call earns a second text-back,
+// rather than one per attempt (see claimMissedCallTextBack in
+// src/lib/twilio.ts).
+const MISSED_CALL_TEXT_COOLDOWN_MINUTES = 30;
 
 /**
  * POST /api/twilio/voice/[secret] — configure this as a Twilio phone
@@ -21,12 +36,15 @@ import { canonicalRequestUrl, findBusinessByTwilioSecret, findOrCreateLeadByPhon
  * Missed-call text-back: every call that reaches this webhook is, by
  * definition, one nobody picked up (see above) — so unlike a real front
  * desk, "missed call" here isn't a special case to detect, it's just what
- * always happens. Fires an immediate SMS on the same number this call
- * came in on, reusing the SMS-sending path already built for follow-ups —
- * no new integration, just a second use of one already wired up. Fires
- * unconditionally (not only when no voicemail follows): the point is
- * closing the gap between "nobody answered" and "they heard from us,"
- * which is true whether or not they also leave a message.
+ * always happens. Fires an SMS on the same number this call came in on,
+ * reusing the SMS-sending path already built for follow-ups — no new
+ * integration, just a second use of one already wired up. Fires
+ * regardless of whether a voicemail follows: the point is closing the gap
+ * between "nobody answered" and "they heard from us," true either way —
+ * but capped to one per claimMissedCallTextBack()'s cooldown window per
+ * lead, not literally every single call: a caller retrying a dropped or
+ * unanswered call a few minutes later is normal, not a second "missed
+ * call" worth a second text.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ secret: string }> }) {
   const { secret } = await params;
@@ -50,18 +68,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const from = formParams.From;
   if (from) {
-    await findOrCreateLeadByPhone(business.id, from, "Phone call");
-    try {
-      await sendSms(
-        business.id,
-        from,
-        `Hi, thanks for calling ${business.name} — we couldn't pick up, but we saw your call and will follow up shortly. Feel free to reply here anytime.`
-      );
-    } catch (err) {
-      // Best-effort — a Twilio API hiccup on the text-back must never
-      // break the call itself; the voicemail/transcription path below
-      // still runs regardless.
-      console.error(`Missed-call text-back failed for business ${business.id}:`, err);
+    const lead = await findOrCreateLeadByPhone(business.id, from, "Phone call");
+    if (await claimMissedCallTextBack(lead.id, MISSED_CALL_TEXT_COOLDOWN_MINUTES)) {
+      try {
+        const result = await sendSms(
+          business.id,
+          from,
+          `Hi, thanks for calling ${business.name} — we couldn't pick up, but we saw your call and will follow up shortly. Feel free to reply here anytime.`
+        );
+        // sendSms() resolves (doesn't throw) on a Twilio-side rejection —
+        // e.g. an unverified trial number or an SMS-incapable sub-account —
+        // so that has to be checked explicitly, not just caught, or a
+        // silently-broken text-back would never show up anywhere.
+        if (!result.success) {
+          console.error(`Missed-call text-back failed for business ${business.id}: ${result.message}`);
+        }
+      } catch (err) {
+        // Best-effort — a Twilio API hiccup on the text-back must never
+        // break the call itself; the voicemail/transcription path below
+        // still runs regardless.
+        console.error(`Missed-call text-back failed for business ${business.id}:`, err);
+      }
     }
   }
 

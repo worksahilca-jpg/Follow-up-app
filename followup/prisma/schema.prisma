@@ -177,6 +177,15 @@ model Lead {
   // separate read-then-write could.
   lastRapidEngagementNotifiedAt DateTime?
 
+  // Same atomic-conditional-update pattern as
+  // lastRapidEngagementNotifiedAt above, backing the Twilio voice
+  // webhook's missed-call text-back (src/app/api/twilio/voice/[secret]/route.ts).
+  // Without it, a caller who calls back two or three times in a row before
+  // the first attempt connects (a very normal "missed call, try again"
+  // pattern) would get a near-identical text after every single one —
+  // this caps it to one per cooldown window per lead.
+  lastMissedCallTextAt DateTime?
+
   // Workflow enrollment (see src/lib/sequences.ts). sequenceStepIndex is
   // the index of the step that runs NEXT (0 before anything has run);
   // sequenceStepDueAt is when that step is eligible to run — recomputed

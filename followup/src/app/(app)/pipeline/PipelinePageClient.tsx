@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { Lead, PipelineStage } from "@/lib/types";
 import { formatCurrency, daysSince } from "@/lib/demo-data";
 import { getPipelineData } from "@/lib/leads-data";
+import { PIPELINE_STAGES } from "@/lib/demo-data";
 import { urgencyColor } from "@/lib/urgency";
 import ScoreBadge from "@/components/ScoreBadge";
 import StatCard from "@/components/StatCard";
@@ -171,9 +172,8 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
             </p>
             <div className="mt-3 space-y-2">
               {stage.leads.map((lead) => (
-                <Link
+                <div
                   key={lead.id}
-                  href={`/leads/${lead.id}`}
                   draggable
                   onDragStart={(e) => {
                     e.dataTransfer.setData("text/lead-id", lead.id);
@@ -185,7 +185,9 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                   style={{ opacity: draggingId === lead.id ? 0.4 : 1 }}
                 >
                   <ScoreBadge score={lead.score} size="sm" />
-                  <span className="truncate flex-1">{lead.name}</span>
+                  <Link href={`/leads/${lead.id}`} className="truncate flex-1 hover:underline">
+                    {lead.name}
+                  </Link>
                   {stage.id !== "won" && stage.id !== "lost" && (
                     <span
                       className="h-2 w-2 rounded-full shrink-0"
@@ -193,7 +195,26 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                       title={`${daysSince(lead.lastContacted)} days since last contact`}
                     />
                   )}
-                </Link>
+                  {/* Dragging a card between columns needs a mouse — HTML5
+                      drag-and-drop has no touch support on any mobile
+                      browser, so this select is the only way to move a
+                      lead's stage on a phone. Kept visible on every screen
+                      size rather than hidden until touch, since it's a
+                      faster action than a drag even with a mouse. */}
+                  <select
+                    value={stage.id}
+                    onChange={(e) => moveLead(lead.id, e.target.value as PipelineStage)}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={`Move ${lead.name} to a different stage`}
+                    className="shrink-0 text-[10px] rounded border border-line bg-paper px-1 py-0.5 text-ink-soft"
+                  >
+                    {PIPELINE_STAGES.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               ))}
               {stage.leads.length === 0 && (
                 <p className="text-xs text-ink-soft italic">No leads at this stage</p>

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireActiveBilling } from "@/lib/billing";
 import { appUrl } from "@/lib/stripe";
-import { canonicalRequestUrl, findBusinessByTwilioSecret, findOrCreateLeadByPhone, parseTwilioForm, twiml, validateTwilioSignature } from "@/lib/twilio";
+import { canonicalRequestUrl, findBusinessByTwilioSecret, findOrCreateLeadByPhone, parseTwilioForm, sendSms, twiml, validateTwilioSignature } from "@/lib/twilio";
 
 /**
  * POST /api/twilio/voice/[secret] — configure this as a Twilio phone
@@ -17,6 +17,16 @@ import { canonicalRequestUrl, findBusinessByTwilioSecret, findOrCreateLeadByPhon
  * still shows up as a lead (a missed call is still a real signal), and
  * src/app/api/twilio/voice/transcription/[secret]/route.ts only needs to
  * find that same lead by phone number and log the message onto it.
+ *
+ * Missed-call text-back: every call that reaches this webhook is, by
+ * definition, one nobody picked up (see above) — so unlike a real front
+ * desk, "missed call" here isn't a special case to detect, it's just what
+ * always happens. Fires an immediate SMS on the same number this call
+ * came in on, reusing the SMS-sending path already built for follow-ups —
+ * no new integration, just a second use of one already wired up. Fires
+ * unconditionally (not only when no voicemail follows): the point is
+ * closing the gap between "nobody answered" and "they heard from us,"
+ * which is true whether or not they also leave a message.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ secret: string }> }) {
   const { secret } = await params;
@@ -39,7 +49,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const from = formParams.From;
-  if (from) await findOrCreateLeadByPhone(business.id, from, "Phone call");
+  if (from) {
+    await findOrCreateLeadByPhone(business.id, from, "Phone call");
+    try {
+      await sendSms(
+        business.id,
+        from,
+        `Hi, thanks for calling ${business.name} — we couldn't pick up, but we saw your call and will follow up shortly. Feel free to reply here anytime.`
+      );
+    } catch (err) {
+      // Best-effort — a Twilio API hiccup on the text-back must never
+      // break the call itself; the voicemail/transcription path below
+      // still runs regardless.
+      console.error(`Missed-call text-back failed for business ${business.id}:`, err);
+    }
+  }
 
   const transcribeCallback = `${appUrl()}/api/twilio/voice/transcription/${secret}`;
   return twiml(

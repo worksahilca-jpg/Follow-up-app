@@ -69,10 +69,10 @@ export async function parseTwilioForm(request: Request): Promise<Record<string, 
  */
 export async function findBusinessByTwilioSecret(
   secret: string
-): Promise<{ id: string; twilioAuthToken: string | null } | null> {
+): Promise<{ id: string; name: string; twilioAuthToken: string | null } | null> {
   return prisma.business.findUnique({
     where: { twilioSecret: secret },
-    select: { id: true, twilioAuthToken: true },
+    select: { id: true, name: true, twilioAuthToken: true },
   });
 }
 

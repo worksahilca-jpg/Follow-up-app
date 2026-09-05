@@ -1,20 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Lead } from "@/lib/types";
 import { formatCurrency, formatDate, daysSince } from "@/lib/demo-data";
 import { urgencyColor } from "@/lib/urgency";
+import { matchesSavedFilter, type SavedFilterCriteria, type SavedFilterSummary } from "@/lib/savedFilters";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
 import AddLeadForm from "@/components/AddLeadForm";
 import ImportLeadsForm from "@/components/ImportLeadsForm";
 import LogCallForm from "@/components/LogCallForm";
+import SmartViewForm from "@/components/SmartViewForm";
 import StatCard from "@/components/StatCard";
 import EmptyState from "@/components/EmptyState";
 import CleanupLeadsButton from "@/components/CleanupLeadsButton";
-import { Search, Plus, Upload, Phone, Users, Flame, Snowflake, Trophy, Inbox } from "lucide-react";
+import { Search, Plus, Upload, Phone, Users, Flame, Snowflake, Trophy, Inbox, SlidersHorizontal, X } from "lucide-react";
 
 const filters = [
   { id: "all", label: "All" },
@@ -37,25 +39,74 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
   const [showImport, setShowImport] = useState(false);
   const [showLogCall, setShowLogCall] = useState(false);
 
+  // Smart Views (see research/market/2026-09-05-competitor-feature-gaps.md
+  // #2.1) — saved custom filters, alongside the hardcoded quick chips
+  // above. `customCriteria` holds a just-built, not-yet-saved filter;
+  // `activeSavedFilterId` is which saved view (if any) is currently
+  // applied. Only one of quick-filter/custom/saved is ever active at a
+  // time, same single-select feel as the existing chip row.
+  const [savedFilters, setSavedFilters] = useState<SavedFilterSummary[]>([]);
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [customCriteria, setCustomCriteria] = useState<SavedFilterCriteria | null>(null);
+  const [activeSavedFilterId, setActiveSavedFilterId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/saved-filters")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setSavedFilters(data.filters);
+      })
+      .catch(() => {}); // Smart Views are a convenience on top of the quick filters, not load-bearing — a failed fetch just means none show up yet
+  }, []);
+
+  function selectQuickFilter(id: FilterId) {
+    setFilter(id);
+    setCustomCriteria(null);
+    setActiveSavedFilterId(null);
+  }
+
+  function selectSavedFilter(id: string) {
+    setActiveSavedFilterId(id);
+    setCustomCriteria(null);
+  }
+
+  async function deleteSavedFilter(id: string) {
+    setSavedFilters((prev) => prev.filter((f) => f.id !== id));
+    if (activeSavedFilterId === id) {
+      setActiveSavedFilterId(null);
+      setFilter("all");
+    }
+    await fetch(`/api/saved-filters/${id}`, { method: "DELETE" }).catch(() => {});
+  }
+
+  const activeSavedFilter = savedFilters.find((f) => f.id === activeSavedFilterId) ?? null;
+
   const filtered = useMemo(() => {
     let list = [...leads];
-    if (filter === "mine") list = list.filter((l) => l.assignedToId === session?.user?.id);
-    if (filter === "new") list = list.filter((l) => l.stage === "new");
-    if (filter === "hot") list = list.filter((l) => l.priority === "high");
-    if (filter === "today") {
-      list = list.filter((l) => {
-        if (!l.nextFollowUp) return false;
-        return new Date(l.nextFollowUp).toDateString() === new Date().toDateString();
-      });
+
+    if (activeSavedFilter) {
+      list = list.filter((l) => matchesSavedFilter(l, activeSavedFilter.criteria));
+    } else if (customCriteria) {
+      list = list.filter((l) => matchesSavedFilter(l, customCriteria));
+    } else {
+      if (filter === "mine") list = list.filter((l) => l.assignedToId === session?.user?.id);
+      if (filter === "new") list = list.filter((l) => l.stage === "new");
+      if (filter === "hot") list = list.filter((l) => l.priority === "high");
+      if (filter === "today") {
+        list = list.filter((l) => {
+          if (!l.nextFollowUp) return false;
+          return new Date(l.nextFollowUp).toDateString() === new Date().toDateString();
+        });
+      }
+      if (filter === "cold") {
+        list = list.filter((l) => {
+          if (l.stage === "won" || l.stage === "lost") return false;
+          return daysSince(l.lastContacted) >= 7;
+        });
+      }
+      if (filter === "won") list = list.filter((l) => l.stage === "won");
+      if (filter === "lost") list = list.filter((l) => l.stage === "lost");
     }
-    if (filter === "cold") {
-      list = list.filter((l) => {
-        if (l.stage === "won" || l.stage === "lost") return false;
-        return daysSince(l.lastContacted) >= 7;
-      });
-    }
-    if (filter === "won") list = list.filter((l) => l.stage === "won");
-    if (filter === "lost") list = list.filter((l) => l.stage === "lost");
 
     if (query.trim()) {
       const q = query.toLowerCase();
@@ -65,7 +116,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
     }
 
     return list.sort((a, b) => b.score - a.score);
-  }, [leads, filter, query, session?.user?.id]);
+  }, [leads, filter, query, session?.user?.id, activeSavedFilter, customCriteria]);
 
   const hotCount = leads.filter((l) => l.priority === "high").length;
   const coldCount = leads.filter((l) => l.stage !== "won" && l.stage !== "lost" && daysSince(l.lastContacted) >= 7).length;
@@ -108,6 +159,21 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
       {showAddLead && <AddLeadForm onClose={() => setShowAddLead(false)} />}
       {showImport && <ImportLeadsForm onClose={() => setShowImport(false)} />}
       {showLogCall && <LogCallForm onClose={() => setShowLogCall(false)} />}
+      {showBuilder && (
+        <SmartViewForm
+          leads={leads}
+          onClose={() => setShowBuilder(false)}
+          onApply={(criteria) => {
+            setCustomCriteria(criteria);
+            setActiveSavedFilterId(null);
+          }}
+          onSaved={(savedFilter) => {
+            setSavedFilters((prev) => [...prev, savedFilter]);
+            setCustomCriteria(null);
+            setActiveSavedFilterId(savedFilter.id);
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
         <StatCard label="Total" value={String(leads.length)} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
@@ -118,20 +184,60 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1.5">
-          {filters.map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className="rounded-full px-3 py-1.5 text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: filter === f.id ? "var(--ink)" : "var(--card)",
-                color: filter === f.id ? "var(--paper)" : "var(--ink-soft)",
-                border: filter === f.id ? "none" : "1px solid var(--line)",
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
+          {filters.map((f) => {
+            const active = !activeSavedFilter && !customCriteria && filter === f.id;
+            return (
+              <button
+                key={f.id}
+                onClick={() => selectQuickFilter(f.id)}
+                className="rounded-full px-3 py-1.5 text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: active ? "var(--ink)" : "var(--card)",
+                  color: active ? "var(--paper)" : "var(--ink-soft)",
+                  border: active ? "none" : "1px solid var(--line)",
+                }}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+          {savedFilters.length > 0 && <span className="w-px self-stretch bg-line mx-0.5" />}
+          {savedFilters.map((sf) => {
+            const active = activeSavedFilterId === sf.id;
+            const canDelete = sf.createdById === session?.user?.id;
+            return (
+              <span
+                key={sf.id}
+                className="inline-flex items-center rounded-full text-sm font-medium transition-colors overflow-hidden"
+                style={{
+                  backgroundColor: active ? "var(--ink)" : "var(--card)",
+                  color: active ? "var(--paper)" : "var(--ink-soft)",
+                  border: active ? "none" : "1px solid var(--line)",
+                }}
+              >
+                <button onClick={() => selectSavedFilter(sf.id)} className="pl-3 pr-1.5 py-1.5" title={sf.shared ? "Shared with the team" : "Only visible to you"}>
+                  {sf.name}
+                </button>
+                {canDelete && (
+                  <button
+                    onClick={() => deleteSavedFilter(sf.id)}
+                    className="pr-2.5 pl-0.5 py-1.5 opacity-60 hover:opacity-100"
+                    aria-label={`Delete ${sf.name}`}
+                    title="Delete this view"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </span>
+            );
+          })}
+          <button
+            onClick={() => setShowBuilder(true)}
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium border border-dashed border-line text-ink-soft"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Custom filter
+          </button>
         </div>
         <div className="relative">
           <Search className="h-4 w-4 absolute left-3 top-2.5 text-ink-soft" />

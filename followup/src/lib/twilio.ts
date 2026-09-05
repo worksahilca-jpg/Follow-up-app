@@ -120,6 +120,25 @@ export async function findOrCreateLeadByPhone(
   }
 }
 
+/**
+ * Atomically claims the right to send this lead a missed-call text-back —
+ * same conditional-updateMany pattern as checkRapidEngagement()'s dedup
+ * (src/lib/engagement.ts): succeeds only if lastMissedCallTextAt is null
+ * or older than the cooldown, so this doubles as both a de-spam measure
+ * (a caller who calls back two or three times in a row before anyone
+ * answers — a very normal "missed call, try again" pattern — gets one
+ * text, not three) and a concurrency guard (two near-simultaneous calls
+ * from the same number can't both win the race and both send).
+ */
+export async function claimMissedCallTextBack(leadId: string, cooldownMinutes: number): Promise<boolean> {
+  const since = new Date(Date.now() - cooldownMinutes * 60_000);
+  const claim = await prisma.lead.updateMany({
+    where: { id: leadId, OR: [{ lastMissedCallTextAt: null }, { lastMissedCallTextAt: { lt: since } }] },
+    data: { lastMissedCallTextAt: new Date() },
+  });
+  return claim.count === 1;
+}
+
 /** application/xml TwiML response — Twilio requires this content type for both SMS and Voice webhook replies. */
 export function twiml(xml: string): Response {
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>${xml}`, {

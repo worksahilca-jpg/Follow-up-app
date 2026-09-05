@@ -11,10 +11,16 @@ interface Member {
 /**
  * Reassigns a lead to a team member, or unassigns it. Auto-assigned on
  * creation (see src/lib/assignment.ts); this is how it changes after
- * that — including claiming a lead a source rule left unassigned in the
- * shared pool (see routeToPool in src/lib/sourceRouting.ts, "Ponds") or
- * one a teammate deliberately unassigned. "Claim it" is just a shortcut
- * for picking your own name from the same select below.
+ * that. "Claim it" (shown only while unassigned) goes through a separate
+ * /claim endpoint rather than the select's own change() — a claim is
+ * conditional on the lead still being unassigned right now (see
+ * claimLead() in src/lib/assignment.ts), unlike a manual reassignment via
+ * the select, which always overwrites the current value outright. That
+ * matters specifically for a lead a source rule left unassigned in the
+ * shared pool (see routeToPool in src/lib/sourceRouting.ts, "Ponds"):
+ * without it, two people clicking "Claim it" within the same second could
+ * both get a success response, with the DB silently deciding the real
+ * owner by whichever write landed last.
  */
 export default function LeadAssignmentSelect({
   leadId,
@@ -60,6 +66,27 @@ export default function LeadAssignmentSelect({
     }
   }
 
+  async function claim() {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/leads/${leadId}/claim`, { method: "POST" });
+      const data = await res.json();
+      if (!data.success) {
+        // A lost race still tells us who actually got it (see claimLead())
+        // — reflect that real state instead of just an error with the
+        // select still showing "Unassigned".
+        if (typeof data.assignedToId === "string") setCurrent(data.assignedToId);
+        throw new Error(data.message ?? "Couldn't claim — try again.");
+      }
+      setCurrent(session!.user.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't claim — try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   // Until the member list loads, show the name the server already knows
   // rather than a select with only "Unassigned" in it.
   if (members.length === 0) {
@@ -85,7 +112,7 @@ export default function LeadAssignmentSelect({
       </select>
       {canClaim && (
         <button
-          onClick={() => change(session!.user.id)}
+          onClick={claim}
           disabled={saving}
           className="text-xs mt-1 underline disabled:opacity-60"
           style={{ color: "var(--gold)" }}

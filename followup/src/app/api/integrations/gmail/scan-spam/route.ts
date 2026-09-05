@@ -4,6 +4,7 @@ import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { fetchSpamProspects } from "@/lib/integrations/gmail";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { tooManyRecentActions } from "@/lib/rateLimit";
 
 // Same time-limit reasoning as the regular sync route — see that file.
 export const maxDuration = 300;
@@ -22,6 +23,11 @@ export async function POST() {
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+  }
+  // Same reasoning and limit as the regular sync route — this is just as
+  // expensive per call.
+  if (await tooManyRecentActions(ctx.businessId, "gmail-scan-spam", { windowMinutes: 10, max: 5 })) {
+    return NextResponse.json({ success: false, message: "Too many scans right now — try again in a few minutes." }, { status: 429 });
   }
 
   try {

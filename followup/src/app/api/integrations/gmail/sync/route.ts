@@ -5,6 +5,7 @@ import { fetchSalesConversations } from "@/lib/integrations/gmail";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { detectReplies } from "@/lib/outcomes";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { tooManyRecentActions } from "@/lib/rateLimit";
 
 // A full sync (up to 30 Gmail threads, each possibly classified, plus two
 // OpenAI calls per resulting lead for scoring/drafting) comfortably exceeds
@@ -22,6 +23,12 @@ export async function POST() {
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+  }
+  // 5 per 10 minutes — a full sync is already expensive (up to 30 threads,
+  // two OpenAI calls per resulting lead); this is a manual "Sync now"
+  // button, not something a real user needs to hit repeatedly.
+  if (await tooManyRecentActions(ctx.businessId, "gmail-sync", { windowMinutes: 10, max: 5 })) {
+    return NextResponse.json({ success: false, message: "Too many syncs right now — try again in a few minutes." }, { status: 429 });
   }
 
   try {

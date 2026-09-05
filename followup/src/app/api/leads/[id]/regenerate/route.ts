@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail } from "@/lib/sender";
 import { getVoiceSamples } from "@/lib/voice";
+import { tooManyRecentActions } from "@/lib/rateLimit";
 import type { Message } from "@/lib/types";
 
 // POST /api/leads/[id]/regenerate — asks the AI for a fresh draft against
@@ -14,6 +15,12 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+  }
+  // 15 per 10 minutes — comfortably more than a person clicking "regenerate"
+  // needs, tight enough to stop a runaway retry loop or a compromised
+  // session from burning real OpenAI spend on the platform's own key.
+  if (await tooManyRecentActions(ctx.businessId, "regenerate", { windowMinutes: 10, max: 15 })) {
+    return NextResponse.json({ success: false, message: "Too many regenerations right now — try again in a few minutes." }, { status: 429 });
   }
 
   const { id } = await params;

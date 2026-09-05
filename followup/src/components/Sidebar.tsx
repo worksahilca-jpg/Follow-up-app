@@ -10,6 +10,7 @@ import {
   GitBranch,
   Workflow,
   BarChart3,
+  Activity,
   Settings,
   Compass,
   LogOut,
@@ -22,6 +23,7 @@ const nav = [
   { href: "/pipeline", label: "Pipeline", icon: GitBranch },
   { href: "/workflows", label: "Workflows", icon: Workflow },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/activity", label: "Activity", icon: Activity },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

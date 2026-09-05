@@ -77,10 +77,13 @@ export async function findBusinessByTwilioSecret(
 }
 
 /**
- * Phone numbers have no unique DB constraint (unlike email's
- * businessId_email), so this is a manual find-or-create rather than a
- * Prisma upsert — an SMS and a later call from the same number should
- * become one lead, not two.
+ * Optimistic find-or-create — Lead has a `(businessId, phone)` unique
+ * constraint backing this, so two concurrent inbound messages for the same
+ * new contact can't both create a Lead: whichever request's `create` loses
+ * the race gets a P2002, which is caught below and turned into the same
+ * "just update lastContacted" outcome the non-race path takes. Not a plain
+ * Prisma `upsert` because `applySourceRouting` must run exactly once, only
+ * on genuine creation.
  */
 export async function findOrCreateLeadByPhone(
   businessId: string,
@@ -91,19 +94,30 @@ export async function findOrCreateLeadByPhone(
   if (existing) {
     return prisma.lead.update({ where: { id: existing.id }, data: { lastContacted: new Date() } });
   }
-  const lead = await prisma.lead.create({
-    data: {
-      businessId,
-      name: phone,
-      phone,
-      source,
-      stage: "NEW",
-      lastContacted: new Date(),
-      assignedToId: await pickAssignee(businessId),
-    },
-  });
-  await applySourceRouting(businessId, lead.id, source);
-  return lead;
+  try {
+    const lead = await prisma.lead.create({
+      data: {
+        businessId,
+        name: phone,
+        phone,
+        source,
+        stage: "NEW",
+        lastContacted: new Date(),
+        assignedToId: await pickAssignee(businessId),
+      },
+    });
+    await applySourceRouting(businessId, lead.id, source);
+    return lead;
+  } catch (err) {
+    // Lost the race to a concurrent request that created this lead first —
+    // it's guaranteed to exist now. Don't re-run applySourceRouting; it
+    // already ran once, for whichever request actually created the row.
+    if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+      const winner = await prisma.lead.findFirst({ where: { businessId, phone } });
+      return prisma.lead.update({ where: { id: winner!.id }, data: { lastContacted: new Date() } });
+    }
+    throw err;
+  }
 }
 
 /** application/xml TwiML response — Twilio requires this content type for both SMS and Voice webhook replies. */

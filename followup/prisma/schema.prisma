@@ -167,6 +167,14 @@ model Lead {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
+  // checkRapidEngagement()'s dedup marker (src/lib/engagement.ts) — set via
+  // a conditional updateMany (WHERE null OR older than the window) instead
+  // of a findFirst-then-create Notification check, so the whole
+  // check-and-mark happens as one atomic UPDATE statement at the DB level:
+  // two concurrent inbound messages can't both pass the check the way a
+  // separate read-then-write could.
+  lastRapidEngagementNotifiedAt DateTime?
+
   // Workflow enrollment (see src/lib/sequences.ts). sequenceStepIndex is
   // the index of the step that runs NEXT (0 before anything has run);
   // sequenceStepDueAt is when that step is eligible to run — recomputed
@@ -199,6 +207,13 @@ model Lead {
   bookings      Booking[]
 
   @@unique([businessId, email])
+  // Postgres allows multiple NULLs in a unique index, so leads with no
+  // phone (manual entry, CSV import, website-form-by-email-only) are
+  // unaffected — this only blocks two rows sharing one real
+  // (businessId, phone). Backs findOrCreateLeadByPhone()'s and
+  // findOrCreateLeadByInstagram()'s P2002 fallback against the race two
+  // concurrent inbound messages for the same new contact create.
+  @@unique([businessId, phone])
   // getLeads() and the cron/automation eligibility query both filter on
   // businessId plus one of these — without a composite index each is a
   // full scan of the business's leads once that list gets big.

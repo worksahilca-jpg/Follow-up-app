@@ -108,6 +108,10 @@ export default function WorkflowsPage() {
           <p className="text-ink-soft mt-1">
             Build a multi-step follow-up sequence once, then enroll leads into it from their own page.
           </p>
+          <p className="text-sm text-ink-soft mt-1">
+            The moment a lead replies, its workflow stops automatically — you get notified, and nothing scheduled
+            sends after that. It never talks past a conversation that&apos;s actually happening.
+          </p>
         </div>
         {!creating && (
           <div className="flex items-center gap-2 shrink-0">

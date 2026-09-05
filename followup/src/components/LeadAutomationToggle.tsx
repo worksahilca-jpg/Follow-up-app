@@ -91,6 +91,12 @@ export default function LeadAutomationToggle({
         ))}
       </div>
       <p className="text-xs mt-2 text-ink-soft leading-relaxed">{DESCRIPTIONS[tier]}</p>
+      {tier !== "off" && (
+        <p className="text-xs mt-2 text-ink-soft leading-relaxed">
+          The moment this lead replies, the silence clock resets — it won&apos;t auto-send again until they&apos;ve
+          gone quiet for the full window once more.
+        </p>
+      )}
 
       {confirmingAutonomous && (
         <div className="mt-3 rounded-lg p-3" style={{ backgroundColor: "var(--coral-soft)" }}>

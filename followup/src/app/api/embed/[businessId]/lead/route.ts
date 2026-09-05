@@ -5,6 +5,7 @@ import { pickAssignee } from "@/lib/assignment";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { applySourceRouting } from "@/lib/sourceRouting";
+import { tooManyRecentLeads } from "@/lib/rateLimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEXT = 200;
@@ -43,9 +44,14 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
  * not a blank record waiting on the next sync.
  *
  * `hp` is a honeypot field the visible form leaves empty and hides from
- * real visitors with CSS — a bot that fills every field trips it. Anything
- * else in the way of spam protection (real rate limiting, a CAPTCHA) isn't
- * built yet; this is the simple, free layer only.
+ * real visitors with CSS — a bot that fills every field trips it. On top
+ * of that, tooManyRecentLeads() caps how many "Website form" leads one
+ * business can receive in a short window — this businessId isn't a
+ * secret (it's meant to sit in a customer's public website HTML), so
+ * anyone viewing page source can find this exact URL and hit it directly
+ * with a script; without a cap, a flood of submissions with a message
+ * would each trigger a real OpenAI call on the business's own dime. A
+ * real CAPTCHA still isn't built — this is the free layer.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ businessId: string }> }) {
   const { businessId } = await params;
@@ -61,6 +67,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json(
       { success: false, message: "This form isn't currently accepting submissions — please reach out another way." },
       { status: 503 }
+    );
+  }
+
+  // 20 per 10 minutes — generous for a real burst of interest (an ad
+  // campaign, a busy open house), tight enough to blunt a script hammering
+  // this URL directly. See the file comment above for why this needs a cap
+  // at all.
+  if (await tooManyRecentLeads(businessId, "Website form", { windowMinutes: 10, max: 20 })) {
+    return NextResponse.json(
+      { success: false, message: "Too many submissions right now — please try again in a few minutes." },
+      { status: 429 }
     );
   }
 

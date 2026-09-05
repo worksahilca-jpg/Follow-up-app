@@ -17,6 +17,10 @@ import {
   BellOff,
 } from "lucide-react";
 import FadeIn from "@/components/motion/FadeIn";
+import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
+import CountUp from "@/components/motion/CountUp";
+import ParallaxDots from "@/components/motion/ParallaxDots";
+import HoverLift from "@/components/motion/HoverLift";
 import FaqAccordion from "@/components/FaqAccordion";
 
 // The one place this page departs from the app-wide Inter-only rule (see
@@ -67,8 +71,7 @@ export default function LandingPage() {
             Deliberately not a gradient blob: with the accent already
             violet, a gradient hero here would read as the generic
             AI-landing-page look rather than something considered. */}
-        <div
-          aria-hidden
+        <ParallaxDots
           className="absolute inset-0 -z-10 hidden sm:block"
           style={{
             backgroundImage:
@@ -78,24 +81,34 @@ export default function LandingPage() {
             WebkitMaskImage: "radial-gradient(ellipse 60% 55% at 22% 15%, black 0%, transparent 72%)",
           }}
         />
-        <FadeIn>
+        {/* On-mount stagger rather than the scroll-triggered FadeIn used
+            everywhere else — this is the first thing anyone sees, so it
+            plays once as a single orchestrated beat instead of each part
+            popping in independently. */}
+        <RevealGroup on="mount">
           {/* Neutral bordered chip, not a violet badge — violet stays on
               buttons/links/focus states only, nowhere decorative. */}
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft">
-            <Sparkles className="h-3 w-3" /> AI-native, not AI-bolted-on
-          </span>
-          <h1
-            className="text-5xl sm:text-6xl xl:text-7xl leading-[1.03] mt-5"
-            style={{ ...display, letterSpacing: "-0.02em", textWrap: "balance" }}
-          >
-            Never lose a lead because you forgot to follow up.
-          </h1>
-          <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-md">
-            FollowUp is the AI teammate that reads your sales conversations and tells
-            you exactly who to contact today, why, and what to say — before that
-            &quot;let me think about it&quot; turns into a lost sale.
-          </p>
-          <div className="mt-9 flex flex-wrap gap-3">
+          <RevealItem>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft">
+              <Sparkles className="h-3 w-3" /> AI-native, not AI-bolted-on
+            </span>
+          </RevealItem>
+          <RevealItem>
+            <h1
+              className="text-5xl sm:text-6xl xl:text-7xl leading-[1.03] mt-5"
+              style={{ ...display, letterSpacing: "-0.02em", textWrap: "balance" }}
+            >
+              Never lose a lead because you forgot to follow up.
+            </h1>
+          </RevealItem>
+          <RevealItem>
+            <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-md">
+              FollowUp is the AI teammate that reads your sales conversations and tells
+              you exactly who to contact today, why, and what to say — before that
+              &quot;let me think about it&quot; turns into a lost sale.
+            </p>
+          </RevealItem>
+          <RevealItem className="mt-9 flex flex-wrap gap-3">
             {/* The one element on the page allowed a little more weight than
                 "restrained" — this is the entire point of the hero, so it
                 earns a glow and some heft that nothing else on the page gets. */}
@@ -113,20 +126,23 @@ export default function LandingPage() {
             <a href="#how-it-works" className="rounded-full border border-line px-5 py-3 text-sm font-medium transition-colors hover:bg-card">
               See how it works
             </a>
-          </div>
+          </RevealItem>
           {/* Credibility line — a cited stat rather than a fabricated customer
               count or logo wall, which the app doesn't have yet and shouldn't
               pretend to. The number itself gets real typographic weight
-              instead of hiding in a caption; still plain-colored, since
+              instead of hiding in a caption, and now ticks up on load
+              instead of sitting there static; still plain-colored, since
               color-coding stays reserved for the lead-urgency pills. */}
-          <div className="mt-8 flex items-center gap-4">
-            <p className="text-3xl leading-none shrink-0" style={display}>21&times;</p>
+          <RevealItem className="mt-8 flex items-center gap-4">
+            <p className="text-3xl leading-none shrink-0" style={display}>
+              <CountUp to={21} suffix="×" />
+            </p>
             <p className="text-xs text-ink-soft leading-relaxed max-w-[15rem]">
               higher conversion when a lead is contacted within 5 minutes instead of
               after 30 — no credit card required to see it for yourself.
             </p>
-          </div>
-        </FadeIn>
+          </RevealItem>
+        </RevealGroup>
 
         {/* Live-looking follow-up card mockup, framed like a real screenshot
             in a browser window rather than a bare panel. The window-chrome
@@ -148,11 +164,23 @@ export default function LandingPage() {
             <p className="text-xs text-ink-soft mb-3">Today&apos;s follow-ups</p>
             <div className="rounded-xl border border-line p-4">
               <div className="flex items-start gap-3">
-                <div
-                  className="h-11 w-11 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
-                  style={{ backgroundColor: "var(--coral-soft)", color: "var(--coral)" }}
-                >
-                  92
+                <div className="relative shrink-0">
+                  {/* A quiet ping on the hottest lead's score only — the one
+                      place motion doubles as meaning (this is the lead about
+                      to go cold) rather than decoration. Tailwind's
+                      motion-safe: variant keeps it off entirely under
+                      prefers-reduced-motion. */}
+                  <span
+                    className="motion-safe:animate-ping absolute inset-0 rounded-full opacity-60"
+                    style={{ backgroundColor: "var(--coral-soft)" }}
+                    aria-hidden
+                  />
+                  <div
+                    className="relative h-11 w-11 rounded-full flex items-center justify-center text-sm font-semibold"
+                    style={{ backgroundColor: "var(--coral-soft)", color: "var(--coral)" }}
+                  >
+                    92
+                  </div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
@@ -451,14 +479,17 @@ export default function LandingPage() {
           <FadeIn delay={0.15}>
             <div className="rounded-2xl border border-line bg-card p-5" style={{ boxShadow: "0 20px 50px -28px rgba(0,0,0,0.35)" }}>
               <p className="text-xs text-ink-soft mb-3">Team pipeline</p>
-              <div className="space-y-2">
+              {/* Rows cascade in one after another once the card scrolls
+                  into view — reads as a board populating with live rows
+                  rather than one flat image dropped in. */}
+              <RevealGroup className="space-y-2" on="view">
                 {[
                   { name: "Sarah Johnson", owner: "You", status: "On track", color: "var(--sage)" },
                   { name: "Mike Patel", owner: "You", status: "At risk", color: "var(--slate)" },
                   { name: "Devon Ruiz", owner: "Alex", status: "Stuck", color: "var(--coral)" },
                   { name: "Priya Shah", owner: "Alex", status: "On track", color: "var(--sage)" },
                 ].map((row) => (
-                  <div
+                  <RevealItem
                     key={row.name}
                     className="flex items-center gap-3 rounded-lg border border-line px-3 py-2.5"
                   >
@@ -471,9 +502,9 @@ export default function LandingPage() {
                     >
                       {row.status}
                     </span>
-                  </div>
+                  </RevealItem>
                 ))}
-              </div>
+              </RevealGroup>
             </div>
           </FadeIn>
         </div>
@@ -578,13 +609,13 @@ export default function LandingPage() {
 // rest of the page rather than reaching for the accent as decoration.
 function Step({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
-    <div className="rounded-xl border border-line bg-card p-5">
+    <HoverLift className="rounded-xl border border-line bg-card p-5">
       <div className="h-9 w-9 rounded-lg flex items-center justify-center border border-line text-ink-soft">
         {icon}
       </div>
       <h4 className="font-medium mt-3">{title}</h4>
       <p className="text-sm text-ink-soft mt-1 leading-relaxed">{body}</p>
-    </div>
+    </HoverLift>
   );
 }
 

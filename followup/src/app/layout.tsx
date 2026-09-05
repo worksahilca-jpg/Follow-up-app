@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces } from "next/font/google";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 
@@ -51,7 +52,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`h-full antialiased ${inter.variable} ${fraunces.variable}`}>
       <body className="min-h-full flex flex-col bg-paper text-ink">
-        <AuthProvider>{children}</AuthProvider>
+        {/* Every framer-motion animation in the app — the landing page's
+            reveal/parallax/hover motion, the FAQ accordion — reads the
+            visitor's OS-level "reduce motion" setting through this one
+            provider rather than each component re-checking it. */}
+        <MotionConfig reducedMotion="user">
+          <AuthProvider>{children}</AuthProvider>
+        </MotionConfig>
       </body>
     </html>
   );

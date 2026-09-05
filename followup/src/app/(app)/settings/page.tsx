@@ -390,6 +390,11 @@ function SettingsPageInner() {
             </div>
           )}
           <p className="text-xs text-ink-soft mt-3">
+            The moment a lead replies, the silence clock resets — this never fires again until they&apos;ve gone
+            quiet for the full window once more, so it can&apos;t talk past a conversation that&apos;s actually
+            happening.
+          </p>
+          <p className="text-xs text-ink-soft mt-2">
             Off by default for every lead. Every automated message is still logged in the lead&apos;s conversation
             history, and you can turn this off per-lead any time.
           </p>

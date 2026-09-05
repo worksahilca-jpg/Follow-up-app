@@ -49,6 +49,7 @@ export default function TeamSection() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<TeamRole>("SALES");
   const [inviting, setInviting] = useState(false);
+  const [inviteEmailSent, setInviteEmailSent] = useState<boolean | null>(null);
 
   function load() {
     fetch("/api/team")
@@ -71,6 +72,7 @@ export default function TeamSection() {
   async function sendInvite() {
     setInviting(true);
     setError(null);
+    setInviteEmailSent(null);
     try {
       const res = await fetch("/api/team/invites", {
         method: "POST",
@@ -79,6 +81,10 @@ export default function TeamSection() {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message ?? "Couldn't send invite.");
+      // `emailSent` is boolean | undefined — an undefined value (e.g. a stale
+      // server) is treated the same as false, so we never claim an email
+      // went out when we're not sure it did.
+      setInviteEmailSent(data.emailSent === true);
       setInviteEmail("");
       load();
     } catch (err) {
@@ -217,8 +223,15 @@ export default function TeamSection() {
       )}
       {isAdmin && (
         <p className="text-xs text-ink-soft mt-2">
-          They&apos;ll join your team automatically the next time they sign in with this email — no separate invite
-          email is sent, so let them know to try signing in.
+          They&apos;ll join automatically the next time they sign in with this email. If you have Gmail connected,
+          we&apos;ll also send them a heads-up.
+        </p>
+      )}
+      {isAdmin && inviteEmailSent !== null && (
+        <p className="text-xs mt-1" style={{ color: inviteEmailSent ? "var(--sage)" : "var(--gold)" }}>
+          {inviteEmailSent
+            ? "Invite sent — they'll also join automatically the moment they sign in with this email."
+            : "Invite created — no email could be sent (connect Gmail under Settings to enable that), so let them know to sign in with this email to join."}
         </p>
       )}
 

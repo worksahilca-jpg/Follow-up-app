@@ -11,7 +11,7 @@ import {
   getPipelineData,
   getUpcomingBookings,
 } from "@/lib/leads-data";
-import { formatCurrency, daysSince } from "@/lib/demo-data";
+import { formatCurrency, daysSince, getGreeting } from "@/lib/demo-data";
 import EmptyState from "@/components/EmptyState";
 import { AlertTriangle, Users, Flame, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox, CalendarClock } from "lucide-react";
 
@@ -30,10 +30,10 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl">Good morning</h1>
+      <h1 className="font-display text-3xl">{getGreeting()}</h1>
       <p className="text-ink-soft mt-1">Here&apos;s what needs your attention today.</p>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
         <StatCard
           label="Total leads"
           value={String(stats.totalLeads)}

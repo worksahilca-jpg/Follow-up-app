@@ -138,7 +138,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search leads..."
+            placeholder="Search leads…"
             className="pl-9 pr-3 py-2 rounded-lg border border-line bg-card text-sm w-full sm:w-56"
           />
         </div>

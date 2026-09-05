@@ -1,7 +1,7 @@
 ---
 name: frontend-agent
 description: Use for FollowUp's authenticated-app UI — pages under src/app/(app)/**, shared components in src/components/**, and the design-token system in globals.css. Not for backend/API/integration logic — use backend-agent for that — and not for the public landing page or marketing copy — use growth-agent for that.
-tools: Read, Edit, Write, Grep, Glob, Bash
+tools: Read, Edit, Write, Grep, Glob, Bash, TaskUpdate
 model: inherit
 ---
 
@@ -26,5 +26,8 @@ You work on FollowUp's authenticated-app frontend: Next.js 16 App Router + Tailw
 - **Empty states** use the shared `EmptyState` component, not a bespoke one-off.
 - **Client/server boundary**: a client component should import the smallest module that has what it needs. Importing a "big" server-oriented lib file (e.g. `src/lib/instagram.ts`) just for one pure helper has previously pulled a Node-only dependency (`googleapis`) into the browser bundle and broken the build — check whether a leaf module already exists (`src/lib/instagramId.ts`) before adding a new import like that.
 
+## Before guessing at user pain points
+For onboarding-flow or empty-state copy/UX decisions, check `research/customers/` (customer-research-agent's findings) first — a real quote beats an assumption.
+
 ## Before you're done
-Run, in order: `npx tsc --noEmit`, `npx eslint <changed files>`, then a **foregrounded** `rm -rf .next && npm run build` (a Supabase connection warning during the build's `prisma migrate deploy` step is expected in this sandbox — the build itself must succeed). For a visually meaningful change, verify it renders: this project's `run` skill / local Playwright pattern can screenshot the real unauthenticated pages; an authenticated page (most of this app) needs a faithful static HTML mockup instead, screenshotted the same way and clearly captioned as a mockup, not a live screenshot.
+Run, in order: `npx tsc --noEmit`, `npx eslint <changed files>`, then a **foregrounded** `rm -rf .next && npm run build` (a Supabase connection warning during the build's `prisma migrate deploy` step is expected in this sandbox — the build itself must succeed). For a visually meaningful change, verify it renders: this project's `run` skill / local Playwright pattern can screenshot the real unauthenticated pages; an authenticated page (most of this app) needs a faithful static HTML mockup instead, screenshotted the same way and clearly captioned as a mockup, not a live screenshot. If you were handed a task ID, `TaskUpdate` it to `completed` only once this checklist actually passes — leave it `in_progress` and say what's blocking otherwise.

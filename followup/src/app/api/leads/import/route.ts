@@ -5,6 +5,7 @@ import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { makeBatchAssigner } from "@/lib/assignment";
+import { applySourceRouting } from "@/lib/sourceRouting";
 
 const MAX_FILE_BYTES = 2 * 1024 * 1024; // 2MB — plenty for a few thousand rows of lead data
 const MAX_ROWS = 1000;
@@ -149,13 +150,24 @@ export async function POST(request: NextRequest) {
     });
   });
 
-  const result = toInsert.length
-    ? await prisma.lead.createMany({ data: toInsert, skipDuplicates: true })
-    : { count: 0 };
+  // createManyAndReturn (not createMany) so each row actually inserted —
+  // skipDuplicates means some rows in toInsert may not be — can still get
+  // applySourceRouting called on it, same as every other lead-creation path.
+  const created = toInsert.length
+    ? await prisma.lead.createManyAndReturn({
+        data: toInsert,
+        skipDuplicates: true,
+        select: { id: true, source: true },
+      })
+    : [];
+
+  for (const lead of created) {
+    await applySourceRouting(ctx.businessId, lead.id, lead.source);
+  }
 
   return NextResponse.json({
     success: true,
-    created: result.count,
+    created: created.length,
     skipped: skipped.length,
     skippedSamples: skipped.slice(0, 10),
   });

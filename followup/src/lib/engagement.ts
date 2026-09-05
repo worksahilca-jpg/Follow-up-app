@@ -48,11 +48,20 @@ export async function checkRapidEngagement(leadId: string): Promise<void> {
   // Nobody assigned means nobody to hand this off to — nothing to do.
   if (!lead?.assignedToId) return;
 
-  const alreadyNotified = await prisma.notification.findFirst({
-    where: { leadId, createdAt: { gte: since } },
-    select: { id: true },
+  // Atomic check-and-mark: a single conditional UPDATE, not a separate
+  // findFirst-then-create Notification check. Two concurrent inbound
+  // messages both racing to notify for the same lead serialize on this
+  // row — whichever commits first "wins" the window, and the second's
+  // WHERE clause is re-evaluated against the now-updated row and matches
+  // zero rows, so only one Notification ever gets created per burst.
+  const claim = await prisma.lead.updateMany({
+    where: {
+      id: leadId,
+      OR: [{ lastRapidEngagementNotifiedAt: null }, { lastRapidEngagementNotifiedAt: { lt: since } }],
+    },
+    data: { lastRapidEngagementNotifiedAt: new Date() },
   });
-  if (alreadyNotified) return;
+  if (claim.count === 0) return; // already notified within this window
 
   await prisma.notification.create({
     data: {

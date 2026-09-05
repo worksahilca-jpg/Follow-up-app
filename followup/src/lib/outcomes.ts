@@ -34,6 +34,7 @@ export async function detectReplies(businessId: string): Promise<number> {
     select: {
       id: true,
       sentAt: true,
+      leadId: true,
       lead: {
         select: {
           conversations: {
@@ -50,19 +51,42 @@ export async function detectReplies(businessId: string): Promise<number> {
     },
   });
 
+  // Group by lead first — a lead with multiple outstanding FollowUps must
+  // have each of its inbound messages claimed by at most one of them, so
+  // this can't attribute the same real reply to two FollowUps (see the
+  // audit finding this fixes: two pending FollowUps + one reply used to
+  // both get stamped with that reply's timestamp).
+  const byLead = new Map<string, typeof pending>();
+  for (const followUp of pending) {
+    const list = byLead.get(followUp.leadId);
+    if (list) list.push(followUp);
+    else byLead.set(followUp.leadId, [followUp]);
+  }
+
   let matched = 0;
 
-  for (const followUp of pending) {
-    const sentAt = followUp.sentAt!;
-    const firstReply = followUp.lead.conversations
+  for (const followUps of byLead.values()) {
+    // Earliest-sent FollowUp gets first claim on the earliest available
+    // inbound message — mirrors the order replies would actually resolve
+    // outstanding follow-ups in.
+    const sorted = [...followUps].sort((a, b) => a.sentAt!.getTime() - b.sentAt!.getTime());
+    // Same inbound messages regardless of which FollowUp in this lead we
+    // look from — conversations are shared across all of a lead's FollowUps.
+    const available = sorted[0].lead.conversations
       .flatMap((c) => c.messages)
-      .filter((m) => m.sentAt > sentAt)
-      .sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime())[0];
+      .sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime());
 
-    if (firstReply) {
+    for (const followUp of sorted) {
+      const sentAt = followUp.sentAt!;
+      const claimedIndex = available.findIndex((m) => m.sentAt > sentAt);
+      if (claimedIndex === -1) continue;
+
+      const reply = available[claimedIndex];
+      available.splice(claimedIndex, 1); // consumed — the next FollowUp can't also claim it
+
       await prisma.followUp.update({
         where: { id: followUp.id },
-        data: { repliedAt: firstReply.sentAt },
+        data: { repliedAt: reply.sentAt },
       });
       matched++;
     }

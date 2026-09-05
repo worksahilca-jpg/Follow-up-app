@@ -19,13 +19,14 @@ const GRAPH_API = "https://graph.instagram.com";
  * the event's recipient ID.
  *
  * Leads have no dedicated "Instagram-scoped ID" column — phone has no
- * unique constraint and no format validation, so it's reused here the
- * same way Twilio reuses it for a real phone number, prefixed `ig:` so
- * the two can never collide and so it's obvious at a glance in the UI
- * where a given lead's "phone" field actually came from. The prefix logic
- * itself lives in src/lib/instagramId.ts, a zero-dependency leaf module —
- * see that file for why (a client component needs isInstagramLeadId
- * without pulling in everything else this file imports).
+ * format validation (it's just a unique-per-business text column, not
+ * checked against a phone number shape), so it's reused here the same way
+ * Twilio reuses it for a real phone number, prefixed `ig:` so the two can
+ * never collide and so it's obvious at a glance in the UI where a given
+ * lead's "phone" field actually came from. The prefix logic itself lives
+ * in src/lib/instagramId.ts, a zero-dependency leaf module — see that file
+ * for why (a client component needs isInstagramLeadId without pulling in
+ * everything else this file imports).
  */
 
 /**
@@ -99,7 +100,17 @@ export async function sendInstagramMessage(
   return { success: true };
 }
 
-/** Manual find-or-create, same shape as Twilio's phone lookup — a later DM from the same sender should update one lead, not create a new one each time. */
+/**
+ * Optimistic find-or-create, same shape as Twilio's phone lookup — a later
+ * DM from the same sender should update one lead, not create a new one
+ * each time. Backed by Lead's `(businessId, phone)` unique constraint
+ * (the Instagram-prefixed id is stored in the `phone` column — see the
+ * file doc comment above), so two concurrent DMs from a brand-new sender
+ * can't both create a Lead: the loser's `create` gets a P2002, caught
+ * below and turned into the same "just update lastContacted" outcome as
+ * the non-race path. Not a plain Prisma `upsert` because
+ * `applySourceRouting` must run exactly once, only on genuine creation.
+ */
 export async function findOrCreateLeadByInstagram(
   businessId: string,
   senderId: string,
@@ -110,17 +121,28 @@ export async function findOrCreateLeadByInstagram(
   if (existing) {
     return prisma.lead.update({ where: { id: existing.id }, data: { lastContacted: new Date() } });
   }
-  const lead = await prisma.lead.create({
-    data: {
-      businessId,
-      name: senderUsername ? `@${senderUsername}` : "Instagram DM",
-      phone,
-      source: "Instagram",
-      stage: "NEW",
-      lastContacted: new Date(),
-      assignedToId: await pickAssignee(businessId),
-    },
-  });
-  await applySourceRouting(businessId, lead.id, "Instagram");
-  return lead;
+  try {
+    const lead = await prisma.lead.create({
+      data: {
+        businessId,
+        name: senderUsername ? `@${senderUsername}` : "Instagram DM",
+        phone,
+        source: "Instagram",
+        stage: "NEW",
+        lastContacted: new Date(),
+        assignedToId: await pickAssignee(businessId),
+      },
+    });
+    await applySourceRouting(businessId, lead.id, "Instagram");
+    return lead;
+  } catch (err) {
+    // Lost the race to a concurrent request that created this lead first —
+    // it's guaranteed to exist now. Don't re-run applySourceRouting; it
+    // already ran once, for whichever request actually created the row.
+    if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+      const winner = await prisma.lead.findFirst({ where: { businessId, phone } });
+      return prisma.lead.update({ where: { id: winner!.id }, data: { lastContacted: new Date() } });
+    }
+    throw err;
+  }
 }

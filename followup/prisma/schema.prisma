@@ -26,6 +26,7 @@ model User {
   assignedLeads Lead[]         @relation("AssignedLeads")
   integrations  Integration[]
   notifications Notification[]
+  savedFilters  SavedFilter[]
 
   // Every Gmail sync/automation lookup resolves the connected account via
   // "the user(s) on this business" — without this, that's a table scan.
@@ -60,6 +61,7 @@ model Business {
   invites         Invite[]
   feedback        ProductFeedback[]
   rateLimitHits   RateLimitHit[]
+  savedFilters    SavedFilter[]
 
   // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
   // mirrors the Stripe Subscription.status string verbatim (active,
@@ -408,6 +410,31 @@ model RateLimitHit {
   createdAt  DateTime @default(now())
 
   @@index([businessId, action, createdAt])
+}
+
+// A saved, named lead-list filter ("Smart View" in Close's terms — see
+// research/market/2026-09-05-competitor-feature-gaps.md #2.1) — persists
+// a custom combination of criteria (src/lib/savedFilters.ts's Criteria
+// shape) that the hardcoded quick-filter chips in LeadsPageClient.tsx
+// can't express, e.g. "Instagram leads over $2k, no contact in 10 days."
+// `shared: false` means only createdById sees it; `shared: true` puts it
+// in front of the whole business, same as Close's private-vs-team choice.
+model SavedFilter {
+  id          String   @id @default(cuid())
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdById String
+  name        String
+  shared      Boolean  @default(false)
+  // { source?, stage?, priority?, minDealValue?, minDaysSinceContact? } —
+  // deliberately loose (no relation, no per-key column) since this is a
+  // client-evaluated predicate, not something queried in SQL.
+  criteria    Json
+  createdAt   DateTime @default(now())
+
+  // getSavedFilters()'s "shared ones + my own private ones" read.
+  @@index([businessId, shared])
 }
 
 // A pending invitation to join a business's team, by email — not yet a

@@ -513,7 +513,7 @@ export default function LandingPage() {
               items={[
                 {
                   q: "Will FollowUp send emails without my permission?",
-                  a: "No. Every AI-drafted message needs your approval unless you explicitly turn on automation for a specific lead.",
+                  a: "No. Every AI-drafted message needs your approval unless you explicitly turn on automation for a specific lead — and even then, automation stops the instant that lead replies to you.",
                 },
                 {
                   q: "Is this another CRM I have to fill out?",

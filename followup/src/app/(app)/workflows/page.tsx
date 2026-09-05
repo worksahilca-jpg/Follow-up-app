@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Sparkles, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft, Workflow as WorkflowIcon } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
 
 type SequenceAction = "EMAIL" | "CHANGE_STAGE";
 
@@ -169,12 +170,11 @@ export default function WorkflowsPage() {
 
       <div className="mt-6 space-y-4">
         {loaded && sequences.length === 0 && !creating && (
-          <div className="rounded-xl border border-line bg-card p-8 text-center">
-            <WorkflowIcon className="h-6 w-6 mx-auto text-ink-soft" />
-            <p className="text-sm text-ink-soft mt-3">
-              No workflows yet — try &quot;Use recommended cadence&quot; above, or build your own from scratch.
-            </p>
-          </div>
+          <EmptyState
+            icon={WorkflowIcon}
+            title="No workflows yet"
+            description={<>Try &quot;Use recommended cadence&quot; above, or build your own from scratch.</>}
+          />
         )}
         {sequences.map((seq) => (
           <WorkflowCard

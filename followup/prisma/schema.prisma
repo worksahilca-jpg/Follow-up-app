@@ -178,6 +178,17 @@ model Lead {
   sequenceId        String?
   sequenceStepIndex Int       @default(0)
   sequenceStepDueAt DateTime?
+  // Set once, in runSequencesForBusiness()'s "finished the last step"
+  // branch — the only sequence exit path that gets a persisted timestamp.
+  // Deliberately NOT set on early unenroll (manual, sequence deleted, or
+  // the stop-on-reply pause) — those all just clear sequenceId/
+  // sequenceStepIndex/sequenceStepDueAt with no distinguishing signal, so
+  // "why did this lead leave its sequence" isn't otherwise knowable from
+  // stored data. Kept as a running "last completed at" marker (not reset
+  // on re-enrollment) so getAnalytics()'s sequence-health metric has a
+  // real, honest "completed in the last 30 days" count instead of one
+  // that conflates completion with every other kind of exit.
+  sequenceCompletedAt DateTime?
 
   conversations Conversation[]
   deals         Deal[]
@@ -195,6 +206,8 @@ model Lead {
   @@index([businessId, source])
   // The workflow cron's "which enrolled leads are due right now" scan.
   @@index([businessId, sequenceStepDueAt])
+  // getAnalytics()'s sequence-health "completed in the last 30 days" scan.
+  @@index([businessId, sequenceCompletedAt])
 }
 
 model Conversation {

@@ -295,6 +295,10 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
     if (!step) {
       // Enrolled past the last step somehow (steps edited out from under
       // it) — clear enrollment rather than looping on a step that's gone.
+      // Deliberately NOT stamping sequenceCompletedAt here: this lead
+      // didn't actually finish the sequence as built, its step list just
+      // changed size underneath it, so counting it as a real completion
+      // in analytics would overstate the metric.
       await prisma.lead.update({
         where: { id: lead.id },
         data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
@@ -365,7 +369,18 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
               sequenceStepIndex: nextIndex,
               sequenceStepDueAt: new Date(Date.now() + nextStep.delayDays * 24 * 60 * 60 * 1000),
             }
-          : { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null }, // finished the sequence
+          : {
+              // Finished the sequence — the one exit path that gets a
+              // persisted timestamp (see Lead.sequenceCompletedAt), so
+              // getAnalytics()'s sequence-health metric can honestly count
+              // real completions instead of conflating them with early
+              // unenroll (manual, sequence deleted, or the stop-on-reply
+              // pause above, none of which set this).
+              sequenceId: null,
+              sequenceStepIndex: 0,
+              sequenceStepDueAt: null,
+              sequenceCompletedAt: new Date(),
+            },
       });
       return { kind: nextStep ? ("advanced" as const) : ("completed" as const) };
     } catch (err) {

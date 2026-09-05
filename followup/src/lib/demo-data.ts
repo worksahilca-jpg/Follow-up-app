@@ -452,3 +452,12 @@ export function formatCurrency(n: number): string {
 export function formatDate(dateIso: string): string {
   return new Date(dateIso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
+
+/** Time-of-day greeting for the dashboard header — was hardcoded to
+ *  "Good morning" regardless of when the page loaded. */
+export function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}

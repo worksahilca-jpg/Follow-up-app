@@ -17,7 +17,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 min-w-0">
-        <div className="max-w-5xl mx-auto px-8 py-10">{children}</div>
+        {/* pt-20 clears the fixed mobile top bar (see Sidebar) below lg;
+            at lg and up that bar doesn't render, so padding goes back to
+            matching py-10 like every other side. */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 lg:pt-10 pb-10">{children}</div>
       </main>
     </div>
   );

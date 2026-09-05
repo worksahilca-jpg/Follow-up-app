@@ -176,7 +176,7 @@ export default function EmbedLeadPage() {
 
       <p className="text-center text-xs text-ink-soft pb-4">
         <a
-          href="https://follow-up-app-two.vercel.app"
+          href="/"
           target="_blank"
           rel="noopener"
           className="inline-flex items-center gap-1 hover:text-ink transition-colors"

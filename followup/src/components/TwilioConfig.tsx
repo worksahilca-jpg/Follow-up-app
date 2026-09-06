@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, Phone, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, Phone, PhoneCall, ShieldAlert } from "lucide-react";
 
 /**
  * "Phone (SMS + calls)" section of Settings. Unlike the other two webhook
@@ -24,6 +24,8 @@ export default function TwilioConfig() {
   const [whatsappPhoneNumber, setWhatsappPhoneNumber] = useState<string | null>(null);
   const [whatsappPhoneNumberDraft, setWhatsappPhoneNumberDraft] = useState("");
   const [savingWhatsapp, setSavingWhatsapp] = useState(false);
+  const [voiceAgentEnabled, setVoiceAgentEnabled] = useState(false);
+  const [savingVoiceAgent, setSavingVoiceAgent] = useState(false);
   const [savingOutbound, setSavingOutbound] = useState(false);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState<"sms" | "voice" | "whatsapp" | null>(null);
@@ -42,6 +44,7 @@ export default function TwilioConfig() {
           accountSid?: string | null;
           phoneNumber?: string | null;
           whatsappPhoneNumber?: string | null;
+          voiceAgentEnabled?: boolean;
         }) => {
           if (data.success) {
             setSmsUrl(data.smsUrl ?? null);
@@ -54,6 +57,7 @@ export default function TwilioConfig() {
             setPhoneNumberDraft(data.phoneNumber ?? "");
             setWhatsappPhoneNumber(data.whatsappPhoneNumber ?? null);
             setWhatsappPhoneNumberDraft(data.whatsappPhoneNumber ?? "");
+            setVoiceAgentEnabled(!!data.voiceAgentEnabled);
           }
         }
       )
@@ -128,6 +132,21 @@ export default function TwilioConfig() {
       }
     } finally {
       setSavingWhatsapp(false);
+    }
+  }
+
+  async function toggleVoiceAgent(next: boolean) {
+    setSavingVoiceAgent(true);
+    try {
+      const res = await fetch("/api/twilio/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voiceAgentEnabled: next }),
+      });
+      const data: { success: boolean } = await res.json();
+      if (data.success) setVoiceAgentEnabled(next);
+    } finally {
+      setSavingVoiceAgent(false);
     }
   }
 
@@ -398,6 +417,50 @@ export default function TwilioConfig() {
                   )}
                 </div>
               )}
+
+              <div className="pt-3 border-t border-line">
+                <p className="text-xs font-medium flex items-center gap-1.5">
+                  <PhoneCall className="h-3.5 w-3.5" /> Live AI voice agent
+                  <span
+                    className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                    style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
+                  >
+                    Beta
+                  </span>
+                </p>
+                <p className="text-xs text-ink-soft mt-1">
+                  Off by default. On, a call is answered live by an AI that actually talks with the caller —
+                  no more &quot;leave a message after the tone.&quot; It speaks the caller&apos;s own language,
+                  not just English. Off, calls work exactly as they do today (a recorded voicemail).
+                </p>
+                <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
+                  <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
+                    <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
+                    <span>
+                      <strong className="font-medium">Real per-minute cost, and a compliance step that&apos;s
+                      on you.</strong> Every call the agent answers costs real money (Twilio + OpenAI, on top of
+                      what you already pay for texting). Every call also opens with a spoken notice that
+                      it&apos;s an AI and the call may be recorded — several states legally require caller
+                      consent to record a call, and that notice is how it&apos;s obtained here. Turning this on
+                      is a decision worth checking against your own state&apos;s call-recording law first, not
+                      just a feature switch.
+                    </span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => toggleVoiceAgent(!voiceAgentEnabled)}
+                  disabled={savingVoiceAgent}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium disabled:opacity-60"
+                  style={
+                    voiceAgentEnabled
+                      ? { backgroundColor: "var(--sage-soft)", color: "var(--sage)" }
+                      : { backgroundColor: "var(--ink)", color: "var(--paper)" }
+                  }
+                >
+                  {voiceAgentEnabled ? <Check className="h-4 w-4" /> : null}
+                  {savingVoiceAgent ? "Saving…" : voiceAgentEnabled ? "On — calls are answered live" : "Turn on"}
+                </button>
+              </div>
             </div>
           )}
         </div>

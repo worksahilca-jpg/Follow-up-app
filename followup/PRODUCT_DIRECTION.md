@@ -133,17 +133,39 @@ Not a self-congratulation pass — a real check, including the gaps.
 
 ## Next real initiative: AI voice agents + real multilingual support
 
+**Update (2026-09-06): the voice AI half is built, Phase 1, shipped opt-in and
+off by default.** `src/app/api/twilio/voice/[secret]/route.ts` now branches on
+`Business.voiceAgentEnabled` — on, a call gets `<Connect><Stream>`'d to a
+separate always-on bridge service (`/voice-agent` at the repo root, its own
+Vercel project — Twilio's Media Streams need a persistent connection a Next.js
+route can't hold) that relays the caller's audio live to OpenAI's Realtime API
+and back, so the caller has an actual spoken conversation instead of leaving a
+voicemail — in whatever language they speak, per the multilingual-instruction
+fix (see point 2 below, and `buildInstructions()` in
+`voice-agent/api/stream.js`). The finished transcript is handed back to
+`/api/twilio/voice-agent-callback/[secret]/route.ts`, which owns it the same
+way every other channel does (Rule 2) — a real Lead/Conversation/Message, not
+data left sitting on a third party. Off is still the original voicemail flow,
+unchanged, for every business that hasn't opted in.
+
+What Phase 1 does NOT cover, on file rather than assumed solved:
+- Per-state call-recording consent nuance (one spoken disclosure everywhere
+  today, not tailored to two-party-consent states).
+- A live handoff to a real human mid-call.
+- The AI-disclosure line itself is always spoken in English, even though the
+  agent then replies in whatever language the caller actually speaks.
+
 The two biggest gaps between what's built today and the mission above, named
 plainly rather than assumed solved:
 
-1. **No real voice AI exists yet.** A missed call today gets a recorded greeting
-   + `<Record>` transcription + a text-back (see `src/app/api/twilio/voice/[secret]/route.ts`)
-   — that's a placeholder, not an agent that answers and holds a conversation. Real
-   voice AI needs different infrastructure than Twilio's basic voicemail flow
-   (something that can converse live, low-latency, in the caller's language) and
-   carries its own TCPA exposure — see `research/integrations/2026-09-06-twilio-sms-compliance.md`'s
-   voice-compliance section: the FCC treats an AI-generated call voice as
-   "artificial/prerecorded," same consent bar as a robocall.
+1. ~~No real voice AI exists yet.~~ **Built, Phase 1 — see above.** A missed
+   call when the agent is off still gets the original recorded greeting +
+   `<Record>` transcription + a text-back, unchanged. Its own TCPA exposure is
+   real and only partly resolved — see
+   `research/integrations/2026-09-06-voice-ai-and-multilingual-scoping.md`
+   Part 1 for the inbound-specific compliance findings this build followed
+   (disclosure + recording-consent notice before anything connects, keep the
+   conversation scoped to what the caller called about).
 2. **Nothing has been built or tested for non-English leads.** AI scoring and
    drafting (`src/lib/integrations/openai.ts`) has never been checked against a
    non-English lead; Gmail/Twilio/Instagram capture has never been verified to
@@ -151,9 +173,11 @@ plainly rather than assumed solved:
    it needs real verification, not an assumption that "the model probably handles
    it."
 
-Both need a real research/scoping pass (current voice-AI platform options, cost,
-latency, multilingual quality, compliance) before any code gets written — this is
-a substantial build, not a quick feature.
+Both needed a real research/scoping pass (current voice-AI platform options,
+cost, latency, multilingual quality, compliance) before any code got written —
+see `research/integrations/2026-09-06-voice-ai-and-multilingual-scoping.md`.
+Point 2 (non-English testing end to end, not just the model-instruction fix
+already shipped) is still open.
 
 ## Rule 1, closed (2026-09-06)
 

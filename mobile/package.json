@@ -1,0 +1,19 @@
+{
+  "name": "followup-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Native iOS/Android shell for FollowUp (App Store / Play Store distribution) — wraps the live web app at followupbase.io via Capacitor rather than reimplementing the UI. See README.md.",
+  "scripts": {
+    "sync": "cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/cli": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/ios": "^8.5.1"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

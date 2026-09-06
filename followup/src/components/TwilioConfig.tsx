@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, ChevronDown, Phone, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, Phone, ShieldAlert } from "lucide-react";
 
 /**
  * "Phone (SMS + calls)" section of Settings. Unlike the other two webhook
@@ -236,6 +236,30 @@ export default function TwilioConfig() {
                       liability, and it&apos;s your business&apos;s liability, not FollowUp&apos;s. If you&apos;re
                       not sure your leads have opted in to texting, check with your own legal counsel before
                       relying on this channel.
+                    </span>
+                  </p>
+                </div>
+                <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
+                  <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
+                    <span>
+                      <strong className="font-medium">Register your number for A2P 10DLC.</strong> This is
+                      separate from consent, above — it&apos;s about whether texts arrive at all. US carriers
+                      (AT&amp;T, T-Mobile, Verizon) now block or heavily throttle automated texts from an
+                      unregistered number, so an unregistered Twilio number can look &quot;Connected&quot; here
+                      while its messages quietly never reach anyone. Registration (a Brand + Campaign) happens
+                      once per Twilio account, in Twilio&apos;s own console — real cost, and typically a few
+                      weeks to fully clear every carrier, so it&apos;s worth starting well before you&apos;re
+                      relying on this channel.{" "}
+                      <a
+                        href="https://www.twilio.com/docs/messaging/compliance/a2p-10dlc/quickstart"
+                        target="_blank"
+                        rel="noopener"
+                        className="underline"
+                      >
+                        Register in the Twilio Console
+                      </a>
+                      .
                     </span>
                   </p>
                 </div>

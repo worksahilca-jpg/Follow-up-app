@@ -127,6 +127,21 @@ export default function TwilioConfig() {
             Needs a Twilio account and phone number (paid, ~$1/mo + per message/call — not required to use the
             rest of FollowUp). Set the URLs up now, connect the Twilio side whenever you&apos;re ready.
           </p>
+          <p className="text-xs mt-1.5" style={{ color: "var(--gold)" }}>
+            Before texting real leads: US/Canada carriers block unregistered business SMS traffic. Register
+            your Twilio number for{" "}
+            <a
+              href="https://console.twilio.com/us1/develop/sms/regulatory-compliance/a2p10dlc"
+              target="_blank"
+              rel="noopener"
+              className="underline"
+            >
+              A2P 10DLC
+            </a>{" "}
+            (Twilio Console → Messaging → Regulatory Compliance) or texts can silently fail to deliver — which
+            looks like FollowUp isn&apos;t working, when it&apos;s actually the carrier blocking an unregistered
+            number.
+          </p>
 
           <button
             onClick={() => setShowExamples((v) => !v)}

@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, Phone, PhoneCall, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, Phone, PhoneCall, ShieldAlert, X } from "lucide-react";
+
+type NumberStatus = {
+  config: { voiceUrl: string; smsUrl: string; voiceCapable: boolean; smsCapable: boolean } | null;
+  voiceMatches: boolean;
+  smsMatches: boolean;
+  calls: Array<{ sid: string; from: string; status: string; durationSeconds: number; startTime: string | null; error: string | null }>;
+};
 
 /**
  * "Phone (SMS + calls)" section of Settings. Unlike the other two webhook
@@ -25,6 +32,10 @@ export default function TwilioConfig() {
   const [whatsappPhoneNumberDraft, setWhatsappPhoneNumberDraft] = useState("");
   const [savingWhatsapp, setSavingWhatsapp] = useState(false);
   const [voiceAgentEnabled, setVoiceAgentEnabled] = useState(false);
+  const [numberStatus, setNumberStatus] = useState<NumberStatus | null>(null);
+  const [numberError, setNumberError] = useState<string | null>(null);
+  const [numberLoading, setNumberLoading] = useState(false);
+  const [configuringNumber, setConfiguringNumber] = useState(false);
   const [savingVoiceAgent, setSavingVoiceAgent] = useState(false);
   const [savingOutbound, setSavingOutbound] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -63,6 +74,11 @@ export default function TwilioConfig() {
       )
       .finally(() => setLoading(false));
   }, []);
+
+  // Only worth asking Twilio once there's an Account SID + number to ask about.
+  useEffect(() => {
+    if (accountSid && phoneNumber) void loadNumberStatus();
+  }, [accountSid, phoneNumber]);
 
   async function generate() {
     setSaving(true);
@@ -132,6 +148,37 @@ export default function TwilioConfig() {
       }
     } finally {
       setSavingWhatsapp(false);
+    }
+  }
+
+  async function loadNumberStatus() {
+    setNumberLoading(true);
+    setNumberError(null);
+    try {
+      const res = await fetch("/api/twilio/number");
+      const data: { success: boolean; message?: string } & Partial<NumberStatus> = await res.json();
+      if (data.success && data.calls) {
+        setNumberStatus({ config: data.config ?? null, voiceMatches: !!data.voiceMatches, smsMatches: !!data.smsMatches, calls: data.calls });
+      } else {
+        setNumberError(data.message ?? "Couldn't reach Twilio.");
+      }
+    } catch {
+      setNumberError("Couldn't reach Twilio.");
+    } finally {
+      setNumberLoading(false);
+    }
+  }
+
+  async function configureNumber() {
+    setConfiguringNumber(true);
+    setNumberError(null);
+    try {
+      const res = await fetch("/api/twilio/number", { method: "POST" });
+      const data: { success: boolean; message?: string } = await res.json();
+      if (!data.success) setNumberError(data.message ?? "Twilio rejected the change.");
+      await loadNumberStatus();
+    } finally {
+      setConfiguringNumber(false);
     }
   }
 
@@ -350,6 +397,69 @@ export default function TwilioConfig() {
                   </>
                 )}
               </div>
+
+              {accountSid && phoneNumber && (
+                <div className="pt-3 border-t border-line">
+                  <p className="text-xs font-medium">Point your number at FollowUp</p>
+                  <p className="text-xs text-ink-soft mt-1">
+                    Skip pasting URLs into the Twilio Console — FollowUp can set your number&apos;s &quot;A call comes
+                    in&quot; and &quot;A message comes in&quot; webhooks itself, using the Account SID and Auth Token
+                    you already saved.
+                  </p>
+                  {numberLoading && !numberStatus ? (
+                    <p className="text-xs text-ink-soft mt-2">Checking with Twilio…</p>
+                  ) : numberStatus ? (
+                    <div className="mt-2 space-y-1.5">
+                      {numberStatus.config ? (
+                        <>
+                          <p className="text-xs flex items-center gap-1" style={{ color: numberStatus.voiceMatches ? "var(--sage)" : "var(--gold)" }}>
+                            {numberStatus.voiceMatches ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                            Calls {numberStatus.voiceMatches ? "reach FollowUp" : numberStatus.config.voiceUrl ? "go somewhere else" : "aren't configured"}
+                          </p>
+                          <p className="text-xs flex items-center gap-1" style={{ color: numberStatus.smsMatches ? "var(--sage)" : "var(--gold)" }}>
+                            {numberStatus.smsMatches ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                            Texts {numberStatus.smsMatches ? "reach FollowUp" : numberStatus.config.smsUrl ? "go somewhere else" : "aren't configured"}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-xs flex items-center gap-1" style={{ color: "var(--gold)" }}>
+                          <X className="h-3.5 w-3.5" /> {phoneNumber} isn&apos;t in this Twilio account — check the number and Account SID above.
+                        </p>
+                      )}
+                      {numberStatus.config && !(numberStatus.voiceMatches && numberStatus.smsMatches) && (
+                        <button
+                          onClick={configureNumber}
+                          disabled={configuringNumber}
+                          className="mt-1 inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium disabled:opacity-60"
+                          style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                        >
+                          {configuringNumber ? "Setting up…" : "Set up my number automatically"}
+                        </button>
+                      )}
+                      {numberStatus.calls.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-ink-soft mb-1">Recent calls to your number</p>
+                          <ul className="space-y-1">
+                            {numberStatus.calls.map((c) => (
+                              <li key={c.sid} className="text-xs rounded-lg border border-line bg-paper px-2.5 py-1.5">
+                                <span className="font-medium">{c.from || "unknown"}</span>
+                                <span className="text-ink-soft"> · {c.status}{c.durationSeconds ? ` · ${c.durationSeconds}s` : ""}{c.startTime ? ` · ${new Date(c.startTime).toLocaleString()}` : ""}</span>
+                                {c.error && <div className="mt-0.5" style={{ color: "var(--gold)" }}>{c.error}</div>}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <button onClick={loadNumberStatus} disabled={numberLoading} className="text-xs underline text-ink-soft disabled:opacity-60">
+                        {numberLoading ? "Refreshing…" : "Refresh"}
+                      </button>
+                    </div>
+                  ) : null}
+                  {numberError && (
+                    <p className="text-xs mt-2" style={{ color: "var(--gold)" }}>{numberError}</p>
+                  )}
+                </div>
+              )}
 
               {whatsappUrl && (
                 <div className="pt-3 border-t border-line">

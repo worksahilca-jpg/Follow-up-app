@@ -48,6 +48,37 @@ export function canonicalRequestUrl(request: Request): string {
   return `${appUrl()}${new URL(request.url).pathname}`;
 }
 
+/**
+ * Every URL Twilio might legitimately have signed this request against.
+ * The production domain 308-redirects apex → www (Vercel's domain
+ * config), and Twilio follows redirects and signs against the URL it
+ * finally hits — so a webhook configured as https://followupbase.io/…
+ * arrives signed for https://www.followupbase.io/…, and checking only
+ * the appUrl() form rejected every real inbound call as spoofed. Each
+ * candidate still has to produce an exact HMAC match; this only widens
+ * which host spelling is accepted, never the secret or the params.
+ */
+function candidateSignedUrls(request: Request): string[] {
+  const pathname = new URL(request.url).pathname;
+  const base = appUrl();
+  const candidates = new Set<string>([`${base}${pathname}`]);
+  const toggled = /^https?:\/\/www\./i.test(base) ? base.replace(/^(https?:\/\/)www\./i, "$1") : base.replace(/^(https?:\/\/)/i, "$1www.");
+  candidates.add(`${toggled}${pathname}`);
+  const forwardedHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (forwardedHost) candidates.add(`https://${forwardedHost}${pathname}`);
+  return [...candidates];
+}
+
+/** validateTwilioSignature() across every host spelling this request could have been signed for — see candidateSignedUrls(). */
+export function validateTwilioRequestSignature(
+  authToken: string,
+  request: Request,
+  params: Record<string, string>,
+  signature: string | null
+): boolean {
+  return candidateSignedUrls(request).some((url) => validateTwilioSignature(authToken, url, params, signature));
+}
+
 /** application/x-www-form-urlencoded body → plain string map, as Twilio always sends it. */
 export async function parseTwilioForm(request: Request): Promise<Record<string, string>> {
   const form = await request.formData();
@@ -226,7 +257,8 @@ async function twilioApi(
   init?: { method?: "GET" | "POST"; form?: Record<string, string> }
 ): Promise<Record<string, unknown>> {
   const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}${path}`, {
+  const url = path.startsWith("https://") ? path : `https://api.twilio.com/2010-04-01/Accounts/${accountSid}${path}`;
+  const res = await fetch(url, {
     method: init?.method ?? "GET",
     headers: {
       Authorization: `Basic ${auth}`,
@@ -323,21 +355,37 @@ export async function listRecentTwilioCalls(
   phoneNumber: string,
   limit = 5
 ): Promise<TwilioRecentCall[]> {
-  const [callsData, alertsData] = await Promise.all([
-    twilioApi(accountSid, authToken, `/Calls.json?To=${encodeURIComponent(phoneNumber)}&PageSize=${limit}`),
-    twilioApi(accountSid, authToken, `/Notifications.json?PageSize=50`),
-  ]);
+  const callsData = await twilioApi(accountSid, authToken, `/Calls.json?To=${encodeURIComponent(phoneNumber)}&PageSize=${limit}`);
+
+  // Error lookups are best-effort on purpose: the Monitor Alerts API is
+  // the current home for these, the legacy /Notifications resource is
+  // gone on newer accounts (a 404 from it was the first thing a real
+  // account hit here), and neither should ever stop the call list itself
+  // from rendering.
   const errorByCall = new Map<string, string>();
-  for (const n of (alertsData.notifications as Array<Record<string, unknown>> | undefined) ?? []) {
-    const callSid = typeof n.call_sid === "string" ? n.call_sid : null;
-    if (!callSid || errorByCall.has(callSid)) continue;
-    const code = n.error_code ? String(n.error_code) : "";
-    let text = typeof n.message_text === "string" ? n.message_text : "";
-    // message_text is often a form-encoded bag like "Msg=...&url=..."; keep just the message.
-    const msgMatch = /(?:^|&)Msg=([^&]*)/.exec(text);
-    if (msgMatch) text = decodeURIComponent(msgMatch[1].replace(/\+/g, " "));
-    errorByCall.set(callSid, [code, text].filter(Boolean).join(" — "));
+  const remember = (callSid: unknown, code: unknown, text: unknown) => {
+    if (typeof callSid !== "string" || errorByCall.has(callSid)) return;
+    let msg = typeof text === "string" ? text : "";
+    const msgMatch = /(?:^|&)Msg=([^&]*)/.exec(msg);
+    if (msgMatch) msg = decodeURIComponent(msgMatch[1].replace(/\+/g, " "));
+    errorByCall.set(callSid, [code ? String(code) : "", msg].filter(Boolean).join(" — "));
+  };
+  try {
+    const alerts = await twilioApi(accountSid, authToken, "https://monitor.twilio.com/v1/Alerts?PageSize=50");
+    for (const a of (alerts.alerts as Array<Record<string, unknown>> | undefined) ?? []) {
+      remember(a.resource_sid, a.error_code, a.alert_text);
+    }
+  } catch {
+    try {
+      const legacy = await twilioApi(accountSid, authToken, "/Notifications.json?PageSize=50");
+      for (const n of (legacy.notifications as Array<Record<string, unknown>> | undefined) ?? []) {
+        remember(n.call_sid, n.error_code, n.message_text);
+      }
+    } catch {
+      // No error detail available for this account — the calls still list.
+    }
   }
+
   return (((callsData.calls as Array<Record<string, unknown>> | undefined) ?? []).map((c) => ({
     sid: String(c.sid),
     from: typeof c.from === "string" ? c.from : "",

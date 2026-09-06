@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
-import { canonicalRequestUrl, findBusinessByTwilioSecret, findOrCreateLeadByPhone, parseTwilioForm, twiml, validateTwilioSignature } from "@/lib/twilio";
+import { findBusinessByTwilioSecret, findOrCreateLeadByPhone, parseTwilioForm, twiml, validateTwilioRequestSignature } from "@/lib/twilio";
 
 /**
  * POST /api/twilio/whatsapp/[secret] — configure this as the webhook for
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (business.twilioAuthToken) {
     const signature = request.headers.get("x-twilio-signature");
-    if (!validateTwilioSignature(business.twilioAuthToken, canonicalRequestUrl(request), formParams, signature)) {
+    if (!validateTwilioRequestSignature(business.twilioAuthToken, request, formParams, signature)) {
       return twiml("<Response/>");
     }
   }

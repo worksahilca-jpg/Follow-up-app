@@ -4,11 +4,10 @@ import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { transcribeAudio } from "@/lib/integrations/openai";
 import {
-  canonicalRequestUrl,
   fetchTwilioRecording,
   findBusinessByTwilioSecret,
   parseTwilioForm,
-  validateTwilioSignature,
+  validateTwilioRequestSignature,
 } from "@/lib/twilio";
 
 /**
@@ -33,7 +32,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (business.twilioAuthToken) {
     const signature = request.headers.get("x-twilio-signature");
-    if (!validateTwilioSignature(business.twilioAuthToken, canonicalRequestUrl(request), formParams, signature)) {
+    if (!validateTwilioRequestSignature(business.twilioAuthToken, request, formParams, signature)) {
       return NextResponse.json({ received: true }, { status: 403 });
     }
   }

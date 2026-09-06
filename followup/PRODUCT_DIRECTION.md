@@ -28,16 +28,19 @@ Assisted/Autonomous tier) exists to walk toward that end state, not as the goal
 itself. This is the actual filter every rule below serves — if a rule and this
 mission ever seem to conflict, the mission wins; update the rule.
 
-**On rule 1, resolved in conversation:** the depth this needs isn't necessarily one
-industry — it's this specific job, done further than any generalist CRM will
-bother to (rescuing dead/unreached leads, real autonomy, every language). A
-generalist platform can't casually build this because their own business model
-depends on there being a human seat to sell to; FollowUp's ideal customer often
-can't afford that seat in the first place, so full autonomy isn't a nice-to-have
-upgrade for them, it's the only way this job gets done. Going deep on one industry
-(home-services contractors, per the strongest data point on file — see below)
-is still a live option and may sharpen this further, but it's additive to the
-mission, not a precondition for it.
+**On rule 1, resolved — staying horizontal, decided by the CEO (2026-09-06):** the
+depth this needs isn't one industry — it's this specific job, done further than
+any generalist CRM will bother to (rescuing dead/unreached leads, real autonomy,
+every language). A generalist platform can't casually build this because their
+own business model depends on there being a human seat to sell to; FollowUp's
+ideal customer often can't afford that seat in the first place, so full autonomy
+isn't a nice-to-have upgrade for them, it's the only way this job gets done.
+**Going deep on one specific industry was considered and explicitly declined** —
+see the realtor research below, which found real estate specifically to be a
+contested, AI-native-competitor-crowded vertical rather than an open gap; the
+home-services data point stays on file as evidence for the mission's framing (the
+job, not any one industry, is underserved) but is not being adopted as a target
+vertical. FollowUp stays horizontal by decision, not by default.
 
 ## The six rules
 
@@ -78,14 +81,19 @@ of these, say so plainly.
 
 Not a self-congratulation pass — a real check, including the gaps.
 
-- **Rule 1 (vertical depth) — the biggest open gap.** FollowUp is still explicitly
-  horizontal ("follow-up for anyone" — see `growth-agent.md`'s thesis). Nothing built
-  so far is vertical-specific. `research/customers/2026-09-05-icp-pain-and-trust-objections.md`
-  found the single strongest quantified pain signal of any research pass
-  (62% industry-wide missed-call rate, 391% conversion lift from a 1-minute callback)
-  in **home-services contractors** specifically — the closest thing on file to a
-  candidate vertical, but picking one is a CEO decision, not something to default
-  into from a single research pass.
+- **Rule 1 (vertical depth) — resolved, staying horizontal by decision.** FollowUp
+  stays explicitly horizontal ("follow-up for anyone" — see `growth-agent.md`'s
+  thesis), not because a vertical was never considered but because it was
+  weighed and declined. `research/customers/2026-09-05-icp-pain-and-trust-objections.md`
+  found the strongest quantified pain signal of any research pass in home-services
+  contractors (62% industry-wide missed-call rate, 391% conversion lift from a
+  1-minute callback), but `research/market/2026-09-06-realtor-tool-landscape.md`
+  found the closest adjacent vertical actually tried (real estate) to already have
+  funded, AI-native competitors (Structurely, Ylopo) marketing almost exactly
+  FollowUp's pitch — cold-lead rescue, multilingual, full AI autonomy — to that
+  exact segment. Read together: "the depth is on the job, not the industry" (see
+  the mission section above) is the CEO's actual, considered position, not an
+  unexamined default.
 - **Rule 2 (own the data) — already true, verified, not assumed.** Lead conversations
   (`Conversation`/`Message`), AI scoring reasoning (`Lead.scoreReason`/`scoreFactors`),
   drafted messages (`Lead.suggestedMessage`), and outcomes (`FollowUp.repliedAt`,
@@ -147,10 +155,11 @@ Both need a real research/scoping pass (current voice-AI platform options, cost,
 latency, multilingual quality, compliance) before any code gets written — this is
 a substantial build, not a quick feature.
 
-## The one open question rule 1 still leaves
+## Rule 1, closed (2026-09-06)
 
-Going deep on one specific industry (home-services contractors, per the strongest
-data point on file — 62% industry-wide missed-call rate, 391% conversion lift from
-a 1-minute callback, `research/customers/2026-09-05-icp-pain-and-trust-objections.md`)
-is still on the table as a way to sharpen the mission further, but it's the CEO's
-call, not a default to research into alone.
+**Decision: FollowUp stays horizontal. No vertical.** Considered and declined —
+see the resolution above and `research/market/2026-09-06-realtor-tool-landscape.md`
+for why the closest candidate (real estate) turned out to be a contested,
+AI-native-competitor-crowded space rather than an open gap. Don't re-litigate this
+by defaulting back into a vertical pick from a future research pass; if new
+evidence changes the calculus, that's a fresh CEO decision, not a reversion.

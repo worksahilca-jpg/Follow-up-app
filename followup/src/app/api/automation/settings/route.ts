@@ -17,7 +17,7 @@ export async function GET() {
     where: { businessId: ctx.businessId, action: AUTOMATION_ACTION },
   });
   return NextResponse.json({
-    enabled: automation?.enabled ?? false,
+    enabled: automation?.enabled ?? true,
     triggerDays: automation?.triggerDays ?? 5,
   });
 }

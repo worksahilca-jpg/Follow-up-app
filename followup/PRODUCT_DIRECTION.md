@@ -6,6 +6,39 @@ adding anything, not just when it's freshly top of mind. `manager-agent.md` and
 `growth-agent.md` point back here; if you're proposing a feature, a roadmap item, or
 a positioning change and haven't checked it against these six rules, you're not done.
 
+## The mission — in the CEO's own words
+
+> Every CRM has lead generation and lead sortation. Nobody is concerned about the
+> leads that are going cold, the leads that have gone into the interstellar phase,
+> or the leads that have never been reached. Gmail, Instagram DMs — people are
+> spamming leads and nobody is answering them. We have to make sure no potential
+> lead goes cold, and a business owner should not lose a lead because of not
+> following up, not following up in time, or not following up correctly. I don't
+> think any app is doing this. My main goal is to remove the position of the
+> salesperson or follow-up person who is doing this manually — AI agents receiving
+> calls, in every language, fetching and following up on leads in every language,
+> not just English. This makes businesses more money, more productive, in less
+> time.
+
+Read literally, not softened: **the job is rescuing leads that would otherwise die
+— buried in an inbox, an unopened DM, a missed call — and the end state is that no
+human does this job at all**, in any language, not just English. Every existing
+feature (multi-channel capture, AI scoring, approval-first drafting, the per-lead
+Assisted/Autonomous tier) exists to walk toward that end state, not as the goal
+itself. This is the actual filter every rule below serves — if a rule and this
+mission ever seem to conflict, the mission wins; update the rule.
+
+**On rule 1, resolved in conversation:** the depth this needs isn't necessarily one
+industry — it's this specific job, done further than any generalist CRM will
+bother to (rescuing dead/unreached leads, real autonomy, every language). A
+generalist platform can't casually build this because their own business model
+depends on there being a human seat to sell to; FollowUp's ideal customer often
+can't afford that seat in the first place, so full autonomy isn't a nice-to-have
+upgrade for them, it's the only way this job gets done. Going deep on one industry
+(home-services contractors, per the strongest data point on file — see below)
+is still a live option and may sharpen this further, but it's additive to the
+mission, not a precondition for it.
+
 ## The six rules
 
 1. **Vertical depth over horizontal breadth.** Default to going deep on one industry
@@ -90,9 +123,34 @@ Not a self-congratulation pass — a real check, including the gaps.
     forward — a vertical-specific feature is moat by definition; the same feature
     built generic is table stakes at best.
 
-## The one open question every other rule depends on
+## Next real initiative: AI voice agents + real multilingual support
 
-Rule 1 asks for a vertical. Nothing else in this framework can be applied with real
-confidence — what's moat vs. table-stakes (rule 6), what a platform will give away
-free (rule 4), what's worth building deep vs. skipping — until that's picked. This
-is the CEO's call, not a default to research into on our own.
+The two biggest gaps between what's built today and the mission above, named
+plainly rather than assumed solved:
+
+1. **No real voice AI exists yet.** A missed call today gets a recorded greeting
+   + `<Record>` transcription + a text-back (see `src/app/api/twilio/voice/[secret]/route.ts`)
+   — that's a placeholder, not an agent that answers and holds a conversation. Real
+   voice AI needs different infrastructure than Twilio's basic voicemail flow
+   (something that can converse live, low-latency, in the caller's language) and
+   carries its own TCPA exposure — see `research/integrations/2026-09-06-twilio-sms-compliance.md`'s
+   voice-compliance section: the FCC treats an AI-generated call voice as
+   "artificial/prerecorded," same consent bar as a robocall.
+2. **Nothing has been built or tested for non-English leads.** AI scoring and
+   drafting (`src/lib/integrations/openai.ts`) has never been checked against a
+   non-English lead; Gmail/Twilio/Instagram capture has never been verified to
+   handle non-English content correctly end to end. This isn't a small toggle —
+   it needs real verification, not an assumption that "the model probably handles
+   it."
+
+Both need a real research/scoping pass (current voice-AI platform options, cost,
+latency, multilingual quality, compliance) before any code gets written — this is
+a substantial build, not a quick feature.
+
+## The one open question rule 1 still leaves
+
+Going deep on one specific industry (home-services contractors, per the strongest
+data point on file — 62% industry-wide missed-call rate, 391% conversion lift from
+a 1-minute callback, `research/customers/2026-09-05-icp-pain-and-trust-objections.md`)
+is still on the table as a way to sharpen the mission further, but it's the CEO's
+call, not a default to research into alone.

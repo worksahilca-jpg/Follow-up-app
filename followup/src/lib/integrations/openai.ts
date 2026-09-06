@@ -6,10 +6,11 @@
  * { score, reason, factors } instead of parsing free text.
  */
 
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 import { Lead, Message, ScoreFactor } from "@/lib/types";
 
 const MODEL = "gpt-4o-mini";
+const TRANSCRIBE_MODEL = "gpt-4o-mini-transcribe";
 
 function getClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -17,6 +18,23 @@ function getClient(): OpenAI {
     throw new Error("OPENAI_API_KEY is not set — add it to .env to enable AI scoring.");
   }
   return new OpenAI({ apiKey });
+}
+
+/**
+ * Multilingual voicemail transcription — replaces Twilio's own built-in
+ * `<Record transcribe="true">` feature, which is English-only per
+ * Twilio's docs (see research/integrations/2026-09-06-voice-ai-and-
+ * multilingual-scoping.md): a real, live bug where a non-English
+ * caller's voicemail got a garbled/empty transcript fed straight into
+ * scoring as garbage. No `language` param passed on purpose — this
+ * auto-detects rather than assuming English or requiring it configured
+ * per business.
+ */
+export async function transcribeAudio(audio: Buffer, filename: string): Promise<string> {
+  const client = getClient();
+  const file = await toFile(audio, filename);
+  const transcription = await client.audio.transcriptions.create({ file, model: TRANSCRIBE_MODEL });
+  return transcription.text.trim();
 }
 
 function formatTranscript(conversation: Message[]): string {
@@ -323,7 +341,9 @@ export async function generateFollowUpMessage(
           "complete sentences: proper capitalization, no sentence fragments, no trailing off mid-thought, no run-on " +
           "clauses joined by a dash. Warm but professional — not stiff corporate jargon, but not overly casual " +
           "either. Do not include a greeting ('Hi ...', 'Dear ...') or a sign-off/signature of any kind — output " +
-          "only the body paragraph itself." +
+          "only the body paragraph itself. Write your reply in the same language as the lead's most recent " +
+          "message in the conversation below — do not default to English unless that's the language they're " +
+          "actually writing in." +
           voiceBlock +
           hintBlock,
       },

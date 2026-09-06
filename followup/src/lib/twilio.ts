@@ -213,6 +213,142 @@ export function validateVoiceAgentCallbackAuth(request: Request): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+/**
+ * One authenticated call to Twilio's REST API on behalf of a business —
+ * the same Basic-auth shape sendSms()/sendWhatsApp() already use, factored
+ * out now that number configuration and call-log reads need it too. Throws
+ * with Twilio's own message on a non-2xx so callers can surface it as-is.
+ */
+async function twilioApi(
+  accountSid: string,
+  authToken: string,
+  path: string,
+  init?: { method?: "GET" | "POST"; form?: Record<string, string> }
+): Promise<Record<string, unknown>> {
+  const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}${path}`, {
+    method: init?.method ?? "GET",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      ...(init?.form ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+    },
+    body: init?.form ? new URLSearchParams(init.form).toString() : undefined,
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(typeof data.message === "string" ? data.message : `Twilio API error ${res.status}`);
+  }
+  return data;
+}
+
+export type TwilioNumberConfig = {
+  sid: string;
+  phoneNumber: string;
+  voiceUrl: string;
+  voiceMethod: string;
+  smsUrl: string;
+  smsMethod: string;
+  voiceCapable: boolean;
+  smsCapable: boolean;
+};
+
+/**
+ * What Twilio currently has configured on this business's number — the
+ * "A call comes in" / "A message comes in" webhooks a user would otherwise
+ * have to read off the Twilio Console. Null if the number isn't in this
+ * account at all (wrong Account SID, or a number typed with a typo).
+ */
+export async function getTwilioNumberConfig(
+  accountSid: string,
+  authToken: string,
+  phoneNumber: string
+): Promise<TwilioNumberConfig | null> {
+  const data = await twilioApi(accountSid, authToken, `/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(phoneNumber)}`);
+  const numbers = data.incoming_phone_numbers as Array<Record<string, unknown>> | undefined;
+  const n = numbers?.[0];
+  if (!n) return null;
+  const caps = (n.capabilities ?? {}) as Record<string, unknown>;
+  return {
+    sid: String(n.sid),
+    phoneNumber: String(n.phone_number ?? phoneNumber),
+    voiceUrl: typeof n.voice_url === "string" ? n.voice_url : "",
+    voiceMethod: typeof n.voice_method === "string" ? n.voice_method : "",
+    smsUrl: typeof n.sms_url === "string" ? n.sms_url : "",
+    smsMethod: typeof n.sms_method === "string" ? n.sms_method : "",
+    voiceCapable: !!caps.voice,
+    smsCapable: !!caps.sms,
+  };
+}
+
+/**
+ * Points the number's inbound webhooks at FollowUp — the exact edit a user
+ * would otherwise make by hand in Twilio Console → Phone Numbers → the
+ * number → Voice/Messaging Configuration. Exists because that console
+ * page is hidden behind an "upgrade your account" wall on trial accounts,
+ * and because pasting two URLs by hand was the single most error-prone
+ * step of connecting a number (a `www.` or an old domain silently fails
+ * the signature check on every call).
+ */
+export async function setTwilioNumberWebhooks(
+  accountSid: string,
+  authToken: string,
+  numberSid: string,
+  urls: { voiceUrl: string; smsUrl: string }
+): Promise<void> {
+  await twilioApi(accountSid, authToken, `/IncomingPhoneNumbers/${numberSid}.json`, {
+    method: "POST",
+    form: { VoiceUrl: urls.voiceUrl, VoiceMethod: "POST", SmsUrl: urls.smsUrl, SmsMethod: "POST" },
+  });
+}
+
+export type TwilioRecentCall = {
+  sid: string;
+  from: string;
+  status: string;
+  direction: string;
+  durationSeconds: number;
+  startTime: string | null;
+  error: string | null;
+};
+
+/**
+ * The last few inbound calls to this number, each joined to any Twilio
+ * error/warning notification raised for it (the "11200 HTTP retrieval
+ * failure" / "13224" style codes the Console shows in red) — so a failed
+ * test call can be diagnosed from inside FollowUp without the Console.
+ */
+export async function listRecentTwilioCalls(
+  accountSid: string,
+  authToken: string,
+  phoneNumber: string,
+  limit = 5
+): Promise<TwilioRecentCall[]> {
+  const [callsData, alertsData] = await Promise.all([
+    twilioApi(accountSid, authToken, `/Calls.json?To=${encodeURIComponent(phoneNumber)}&PageSize=${limit}`),
+    twilioApi(accountSid, authToken, `/Notifications.json?PageSize=50`),
+  ]);
+  const errorByCall = new Map<string, string>();
+  for (const n of (alertsData.notifications as Array<Record<string, unknown>> | undefined) ?? []) {
+    const callSid = typeof n.call_sid === "string" ? n.call_sid : null;
+    if (!callSid || errorByCall.has(callSid)) continue;
+    const code = n.error_code ? String(n.error_code) : "";
+    let text = typeof n.message_text === "string" ? n.message_text : "";
+    // message_text is often a form-encoded bag like "Msg=...&url=..."; keep just the message.
+    const msgMatch = /(?:^|&)Msg=([^&]*)/.exec(text);
+    if (msgMatch) text = decodeURIComponent(msgMatch[1].replace(/\+/g, " "));
+    errorByCall.set(callSid, [code, text].filter(Boolean).join(" — "));
+  }
+  return (((callsData.calls as Array<Record<string, unknown>> | undefined) ?? []).map((c) => ({
+    sid: String(c.sid),
+    from: typeof c.from === "string" ? c.from : "",
+    status: typeof c.status === "string" ? c.status : "",
+    direction: typeof c.direction === "string" ? c.direction : "",
+    durationSeconds: Number(c.duration ?? 0),
+    startTime: typeof c.start_time === "string" ? c.start_time : null,
+    error: errorByCall.get(String(c.sid)) ?? null,
+  })));
+}
+
 /** application/xml TwiML response — Twilio requires this content type for both SMS and Voice webhook replies. */
 export function twiml(xml: string): Response {
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>${xml}`, {

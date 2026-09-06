@@ -25,6 +25,7 @@ export async function GET() {
       twilioAccountSid: true,
       twilioPhoneNumber: true,
       whatsappPhoneNumber: true,
+      voiceAgentEnabled: true,
     },
   });
 
@@ -38,18 +39,21 @@ export async function GET() {
     accountSid: business?.twilioAccountSid ?? null,
     phoneNumber: business?.twilioPhoneNumber ?? null,
     whatsappPhoneNumber: business?.whatsappPhoneNumber ?? null,
+    voiceAgentEnabled: business?.voiceAgentEnabled ?? false,
   });
 }
 
 /**
- * POST { authToken?, accountSid?, phoneNumber?, whatsappPhoneNumber? } —
- * generates twilioSecret if it doesn't exist yet (idempotent: calling
- * this again without changing anything keeps the same URLs, unlike the
- * other webhook config routes, since regenerating would silently break a
- * live phone number's console config), and saves/updates whichever
- * fields are passed. authToken is write-only — GET never echoes it back,
- * same treatment as a password, since it's what actually authenticates
- * inbound requests as really being from Twilio.
+ * POST { authToken?, accountSid?, phoneNumber?, whatsappPhoneNumber?,
+ * voiceAgentEnabled? } — generates twilioSecret if it doesn't exist yet
+ * (idempotent: calling this again without changing anything keeps the
+ * same URLs, unlike the other webhook config routes, since regenerating
+ * would silently break a live phone number's console config), and
+ * saves/updates whichever fields are passed. authToken is write-only —
+ * GET never echoes it back, same treatment as a password, since it's what
+ * actually authenticates inbound requests as really being from Twilio.
+ * voiceAgentEnabled is a plain boolean toggle, not tied to any secret —
+ * see Business.voiceAgentEnabled in schema.prisma for why it defaults off.
  */
 export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
@@ -60,6 +64,7 @@ export async function POST(request: NextRequest) {
   const accountSid = typeof body.accountSid === "string" ? body.accountSid.trim() : undefined;
   const phoneNumber = typeof body.phoneNumber === "string" ? body.phoneNumber.trim() : undefined;
   const whatsappPhoneNumber = typeof body.whatsappPhoneNumber === "string" ? body.whatsappPhoneNumber.trim() : undefined;
+  const voiceAgentEnabled = typeof body.voiceAgentEnabled === "boolean" ? body.voiceAgentEnabled : undefined;
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
@@ -75,6 +80,7 @@ export async function POST(request: NextRequest) {
       ...(accountSid !== undefined ? { twilioAccountSid: accountSid || null } : {}),
       ...(phoneNumber !== undefined ? { twilioPhoneNumber: phoneNumber || null } : {}),
       ...(whatsappPhoneNumber !== undefined ? { whatsappPhoneNumber: whatsappPhoneNumber || null } : {}),
+      ...(voiceAgentEnabled !== undefined ? { voiceAgentEnabled } : {}),
     },
   });
 

@@ -109,6 +109,18 @@ model Business {
   // new secret needed, just a new URL path.
   whatsappPhoneNumber String?
 
+  // Live AI voice agent (src/app/api/twilio/voice/[secret]/route.ts +
+  // the separate always-on audio-bridge service — see
+  // research/integrations/2026-09-06-voice-ai-and-multilingual-scoping.md).
+  // Off by default and opt-in per business on purpose: unlike every other
+  // channel here, this is the one place FollowUp puts words in a caller's
+  // ear in real time, on the business's behalf, with a real per-minute
+  // cost and its own unresolved TCPA/recording-consent nuance (see the
+  // research doc's Part 1) — a business has to deliberately turn it on,
+  // it never silently activates just because Twilio + billing are
+  // connected the way voicemail capture already does.
+  voiceAgentEnabled Boolean @default(false)
+
   // Instagram DM capture — instagramUserId is the Instagram-scoped ID of
   // the business's own connected account (resolved automatically from the
   // access token at save time via the Graph API, not typed in by hand);

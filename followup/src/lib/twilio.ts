@@ -67,13 +67,27 @@ export async function parseTwilioForm(request: Request): Promise<Record<string, 
  * way) — so callers check billing themselves and decide what TwiML to
  * return.
  */
-export async function findBusinessByTwilioSecret(
-  secret: string
-): Promise<{ id: string; name: string; twilioAuthToken: string | null; twilioAccountSid: string | null } | null> {
+export async function findBusinessByTwilioSecret(secret: string): Promise<{
+  id: string;
+  name: string;
+  twilioAuthToken: string | null;
+  twilioAccountSid: string | null;
+  voiceAgentEnabled: boolean;
+} | null> {
   return prisma.business.findUnique({
     where: { twilioSecret: secret },
-    select: { id: true, name: true, twilioAuthToken: true, twilioAccountSid: true },
+    select: { id: true, name: true, twilioAuthToken: true, twilioAccountSid: true, voiceAgentEnabled: true },
   });
+}
+
+/** Escapes text for use inside TwiML — a `<Say>` body or an XML attribute value (business names and phone numbers are the only user-influenced strings that ever land in TwiML here, and neither has been escaped anywhere in this file until the voice agent needed to put a business name inside a `<Say>`). */
+export function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 /**
@@ -152,6 +166,51 @@ export async function claimMissedCallTextBack(leadId: string, cooldownMinutes: n
     data: { lastMissedCallTextAt: new Date() },
   });
   return claim.count === 1;
+}
+
+/**
+ * wss:// URL of the separate always-on audio-bridge service that actually
+ * holds a live call's Media Stream open and talks to OpenAI's Realtime API
+ * (see /voice-agent at the repo root — a different Vercel project,
+ * because Twilio's Media Streams need a persistent bidirectional
+ * connection Next.js's own request/response model can't hold open, see
+ * research/integrations/2026-09-06-voice-ai-and-multilingual-scoping.md).
+ * Returns null when VOICE_AGENT_WS_URL isn't configured — callers must
+ * treat that as "the live agent isn't available," never throw, since a
+ * missing env var must never turn into a dropped call: the voicemail
+ * fallback in src/app/api/twilio/voice/[secret]/route.ts is what runs
+ * instead.
+ */
+export function voiceAgentStreamUrl(secret: string): string | null {
+  const base = process.env.VOICE_AGENT_WS_URL;
+  if (!base) return null;
+  // The secret rides as a query param (?secret=...), not a path segment —
+  // the bridge service is a single, plainly-named zero-config Vercel
+  // Node.js Function (/voice-agent/api/stream.js), so this avoids any
+  // ambiguity about how Vercel's dynamic-route file-naming interacts with
+  // that function's raw WebSocket-upgrade handling.
+  return `${base.replace(/\/$/, "")}/api/stream?secret=${encodeURIComponent(secret)}`;
+}
+
+/**
+ * Authenticates a request FROM the voice-agent bridge service TO
+ * src/app/api/twilio/voice-agent-callback/[secret] — the one inbound
+ * request in this whole Twilio integration that doesn't come from Twilio
+ * itself, so Twilio's own signature scheme (validateTwilioSignature above)
+ * doesn't apply. A shared bearer secret set as VOICE_AGENT_CALLBACK_SECRET
+ * on both services, checked on top of the per-business twilioSecret
+ * already in the URL path — both have to be known to inject a fake
+ * transcript. Fails closed (returns false) if the secret was never
+ * configured, rather than accepting every request.
+ */
+export function validateVoiceAgentCallbackAuth(request: Request): boolean {
+  const expected = process.env.VOICE_AGENT_CALLBACK_SECRET;
+  if (!expected) return false;
+  const header = request.headers.get("authorization") ?? "";
+  const provided = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const a = Buffer.from(expected);
+  const b = Buffer.from(provided);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 /** application/xml TwiML response — Twilio requires this content type for both SMS and Voice webhook replies. */

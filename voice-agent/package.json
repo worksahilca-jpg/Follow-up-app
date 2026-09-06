@@ -1,0 +1,17 @@
+{
+  "name": "followup-voice-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Always-on audio bridge between Twilio Media Streams and OpenAI's Realtime API. Deployed as its own Vercel project, separate from the main followup Next.js app, because a live phone call needs a persistent bidirectional connection that a normal request/response Next.js route can't hold open. See followup/src/lib/twilio.ts (voiceAgentStreamUrl, validateVoiceAgentCallbackAuth) for the other side of this integration, and followup/research/integrations/2026-09-06-voice-ai-and-multilingual-scoping.md for why this architecture was chosen over a third-party voice-AI platform.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node api/stream.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}

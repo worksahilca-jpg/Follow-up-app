@@ -40,7 +40,13 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     const voiceSamples = await getVoiceSamples(lead.businessId);
     const draftBody = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
     const newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draftBody);
-    await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: newMessage } });
+    // A manually-requested regenerate makes a brand new draft — whatever
+    // reason the old one was held for doesn't describe this one, so it's
+    // cleared rather than left stale next to text nobody's assessed yet.
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: { suggestedMessage: newMessage, suggestedMessageHoldReason: null },
+    });
     return NextResponse.json({ success: true, message: newMessage });
   } catch (err) {
     const reason = err instanceof Error ? err.message : "Regeneration failed.";

@@ -110,6 +110,8 @@ export const leads: Lead[] = [
     ],
     suggestedMessage:
       "Hi John, would tomorrow at 2pm or Thursday morning work for a quick call to go through the portfolio numbers?",
+    suggestedMessageHoldReason:
+      "Proposes specific meeting times and references the portfolio pricing numbers — a scheduling/pricing commitment, so it's held for your review instead of sent automatically.",
     automationTier: "assisted",
   },
   {

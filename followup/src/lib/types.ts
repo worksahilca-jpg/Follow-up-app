@@ -51,6 +51,10 @@ export interface Lead {
   notes: string;
   conversation: Message[];
   suggestedMessage: string;
+  // Why suggestedMessage is waiting on approval instead of having auto-sent
+  // (assessSendRisk()'s reason) — null/absent when nothing's pending review
+  // or automation hasn't held anything for this lead.
+  suggestedMessageHoldReason?: string | null;
   automationTier: AutomationTier;
 }
 

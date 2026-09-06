@@ -156,6 +156,14 @@ model Lead {
   scoreReason      String?
   scoreFactors     Json? // ScoreFactor[] — [{ label, weight }], from AI scoring
   suggestedMessage String? // AI-drafted follow-up, edited/approved before sending
+  // Why suggestedMessage is waiting on a human instead of having gone out on
+  // its own — assessSendRisk()'s reason, from the same automation pass that
+  // set suggestedMessage (src/lib/automation.ts). Null means either nothing's
+  // pending or automation hasn't held anything for this lead; cleared
+  // whenever the message is actually sent (sendFollowUpToLead). Exists so the
+  // lead page can show *why* a draft is waiting on approval instead of just
+  // that it is — see CLAUDE.md's "trust is a feature" rule.
+  suggestedMessageHoldReason String?
   priority         Priority       @default(NONE)
   lastContacted    DateTime?
   nextFollowUp     DateTime?

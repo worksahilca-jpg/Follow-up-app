@@ -136,7 +136,14 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
 
         if (risk.riskLevel !== "low") {
           if (!lead.suggestedMessage) {
-            await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message } });
+            // suggestedMessageHoldReason rides along with suggestedMessage on
+            // purpose, same guard and all — so the reason shown next to a
+            // draft always matches *why that specific draft* was held, not
+            // whatever the most recent automation pass happened to say.
+            await prisma.lead.update({
+              where: { id: lead.id },
+              data: { suggestedMessage: message, suggestedMessageHoldReason: risk.reason || null },
+            });
           }
           return { kind: "held", note: `${lead.name}: ${risk.reason}` };
         }

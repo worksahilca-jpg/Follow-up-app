@@ -101,7 +101,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             </div>
           </section>
 
-          <MessageComposer leadId={lead.id} initialMessage={lead.suggestedMessage} leadName={lead.name} />
+          <MessageComposer
+            leadId={lead.id}
+            initialMessage={lead.suggestedMessage}
+            initialHoldReason={lead.suggestedMessageHoldReason}
+            leadName={lead.name}
+          />
         </div>
 
         <aside className="space-y-6">

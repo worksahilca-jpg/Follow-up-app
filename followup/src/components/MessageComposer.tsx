@@ -6,13 +6,16 @@ import { Sparkles, Send, RotateCcw } from "lucide-react";
 export default function MessageComposer({
   leadId,
   initialMessage,
+  initialHoldReason,
   leadName,
 }: {
   leadId: string;
   initialMessage: string;
+  initialHoldReason?: string | null;
   leadName: string;
 }) {
   const [message, setMessage] = useState(initialMessage);
+  const [holdReason, setHoldReason] = useState(initialHoldReason ?? null);
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
@@ -26,6 +29,10 @@ export default function MessageComposer({
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Regeneration failed.");
       setMessage(data.message);
+      // Matches the backend: a freshly regenerated draft hasn't been risk-
+      // assessed yet, so whatever reason the old one was held for no longer
+      // describes it.
+      setHoldReason(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Regeneration failed.");
     } finally {
@@ -72,6 +79,14 @@ export default function MessageComposer({
       <p className="text-xs text-ink-soft mt-1">
         FollowUp drafted this based on your conversation. Nothing sends without your approval.
       </p>
+      {holdReason && (
+        <p
+          className="mt-2 rounded-lg border border-line px-3 py-2 text-xs"
+          style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
+        >
+          Why this is waiting on you: {holdReason}
+        </p>
+      )}
       <textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}

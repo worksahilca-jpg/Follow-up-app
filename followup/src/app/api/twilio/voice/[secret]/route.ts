@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { requireActiveBilling } from "@/lib/billing";
 import { appUrl } from "@/lib/stripe";
 import {
-  canonicalRequestUrl,
   claimMissedCallTextBack,
   escapeXml,
   findBusinessByTwilioSecret,
@@ -10,7 +9,7 @@ import {
   parseTwilioForm,
   sendSms,
   twiml,
-  validateTwilioSignature,
+  validateTwilioRequestSignature,
   voiceAgentStreamUrl,
 } from "@/lib/twilio";
 
@@ -89,7 +88,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (business.twilioAuthToken) {
     const signature = request.headers.get("x-twilio-signature");
-    if (!validateTwilioSignature(business.twilioAuthToken, canonicalRequestUrl(request), formParams, signature)) {
+    if (!validateTwilioRequestSignature(business.twilioAuthToken, request, formParams, signature)) {
       return twiml("<Response><Reject/></Response>");
     }
   }

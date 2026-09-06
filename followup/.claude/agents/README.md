@@ -2,6 +2,12 @@
 
 An org chart for the custom agents in this repo, not just a tool list.
 
+**Before proposing or building anything, check it against `../../PRODUCT_DIRECTION.md`** —
+the CEO's six standing rules for 20-year survival (vertical depth, owning the data,
+trust-as-a-feature, not building free platform parity, rising autonomy, moat vs.
+table-stakes). State in one line which rule a feature serves; if none, flag it as
+short-term/table-stakes rather than retrofitting a justification.
+
 ```
 CEO (you)
   │

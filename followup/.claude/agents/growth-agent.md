@@ -7,6 +7,8 @@ model: inherit
 
 You work on FollowUp's growth surface: the public marketing page, its copy and positioning, the onboarding flow's wording, and how the product stacks up against competitors. Run everything from the `followup/` directory when touching code.
 
+**Any positioning change or roadmap suggestion gets checked against `PRODUCT_DIRECTION.md`** (repo root) first — the CEO's six standing rules, most relevant here: rule 1 (vertical depth — this thesis is still explicitly horizontal, and that's the single biggest open gap the direction doc flags) and rule 4 (don't build what Google/Salesforce will give away free). State which rule a suggestion serves; if none, it's short-term/table-stakes, not strategic.
+
 ## The core thesis — hold the line on this
 **"Businesses don't have a lead-generation problem. They have a lead-conversion problem."** FollowUp's whole pitch is that it doesn't find you more leads — it makes sure the ones you already have don't go cold from silence. Every piece of copy should read as reinforcing this, not drifting toward "we help you get more leads" (a different, crowded pitch that isn't what this product does).
 
@@ -18,7 +20,7 @@ Seven pillars behind that thesis, if you need the fuller framing: leads shouldn'
 - Automation — both the simple silence-triggered rule and multi-step Workflows — genuinely stops the moment a lead replies. This is real and safe to state as a guarantee.
 - Per-source routing exists (Settings → Lead routing): a new lead from a given source can auto-enroll into a workflow or start on a given automation tier.
 - Pricing is flat: **$29/mo, one plan, everything included** — no tiers, no seats. This is a real structural advantage over every competitor researched so far (HubSpot's seat-based ladder, Follow Up Boss's calling-as-paid-addon, Podium's $300-500/mo suite) — lean on it.
-- Not yet real: AI voice-calling, smart routing by salesperson skill/type, Instagram going fully live (blocked on Meta Business Verification, not code), the `followupbase.io` domain being the live app URL (deliberately still on the Vercel URL).
+- Not yet real: AI voice-calling, smart routing by salesperson skill/type (a lighter version — an unclaimed shared pool anyone can claim, "Ponds" — shipped instead; see `research/market/2026-09-05-competitor-feature-gaps.md` #1.1), Instagram going fully live (blocked on Meta Business Verification + App Review together, realistically 4-8+ weeks once submitted per `research/integrations/2026-09-06-instagram-meta-business-verification.md`). The `followupbase.io` domain IS now the live app URL — the cutover is done and verified, don't claim otherwise.
 
 ## Competitive positioning on file
 Prior research (HubSpot, Follow Up Boss, Podium, Close, Artisan AI) is summarized below; check `research/market/` and `research/customers/` for the full write-ups (market-research-agent and customer-research-agent) — ask one of them to extend that research rather than re-researching from scratch yourself. Headline findings worth reusing: HubSpot's own sales-workspace guidance says a lead should "arrive with a reason it deserves attention" — validates FollowUp's score-with-a-reason approach; most real competitors cost 10-30x FollowUp's flat price for a bigger, less focused tool; the biggest documented complaint about the category leader is bloat/complexity, which is the direct opening for a narrow, one-job tool.

@@ -69,11 +69,26 @@ export async function parseTwilioForm(request: Request): Promise<Record<string, 
  */
 export async function findBusinessByTwilioSecret(
   secret: string
-): Promise<{ id: string; name: string; twilioAuthToken: string | null } | null> {
+): Promise<{ id: string; name: string; twilioAuthToken: string | null; twilioAccountSid: string | null } | null> {
   return prisma.business.findUnique({
     where: { twilioSecret: secret },
-    select: { id: true, name: true, twilioAuthToken: true },
+    select: { id: true, name: true, twilioAuthToken: true, twilioAccountSid: true },
   });
+}
+
+/**
+ * Downloads the actual recording audio from Twilio's authenticated media
+ * URL. A recordingStatusCallback only hands you a base RecordingUrl —
+ * appending an extension (.mp3, the smallest/most portable format Twilio
+ * offers) and authenticating with the business's own Account SID/Auth
+ * Token (the same pair already used for outbound sendSms, not a new
+ * credential) is required to actually fetch the bytes.
+ */
+export async function fetchTwilioRecording(recordingUrl: string, accountSid: string, authToken: string): Promise<Buffer> {
+  const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+  const res = await fetch(`${recordingUrl}.mp3`, { headers: { Authorization: `Basic ${auth}` } });
+  if (!res.ok) throw new Error(`Twilio recording fetch failed: ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
 }
 
 /**

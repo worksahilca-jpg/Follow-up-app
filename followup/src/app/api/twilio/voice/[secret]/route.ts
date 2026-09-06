@@ -23,9 +23,15 @@ const MISSED_CALL_TEXT_COOLDOWN_MINUTES = 30;
  * number's "A Call Comes In" webhook (Twilio Console → Phone Numbers →
  * your number → Voice). Nobody's actually answering these calls, so the
  * only sane behavior is a voicemail-style catch: a short greeting, then
- * <Record> with Twilio's own transcription (transcribeCallback below) —
- * no separate transcription API/cost, and no audio ever gets stored on
- * FollowUp's side, only the resulting text.
+ * <Record>. Transcription is deliberately NOT Twilio's own built-in
+ * `transcribe="true"` feature — that's English-only per Twilio's docs (a
+ * real bug: a non-English caller's voicemail got fed into scoring as
+ * garbled nonsense). Instead this uses recordingStatusCallback, and
+ * src/app/api/twilio/voice/transcription/[secret]/route.ts fetches the
+ * recording and transcribes it itself via OpenAI (auto-detects language,
+ * see transcribeAudio in src/lib/integrations/openai.ts). The audio is
+ * only ever held in memory long enough to transcribe it — never written
+ * to disk or stored on FollowUp's side, only the resulting text is.
  *
  * The lead itself is created HERE, on the call landing, not after the
  * recording finishes — so a caller who hangs up before leaving a message
@@ -92,11 +98,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
   }
 
-  const transcribeCallback = `${appUrl()}/api/twilio/voice/transcription/${secret}`;
+  const recordingStatusCallback = `${appUrl()}/api/twilio/voice/transcription/${secret}`;
   return twiml(
     `<Response>` +
       `<Say>Thanks for calling. Please leave a message after the tone, then hang up or press pound.</Say>` +
-      `<Record maxLength="120" playBeep="true" finishOnKey="#" transcribe="true" transcribeCallback="${transcribeCallback}"/>` +
+      `<Record maxLength="120" playBeep="true" finishOnKey="#" recordingStatusCallback="${recordingStatusCallback}" recordingStatusCallbackEvent="completed"/>` +
       `<Say>We didn't catch a message. Goodbye.</Say>` +
       `</Response>`
   );

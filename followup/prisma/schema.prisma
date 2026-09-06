@@ -98,6 +98,16 @@ model Business {
   // Console), so these are safe to echo back on GET, unlike the token.
   twilioAccountSid   String?
   twilioPhoneNumber  String?
+  // The Twilio WhatsApp-enabled sender number (e.g. "+14155238886") —
+  // deliberately separate from twilioPhoneNumber above rather than reused,
+  // since a business's plain-SMS number and its WhatsApp sender are
+  // commonly two different Twilio numbers (see
+  // research/integrations/2026-09-06-whatsapp-business-production-readiness.md).
+  // Same Account SID/Auth Token pair as SMS/voice above — one Twilio
+  // account, multiple senders. Inbound uses the same twilioSecret as
+  // SMS/voice (see src/app/api/twilio/whatsapp/[secret]/route.ts) — no
+  // new secret needed, just a new URL path.
+  whatsappPhoneNumber String?
 
   // Instagram DM capture — instagramUserId is the Instagram-scoped ID of
   // the business's own connected account (resolved automatically from the
@@ -241,7 +251,7 @@ model Conversation {
   id         String    @id @default(cuid())
   lead       Lead      @relation(fields: [leadId], references: [id])
   leadId     String
-  channel    String // email | call | text
+  channel    String // email | call | text | whatsapp | instagram
   externalId String?   @unique // Gmail thread id, for idempotent sync
   messages   Message[]
   createdAt  DateTime  @default(now())
@@ -279,7 +289,7 @@ model FollowUp {
   id          String    @id @default(cuid())
   lead        Lead      @relation(fields: [leadId], references: [id])
   leadId      String
-  channel     String // email | call | text
+  channel     String // email | call | text | whatsapp | instagram
   message     String?
   status      String    @default("pending") // pending | sent | dismissed | snoozed
   automated   Boolean   @default(false)

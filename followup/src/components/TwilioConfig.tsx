@@ -14,15 +14,19 @@ export default function TwilioConfig() {
   const [loading, setLoading] = useState(true);
   const [smsUrl, setSmsUrl] = useState<string | null>(null);
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
   const [hasAuthToken, setHasAuthToken] = useState(false);
   const [authTokenDraft, setAuthTokenDraft] = useState("");
   const [accountSid, setAccountSid] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [accountSidDraft, setAccountSidDraft] = useState("");
   const [phoneNumberDraft, setPhoneNumberDraft] = useState("");
+  const [whatsappPhoneNumber, setWhatsappPhoneNumber] = useState<string | null>(null);
+  const [whatsappPhoneNumberDraft, setWhatsappPhoneNumberDraft] = useState("");
+  const [savingWhatsapp, setSavingWhatsapp] = useState(false);
   const [savingOutbound, setSavingOutbound] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [copied, setCopied] = useState<"sms" | "voice" | null>(null);
+  const [copied, setCopied] = useState<"sms" | "voice" | "whatsapp" | null>(null);
   const [showExamples, setShowExamples] = useState(false);
 
   useEffect(() => {
@@ -33,18 +37,23 @@ export default function TwilioConfig() {
           success: boolean;
           smsUrl?: string | null;
           voiceUrl?: string | null;
+          whatsappUrl?: string | null;
           hasAuthToken?: boolean;
           accountSid?: string | null;
           phoneNumber?: string | null;
+          whatsappPhoneNumber?: string | null;
         }) => {
           if (data.success) {
             setSmsUrl(data.smsUrl ?? null);
             setVoiceUrl(data.voiceUrl ?? null);
+            setWhatsappUrl(data.whatsappUrl ?? null);
             setHasAuthToken(!!data.hasAuthToken);
             setAccountSid(data.accountSid ?? null);
             setPhoneNumber(data.phoneNumber ?? null);
             setAccountSidDraft(data.accountSid ?? "");
             setPhoneNumberDraft(data.phoneNumber ?? "");
+            setWhatsappPhoneNumber(data.whatsappPhoneNumber ?? null);
+            setWhatsappPhoneNumberDraft(data.whatsappPhoneNumber ?? "");
           }
         }
       )
@@ -55,10 +64,11 @@ export default function TwilioConfig() {
     setSaving(true);
     try {
       const res = await fetch("/api/twilio/config", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      const data: { success: boolean; smsUrl?: string; voiceUrl?: string } = await res.json();
+      const data: { success: boolean; smsUrl?: string; voiceUrl?: string; whatsappUrl?: string } = await res.json();
       if (data.success) {
         setSmsUrl(data.smsUrl ?? null);
         setVoiceUrl(data.voiceUrl ?? null);
+        setWhatsappUrl(data.whatsappUrl ?? null);
       }
     } finally {
       setSaving(false);
@@ -103,7 +113,25 @@ export default function TwilioConfig() {
     }
   }
 
-  async function copy(which: "sms" | "voice", value: string) {
+  async function saveWhatsapp() {
+    if (!whatsappPhoneNumberDraft.trim()) return;
+    setSavingWhatsapp(true);
+    try {
+      const res = await fetch("/api/twilio/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ whatsappPhoneNumber: whatsappPhoneNumberDraft.trim() }),
+      });
+      const data: { success: boolean } = await res.json();
+      if (data.success) {
+        setWhatsappPhoneNumber(whatsappPhoneNumberDraft.trim());
+      }
+    } finally {
+      setSavingWhatsapp(false);
+    }
+  }
+
+  async function copy(which: "sms" | "voice" | "whatsapp", value: string) {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(which);
@@ -303,6 +331,73 @@ export default function TwilioConfig() {
                   </>
                 )}
               </div>
+
+              {whatsappUrl && (
+                <div className="pt-3 border-t border-line">
+                  <p className="text-xs font-medium">WhatsApp</p>
+                  <p className="text-xs text-ink-soft mt-1">
+                    Same Twilio account, a separate{" "}
+                    <a
+                      href="https://console.twilio.com/us1/develop/sms/senders/whatsapp-senders"
+                      target="_blank"
+                      rel="noopener"
+                      className="underline"
+                    >
+                      WhatsApp Sender
+                    </a>
+                    . Paste the URL below into that sender&apos;s &quot;When a message comes in&quot; webhook. A
+                    WhatsApp message merges into the same lead as a text from that number — it&apos;s just another
+                    way they can reach you.
+                  </p>
+                  <div className="mt-2">
+                    <pre className="rounded-lg bg-paper border border-line p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all">
+                      {whatsappUrl}
+                    </pre>
+                    <button onClick={() => copy("whatsapp", whatsappUrl)} className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line">
+                      {copied === "whatsapp" ? <Check className="h-3 w-3" /> : null}
+                      {copied === "whatsapp" ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+
+                  {!accountSid && (
+                    <p className="text-xs text-ink-soft mt-2">
+                      Save your Account SID above first — replying over WhatsApp uses the same Twilio credentials as
+                      texting.
+                    </p>
+                  )}
+
+                  {whatsappPhoneNumber ? (
+                    <p className="text-xs mt-2 flex items-center gap-1" style={{ color: "var(--sage)" }}>
+                      <Check className="h-3.5 w-3.5" /> Connected — replying to a WhatsApp lead sends a real WhatsApp
+                      message from {whatsappPhoneNumber}.
+                    </p>
+                  ) : (
+                    accountSid && (
+                      <div className="mt-2 space-y-2">
+                        <p className="text-xs text-ink-soft">
+                          The WhatsApp-enabled number Twilio gave your sender (shown on that sender&apos;s page in
+                          the Console) — often the same digits as your Twilio number above, sometimes a different
+                          one.
+                        </p>
+                        <input
+                          value={whatsappPhoneNumberDraft}
+                          onChange={(e) => setWhatsappPhoneNumberDraft(e.target.value)}
+                          placeholder="Your WhatsApp number, e.g. +18609358202"
+                          className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                        />
+                        <button
+                          onClick={saveWhatsapp}
+                          disabled={savingWhatsapp || !whatsappPhoneNumberDraft.trim()}
+                          className="rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                          style={{ backgroundColor: "var(--ink)" }}
+                        >
+                          {savingWhatsapp ? "Saving…" : "Save"}
+                        </button>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

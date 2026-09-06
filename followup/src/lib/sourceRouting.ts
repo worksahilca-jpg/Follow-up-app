@@ -1,7 +1,7 @@
 /**
  * Per-source lead routing — what happens automatically the moment a NEW
  * lead is created from a given source (Lead.source: "Gmail",
- * "Gmail (spam)", "SMS", "Phone call", "Webhook", "Website form",
+ * "Gmail (spam)", "SMS", "Phone call", "WhatsApp", "Webhook", "Website form",
  * "Manual entry", "Instagram"). A business sets these rules once in
  * Settings (see SourceRule in schema.prisma); every real-time lead-creation
  * call site below calls this exactly once, right after creating the lead —
@@ -64,6 +64,7 @@ export const KNOWN_LEAD_SOURCES = [
   "Gmail (spam)",
   "SMS",
   "Phone call",
+  "WhatsApp",
   "Instagram",
   "Website form",
   "Webhook",

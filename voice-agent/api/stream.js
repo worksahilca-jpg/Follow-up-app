@@ -52,10 +52,13 @@ const REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-mini";
 const OPENAI_CONNECT_TIMEOUT_MS = 6000;
 
 const app = express();
-app.get("/api/stream", (_req, res) => {
-  // A plain GET here (not a WebSocket upgrade) is just a liveness check —
-  // Twilio only ever opens this as a WebSocket.
-  res.status(200).send("FollowUp voice-agent bridge is up.");
+// A plain GET (not a WebSocket upgrade) is just a liveness check — Twilio
+// only ever opens this as a WebSocket. Path-agnostic on purpose: Vercel
+// mounts this file at /api/stream and strips that prefix before
+// forwarding, so inside here the request path is "/" — locally it's the
+// full "/api/stream". Match either rather than guess.
+app.get(/.*/, (_req, res) => {
+  res.status(200).type("text/plain").send("FollowUp voice-agent bridge is up.");
 });
 
 const server = createServer(app);
@@ -338,6 +341,12 @@ async function postTranscript({ secret, from, turns }) {
   }
 }
 
-server.listen(Number(process.env.PORT ?? 8080));
+// Only bind a port when running locally. On Vercel the exported server
+// object IS the function — Vercel drives it directly, and calling
+// listen() there as well is the documented "pick one, not both" mistake:
+// it never resolves inside their runtime and every request hangs.
+if (!process.env.VERCEL) {
+  server.listen(Number(process.env.PORT ?? 8080));
+}
 
 export default server;

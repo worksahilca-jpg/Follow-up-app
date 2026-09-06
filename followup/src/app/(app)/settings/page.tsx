@@ -9,6 +9,7 @@ import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
 import InstagramConfig from "@/components/InstagramConfig";
+import FilteredEmails from "@/components/FilteredEmails";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart } from "lucide-react";
 
 export default function SettingsPage() {
@@ -321,6 +322,7 @@ function SettingsPageInner() {
                 and adds anything that looks like a genuine prospect, tagged so you can tell where it came from.
                 Manual only; it never runs on its own.
               </p>
+              <FilteredEmails />
             </div>
           )}
           {gmailError && (
@@ -329,7 +331,7 @@ function SettingsPageInner() {
             </p>
           )}
           <div className="rounded-lg border border-line px-4 py-3 text-sm text-ink-soft flex items-center justify-between opacity-60">
-            <span>Outlook, Instagram, WhatsApp, SMS — coming soon</span>
+            <span>Outlook / Microsoft 365 — coming soon</span>
           </div>
         </div>
         {!gmailConnected && (

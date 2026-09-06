@@ -62,6 +62,7 @@ model Business {
   feedback        ProductFeedback[]
   rateLimitHits   RateLimitHit[]
   savedFilters    SavedFilter[]
+  filteredEmails  FilteredEmail[]
 
   // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
   // mirrors the Stripe Subscription.status string verbatim (active,
@@ -458,6 +459,31 @@ model RateLimitHit {
 // can't express, e.g. "Instagram leads over $2k, no contact in 10 days."
 // `shared: false` means only createdById sees it; `shared: true` puts it
 // in front of the whole business, same as Close's private-vs-team choice.
+// An inbox thread the AI prospect classifier decided was NOT a lead
+// (personal mail, a recruiter, a vendor pitch, ...). Kept on purpose:
+// until this existed the verdict was thrown away, so a real customer
+// email the classifier got wrong simply vanished with no trace — the one
+// failure mode "no lead goes cold" can least afford. Settings lists these
+// with the classifier's own reason and a one-click "this was a lead"
+// override (importGmailThread in src/lib/integrations/gmail.ts). Also
+// what stops the automatic sync re-classifying the same rejected thread
+// every ten minutes: a thread stays skipped until it gets a new message.
+model FilteredEmail {
+  id            String   @id @default(cuid())
+  business      Business @relation(fields: [businessId], references: [id])
+  businessId    String
+  threadId      String // Gmail thread id
+  senderName    String
+  senderEmail   String
+  subject       String?
+  reason        String // the classifier's one-line explanation, verbatim
+  lastMessageAt DateTime // newest message seen when this verdict was made
+  createdAt     DateTime @default(now())
+
+  @@unique([businessId, threadId])
+  @@index([businessId, createdAt])
+}
+
 model SavedFilter {
   id          String   @id @default(cuid())
   business    Business @relation(fields: [businessId], references: [id])

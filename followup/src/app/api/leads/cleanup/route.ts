@@ -52,6 +52,14 @@ export async function POST() {
   // Each lead is classified and (if it fails) deleted independently, so
   // this is safe to run several at a time instead of one OpenAI round trip
   // at a time.
+  // Same business context the inbox sync gives the classifier — without it,
+  // a realtor's active deals read as "not about the business" and this
+  // route would delete them.
+  const businessContext = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: { name: true, industry: true },
+  });
+
   const outcomes = await mapWithConcurrency(leads, 5, async (lead): Promise<Outcome> => {
     const messages = lead.conversations.flatMap((c) =>
       c.messages.map((m) => ({
@@ -66,10 +74,11 @@ export async function POST() {
     if (messages.length === 0) return undefined; // nothing to judge it by — leave it, and don't count it as checked
 
     try {
-      const { isProspect, reason } = await classifyAsProspect(messages, {
-        name: lead.name,
-        email: lead.email ?? "unknown",
-      });
+      const { isProspect, reason } = await classifyAsProspect(
+        messages,
+        { name: lead.name, email: lead.email ?? "unknown" },
+        businessContext ?? undefined
+      );
       if (!isProspect) {
         await deleteLeadCascade(lead.id);
         return { id: lead.id, name: lead.name, removed: true, reason };

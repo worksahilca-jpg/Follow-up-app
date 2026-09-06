@@ -561,6 +561,12 @@ model Integration {
   // thread is fetched + AI-classified once when it's new, not 30 threads
   // re-classified on every tick.
   lastSyncedAt DateTime?
+  // When the last DEEP pass ran (the full 90-day / 100-thread pull the
+  // manual "Sync now" also does). The cron does one automatically once a
+  // day on top of the every-ten-minutes incremental tick, so an owner
+  // never has to press a button — and a classifier improvement re-judges
+  // the whole inbox on its own within a day instead of only new mail.
+  deepSyncedAt DateTime?
 
   @@unique([userId, provider])
 }

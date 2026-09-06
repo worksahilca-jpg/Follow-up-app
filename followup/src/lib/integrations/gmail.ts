@@ -270,7 +270,8 @@ async function processThreadRefs(
   gmail: gmail_v1.Gmail,
   selfEmail: string,
   threadRefs: gmail_v1.Schema$Thread[],
-  sourceLabel: string
+  sourceLabel: string,
+  options: { skipClassification?: boolean } = {}
 ): Promise<Lead[]> {
   // Threads are independent of each other (each maps to at most one lead
   // by counterpart email), so process several in parallel instead of one
@@ -323,11 +324,23 @@ async function processThreadRefs(
       select: { id: true },
     }));
 
+    const newestMessageAt = parsedMessages[parsedMessages.length - 1].sentAt;
+
     // Gate on the AI prospect check before writing anything for this
     // thread. Without an API key there's no classifier to ask, so fall
     // back to the older, broader heuristic rather than dropping every
-    // lead in demo/unconfigured environments.
-    if (process.env.OPENAI_API_KEY && !alreadyKnown) {
+    // lead in demo/unconfigured environments. `skipClassification` is
+    // the owner's explicit "this was a lead" override (importGmailThread).
+    if (process.env.OPENAI_API_KEY && !alreadyKnown && !options.skipClassification) {
+      // A thread this classifier already rejected stays rejected until it
+      // gets a new message — otherwise the every-ten-minutes sync would
+      // pay OpenAI to re-reach the same verdict on the same mail forever.
+      const priorVerdict = await prisma.filteredEmail.findUnique({
+        where: { businessId_threadId: { businessId, threadId: thread.id! } },
+        select: { lastMessageAt: true },
+      });
+      if (priorVerdict && priorVerdict.lastMessageAt >= newestMessageAt) return null;
+
       try {
         const transcript: Message[] = parsedMessages.map((m) => ({
           id: m.id,
@@ -337,14 +350,35 @@ async function processThreadRefs(
           date: m.sentAt.toISOString(),
           opened: false,
         }));
-        const { isProspect } = await classifyAsProspect(transcript, counterpart);
-        if (!isProspect) return null;
+        const { isProspect, reason } = await classifyAsProspect(transcript, counterpart);
+        if (!isProspect) {
+          // Not a lead — but never silently. Record the verdict where the
+          // owner can see it and overrule it (Settings → Gmail).
+          await prisma.filteredEmail.upsert({
+            where: { businessId_threadId: { businessId, threadId: thread.id! } },
+            update: { reason, lastMessageAt: newestMessageAt },
+            create: {
+              businessId,
+              threadId: thread.id!,
+              senderName: counterpart.name,
+              senderEmail: counterpart.email,
+              subject: getHeader(gmailMessages[0]?.payload?.headers, "Subject") || null,
+              reason,
+              lastMessageAt: newestMessageAt,
+            },
+          });
+          return null;
+        }
       } catch (err) {
         // Classification failing shouldn't block the sync — better to
         // include a thread than silently lose a real lead.
         console.error(`Failed to classify thread ${ref.id}:`, err);
       }
     }
+
+    // Whatever got it here (classifier said yes, or the owner overruled
+    // it), this thread is a lead now — drop any stale "not a lead" record.
+    await prisma.filteredEmail.deleteMany({ where: { businessId, threadId: thread.id! } });
 
     const lastContacted = parsedMessages[parsedMessages.length - 1].sentAt;
 
@@ -465,6 +499,24 @@ export async function fetchSalesConversations(
   });
 
   return processThreadRefs(businessId, gmail, selfEmail, listData.threads ?? [], "Gmail");
+}
+
+/**
+ * The owner's override for a thread the classifier filtered out: import
+ * exactly this one thread as a lead, classification bypassed. The
+ * FilteredEmail row is cleared by processThreadRefs on success. Returns
+ * null if the thread no longer exists in Gmail or has no external
+ * counterpart (e.g. the owner deleted it).
+ */
+export async function importGmailThread(businessId: string, threadId: string): Promise<Lead | null> {
+  const authed = await getAuthedGmailClient(businessId);
+  if (!authed) return null;
+  const { gmail, integration } = authed;
+  const selfEmail = integration.user.email.toLowerCase();
+  const [lead] = await processThreadRefs(businessId, gmail, selfEmail, [{ id: threadId }], "Gmail", {
+    skipClassification: true,
+  });
+  return lead ?? null;
 }
 
 /**

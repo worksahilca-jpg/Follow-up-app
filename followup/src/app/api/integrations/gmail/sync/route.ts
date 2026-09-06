@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
-import { fetchSalesConversations } from "@/lib/integrations/gmail";
-import { scoreAndDraftForLead } from "@/lib/scoring";
-import { detectReplies } from "@/lib/outcomes";
-import { mapWithConcurrency } from "@/lib/concurrency";
+import { syncGmailForBusiness } from "@/lib/gmailSync";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 
 // A full sync (up to 30 Gmail threads, each possibly classified, plus two
@@ -17,7 +14,9 @@ export const maxDuration = 300;
 // signed-in user's own business, upserts them as real Lead/Conversation/
 // Message rows, then (if OPENAI_API_KEY is set) scores each one and drafts
 // a follow-up message. Triggered by the "Sync now" button on Settings once
-// Gmail is connected.
+// Gmail is connected. The automatic every-few-minutes version of this
+// is /api/cron/gmail-sync — same code path (src/lib/gmailSync.ts), just
+// narrowed to what's new.
 export async function POST() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
@@ -32,32 +31,8 @@ export async function POST() {
   }
 
   try {
-    const leads = await fetchSalesConversations(ctx.businessId);
-
-    const scoredFlags = await mapWithConcurrency(leads, 5, async (lead) => {
-      try {
-        return await scoreAndDraftForLead(lead.id);
-      } catch (err) {
-        // One lead failing to score shouldn't fail the whole sync.
-        console.error(`Failed to score lead ${lead.id}:`, err);
-        return false;
-      }
-    });
-    const scored = scoredFlags.filter(Boolean).length;
-
-    // New inbound messages just landed — this is the one point where it's
-    // worth checking whether any of them are a reply to a follow-up we
-    // already sent.
-    let repliesDetected = 0;
-    try {
-      repliesDetected = await detectReplies(ctx.businessId);
-    } catch (err) {
-      // Outcome tracking failing shouldn't fail the sync that just
-      // succeeded — leads are still saved and scored either way.
-      console.error(`Failed to detect replies for business ${ctx.businessId}:`, err);
-    }
-
-    return NextResponse.json({ success: true, count: leads.length, scored, repliesDetected, leads });
+    const { count, scored, repliesDetected, leads } = await syncGmailForBusiness(ctx.businessId);
+    return NextResponse.json({ success: true, count, scored, repliesDetected, leads });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Gmail sync failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });

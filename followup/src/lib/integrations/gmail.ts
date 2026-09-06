@@ -313,11 +313,21 @@ async function processThreadRefs(
     )?.from;
     if (!counterpart) return null;
 
+    // A thread already stored as a Conversation passed the prospect gate
+    // once — re-running the classifier on it every sync is pure OpenAI
+    // spend for a verdict that's already on file. Only genuinely new
+    // threads get classified; known ones go straight to picking up any
+    // new messages below.
+    const alreadyKnown = !!(await prisma.conversation.findUnique({
+      where: { externalId: thread.id! },
+      select: { id: true },
+    }));
+
     // Gate on the AI prospect check before writing anything for this
     // thread. Without an API key there's no classifier to ask, so fall
     // back to the older, broader heuristic rather than dropping every
     // lead in demo/unconfigured environments.
-    if (process.env.OPENAI_API_KEY) {
+    if (process.env.OPENAI_API_KEY && !alreadyKnown) {
       try {
         const transcript: Message[] = parsedMessages.map((m) => ({
           id: m.id,
@@ -435,15 +445,22 @@ async function processThreadRefs(
  * leads that do pass still comes from the AI layer's scoreLead(), not from
  * this sync step.
  */
-export async function fetchSalesConversations(businessId: string): Promise<Lead[]> {
+export async function fetchSalesConversations(
+  businessId: string,
+  options: { since?: Date } = {}
+): Promise<Lead[]> {
   const authed = await getAuthedGmailClient(businessId);
   if (!authed) return [];
   const { gmail, integration } = authed;
   const selfEmail = integration.user.email.toLowerCase();
 
+  // `since` is the automatic sync's narrowing: only threads with activity
+  // after that instant (Gmail's `after:` takes epoch seconds). The manual
+  // "Sync now" passes nothing and keeps the broad 90-day / 30-thread pull.
+  const sinceClause = options.since ? ` after:${Math.floor(options.since.getTime() / 1000)}` : "";
   const { data: listData } = await gmail.users.threads.list({
     userId: "me",
-    q: "-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d",
+    q: `-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d${sinceClause}`,
     maxResults: 30,
   });
 

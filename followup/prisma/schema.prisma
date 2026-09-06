@@ -522,6 +522,12 @@ model Integration {
   accessToken  String?
   refreshToken String?
   connectedAt  DateTime?
+  // When the automatic inbox sync (src/lib/gmailSync.ts, run every few
+  // minutes by /api/cron/gmail-sync) last completed for this connection —
+  // the next run only asks Gmail for threads newer than this, so a
+  // thread is fetched + AI-classified once when it's new, not 30 threads
+  // re-classified on every tick.
+  lastSyncedAt DateTime?
 
   @@unique([userId, provider])
 }

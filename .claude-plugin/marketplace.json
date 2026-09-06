@@ -1,0 +1,15 @@
+{
+  "name": "followup-plugins",
+  "owner": {
+    "name": "worksahilca-jpg",
+    "email": "work.sahilca@gmail.com"
+  },
+  "description": "Claude Code plugins for the FollowUp app.",
+  "plugins": [
+    {
+      "name": "followup-team",
+      "source": "./followup-team",
+      "description": "FollowUp's product team as Claude Code subagents — manager, backend, frontend, growth, and three research specialists."
+    }
+  ]
+}

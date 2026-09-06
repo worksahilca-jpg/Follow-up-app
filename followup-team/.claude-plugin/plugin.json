@@ -1,0 +1,13 @@
+{
+  "name": "followup-team",
+  "displayName": "FollowUp AI Team",
+  "version": "1.0.0",
+  "description": "FollowUp's product team as installable Claude Code subagents: a manager that delegates to backend, frontend, and growth specialists, backed by three research agents.",
+  "author": {
+    "name": "worksahilca-jpg",
+    "email": "work.sahilca@gmail.com"
+  },
+  "homepage": "https://github.com/worksahilca-jpg/Follow-up-app",
+  "repository": "https://github.com/worksahilca-jpg/Follow-up-app",
+  "keywords": ["subagents", "delegation", "sales", "crm", "followup"]
+}

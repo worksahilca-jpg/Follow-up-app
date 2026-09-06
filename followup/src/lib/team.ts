@@ -17,6 +17,8 @@
 
 import { prisma } from "@/lib/db";
 import type { TeamRole } from "@prisma/client";
+import { sendEmail } from "@/lib/integrations/gmail";
+import { appUrl } from "@/lib/stripe";
 
 export interface TeamMemberSummary {
   id: string;
@@ -102,12 +104,47 @@ async function requireAdmin(businessId: string, actingUserId: string): Promise<{
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Best-effort invite notification, sent from whichever Gmail account the
+ * inviting business has connected. Mirrors createCalendarEvent's pattern
+ * in src/lib/integrations/gmail.ts: no connected Gmail account or any
+ * send error just means the email doesn't go out — the Invite row (already
+ * written by the caller) is the source of truth, so failure here must
+ * never throw or bubble up to fail the invite itself.
+ */
+async function sendInviteEmail(businessId: string, email: string, role: TeamRole): Promise<boolean> {
+  try {
+    const business = await prisma.business.findUnique({ where: { id: businessId }, select: { name: true } });
+    const businessName = business?.name ?? "a FollowUp workspace";
+    const roleLabel = role === "ADMIN" ? "an admin" : "a sales team member";
+    const signInUrl = `${appUrl()}/signin`;
+
+    const result = await sendEmail(businessId, {
+      to: email,
+      subject: `You've been invited to join ${businessName} on FollowUp`,
+      body: [
+        `Hi there,`,
+        ``,
+        `You've been invited to join ${businessName}'s team on FollowUp as ${roleLabel}.`,
+        ``,
+        `To accept, just sign in at ${signInUrl} using this exact email address (${email}) — your account will be added to the team automatically.`,
+        ``,
+        `If you weren't expecting this invite, you can safely ignore this email.`,
+      ].join("\n"),
+    });
+    return result.success;
+  } catch (err) {
+    console.error(`Failed to send invite email for business ${businessId}:`, err);
+    return false;
+  }
+}
+
 export async function inviteMember(
   businessId: string,
   actingUserId: string,
   emailRaw: string,
   role: TeamRole
-): Promise<{ success: true } | { success: false; message: string }> {
+): Promise<{ success: true; emailSent: boolean } | { success: false; message: string }> {
   const admin = await requireAdmin(businessId, actingUserId);
   if (!admin.ok) return { success: false, message: admin.message };
 
@@ -127,7 +164,11 @@ export async function inviteMember(
     update: { role },
     create: { businessId, email, role },
   });
-  return { success: true };
+
+  // Best-effort courtesy on top of the Invite row above, which is already
+  // the source of truth — an email failure here must never fail the invite.
+  const emailSent = await sendInviteEmail(businessId, email, role);
+  return { success: true, emailSent };
 }
 
 export async function cancelInvite(inviteId: string, businessId: string, actingUserId: string): Promise<{ success: boolean; message?: string }> {

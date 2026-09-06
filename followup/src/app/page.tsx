@@ -353,7 +353,7 @@ export default function LandingPage() {
             {
               icon: <Mail className="h-4 w-4" />,
               title: "Connect your inbox",
-              body: "FollowUp reads your sales conversations in Gmail — nothing else.",
+              body: "FollowUp reads your sales conversations in Gmail — SMS, Instagram DMs, and more connect the same way.",
             },
             {
               icon: <TrendingUp className="h-4 w-4" />,

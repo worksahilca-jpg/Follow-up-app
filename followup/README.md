@@ -15,22 +15,31 @@ Everything in the UI is fully working **against demo data** — no setup needed:
 - Pipeline view with stage totals + weighted value
 - Settings (integrations, automation rules, team, billing UI)
 
-The "Send email", "Connect Gmail", "Send now" etc. buttons are demo
-interactions — they update the screen but don't call real external services.
+Settings' "Connect Gmail", "Sync now", and "Scan spam" buttons call the real
+Gmail integration directly — there's no demo branch in that code path, so the
+moment real Google OAuth credentials exist they will genuinely try to reach
+Google. Other buttons elsewhere in the UI (e.g. "Send email" on a lead) were
+not re-audited against this and may still be demo interactions — see
+`research/integrations/gmail.md` for exactly what was and wasn't checked.
 
 ## What needs real credentials to go live
 
 | Feature | Needs | File to edit |
 |---|---|---|
-| Reading your real inbox | Google Cloud OAuth credentials | `src/lib/integrations/gmail.ts` |
-| Sending real emails | Same Gmail credentials | `src/lib/integrations/gmail.ts` |
+| Reading your real inbox | A Google Cloud project + OAuth verification — the code itself is already real, see `research/integrations/gmail.md` | `src/lib/integrations/gmail.ts` (no code changes needed) |
+| Sending real emails | Same Gmail credentials | `src/lib/integrations/gmail.ts` (no code changes needed) |
 | Real AI scoring & message drafting | OpenAI API key | `src/lib/integrations/openai.ts` |
 | Persisting leads/users for real | A Postgres database (e.g. Supabase) | `prisma/schema.prisma`, then run `npx prisma migrate dev` |
-| Real login | NextAuth secret + Google OAuth | (not yet wired — currently no auth gate) |
+| Real login | Already wired — needs `NEXTAUTH_SECRET` + the same Google OAuth credentials Gmail uses | `src/lib/auth.ts` (no code changes needed) |
 
-Every real integration is written as a small service file with the same
-function signatures as the mock version, so swapping in real API calls
-doesn't require touching any page or component.
+Gmail and real login are both confirmed to already be complete, real
+implementations rather than mocks — going live for either is a provisioning
++ Google-review problem, not a coding one (see
+`research/integrations/gmail.md`). They also share the same underlying
+Google OAuth client, so the one Google Cloud project that unblocks Gmail
+unblocks real login too. The OpenAI/database rows above haven't been
+re-verified the same way yet; treat "file to edit" for those as the working
+assumption, not a confirmed fact.
 
 ## Running it
 
@@ -59,7 +68,8 @@ src/app/(app)/pipeline           pipeline view
 src/app/(app)/settings           integrations, automation, team, billing
 src/lib/demo-data.ts             10+ realistic demo leads + helpers
 src/lib/types.ts                 shared TypeScript types
-src/lib/integrations/gmail.ts    Gmail service abstraction (mocked)
+src/lib/integrations/gmail.ts    real Gmail + Calendar integration (needs Google Cloud credentials, not code)
 src/lib/integrations/openai.ts   AI scoring/drafting abstraction (mocked)
 prisma/schema.prisma             full production data model
+research/                        production-readiness + market/customer findings (see research/README.md)
 ```

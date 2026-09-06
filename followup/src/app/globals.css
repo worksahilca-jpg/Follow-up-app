@@ -11,10 +11,12 @@
   --line: #e4e4e7;
   --card: #ffffff;
 
-  /* Brand / primary — the one accent color, used only on buttons, links,
-     active states, and focus rings. Never a background fill, an icon
-     color, or a border outside those interactive contexts. rust-soft is
-     for focus-ring halos only (see embed page), not badge/panel fills. */
+  /* Brand / primary — the one accent color: buttons, links, active
+     states, focus rings, plus a small established set of soft-tint
+     fills (active/unread indicators in Sidebar and NotificationBell,
+     the selected slot on the booking page, the embed widget's header,
+     and the primary chart series in chart-colors.ts). Don't reach for
+     it as a general decorative fill beyond that set. */
   --rust: #7c3aed;
   --rust-soft: #ede9fe;
 

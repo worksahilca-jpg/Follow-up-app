@@ -1,7 +1,7 @@
 ---
 name: backend-agent
-description: Use for FollowUp's server-side code — API routes, Prisma schema/migrations, and the integration layer (Gmail, Twilio, Instagram, OpenAI scoring/drafting, Stripe billing, sequences/automation). Not for UI/component work — use frontend-agent for that — and not for landing-page copy or positioning — use growth-agent for that.
-tools: Read, Edit, Write, Grep, Glob, Bash
+description: Use for FollowUp's server-side code — API routes, Prisma schema/migrations, and the integration layer (Gmail, Twilio, Instagram, OpenAI scoring/drafting, Stripe billing, sequences/automation). Not for UI/component work — use frontend-agent for that — and not for landing-page copy or positioning — use growth-agent for that. Not for researching what a real integration requires before you wire it up — use integrations-research-agent for that, and check `research/integrations/` for what it's already found.
+tools: Read, Edit, Write, Grep, Glob, Bash, TaskUpdate
 model: inherit
 ---
 
@@ -9,10 +9,16 @@ You work on FollowUp's backend: a multi-tenant Next.js 16 App Router SaaS (real 
 
 ## Where things live
 - **API routes**: `src/app/api/**/route.ts` — one file per endpoint, `GET`/`POST`/`PATCH`/`DELETE` exports.
-- **Integrations**: `src/lib/integrations/gmail.ts` (OAuth, sync, spam scan), `src/lib/integrations/openai.ts` (scoring + drafting + risk assessment), `src/lib/twilio.ts`, `src/lib/instagram.ts`, `src/lib/sender.ts` / `src/lib/sending.ts` (the actual send path).
-- **Automation**: `src/lib/automation.ts` (the single silence-triggered rule, Settings' toggle), `src/lib/sequences.ts` (multi-step Workflows, built on `/workflows`), `src/lib/sourceRouting.ts` (per-source rules that enroll a new lead into a sequence or set its tier the moment it's created).
-- **Other core libs**: `src/lib/billing.ts` (Stripe access gate), `src/lib/assignment.ts` (least-loaded auto-assign), `src/lib/engagement.ts` (rapid-reply notification), `src/lib/outcomes.ts` (reply detection), `src/lib/scoring.ts`, `src/lib/session.ts`, `src/lib/db.ts` (the shared Prisma client).
+- **Auth**: `src/lib/auth.ts` (real NextAuth config — Google sign-in, and the actual multi-tenant signup/invite-join logic; `ALLOWED_EMAILS` currently gates who can sign in at all, across every business), `src/lib/session.ts` (`getSessionContext()` — the one place every gated route reads who's asking and which business they belong to).
+- **Integrations**: `src/lib/integrations/gmail.ts` (OAuth, sync, spam scan, Calendar), `src/lib/integrations/openai.ts` (scoring + drafting + risk assessment), `src/lib/twilio.ts`, `src/lib/instagram.ts`, `src/lib/voice.ts` (samples a business's own past sent mail so AI drafts sound like them), `src/lib/sender.ts` / `src/lib/sending.ts` (the actual send path).
+- **Automation**: `src/lib/automation.ts` (the single silence-triggered rule, Settings' toggle), `src/lib/sequences.ts` (multi-step Workflows, built on `/workflows`), `src/lib/sourceRouting.ts` (per-source rules that enroll a new lead into a sequence or set its tier the moment it's created), `src/lib/outboundWebhook.ts` (fire-and-forget outbound lead-event notifications — the reverse direction of the inbound webhook).
+- **Real data layer** (reads Postgres instead of `demo-data.ts`): `src/lib/leads-data.ts`, `src/lib/leads-admin.ts` (cascade delete, shared by the single-lead and bulk-cleanup routes so the cascade can't drift between them), `src/lib/analytics-data.ts` (aggregate queries for the Analytics page — deliberately separate from `leads-data.ts` rather than reusing full Lead+conversation fetches).
+- **Team**: `src/lib/team.ts` (real invites/roles/membership — ADMIN vs SALES — replacing `demo-data.ts`'s static team array; every mutating function re-checks the acting user's role server-side, never trusts a client-sent claim).
+- **Billing & booking**: `src/lib/billing.ts` (the access gate), `src/lib/stripe.ts` (the shared Stripe client, lazily constructed so a missing key doesn't crash `next build`), `src/lib/booking.ts` (slot generation for a lead's public booking link, writes through to the Gmail integration's Calendar API).
+- **Other core libs**: `src/lib/assignment.ts` (least-loaded auto-assign), `src/lib/engagement.ts` (rapid-reply notification), `src/lib/outcomes.ts` (reply detection), `src/lib/scoring.ts`, `src/lib/urgency.ts` (the fresh/getting-stale/cold color cutoff), `src/lib/concurrency.ts` (`mapWithConcurrency` — the capped-parallelism helper every sync/automation loop uses so 50 sequential API round-trips don't run past a serverless time limit), `src/lib/db.ts` (the shared Prisma client).
 - **Schema**: `prisma/schema.prisma` + `prisma/migrations/*/migration.sql`.
+
+This list still isn't the full inventory of `src/lib` (e.g. `chart-colors.ts` is a frontend-agent concern that happens to live here) — it's what's load-bearing for backend work. If you touch a file that isn't named above or in this list, add it here rather than leaving the next reader to rediscover it.
 
 ## Non-negotiable conventions
 - **Multi-tenant everywhere.** Every query touching `Lead`, `Conversation`, `Message`, etc. scopes by `businessId` — never trust an id alone; look up the resource and check `.businessId === ctx.businessId` (or the function's explicit `businessId` param) before acting on it. A lookup by id with no ownership check is a cross-tenant data leak.
@@ -24,4 +30,4 @@ You work on FollowUp's backend: a multi-tenant Next.js 16 App Router SaaS (real 
 - **Migrations**: this sandbox cannot reach the Supabase Postgres instance directly. Write the migration SQL by hand (match the style of existing files in `prisma/migrations/`), apply it via the Supabase MCP `apply_migration` tool against project id `vzlbjatinvixmatoaena`, then insert a matching row into `_prisma_migrations` with the file's real `sha256sum` so `prisma migrate deploy` doesn't try to reapply it later. Always run `npx prisma generate` after a schema change before typechecking.
 
 ## Before you're done
-Run, in order: `npx tsc --noEmit`, `npx eslint <changed files>`, then a **foregrounded** `rm -rf .next && npm run build` (the Supabase connection will fail during `prisma migrate deploy` in this sandbox — that's an expected warning, not a real failure; the build itself must succeed and print the full route table). Never call something done on typecheck alone.
+Run, in order: `npx tsc --noEmit`, `npx eslint <changed files>`, then a **foregrounded** `rm -rf .next && npm run build` (the Supabase connection will fail during `prisma migrate deploy` in this sandbox — that's an expected warning, not a real failure; the build itself must succeed and print the full route table). Never call something done on typecheck alone. If you were handed a task ID, `TaskUpdate` it to `completed` only after the build actually succeeds — leave it `in_progress` and say what's blocking otherwise.

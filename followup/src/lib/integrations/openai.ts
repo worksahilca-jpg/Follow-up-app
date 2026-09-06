@@ -182,9 +182,12 @@ function stripQuotedReply(body: string): string {
  * long, heavily-requoted thread; trimming what it has to read fixes that
  * without needing a bigger model.
  */
+export type ClassifierBusinessContext = { name: string; industry: string | null };
+
 export async function classifyAsProspect(
   conversation: Message[],
-  sender: { name: string; email: string }
+  sender: { name: string; email: string },
+  business?: ClassifierBusinessContext
 ): Promise<{ isProspect: boolean; reason: string }> {
   const client = getClient();
 
@@ -192,24 +195,38 @@ export async function classifyAsProspect(
     .slice(0, 3)
     .map((m) => ({ ...m, body: stripQuotedReply(m.body).slice(0, 1200) }));
 
+  // The single most important input, learned the hard way on a real
+  // realtor's inbox: without knowing WHAT the business sells, the
+  // classifier judged offers, deposits, and buyers' questions about a
+  // listing as "not about the business's product" and threw away 7 of
+  // his real deals. Every verdict is now made as someone in this
+  // business would make it.
+  const businessLine = business
+    ? `The inbox belongs to "${business.name}"${business.industry ? `, a ${business.industry} business` : ""}. ` +
+      `Judge every thread the way an experienced person in that exact line of work would.`
+    : "The inbox belongs to a small business.";
+
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
       {
         role: "system",
         content:
-          "You triage a small business owner's inbox before it reaches their CRM. Decide whether this email " +
-          "thread is a genuine sales conversation with a prospective customer, as opposed to personal " +
-          "correspondence, a recruiter or job application, a vendor or supplier pitching the business, an " +
-          "existing customer's support/logistics message unrelated to a new sale, or a newsletter/notification " +
-          "sent from a real-looking address. The sender's name and email address are often the strongest signal " +
-          "— a company/brand name instead of a person, an HR/recruiting-sounding name, a known platform or " +
-          "rewards/notification program, or a domain that belongs to a tool/vendor rather than an individual " +
-          "customer should all weigh heavily toward false, even if the message body reads politely or on-topic. " +
-          "Mentions of an offer letter, employment agreement, compensation/salary, SIN/SSN, work permit, or " +
-          "onboarding paperwork mean this is a job, not a sale — false, regardless of how warm the tone is. " +
-          "Lean toward true only for genuinely ambiguous business inquiries about the business's own product or " +
-          "service, from what looks like an actual person.",
+          `You triage a small business owner's inbox before it reaches their CRM. ${businessLine} ` +
+          "Answer true when the thread is CUSTOMER BUSINESS for this company — any of: (a) a prospective " +
+          "customer asking about, requesting, or negotiating the business's own service; (b) an EXISTING client in " +
+          "an active engagement or transaction (documents, deposits, signatures, questions, scheduling — the deal " +
+          "is the business); (c) an intermediary acting on a customer's behalf (another agent bringing an offer or " +
+          "a rental application, a referral partner, a client's representative). Missing any of these means the " +
+          "owner loses money, so when a real person is writing about a real piece of this business's work, say true. " +
+          "Answer false for: automated platform notifications even when they mention the business's work (showing " +
+          "systems, listing alerts, e-signature completions with no human message, calendar/booking systems, " +
+          "password resets, receipts); newsletters and marketing; recruiters, job offers, or employment paperwork " +
+          "directed at the OWNER; vendors or agencies selling TO the business (advertising, software, leads-for-sale); " +
+          "and purely personal correspondence. The sender's identity is a strong signal: a brand, platform, or " +
+          "no-reply style address weighs toward false; a named person writing in their own words weighs toward true. " +
+          "Documents like deposits, IDs, work permits, or signed agreements are NOT job signals when they belong to " +
+          "a client's transaction — they are only employment signals when the thread is about the owner's own job.",
       },
       {
         role: "user",

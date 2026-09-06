@@ -273,6 +273,14 @@ async function processThreadRefs(
   sourceLabel: string,
   options: { skipClassification?: boolean } = {}
 ): Promise<Lead[]> {
+  // Who this inbox belongs to and what they do — the classifier's most
+  // important input (see classifyAsProspect). Fetched once per run, not
+  // per thread.
+  const businessContext = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { name: true, industry: true },
+  });
+
   // Threads are independent of each other (each maps to at most one lead
   // by counterpart email), so process several in parallel instead of one
   // full Gmail-get + classify + DB-write round trip at a time — a 30-thread
@@ -350,7 +358,7 @@ async function processThreadRefs(
           date: m.sentAt.toISOString(),
           opened: false,
         }));
-        const { isProspect, reason } = await classifyAsProspect(transcript, counterpart);
+        const { isProspect, reason } = await classifyAsProspect(transcript, counterpart, businessContext ?? undefined);
         if (!isProspect) {
           // Not a lead — but never silently. Record the verdict where the
           // owner can see it and overrule it (Settings → Gmail).
@@ -492,10 +500,15 @@ export async function fetchSalesConversations(
   // after that instant (Gmail's `after:` takes epoch seconds). The manual
   // "Sync now" passes nothing and keeps the broad 90-day / 30-thread pull.
   const sinceClause = options.since ? ` after:${Math.floor(options.since.getTime() / 1000)}` : "";
+  // A manual sync is the "go back and find what I've been ignoring" pull,
+  // so it goes deep (a busy inbox has far more than 30 threads in 90
+  // days); the automatic tick only looks at what's new, where 30 is
+  // plenty. Known and previously-rejected threads skip the classifier, so
+  // depth costs Gmail reads, not OpenAI calls, on every run after the first.
   const { data: listData } = await gmail.users.threads.list({
     userId: "me",
     q: `-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d${sinceClause}`,
-    maxResults: 30,
+    maxResults: options.since ? 30 : 100,
   });
 
   return processThreadRefs(businessId, gmail, selfEmail, listData.threads ?? [], "Gmail");

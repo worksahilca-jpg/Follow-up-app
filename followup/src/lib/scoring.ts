@@ -53,16 +53,42 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   const draftBody = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
   const suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draftBody);
 
+  const newPriority = priorityFromScore(scoreResult.score);
+  // "Handoff" — the explicit "this one's ready, go close it" moment the
+  // product was missing (see PRODUCT_DIRECTION.md's mission: AI decides
+  // qualified, business owner takes over). Fires only on a genuine
+  // NOT-HIGH -> HIGH transition, comparing against the priority already
+  // loaded above before this write — not on every re-score while a lead
+  // stays hot, which would just be noise. No atomic dedup guard here the
+  // way rapid-engagement/missed-call-text-back have one: this function
+  // isn't called with anywhere near their concurrency (one sync/reply
+  // cycle at a time per lead in practice), and the failure mode of an
+  // occasional duplicate notification is cosmetic, not a data-integrity
+  // problem like those two were.
+  const becameHot = lead.priority !== "HIGH" && newPriority === "HIGH";
+
   await prisma.lead.update({
     where: { id: lead.id },
     data: {
       score: scoreResult.score,
       scoreReason: scoreResult.reason,
       scoreFactors: scoreResult.factors as unknown as Prisma.InputJsonValue,
-      priority: priorityFromScore(scoreResult.score),
+      priority: newPriority,
       suggestedMessage,
     },
   });
+
+  // Nobody assigned means nobody to hand this off to — same posture as
+  // checkRapidEngagement() in src/lib/engagement.ts.
+  if (becameHot && lead.assignedToId) {
+    await prisma.notification.create({
+      data: {
+        userId: lead.assignedToId,
+        leadId: lead.id,
+        message: `${lead.name} just became a hot lead — ${scoreResult.reason}`,
+      },
+    });
+  }
 
   return true;
 }

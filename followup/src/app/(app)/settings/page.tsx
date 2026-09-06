@@ -383,10 +383,11 @@ function SettingsPageInner() {
             <div>
               <p className="font-medium text-sm">Auto follow-up on silence</p>
               <p className="text-xs text-ink-soft mt-1">
-                Master switch. When on, leads set to Assisted or Autonomous (on each lead&apos;s page) get an
-                AI-drafted check-in after this many days of no response. Assisted holds anything that touches
-                pricing, terms, or a negative-sounding conversation for your approval instead of sending it;
-                Autonomous sends every draft with no review at all.
+                Master switch — on by default. Leads in Assisted or Autonomous (every new lead starts in
+                Assisted) get an AI-drafted check-in after this many days of no response. <strong>Our promise:</strong>{" "}
+                Assisted never sends anything about pricing, terms, or a tense conversation without your approval,
+                and every follow-up stops the instant the lead replies. Autonomous sends every draft with no review
+                at all — opt-in per lead only.
               </p>
             </div>
             <button
@@ -431,7 +432,7 @@ function SettingsPageInner() {
             happening.
           </p>
           <p className="text-xs text-ink-soft mt-2">
-            Off by default for every lead. Every automated message is still logged in the lead&apos;s conversation
+            Every new lead starts in Assisted; set any lead to Off or Autonomous on its page. Every automated message is still logged in the lead&apos;s conversation
             history, and you can turn this off per-lead any time.
           </p>
           {automationOn && (

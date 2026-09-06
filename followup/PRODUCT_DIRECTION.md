@@ -179,6 +179,18 @@ see `research/integrations/2026-09-06-voice-ai-and-multilingual-scoping.md`.
 Point 2 (non-English testing end to end, not just the model-instruction fix
 already shipped) is still open.
 
+## Follow-up is on by default (CEO decision, 2026-09-06)
+
+New leads start in the **Assisted** tier and every business's "Auto follow-up on
+silence" switch starts **on** (5-day window). Reasoning, in the CEO's framing: the
+product's job is that the follow-up *gets done* without the owner remembering —
+a default of OFF only moved the thing they forget from "write the email" to
+"click approve." Rule 3 makes the default safe: the guarantee is stated in the
+UI (nothing about pricing, terms, or a tense conversation without approval;
+everything stops the instant the lead replies), and the owner can set any lead
+to OFF or AUTONOMOUS. Validated the same day by the first outside tester (a
+realtor): "amazing if it will be taking follow up from each and every one."
+
 ## Rule 1, closed (2026-09-06)
 
 **Decision: FollowUp stays horizontal. No vertical.** Considered and declined —

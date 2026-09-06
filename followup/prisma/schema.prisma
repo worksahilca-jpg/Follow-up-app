@@ -154,7 +154,14 @@ enum Priority {
   NONE
 }
 
-// Per-lead trust tier for automated follow-ups (see src/lib/automation.ts):
+// Per-lead trust tier for automated follow-ups (see src/lib/automation.ts).
+// ASSISTED is the default (CEO decision, 2026-09-06): the product's job is
+// that the follow-up gets DONE without the owner remembering — a default
+// of OFF just moved the thing they forget from "write the email" to
+// "click approve." The guarantee that makes the default safe is explicit
+// and user-visible: nothing about pricing, terms, or a tense conversation
+// goes out without approval, and everything stops the instant the lead
+// replies. Owners dial any lead down to OFF or up to AUTONOMOUS.
 //   OFF        — never sent automatically; every draft needs manual approval.
 //   ASSISTED   — automated sends allowed, but each draft still passes
 //                assessSendRisk() first; anything not low-risk is held for
@@ -186,7 +193,7 @@ model Lead {
   lastContacted    DateTime?
   nextFollowUp     DateTime?
   notes            String?
-  automationTier   AutomationTier @default(OFF)
+  automationTier   AutomationTier @default(ASSISTED)
   assignedTo       User?          @relation("AssignedLeads", fields: [assignedToId], references: [id])
   assignedToId     String?
   createdAt        DateTime       @default(now())

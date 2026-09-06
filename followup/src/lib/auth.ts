@@ -81,7 +81,15 @@ export const authOptions: NextAuthOptions = {
         ? pendingInvite.businessId
         : (
             await prisma.business.create({
-              data: { name: user.name ? `${user.name}'s Business` : "My Business" },
+              data: {
+                name: user.name ? `${user.name}'s Business` : "My Business",
+                // Follow-up is on from day one (see AutomationTier in
+                // schema.prisma): the master switch exists so an owner can
+                // turn it OFF, not something they have to discover to turn on.
+                automations: {
+                  create: { name: "Auto follow-up on silence", action: "auto_send", enabled: true, triggerDays: 5 },
+                },
+              },
             })
           ).id;
       const role = pendingInvite ? pendingInvite.role : "ADMIN";

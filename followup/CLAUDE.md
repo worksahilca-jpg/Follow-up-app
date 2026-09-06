@@ -2,17 +2,44 @@
 
 # Product Direction
 
-The goal isn't just shipping features — it's building something that's still
-the obvious choice in 20 years. That only happens by being genuinely useful
-and trustworthy to users, not by chasing competitors feature-for-feature.
-Beating other tools is a side effect of that, not a separate goal.
+The actual mission: **no lead ever goes cold, and no business owner loses a
+deal because a follow-up was late, wrong, or never sent — on any channel, in
+any language.** Every CRM already does lead generation and lead sorting;
+none of them are actually on the hook for the leads that get spammed past,
+ignored, or left to rot in an inbox or DM. That's the gap this product
+exists to close. The long-term version needs no dedicated human just to
+keep that promise — AI should be able to receive a call, read a DM, or
+answer an email, in the lead's own language, well enough that a business
+never has to hire someone whose whole job is "don't let leads go cold."
+
+Getting there is a sequencing problem, not a switch to flip. Earn full
+autonomy channel by channel — text/email/DM first (reversible, low-stakes,
+easy to hold-for-review), live voice calls last (highest-stakes, hardest to
+undo, hardest to get right in a language other than English). Skipping
+straight to unsupervised multilingual phone calls is the fastest way to
+become this category's own cautionary tale — see
+`research/customers/2026-09-05-icp-pain-points-trust-pricing.md` section
+3.2: the most autonomous "AI SDR" in the category has the *lowest* rating
+among reviewed competitors, precisely because generic-sounding automation
+tanks response rates once a lead notices, and voice has no
+hold-for-review safety net once the call already happened. Rule 5 below
+(design for rising autonomy) is exactly this: each channel earns its way
+there, not all of it on day one.
+
+"Every language" should mean every language the underlying speech/LLM stack
+actually covers well (major world languages first: Spanish, Mandarin,
+Hindi, Arabic, Portuguese, etc.), stated honestly rather than promised
+absolutely — and it's a real, underused wedge regardless: most competitors
+in this category barely support non-English leads at all, which is a gap
+worth owning before anyone else does.
 
 Before adding anything, weigh it against these rules:
 
-1. **Vertical depth over horizontal breadth.** Go deep on one industry
-   rather than staying generic "follow-up for anyone." A feature that only
-   makes sense "for everyone" loses to platforms; one that makes this
-   indispensable to one industry doesn't.
+1. **Vertical depth over horizontal breadth.** Go deep on one industry — or
+   one underserved language/region — rather than staying generic "follow-up
+   for anyone." A feature that only makes sense "for everyone" loses to
+   platforms; one that makes this indispensable to one industry or one
+   underserved market doesn't.
 
 2. **Own the data, don't just view it.** Lead history, AI scoring
    reasoning, message templates, and outcomes live in our own DB as

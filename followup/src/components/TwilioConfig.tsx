@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, ChevronDown, Phone } from "lucide-react";
+import { Check, ChevronDown, Phone, ShieldAlert } from "lucide-react";
 
 /**
  * "Phone (SMS + calls)" section of Settings. Unlike the other two webhook
@@ -226,6 +226,19 @@ export default function TwilioConfig() {
 
               <div className="pt-3 border-t border-line">
                 <p className="text-xs font-medium">Send text replies</p>
+                <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
+                  <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
+                    <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
+                    <span>
+                      <strong className="font-medium">Know your consent obligations.</strong> Automated texts
+                      from FollowUp — follow-ups and the missed-call reply — fall under TCPA rules in the US:
+                      sending texts without the recipient&apos;s prior consent can carry real per-message
+                      liability, and it&apos;s your business&apos;s liability, not FollowUp&apos;s. If you&apos;re
+                      not sure your leads have opted in to texting, check with your own legal counsel before
+                      relying on this channel.
+                    </span>
+                  </p>
+                </div>
                 {accountSid && phoneNumber ? (
                   <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "var(--sage)" }}>
                     <Check className="h-3.5 w-3.5" /> Connected — replying to a text/call lead now sends a real SMS

@@ -69,6 +69,9 @@ function getOAuthClient() {
 export interface GmailConnectionStatus {
   connected: boolean;
   email?: string;
+  // True while Google's push watch on this inbox is live — new mail is
+  // seen in seconds. False means the ten-minute poll is the only path.
+  pushActive?: boolean;
 }
 
 // The business's Gmail connection — whichever of its users connected one.
@@ -84,7 +87,8 @@ async function getGmailIntegration(businessId: string) {
 export async function getGmailStatus(businessId: string): Promise<GmailConnectionStatus> {
   const integration = await getGmailIntegration(businessId);
   if (!integration) return { connected: false };
-  return { connected: true, email: integration.user.email };
+  const pushActive = !!integration.watchExpiration && integration.watchExpiration.getTime() > Date.now();
+  return { connected: true, email: integration.accountEmail ?? integration.user.email, pushActive };
 }
 
 // `next` rides through Google's consent screen as the OAuth `state` param
@@ -139,6 +143,7 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
       accessToken: tokens.access_token ?? null,
       refreshToken,
       connectedAt: new Date(),
+      accountEmail: email,
     },
     create: {
       userId,
@@ -147,6 +152,7 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
       accessToken: tokens.access_token ?? null,
       refreshToken,
       connectedAt: new Date(),
+      accountEmail: email,
     },
   });
 
@@ -169,6 +175,70 @@ async function getAuthedGmailClient(businessId: string) {
   if (!authed) return null;
   const gmail = google.gmail({ version: "v1", auth: authed.oauth2Client });
   return { gmail, integration: authed.integration };
+}
+
+// Renew this far ahead of expiry so a missed cron tick can't leave a
+// mailbox unwatched; Google caps a watch at 7 days.
+const WATCH_RENEW_AHEAD_MS = 24 * 60 * 60_000;
+
+/**
+ * Gmail push: asks Google to publish to our Pub/Sub topic whenever this
+ * inbox changes, so a new lead's email is seen in seconds (see
+ * src/app/api/integrations/gmail/push/route.ts) instead of on the next
+ * ten-minute tick. Idempotent and cheap: a watch that's still good for
+ * more than a day is left alone. Requires GMAIL_PUSH_TOPIC
+ * (projects/<gcp-project>/topics/<topic>) — without it this is a no-op
+ * and the cron poll remains the only path, which still works.
+ */
+export async function ensureGmailWatch(businessId: string): Promise<{ active: boolean; reason?: string }> {
+  const topicName = process.env.GMAIL_PUSH_TOPIC;
+  if (!topicName) return { active: false, reason: "GMAIL_PUSH_TOPIC not configured" };
+  const authed = await getAuthedGmailClient(businessId);
+  if (!authed) return { active: false, reason: "Gmail not connected" };
+  const { gmail, integration } = authed;
+
+  const exp = integration.watchExpiration?.getTime() ?? 0;
+  if (exp - Date.now() > WATCH_RENEW_AHEAD_MS) return { active: true };
+
+  try {
+    const res = await gmail.users.watch({
+      userId: "me",
+      requestBody: { topicName, labelIds: ["INBOX"], labelFilterBehavior: "INCLUDE" },
+    });
+    const expiration = res.data.expiration ? new Date(Number(res.data.expiration)) : new Date(Date.now() + 6 * 24 * 60 * 60_000);
+    // Backfill the mailbox address for connections made before it was stored.
+    let accountEmail = integration.accountEmail ?? null;
+    if (!accountEmail) {
+      const profile = await gmail.users.getProfile({ userId: "me" }).catch(() => null);
+      accountEmail = profile?.data.emailAddress ?? null;
+    }
+    await prisma.integration.update({
+      where: { id: integration.id },
+      data: { watchExpiration: expiration, watchHistoryId: res.data.historyId ?? null, ...(accountEmail ? { accountEmail } : {}) },
+    });
+    return { active: true };
+  } catch (err) {
+    console.error(`Gmail watch failed for business ${businessId}:`, err);
+    return { active: false, reason: err instanceof Error ? err.message : "watch failed" };
+  }
+}
+
+/**
+ * Which business a Pub/Sub notification is about — Google identifies the
+ * mailbox by address only. Matches the stored connected address first and
+ * falls back to the login email for connections that predate accountEmail.
+ */
+export async function findBusinessIdByGmailAddress(emailAddress: string): Promise<string | null> {
+  const addr = emailAddress.trim().toLowerCase();
+  const integration = await prisma.integration.findFirst({
+    where: {
+      provider: "gmail",
+      status: "connected",
+      OR: [{ accountEmail: { equals: addr, mode: "insensitive" } }, { user: { email: { equals: addr, mode: "insensitive" } } }],
+    },
+    select: { user: { select: { businessId: true } } },
+  });
+  return integration?.user.businessId ?? null;
 }
 
 /**

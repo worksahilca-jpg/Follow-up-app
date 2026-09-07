@@ -24,6 +24,7 @@ function SettingsPageInner() {
   const searchParams = useSearchParams();
 
   const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailPushActive, setGmailPushActive] = useState(false);
   const [gmailEmail, setGmailEmail] = useState<string | undefined>();
   const [gmailStatusLoaded, setGmailStatusLoaded] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -59,9 +60,10 @@ function SettingsPageInner() {
   useEffect(() => {
     fetch("/api/integrations/gmail/status")
       .then((r) => r.json())
-      .then((data: { connected: boolean; email?: string }) => {
+      .then((data: { connected: boolean; email?: string; pushActive?: boolean }) => {
         setGmailConnected(data.connected);
         setGmailEmail(data.email);
+        setGmailPushActive(Boolean(data.pushActive));
       })
       .finally(() => setGmailStatusLoaded(true));
   }, []);
@@ -291,7 +293,7 @@ function SettingsPageInner() {
             name="Gmail + Calendar"
             description={
               gmailConnected && gmailEmail
-                ? `Connected as ${gmailEmail}`
+                ? `Connected as ${gmailEmail} — ${gmailPushActive ? "new emails are picked up within seconds" : "new emails are picked up within 10 minutes"}`
                 : "Required — FollowUp reads sales conversations from your inbox to score leads and draft replies, and puts booked calls on your Google Calendar."
             }
             connected={gmailConnected}

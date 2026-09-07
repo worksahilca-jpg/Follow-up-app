@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { hasActiveAccess } from "@/lib/billing";
-import { fetchSalesConversations } from "@/lib/integrations/gmail";
+import { ensureGmailWatch, fetchSalesConversations } from "@/lib/integrations/gmail";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { detectReplies } from "@/lib/outcomes";
 import { mapWithConcurrency } from "@/lib/concurrency";
@@ -164,6 +164,9 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
       const result = await syncGmailForBusiness(businessId, since ? { since } : {});
       synced += 1;
       newLeads += result.count;
+      // Keep the push watch alive (7-day max) — the poll above is the
+      // fallback; push is what makes "seen in seconds" true.
+      await ensureGmailWatch(businessId).catch((e) => console.error(`Gmail watch renewal failed for ${businessId}:`, e));
     } catch (err) {
       failed += 1;
       console.error(`Automatic Gmail sync failed for business ${businessId}:`, err);
@@ -180,4 +183,47 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
   });
 
   return { businesses: byBusiness.size, synced, newLeads, failed };
+}
+
+// How long a push-triggered sync may hold the per-business lock before
+// another notification is allowed to start one. Bursts are normal
+// (Google fires on every mailbox change, including our own sends) — the
+// first notification does the work, the rest are acknowledged and dropped;
+// the 15-minute overlap on `since` means nothing is missed.
+const PUSH_LOCK_MS = 3 * 60_000;
+
+/**
+ * The push path: Google told us this inbox changed, so run one
+ * incremental sync now. Same body as the cron tick, minus the deep-pass
+ * decision (the cron still owns that), plus a short lock so a burst of
+ * notifications can't run overlapping syncs.
+ */
+export async function syncGmailForBusinessFromPush(businessId: string): Promise<GmailSyncResult | null> {
+  const now = new Date();
+  const claim = await prisma.integration.updateMany({
+    where: {
+      provider: "gmail",
+      status: "connected",
+      user: { businessId },
+      OR: [{ pushSyncStartedAt: null }, { pushSyncStartedAt: { lt: new Date(now.getTime() - PUSH_LOCK_MS) } }],
+    },
+    data: { pushSyncStartedAt: now },
+  });
+  if (claim.count === 0) return null;
+
+  try {
+    const business = await prisma.business.findUnique({ where: { id: businessId }, select: { subscriptionStatus: true } });
+    if (!hasActiveAccess(business?.subscriptionStatus)) return null;
+    const integration = await prisma.integration.findFirst({
+      where: { provider: "gmail", status: "connected", user: { businessId } },
+      select: { lastSyncedAt: true },
+    });
+    const since = new Date((integration?.lastSyncedAt ?? now).getTime() - SYNC_OVERLAP_MS);
+    return await syncGmailForBusiness(businessId, { since });
+  } finally {
+    await prisma.integration.updateMany({
+      where: { provider: "gmail", status: "connected", user: { businessId } },
+      data: { pushSyncStartedAt: null },
+    });
+  }
 }

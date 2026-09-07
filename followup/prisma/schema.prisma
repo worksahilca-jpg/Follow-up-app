@@ -585,6 +585,18 @@ model Integration {
   // message), cleared by the next successful run — so a sync that keeps
   // dying shows up on the row, not only in a serverless log.
   lastSyncError String?
+  // The Gmail address actually connected (can differ from the login
+  // email) — what Google's push notifications identify the mailbox by.
+  accountEmail String?
+  // Gmail push (src/lib/integrations/gmail.ts ensureGmailWatch): Google
+  // publishes a Pub/Sub message the moment the inbox changes, and
+  // /api/integrations/gmail/push runs an incremental sync within seconds
+  // instead of waiting for the ten-minute tick. A watch lasts 7 days;
+  // the cron renews it. pushSyncStartedAt is the short lock that keeps a
+  // burst of notifications from starting overlapping syncs.
+  watchExpiration   DateTime?
+  watchHistoryId    String?
+  pushSyncStartedAt DateTime?
 
   @@unique([userId, provider])
 }

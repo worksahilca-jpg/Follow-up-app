@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: App — typecheck, lint, build, audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: followup
+    env:
+      # Build-time only; the build never needs a live DB.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
+      NEXTAUTH_SECRET: ci-only-not-a-real-secret
+      NEXTAUTH_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: followup/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+      - run: npx eslint .
+      - run: npm run build
+      - name: Dependency audit (fails on critical)
+        run: npm audit --omit=dev --audit-level=critical
+
+  voice-agent:
+    name: Voice bridge — install + syntax
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: voice-agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: node --check api/stream.js
+
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

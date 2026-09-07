@@ -3,6 +3,7 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { inviteMember } from "@/lib/team";
 import type { TeamRole } from "@prisma/client";
+import { recordAudit } from "@/lib/audit";
 
 const VALID_ROLES: TeamRole[] = ["ADMIN", "SALES"];
 
@@ -25,5 +26,6 @@ export async function POST(request: NextRequest) {
 
   const result = await inviteMember(ctx.businessId, ctx.userId, email, role as TeamRole);
   if (!result.success) return NextResponse.json(result, { status: 400 });
+  void recordAudit(ctx, "team.invite", { meta: { role } });
   return NextResponse.json(result, { status: 201 });
 }

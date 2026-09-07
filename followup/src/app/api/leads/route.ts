@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { applySourceRouting } from "@/lib/sourceRouting";
+import { tooManyRecentActions } from "@/lib/rateLimit";
 
 const MAX_TEXT = 200;
 
@@ -22,6 +23,7 @@ function cleanText(value: unknown, max = MAX_TEXT): string {
 export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (await tooManyRecentActions(ctx.businessId, "leads.create", { windowMinutes: 10, max: 100 })) return NextResponse.json({ success: false, message: "Too many requests — try again in a few minutes." }, { status: 429 });
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
   }

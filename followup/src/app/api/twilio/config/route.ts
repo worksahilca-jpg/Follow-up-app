@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { appUrl } from "@/lib/stripe";
+import { requireAdmin } from "@/lib/session";
+import { recordAudit } from "@/lib/audit";
 
 /**
  * GET/POST /api/twilio/config — this business's Twilio setup: the three
@@ -58,6 +60,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  void recordAudit(ctx, "integration.twilio.update");
 
   const body = await request.json().catch(() => ({}));
   const authToken = typeof body.authToken === "string" ? body.authToken.trim() : undefined;
@@ -96,6 +100,8 @@ export async function POST(request: NextRequest) {
 export async function DELETE() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  void recordAudit(ctx, "integration.twilio.disconnect");
 
   await prisma.business.update({
     where: { id: ctx.businessId },

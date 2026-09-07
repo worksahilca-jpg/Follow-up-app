@@ -110,6 +110,12 @@ model Business {
   // new secret needed, just a new URL path.
   whatsappPhoneNumber String?
 
+  // Privacy: may this business's (de-identified) conversation data be used
+  // to improve FollowUp's models? Opt-in, off by default, and even when on
+  // nothing leaves the production DB without the de-identification step
+  // (docs/security-roadmap.md, "Training on customer data").
+  allowModelTraining Boolean @default(false)
+
   // Live AI voice agent (src/app/api/twilio/voice/[secret]/route.ts +
   // the separate always-on audio-bridge service — see
   // research/integrations/2026-09-06-voice-ai-and-multilingual-scoping.md).
@@ -612,6 +618,28 @@ model Automation {
   createdAt   DateTime @default(now())
 
   @@index([businessId])
+}
+
+// Who did what, when — the record an owner (or an auditor) can read back.
+// Written by src/lib/audit.ts from every sensitive action: sends, deletes,
+// imports, integration connect/disconnect, settings and team changes,
+// billing. Append-only by convention (no route updates or deletes rows).
+// `meta` never carries credentials or message bodies, only identifiers
+// and counts. Not a relation to Business/User on purpose: an audit row
+// must outlive the thing it describes.
+model AuditEvent {
+  id         String   @id @default(cuid())
+  businessId String
+  userId     String?
+  action     String
+  targetType String?
+  targetId   String?
+  meta       Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, createdAt])
+  @@index([targetId])
 }
 
 model AIInsight {

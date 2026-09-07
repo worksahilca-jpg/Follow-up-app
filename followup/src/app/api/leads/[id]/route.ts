@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { deleteLeadCascade } from "@/lib/leads-admin";
+import { recordAudit } from "@/lib/audit";
 
 // DELETE /api/leads/[id] — permanently removes a lead and everything under
 // it (conversations, messages, deals, follow-ups, tasks, AI insights).
@@ -19,6 +20,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   }
 
   await deleteLeadCascade(id);
+  void recordAudit(ctx, "lead.delete", { targetType: "lead", targetId: id });
 
   return NextResponse.json({ success: true });
 }

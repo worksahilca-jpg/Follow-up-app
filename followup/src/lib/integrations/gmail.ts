@@ -177,6 +177,42 @@ async function getAuthedGmailClient(businessId: string) {
   return { gmail, integration: authed.integration };
 }
 
+/**
+ * Disconnect: stop the push watch, revoke the tokens at Google (so they
+ * are dead even if a database copy ever leaked), then clear them here.
+ * Every step is best-effort except the final clear.
+ */
+export async function disconnectGmail(businessId: string): Promise<void> {
+  const integration = await getGmailIntegration(businessId);
+  if (!integration) return;
+  try {
+    const authed = await getAuthedGmailClient(businessId);
+    if (authed && integration.watchExpiration) await authed.gmail.users.stop({ userId: "me" });
+  } catch (err) {
+    console.error(`Gmail watch stop failed for business ${businessId}:`, err);
+  }
+  for (const token of [integration.refreshToken, integration.accessToken]) {
+    if (!token) continue;
+    try {
+      await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`, { method: "POST" });
+    } catch (err) {
+      console.error(`Google token revocation failed for business ${businessId}:`, err);
+    }
+  }
+  await prisma.integration.update({
+    where: { id: integration.id },
+    data: {
+      status: "disconnected",
+      accessToken: null,
+      refreshToken: null,
+      watchExpiration: null,
+      watchHistoryId: null,
+      pushSyncStartedAt: null,
+      lastSyncError: null,
+    },
+  });
+}
+
 // Renew this far ahead of expiry so a missed cron tick can't leave a
 // mailbox unwatched; Google caps a watch at 7 days.
 const WATCH_RENEW_AHEAD_MS = 24 * 60 * 60_000;

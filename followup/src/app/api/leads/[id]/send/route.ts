@@ -3,6 +3,8 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { sendFollowUpToLead } from "@/lib/sending";
+import { tooManyRecentActions } from "@/lib/rateLimit";
+import { recordAudit } from "@/lib/audit";
 
 // POST /api/leads/[id]/send — the one place a real email actually goes out.
 // Always requires a person to have clicked "Send now" with the message
@@ -11,6 +13,7 @@ import { sendFollowUpToLead } from "@/lib/sending";
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (await tooManyRecentActions(ctx.businessId, "leads.send", { windowMinutes: 10, max: 60 })) return NextResponse.json({ success: false, message: "Too many requests — try again in a few minutes." }, { status: 429 });
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
   }
@@ -26,5 +29,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const result = await sendFollowUpToLead(id, message);
+  if (result.success) void recordAudit(ctx, "lead.send", { targetType: "lead", targetId: id, meta: { length: message.length } });
   return NextResponse.json(result, { status: result.success ? 200 : 500 });
 }

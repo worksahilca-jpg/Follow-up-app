@@ -218,6 +218,25 @@ function SettingsPageInner() {
   // second charge) while the first one is still settling.
   const awaitingActivation = billingRedirect === "success" && billingLoaded && !billingActive;
 
+  const [disconnecting, setDisconnecting] = useState(false);
+  async function handleGmailDisconnect() {
+    if (!window.confirm("Disconnect Gmail? FollowUp will stop reading this inbox and revoke its access at Google. You can reconnect any time.")) return;
+    setDisconnecting(true);
+    try {
+      const res = await fetch("/api/integrations/gmail/disconnect", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setGmailConnected(false);
+        setGmailEmail(undefined);
+        setGmailPushActive(false);
+      } else {
+        setSyncResult(data.message ?? "Couldn't disconnect — try again.");
+      }
+    } finally {
+      setDisconnecting(false);
+    }
+  }
+
   async function handleGmailSync() {
     setSyncing(true);
     setSyncResult(null);
@@ -310,6 +329,14 @@ function SettingsPageInner() {
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
                 {syncing ? "Syncing…" : "Sync now"}
+              </button>
+              <button
+                onClick={handleGmailDisconnect}
+                disabled={disconnecting}
+                className="text-sm font-medium rounded-lg px-3 py-1.5 disabled:opacity-60"
+                style={{ backgroundColor: "var(--paper)", color: "var(--coral)", border: "1px solid var(--line)" }}
+              >
+                {disconnecting ? "Disconnecting…" : "Disconnect"}
               </button>
               <a
                 href="/api/integrations/gmail/connect"

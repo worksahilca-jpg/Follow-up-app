@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { appUrl } from "@/lib/stripe";
+import { requireAdmin } from "@/lib/session";
+import { recordAudit } from "@/lib/audit";
 
 function webhookUrl(secret: string): string {
   return `${appUrl()}/api/webhooks/lead/${secret}`;
@@ -39,6 +41,8 @@ export async function GET() {
 export async function POST() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  void recordAudit(ctx, "webhook.secret.rotate");
 
   const secret = randomBytes(24).toString("base64url");
   await prisma.business.update({ where: { id: ctx.businessId }, data: { webhookSecret: secret } });

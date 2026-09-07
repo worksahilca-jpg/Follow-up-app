@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getStripe, PLAN_PRICE_ID, appUrl } from "@/lib/stripe";
+import { requireAdmin } from "@/lib/session";
+import { recordAudit } from "@/lib/audit";
 
 // POST /api/billing/checkout — starts a Stripe Checkout session for the
 // caller's business and hands back the URL to redirect to. Reuses the
@@ -10,6 +12,8 @@ import { getStripe, PLAN_PRICE_ID, appUrl } from "@/lib/stripe";
 export async function POST() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  void recordAudit(ctx, "billing.checkout");
 
   if (!PLAN_PRICE_ID) {
     return NextResponse.json({ success: false, message: "Billing isn't configured yet." }, { status: 500 });

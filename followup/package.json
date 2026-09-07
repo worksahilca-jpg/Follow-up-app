@@ -7,7 +7,8 @@
     "build": "(prisma migrate deploy || echo 'WARNING: prisma migrate deploy failed — continuing build without applying migrations. Run `npx prisma migrate deploy` manually against DATABASE_URL/DIRECT_URL to apply them.') && next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test": "vitest run"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -34,6 +35,8 @@
     "eslint-config-next": "16.3.4",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
   }
 }

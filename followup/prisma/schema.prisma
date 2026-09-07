@@ -567,6 +567,10 @@ model Integration {
   // never has to press a button — and a classifier improvement re-judges
   // the whole inbox on its own within a day instead of only new mail.
   deepSyncedAt DateTime?
+  // The last automatic sync failure for this connection (timestamp +
+  // message), cleared by the next successful run — so a sync that keeps
+  // dying shows up on the row, not only in a serverless log.
+  lastSyncError String?
 
   @@unique([userId, provider])
 }

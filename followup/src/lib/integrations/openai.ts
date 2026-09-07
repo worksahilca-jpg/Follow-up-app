@@ -291,7 +291,9 @@ export async function assessSendRisk(
           "You decide whether a drafted follow-up email is safe to send completely automatically, with no " +
           "human review. When genuinely unsure, prefer 'medium' over 'low' — the cost of an unnecessary human " +
           "review is much lower than an autonomous message that overpromises, quotes a number, or mishandles a " +
-          "sensitive moment with a real prospect.",
+          "sensitive moment with a real prospect. A draft that asserts any specific fact, detail, number, date, " +
+          "or prior commitment that does not appear in the conversation is fabricated — that is never 'low', " +
+          "and is 'high' if a reasonable reader would take the invented detail as true.",
       },
       {
         role: "user",
@@ -360,7 +362,11 @@ export async function generateFollowUpMessage(
           "either. Do not include a greeting ('Hi ...', 'Dear ...') or a sign-off/signature of any kind — output " +
           "only the body paragraph itself. Write your reply in the same language as the lead's most recent " +
           "message in the conversation below — do not default to English unless that's the language they're " +
-          "actually writing in." +
+          "actually writing in. Never invent facts: everything you state about the lead, their situation, their " +
+          "property or project, prior calls, timelines, or what the business has done or will do must appear " +
+          "in the conversation below. If the lead asked a factual question the conversation doesn't answer, " +
+          "acknowledge the question and say you'll confirm the specifics for them — do not make up an answer, " +
+          "a number, a date, or a detail to sound helpful. When in doubt, leave it out." +
           voiceBlock +
           hintBlock,
       },

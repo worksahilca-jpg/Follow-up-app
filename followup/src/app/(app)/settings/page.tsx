@@ -474,8 +474,8 @@ function SettingsPageInner() {
           )}
           {automationOn && (
             <p className="text-xs text-ink-soft mt-2">
-              This also runs automatically once a day — this button is just for checking sooner, or confirming
-              it&apos;s working.
+              This also runs automatically every hour, so a lead that goes quiet is caught the same day — this
+              button is just for checking sooner, or confirming it&apos;s working.
             </p>
           )}
         </div>

@@ -72,6 +72,11 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   }
 
   const cutoff = new Date(Date.now() - automation.triggerDays * 24 * 60 * 60 * 1000);
+  // Runs hourly (vercel.json). A lead this pass sends to gets a new
+  // lastContacted and drops out of the window on its own; a lead it holds
+  // for approval does not, so it's excluded from re-assessment for most of
+  // a day via lastAutomationCheckedAt (see schema.prisma).
+  const recheckCutoff = new Date(Date.now() - 20 * 60 * 60 * 1000);
 
   const [eligible, voiceSamples] = await Promise.all([
     prisma.lead.findMany({
@@ -80,6 +85,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         automationTier: { not: "OFF" },
         stage: { notIn: ["WON", "LOST"] },
         lastContacted: { lte: cutoff },
+        OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
       },
       include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
     }),
@@ -93,6 +99,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // not just a "how fast can we finish" budget.
   const outcomes = await mapWithConcurrency(eligible, 3, async (lead): Promise<LeadOutcome> => {
     try {
+      await prisma.lead.update({ where: { id: lead.id }, data: { lastAutomationCheckedAt: new Date() } });
       const conversation: Message[] = lead.conversations.flatMap((c) =>
         c.messages.map((m) => ({
           id: m.id,

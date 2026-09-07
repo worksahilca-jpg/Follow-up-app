@@ -215,42 +215,42 @@ AI-native-competitor-crowded space rather than an open gap. Don't re-litigate th
 by defaulting back into a vertical pick from a future research pass; if new
 evidence changes the calculus, that's a fresh CEO decision, not a reversion.
 
-## Where we are right now, against the main goal (2026-09-07)
+## Where we are right now, against the main goal (updated 2026-09-07, end of day)
 
-Measured against the four points at the top of this file, code-verified today.
+Measured against the four points at the top of this file, code-verified.
 
-**Point 1 — no lead lost to no / late / wrong follow-up.** This is the direction the
-product is actually on today. Built: capture from Gmail (auto-sync every 10 min plus a
-daily 90-day deep pass — nobody presses "Sync now"), Twilio SMS and voice, WhatsApp,
-Instagram DM, the website widget, webhooks, CSV, manual; AI classification with a
-business-aware rubric; scoring with a visible reason; a drafted reply for every lead;
-follow-up on by default (Assisted tier, "auto follow-up on silence" on at 5 days);
-everything stops the instant the lead replies; drafts can never state a fact that isn't
-in the conversation (shipped 2026-09-07 after a real tester's lead got an invented
-answer). Gaps: *late* — a new email lead waits up to 10 minutes to be seen and, in
-Assisted, waits for the owner to approve the first substantive reply; *wrong* — the
-no-invention rule is new and needs a test proving it.
+**Point 1 — no lead lost to no / late / wrong follow-up. Closed in code.**
+Capture from Gmail (push within seconds once the Google Cloud topic is set up,
+ten-minute poll as fallback, daily deep pass), Twilio SMS and voice, live AI
+voice agent, WhatsApp, Instagram DM, widget, webhook, CSV, manual. Every new
+lead gets an instant, fixed-template acknowledgement on the channel they used,
+in their language, once, never over the owner's own reply. The silence check
+runs hourly. Drafts can never state a fact absent from the conversation, and a
+draft that does is held by the risk gate. 51 automated tests pin these promises
+and run on every pull request.
 
-**Point 2 — rescuing cold / dead / never-reached leads (a feeder).** Partly built: the
-deep pass pulls 90 days of inbox history and scores every thread, so old leads surface;
-spam-folder discovery exists; missed calls become leads and get a text-back. Not built:
-anything that watches whether a *human* went quiet on a lead and treats that as the
-trigger (the "rescue score" idea in `research/market/2026-09-07-lead-rescue-gap-and-strategy.md`),
-and any report of leads recovered / revenue recovered. Kept as a feeder, per the CEO.
+**Point 2 — rescuing cold / dead / never-reached leads (a feeder). Built.**
+The human-neglect trigger: a lead who wrote and got no answer for N hours
+(default 24) is drafted, sent when safe or held for one-click approval, and the
+owner is told either way. The rescue score ranks every open lead by neglect ×
+intent × recoverability and the dashboard opens on "About to be lost." The
+report "What FollowUp saved you this week" counts only replies to messages
+FollowUp sent on its own, the owner is notified the moment a rescued lead
+comes back, and a Monday digest emails the same numbers from the owner's own
+Gmail. Still missing here: nothing structural; real usage will tune the score.
 
-**Point 3 — every language, every platform.** Drafts reply in the lead's language;
-voicemail transcription auto-detects language; the live voice agent speaks the
-caller's language. Platforms: the list above; Outlook is not built. Not yet verified
-end to end with a real non-English lead — that test is still owed.
+**Point 3 — every language, every platform. Partly.** Drafts, the instant
+reply, voicemail transcription and the live voice agent all work in the lead's
+language. Outlook is not built. No real non-English lead has been tested end
+to end yet. Meta's free inbound agent on WhatsApp/Instagram (June 2026) means
+FollowUp should ingest what it handles rather than compete on the first DM.
 
-**Point 4 — no human does this job; the owner still closes.** Architecture is ready
-(per-lead OFF / ASSISTED / AUTONOMOUS, risk gate before any autonomous send). Default is
-still Assisted, so today the owner still approves substantive replies. Rising autonomy
-is the direction, not a switch we've flipped.
+**Point 4 — no human does this job; the owner still closes. Architecture
+ready, default still Assisted.** Per-lead OFF / ASSISTED / AUTONOMOUS, risk gate
+before any autonomous send, audit trail of every action, credentials encrypted
+at rest, admin-only settings. The step to "autonomous for low-risk replies by
+default" is a product decision, not a build.
 
-**So: the direction we are on right now is Point 1 — do the following up for the
-owner, safely, on by default, on every channel we have.** The next moves that serve it
-directly are (a) an instant, risk-free acknowledgement to a new lead with the
-substantive reply following through Assisted, (b) Gmail push instead of the 10-minute
-poll, (c) the test that proves the no-invention and stop-on-reply guarantees, then
-(d) the human-neglect trigger and recovered-leads report for Point 2.
+**So: Phases A and B of the plan are done. Next is Phase C (languages and
+platforms) and the security roadmap's Level 2 remainder; Phase D (autonomy by
+default, consent record) after real customers have watched Assisted work.**

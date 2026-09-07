@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { appUrl } from "@/lib/stripe";
 import {
@@ -124,6 +125,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         // silently-broken text-back would never show up anywhere.
         if (!result.success) {
           console.error(`Missed-call text-back failed for business ${business.id}: ${result.message}`);
+        } else {
+          // The text-back is this lead's acknowledgement — see
+          // src/lib/acknowledge.ts; a follow-up text from the same caller
+          // must not earn a second "we got your message."
+          await prisma.lead.updateMany({ where: { id: lead.id, acknowledgedAt: null }, data: { acknowledgedAt: new Date() } });
         }
       } catch (err) {
         // Best-effort — a Twilio API hiccup on the text-back must never

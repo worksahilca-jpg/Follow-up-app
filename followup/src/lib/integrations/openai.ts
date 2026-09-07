@@ -384,3 +384,47 @@ export async function generateFollowUpMessage(
   if (!message) throw new Error("OpenAI returned no content for generateFollowUpMessage.");
   return message;
 }
+
+/**
+ * Puts a FIXED sentence into the language of the lead's own message —
+ * used by the instant acknowledgement (src/lib/acknowledge.ts), which is
+ * deliberately a template rather than a generated reply so it can never
+ * state a fact about the business. Translation is the only AI step, and
+ * the instruction forbids adding, removing, or changing anything. If the
+ * lead wrote in English (or the language can't be told), the text comes
+ * back untouched; without an API key, same thing — an untranslated
+ * acknowledgement beats no acknowledgement.
+ */
+export async function localizeFixedText(text: string, sampleOfLeadMessage: string): Promise<string> {
+  if (!process.env.OPENAI_API_KEY || !sampleOfLeadMessage.trim()) return text;
+  try {
+    const client = getClient();
+    const completion = await client.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You translate a short fixed message into the language the customer wrote in. If the customer's " +
+            "message is in English, or you cannot tell, return the message EXACTLY as given. Otherwise return " +
+            "only the translation: same meaning, same length, nothing added, removed, or explained. Keep names " +
+            "unchanged. Output the message text only.",
+        },
+        {
+          role: "user",
+          content: `Customer's message:\n${sampleOfLeadMessage.slice(0, 600)}\n\nMessage to translate:\n${text}`,
+        },
+      ],
+      max_tokens: 200,
+      temperature: 0,
+    });
+    const out = completion.choices[0]?.message?.content?.trim();
+    // Guard against the model "helping": anything wildly longer than the
+    // template is not a translation, so fall back to the original.
+    if (!out || out.length > text.length * 2.5 + 40) return text;
+    return out;
+  } catch (err) {
+    console.error("localizeFixedText failed, sending untranslated:", err);
+    return text;
+  }
+}

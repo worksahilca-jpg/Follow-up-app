@@ -6,6 +6,7 @@ import { scoreAndDraftForLead } from "@/lib/scoring";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentLeads } from "@/lib/rateLimit";
+import { acknowledgeNewLead } from "@/lib/acknowledge";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEXT = 200;
@@ -135,6 +136,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await scoreAndDraftForLead(lead.id);
     }
 
+    // A form/webhook lead gave us an email on purpose — acknowledge by
+    // email only (never text a number nobody texted from). See src/lib/acknowledge.ts.
+    if (email) {
+      await acknowledgeNewLead(lead.id, { channel: "email", inboundText: message, inboundAt: now });
+    }
     return NextResponse.json({ success: true });
   } catch (err) {
     // Duplicate email for this business (Lead's businessId_email unique

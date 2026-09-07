@@ -87,7 +87,10 @@ export const authOptions: NextAuthOptions = {
                 // schema.prisma): the master switch exists so an owner can
                 // turn it OFF, not something they have to discover to turn on.
                 automations: {
-                  create: { name: "Auto follow-up on silence", action: "auto_send", enabled: true, triggerDays: 5 },
+                  create: [
+                    { name: "Auto follow-up on silence", action: "auto_send", enabled: true, triggerDays: 5 },
+                    { name: "Instant reply to new leads", action: "instant_ack", enabled: true, triggerDays: 0 },
+                  ],
                 },
               },
             })

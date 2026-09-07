@@ -36,6 +36,7 @@ import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
+import { acknowledgeNewLead } from "@/lib/acknowledge";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -344,6 +345,7 @@ async function processThreadRefs(
           direction: (from.email === selfEmail ? "outbound" : "inbound") as "outbound" | "inbound",
           body: extractPlainTextBody(m.payload).slice(0, 5000),
           sentAt: dateHeader ? new Date(dateHeader) : new Date(),
+          messageIdHeader: getHeader(m.payload?.headers, "Message-ID") || undefined,
         };
       });
     if (parsedMessages.length === 0) return null;
@@ -488,6 +490,27 @@ async function processThreadRefs(
     // is long past) never spuriously fires it.
     await checkRapidEngagement(lead.id);
 
+    // A brand-new lead whose first email just landed gets the instant
+    // "we got your message" — in their thread, in their language. Old
+    // threads found by a deep pass, and threads the owner already
+    // answered, are skipped inside acknowledgeNewLead (it checks the
+    // inbound's age and whether any outbound exists), so this is safe to
+    // call from every pass.
+    if (isNewLead) {
+      const newestInbound = [...parsedMessages].reverse().find((m) => m.direction === "inbound");
+      if (newestInbound) {
+        await acknowledgeNewLead(lead.id, {
+          channel: "email",
+          inboundText: newestInbound.body,
+          inboundAt: newestInbound.sentAt,
+          hasHumanReply: parsedMessages.some((m) => m.direction === "outbound"),
+          emailThreadId: thread.id!,
+          emailMessageId: newestInbound.messageIdHeader,
+          emailSubject: getHeader(gmailMessages[0]?.payload?.headers, "Subject") || undefined,
+        });
+      }
+    }
+
     return {
       id: lead.id,
       name: lead.name,
@@ -615,16 +638,21 @@ export async function fetchSpamProspects(businessId: string): Promise<Lead[]> {
 
 export async function sendEmail(
   businessId: string,
-  params: { to: string; subject: string; body: string }
+  params: { to: string; subject: string; body: string; threadId?: string; inReplyTo?: string }
 ): Promise<{ success: boolean; messageId?: string }> {
   const authed = await getAuthedGmailClient(businessId);
   if (!authed) return { success: false };
   const { gmail, integration } = authed;
 
+  // In-Reply-To/References + threadId make the message land in the lead's
+  // existing thread (Gmail's and theirs) instead of starting a new one —
+  // used by the instant acknowledgement so "we got your message" sits
+  // directly under the message it's acknowledging.
   const raw = [
     `From: ${integration.user.email}`,
     `To: ${params.to}`,
     `Subject: ${params.subject}`,
+    ...(params.inReplyTo ? [`In-Reply-To: ${params.inReplyTo}`, `References: ${params.inReplyTo}`] : []),
     "Content-Type: text/plain; charset=utf-8",
     "",
     params.body,
@@ -638,7 +666,7 @@ export async function sendEmail(
 
   const res = await gmail.users.messages.send({
     userId: "me",
-    requestBody: { raw: encoded },
+    requestBody: { raw: encoded, ...(params.threadId ? { threadId: params.threadId } : {}) },
   });
 
   return { success: true, messageId: res.data.id ?? undefined };

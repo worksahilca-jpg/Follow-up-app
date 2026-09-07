@@ -223,6 +223,13 @@ model Lead {
   // per lead, never twice, no matter how many channels or webhooks fire.
   acknowledgedAt DateTime?
 
+  // When the silence automation (src/lib/automation.ts) last considered
+  // this lead. The check runs hourly so a lead going quiet is caught the
+  // same day, but a lead it HELD for approval (risk not low) would
+  // otherwise be re-assessed 24 times a day for the same verdict — this
+  // skips any lead looked at within the last ~20 hours.
+  lastAutomationCheckedAt DateTime?
+
   // Workflow enrollment (see src/lib/sequences.ts). sequenceStepIndex is
   // the index of the step that runs NEXT (0 before anything has run);
   // sequenceStepDueAt is when that step is eligible to run — recomputed

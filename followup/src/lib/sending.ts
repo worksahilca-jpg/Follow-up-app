@@ -46,6 +46,8 @@ export async function sendFollowUpToLead(
     subject?: string;
     emailThreadId?: string;
     emailInReplyTo?: string;
+    // Attribution for the rescued-leads report (see FollowUp.trigger).
+    trigger?: "instant_ack" | "unanswered" | "silence" | "sequence" | "manual";
   } = {}
 ): Promise<{ success: boolean; message?: string }> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
@@ -111,6 +113,7 @@ export async function sendFollowUpToLead(
       message: body,
       status: "sent",
       automated: options.automated ?? false,
+      trigger: options.trigger ?? (options.automated ? "silence" : "manual"),
       sentAt: new Date(),
     },
   });

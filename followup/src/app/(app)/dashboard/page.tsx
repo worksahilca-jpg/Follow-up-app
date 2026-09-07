@@ -13,7 +13,9 @@ import {
 import { formatCurrency, getGreeting } from "@/lib/demo-data";
 import EmptyState from "@/components/EmptyState";
 import { getAtRiskLeads } from "@/lib/rescue";
-import { AlertTriangle, Flame, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox, CalendarClock } from "lucide-react";
+import { describeTrigger, getRescueReport } from "@/lib/rescued";
+import { getSessionContext } from "@/lib/session";
+import { AlertTriangle, Flame, LifeBuoy, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox, CalendarClock } from "lucide-react";
 
 // This page reads live leads from the database on every request — never
 // bake a stale snapshot into the build.
@@ -27,6 +29,8 @@ export default async function DashboardPage() {
   const weeklyReport = await getWeeklyReport(leads);
   const pipelineSnapshot = getPipelineData(leads).map((s) => ({ label: s.label, count: s.leads.length, value: s.value }));
   const upcomingBookings = await getUpcomingBookings();
+  const ctx = await getSessionContext();
+  const rescue = ctx ? await getRescueReport(ctx.businessId, 7) : null;
 
   return (
     <div>
@@ -165,6 +169,37 @@ export default async function DashboardPage() {
               </Link>
             ))}
           </div>
+        </section>
+      )}
+
+      {rescue && (
+        <section className="mt-10">
+          <h2 className="font-display text-xl flex items-center gap-2">
+            <LifeBuoy className="h-4 w-4" style={{ color: "var(--sage)" }} />
+            What FollowUp saved you this week
+          </h2>
+          <p className="text-sm text-ink-soft mt-1">
+            Only replies to messages FollowUp sent on its own count here — your own replies are yours.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+            <StatCard label="Answered for you" value={String(rescue.answeredForYou)} icon={Send} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+            <StatCard label="Came back" value={String(rescue.rescued)} icon={MessageCircle} accent="var(--sage)" accentSoft="var(--sage-soft)" />
+            <StatCard label="Booked" value={String(rescue.booked)} icon={CalendarClock} accent="var(--sage)" accentSoft="var(--sage-soft)" />
+            <StatCard label="In play" value={formatCurrency(rescue.valueInPlay)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
+          </div>
+          {rescue.leads.length > 0 && (
+            <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line">
+              {rescue.leads.slice(0, 6).map((l) => (
+                <Link key={l.id} href={`/leads/${l.id}`} className="flex items-center justify-between gap-4 px-5 py-3 text-sm hover:bg-paper">
+                  <span className="min-w-0">
+                    <span className="font-medium">{l.name}</span>
+                    <span className="text-ink-soft"> — {describeTrigger(l.trigger)}, replied {l.repliedAfterHours}h later</span>
+                  </span>
+                  {l.dealValue > 0 && <span style={{ color: "var(--gold)" }}>{formatCurrency(l.dealValue)}</span>}
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
       )}
 

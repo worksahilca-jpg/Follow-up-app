@@ -199,7 +199,10 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         }
       }
 
-      const result = await sendFollowUpToLead(lead.id, message, { automated: true });
+      const result = await sendFollowUpToLead(lead.id, message, {
+        automated: true,
+        trigger: unansweredIds.has(lead.id) ? "unanswered" : "silence",
+      });
       if (result.success && unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "sent");
       return result.success
         ? { kind: "sent" }

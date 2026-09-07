@@ -340,9 +340,15 @@ model FollowUp {
   // replies to this specific follow-up. Null means "sent, no reply yet" —
   // distinct from never having sent one at all (sentAt null).
   repliedAt   DateTime?
+  // What produced this send — instant_ack | unanswered | silence | sequence
+  // | manual. The attribution behind "what FollowUp saved you this week"
+  // (src/lib/rescued.ts): a reply to an automated trigger is a rescued
+  // conversation; a reply to a manual send is the owner's own work.
+  trigger     String?
   createdAt   DateTime  @default(now())
 
   @@index([leadId])
+  @@index([trigger, sentAt])
   // getWeeklyReport's "sent in the last 7 days, for these leads" query.
   @@index([status, sentAt])
   // detectReplies()'s "sent, still waiting on a reply, for this business's

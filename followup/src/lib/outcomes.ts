@@ -35,8 +35,12 @@ export async function detectReplies(businessId: string): Promise<number> {
       id: true,
       sentAt: true,
       leadId: true,
+      automated: true,
+      trigger: true,
       lead: {
         select: {
+          name: true,
+          assignedToId: true,
           conversations: {
             select: {
               messages: {
@@ -89,6 +93,31 @@ export async function detectReplies(businessId: string): Promise<number> {
         data: { repliedAt: reply.sentAt },
       });
       matched++;
+      // The moment that matters: a lead FollowUp chased has come back.
+      // One notification per rescued follow-up (repliedAt is set exactly
+      // once), to whoever owns the lead.
+      if (followUp.automated && followUp.lead.assignedToId) {
+        const hours = Math.max(1, Math.round((reply.sentAt.getTime() - sentAt.getTime()) / 3_600_000));
+        const how =
+          followUp.trigger === "instant_ack"
+            ? "the instant reply"
+            : followUp.trigger === "unanswered"
+              ? "the reply FollowUp sent when you hadn't"
+              : followUp.trigger === "sequence"
+                ? "a workflow message"
+                : "the follow-up FollowUp sent";
+        try {
+          await prisma.notification.create({
+            data: {
+              userId: followUp.lead.assignedToId,
+              leadId: followUp.leadId,
+              message: `${followUp.lead.name} replied to ${how} (${hours}h later) — they're back. Jump in.`,
+            },
+          });
+        } catch (err) {
+          console.error(`Rescued-reply notification failed for lead ${followUp.leadId}:`, err);
+        }
+      }
     }
   }
 

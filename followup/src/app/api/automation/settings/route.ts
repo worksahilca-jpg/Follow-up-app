@@ -3,6 +3,12 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { INSTANT_ACK_ACTION, INSTANT_ACK_NAME, isInstantAckEnabled } from "@/lib/acknowledge";
+import { UNANSWERED_ACTION, UNANSWERED_DEFAULT_HOURS, UNANSWERED_NAME } from "@/lib/automation";
+
+async function getUnansweredReplySetting(businessId: string): Promise<{ enabled: boolean; hours: number }> {
+  const rule = await prisma.automation.findFirst({ where: { businessId, action: UNANSWERED_ACTION } });
+  return { enabled: rule?.enabled ?? true, hours: rule?.triggerHours ?? UNANSWERED_DEFAULT_HOURS };
+}
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
 
@@ -23,6 +29,7 @@ export async function GET() {
     enabled: automation?.enabled ?? true,
     triggerDays: automation?.triggerDays ?? 5,
     instantAck: await isInstantAckEnabled(ctx.businessId),
+    unansweredReply: await getUnansweredReplySetting(ctx.businessId),
   });
 }
 
@@ -36,6 +43,22 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}));
+
+  // The unanswered-reply rule is saved on its own (see src/lib/automation.ts).
+  if (body.unansweredReply && typeof body.unansweredReply === "object" && body.enabled === undefined && body.instantAck === undefined) {
+    const enabled = Boolean(body.unansweredReply.enabled);
+    const raw = Number(body.unansweredReply.hours);
+    const hours = Number.isFinite(raw) ? Math.max(1, Math.min(168, Math.round(raw))) : UNANSWERED_DEFAULT_HOURS;
+    const existingRule = await prisma.automation.findFirst({ where: { businessId: ctx.businessId, action: UNANSWERED_ACTION } });
+    if (existingRule) {
+      await prisma.automation.update({ where: { id: existingRule.id }, data: { enabled, triggerHours: hours } });
+    } else {
+      await prisma.automation.create({
+        data: { businessId: ctx.businessId, name: UNANSWERED_NAME, action: UNANSWERED_ACTION, enabled, triggerDays: 1, triggerHours: hours },
+      });
+    }
+    return NextResponse.json({ success: true, unansweredReply: { enabled, hours } });
+  }
 
   // The instant-reply switch is saved on its own (see src/lib/acknowledge.ts);
   // a request carrying only `instantAck` must not touch the silence settings.

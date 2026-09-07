@@ -613,7 +613,10 @@ model Automation {
   businessId  String
   name        String
   triggerDays Int // e.g. "after 5 days of no response"
-  action      String // create_reminder | ai_email_suggestion | auto_send
+  // Hour-granularity window for actions where a day is too coarse — the
+  // "unanswered_reply" action (a lead wrote, nobody answered for N hours).
+  triggerHours Int?
+  action      String // auto_send | instant_ack | unanswered_reply | create_reminder | ai_email_suggestion
   enabled     Boolean  @default(false)
   createdAt   DateTime @default(now())
 

@@ -20,7 +20,41 @@ const SYNC_OVERLAP_MS = 15 * 60_000;
 // call, so a deep pass costs Gmail reads, not OpenAI spend).
 const DEEP_SYNC_INTERVAL_MS = 24 * 60 * 60_000;
 
-export type GmailSyncResult = { count: number; scored: number; repliesDetected: number; leads: Lead[] };
+// Per-run work caps — each keeps one invocation comfortably inside the
+// serverless time limit so a pass FINISHES (and stamps itself) instead of
+// restarting from zero on the next tick. Whatever's left over is picked
+// up next tick: unclassified threads by the next pass, unscored leads by
+// the sweep below.
+const MAX_CLASSIFICATIONS_PER_RUN = 25;
+const MAX_SCORES_PER_RUN = 15;
+
+export type GmailSyncResult = { count: number; scored: number; repliesDetected: number; truncated: boolean; leads: Lead[] };
+
+/**
+ * Self-healing scoring: any lead that exists with messages but was never
+ * scored (no scoreReason) gets scored now, oldest first. A lead can end
+ * up in that state whenever a pass is cut short — and until it's scored
+ * it shows as "not reviewed yet" and no automated follow-up considers it.
+ * Runs at the start of every sync, so a stuck lead never waits more than
+ * one tick.
+ */
+async function scoreUnscoredLeads(businessId: string, limit: number): Promise<number> {
+  const unscored = await prisma.lead.findMany({
+    where: { businessId, scoreReason: null, conversations: { some: { messages: { some: {} } } } },
+    orderBy: { createdAt: "asc" },
+    take: limit,
+    select: { id: true },
+  });
+  const flags = await mapWithConcurrency(unscored, 5, async ({ id }) => {
+    try {
+      return await scoreAndDraftForLead(id);
+    } catch (err) {
+      console.error(`Failed to score lead ${id}:`, err);
+      return false;
+    }
+  });
+  return flags.filter(Boolean).length;
+}
 
 /**
  * One inbox sync for one business: pull threads, upsert leads, score +
@@ -34,9 +68,24 @@ export type GmailSyncResult = { count: number; scored: number; repliesDetected: 
 export async function syncGmailForBusiness(businessId: string, options: { since?: Date } = {}): Promise<GmailSyncResult> {
   const startedAt = new Date();
   const isDeep = !options.since;
-  const leads = await fetchSalesConversations(businessId, options);
 
-  const scoredFlags = await mapWithConcurrency(leads, 5, async (lead) => {
+  // Leftovers first: anything a previous cut-short run left unscored.
+  let scored = await scoreUnscoredLeads(businessId, MAX_SCORES_PER_RUN);
+
+  let truncated = false;
+  const leads = await fetchSalesConversations(businessId, {
+    since: options.since,
+    maxClassifications: MAX_CLASSIFICATIONS_PER_RUN,
+    onResult: (info) => {
+      truncated = info.truncated;
+    },
+  });
+
+  // Only what this run actually changed gets (re)scored — a deep pass
+  // returns every known lead too, and re-scoring all of them on every
+  // pass was both the cost and the time sink.
+  const toScore = leads.filter((l) => l.touched).slice(0, Math.max(0, MAX_SCORES_PER_RUN - scored));
+  const scoredFlags = await mapWithConcurrency(toScore, 5, async (lead) => {
     try {
       return await scoreAndDraftForLead(lead.id);
     } catch (err) {
@@ -45,6 +94,7 @@ export async function syncGmailForBusiness(businessId: string, options: { since?
       return false;
     }
   });
+  scored += scoredFlags.filter(Boolean).length;
 
   let repliesDetected = 0;
   try {
@@ -55,12 +105,15 @@ export async function syncGmailForBusiness(businessId: string, options: { since?
     console.error(`Failed to detect replies for business ${businessId}:`, err);
   }
 
+  // A deep pass only counts as done when nothing was left past the
+  // budget; a truncated one runs again next tick and picks up where the
+  // known-thread skipping leaves off.
   await prisma.integration.updateMany({
     where: { provider: "gmail", status: "connected", user: { businessId } },
-    data: { lastSyncedAt: startedAt, ...(isDeep ? { deepSyncedAt: startedAt } : {}) },
+    data: { lastSyncedAt: startedAt, ...(isDeep && !truncated ? { deepSyncedAt: startedAt } : {}) },
   });
 
-  return { count: leads.length, scored: scoredFlags.filter(Boolean).length, repliesDetected, leads };
+  return { count: leads.length, scored, repliesDetected, truncated, leads };
 }
 
 /**

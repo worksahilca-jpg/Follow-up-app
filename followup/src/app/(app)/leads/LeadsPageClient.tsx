@@ -272,7 +272,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
               <p className="text-sm text-ink-soft truncate">{lead.company}</p>
             </div>
             <div className="hidden sm:block">
-              <PriorityPill priority={lead.priority} />
+              <PriorityPill priority={lead.priority} reviewed={Boolean(lead.scoreReason)} />
             </div>
             <div
               className="text-sm hidden lg:block w-28 truncate"

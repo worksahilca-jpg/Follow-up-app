@@ -10,8 +10,14 @@ const config: Record<Priority, { label: string; bg: string; fg: string }> = {
   none: { label: "No action needed", bg: "var(--line)", fg: "var(--ink-soft)" },
 };
 
-export default function PriorityPill({ priority }: { priority: Priority }) {
-  const c = config[priority];
+// A lead the AI hasn't looked at yet has priority "none" by default — but
+// "No action needed" is a verdict, and no verdict has been made. Saying so
+// honestly matters: a buyer's unanswered question labeled "no action
+// needed" is the exact failure this product exists to prevent.
+const notReviewed = { label: "Not reviewed yet", bg: "var(--line)", fg: "var(--ink-soft)" };
+
+export default function PriorityPill({ priority, reviewed = true }: { priority: Priority; reviewed?: boolean }) {
+  const c = !reviewed && priority === "none" ? notReviewed : config[priority];
   return (
     <span
       className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"

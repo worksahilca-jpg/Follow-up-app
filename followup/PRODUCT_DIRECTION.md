@@ -1,6 +1,11 @@
 # Product direction — build for 20-year survival, not just to ship features
 
-## The main goal, in order (CEO, 2026-09-07 — this ordering is canonical)
+## The main goal (CEO, 2026-09-07 — this wording and ordering are canonical)
+
+**The problem: business owners are not able to follow up.** That is the main thing.
+FollowUp exists because the owner can't, won't, or forgets to do the following up.
+
+What FollowUp does about it, in order:
 
 1. **No lead is lost because of no follow-up, late follow-up, or wrong follow-up.**
 2. Rescuing cold, dead, or never-reached leads is one feeder into that, not the goal itself.

@@ -1,5 +1,14 @@
 # Product direction — build for 20-year survival, not just to ship features
 
+## The main goal, in order (CEO, 2026-09-07 — this ordering is canonical)
+
+1. **No lead is lost because of no follow-up, late follow-up, or wrong follow-up.**
+2. Rescuing cold, dead, or never-reached leads is one feeder into that, not the goal itself.
+3. In every language, from every platform.
+4. The end state is that no human does this job at all. The owner still closes the deal.
+
+When anything below, or any research note, seems to say otherwise, this list wins.
+
 Set by the CEO (2026-09-06). This is a standing filter, not a one-time memo — every
 agent in `.claude/agents/` and every session working on this repo applies it before
 adding anything, not just when it's freshly top of mind. `manager-agent.md` and

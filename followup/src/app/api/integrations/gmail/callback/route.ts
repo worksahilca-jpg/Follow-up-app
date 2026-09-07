@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
-import { exchangeCodeForTokens } from "@/lib/integrations/gmail";
+import { ensureGmailWatch, exchangeCodeForTokens } from "@/lib/integrations/gmail";
 
 // GET /api/integrations/gmail/callback — Google redirects here after the
 // user approves (or denies) the consent screen. This URL must exactly match
@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const { email } = await exchangeCodeForTokens(code, ctx.userId);
+    // Best-effort: push is an accelerator, the poll still works without it.
+    await ensureGmailWatch(ctx.businessId).catch(() => null);
     returnTo.searchParams.set("gmail", "connected");
     returnTo.searchParams.set("email", email);
   } catch (err) {

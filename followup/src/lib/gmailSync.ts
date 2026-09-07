@@ -110,7 +110,11 @@ export async function syncGmailForBusiness(businessId: string, options: { since?
   // known-thread skipping leaves off.
   await prisma.integration.updateMany({
     where: { provider: "gmail", status: "connected", user: { businessId } },
-    data: { lastSyncedAt: startedAt, ...(isDeep && !truncated ? { deepSyncedAt: startedAt } : {}) },
+    data: {
+      lastSyncedAt: startedAt,
+      lastSyncError: null,
+      ...(isDeep && !truncated ? { deepSyncedAt: startedAt } : {}),
+    },
   });
 
   return { count: leads.length, scored, repliesDetected, truncated, leads };
@@ -163,6 +167,15 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
     } catch (err) {
       failed += 1;
       console.error(`Automatic Gmail sync failed for business ${businessId}:`, err);
+      // A failing sync must be visible somewhere other than a log nobody
+      // reads — record what went wrong on the connection itself.
+      const message = err instanceof Error ? err.message : String(err);
+      await prisma.integration
+        .updateMany({
+          where: { provider: "gmail", status: "connected", user: { businessId } },
+          data: { lastSyncError: `${new Date().toISOString()} ${message}`.slice(0, 1000) },
+        })
+        .catch((e) => console.error(`Failed to record sync error for business ${businessId}:`, e));
     }
   });
 

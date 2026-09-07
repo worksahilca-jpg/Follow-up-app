@@ -304,7 +304,23 @@ async function processThreadRefs(
   // sync sequentially can easily run past a serverless function's time
   // limit. Capped rather than unbounded so this doesn't also hammer the
   // Gmail API and OpenAI past their own per-account rate limits.
+  // One thread blowing up (a malformed Date header, a Gmail 404 on a
+  // deleted thread, a transient DB error) must cost exactly that thread —
+  // never the whole run, which would also mean lastSyncedAt/deepSyncedAt
+  // never get stamped and the same pass restarts from zero every tick.
   const results = await mapWithConcurrency(threadRefs, 5, async (ref): Promise<SyncedLead | null> => {
+    try {
+      return await processOneThread(ref);
+    } catch (err) {
+      console.error(`Failed to process Gmail thread ${ref.id ?? "?"}:`, err);
+      return null;
+    }
+  });
+
+  options.onResult?.({ truncated });
+  return results.filter((lead): lead is SyncedLead => lead !== null);
+
+  async function processOneThread(ref: gmail_v1.Schema$Thread): Promise<SyncedLead | null> {
     if (!ref.id) return null;
 
     const { data: thread } = await gmail.users.threads.get({
@@ -493,10 +509,7 @@ async function processThreadRefs(
       automationTier: lead.automationTier.toLowerCase() as Lead["automationTier"],
       touched,
     };
-  });
-
-  options.onResult?.({ truncated });
-  return results.filter((lead): lead is SyncedLead => lead !== null);
+  }
 }
 
 /**

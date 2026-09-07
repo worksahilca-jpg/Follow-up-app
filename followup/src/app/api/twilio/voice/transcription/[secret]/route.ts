@@ -30,11 +30,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const formParams = await parseTwilioForm(request);
 
-  if (business.twilioAuthToken) {
-    const signature = request.headers.get("x-twilio-signature");
-    if (!validateTwilioRequestSignature(business.twilioAuthToken, request, formParams, signature)) {
-      return NextResponse.json({ received: true }, { status: 403 });
-    }
+  // Signature verification is mandatory — see the SMS route for why a
+  // business with no saved Auth Token is rejected instead of trusted.
+  if (!business.twilioAuthToken) {
+    console.warn(`Twilio recording callback for business ${business.id} rejected: no Auth Token saved.`);
+    return NextResponse.json({ received: true }, { status: 403 });
+  }
+  const signature = request.headers.get("x-twilio-signature");
+  if (!validateTwilioRequestSignature(business.twilioAuthToken, request, formParams, signature)) {
+    return NextResponse.json({ received: true }, { status: 403 });
   }
 
   // The call itself was already gated on active billing when the lead was

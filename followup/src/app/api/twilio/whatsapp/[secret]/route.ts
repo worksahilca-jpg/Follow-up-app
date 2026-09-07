@@ -33,11 +33,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const formParams = await parseTwilioForm(request);
 
-  if (business.twilioAuthToken) {
-    const signature = request.headers.get("x-twilio-signature");
-    if (!validateTwilioRequestSignature(business.twilioAuthToken, request, formParams, signature)) {
-      return twiml("<Response/>");
-    }
+  // The URL secret identifies the business; the Twilio signature proves
+  // the request came from Twilio. Both are required — a business that
+  // hasn't saved its Auth Token yet (Settings → Phone) can't be served
+  // safely, so its inbound is dropped and logged rather than trusted.
+  if (!business.twilioAuthToken) {
+    console.warn(`Twilio inbound for business ${business.id} dropped: no Auth Token saved, signature can't be verified.`);
+    return twiml("<Response/>");
+  }
+  const signature = request.headers.get("x-twilio-signature");
+  if (!validateTwilioRequestSignature(business.twilioAuthToken, request, formParams, signature)) {
+    return twiml("<Response/>");
   }
 
   if (!(await requireActiveBilling(business.id))) return twiml("<Response/>");

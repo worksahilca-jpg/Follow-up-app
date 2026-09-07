@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { syncGmailForAllBusinesses } from "@/lib/gmailSync";
+import { encryptPlaintextSecrets } from "@/lib/secretsSweep";
 
 // Every business with a connected Gmail, each pulling only what's new since
 // its last tick — small per business, but the count of businesses is the
@@ -20,8 +21,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Piggybacks on this tick: re-saves any credentials still stored in
+    // plaintext so they get encrypted (no-op once done; see secretsSweep.ts).
+    const encrypted = await encryptPlaintextSecrets().catch((err) => {
+      console.error("Credential encryption sweep failed:", err);
+      return { integrations: 0, businesses: 0 };
+    });
     const result = await syncGmailForAllBusinesses();
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json({ success: true, ...result, encrypted });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Gmail sync run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });

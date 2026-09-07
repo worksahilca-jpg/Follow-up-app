@@ -199,3 +199,12 @@ for why the closest candidate (real estate) turned out to be a contested,
 AI-native-competitor-crowded space rather than an open gap. Don't re-litigate this
 by defaulting back into a vertical pick from a future research pass; if new
 evidence changes the calculus, that's a fresh CEO decision, not a reversion.
+
+## The aim, restated (CEO research, 2026-09-07)
+
+"You paid for the lead. We'll make sure it doesn't die because nobody followed up."
+FollowUp is lead rescue, not a CRM, not a chatbot, not an AI salesperson: it watches
+whether a human followed up, steps in when nobody did, brings cold conversations back,
+and hands over when the lead is ready. The metric is leads saved and revenue
+recovered, not messages sent. Full context, the moat ranking, and the six competitor
+answers: `research/market/2026-09-07-lead-rescue-gap-and-strategy.md`.

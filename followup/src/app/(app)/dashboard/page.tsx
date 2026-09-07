@@ -6,14 +6,14 @@ import {
   getLeads,
   getStats,
   getTodaysFollowUps,
-  getColdLeads,
   getWeeklyReport,
   getPipelineData,
   getUpcomingBookings,
 } from "@/lib/leads-data";
-import { formatCurrency, daysSince, getGreeting } from "@/lib/demo-data";
+import { formatCurrency, getGreeting } from "@/lib/demo-data";
 import EmptyState from "@/components/EmptyState";
-import { AlertTriangle, Users, Flame, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox, CalendarClock } from "lucide-react";
+import { getAtRiskLeads } from "@/lib/rescue";
+import { AlertTriangle, Flame, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox, CalendarClock } from "lucide-react";
 
 // This page reads live leads from the database on every request — never
 // bake a stale snapshot into the build.
@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   const leads = await getLeads();
   const stats = getStats(leads);
   const today = getTodaysFollowUps(leads);
-  const cold = getColdLeads(leads);
+  const atRisk = getAtRiskLeads(leads).slice(0, 8);
   const weeklyReport = await getWeeklyReport(leads);
   const pipelineSnapshot = getPipelineData(leads).map((s) => ({ label: s.label, count: s.leads.length, value: s.value }));
   const upcomingBookings = await getUpcomingBookings();
@@ -35,11 +35,11 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
         <StatCard
-          label="Total leads"
-          value={String(stats.totalLeads)}
-          icon={Users}
-          accent="var(--slate)"
-          accentSoft="var(--slate-soft)"
+          label="At risk right now"
+          value={String(stats.atRisk)}
+          icon={AlertTriangle}
+          accent="var(--coral)"
+          accentSoft="var(--coral-soft)"
         />
         <StatCard
           label="Hot leads"
@@ -102,24 +102,37 @@ export default async function DashboardPage() {
         </section>
       </div>
 
-      {cold.length > 0 && (
+      {atRisk.length > 0 && (
         <section className="mt-10">
           <h2 className="font-display text-xl flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" style={{ color: "var(--coral)" }} />
-            Leads going cold
+            About to be lost
           </h2>
+          <p className="text-sm text-ink-soft mt-1">
+            Ranked by how long they&apos;ve waited, how interested they are, and how cold the trail is. Automation is
+            already working these; the ones at the top need you.
+          </p>
           <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line">
-            {cold.map((lead) => (
+            {atRisk.map((lead) => (
               <Link
                 key={lead.id}
                 href={`/leads/${lead.id}`}
-                className="flex items-center justify-between px-5 py-3 text-sm hover:bg-paper"
+                className="flex items-center justify-between gap-4 px-5 py-3 text-sm hover:bg-paper"
               >
-                <span>
+                <span className="min-w-0">
                   <span className="font-medium">{lead.name}</span>
-                  <span className="text-ink-soft"> — {daysSince(lead.lastContacted)} days inactive</span>
+                  <span className="text-ink-soft"> — {lead.rescue.reason}</span>
                 </span>
-                <span style={{ color: "var(--gold)" }}>{formatCurrency(lead.dealValue)}</span>
+                <span className="flex items-center gap-3 shrink-0">
+                  {lead.dealValue > 0 && <span style={{ color: "var(--gold)" }}>{formatCurrency(lead.dealValue)}</span>}
+                  <span
+                    className="rounded-full px-2 py-0.5 text-xs font-medium tabular-nums"
+                    style={{ backgroundColor: "var(--coral-soft)", color: "var(--coral)" }}
+                    title="Rescue score, 0–100"
+                  >
+                    {lead.rescue.score}
+                  </span>
+                </span>
               </Link>
             ))}
           </div>

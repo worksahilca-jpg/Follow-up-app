@@ -21,6 +21,7 @@ import { PIPELINE_STAGES } from "@/lib/demo-data";
 import { getSessionContext } from "@/lib/session";
 import { Lead, Message, ScoreFactor } from "@/lib/types";
 import type { Prisma } from "@prisma/client";
+import { getAtRiskLeads } from "@/lib/rescue";
 
 type DbLead = Prisma.LeadGetPayload<{
   include: { conversations: { include: { messages: true } }; assignedTo: true };
@@ -116,6 +117,7 @@ export function getStats(leads: Lead[]) {
   const potentialRevenue = active.reduce((sum, l) => sum + l.dealValue, 0);
   return {
     totalLeads: leads.length,
+    atRisk: getAtRiskLeads(leads).length,
     hotLeads: hot.length,
     followUpsToday: getTodaysFollowUps(leads).length,
     potentialRevenue,

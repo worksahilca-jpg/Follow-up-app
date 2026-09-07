@@ -35,6 +35,7 @@ jobs:
       - run: npx next typegen
       - run: npx tsc --noEmit
       - run: npx eslint .
+      - run: npm test
       - run: npm run build
       - name: Dependency audit (fails on critical)
         run: npm audit --omit=dev --audit-level=critical

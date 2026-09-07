@@ -3,6 +3,8 @@ import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { resolveInstagramUserId, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
 import { appUrl } from "@/lib/stripe";
+import { requireAdmin } from "@/lib/session";
+import { recordAudit } from "@/lib/audit";
 
 /**
  * GET/POST/DELETE /api/instagram/config — this business's Instagram
@@ -40,6 +42,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  void recordAudit(ctx, "integration.instagram.update");
 
   const body = await request.json().catch(() => ({}));
   const accessToken = typeof body.accessToken === "string" ? body.accessToken.trim() : "";
@@ -67,6 +71,8 @@ export async function POST(request: NextRequest) {
 export async function DELETE() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  void recordAudit(ctx, "integration.instagram.disconnect");
 
   await prisma.business.update({
     where: { id: ctx.businessId },

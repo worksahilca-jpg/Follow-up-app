@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin } from "@/lib/session";
 import { startGmailOAuth } from "@/lib/integrations/gmail";
 
 // GET /api/integrations/gmail/connect — kicks off the Google OAuth consent
@@ -9,6 +9,7 @@ import { startGmailOAuth } from "@/lib/integrations/gmail";
 export async function GET(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.redirect(new URL("/signin", request.url));
+  if (!(await requireAdmin(ctx))) return NextResponse.redirect(new URL("/settings?gmail=error&message=Only+an+admin+can+connect+Gmail", request.url));
 
   const next = new URL(request.url).searchParams.get("next") ?? undefined;
 

@@ -3,6 +3,8 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { INSTANT_ACK_ACTION, INSTANT_ACK_NAME, isInstantAckEnabled } from "@/lib/acknowledge";
+import { requireAdmin } from "@/lib/session";
+import { recordAudit } from "@/lib/audit";
 
 const AUTOMATION_NAME = "Auto follow-up on silence";
 const AUTOMATION_ACTION = "auto_send";
@@ -27,6 +29,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false }, { status: 401 });
+  if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  void recordAudit(ctx, "automation.settings.update");
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
   }

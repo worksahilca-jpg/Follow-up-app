@@ -6,6 +6,8 @@ import { deleteLeadCascade } from "@/lib/leads-admin";
 import { classifyAsProspect } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import type { Message } from "@/lib/types";
+import { requireAdmin } from "@/lib/session";
+import { recordAudit } from "@/lib/audit";
 
 // A business with a large backlog means one OpenAI classification call per
 // Gmail-sourced lead — comfortably past a default serverless timeout even
@@ -27,6 +29,8 @@ export const maxDuration = 300;
 export async function POST() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  void recordAudit(ctx, "leads.cleanup");
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
   }

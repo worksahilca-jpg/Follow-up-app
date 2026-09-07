@@ -13,6 +13,7 @@ import type { Message } from "@/lib/types";
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (await tooManyRecentActions(ctx.businessId, "leads.regenerate", { windowMinutes: 10, max: 30 })) return NextResponse.json({ success: false, message: "Too many requests — try again in a few minutes." }, { status: 429 });
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
   }

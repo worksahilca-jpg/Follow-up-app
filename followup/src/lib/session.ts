@@ -6,11 +6,23 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 
 export interface SessionContext {
   userId: string;
   businessId: string;
   email: string;
+}
+
+/**
+ * Role gate for account-level settings (integrations, billing, team,
+ * automation defaults, bulk deletes). Looked up fresh rather than trusted
+ * from the JWT so a demotion takes effect on the next request, not at
+ * token expiry.
+ */
+export async function requireAdmin(ctx: SessionContext): Promise<boolean> {
+  const user = await prisma.user.findUnique({ where: { id: ctx.userId }, select: { role: true, businessId: true } });
+  return !!user && user.businessId === ctx.businessId && user.role === "ADMIN";
 }
 
 export async function getSessionContext(): Promise<SessionContext | null> {

@@ -87,11 +87,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const formParams = await parseTwilioForm(request);
 
-  if (business.twilioAuthToken) {
-    const signature = request.headers.get("x-twilio-signature");
-    if (!validateTwilioRequestSignature(business.twilioAuthToken, request, formParams, signature)) {
-      return twiml("<Response><Reject/></Response>");
-    }
+  // Signature verification is mandatory — see the SMS route for why a
+  // business with no saved Auth Token is rejected instead of trusted.
+  if (!business.twilioAuthToken) {
+    console.warn(`Twilio call for business ${business.id} rejected: no Auth Token saved, signature can't be verified.`);
+    return twiml("<Response><Reject/></Response>");
+  }
+  const signature = request.headers.get("x-twilio-signature");
+  if (!validateTwilioRequestSignature(business.twilioAuthToken, request, formParams, signature)) {
+    return twiml("<Response><Reject/></Response>");
   }
 
   if (!(await requireActiveBilling(business.id))) {

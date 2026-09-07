@@ -216,6 +216,13 @@ model Lead {
   // this caps it to one per cooldown window per lead.
   lastMissedCallTextAt DateTime?
 
+  // When the instant acknowledgement went out (src/lib/acknowledge.ts) —
+  // the short "we got your message" a brand-new lead gets within a minute
+  // of their first inbound, on the channel they used. Same atomic
+  // conditional-update claim as the two markers above: set exactly once
+  // per lead, never twice, no matter how many channels or webhooks fire.
+  acknowledgedAt DateTime?
+
   // Workflow enrollment (see src/lib/sequences.ts). sequenceStepIndex is
   // the index of the step that runs NEXT (0 before anything has run);
   // sequenceStepDueAt is when that step is eligible to run — recomputed

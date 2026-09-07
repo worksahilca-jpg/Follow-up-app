@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
+import { INSTANT_ACK_ACTION, INSTANT_ACK_NAME, isInstantAckEnabled } from "@/lib/acknowledge";
 
 const AUTOMATION_NAME = "Auto follow-up on silence";
 const AUTOMATION_ACTION = "auto_send";
@@ -19,6 +20,7 @@ export async function GET() {
   return NextResponse.json({
     enabled: automation?.enabled ?? true,
     triggerDays: automation?.triggerDays ?? 5,
+    instantAck: await isInstantAckEnabled(ctx.businessId),
   });
 }
 
@@ -30,6 +32,23 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}));
+
+  // The instant-reply switch is saved on its own (see src/lib/acknowledge.ts);
+  // a request carrying only `instantAck` must not touch the silence settings.
+  if (typeof body.instantAck === "boolean" && body.enabled === undefined) {
+    const existingAck = await prisma.automation.findFirst({
+      where: { businessId: ctx.businessId, action: INSTANT_ACK_ACTION },
+    });
+    if (existingAck) {
+      await prisma.automation.update({ where: { id: existingAck.id }, data: { enabled: body.instantAck } });
+    } else {
+      await prisma.automation.create({
+        data: { businessId: ctx.businessId, name: INSTANT_ACK_NAME, action: INSTANT_ACK_ACTION, enabled: body.instantAck, triggerDays: 0 },
+      });
+    }
+    return NextResponse.json({ success: true, instantAck: body.instantAck });
+  }
+
   const enabled = Boolean(body.enabled);
   const triggerDays = Number.isFinite(body.triggerDays) ? Math.max(1, Math.min(30, Math.round(body.triggerDays))) : 5;
 

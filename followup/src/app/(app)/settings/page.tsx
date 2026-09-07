@@ -38,6 +38,9 @@ function SettingsPageInner() {
   const [runningNow, setRunningNow] = useState(false);
   const [runResult, setRunResult] = useState<string | null>(null);
   const [automationError, setAutomationError] = useState<string | null>(null);
+  const [instantAckOn, setInstantAckOn] = useState(true);
+  const [instantAckSaving, setInstantAckSaving] = useState(false);
+  const [instantAckError, setInstantAckError] = useState<string | null>(null);
 
   const [billingActive, setBillingActive] = useState(false);
   const [billingStatus, setBillingStatus] = useState<string | null>(null);
@@ -67,9 +70,10 @@ function SettingsPageInner() {
   useEffect(() => {
     fetch("/api/automation/settings")
       .then((r) => r.json())
-      .then((data: { enabled: boolean; triggerDays: number }) => {
+      .then((data: { enabled: boolean; triggerDays: number; instantAck?: boolean }) => {
         setAutomationOn(data.enabled);
         setAutoAfterDays(data.triggerDays);
+        setInstantAckOn(data.instantAck ?? true);
       })
       .finally(() => setAutomationLoaded(true));
   }, []);
@@ -90,6 +94,25 @@ function SettingsPageInner() {
       }
     } finally {
       setAutomationSaving(false);
+    }
+  }
+
+  async function saveInstantAck(next: boolean) {
+    setInstantAckSaving(true);
+    setInstantAckError(null);
+    try {
+      const res = await fetch("/api/automation/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instantAck: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setInstantAckOn(!next);
+        setInstantAckError(data.message ?? "Couldn't save — try again.");
+      }
+    } finally {
+      setInstantAckSaving(false);
     }
   }
 
@@ -453,6 +476,40 @@ function SettingsPageInner() {
             <p className="text-xs text-ink-soft mt-2">
               This also runs automatically once a day — this button is just for checking sooner, or confirming
               it&apos;s working.
+            </p>
+          )}
+        </div>
+        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-sm">Instant reply to new leads</p>
+              <p className="text-xs text-ink-soft mt-1">
+                Within a minute of a new lead&apos;s first message — email, text, WhatsApp, or Instagram — FollowUp
+                sends a short &ldquo;thanks, we got your message, I&apos;ll get back to you shortly,&rdquo; in the language
+                they wrote in. <strong>Our promise:</strong> it&apos;s a fixed sentence, not an AI reply — it never
+                states a fact about your business, never answers a question, goes out once per lead only, and never
+                goes out if you&apos;ve already replied. Your real reply still comes from you.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !instantAckOn;
+                setInstantAckOn(next);
+                saveInstantAck(next);
+              }}
+              disabled={!automationLoaded || instantAckSaving}
+              className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
+              style={{ backgroundColor: instantAckOn ? "var(--rust)" : "var(--line)" }}
+            >
+              <span
+                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
+                style={{ transform: instantAckOn ? "translateX(22px)" : "translateX(2px)" }}
+              />
+            </button>
+          </div>
+          {instantAckError && (
+            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+              {instantAckError}
             </p>
           )}
         </div>

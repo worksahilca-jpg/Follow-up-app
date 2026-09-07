@@ -37,26 +37,40 @@ async function detectPhoneChannel(leadId: string): Promise<"whatsapp" | "text"> 
 export async function sendFollowUpToLead(
   leadId: string,
   body: string,
-  options: { automated?: boolean } = {}
+  options: {
+    automated?: boolean;
+    // Force a channel instead of the email-first default — the instant
+    // acknowledgement (src/lib/acknowledge.ts) replies on the channel the
+    // lead actually used.
+    channel?: "email" | "text" | "whatsapp" | "instagram";
+    subject?: string;
+    emailThreadId?: string;
+    emailInReplyTo?: string;
+  } = {}
 ): Promise<{ success: boolean; message?: string }> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
   if (!lead) return { success: false, message: "Lead not found." };
 
-  const channel = lead.email
-    ? "email"
-    : isInstagramLeadId(lead.phone)
-      ? "instagram"
-      : lead.phone
-        ? await detectPhoneChannel(lead.id)
-        : null;
+  const channel =
+    options.channel ??
+    (lead.email
+      ? "email"
+      : isInstagramLeadId(lead.phone)
+        ? "instagram"
+        : lead.phone
+          ? await detectPhoneChannel(lead.id)
+          : null);
   if (!channel) return { success: false, message: "This lead has no email or phone number on file." };
 
   let externalId: string | undefined;
   if (channel === "email") {
+    if (!lead.email) return { success: false, message: "This lead has no email address on file." };
     const result = await sendEmail(lead.businessId, {
-      to: lead.email!,
-      subject: `Following up, ${lead.name.split(" ")[0]}`,
+      to: lead.email,
+      subject: options.subject ?? `Following up, ${lead.name.split(" ")[0]}`,
       body,
+      threadId: options.emailThreadId,
+      inReplyTo: options.emailInReplyTo,
     });
     if (!result.success) return { success: false, message: "Gmail didn't confirm this message sent." };
     externalId = result.messageId ?? undefined;

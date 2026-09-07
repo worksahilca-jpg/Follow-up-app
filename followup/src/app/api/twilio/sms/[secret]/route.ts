@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
+import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { findBusinessByTwilioSecret, findOrCreateLeadByPhone, parseTwilioForm, twiml, validateTwilioRequestSignature } from "@/lib/twilio";
 
 /**
@@ -52,6 +53,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await prisma.message.create({
       data: { conversationId: conversation.id, direction: "inbound", body, sentAt: new Date() },
     });
+    // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
+    await acknowledgeNewLead(lead.id, { channel: "text", inboundText: body, inboundAt: new Date() });
     await scoreAndDraftForLead(lead.id);
     await checkRapidEngagement(lead.id);
   }

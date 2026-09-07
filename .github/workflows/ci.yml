@@ -30,6 +30,9 @@ jobs:
           cache-dependency-path: followup/package-lock.json
       - run: npm ci
       - run: npx prisma generate
+      # Generates .next/types (LayoutProps, PageProps…) that tsc needs; a
+      # fresh checkout has no .next directory.
+      - run: npx next typegen
       - run: npx tsc --noEmit
       - run: npx eslint .
       - run: npm run build

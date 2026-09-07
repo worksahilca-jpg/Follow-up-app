@@ -265,14 +265,31 @@ function isAutomatedSender(email: string): boolean {
  * to the parsing/classification/upsert logic can't accidentally apply to
  * only one of the two sync paths.
  */
+export type SyncOptions = {
+  skipClassification?: boolean;
+  // Cap on AI classifications per run — the expensive, slow part. A first
+  // pass over a busy inbox can't finish 100 classifications inside one
+  // serverless invocation, and an unfinished pass used to leave nothing
+  // stamped and restart from zero every tick. With a budget, each tick
+  // makes bounded progress; threads past the budget are simply left for
+  // the next tick (they're unknown, so nothing is lost).
+  maxClassifications?: number;
+  onResult?: (info: { truncated: boolean }) => void;
+};
+
+/** A Lead plus whether THIS run actually changed it — new lead, or a newer message than it had — so callers re-score only what moved, not every known lead on every pass. */
+export type SyncedLead = Lead & { touched: boolean };
+
 async function processThreadRefs(
   businessId: string,
   gmail: gmail_v1.Gmail,
   selfEmail: string,
   threadRefs: gmail_v1.Schema$Thread[],
   sourceLabel: string,
-  options: { skipClassification?: boolean } = {}
-): Promise<Lead[]> {
+  options: SyncOptions = {}
+): Promise<SyncedLead[]> {
+  let classifications = 0;
+  let truncated = false;
   // Who this inbox belongs to and what they do — the classifier's most
   // important input (see classifyAsProspect). Fetched once per run, not
   // per thread.
@@ -287,7 +304,7 @@ async function processThreadRefs(
   // sync sequentially can easily run past a serverless function's time
   // limit. Capped rather than unbounded so this doesn't also hammer the
   // Gmail API and OpenAI past their own per-account rate limits.
-  const results = await mapWithConcurrency(threadRefs, 5, async (ref): Promise<Lead | null> => {
+  const results = await mapWithConcurrency(threadRefs, 5, async (ref): Promise<SyncedLead | null> => {
     if (!ref.id) return null;
 
     const { data: thread } = await gmail.users.threads.get({
@@ -349,6 +366,12 @@ async function processThreadRefs(
       });
       if (priorVerdict && priorVerdict.lastMessageAt >= newestMessageAt) return null;
 
+      if (options.maxClassifications !== undefined && classifications >= options.maxClassifications) {
+        truncated = true;
+        return null;
+      }
+      classifications += 1;
+
       try {
         const transcript: Message[] = parsedMessages.map((m) => ({
           id: m.id,
@@ -396,10 +419,12 @@ async function processThreadRefs(
     // wasted pickAssignee() query just to have its result thrown away.
     // Checked here explicitly instead: only a brand-new lead gets routed;
     // an existing one keeps whoever it's already assigned to.
-    const isNewLead = !(await prisma.lead.findUnique({
+    const existingLead = await prisma.lead.findUnique({
       where: { businessId_email: { businessId, email: counterpart.email } },
-      select: { id: true },
-    }));
+      select: { id: true, lastContacted: true },
+    });
+    const isNewLead = !existingLead;
+    const touched = isNewLead || !existingLead.lastContacted || newestMessageAt > existingLead.lastContacted;
 
     const lead = await prisma.lead.upsert({
       where: { businessId_email: { businessId, email: counterpart.email } },
@@ -466,10 +491,12 @@ async function processThreadRefs(
       conversation: [],
       suggestedMessage: "",
       automationTier: lead.automationTier.toLowerCase() as Lead["automationTier"],
+      touched,
     };
   });
 
-  return results.filter((lead): lead is Lead => lead !== null);
+  options.onResult?.({ truncated });
+  return results.filter((lead): lead is SyncedLead => lead !== null);
 }
 
 /**
@@ -489,8 +516,8 @@ async function processThreadRefs(
  */
 export async function fetchSalesConversations(
   businessId: string,
-  options: { since?: Date } = {}
-): Promise<Lead[]> {
+  options: { since?: Date } & Pick<SyncOptions, "maxClassifications" | "onResult"> = {}
+): Promise<SyncedLead[]> {
   const authed = await getAuthedGmailClient(businessId);
   if (!authed) return [];
   const { gmail, integration } = authed;
@@ -511,7 +538,10 @@ export async function fetchSalesConversations(
     maxResults: options.since ? 30 : 100,
   });
 
-  return processThreadRefs(businessId, gmail, selfEmail, listData.threads ?? [], "Gmail");
+  return processThreadRefs(businessId, gmail, selfEmail, listData.threads ?? [], "Gmail", {
+    maxClassifications: options.maxClassifications,
+    onResult: options.onResult,
+  });
 }
 
 /**

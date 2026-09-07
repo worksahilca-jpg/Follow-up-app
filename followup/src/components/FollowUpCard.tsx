@@ -68,7 +68,7 @@ export default function FollowUpCard({ lead }: { lead: Lead }) {
           </div>
           <p className="text-sm text-ink-soft">{lead.company}</p>
           <div className="mt-2">
-            <PriorityPill priority={lead.priority} />
+            <PriorityPill priority={lead.priority} reviewed={Boolean(lead.scoreReason)} />
           </div>
           <p className="text-sm mt-3 text-ink-soft leading-relaxed">{lead.scoreReason}</p>
 

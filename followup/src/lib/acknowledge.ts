@@ -114,6 +114,7 @@ export async function acknowledgeNewLead(
 
     const result = await sendFollowUpToLead(leadId, body, {
       automated: true,
+      trigger: "instant_ack",
       channel: input.channel,
       subject,
       emailThreadId: input.emailThreadId,

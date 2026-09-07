@@ -135,7 +135,7 @@ describe("silence automation risk gate", () => {
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
     expect(r.sent).toBe(1);
-    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), { automated: true });
+    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), { automated: true, trigger: "silence" });
   });
 
   it("fails closed: a risk check that throws holds the lead", async () => {

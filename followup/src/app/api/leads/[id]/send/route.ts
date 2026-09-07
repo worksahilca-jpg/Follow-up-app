@@ -28,7 +28,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ success: false, message: "Message can't be empty." }, { status: 400 });
   }
 
-  const result = await sendFollowUpToLead(id, message);
+  const result = await sendFollowUpToLead(id, message, { trigger: "manual" });
   if (result.success) void recordAudit(ctx, "lead.send", { targetType: "lead", targetId: id, meta: { length: message.length } });
   return NextResponse.json(result, { status: result.success ? 200 : 500 });
 }

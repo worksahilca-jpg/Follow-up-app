@@ -90,6 +90,7 @@ export const authOptions: NextAuthOptions = {
                   create: [
                     { name: "Auto follow-up on silence", action: "auto_send", enabled: true, triggerDays: 5 },
                     { name: "Instant reply to new leads", action: "instant_ack", enabled: true, triggerDays: 0 },
+                    { name: "Reply for me when I haven't", action: "unanswered_reply", enabled: true, triggerDays: 1, triggerHours: 24 },
                   ],
                 },
               },

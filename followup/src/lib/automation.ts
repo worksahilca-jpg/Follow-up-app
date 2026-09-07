@@ -36,15 +36,55 @@ import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
 import type { Message } from "@/lib/types";
 
+export const UNANSWERED_ACTION = "unanswered_reply";
+export const UNANSWERED_NAME = "Reply for me when I haven't";
+export const UNANSWERED_DEFAULT_HOURS = 24;
+
 interface AutomationResult {
   checked: number;
+  unanswered: number; // of `checked`, how many were picked up because the LEAD wrote last and nobody answered
   sent: number;
   held: number; // risk-gated: drafted and saved for manual approval instead of auto-sent
   skipped: string[]; // real failures (send errors, exceptions)
   heldReasons: string[]; // "{lead name}: {why it was held}", one per held lead
 }
 
-const EMPTY_RESULT: AutomationResult = { checked: 0, sent: 0, held: 0, skipped: [], heldReasons: [] };
+const EMPTY_RESULT: AutomationResult = { checked: 0, unanswered: 0, sent: 0, held: 0, skipped: [], heldReasons: [] };
+
+/**
+ * The human-neglect trigger — PRODUCT_DIRECTION.md main goal, point 2. The
+ * silence window above catches a lead that went quiet on US; this catches
+ * the opposite and worse case: the lead wrote, and the owner never came
+ * back. "Neglected" = the newest message on the lead is INBOUND and older
+ * than the business's unanswered-reply window. Such a lead is fed through
+ * the same draft → risk gate → send/hold path as a silent one, and the
+ * owner is told either way (a held draft is a reply waiting for one click).
+ */
+async function findUnansweredLeads(businessId: string, hours: number, recheckCutoff: Date) {
+  const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000);
+  const candidates = await prisma.lead.findMany({
+    where: {
+      businessId,
+      automationTier: { not: "OFF" },
+      stage: { notIn: ["WON", "LOST"] },
+      OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
+      conversations: { some: { messages: { some: { direction: "inbound", sentAt: { lte: cutoff } } } } },
+    },
+    include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+  });
+  // The query finds "has an old inbound"; only "the LAST message is that
+  // inbound" counts — if anyone has replied since, it's not neglected.
+  return candidates.filter((lead) => {
+    const all = lead.conversations.flatMap((c) => c.messages);
+    if (all.length === 0) return false;
+    const last = all.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
+    return last.direction === "inbound" && last.sentAt <= cutoff;
+  });
+}
+
+function hoursAgo(date: Date): number {
+  return Math.max(1, Math.round((Date.now() - date.getTime()) / 3_600_000));
+}
 
 type LeadOutcome =
   | { kind: "sent" }
@@ -78,7 +118,11 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // a day via lastAutomationCheckedAt (see schema.prisma).
   const recheckCutoff = new Date(Date.now() - 20 * 60 * 60 * 1000);
 
-  const [eligible, voiceSamples] = await Promise.all([
+  const unansweredRule = await prisma.automation.findFirst({ where: { businessId, action: UNANSWERED_ACTION } });
+  const unansweredEnabled = unansweredRule?.enabled ?? true; // on by default, like everything else here
+  const unansweredHours = unansweredRule?.triggerHours ?? UNANSWERED_DEFAULT_HOURS;
+
+  const [silent, voiceSamples, unanswered] = await Promise.all([
     prisma.lead.findMany({
       where: {
         businessId,
@@ -92,7 +136,12 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     // Same voice sample set for every lead in this business — fetched once
     // up front rather than inside the per-lead loop below.
     getVoiceSamples(businessId),
+    unansweredEnabled ? findUnansweredLeads(businessId, unansweredHours, recheckCutoff) : Promise.resolve([]),
   ]);
+
+  // Merge, unanswered first (it's the more urgent reason), one row per lead.
+  const unansweredIds = new Set(unanswered.map((l) => l.id));
+  const eligible = [...unanswered, ...silent.filter((l) => !unansweredIds.has(l.id))];
 
   // Kept modest (vs. the 5 used for sync/cleanup) — this loop calls Gmail's
   // send API per lead, which has its own tighter per-account send quota,
@@ -145,11 +194,13 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           if (!lead.suggestedMessage) {
             await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message } });
           }
+          if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
           return { kind: "held", note: `${lead.name}: ${risk.reason}` };
         }
       }
 
       const result = await sendFollowUpToLead(lead.id, message, { automated: true });
+      if (result.success && unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "sent");
       return result.success
         ? { kind: "sent" }
         : { kind: "skipped", note: `${lead.name}: ${result.message ?? "unknown error"}` };
@@ -166,6 +217,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
 
   return {
     checked: eligible.length,
+    unanswered: unanswered.length,
     sent,
     held: heldOutcomes.length,
     skipped,
@@ -174,6 +226,31 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
 }
 
 /** What a real scheduler calls: every business with automation on, in one pass. */
+/**
+ * Tells the assigned person what just happened on a neglected lead. A held
+ * draft is "one click from answered"; a sent one is "handled, here's what
+ * went out." Once per consideration — lastAutomationCheckedAt keeps this
+ * from repeating every hour.
+ */
+async function notifyNeglect(
+  lead: { id: string; name: string; assignedToId: string | null },
+  conversation: Message[],
+  outcome: "held" | "sent"
+): Promise<void> {
+  if (!lead.assignedToId) return;
+  const lastInbound = [...conversation].reverse().find((m) => m.direction === "inbound");
+  const waited = lastInbound ? `${hoursAgo(new Date(lastInbound.date))}h` : "a while";
+  const message =
+    outcome === "sent"
+      ? `${lead.name} wrote ${waited} ago and hadn't heard back — FollowUp replied for you. Check the thread.`
+      : `${lead.name} wrote ${waited} ago and hasn't heard back — a reply is drafted and waiting for your approval.`;
+  try {
+    await prisma.notification.create({ data: { userId: lead.assignedToId, leadId: lead.id, message } });
+  } catch (err) {
+    console.error(`Neglect notification failed for lead ${lead.id}:`, err);
+  }
+}
+
 export async function runAutomationForAllBusinesses(): Promise<AutomationResult> {
   const enabled = await prisma.automation.findMany({
     where: { action: "auto_send", enabled: true },
@@ -200,6 +277,7 @@ export async function runAutomationForAllBusinesses(): Promise<AutomationResult>
   const totals: AutomationResult = { ...EMPTY_RESULT, skipped: [], heldReasons: [] };
   for (const result of results) {
     totals.checked += result.checked;
+    totals.unanswered += result.unanswered;
     totals.sent += result.sent;
     totals.held += result.held;
     totals.skipped.push(...result.skipped);

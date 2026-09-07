@@ -42,6 +42,10 @@ function SettingsPageInner() {
   const [instantAckOn, setInstantAckOn] = useState(true);
   const [instantAckSaving, setInstantAckSaving] = useState(false);
   const [instantAckError, setInstantAckError] = useState<string | null>(null);
+  const [unansweredOn, setUnansweredOn] = useState(true);
+  const [unansweredHours, setUnansweredHours] = useState(24);
+  const [unansweredSaving, setUnansweredSaving] = useState(false);
+  const [unansweredError, setUnansweredError] = useState<string | null>(null);
 
   const [billingActive, setBillingActive] = useState(false);
   const [billingStatus, setBillingStatus] = useState<string | null>(null);
@@ -72,10 +76,12 @@ function SettingsPageInner() {
   useEffect(() => {
     fetch("/api/automation/settings")
       .then((r) => r.json())
-      .then((data: { enabled: boolean; triggerDays: number; instantAck?: boolean }) => {
+      .then((data: { enabled: boolean; triggerDays: number; instantAck?: boolean; unansweredReply?: { enabled: boolean; hours: number } }) => {
         setAutomationOn(data.enabled);
         setAutoAfterDays(data.triggerDays);
         setInstantAckOn(data.instantAck ?? true);
+        setUnansweredOn(data.unansweredReply?.enabled ?? true);
+        setUnansweredHours(data.unansweredReply?.hours ?? 24);
       })
       .finally(() => setAutomationLoaded(true));
   }, []);
@@ -96,6 +102,25 @@ function SettingsPageInner() {
       }
     } finally {
       setAutomationSaving(false);
+    }
+  }
+
+  async function saveUnanswered(enabled: boolean, hours: number) {
+    setUnansweredSaving(true);
+    setUnansweredError(null);
+    try {
+      const res = await fetch("/api/automation/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unansweredReply: { enabled, hours } }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setUnansweredOn(!enabled);
+        setUnansweredError(data.message ?? "Couldn't save — try again.");
+      }
+    } finally {
+      setUnansweredSaving(false);
     }
   }
 
@@ -540,6 +565,55 @@ function SettingsPageInner() {
             <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
               {instantAckError}
             </p>
+          )}
+        </div>
+        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-sm">Reply for me when I haven&apos;t</p>
+              <p className="text-xs text-ink-soft mt-1">
+                The case that loses the most deals: a lead writes, and nobody answers. If a lead&apos;s message goes
+                unanswered for this many hours, FollowUp drafts the reply and either sends it (Assisted, only when the
+                safety check says it&apos;s safe — never pricing, terms, or a tense thread) or holds it for your
+                one-click approval, and tells you either way. <strong>Our promise:</strong> it never talks over you —
+                the moment anyone replies, the lead is no longer &ldquo;unanswered.&rdquo;
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !unansweredOn;
+                setUnansweredOn(next);
+                saveUnanswered(next, unansweredHours);
+              }}
+              disabled={!automationLoaded || unansweredSaving}
+              className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
+              style={{ backgroundColor: unansweredOn ? "var(--rust)" : "var(--line)" }}
+            >
+              <span
+                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
+                style={{ transform: unansweredOn ? "translateX(22px)" : "translateX(2px)" }}
+              />
+            </button>
+          </div>
+          {unansweredError && (
+            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+              {unansweredError}
+            </p>
+          )}
+          {unansweredOn && (
+            <div className="mt-4 flex items-center gap-2 text-sm">
+              <span>Step in after</span>
+              <input
+                type="number"
+                min={1}
+                max={168}
+                value={unansweredHours}
+                onChange={(e) => setUnansweredHours(Number(e.target.value))}
+                onBlur={() => saveUnanswered(unansweredOn, unansweredHours)}
+                className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
+              />
+              <span>hours without a reply from you</span>
+            </div>
           )}
         </div>
       </section>

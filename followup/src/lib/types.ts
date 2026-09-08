@@ -58,6 +58,11 @@ export interface Lead {
   suggestedMessage: string;
   suggestedSubject?: string;
   automationTier: AutomationTier;
+  // TCPA/CTIA opt-out (see Lead.optedOutAt in schema.prisma) — set the
+  // moment a lead texts STOP on SMS/WhatsApp, cleared on START. Optional
+  // (not present on demo-data.ts's static leads) since it's undefined,
+  // never a lie, for a lead that was never opted out.
+  optedOutAt?: string | null;
 }
 
 export interface TeamMember {

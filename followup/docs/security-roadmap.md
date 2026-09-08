@@ -45,7 +45,26 @@ checked and the re-audit checklist in `docs/security.md` passes.
       the role is created and verified, but the `DATABASE_URL` cutover in
       Vercel is a manual step still pending (needs a live test through
       the pooler first).
-- [ ] Per-business data export and full deletion, audit-logged (task #72).
+- [x] **Per-business data export and full deletion, audit-logged** (task #72).
+      Settings → "Your data": `GET /api/business/export` hands back every
+      lead, conversation, message, deal, task, booking, sequence, team
+      member and audit-log entry as one JSON file — deliberately never
+      includes an OAuth token, the Twilio auth token, a CRM API key, or
+      either webhook secret (`src/lib/businessData.ts`'s explicit
+      field allowlist, not an omit-list, so a new secret column has to be
+      added on purpose to ever reach an export). `POST /api/business/delete`
+      is admin-only and gated behind typing the business's own name back;
+      it cancels any active Stripe subscription, then removes every
+      dependent row across 19 tables inside one transaction in FK-safe
+      order (no cascade is configured from `Business` — see the schema's
+      `onDelete` comments), and finally writes one `AuditEvent` documenting
+      the deletion. That audit row is the one thing that survives on
+      purpose: `AuditEvent` isn't a foreign-key relation to `Business` or
+      `User` (schema comment: "an audit row must outlive the thing it
+      describes"), so the erasure leaves a permanent record even though
+      everything else is gone. 9 tests cover the deletion order, the
+      Stripe-failure-never-blocks-erasure guarantee, and that no
+      credential ever appears in an export.
 - [x] **Schema validation (zod) on every request body** (task #73). Every
       route with a JSON body validates it through a shared helper
       (`src/lib/validation.ts`) instead of ad-hoc `typeof` checks.

@@ -157,6 +157,23 @@ export async function findOrCreateLeadByInstagram(
  * Meta's message id (webhooks redeliver), and bumps lastContacted so the
  * 5-day-silence automation doesn't also fire on a lead that was, in
  * fact, just answered outside FollowUp.
+ *
+ * ⚠️ UNVERIFIED AGAINST META'S ACTUAL BEHAVIOR — see
+ * research/integrations/2026-09-08-meta-business-agent-webhook-behavior.md
+ * before trusting this in production. Open risk: Meta may route
+ * Business-Agent-held conversations through the older Messenger
+ * "Handover Protocol" (a `standby` webhook field + `messaging_handovers`
+ * events, not just `is_echo` on the standard `messaging` field this
+ * route reads) — if so, this function may simply never get called while
+ * Business Agent holds the thread, the opposite of what task #68
+ * intended. Separately, `message_echoes` may carry an `app_id` that
+ * could actually distinguish "Business Agent answered" from "a teammate
+ * answered natively" — this function deliberately doesn't try, which
+ * may be over-cautious, not necessary. Neither was confirmed via
+ * WebFetch (blocked in dev) or an empirical test. Recommended before
+ * relying on this at scale: connect a test account, have Business Agent
+ * answer a real DM, and log the raw webhook payload this route actually
+ * receives.
  */
 export async function captureDirectReply(
   leadId: string,

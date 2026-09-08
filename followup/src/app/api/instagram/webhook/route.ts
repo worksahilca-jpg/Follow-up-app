@@ -45,6 +45,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false }, { status: 403 });
   }
 
+  // ⚠️ Only entry.messaging is read below (both branches). This is
+  // UNVERIFIED against Meta's actual Business-Agent behavior — there's a
+  // real, unresolved possibility that a conversation Meta's AI is
+  // actively handling arrives on a separate `standby` field (Messenger's
+  // older Handover Protocol) instead, which this route doesn't read at
+  // all. See research/integrations/2026-09-08-meta-business-agent-webhook-behavior.md
+  // and the warning on captureDirectReply() (src/lib/instagram.ts)
+  // before trusting the is_echo capture path below at scale.
   const payload = JSON.parse(rawBody || "{}");
   if (payload.object === "page" && Array.isArray(payload.entry)) {
     await handlePageEvents(payload.entry);

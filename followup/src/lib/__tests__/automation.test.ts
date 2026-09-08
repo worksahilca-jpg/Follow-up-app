@@ -21,16 +21,19 @@ vi.mock("@/lib/sender", () => ({ composeFollowUpEmail: vi.fn(async (_f: string, 
 vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ success: true })) }));
 vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
+vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 
 import { prisma } from "@/lib/db";
 import { assessSendRisk } from "@/lib/integrations/openai";
 import { sendFollowUpToLead } from "@/lib/sending";
+import { recordAudit } from "@/lib/audit";
 import { runAutomationForBusiness } from "@/lib/automation";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
 const risk = assessSendRisk as unknown as ReturnType<typeof vi.fn>;
 const send = sendFollowUpToLead as unknown as ReturnType<typeof vi.fn>;
+const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
 
 function lead(overrides: Record<string, unknown> = {}) {
   return {
@@ -129,6 +132,14 @@ describe("silence automation risk gate", () => {
     expect(send).not.toHaveBeenCalled();
     expect(p.lead.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ suggestedMessage: expect.any(String), suggestedSubject: expect.any(String) }) })
+    );
+    // task #67: a held-not-sent decision is still a real AI decision —
+    // Rule 3's risk gate — so it lands in the audit trail too, not just a
+    // string in this run's own summary.
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({ businessId: "biz1" }),
+      "ai.hold",
+      expect.objectContaining({ targetId: "lead1", meta: expect.objectContaining({ riskLevel: "medium" }) })
     );
   });
 

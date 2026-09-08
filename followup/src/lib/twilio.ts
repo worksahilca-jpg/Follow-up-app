@@ -414,6 +414,35 @@ export function twiml(xml: string): Response {
 }
 
 /**
+ * The standard CTIA/Twilio opt-out and opt-in keywords, matched as the
+ * WHOLE trimmed message body (case-insensitive) — not a substring check,
+ * so "please stop texting me" doesn't trip it but "STOP" or "Stop" does.
+ * This is the app's OWN record of a lead's consent (see Lead.optedOutAt
+ * and every check against it in src/lib/sending.ts) — it is deliberately
+ * NOT a substitute for Twilio's own Advanced Opt-Out feature (Console →
+ * Messaging → Settings), which blocks delivery at the carrier level
+ * before it even reaches this webhook. Enable both: Twilio's for the
+ * legal carrier-level guarantee, this for the app's own guarantee that no
+ * send path here — manual, automated, or a sequence — can ignore it.
+ *
+ * "YES" is deliberately excluded from the opt-in set even though some
+ * CTIA guidance lists it: outside of a real Twilio Advanced Opt-Out flow,
+ * a bare "yes" is far more likely to be a normal reply mid-conversation
+ * than an intentional re-subscribe, and silently clearing an opt-out on
+ * that would be the wrong failure mode.
+ */
+const STOP_KEYWORDS = new Set(["stop", "stopall", "unsubscribe", "cancel", "end", "quit"]);
+const START_KEYWORDS = new Set(["start", "unstop"]);
+
+export function isOptOutMessage(body: string): boolean {
+  return STOP_KEYWORDS.has(body.trim().toLowerCase());
+}
+
+export function isOptInMessage(body: string): boolean {
+  return START_KEYWORDS.has(body.trim().toLowerCase());
+}
+
+/**
  * Sends a real outbound SMS via Twilio's REST API — the reverse of
  * everything else in this file, which only ever receives. Called from
  * src/lib/sending.ts as the fallback for a lead that has a phone but no

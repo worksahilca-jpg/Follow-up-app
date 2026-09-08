@@ -270,6 +270,17 @@ model Lead {
   // that conflates completion with every other kind of exit.
   sequenceCompletedAt DateTime?
 
+  // TCPA/CTIA consent: set the moment a lead texts STOP (or an equivalent
+  // opt-out keyword) on SMS or WhatsApp — see isOptOutMessage() in
+  // src/lib/twilio.ts and the two inbound webhooks that call it. Every
+  // send path funnels through sendFollowUpToLead() (src/lib/sending.ts),
+  // which refuses to text/WhatsApp an opted-out lead regardless of which
+  // caller asked (manual, automated, sequence) — this is a hard stop, not
+  // a risk signal to weigh. A later START/UNSTOP clears it. Deliberately
+  // does NOT block email/Instagram/Messenger sends — STOP is the SMS-
+  // specific legal mechanism (TCPA), not a general "never contact again."
+  optedOutAt DateTime?
+
   conversations Conversation[]
   deals         Deal[]
   followUps     FollowUp[]

@@ -146,3 +146,73 @@ export async function findOrCreateLeadByInstagram(
     throw err;
   }
 }
+
+// --- One-click OAuth ("Connect with Instagram") -----------------------
+//
+// The paste-a-token flow above still works and stays as a fallback (a
+// Meta reviewer, or a business whose token was generated another way),
+// but a real business owner can't generate an Instagram access token by
+// hand. This is Meta's "Instagram API with Instagram Login" product —
+// note this is a SEPARATE app identity from the main Facebook app used
+// below for Facebook Login (see src/lib/facebook.ts): Meta's dashboard
+// shows its own "Instagram app ID"/"Instagram app secret" under
+// App Dashboard → your app → Instagram → API setup with Instagram Login.
+// See docs/meta-oauth-setup.md for the exact console steps.
+const INSTAGRAM_OAUTH_SCOPES = "instagram_business_basic,instagram_business_manage_messages";
+
+export function instagramOAuthAvailable(): boolean {
+  return !!process.env.INSTAGRAM_APP_ID && !!process.env.INSTAGRAM_APP_SECRET;
+}
+
+export function buildInstagramAuthUrl(redirectUri: string, state: string): string {
+  const params = new URLSearchParams({
+    client_id: process.env.INSTAGRAM_APP_ID ?? "",
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: INSTAGRAM_OAUTH_SCOPES,
+    state,
+    force_reauth: "true",
+  });
+  return `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+}
+
+/**
+ * Trades the authorization code for a long-lived (60-day) Instagram
+ * access token: short-lived token first (api.instagram.com, 1 hour),
+ * then the ig_exchange_token long-lived exchange (graph.instagram.com) —
+ * both documented steps of "Instagram API with Instagram Login."
+ * Callers should follow up with resolveInstagramUserId() for the id/username.
+ */
+export async function exchangeInstagramAuthCode(
+  code: string,
+  redirectUri: string
+): Promise<{ accessToken: string } | { error: string }> {
+  const appId = process.env.INSTAGRAM_APP_ID;
+  const appSecret = process.env.INSTAGRAM_APP_SECRET;
+  if (!appId || !appSecret) return { error: "Instagram sign-in isn't configured yet." };
+
+  const shortLivedRes = await fetch("https://api.instagram.com/oauth/access_token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: appId,
+      client_secret: appSecret,
+      grant_type: "authorization_code",
+      redirect_uri: redirectUri,
+      code,
+    }),
+  });
+  if (!shortLivedRes.ok) return { error: "Instagram rejected that sign-in — try connecting again." };
+  const shortLived = await shortLivedRes.json().catch(() => ({}));
+  const shortLivedToken = shortLived?.access_token;
+  if (typeof shortLivedToken !== "string") return { error: "Instagram didn't return an access token." };
+
+  const longLivedRes = await fetch(
+    `${GRAPH_API}/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(appSecret)}&access_token=${encodeURIComponent(shortLivedToken)}`
+  );
+  if (!longLivedRes.ok) return { error: "Couldn't extend that Instagram sign-in — try again." };
+  const longLived = await longLivedRes.json().catch(() => ({}));
+  const longLivedToken = longLived?.access_token;
+  if (typeof longLivedToken !== "string") return { error: "Instagram didn't return a long-lived token." };
+  return { accessToken: longLivedToken };
+}

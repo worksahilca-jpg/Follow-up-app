@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { resolveInstagramUserId, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
+import { instagramOAuthAvailable, resolveInstagramUserId, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
 import { appUrl } from "@/lib/stripe";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
@@ -29,6 +29,7 @@ export async function GET() {
     instagramUserId: business?.instagramUserId ?? null,
     webhookUrl: `${appUrl()}/api/instagram/webhook`,
     verifyToken: WEBHOOK_VERIFY_TOKEN,
+    oauthAvailable: instagramOAuthAvailable(),
   });
 }
 

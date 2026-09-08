@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/db", () => ({
   prisma: {
     automation: { findFirst: vi.fn() },
-    lead: { findMany: vi.fn(), update: vi.fn() },
+    lead: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     notification: { create: vi.fn() },
   },
 }));
@@ -56,6 +56,7 @@ beforeEach(() => {
   // First findMany is the silence query, second the unanswered query.
   p.lead.findMany.mockResolvedValue([]);
   p.lead.update.mockResolvedValue({});
+  p.lead.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds by default
   p.notification.create.mockResolvedValue({});
   send.mockResolvedValue({ success: true });
 });
@@ -180,7 +181,10 @@ describe("silence automation risk gate", () => {
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     risk.mockResolvedValue({ riskLevel: "high", reason: "quotes a price" });
     await runAutomationForBusiness("biz1");
-    expect(p.lead.update).toHaveBeenCalledWith({ where: { id: "lead1" }, data: { lastAutomationCheckedAt: expect.any(Date) } });
+    expect(p.lead.updateMany).toHaveBeenCalledWith({
+      where: { id: "lead1", OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: expect.any(Date) } }] },
+      data: { lastAutomationCheckedAt: expect.any(Date) },
+    });
   });
 
   it("does nothing at all when the master switch is off", async () => {
@@ -188,5 +192,29 @@ describe("silence automation risk gate", () => {
     const r = await runAutomationForBusiness("biz1");
     expect(r.checked).toBe(0);
     expect(p.lead.findMany).not.toHaveBeenCalled();
+  });
+
+  // task #84 (second-pass audit): a manual "Run automation check now" click
+  // racing the hourly cron, or two overlapping cron ticks, both see the
+  // same lead as eligible from the plain SELECT above — only one of them
+  // may actually win the atomic claim and act on it.
+  describe("concurrent-run claim (task #84)", () => {
+    it("skips a lead another concurrent run already claimed, instead of sending twice", async () => {
+      p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+      p.lead.updateMany.mockResolvedValueOnce({ count: 0 }); // lost the race
+      const r = await runAutomationForBusiness("biz1");
+      expect(send).not.toHaveBeenCalled();
+      expect(r.sent).toBe(0);
+      expect(r.held).toBe(0);
+      expect(r.skipped).toEqual([]); // claimed-away is not a failure
+    });
+
+    it("still sends when this run wins the claim", async () => {
+      p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+      p.lead.updateMany.mockResolvedValueOnce({ count: 1 }); // won the race
+      const r = await runAutomationForBusiness("biz1");
+      expect(send).toHaveBeenCalledTimes(1);
+      expect(r.sent).toBe(1);
+    });
   });
 });

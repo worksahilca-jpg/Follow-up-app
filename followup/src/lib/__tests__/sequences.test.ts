@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   prisma: {
-    lead: { findMany: vi.fn(), update: vi.fn() },
+    lead: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     notification: { create: vi.fn() },
   },
 }));
@@ -47,6 +47,7 @@ function enrolled(lastDirection: "inbound" | "outbound") {
 
 beforeEach(() => {
   p.lead.update.mockResolvedValue({});
+  p.lead.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds by default
   p.notification.create.mockResolvedValue({});
 });
 
@@ -78,5 +79,32 @@ describe("workflow stop-on-reply", () => {
     const r = await runSequencesForBusiness("biz1");
     expect(send).not.toHaveBeenCalled();
     expect(r.checked).toBe(1);
+  });
+});
+
+// task #84 (second-pass audit): a manual "run now" click racing the hourly
+// cron, or two overlapping cron ticks, both see the same due lead from the
+// plain SELECT above — only the run that wins the atomic claim may act.
+describe("concurrent-run claim (task #84)", () => {
+  function enrolledOnEmailStep() {
+    const l = enrolled("outbound");
+    l.sequence = { ...l.sequence, steps: [{ ...step, action: "EMAIL" }] };
+    return l;
+  }
+
+  it("skips a lead another concurrent run already claimed, instead of sending its step twice", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    p.lead.updateMany.mockResolvedValueOnce({ count: 0 }); // lost the race
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(r.advanced).toBe(0);
+    expect(r.skipped).toEqual([]); // claimed-away is not a failure
+  });
+
+  it("still advances the step when this run wins the claim", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    p.lead.updateMany.mockResolvedValueOnce({ count: 1 }); // won the race
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).toHaveBeenCalledTimes(1);
   });
 });

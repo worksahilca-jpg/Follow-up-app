@@ -1,7 +1,7 @@
 import { ShieldCheck, ShieldAlert, History } from "lucide-react";
 import { deriveConsentBasis } from "@/lib/consent";
 import { formatDate } from "@/lib/demo-data";
-import type { LeadAuditEntry } from "@/lib/leads-data";
+import type { LeadAuditTrail } from "@/lib/leads-data";
 
 /**
  * Synthesis rec #2 (research/market/2026-09-08-product-direction-
@@ -49,9 +49,11 @@ export default function LeadTrustPanel({
 }: {
   source: string;
   optedOutAt?: string | null;
-  auditTrail: LeadAuditEntry[];
+  auditTrail: LeadAuditTrail;
 }) {
   const consent = deriveConsentBasis(source);
+  const { events, totalCount } = auditTrail;
+  const truncated = totalCount > events.length;
 
   return (
     <div className="rounded-xl border border-line bg-card p-4">
@@ -95,23 +97,34 @@ export default function LeadTrustPanel({
           <History className="h-3.5 w-3.5" />
           AI activity log
         </h4>
-        {auditTrail.length === 0 ? (
+        {events.length === 0 ? (
           <p className="text-sm text-ink-soft mt-2">Nothing sent or held for this lead yet.</p>
         ) : (
-          <ul className="mt-2 space-y-2.5">
-            {auditTrail.map((entry) => {
-              const copy = (ACTION_COPY[entry.action] ?? (() => ({ label: entry.action })))(entry.meta);
-              return (
-                <li key={entry.id} className="text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">{copy.label}</span>
-                    <span className="text-xs text-ink-soft shrink-0">{formatDate(entry.createdAt)}</span>
-                  </div>
-                  {copy.detail && <p className="text-xs text-ink-soft mt-0.5">{copy.detail}</p>}
-                </li>
-              );
-            })}
-          </ul>
+          <>
+            <ul className="mt-2 space-y-2.5">
+              {events.map((entry) => {
+                const copy = (ACTION_COPY[entry.action] ?? (() => ({ label: entry.action })))(entry.meta);
+                return (
+                  <li key={entry.id} className="text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">{copy.label}</span>
+                      <span className="text-xs text-ink-soft shrink-0">{formatDate(entry.createdAt)}</span>
+                    </div>
+                    {copy.detail && <p className="text-xs text-ink-soft mt-0.5">{copy.detail}</p>}
+                  </li>
+                );
+              })}
+            </ul>
+            {truncated && (
+              // task #85: this log used to just stop at 25 with nothing
+              // saying so — a lead with a longer history looked fully
+              // audited when it wasn't. Nothing here is lost (AuditEvent
+              // rows are permanent), only what's rendered is capped.
+              <p className="text-xs text-ink-soft mt-2.5 italic">
+                Showing the 25 most recent of {totalCount} actions.
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>

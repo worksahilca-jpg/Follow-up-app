@@ -17,6 +17,9 @@ import StatCard from "@/components/StatCard";
 import EmptyState from "@/components/EmptyState";
 import CleanupLeadsButton from "@/components/CleanupLeadsButton";
 import { Search, Plus, Upload, Phone, Users, Flame, Snowflake, Trophy, Inbox, SlidersHorizontal, X } from "lucide-react";
+import FadeIn from "@/components/motion/FadeIn";
+import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
+import CountUp from "@/components/motion/CountUp";
 
 const filters = [
   { id: "all", label: "All" },
@@ -177,12 +180,25 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
         />
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
-        <StatCard label="Total" value={String(leads.length)} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-        <StatCard label="Hot" value={String(hotCount)} icon={Flame} accent="var(--coral)" accentSoft="var(--coral-soft)" />
-        <StatCard label="Going cold" value={String(coldCount)} icon={Snowflake} accent="var(--gold)" accentSoft="var(--gold-soft)" />
-        <StatCard label="Won" value={String(wonCount)} icon={Trophy} accent="var(--sage)" accentSoft="var(--sage-soft)" />
-      </div>
+      {/* Same on-mount stagger + tick-up treatment as the dashboard's own
+          stat row (src/app/(app)/dashboard/page.tsx) — this page and the
+          dashboard are both "first thing you see" moments, so they should
+          feel like the same product, not two different ones stitched
+          together. */}
+      <RevealGroup on="mount" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+        <RevealItem>
+          <StatCard label="Total" value={<CountUp to={leads.length} />} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+        </RevealItem>
+        <RevealItem>
+          <StatCard label="Hot" value={<CountUp to={hotCount} />} icon={Flame} accent="var(--coral)" accentSoft="var(--coral-soft)" />
+        </RevealItem>
+        <RevealItem>
+          <StatCard label="Going cold" value={<CountUp to={coldCount} />} icon={Snowflake} accent="var(--gold)" accentSoft="var(--gold-soft)" />
+        </RevealItem>
+        <RevealItem>
+          <StatCard label="Won" value={<CountUp to={wonCount} />} icon={Trophy} accent="var(--sage)" accentSoft="var(--sage-soft)" />
+        </RevealItem>
+      </RevealGroup>
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1.5">
@@ -252,42 +268,48 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
         </div>
       </div>
 
-      <div className="mt-6 rounded-xl border border-line bg-card divide-y divide-line overflow-hidden">
-        {filtered.map((lead) => (
-          <Link
-            key={lead.id}
-            href={`/leads/${lead.id}`}
-            className="flex items-center gap-4 px-5 py-4 hover:bg-paper transition-colors"
-          >
-            <ScoreBadge score={lead.score} size="sm" />
-            {lead.stage !== "won" && lead.stage !== "lost" && (
-              <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: urgencyColor(daysSince(lead.lastContacted)) }}
-                title={`${daysSince(lead.lastContacted)} days since last contact`}
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="font-medium truncate">{lead.name}</p>
-              <p className="text-sm text-ink-soft truncate">{lead.company}</p>
-            </div>
-            <div className="hidden sm:block">
-              <PriorityPill priority={lead.priority} reviewed={Boolean(lead.scoreReason)} />
-            </div>
-            <div
-              className="text-sm hidden lg:block w-28 truncate"
-              style={lead.assignedToId ? { color: "var(--ink-soft)" } : { color: "var(--gold)", fontWeight: 500 }}
+      {/* One fade for the whole list rather than a per-row stagger — a
+          RevealGroup cascade reads as choreography for 4 stat cards, but
+          at list length (a dozen rows, a hundred) the same per-child delay
+          just makes scanning the page feel slow. The urgency signal that
+          used to be a small dot (easy to miss scrolling fast) is now a
+          left-edge rail per row instead — the same color, just legible at
+          a glance down the whole list, the way a severity stripe should
+          read. See src/lib/urgency.ts for what the color scale means. */}
+      <FadeIn className="mt-6 rounded-xl border border-line bg-card divide-y divide-line overflow-hidden">
+        {filtered.map((lead) => {
+          const open = lead.stage !== "won" && lead.stage !== "lost";
+          return (
+            <Link
+              key={lead.id}
+              href={`/leads/${lead.id}`}
+              className="flex items-center gap-4 pl-4 pr-5 py-4 hover:bg-paper transition-colors border-l-[3px]"
+              style={{ borderLeftColor: open ? urgencyColor(daysSince(lead.lastContacted)) : "transparent" }}
+              title={open ? `${daysSince(lead.lastContacted)} days since last contact` : undefined}
             >
-              {lead.assignedToId ? lead.assignedTo : "Up for grabs"}
-            </div>
-            <div className="text-sm text-ink-soft hidden md:block w-24">
-              {formatDate(lead.lastContacted)}
-            </div>
-            <div className="text-sm font-medium tabular-nums w-20 text-right" style={{ color: "var(--gold)" }}>
-              {formatCurrency(lead.dealValue)}
-            </div>
-          </Link>
-        ))}
+              <ScoreBadge score={lead.score} size="sm" />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium truncate">{lead.name}</p>
+                <p className="text-sm text-ink-soft truncate">{lead.company}</p>
+              </div>
+              <div className="hidden sm:block">
+                <PriorityPill priority={lead.priority} reviewed={Boolean(lead.scoreReason)} />
+              </div>
+              <div
+                className="text-sm hidden lg:block w-28 truncate"
+                style={lead.assignedToId ? { color: "var(--ink-soft)" } : { color: "var(--gold)", fontWeight: 500 }}
+              >
+                {lead.assignedToId ? lead.assignedTo : "Up for grabs"}
+              </div>
+              <div className="text-sm text-ink-soft hidden md:block w-24">
+                {formatDate(lead.lastContacted)}
+              </div>
+              <div className="text-sm font-medium tabular-nums w-20 text-right" style={{ color: "var(--gold)" }}>
+                {formatCurrency(lead.dealValue)}
+              </div>
+            </Link>
+          );
+        })}
         {filtered.length === 0 && leads.length > 0 && (
           <p className="px-5 py-8 text-center text-sm text-ink-soft">No leads match this filter.</p>
         )}
@@ -315,7 +337,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
             }
           />
         )}
-      </div>
+      </FadeIn>
     </div>
   );
 }

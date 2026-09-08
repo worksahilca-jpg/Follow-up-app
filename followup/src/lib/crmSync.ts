@@ -45,7 +45,12 @@ export async function syncCrmForBusiness(businessId: string): Promise<CrmSyncRes
   let imported = 0;
   let touched = 0;
   let truncated = false;
-  let cursor: string | null = null;
+  // Resume from wherever the last truncated run left off, instead of
+  // always restarting at page 1 — see CrmConnection.syncCursor in
+  // schema.prisma and research/audit/2026-09-08-newer-surface-audit.md
+  // finding #2. Null (no prior backfill in progress, or the last one
+  // finished) behaves exactly as before this fix.
+  let cursor: string | null = conn.syncCursor;
   let pages = 0;
 
   try {
@@ -66,7 +71,14 @@ export async function syncCrmForBusiness(businessId: string): Promise<CrmSyncRes
 
     await prisma.crmConnection.update({
       where: { businessId },
-      data: { lastSyncedAt: truncated ? conn.lastSyncedAt : startedAt, lastSyncError: null },
+      data: {
+        lastSyncedAt: truncated ? conn.lastSyncedAt : startedAt,
+        // Persist where to resume next tick while a backfill is still in
+        // progress; cleared the moment a run actually reaches the end
+        // (hasMore: false) rather than just hitting the page budget.
+        syncCursor: truncated ? cursor : null,
+        lastSyncError: null,
+      },
     });
   } catch (err) {
     console.error(`CRM sync failed for business ${businessId} (${conn.provider}):`, err);

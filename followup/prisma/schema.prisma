@@ -724,6 +724,20 @@ model CrmConnection {
   lastSyncedAt  DateTime?
   lastSyncError String?
   createdAt     DateTime  @default(now())
+
+  // Where a page-budget-truncated sync run left off (see MAX_PAGES_PER_RUN
+  // in src/lib/crmSync.ts), so the NEXT run resumes from here instead of
+  // restarting at page 1 — without this, an account with more contacts
+  // than fit in one run's page budget could never finish backfilling, no
+  // matter how many cron ticks passed (research/audit/
+  // 2026-09-08-newer-surface-audit.md finding #2). Set alongside
+  // lastSyncedAt in the same update: non-null only while a backfill is
+  // still in progress, cleared back to null the moment a run completes an
+  // untruncated pass (at which point lastSyncedAt itself advances).
+  // Provider-specific format (an offset string for Follow Up Boss, an
+  // opaque `after` token for HubSpot) — never parsed here, only round-tripped
+  // through CrmClient.fetchPage's own cursor parameter.
+  syncCursor String?
 }
 
 model AuditEvent {

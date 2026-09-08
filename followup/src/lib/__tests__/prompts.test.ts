@@ -27,7 +27,9 @@ beforeEach(() => {
 
 describe("no-invention drafting", () => {
   it("instructs the model to never state facts absent from the conversation", async () => {
-    create.mockResolvedValue({ choices: [{ message: { content: "I will confirm the roof details for you." } }] });
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "Your roof question", body: "I will confirm the roof details for you." }) } }],
+    });
     await generateFollowUpMessage({ name: "Young Son", conversation });
     const system = create.mock.calls[0][0].messages[0].content as string;
     expect(system).toMatch(/Never invent facts/);

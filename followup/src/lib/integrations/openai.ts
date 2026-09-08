@@ -311,9 +311,34 @@ export async function assessSendRisk(
   return JSON.parse(raw) as { riskLevel: "low" | "medium" | "high"; reason: string };
 }
 
+const FOLLOW_UP_JSON_SCHEMA = {
+  name: "follow_up_email",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      subject: {
+        type: "string",
+        description:
+          "A concise, professional email subject line specific to this conversation (reference the actual " +
+          "topic/property/project when the conversation gives you one) — never generic filler like just " +
+          "'Following up' or 'Checking in' on its own. Plain business tone: no emoji, no ALL CAPS, no " +
+          "exclamation points, no clickbait. Under 80 characters.",
+      },
+      body: {
+        type: "string",
+        description: "2-4 complete sentences, the body paragraph only — no greeting or sign-off.",
+      },
+    },
+    required: ["subject", "body"],
+    additionalProperties: false,
+  },
+} as const;
+
 /**
- * Drafts only the body paragraph of a follow-up — no greeting, no
- * sign-off. Those get added by the caller (src/lib/sender.ts +
+ * Drafts a follow-up email as a real business email: a proper subject
+ * line plus the body paragraph — no greeting, no sign-off on the body.
+ * The greeting/sign-off get added by the caller (src/lib/sender.ts +
  * whoever calls this) using the real sender's name, so the email always
  * has an actual signature instead of the AI guessing or omitting one.
  *
@@ -332,7 +357,7 @@ export async function generateFollowUpMessage(
   lead: Pick<Lead, "name" | "conversation">,
   voiceSamples: string[] = [],
   messageHint?: string
-): Promise<string> {
+): Promise<{ subject: string; body: string }> {
   const client = getClient();
 
   const voiceBlock =
@@ -353,20 +378,21 @@ export async function generateFollowUpMessage(
       {
         role: "system",
         content:
-          "You draft the body of a follow-up email. You represent the business that was CONTACTED — the person " +
-          "in this conversation reached out about the business's services. You are not the one requesting " +
-          "anything; never write as if you're the one who needs a vendor, contractor, or service. Reference " +
-          "something concrete and specific from the conversation so it doesn't read as generic. Write 2-4 " +
-          "complete sentences: proper capitalization, no sentence fragments, no trailing off mid-thought, no run-on " +
-          "clauses joined by a dash. Warm but professional — not stiff corporate jargon, but not overly casual " +
-          "either. Do not include a greeting ('Hi ...', 'Dear ...') or a sign-off/signature of any kind — output " +
-          "only the body paragraph itself. Write your reply in the same language as the lead's most recent " +
-          "message in the conversation below — do not default to English unless that's the language they're " +
-          "actually writing in. Never invent facts: everything you state about the lead, their situation, their " +
-          "property or project, prior calls, timelines, or what the business has done or will do must appear " +
-          "in the conversation below. If the lead asked a factual question the conversation doesn't answer, " +
-          "acknowledge the question and say you'll confirm the specifics for them — do not make up an answer, " +
-          "a number, a date, or a detail to sound helpful. When in doubt, leave it out." +
+          "You draft a follow-up email — a subject line and the body paragraph. You represent the business " +
+          "that was CONTACTED — the person in this conversation reached out about the business's services. You " +
+          "are not the one requesting anything; never write as if you're the one who needs a vendor, contractor, " +
+          "or service. Reference something concrete and specific from the conversation so neither the subject " +
+          "nor the body reads as generic. The body: 2-4 complete sentences, proper capitalization, no sentence " +
+          "fragments, no trailing off mid-thought, no run-on clauses joined by a dash. Warm but professional — " +
+          "not stiff corporate jargon, but not overly casual either. Do not include a greeting ('Hi ...', " +
+          "'Dear ...') or a sign-off/signature of any kind in the body — output only the body paragraph itself. " +
+          "Write both the subject and the body in the same language as the lead's most recent message in the " +
+          "conversation below — do not default to English unless that's the language they're actually writing " +
+          "in. Never invent facts: everything you state about the lead, their situation, their property or " +
+          "project, prior calls, timelines, or what the business has done or will do must appear in the " +
+          "conversation below. If the lead asked a factual question the conversation doesn't answer, acknowledge " +
+          "the question and say you'll confirm the specifics for them — do not make up an answer, a number, a " +
+          "date, or a detail to sound helpful. When in doubt, leave it out." +
           voiceBlock +
           hintBlock,
       },
@@ -377,12 +403,16 @@ export async function generateFollowUpMessage(
           `Conversation so far:\n${formatTranscript(lead.conversation)}`,
       },
     ],
-    max_tokens: 200,
+    max_tokens: 260,
+    response_format: { type: "json_schema", json_schema: FOLLOW_UP_JSON_SCHEMA },
   });
 
-  const message = completion.choices[0]?.message?.content?.trim();
-  if (!message) throw new Error("OpenAI returned no content for generateFollowUpMessage.");
-  return message;
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("OpenAI returned no content for generateFollowUpMessage.");
+
+  const parsed = JSON.parse(raw) as { subject: string; body: string };
+  if (!parsed.body?.trim()) throw new Error("OpenAI returned an empty body for generateFollowUpMessage.");
+  return { subject: parsed.subject?.trim() || "Following up", body: parsed.body.trim() };
 }
 
 /**

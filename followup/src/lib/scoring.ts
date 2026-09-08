@@ -50,8 +50,8 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     }),
     getVoiceSamples(lead.businessId),
   ]);
-  const draftBody = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
-  const suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draftBody);
+  const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
+  const suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body);
 
   const newPriority = priorityFromScore(scoreResult.score);
   // "Handoff" — the explicit "this one's ready, go close it" moment the
@@ -75,6 +75,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       scoreFactors: scoreResult.factors as unknown as Prisma.InputJsonValue,
       priority: newPriority,
       suggestedMessage,
+      suggestedSubject: draft.subject,
     },
   });
 

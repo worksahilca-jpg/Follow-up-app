@@ -4,10 +4,11 @@
  * lead's conversation history, and as a FollowUp record (so "Sent" on the
  * weekly report can be a real count instead of a placeholder).
  *
- * Four real channels now: email (Gmail), SMS (Twilio) or WhatsApp
- * (Twilio's WhatsApp API) when the lead only has a phone, Instagram DM
- * when the lead's "phone" is actually an Instagram-scoped sender ID (see
- * src/lib/instagram.ts) — same approval-first flow either way, just a
+ * Real channels now: email (Gmail or Outlook — see detectEmailProvider
+ * below), SMS (Twilio) or WhatsApp (Twilio's WhatsApp API) when the lead
+ * only has a phone, Instagram DM or Facebook Messenger when the lead's
+ * "phone" is actually a platform-scoped sender ID (see
+ * src/lib/instagramId.ts) — same approval-first flow either way, just a
  * different wire underneath.
  */
 
@@ -106,7 +107,7 @@ export async function sendFollowUpToLead(
     if (emailProvider === "outlook") {
       const result = await sendOutlookEmail(lead.businessId, {
         to: lead.email,
-        subject: options.subject ?? `Following up, ${lead.name.split(" ")[0]}`,
+        subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
         body,
         // Graph's /reply endpoint takes the specific message's own id,
         // not an RFC822 Message-ID header — acknowledgeNewLead's Outlook
@@ -118,7 +119,7 @@ export async function sendFollowUpToLead(
     } else {
       const result = await sendEmail(lead.businessId, {
         to: lead.email,
-        subject: options.subject ?? `Following up, ${lead.name.split(" ")[0]}`,
+        subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
         body,
         threadId: options.emailThreadId,
         inReplyTo: options.emailInReplyTo,

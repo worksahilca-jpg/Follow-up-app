@@ -204,6 +204,7 @@ model Lead {
   scoreReason      String?
   scoreFactors     Json? // ScoreFactor[] — [{ label, weight }], from AI scoring
   suggestedMessage String? // AI-drafted follow-up, edited/approved before sending
+  suggestedSubject String? // AI-drafted subject line for the same email, same edited/approved-before-sending path
   priority         Priority       @default(NONE)
   lastContacted    DateTime?
   nextFollowUp     DateTime?

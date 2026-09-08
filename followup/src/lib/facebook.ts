@@ -173,3 +173,77 @@ export async function upsertLeadFromLeadgen(
   await applySourceRouting(businessId, lead.id, "Facebook Lead Ad");
   return { lead, isNew: true };
 }
+
+// --- One-click OAuth ("Connect with Facebook") -------------------------
+//
+// Facebook Login for Business: separate app identity from Instagram
+// Login above — this is the MAIN Meta app's own App ID/Secret. See
+// docs/meta-oauth-setup.md for the console steps and exact permissions
+// to request in App Review (pages_show_list, pages_messaging,
+// pages_manage_metadata, pages_read_engagement, leads_retrieval).
+const FACEBOOK_OAUTH_SCOPES = "pages_show_list,pages_messaging,pages_manage_metadata,pages_read_engagement,leads_retrieval";
+
+export function facebookOAuthAvailable(): boolean {
+  return !!process.env.FACEBOOK_APP_ID && !!process.env.FACEBOOK_APP_SECRET;
+}
+
+export function buildFacebookAuthUrl(redirectUri: string, state: string): string {
+  const params = new URLSearchParams({
+    client_id: process.env.FACEBOOK_APP_ID ?? "",
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: FACEBOOK_OAUTH_SCOPES,
+    state,
+  });
+  return `https://www.facebook.com/v21.0/dialog/oauth?${params.toString()}`;
+}
+
+export interface ManagedPage {
+  id: string;
+  name: string;
+  accessToken: string;
+}
+
+/**
+ * Authorization code → short-lived user token → long-lived (60-day) user
+ * token → the Pages that person manages, EACH with its own Page access
+ * token (documented as not expiring on its own — it dies only if the
+ * underlying user token is revoked or the person loses their role on the
+ * Page). A business connects exactly one Page (Business.facebookPageId is
+ * unique); if the person manages more than one, the caller has to ask
+ * which — see the picker flow in /api/facebook/oauth/callback.
+ */
+export async function exchangeFacebookAuthCode(
+  code: string,
+  redirectUri: string
+): Promise<{ pages: ManagedPage[] } | { error: string }> {
+  const appId = process.env.FACEBOOK_APP_ID;
+  const appSecret = process.env.FACEBOOK_APP_SECRET;
+  if (!appId || !appSecret) return { error: "Facebook sign-in isn't configured yet." };
+
+  const shortLivedRes = await fetch(
+    `${GRAPH}/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${appSecret}&code=${encodeURIComponent(code)}`
+  );
+  if (!shortLivedRes.ok) return { error: "Facebook rejected that sign-in — try connecting again." };
+  const shortLived = await shortLivedRes.json().catch(() => ({}));
+  const shortLivedToken = shortLived?.access_token;
+  if (typeof shortLivedToken !== "string") return { error: "Facebook didn't return an access token." };
+
+  const longLivedRes = await fetch(
+    `${GRAPH}/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${encodeURIComponent(shortLivedToken)}`
+  );
+  if (!longLivedRes.ok) return { error: "Couldn't extend that Facebook sign-in — try again." };
+  const longLived = await longLivedRes.json().catch(() => ({}));
+  const longLivedUserToken = longLived?.access_token;
+  if (typeof longLivedUserToken !== "string") return { error: "Facebook didn't return a long-lived token." };
+
+  const pagesRes = await fetch(`${GRAPH}/me/accounts?access_token=${encodeURIComponent(longLivedUserToken)}`);
+  if (!pagesRes.ok) return { error: "Couldn't read your Facebook Pages — try connecting again." };
+  const pagesData = await pagesRes.json().catch(() => ({}));
+  const rows: Array<{ id?: string; name?: string; access_token?: string }> = Array.isArray(pagesData?.data) ? pagesData.data : [];
+  const pages = rows
+    .filter((p): p is { id: string; name: string; access_token: string } => !!p.id && !!p.access_token)
+    .map((p) => ({ id: p.id, name: p.name ?? "Facebook Page", accessToken: p.access_token }));
+  if (pages.length === 0) return { error: "That Facebook account doesn't manage any Pages — you need to be an admin on the Page you want to connect." };
+  return { pages };
+}

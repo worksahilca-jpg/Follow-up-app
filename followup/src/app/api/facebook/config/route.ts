@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { resolveFacebookPage } from "@/lib/facebook";
+import { facebookOAuthAvailable, resolveFacebookPage } from "@/lib/facebook";
 import { WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
 import { appUrl } from "@/lib/stripe";
 import { recordAudit } from "@/lib/audit";
@@ -23,6 +23,7 @@ export async function GET() {
     pageName: business?.facebookPageName ?? null,
     webhookUrl: `${appUrl()}/api/instagram/webhook`,
     verifyToken: WEBHOOK_VERIFY_TOKEN,
+    oauthAvailable: facebookOAuthAvailable(),
   });
 }
 

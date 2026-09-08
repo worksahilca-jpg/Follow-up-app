@@ -37,7 +37,7 @@ function person(externalId: string, over: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   fetchPage.mockReset();
-  p.crmConnection.findUnique.mockResolvedValue({ businessId: "biz1", provider: "followupboss", apiKey: "key", lastSyncedAt: null });
+  p.crmConnection.findUnique.mockResolvedValue({ businessId: "biz1", provider: "followupboss", apiKey: "key", lastSyncedAt: null, syncCursor: null });
   p.crmConnection.update.mockResolvedValue({});
   p.lead.findUnique.mockResolvedValue(null);
   p.lead.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: "new-lead", ...data }));
@@ -70,13 +70,31 @@ describe("CRM sync", () => {
     expect(p.lead.create).not.toHaveBeenCalled();
   });
 
-  it("stops at the page budget and does not advance lastSyncedAt when truncated", async () => {
+  it("stops at the page budget, does not advance lastSyncedAt, and persists the cursor to resume from when truncated", async () => {
     for (let i = 0; i < 6; i++) fetchPage.mockResolvedValueOnce({ people: [person(String(i))], nextCursor: String(i + 1), hasMore: true });
     const r = await syncCrmForBusiness("biz1");
     expect(r.truncated).toBe(true);
     expect(fetchPage).toHaveBeenCalledTimes(5);
+    // 5 pages ran (cursor "0".."4" as each page's OWN cursor argument),
+    // the 5th page returned nextCursor "5" — that's what should persist.
     expect(p.crmConnection.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ lastSyncedAt: null }) })
+      expect.objectContaining({ data: expect.objectContaining({ lastSyncedAt: null, syncCursor: "5" }) })
+    );
+  });
+
+  it("resumes from a previously-persisted cursor instead of restarting at page 1", async () => {
+    p.crmConnection.findUnique.mockResolvedValue({ businessId: "biz1", provider: "followupboss", apiKey: "key", lastSyncedAt: null, syncCursor: "500" });
+    fetchPage.mockResolvedValueOnce({ people: [person("501")], nextCursor: null, hasMore: false });
+    await syncCrmForBusiness("biz1");
+    expect(fetchPage).toHaveBeenCalledWith("key", "500", null);
+  });
+
+  it("clears the persisted cursor once a run completes a full, untruncated pass", async () => {
+    p.crmConnection.findUnique.mockResolvedValue({ businessId: "biz1", provider: "followupboss", apiKey: "key", lastSyncedAt: null, syncCursor: "500" });
+    fetchPage.mockResolvedValueOnce({ people: [person("501")], nextCursor: null, hasMore: false });
+    await syncCrmForBusiness("biz1");
+    expect(p.crmConnection.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ syncCursor: null }) })
     );
   });
 

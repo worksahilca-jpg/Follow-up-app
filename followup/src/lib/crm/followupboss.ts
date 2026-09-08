@@ -14,6 +14,20 @@ import type { CrmClient, CrmPerson } from "./types";
  * person a cheap no-op — the same "known thread skips work" shape the
  * Gmail sync already uses. `since` is accepted for interface symmetry
  * with HubSpot but not sent as a request filter here.
+ *
+ * Sort stays `-created` (newest-first) — a deliberate call, not an
+ * oversight, after research/audit/2026-09-08-newer-surface-audit.md
+ * finding #2 (fixed via CrmConnection.syncCursor, see src/lib/crmSync.ts)
+ * flagged switching to oldest-first as worth considering: newest-first is
+ * what lets a fully-caught-up connection notice a brand new contact
+ * within its next few ticks at all, since there's no reliable `since`
+ * filter here to catch it otherwise — oldest-first would trade that for
+ * only ever converging a historical backfill, at the cost of a large,
+ * still-growing account needing to re-walk its entire contact list before
+ * reaching anything new again. A contact landing near the current resume
+ * offset just as new contacts arrive gets re-processed (a harmless,
+ * already-idempotent no-op), not skipped, since new contacts insert
+ * ahead of the resume point, not behind it.
  */
 const BASE = "https://api.followupboss.com/v1";
 const PAGE_SIZE = 100;

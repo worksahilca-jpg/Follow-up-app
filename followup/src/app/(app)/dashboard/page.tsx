@@ -18,6 +18,8 @@ import { getSessionContext } from "@/lib/session";
 import { AlertTriangle, Flame, LifeBuoy, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox, CalendarClock } from "lucide-react";
 import FadeIn from "@/components/motion/FadeIn";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
+import AuroraBackground from "@/components/motion/AuroraBackground";
+import CountUp from "@/components/motion/CountUp";
 
 // This page reads live leads from the database on every request — never
 // bake a stale snapshot into the build.
@@ -36,10 +38,19 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <FadeIn>
-        <h1 className="font-display text-3xl">{getGreeting()}</h1>
-        <p className="text-ink-soft mt-1">Here&apos;s what needs your attention today.</p>
-      </FadeIn>
+      {/* A contained aurora wash behind just the greeting — the same
+          living background the landing page uses, scaled down to a
+          "welcome banner" rather than a full-bleed hero. This is a
+          working tool people sit in all day, so the drama stays here at
+          the top instead of following the cursor through dense list
+          content below. */}
+      <div className="relative overflow-hidden rounded-2xl border border-line px-6 py-8">
+        <AuroraBackground className="opacity-30" />
+        <FadeIn>
+          <h1 className="font-display text-3xl">{getGreeting()}</h1>
+          <p className="text-ink-soft mt-1">Here&apos;s what needs your attention today.</p>
+        </FadeIn>
+      </div>
 
       {/* Same on-mount stagger as the landing page's hero (RevealGroup
           on="mount") — the first thing anyone sees after signing in reads
@@ -47,12 +58,15 @@ export default async function DashboardPage() {
           once. Every list row below gets a plain CSS hover lift (a
           transform + shadow, no separate motion component needed for
           rows that repeat) so this page finally has something to point a
-          cursor at that responds, the way the landing page already did. */}
+          cursor at that responds, the way the landing page already did.
+          The counts themselves tick up on load (CountUp) rather than
+          sitting there static — currency stays a plain formatted string,
+          since CountUp has no formatter of its own. */}
       <RevealGroup on="mount" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
         <RevealItem>
           <StatCard
             label="At risk right now"
-            value={String(stats.atRisk)}
+            value={<CountUp to={stats.atRisk} />}
             icon={AlertTriangle}
             accent="var(--coral)"
             accentSoft="var(--coral-soft)"
@@ -61,7 +75,7 @@ export default async function DashboardPage() {
         <RevealItem>
           <StatCard
             label="Hot leads"
-            value={String(stats.hotLeads)}
+            value={<CountUp to={stats.hotLeads} />}
             icon={Flame}
             accent="var(--coral)"
             accentSoft="var(--coral-soft)"
@@ -70,7 +84,7 @@ export default async function DashboardPage() {
         <RevealItem>
           <StatCard
             label="Follow-ups today"
-            value={String(stats.followUpsToday)}
+            value={<CountUp to={stats.followUpsToday} />}
             icon={Clock}
             accent="var(--sage)"
             accentSoft="var(--sage-soft)"
@@ -201,9 +215,9 @@ export default async function DashboardPage() {
             Only replies to messages FollowUp sent on its own count here — your own replies are yours.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-            <StatCard label="Answered for you" value={String(rescue.answeredForYou)} icon={Send} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-            <StatCard label="Came back" value={String(rescue.rescued)} icon={MessageCircle} accent="var(--sage)" accentSoft="var(--sage-soft)" />
-            <StatCard label="Booked" value={String(rescue.booked)} icon={CalendarClock} accent="var(--sage)" accentSoft="var(--sage-soft)" />
+            <StatCard label="Answered for you" value={<CountUp to={rescue.answeredForYou} />} icon={Send} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+            <StatCard label="Came back" value={<CountUp to={rescue.rescued} />} icon={MessageCircle} accent="var(--sage)" accentSoft="var(--sage-soft)" />
+            <StatCard label="Booked" value={<CountUp to={rescue.booked} />} icon={CalendarClock} accent="var(--sage)" accentSoft="var(--sage-soft)" />
             <StatCard label="In play" value={formatCurrency(rescue.valueInPlay)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
           </div>
           {rescue.leads.length > 0 && (
@@ -225,10 +239,10 @@ export default async function DashboardPage() {
       <FadeIn className="mt-10 mb-6">
         <h2 className="font-display text-xl">This week&apos;s AI report</h2>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
-          <StatCard label="Analyzed" value={String(weeklyReport.conversationsAnalyzed)} icon={FileSearch} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-          <StatCard label="Sent" value={String(weeklyReport.followUpsSent)} icon={Send} accent="var(--sage)" accentSoft="var(--sage-soft)" />
-          <StatCard label="Replies" value={String(weeklyReport.repliesReceived)} icon={MessageCircle} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-          <StatCard label="Closed" value={String(weeklyReport.dealsClosed)} icon={Trophy} accent="var(--sage)" accentSoft="var(--sage-soft)" />
+          <StatCard label="Analyzed" value={<CountUp to={weeklyReport.conversationsAnalyzed} />} icon={FileSearch} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+          <StatCard label="Sent" value={<CountUp to={weeklyReport.followUpsSent} />} icon={Send} accent="var(--sage)" accentSoft="var(--sage-soft)" />
+          <StatCard label="Replies" value={<CountUp to={weeklyReport.repliesReceived} />} icon={MessageCircle} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+          <StatCard label="Closed" value={<CountUp to={weeklyReport.dealsClosed} />} icon={Trophy} accent="var(--sage)" accentSoft="var(--sage-soft)" />
           <StatCard label="Revenue" value={formatCurrency(weeklyReport.revenueGenerated)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
         </div>
         <p className="text-sm text-ink-soft mt-4 leading-relaxed">{weeklyReport.insight}</p>

@@ -8,7 +8,11 @@ export default function StatCard({
   icon: Icon,
 }: {
   label: string;
-  value: string;
+  // A plain string for anything already formatted (currency, in
+  // particular — CountUp has no formatter of its own); a CountUp element
+  // for a bare integer that should tick up on load instead of sitting
+  // there static.
+  value: string | React.ReactNode;
   accent?: string;
   accentSoft?: string;
   icon?: LucideIcon;

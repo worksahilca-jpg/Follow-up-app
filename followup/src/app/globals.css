@@ -113,3 +113,79 @@ textarea:focus-visible, [tabindex]:focus-visible {
   box-shadow: 0 0 0 3px var(--rust-soft), 0 0 0 1px var(--rust);
   border-radius: 4px;
 }
+
+/* ---- Bold decorative primitives (landing page, dashboard) ----
+   Everything below is pure CSS (no JS cost) and gated under
+   prefers-reduced-motion so a visitor who's asked for less motion still
+   gets the color/shape, just not the drift/shimmer. */
+
+/* Aurora background (see AuroraBackground.tsx): three oversized, heavily
+   blurred color fields drifting past each other slowly — a living wash
+   behind the hero instead of a flat color, using only colors already in
+   the palette (never a color invented just for this). Kept far too slow
+   and far too blurred to read as a "gradient blob SaaS hero" cliché at a
+   glance; it's closer to light through stained glass than a logo mark. */
+@keyframes aurora-drift-a {
+  0%, 100% { transform: translate(-8%, -6%) scale(1); }
+  50% { transform: translate(6%, 8%) scale(1.2); }
+}
+@keyframes aurora-drift-b {
+  0%, 100% { transform: translate(6%, 10%) scale(1.1); }
+  50% { transform: translate(-10%, -4%) scale(0.9); }
+}
+@keyframes aurora-drift-c {
+  0%, 100% { transform: translate(0%, -8%) scale(1.05); }
+  50% { transform: translate(-6%, 6%) scale(1.25); }
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.5;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .aurora-blob-a { animation: aurora-drift-a 22s ease-in-out infinite; }
+  .aurora-blob-b { animation: aurora-drift-b 26s ease-in-out infinite; }
+  .aurora-blob-c { animation: aurora-drift-c 19s ease-in-out infinite; }
+}
+
+/* A diagonal light sweep on hover — the one flourish every primary CTA
+   gets, so the two "Get started" buttons feel like the most alive things
+   on the page rather than flat color fills. */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  left: -60%;
+  width: 40%;
+  background: linear-gradient(115deg, transparent, color-mix(in srgb, var(--on-accent) 55%, transparent), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.55s ease;
+}
+.btn-shine:hover::after {
+  left: 130%;
+}
+
+/* Shimmering gradient text — used once per page, on the single phrase
+   that should read as "the point," never as a running style. */
+.text-gradient-warm {
+  background: linear-gradient(100deg, var(--rust), var(--gold), var(--rust));
+  background-size: 220% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .text-gradient-warm {
+    animation: gradient-shimmer 7s ease-in-out infinite;
+  }
+}
+@keyframes gradient-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}

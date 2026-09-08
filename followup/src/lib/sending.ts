@@ -68,6 +68,52 @@ async function detectEmailProvider(businessId: string, leadId: string): Promise<
   return "gmail";
 }
 
+/**
+ * Which channel an AUTOMATED send (automation.ts, sequences.ts) should
+ * use — always pass this explicitly rather than relying on
+ * sendFollowUpToLead()'s own default below, which the manual-send
+ * composer UI (MessageComposer.tsx's `isEmail = Boolean(leadEmail)`) is
+ * built around and this deliberately leaves untouched.
+ *
+ * The bug this fixes: that default always picks "email" whenever the
+ * lead has one on file, regardless of what channel the lead is actually
+ * engaging on — so a lead who only ever texts or DMs, but also has an
+ * email address (common: a web form asks for both, or a rep adds one
+ * later), got automated replies sent to an inbox they never check. This
+ * mirrors detectPhoneChannel()'s own reasoning above ("which one to
+ * reply on isn't stored on the lead, it's inferred from whichever channel
+ * they most recently actually messaged through") but widens it to
+ * arbitrate against email too, instead of only between text/WhatsApp.
+ *
+ * "web" and "call" aren't send-capable channels themselves (no reply
+ * API), and a lead with no inbound history yet has nothing to infer from
+ * — both fall through to the same static preference order
+ * sendFollowUpToLead()'s own default uses.
+ */
+export async function detectAutomatedReplyChannel(lead: {
+  id: string;
+  email: string | null;
+  phone: string | null;
+}): Promise<"email" | "text" | "whatsapp" | "instagram" | "messenger" | null> {
+  const lastInbound = await prisma.message.findFirst({
+    where: { conversation: { leadId: lead.id }, direction: "inbound" },
+    orderBy: { sentAt: "desc" },
+    select: { conversation: { select: { channel: true } } },
+  });
+  const lastChannel = lastInbound?.conversation.channel;
+  if (lastChannel === "email" && lead.email) return "email";
+  if (lastChannel === "text" && lead.phone) return "text";
+  if (lastChannel === "whatsapp" && lead.phone) return "whatsapp";
+  if (lastChannel === "instagram" && isInstagramLeadId(lead.phone)) return "instagram";
+  if (lastChannel === "messenger" && isMessengerLeadId(lead.phone)) return "messenger";
+
+  if (lead.email) return "email";
+  if (isInstagramLeadId(lead.phone)) return "instagram";
+  if (isMessengerLeadId(lead.phone)) return "messenger";
+  if (lead.phone) return detectPhoneChannel(lead.id);
+  return null;
+}
+
 export async function sendFollowUpToLead(
   leadId: string,
   body: string,

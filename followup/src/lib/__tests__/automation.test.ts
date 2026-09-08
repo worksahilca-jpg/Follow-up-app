@@ -18,14 +18,19 @@ vi.mock("@/lib/integrations/openai", () => ({
   assessSendRisk: vi.fn(),
 }));
 vi.mock("@/lib/sender", () => ({ composeFollowUpEmail: vi.fn(async (_f: string, _b: string, body: string) => `Hi,\n\n${body}`) }));
-vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ success: true })) }));
+vi.mock("@/lib/sending", () => ({
+  sendFollowUpToLead: vi.fn(async () => ({ success: true })),
+  // task #86: automation.ts now passes this explicitly instead of relying
+  // on sendFollowUpToLead()'s own email-if-present default.
+  detectAutomatedReplyChannel: vi.fn(async () => "email"),
+}));
 vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 
 import { prisma } from "@/lib/db";
 import { assessSendRisk } from "@/lib/integrations/openai";
-import { sendFollowUpToLead } from "@/lib/sending";
+import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { recordAudit } from "@/lib/audit";
 import { runAutomationForBusiness } from "@/lib/automation";
 
@@ -34,6 +39,7 @@ const p = prisma as any;
 const risk = assessSendRisk as unknown as ReturnType<typeof vi.fn>;
 const send = sendFollowUpToLead as unknown as ReturnType<typeof vi.fn>;
 const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
+const replyChannel = detectAutomatedReplyChannel as unknown as ReturnType<typeof vi.fn>;
 
 function lead(overrides: Record<string, unknown> = {}) {
   return {
@@ -59,6 +65,7 @@ beforeEach(() => {
   p.lead.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds by default
   p.notification.create.mockResolvedValue({});
   send.mockResolvedValue({ success: true });
+  replyChannel.mockResolvedValue("email");
 });
 
 function unansweredLead(hoursAgo: number, lastDirection: "inbound" | "outbound" = "inbound") {
@@ -149,7 +156,7 @@ describe("silence automation risk gate", () => {
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
     expect(r.sent).toBe(1);
-    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), { automated: true, trigger: "silence", subject: expect.any(String) });
+    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), { automated: true, trigger: "silence", subject: expect.any(String), channel: "email" });
   });
 
   it("fails closed: a risk check that throws holds the lead", async () => {
@@ -216,5 +223,16 @@ describe("silence automation risk gate", () => {
       expect(send).toHaveBeenCalledTimes(1);
       expect(r.sent).toBe(1);
     });
+  });
+
+  // task #86 (third-pass audit): this used to rely on sendFollowUpToLead()'s
+  // own "email if the lead has one" default, which ignored what channel the
+  // lead is actually engaging on.
+  it("passes the lead's actual engaged channel explicitly, not sendFollowUpToLead's own default", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    replyChannel.mockResolvedValue("text"); // this lead only ever texted, despite having an email on file
+    await runAutomationForBusiness("biz1");
+    expect(replyChannel).toHaveBeenCalledWith(expect.objectContaining({ id: "lead1" }));
+    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), expect.objectContaining({ channel: "text" }));
   });
 });

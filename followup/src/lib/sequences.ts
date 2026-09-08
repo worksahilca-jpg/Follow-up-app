@@ -355,6 +355,16 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       if (step.action === "CHANGE_STAGE" && step.stageTo) {
         await prisma.lead.update({ where: { id: lead.id }, data: { stage: step.stageTo } });
       } else if (step.action === "EMAIL") {
+        // This step is labeled "Send email" in the workflow builder — an
+        // explicit, understood choice, not "send whatever channel this
+        // lead happens to be on." A lead with no email address (captured
+        // via SMS, a missed call, Instagram, or Messenger) never had one
+        // to begin with, so skip and say why rather than silently
+        // sendFollowUpToLead()-defaulting to a text/DM in an email's
+        // voice ("Hi X, ... Best, Y") that the business never asked for.
+        if (!lead.email) {
+          return { kind: "skipped" as const, note: `${lead.name}: this step sends by email, but the lead has no email address on file` };
+        }
         const conversation: Message[] = lead.conversations.flatMap((c) =>
           c.messages.map((m) => ({
             id: m.id,
@@ -375,6 +385,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           automated: true,
           trigger: "sequence",
           subject: draft.subject,
+          channel: "email",
         });
         if (!result.success) {
           return { kind: "skipped" as const, note: `${lead.name}: ${result.message ?? "send failed"}` };

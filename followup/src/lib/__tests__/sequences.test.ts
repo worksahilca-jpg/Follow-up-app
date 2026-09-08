@@ -31,6 +31,7 @@ function enrolled(lastDirection: "inbound" | "outbound") {
     name: "Young Son",
     businessId: "biz1",
     assignedToId: "user1",
+    email: "young@example.com",
     sequenceStepIndex: 0,
     sequence: { id: "seq1", name: "New lead cadence", active: true, steps: [step] },
     conversations: [
@@ -104,7 +105,32 @@ describe("concurrent-run claim (task #84)", () => {
   it("still advances the step when this run wins the claim", async () => {
     p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
     p.lead.updateMany.mockResolvedValueOnce({ count: 1 }); // won the race
-    const r = await runSequencesForBusiness("biz1");
+    await runSequencesForBusiness("biz1");
     expect(send).toHaveBeenCalledTimes(1);
+  });
+});
+
+// task #86 (third-pass audit): an "EMAIL" step is an explicit, understood
+// choice in the workflow builder — it must never silently fall through to
+// texting/DMing a lead that has no email address on file.
+describe("EMAIL step channel handling (task #86)", () => {
+  function enrolledOnEmailStep(overrides: Record<string, unknown> = {}) {
+    const l = enrolled("outbound");
+    l.sequence = { ...l.sequence, steps: [{ ...step, action: "EMAIL" }] };
+    return { ...l, ...overrides };
+  }
+
+  it("always passes channel: email explicitly for an EMAIL step", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    await runSequencesForBusiness("biz1");
+    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), expect.objectContaining({ channel: "email" }));
+  });
+
+  it("skips (does not send anything) an EMAIL step for a lead with no email on file", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep({ email: null })]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(r.advanced).toBe(0);
+    expect(r.skipped).toEqual([expect.stringMatching(/no email address on file/)]);
   });
 });

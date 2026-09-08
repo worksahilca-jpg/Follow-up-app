@@ -26,9 +26,17 @@ checked and the re-audit checklist in `docs/security.md` passes.
 - [x] **CI on every PR**: typecheck, lint, build, dependency audit, gitleaks secret
       scan. Dependabot weekly.
 - [ ] Error monitoring with PII scrubbing + alerts on auth/webhook failure spikes (task #70).
-- [ ] Least-privilege DB role for the app; migrations only via DIRECT_URL (task #71).
+- [x] **Least-privilege DB role for the app** (task #71). `followup_app`: full
+      CRUD on app tables, no DDL, no access to `_prisma_migrations`,
+      `NOSUPERUSER`/`NOCREATEDB`/`NOCREATEROLE`. Migrations keep using the
+      owner role via `DIRECT_URL`. See `docs/least-privilege-db-role.md` —
+      the role is created and verified, but the `DATABASE_URL` cutover in
+      Vercel is a manual step still pending (needs a live test through
+      the pooler first).
 - [ ] Per-business data export and full deletion, audit-logged (task #72).
-- [ ] Schema validation (zod) on every request body (task #73).
+- [x] **Schema validation (zod) on every request body** (task #73). Every
+      route with a JSON body validates it through a shared helper
+      (`src/lib/validation.ts`) instead of ad-hoc `typeof` checks.
 - [ ] Automated tests for the trust guarantees (task #59) — security regressions
       are caught by tests, not by luck.
 - [ ] Session hardening: 7-day max age, re-auth prompt before revealing/rotating

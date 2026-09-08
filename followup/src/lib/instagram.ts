@@ -201,6 +201,35 @@ export async function captureDirectReply(
   await prisma.lead.update({ where: { id: leadId }, data: { lastContacted: sentAt } }).catch(() => {});
 }
 
+/**
+ * Creates an inbound Message row, or detects it's already there — Meta
+ * redelivers webhook events aggressively on anything but a fast 2xx (see
+ * src/app/api/instagram/webhook/route.ts's own doc comment), and the
+ * primary inbound paths there had no idempotency key at all, unlike
+ * captureDirectReply() above's upsert-by-externalId for the is_echo
+ * branch — a real gap fixed here
+ * (research/audit/2026-09-08-newer-surface-audit.md finding #3). A plain
+ * create + catch-the-unique-violation, not a separate
+ * findUnique-then-create, is the same atomic-conditional-write posture
+ * used elsewhere in this codebase (see Lead.lastRapidEngagementNotifiedAt
+ * in schema.prisma) — two concurrent redeliveries of the same event
+ * can't both slip past a separate read-then-write the way they could
+ * here otherwise. Returns whether this call actually created the row —
+ * false means the caller should skip the rest of this event (ack/scoring
+ * already ran the first time).
+ */
+export async function createInboundMessageIfNew(conversationId: string, body: string, sentAt: Date, externalId?: string): Promise<boolean> {
+  try {
+    await prisma.message.create({
+      data: { conversationId, direction: "inbound", body, sentAt, externalId },
+    });
+    return true;
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "P2002") return false;
+    throw err;
+  }
+}
+
 // --- One-click OAuth ("Connect with Instagram") -----------------------
 //
 // The paste-a-token flow above still works and stays as a fallback (a

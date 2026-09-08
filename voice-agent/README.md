@@ -17,11 +17,16 @@ Vapi/Retell/Bland).
 
 ```
 caller ↔ Twilio ↔ (this service) ↔ OpenAI Realtime API
-                        │
-                        └─ on hangup, POSTs the transcript to
-                           followup's /api/twilio/voice-agent-callback/[secret]
-                           (creates the Lead/Conversation/Message rows,
-                           runs scoring — see that route for the other half)
+              │                │
+              │                └─ on hangup, POSTs the transcript to
+              │                   followup's /api/twilio/voice-agent-callback/[secret]
+              │                   (creates the Lead/Conversation/Message rows,
+              │                   runs scoring — see that route for the other half)
+              └─ on connect, BEFORE opening the OpenAI leg, checks
+                 followup's /api/twilio/voice-agent-auth/[secret] —
+                 rejects any connection whose secret isn't a real
+                 business with the voice agent enabled and active
+                 billing (this service has no DB access of its own)
 ```
 
 `followup/src/app/api/twilio/voice/[secret]/route.ts` is what points a
@@ -47,7 +52,13 @@ every other channel already uses.
      separate one if you want to track voice-agent spend independently.
    - `FOLLOWUP_APP_URL` — the main app's URL, e.g. `https://followupbase.io`.
    - `VOICE_AGENT_CALLBACK_SECRET` — any long random string you generate
-     once (`openssl rand -base64 32`, or similar).
+     once (`openssl rand -base64 32`, or similar). Required for BOTH
+     directions now: this bridge sends it to authorize itself before
+     opening a call (`/api/twilio/voice-agent-auth/[secret]`) and again
+     when posting the transcript back (`/api/twilio/voice-agent-callback/
+     [secret]`) — without it, or without `FOLLOWUP_APP_URL`, every
+     incoming call is rejected outright rather than silently allowed
+     through.
    - `OPENAI_REALTIME_MODEL` (optional) — defaults to `gpt-realtime-mini`
      if unset.
 3. On the **main followup app's** Vercel project, set:

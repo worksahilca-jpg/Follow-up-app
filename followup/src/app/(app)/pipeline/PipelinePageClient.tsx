@@ -13,6 +13,8 @@ import StatCard from "@/components/StatCard";
 import PipelineSnapshot from "@/components/PipelineSnapshot";
 import EmptyState from "@/components/EmptyState";
 import { DollarSign, TrendingUp, Users, Inbox } from "lucide-react";
+import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
+import CountUp from "@/components/motion/CountUp";
 
 const STAGE_WEIGHT: Record<string, number> = {
   new: 0.1,
@@ -98,11 +100,17 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
-        <StatCard label="Active leads" value={String(visible.length)} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-        <StatCard label="Total pipeline value" value={formatCurrency(totalValue)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
-        <StatCard label="Weighted value" value={formatCurrency(Math.round(weightedValue))} icon={TrendingUp} accent="var(--gold)" accentSoft="var(--gold-soft)" />
-      </div>
+      <RevealGroup on="mount" className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
+        <RevealItem>
+          <StatCard label="Active leads" value={<CountUp to={visible.length} />} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+        </RevealItem>
+        <RevealItem>
+          <StatCard label="Total pipeline value" value={formatCurrency(totalValue)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
+        </RevealItem>
+        <RevealItem>
+          <StatCard label="Weighted value" value={formatCurrency(Math.round(weightedValue))} icon={TrendingUp} accent="var(--gold)" accentSoft="var(--gold-soft)" />
+        </RevealItem>
+      </RevealGroup>
 
       {visible.length === 0 ? (
         <EmptyState
@@ -140,10 +148,16 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
         </p>
       )}
 
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stages.map((stage) => (
+      {/* One-time cascade on load, like the stat row above — a handful of
+          columns (not a long scrolling list, where the same per-child
+          delay would just feel slow) is exactly the case a stagger reads
+          as deliberate. */}
+      <RevealGroup on="mount" className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stages.map((stage) => {
+          const closed = stage.id === "won" || stage.id === "lost";
+          return (
+          <RevealItem key={stage.id}>
           <div
-            key={stage.id}
             onDragOver={(e) => {
               e.preventDefault();
               setDragOverStage(stage.id);
@@ -165,7 +179,22 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
           >
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">{stage.label}</h3>
-              <span className="text-xs text-ink-soft">{stage.leads.length}</span>
+              {/* Won/Lost are a qualitatively different kind of column than
+                  the in-progress stages — a closed outcome, not a step on
+                  the way to one — so the count itself carries that via
+                  color instead of every column reading identically. */}
+              <span
+                className="text-xs font-medium rounded-full px-1.5 py-0.5 tabular-nums"
+                style={
+                  stage.id === "won"
+                    ? { color: "var(--sage)", backgroundColor: "var(--sage-soft)" }
+                    : stage.id === "lost"
+                      ? { color: "var(--coral)", backgroundColor: "var(--coral-soft)" }
+                      : { color: "var(--ink-soft)" }
+                }
+              >
+                {stage.leads.length}
+              </span>
             </div>
             <p className="text-sm font-medium mt-0.5" style={{ color: "var(--gold)" }}>
               {formatCurrency(stage.value)}
@@ -181,20 +210,17 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                     setDraggingId(lead.id);
                   }}
                   onDragEnd={() => setDraggingId(null)}
-                  className="flex items-center gap-2 rounded-lg border border-line px-2.5 py-2 text-xs hover:bg-paper cursor-grab active:cursor-grabbing"
-                  style={{ opacity: draggingId === lead.id ? 0.4 : 1 }}
+                  className="flex items-center gap-2 rounded-lg border border-line pl-2 pr-2.5 py-2 text-xs hover:bg-paper cursor-grab active:cursor-grabbing border-l-[3px]"
+                  style={{
+                    opacity: draggingId === lead.id ? 0.4 : 1,
+                    borderLeftColor: closed ? "var(--line)" : urgencyColor(daysSince(lead.lastContacted)),
+                  }}
+                  title={closed ? undefined : `${daysSince(lead.lastContacted)} days since last contact`}
                 >
                   <ScoreBadge score={lead.score} size="sm" />
                   <Link href={`/leads/${lead.id}`} className="truncate flex-1 hover:underline">
                     {lead.name}
                   </Link>
-                  {stage.id !== "won" && stage.id !== "lost" && (
-                    <span
-                      className="h-2 w-2 rounded-full shrink-0"
-                      style={{ backgroundColor: urgencyColor(daysSince(lead.lastContacted)) }}
-                      title={`${daysSince(lead.lastContacted)} days since last contact`}
-                    />
-                  )}
                   {/* Dragging a card between columns needs a mouse — HTML5
                       drag-and-drop has no touch support on any mobile
                       browser, so this select is the only way to move a
@@ -221,8 +247,10 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
               )}
             </div>
           </div>
-        ))}
-      </div>
+          </RevealItem>
+          );
+        })}
+      </RevealGroup>
     </div>
   );
 }

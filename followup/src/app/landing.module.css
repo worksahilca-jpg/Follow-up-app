@@ -210,6 +210,33 @@
   color: var(--amber);
 }
 
+/* The headline's one accented phrase — same idea as the app's own
+   .text-gradient-accent (globals.css), amber-toned instead of blue, kept
+   to this one use on the page. */
+.shimmer {
+  background: linear-gradient(100deg, var(--amber), #f3c374, var(--amber));
+  background-size: 220% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .shimmer {
+    animation: shimmer-move 7s ease-in-out infinite;
+  }
+}
+@keyframes shimmer-move {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Comparison table (Positioning section) */
+.compareGrid {
+  border: 1px solid rgba(24, 20, 15, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* .mockupWrap's idle float + parallax are handled in JS (see
      useReducedMotion() in HeroMockup.tsx) — nothing to disable here. */

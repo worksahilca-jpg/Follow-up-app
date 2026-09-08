@@ -9,35 +9,10 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
-import { Mail, MessageSquare, Phone } from "lucide-react";
 import styles from "@/app/landing.module.css";
 
 const BASE_RX = 6;
 const BASE_RY = -22;
-
-const LEADS = [
-  {
-    name: "Priya Nair",
-    dot: "var(--amber)",
-    meta: "6d quiet · opened ×2",
-    note: "Proposal sent, no reply. Point at the spring launch deadline.",
-    Icon: Mail,
-  },
-  {
-    name: "Ben Holt",
-    dot: "var(--coral)",
-    meta: "4d · on you",
-    note: "You promised a revised quote. It's Tuesday.",
-    Icon: Phone,
-  },
-  {
-    name: "Dana Okafor",
-    dot: "var(--blue)",
-    meta: "13d quiet",
-    note: "Ask about the partner, not the proposal.",
-    Icon: MessageSquare,
-  },
-];
 
 /**
  * The hero's 3D CSS scene. Idle float and mouse parallax are composed
@@ -48,6 +23,12 @@ const LEADS = [
  * useAnimationFrame loop drives a slow sine-wave idle drift; mouse
  * position adds a spring-smoothed offset on top, so a mouse move nudges
  * the scene without ever snapping out of its own floating rhythm.
+ *
+ * Content is the same "Today's follow-ups" mockup the landing page has
+ * always shown (Sarah Johnson / Mike Patel) — restyled into the new
+ * layered-3D treatment, not replaced with new material: Mike Patel's
+ * card was already visually deprioritized (opacity-60) in the old flat
+ * version, which maps naturally onto "pushed back on the Z axis" here.
  */
 export default function HeroMockup() {
   const reducedMotion = useReducedMotion();
@@ -96,27 +77,31 @@ export default function HeroMockup() {
   return (
     <div className={styles.scene} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
       <motion.div className={styles.mockupWrap} style={{ rotateX, rotateY, y, position: "relative" }}>
-        {/* Back context card — pushed behind on Z. The static 3D placement
-            (translateZ/rotateX/rotateY) stays on this outer div's CSS
-            class; the dynamic counter-parallax offset lives on the inner
-            motion.div as its own nested transform, so the two never
-            overwrite the same `transform` property. */}
+        {/* Back card — Mike Patel, the deprioritized second lead (opacity
+            0.92, pushed behind on Z). Static 3D placement stays on this
+            outer div's CSS class; the dynamic counter-parallax offset
+            lives on the inner motion.div's own nested transform. */}
         <div className={styles.backCard}>
           <motion.div style={{ padding: "14px 16px", x: cardCounter }}>
-            <span
-              className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold"
-              style={{ background: "rgba(24,20,15,0.06)", color: "var(--ink-soft)" }}
-            >
-              16 days quiet
-            </span>
+            <div className="flex items-center justify-between">
+              <span
+                className="flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold"
+                style={{ background: "rgba(24,20,15,0.08)", color: "var(--ink-soft)" }}
+              >
+                68
+              </span>
+              <span
+                className="rounded-full px-2 py-0.5 text-[9px] font-semibold"
+                style={{ background: "rgba(24,20,15,0.08)", color: "var(--ink-soft)" }}
+              >
+                Warm
+              </span>
+            </div>
             <p className="mt-2 text-sm font-bold" style={{ color: "var(--ink)" }}>
-              Leila Haddad
+              Mike Patel
             </p>
-            <p className="text-xs" style={{ color: "var(--ink-soft)" }}>
-              Haddad Law
-            </p>
-            <p className="mt-2 text-xs font-semibold" style={{ color: "var(--amber)" }}>
-              Watch this week →
+            <p className="mt-1 text-xs leading-snug" style={{ color: "var(--ink-soft)" }}>
+              Requested a proposal 3 days ago
             </p>
           </motion.div>
         </div>
@@ -134,18 +119,18 @@ export default function HeroMockup() {
               className="absolute left-1/2 -translate-x-1/2 text-[11px] font-semibold"
               style={{ color: "var(--ink-soft)" }}
             >
-              FollowUp · Daily Brief
+              FollowUp
             </p>
           </div>
 
-          <div className="flex" style={{ minHeight: 340 }}>
+          <div className="flex" style={{ minHeight: 300 }}>
             {/* Sidebar */}
             <div
               className="w-[132px] shrink-0 px-3 py-4 flex flex-col justify-between"
               style={{ borderRight: "1px solid rgba(24,20,15,0.07)" }}
             >
               <div className="space-y-0.5 text-[12px]">
-                <SideItem label="Today" badge="5" active />
+                <SideItem label="Today" badge="2" active />
                 <SideItem label="All threads" />
                 <SideItem label="Snoozed" />
                 <SideItem label="Insights" />
@@ -162,91 +147,93 @@ export default function HeroMockup() {
                       style={{ background: "#5fb256" }}
                     />
                   </span>
-                  <span className="text-[11px] font-medium">Sahil</span>
+                  <span className="text-[11px] font-medium">You</span>
                 </div>
               </div>
             </div>
 
             {/* Main panel */}
             <div className="flex-1 px-4 py-4">
-              <p className="text-[11px]" style={{ color: "var(--ink-soft)" }}>
-                Tuesday, Sep 8 — Good morning
+              <p className="text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>
+                Today&apos;s follow-ups
               </p>
-              <p className="text-[15px] font-extrabold mt-1 leading-snug" style={{ color: "var(--ink)" }}>
-                <span style={{ color: "var(--amber)" }}>5 conversations</span> need attention
-              </p>
-              <div
-                className="mt-2.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold"
-                style={{ background: "var(--amber-soft)", color: "#96631c" }}
-              >
-                2 people haven&apos;t heard from you in 6+ days
-              </div>
 
-              <div className="mt-3 space-y-2">
-                {LEADS.map((lead) => (
-                  <div
-                    key={lead.name}
-                    className={styles.leadCard}
-                    style={{
-                      borderLeftColor: lead.dot,
-                      background: "rgba(24,20,15,0.02)",
-                      borderRadius: 8,
-                      padding: "8px 10px",
-                    }}
+              <div
+                className={styles.leadCard}
+                style={{
+                  borderLeftColor: "var(--coral)",
+                  background: "rgba(24,20,15,0.02)",
+                  borderRadius: 10,
+                  padding: "12px",
+                  marginTop: 10,
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${styles.pulseDot}`}
+                    style={{ background: "var(--amber-soft)", color: "#96631c" }}
                   >
+                    92
+                  </span>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`h-1.5 w-1.5 rounded-full ${styles.pulseDot}`} style={{ background: lead.dot }} />
-                        <span className="text-[12px] font-bold" style={{ color: "var(--ink)" }}>
-                          {lead.name}
-                        </span>
-                      </div>
-                      <lead.Icon className="h-3 w-3" style={{ color: "var(--ink-faint)" }} />
+                      <span className="text-[13px] font-bold" style={{ color: "var(--ink)" }}>
+                        Sarah Johnson
+                      </span>
+                      <span className="text-[12px] font-bold shrink-0" style={{ color: "var(--ink)" }}>
+                        $3,500
+                      </span>
                     </div>
-                    <p className="text-[10px] mt-0.5" style={{ color: "var(--ink-soft)" }}>
-                      {lead.meta}
-                    </p>
-                    <p className="text-[11px] mt-1 leading-snug" style={{ color: "var(--ink)" }}>
-                      {lead.note}
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px]" style={{ color: "var(--ink-soft)" }}>
+                        ABC Marketing
+                      </span>
+                      <span
+                        className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+                        style={{ background: "var(--coral)", color: "#fff" }}
+                      >
+                        Hot lead
+                      </span>
+                    </div>
+                    <p className="text-[11px] mt-1.5 leading-snug" style={{ color: "var(--ink)" }}>
+                      Asked about pricing, opened your proposal twice, no reply in 5 days.
                     </p>
                   </div>
-                ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Floating draft card — pulled forward on Z via the outer div's
-            static CSS transform, its own independent float rhythm via
-            CSS margin-top (a different property, so it coexists fine
-            with the static transform), and the dynamic counter-parallax
-            offset isolated to the inner motion.div — same
-            static/dynamic split as the back card above. */}
+        {/* Floating draft card — the drafted reply for Sarah, pulled
+            forward on Z. Same static/dynamic transform split as the back
+            card above; its own independent float rhythm comes from a CSS
+            margin-top keyframe (a different property, so it doesn't
+            contend with the static transform). */}
         <div className={styles.draftCard}>
           <motion.div className="px-3.5 pt-3.5 pb-3" style={{ x: cardCounter }}>
             <div className="flex items-center gap-1.5">
               <span className={`h-1.5 w-1.5 rounded-full ${styles.pulseDot}`} style={{ background: "var(--amber)" }} />
               <span className="text-[9px] font-bold tracking-wide" style={{ color: "var(--amber)" }}>
-                DRAFT READY FOR PRIYA
+                DRAFT READY FOR SARAH
               </span>
             </div>
             <p className="text-[11px] font-bold mt-2" style={{ color: "var(--ink)" }}>
-              Re: Brand video — spring launch
+              Re: Your proposal
             </p>
             <p className="text-[10px] mt-1 leading-relaxed" style={{ color: "var(--ink-soft)" }}>
-              Wanted to check in on the proposal — if the{" "}
-              <span style={{ color: "var(--amber)", fontWeight: 600 }}>spring launch</span> is still the
-              target, we&apos;d need…
+              Wanted to check in — I know you&apos;ve had a look at the numbers a couple of times.
+              Happy to walk through anything that&apos;s unclear…
             </p>
             <div className="flex gap-1.5 mt-2.5">
               <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{ background: "var(--ink)", color: "#f3f0ea" }}>
-                Send now
+                Send email
               </span>
               <span
                 className="rounded-full px-2.5 py-1 text-[10px] font-semibold"
                 style={{ border: "1px solid rgba(24,20,15,0.15)", color: "var(--ink-soft)" }}
               >
-                Edit
+                Snooze
               </span>
             </div>
           </motion.div>

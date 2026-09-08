@@ -24,14 +24,17 @@ export default function LandingNav() {
           </span>
         </Link>
         <div className="hidden md:flex items-center gap-7 text-[13.5px] font-medium" style={{ color: "var(--ink-soft)" }}>
-          <a href="#notices" className="hover:opacity-70 transition-opacity">
-            What it notices
-          </a>
-          <a href="#how" className="hover:opacity-70 transition-opacity">
+          <a href="#how-it-works" className="hover:opacity-70 transition-opacity">
             How it works
           </a>
-          <a href="#draft" className="hover:opacity-70 transition-opacity">
-            A real draft
+          <a href="#who-its-for" className="hover:opacity-70 transition-opacity">
+            Who it&apos;s for
+          </a>
+          <a href="#pricing" className="hover:opacity-70 transition-opacity">
+            Pricing
+          </a>
+          <a href="#faq" className="hover:opacity-70 transition-opacity">
+            FAQ
           </a>
         </div>
         <Link

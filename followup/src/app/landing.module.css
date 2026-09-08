@@ -1,0 +1,220 @@
+/* Editorial landing-page design system — deliberately its own palette,
+   scoped entirely to this CSS module so it never touches the dashboard's
+   --paper/--ink/--rust tokens in globals.css. A marketing page earning a
+   distinct visual identity from the in-product UI is a normal, legitimate
+   split (this file), not a fork of the app's design system. */
+
+.root {
+  --cream: #f3f0ea;
+  --surface: #ffffff;
+  --ink: #18140f;
+  --ink-soft: rgba(24, 20, 15, 0.5);
+  --ink-faint: rgba(24, 20, 15, 0.28);
+  --amber: #e8a23a;
+  --amber-soft: rgba(232, 162, 58, 0.14);
+  --coral: #d1553f;
+  --blue: #4a6fa5;
+
+  background: var(--cream);
+  color: var(--ink);
+  position: relative;
+  overflow-x: clip;
+}
+
+.root :global(a),
+.root :global(button) {
+  font-family: inherit;
+}
+
+/* ---------- texture ---------- */
+
+.gridTexture {
+  position: absolute;
+  inset: 0;
+  height: 780px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(24, 20, 15, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(24, 20, 15, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 30% 20%, black, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 30% 20%, black, transparent 75%);
+}
+
+/* ---------- nav ---------- */
+
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  transition: background-color 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease;
+  border-bottom: 1px solid transparent;
+}
+.navScrolled {
+  background: color-mix(in srgb, var(--cream) 90%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom-color: rgba(24, 20, 15, 0.08);
+}
+
+/* ---------- headline ---------- */
+
+.headline {
+  font-weight: 800;
+  font-size: clamp(52px, 6.5vw, 106px);
+  letter-spacing: -0.055em;
+  line-height: 0.88;
+}
+
+/* ---------- heartbeat pulse (urgency dots, amber chip) ---------- */
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+}
+.pulseDot {
+  animation: heartbeat 2.2s ease-in-out infinite;
+}
+
+/* ---------- 3D mockup ---------- */
+
+.scene {
+  perspective: 1400px;
+  perspective-origin: 50% 30%;
+}
+
+/* Idle float + mouse parallax are both driven by framer-motion (one
+   motion value per axis, composed every frame — see HeroMockup.tsx) so
+   there's a single source of truth for `transform` on this element.
+   A CSS @keyframes animation running on the same property at the same
+   time would fight framer-motion's per-frame writes rather than compose
+   with them. */
+.mockupWrap {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.appWindow {
+  width: 520px;
+  max-width: 88vw;
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow:
+    0 2px 0 rgba(24, 20, 15, 0.04) inset,
+    0 40px 80px -24px rgba(24, 20, 15, 0.35),
+    0 12px 28px -12px rgba(24, 20, 15, 0.25);
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(24, 20, 15, 0.07);
+  position: relative;
+}
+.trafficDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.draftCard {
+  position: absolute;
+  right: -60px;
+  bottom: -30px;
+  width: 240px;
+  transform: translateZ(60px) rotateX(-2deg) rotateY(4deg);
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: 0 30px 60px -20px rgba(24, 20, 15, 0.4), 0 0 0 1px rgba(24, 20, 15, 0.05);
+  animation: floaty-draft 5.5s ease-in-out infinite;
+}
+@keyframes floaty-draft {
+  0%, 100% { margin-top: 0px; }
+  50% { margin-top: -10px; }
+}
+
+.backCard {
+  position: absolute;
+  /* Deeper offset than a literal reading of "left: -50px" would give —
+     at -50px nearly the whole card sat behind the (higher, later-in-DOM)
+     app window and only a sliver ever showed; pushed further left so the
+     depth layering the design calls for is actually visible instead of
+     implied. */
+  left: -104px;
+  top: 6px;
+  width: 190px;
+  opacity: 0.92;
+  transform: translateZ(-30px) rotateX(3deg) rotateY(-5deg);
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: 0 24px 50px -20px rgba(24, 20, 15, 0.3);
+}
+
+.groundShadow {
+  position: absolute;
+  left: 50%;
+  bottom: -28px;
+  transform: translateX(-50%);
+  width: 78%;
+  height: 60px;
+  background: radial-gradient(ellipse at center, rgba(24, 20, 15, 0.28), transparent 72%);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.5), transparent 40%);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* ---------- lead cards inside mockup ---------- */
+
+.leadCard {
+  border-left: 3px solid transparent;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.leadCard:hover {
+  transform: translateX(2px);
+}
+
+/* ---------- section reveal ---------- */
+
+.stepNumber {
+  font-size: 74px;
+  font-weight: 800;
+  opacity: 0.06;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+/* ---------- price ---------- */
+
+.priceGiant {
+  font-weight: 800;
+  font-size: clamp(64px, 9vw, 120px);
+  letter-spacing: -0.07em;
+  line-height: 0.95;
+}
+
+/* ---------- misc ---------- */
+
+.chipMark {
+  color: var(--amber);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* .mockupWrap's idle float + parallax are handled in JS (see
+     useReducedMotion() in HeroMockup.tsx) — nothing to disable here. */
+  .draftCard,
+  .pulseDot {
+    animation: none !important;
+  }
+}

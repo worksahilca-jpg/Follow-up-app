@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getLeadById } from "@/lib/leads-data";
+import { getLeadById, getLeadAuditTrail } from "@/lib/leads-data";
 import { formatCurrency, formatDate } from "@/lib/demo-data";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
@@ -10,6 +10,7 @@ import LeadWorkflowEnrollment from "@/components/LeadWorkflowEnrollment";
 import LeadAssignmentSelect from "@/components/LeadAssignmentSelect";
 import DeleteLeadButton from "@/components/DeleteLeadButton";
 import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
+import LeadTrustPanel from "@/components/LeadTrustPanel";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 import { isInstagramLeadId, isSocialLeadId } from "@/lib/instagramId";
 
@@ -19,6 +20,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const lead = await getLeadById(id);
   if (!lead) notFound();
+  const auditTrail = await getLeadAuditTrail(id);
 
   return (
     <div>
@@ -148,6 +150,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <h3 className="text-sm font-semibold">Notes</h3>
             <p className="text-sm text-ink-soft mt-2 leading-relaxed">{lead.notes}</p>
           </div>
+          <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} />
           <LeadAutomationToggle leadId={lead.id} initialTier={lead.automationTier} />
           <LeadWorkflowEnrollment leadId={lead.id} />
           <DeleteLeadButton leadId={lead.id} leadName={lead.name} />

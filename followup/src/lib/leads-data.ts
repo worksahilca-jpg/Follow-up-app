@@ -64,6 +64,7 @@ function mapDbLeadToUiLead(dbLead: DbLead): Lead {
     suggestedMessage: dbLead.suggestedMessage ?? "",
     suggestedSubject: dbLead.suggestedSubject ?? "",
     automationTier: dbLead.automationTier.toLowerCase() as Lead["automationTier"],
+    optedOutAt: dbLead.optedOutAt ? dbLead.optedOutAt.toISOString() : null,
   };
 }
 
@@ -89,6 +90,40 @@ export async function getLeadById(id: string): Promise<Lead | undefined> {
   const dbLead = await prisma.lead.findUnique({ where: { id }, include: leadInclude });
   if (!dbLead || dbLead.businessId !== ctx.businessId) return undefined;
   return mapDbLeadToUiLead(dbLead);
+}
+
+export interface LeadAuditEntry {
+  id: string;
+  action: string;
+  createdAt: string; // ISO date
+  meta: Record<string, unknown> | null;
+}
+
+/**
+ * The per-lead slice of the AI audit trail (task #67 / synthesis rec #2)
+ * — every recordAudit() call written with targetType "lead" and this
+ * lead's id: a manual send (lib/audit.ts action "lead.send"), an
+ * automated one (sending.ts "ai.send"), or the risk gate holding a draft
+ * instead of sending it (automation.ts "ai.hold"). Scoped by businessId
+ * the same way getLeadById() is — the AuditEvent row would never match a
+ * lead in a different business anyway, but filtering on it here keeps
+ * this query as tenant-scoped as every other lead read, not an
+ * accidental exception.
+ */
+export async function getLeadAuditTrail(leadId: string): Promise<LeadAuditEntry[]> {
+  const ctx = await getSessionContext();
+  if (!ctx) return [];
+  const events = await prisma.auditEvent.findMany({
+    where: { businessId: ctx.businessId, targetType: "lead", targetId: leadId },
+    orderBy: { createdAt: "desc" },
+    take: 25,
+  });
+  return events.map((e) => ({
+    id: e.id,
+    action: e.action,
+    createdAt: e.createdAt.toISOString(),
+    meta: (e.meta as Record<string, unknown> | null) ?? null,
+  }));
 }
 
 export function isDueToday(lead: Lead): boolean {

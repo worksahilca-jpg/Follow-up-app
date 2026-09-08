@@ -88,13 +88,20 @@ export default function LandingPage() {
               className="text-5xl sm:text-6xl leading-[1.1] mt-5 mx-auto max-w-2xl"
               style={{ letterSpacing: "-0.02em", textWrap: "balance" }}
             >
-              Never <span className="text-gradient-accent">lose a lead</span> because you forgot to follow up.
+              Every tool answers the lead. FollowUp catches the one that <span className="text-gradient-accent">went quiet</span>.
             </h1>
           </KineticHeadline>
           <RevealItem>
+            {/* This is the actual differentiator, said plainly, not implied:
+                every AI-receptionist/speed-to-lead competitor answers the
+                incoming message fast. None of them watch what happens
+                after — a lead who got a reply once and then went cold is
+                invisible to a tool built only to catch the first message.
+                See research/market/2026-09-08-product-direction-synthesis.md
+                recommendation #1 for the evidence this is grounded in. */}
             <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-md mx-auto">
-              FollowUp is the AI teammate that reads your sales conversations and tells
-              you exactly who to contact today, why, and what to say — before that
+              FollowUp reads every conversation, not just the new ones — and notices
+              the lead who already heard from you once, then went silent, before
               &quot;let me think about it&quot; turns into a lost sale.
             </p>
           </RevealItem>

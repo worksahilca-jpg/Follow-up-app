@@ -5,7 +5,13 @@ import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { fetchLeadgenLead, findOrCreateLeadByMessenger, upsertLeadFromLeadgen } from "@/lib/facebook";
-import { WEBHOOK_VERIFY_TOKEN, captureDirectReply, findOrCreateLeadByInstagram, validateMetaSignature } from "@/lib/instagram";
+import {
+  WEBHOOK_VERIFY_TOKEN,
+  captureDirectReply,
+  createInboundMessageIfNew,
+  findOrCreateLeadByInstagram,
+  validateMetaSignature,
+} from "@/lib/instagram";
 import { recordAuthFailure } from "@/lib/monitoring";
 
 /**
@@ -106,9 +112,9 @@ export async function POST(request: NextRequest) {
       if (!conversation) {
         conversation = await prisma.conversation.create({ data: { leadId: lead.id, channel: "instagram" } });
       }
-      await prisma.message.create({
-        data: { conversationId: conversation.id, direction: "inbound", body: text, sentAt: new Date() },
-      });
+      const isNewMessage = await createInboundMessageIfNew(conversation.id, text, new Date(), event.message?.mid);
+      if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
+
       // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
       await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: text, inboundAt: new Date() });
       await scoreAndDraftForLead(lead.id);
@@ -157,9 +163,9 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       if (!conversation) {
         conversation = await prisma.conversation.create({ data: { leadId: lead.id, channel: "messenger" } });
       }
-      await prisma.message.create({
-        data: { conversationId: conversation.id, direction: "inbound", body: text, sentAt: new Date() },
-      });
+      const isNewMessage = await createInboundMessageIfNew(conversation.id, text, new Date(), event.message?.mid);
+      if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
+
       await acknowledgeNewLead(lead.id, { channel: "messenger", inboundText: text, inboundAt: new Date() });
       await scoreAndDraftForLead(lead.id);
       await checkRapidEngagement(lead.id);
@@ -178,9 +184,12 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       if (!conversation) {
         conversation = await prisma.conversation.create({ data: { leadId: result.lead.id, channel: "web" } });
       }
-      await prisma.message.create({
-        data: { conversationId: conversation.id, direction: "inbound", body, sentAt: data.createdTime },
-      });
+      // leadgen_id, not a message id, but it's unique per form submission
+      // and there's exactly one synthetic Message per submission — the
+      // same idempotency key this route uses for real message ids above.
+      const isNewMessage = await createInboundMessageIfNew(conversation.id, body, data.createdTime, leadgenId);
+      if (!isNewMessage) continue; // Meta redelivered this leadgen change — already recorded
+
       // A form lead gave an email on purpose — acknowledge by email only.
       if (result.isNew && result.lead.email) {
         await acknowledgeNewLead(result.lead.id, { channel: "email", inboundText: body, inboundAt: data.createdTime });

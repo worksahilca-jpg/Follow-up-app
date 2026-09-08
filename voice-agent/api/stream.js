@@ -19,6 +19,13 @@
 // HTTP Server" / WebSocket support Vercel now documents).
 //
 // What actually happens on a call:
+//   0. Before anything else, the secret is checked against the main
+//      app's /api/twilio/voice-agent-auth/[secret] (authorizeCall()
+//      below) — this service has no DB of its own, so it can't tell a
+//      real business's secret from junk on its own. Any connection that
+//      fails this is closed immediately, before the billed OpenAI leg
+//      ever opens. See research/audit/2026-09-08-newer-surface-audit.md
+//      finding #1 for the abuse this closes.
 //   1. Twilio connects here and streams the caller's audio as base64
 //      mulaw (8kHz) "media" events.
 //   2. This relays that audio straight into OpenAI's Realtime API
@@ -71,15 +78,56 @@ wss.on("connection", (twilioWs, request) => {
     twilioWs.close(1008, "Missing secret");
     return;
   }
-  handleCall(twilioWs, secret).catch((err) => {
-    console.error("[voice-agent] handleCall crashed:", err);
-    try {
-      twilioWs.close();
-    } catch {
-      // already closed
-    }
-  });
+  authorizeCall(secret)
+    .then((authorized) => {
+      if (!authorized) {
+        console.error("[voice-agent] rejected connection: secret is not a real business with the voice agent enabled and active billing.");
+        twilioWs.close(1008, "Unauthorized");
+        return;
+      }
+      handleCall(twilioWs, secret).catch((err) => {
+        console.error("[voice-agent] handleCall crashed:", err);
+        try {
+          twilioWs.close();
+        } catch {
+          // already closed
+        }
+      });
+    })
+    .catch((err) => {
+      console.error("[voice-agent] authorizeCall check failed:", err);
+      twilioWs.close(1011, "Internal error");
+    });
 });
+
+/**
+ * Confirms `secret` is real (a business with the voice agent enabled and
+ * active billing) BEFORE this bridge does anything expensive — see
+ * followup/src/app/api/twilio/voice-agent-auth/[secret]/route.ts for the
+ * fix this closes (research/audit/2026-09-08-newer-surface-audit.md
+ * finding #1). This bridge has no direct DB access, so the check happens
+ * as an authenticated call back to the main app instead — the same
+ * shared-bearer-secret trust boundary postTranscript() below already
+ * uses to write a transcript, applied here on the way in. Fails CLOSED:
+ * any error, timeout, or missing env var rejects the call rather than
+ * falling back to the old "any secret works" behavior.
+ */
+async function authorizeCall(secret) {
+  if (!FOLLOWUP_APP_URL || !VOICE_AGENT_CALLBACK_SECRET) {
+    console.error("[voice-agent] Missing FOLLOWUP_APP_URL or VOICE_AGENT_CALLBACK_SECRET — refusing to authorize any call.");
+    return false;
+  }
+  try {
+    const url = `${FOLLOWUP_APP_URL.replace(/\/$/, "")}/api/twilio/voice-agent-auth/${secret}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${VOICE_AGENT_CALLBACK_SECRET}` },
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("[voice-agent] voice-agent-auth request failed:", err);
+    return false;
+  }
+}
 
 /**
  * One phone call, start to finish. All state here is scoped to this one

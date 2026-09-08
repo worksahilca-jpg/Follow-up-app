@@ -109,19 +109,40 @@ checked and the re-audit checklist in `docs/security.md` passes.
 The CEO intends to improve FollowUp's models on real conversations. That is
 allowed only under these rules, enforced in code as they are built:
 
-1. **Opt-in per business.** `Business.allowModelTraining` exists, default
-   `false`. No data from a business with it off ever enters a training set.
-2. **De-identify first.** Names, emails, phone numbers, addresses, and any
-   free-text identifier are stripped or replaced before a message leaves the
-   production database (task #74 builds this pipeline). Lead content is
-   personal information under PIPEDA; the business is the custodian, not us.
-3. **Separate store.** Training sets live outside the production DB, with their
-   own retention (default 12 months) and their own access log.
+1. **[x] Opt-in per business.** `Business.allowModelTraining` exists, default
+   `false`. No data from a business with it off ever enters a training set —
+   enforced at the read: `buildDeidentifiedTrainingSet()`
+   (`src/lib/deidentify.ts`, task #74) checks the flag before it queries a
+   single lead, not after.
+2. **[x] De-identify first.** `deidentifyText()` (`src/lib/deidentify.ts`)
+   is the boundary: every message body is run through it before this
+   function's return value exists anywhere. Two layers — targeted
+   substitution first (the lead's own name/email/phone/company and the
+   assigned agent's name/email are known structurally, so each is replaced
+   with a role-tagged placeholder like `[LEAD_NAME]` or `[AGENT_EMAIL]`
+   everywhere it appears, including a phone number reformatted differently
+   than how it's stored), then a generic pattern backstop (reusing the same
+   `EMAIL_RE`/`PHONE_RE` as `src/lib/sentryScrub.ts`, plus a street-address
+   heuristic) for anyone the structured data doesn't know about — a
+   referral's number, a spouse's email. Covers `Message.body` only for
+   now; `Lead.notes`, `scoreReason`, and `AIInsight.summary` are free text
+   too but are out of scope for this pass. 10 tests cover both layers and
+   the opt-in gate. Lead content is personal information under PIPEDA; the
+   business is the custodian, not us.
+3. **[ ] Separate store.** Training sets live outside the production DB, with
+   their own retention (default 12 months) and their own access log. Not
+   built yet — there's no training job for it to feed. `buildDeidentifiedTrainingSet()`
+   is the boundary this will read through once one exists; it isn't wired
+   into anything itself.
 4. **No third-party training by default.** The OpenAI API does not train on API
    traffic; keep it that way (no opt-in to data sharing) and say so in the
    privacy policy.
-5. **Right to be forgotten propagates.** Deleting a business or a lead also
-   deletes its rows from any training set not yet used, and blocks re-use.
+5. **[partial] Right to be forgotten propagates.** Deleting a business or a
+   lead already means it can never appear in a future `buildDeidentifiedTrainingSet()`
+   call — it reads live production data, so a gone row is simply gone.
+   What's still open: "deletes its rows from any training set not yet
+   used" needs an actual persisted training-set store to delete FROM,
+   which doesn't exist yet (see rule 3) — revisit this the moment one does.
 6. **Written down for customers.** The privacy policy states all of the above
    in plain words before the first training run.
 

@@ -14,12 +14,14 @@ import type { ErrorEvent } from "@sentry/core";
  * phone number, or Sentry's own automatic request-context capture.
  */
 
-const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+// Exported: src/lib/deidentify.ts reuses these as its generic backstop
+// layer, so the two PII scrubbers this app has can't quietly drift apart.
+export const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 // A loose "looks like a phone number" match: 7+ digits, optionally
 // grouped with spaces/dashes/dots/parens and a leading +. Deliberately
 // broad — a false-positive redaction (an order number, a zip+plus4) costs
 // nothing here; a missed real phone number is the failure mode that matters.
-const PHONE_RE = /(\+?\d[\d\s().-]{6,}\d)/g;
+export const PHONE_RE = /(\+?\d[\d\s().-]{6,}\d)/g;
 
 export function scrubPii(text: string): string {
   return text.replace(EMAIL_RE, "[redacted-email]").replace(PHONE_RE, "[redacted-phone]");

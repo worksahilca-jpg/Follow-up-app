@@ -99,6 +99,14 @@ export interface LeadAuditEntry {
   meta: Record<string, unknown> | null;
 }
 
+export interface LeadAuditTrail {
+  events: LeadAuditEntry[];
+  /** Total AuditEvent rows for this lead, independent of the `take` cap below —
+   *  lets the UI say "showing the 25 most recent of N" instead of silently
+   *  implying the panel is the complete record when it isn't (task #85). */
+  totalCount: number;
+}
+
 /**
  * The per-lead slice of the AI audit trail (task #67 / synthesis rec #2)
  * — every recordAudit() call written with targetType "lead" and this
@@ -110,20 +118,23 @@ export interface LeadAuditEntry {
  * this query as tenant-scoped as every other lead read, not an
  * accidental exception.
  */
-export async function getLeadAuditTrail(leadId: string): Promise<LeadAuditEntry[]> {
+export async function getLeadAuditTrail(leadId: string): Promise<LeadAuditTrail> {
   const ctx = await getSessionContext();
-  if (!ctx) return [];
-  const events = await prisma.auditEvent.findMany({
-    where: { businessId: ctx.businessId, targetType: "lead", targetId: leadId },
-    orderBy: { createdAt: "desc" },
-    take: 25,
-  });
-  return events.map((e) => ({
-    id: e.id,
-    action: e.action,
-    createdAt: e.createdAt.toISOString(),
-    meta: (e.meta as Record<string, unknown> | null) ?? null,
-  }));
+  if (!ctx) return { events: [], totalCount: 0 };
+  const where = { businessId: ctx.businessId, targetType: "lead", targetId: leadId };
+  const [events, totalCount] = await Promise.all([
+    prisma.auditEvent.findMany({ where, orderBy: { createdAt: "desc" }, take: 25 }),
+    prisma.auditEvent.count({ where }),
+  ]);
+  return {
+    events: events.map((e) => ({
+      id: e.id,
+      action: e.action,
+      createdAt: e.createdAt.toISOString(),
+      meta: (e.meta as Record<string, unknown> | null) ?? null,
+    })),
+    totalCount,
+  };
 }
 
 export function isDueToday(lead: Lead): boolean {

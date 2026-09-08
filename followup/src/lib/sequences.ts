@@ -290,6 +290,23 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
   const voiceSamples = await getVoiceSamples(businessId);
 
   const outcomes = await mapWithConcurrency(active, 3, async (lead) => {
+    // Atomic check-and-claim before anything else — same reasoning as
+    // runAutomationForBusiness()'s claim, and the same missing-guard shape
+    // this file used to have: the eligibility query above is a plain SELECT,
+    // and every write below it used to run unconditionally, so a manual
+    // "run now" click racing the hourly cron (or two overlapping cron ticks)
+    // could both see this lead as due and both send its step. Locking
+    // sequenceStepDueAt a few minutes into the future claims the row; the
+    // real post-step update further down overwrites this lock with the
+    // actual next-due date (or clears it) once processing finishes. If
+    // processing throws, the lock expires on its own well before the next
+    // scheduled run, so the lead is simply retried then.
+    const claim = await prisma.lead.updateMany({
+      where: { id: lead.id, sequenceStepIndex: lead.sequenceStepIndex, sequenceStepDueAt: { lte: new Date() } },
+      data: { sequenceStepDueAt: new Date(Date.now() + 5 * 60 * 1000) },
+    });
+    if (claim.count === 0) return { kind: "claimed" as const };
+
     const sequence = lead.sequence!; // filtered above
     const step = sequence.steps[lead.sequenceStepIndex];
     if (!step) {

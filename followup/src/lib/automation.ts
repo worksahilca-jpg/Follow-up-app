@@ -90,7 +90,11 @@ function hoursAgo(date: Date): number {
 type LeadOutcome =
   | { kind: "sent" }
   | { kind: "held"; note: string }
-  | { kind: "skipped"; note: string };
+  | { kind: "skipped"; note: string }
+  // Another concurrent run (the hourly cron, a manual "run now" click, or an
+  // overlapping cron tick — see the claim below) already handled this lead
+  // for this eligibility window. Not a failure, just nothing left to do.
+  | { kind: "claimed" };
 
 export async function runAutomationForBusiness(businessId: string): Promise<AutomationResult> {
   const automation = await prisma.automation.findFirst({
@@ -149,7 +153,24 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // not just a "how fast can we finish" budget.
   const outcomes = await mapWithConcurrency(eligible, 3, async (lead): Promise<LeadOutcome> => {
     try {
-      await prisma.lead.update({ where: { id: lead.id }, data: { lastAutomationCheckedAt: new Date() } });
+      // Atomic check-and-claim, same shape as claimLead()/acknowledgeNewLead()/
+      // checkRapidEngagement() elsewhere in this codebase — a plain update
+      // here always succeeds regardless of who else is touching this row,
+      // which let the hourly cron and a manual "Run automation check now"
+      // click (or two overlapping cron ticks) both see the same lead as
+      // eligible and both draft-and-send it, unreviewed, for an AUTONOMOUS
+      // lead. Re-using the same OR clause the eligibility query above used
+      // means only the first caller to land here wins; everyone else's
+      // WHERE matches zero rows once this commits.
+      const claim = await prisma.lead.updateMany({
+        where: {
+          id: lead.id,
+          OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
+        },
+        data: { lastAutomationCheckedAt: new Date() },
+      });
+      if (claim.count === 0) return { kind: "claimed" };
+
       const conversation: Message[] = lead.conversations.flatMap((c) =>
         c.messages.map((m) => ({
           id: m.id,

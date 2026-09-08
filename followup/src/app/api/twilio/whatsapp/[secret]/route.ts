@@ -4,7 +4,16 @@ import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { findBusinessByTwilioSecret, findOrCreateLeadByPhone, parseTwilioForm, twiml, validateTwilioRequestSignature } from "@/lib/twilio";
+import { recordAudit } from "@/lib/audit";
+import {
+  findBusinessByTwilioSecret,
+  findOrCreateLeadByPhone,
+  isOptInMessage,
+  isOptOutMessage,
+  parseTwilioForm,
+  twiml,
+  validateTwilioRequestSignature,
+} from "@/lib/twilio";
 
 /**
  * POST /api/twilio/whatsapp/[secret] — configure this as the webhook for
@@ -62,8 +71,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await prisma.message.create({
       data: { conversationId: conversation.id, direction: "inbound", body, sentAt: new Date() },
     });
-    // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
-    await acknowledgeNewLead(lead.id, { channel: "whatsapp", inboundText: body, inboundAt: new Date() });
+
+    // STOP/START handled before anything else touches this lead — see the
+    // matching comment in the SMS webhook (src/app/api/twilio/sms/[secret]/
+    // route.ts) for why. Lead.phone is shared between SMS and WhatsApp
+    // (see findOrCreateLeadByPhone), so a STOP here also blocks SMS sends
+    // to the same lead, and vice versa — one person, one opt-out.
+    const optingOut = isOptOutMessage(body);
+    const optingIn = isOptInMessage(body);
+    if (optingOut || optingIn) {
+      await prisma.lead.update({ where: { id: lead.id }, data: { optedOutAt: optingOut ? new Date() : null } });
+      void recordAudit({ businessId: business.id, userId: null }, optingOut ? "lead.opt_out" : "lead.opt_in", {
+        targetType: "lead",
+        targetId: lead.id,
+        meta: { channel: "whatsapp", via: "keyword" },
+      });
+    }
+
+    if (!optingOut) {
+      // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
+      await acknowledgeNewLead(lead.id, { channel: "whatsapp", inboundText: body, inboundAt: new Date() });
+    }
     await scoreAndDraftForLead(lead.id);
     await checkRapidEngagement(lead.id);
   }

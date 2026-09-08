@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { enrollLead, unenrollLead, getLeadEnrollment } from "@/lib/sequences";
+import { parseJsonBody } from "@/lib/validation";
+
+const enrollSchema = z.object({ sequenceId: z.string().min(1, "sequenceId is required.") });
 
 // GET /api/leads/[id]/sequence — this lead's current workflow enrollment,
 // if any. POST — enroll it in a workflow (body: { sequenceId }). DELETE —
@@ -24,11 +28,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => ({}));
-  const sequenceId = typeof body.sequenceId === "string" ? body.sequenceId : "";
-  if (!sequenceId) return NextResponse.json({ success: false, message: "sequenceId is required." }, { status: 400 });
+  const parsed = await parseJsonBody(request, enrollSchema);
+  if (!parsed.ok) return parsed.response;
 
-  const result = await enrollLead(id, ctx.businessId, sequenceId);
+  const result = await enrollLead(id, ctx.businessId, parsed.data.sequenceId);
   if (!result.success) return NextResponse.json(result, { status: 400 });
   return NextResponse.json(result);
 }

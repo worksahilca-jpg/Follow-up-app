@@ -12,7 +12,8 @@ import InstagramConfig from "@/components/InstagramConfig";
 import FacebookConfig from "@/components/FacebookConfig";
 import CrmConfig from "@/components/CrmConfig";
 import FilteredEmails from "@/components/FilteredEmails";
-import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart } from "lucide-react";
+import DataPrivacySection from "@/components/DataPrivacySection";
+import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -847,6 +848,17 @@ function SettingsPageInner() {
               </div>
             </>
           )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-display text-xl flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-ink-soft" />
+          Your data
+        </h2>
+        <p className="text-sm text-ink-soft mt-1">Export everything, or permanently delete this business.</p>
+        <div className="mt-4">
+          <DataPrivacySection />
         </div>
       </section>
     </div>

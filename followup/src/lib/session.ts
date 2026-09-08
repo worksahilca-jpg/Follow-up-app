@@ -12,6 +12,21 @@ export interface SessionContext {
   userId: string;
   businessId: string;
   email: string;
+  // Epoch ms of the last real Google sign-in behind this session — see
+  // authTime in src/lib/auth.ts. Backs hasRecentAuth() below.
+  authTime: number;
+}
+
+// Google sign-in is the only credential this app has (no password), so
+// "recent auth" means "actually went through Google's login screen again
+// in the last few minutes" — not a password re-prompt. Reserved for the
+// handful of actions where a still-valid session cookie genuinely isn't
+// enough: rotating a secret that immediately revokes the old one, or
+// permanently deleting a business.
+const REAUTH_WINDOW_MS = 5 * 60 * 1000;
+
+export function hasRecentAuth(ctx: SessionContext): boolean {
+  return Date.now() - ctx.authTime < REAUTH_WINDOW_MS;
 }
 
 /**
@@ -32,5 +47,6 @@ export async function getSessionContext(): Promise<SessionContext | null> {
     userId: session.user.id,
     businessId: session.user.businessId,
     email: session.user.email,
+    authTime: session.authTime ?? 0,
   };
 }

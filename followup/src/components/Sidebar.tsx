@@ -122,13 +122,23 @@ export default function Sidebar() {
               key={href}
               href={href}
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors"
+              className="relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors"
               style={{
                 backgroundColor: active ? "var(--rust-soft)" : "transparent",
                 color: active ? "var(--rust)" : "var(--ink-soft)",
                 fontWeight: active ? 600 : 500,
               }}
             >
+              {/* A thin accent bar instead of relying on the tint alone to
+                  say "you are here" — reads at a glance even for someone
+                  scanning quickly, not just on close inspection. */}
+              {active && (
+                <span
+                  className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full"
+                  style={{ backgroundColor: "var(--rust)" }}
+                  aria-hidden
+                />
+              )}
               <Icon className="h-4 w-4" />
               {label}
             </Link>

@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
-import { getSequenceById, updateSequence, deleteSequence, type SequenceStepInput } from "@/lib/sequences";
+import { getSequenceById, updateSequence, deleteSequence } from "@/lib/sequences";
+import { parseJsonBody, sequenceStepSchema } from "@/lib/validation";
+
+const updateSequenceSchema = z.object({
+  name: z.string().optional(),
+  active: z.boolean().optional(),
+  steps: z.array(sequenceStepSchema).optional(),
+});
 
 // GET one workflow (with its steps), PATCH to rename/rewrite its steps/
 // toggle active, DELETE to remove it — all scoped to the signed-in user's
@@ -24,13 +32,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => ({}));
-  const updates: { name?: string; active?: boolean; steps?: SequenceStepInput[] } = {};
-  if (typeof body.name === "string") updates.name = body.name;
-  if (typeof body.active === "boolean") updates.active = body.active;
-  if (Array.isArray(body.steps)) updates.steps = body.steps;
+  const parsed = await parseJsonBody(request, updateSequenceSchema);
+  if (!parsed.ok) return parsed.response;
 
-  const result = await updateSequence(id, ctx.businessId, updates);
+  const result = await updateSequence(id, ctx.businessId, parsed.data);
   if (!result.success) {
     return NextResponse.json(result, { status: result.message === "Workflow not found." ? 404 : 400 });
   }

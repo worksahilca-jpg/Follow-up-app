@@ -3,8 +3,8 @@ import type { LucideIcon } from "lucide-react";
 /**
  * A neutral icon badge instead of plain "no leads yet" text — used
  * wherever a page/section has nothing to show yet (dashboard, leads,
- * pipeline). No accent color and no decorative animation here — violet
- * is reserved for buttons/links/focus states, not empty-state chrome.
+ * pipeline). No accent color and no decorative animation here — the blue
+ * accent is reserved for buttons/links/focus states, not empty-state chrome.
  */
 export default function EmptyState({
   icon: Icon,

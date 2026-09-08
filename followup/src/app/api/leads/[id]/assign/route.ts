@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { assignLead } from "@/lib/assignment";
+import { parseJsonBody } from "@/lib/validation";
+
+const assignSchema = z.object({ assignedToId: z.string().nullable() });
 
 // POST /api/leads/[id]/assign — reassigns a lead to a team member (body:
 // { assignedToId }), or unassigns it (assignedToId: null). Anyone signed
@@ -11,10 +15,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
 
   const { id } = await params;
-  const body = await request.json().catch(() => ({}));
-  const assignedToId = typeof body.assignedToId === "string" ? body.assignedToId : null;
+  const parsed = await parseJsonBody(request, assignSchema);
+  if (!parsed.ok) return parsed.response;
 
-  const result = await assignLead(id, ctx.businessId, assignedToId);
+  const result = await assignLead(id, ctx.businessId, parsed.data.assignedToId);
   if (!result.success) return NextResponse.json(result, { status: 400 });
   return NextResponse.json(result);
 }

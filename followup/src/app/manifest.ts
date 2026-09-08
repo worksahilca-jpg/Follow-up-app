@@ -14,8 +14,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Never lose a lead because you forgot to follow up.",
     start_url: "/",
     display: "standalone",
-    background_color: "#fafafa",
-    theme_color: "#7c3aed",
+    background_color: "#f8f9fb",
+    theme_color: "#3b82c4",
     icons: [{ src: "/icon", sizes: "32x32", type: "image/png" }],
   };
 }

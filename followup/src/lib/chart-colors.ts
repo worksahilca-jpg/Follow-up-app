@@ -5,18 +5,18 @@
  * shared here so every chart does that in one place instead of each
  * component carrying its own copy.
  */
-export const CHART_AXIS_COLOR = "#71717a"; // --ink-soft
-export const CHART_GRID_COLOR = "#e4e4e7"; // --line
+export const CHART_AXIS_COLOR = "#4b515c"; // --ink-soft
+export const CHART_GRID_COLOR = "#e6e9ee"; // --line
 
 export const CHART_TOOLTIP_STYLE = {
   backgroundColor: "#ffffff", // --card
-  border: "1px solid #e4e4e7", // --line
+  border: "1px solid #e6e9ee", // --line
   borderRadius: 8,
   fontSize: 13,
 };
 
-export const CHART_PRIMARY = "#7c3aed"; // --rust
-export const CHART_INK = "#18181b"; // --ink
+export const CHART_PRIMARY = "#3b82c4"; // --rust
+export const CHART_INK = "#14181f"; // --ink
 export const CHART_SECONDARY = "#64748b"; // --slate
 export const CHART_SUCCESS = "#16a34a"; // --sage
 export const CHART_MONEY = "#d97706"; // --gold

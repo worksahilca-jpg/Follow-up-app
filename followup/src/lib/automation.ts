@@ -34,6 +34,7 @@ import { sendFollowUpToLead } from "@/lib/sending";
 import { requireActiveBilling } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
+import { recordAudit } from "@/lib/audit";
 import type { Message } from "@/lib/types";
 
 export const UNANSWERED_ACTION = "unanswered_reply";
@@ -199,6 +200,16 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
             await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message, suggestedSubject: subject } });
           }
           if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
+          // Held-not-sent is as much a real AI decision as a send — the
+          // risk gate is exactly the guarantee Rule 3 (trust ships like a
+          // feature) is about, so it belongs in the same audit trail an
+          // actual send gets (see the "ai.send" call in sendFollowUpToLead,
+          // src/lib/sending.ts), not just a string in this run's summary.
+          void recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
+            targetType: "lead",
+            targetId: lead.id,
+            meta: { riskLevel: risk.riskLevel, reason: risk.reason, trigger: unansweredIds.has(lead.id) ? "unanswered" : "silence" },
+          });
           return { kind: "held", note: `${lead.name}: ${risk.reason}` };
         }
       }

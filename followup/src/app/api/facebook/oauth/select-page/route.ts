@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { decryptSecret } from "@/lib/crypto";
 import { recordAudit } from "@/lib/audit";
+import { parseJsonBody } from "@/lib/validation";
 import type { ManagedPage } from "@/lib/facebook";
+
+const selectPageSchema = z.object({ pageId: z.string() });
 
 // POST { pageId } — finalizes the OAuth picker: reads the encrypted
 // pending-pages cookie set by the callback, saves the chosen Page's own
@@ -13,8 +17,9 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
 
-  const body = await request.json().catch(() => ({}));
-  const pageId = typeof body.pageId === "string" ? body.pageId : "";
+  const parsed = await parseJsonBody(request, selectPageSchema);
+  if (!parsed.ok) return parsed.response;
+  const { pageId } = parsed.data;
   const raw = request.cookies.get("fb_pending_pages")?.value;
   if (!pageId || !raw) {
     return NextResponse.json({ success: false, message: "That sign-in expired — connect Facebook again." }, { status: 400 });

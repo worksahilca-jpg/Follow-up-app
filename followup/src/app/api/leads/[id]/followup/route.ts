@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { parseJsonBody } from "@/lib/validation";
+
+const followupActionSchema = z.object({ action: z.enum(["snooze", "complete"]) });
 
 // POST /api/leads/[id]/followup — the dashboard's quick actions on a
 // "today's follow-ups" card (see FollowUpCard.tsx). Both actions just move
@@ -19,11 +23,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
 
   const { id } = await params;
-  const body = await request.json().catch(() => ({}));
-  const action = body.action;
-  if (action !== "snooze" && action !== "complete") {
-    return NextResponse.json({ success: false, message: "Invalid action." }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, followupActionSchema);
+  if (!parsed.ok) return parsed.response;
+  const { action } = parsed.data;
 
   const lead = await prisma.lead.findUnique({ where: { id }, select: { businessId: true } });
   if (!lead || lead.businessId !== ctx.businessId) {

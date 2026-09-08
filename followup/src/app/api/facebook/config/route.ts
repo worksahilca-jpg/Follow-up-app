@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { facebookOAuthAvailable, resolveFacebookPage } from "@/lib/facebook";
 import { WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
 import { appUrl } from "@/lib/stripe";
 import { recordAudit } from "@/lib/audit";
+import { parseJsonBody } from "@/lib/validation";
+
+const accessTokenSchema = z.object({ accessToken: z.string().trim().min(1, "Paste a real Page access token.") });
 
 // Facebook Page (Messenger + Lead Ads) — see src/lib/facebook.ts. Same
 // shape as the Instagram config: paste a Page access token, the Page is
@@ -31,9 +35,9 @@ export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
-  const body = await request.json().catch(() => ({}));
-  const token = typeof body.accessToken === "string" ? body.accessToken.trim() : "";
-  if (!token) return NextResponse.json({ success: false, message: "Paste a real Page access token." }, { status: 400 });
+  const parsed = await parseJsonBody(request, accessTokenSchema);
+  if (!parsed.ok) return parsed.response;
+  const token = parsed.data.accessToken;
   const page = await resolveFacebookPage(token);
   if (!page) {
     return NextResponse.json({ success: false, message: "That token didn't work — make sure it's a Page access token, not a user token." }, { status: 400 });

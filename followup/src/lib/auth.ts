@@ -34,6 +34,19 @@ const allowedEmails = (process.env.ALLOWED_EMAILS ?? "")
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
 
+// A session cookie is good for a week at most — after that, sign in again.
+// Down from NextAuth's 30-day default: this app holds other people's
+// conversations, so a stolen or forgotten-open cookie shouldn't stay a
+// live credential for a month.
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+
+// How often a still-valid session gets its businessId re-checked against
+// the DB (see the jwt callback below) — bounds how long someone removed
+// from their team (removeMember() in team.ts sets businessId to null) can
+// keep using an already-issued token, without paying a DB round trip on
+// every single request the way a check-every-time approach would.
+const REVALIDATE_INTERVAL_MS = 5 * 60 * 1000;
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -41,7 +54,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_SECONDS },
   pages: {
     signIn: "/signin",
   },
@@ -115,6 +128,18 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user }) {
+      if (user) {
+        // `user` is only present right after a real round-trip through
+        // Google's own sign-in screen just completed — not on the
+        // thousands of ordinary requests that merely reuse an existing
+        // cookie. Stamping it here is what lets requireRecentAuth()
+        // (src/lib/session.ts) tell "this session was actively re-proven
+        // N minutes ago" from "this cookie has just been sitting in a
+        // browser for days" — the step-up check before rotating a secret
+        // or deleting a business.
+        token.authTime = Date.now();
+      }
+
       // Re-derived right after sign-in (when `user` is present) AND
       // retried on every later request as long as businessId is still
       // missing from the token — a token that never got it on that first
@@ -131,8 +156,35 @@ export const authOptions: NextAuthOptions = {
         if (dbUser?.businessId) {
           token.userId = dbUser.id;
           token.businessId = dbUser.businessId;
+          token.checkedAt = Date.now();
         }
+        return token;
       }
+
+      // Periodic revalidation: without this, a user removed from their
+      // team (businessId set to null — removeMember() in team.ts) or
+      // whose whole business was deleted (src/lib/businessData.ts) keeps
+      // an already-issued token that still claims the old businessId for
+      // as long as the token itself is valid — up to SESSION_MAX_AGE_SECONDS.
+      // Re-checking here on a short interval instead of trusting the token
+      // forever bounds that exposure window to REVALIDATE_INTERVAL_MS,
+      // while keeping the common case (checked within the last few
+      // minutes) a zero-DB-hit no-op, same as before this existed.
+      const lastChecked = typeof token.checkedAt === "number" ? token.checkedAt : 0;
+      if (token.userId && Date.now() - lastChecked > REVALIDATE_INTERVAL_MS) {
+        const dbUser = await prisma.user.findUnique({ where: { id: token.userId }, select: { businessId: true } });
+        if (!dbUser?.businessId) {
+          // Removed from their team, or the user row itself is gone —
+          // strip the claims that grant data access. getSessionContext()
+          // treats a token with no businessId as "not signed in."
+          token.userId = undefined;
+          token.businessId = undefined;
+        } else {
+          token.businessId = dbUser.businessId;
+        }
+        token.checkedAt = Date.now();
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -140,6 +192,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.userId;
         session.user.businessId = token.businessId;
       }
+      session.authTime = token.authTime ?? 0;
       return session;
     },
   },

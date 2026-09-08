@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse, after } from "next/server";
+import { z } from "zod";
 import { findBusinessIdByGmailAddress } from "@/lib/integrations/gmail";
 import { syncGmailForBusinessFromPush } from "@/lib/gmailSync";
+import { recordAuthFailure } from "@/lib/monitoring";
+
+// Google's own Pub/Sub push envelope — https://cloud.google.com/pubsub/docs/push.
+// Loosely typed on purpose: only `message.data` is ever read, and this
+// endpoint already treats anything it doesn't recognize as a no-op 204
+// (see the doc comment below) rather than an error, so validation here
+// only needs to safely narrow the shape, not reject the rest of it.
+const pubSubPushSchema = z.object({
+  message: z.object({ data: z.string().optional() }).optional(),
+});
 
 export const maxDuration = 120;
 
@@ -24,11 +35,13 @@ export async function POST(request: NextRequest) {
   const secret = process.env.GMAIL_PUSH_SECRET;
   if (!secret) return NextResponse.json({ success: false }, { status: 404 });
   if (request.nextUrl.searchParams.get("secret") !== secret) {
+    recordAuthFailure("gmail_push_secret");
     return NextResponse.json({ success: false }, { status: 403 });
   }
 
-  const payload = await request.json().catch(() => null);
-  const data: string | undefined = payload?.message?.data;
+  const rawPayload = await request.json().catch(() => null);
+  const payload = pubSubPushSchema.safeParse(rawPayload);
+  const data = payload.success ? payload.data.message?.data : undefined;
   if (!data) return new NextResponse(null, { status: 204 });
 
   let emailAddress: string | undefined;

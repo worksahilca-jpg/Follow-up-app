@@ -6,6 +6,7 @@ import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { fetchLeadgenLead, findOrCreateLeadByMessenger, upsertLeadFromLeadgen } from "@/lib/facebook";
 import { WEBHOOK_VERIFY_TOKEN, findOrCreateLeadByInstagram, validateMetaSignature } from "@/lib/instagram";
+import { recordAuthFailure } from "@/lib/monitoring";
 
 /**
  * GET /api/instagram/webhook — Meta's one-time webhook verification
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
   if (mode === "subscribe" && token === WEBHOOK_VERIFY_TOKEN && challenge) {
     return new NextResponse(challenge, { status: 200 });
   }
+  recordAuthFailure("meta_webhook_verify");
   return NextResponse.json({ success: false }, { status: 403 });
 }
 
@@ -39,6 +41,7 @@ export async function POST(request: NextRequest) {
   const rawBody = await request.text();
 
   if (!validateMetaSignature(rawBody, request.headers.get("x-hub-signature-256"))) {
+    recordAuthFailure("meta_webhook_verify", { stage: "post_signature" });
     return NextResponse.json({ success: false }, { status: 403 });
   }
 

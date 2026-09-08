@@ -16,6 +16,7 @@ import { prisma } from "@/lib/db";
 import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
+import { recordAudit } from "@/lib/audit";
 import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 import { sendMessengerMessage } from "@/lib/facebook";
@@ -98,6 +99,16 @@ export async function sendFollowUpToLead(
           ? await detectPhoneChannel(lead.id)
           : null);
   if (!channel) return { success: false, message: "This lead has no email or phone number on file." };
+
+  // TCPA/CTIA opt-out — see Lead.optedOutAt and isOptOutMessage() in
+  // src/lib/twilio.ts. A hard stop, not a risk signal: applies to every
+  // caller (manual send, automation.ts, sequences.ts, acknowledge.ts —
+  // this is the one funnel all of them send through) and is never
+  // overridable from here. Scoped to text/whatsapp only — STOP is the
+  // SMS-specific legal mechanism, not a "never contact this lead again."
+  if ((channel === "text" || channel === "whatsapp") && lead.optedOutAt) {
+    return { success: false, message: "This lead texted STOP — SMS/WhatsApp sending is blocked until they text START to opt back in." };
+  }
 
   let externalId: string | undefined;
   let emailProvider: "gmail" | "outlook" | undefined;
@@ -183,6 +194,22 @@ export async function sendFollowUpToLead(
   // a CRM hiccup fail a send that already succeeded. See src/lib/crmSync.ts.
   if (lead.crmProvider && lead.crmId && isCrmProvider(lead.crmProvider)) {
     void pushCrmNote(lead.businessId, lead.crmProvider, lead.crmId, body);
+  }
+
+  // AI audit trail (task #67): every message this app sent with nobody
+  // clicking "Send" — auto-send on silence, the human-neglect rescue, a
+  // sequence step, the instant acknowledgement — lands in the same
+  // append-only AuditEvent trail admin-side actions already use, instead
+  // of only existing as a FollowUp row nobody but the weekly report
+  // reads. A manual send is already covered by its own route-level
+  // recordAudit("lead.send", ...) call, so this only fires for automated
+  // ones to avoid double-logging the same send.
+  if (options.automated) {
+    void recordAudit({ businessId: lead.businessId, userId: null }, "ai.send", {
+      targetType: "lead",
+      targetId: lead.id,
+      meta: { channel, trigger: options.trigger ?? "silence", length: body.length },
+    });
   }
 
   return { success: true };

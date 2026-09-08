@@ -1,25 +1,20 @@
 import type { Metadata } from "next";
-import { Inter, Fraunces } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 
-// Single font family throughout the authenticated app (weight does the
-// work headings used to need a separate serif for) — the clean,
-// restrained look of most modern SaaS UI (Linear, Notion, Stripe) rather
-// than an editorial display font.
+// Inter is the body/UI face everywhere — forms, tables, buttons — where
+// density and legibility matter more than character.
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
-// Fraunces is loaded here (once, for every route) but only ever referenced
-// via var(--font-fraunces) — and today that's just the public marketing
-// page's own headlines. The authenticated app keeps the Inter-only look
-// above untouched; this just makes a second, editorial display face
-// available where it's asked for.
-const fraunces = Fraunces({
+// Space Grotesk is the display face for every heading app-wide (see
+// --font-display in globals.css) — a clean, slightly technical geometric
+// sans that reads as "confident product" rather than an editorial one.
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-fraunces",
-  weight: ["500", "600"],
-  style: ["normal", "italic"],
+  variable: "--font-space-grotesk",
+  weight: ["500", "600", "700"],
 });
 
 // metadataBase makes every relative URL below (the OG image, icons) resolve
@@ -50,7 +45,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`h-full antialiased ${inter.variable} ${fraunces.variable}`}>
+    <html lang="en" className={`h-full antialiased ${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="min-h-full flex flex-col bg-paper text-ink">
         {/* Every framer-motion animation in the app — the landing page's
             reveal/parallax/hover motion, the FAQ accordion — reads the

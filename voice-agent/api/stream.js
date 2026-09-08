@@ -58,6 +58,14 @@ const REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-mini";
 // ordinary voicemail flow (see followup's voice/[secret]/route.ts).
 const OPENAI_CONNECT_TIMEOUT_MS = 6000;
 
+// Same "a caller must never sit on a silent line" guarantee, applied to
+// authorizeCall()'s fetch back to the main app — a single indexed lookup
+// plus a billing check, normally milliseconds, but unlike every other
+// wait in this file it had no bound at all until this was added: a slow
+// or briefly-unreachable main app would otherwise hang a real,
+// legitimate call indefinitely instead of falling back to voicemail.
+const VOICE_AGENT_AUTH_TIMEOUT_MS = 4000;
+
 const app = express();
 // A plain GET (not a WebSocket upgrade) is just a liveness check — Twilio
 // only ever opens this as a WebSocket. Path-agnostic on purpose: Vercel
@@ -110,7 +118,8 @@ wss.on("connection", (twilioWs, request) => {
  * shared-bearer-secret trust boundary postTranscript() below already
  * uses to write a transcript, applied here on the way in. Fails CLOSED:
  * any error, timeout, or missing env var rejects the call rather than
- * falling back to the old "any secret works" behavior.
+ * falling back to the old "any secret works" behavior. Bounded by
+ * VOICE_AGENT_AUTH_TIMEOUT_MS — see that constant's comment for why.
  */
 async function authorizeCall(secret) {
   if (!FOLLOWUP_APP_URL || !VOICE_AGENT_CALLBACK_SECRET) {
@@ -121,10 +130,11 @@ async function authorizeCall(secret) {
     const url = `${FOLLOWUP_APP_URL.replace(/\/$/, "")}/api/twilio/voice-agent-auth/${secret}`;
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${VOICE_AGENT_CALLBACK_SECRET}` },
+      signal: AbortSignal.timeout(VOICE_AGENT_AUTH_TIMEOUT_MS),
     });
     return res.ok;
   } catch (err) {
-    console.error("[voice-agent] voice-agent-auth request failed:", err);
+    console.error("[voice-agent] voice-agent-auth request failed or timed out:", err);
     return false;
   }
 }

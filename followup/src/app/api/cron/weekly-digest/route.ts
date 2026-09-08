@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCronSecret } from "@/lib/cronAuth";
 import { prisma } from "@/lib/db";
 import { hasActiveAccess } from "@/lib/billing";
 import { sendEmail } from "@/lib/integrations/gmail";
@@ -16,11 +17,8 @@ export const maxDuration = 300;
  * skipped — the same report is always on the dashboard.
  */
 export async function GET(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  if (!secret || auth !== `Bearer ${secret}`) {
-    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
-  }
+  const unauthorized = requireCronSecret(request, "weekly-digest");
+  if (unauthorized) return unauthorized;
 
   const businesses = await prisma.business.findMany({
     where: { users: { some: { integrations: { some: { provider: "gmail", status: "connected" } } } } },

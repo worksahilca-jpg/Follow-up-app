@@ -9,6 +9,7 @@ import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentLeads } from "@/lib/rateLimit";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { cleanedText, EMAIL_RE, parseObject } from "@/lib/validation";
+import { recordAuthFailure } from "@/lib/monitoring";
 
 const MAX_TEXT = 200;
 const MAX_MESSAGE = 4000;
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const business = await prisma.business.findUnique({ where: { webhookSecret: secret }, select: { id: true } });
   if (!business) {
+    recordAuthFailure("webhook_secret", { route: "webhooks/lead" });
     return NextResponse.json({ success: false, message: "Invalid or revoked webhook URL." }, { status: 404 });
   }
   const businessId = business.id;

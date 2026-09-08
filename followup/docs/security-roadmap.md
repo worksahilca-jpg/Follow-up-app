@@ -25,7 +25,19 @@ checked and the re-audit checklist in `docs/security.md` passes.
 - [x] **Rate limits on costly/abusable routes**: send, import, create, regenerate.
 - [x] **CI on every PR**: typecheck, lint, build, dependency audit, gitleaks secret
       scan. Dependabot weekly.
-- [ ] Error monitoring with PII scrubbing + alerts on auth/webhook failure spikes (task #70).
+- [x] **Error monitoring with PII scrubbing + alerts on auth/webhook failure
+      spikes** (task #70). Sentry wired through Next's instrumentation
+      hooks (server, edge, client, plus `app/global-error.tsx`), a shared
+      `beforeSend` (`src/lib/sentryScrub.ts`) that redacts email/phone
+      patterns and strips request bodies/cookies/headers before anything
+      leaves the app, and `recordAuthFailure()`
+      (`src/lib/monitoring.ts`) reporting every forged Twilio signature,
+      wrong webhook/cron secret, and failed Meta verification as a
+      fingerprinted event Sentry groups and can alert on. Inert (no-op,
+      breaks nothing) until `SENTRY_DSN` is set — see
+      `docs/error-monitoring-setup.md`, which also has the exact two
+      Alert Rules to create once a Sentry project exists (that account
+      creation and alert-rule setup is the one manual step left).
 - [x] **Least-privilege DB role for the app** (task #71). `followup_app`: full
       CRUD on app tables, no DDL, no access to `_prisma_migrations`,
       `NOSUPERUSER`/`NOCREATEDB`/`NOCREATEROLE`. Migrations keep using the

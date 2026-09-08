@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 /**
  * Security headers, applied to every response. The one deliberate
@@ -58,4 +59,24 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * Wraps the config to upload source maps (only when SENTRY_AUTH_TOKEN is
+ * set — silently skipped otherwise, never fails the build) and tunnel the
+ * browser SDK's error/trace beacons through this app's own origin at
+ * /monitoring rather than posting straight to sentry.io. Two reasons:
+ * an ad-blocker won't silently eat error reports the way it does a
+ * direct sentry.io request, and connect-src 'self' — already in the CSP
+ * above for the app's own API calls — covers it with no CSP change needed.
+ */
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+  tunnelRoute: "/monitoring",
+  widenClientFileUpload: true,
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+    automaticVercelMonitors: false,
+  },
+});

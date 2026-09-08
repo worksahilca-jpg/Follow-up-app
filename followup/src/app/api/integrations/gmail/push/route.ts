@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { z } from "zod";
 import { findBusinessIdByGmailAddress } from "@/lib/integrations/gmail";
 import { syncGmailForBusinessFromPush } from "@/lib/gmailSync";
+import { recordAuthFailure } from "@/lib/monitoring";
 
 // Google's own Pub/Sub push envelope — https://cloud.google.com/pubsub/docs/push.
 // Loosely typed on purpose: only `message.data` is ever read, and this
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
   const secret = process.env.GMAIL_PUSH_SECRET;
   if (!secret) return NextResponse.json({ success: false }, { status: 404 });
   if (request.nextUrl.searchParams.get("secret") !== secret) {
+    recordAuthFailure("gmail_push_secret");
     return NextResponse.json({ success: false }, { status: 403 });
   }
 

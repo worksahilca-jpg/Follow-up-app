@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RotateCw } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
 
 // Root app/error.tsx — the fallback for an unexpected runtime error
 // anywhere in the app, instead of Next's generic unstyled error screen.
@@ -18,6 +19,7 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error(error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (

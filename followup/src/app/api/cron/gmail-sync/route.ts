@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCronSecret } from "@/lib/cronAuth";
 import { syncGmailForAllBusinesses } from "@/lib/gmailSync";
 import { encryptPlaintextSecrets } from "@/lib/secretsSweep";
 
@@ -14,11 +15,8 @@ export const maxDuration = 300;
 // "no lead goes cold": the lead was cold from the moment it arrived. Same
 // CRON_SECRET protection as /api/cron/automation.
 export async function GET(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  if (!secret || auth !== `Bearer ${secret}`) {
-    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
-  }
+  const unauthorized = requireCronSecret(request, "gmail-sync");
+  if (unauthorized) return unauthorized;
 
   try {
     // Piggybacks on this tick: re-saves any credentials still stored in

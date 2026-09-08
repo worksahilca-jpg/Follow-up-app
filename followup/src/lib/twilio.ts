@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { pickAssignee } from "@/lib/assignment";
 import { appUrl } from "@/lib/stripe";
 import { applySourceRouting } from "@/lib/sourceRouting";
+import { recordAuthFailure } from "@/lib/monitoring";
 import type { Lead } from "@prisma/client";
 
 /**
@@ -76,7 +77,9 @@ export function validateTwilioRequestSignature(
   params: Record<string, string>,
   signature: string | null
 ): boolean {
-  return candidateSignedUrls(request).some((url) => validateTwilioSignature(authToken, url, params, signature));
+  const valid = candidateSignedUrls(request).some((url) => validateTwilioSignature(authToken, url, params, signature));
+  if (!valid) recordAuthFailure("twilio_signature", { path: new URL(request.url).pathname });
+  return valid;
 }
 
 /** application/x-www-form-urlencoded body → plain string map, as Twilio always sends it. */
@@ -236,12 +239,17 @@ export function voiceAgentStreamUrl(secret: string): string | null {
  */
 export function validateVoiceAgentCallbackAuth(request: Request): boolean {
   const expected = process.env.VOICE_AGENT_CALLBACK_SECRET;
-  if (!expected) return false;
+  if (!expected) {
+    recordAuthFailure("voice_agent_callback", { reason: "not_configured" });
+    return false;
+  }
   const header = request.headers.get("authorization") ?? "";
   const provided = header.startsWith("Bearer ") ? header.slice(7) : "";
   const a = Buffer.from(expected);
   const b = Buffer.from(provided);
-  return a.length === b.length && timingSafeEqual(a, b);
+  const valid = a.length === b.length && timingSafeEqual(a, b);
+  if (!valid) recordAuthFailure("voice_agent_callback", { reason: "bad_token" });
+  return valid;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCronSecret } from "@/lib/cronAuth";
 import { syncOutlookForAllBusinesses } from "@/lib/outlookSync";
 
 // Every business with a connected Outlook, pulling only what's new via
@@ -12,11 +13,8 @@ export const maxDuration = 300;
 // runs on the Gmail cron tick and covers every Integration row regardless
 // of provider, so it isn't duplicated here.
 export async function GET(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  if (!secret || auth !== `Bearer ${secret}`) {
-    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
-  }
+  const unauthorized = requireCronSecret(request, "outlook-sync");
+  if (unauthorized) return unauthorized;
 
   try {
     const result = await syncOutlookForAllBusinesses();

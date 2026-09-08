@@ -137,9 +137,33 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ success: true, leadId: lead.id });
   } catch (err) {
     // Duplicate email for this business — same lead re-sent (a retried
-    // Zapier run, a re-submitted form) shouldn't error.
+    // Zapier run, a re-submitted form) shouldn't error. This used to just
+    // return success and drop the resend's content entirely — an
+    // integration re-sending an updated payload for a lead it already
+    // pushed once (a Google Form edit-response sync, a CRM export re-run)
+    // was a total no-op beyond the row already existing. Find the
+    // existing lead instead and treat this the same as any other new
+    // inbound message on it: appended, re-scored, and (subject to its own
+    // once-only guard) re-acknowledged — same "conflict -> find and
+    // continue" shape findOrCreateLeadByPhone() already uses for the SMS
+    // side of this same problem.
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
-      return NextResponse.json({ success: true });
+      const existing = await prisma.lead.findUnique({ where: { businessId_email: { businessId, email } } });
+      if (existing && message) {
+        let conversation = await prisma.conversation.findFirst({
+          where: { leadId: existing.id, channel: "web" },
+          orderBy: { createdAt: "desc" },
+        });
+        if (!conversation) {
+          conversation = await prisma.conversation.create({ data: { leadId: existing.id, channel: "web" } });
+        }
+        await prisma.message.create({
+          data: { conversationId: conversation.id, direction: "inbound", body: message, sentAt: now },
+        });
+        await scoreAndDraftForLead(existing.id);
+        if (email) await acknowledgeNewLead(existing.id, { channel: "email", inboundText: message, inboundAt: now });
+      }
+      return NextResponse.json({ success: true, leadId: existing?.id });
     }
     throw err;
   }

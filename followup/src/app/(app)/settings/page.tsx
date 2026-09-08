@@ -390,7 +390,39 @@ function SettingsPageInner() {
         <p className="text-ink-soft mt-1">Connect your inbox, set follow-up rules, and manage your team.</p>
       </div>
 
-      <section>
+      {/* 12 sections is a lot to scroll blind through to find one thing —
+          a sticky jump row turns "where's Billing again?" into one click
+          instead of a hunt. Pure navigation, no new state; each target is
+          just the section's own existing id. */}
+      <nav
+        className="sticky top-0 z-10 -mx-1 flex flex-wrap gap-1 overflow-x-auto bg-paper/95 px-1 py-2 backdrop-blur-sm border-b border-line"
+        aria-label="Jump to a settings section"
+      >
+        {[
+          ["integrations", "Integrations"],
+          ["website-widget", "Website widget"],
+          ["lead-webhook", "Lead webhook"],
+          ["outbound-webhook", "Outbound webhook"],
+          ["phone", "Phone"],
+          ["instagram", "Instagram"],
+          ["automation", "Automation"],
+          ["lead-routing", "Lead routing"],
+          ["team", "Team"],
+          ["billing", "Billing"],
+          ["feedback", "Feedback"],
+          ["data", "Your data"],
+        ].map(([id, label]) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            className="shrink-0 rounded-full px-3 py-1.5 text-xs font-medium border border-line text-ink-soft hover:bg-card hover:text-ink transition-colors"
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
+
+      <section id="integrations" className="scroll-mt-16">
         <h2 className="font-display text-xl">Integrations</h2>
         <div className="mt-4 space-y-3">
           <IntegrationRow
@@ -526,35 +558,35 @@ function SettingsPageInner() {
         )}
       </section>
 
-      <section>
+      <section id="website-widget" className="scroll-mt-16">
         <h2 className="font-display text-xl">Website widget</h2>
         <div className="mt-4">
           <CopyEmbedSnippet />
         </div>
       </section>
 
-      <section>
+      <section id="lead-webhook" className="scroll-mt-16">
         <h2 className="font-display text-xl">Lead webhook</h2>
         <div className="mt-4">
           <CopyWebhookUrl />
         </div>
       </section>
 
-      <section>
+      <section id="outbound-webhook" className="scroll-mt-16">
         <h2 className="font-display text-xl">Outbound webhook</h2>
         <div className="mt-4">
           <OutboundWebhookConfig />
         </div>
       </section>
 
-      <section>
+      <section id="phone" className="scroll-mt-16">
         <h2 className="font-display text-xl">Phone (SMS + calls)</h2>
         <div className="mt-4">
           <TwilioConfig />
         </div>
       </section>
 
-      <section>
+      <section id="instagram" className="scroll-mt-16">
         <h2 className="font-display text-xl">Instagram</h2>
         <div className="mt-4">
           <InstagramConfig />
@@ -563,7 +595,7 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section>
+      <section id="automation" className="scroll-mt-16">
         <h2 className="font-display text-xl">Automation</h2>
         <div className="mt-4 rounded-xl border border-line bg-card p-5">
           <div className="flex items-center justify-between">
@@ -728,7 +760,7 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section>
+      <section id="lead-routing" className="scroll-mt-16">
         <h2 className="font-display text-xl">Lead routing</h2>
         <p className="text-sm text-ink-soft mt-1">
           Give a lead a head start based on where it came from — before anyone&apos;s looked at it.
@@ -738,7 +770,7 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section>
+      <section id="team" className="scroll-mt-16">
         <h2 className="font-display text-xl">Team</h2>
         <p className="text-sm text-ink-soft mt-1">
           Admins can invite teammates, change roles, and remove people. Everyone can see who&apos;s on the team.
@@ -748,7 +780,7 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section>
+      <section id="billing" className="scroll-mt-16">
         <h2 className="font-display text-xl">Billing</h2>
         {billingRedirect === "success" && (
           <p className="mt-2 text-sm" style={{ color: "var(--sage)" }}>
@@ -807,7 +839,7 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section>
+      <section id="feedback" className="scroll-mt-16">
         <h2 className="font-display text-xl flex items-center gap-2">
           <MessageSquareHeart className="h-4 w-4 text-ink-soft" />
           Something we should know?
@@ -851,7 +883,7 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section>
+      <section id="data" className="scroll-mt-16">
         <h2 className="font-display text-xl flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-ink-soft" />
           Your data

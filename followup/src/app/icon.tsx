@@ -4,7 +4,7 @@ export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
 // Replaces the stock Next.js favicon with the real brand mark. Solid
-// wine fill (matches --rust in globals.css) rather than a stroke-only icon
+// blue fill (matches --rust in globals.css) rather than a stroke-only icon
 // on transparent/white — at 16-32px a thin outline reads as a smudge; a
 // filled shape holds up. Can't reference the CSS variable directly —
 // Satori renders this to a static PNG with no stylesheet — so this has to
@@ -20,13 +20,13 @@ export default async function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#7a2e3a",
+          backgroundColor: "#3b82c4",
           borderRadius: "7px",
         }}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#faf9f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f8f9fb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10" />
-          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="#faf9f6" stroke="none" />
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="#f8f9fb" stroke="none" />
         </svg>
       </div>
     ),

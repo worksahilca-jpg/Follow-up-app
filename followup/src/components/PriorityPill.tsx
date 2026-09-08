@@ -1,6 +1,6 @@
 import { Priority } from "@/lib/types";
 
-// The accent (wine) is reserved for buttons/links/focus states — priority
+// The accent (blue) is reserved for buttons/links/focus states — priority
 // is a status, so it draws from the same low-saturation red/amber/gray
 // family as the rest of the urgency system, never the brand accent.
 const config: Record<Priority, { label: string; bg: string; fg: string }> = {

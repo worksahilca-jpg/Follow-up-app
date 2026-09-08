@@ -19,15 +19,15 @@ export default async function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "72px",
-          backgroundColor: "#faf9f6",
+          backgroundColor: "#f8f9fb",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7a2e3a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3b82c4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
           </svg>
-          <span style={{ fontSize: 34, fontWeight: 700, color: "#231f1c", letterSpacing: "-0.02em" }}>
+          <span style={{ fontSize: 34, fontWeight: 700, color: "#14181f", letterSpacing: "-0.02em" }}>
             FollowUp
           </span>
         </div>
@@ -37,14 +37,14 @@ export default async function OpengraphImage() {
             style={{
               fontSize: 64,
               fontWeight: 700,
-              color: "#231f1c",
+              color: "#14181f",
               lineHeight: 1.08,
               letterSpacing: "-0.02em",
             }}
           >
             Never lose a lead because you forgot to follow up.
           </span>
-          <span style={{ fontSize: 26, color: "#78716c", marginTop: "28px", lineHeight: 1.4 }}>
+          <span style={{ fontSize: 26, color: "#4b515c", marginTop: "28px", lineHeight: 1.4 }}>
             The AI teammate that tells you exactly who to contact today, why, and what to say.
           </span>
         </div>

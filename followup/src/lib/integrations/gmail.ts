@@ -515,6 +515,7 @@ async function processThreadRefs(
             create: {
               businessId,
               threadId: thread.id!,
+              provider: "gmail",
               senderName: counterpart.name,
               senderEmail: counterpart.email,
               subject: getHeader(gmailMessages[0]?.payload?.headers, "Subject") || null,
@@ -573,7 +574,7 @@ async function processThreadRefs(
     });
     if (!conversation) {
       conversation = await prisma.conversation.create({
-        data: { leadId: lead.id, channel: "email", externalId: thread.id! },
+        data: { leadId: lead.id, channel: "email", externalId: thread.id!, emailProvider: "gmail" },
       });
     }
 

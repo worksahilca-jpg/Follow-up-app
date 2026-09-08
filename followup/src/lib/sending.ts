@@ -12,7 +12,8 @@
  */
 
 import { prisma } from "@/lib/db";
-import { sendEmail } from "@/lib/integrations/gmail";
+import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
+import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
 import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
@@ -34,6 +35,35 @@ async function detectPhoneChannel(leadId: string): Promise<"whatsapp" | "text"> 
     select: { conversation: { select: { channel: true } } },
   });
   return lastInbound?.conversation.channel === "whatsapp" ? "whatsapp" : "text";
+}
+
+/**
+ * Same idea as detectPhoneChannel() above, for email once a business can
+ * have both Gmail and Outlook connected: a reply has to go out from
+ * whichever mailbox actually holds the lead's thread, not always Gmail.
+ *  - A lead with an existing "email" Conversation uses whatever provider
+ *    was stamped on it (see Conversation.emailProvider) — null there
+ *    means a row from before this field existed, always Gmail.
+ *  - A lead with no email history yet (manually entered, or captured on
+ *    another channel first) falls back to whichever mailbox is actually
+ *    connected, preferring Gmail since that's the long-standing default
+ *    when a business has both.
+ */
+async function detectEmailProvider(businessId: string, leadId: string): Promise<"gmail" | "outlook"> {
+  const lastEmailConversation = await prisma.conversation.findFirst({
+    where: { leadId, channel: "email" },
+    orderBy: { createdAt: "desc" },
+    select: { emailProvider: true },
+  });
+  if (lastEmailConversation?.emailProvider === "outlook") return "outlook";
+  if (lastEmailConversation) return "gmail";
+
+  const [gmailStatus, outlookStatus] = await Promise.all([getGmailStatus(businessId), getOutlookStatus(businessId)]);
+  if (gmailStatus.connected) return "gmail";
+  if (outlookStatus.connected) return "outlook";
+  // Neither connected — sendEmail() will fail with a clear "not
+  // connected" message, same behavior as before Outlook existed.
+  return "gmail";
 }
 
 export async function sendFollowUpToLead(
@@ -69,17 +99,33 @@ export async function sendFollowUpToLead(
   if (!channel) return { success: false, message: "This lead has no email or phone number on file." };
 
   let externalId: string | undefined;
+  let emailProvider: "gmail" | "outlook" | undefined;
   if (channel === "email") {
     if (!lead.email) return { success: false, message: "This lead has no email address on file." };
-    const result = await sendEmail(lead.businessId, {
-      to: lead.email,
-      subject: options.subject ?? `Following up, ${lead.name.split(" ")[0]}`,
-      body,
-      threadId: options.emailThreadId,
-      inReplyTo: options.emailInReplyTo,
-    });
-    if (!result.success) return { success: false, message: "Gmail didn't confirm this message sent." };
-    externalId = result.messageId ?? undefined;
+    emailProvider = await detectEmailProvider(lead.businessId, lead.id);
+    if (emailProvider === "outlook") {
+      const result = await sendOutlookEmail(lead.businessId, {
+        to: lead.email,
+        subject: options.subject ?? `Following up, ${lead.name.split(" ")[0]}`,
+        body,
+        // Graph's /reply endpoint takes the specific message's own id,
+        // not an RFC822 Message-ID header — acknowledgeNewLead's Outlook
+        // path passes that Graph id through as emailInReplyTo (same
+        // field Gmail's flow uses for its own, differently-shaped id).
+        replyToMessageId: options.emailInReplyTo,
+      });
+      if (!result.success) return { success: false, message: "Outlook didn't confirm this message sent." };
+    } else {
+      const result = await sendEmail(lead.businessId, {
+        to: lead.email,
+        subject: options.subject ?? `Following up, ${lead.name.split(" ")[0]}`,
+        body,
+        threadId: options.emailThreadId,
+        inReplyTo: options.emailInReplyTo,
+      });
+      if (!result.success) return { success: false, message: "Gmail didn't confirm this message sent." };
+      externalId = result.messageId ?? undefined;
+    }
   } else if (channel === "instagram") {
     const result = await sendInstagramMessage(lead.businessId, instagramRecipientId(lead.phone!), body);
     if (!result.success) return { success: false, message: result.message ?? "Instagram didn't confirm this message sent." };
@@ -101,7 +147,9 @@ export async function sendFollowUpToLead(
     orderBy: { createdAt: "desc" },
   });
   if (!conversation) {
-    conversation = await prisma.conversation.create({ data: { leadId: lead.id, channel } });
+    conversation = await prisma.conversation.create({
+      data: { leadId: lead.id, channel, ...(emailProvider ? { emailProvider } : {}) },
+    });
   }
 
   await prisma.message.create({

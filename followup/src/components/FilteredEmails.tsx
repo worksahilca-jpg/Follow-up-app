@@ -5,6 +5,7 @@ import { Check, EyeOff } from "lucide-react";
 
 type FilteredEmail = {
   id: string;
+  provider: string;
   senderName: string;
   senderEmail: string;
   subject: string | null;
@@ -15,7 +16,8 @@ type FilteredEmail = {
 /**
  * "Filtered out as not leads" — what the AI inbox classifier decided NOT
  * to turn into a lead, and why, with a one-click override. Sits under
- * Gmail in Settings. The point is trust: an owner can see every judgment
+ * Email in Settings, shared across Gmail and Outlook (whichever mailbox
+ * a row came from, see FilteredEmail.provider). The point is trust: an owner can see every judgment
  * call the AI made on their inbox, not just the ones it got right.
  */
 export default function FilteredEmails() {
@@ -70,6 +72,7 @@ export default function FilteredEmails() {
                 <div className="min-w-0">
                   <span className="font-medium">{item.senderName || item.senderEmail}</span>
                   <span className="text-ink-soft"> · {item.senderEmail}</span>
+                  {item.provider === "outlook" && <span className="text-ink-soft"> · Outlook</span>}
                   {item.subject && <div className="truncate">{item.subject}</div>}
                   <div className="text-ink-soft mt-0.5">{item.reason}</div>
                   <div className="text-ink-soft mt-0.5">{new Date(item.lastMessageAt).toLocaleString()}</div>

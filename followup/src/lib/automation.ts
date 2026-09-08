@@ -160,13 +160,17 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         }))
       );
 
-      const message =
-        lead.suggestedMessage ||
-        (await composeFollowUpEmail(
-          lead.name.split(" ")[0],
-          lead.businessId,
-          await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples)
-        ));
+      // Reuse an existing draft (subject + body) when this lead already has
+      // one from a normal scoring pass — only draft fresh here if it
+      // somehow doesn't (e.g. scoring never ran, most commonly no
+      // OPENAI_API_KEY configured).
+      let subject = lead.suggestedSubject ?? undefined;
+      let message = lead.suggestedMessage;
+      if (!message) {
+        const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
+        subject = draft.subject;
+        message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body);
+      }
 
       // AUTONOMOUS skips the risk check entirely — that's the whole point
       // of the tier. Every other opted-in lead (ASSISTED) still gets
@@ -192,7 +196,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
 
         if (risk.riskLevel !== "low") {
           if (!lead.suggestedMessage) {
-            await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message } });
+            await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message, suggestedSubject: subject } });
           }
           if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
           return { kind: "held", note: `${lead.name}: ${risk.reason}` };
@@ -202,6 +206,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       const result = await sendFollowUpToLead(lead.id, message, {
         automated: true,
         trigger: unansweredIds.has(lead.id) ? "unanswered" : "silence",
+        subject,
       });
       if (result.success && unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "sent");
       return result.success

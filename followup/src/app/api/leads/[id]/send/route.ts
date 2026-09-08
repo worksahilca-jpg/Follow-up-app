@@ -27,8 +27,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!message) {
     return NextResponse.json({ success: false, message: "Message can't be empty." }, { status: 400 });
   }
+  // Optional: the composer only shows/requires a Subject field for leads
+  // being emailed (see MessageComposer.tsx) — a text/WhatsApp/Instagram
+  // send has no subject concept, so this is just omitted for those.
+  const subject = typeof body.subject === "string" && body.subject.trim() ? body.subject.trim() : undefined;
 
-  const result = await sendFollowUpToLead(id, message, { trigger: "manual" });
+  const result = await sendFollowUpToLead(id, message, { trigger: "manual", subject });
   if (result.success) void recordAudit(ctx, "lead.send", { targetType: "lead", targetId: id, meta: { length: message.length } });
   return NextResponse.json(result, { status: result.success ? 200 : 500 });
 }

@@ -353,8 +353,12 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           voiceSamples,
           step.messageHint ?? undefined
         );
-        const message = await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft);
-        const result = await sendFollowUpToLead(lead.id, message, { automated: true, trigger: "sequence" });
+        const message = await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft.body);
+        const result = await sendFollowUpToLead(lead.id, message, {
+          automated: true,
+          trigger: "sequence",
+          subject: draft.subject,
+        });
         if (!result.success) {
           return { kind: "skipped" as const, note: `${lead.name}: ${result.message ?? "send failed"}` };
         }

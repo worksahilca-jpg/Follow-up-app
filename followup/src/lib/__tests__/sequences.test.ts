@@ -10,7 +10,7 @@ vi.mock("@/lib/db", () => ({
     notification: { create: vi.fn() },
   },
 }));
-vi.mock("@/lib/integrations/openai", () => ({ generateFollowUpMessage: vi.fn(async () => "draft") }));
+vi.mock("@/lib/integrations/openai", () => ({ generateFollowUpMessage: vi.fn(async () => ({ subject: "Following up", body: "draft" })) }));
 vi.mock("@/lib/sender", () => ({ composeFollowUpEmail: vi.fn(async (_f: string, _b: string, body: string) => body) }));
 vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ success: true })) }));
 vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));

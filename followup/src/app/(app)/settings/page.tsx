@@ -34,6 +34,14 @@ function SettingsPageInner() {
   const [scanningSpam, setScanningSpam] = useState(false);
   const [spamScanResult, setSpamScanResult] = useState<string | null>(null);
 
+  const [outlookConnected, setOutlookConnected] = useState(false);
+  const [outlookEmail, setOutlookEmail] = useState<string | undefined>();
+  const [outlookOauthAvailable, setOutlookOauthAvailable] = useState(false);
+  const [outlookStatusLoaded, setOutlookStatusLoaded] = useState(false);
+  const [outlookSyncing, setOutlookSyncing] = useState(false);
+  const [outlookSyncResult, setOutlookSyncResult] = useState<string | null>(null);
+  const [outlookDisconnecting, setOutlookDisconnecting] = useState(false);
+
   const [autoAfterDays, setAutoAfterDays] = useState(5);
   const [automationOn, setAutomationOn] = useState(false);
   const [automationLoaded, setAutomationLoaded] = useState(false);
@@ -72,6 +80,17 @@ function SettingsPageInner() {
         setGmailPushActive(Boolean(data.pushActive));
       })
       .finally(() => setGmailStatusLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/integrations/outlook/status")
+      .then((r) => r.json())
+      .then((data: { connected: boolean; email?: string; oauthAvailable?: boolean }) => {
+        setOutlookConnected(data.connected);
+        setOutlookEmail(data.email);
+        setOutlookOauthAvailable(Boolean(data.oauthAvailable));
+      })
+      .finally(() => setOutlookStatusLoaded(true));
   }, []);
 
   // Real automation settings (business-level master switch + delay).
@@ -238,6 +257,8 @@ function SettingsPageInner() {
   // pure derivation from the URL, no state needed.
   const gmailError =
     searchParams.get("gmail") === "error" ? searchParams.get("message") ?? "Couldn't connect Gmail." : null;
+  const outlookError =
+    searchParams.get("outlook") === "error" ? searchParams.get("message") ?? "Couldn't connect Outlook." : null;
   const billingRedirect = searchParams.get("billing"); // "success" | "canceled" | null
   // Just paid, but the webhook hasn't landed yet — the poll above is
   // already chasing it. Disable Subscribe during this window specifically
@@ -281,6 +302,43 @@ function SettingsPageInner() {
       setSyncResult(err instanceof Error ? err.message : "Sync failed.");
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function handleOutlookDisconnect() {
+    if (!window.confirm("Disconnect Outlook? FollowUp will stop reading this inbox. You can reconnect any time.")) return;
+    setOutlookDisconnecting(true);
+    try {
+      const res = await fetch("/api/integrations/outlook/disconnect", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setOutlookConnected(false);
+        setOutlookEmail(undefined);
+      } else {
+        setOutlookSyncResult(data.message ?? "Couldn't disconnect — try again.");
+      }
+    } finally {
+      setOutlookDisconnecting(false);
+    }
+  }
+
+  async function handleOutlookSync() {
+    setOutlookSyncing(true);
+    setOutlookSyncResult(null);
+    try {
+      const res = await fetch("/api/integrations/outlook/sync", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Sync failed");
+      if (data.count === 0) {
+        setOutlookSyncResult("Synced — no new sales conversations found in your recent inbox.");
+      } else {
+        const scoredNote = data.scored > 0 ? `, AI-scored ${data.scored}` : "";
+        setOutlookSyncResult(`Synced ${data.count} lead${data.count === 1 ? "" : "s"} from your inbox${scoredNote}.`);
+      }
+    } catch (err) {
+      setOutlookSyncResult(err instanceof Error ? err.message : "Sync failed.");
+    } finally {
+      setOutlookSyncing(false);
     }
   }
 
@@ -401,7 +459,6 @@ function SettingsPageInner() {
                 and adds anything that looks like a genuine prospect, tagged so you can tell where it came from.
                 Manual only; it never runs on its own.
               </p>
-              <FilteredEmails />
             </div>
           )}
           {gmailError && (
@@ -409,13 +466,61 @@ function SettingsPageInner() {
               {gmailError}
             </p>
           )}
-          <div className="rounded-lg border border-line px-4 py-3 text-sm text-ink-soft flex items-center justify-between opacity-60">
-            <span>Outlook / Microsoft 365 — coming soon</span>
-          </div>
+
+          {outlookOauthAvailable ? (
+            <IntegrationRow
+              icon={<Mail className="h-4 w-4" />}
+              name="Outlook / Microsoft 365"
+              description={
+                outlookConnected && outlookEmail
+                  ? `Connected as ${outlookEmail} — new emails are picked up within 10 minutes`
+                  : "Optional second inbox — for a business that runs sales email through Microsoft 365 instead of (or alongside) Gmail."
+              }
+              connected={outlookConnected}
+              loading={!outlookStatusLoaded}
+              href={outlookConnected ? undefined : "/api/integrations/outlook/connect"}
+            />
+          ) : (
+            <div className="rounded-lg border border-line px-4 py-3 text-sm text-ink-soft flex items-center justify-between opacity-60">
+              <span>Outlook / Microsoft 365 — not set up yet (see docs/outlook-setup.md)</span>
+            </div>
+          )}
+          {outlookConnected && (
+            <div className="ml-[52px] flex items-center gap-3">
+              <button
+                onClick={handleOutlookSync}
+                disabled={outlookSyncing}
+                className="text-sm font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
+                style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${outlookSyncing ? "animate-spin" : ""}`} />
+                {outlookSyncing ? "Syncing…" : "Sync now"}
+              </button>
+              <button
+                onClick={handleOutlookDisconnect}
+                disabled={outlookDisconnecting}
+                className="text-sm font-medium rounded-lg px-3 py-1.5 disabled:opacity-60"
+                style={{ backgroundColor: "var(--paper)", color: "var(--coral)", border: "1px solid var(--line)" }}
+              >
+                {outlookDisconnecting ? "Disconnecting…" : "Disconnect"}
+              </button>
+              {outlookSyncResult && <span className="text-xs text-ink-soft">{outlookSyncResult}</span>}
+            </div>
+          )}
+          {outlookError && (
+            <p className="text-xs" style={{ color: "var(--coral)" }}>
+              {outlookError}
+            </p>
+          )}
+          {(gmailConnected || outlookConnected) && (
+            <div className="ml-[52px] rounded-lg border border-line px-4 py-3">
+              <FilteredEmails />
+            </div>
+          )}
         </div>
-        {!gmailConnected && (
+        {!gmailConnected && !outlookConnected && (
           <p className="text-xs text-ink-soft mt-2">
-            Connect Gmail to start pulling in your real leads — until then the dashboard stays empty.
+            Connect Gmail or Outlook to start pulling in your real leads — until then the dashboard stays empty.
           </p>
         )}
       </section>

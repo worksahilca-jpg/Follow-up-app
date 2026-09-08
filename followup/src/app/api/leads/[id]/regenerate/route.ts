@@ -46,10 +46,10 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
   try {
     const voiceSamples = await getVoiceSamples(lead.businessId);
-    const draftBody = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
-    const newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draftBody);
-    await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: newMessage } });
-    return NextResponse.json({ success: true, message: newMessage });
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
+    const newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body);
+    await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: newMessage, suggestedSubject: draft.subject } });
+    return NextResponse.json({ success: true, message: newMessage, subject: draft.subject });
   } catch (err) {
     const reason = err instanceof Error ? err.message : "Regeneration failed.";
     return NextResponse.json({ success: false, message: reason }, { status: 500 });

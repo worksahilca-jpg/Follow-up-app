@@ -51,6 +51,7 @@ export interface Lead {
   notes: string;
   conversation: Message[];
   suggestedMessage: string;
+  suggestedSubject?: string;
   automationTier: AutomationTier;
 }
 

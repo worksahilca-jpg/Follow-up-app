@@ -204,6 +204,7 @@ model Lead {
   scoreReason      String?
   scoreFactors     Json? // ScoreFactor[] — [{ label, weight }], from AI scoring
   suggestedMessage String? // AI-drafted follow-up, edited/approved before sending
+  suggestedSubject String? // AI-drafted subject line for the same email, same edited/approved-before-sending path
   priority         Priority       @default(NONE)
   lastContacted    DateTime?
   nextFollowUp     DateTime?
@@ -310,9 +311,16 @@ model Conversation {
   lead       Lead      @relation(fields: [leadId], references: [id])
   leadId     String
   channel    String // email | call | text | whatsapp | instagram
-  externalId String?   @unique // Gmail thread id, for idempotent sync
-  messages   Message[]
-  createdAt  DateTime  @default(now())
+  externalId String?   @unique // Gmail thread id / Outlook conversationId, for idempotent sync
+  // Which mailbox a channel:"email" conversation actually lives in — null
+  // (a row from before this field existed, or a manual-entry lead with no
+  // captured thread yet) means Gmail, the original and long-standing
+  // default. Read by detectEmailProvider() in src/lib/sending.ts so a
+  // reply goes out from the same mailbox the lead's thread is actually
+  // in, not always Gmail once a business has both connected.
+  emailProvider String?
+  messages      Message[]
+  createdAt     DateTime  @default(now())
 
   @@index([leadId])
 }
@@ -523,7 +531,12 @@ model FilteredEmail {
   id            String   @id @default(cuid())
   business      Business @relation(fields: [businessId], references: [id])
   businessId    String
-  threadId      String // Gmail thread id
+  threadId      String // Gmail thread id, or Outlook (Graph) conversationId
+  // Which mailbox this verdict came from — gmail | outlook. Needed so the
+  // "restore" action (src/app/api/integrations/gmail/filtered/[id]/restore)
+  // knows which provider's importer to call; defaults to "gmail" since
+  // every row before Outlook existed was one.
+  provider      String   @default("gmail")
   senderName    String
   senderEmail   String
   subject       String?
@@ -627,6 +640,19 @@ model Integration {
   watchExpiration   DateTime?
   watchHistoryId    String?
   pushSyncStartedAt DateTime?
+  // Outlook only (src/lib/integrations/outlook.ts): unlike googleapis'
+  // client, Microsoft Graph doesn't refresh access tokens for us — this is
+  // when the current one actually expires, so a call can refresh just
+  // ahead of that instead of on every request or only after a 401.
+  tokenExpiresAt DateTime?
+  // Outlook only: Graph's delta-query cursor (the last page's
+  // @odata.deltaLink) — persisted so the next sync asks Graph for
+  // "what changed since here" instead of re-pulling the whole inbox.
+  // Null means "no cursor yet," which is also what a fresh connection
+  // and a delta gone stale (Graph returns 410 Gone after ~a few weeks of
+  // inactivity) both look like — either way the next sync just does one
+  // full pass and gets a fresh cursor back.
+  deltaLink String?
 
   @@unique([userId, provider])
 }

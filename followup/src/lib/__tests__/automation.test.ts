@@ -14,7 +14,7 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 vi.mock("@/lib/integrations/openai", () => ({
-  generateFollowUpMessage: vi.fn(async () => "Just checking in on your question."),
+  generateFollowUpMessage: vi.fn(async () => ({ subject: "Checking in", body: "Just checking in on your question." })),
   assessSendRisk: vi.fn(),
 }));
 vi.mock("@/lib/sender", () => ({ composeFollowUpEmail: vi.fn(async (_f: string, _b: string, body: string) => `Hi,\n\n${body}`) }));
@@ -127,7 +127,9 @@ describe("silence automation risk gate", () => {
     expect(r.held).toBe(1);
     expect(r.sent).toBe(0);
     expect(send).not.toHaveBeenCalled();
-    expect(p.lead.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ suggestedMessage: expect.any(String) }) }));
+    expect(p.lead.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ suggestedMessage: expect.any(String), suggestedSubject: expect.any(String) }) })
+    );
   });
 
   it("sends an Assisted lead only when risk is low", async () => {
@@ -135,7 +137,7 @@ describe("silence automation risk gate", () => {
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
     expect(r.sent).toBe(1);
-    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), { automated: true, trigger: "silence" });
+    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), { automated: true, trigger: "silence", subject: expect.any(String) });
   });
 
   it("fails closed: a risk check that throws holds the lead", async () => {

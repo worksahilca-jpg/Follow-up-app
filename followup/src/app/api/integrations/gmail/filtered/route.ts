@@ -13,7 +13,7 @@ export async function GET() {
     where: { businessId: ctx.businessId },
     orderBy: { lastMessageAt: "desc" },
     take: 50,
-    select: { id: true, senderName: true, senderEmail: true, subject: true, reason: true, lastMessageAt: true },
+    select: { id: true, provider: true, senderName: true, senderEmail: true, subject: true, reason: true, lastMessageAt: true },
   });
   return NextResponse.json({ success: true, filtered });
 }

@@ -70,8 +70,25 @@ checked and the re-audit checklist in `docs/security.md` passes.
       (`src/lib/validation.ts`) instead of ad-hoc `typeof` checks.
 - [ ] Automated tests for the trust guarantees (task #59) — security regressions
       are caught by tests, not by luck.
-- [ ] Session hardening: 7-day max age, re-auth prompt before revealing/rotating
-      secrets, sessions invalidated on role change or removal.
+- [x] **Session hardening.** Sessions now expire after 7 days (down from
+      NextAuth's 30-day default — `SESSION_MAX_AGE_SECONDS` in
+      `src/lib/auth.ts`). A step-up check (`requireRecentAuth()`,
+      `src/lib/reauth.ts`) gates the two truly irreversible actions —
+      rotating the lead-webhook secret (immediately revokes the old URL)
+      and deleting a business — behind having actually gone through
+      Google's login screen in the last 5 minutes, not just holding a
+      still-valid cookie; the client reacts to that 401 by forcing a fresh
+      Google sign-in (`handleReauthRequired()`,
+      `src/lib/reauthClient.ts`) and the admin just retries. And a session
+      is no longer trusted indefinitely once someone's removed from their
+      team: the JWT's businessId is re-checked against the DB every 5
+      minutes (`REVALIDATE_INTERVAL_MS`), so `removeMember()` or a full
+      business deletion revokes data access within minutes instead of
+      leaving the old token good for the rest of its (now 7-day) life —
+      role *demotion* was already instant, since `requireAdmin()` has
+      always re-checked role fresh on every admin-gated request. 13 new
+      tests cover the jwt callback's revalidation/authTime-stamping logic
+      and the step-up gate itself.
 - [ ] Owner actions (see `docs/security.md`): private repo, 2FA everywhere,
       `TOKEN_ENCRYPTION_KEY` set, GitHub secret scanning + Dependabot alerts on.
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, ChevronDown, Webhook } from "lucide-react";
+import { handleReauthRequired } from "@/lib/reauthClient";
 
 /**
  * "Lead webhook" section of Settings — a generated, per-business URL that
@@ -32,7 +33,12 @@ export default function CopyWebhookUrl() {
     setGenerating(true);
     try {
       const res = await fetch("/api/webhooks/config", { method: "POST" });
-      const data: { success: boolean; webhookUrl?: string } = await res.json();
+      const data: { success: boolean; webhookUrl?: string; code?: string } = await res.json();
+      // Rotating this immediately revokes the old URL, so the server asks
+      // for a freshly re-proven session first — if it did, this redirects
+      // through Google's login screen and the user just clicks Regenerate
+      // again once they're back.
+      if (await handleReauthRequired(res, data)) return;
       if (data.success && data.webhookUrl) setWebhookUrl(data.webhookUrl);
     } finally {
       setGenerating(false);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext, requireAdmin } from "@/lib/session";
+import { requireRecentAuth } from "@/lib/reauth";
 import { prisma } from "@/lib/db";
 import { deleteBusinessData } from "@/lib/businessData";
 import { parseJsonBody } from "@/lib/validation";
@@ -28,7 +29,10 @@ export async function GET() {
 // deleteBusinessData in src/lib/businessData.ts for the exact list and
 // order), plus cancels any active Stripe subscription. Irreversible, so it
 // requires the business's own name typed back exactly (case-insensitive)
-// rather than a bare confirm-flag a client could send by accident.
+// rather than a bare confirm-flag a client could send by accident, AND a
+// recently, actually re-proven session (requireRecentAuth) — the one
+// action in this app where "still has a valid cookie" shouldn't be enough
+// on its own.
 //
 // Not gated on requireActiveBilling on purpose — the right to be erased
 // can't depend on still having an active subscription.
@@ -38,6 +42,8 @@ export async function POST(request: NextRequest) {
   if (!(await requireAdmin(ctx))) {
     return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
   }
+  const reauth = requireRecentAuth(ctx);
+  if (reauth) return reauth;
 
   const parsed = await parseJsonBody(request, deleteSchema);
   if (!parsed.ok) return parsed.response;

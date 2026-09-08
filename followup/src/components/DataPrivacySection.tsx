@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { Download, TriangleAlert } from "lucide-react";
+import { handleReauthRequired } from "@/lib/reauthClient";
 
 export default function DataPrivacySection() {
   const [businessName, setBusinessName] = useState<string | null>(null);
@@ -44,6 +45,11 @@ export default function DataPrivacySection() {
         body: JSON.stringify({ confirmation: confirmText }),
       });
       const data = await res.json();
+      // This is irreversible, so the server insists the session was
+      // recently, actually re-proven — if it wasn't, this redirects
+      // through Google's login screen and the admin just confirms again
+      // once they're back.
+      if (await handleReauthRequired(res, data)) return;
       if (!data.success) throw new Error(data.message ?? "Couldn't delete — try again.");
       // Nothing left to sign back into — send them to the marketing site,
       // not back to a dashboard for an account that no longer exists.

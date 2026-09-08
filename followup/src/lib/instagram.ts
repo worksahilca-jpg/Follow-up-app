@@ -147,6 +147,43 @@ export async function findOrCreateLeadByInstagram(
   }
 }
 
+/**
+ * Task #68: records an outbound message FollowUp captured from a Meta
+ * webhook "echo" but didn't send itself — most commonly Meta's own free
+ * Business AI answering a DM on Instagram or Messenger, but the same
+ * path for a teammate replying from the native app. Shared by both
+ * channels (see the instagram/webhook route) since the logic is
+ * identical once a lead + conversation are resolved: idempotent on
+ * Meta's message id (webhooks redeliver), and bumps lastContacted so the
+ * 5-day-silence automation doesn't also fire on a lead that was, in
+ * fact, just answered outside FollowUp.
+ */
+export async function captureDirectReply(
+  leadId: string,
+  channel: "instagram" | "messenger",
+  body: string,
+  source: "instagram_direct" | "messenger_direct",
+  externalId: string | undefined,
+  sentAt: Date
+): Promise<void> {
+  let conversation = await prisma.conversation.findFirst({ where: { leadId, channel } });
+  if (!conversation) {
+    conversation = await prisma.conversation.create({ data: { leadId, channel } });
+  }
+  if (externalId) {
+    await prisma.message.upsert({
+      where: { externalId },
+      update: {},
+      create: { conversationId: conversation.id, direction: "outbound", body, source, externalId, sentAt },
+    });
+  } else {
+    await prisma.message.create({
+      data: { conversationId: conversation.id, direction: "outbound", body, source, sentAt },
+    });
+  }
+  await prisma.lead.update({ where: { id: leadId }, data: { lastContacted: sentAt } }).catch(() => {});
+}
+
 // --- One-click OAuth ("Connect with Instagram") -----------------------
 //
 // The paste-a-token flow above still works and stays as a fallback (a

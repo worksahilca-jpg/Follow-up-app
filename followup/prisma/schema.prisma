@@ -346,6 +346,22 @@ model Message {
   externalId     String?      @unique // Gmail message id, for idempotent sync
   sentAt         DateTime     @default(now())
 
+  // Set only for an outbound message FollowUp captured but didn't send
+  // itself — e.g. "instagram_direct" / "messenger_direct" for a reply
+  // Meta's own Business AI (or a teammate using the native Instagram/
+  // Messenger app) sent on the business's behalf, seen only as a webhook
+  // "echo" (see src/app/api/instagram/webhook/route.ts). Null means
+  // FollowUp sent it (sendFollowUpToLead, src/lib/sending.ts) — the
+  // common case, left untouched everywhere else rather than backfilled.
+  // The point: task #68's "ingest what Meta handled" needs the real
+  // conversation history to include these, and needs the existing
+  // human-neglect trigger (src/lib/automation.ts) to see them as a real
+  // outbound reply, so a lead Meta's AI already answered isn't
+  // double-messaged, and a lead it handled and then dropped still gets
+  // rescued — for free, on the same machinery, with no new "was this the
+  // AI" detection to get wrong.
+  source String?
+
   @@index([conversationId])
 }
 

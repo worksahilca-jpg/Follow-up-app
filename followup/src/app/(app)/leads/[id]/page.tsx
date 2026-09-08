@@ -95,6 +95,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                     <span>{formatDate(m.date)}</span>
                   </div>
                   <p>{m.body}</p>
+                  {m.source && (
+                    <p className="text-xs mt-1" style={{ color: "var(--slate)" }}>
+                      Sent directly on {m.source === "messenger_direct" ? "Messenger" : "Instagram"} — not through FollowUp
+                      {m.source.endsWith("_direct") ? " (likely Meta's own AI or a teammate replying from the native app)" : ""}
+                    </p>
+                  )}
                   {m.opened && <p className="text-xs mt-1" style={{ color: "var(--sage)" }}>Opened</p>}
                 </div>
               ))}

@@ -5,7 +5,7 @@ import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { fetchLeadgenLead, findOrCreateLeadByMessenger, upsertLeadFromLeadgen } from "@/lib/facebook";
-import { WEBHOOK_VERIFY_TOKEN, findOrCreateLeadByInstagram, validateMetaSignature } from "@/lib/instagram";
+import { WEBHOOK_VERIFY_TOKEN, captureDirectReply, findOrCreateLeadByInstagram, validateMetaSignature } from "@/lib/instagram";
 import { recordAuthFailure } from "@/lib/monitoring";
 
 /**
@@ -68,10 +68,29 @@ export async function POST(request: NextRequest) {
     for (const event of entry.messaging ?? []) {
       const senderId: string | undefined = event.sender?.id;
       const text: string | undefined = event.message?.text;
-      // is_echo marks a message the connected account itself sent (e.g. a
-      // reply sent from the real Instagram app/website directly, not
-      // through FollowUp) — skip it, it's not an inbound lead message.
-      if (!senderId || !text || event.message?.is_echo) continue;
+      if (!senderId || !text) continue;
+
+      // is_echo marks a message the connected account itself sent — not
+      // through FollowUp, so not an inbound lead message. Task #68: this
+      // used to just skip it. Now it's captured as a real outbound
+      // Message instead of dropped — the recipient of an echo is who
+      // FollowUp is talking to, so the lead lookup is symmetric with the
+      // inbound path below. See Message.source in schema.prisma for why:
+      // this is what lets a lead Meta's own Business AI already answered
+      // (a very real, very common case now that Meta ships one free on
+      // Instagram) show up as answered here too, instead of FollowUp
+      // racing to send its own reply on top of one that already went
+      // out — and still lets the existing human-neglect trigger
+      // (src/lib/automation.ts) rescue it later if Meta's agent replied
+      // once and then the thread went quiet.
+      if (event.message?.is_echo) {
+        const recipientId: string | undefined = event.recipient?.id;
+        if (!recipientId) continue;
+        const lead = await findOrCreateLeadByInstagram(business.id, recipientId);
+        const sentAt = typeof event.timestamp === "number" ? new Date(event.timestamp) : new Date();
+        await captureDirectReply(lead.id, "instagram", text, "instagram_direct", event.message?.mid, sentAt);
+        continue;
+      }
 
       const lead = await findOrCreateLeadByInstagram(business.id, senderId);
 
@@ -109,7 +128,22 @@ async function handlePageEvents(entries: any[]): Promise<void> {
     for (const event of entry.messaging ?? []) {
       const senderId: string | undefined = event.sender?.id;
       const text: string | undefined = event.message?.text;
-      if (!senderId || !text || event.message?.is_echo || senderId === pageId) continue;
+      if (!senderId || !text) continue;
+
+      // Same "capture, don't drop" treatment as Instagram's echo path
+      // above — see the comment there for why. Messenger's own Business
+      // AI reply (or a teammate answering from the native Messenger
+      // inbox) arrives the same way: an is_echo event whose sender is
+      // the Page itself.
+      if (event.message?.is_echo || senderId === pageId) {
+        const recipientId: string | undefined = event.recipient?.id;
+        if (!recipientId || recipientId === pageId) continue;
+        const lead = await findOrCreateLeadByMessenger(business.id, recipientId);
+        const sentAt = typeof event.timestamp === "number" ? new Date(event.timestamp) : new Date();
+        await captureDirectReply(lead.id, "messenger", text, "messenger_direct", event.message?.mid, sentAt);
+        continue;
+      }
+
       const lead = await findOrCreateLeadByMessenger(business.id, senderId);
       let conversation = await prisma.conversation.findFirst({ where: { leadId: lead.id, channel: "messenger" } });
       if (!conversation) {

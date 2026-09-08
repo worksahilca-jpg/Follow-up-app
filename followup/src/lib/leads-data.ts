@@ -37,6 +37,7 @@ function mapDbLeadToUiLead(dbLead: DbLead): Lead {
         body: m.body,
         date: m.sentAt.toISOString(),
         opened: m.opened,
+        source: m.source ?? undefined,
       }))
     )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());

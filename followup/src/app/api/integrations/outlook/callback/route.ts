@@ -6,7 +6,8 @@ import { recordAudit } from "@/lib/audit";
 // GET /api/integrations/outlook/callback — Microsoft redirects here after
 // the user approves (or denies) consent. This URL must exactly match a
 // "Redirect URI" registered on the app in Azure AD / Entra ID. Mirrors
-// /api/integrations/gmail/callback.
+// /api/integrations/gmail/callback, including its CSRF `state` fix
+// (research/audit/2026-09-08-newer-surface-audit.md finding #4).
 export async function GET(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.redirect(new URL("/signin", request.url));
@@ -14,29 +15,40 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const oauthError = searchParams.get("error_description") ?? searchParams.get("error");
-  // Echoed back verbatim from the `state` we sent in buildOutlookAuthUrl().
-  const returnTo = new URL(searchParams.get("state") === "onboarding" ? "/onboarding" : "/settings", request.url);
+  const state = searchParams.get("state");
+  const expectedState = request.cookies.get("outlook_oauth_state")?.value;
+  // Set in its own cookie by the connect route — no longer trusted from
+  // `state` itself, which is now a pure CSRF token actually checked below.
+  const next = request.cookies.get("outlook_oauth_next")?.value;
+  const returnTo = new URL(next === "onboarding" ? "/onboarding" : "/settings", request.url);
 
-  if (oauthError) {
+  const fail = (message: string) => {
     returnTo.searchParams.set("outlook", "error");
-    returnTo.searchParams.set("message", oauthError);
-    return NextResponse.redirect(returnTo);
-  }
-  if (!code) {
-    returnTo.searchParams.set("outlook", "error");
-    returnTo.searchParams.set("message", "No authorization code returned by Microsoft.");
-    return NextResponse.redirect(returnTo);
-  }
+    returnTo.searchParams.set("message", message);
+    const res = NextResponse.redirect(returnTo);
+    res.cookies.delete("outlook_oauth_state");
+    res.cookies.delete("outlook_oauth_next");
+    return res;
+  };
 
+  if (oauthError) return fail(oauthError);
+  if (!code) return fail("No authorization code returned by Microsoft.");
+  if (!state || !expectedState || state !== expectedState) return fail("That sign-in link expired — try connecting again.");
+
+  let res: NextResponse;
   try {
     const { email } = await exchangeOutlookAuthCode(code, ctx.userId);
     void recordAudit(ctx, "integration.outlook.connect");
     returnTo.searchParams.set("outlook", "connected");
     returnTo.searchParams.set("email", email);
+    res = NextResponse.redirect(returnTo);
   } catch (err) {
     returnTo.searchParams.set("outlook", "error");
     returnTo.searchParams.set("message", err instanceof Error ? err.message : "Outlook connection failed.");
+    res = NextResponse.redirect(returnTo);
   }
 
-  return NextResponse.redirect(returnTo);
+  res.cookies.delete("outlook_oauth_state");
+  res.cookies.delete("outlook_oauth_next");
+  return res;
 }

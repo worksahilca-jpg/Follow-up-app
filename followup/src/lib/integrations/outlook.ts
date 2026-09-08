@@ -89,11 +89,15 @@ export async function getOutlookStatus(businessId: string): Promise<OutlookConne
   return { connected: true, email: integration.accountEmail ?? integration.user.email };
 }
 
-// `next` rides through Microsoft's consent screen as the OAuth `state`
-// param and comes back verbatim on the callback — same pattern as Gmail's
-// startGmailOAuth, needed for the same reason: the redirect to Microsoft
-// is a real page navigation that loses any client-side page state.
-export function buildOutlookAuthUrl(next?: string): string {
+// `state` is a random, per-request CSRF token — see the connect/callback
+// routes, which set it in an httpOnly cookie and check it back on return.
+// Fixed research/audit/2026-09-08-newer-surface-audit.md finding #4:
+// `state` used to just be `next` (onboarding vs. Settings) echoed
+// verbatim — same shape as Gmail's startGmailOAuth had, and the same fix:
+// `next` now travels in its own cookie (see the connect route) so `state`
+// can be a pure CSRF token, actually checked back on the callback instead
+// of just read.
+export function buildOutlookAuthUrl(state: string): string {
   const creds = credentials();
   if (!creds) throw new Error("Outlook isn't configured: set MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, MICROSOFT_REDIRECT_URI in .env");
   const url = new URL(`${AUTHORITY}/authorize`);
@@ -103,7 +107,7 @@ export function buildOutlookAuthUrl(next?: string): string {
   url.searchParams.set("response_mode", "query");
   url.searchParams.set("scope", SCOPES.join(" "));
   url.searchParams.set("prompt", "consent"); // force consent every time so we reliably get a refresh token
-  if (next) url.searchParams.set("state", next);
+  url.searchParams.set("state", state);
   return url.toString();
 }
 

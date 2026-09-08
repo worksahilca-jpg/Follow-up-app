@@ -91,18 +91,21 @@ export async function getGmailStatus(businessId: string): Promise<GmailConnectio
   return { connected: true, email: integration.accountEmail ?? integration.user.email, pushActive };
 }
 
-// `next` rides through Google's consent screen as the OAuth `state` param
-// and comes back verbatim on the callback — the only way to tell the
-// callback route where to send the user afterwards (onboarding vs.
-// Settings), since the redirect to Google is a real page navigation that
-// loses whatever page state we had.
-export async function startGmailOAuth(next?: string): Promise<{ redirectUrl: string }> {
+// `state` is a random, per-request CSRF token — see the connect/callback
+// routes, which set it in an httpOnly cookie and check it back on return.
+// Fixed research/audit/2026-09-08-newer-surface-audit.md finding #4:
+// `state` used to just be `next` (onboarding vs. Settings) echoed
+// verbatim, which meant nothing was actually validated on the way back —
+// an attacker's own authorization code could be walked to a signed-in
+// victim via a login-CSRF redirect. `next` now travels in its own cookie
+// instead (see the connect route), so `state` can be a pure CSRF token.
+export async function startGmailOAuth(state: string): Promise<{ redirectUrl: string }> {
   const oauth2Client = getOAuthClient();
   const redirectUrl = oauth2Client.generateAuthUrl({
     access_type: "offline", // required to get a refresh token
     prompt: "consent", // force the consent screen so we get a refresh token every time
     scope: SCOPES,
-    ...(next ? { state: next } : {}),
+    state,
   });
   return { redirectUrl };
 }

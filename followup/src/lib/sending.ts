@@ -17,6 +17,7 @@ import { sendSms, sendWhatsApp } from "@/lib/twilio";
 import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 import { sendMessengerMessage } from "@/lib/facebook";
+import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 
 /**
  * SMS and WhatsApp both live on Lead.phone (the same phone number
@@ -129,5 +130,26 @@ export async function sendFollowUpToLead(
     data: { lastContacted: new Date() },
   });
 
+  // Push a note to the CRM this lead came from — best-effort, never lets
+  // a CRM hiccup fail a send that already succeeded. See src/lib/crmSync.ts.
+  if (lead.crmProvider && lead.crmId && isCrmProvider(lead.crmProvider)) {
+    void pushCrmNote(lead.businessId, lead.crmProvider, lead.crmId, body);
+  }
+
   return { success: true };
+}
+
+async function pushCrmNote(businessId: string, provider: string, crmId: string, body: string): Promise<void> {
+  try {
+    const conn = await prisma.crmConnection.findUnique({ where: { businessId } });
+    if (!conn?.apiKey || conn.provider !== provider) return;
+    const result = await CRM_PROVIDERS[provider as keyof typeof CRM_PROVIDERS].client.pushNote(
+      conn.apiKey,
+      crmId,
+      `FollowUp sent:\n\n${body}`
+    );
+    if (!result.ok) console.error(`CRM note push failed for business ${businessId}: ${result.message}`);
+  } catch (err) {
+    console.error(`CRM note push errored for business ${businessId}:`, err);
+  }
 }

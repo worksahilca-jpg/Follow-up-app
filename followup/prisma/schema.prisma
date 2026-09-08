@@ -63,6 +63,7 @@ model Business {
   rateLimitHits   RateLimitHit[]
   savedFilters    SavedFilter[]
   filteredEmails  FilteredEmail[]
+  crmConnection   CrmConnection?
 
   // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
   // mirrors the Stripe Subscription.status string verbatim (active,
@@ -293,6 +294,15 @@ model Lead {
   @@index([businessId, sequenceStepDueAt])
   // getAnalytics()'s sequence-health "completed in the last 30 days" scan.
   @@index([businessId, sequenceCompletedAt])
+
+  // Which outside CRM this lead came from, and its id there — set by
+  // src/lib/crmSync.ts, used both to avoid re-importing the same contact
+  // and to push a note back after FollowUp sends on their behalf (see
+  // sendFollowUpToLead in src/lib/sending.ts).
+  crmProvider String?
+  crmId       String?
+
+  @@unique([businessId, crmProvider, crmId])
 }
 
 model Conversation {
@@ -644,6 +654,25 @@ model Automation {
 // `meta` never carries credentials or message bodies, only identifiers
 // and counts. Not a relation to Business/User on purpose: an audit row
 // must outlive the thing it describes.
+// A business's connection to an outside CRM it already runs (Follow Up
+// Boss, HubSpot) — for the businesses in the "half already have a CRM"
+// half of the market (research/market/2026-09-07-why-followup-evidence-for-and-against.md):
+// FollowUp works ALONGSIDE it rather than asking them to leave it. One per
+// business (most run exactly one CRM); apiKey is encrypted at rest
+// (src/lib/db.ts ENCRYPTED_FIELDS). Sync state mirrors Integration's
+// lastSyncedAt/lastSyncError pattern.
+model CrmConnection {
+  id            String    @id @default(cuid())
+  business      Business  @relation(fields: [businessId], references: [id])
+  businessId    String    @unique
+  provider      String // followupboss | hubspot
+  apiKey        String? // FUB: the account API key (Basic auth). HubSpot: a private app access token.
+  accountLabel  String? // display only — e.g. the HubSpot portal's own name, if the API returns one
+  lastSyncedAt  DateTime?
+  lastSyncError String?
+  createdAt     DateTime  @default(now())
+}
+
 model AuditEvent {
   id         String   @id @default(cuid())
   businessId String

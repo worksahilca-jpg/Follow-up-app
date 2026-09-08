@@ -18,6 +18,7 @@ import { decryptSecret, encryptSecret } from "@/lib/crypto";
 const ENCRYPTED_FIELDS: Record<string, string[]> = {
   Integration: ["accessToken", "refreshToken"],
   Business: ["twilioAuthToken", "instagramAccessToken", "facebookPageAccessToken"],
+  CrmConnection: ["apiKey"],
 };
 
 type Rec = Record<string, unknown>;

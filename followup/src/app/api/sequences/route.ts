@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
-import { getSequences, createSequence, type SequenceStepInput } from "@/lib/sequences";
+import { getSequences, createSequence } from "@/lib/sequences";
+import { parseJsonBody, sequenceStepSchema } from "@/lib/validation";
+
+const createSequenceSchema = z.object({
+  name: z.string(),
+  steps: z.array(sequenceStepSchema).default([]),
+});
 
 // GET /api/sequences — every workflow belonging to the signed-in user's
 // own business. POST /api/sequences — create a new one with its full step
@@ -21,9 +28,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
   }
 
-  const body = await request.json().catch(() => ({}));
-  const name = typeof body.name === "string" ? body.name : "";
-  const steps: SequenceStepInput[] = Array.isArray(body.steps) ? body.steps : [];
+  const parsed = await parseJsonBody(request, createSequenceSchema);
+  if (!parsed.ok) return parsed.response;
+  const { name, steps } = parsed.data;
 
   const result = await createSequence(ctx.businessId, name, steps);
   if (!result.success) return NextResponse.json(result, { status: 400 });

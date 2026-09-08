@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { instagramOAuthAvailable, resolveInstagramUserId, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
 import { appUrl } from "@/lib/stripe";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
+import { parseJsonBody } from "@/lib/validation";
+
+const accessTokenSchema = z.object({ accessToken: z.string().trim().min(1, "Paste a real access token.") });
 
 /**
  * GET/POST/DELETE /api/instagram/config — this business's Instagram
@@ -46,11 +50,9 @@ export async function POST(request: NextRequest) {
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
   void recordAudit(ctx, "integration.instagram.update");
 
-  const body = await request.json().catch(() => ({}));
-  const accessToken = typeof body.accessToken === "string" ? body.accessToken.trim() : "";
-  if (!accessToken) {
-    return NextResponse.json({ success: false, message: "Paste a real access token." }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, accessTokenSchema);
+  if (!parsed.ok) return parsed.response;
+  const { accessToken } = parsed.data;
 
   const resolved = await resolveInstagramUserId(accessToken);
   if (!resolved) {

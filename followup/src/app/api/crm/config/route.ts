@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import { recordAudit } from "@/lib/audit";
+import { parseJsonBody } from "@/lib/validation";
+
+const crmConfigSchema = z.object({
+  provider: z.string(),
+  apiKey: z.string().trim().min(1, "Paste a real API key."),
+});
 
 // One CRM connection per business — see CrmConnection in schema.prisma.
 export async function GET() {
@@ -24,11 +31,10 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
 
-  const body = await request.json().catch(() => ({}));
-  const provider = typeof body.provider === "string" ? body.provider : "";
-  const apiKey = typeof body.apiKey === "string" ? body.apiKey.trim() : "";
+  const parsed = await parseJsonBody(request, crmConfigSchema);
+  if (!parsed.ok) return parsed.response;
+  const { provider, apiKey } = parsed.data;
   if (!isCrmProvider(provider)) return NextResponse.json({ success: false, message: "Pick a CRM." }, { status: 400 });
-  if (!apiKey) return NextResponse.json({ success: false, message: "Paste a real API key." }, { status: 400 });
 
   const test = await CRM_PROVIDERS[provider].client.testConnection(apiKey);
   if (!test.ok) return NextResponse.json({ success: false, message: test.message ?? "That key didn't work." }, { status: 400 });

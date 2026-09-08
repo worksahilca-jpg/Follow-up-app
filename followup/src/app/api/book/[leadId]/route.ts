@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getBookingContext, getAvailableSlots, createBooking } from "@/lib/booking";
+import { parseJsonBody } from "@/lib/validation";
+
+const bookSchema = z.object({
+  // Loosely validated on purpose: createBooking() re-validates this
+  // against real, currently-open slots server-side (see its own doc
+  // comment) — a garbage string just fails to match and returns a clean
+  // "not available" error there, so this only needs to rule out an
+  // empty/missing value before it gets that far.
+  scheduledAt: z.string().min(1, "scheduledAt is required."),
+});
 
 // GET /api/book/[leadId] — public, unauthenticated: the lead viewing their
 // own booking link isn't a FollowUp user. Deliberately returns only what
@@ -22,13 +33,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 // slot the client posted back was actually in the list it was offered.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ leadId: string }> }) {
   const { leadId } = await params;
-  const body = await request.json().catch(() => ({}));
+  const parsed = await parseJsonBody(request, bookSchema);
+  if (!parsed.ok) return parsed.response;
 
-  if (typeof body.scheduledAt !== "string") {
-    return NextResponse.json({ success: false, message: "Missing 'scheduledAt'." }, { status: 400 });
-  }
-
-  const result = await createBooking(leadId, body.scheduledAt);
+  const result = await createBooking(leadId, parsed.data.scheduledAt);
   if (!result.success) {
     return NextResponse.json(result, { status: 409 });
   }

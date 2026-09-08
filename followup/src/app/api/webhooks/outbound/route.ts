@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { parseJsonBody } from "@/lib/validation";
+
+const outboundWebhookSchema = z.object({ url: z.string().nullable().optional() });
 
 /**
  * GET/POST /api/webhooks/outbound — the signed-in business's own outbound
@@ -30,26 +34,27 @@ export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
 
-  const body = await request.json().catch(() => ({}));
-  const raw = typeof body.url === "string" ? body.url.trim() : "";
+  const parsedBody = await parseJsonBody(request, outboundWebhookSchema);
+  if (!parsedBody.ok) return parsedBody.response;
+  const raw = (parsedBody.data.url ?? "").trim();
 
   if (!raw) {
     await prisma.business.update({ where: { id: ctx.businessId }, data: { outboundWebhookUrl: null } });
     return NextResponse.json({ success: true, url: null });
   }
 
-  let parsed: URL;
+  let parsedUrl: URL;
   try {
-    parsed = new URL(raw);
+    parsedUrl = new URL(raw);
   } catch {
     return NextResponse.json({ success: false, message: "That doesn't look like a valid URL." }, { status: 400 });
   }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
     return NextResponse.json({ success: false, message: "URL must start with http:// or https://." }, { status: 400 });
   }
 
-  await prisma.business.update({ where: { id: ctx.businessId }, data: { outboundWebhookUrl: parsed.toString() } });
-  return NextResponse.json({ success: true, url: parsed.toString() });
+  await prisma.business.update({ where: { id: ctx.businessId }, data: { outboundWebhookUrl: parsedUrl.toString() } });
+  return NextResponse.json({ success: true, url: parsedUrl.toString() });
 }
 
 /**

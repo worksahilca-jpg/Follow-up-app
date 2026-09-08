@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { parseJsonBody } from "@/lib/validation";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
@@ -14,6 +16,18 @@ import { recordAudit } from "@/lib/audit";
 
 const AUTOMATION_NAME = "Auto follow-up on silence";
 const AUTOMATION_ACTION = "auto_send";
+
+const settingsSchema = z.object({
+  enabled: z.boolean().optional(),
+  triggerDays: z.coerce.number().int().optional(),
+  instantAck: z.boolean().optional(),
+  unansweredReply: z
+    .object({
+      enabled: z.boolean().optional(),
+      hours: z.coerce.number().optional(),
+    })
+    .optional(),
+});
 
 // GET /api/automation/settings — the business-level automation master
 // switch + trigger delay for the SIGNED-IN user's own business, backing
@@ -42,7 +56,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
   }
 
-  const body = await request.json().catch(() => ({}));
+  const parsed = await parseJsonBody(request, settingsSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   // The unanswered-reply rule is saved on its own (see src/lib/automation.ts).
   if (body.unansweredReply && typeof body.unansweredReply === "object" && body.enabled === undefined && body.instantAck === undefined) {
@@ -77,7 +93,7 @@ export async function POST(request: NextRequest) {
   }
 
   const enabled = Boolean(body.enabled);
-  const triggerDays = Number.isFinite(body.triggerDays) ? Math.max(1, Math.min(30, Math.round(body.triggerDays))) : 5;
+  const triggerDays = body.triggerDays !== undefined && Number.isFinite(body.triggerDays) ? Math.max(1, Math.min(30, Math.round(body.triggerDays))) : 5;
 
   const existing = await prisma.automation.findFirst({
     where: { businessId: ctx.businessId, action: AUTOMATION_ACTION },

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { pickAssignee } from "@/lib/assignment";
@@ -7,14 +8,23 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentLeads } from "@/lib/rateLimit";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
+import { cleanedText, EMAIL_RE, parseJsonBody } from "@/lib/validation";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEXT = 200;
 const MAX_MESSAGE = 4000;
 
-function cleanText(value: unknown, max = MAX_TEXT): string {
-  return typeof value === "string" ? value.trim().slice(0, max) : "";
-}
+// Public, unauthenticated body from a stranger's browser — every field is
+// "clean to a bounded string or empty," never a rejection (see
+// cleanedText's own doc comment); the honeypot in particular MUST parse
+// successfully whatever a bot fills it with, since tripping it is the
+// point.
+const embedLeadSchema = z.object({
+  hp: cleanedText(MAX_TEXT),
+  name: cleanedText(MAX_TEXT),
+  email: cleanedText(MAX_TEXT),
+  phone: cleanedText(40),
+  message: cleanedText(MAX_MESSAGE),
+});
 
 /**
  * GET /api/embed/[businessId]/lead — what the embed page needs to render
@@ -82,17 +92,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     );
   }
 
-  const body = await request.json().catch(() => ({}));
+  const parsed = await parseJsonBody(request, embedLeadSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
-  if (cleanText(body.hp)) {
+  if (body.hp) {
     // Honeypot tripped — pretend it worked so whatever filled it doesn't learn anything.
     return NextResponse.json({ success: true });
   }
 
-  const name = cleanText(body.name);
-  const email = cleanText(body.email).toLowerCase();
-  const phone = cleanText(body.phone, 40);
-  const message = cleanText(body.message, MAX_MESSAGE);
+  const name = body.name;
+  const email = body.email.toLowerCase();
+  const phone = body.phone;
+  const message = body.message;
 
   if (!name) {
     return NextResponse.json({ success: false, message: "Your name is required." }, { status: 400 });

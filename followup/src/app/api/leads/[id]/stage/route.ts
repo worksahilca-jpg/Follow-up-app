@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import type { PipelineStage } from "@prisma/client";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
+import { parseJsonBody } from "@/lib/validation";
 
-const VALID_STAGES: PipelineStage[] = [
-  "NEW",
-  "CONTACTED",
-  "QUALIFIED",
-  "PROPOSAL",
-  "NEGOTIATION",
-  "WON",
-  "LOST",
-];
+const stageSchema = z.object({
+  stage: z.enum(["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"]),
+});
 
 // POST /api/leads/[id]/stage — moves a lead through the pipeline. Landing
 // on WON or LOST also logs a real Deal record (win/loss + value + date),
@@ -22,11 +17,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
 
   const { id } = await params;
-  const body = await request.json().catch(() => ({}));
-  const stage = body.stage as PipelineStage;
-  if (!VALID_STAGES.includes(stage)) {
-    return NextResponse.json({ success: false, message: "Invalid stage." }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, stageSchema);
+  if (!parsed.ok) return parsed.response;
+  const { stage } = parsed.data;
 
   const lead = await prisma.lead.findUnique({ where: { id } });
   if (!lead || lead.businessId !== ctx.businessId) {

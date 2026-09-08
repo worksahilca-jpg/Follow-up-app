@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
-import type { AutomationTier as DbAutomationTier } from "@prisma/client";
+import { parseJsonBody } from "@/lib/validation";
 
-const VALID_TIERS: DbAutomationTier[] = ["OFF", "ASSISTED", "AUTONOMOUS"];
+const automationTierSchema = z.object({
+  tier: z.string().transform((v) => v.toUpperCase()).pipe(z.enum(["OFF", "ASSISTED", "AUTONOMOUS"])),
+});
 
 // POST /api/leads/[id]/automation — sets the per-lead automation trust
 // tier. OFF by default (Lead.automationTier defaults to OFF in the
@@ -21,15 +24,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const owned = await prisma.lead.findFirst({ where: { id, businessId: ctx.businessId }, select: { id: true } });
   if (!owned) return NextResponse.json({ success: false, message: "Lead not found." }, { status: 404 });
 
-  const body = await request.json().catch(() => ({}));
-  const tier = typeof body.tier === "string" ? body.tier.toUpperCase() : "";
-  if (!VALID_TIERS.includes(tier as DbAutomationTier)) {
-    return NextResponse.json({ success: false, message: "Invalid automation tier." }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, automationTierSchema);
+  if (!parsed.ok) return parsed.response;
 
   const lead = await prisma.lead.update({
     where: { id },
-    data: { automationTier: tier as DbAutomationTier },
+    data: { automationTier: parsed.data.tier },
   });
 
   return NextResponse.json({ success: true, automationTier: lead.automationTier.toLowerCase() });

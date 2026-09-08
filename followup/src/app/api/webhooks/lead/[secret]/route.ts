@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { pickAssignee } from "@/lib/assignment";
@@ -7,14 +8,21 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentLeads } from "@/lib/rateLimit";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
+import { cleanedText, EMAIL_RE, parseObject } from "@/lib/validation";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEXT = 200;
 const MAX_MESSAGE = 4000;
 
-function cleanText(value: unknown, max = MAX_TEXT): string {
-  return typeof value === "string" ? value.trim().slice(0, max) : "";
-}
+// Same "clean to a bounded string or empty, never reject" shape as the
+// embed widget's schema — this is machine-to-machine (Zapier/Make/a
+// script), so a wrongly-typed field should degrade gracefully rather
+// than bounce a webhook that's otherwise fine.
+const webhookLeadSchema = z.object({
+  name: cleanedText(MAX_TEXT),
+  email: cleanedText(MAX_TEXT),
+  phone: cleanedText(40),
+  message: cleanedText(MAX_MESSAGE),
+});
 
 /**
  * POST /api/webhooks/lead/[secret] — the generic inbound lead-capture
@@ -65,18 +73,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // (e.g. straight from an <form> action, or some no-code tools) is
   // accepted too rather than rejected outright.
   const contentType = request.headers.get("content-type") ?? "";
-  let body: Record<string, unknown>;
+  let raw: Record<string, unknown>;
   if (contentType.includes("application/json")) {
-    body = await request.json().catch(() => ({}));
+    raw = await request.json().catch(() => ({}));
   } else {
     const form = await request.formData().catch(() => null);
-    body = form ? Object.fromEntries(form.entries()) : {};
+    raw = form ? Object.fromEntries(form.entries()) : {};
   }
+  const parsed = parseObject(raw, webhookLeadSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
-  const name = cleanText(body.name);
-  const email = cleanText(body.email).toLowerCase();
-  const phone = cleanText(body.phone, 40);
-  const message = cleanText(body.message, MAX_MESSAGE);
+  const name = body.name;
+  const email = body.email.toLowerCase();
+  const phone = body.phone;
+  const message = body.message;
 
   if (!name) {
     return NextResponse.json({ success: false, message: "`name` is required." }, { status: 400 });

@@ -1,10 +1,20 @@
 import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { appUrl } from "@/lib/stripe";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
+import { parseJsonBody } from "@/lib/validation";
+
+const twilioConfigSchema = z.object({
+  authToken: z.string().trim().optional(),
+  accountSid: z.string().trim().optional(),
+  phoneNumber: z.string().trim().optional(),
+  whatsappPhoneNumber: z.string().trim().optional(),
+  voiceAgentEnabled: z.boolean().optional(),
+});
 
 /**
  * GET/POST /api/twilio/config — this business's Twilio setup: the three
@@ -63,12 +73,9 @@ export async function POST(request: NextRequest) {
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
   void recordAudit(ctx, "integration.twilio.update");
 
-  const body = await request.json().catch(() => ({}));
-  const authToken = typeof body.authToken === "string" ? body.authToken.trim() : undefined;
-  const accountSid = typeof body.accountSid === "string" ? body.accountSid.trim() : undefined;
-  const phoneNumber = typeof body.phoneNumber === "string" ? body.phoneNumber.trim() : undefined;
-  const whatsappPhoneNumber = typeof body.whatsappPhoneNumber === "string" ? body.whatsappPhoneNumber.trim() : undefined;
-  const voiceAgentEnabled = typeof body.voiceAgentEnabled === "boolean" ? body.voiceAgentEnabled : undefined;
+  const parsed = await parseJsonBody(request, twilioConfigSchema);
+  if (!parsed.ok) return parsed.response;
+  const { authToken, accountSid, phoneNumber, whatsappPhoneNumber, voiceAgentEnabled } = parsed.data;
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },

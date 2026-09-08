@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
@@ -7,12 +8,23 @@ import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentActions } from "@/lib/rateLimit";
+import { cleanedText, EMAIL_RE, parseJsonBody } from "@/lib/validation";
 
 const MAX_TEXT = 200;
 
-function cleanText(value: unknown, max = MAX_TEXT): string {
-  return typeof value === "string" ? value.trim().slice(0, max) : "";
-}
+// Signed-in, manually-typed input — still forgiving of a stray wrong type
+// (cleanedText degrades to "" instead of rejecting), since the real
+// validation that matters (name required, email shaped like an email) is
+// business logic below, same as before this schema existed.
+const manualLeadSchema = z.object({
+  name: cleanedText(MAX_TEXT),
+  company: cleanedText(MAX_TEXT),
+  email: cleanedText(MAX_TEXT),
+  phone: cleanedText(40),
+  source: cleanedText(MAX_TEXT),
+  notes: cleanedText(2000),
+  dealValue: z.coerce.number().catch(0),
+});
 
 // POST /api/leads — manual lead entry. Businesses that haven't connected
 // Gmail (or that get leads from a channel we don't sync yet) still need a
@@ -28,21 +40,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
   }
 
-  const body = await request.json().catch(() => ({}));
+  const parsed = await parseJsonBody(request, manualLeadSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
-  const name = cleanText(body.name);
+  const name = body.name;
   if (!name) {
     return NextResponse.json({ success: false, message: "Name is required." }, { status: 400 });
   }
 
-  const company = cleanText(body.company);
-  const email = cleanText(body.email).toLowerCase();
-  const phone = cleanText(body.phone, 40);
-  const source = cleanText(body.source) || "Manual entry";
-  const notes = cleanText(body.notes, 2000);
-  const dealValue = Number.isFinite(body.dealValue) ? Math.max(0, Number(body.dealValue)) : 0;
+  const company = body.company;
+  const email = body.email.toLowerCase();
+  const phone = body.phone;
+  const source = body.source || "Manual entry";
+  const notes = body.notes;
+  const dealValue = Math.max(0, body.dealValue);
 
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email && !EMAIL_RE.test(email)) {
     return NextResponse.json({ success: false, message: "That email doesn't look right." }, { status: 400 });
   }
 

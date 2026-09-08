@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { findBusinessByTwilioSecret, findOrCreateLeadByPhone, validateVoiceAgentCallbackAuth } from "@/lib/twilio";
+import { parseJsonBody } from "@/lib/validation";
 
 type VoiceAgentTurn = { role: "caller" | "agent"; text: string };
 
@@ -16,6 +18,15 @@ function isVoiceAgentTurn(value: unknown): value is VoiceAgentTurn {
     (value as VoiceAgentTurn).text.trim().length > 0
   );
 }
+
+// Loosely typed on purpose: individual malformed turns (a transcription
+// hiccup on one line) get filtered out below by isVoiceAgentTurn rather
+// than rejecting the whole call transcript — only the outer shape (from
+// a string, turns an array) needs to hold for that filtering to run at all.
+const voiceAgentCallbackSchema = z.object({
+  from: z.string().optional(),
+  turns: z.array(z.unknown()).optional(),
+});
 
 /**
  * POST /api/twilio/voice-agent-callback/[secret] — NOT a Twilio webhook.
@@ -49,9 +60,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // call here, same posture as every other Twilio callback in this family.
   if (!(await requireActiveBilling(business.id))) return NextResponse.json({ success: true });
 
-  const body = await request.json().catch(() => ({}));
-  const from = typeof body.from === "string" ? body.from.trim() : "";
-  const turns: VoiceAgentTurn[] = Array.isArray(body.turns) ? body.turns.filter(isVoiceAgentTurn) : [];
+  const parsed = await parseJsonBody(request, voiceAgentCallbackSchema);
+  if (!parsed.ok) return parsed.response;
+  const from = (parsed.data.from ?? "").trim();
+  const turns: VoiceAgentTurn[] = (parsed.data.turns ?? []).filter(isVoiceAgentTurn);
   if (!from || turns.length === 0) return NextResponse.json({ success: true });
 
   const lead = await findOrCreateLeadByPhone(business.id, from, "Phone call");

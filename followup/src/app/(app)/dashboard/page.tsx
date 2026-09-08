@@ -16,6 +16,8 @@ import { getAtRiskLeads } from "@/lib/rescue";
 import { describeTrigger, getRescueReport } from "@/lib/rescued";
 import { getSessionContext } from "@/lib/session";
 import { AlertTriangle, Flame, LifeBuoy, Clock, DollarSign, FileSearch, Send, MessageCircle, Trophy, Inbox, CalendarClock } from "lucide-react";
+import FadeIn from "@/components/motion/FadeIn";
+import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
 
 // This page reads live leads from the database on every request — never
 // bake a stale snapshot into the build.
@@ -34,42 +36,59 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl">{getGreeting()}</h1>
-      <p className="text-ink-soft mt-1">Here&apos;s what needs your attention today.</p>
+      <FadeIn>
+        <h1 className="font-display text-3xl">{getGreeting()}</h1>
+        <p className="text-ink-soft mt-1">Here&apos;s what needs your attention today.</p>
+      </FadeIn>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
-        <StatCard
-          label="At risk right now"
-          value={String(stats.atRisk)}
-          icon={AlertTriangle}
-          accent="var(--coral)"
-          accentSoft="var(--coral-soft)"
-        />
-        <StatCard
-          label="Hot leads"
-          value={String(stats.hotLeads)}
-          icon={Flame}
-          accent="var(--coral)"
-          accentSoft="var(--coral-soft)"
-        />
-        <StatCard
-          label="Follow-ups today"
-          value={String(stats.followUpsToday)}
-          icon={Clock}
-          accent="var(--sage)"
-          accentSoft="var(--sage-soft)"
-        />
-        <StatCard
-          label="Potential revenue"
-          value={formatCurrency(stats.potentialRevenue)}
-          icon={DollarSign}
-          accent="var(--gold)"
-          accentSoft="var(--gold-soft)"
-        />
-      </div>
+      {/* Same on-mount stagger as the landing page's hero (RevealGroup
+          on="mount") — the first thing anyone sees after signing in reads
+          as one orchestrated beat instead of four cards popping in at
+          once. Every list row below gets a plain CSS hover lift (a
+          transform + shadow, no separate motion component needed for
+          rows that repeat) so this page finally has something to point a
+          cursor at that responds, the way the landing page already did. */}
+      <RevealGroup on="mount" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+        <RevealItem>
+          <StatCard
+            label="At risk right now"
+            value={String(stats.atRisk)}
+            icon={AlertTriangle}
+            accent="var(--coral)"
+            accentSoft="var(--coral-soft)"
+          />
+        </RevealItem>
+        <RevealItem>
+          <StatCard
+            label="Hot leads"
+            value={String(stats.hotLeads)}
+            icon={Flame}
+            accent="var(--coral)"
+            accentSoft="var(--coral-soft)"
+          />
+        </RevealItem>
+        <RevealItem>
+          <StatCard
+            label="Follow-ups today"
+            value={String(stats.followUpsToday)}
+            icon={Clock}
+            accent="var(--sage)"
+            accentSoft="var(--sage-soft)"
+          />
+        </RevealItem>
+        <RevealItem>
+          <StatCard
+            label="Potential revenue"
+            value={formatCurrency(stats.potentialRevenue)}
+            icon={DollarSign}
+            accent="var(--gold)"
+            accentSoft="var(--gold-soft)"
+          />
+        </RevealItem>
+      </RevealGroup>
 
       <div className="grid lg:grid-cols-5 gap-6 mt-10">
-        <section className="lg:col-span-3">
+        <FadeIn delay={0.05} className="lg:col-span-3">
           <h2 className="font-display text-xl">Today&apos;s follow-ups</h2>
           <div className="mt-4 space-y-3">
             {leads.length === 0 && (
@@ -95,19 +114,19 @@ export default async function DashboardPage() {
               <FollowUpCard key={lead.id} lead={lead} />
             ))}
           </div>
-        </section>
+        </FadeIn>
 
-        <section className="lg:col-span-2">
+        <FadeIn delay={0.1} className="lg:col-span-2">
           <h2 className="font-display text-xl">Pipeline snapshot</h2>
           <p className="text-sm text-ink-soft mt-1">Leads by stage, right now.</p>
           <div className="mt-4">
             <PipelineSnapshot stages={pipelineSnapshot} />
           </div>
-        </section>
+        </FadeIn>
       </div>
 
       {atRisk.length > 0 && (
-        <section className="mt-10">
+        <FadeIn className="mt-10">
           <h2 className="font-display text-xl flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" style={{ color: "var(--coral)" }} />
             About to be lost
@@ -116,12 +135,12 @@ export default async function DashboardPage() {
             Ranked by how long they&apos;ve waited, how interested they are, and how cold the trail is. Automation is
             already working these; the ones at the top need you.
           </p>
-          <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line">
+          <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line overflow-hidden">
             {atRisk.map((lead) => (
               <Link
                 key={lead.id}
                 href={`/leads/${lead.id}`}
-                className="flex items-center justify-between gap-4 px-5 py-3 text-sm hover:bg-paper"
+                className="flex items-center justify-between gap-4 px-5 py-3 text-sm hover:bg-paper transition-all hover:-translate-y-px hover:shadow-sm relative"
               >
                 <span className="min-w-0">
                   <span className="font-medium">{lead.name}</span>
@@ -140,21 +159,21 @@ export default async function DashboardPage() {
               </Link>
             ))}
           </div>
-        </section>
+        </FadeIn>
       )}
 
       {upcomingBookings.length > 0 && (
-        <section className="mt-10">
+        <FadeIn className="mt-10">
           <h2 className="font-display text-xl flex items-center gap-2">
             <CalendarClock className="h-4 w-4" style={{ color: "var(--sage)" }} />
             Upcoming calls
           </h2>
-          <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line">
+          <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line overflow-hidden">
             {upcomingBookings.map((b) => (
               <Link
                 key={b.id}
                 href={`/leads/${b.leadId}`}
-                className="flex items-center justify-between px-5 py-3 text-sm hover:bg-paper"
+                className="flex items-center justify-between px-5 py-3 text-sm hover:bg-paper transition-all hover:-translate-y-px hover:shadow-sm relative"
               >
                 <span className="font-medium">{b.leadName}</span>
                 <span className="text-ink-soft">
@@ -169,11 +188,11 @@ export default async function DashboardPage() {
               </Link>
             ))}
           </div>
-        </section>
+        </FadeIn>
       )}
 
       {rescue && (
-        <section className="mt-10">
+        <FadeIn className="mt-10">
           <h2 className="font-display text-xl flex items-center gap-2">
             <LifeBuoy className="h-4 w-4" style={{ color: "var(--sage)" }} />
             What FollowUp saved you this week
@@ -188,9 +207,9 @@ export default async function DashboardPage() {
             <StatCard label="In play" value={formatCurrency(rescue.valueInPlay)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
           </div>
           {rescue.leads.length > 0 && (
-            <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line">
+            <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line overflow-hidden">
               {rescue.leads.slice(0, 6).map((l) => (
-                <Link key={l.id} href={`/leads/${l.id}`} className="flex items-center justify-between gap-4 px-5 py-3 text-sm hover:bg-paper">
+                <Link key={l.id} href={`/leads/${l.id}`} className="flex items-center justify-between gap-4 px-5 py-3 text-sm hover:bg-paper transition-all hover:-translate-y-px hover:shadow-sm relative">
                   <span className="min-w-0">
                     <span className="font-medium">{l.name}</span>
                     <span className="text-ink-soft"> — {describeTrigger(l.trigger)}, replied {l.repliedAfterHours}h later</span>
@@ -200,10 +219,10 @@ export default async function DashboardPage() {
               ))}
             </div>
           )}
-        </section>
+        </FadeIn>
       )}
 
-      <section className="mt-10 mb-6">
+      <FadeIn className="mt-10 mb-6">
         <h2 className="font-display text-xl">This week&apos;s AI report</h2>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
           <StatCard label="Analyzed" value={String(weeklyReport.conversationsAnalyzed)} icon={FileSearch} accent="var(--slate)" accentSoft="var(--slate-soft)" />
@@ -213,7 +232,7 @@ export default async function DashboardPage() {
           <StatCard label="Revenue" value={formatCurrency(weeklyReport.revenueGenerated)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
         </div>
         <p className="text-sm text-ink-soft mt-4 leading-relaxed">{weeklyReport.insight}</p>
-      </section>
+      </FadeIn>
     </div>
   );
 }

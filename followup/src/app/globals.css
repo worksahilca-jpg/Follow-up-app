@@ -1,28 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  /* Neutrals — plain off-white, not a tint, with cards a hair lighter
-     (near-white vs. off-white) for separation via contrast rather than
-     color. Near-black headline text, medium-gray secondary text — never
-     pure black on pure white. */
-  --paper: #fafafa;
-  --ink: #18181b;
-  --ink-soft: #71717a;
-  --line: #e4e4e7;
+  /* Neutrals — a warm off-white (a hair of stone, not the cool blue-grey
+     zinc this used to be), cards a shade lighter still (near-white vs.
+     off-white) for separation via contrast rather than color. Warm
+     near-black headline text, warm medium-gray secondary text — never
+     pure black on pure white, and never a cool cast fighting the warm
+     accent below. */
+  --paper: #faf9f6;
+  --ink: #231f1c;
+  --ink-soft: #78716c;
+  --line: #e7e1d9;
   --card: #ffffff;
 
-  /* Brand / primary — the one accent color, used only on buttons, links,
-     active states, and focus rings. Never a background fill, an icon
-     color, or a border outside those interactive contexts. rust-soft is
-     for focus-ring halos only (see embed page), not badge/panel fills. */
-  --rust: #7c3aed;
-  --rust-soft: #ede9fe;
+  /* Brand / primary — a deep, warm wine, standing in for the cooler
+     violet this used to be. The one accent color, used only on buttons,
+     links, active states, and focus rings. Never a background fill, an
+     icon color, or a border outside those interactive contexts. rust-soft
+     is for focus-ring halos only (see embed page), not badge/panel fills.
+     (Name kept as-is rather than renamed across its ~90 call sites — the
+     value is what changed.) */
+  --rust: #7a2e3a;
+  --rust-soft: #f3e3e5;
 
   /* Text that sits ON the accent fill (button labels on a --rust
      background). Deliberately independent of --ink: --ink tracks the
      page's own text color and flips with the theme, but a button's label
      only needs to contrast against --rust, which doesn't move with it. */
-  --on-accent: #fafafa;
+  --on-accent: #faf9f6;
 
   /* Lead-urgency status-pill system — the one place color variety is
      allowed outside the accent. Flat, low-saturation: soft tint for the
@@ -57,7 +62,12 @@
   --color-coral: var(--coral);
   --color-coral-soft: var(--coral-soft);
   --color-card: var(--card);
-  --font-display: var(--font-inter), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  /* Fraunces everywhere a heading appears — was Inter-only outside the
+     marketing page (see the .font-display rule below); Inter stays the
+     body/UI face throughout, so nothing dense (tables, forms, buttons)
+     loses legibility, but every h1/h2/h3 now carries the same warm,
+     editorial character the landing page already had. */
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
   --font-body: var(--font-inter), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -81,7 +91,7 @@ h1, h2, h3, .font-display {
    component: most buttons/links/inputs across the authenticated app had
    no focus ring at all (falling back to the browser's raw default) and
    inconsistent hover transitions — some instant, some eased. This gives
-   every interactive element the same on-brand violet focus ring (the one
+   every interactive element the same on-brand wine focus ring (the one
    sanctioned non-button use of the accent) and a quiet, consistent
    150ms transition, without touching each component's own classes. */
 a, button, input, select, textarea, [tabindex] {

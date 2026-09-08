@@ -68,8 +68,8 @@ export default function LandingPage() {
         {/* A faint dot grid behind the copy only — evokes a signal grid /
             timeline rather than decoration for its own sake, and fades out
             via a mask so it never fights the text sitting on top of it.
-            Deliberately not a gradient blob: with the accent already
-            violet, a gradient hero here would read as the generic
+            Deliberately not a gradient blob: with a warm accent already
+            doing the work, a gradient hero here would read as the generic
             AI-landing-page look rather than something considered. */}
         <ParallaxDots
           className="absolute inset-0 -z-10 hidden sm:block"
@@ -86,8 +86,9 @@ export default function LandingPage() {
             plays once as a single orchestrated beat instead of each part
             popping in independently. */}
         <RevealGroup on="mount">
-          {/* Neutral bordered chip, not a violet badge — violet stays on
-              buttons/links/focus states only, nowhere decorative. */}
+          {/* Neutral bordered chip, not an accent-colored badge — the wine
+              accent stays on buttons/links/focus states only, nowhere
+              decorative. */}
           <RevealItem>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft">
               <Sparkles className="h-3 w-3" /> AI-native, not AI-bolted-on
@@ -564,7 +565,7 @@ export default function LandingPage() {
       </section>
 
       {/* Closing CTA — plain page background, not a bold color band. The
-          violet stays confined to the button itself, the page's final
+          accent stays confined to the button itself, the page's final
           word coming from restraint rather than a splash of color. Plain
           (not bg-card) since FAQ right above it is already bg-card. */}
       <section>
@@ -622,7 +623,7 @@ function Step({ icon, title, body }: { icon: React.ReactNode; title: string; bod
   );
 }
 
-// Same neutral card treatment as everything else on the page — no violet
+// Same neutral card treatment as everything else on the page — no accent
 // border or glow to mark this as "the" plan; with one plan on offer that
 // distinction has no work to do anyway.
 function PriceCard({

@@ -9,6 +9,7 @@ import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
 import InstagramConfig from "@/components/InstagramConfig";
+import FacebookConfig from "@/components/FacebookConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart } from "lucide-react";
 
@@ -450,6 +451,7 @@ function SettingsPageInner() {
         <h2 className="font-display text-xl">Instagram</h2>
         <div className="mt-4">
           <InstagramConfig />
+          <FacebookConfig />
         </div>
       </section>
 

@@ -25,3 +25,24 @@ export function instagramRecipientId(phone: string): string {
 export function instagramLeadId(senderId: string): string {
   return `${IG_ID_PREFIX}${senderId}`;
 }
+
+// Facebook Messenger uses the same trick with its own prefix: a Page-scoped
+// user ID (PSID) stored in Lead.phone as "fb:<psid>". See src/lib/facebook.ts.
+const FB_ID_PREFIX = "fb:";
+
+export function isMessengerLeadId(phone: string | null): phone is string {
+  return !!phone?.startsWith(FB_ID_PREFIX);
+}
+
+export function messengerRecipientId(phone: string): string {
+  return phone.slice(FB_ID_PREFIX.length);
+}
+
+export function messengerLeadId(psid: string): string {
+  return `${FB_ID_PREFIX}${psid}`;
+}
+
+/** True for any social-DM pseudo-id (Instagram or Messenger) — not a dialable number. */
+export function isSocialLeadId(phone: string | null): phone is string {
+  return isInstagramLeadId(phone) || isMessengerLeadId(phone);
+}

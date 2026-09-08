@@ -15,7 +15,8 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/integrations/gmail";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
 import { sendInstagramMessage } from "@/lib/instagram";
-import { instagramRecipientId, isInstagramLeadId } from "@/lib/instagramId";
+import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
+import { sendMessengerMessage } from "@/lib/facebook";
 
 /**
  * SMS and WhatsApp both live on Lead.phone (the same phone number
@@ -42,7 +43,7 @@ export async function sendFollowUpToLead(
     // Force a channel instead of the email-first default — the instant
     // acknowledgement (src/lib/acknowledge.ts) replies on the channel the
     // lead actually used.
-    channel?: "email" | "text" | "whatsapp" | "instagram";
+    channel?: "email" | "text" | "whatsapp" | "instagram" | "messenger";
     subject?: string;
     emailThreadId?: string;
     emailInReplyTo?: string;
@@ -59,7 +60,9 @@ export async function sendFollowUpToLead(
       ? "email"
       : isInstagramLeadId(lead.phone)
         ? "instagram"
-        : lead.phone
+        : isMessengerLeadId(lead.phone)
+          ? "messenger"
+          : lead.phone
           ? await detectPhoneChannel(lead.id)
           : null);
   if (!channel) return { success: false, message: "This lead has no email or phone number on file." };
@@ -79,6 +82,9 @@ export async function sendFollowUpToLead(
   } else if (channel === "instagram") {
     const result = await sendInstagramMessage(lead.businessId, instagramRecipientId(lead.phone!), body);
     if (!result.success) return { success: false, message: result.message ?? "Instagram didn't confirm this message sent." };
+  } else if (channel === "messenger") {
+    const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body);
+    if (!result.success) return { success: false, message: result.message ?? "Facebook didn't confirm this message sent." };
   } else if (channel === "whatsapp") {
     const result = await sendWhatsApp(lead.businessId, lead.phone!, body);
     if (!result.success) return { success: false, message: result.message ?? "WhatsApp didn't confirm this message sent." };

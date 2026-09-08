@@ -20,10 +20,15 @@ export type MessageDirection = "inbound" | "outbound";
 export interface Message {
   id: string;
   direction: MessageDirection;
-  channel: "email" | "call" | "text";
+  channel: "email" | "call" | "text" | "whatsapp" | "instagram" | "messenger" | "web";
   body: string;
   date: string; // ISO date
   opened?: boolean;
+  // Set only when this outbound message wasn't sent through FollowUp —
+  // e.g. "instagram_direct"/"messenger_direct" for a reply captured from
+  // a Meta webhook echo (see Message.source in schema.prisma). Undefined
+  // means FollowUp sent it, same as before this field existed.
+  source?: string;
 }
 
 export interface ScoreFactor {

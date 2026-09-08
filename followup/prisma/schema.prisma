@@ -141,6 +141,14 @@ model Business {
   // ID. See src/lib/instagram.ts.
   instagramUserId     String? @unique
   instagramAccessToken String?
+
+  // Facebook Page — Messenger DMs and Lead Ads (src/lib/facebook.ts). Same
+  // Meta app and same webhook URL as Instagram; events for object "page"
+  // route to the business whose Page ID matches entry.id. The Page access
+  // token is encrypted at rest (src/lib/db.ts ENCRYPTED_FIELDS).
+  facebookPageId          String? @unique
+  facebookPageName        String?
+  facebookPageAccessToken String?
 }
 
 enum PipelineStage {

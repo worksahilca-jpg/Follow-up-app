@@ -37,7 +37,7 @@ export const INSTANT_ACK_NAME = "Instant reply to new leads";
 
 const STALE_AFTER_MS = 60 * 60_000;
 
-export type AckChannel = "email" | "text" | "whatsapp" | "instagram";
+export type AckChannel = "email" | "text" | "whatsapp" | "instagram" | "messenger";
 
 export async function isInstantAckEnabled(businessId: string): Promise<boolean> {
   const row = await prisma.automation.findFirst({

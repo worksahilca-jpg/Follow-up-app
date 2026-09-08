@@ -24,10 +24,12 @@ vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ succe
 import { prisma } from "@/lib/db";
 import { sendFollowUpToLead } from "@/lib/sending";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
+import { localizeFixedText } from "@/lib/integrations/openai";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
 const send = sendFollowUpToLead as unknown as ReturnType<typeof vi.fn>;
+const localize = localizeFixedText as unknown as ReturnType<typeof vi.fn>;
 
 const baseLead = {
   id: "lead1",
@@ -58,6 +60,36 @@ describe("instant acknowledgement", () => {
     expect(opts).toMatchObject({ automated: true, channel: "text" });
     // The claim is atomic: only rows still unacknowledged are updated.
     expect(p.lead.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "lead1", acknowledgedAt: null } }));
+  });
+
+  // Task #63: verifies the actual code path a non-English lead goes
+  // through, not just localizeFixedText's own translation quality
+  // (already covered separately in prompts.test.ts). This is deliberately
+  // NOT a substitute for a real end-to-end test with an actual
+  // non-English lead and native-speaker review of the output — it can't
+  // be, without a live model call and a real speaker to judge it — but it
+  // does close the one gap that WAS untestable before: does
+  // acknowledgeNewLead actually hand the lead's own inbound text to the
+  // localizer (so language detection has something real to work from),
+  // and does whatever comes back actually get sent, unmodified.
+  it("hands the lead's real inbound text to the localizer and sends back whatever it returns, for a non-English message", async () => {
+    localize.mockImplementationOnce(async (_template: string, sample: string) => {
+      // A real localizer call would detect Spanish from `sample` and
+      // translate the template — this stand-in just proves the plumbing:
+      // the exact inbound text reached the call, and the exact result
+      // reached the send, with nothing in between touching either.
+      expect(sample).toBe("Hola, ¿todavía tienen la casa disponible?");
+      return "¡Hola! Gracias por contactar a MJ Homes. Recibimos tu mensaje y Manoj te responderá pronto.";
+    });
+    const r = await acknowledgeNewLead("lead1", {
+      channel: "text",
+      inboundText: "Hola, ¿todavía tienen la casa disponible?",
+      inboundAt: new Date(),
+    });
+    expect(r.sent).toBe(true);
+    expect(localize).toHaveBeenCalledWith(expect.any(String), "Hola, ¿todavía tienen la casa disponible?");
+    const [, body] = send.mock.calls[0];
+    expect(body).toBe("¡Hola! Gracias por contactar a MJ Homes. Recibimos tu mensaje y Manoj te responderá pronto.");
   });
 
   it("never sends twice: an already-acknowledged lead is skipped before any work", async () => {

@@ -465,7 +465,13 @@ export async function generateFollowUpMessage(
           "includes matching how they wrote it, not just which language it is: if they wrote in a " +
           "romanized/Latin-script version of a language (e.g. Hindi or Punjabi typed in English letters, " +
           "sometimes called Hinglish), reply the same way in that same romanized style — do not switch to the " +
-          "language's native script unless the lead did. Never invent facts: everything you state about the lead, their situation, their property or " +
+          "language's native script unless the lead did. Judge a message's language from its overall " +
+          "substantive content, never from a short opening greeting word alone: a message that starts with an " +
+          "English word like \"Hi\" or \"Hello\" but continues in a different language is written in THAT " +
+          "language, not English — the opening word is a borrowed pleasantry, not a language signal. For " +
+          "example, \"Hi, maine tamari jaherat joi hati. Mane aa athvadiye ghar jovama rus chhe. Krupa kari " +
+          "kimmat jaanavso.\" is romanized Gujarati despite the English \"Hi\", and the correct reply to it is " +
+          "also in romanized Gujarati, never English. Never invent facts: everything you state about the lead, their situation, their property or " +
           "project, prior calls, timelines, or what the business has done or will do must appear in the " +
           "conversation below. If the lead asked a factual question the conversation doesn't answer, acknowledge " +
           "the question and say you'll confirm the specifics for them — do not make up an answer, a number, a " +
@@ -594,7 +600,11 @@ export async function generateInstantReply(input: {
           "language as their message below, matching their own tone and formality — casual if they wrote " +
           "casually, formal if formal — and if they wrote in a romanized/Latin-script version of a language " +
           "(e.g. Hindi or Punjabi typed in English letters), reply the same way in that same romanized style " +
-          "rather than switching to native script." +
+          "rather than switching to native script. Judge the language from the message's overall substantive " +
+          "content, never from a short opening greeting word alone: a message starting with an English word " +
+          "like \"Hi\" or \"Hello\" but continuing in a different language is written in THAT language, not " +
+          "English — e.g. \"Hi, maine tamari jaherat joi hati\" is romanized Gujarati despite the English " +
+          "\"Hi\", and the reply to it must be in romanized Gujarati too, never English." +
           UNTRUSTED_CONVERSATION_NOTICE,
       },
       {

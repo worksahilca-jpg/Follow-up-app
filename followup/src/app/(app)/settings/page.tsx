@@ -799,10 +799,14 @@ function SettingsPageInner() {
               <CreditCard className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">FollowUp — $29/month</p>
+              <p className="text-sm font-medium">FollowUp — $29/month after a 14-day free trial</p>
               <p className="text-xs text-ink-soft mt-0.5">
                 {!billingLoaded
                   ? "Checking your subscription…"
+                  : billingStatus === "trialing"
+                  ? billingPeriodEnd
+                    ? `Free trial — first charge on ${new Date(billingPeriodEnd).toLocaleDateString()}.`
+                    : "Free trial."
                   : billingActive
                   ? billingPeriodEnd
                     ? `Active — renews ${new Date(billingPeriodEnd).toLocaleDateString()}.`
@@ -811,7 +815,7 @@ function SettingsPageInner() {
                   ? "Payment failed — update your card to keep your account active."
                   : billingStatus === "canceled"
                   ? "Subscription canceled — resubscribe to unlock leads, sync, and sending again."
-                  : "Not subscribed yet — you can view your existing data, but adding leads, syncing Gmail, and sending follow-ups are locked."}
+                  : "Not subscribed yet — start a free 14-day trial, no card required, to unlock adding leads, syncing Gmail, and sending follow-ups."}
               </p>
             </div>
             {billingLoaded && (
@@ -827,7 +831,7 @@ function SettingsPageInner() {
                   ? "Activating…"
                   : billingActive || billingStatus
                   ? "Manage billing"
-                  : "Subscribe"}
+                  : "Start free trial"}
               </button>
             )}
           </div>

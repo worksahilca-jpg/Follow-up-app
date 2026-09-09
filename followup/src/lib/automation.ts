@@ -30,7 +30,7 @@
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { composeFollowUpEmail } from "@/lib/sender";
-import { sendFollowUpToLead } from "@/lib/sending";
+import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { requireActiveBilling } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
@@ -235,10 +235,16 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         }
       }
 
+      // Explicit channel, not sendFollowUpToLead()'s own email-if-present
+      // default — a lead that only ever texted or DM'd, but happens to
+      // also have an email on file, would otherwise get an automated
+      // reply sent to an inbox they never check (see
+      // detectAutomatedReplyChannel's doc comment).
       const result = await sendFollowUpToLead(lead.id, message, {
         automated: true,
         trigger: unansweredIds.has(lead.id) ? "unanswered" : "silence",
         subject,
+        channel: (await detectAutomatedReplyChannel(lead)) ?? undefined,
       });
       if (result.success && unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "sent");
       return result.success

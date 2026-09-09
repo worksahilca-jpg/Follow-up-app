@@ -156,8 +156,31 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ success: true });
   } catch (err) {
     // Duplicate email for this business (Lead's businessId_email unique
-    // constraint) — the same person submitting twice shouldn't 500.
+    // constraint) — the same person submitting twice shouldn't 500. This
+    // used to just return success and drop the new submission entirely —
+    // a genuine follow-up question ("actually, can you also quote me for
+    // X") from a returning visitor vanished with no record anywhere. Find
+    // the existing lead instead and treat this the same as any other new
+    // inbound message on it: appended, re-scored, and (subject to its own
+    // once-only guard) re-acknowledged — same "conflict -> find and
+    // continue" shape findOrCreateLeadByPhone() already uses for the SMS
+    // side of this same problem.
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+      const existing = await prisma.lead.findUnique({ where: { businessId_email: { businessId, email } } });
+      if (existing && message) {
+        let conversation = await prisma.conversation.findFirst({
+          where: { leadId: existing.id, channel: "web" },
+          orderBy: { createdAt: "desc" },
+        });
+        if (!conversation) {
+          conversation = await prisma.conversation.create({ data: { leadId: existing.id, channel: "web" } });
+        }
+        await prisma.message.create({
+          data: { conversationId: conversation.id, direction: "inbound", body: message, sentAt: now },
+        });
+        await scoreAndDraftForLead(existing.id);
+        if (email) await acknowledgeNewLead(existing.id, { channel: "email", inboundText: message, inboundAt: now });
+      }
       return NextResponse.json({ success: true });
     }
     throw err;

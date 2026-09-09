@@ -75,6 +75,23 @@ describe("no-invention drafting", () => {
     expect(system).toMatch(/only the most recent message decides/);
   });
 
+  // Second live-test finding on the same lead (task #63): a message
+  // opening with the borrowed English word "Hi" before switching to
+  // romanized Gujarati still came back in plain English on a fresh
+  // regeneration, even after the fix above shipped — the "most recent
+  // message" instruction was never the problem; the model was reading
+  // that one message itself as English because of its opening word.
+  it("instructs the model not to let an opening English greeting word override the rest of the message's language", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "Your roof question", body: "I will confirm the roof details for you." }) } }],
+    });
+    await generateFollowUpMessage({ name: "Young Son", conversation });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/short opening greeting word alone/);
+    expect(system).toMatch(/is written in THAT language, not.*English/);
+    expect(system).toMatch(/romanized Gujarati/);
+  });
+
   // research/audit/2026-09-09-sixth-pass-audit.md finding #1 — same
   // reasoning as assessSendRisk's own test below: a voice-agent-channel
   // message must not be draftable as a confirmed fact just because it's
@@ -179,6 +196,17 @@ describe("instant reply (generateInstantReply)", () => {
     expect(system).toMatch(/same language as their message/);
     expect(system).toMatch(/matching their own tone and formality/);
     expect(system).toMatch(/romanized\/Latin-script/);
+  });
+
+  // Same task #63 follow-up finding as generateFollowUpMessage's own test
+  // below — the instant reply is exactly as exposed to a message shaped
+  // "Hi, <romanized-language text>" mis-read as English.
+  it("instructs the model not to let an opening English greeting word override the rest of the message's language", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: "Got it, I'll confirm the price for you." } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/short opening greeting word alone/);
+    expect(system).toMatch(/is written in THAT language, not.*English/);
   });
 
   it("wraps the lead's inbound text in the same untrusted-data delimiter as every other AI call", async () => {

@@ -81,7 +81,11 @@ beforeEach(() => {
   sendWindow.mockReturnValue(true);
 });
 
-function unansweredLead(hoursAgo: number, lastDirection: "inbound" | "outbound" = "inbound") {
+function unansweredLead(
+  hoursAgo: number,
+  lastDirection: "inbound" | "outbound" = "inbound",
+  overrides: Record<string, unknown> = {}
+) {
   return lead({
     id: "lead2",
     name: "Harpreet",
@@ -98,6 +102,7 @@ function unansweredLead(hoursAgo: number, lastDirection: "inbound" | "outbound" 
     // "Here is the listing." is a real reply, not the instant-ack —
     // this lead keeps the normal (longer) unanswered-reply window.
     followUps: [{ trigger: "manual" }],
+    ...overrides,
   });
 }
 
@@ -115,6 +120,27 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
     expect(send).not.toHaveBeenCalled();
     expect(p.notification.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ leadId: "lead2", message: expect.stringMatching(/hasn't heard back/) }) })
+    );
+  });
+
+  // Live-test finding (task #63): a cached suggestedMessage can predate the
+  // lead's actual most recent inbound message — this lead already has a
+  // stale draft sitting from an earlier scoring pass, before its most
+  // recent message came in. Reusing that draft verbatim is exactly what
+  // shipped a real English reply to a lead whose latest message was in a
+  // different language.
+  it("always drafts fresh for an unanswered lead, even when a stale draft is already cached", async () => {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([
+      unansweredLead(30, "inbound", { suggestedMessage: "A stale draft from before the lead's latest message" }),
+    ]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(1);
+    expect(draftMessage).toHaveBeenCalled();
+    expect(send).toHaveBeenCalledWith(
+      "lead2",
+      expect.not.stringContaining("A stale draft from before the lead's latest message"),
+      expect.objectContaining({ trigger: "unanswered" })
     );
   });
 

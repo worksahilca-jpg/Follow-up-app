@@ -16,24 +16,14 @@
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import type { Lead } from "@/lib/types";
-import { daysSince } from "@/lib/demo-data";
-
-export interface SavedFilterCriteria {
-  source?: string;
-  stage?: Lead["stage"];
-  priority?: Lead["priority"];
-  minDealValue?: number;
-  minDaysSinceContact?: number;
-}
-
-export interface SavedFilterSummary {
-  id: string;
-  name: string;
-  shared: boolean;
-  createdById: string;
-  criteria: SavedFilterCriteria;
-}
+// Types (and the pure matchesSavedFilter predicate) now live in
+// savedFilterMatch.ts, which has no Prisma dependency — see that file's
+// header for why. Re-exported here so any other server-side caller of
+// "@/lib/savedFilters" for these types keeps working unchanged; client
+// components must import them from "@/lib/savedFilterMatch" directly,
+// never from this file (see leads/LeadsPageClient.tsx).
+export type { SavedFilterCriteria, SavedFilterSummary } from "@/lib/savedFilterMatch";
+import type { SavedFilterCriteria, SavedFilterSummary } from "@/lib/savedFilterMatch";
 
 /** Every Smart View this user can see: their own private ones plus every shared one on the business. */
 export async function getSavedFilters(businessId: string, userId: string): Promise<SavedFilterSummary[]> {
@@ -83,12 +73,11 @@ export async function deleteSavedFilter(
   return { success: true };
 }
 
-/** Same predicate shape as the hardcoded quick filters in LeadsPageClient.tsx — every criterion set must match (AND, not OR). */
-export function matchesSavedFilter(lead: Lead, criteria: SavedFilterCriteria): boolean {
-  if (criteria.source && lead.source !== criteria.source) return false;
-  if (criteria.stage && lead.stage !== criteria.stage) return false;
-  if (criteria.priority && lead.priority !== criteria.priority) return false;
-  if (criteria.minDealValue !== undefined && lead.dealValue < criteria.minDealValue) return false;
-  if (criteria.minDaysSinceContact !== undefined && daysSince(lead.lastContacted) < criteria.minDaysSinceContact) return false;
-  return true;
-}
+// Moved to src/lib/savedFilterMatch.ts along with the types above — pure,
+// no Prisma dependency of its own, but LeadsPageClient ("use client")
+// importing it from *this* file pulled this file's own
+// `import { prisma } from "@/lib/db"` into the browser bundle, which throws
+// at runtime ("PrismaClient is unable to run in this browser environment").
+// Re-exported here for any other (server-side) caller of matchesSavedFilter
+// from "@/lib/savedFilters".
+export { matchesSavedFilter } from "@/lib/savedFilterMatch";

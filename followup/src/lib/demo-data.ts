@@ -430,17 +430,6 @@ export const PIPELINE_STAGES: { id: Lead["stage"]; label: string }[] = [
   { id: "lost", label: "Lost" },
 ];
 
-export function getPipelineData() {
-  return PIPELINE_STAGES.map((stage) => {
-    const stageLeads = leads.filter((l) => l.stage === stage.id);
-    return {
-      ...stage,
-      leads: stageLeads,
-      value: stageLeads.reduce((sum, l) => sum + l.dealValue, 0),
-    };
-  });
-}
-
 export function daysSince(dateIso: string): number {
   return Math.floor((Date.now() - new Date(dateIso).getTime()) / 86400000);
 }

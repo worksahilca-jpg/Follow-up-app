@@ -4,7 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { Lead } from "@/lib/types";
 import { PIPELINE_STAGES } from "@/lib/demo-data";
-import type { SavedFilterCriteria, SavedFilterSummary } from "@/lib/savedFilters";
+import type { SavedFilterCriteria, SavedFilterSummary } from "@/lib/savedFilterMatch";
 
 const inputClass = "w-full rounded-lg border border-line bg-card px-3 py-2 text-sm";
 

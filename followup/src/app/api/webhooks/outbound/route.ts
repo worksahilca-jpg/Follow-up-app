@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { parseJsonBody } from "@/lib/validation";
+import { assertSafeWebhookUrl, UnsafeWebhookUrlError } from "@/lib/ssrf";
 
 const outboundWebhookSchema = z.object({ url: z.string().nullable().optional() });
 
@@ -43,14 +44,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, url: null });
   }
 
+  // assertSafeWebhookUrl also rejects a hostname that resolves to a
+  // private/loopback/link-local address (e.g. the cloud metadata IP) —
+  // this field is fetched from server code on every lead event, so a
+  // business (or an attacker who's compromised one business's session)
+  // must not be able to point it at an internal service. See src/lib/ssrf.ts.
   let parsedUrl: URL;
   try {
-    parsedUrl = new URL(raw);
-  } catch {
-    return NextResponse.json({ success: false, message: "That doesn't look like a valid URL." }, { status: 400 });
-  }
-  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-    return NextResponse.json({ success: false, message: "URL must start with http:// or https://." }, { status: 400 });
+    parsedUrl = await assertSafeWebhookUrl(raw);
+  } catch (err) {
+    const message = err instanceof UnsafeWebhookUrlError ? err.message : "That doesn't look like a valid URL.";
+    return NextResponse.json({ success: false, message }, { status: 400 });
   }
 
   await prisma.business.update({ where: { id: ctx.businessId }, data: { outboundWebhookUrl: parsedUrl.toString() } });
@@ -77,6 +81,12 @@ export async function PUT() {
   }
 
   try {
+    // Re-check the saved URL right before firing, not just at save time —
+    // a hostname that resolved to a public address when it was saved can
+    // be re-pointed at a private one later (DNS rebinding), and this
+    // handler is otherwise a direct, low-latency SSRF oracle: it fetches
+    // immediately and reports back reachability. See src/lib/ssrf.ts.
+    await assertSafeWebhookUrl(business.outboundWebhookUrl);
     const res = await fetch(business.outboundWebhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -92,6 +102,9 @@ export async function PUT() {
         timestamp: new Date().toISOString(),
       }),
       signal: AbortSignal.timeout(8000),
+      // Never follow a redirect — a public hostname that 30x's to an
+      // internal address would otherwise bypass the check above entirely.
+      redirect: "manual",
     });
     if (!res.ok) {
       return NextResponse.json(

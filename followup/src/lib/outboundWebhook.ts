@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { Lead } from "@prisma/client";
+import { assertSafeWebhookUrl } from "@/lib/ssrf";
 
 /**
  * Outbound lead-event webhook — the reverse direction of the inbound one
@@ -41,6 +42,13 @@ export async function notifyLeadEvent(
     const url = business?.outboundWebhookUrl;
     if (!url) return;
 
+    // Re-check right before every fire, not just when the URL was saved —
+    // a hostname can be re-pointed at an internal address after the fact
+    // (DNS rebinding), and this fires on every real lead event, so it's
+    // the one place in this codebase that repeatedly fetches a
+    // tenant-supplied URL server-side. See src/lib/ssrf.ts.
+    await assertSafeWebhookUrl(url);
+
     const payload = {
       event,
       leadId: lead.id,
@@ -63,6 +71,9 @@ export async function notifyLeadEvent(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(8000),
+      // Never follow a redirect — see the same note on the PUT test-fire
+      // handler in src/app/api/webhooks/outbound/route.ts.
+      redirect: "manual",
     });
   } catch {
     // Swallow — see file header. The downstream tool being down or the URL

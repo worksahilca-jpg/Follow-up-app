@@ -27,6 +27,7 @@ import { sendFollowUpToLead } from "@/lib/sending";
 import { requireActiveBilling } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
+import { isWithinSendWindow } from "@/lib/sendWindow";
 import type { Prisma, SequenceAction, PipelineStage } from "@prisma/client";
 import type { Message } from "@/lib/types";
 
@@ -260,10 +261,15 @@ interface SequenceRunResult {
   advanced: number; // steps that ran successfully (email sent or stage changed)
   completed: number; // leads that finished their last step
   pausedForReply: number; // unenrolled because the lead replied and hasn't been answered yet
+  // Outside the business's local send window (see sendWindow.ts) — an
+  // EMAIL step deferred to the next hourly cron tick rather than sent
+  // immediately. Only EMAIL steps can defer; CHANGE_STAGE never contacts
+  // the lead, so it always runs on schedule regardless of the hour.
+  deferred: number;
   skipped: string[]; // "{lead name}: {why}"
 }
 
-const EMPTY_RUN: SequenceRunResult = { checked: 0, advanced: 0, completed: 0, pausedForReply: 0, skipped: [] };
+const EMPTY_RUN: SequenceRunResult = { checked: 0, advanced: 0, completed: 0, pausedForReply: 0, deferred: 0, skipped: [] };
 
 /** What a real scheduler calls for one business — see runSequencesForAllBusinesses() below for the fan-out. */
 export async function runSequencesForBusiness(businessId: string): Promise<SequenceRunResult> {
@@ -288,6 +294,11 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
   if (active.length === 0) return { ...EMPTY_RUN, checked: due.length };
 
   const voiceSamples = await getVoiceSamples(businessId);
+  // Fetched once for the whole run — every lead here belongs to the same
+  // business, so the send-window check below (EMAIL steps only) always
+  // resolves against the same timezone.
+  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true } });
+  const timezone = business?.timezone ?? "America/New_York";
 
   const outcomes = await mapWithConcurrency(active, 3, async (lead) => {
     // Atomic check-and-claim before anything else — same reasoning as
@@ -355,6 +366,15 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       if (step.action === "CHANGE_STAGE" && step.stageTo) {
         await prisma.lead.update({ where: { id: lead.id }, data: { stage: step.stageTo } });
       } else if (step.action === "EMAIL") {
+        // Outside the business's local send window (e.g. 3am) — return
+        // immediately, before the "no email address" skip check even, so
+        // this never falls through to the advance-to-next-step logic
+        // below. The 5-minute claim lock above self-expires well before
+        // the next hourly cron tick, so nothing needs to be explicitly
+        // reset for this lead to be reconsidered once it's daytime.
+        if (!isWithinSendWindow(new Date(), timezone)) {
+          return { kind: "deferred" as const };
+        }
         // This step is labeled "Send email" in the workflow builder — an
         // explicit, understood choice, not "send whatever channel this
         // lead happens to be on." A lead with no email address (captured
@@ -425,6 +445,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
     advanced: outcomes.filter((o) => o.kind === "advanced" || o.kind === "completed").length,
     completed: outcomes.filter((o) => o.kind === "completed").length,
     pausedForReply: outcomes.filter((o) => o.kind === "paused").length,
+    deferred: outcomes.filter((o) => o.kind === "deferred").length,
     skipped: outcomes.filter((o): o is { kind: "skipped"; note: string } => o.kind === "skipped").map((o) => o.note),
   };
 }
@@ -452,6 +473,7 @@ export async function runSequencesForAllBusinesses(): Promise<SequenceRunResult>
     totals.advanced += r.advanced;
     totals.completed += r.completed;
     totals.pausedForReply += r.pausedForReply;
+    totals.deferred += r.deferred;
     totals.skipped.push(...r.skipped);
   }
   return totals;

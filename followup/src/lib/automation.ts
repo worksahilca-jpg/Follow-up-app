@@ -325,17 +325,28 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       );
 
       const isDeadLead = deadIds.has(lead.id);
+      // task #63 (live-test finding): a cached suggestedMessage can predate
+      // the lead's actual most recent inbound message — scoring.ts drafts
+      // once per inbound webhook, but a lead that fires off several
+      // messages in a burst (or in different languages) can leave a stale
+      // draft sitting there for hours before the unanswered trigger picks
+      // it up. Reusing it verbatim shipped a real English reply to a lead
+      // whose latest message was romanized Gujarati. Unlike silence (where
+      // nothing new happened since the cache was written, so it's still
+      // the right answer), "unanswered" specifically means new inbound
+      // content exists that the cached draft was never written against —
+      // so it gets the same "never trust the cache" treatment as a dead
+      // lead, for the same underlying reason.
+      const isUnanswered = unansweredIds.has(lead.id);
 
       // Reuse an existing draft (subject + body) when this lead already has
       // one from a normal scoring pass — only draft fresh here if it
       // somehow doesn't (e.g. scoring never ran, most commonly no
-      // OPENAI_API_KEY configured). A dead lead never reuses a cached
-      // draft, even if one exists — that draft was written before this
-      // lead crossed into reactivation territory and won't carry the
-      // elapsed-time framing this trigger specifically needs.
+      // OPENAI_API_KEY configured), or if it's a dead lead or unanswered
+      // reply (see above) — either way the cached draft can't be trusted.
       let subject = lead.suggestedSubject ?? undefined;
       let message = lead.suggestedMessage;
-      if (!message || isDeadLead) {
+      if (!message || isDeadLead || isUnanswered) {
         const messageHint = isDeadLead
           ? deadLeadMessageHint(Math.floor((Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000))
           : undefined;
@@ -367,12 +378,12 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         }
 
         if (risk.riskLevel !== "low") {
-          // Always (re)write for a dead lead, even if suggestedMessage
-          // already existed — it was regenerated above specifically
-          // because the cached draft predates this lead crossing into
-          // reactivation territory, so the stale one must not linger as
-          // what the owner sees waiting for approval.
-          if (!lead.suggestedMessage || isDeadLead) {
+          // Always (re)write for a dead lead or an unanswered reply, even
+          // if suggestedMessage already existed — it was regenerated above
+          // specifically because the cached draft can't be trusted for
+          // either (see the comment above isUnanswered), so the stale one
+          // must not linger as what the owner sees waiting for approval.
+          if (!lead.suggestedMessage || isDeadLead || isUnanswered) {
             await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message, suggestedSubject: subject } });
           }
           if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");

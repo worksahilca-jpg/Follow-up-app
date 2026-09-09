@@ -114,6 +114,45 @@ export async function detectAutomatedReplyChannel(lead: {
   return null;
 }
 
+/**
+ * research/product/2026-09-09-followup-cadence-best-practices.md §4: the
+ * channel a caller escalates to when it has deliberately decided NOT to
+ * use email for this particular send — a workflow (sequences.ts) EMAIL
+ * step for a lead with no email address at all, or one whose earlier
+ * EMAIL steps in the same sequence already went out with no reply.
+ *
+ * Deliberately a separate function rather than a flag on
+ * detectAutomatedReplyChannel() above: that function always prefers
+ * email whenever the lead has one (both via its own lastChannel check
+ * and its static fallback order), which is exactly the behavior a caller
+ * invoking this one is trying to get away from. Mirrors its phone/DM
+ * branches exactly — same priority (whichever channel the lead's last
+ * inbound message actually came in on, then Instagram/Messenger/phone
+ * based on what Lead.phone actually holds) — so the two channel-picking
+ * functions never quietly disagree about what "text" or "whatsapp" means
+ * for a given lead; this one just never returns "email".
+ */
+export async function detectNonEmailChannel(lead: {
+  id: string;
+  phone: string | null;
+}): Promise<"text" | "whatsapp" | "instagram" | "messenger" | null> {
+  if (!lead.phone) return null;
+  const lastInbound = await prisma.message.findFirst({
+    where: { conversation: { leadId: lead.id }, direction: "inbound" },
+    orderBy: { sentAt: "desc" },
+    select: { conversation: { select: { channel: true } } },
+  });
+  const lastChannel = lastInbound?.conversation.channel;
+  if (lastChannel === "text") return "text";
+  if (lastChannel === "whatsapp") return "whatsapp";
+  if (lastChannel === "instagram" && isInstagramLeadId(lead.phone)) return "instagram";
+  if (lastChannel === "messenger" && isMessengerLeadId(lead.phone)) return "messenger";
+
+  if (isInstagramLeadId(lead.phone)) return "instagram";
+  if (isMessengerLeadId(lead.phone)) return "messenger";
+  return detectPhoneChannel(lead.id);
+}
+
 export async function sendFollowUpToLead(
   leadId: string,
   body: string,

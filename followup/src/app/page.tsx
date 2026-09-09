@@ -21,7 +21,7 @@ import HeroMockup from "@/components/landing/HeroMockup";
 import Reveal from "@/components/landing/Reveal";
 import LandingFaq from "@/components/landing/LandingFaq";
 import CountUp from "@/components/motion/CountUp";
-import { plusJakarta } from "@/components/landing/font";
+import { plusJakarta } from "@/lib/fonts";
 
 // Same content this page has always had — restyled into the new warm
 // editorial palette/typography/3D-mockup treatment, not rewritten. Only

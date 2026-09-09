@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import styles from "@/app/landing.module.css";
-import { plusJakarta } from "@/components/landing/font";
+import { plusJakarta } from "@/lib/fonts";
 import Reveal from "@/components/landing/Reveal";
 import SignInScene from "@/components/landing/SignInScene";
 

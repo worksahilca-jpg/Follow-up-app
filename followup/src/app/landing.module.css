@@ -1,8 +1,12 @@
-/* Editorial landing-page design system — deliberately its own palette,
-   scoped entirely to this CSS module so it never touches the dashboard's
-   --paper/--ink/--rust tokens in globals.css. A marketing page earning a
-   distinct visual identity from the in-product UI is a normal, legitimate
-   split (this file), not a fork of the app's design system. */
+/* Editorial design system for the pre-auth marketing surface — the
+   landing page (src/app/page.tsx) and /signin (src/app/signin/page.tsx),
+   the two pages a visitor sees before they're ever signed in. Deliberately
+   its own palette, scoped entirely to this CSS module so it never touches
+   the authenticated app's --paper/--ink/--rust tokens in globals.css. A
+   marketing/entry surface earning a distinct visual identity from the
+   in-product UI is a normal, legitimate split (this file), not a fork of
+   the app's design system — the two co-exist by design (see each file's
+   own header comment for why). */
 
 .root {
   --cream: #f3f0ea;
@@ -235,6 +239,21 @@
   border: 1px solid rgba(24, 20, 15, 0.1);
   border-radius: 16px;
   overflow: hidden;
+}
+
+/* ---------- /signin decorative scene (SignInScene.tsx) ----------
+   The sign-in card itself stays flat and stationary (it holds the one
+   thing a visitor actually has to click precisely) — the depth/motion the
+   redesign asked for lives entirely in these purely decorative elements
+   behind it: a couple of small floating chips on their own Z planes plus
+   the aurora-blob wash (globals.css) recolored to this page's palette. */
+.signinChip {
+  position: absolute;
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 24px 50px -20px rgba(24, 20, 15, 0.32), 0 0 0 1px rgba(24, 20, 15, 0.05);
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {

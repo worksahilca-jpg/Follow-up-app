@@ -746,6 +746,23 @@ export async function fetchSpamProspects(businessId: string): Promise<Lead[]> {
   return processThreadRefs(businessId, gmail, selfEmail, listData.threads ?? [], "Gmail (spam)");
 }
 
+// A CRLF embedded in any value below would terminate that header line
+// early and let the rest of the string become its own, fully-honored
+// header (e.g. an injected Bcc) once this whole array is joined with
+// "\r\n" into a raw RFC822 message — Subject in particular can carry a
+// caller-supplied Lead.name with no CRLF-stripping of its own
+// (cleanedText only trims/caps, never strips embedded control
+// characters). Applied at this single point regardless of how upstream
+// validation already constrains a given value, since this is the actual
+// place a broken header would take effect.
+// Exported for direct unit testing (see __tests__/gmailHeaderInjection.test.ts)
+// — sendEmail() itself needs a real OAuth client + Gmail API mock to
+// exercise, but the actual security property (no embedded CRLF survives)
+// is this function's alone.
+export function sanitizeHeaderValue(value: string): string {
+  return value.replace(/[\r\n\x00-\x08\x0b\x0c\x0e-\x1f]+/g, " ").trim();
+}
+
 export async function sendEmail(
   businessId: string,
   params: { to: string; subject: string; body: string; threadId?: string; inReplyTo?: string }
@@ -758,11 +775,14 @@ export async function sendEmail(
   // existing thread (Gmail's and theirs) instead of starting a new one —
   // used by the instant acknowledgement so "we got your message" sits
   // directly under the message it's acknowledging.
+  const to = sanitizeHeaderValue(params.to);
+  const subject = sanitizeHeaderValue(params.subject);
+  const inReplyTo = params.inReplyTo ? sanitizeHeaderValue(params.inReplyTo) : undefined;
   const raw = [
     `From: ${integration.user.email}`,
-    `To: ${params.to}`,
-    `Subject: ${params.subject}`,
-    ...(params.inReplyTo ? [`In-Reply-To: ${params.inReplyTo}`, `References: ${params.inReplyTo}`] : []),
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    ...(inReplyTo ? [`In-Reply-To: ${inReplyTo}`, `References: ${inReplyTo}`] : []),
     "Content-Type: text/plain; charset=utf-8",
     "",
     params.body,

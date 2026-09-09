@@ -35,6 +35,7 @@ import { requireActiveBilling } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
+import { isWithinSendWindow } from "@/lib/sendWindow";
 import type { Message } from "@/lib/types";
 
 export const UNANSWERED_ACTION = "unanswered_reply";
@@ -57,11 +58,24 @@ interface AutomationResult {
   unanswered: number; // of `checked`, how many were picked up because the LEAD wrote last and nobody answered
   sent: number;
   held: number; // risk-gated: drafted and saved for manual approval instead of auto-sent
+  // Outside the business's local send window (see sendWindow.ts) — not
+  // sent this tick, not held for approval either, just retried on the
+  // next in-window hourly tick. Distinct from `skipped`, which is a real
+  // failure.
+  deferred: number;
   skipped: string[]; // real failures (send errors, exceptions)
   heldReasons: string[]; // "{lead name}: {why it was held}", one per held lead
 }
 
-const EMPTY_RESULT: AutomationResult = { checked: 0, unanswered: 0, sent: 0, held: 0, skipped: [], heldReasons: [] };
+const EMPTY_RESULT: AutomationResult = {
+  checked: 0,
+  unanswered: 0,
+  sent: 0,
+  held: 0,
+  deferred: 0,
+  skipped: [],
+  heldReasons: [],
+};
 
 /**
  * The human-neglect trigger — PRODUCT_DIRECTION.md main goal, point 2. The
@@ -136,7 +150,10 @@ type LeadOutcome =
   // Another concurrent run (the hourly cron, a manual "run now" click, or an
   // overlapping cron tick — see the claim below) already handled this lead
   // for this eligibility window. Not a failure, just nothing left to do.
-  | { kind: "claimed" };
+  | { kind: "claimed" }
+  // Outside the business's local send window (sendWindow.ts) — see that
+  // module's own doc comment for why this gates the send, not eligibility.
+  | { kind: "deferred" };
 
 export async function runAutomationForBusiness(businessId: string): Promise<AutomationResult> {
   const automation = await prisma.automation.findFirst({
@@ -168,6 +185,12 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   const unansweredRule = await prisma.automation.findFirst({ where: { businessId, action: UNANSWERED_ACTION } });
   const unansweredEnabled = unansweredRule?.enabled ?? true; // on by default, like everything else here
   const unansweredHours = unansweredRule?.triggerHours ?? UNANSWERED_DEFAULT_HOURS;
+
+  // Fetched once for the whole run, not per lead — every lead in this
+  // batch belongs to the same business, so the send-window check below
+  // always resolves against the same timezone.
+  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true } });
+  const timezone = business?.timezone ?? "America/New_York";
 
   const [silent, voiceSamples, unanswered] = await Promise.all([
     prisma.lead.findMany({
@@ -212,6 +235,17 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         data: { lastAutomationCheckedAt: new Date() },
       });
       if (claim.count === 0) return { kind: "claimed" };
+
+      // Outside the business's local send window (e.g. 3am) — release the
+      // claim instead of drafting/sending, so the very next hourly cron
+      // tick (not a 20-hour recheckCutoff wait) re-considers this lead
+      // once it's actually daytime. Checked here rather than in the
+      // eligibility query above so it's evaluated at send time, not at
+      // whatever moment the batch was fetched.
+      if (!isWithinSendWindow(new Date(), timezone)) {
+        await prisma.lead.updateMany({ where: { id: lead.id }, data: { lastAutomationCheckedAt: null } });
+        return { kind: "deferred" };
+      }
 
       const conversation: Message[] = lead.conversations.flatMap((c) =>
         c.messages.map((m) => ({
@@ -299,6 +333,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
 
   const sent = outcomes.filter((o) => o.kind === "sent").length;
   const heldOutcomes = outcomes.filter((o): o is { kind: "held"; note: string } => o.kind === "held");
+  const deferred = outcomes.filter((o) => o.kind === "deferred").length;
   const skipped = outcomes
     .filter((o): o is { kind: "skipped"; note: string } => o.kind === "skipped")
     .map((o) => o.note);
@@ -308,6 +343,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     unanswered: unanswered.length,
     sent,
     held: heldOutcomes.length,
+    deferred,
     skipped,
     heldReasons: heldOutcomes.map((o) => o.note),
   };
@@ -368,6 +404,7 @@ export async function runAutomationForAllBusinesses(): Promise<AutomationResult>
     totals.unanswered += result.unanswered;
     totals.sent += result.sent;
     totals.held += result.held;
+    totals.deferred += result.deferred;
     totals.skipped.push(...result.skipped);
     totals.heldReasons.push(...result.heldReasons);
   }

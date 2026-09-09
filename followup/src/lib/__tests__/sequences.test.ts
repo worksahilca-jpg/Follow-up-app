@@ -8,6 +8,7 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     lead: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     notification: { create: vi.fn() },
+    business: { findUnique: vi.fn() },
   },
 }));
 vi.mock("@/lib/integrations/openai", () => ({ generateFollowUpMessage: vi.fn(async () => ({ subject: "Following up", body: "draft" })) }));
@@ -15,16 +16,22 @@ vi.mock("@/lib/sender", () => ({ composeFollowUpEmail: vi.fn(async (_f: string, 
 vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ success: true })) }));
 vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
+// Real send-window logic has no place in a deterministic test — defaulted
+// to "always within window" so every existing test's outcome depends only
+// on what it actually sets up; sendWindow.test.ts covers the real logic.
+vi.mock("@/lib/sendWindow", () => ({ isWithinSendWindow: vi.fn(() => true) }));
 
 import { prisma } from "@/lib/db";
 import { sendFollowUpToLead } from "@/lib/sending";
+import { isWithinSendWindow } from "@/lib/sendWindow";
 import { runSequencesForBusiness } from "@/lib/sequences";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
 const send = sendFollowUpToLead as unknown as ReturnType<typeof vi.fn>;
+const sendWindow = isWithinSendWindow as unknown as ReturnType<typeof vi.fn>;
 
-const step = { id: "s1", order: 0, delayDays: 0, action: "SEND_EMAIL", messageHint: null };
+const step = { id: "s1", order: 0, delayDays: 0, action: "SEND_EMAIL", messageHint: null, stageTo: null as string | null };
 function enrolled(lastDirection: "inbound" | "outbound") {
   return {
     id: "lead1",
@@ -50,6 +57,8 @@ beforeEach(() => {
   p.lead.update.mockResolvedValue({});
   p.lead.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds by default
   p.notification.create.mockResolvedValue({});
+  p.business.findUnique.mockResolvedValue({ timezone: "America/New_York" });
+  sendWindow.mockReturnValue(true);
 });
 
 describe("workflow stop-on-reply", () => {
@@ -132,5 +141,63 @@ describe("EMAIL step channel handling (task #86)", () => {
     expect(send).not.toHaveBeenCalled();
     expect(r.advanced).toBe(0);
     expect(r.skipped).toEqual([expect.stringMatching(/no email address on file/)]);
+  });
+});
+
+// research/product/2026-09-09-followup-cadence-best-practices.md §5,
+// recommendation #5: an EMAIL step due outside the business's local send
+// window (e.g. 3am) is deferred to the next hourly cron tick instead of
+// firing immediately. CHANGE_STAGE steps never contact the lead, so they
+// always run on schedule regardless of the hour.
+describe("send-window gate (src/lib/sendWindow.ts)", () => {
+  function enrolledOnEmailStep(overrides: Record<string, unknown> = {}) {
+    const l = enrolled("outbound");
+    l.sequence = { ...l.sequence, steps: [{ ...step, action: "EMAIL" }] };
+    return { ...l, ...overrides };
+  }
+
+  function enrolledOnStageStep() {
+    const l = enrolled("outbound");
+    l.sequence = { ...l.sequence, steps: [{ ...step, action: "CHANGE_STAGE", stageTo: "QUALIFIED" }] };
+    return l;
+  }
+
+  it("defers an EMAIL step instead of sending when outside the send window", async () => {
+    sendWindow.mockReturnValue(false);
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(r.advanced).toBe(0);
+    expect(r.deferred).toBe(1);
+  });
+
+  it("never attempts to draft when deferring", async () => {
+    sendWindow.mockReturnValue(false);
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    await runSequencesForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("does not gate a CHANGE_STAGE step on the send window — it never contacts the lead", async () => {
+    sendWindow.mockReturnValue(false);
+    p.lead.findMany.mockResolvedValue([enrolledOnStageStep()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.advanced).toBe(1);
+    expect(r.deferred).toBe(0);
+    expect(p.lead.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ stage: "QUALIFIED" }) }));
+  });
+
+  it("looks up the send window against the business's own configured timezone", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "Asia/Kolkata" });
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    await runSequencesForBusiness("biz1");
+    expect(sendWindow).toHaveBeenCalledWith(expect.any(Date), "Asia/Kolkata");
+  });
+
+  it("still sends normally once back inside the window", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(r.deferred).toBe(0);
   });
 });

@@ -242,10 +242,11 @@ function SettingsPageInner() {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Automation run failed.");
       const heldNote = data.held > 0 ? `, held ${data.held} for review` : "";
+      const deferredNote = data.deferred > 0 ? `, waiting on ${data.deferred} until working hours` : "";
       setRunResult(
         data.checked === 0
           ? "Checked — no leads are opted in and overdue right now."
-          : `Checked ${data.checked} opted-in lead${data.checked === 1 ? "" : "s"}, sent ${data.sent}${heldNote}.`
+          : `Checked ${data.checked} opted-in lead${data.checked === 1 ? "" : "s"}, sent ${data.sent}${heldNote}${deferredNote}.`
       );
     } catch (err) {
       setRunResult(err instanceof Error ? err.message : "Automation run failed.");

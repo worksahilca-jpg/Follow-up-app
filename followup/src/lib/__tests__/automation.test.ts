@@ -11,6 +11,7 @@ vi.mock("@/lib/db", () => ({
     automation: { findFirst: vi.fn() },
     lead: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     notification: { create: vi.fn() },
+    business: { findUnique: vi.fn() },
   },
 }));
 vi.mock("@/lib/integrations/openai", () => ({
@@ -27,11 +28,18 @@ vi.mock("@/lib/sending", () => ({
 vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
+// Real send-window logic (real time-of-day, real Intl calls) has no place
+// in a deterministic test — defaulted to "always within window" here so
+// every existing test's outcome depends only on what it actually sets up;
+// the dedicated describe block below overrides this to false to exercise
+// the deferral path itself.
+vi.mock("@/lib/sendWindow", () => ({ isWithinSendWindow: vi.fn(() => true) }));
 
 import { prisma } from "@/lib/db";
 import { assessSendRisk } from "@/lib/integrations/openai";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { recordAudit } from "@/lib/audit";
+import { isWithinSendWindow } from "@/lib/sendWindow";
 import { runAutomationForBusiness } from "@/lib/automation";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +48,7 @@ const risk = assessSendRisk as unknown as ReturnType<typeof vi.fn>;
 const send = sendFollowUpToLead as unknown as ReturnType<typeof vi.fn>;
 const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
 const replyChannel = detectAutomatedReplyChannel as unknown as ReturnType<typeof vi.fn>;
+const sendWindow = isWithinSendWindow as unknown as ReturnType<typeof vi.fn>;
 
 function lead(overrides: Record<string, unknown> = {}) {
   return {
@@ -65,8 +74,10 @@ beforeEach(() => {
   p.lead.update.mockResolvedValue({});
   p.lead.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds by default
   p.notification.create.mockResolvedValue({});
+  p.business.findUnique.mockResolvedValue({ timezone: "America/New_York" });
   send.mockResolvedValue({ success: true });
   replyChannel.mockResolvedValue("email");
+  sendWindow.mockReturnValue(true);
 });
 
 function unansweredLead(hoursAgo: number, lastDirection: "inbound" | "outbound" = "inbound") {
@@ -298,5 +309,45 @@ describe("silence automation risk gate", () => {
     await runAutomationForBusiness("biz1");
     expect(replyChannel).toHaveBeenCalledWith(expect.objectContaining({ id: "lead1" }));
     expect(send).toHaveBeenCalledWith("lead1", expect.any(String), expect.objectContaining({ channel: "text" }));
+  });
+});
+
+// research/product/2026-09-09-followup-cadence-best-practices.md §5,
+// recommendation #5: an automated send eligible outside typical waking
+// hours (a lead due at 3am local to the business) is deferred to the next
+// hourly cron tick instead of firing immediately.
+describe("send-window gate (src/lib/sendWindow.ts)", () => {
+  it("defers instead of sending when outside the business's local send window, and releases the claim", async () => {
+    sendWindow.mockReturnValue(false);
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(r.sent).toBe(0);
+    expect(r.held).toBe(0);
+    expect(r.deferred).toBe(1);
+    // Released, not left stamped — so the next hourly tick (not a 20h
+    // recheckCutoff wait) reconsiders this lead once it's daytime.
+    expect(p.lead.updateMany).toHaveBeenLastCalledWith({ where: { id: "lead1" }, data: { lastAutomationCheckedAt: null } });
+  });
+
+  it("never even attempts to draft or risk-check a deferred lead", async () => {
+    sendWindow.mockReturnValue(false);
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
+    await runAutomationForBusiness("biz1");
+    expect(risk).not.toHaveBeenCalled();
+  });
+
+  it("looks up the send window against the business's own configured timezone", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "Asia/Kolkata" });
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    await runAutomationForBusiness("biz1");
+    expect(sendWindow).toHaveBeenCalledWith(expect.any(Date), "Asia/Kolkata");
+  });
+
+  it("still sends normally once back inside the window", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(r.deferred).toBe(0);
   });
 });

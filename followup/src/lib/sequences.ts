@@ -23,7 +23,7 @@
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail } from "@/lib/sender";
-import { sendFollowUpToLead } from "@/lib/sending";
+import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
 import { requireActiveBilling } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
@@ -271,6 +271,21 @@ interface SequenceRunResult {
 
 const EMPTY_RUN: SequenceRunResult = { checked: 0, advanced: 0, completed: 0, pausedForReply: 0, deferred: 0, skipped: [] };
 
+/**
+ * research/product/2026-09-09-followup-cadence-best-practices.md §4:
+ * generateFollowUpMessage()'s body is already greeting/sign-off-free
+ * (composeFollowUpEmail adds those separately for the email case), so it
+ * reads fine as a text as-is — this just tells the model it's writing
+ * one, since a text that reads like a shortened email ("per my previous
+ * message...") is an obvious tell.
+ */
+function nonEmailStepHint(stepHint: string | null): string {
+  const base =
+    "This is going out as a text message, not an email — keep it noticeably shorter and more " +
+    "conversational than an email would be, and never reference an inbox, attachment, or anything email-specific.";
+  return stepHint?.trim() ? `${base} ${stepHint.trim()}` : base;
+}
+
 /** What a real scheduler calls for one business — see runSequencesForAllBusinesses() below for the fan-out. */
 export async function runSequencesForBusiness(businessId: string): Promise<SequenceRunResult> {
   // Same paid-feature gate as the silence-based automation — a workflow
@@ -375,15 +390,29 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         if (!isWithinSendWindow(new Date(), timezone)) {
           return { kind: "deferred" as const };
         }
-        // This step is labeled "Send email" in the workflow builder — an
-        // explicit, understood choice, not "send whatever channel this
-        // lead happens to be on." A lead with no email address (captured
-        // via SMS, a missed call, Instagram, or Messenger) never had one
-        // to begin with, so skip and say why rather than silently
-        // sendFollowUpToLead()-defaulting to a text/DM in an email's
-        // voice ("Hi X, ... Best, Y") that the business never asked for.
-        if (!lead.email) {
-          return { kind: "skipped" as const, note: `${lead.name}: this step sends by email, but the lead has no email address on file` };
+        // research/product/2026-09-09-followup-cadence-best-practices.md
+        // §4: this step is labeled "Send email" in the workflow builder —
+        // a deliberate choice, not "send whatever channel this lead
+        // happens to be on" — but a hard EMAIL-only lock has two real
+        // costs: a lead with no email at all (captured via SMS, a missed
+        // call, Instagram, or Messenger) gets skipped outright forever,
+        // and a lead whose email genuinely isn't landing gets the exact
+        // same channel repeated at every later step too. Escalate to a
+        // non-email channel instead, gated on the lead actually being
+        // reachable one: no email on file at all, OR an earlier EMAIL
+        // step in THIS sequence already ran with no reply since — the
+        // stop-on-reply check above guarantees "no reply since" for any
+        // enrolled lead reaching this point, since a reply unenrolls it
+        // immediately rather than letting the sequence continue quietly.
+        const triedEmailAlready = sequence.steps.slice(0, lead.sequenceStepIndex).some((s) => s.action === "EMAIL");
+        const nonEmailChannel = !lead.email || triedEmailAlready ? await detectNonEmailChannel(lead) : null;
+        // No non-email channel available (no phone/DM on file, or one
+        // exists but nothing to fall back to) — stick with email if the
+        // lead has one even on a later step, rather than skip a send
+        // that email could still reach.
+        const channel = nonEmailChannel ?? (lead.email ? "email" : null);
+        if (!channel) {
+          return { kind: "skipped" as const, note: `${lead.name}: this step sends a follow-up, but the lead has no email or phone number on file` };
         }
         const conversation: Message[] = lead.conversations.flatMap((c) =>
           c.messages.map((m) => ({
@@ -398,14 +427,15 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         const draft = await generateFollowUpMessage(
           { name: lead.name, conversation },
           voiceSamples,
-          step.messageHint ?? undefined
+          channel === "email" ? step.messageHint ?? undefined : nonEmailStepHint(step.messageHint)
         );
-        const message = await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft.body);
+        const message =
+          channel === "email" ? await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft.body) : draft.body;
         const result = await sendFollowUpToLead(lead.id, message, {
           automated: true,
           trigger: "sequence",
-          subject: draft.subject,
-          channel: "email",
+          subject: channel === "email" ? draft.subject : undefined,
+          channel,
         });
         if (!result.success) {
           return { kind: "skipped" as const, note: `${lead.name}: ${result.message ?? "send failed"}` };

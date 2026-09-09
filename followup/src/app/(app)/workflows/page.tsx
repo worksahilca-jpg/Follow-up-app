@@ -318,7 +318,9 @@ function WorkflowCard({
               {i === 0 ? `${step.delayDays}d after enrollment` : `${step.delayDays}d later`} —{" "}
               {step.action === "EMAIL" ? (
                 <>
-                  send an AI-drafted follow-up{step.messageHint ? ` (focused on: ${step.messageHint})` : ""}
+                  send an AI-drafted follow-up{step.messageHint ? ` (focused on: ${step.messageHint})` : ""} — falls
+                  back to text if the lead has no email, or hasn&apos;t replied to an earlier email step and has a
+                  phone on file
                 </>
               ) : (
                 <>move to {STAGE_OPTIONS.find((s) => s.value === step.stageTo)?.label ?? step.stageTo}</>
@@ -480,12 +482,18 @@ function WorkflowEditor({
             </div>
 
             {step.action === "EMAIL" ? (
-              <input
-                value={step.messageHint}
-                onChange={(e) => updateStep(i, { messageHint: e.target.value })}
-                placeholder={'Optional — steer what this draft focuses on, e.g. "mention our case studies"'}
-                className="mt-2.5 w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
-              />
+              <>
+                <input
+                  value={step.messageHint}
+                  onChange={(e) => updateStep(i, { messageHint: e.target.value })}
+                  placeholder={'Optional — steer what this draft focuses on, e.g. "mention our case studies"'}
+                  className="mt-2.5 w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                />
+                <p className="mt-1.5 text-[11px] text-ink-soft">
+                  Falls back to a text message if this lead has no email on file, or hasn&apos;t replied by this step
+                  and has a phone number to try instead.
+                </p>
+              </>
             ) : (
               <select
                 value={step.stageTo ?? ""}

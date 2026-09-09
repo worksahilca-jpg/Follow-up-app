@@ -13,7 +13,7 @@ vi.mock("@/lib/db", () => ({
 }));
 
 import { prisma } from "@/lib/db";
-import { detectAutomatedReplyChannel } from "@/lib/sending";
+import { detectAutomatedReplyChannel, detectNonEmailChannel } from "@/lib/sending";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -64,5 +64,45 @@ describe("detectAutomatedReplyChannel", () => {
 
   it("returns null when the lead has neither an email nor a phone", async () => {
     expect(await detectAutomatedReplyChannel(lead({ email: null, phone: null }))).toBeNull();
+  });
+});
+
+// research/product/2026-09-09-followup-cadence-best-practices.md §4: a
+// sequence step escalating off an unresponsive email channel needs the
+// lead's actual phone/DM channel WITHOUT detectAutomatedReplyChannel's
+// own email-first preference undoing the whole point of asking.
+describe("detectNonEmailChannel", () => {
+  it("never returns email even when the lead's last inbound message was on email", async () => {
+    p.message.findFirst.mockResolvedValue({ conversation: { channel: "email" } });
+    expect(await detectNonEmailChannel(lead())).not.toBe("email");
+  });
+
+  it("prefers the channel the lead most recently actually messaged through", async () => {
+    p.message.findFirst.mockResolvedValue({ conversation: { channel: "whatsapp" } });
+    expect(await detectNonEmailChannel(lead())).toBe("whatsapp");
+  });
+
+  it("recognizes an Instagram sender id in the phone field", async () => {
+    p.message.findFirst.mockResolvedValue({ conversation: { channel: "instagram" } });
+    expect(await detectNonEmailChannel(lead({ phone: "ig:12345" }))).toBe("instagram");
+  });
+
+  it("falls back to whichever phone channel (text vs WhatsApp) the lead last used when there's no channel-matching inbound", async () => {
+    p.message.findFirst.mockResolvedValue({ conversation: { channel: "whatsapp" } });
+    expect(await detectNonEmailChannel(lead({ phone: "+15551234567" }))).toBe("whatsapp");
+  });
+
+  it("defaults to text when there's no inbound history to infer from at all", async () => {
+    p.message.findFirst.mockResolvedValue(null);
+    expect(await detectNonEmailChannel(lead())).toBe("text");
+  });
+
+  it("returns null for a lead with no phone number or platform sender id on file", async () => {
+    expect(await detectNonEmailChannel(lead({ phone: null }))).toBeNull();
+  });
+
+  it("never queries at all when the lead has no phone — nothing to look up", async () => {
+    await detectNonEmailChannel(lead({ phone: null }));
+    expect(p.message.findFirst).not.toHaveBeenCalled();
   });
 });

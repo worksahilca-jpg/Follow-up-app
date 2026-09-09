@@ -13,7 +13,13 @@ vi.mock("@/lib/db", () => ({
 }));
 vi.mock("@/lib/integrations/openai", () => ({ generateFollowUpMessage: vi.fn(async () => ({ subject: "Following up", body: "draft" })) }));
 vi.mock("@/lib/sender", () => ({ composeFollowUpEmail: vi.fn(async (_f: string, _b: string, body: string) => body) }));
-vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ success: true })) }));
+vi.mock("@/lib/sending", () => ({
+  sendFollowUpToLead: vi.fn(async () => ({ success: true })),
+  // Defaults to "nothing to fall back to" so every existing test's EMAIL
+  // step keeps sending by email exactly as before; the dedicated describe
+  // block below overrides this to exercise the escalation itself.
+  detectNonEmailChannel: vi.fn(async () => null),
+}));
 vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
 // Real send-window logic has no place in a deterministic test — defaulted
@@ -22,7 +28,9 @@ vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
 vi.mock("@/lib/sendWindow", () => ({ isWithinSendWindow: vi.fn(() => true) }));
 
 import { prisma } from "@/lib/db";
-import { sendFollowUpToLead } from "@/lib/sending";
+import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
+import { composeFollowUpEmail } from "@/lib/sender";
+import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { runSequencesForBusiness } from "@/lib/sequences";
 
@@ -30,6 +38,9 @@ import { runSequencesForBusiness } from "@/lib/sequences";
 const p = prisma as any;
 const send = sendFollowUpToLead as unknown as ReturnType<typeof vi.fn>;
 const sendWindow = isWithinSendWindow as unknown as ReturnType<typeof vi.fn>;
+const nonEmailChannel = detectNonEmailChannel as unknown as ReturnType<typeof vi.fn>;
+const composeEmail = composeFollowUpEmail as unknown as ReturnType<typeof vi.fn>;
+const draftMessage = generateFollowUpMessage as unknown as ReturnType<typeof vi.fn>;
 
 const step = { id: "s1", order: 0, delayDays: 0, action: "SEND_EMAIL", messageHint: null, stageTo: null as string | null };
 function enrolled(lastDirection: "inbound" | "outbound") {
@@ -59,6 +70,7 @@ beforeEach(() => {
   p.notification.create.mockResolvedValue({});
   p.business.findUnique.mockResolvedValue({ timezone: "America/New_York" });
   sendWindow.mockReturnValue(true);
+  nonEmailChannel.mockResolvedValue(null);
 });
 
 describe("workflow stop-on-reply", () => {
@@ -121,7 +133,7 @@ describe("concurrent-run claim (task #84)", () => {
 
 // task #86 (third-pass audit): an "EMAIL" step is an explicit, understood
 // choice in the workflow builder — it must never silently fall through to
-// texting/DMing a lead that has no email address on file.
+// texting/DMing a lead on top of an active email conversation.
 describe("EMAIL step channel handling (task #86)", () => {
   function enrolledOnEmailStep(overrides: Record<string, unknown> = {}) {
     const l = enrolled("outbound");
@@ -135,12 +147,78 @@ describe("EMAIL step channel handling (task #86)", () => {
     expect(send).toHaveBeenCalledWith("lead1", expect.any(String), expect.objectContaining({ channel: "email" }));
   });
 
-  it("skips (does not send anything) an EMAIL step for a lead with no email on file", async () => {
+  it("skips (does not send anything) for a lead with neither an email nor a phone number", async () => {
     p.lead.findMany.mockResolvedValue([enrolledOnEmailStep({ email: null })]);
     const r = await runSequencesForBusiness("biz1");
     expect(send).not.toHaveBeenCalled();
     expect(r.advanced).toBe(0);
-    expect(r.skipped).toEqual([expect.stringMatching(/no email address on file/)]);
+    expect(r.skipped).toEqual([expect.stringMatching(/no email or phone number on file/)]);
+  });
+});
+
+// research/product/2026-09-09-followup-cadence-best-practices.md §4,
+// recommendation #4: an EMAIL step escalates to whatever non-email
+// channel the lead is actually reachable on instead of skipping a
+// no-email lead outright, or repeating an email that isn't landing.
+describe("channel-switching within a workflow (research rec #4)", () => {
+  function enrolledOnStep(stepIndex: number, overrides: Record<string, unknown> = {}) {
+    const l = enrolled("outbound");
+    l.sequenceStepIndex = stepIndex;
+    l.sequence = {
+      ...l.sequence,
+      steps: [
+        { ...step, order: 0, action: "EMAIL" },
+        { ...step, order: 1, action: "EMAIL" },
+      ],
+    };
+    return { ...l, ...overrides };
+  }
+
+  it("falls back to text instead of skipping when the lead has no email but does have a phone", async () => {
+    nonEmailChannel.mockResolvedValue("text");
+    p.lead.findMany.mockResolvedValue([enrolledOnStep(0, { email: null, phone: "+15551234567" })]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), expect.objectContaining({ channel: "text", subject: undefined }));
+    expect(r.advanced).toBe(1);
+  });
+
+  it("never even asks for a fallback channel on the first EMAIL step of a lead that has an email", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnStep(0, { phone: "+15551234567" })]);
+    await runSequencesForBusiness("biz1");
+    expect(nonEmailChannel).not.toHaveBeenCalled();
+    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), expect.objectContaining({ channel: "email" }));
+  });
+
+  it("escalates to the lead's non-email channel on a later step, once an earlier EMAIL step already ran", async () => {
+    nonEmailChannel.mockResolvedValue("whatsapp");
+    // Still has an email — escalation isn't about the lead lacking one,
+    // it's that step 0 already tried it and (per the stop-on-reply gate
+    // above) got no reply since.
+    p.lead.findMany.mockResolvedValue([enrolledOnStep(1, { phone: "+15551234567" })]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(nonEmailChannel).toHaveBeenCalledWith(expect.objectContaining({ id: "lead1" }));
+    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), expect.objectContaining({ channel: "whatsapp", subject: undefined }));
+    expect(r.advanced).toBe(1);
+  });
+
+  it("stays on email for a later step when the lead has no phone to escalate to", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnStep(1)]); // email only, no phone at all
+    await runSequencesForBusiness("biz1");
+    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), expect.objectContaining({ channel: "email" }));
+  });
+
+  it("skips composeFollowUpEmail's greeting/sign-off wrapper when escalating off email", async () => {
+    nonEmailChannel.mockResolvedValue("text");
+    p.lead.findMany.mockResolvedValue([enrolledOnStep(1, { phone: "+15551234567" })]);
+    await runSequencesForBusiness("biz1");
+    expect(composeEmail).not.toHaveBeenCalled();
+  });
+
+  it("tells the AI it's drafting a text, not an email, when escalating", async () => {
+    nonEmailChannel.mockResolvedValue("text");
+    p.lead.findMany.mockResolvedValue([enrolledOnStep(1, { phone: "+15551234567" })]);
+    await runSequencesForBusiness("biz1");
+    expect(draftMessage).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.stringContaining("text message"));
   });
 });
 

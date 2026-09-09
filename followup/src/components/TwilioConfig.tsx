@@ -478,6 +478,29 @@ export default function TwilioConfig() {
                     WhatsApp message merges into the same lead as a text from that number — it&apos;s just another
                     way they can reach you.
                   </p>
+                  <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
+                    <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
+                      <span>
+                        <strong className="font-medium">Verify your WhatsApp Business Account.</strong> A newly
+                        registered sender is capped at 250 business-initiated messages per 24 hours until Meta
+                        Business Verification clears on your own Meta Business Manager — a separate, one-time
+                        process each business does for itself, typically 2-10 business days. Replying to a lead
+                        who messaged you first isn&apos;t affected by this cap. Reaching a lead who hasn&apos;t
+                        messaged in over 24 hours also needs a pre-approved message template, which FollowUp
+                        doesn&apos;t support sending yet — those follow-ups fall back to email or text instead.{" "}
+                        <a
+                          href="https://www.twilio.com/docs/whatsapp/self-sign-up"
+                          target="_blank"
+                          rel="noopener"
+                          className="underline"
+                        >
+                          WhatsApp sender setup &amp; verification
+                        </a>
+                        .
+                      </span>
+                    </p>
+                  </div>
                   <div className="mt-2">
                     <pre className="rounded-lg bg-paper border border-line p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all">
                       {whatsappUrl}

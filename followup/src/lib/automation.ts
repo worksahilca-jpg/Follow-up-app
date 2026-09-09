@@ -53,9 +53,20 @@ export const UNANSWERED_DEFAULT_HOURS = 24;
 // fixed safety net rather than another setting to tune.
 export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 
+export const DEAD_LEAD_ACTION = "dead_lead_reactivation";
+export const DEAD_LEAD_NAME = "Reactivate cold leads";
+// research/product/2026-09-09-followup-cadence-best-practices.md, §3: a
+// lead a business has genuinely stopped chasing — not just a few days
+// quiet, actually cold — needs a distinct campaign, not a longer version
+// of the same silence trigger. 45 days is the low end of the 45-60-day
+// range that research settled on; configurable 30-180 like triggerDays is
+// for the main rule.
+export const DEAD_LEAD_DEFAULT_DAYS = 45;
+
 interface AutomationResult {
   checked: number;
   unanswered: number; // of `checked`, how many were picked up because the LEAD wrote last and nobody answered
+  reactivated: number; // of `checked`, how many were picked up because the lead has gone genuinely cold (DEAD_LEAD_ACTION)
   sent: number;
   held: number; // risk-gated: drafted and saved for manual approval instead of auto-sent
   // Outside the business's local send window (see sendWindow.ts) — not
@@ -70,12 +81,35 @@ interface AutomationResult {
 const EMPTY_RESULT: AutomationResult = {
   checked: 0,
   unanswered: 0,
+  reactivated: 0,
   sent: 0,
   held: 0,
   deferred: 0,
   skipped: [],
   heldReasons: [],
 };
+
+/**
+ * The messaging angle that makes a dead-lead reactivation actually work,
+ * per the research's real-estate-vendor data (§3): name the actual
+ * elapsed time in one sentence at most, then move on to something
+ * concrete — never repeat "just checking in" or "circling back," the
+ * single most-cited reason a reactivation-style message gets ignored.
+ * Passed as generateFollowUpMessage()'s messageHint, the same steering
+ * mechanism sequences.ts already uses per-step — this is deliberately
+ * NOT a second system prompt, just a stronger steer on the existing one.
+ */
+function deadLeadMessageHint(daysSinceContact: number): string {
+  return (
+    `This lead has gone genuinely cold — nobody, on either side, has said anything in about ${daysSinceContact} ` +
+    "days. This is a reactivation message, not a routine follow-up: name that actual elapsed time plainly " +
+    "(e.g. \"it's been about a month since we last talked about...\"), in one sentence at most, then move on. " +
+    "Never fall back to a vague \"just checking in\" or \"circling back\" — research on real reactivation " +
+    "campaigns found that's the single most-cited reason this kind of message gets ignored, since it signals " +
+    "nothing new to offer. Lead with something concrete and useful instead: reference a specific detail from " +
+    "what they were originally interested in, not a generic status question."
+  );
+}
 
 /**
  * The human-neglect trigger — PRODUCT_DIRECTION.md main goal, point 2. The
@@ -192,26 +226,58 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true } });
   const timezone = business?.timezone ?? "America/New_York";
 
-  const [silent, voiceSamples, unanswered] = await Promise.all([
+  const deadLeadRule = await prisma.automation.findFirst({ where: { businessId, action: DEAD_LEAD_ACTION } });
+  const deadLeadEnabled = deadLeadRule?.enabled ?? true; // on by default, like everything else here
+  const deadLeadDays = deadLeadRule?.triggerDays ?? DEAD_LEAD_DEFAULT_DAYS;
+  const deadCutoff = new Date(Date.now() - deadLeadDays * 24 * 60 * 60 * 1000);
+
+  const [silent, deadLeads, voiceSamples, unanswered] = await Promise.all([
     prisma.lead.findMany({
       where: {
         businessId,
         automationTier: { not: "OFF" },
         stage: { notIn: ["WON", "LOST"] },
         lastContacted: { lte: cutoff },
+        // A lead past the dead-lead threshold exits the normal silence
+        // cadence entirely — it belongs to the `deadLeads` query below
+        // instead, with its own messaging. Only excluded when that rule
+        // is actually enabled; disabled just means "no dead-lead rule,"
+        // not "these leads vanish from the normal cadence too."
+        ...(deadLeadEnabled ? { NOT: { lastContacted: { lte: deadCutoff } } } : {}),
         OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
       },
       include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
     }),
+    deadLeadEnabled
+      ? prisma.lead.findMany({
+          where: {
+            businessId,
+            automationTier: { not: "OFF" },
+            stage: { notIn: ["WON", "LOST"] },
+            lastContacted: { lte: deadCutoff },
+            OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
+          },
+          include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+        })
+      : Promise.resolve([]),
     // Same voice sample set for every lead in this business — fetched once
     // up front rather than inside the per-lead loop below.
     getVoiceSamples(businessId),
     unansweredEnabled ? findUnansweredLeads(businessId, unansweredHours, recheckCutoff) : Promise.resolve([]),
   ]);
 
-  // Merge, unanswered first (it's the more urgent reason), one row per lead.
+  // Merge in priority order — unanswered (the lead wrote and got ignored)
+  // is the most urgent, dead-lead reactivation is a deliberate exit from
+  // the normal cadence, silent is everything else. One row per lead: a
+  // dead lead that's ALSO unanswered gets the unanswered framing, not a
+  // double-send — the human-neglect case is the more urgent one to name.
   const unansweredIds = new Set(unanswered.map((l) => l.id));
-  const eligible = [...unanswered, ...silent.filter((l) => !unansweredIds.has(l.id))];
+  const deadIds = new Set(deadLeads.filter((l) => !unansweredIds.has(l.id)).map((l) => l.id));
+  const eligible = [
+    ...unanswered,
+    ...deadLeads.filter((l) => deadIds.has(l.id)),
+    ...silent.filter((l) => !unansweredIds.has(l.id) && !deadIds.has(l.id)),
+  ];
 
   // Kept modest (vs. the 5 used for sync/cleanup) — this loop calls Gmail's
   // send API per lead, which has its own tighter per-account send quota,
@@ -258,14 +324,22 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         }))
       );
 
+      const isDeadLead = deadIds.has(lead.id);
+
       // Reuse an existing draft (subject + body) when this lead already has
       // one from a normal scoring pass — only draft fresh here if it
       // somehow doesn't (e.g. scoring never ran, most commonly no
-      // OPENAI_API_KEY configured).
+      // OPENAI_API_KEY configured). A dead lead never reuses a cached
+      // draft, even if one exists — that draft was written before this
+      // lead crossed into reactivation territory and won't carry the
+      // elapsed-time framing this trigger specifically needs.
       let subject = lead.suggestedSubject ?? undefined;
       let message = lead.suggestedMessage;
-      if (!message) {
-        const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
+      if (!message || isDeadLead) {
+        const messageHint = isDeadLead
+          ? deadLeadMessageHint(Math.floor((Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000))
+          : undefined;
+        const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples, messageHint);
         subject = draft.subject;
         message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body);
       }
@@ -293,7 +367,12 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         }
 
         if (risk.riskLevel !== "low") {
-          if (!lead.suggestedMessage) {
+          // Always (re)write for a dead lead, even if suggestedMessage
+          // already existed — it was regenerated above specifically
+          // because the cached draft predates this lead crossing into
+          // reactivation territory, so the stale one must not linger as
+          // what the owner sees waiting for approval.
+          if (!lead.suggestedMessage || isDeadLead) {
             await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message, suggestedSubject: subject } });
           }
           if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
@@ -305,7 +384,11 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           void recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
             targetType: "lead",
             targetId: lead.id,
-            meta: { riskLevel: risk.riskLevel, reason: risk.reason, trigger: unansweredIds.has(lead.id) ? "unanswered" : "silence" },
+            meta: {
+              riskLevel: risk.riskLevel,
+              reason: risk.reason,
+              trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence",
+            },
           });
           return { kind: "held", note: `${lead.name}: ${risk.reason}` };
         }
@@ -318,7 +401,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // detectAutomatedReplyChannel's doc comment).
       const result = await sendFollowUpToLead(lead.id, message, {
         automated: true,
-        trigger: unansweredIds.has(lead.id) ? "unanswered" : "silence",
+        trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence",
         subject,
         channel: (await detectAutomatedReplyChannel(lead)) ?? undefined,
       });
@@ -341,6 +424,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   return {
     checked: eligible.length,
     unanswered: unanswered.length,
+    reactivated: deadIds.size,
     sent,
     held: heldOutcomes.length,
     deferred,
@@ -402,6 +486,7 @@ export async function runAutomationForAllBusinesses(): Promise<AutomationResult>
   for (const result of results) {
     totals.checked += result.checked;
     totals.unanswered += result.unanswered;
+    totals.reactivated += result.reactivated;
     totals.sent += result.sent;
     totals.held += result.held;
     totals.deferred += result.deferred;

@@ -57,6 +57,10 @@ function SettingsPageInner() {
   const [unansweredHours, setUnansweredHours] = useState(24);
   const [unansweredSaving, setUnansweredSaving] = useState(false);
   const [unansweredError, setUnansweredError] = useState<string | null>(null);
+  const [deadLeadOn, setDeadLeadOn] = useState(true);
+  const [deadLeadDays, setDeadLeadDays] = useState(45);
+  const [deadLeadSaving, setDeadLeadSaving] = useState(false);
+  const [deadLeadError, setDeadLeadError] = useState<string | null>(null);
 
   const [billingActive, setBillingActive] = useState(false);
   const [billingStatus, setBillingStatus] = useState<string | null>(null);
@@ -98,13 +102,23 @@ function SettingsPageInner() {
   useEffect(() => {
     fetch("/api/automation/settings")
       .then((r) => r.json())
-      .then((data: { enabled: boolean; triggerDays: number; instantAck?: boolean; unansweredReply?: { enabled: boolean; hours: number } }) => {
-        setAutomationOn(data.enabled);
-        setAutoAfterDays(data.triggerDays);
-        setInstantAckOn(data.instantAck ?? true);
-        setUnansweredOn(data.unansweredReply?.enabled ?? true);
-        setUnansweredHours(data.unansweredReply?.hours ?? 24);
-      })
+      .then(
+        (data: {
+          enabled: boolean;
+          triggerDays: number;
+          instantAck?: boolean;
+          unansweredReply?: { enabled: boolean; hours: number };
+          deadLeadReactivation?: { enabled: boolean; days: number };
+        }) => {
+          setAutomationOn(data.enabled);
+          setAutoAfterDays(data.triggerDays);
+          setInstantAckOn(data.instantAck ?? true);
+          setUnansweredOn(data.unansweredReply?.enabled ?? true);
+          setUnansweredHours(data.unansweredReply?.hours ?? 24);
+          setDeadLeadOn(data.deadLeadReactivation?.enabled ?? true);
+          setDeadLeadDays(data.deadLeadReactivation?.days ?? 45);
+        }
+      )
       .finally(() => setAutomationLoaded(true));
   }, []);
 
@@ -143,6 +157,25 @@ function SettingsPageInner() {
       }
     } finally {
       setUnansweredSaving(false);
+    }
+  }
+
+  async function saveDeadLead(enabled: boolean, days: number) {
+    setDeadLeadSaving(true);
+    setDeadLeadError(null);
+    try {
+      const res = await fetch("/api/automation/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deadLeadReactivation: { enabled, days } }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setDeadLeadOn(!enabled);
+        setDeadLeadError(data.message ?? "Couldn't save — try again.");
+      }
+    } finally {
+      setDeadLeadSaving(false);
     }
   }
 
@@ -243,10 +276,11 @@ function SettingsPageInner() {
       if (!res.ok || !data.success) throw new Error(data.message ?? "Automation run failed.");
       const heldNote = data.held > 0 ? `, held ${data.held} for review` : "";
       const deferredNote = data.deferred > 0 ? `, waiting on ${data.deferred} until working hours` : "";
+      const reactivatedNote = data.reactivated > 0 ? `, ${data.reactivated} of those were cold leads reactivated` : "";
       setRunResult(
         data.checked === 0
           ? "Checked — no leads are opted in and overdue right now."
-          : `Checked ${data.checked} opted-in lead${data.checked === 1 ? "" : "s"}, sent ${data.sent}${heldNote}${deferredNote}.`
+          : `Checked ${data.checked} opted-in lead${data.checked === 1 ? "" : "s"}, sent ${data.sent}${heldNote}${deferredNote}${reactivatedNote}.`
       );
     } catch (err) {
       setRunResult(err instanceof Error ? err.message : "Automation run failed.");
@@ -756,6 +790,55 @@ function SettingsPageInner() {
                 className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
               />
               <span>hours without a reply from you</span>
+            </div>
+          )}
+        </div>
+        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-sm">Reactivate cold leads</p>
+              <p className="text-xs text-ink-soft mt-1">
+                A lead nobody&apos;s heard from in a while isn&apos;t dead — real-estate reactivation data puts the
+                odds of winning one back at 5-15%, often at 3-4x the conversion rate of a brand-new lead. Once a lead
+                has gone quiet this many days on both sides, FollowUp switches to a different kind of message —
+                naming how long it&apos;s actually been and leading with something worth their time, never a vague
+                &ldquo;just checking in&rdquo; — instead of repeating the same follow-up.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !deadLeadOn;
+                setDeadLeadOn(next);
+                saveDeadLead(next, deadLeadDays);
+              }}
+              disabled={!automationLoaded || deadLeadSaving}
+              className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
+              style={{ backgroundColor: deadLeadOn ? "var(--rust)" : "var(--line)" }}
+            >
+              <span
+                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
+                style={{ transform: deadLeadOn ? "translateX(22px)" : "translateX(2px)" }}
+              />
+            </button>
+          </div>
+          {deadLeadError && (
+            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+              {deadLeadError}
+            </p>
+          )}
+          {deadLeadOn && (
+            <div className="mt-4 flex items-center gap-2 text-sm">
+              <span>Switch to reactivation after</span>
+              <input
+                type="number"
+                min={30}
+                max={180}
+                value={deadLeadDays}
+                onChange={(e) => setDeadLeadDays(Number(e.target.value))}
+                onBlur={() => saveDeadLead(deadLeadOn, deadLeadDays)}
+                className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
+              />
+              <span>days of silence on both sides</span>
             </div>
           )}
         </div>

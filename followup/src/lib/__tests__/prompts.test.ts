@@ -38,6 +38,23 @@ describe("no-invention drafting", () => {
     expect(system).toMatch(/same language as the lead/);
   });
 
+  // Task #63 finding: a live test lead whose thread mixed Spanish, Hindi,
+  // Punjabi, and a final English message got a well-formed but generic
+  // "professional" English reply — correct on language (matches the most
+  // recent message), but the prompt had no instruction to also mirror the
+  // lead's own formality/register, or to keep a romanized (Hinglish-style)
+  // language romanized rather than switching to native script.
+  it("instructs the model to mirror the lead's tone/formality and writing style (romanized vs. native script), not a fixed house style", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "Your roof question", body: "I will confirm the roof details for you." }) } }],
+    });
+    await generateFollowUpMessage({ name: "Young Son", conversation });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/[Mm]atch the lead's own tone and formality/);
+    expect(system).toMatch(/romanized\/Latin-script/);
+    expect(system).toMatch(/do not switch to the.*native script unless the lead did/);
+  });
+
   // research/audit/2026-09-09-sixth-pass-audit.md finding #1 — same
   // reasoning as assessSendRisk's own test below: a voice-agent-channel
   // message must not be draftable as a confirmed fact just because it's
@@ -147,5 +164,17 @@ describe("fixed-text localizer", () => {
   it("degrades to the original text if the API call fails", async () => {
     create.mockRejectedValue(new Error("rate limited"));
     expect(await localizeFixedText(template, "Bonjour")).toBe(template);
+  });
+
+  // Task #63 finding, same root cause as the drafting-prompt test above:
+  // the localizer only said "translate into the language the customer
+  // wrote in," with nothing about matching a romanized/Hinglish-style
+  // writing system rather than switching to native script.
+  it("instructs the model to match a romanized writing style rather than switching to native script", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: "translated" } }] });
+    await localizeFixedText(template, "Ghar ke baare mein jaankari chahiye");
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/romanized\/Latin-script/);
+    expect(system).toMatch(/not the language's native script/);
   });
 });

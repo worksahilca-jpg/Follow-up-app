@@ -450,12 +450,19 @@ export async function generateFollowUpMessage(
           "are not the one requesting anything; never write as if you're the one who needs a vendor, contractor, " +
           "or service. Reference something concrete and specific from the conversation so neither the subject " +
           "nor the body reads as generic. The body: 2-4 complete sentences, proper capitalization, no sentence " +
-          "fragments, no trailing off mid-thought, no run-on clauses joined by a dash. Warm but professional — " +
-          "not stiff corporate jargon, but not overly casual either. Do not include a greeting ('Hi ...', " +
+          "fragments, no trailing off mid-thought, no run-on clauses joined by a dash. Match the lead's own tone " +
+          "and formality from their most recent message, not a fixed house style — if they wrote briefly and " +
+          "casually (short sentences, informal phrasing, a romanized/colloquial way of writing their language), " +
+          "reply the same way; if they wrote formally, reply formally. Staying appropriately polished for a " +
+          "business reply always outranks mirroring casualness — never become sloppy, rude, or unprofessional " +
+          "just because the lead was casual. Do not include a greeting ('Hi ...', " +
           "'Dear ...') or a sign-off/signature of any kind in the body — output only the body paragraph itself. " +
           "Write both the subject and the body in the same language as the lead's most recent message in the " +
           "conversation below — do not default to English unless that's the language they're actually writing " +
-          "in. Never invent facts: everything you state about the lead, their situation, their property or " +
+          "in. This includes matching how they wrote it, not just which language it is: if they wrote in a " +
+          "romanized/Latin-script version of a language (e.g. Hindi or Punjabi typed in English letters, " +
+          "sometimes called Hinglish), reply the same way in that same romanized style — do not switch to the " +
+          "language's native script unless the lead did. Never invent facts: everything you state about the lead, their situation, their property or " +
           "project, prior calls, timelines, or what the business has done or will do must appear in the " +
           "conversation below. If the lead asked a factual question the conversation doesn't answer, acknowledge " +
           "the question and say you'll confirm the specifics for them — do not make up an answer, a number, a " +
@@ -508,8 +515,11 @@ export async function localizeFixedText(text: string, sampleOfLeadMessage: strin
           content:
             "You translate a short fixed message into the language the customer wrote in. If the customer's " +
             "message is in English, or you cannot tell, return the message EXACTLY as given. Otherwise return " +
-            "only the translation: same meaning, same length, nothing added, removed, or explained. Keep names " +
-            "unchanged. Output the message text only.",
+            "only the translation: same meaning, same length, nothing added, removed, or explained. Match how " +
+            "they wrote it, not just which language it is — if they wrote in a romanized/Latin-script version " +
+            "of a language (e.g. Hindi or Punjabi typed in English letters), translate into that same romanized " +
+            "style, not the language's native script, unless the customer used the native script themselves. " +
+            "Keep names unchanged. Output the message text only.",
         },
         {
           role: "user",

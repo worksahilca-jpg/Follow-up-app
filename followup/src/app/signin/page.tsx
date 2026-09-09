@@ -4,13 +4,38 @@ import { useEffect, useState } from "react";
 import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { Compass } from "lucide-react";
+import Link from "next/link";
+import styles from "@/app/landing.module.css";
+import { plusJakarta } from "@/components/landing/font";
+import Reveal from "@/components/landing/Reveal";
+import SignInScene from "@/components/landing/SignInScene";
 
+// Same editorial, warm-cream/3D-mockup system as the landing page (see
+// landing.module.css's header comment) — this used to be a bare centered
+// box on the app's own flat blue palette, which read as an afterthought
+// right after the landing page it follows. Everything below this point is
+// presentation only: the actual sign-in logic (auto-retry, error states,
+// the Google button itself) is untouched from before this redesign.
 export default function SignInPage() {
   return (
-    <Suspense fallback={null}>
-      <SignInPageInner />
-    </Suspense>
+    <div className={`${styles.root} min-h-screen ${plusJakarta.variable}`} style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
+      <div className={styles.gridTexture} />
+      <SignInScene />
+      <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-16">
+        <Link href="/" className="mb-10 flex items-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${styles.pulseDot}`} style={{ background: "var(--amber)" }} />
+          <span className="text-[17px] font-extrabold" style={{ letterSpacing: "-0.03em" }}>
+            FollowUp
+          </span>
+        </Link>
+        <Suspense fallback={null}>
+          <SignInPageInner />
+        </Suspense>
+        <Link href="/" className="mt-8 text-xs font-medium transition-opacity hover:opacity-70" style={{ color: "var(--ink-soft)" }}>
+          ← Back to home
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -66,13 +91,17 @@ function SignInPageInner() {
   }, [autoRetrying]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-sm text-center">
-        <div className="flex items-center justify-center gap-2">
-          <Compass className="h-6 w-6" style={{ color: "var(--rust)" }} />
-          <span className="font-display text-2xl">FollowUp</span>
-        </div>
-        <p className="text-ink-soft mt-2">Sign in to see your real leads and follow-ups.</p>
+    <Reveal className="w-full max-w-sm">
+      <div
+        className="relative w-full rounded-2xl p-8 text-center"
+        style={{ background: "var(--surface)", boxShadow: "0 30px 60px -28px rgba(24,20,15,0.35), 0 0 0 1px rgba(24,20,15,0.05)" }}
+      >
+        <h1 className="text-xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
+          Welcome back
+        </h1>
+        <p className="mt-2 text-sm" style={{ color: "var(--ink-soft)" }}>
+          Sign in to see your real leads and follow-ups.
+        </p>
 
         <button
           onClick={() => {
@@ -80,7 +109,8 @@ function SignInPageInner() {
             signIn("google", { callbackUrl: "/dashboard" });
           }}
           disabled={redirecting || autoRetrying}
-          className="mt-8 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-card px-4 py-3 text-sm font-medium hover:bg-paper transition-colors disabled:opacity-60"
+          className="mt-7 w-full inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-transform hover:scale-[1.015] disabled:opacity-60 disabled:hover:scale-100"
+          style={{ background: "#fff", color: "var(--ink)", border: "1px solid rgba(24,20,15,0.15)" }}
         >
           <GoogleIcon className="h-4 w-4" />
           {redirecting || autoRetrying ? "Redirecting…" : "Continue with Google"}
@@ -97,11 +127,11 @@ function SignInPageInner() {
         {!autoRetrying && error && error !== "AccessDenied" && (
           <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
             Sign-in failed — please try again.{" "}
-            <span className="text-ink-soft">({error})</span>
+            <span style={{ color: "var(--ink-soft)" }}>({error})</span>
           </p>
         )}
       </div>
-    </div>
+    </Reveal>
   );
 }
 

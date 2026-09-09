@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import {
   Mail,
   Clock,
@@ -22,16 +21,7 @@ import HeroMockup from "@/components/landing/HeroMockup";
 import Reveal from "@/components/landing/Reveal";
 import LandingFaq from "@/components/landing/LandingFaq";
 import CountUp from "@/components/motion/CountUp";
-
-// Loaded here rather than the root layout so it stays scoped to this one
-// page's own class tree (applied via plusJakarta.variable below on the
-// landing wrapper) — the authenticated app keeps Inter/Space Grotesk from
-// layout.tsx untouched.
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  weight: ["400", "500", "600", "700", "800"],
-});
+import { plusJakarta } from "@/components/landing/font";
 
 // Same content this page has always had — restyled into the new warm
 // editorial palette/typography/3D-mockup treatment, not rewritten. Only

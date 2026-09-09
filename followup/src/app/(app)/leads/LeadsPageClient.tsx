@@ -9,6 +9,7 @@ import { urgencyColor } from "@/lib/urgency";
 import { matchesSavedFilter, type SavedFilterCriteria, type SavedFilterSummary } from "@/lib/savedFilterMatch";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
+import AutomationStatusBadge from "@/components/AutomationStatusBadge";
 import AddLeadForm from "@/components/AddLeadForm";
 import ImportLeadsForm from "@/components/ImportLeadsForm";
 import LogCallForm from "@/components/LogCallForm";
@@ -294,6 +295,9 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
               </div>
               <div className="hidden sm:block">
                 <PriorityPill priority={lead.priority} reviewed={Boolean(lead.scoreReason)} />
+              </div>
+              <div className="hidden md:block">
+                <AutomationStatusBadge status={lead.automationStatus} compact />
               </div>
               <div
                 className="text-sm hidden lg:block w-28 truncate"

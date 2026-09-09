@@ -21,12 +21,18 @@ import { getSessionContext } from "@/lib/session";
 import { Lead, Message, ScoreFactor } from "@/lib/types";
 import type { Prisma } from "@prisma/client";
 import { getAtRiskLeads } from "@/lib/rescue";
+import { computeAutomationStatus, getBusinessAutomationRules, type BusinessAutomationRules } from "@/lib/automationStatus";
 
 type DbLead = Prisma.LeadGetPayload<{
-  include: { conversations: { include: { messages: true } }; assignedTo: true };
+  include: {
+    conversations: { include: { messages: true } };
+    assignedTo: true;
+    sequence: { select: { name: true; active: true } };
+    followUps: { select: { trigger: true } };
+  };
 }>;
 
-function mapDbLeadToUiLead(dbLead: DbLead): Lead {
+function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules): Lead {
   const conversation: Message[] = dbLead.conversations
     .flatMap((c) =>
       c.messages.map((m) => ({
@@ -41,6 +47,10 @@ function mapDbLeadToUiLead(dbLead: DbLead): Lead {
     )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+  const stage = dbLead.stage.toLowerCase() as Lead["stage"];
+  const automationTier = dbLead.automationTier.toLowerCase() as Lead["automationTier"];
+  const lastContacted = (dbLead.lastContacted ?? dbLead.createdAt).toISOString();
+
   return {
     id: dbLead.id,
     name: dbLead.name,
@@ -48,13 +58,13 @@ function mapDbLeadToUiLead(dbLead: DbLead): Lead {
     email: dbLead.email ?? "",
     phone: dbLead.phone ?? undefined,
     source: dbLead.source ?? "Unknown",
-    stage: dbLead.stage.toLowerCase() as Lead["stage"],
+    stage,
     dealValue: dbLead.dealValue,
     score: dbLead.score,
     scoreReason: dbLead.scoreReason ?? "Not scored yet — click \"Sync now\" in Settings once OpenAI is connected.",
     scoreFactors: (dbLead.scoreFactors as unknown as ScoreFactor[] | null) ?? [],
     priority: dbLead.priority.toLowerCase() as Lead["priority"],
-    lastContacted: (dbLead.lastContacted ?? dbLead.createdAt).toISOString(),
+    lastContacted,
     nextFollowUp: dbLead.nextFollowUp ? dbLead.nextFollowUp.toISOString() : null,
     assignedTo: dbLead.assignedTo?.name ?? dbLead.assignedTo?.email ?? "Unassigned",
     assignedToId: dbLead.assignedToId,
@@ -62,25 +72,47 @@ function mapDbLeadToUiLead(dbLead: DbLead): Lead {
     conversation,
     suggestedMessage: dbLead.suggestedMessage ?? "",
     suggestedSubject: dbLead.suggestedSubject ?? "",
-    automationTier: dbLead.automationTier.toLowerCase() as Lead["automationTier"],
+    automationTier,
     optedOutAt: dbLead.optedOutAt ? dbLead.optedOutAt.toISOString() : null,
+    automationStatus: computeAutomationStatus(
+      {
+        stage,
+        automationTier,
+        lastContacted,
+        conversation,
+        // null covers a manual send predating the trigger column — still
+        // a real, substantive reply, so it must count the same as "manual"
+        // does, not get treated as if nothing had gone out at all.
+        followUpTriggers: dbLead.followUps.map((f) => f.trigger ?? "manual"),
+        sequence: dbLead.sequence ? { name: dbLead.sequence.name, active: dbLead.sequence.active, dueAt: dbLead.sequenceStepDueAt?.toISOString() ?? null } : null,
+      },
+      rules
+    ),
   };
 }
 
 const leadInclude = {
   conversations: { include: { messages: true } },
   assignedTo: true,
+  sequence: { select: { name: true, active: true } },
+  // Only the trigger is needed — see computeAutomationStatus's
+  // hasSubstantiveFollowUp check, mirroring findUnansweredLeads() in
+  // automation.ts.
+  followUps: { select: { trigger: true } },
 } satisfies Prisma.LeadInclude;
 
 export async function getLeads(): Promise<Lead[]> {
   const ctx = await getSessionContext();
   if (!ctx) return [];
-  const dbLeads = await prisma.lead.findMany({
-    where: { businessId: ctx.businessId },
-    include: leadInclude,
-    orderBy: { score: "desc" },
-  });
-  return dbLeads.map(mapDbLeadToUiLead);
+  const [dbLeads, rules] = await Promise.all([
+    prisma.lead.findMany({
+      where: { businessId: ctx.businessId },
+      include: leadInclude,
+      orderBy: { score: "desc" },
+    }),
+    getBusinessAutomationRules(ctx.businessId),
+  ]);
+  return dbLeads.map((l) => mapDbLeadToUiLead(l, rules));
 }
 
 export async function getLeadById(id: string): Promise<Lead | undefined> {
@@ -88,7 +120,8 @@ export async function getLeadById(id: string): Promise<Lead | undefined> {
   if (!ctx) return undefined;
   const dbLead = await prisma.lead.findUnique({ where: { id }, include: leadInclude });
   if (!dbLead || dbLead.businessId !== ctx.businessId) return undefined;
-  return mapDbLeadToUiLead(dbLead);
+  const rules = await getBusinessAutomationRules(ctx.businessId);
+  return mapDbLeadToUiLead(dbLead, rules);
 }
 
 export interface LeadAuditEntry {

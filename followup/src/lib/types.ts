@@ -1,3 +1,5 @@
+import type { AutomationStatus } from "@/lib/automationStatus";
+
 export type PipelineStage =
   | "new"
   | "contacted"
@@ -63,6 +65,14 @@ export interface Lead {
   // (not present on demo-data.ts's static leads) since it's undefined,
   // never a lie, for a lead that was never opted out.
   optedOutAt?: string | null;
+  // What FollowUp is actually doing with this lead right now (see
+  // src/lib/automationStatus.ts) — computed server-side in leads-data.ts,
+  // not present on demo-data.ts's static leads (no real automation runs
+  // behind those) or anywhere else a Lead is built without a live business
+  // to compute it against. Undefined means "not computed," never a claim
+  // about the lead's actual state — components must treat it the same as
+  // any other absent optional field, not render a default status for it.
+  automationStatus?: AutomationStatus;
 }
 
 export interface TeamMember {

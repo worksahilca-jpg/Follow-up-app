@@ -49,6 +49,7 @@ function lead(overrides: Record<string, unknown> = {}) {
     automationTier: "ASSISTED",
     suggestedMessage: null,
     conversations: [{ channel: "email", messages: [{ id: "m1", direction: "inbound", body: "Is the roof original?", sentAt: new Date(), opened: false }] }],
+    followUps: [],
     ...overrides,
   };
 }
@@ -82,6 +83,9 @@ function unansweredLead(hoursAgo: number, lastDirection: "inbound" | "outbound" 
         ],
       },
     ],
+    // "Here is the listing." is a real reply, not the instant-ack —
+    // this lead keeps the normal (longer) unanswered-reply window.
+    followUps: [{ trigger: "manual" }],
   });
 }
 
@@ -117,6 +121,66 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
 
   it("waits the full window: an inbound newer than the window is not neglected yet", async () => {
     p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(2)]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.unanswered).toBe(0);
+  });
+
+  // Task from research/product/2026-09-09-followup-cadence-best-practices.md
+  // §1: a lead whose only outbound message is the instant-ack template
+  // (never a real reply) gets the much shorter UNANSWERED_FIRST_REPLY_HOURS
+  // window instead of waiting out the full business-configured one.
+  function firstReplyLead(hoursAgo: number, outboundTrigger?: "instant_ack") {
+    return lead({
+      id: "lead3",
+      name: "Priya",
+      assignedToId: "user1",
+      conversations: [
+        {
+          channel: "email",
+          messages: [
+            ...(outboundTrigger
+              ? [{ id: "a", direction: "outbound", body: "Thanks for reaching out...", sentAt: new Date(Date.now() - (hoursAgo + 1) * 3_600_000), opened: false }]
+              : []),
+            { id: "b", direction: "inbound", body: "What's the price?", sentAt: new Date(Date.now() - hoursAgo * 3_600_000), opened: false },
+          ],
+        },
+      ],
+      // The instant-ack's own FollowUp row is what marks it non-substantive
+      // — see the comment above findUnansweredLeads's hasSubstantiveFollowUp
+      // check; Message itself carries no such marker.
+      followUps: outboundTrigger ? [{ trigger: outboundTrigger }] : [],
+    });
+  }
+
+  it("picks up a first-message lead past only the short window, even though it's well inside the normal 24h one", async () => {
+    // 4 hours: past UNANSWERED_FIRST_REPLY_HOURS (3) but nowhere near the
+    // business's 24h default — the old flat-24h behavior would have missed
+    // this entirely for another 20 hours.
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([firstReplyLead(4, "instant_ack")]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.unanswered).toBe(1);
+  });
+
+  it("applies the same short window when there's no outbound message at all yet, not just an instant-ack one", async () => {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([firstReplyLead(4)]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.unanswered).toBe(1);
+  });
+
+  it("still waits out the short window for a first-message lead — 1 hour isn't enough", async () => {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([firstReplyLead(1, "instant_ack")]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.unanswered).toBe(0);
+  });
+
+  it("does NOT shorten the window once a real (non-instant-ack) reply has gone out", async () => {
+    // Same 4-hour staleness as the picked-up case above, but the prior
+    // outbound message is a real reply (no special trigger) rather than
+    // the instant-ack template — this is unansweredLead's own shape, and
+    // it must still respect the full 24h default, not the 3h one.
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(4)]);
     const r = await runAutomationForBusiness("biz1");
     expect(r.unanswered).toBe(0);
   });

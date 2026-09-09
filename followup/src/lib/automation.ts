@@ -41,6 +41,17 @@ export const UNANSWERED_ACTION = "unanswered_reply";
 export const UNANSWERED_NAME = "Reply for me when I haven't";
 export const UNANSWERED_DEFAULT_HOURS = 24;
 
+// research/product/2026-09-09-followup-cadence-best-practices.md, §1:
+// qualification odds fall off steepest in the first hours after a lead's
+// FIRST real message — hour 3 of total silence on a brand-new lead is not
+// equivalent to hour 24 of an established conversation going quiet, but
+// findUnansweredLeads() used to treat them identically. Applies only when
+// nothing substantive has gone out yet (the instant-ack template doesn't
+// count — see the trigger check below); not user-configurable the way
+// UNANSWERED_DEFAULT_HOURS is, at least for now, since it's meant to be a
+// fixed safety net rather than another setting to tune.
+export const UNANSWERED_FIRST_REPLY_HOURS = 3;
+
 interface AutomationResult {
   checked: number;
   unanswered: number; // of `checked`, how many were picked up because the LEAD wrote last and nobody answered
@@ -63,23 +74,54 @@ const EMPTY_RESULT: AutomationResult = { checked: 0, unanswered: 0, sent: 0, hel
  */
 async function findUnansweredLeads(businessId: string, hours: number, recheckCutoff: Date) {
   const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000);
+  const firstReplyCutoff = new Date(Date.now() - UNANSWERED_FIRST_REPLY_HOURS * 60 * 60 * 1000);
+  // The DB-level filter has to be broad enough to catch both cases the
+  // per-lead check below distinguishes — an established conversation
+  // silent past the full `hours` window, and a lead's still-unanswered
+  // FIRST message silent past the much shorter UNANSWERED_FIRST_REPLY_HOURS
+  // window — so it uses whichever cutoff is more recent (further hours
+  // means a smaller/older Date, so the later Date is the broader filter,
+  // catching more candidates than either threshold alone would).
+  const queryCutoff = firstReplyCutoff > cutoff ? firstReplyCutoff : cutoff;
   const candidates = await prisma.lead.findMany({
     where: {
       businessId,
       automationTier: { not: "OFF" },
       stage: { notIn: ["WON", "LOST"] },
       OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
-      conversations: { some: { messages: { some: { direction: "inbound", sentAt: { lte: cutoff } } } } },
+      conversations: { some: { messages: { some: { direction: "inbound", sentAt: { lte: queryCutoff } } } } },
     },
-    include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+    include: {
+      conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } },
+      // Message itself carries no "was this the instant-ack" marker —
+      // that only lives on the separate FollowUp row sendFollowUpToLead()
+      // creates alongside every real send (see below).
+      followUps: { select: { trigger: true } },
+    },
   });
-  // The query finds "has an old inbound"; only "the LAST message is that
-  // inbound" counts — if anyone has replied since, it's not neglected.
+  // The query finds "has an old-enough inbound"; only "the LAST message is
+  // that inbound, AND it's old enough by the threshold THIS lead actually
+  // gets" counts — if anyone has replied since, it's not neglected.
   return candidates.filter((lead) => {
     const all = lead.conversations.flatMap((c) => c.messages);
     if (all.length === 0) return false;
     const last = all.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
-    return last.direction === "inbound" && last.sentAt <= cutoff;
+    if (last.direction !== "inbound") return false;
+    // A lead with no substantive outbound reply yet — not counting the
+    // instant-ack template, fixed boilerplate rather than a real reply —
+    // gets the shorter first-reply threshold; everyone already in a real
+    // back-and-forth keeps the business's normal unanswered-reply window.
+    // Two ways a "real reply" shows up: a FollowUp row (created by
+    // sendFollowUpToLead for every automated/manual send this app itself
+    // made) whose trigger isn't "instant_ack", or a directly-captured
+    // Instagram/Messenger echo (Message.source set — see captureDirectReply
+    // in instagram.ts, which never creates a FollowUp row at all, so it
+    // has to be checked on the Message itself).
+    const hasDirectEchoReply = all.some((m) => m.direction === "outbound" && m.source);
+    const hasSubstantiveFollowUp = lead.followUps.some((f) => f.trigger !== "instant_ack");
+    const hasSubstantiveOutbound = hasDirectEchoReply || hasSubstantiveFollowUp;
+    const effectiveCutoff = hasSubstantiveOutbound ? cutoff : firstReplyCutoff;
+    return last.sentAt <= effectiveCutoff;
   });
 }
 

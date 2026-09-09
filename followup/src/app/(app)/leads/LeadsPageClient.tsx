@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { Lead } from "@/lib/types";
 import { formatCurrency, formatDate, daysSince } from "@/lib/demo-data";
 import { urgencyColor } from "@/lib/urgency";
-import { matchesSavedFilter, type SavedFilterCriteria, type SavedFilterSummary } from "@/lib/savedFilters";
+import { matchesSavedFilter, type SavedFilterCriteria, type SavedFilterSummary } from "@/lib/savedFilterMatch";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
 import AddLeadForm from "@/components/AddLeadForm";

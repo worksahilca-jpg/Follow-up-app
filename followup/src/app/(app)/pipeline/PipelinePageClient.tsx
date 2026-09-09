@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Lead, PipelineStage } from "@/lib/types";
 import { formatCurrency, daysSince } from "@/lib/demo-data";
-import { getPipelineData } from "@/lib/leads-data";
+import { getPipelineData } from "@/lib/pipeline";
 import { PIPELINE_STAGES } from "@/lib/demo-data";
 import { urgencyColor } from "@/lib/urgency";
 import ScoreBadge from "@/components/ScoreBadge";

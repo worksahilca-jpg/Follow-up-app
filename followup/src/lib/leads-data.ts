@@ -17,7 +17,6 @@
  */
 
 import { prisma } from "@/lib/db";
-import { PIPELINE_STAGES } from "@/lib/demo-data";
 import { getSessionContext } from "@/lib/session";
 import { Lead, Message, ScoreFactor } from "@/lib/types";
 import type { Prisma } from "@prisma/client";
@@ -172,16 +171,14 @@ export function getStats(leads: Lead[]) {
   };
 }
 
-export function getPipelineData(leads: Lead[]) {
-  return PIPELINE_STAGES.map((stage) => {
-    const stageLeads = leads.filter((l) => l.stage === stage.id);
-    return {
-      ...stage,
-      leads: stageLeads,
-      value: stageLeads.reduce((sum, l) => sum + l.dealValue, 0),
-    };
-  });
-}
+// Moved to src/lib/pipeline.ts — it's a pure function of an already-fetched
+// Lead[] with no Prisma dependency of its own, but PipelinePageClient
+// ("use client") importing it from *this* file pulled this file's own
+// `import { prisma } from "@/lib/db"` into the browser bundle, which throws
+// at runtime ("PrismaClient is unable to run in this browser environment").
+// Re-exported here so every other (server-side) caller of getPipelineData
+// from "@/lib/leads-data" keeps working unchanged.
+export { getPipelineData } from "@/lib/pipeline";
 
 /**
  * Only counts things we can actually verify happened for real right now.

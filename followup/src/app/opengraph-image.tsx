@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "FollowUp — Never lose a lead because you forgot to follow up.";
+export const alt = "FollowUp — catches the lead that went quiet.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -35,14 +35,14 @@ export default async function OpengraphImage() {
         <div style={{ display: "flex", flexDirection: "column", maxWidth: "920px" }}>
           <span
             style={{
-              fontSize: 64,
+              fontSize: 54,
               fontWeight: 700,
               color: "#14181f",
-              lineHeight: 1.08,
+              lineHeight: 1.15,
               letterSpacing: "-0.02em",
             }}
           >
-            Never lose a lead because you forgot to follow up.
+            Every tool answers the lead. FollowUp catches the one that went quiet.
           </span>
           <span style={{ fontSize: 26, color: "#4b515c", marginTop: "28px", lineHeight: 1.4 }}>
             The AI teammate that tells you exactly who to contact today, why, and what to say.

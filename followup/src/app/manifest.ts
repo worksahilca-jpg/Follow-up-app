@@ -11,7 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "FollowUp",
     short_name: "FollowUp",
-    description: "Never lose a lead because you forgot to follow up.",
+    description: "The AI teammate that catches the lead that went quiet.",
     start_url: "/",
     display: "standalone",
     background_color: "#f8f9fb",

@@ -103,18 +103,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const existingEmails = new Set(
-    (
-      await prisma.lead.findMany({
-        where: { businessId: ctx.businessId, email: { not: null } },
-        select: { email: true },
-      })
-    ).map((l) => (l.email as string).toLowerCase())
-  );
+  const [existingEmails, existingPhones] = await Promise.all([
+    prisma.lead
+      .findMany({ where: { businessId: ctx.businessId, email: { not: null } }, select: { email: true } })
+      .then((rows) => new Set(rows.map((l) => (l.email as string).toLowerCase()))),
+    // Lead also has a unique (businessId, phone) constraint (see
+    // schema.prisma) — pre-checking it the same way email is checked below
+    // means a phone collision gets reported in `skipped` like every other
+    // rejected row, instead of being silently dropped by skipDuplicates at
+    // the DB layer with no trace in the response at all.
+    prisma.lead
+      .findMany({ where: { businessId: ctx.businessId, phone: { not: null } }, select: { phone: true } })
+      .then((rows) => new Set(rows.map((l) => l.phone as string))),
+  ]);
 
   const toInsert: Prisma.LeadCreateManyInput[] = [];
   const skipped: string[] = [];
   const seenEmailsInBatch = new Set<string>();
+  const seenPhonesInBatch = new Set<string>();
   // Distributes the whole batch across the team in-memory (see
   // src/lib/assignment.ts) rather than one auto-assign query per row.
   const nextAssignee = await makeBatchAssigner(ctx.businessId);
@@ -138,6 +144,13 @@ export async function POST(request: NextRequest) {
     }
     if (email) seenEmailsInBatch.add(email);
 
+    const phone = columnMap.phone ? cleanText(row[columnMap.phone], 40) : "";
+    if (phone && (existingPhones.has(phone) || seenPhonesInBatch.has(phone))) {
+      skipped.push(`Row ${rowNum} (${name}): duplicate phone number, skipped`);
+      return;
+    }
+    if (phone) seenPhonesInBatch.add(phone);
+
     const dealValueRaw = columnMap.dealValue ? row[columnMap.dealValue] : "";
     const dealValueNum = Number(String(dealValueRaw ?? "").replace(/[^0-9.-]/g, ""));
 
@@ -146,7 +159,7 @@ export async function POST(request: NextRequest) {
       name,
       company: columnMap.company ? cleanText(row[columnMap.company]) || null : null,
       email: email || null,
-      phone: columnMap.phone ? cleanText(row[columnMap.phone], 40) || null : null,
+      phone: phone || null,
       source: (columnMap.source ? cleanText(row[columnMap.source]) : "") || "CSV import",
       notes: columnMap.notes ? cleanText(row[columnMap.notes], 2000) || null : null,
       dealValue: Number.isFinite(dealValueNum) && dealValueNum > 0 ? dealValueNum : 0,

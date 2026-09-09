@@ -37,6 +37,20 @@ describe("no-invention drafting", () => {
     expect(system).toMatch(/do not make up an answer/);
     expect(system).toMatch(/same language as the lead/);
   });
+
+  // research/audit/2026-09-09-sixth-pass-audit.md finding #1 — same
+  // reasoning as assessSendRisk's own test below: a voice-agent-channel
+  // message must not be draftable as a confirmed fact just because it's
+  // stored as outbound.
+  it("tells the model a voice-agent-channel message is not a business-authored confirmation either", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "Following up", body: "body" }) } }],
+    });
+    await generateFollowUpMessage({ name: "Young Son", conversation });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/voice-agent/);
+    expect(system).toMatch(/NOT a business-authored/);
+  });
 });
 
 describe("send-risk gate", () => {
@@ -95,6 +109,18 @@ describe("send-risk gate", () => {
       expect(userMsg.length).toBeLessThan(20000); // well under the ~500 raw messages' true size
       expect(userMsg).toMatch(/MOST_RECENT_MARKER/);
       expect(userMsg).toMatch(/omitted for length/);
+    });
+
+    // research/audit/2026-09-09-sixth-pass-audit.md finding #1: a live,
+    // unhardened AI phone bot can be talked into "confirming" something on
+    // a call, and its spoken lines are stored as direction: "outbound" —
+    // the exact marker this file's own "an outbound message confirms it"
+    // reasoning otherwise treats as a verified, business-authored fact.
+    it("tells the model a voice-agent-channel message is not a business-authored confirmation, even though it's outbound", async () => {
+      await assessSendRisk({ conversation }, "draft");
+      const system = create.mock.calls[0][0].messages[0].content as string;
+      expect(system).toMatch(/voice-agent/);
+      expect(system).toMatch(/NOT a business-authored/);
     });
   });
 });

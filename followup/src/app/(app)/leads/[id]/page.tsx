@@ -11,6 +11,7 @@ import LeadAssignmentSelect from "@/components/LeadAssignmentSelect";
 import DeleteLeadButton from "@/components/DeleteLeadButton";
 import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
 import LeadTrustPanel from "@/components/LeadTrustPanel";
+import AutomationStatusBadge from "@/components/AutomationStatusBadge";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 import { isInstagramLeadId, isSocialLeadId } from "@/lib/instagramId";
 
@@ -119,6 +120,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         <aside className="space-y-6">
+          <AutomationStatusBadge status={lead.automationStatus} />
           <div className="rounded-xl border border-line bg-card p-4">
             <h3 className="text-sm font-semibold">Details</h3>
             <dl className="mt-3 space-y-2 text-sm">

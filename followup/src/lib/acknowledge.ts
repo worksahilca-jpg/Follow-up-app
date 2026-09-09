@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { localizeFixedText } from "@/lib/integrations/openai";
+import { generateInstantReply, assessSendRisk, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
 
@@ -7,18 +7,29 @@ import { sendFollowUpToLead } from "@/lib/sending";
  * Instant acknowledgement — the first half of "no lead is lost to LATE
  * follow-up" (PRODUCT_DIRECTION.md, main goal, point 1).
  *
- * A brand-new lead's first message gets a short "we got your message,
- * <owner> will get back to you shortly" within a minute, on the channel
- * they used, in the language they wrote in. The substantive reply still
- * goes through the Assisted flow (drafted, approved by the owner); this
- * only closes the gap between "they wrote" and "someone noticed," which
- * the research puts at 29–47 hours on average and where the close rate
+ * A brand-new lead's first message gets a real, specific reply within a
+ * minute — answering what it honestly can from what the lead themselves
+ * wrote, or saying so warmly by name ("I'll get you the exact price and
+ * <owner> will follow up shortly") when it can't — on the channel they
+ * used, in the language and tone they wrote in. The substantive reply
+ * still goes through the Assisted flow (drafted, approved by the owner)
+ * once there's real business context to draw from; this only closes the
+ * gap between "they wrote" and "someone/something noticed," which the
+ * research puts at 29–47 hours on average and where the close rate
  * falls by more than half.
  *
- * It is safe to send with no human review because it is a TEMPLATE, not
- * a generated reply: it states no fact about the business, quotes no
- * price, answers no question. The only AI step is translating the fixed
- * sentence (localizeFixedText), which is forbidden from adding anything.
+ * This used to be a fixed template specifically because a generated
+ * reply risked inventing a fact with zero human review — now it's a
+ * generated reply (generateInstantReply), kept safe two ways instead of
+ * by being static: the prompt itself is written to answer only from what
+ * the lead already said and never invent a price/availability/timeline,
+ * and (for anything but an AUTONOMOUS lead) the draft still passes
+ * assessSendRisk — the same gate a normal automated follow-up passes —
+ * before being sent. If generation fails, the risk check isn't "low," or
+ * there's no OPENAI_API_KEY, this falls back to a fixed, always-safe
+ * line (still run through localizeFixedText) rather than holding the
+ * very first touch for approval — delaying it defeats the point of
+ * "instant," and the fallback line states no fact about the business.
  *
  * Guarantees, each enforced below and each a reason this returns without
  * sending:
@@ -38,6 +49,50 @@ export const INSTANT_ACK_NAME = "Instant reply to new leads";
 const STALE_AFTER_MS = 60 * 60_000;
 
 export type AckChannel = "email" | "text" | "whatsapp" | "instagram" | "messenger";
+
+// The always-safe fallback: states no fact about the business, so it's
+// fine to send with zero review the same way the old fixed template
+// was. Kept as a plain function (not a module-level constant) since it
+// depends on businessName/owner, which vary per business.
+function genericAckLine(businessName: string, ownerFirstName: string): string {
+  return `Thanks for reaching out to ${businessName} — I'll take a look and ${ownerFirstName} will follow up shortly.`;
+}
+
+/**
+ * Builds the one line of substantive content the caller wraps into an
+ * email (composeFollowUpEmail adds the greeting/sign-off) or sends
+ * as-is with a short "Hi! " prefix for every other channel. See this
+ * file's own header comment for the safety reasoning; this function is
+ * where that reasoning is actually implemented.
+ */
+async function buildAckLine(input: {
+  leadFirstName: string;
+  ownerFirstName: string;
+  businessName: string;
+  automationTier: string;
+  inboundText: string;
+  channel: AckChannel;
+}): Promise<string> {
+  const fallback = await localizeFixedText(genericAckLine(input.businessName, input.ownerFirstName), input.inboundText);
+  if (!input.inboundText.trim()) return fallback; // nothing specific to respond to
+
+  try {
+    const reply = await generateInstantReply({
+      leadFirstName: input.leadFirstName,
+      ownerFirstName: input.ownerFirstName,
+      inboundText: input.inboundText,
+    });
+    if (input.automationTier === "AUTONOMOUS") return reply; // same skip every other autonomous send path takes
+    const risk = await assessSendRisk(
+      { conversation: [{ id: "inbound", direction: "inbound", channel: input.channel, body: input.inboundText, date: new Date().toISOString() }] },
+      reply
+    );
+    return risk.riskLevel === "low" ? reply : fallback;
+  } catch (err) {
+    console.error("Instant reply generation failed, falling back to the generic acknowledgement:", err);
+    return fallback;
+  }
+}
 
 export async function isInstantAckEnabled(businessId: string): Promise<boolean> {
   const row = await prisma.automation.findFirst({
@@ -94,22 +149,25 @@ export async function acknowledgeNewLead(
     const business = await prisma.business.findUnique({ where: { id: lead.businessId }, select: { name: true } });
     const businessName = business?.name ?? "us";
     const owner = await getSenderFirstName(lead.businessId);
+    const leadFirstName = lead.name.split(" ")[0];
+
+    const line = await buildAckLine({
+      leadFirstName,
+      ownerFirstName: owner,
+      businessName,
+      automationTier: lead.automationTier,
+      inboundText: input.inboundText ?? "",
+      channel: input.channel,
+    });
 
     let body: string;
     let subject: string | undefined;
     if (input.channel === "email") {
-      const line = await localizeFixedText(
-        `Thanks for reaching out to ${businessName}. I got your message and will get back to you shortly.`,
-        input.inboundText ?? ""
-      );
-      body = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, line);
+      body = await composeFollowUpEmail(leadFirstName, lead.businessId, line);
       const cleanSubject = input.emailSubject?.replace(/^(re|fwd?):\s*/i, "").trim();
       subject = cleanSubject ? `Re: ${cleanSubject}` : `Thanks for reaching out to ${businessName}`;
     } else {
-      body = await localizeFixedText(
-        `Hi! Thanks for reaching out to ${businessName}. We got your message and ${owner} will get back to you shortly.`,
-        input.inboundText ?? ""
-      );
+      body = `Hi! ${line}`;
     }
 
     const result = await sendFollowUpToLead(leadId, body, {

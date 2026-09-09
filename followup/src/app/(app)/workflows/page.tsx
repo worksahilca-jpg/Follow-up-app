@@ -45,37 +45,44 @@ function blankStep(): StepDraft {
 }
 
 // A real bounded, escalating cadence rather than a blank sheet to fill in
-// — cumulative days 2 / 5 / 10 / 18, matching the "most conversions happen
-// 5-8 touches over 2-4 weeks" data (see the competitive research this was
-// built from). Loaded into the editor for review/editing, never saved
-// automatically — a business should see exactly what it's agreeing to
-// send before it goes near a real lead.
+// — cumulative days 3 / 7 / 14 / 30 from enrollment (stored below as the
+// gap-from-previous-step delayDays sequences.ts actually runs on: 3, 4,
+// 7, 16), matching research/product/2026-09-09-followup-cadence-best-
+// practices.md's escalating-then-widening shape — the same pattern every
+// competitor surveyed there (Follow Up Boss, kvCORE, BoomTown) already
+// uses instead of one flat repeating interval. Loaded into the editor
+// for review/editing, never saved automatically — a business should see
+// exactly what it's agreeing to send before it goes near a real lead.
 const RECOMMENDED_CADENCE: { name: string; steps: StepDraft[] } = {
   name: "Recommended follow-up cadence",
   steps: [
     {
-      delayDays: 2,
+      delayDays: 3,
       action: "EMAIL",
       stageTo: null,
       messageHint: "A light, low-pressure check-in — just making sure this didn't get buried, nothing pushy.",
     },
     {
-      delayDays: 3,
+      delayDays: 4, // day 7 cumulative
       action: "EMAIL",
       stageTo: null,
       messageHint: "More direct — ask plainly if they're still interested and what would help them decide.",
     },
     {
-      delayDays: 5,
+      delayDays: 7, // day 14 cumulative
       action: "EMAIL",
       stageTo: null,
       messageHint: "Offer something of real value — answer a likely objection or suggest a concrete next step, not another check-in.",
     },
     {
-      delayDays: 8,
+      delayDays: 16, // day 30 cumulative
       action: "EMAIL",
       stageTo: null,
-      messageHint: "A final, honest message — acknowledge the silence, ask once more, no pressure either way.",
+      messageHint:
+        "A final message for a lead that's gone genuinely quiet for a month — name the actual elapsed time " +
+        "(e.g. \"it's been about a month since...\") rather than a vague \"just checking in,\" and lead with " +
+        "something concrete and useful (a real update, a real reason this is still worth their time) instead " +
+        "of only asking again. No pressure either way.",
     },
   ],
 };
@@ -148,7 +155,7 @@ export default function WorkflowsPage() {
         <div className="mt-6">
           {template && (
             <p className="text-xs text-ink-soft mb-2">
-              Starting from our recommended 4-step cadence (day 2, 5, 10, 18) — edit anything below before saving.
+              Starting from our recommended 4-step cadence (day 3, 7, 14, 30) — edit anything below before saving.
             </p>
           )}
           <WorkflowEditor

@@ -88,42 +88,58 @@ export const authOptions: NextAuthOptions = {
       // Someone may already have invited this exact email to their
       // team — join that business at the invited role instead of
       // spinning up a new one, and consume the invite either way.
-      const pendingInvite = await prisma.invite.findFirst({ where: { email } });
+      //
+      // The invite lookup, the user upsert, and the invite delete all run
+      // in one transaction — two overlapping completions of this same
+      // flow (the same person accepting from two tabs, or a client retry
+      // landing as a second callback before the first finishes) used to
+      // run these as separate, unguarded statements, so both could read
+      // the same still-present invite before either deleted it; the
+      // loser's plain `delete` then threw an uncaught P2025 ("record not
+      // found"), surfacing to the user as a failed sign-in even though
+      // their business assignment had already succeeded moments before.
+      // `deleteMany` here is count-tolerant (never throws when the row is
+      // already gone), so a losing concurrent request now completes sign-
+      // in successfully instead (research/audit/2026-09-09-fifth-pass-
+      // audit.md finding #2).
+      await prisma.$transaction(async (tx) => {
+        const pendingInvite = await tx.invite.findFirst({ where: { email } });
 
-      const businessId = pendingInvite
-        ? pendingInvite.businessId
-        : (
-            await prisma.business.create({
-              data: {
-                name: user.name ? `${user.name}'s Business` : "My Business",
-                // Follow-up is on from day one (see AutomationTier in
-                // schema.prisma): the master switch exists so an owner can
-                // turn it OFF, not something they have to discover to turn on.
-                automations: {
-                  create: [
-                    { name: "Auto follow-up on silence", action: "auto_send", enabled: true, triggerDays: 5 },
-                    { name: "Instant reply to new leads", action: "instant_ack", enabled: true, triggerDays: 0 },
-                    { name: "Reply for me when I haven't", action: "unanswered_reply", enabled: true, triggerDays: 1, triggerHours: 24 },
-                  ],
+        const businessId = pendingInvite
+          ? pendingInvite.businessId
+          : (
+              await tx.business.create({
+                data: {
+                  name: user.name ? `${user.name}'s Business` : "My Business",
+                  // Follow-up is on from day one (see AutomationTier in
+                  // schema.prisma): the master switch exists so an owner can
+                  // turn it OFF, not something they have to discover to turn on.
+                  automations: {
+                    create: [
+                      { name: "Auto follow-up on silence", action: "auto_send", enabled: true, triggerDays: 5 },
+                      { name: "Instant reply to new leads", action: "instant_ack", enabled: true, triggerDays: 0 },
+                      { name: "Reply for me when I haven't", action: "unanswered_reply", enabled: true, triggerDays: 1, triggerHours: 24 },
+                    ],
+                  },
                 },
-              },
-            })
-          ).id;
-      const role = pendingInvite ? pendingInvite.role : "ADMIN";
+              })
+            ).id;
+        const role = pendingInvite ? pendingInvite.role : "ADMIN";
 
-      if (existing) {
-        await prisma.user.update({
-          where: { id: existing.id },
-          data: { businessId, role, name: user.name ?? existing.name },
-        });
-      } else {
-        await prisma.user.create({
-          data: { email, name: user.name ?? undefined, businessId, role },
-        });
-      }
-      if (pendingInvite) {
-        await prisma.invite.delete({ where: { id: pendingInvite.id } });
-      }
+        if (existing) {
+          await tx.user.update({
+            where: { id: existing.id },
+            data: { businessId, role, name: user.name ?? existing.name },
+          });
+        } else {
+          await tx.user.create({
+            data: { email, name: user.name ?? undefined, businessId, role },
+          });
+        }
+        if (pendingInvite) {
+          await tx.invite.deleteMany({ where: { id: pendingInvite.id } });
+        }
+      });
 
       return true;
     },

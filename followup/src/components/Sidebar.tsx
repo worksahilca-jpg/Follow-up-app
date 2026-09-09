@@ -155,7 +155,7 @@ export default function Sidebar() {
             Not subscribed
           </p>
           <p className="text-xs mt-1 text-ink-soft">
-            Subscribe ($29/mo) to sync, add leads, and send follow-ups.
+            Start a free 14-day trial (no card required) to sync, add leads, and send follow-ups.
           </p>
         </Link>
       )}

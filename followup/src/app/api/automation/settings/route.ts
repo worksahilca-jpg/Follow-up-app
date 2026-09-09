@@ -5,11 +5,23 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { INSTANT_ACK_ACTION, INSTANT_ACK_NAME, isInstantAckEnabled } from "@/lib/acknowledge";
-import { UNANSWERED_ACTION, UNANSWERED_DEFAULT_HOURS, UNANSWERED_NAME } from "@/lib/automation";
+import {
+  UNANSWERED_ACTION,
+  UNANSWERED_DEFAULT_HOURS,
+  UNANSWERED_NAME,
+  DEAD_LEAD_ACTION,
+  DEAD_LEAD_DEFAULT_DAYS,
+  DEAD_LEAD_NAME,
+} from "@/lib/automation";
 
 async function getUnansweredReplySetting(businessId: string): Promise<{ enabled: boolean; hours: number }> {
   const rule = await prisma.automation.findFirst({ where: { businessId, action: UNANSWERED_ACTION } });
   return { enabled: rule?.enabled ?? true, hours: rule?.triggerHours ?? UNANSWERED_DEFAULT_HOURS };
+}
+
+async function getDeadLeadReactivationSetting(businessId: string): Promise<{ enabled: boolean; days: number }> {
+  const rule = await prisma.automation.findFirst({ where: { businessId, action: DEAD_LEAD_ACTION } });
+  return { enabled: rule?.enabled ?? true, days: rule?.triggerDays ?? DEAD_LEAD_DEFAULT_DAYS };
 }
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
@@ -25,6 +37,12 @@ const settingsSchema = z.object({
     .object({
       enabled: z.boolean().optional(),
       hours: z.coerce.number().optional(),
+    })
+    .optional(),
+  deadLeadReactivation: z
+    .object({
+      enabled: z.boolean().optional(),
+      days: z.coerce.number().optional(),
     })
     .optional(),
 });
@@ -44,6 +62,7 @@ export async function GET() {
     triggerDays: automation?.triggerDays ?? 5,
     instantAck: await isInstantAckEnabled(ctx.businessId),
     unansweredReply: await getUnansweredReplySetting(ctx.businessId),
+    deadLeadReactivation: await getDeadLeadReactivationSetting(ctx.businessId),
   });
 }
 
@@ -61,7 +80,13 @@ export async function POST(request: NextRequest) {
   const body = parsed.data;
 
   // The unanswered-reply rule is saved on its own (see src/lib/automation.ts).
-  if (body.unansweredReply && typeof body.unansweredReply === "object" && body.enabled === undefined && body.instantAck === undefined) {
+  if (
+    body.unansweredReply &&
+    typeof body.unansweredReply === "object" &&
+    body.enabled === undefined &&
+    body.instantAck === undefined &&
+    body.deadLeadReactivation === undefined
+  ) {
     const enabled = Boolean(body.unansweredReply.enabled);
     const raw = Number(body.unansweredReply.hours);
     const hours = Number.isFinite(raw) ? Math.max(1, Math.min(168, Math.round(raw))) : UNANSWERED_DEFAULT_HOURS;
@@ -74,6 +99,29 @@ export async function POST(request: NextRequest) {
       });
     }
     return NextResponse.json({ success: true, unansweredReply: { enabled, hours } });
+  }
+
+  // The dead-lead reactivation rule is saved on its own too — same
+  // isolation reasoning as the unanswered-reply rule above.
+  if (
+    body.deadLeadReactivation &&
+    typeof body.deadLeadReactivation === "object" &&
+    body.enabled === undefined &&
+    body.instantAck === undefined &&
+    body.unansweredReply === undefined
+  ) {
+    const enabled = Boolean(body.deadLeadReactivation.enabled);
+    const raw = Number(body.deadLeadReactivation.days);
+    const days = Number.isFinite(raw) ? Math.max(30, Math.min(180, Math.round(raw))) : DEAD_LEAD_DEFAULT_DAYS;
+    const existingRule = await prisma.automation.findFirst({ where: { businessId: ctx.businessId, action: DEAD_LEAD_ACTION } });
+    if (existingRule) {
+      await prisma.automation.update({ where: { id: existingRule.id }, data: { enabled, triggerDays: days } });
+    } else {
+      await prisma.automation.create({
+        data: { businessId: ctx.businessId, name: DEAD_LEAD_NAME, action: DEAD_LEAD_ACTION, enabled, triggerDays: days },
+      });
+    }
+    return NextResponse.json({ success: true, deadLeadReactivation: { enabled, days } });
   }
 
   // The instant-reply switch is saved on its own (see src/lib/acknowledge.ts);

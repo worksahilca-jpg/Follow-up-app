@@ -105,7 +105,9 @@ export async function detectReplies(businessId: string): Promise<number> {
               ? "the reply FollowUp sent when you hadn't"
               : followUp.trigger === "sequence"
                 ? "a workflow message"
-                : "the follow-up FollowUp sent";
+                : followUp.trigger === "dead_lead_reactivation"
+                  ? "a reactivation message to a lead that had gone cold"
+                  : "the follow-up FollowUp sent";
         try {
           await prisma.notification.create({
             data: {

@@ -36,11 +36,11 @@ vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 vi.mock("@/lib/sendWindow", () => ({ isWithinSendWindow: vi.fn(() => true) }));
 
 import { prisma } from "@/lib/db";
-import { assessSendRisk } from "@/lib/integrations/openai";
+import { assessSendRisk, generateFollowUpMessage } from "@/lib/integrations/openai";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
-import { runAutomationForBusiness } from "@/lib/automation";
+import { runAutomationForBusiness, DEAD_LEAD_ACTION } from "@/lib/automation";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -49,6 +49,7 @@ const send = sendFollowUpToLead as unknown as ReturnType<typeof vi.fn>;
 const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
 const replyChannel = detectAutomatedReplyChannel as unknown as ReturnType<typeof vi.fn>;
 const sendWindow = isWithinSendWindow as unknown as ReturnType<typeof vi.fn>;
+const draftMessage = generateFollowUpMessage as unknown as ReturnType<typeof vi.fn>;
 
 function lead(overrides: Record<string, unknown> = {}) {
   return {
@@ -101,8 +102,12 @@ function unansweredLead(hoursAgo: number, lastDirection: "inbound" | "outbound" 
 }
 
 describe("human-neglect trigger (lead wrote, nobody answered)", () => {
+  // Promise.all fires the three lead.findMany calls in a fixed order:
+  // the silence query, then the dead-lead-reactivation query (on by
+  // default — see DEAD_LEAD_ACTION), then findUnansweredLeads's own
+  // query. Every test in this block cares only about the third.
   it("picks up a lead whose last message is inbound and older than the window, and tells the owner when held", async () => {
-    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(30)]);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(30)]);
     risk.mockResolvedValue({ riskLevel: "medium", reason: "answers a factual question" });
     const r = await runAutomationForBusiness("biz1");
     expect(r.unanswered).toBe(1);
@@ -114,7 +119,7 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
   });
 
   it("tells the owner when it replied for them", async () => {
-    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(30)]);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(30)]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
     expect(r.sent).toBe(1);
@@ -124,14 +129,14 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
   });
 
   it("never treats a lead as neglected once anyone has replied (last message outbound)", async () => {
-    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(30, "outbound")]);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(30, "outbound")]);
     const r = await runAutomationForBusiness("biz1");
     expect(r.unanswered).toBe(0);
     expect(r.checked).toBe(0);
   });
 
   it("waits the full window: an inbound newer than the window is not neglected yet", async () => {
-    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(2)]);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(2)]);
     const r = await runAutomationForBusiness("biz1");
     expect(r.unanswered).toBe(0);
   });
@@ -167,21 +172,21 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
     // 4 hours: past UNANSWERED_FIRST_REPLY_HOURS (3) but nowhere near the
     // business's 24h default — the old flat-24h behavior would have missed
     // this entirely for another 20 hours.
-    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([firstReplyLead(4, "instant_ack")]);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([firstReplyLead(4, "instant_ack")]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
     expect(r.unanswered).toBe(1);
   });
 
   it("applies the same short window when there's no outbound message at all yet, not just an instant-ack one", async () => {
-    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([firstReplyLead(4)]);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([firstReplyLead(4)]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
     expect(r.unanswered).toBe(1);
   });
 
   it("still waits out the short window for a first-message lead — 1 hour isn't enough", async () => {
-    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([firstReplyLead(1, "instant_ack")]);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([firstReplyLead(1, "instant_ack")]);
     const r = await runAutomationForBusiness("biz1");
     expect(r.unanswered).toBe(0);
   });
@@ -191,7 +196,7 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
     // outbound message is a real reply (no special trigger) rather than
     // the instant-ack template — this is unansweredLead's own shape, and
     // it must still respect the full 24h default, not the 3h one.
-    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(4)]);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(4)]);
     const r = await runAutomationForBusiness("biz1");
     expect(r.unanswered).toBe(0);
   });
@@ -349,5 +354,103 @@ describe("send-window gate (src/lib/sendWindow.ts)", () => {
     const r = await runAutomationForBusiness("biz1");
     expect(send).toHaveBeenCalledTimes(1);
     expect(r.deferred).toBe(0);
+  });
+});
+
+// research/product/2026-09-09-followup-cadence-best-practices.md §3: a lead
+// gone genuinely cold (45+ days by default) gets a distinct reactivation
+// campaign — its own AI-prompt framing and its own `trigger` value — rather
+// than a longer version of the same silence trigger.
+describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
+  function coldLead(daysAgo: number, overrides: Record<string, unknown> = {}) {
+    return lead({
+      id: "lead4",
+      name: "Marcus",
+      suggestedMessage: "A stale cached draft from before this lead went cold",
+      suggestedSubject: "Old subject",
+      lastContacted: new Date(Date.now() - daysAgo * 86_400_000),
+      createdAt: new Date(Date.now() - daysAgo * 86_400_000),
+      ...overrides,
+    });
+  }
+
+  it("always drafts fresh instead of reusing a cached suggestedMessage, and tags the send with its own trigger", async () => {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([coldLead(60)]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.reactivated).toBe(1);
+    expect(r.checked).toBe(1);
+    expect(draftMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Marcus" }),
+      [],
+      expect.stringContaining("gone genuinely cold")
+    );
+    expect(send).toHaveBeenCalledWith("lead4", expect.any(String), expect.objectContaining({ trigger: DEAD_LEAD_ACTION }));
+  });
+
+  it("overwrites the stale cached draft (not just skips redrafting) when held for approval", async () => {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([coldLead(60)]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "medium", reason: "mentions a price" });
+    await runAutomationForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const call = p.lead.update.mock.calls.find((c: any) => c[0].where.id === "lead4");
+    expect(call).toBeDefined();
+    expect(call[0].data.suggestedMessage).not.toBe("A stale cached draft from before this lead went cold");
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({ businessId: "biz1" }),
+      "ai.hold",
+      expect.objectContaining({ meta: expect.objectContaining({ trigger: DEAD_LEAD_ACTION }) })
+    );
+  });
+
+  it("gives the human-neglect framing priority over reactivation for a lead that qualifies as both", async () => {
+    const both = coldLead(60, {
+      id: "lead5",
+      assignedToId: "user1",
+      conversations: [
+        {
+          channel: "email",
+          messages: [{ id: "z", direction: "inbound", body: "Still interested?", sentAt: new Date(Date.now() - 60 * 86_400_000), opened: false }],
+        },
+      ],
+    });
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([both]).mockResolvedValueOnce([both]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.checked).toBe(1); // counted once — never a double-send
+    expect(r.unanswered).toBe(1);
+    expect(r.reactivated).toBe(0); // the more urgent framing won, not reactivation
+    expect(send).toHaveBeenCalledWith("lead5", expect.any(String), expect.objectContaining({ trigger: "unanswered" }));
+  });
+
+  it("never queries for dead leads at all when the rule is turned off", async () => {
+    p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
+      where.action === "auto_send"
+        ? { enabled: true, triggerDays: 5 }
+        : where.action === DEAD_LEAD_ACTION
+          ? { enabled: false, triggerDays: 45 }
+          : { enabled: true, triggerHours: 24 }
+    );
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]); // silent, then unanswered — no third call
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.reactivated).toBe(0);
+    expect(p.lead.findMany).toHaveBeenCalledTimes(2);
+  });
+
+  it("respects a business-configured dead-lead day threshold instead of the 45-day default", async () => {
+    p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
+      where.action === "auto_send"
+        ? { enabled: true, triggerDays: 5 }
+        : where.action === DEAD_LEAD_ACTION
+          ? { enabled: true, triggerDays: 90 }
+          : { enabled: true, triggerHours: 24 }
+    );
+    p.lead.findMany.mockResolvedValue([]);
+    await runAutomationForBusiness("biz1");
+    const deadLeadsCall = p.lead.findMany.mock.calls[1][0];
+    const cutoff = deadLeadsCall.where.lastContacted.lte as Date;
+    const daysAgo = Math.round((Date.now() - cutoff.getTime()) / 86_400_000);
+    expect(daysAgo).toBe(90);
   });
 });

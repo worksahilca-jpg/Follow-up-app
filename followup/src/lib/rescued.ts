@@ -95,6 +95,8 @@ export function describeTrigger(trigger: string): string {
       return "workflow";
     case "silence":
       return "follow-up on silence";
+    case "dead_lead_reactivation":
+      return "reactivated a cold lead";
     default:
       return trigger;
   }

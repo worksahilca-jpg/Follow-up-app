@@ -74,4 +74,65 @@ describe("beforeSend", () => {
     expect(result.user!.ip_address).toBeUndefined();
     expect(result.user!.username).toBeUndefined();
   });
+
+  // research/audit/2026-09-09-seventh-pass-audit.md finding #1:
+  // recordAuthFailure()'s free-form `extra` bag reached Sentry with a live
+  // Twilio secret in it, unscrubbed — beforeSend only ever touched
+  // message/exception/breadcrumbs/request/user, never `extra` itself.
+  it("scrubs PII out of every string value in event.extra", () => {
+    const event = fakeEvent({
+      extra: { note: "called lead@example.com", count: 3, nested: { untouched: true } },
+    });
+    const result = beforeSend(event)!;
+    expect(result.extra!.note).toBe("called [redacted-email]");
+    expect(result.extra!.count).toBe(3);
+    expect(result.extra!.nested).toEqual({ untouched: true });
+  });
+
+  // research/audit/2026-09-09-seventh-pass-audit.md finding #1 (redaction
+  // half): a live per-business Twilio/webhook secret is the trailing path
+  // segment on a known, finite set of routes — redact it wherever it shows
+  // up in free-form text, not just in the one known request_path field.
+  it("redacts a live secret-bearing route segment out of any scrubbed text", () => {
+    const event = fakeEvent({
+      message: "signature check failed for /api/twilio/sms/abc123secret",
+      extra: { detail: "no business found for /api/webhooks/lead/xyz789secret" },
+    });
+    const result = beforeSend(event)!;
+    expect(result.message).toBe("signature check failed for /api/twilio/sms/[redacted]");
+    expect(result.extra!.detail).toBe("no business found for /api/webhooks/lead/[redacted]");
+  });
+
+  // research/audit/2026-09-09-seventh-pass-audit.md finding #2: Sentry's own
+  // automatic Next.js instrumentation (onRequestError -> contexts.nextjs.
+  // request_path) reports the raw request path plus its full query string —
+  // including e.g. GMAIL_PUSH_SECRET on the Gmail push webhook, or a
+  // Twilio/webhook secret as the trailing path segment — on any uncaught
+  // exception in any route. Neither app code nor beforeSend touched this
+  // field before this fix.
+  it("strips the query string and redacts a secret segment from contexts.nextjs.request_path", () => {
+    const event = fakeEvent({
+      contexts: { nextjs: { request_path: "/api/integrations/gmail/push?secret=live-push-secret" } },
+    });
+    const result = beforeSend(event)!;
+    expect((result.contexts!.nextjs as { request_path: string }).request_path).toBe(
+      "/api/integrations/gmail/push"
+    );
+  });
+
+  it("redacts a secret path segment in contexts.nextjs.request_path even with no query string", () => {
+    const event = fakeEvent({
+      contexts: { nextjs: { request_path: "/api/twilio/voice-agent-callback/abc123secret" } },
+    });
+    const result = beforeSend(event)!;
+    expect((result.contexts!.nextjs as { request_path: string }).request_path).toBe(
+      "/api/twilio/voice-agent-callback/[redacted]"
+    );
+  });
+
+  it("leaves other contexts untouched", () => {
+    const event = fakeEvent({ contexts: { runtime: { name: "node", version: "20.0.0" } } });
+    const result = beforeSend(event)!;
+    expect(result.contexts!.runtime).toEqual({ name: "node", version: "20.0.0" });
+  });
 });

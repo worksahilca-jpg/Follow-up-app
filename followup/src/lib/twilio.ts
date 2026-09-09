@@ -78,7 +78,16 @@ export function validateTwilioRequestSignature(
   signature: string | null
 ): boolean {
   const valid = candidateSignedUrls(request).some((url) => validateTwilioSignature(authToken, url, params, signature));
-  if (!valid) recordAuthFailure("twilio_signature", { path: new URL(request.url).pathname });
+  // Coarse route label only — every path here is /api/twilio/<kind>/[secret],
+  // so the trailing segment is always the live per-business secret itself.
+  // Dropping it (rather than reporting the full pathname) keeps this in line
+  // with recordAuthFailure()'s own contract: which check failed and which
+  // route, never a credential (research/audit/2026-09-09-seventh-pass-audit.md
+  // finding #1 — this call was putting the raw secret in Sentry's `extra`).
+  if (!valid) {
+    const route = new URL(request.url).pathname.replace(/\/[^/]+$/, "");
+    recordAuthFailure("twilio_signature", { route });
+  }
   return valid;
 }
 

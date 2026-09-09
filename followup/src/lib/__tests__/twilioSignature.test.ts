@@ -55,7 +55,11 @@ describe("Twilio signature validation", () => {
     const request = new Request("https://followupbase.io/api/twilio/sms/secret1", { method: "POST" });
     validateTwilioRequestSignature(TOKEN, request, params, "bogus");
     expect(recordAuthFailure).toHaveBeenCalledTimes(1);
-    expect(recordAuthFailure).toHaveBeenCalledWith("twilio_signature", { path: "/api/twilio/sms/secret1" });
+    // task (seventh-pass audit, finding #1): used to report the full path
+    // including the live per-business secret as its trailing segment; now
+    // only the coarse route survives.
+    expect(recordAuthFailure).toHaveBeenCalledWith("twilio_signature", { route: "/api/twilio/sms" });
+    expect(JSON.stringify(recordAuthFailure.mock.calls[0])).not.toMatch(/secret1/);
   });
 
   it("does not report a correctly signed request", () => {

@@ -459,7 +459,10 @@ export async function generateFollowUpMessage(
           "'Dear ...') or a sign-off/signature of any kind in the body — output only the body paragraph itself. " +
           "Write both the subject and the body in the same language as the lead's most recent message in the " +
           "conversation below — do not default to English unless that's the language they're actually writing " +
-          "in. This includes matching how they wrote it, not just which language it is: if they wrote in a " +
+          "in. If earlier messages in this conversation are in a different language than the most recent one " +
+          "(a lead who switched languages mid-thread, or contacted the business more than once in different " +
+          "languages), that earlier language is irrelevant here — only the most recent message decides. This " +
+          "includes matching how they wrote it, not just which language it is: if they wrote in a " +
           "romanized/Latin-script version of a language (e.g. Hindi or Punjabi typed in English letters, " +
           "sometimes called Hinglish), reply the same way in that same romanized style — do not switch to the " +
           "language's native script unless the lead did. Never invent facts: everything you state about the lead, their situation, their property or " +

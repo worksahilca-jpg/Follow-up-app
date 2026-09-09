@@ -55,6 +55,26 @@ describe("no-invention drafting", () => {
     expect(system).toMatch(/do not switch to the.*native script unless the lead did/);
   });
 
+  // Task #63 follow-up finding: the same live test lead's thread later grew
+  // to six inbound messages across five languages/scripts (the four from
+  // the original finding above, plus a native-script and then a romanized
+  // Gujarati message after the instant ack had already gone out) — the
+  // background scoring pass drafted its reply in plain English, ignoring
+  // the actual most recent (romanized Gujarati) message entirely. The
+  // "match the most recent message" instruction was already there; what
+  // was missing is telling the model to disregard every OTHER language in
+  // the thread when several are present, rather than leaving "most recent"
+  // to compete against everything else in the transcript.
+  it("instructs the model to disregard earlier messages' language when the most recent one differs", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "Your roof question", body: "I will confirm the roof details for you." }) } }],
+    });
+    await generateFollowUpMessage({ name: "Young Son", conversation });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/earlier messages.*(are|is) in a different language/i);
+    expect(system).toMatch(/only the most recent message decides/);
+  });
+
   // research/audit/2026-09-09-sixth-pass-audit.md finding #1 — same
   // reasoning as assessSendRisk's own test below: a voice-agent-channel
   // message must not be draftable as a confirmed fact just because it's

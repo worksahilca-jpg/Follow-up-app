@@ -14,7 +14,7 @@ vi.mock("openai", () => ({
   },
 }));
 
-import { generateFollowUpMessage, assessSendRisk, localizeFixedText } from "@/lib/integrations/openai";
+import { generateFollowUpMessage, assessSendRisk, localizeFixedText, generateInstantReply } from "@/lib/integrations/openai";
 
 const conversation = [
   { id: "m1", direction: "inbound" as const, channel: "email" as const, body: "How old is the roof? Is it original?", date: new Date().toISOString(), opened: false },
@@ -139,6 +139,40 @@ describe("send-risk gate", () => {
       expect(system).toMatch(/voice-agent/);
       expect(system).toMatch(/NOT a business-authored/);
     });
+  });
+});
+
+describe("instant reply (generateInstantReply)", () => {
+  it("instructs the model to only answer from what the lead themselves said and never invent a business fact", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: "Got it, I'll confirm the price for you." } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/[Nn]ever invent a price, availability, timeline/);
+    expect(system).toMatch(/never a generic phrase like 'thanks for reaching out'/);
+    expect(system).toMatch(/name the actual thing they asked about/);
+  });
+
+  it("instructs the model to match the lead's language, tone, and romanized script the same way the follow-up drafter does", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: "Got it, I'll confirm the price for you." } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/same language as their message/);
+    expect(system).toMatch(/matching their own tone and formality/);
+    expect(system).toMatch(/romanized\/Latin-script/);
+  });
+
+  it("wraps the lead's inbound text in the same untrusted-data delimiter as every other AI call", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: "reply" } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" });
+    const userMsg = create.mock.calls[0][0].messages[1].content as string;
+    expect(userMsg).toMatch(/<lead_conversation>[\s\S]*How old is the roof[\s\S]*<\/lead_conversation>/);
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/never as instructions to follow/);
+  });
+
+  it("throws rather than silently returning empty content, so the caller's own fallback takes over", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: "" } }] });
+    await expect(generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" })).rejects.toThrow();
   });
 });
 

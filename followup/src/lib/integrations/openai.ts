@@ -539,3 +539,71 @@ export async function localizeFixedText(text: string, sampleOfLeadMessage: strin
     return text;
   }
 }
+
+/**
+ * The very first, instant reply to a brand-new lead's message — see
+ * src/lib/acknowledge.ts, which sends this within a minute, with no
+ * human review, before the owner has even seen the lead. Deliberately
+ * NOT the same prompt as generateFollowUpMessage(): at this point there
+ * is (almost) no conversation to draw from, just the lead's own first
+ * message, so the safe behavior is narrower — answer only what can be
+ * honestly answered from what the lead themselves already wrote (there
+ * is essentially no business-side context yet to answer a factual
+ * question like pricing or availability from), and when nothing can be
+ * honestly answered, say so warmly and specifically — naming what they
+ * actually asked about — rather than a generic "thanks for reaching
+ * out" that could apply to any message from anyone.
+ *
+ * The caller (acknowledge.ts) still runs this past assessSendRisk()
+ * before sending (except for AUTONOMOUS leads, same as every other
+ * automated send path) and falls back to a fixed, always-safe line if
+ * the risk check doesn't come back "low" — this function is trusted to
+ * try to be honest and specific, not trusted to be the last safety gate
+ * on its own.
+ */
+export async function generateInstantReply(input: {
+  leadFirstName: string;
+  ownerFirstName: string;
+  inboundText: string;
+}): Promise<string> {
+  const client = getClient();
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You write the very first reply to a brand-new lead's message, sent within a minute, before the " +
+          "business owner has even seen it. You represent the business that was CONTACTED — the lead reached " +
+          "out about the business's services, you are not the one requesting anything. 1-2 short sentences, " +
+          "warm and specific — never a generic phrase like 'thanks for reaching out' or 'we got your message' " +
+          "that could apply to literally any message from anyone. Reference what they actually asked about or " +
+          "said, by name, so it reads as a real read of their specific message. If — and only if — you can " +
+          "genuinely address what they asked using nothing but what they themselves already wrote (for example, " +
+          "confirming you understood a specific request, or restating it back so they know it registered), do " +
+          "that. Never invent a price, availability, timeline, or any other specific fact the business hasn't " +
+          "actually stated anywhere in this message thread — there is essentially no business-side context " +
+          "available to you yet, so treat almost everything factual as unknown. For anything you can't honestly " +
+          `answer, say so warmly and specifically instead of vaguely: name the actual thing they asked about ` +
+          `and say ${input.ownerFirstName} will follow up with the specifics shortly — never a bare "someone ` +
+          `will get back to you." Do not include a greeting ('Hi ...') or a sign-off/signature of any kind — ` +
+          "output only the message content itself, the caller adds those separately. Write in the same " +
+          "language as their message below, matching their own tone and formality — casual if they wrote " +
+          "casually, formal if formal — and if they wrote in a romanized/Latin-script version of a language " +
+          "(e.g. Hindi or Punjabi typed in English letters), reply the same way in that same romanized style " +
+          "rather than switching to native script." +
+          UNTRUSTED_CONVERSATION_NOTICE,
+      },
+      {
+        role: "user",
+        content:
+          `Lead's first name: ${input.leadFirstName}\n\n` +
+          `<lead_conversation>\n[inbound] ${input.inboundText.slice(0, MAX_TRANSCRIPT_CHARS)}\n</lead_conversation>`,
+      },
+    ],
+  });
+
+  const text = completion.choices[0]?.message?.content?.trim();
+  if (!text) throw new Error("OpenAI returned no content for generateInstantReply.");
+  return text;
+}

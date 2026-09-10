@@ -540,8 +540,18 @@ export async function localizeFixedText(text: string, sampleOfLeadMessage: strin
     });
     const out = completion.choices[0]?.message?.content?.trim();
     // Guard against the model "helping": anything wildly longer than the
-    // template is not a translation, so fall back to the original.
-    if (!out || out.length > text.length * 2.5 + 40) return text;
+    // template is not a translation, so fall back to the original. Logged
+    // when it trips — task #63's live test shipped untranslated English
+    // to Spanish leads with nothing in the logs saying which step bailed;
+    // lengths only, never the text itself.
+    if (!out) {
+      console.warn(`localizeFixedText: empty model output, sending untranslated (template ${text.length} chars)`);
+      return text;
+    }
+    if (out.length > text.length * 2.5 + 40) {
+      console.warn(`localizeFixedText: output ${out.length} chars vs template ${text.length}, treating as not-a-translation and sending untranslated`);
+      return text;
+    }
     return out;
   } catch (err) {
     console.error("localizeFixedText failed, sending untranslated:", err);
@@ -594,8 +604,9 @@ export async function generateInstantReply(input: {
           "actually stated anywhere in this message thread — there is essentially no business-side context " +
           "available to you yet, so treat almost everything factual as unknown. For anything you can't honestly " +
           `answer, say so warmly and specifically instead of vaguely: name the actual thing they asked about ` +
-          `and say ${input.ownerFirstName} will follow up with the specifics shortly — never a bare "someone ` +
-          `will get back to you." Do not include a greeting ('Hi ...') or a sign-off/signature of any kind — ` +
+          `and say you will follow up with the specifics shortly — in the first person, because the message is ` +
+          `signed by ${input.ownerFirstName} and you are writing as them, so never refer to ${input.ownerFirstName} ` +
+          `in the third person — and never a bare "someone will get back to you." Do not include a greeting ('Hi ...') or a sign-off/signature of any kind — ` +
           "output only the message content itself, the caller adds those separately. Write in the same " +
           "language as their message below, matching their own tone and formality — casual if they wrote " +
           "casually, formal if formal — and if they wrote in a romanized/Latin-script version of a language " +

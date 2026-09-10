@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { generateInstantReply, assessSendRisk, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
+import { recordAudit } from "@/lib/audit";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -10,7 +11,7 @@ import { sendFollowUpToLead } from "@/lib/sending";
  * A brand-new lead's first message gets a real, specific reply within a
  * minute — answering what it honestly can from what the lead themselves
  * wrote, or saying so warmly by name ("I'll get you the exact price and
- * <owner> will follow up shortly") when it can't — on the channel they
+ * follow up shortly") when it can't — on the channel they
  * used, in the language and tone they wrote in. The substantive reply
  * still goes through the Assisted flow (drafted, approved by the owner)
  * once there's real business context to draw from; this only closes the
@@ -64,9 +65,26 @@ export type AckChannel = "email" | "text" | "whatsapp" | "instagram" | "messenge
 // fine to send with zero review the same way the old fixed template
 // was. Kept as a plain function (not a module-level constant) since it
 // depends on businessName/owner, which vary per business.
-function genericAckLine(businessName: string, ownerFirstName: string): string {
-  return `Thanks for reaching out to ${businessName} — I'll take a look and ${ownerFirstName} will follow up shortly.`;
+function genericAckLine(businessName: string): string {
+  // First person throughout: the email is signed by the owner
+  // (composeFollowUpEmail's sign-off), so "I" is them. The previous
+  // wording — "I'll take a look and <owner> will follow up shortly. Best,
+  // <owner>" — mixed first and third person for the same signer and read
+  // as filler; task #63's first two live leads both received it.
+  return `Thank you for contacting ${businessName}. I've received your message and will get back to you shortly.`;
 }
+
+/**
+ * What buildAckLine decided and why — `source` says whether the line is
+ * the model's specific reply or the always-safe generic one, `reason` is
+ * a short human-readable why (risk level + the risk check's own reason,
+ * "generation failed", …). Recorded to the AI audit trail on every send
+ * so a fallback that looks wrong on a real lead — task #63's live test
+ * shipped two generic English acknowledgements to Spanish leads with no
+ * record of which step had bailed — can be diagnosed from the lead page
+ * instead of from production logs nobody can reach.
+ */
+type AckLine = { line: string; source: "generated" | "fallback"; reason: string };
 
 /**
  * Builds the one line of substantive content the caller wraps into an
@@ -83,9 +101,9 @@ async function buildAckLine(input: {
   automationTier: string;
   inboundText: string;
   channel: AckChannel;
-}): Promise<string> {
-  const fallback = genericAckLine(input.businessName, input.ownerFirstName);
-  if (!input.inboundText.trim()) return fallback; // nothing specific to respond to
+}): Promise<AckLine> {
+  const fallback = genericAckLine(input.businessName);
+  if (!input.inboundText.trim()) return { line: fallback, source: "fallback", reason: "no inbound text" }; // nothing specific to respond to
 
   try {
     const reply = await generateInstantReply({
@@ -93,15 +111,16 @@ async function buildAckLine(input: {
       ownerFirstName: input.ownerFirstName,
       inboundText: input.inboundText,
     });
-    if (input.automationTier === "AUTONOMOUS") return reply; // same skip every other autonomous send path takes
+    if (input.automationTier === "AUTONOMOUS") return { line: reply, source: "generated", reason: "autonomous, risk check skipped" }; // same skip every other autonomous send path takes
     const risk = await assessSendRisk(
       { conversation: [{ id: "inbound", direction: "inbound", channel: input.channel, body: input.inboundText, date: new Date().toISOString() }] },
       reply
     );
-    return risk.riskLevel === "low" ? reply : fallback;
+    if (risk.riskLevel === "low") return { line: reply, source: "generated", reason: "risk low" };
+    return { line: fallback, source: "fallback", reason: `risk ${risk.riskLevel}: ${risk.reason}`.slice(0, 160) };
   } catch (err) {
     console.error("Instant reply generation failed, falling back to the generic acknowledgement:", err);
-    return fallback;
+    return { line: fallback, source: "fallback", reason: "generation failed" };
   }
 }
 
@@ -162,7 +181,7 @@ export async function acknowledgeNewLead(
     const owner = await getSenderFirstName(lead.businessId);
     const leadFirstName = lead.name.split(" ")[0];
 
-    const line = await buildAckLine({
+    const decision = await buildAckLine({
       leadFirstName,
       ownerFirstName: owner,
       businessName,
@@ -171,20 +190,24 @@ export async function acknowledgeNewLead(
       channel: input.channel,
     });
 
-    // The lead's own message decides the language of everything around
-    // the line too — the email greeting/sign-off frame, or the "Hi! "
-    // prefix on other channels. localizeFixedText returns its input
-    // untouched for an English lead (or with nothing to sample), so the
-    // common case reads exactly as before.
+    // The lead's own message decides the language of everything that
+    // goes out: a generated reply is already in their language, but the
+    // generic fallback line is English and has to be translated (email
+    // path: here, since composeFollowUpEmail localizes only its frame;
+    // other channels: below, as one string with the "Hi! " prefix). The
+    // email greeting/sign-off frame and the default subject follow too.
+    // localizeFixedText returns its input untouched for an English lead
+    // (or with nothing to sample), so the common case reads as before.
     const languageSample = input.inboundText ?? "";
     let body: string;
     let subject: string | undefined;
     if (input.channel === "email") {
+      const line = decision.source === "fallback" ? await localizeFixedText(decision.line, languageSample) : decision.line;
       body = await composeFollowUpEmail(leadFirstName, lead.businessId, line, { languageSample });
       const cleanSubject = input.emailSubject?.replace(/^(re|fwd?):\s*/i, "").trim();
-      subject = cleanSubject ? `Re: ${cleanSubject}` : await localizeFixedText(`Thanks for reaching out to ${businessName}`, languageSample);
+      subject = cleanSubject ? `Re: ${cleanSubject}` : await localizeFixedText(`Thank you for contacting ${businessName}`, languageSample);
     } else {
-      body = await localizeFixedText(`Hi! ${line}`, languageSample);
+      body = await localizeFixedText(`Hi! ${decision.line}`, languageSample);
     }
 
     const result = await sendFollowUpToLead(leadId, body, {
@@ -202,6 +225,14 @@ export async function acknowledgeNewLead(
       console.error(`Instant acknowledgement failed for lead ${leadId}: ${result.message}`);
       return { sent: false, reason: result.message };
     }
+    // Identifiers and the decision only — never the message text (see
+    // recordAudit's own contract). sendFollowUpToLead already logs the
+    // generic "ai.send"; this is the ack-specific why.
+    void recordAudit({ businessId: lead.businessId, userId: null }, "ai.instant_ack", {
+      targetType: "lead",
+      targetId: lead.id,
+      meta: { channel: input.channel, source: decision.source, reason: decision.reason, localized: languageSample.trim().length > 0 },
+    });
     return { sent: true };
   } catch (err) {
     // Never let the acknowledgement break the webhook that captured the lead.

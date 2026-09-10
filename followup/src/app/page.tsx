@@ -146,6 +146,30 @@ export default function LandingPage() {
               another system.
             </p>
           </Reveal>
+
+          <Reveal delay={0.1} className="mt-14 grid gap-6 sm:grid-cols-3">
+            {[
+              { stat: "79%", copy: "of leads never convert — mostly from poor follow-up, not poor interest" },
+              { stat: "63%", copy: "of companies never respond to an inbound lead at all" },
+              { stat: "47 hrs", copy: "average time to first response, even though the first 5 minutes matter most" },
+            ].map(({ stat, copy }) => (
+              <div
+                key={stat}
+                className="rounded-2xl p-6"
+                style={{ background: "var(--cream)", border: "1px solid rgba(24,20,15,0.1)" }}
+              >
+                <p style={{ fontWeight: 800, fontSize: 30, letterSpacing: "-0.02em", color: "var(--ink)" }}>
+                  {stat}
+                </p>
+                <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+                  {copy}
+                </p>
+              </div>
+            ))}
+          </Reveal>
+          <p className="mt-4 text-xs" style={{ color: "var(--ink-soft)", opacity: 0.7 }}>
+            Industry-wide lead-response benchmarks, not FollowUp&apos;s own results.
+          </p>
         </div>
       </section>
 

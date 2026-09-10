@@ -29,8 +29,6 @@ vi.mock("@/lib/sender", () => ({
   composeFollowUpEmail: vi.fn(async (first: string, _b: string, body: string) => `Hi ${first},\n\n${body}\n\nBest,\nManoj`),
 }));
 vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ success: true })) }));
-const { recordAudit } = vi.hoisted(() => ({ recordAudit: vi.fn(async () => {}) }));
-vi.mock("@/lib/audit", () => ({ recordAudit }));
 
 import { prisma } from "@/lib/db";
 import { sendFollowUpToLead } from "@/lib/sending";
@@ -64,7 +62,6 @@ beforeEach(() => {
   localize.mockImplementation(async (t: string) => t);
   generateReply.mockResolvedValue("Got it — I'll get you the exact price and Manoj will follow up shortly.");
   assessRisk.mockResolvedValue({ riskLevel: "low", reason: "" });
-  recordAudit.mockClear();
 });
 
 describe("instant acknowledgement", () => {
@@ -207,24 +204,36 @@ describe("instant acknowledgement", () => {
     });
   });
 
-  it("records which line went out and why to the audit trail — never the text", async () => {
+  // The decision is merged into sendFollowUpToLead's own "ai.send" audit
+  // event (extraAuditMeta), not logged as a separate event — task #63's
+  // live test found two rows for one send when this was a standalone
+  // recordAudit call: the generic "ai.send" the UI knows how to render,
+  // and an undetailed second line for an action name it didn't recognize.
+  it("passes which line went out and why as extraAuditMeta — never the message text", async () => {
     assessRisk.mockResolvedValue({ riskLevel: "medium", reason: "states availability the business never confirmed" });
     await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
-    expect(recordAudit).toHaveBeenCalledWith({ businessId: "biz1", userId: null }, "ai.instant_ack", {
-      targetType: "lead",
-      targetId: "lead1",
-      meta: { channel: "text", source: "fallback", reason: "risk medium: states availability the business never confirmed", localized: true },
-    });
-    const details = (recordAudit.mock.calls[0] as unknown[])[2] as { meta: Record<string, unknown> };
-    const meta = details.meta;
-    expect(JSON.stringify(meta)).not.toContain("Thank you for contacting");
+    expect(send).toHaveBeenCalledWith(
+      "lead1",
+      expect.any(String),
+      expect.objectContaining({
+        extraAuditMeta: {
+          source: "fallback",
+          reason: "risk medium: states availability the business never confirmed",
+          localized: true,
+        },
+      })
+    );
+    const [, , opts] = send.mock.calls[0];
+    expect(JSON.stringify(opts.extraAuditMeta)).not.toContain("Thank you for contacting");
   });
 
-  it("audits a generated reply as such", async () => {
+  it("passes a generated reply's decision as such", async () => {
     await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
-    expect(recordAudit).toHaveBeenCalledWith(expect.anything(), "ai.instant_ack", expect.objectContaining({
-      meta: expect.objectContaining({ source: "generated", reason: "risk low" }),
-    }));
+    expect(send).toHaveBeenCalledWith(
+      "lead1",
+      expect.any(String),
+      expect.objectContaining({ extraAuditMeta: expect.objectContaining({ source: "generated", reason: "risk low" }) })
+    );
   });
 
   it("never sends twice: an already-acknowledged lead is skipped before any work", async () => {

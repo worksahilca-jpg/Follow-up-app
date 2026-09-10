@@ -167,6 +167,12 @@ export async function sendFollowUpToLead(
     emailInReplyTo?: string;
     // Attribution for the rescued-leads report (see FollowUp.trigger).
     trigger?: "instant_ack" | "unanswered" | "silence" | "sequence" | "manual" | "dead_lead_reactivation";
+    // Extra fields merged into this send's own "ai.send" audit event —
+    // e.g. the instant ack's generated-vs-fallback decision (see
+    // src/lib/acknowledge.ts). Never message text; same contract as
+    // every other audit meta. Kept separate from `trigger` since it's
+    // caller-specific detail, not something every automated send has.
+    extraAuditMeta?: Record<string, unknown>;
   } = {}
 ): Promise<{ success: boolean; message?: string }> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
@@ -293,7 +299,7 @@ export async function sendFollowUpToLead(
     void recordAudit({ businessId: lead.businessId, userId: null }, "ai.send", {
       targetType: "lead",
       targetId: lead.id,
-      meta: { channel, trigger: options.trigger ?? "silence", length: body.length },
+      meta: { channel, trigger: options.trigger ?? "silence", length: body.length, ...options.extraAuditMeta },
     });
   }
 

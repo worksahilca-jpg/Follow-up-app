@@ -18,13 +18,36 @@ const ACTION_COPY: Record<string, (meta: Record<string, unknown> | null) => { la
   "lead.send": () => ({ label: "You sent a message", detail: "Reviewed and sent by your team" }),
   "ai.send": (meta) => ({
     label: "FollowUp sent a message automatically",
-    detail: describeTrigger(meta, "sent"),
+    detail: [describeTrigger(meta, "sent"), describeAckOutcome(meta)].filter(Boolean).join(" ") || undefined,
   }),
   "ai.hold": (meta) => ({
     label: "FollowUp drafted a reply and held it for review",
     detail: (meta?.reason as string) || describeTrigger(meta, "held"),
   }),
 };
+
+/**
+ * Task #63's live test kept showing a generic acknowledgement to a
+ * clearly-engaged lead, with nothing on this page saying why. The instant
+ * ack (src/lib/acknowledge.ts) now merges its own decision into this same
+ * "ai.send" event (source: "generated" | "fallback", reason) — this turns
+ * that decision into the one sentence a business owner actually needs:
+ * did the AI answer specifically, or fall back to the safe line, and why.
+ * Silent when a specific reply went out — that's the expected case and
+ * doesn't need explaining.
+ */
+export function describeAckOutcome(meta: Record<string, unknown> | null): string | undefined {
+  if (meta?.trigger !== "instant_ack" || meta?.source !== "fallback") return undefined;
+  const reason = (meta?.reason as string) || "";
+  if (reason === "generation failed") return "Used the safe default reply — the specific one failed to generate.";
+  if (reason === "no inbound text") return "Used the safe default reply — nothing specific to respond to yet.";
+  const riskMatch = /^risk \w+:\s*(.*)$/.exec(reason);
+  if (riskMatch) {
+    const explanation = riskMatch[1];
+    return `Held back the specific reply as not safe enough to send unreviewed${explanation ? ` — ${explanation}` : ""}.`;
+  }
+  return "Used the safe default reply.";
+}
 
 function describeTrigger(meta: Record<string, unknown> | null, verb: "sent" | "held"): string | undefined {
   const trigger = meta?.trigger as string | undefined;

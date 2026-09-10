@@ -131,4 +131,34 @@ describe("sendFollowUpToLead — AI audit trail", () => {
     expect(result.success).toBe(true);
     expect(audit).not.toHaveBeenCalled();
   });
+
+  // task #63 follow-up: a caller-specific decision (the instant ack's
+  // generated-vs-fallback choice, src/lib/acknowledge.ts) is merged into
+  // this same event via extraAuditMeta — not logged as its own action —
+  // so a lead never ends up with two audit rows for one send.
+  it("merges extraAuditMeta into the same ai.send event, alongside the standard fields", async () => {
+    const result = await sendFollowUpToLead("lead1", "Thanks for reaching out", {
+      channel: "email",
+      automated: true,
+      trigger: "instant_ack",
+      extraAuditMeta: { source: "fallback", reason: "risk medium: states availability", localized: true },
+    });
+    expect(result.success).toBe(true);
+    expect(audit).toHaveBeenCalledTimes(1);
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({ businessId: "biz1" }),
+      "ai.send",
+      expect.objectContaining({
+        targetId: "lead1",
+        meta: {
+          channel: "email",
+          trigger: "instant_ack",
+          length: "Thanks for reaching out".length,
+          source: "fallback",
+          reason: "risk medium: states availability",
+          localized: true,
+        },
+      })
+    );
+  });
 });

@@ -27,9 +27,19 @@ import { sendFollowUpToLead } from "@/lib/sending";
  * assessSendRisk — the same gate a normal automated follow-up passes —
  * before being sent. If generation fails, the risk check isn't "low," or
  * there's no OPENAI_API_KEY, this falls back to a fixed, always-safe
- * line (still run through localizeFixedText) rather than holding the
- * very first touch for approval — delaying it defeats the point of
- * "instant," and the fallback line states no fact about the business.
+ * line rather than holding the very first touch for approval — delaying
+ * it defeats the point of "instant," and the fallback line states no
+ * fact about the business.
+ *
+ * Language (task #63 live-test finding): the outgoing message is
+ * localized as a whole, greeting/sign-off included — not just the
+ * middle line. The first real Spanish test lead got "Hi Lucía, <English
+ * fallback> Best, Sahil": the fallback was localized on its own while
+ * composeFollowUpEmail wrapped it in a fixed English frame, and the
+ * SMS/DM path glued an English "Hi! " onto whatever came back. Now the
+ * email frame follows the lead's language (see src/lib/sender.ts) and
+ * the non-email "Hi! <line>" is localized as one string, so a fallback
+ * and a generated reply both go out entirely in the lead's language.
  *
  * Guarantees, each enforced below and each a reason this returns without
  * sending:
@@ -61,7 +71,8 @@ function genericAckLine(businessName: string, ownerFirstName: string): string {
 /**
  * Builds the one line of substantive content the caller wraps into an
  * email (composeFollowUpEmail adds the greeting/sign-off) or sends
- * as-is with a short "Hi! " prefix for every other channel. See this
+ * with a short "Hi! " prefix for every other channel — either way
+ * localized to the lead's language by the caller, not here. See this
  * file's own header comment for the safety reasoning; this function is
  * where that reasoning is actually implemented.
  */
@@ -73,7 +84,7 @@ async function buildAckLine(input: {
   inboundText: string;
   channel: AckChannel;
 }): Promise<string> {
-  const fallback = await localizeFixedText(genericAckLine(input.businessName, input.ownerFirstName), input.inboundText);
+  const fallback = genericAckLine(input.businessName, input.ownerFirstName);
   if (!input.inboundText.trim()) return fallback; // nothing specific to respond to
 
   try {
@@ -160,14 +171,20 @@ export async function acknowledgeNewLead(
       channel: input.channel,
     });
 
+    // The lead's own message decides the language of everything around
+    // the line too — the email greeting/sign-off frame, or the "Hi! "
+    // prefix on other channels. localizeFixedText returns its input
+    // untouched for an English lead (or with nothing to sample), so the
+    // common case reads exactly as before.
+    const languageSample = input.inboundText ?? "";
     let body: string;
     let subject: string | undefined;
     if (input.channel === "email") {
-      body = await composeFollowUpEmail(leadFirstName, lead.businessId, line);
+      body = await composeFollowUpEmail(leadFirstName, lead.businessId, line, { languageSample });
       const cleanSubject = input.emailSubject?.replace(/^(re|fwd?):\s*/i, "").trim();
-      subject = cleanSubject ? `Re: ${cleanSubject}` : `Thanks for reaching out to ${businessName}`;
+      subject = cleanSubject ? `Re: ${cleanSubject}` : await localizeFixedText(`Thanks for reaching out to ${businessName}`, languageSample);
     } else {
-      body = `Hi! ${line}`;
+      body = await localizeFixedText(`Hi! ${line}`, languageSample);
     }
 
     const result = await sendFollowUpToLead(leadId, body, {

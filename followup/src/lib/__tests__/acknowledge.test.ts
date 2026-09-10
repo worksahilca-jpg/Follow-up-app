@@ -25,7 +25,7 @@ vi.mock("@/lib/integrations/openai", () => ({
   assessSendRisk: vi.fn(async () => ({ riskLevel: "low", reason: "" })),
 }));
 vi.mock("@/lib/sender", () => ({
-  getSenderFirstName: vi.fn(async () => "Manoj"),
+  latestInboundText: vi.fn(() => undefined), getSenderFirstName: vi.fn(async () => "Manoj"),
   composeFollowUpEmail: vi.fn(async (first: string, _b: string, body: string) => `Hi ${first},\n\n${body}\n\nBest,\nManoj`),
 }));
 vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ success: true })) }));
@@ -112,18 +112,19 @@ describe("instant acknowledgement", () => {
     expect(body).toContain("Thanks for reaching out to MJ Homes");
   });
 
-  // Task #63: verifies the actual code path a non-English lead goes
-  // through for the fallback line specifically (the generated-reply path
-  // itself is covered by prompts.test.ts's own language/tone assertions
-  // on generateInstantReply's prompt). This is deliberately NOT a
-  // substitute for a real end-to-end test with an actual non-English
-  // lead and native-speaker review of the output — it can't be, without
-  // a live model call and a real speaker to judge it — but it does prove
-  // the fallback line is handed the lead's real inbound text for
-  // translation, and whatever comes back is sent unmodified.
-  it("hands the lead's real inbound text to the fallback localizer when falling back, and sends back whatever it returns", async () => {
+  // Task #63 (live-test finding): the whole outgoing text — "Hi! " prefix
+  // included — is handed to the localizer with the lead's real inbound
+  // message as the sample, and whatever comes back is sent unmodified.
+  // The earlier version of this test asserted "Hi! ¡Hola! Gracias…" — an
+  // English "Hi!" glued onto a Spanish line — which is exactly the shape
+  // the first real Spanish lead received (English frame around an
+  // in-language line). This is still not a substitute for a real
+  // end-to-end test with a native speaker judging the output; it proves
+  // the plumbing, not the translation.
+  it("localizes the entire fallback text (prefix included) against the lead's real inbound message, and sends what comes back", async () => {
     generateReply.mockRejectedValue(new Error("rate limited"));
-    localize.mockImplementationOnce(async (_template: string, sample: string) => {
+    localize.mockImplementationOnce(async (text: string, sample: string) => {
+      expect(text).toBe("Hi! Thanks for reaching out to MJ Homes — I'll take a look and Manoj will follow up shortly.");
       expect(sample).toBe("Hola, ¿todavía tienen la casa disponible?");
       return "¡Hola! Gracias por contactar a MJ Homes — lo revisaré y Manoj te responderá pronto.";
     });
@@ -133,9 +134,36 @@ describe("instant acknowledgement", () => {
       inboundAt: new Date(),
     });
     expect(r.sent).toBe(true);
-    expect(localize).toHaveBeenCalledWith(expect.any(String), "Hola, ¿todavía tienen la casa disponible?");
+    expect(localize).toHaveBeenCalledTimes(1);
     const [, body] = send.mock.calls[0];
-    expect(body).toBe("Hi! ¡Hola! Gracias por contactar a MJ Homes — lo revisaré y Manoj te responderá pronto.");
+    expect(body).toBe("¡Hola! Gracias por contactar a MJ Homes — lo revisaré y Manoj te responderá pronto.");
+  });
+
+  it("localizes a generated (already in-language) reply's prefix too, rather than gluing an English 'Hi!' onto it", async () => {
+    generateReply.mockResolvedValue("Con gusto — Manoj te enviará el precio exacto en breve.");
+    localize.mockImplementationOnce(async (text: string) => {
+      expect(text).toBe("Hi! Con gusto — Manoj te enviará el precio exacto en breve.");
+      return "¡Hola! Con gusto — Manoj te enviará el precio exacto en breve.";
+    });
+    await acknowledgeNewLead("lead1", {
+      channel: "whatsapp",
+      inboundText: "Hola, ¿cuánto cuesta?",
+      inboundAt: new Date(),
+    });
+    const [, body] = send.mock.calls[0];
+    expect(body).toBe("¡Hola! Con gusto — Manoj te enviará el precio exacto en breve.");
+  });
+
+  it("passes the lead's inbound text to composeFollowUpEmail as the language sample for the email frame", async () => {
+    const { composeFollowUpEmail } = await import("@/lib/sender");
+    await acknowledgeNewLead("lead1", {
+      channel: "email",
+      inboundText: "Hola, ¿todavía tienen la casa disponible?",
+      inboundAt: new Date(),
+    });
+    expect(composeFollowUpEmail).toHaveBeenCalledWith("Young", "biz1", expect.any(String), {
+      languageSample: "Hola, ¿todavía tienen la casa disponible?",
+    });
   });
 
   it("never sends twice: an already-acknowledged lead is skipped before any work", async () => {

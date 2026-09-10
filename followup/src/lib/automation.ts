@@ -29,7 +29,7 @@
 
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
-import { composeFollowUpEmail } from "@/lib/sender";
+import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { requireActiveBilling } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
@@ -352,7 +352,9 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           : undefined;
         const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples, messageHint);
         subject = draft.subject;
-        message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body);
+        message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
+          languageSample: latestInboundText(conversation),
+        });
       }
 
       // AUTONOMOUS skips the risk check entirely — that's the whole point

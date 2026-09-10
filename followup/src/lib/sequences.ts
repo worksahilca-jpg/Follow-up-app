@@ -22,7 +22,7 @@
 
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
-import { composeFollowUpEmail } from "@/lib/sender";
+import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
 import { requireActiveBilling } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
@@ -430,7 +430,9 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           channel === "email" ? step.messageHint ?? undefined : nonEmailStepHint(step.messageHint)
         );
         const message =
-          channel === "email" ? await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft.body) : draft.body;
+          channel === "email"
+            ? await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft.body, { languageSample: latestInboundText(conversation) })
+            : draft.body;
         const result = await sendFollowUpToLead(lead.id, message, {
           automated: true,
           trigger: "sequence",

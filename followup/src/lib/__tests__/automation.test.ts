@@ -18,7 +18,7 @@ vi.mock("@/lib/integrations/openai", () => ({
   generateFollowUpMessage: vi.fn(async () => ({ subject: "Checking in", body: "Just checking in on your question." })),
   assessSendRisk: vi.fn(),
 }));
-vi.mock("@/lib/sender", () => ({ composeFollowUpEmail: vi.fn(async (_f: string, _b: string, body: string) => `Hi,\n\n${body}`) }));
+vi.mock("@/lib/sender", () => ({ latestInboundText: vi.fn(() => undefined), composeFollowUpEmail: vi.fn(async (_f: string, _b: string, body: string) => `Hi,\n\n${body}`) }));
 vi.mock("@/lib/sending", () => ({
   sendFollowUpToLead: vi.fn(async () => ({ success: true })),
   // task #86: automation.ts now passes this explicitly instead of relying

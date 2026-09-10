@@ -8,7 +8,7 @@
 
 import { prisma } from "@/lib/db";
 import { scoreLead, generateFollowUpMessage } from "@/lib/integrations/openai";
-import { composeFollowUpEmail } from "@/lib/sender";
+import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { getVoiceSamples } from "@/lib/voice";
 import type { Message } from "@/lib/types";
 import type { Priority as DbPriority, Prisma } from "@prisma/client";
@@ -51,7 +51,9 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     getVoiceSamples(lead.businessId),
   ]);
   const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
-  const suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body);
+  const suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
+    languageSample: latestInboundText(conversation),
+  });
 
   const newPriority = priorityFromScore(scoreResult.score);
   // "Handoff" — the explicit "this one's ready, go close it" moment the

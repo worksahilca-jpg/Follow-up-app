@@ -3,7 +3,7 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
-import { composeFollowUpEmail } from "@/lib/sender";
+import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { getVoiceSamples } from "@/lib/voice";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import type { Message } from "@/lib/types";
@@ -47,7 +47,9 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   try {
     const voiceSamples = await getVoiceSamples(lead.businessId);
     const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
-    const newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body);
+    const newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
+      languageSample: latestInboundText(conversation),
+    });
     await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: newMessage, suggestedSubject: draft.subject } });
     return NextResponse.json({ success: true, message: newMessage, subject: draft.subject });
   } catch (err) {

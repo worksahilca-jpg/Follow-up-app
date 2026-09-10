@@ -12,7 +12,7 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 vi.mock("@/lib/integrations/openai", () => ({ generateFollowUpMessage: vi.fn(async () => ({ subject: "Following up", body: "draft" })) }));
-vi.mock("@/lib/sender", () => ({ composeFollowUpEmail: vi.fn(async (_f: string, _b: string, body: string) => body) }));
+vi.mock("@/lib/sender", () => ({ latestInboundText: vi.fn(() => undefined), composeFollowUpEmail: vi.fn(async (_f: string, _b: string, body: string) => body) }));
 vi.mock("@/lib/sending", () => ({
   sendFollowUpToLead: vi.fn(async () => ({ success: true })),
   // Defaults to "nothing to fall back to" so every existing test's EMAIL

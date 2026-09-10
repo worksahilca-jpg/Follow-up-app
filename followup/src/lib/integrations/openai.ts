@@ -540,8 +540,18 @@ export async function localizeFixedText(text: string, sampleOfLeadMessage: strin
     });
     const out = completion.choices[0]?.message?.content?.trim();
     // Guard against the model "helping": anything wildly longer than the
-    // template is not a translation, so fall back to the original.
-    if (!out || out.length > text.length * 2.5 + 40) return text;
+    // template is not a translation, so fall back to the original. Logged
+    // when it trips — task #63's live test shipped untranslated English
+    // to Spanish leads with nothing in the logs saying which step bailed;
+    // lengths only, never the text itself.
+    if (!out) {
+      console.warn(`localizeFixedText: empty model output, sending untranslated (template ${text.length} chars)`);
+      return text;
+    }
+    if (out.length > text.length * 2.5 + 40) {
+      console.warn(`localizeFixedText: output ${out.length} chars vs template ${text.length}, treating as not-a-translation and sending untranslated`);
+      return text;
+    }
     return out;
   } catch (err) {
     console.error("localizeFixedText failed, sending untranslated:", err);

@@ -29,6 +29,8 @@ vi.mock("@/lib/sender", () => ({
   composeFollowUpEmail: vi.fn(async (first: string, _b: string, body: string) => `Hi ${first},\n\n${body}\n\nBest,\nManoj`),
 }));
 vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ success: true })) }));
+const { recordAudit } = vi.hoisted(() => ({ recordAudit: vi.fn(async () => {}) }));
+vi.mock("@/lib/audit", () => ({ recordAudit }));
 
 import { prisma } from "@/lib/db";
 import { sendFollowUpToLead } from "@/lib/sending";
@@ -62,6 +64,7 @@ beforeEach(() => {
   localize.mockImplementation(async (t: string) => t);
   generateReply.mockResolvedValue("Got it — I'll get you the exact price and Manoj will follow up shortly.");
   assessRisk.mockResolvedValue({ riskLevel: "low", reason: "" });
+  recordAudit.mockClear();
 });
 
 describe("instant acknowledgement", () => {
@@ -164,6 +167,64 @@ describe("instant acknowledgement", () => {
     expect(composeFollowUpEmail).toHaveBeenCalledWith("Young", "biz1", expect.any(String), {
       languageSample: "Hola, ¿todavía tienen la casa disponible?",
     });
+  });
+
+  // Regression from the first #63 fix: composeFollowUpEmail localizes
+  // only its greeting/sign-off frame, so on the email path the generic
+  // English fallback line itself has to be translated before it goes in
+  // — otherwise a Spanish lead gets a Spanish frame around an English
+  // sentence, which is what the second live test would have produced.
+  it("on the email path, translates the fallback line itself before framing it", async () => {
+    generateReply.mockRejectedValue(new Error("rate limited"));
+    localize.mockImplementation(async (text: string, sample: string) => {
+      if (text.startsWith("Thanks for reaching out to MJ Homes")) {
+        expect(sample).toBe("Hola, ¿todavía tienen la casa disponible?");
+        return "Gracias por contactar a MJ Homes — lo revisaré y Manoj te responderá pronto.";
+      }
+      return text;
+    });
+    const { composeFollowUpEmail } = await import("@/lib/sender");
+    await acknowledgeNewLead("lead1", {
+      channel: "email",
+      inboundText: "Hola, ¿todavía tienen la casa disponible?",
+      inboundAt: new Date(),
+    });
+    expect(composeFollowUpEmail).toHaveBeenCalledWith(
+      "Young",
+      "biz1",
+      "Gracias por contactar a MJ Homes — lo revisaré y Manoj te responderá pronto.",
+      { languageSample: "Hola, ¿todavía tienen la casa disponible?" }
+    );
+  });
+
+  it("does not re-translate a generated reply on the email path (it's already in the lead's language)", async () => {
+    generateReply.mockResolvedValue("Con gusto — Manoj te enviará el precio exacto en breve.");
+    const { composeFollowUpEmail } = await import("@/lib/sender");
+    await acknowledgeNewLead("lead1", { channel: "email", inboundText: "Hola, ¿cuánto cuesta?", inboundAt: new Date() });
+    expect(localize).not.toHaveBeenCalledWith("Con gusto — Manoj te enviará el precio exacto en breve.", expect.any(String));
+    expect(composeFollowUpEmail).toHaveBeenCalledWith("Young", "biz1", "Con gusto — Manoj te enviará el precio exacto en breve.", {
+      languageSample: "Hola, ¿cuánto cuesta?",
+    });
+  });
+
+  it("records which line went out and why to the audit trail — never the text", async () => {
+    assessRisk.mockResolvedValue({ riskLevel: "medium", reason: "states availability the business never confirmed" });
+    await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
+    expect(recordAudit).toHaveBeenCalledWith({ businessId: "biz1", userId: null }, "ai.instant_ack", {
+      targetType: "lead",
+      targetId: "lead1",
+      meta: { channel: "text", source: "fallback", reason: "risk medium: states availability the business never confirmed", localized: true },
+    });
+    const details = (recordAudit.mock.calls[0] as unknown[])[2] as { meta: Record<string, unknown> };
+    const meta = details.meta;
+    expect(JSON.stringify(meta)).not.toContain("Thanks for reaching out");
+  });
+
+  it("audits a generated reply as such", async () => {
+    await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
+    expect(recordAudit).toHaveBeenCalledWith(expect.anything(), "ai.instant_ack", expect.objectContaining({
+      meta: expect.objectContaining({ source: "generated", reason: "risk low" }),
+    }));
   });
 
   it("never sends twice: an already-acknowledged lead is skipped before any work", async () => {

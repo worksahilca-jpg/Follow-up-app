@@ -360,6 +360,19 @@ model Message {
   externalId     String?      @unique // Gmail message id, for idempotent sync
   sentAt         DateTime     @default(now())
 
+  // Twilio delivery status for an outbound text/WhatsApp send — set from
+  // Twilio's own MessageStatus callback (queued/sent/delivered/undelivered/
+  // failed), not from the synchronous send response, which only confirms
+  // Twilio *accepted* the message, not that a carrier actually delivered it.
+  // Null for every message that isn't an SMS/WhatsApp send with a
+  // StatusCallback configured (email, Instagram, inbound messages, sends
+  // made before this shipped) — absence means "not tracked," not "failed."
+  // See src/app/api/twilio/status/[secret]/route.ts.
+  deliveryStatus       String?
+  deliveryErrorCode    String?
+  deliveryErrorMessage String?
+  deliveryUpdatedAt    DateTime?
+
   // Set only for an outbound message FollowUp captured but didn't send
   // itself — e.g. "instagram_direct" / "messenger_direct" for a reply
   // Meta's own Business AI (or a teammate using the native Instagram/

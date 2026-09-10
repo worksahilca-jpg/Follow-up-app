@@ -50,6 +50,17 @@ export function canonicalRequestUrl(request: Request): string {
 }
 
 /**
+ * StatusCallback URL for an outbound SMS/WhatsApp send — same
+ * appUrl()-based construction as recordingStatusCallback in
+ * src/app/api/twilio/voice/[secret]/route.ts, pointed at the delivery-
+ * status webhook instead. Twilio POSTs here every time a message's
+ * status changes (queued → sent → delivered/undelivered/failed).
+ */
+function statusCallbackUrl(secret: string): string {
+  return `${appUrl()}/api/twilio/status/${secret}`;
+}
+
+/**
  * Every URL Twilio might legitimately have signed this request against.
  * The production domain 308-redirects apex → www (Vercel's domain
  * config), and Twilio follows redirects and signs against the URL it
@@ -467,13 +478,14 @@ export async function sendSms(
 ): Promise<{ success: boolean; message?: string; sid?: string }> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { twilioAccountSid: true, twilioAuthToken: true, twilioPhoneNumber: true },
+    select: { twilioAccountSid: true, twilioAuthToken: true, twilioPhoneNumber: true, twilioSecret: true },
   });
   if (!business?.twilioAccountSid || !business.twilioAuthToken || !business.twilioPhoneNumber) {
     return { success: false, message: "Twilio isn't fully connected yet — check Settings → Phone (SMS + calls)." };
   }
 
   const params = new URLSearchParams({ To: to, From: business.twilioPhoneNumber, Body: body });
+  if (business.twilioSecret) params.set("StatusCallback", statusCallbackUrl(business.twilioSecret));
   const auth = Buffer.from(`${business.twilioAccountSid}:${business.twilioAuthToken}`).toString("base64");
 
   const res = await fetch(
@@ -528,6 +540,7 @@ export async function sendWhatsApp(
       twilioAuthToken: true,
       whatsappPhoneNumber: true,
       whatsappTemplateSid: true,
+      twilioSecret: true,
     },
   });
   if (!business?.twilioAccountSid || !business.twilioAuthToken || !business.whatsappPhoneNumber) {
@@ -536,9 +549,11 @@ export async function sendWhatsApp(
 
   const auth = Buffer.from(`${business.twilioAccountSid}:${business.twilioAuthToken}`).toString("base64");
   const messagesUrl = `https://api.twilio.com/2010-04-01/Accounts/${business.twilioAccountSid}/Messages.json`;
+  const statusCallback = business.twilioSecret ? statusCallbackUrl(business.twilioSecret) : undefined;
 
-  const send = (params: URLSearchParams) =>
-    fetch(messagesUrl, {
+  const send = (params: URLSearchParams) => {
+    if (statusCallback) params.set("StatusCallback", statusCallback);
+    return fetch(messagesUrl, {
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,
@@ -546,6 +561,7 @@ export async function sendWhatsApp(
       },
       body: params.toString(),
     });
+  };
 
   const res = await send(
     new URLSearchParams({

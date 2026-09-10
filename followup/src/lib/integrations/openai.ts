@@ -604,8 +604,9 @@ export async function generateInstantReply(input: {
           "actually stated anywhere in this message thread — there is essentially no business-side context " +
           "available to you yet, so treat almost everything factual as unknown. For anything you can't honestly " +
           `answer, say so warmly and specifically instead of vaguely: name the actual thing they asked about ` +
-          `and say ${input.ownerFirstName} will follow up with the specifics shortly — never a bare "someone ` +
-          `will get back to you." Do not include a greeting ('Hi ...') or a sign-off/signature of any kind — ` +
+          `and say you will follow up with the specifics shortly — in the first person, because the message is ` +
+          `signed by ${input.ownerFirstName} and you are writing as them, so never refer to ${input.ownerFirstName} ` +
+          `in the third person — and never a bare "someone will get back to you." Do not include a greeting ('Hi ...') or a sign-off/signature of any kind — ` +
           "output only the message content itself, the caller adds those separately. Write in the same " +
           "language as their message below, matching their own tone and formality — casual if they wrote " +
           "casually, formal if formal — and if they wrote in a romanized/Latin-script version of a language " +

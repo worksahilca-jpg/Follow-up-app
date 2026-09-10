@@ -95,7 +95,7 @@ describe("instant acknowledgement", () => {
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
     expect(r.sent).toBe(true);
     const [, body] = send.mock.calls[0];
-    expect(body).toBe("Hi! Thanks for reaching out to MJ Homes — I'll take a look and Manoj will follow up shortly.");
+    expect(body).toBe("Hi! Thank you for contacting MJ Homes. I've received your message and will get back to you shortly.");
   });
 
   it("falls back to the generic line if generation itself throws, without failing the send", async () => {
@@ -103,7 +103,7 @@ describe("instant acknowledgement", () => {
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
     expect(r.sent).toBe(true);
     const [, body] = send.mock.calls[0];
-    expect(body).toContain("Thanks for reaching out to MJ Homes");
+    expect(body).toContain("Thank you for contacting MJ Homes");
     expect(assessRisk).not.toHaveBeenCalled(); // never reached — generation failed first
   });
 
@@ -112,7 +112,7 @@ describe("instant acknowledgement", () => {
     expect(r.sent).toBe(true);
     expect(generateReply).not.toHaveBeenCalled();
     const [, body] = send.mock.calls[0];
-    expect(body).toContain("Thanks for reaching out to MJ Homes");
+    expect(body).toContain("Thank you for contacting MJ Homes");
   });
 
   // Task #63 (live-test finding): the whole outgoing text — "Hi! " prefix
@@ -127,7 +127,7 @@ describe("instant acknowledgement", () => {
   it("localizes the entire fallback text (prefix included) against the lead's real inbound message, and sends what comes back", async () => {
     generateReply.mockRejectedValue(new Error("rate limited"));
     localize.mockImplementationOnce(async (text: string, sample: string) => {
-      expect(text).toBe("Hi! Thanks for reaching out to MJ Homes — I'll take a look and Manoj will follow up shortly.");
+      expect(text).toBe("Hi! Thank you for contacting MJ Homes. I've received your message and will get back to you shortly.");
       expect(sample).toBe("Hola, ¿todavía tienen la casa disponible?");
       return "¡Hola! Gracias por contactar a MJ Homes — lo revisaré y Manoj te responderá pronto.";
     });
@@ -177,7 +177,7 @@ describe("instant acknowledgement", () => {
   it("on the email path, translates the fallback line itself before framing it", async () => {
     generateReply.mockRejectedValue(new Error("rate limited"));
     localize.mockImplementation(async (text: string, sample: string) => {
-      if (text.startsWith("Thanks for reaching out to MJ Homes")) {
+      if (text.startsWith("Thank you for contacting MJ Homes")) {
         expect(sample).toBe("Hola, ¿todavía tienen la casa disponible?");
         return "Gracias por contactar a MJ Homes — lo revisaré y Manoj te responderá pronto.";
       }
@@ -217,7 +217,7 @@ describe("instant acknowledgement", () => {
     });
     const details = (recordAudit.mock.calls[0] as unknown[])[2] as { meta: Record<string, unknown> };
     const meta = details.meta;
-    expect(JSON.stringify(meta)).not.toContain("Thanks for reaching out");
+    expect(JSON.stringify(meta)).not.toContain("Thank you for contacting");
   });
 
   it("audits a generated reply as such", async () => {
@@ -278,7 +278,7 @@ describe("instant acknowledgement", () => {
     });
     const [, body, opts] = send.mock.calls[0];
     expect(body).toContain("Hi Young,");
-    expect(body).toContain("Thanks for reaching out to MJ Homes");
+    expect(body).toContain("Thank you for contacting MJ Homes");
     expect(opts).toMatchObject({ channel: "email", subject: "Re: Roof question", emailThreadId: "t1", emailInReplyTo: "<abc@mail>" });
   });
 

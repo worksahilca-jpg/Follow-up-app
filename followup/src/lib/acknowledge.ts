@@ -11,7 +11,7 @@ import { recordAudit } from "@/lib/audit";
  * A brand-new lead's first message gets a real, specific reply within a
  * minute — answering what it honestly can from what the lead themselves
  * wrote, or saying so warmly by name ("I'll get you the exact price and
- * <owner> will follow up shortly") when it can't — on the channel they
+ * follow up shortly") when it can't — on the channel they
  * used, in the language and tone they wrote in. The substantive reply
  * still goes through the Assisted flow (drafted, approved by the owner)
  * once there's real business context to draw from; this only closes the
@@ -65,8 +65,13 @@ export type AckChannel = "email" | "text" | "whatsapp" | "instagram" | "messenge
 // fine to send with zero review the same way the old fixed template
 // was. Kept as a plain function (not a module-level constant) since it
 // depends on businessName/owner, which vary per business.
-function genericAckLine(businessName: string, ownerFirstName: string): string {
-  return `Thanks for reaching out to ${businessName} — I'll take a look and ${ownerFirstName} will follow up shortly.`;
+function genericAckLine(businessName: string): string {
+  // First person throughout: the email is signed by the owner
+  // (composeFollowUpEmail's sign-off), so "I" is them. The previous
+  // wording — "I'll take a look and <owner> will follow up shortly. Best,
+  // <owner>" — mixed first and third person for the same signer and read
+  // as filler; task #63's first two live leads both received it.
+  return `Thank you for contacting ${businessName}. I've received your message and will get back to you shortly.`;
 }
 
 /**
@@ -97,7 +102,7 @@ async function buildAckLine(input: {
   inboundText: string;
   channel: AckChannel;
 }): Promise<AckLine> {
-  const fallback = genericAckLine(input.businessName, input.ownerFirstName);
+  const fallback = genericAckLine(input.businessName);
   if (!input.inboundText.trim()) return { line: fallback, source: "fallback", reason: "no inbound text" }; // nothing specific to respond to
 
   try {
@@ -200,7 +205,7 @@ export async function acknowledgeNewLead(
       const line = decision.source === "fallback" ? await localizeFixedText(decision.line, languageSample) : decision.line;
       body = await composeFollowUpEmail(leadFirstName, lead.businessId, line, { languageSample });
       const cleanSubject = input.emailSubject?.replace(/^(re|fwd?):\s*/i, "").trim();
-      subject = cleanSubject ? `Re: ${cleanSubject}` : await localizeFixedText(`Thanks for reaching out to ${businessName}`, languageSample);
+      subject = cleanSubject ? `Re: ${cleanSubject}` : await localizeFixedText(`Thank you for contacting ${businessName}`, languageSample);
     } else {
       body = await localizeFixedText(`Hi! ${decision.line}`, languageSample);
     }

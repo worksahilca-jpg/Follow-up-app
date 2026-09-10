@@ -13,6 +13,8 @@ const twilioConfigSchema = z.object({
   accountSid: z.string().trim().optional(),
   phoneNumber: z.string().trim().optional(),
   whatsappPhoneNumber: z.string().trim().optional(),
+  whatsappTemplateSid: z.string().trim().optional(),
+  whatsappTemplateBody: z.string().trim().optional(),
   voiceAgentEnabled: z.boolean().optional(),
 });
 
@@ -37,6 +39,8 @@ export async function GET() {
       twilioAccountSid: true,
       twilioPhoneNumber: true,
       whatsappPhoneNumber: true,
+      whatsappTemplateSid: true,
+      whatsappTemplateBody: true,
       voiceAgentEnabled: true,
     },
   });
@@ -51,6 +55,8 @@ export async function GET() {
     accountSid: business?.twilioAccountSid ?? null,
     phoneNumber: business?.twilioPhoneNumber ?? null,
     whatsappPhoneNumber: business?.whatsappPhoneNumber ?? null,
+    whatsappTemplateSid: business?.whatsappTemplateSid ?? null,
+    whatsappTemplateBody: business?.whatsappTemplateBody ?? null,
     voiceAgentEnabled: business?.voiceAgentEnabled ?? false,
   });
 }
@@ -75,7 +81,15 @@ export async function POST(request: NextRequest) {
 
   const parsed = await parseJsonBody(request, twilioConfigSchema);
   if (!parsed.ok) return parsed.response;
-  const { authToken, accountSid, phoneNumber, whatsappPhoneNumber, voiceAgentEnabled } = parsed.data;
+  const {
+    authToken,
+    accountSid,
+    phoneNumber,
+    whatsappPhoneNumber,
+    whatsappTemplateSid,
+    whatsappTemplateBody,
+    voiceAgentEnabled,
+  } = parsed.data;
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
@@ -91,6 +105,8 @@ export async function POST(request: NextRequest) {
       ...(accountSid !== undefined ? { twilioAccountSid: accountSid || null } : {}),
       ...(phoneNumber !== undefined ? { twilioPhoneNumber: phoneNumber || null } : {}),
       ...(whatsappPhoneNumber !== undefined ? { whatsappPhoneNumber: whatsappPhoneNumber || null } : {}),
+      ...(whatsappTemplateSid !== undefined ? { whatsappTemplateSid: whatsappTemplateSid || null } : {}),
+      ...(whatsappTemplateBody !== undefined ? { whatsappTemplateBody: whatsappTemplateBody || null } : {}),
       ...(voiceAgentEnabled !== undefined ? { voiceAgentEnabled } : {}),
     },
   });
@@ -118,6 +134,8 @@ export async function DELETE() {
       twilioAccountSid: null,
       twilioPhoneNumber: null,
       whatsappPhoneNumber: null,
+      whatsappTemplateSid: null,
+      whatsappTemplateBody: null,
     },
   });
   return NextResponse.json({ success: true });

@@ -504,55 +504,89 @@ export async function sendSms(
  * Meta App Review needed, same Account SID/Auth Token already saved for
  * SMS/voice, and it reuses this exact request shape almost verbatim.
  *
- * Deliberately narrow, matching Phase 1's real scope: WhatsApp only
- * allows free-form text within 24 hours of the lead's last inbound
- * message — reaching them outside that window requires a pre-approved
- * message template, which isn't built yet. Twilio surfaces that case as
- * error 63016; this catches it specifically so the failure reads as an
- * honest explanation instead of a generic "Twilio rejected this."
+ * WhatsApp only allows free-form text within 24 hours of the lead's last
+ * inbound message — Twilio surfaces a reply outside that window as error
+ * 63016. When the business has approved a template (Business.whatsapp
+ * TemplateSid — see schema.prisma for how that gets there), this retries
+ * the send via Twilio's Content API instead of giving up: ContentSid +
+ * ContentVariables {"1": leadFirstName} in place of Body, substituting the
+ * lead's first name into the template's one approved placeholder. No
+ * template configured still falls back to the old behavior — an honest
+ * explanation instead of a generic "Twilio rejected this," so the caller
+ * (src/lib/sending.ts) can fall back to text/email.
  */
 export async function sendWhatsApp(
   businessId: string,
   to: string,
-  body: string
+  body: string,
+  options: { leadFirstName?: string } = {}
 ): Promise<{ success: boolean; message?: string; sid?: string }> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { twilioAccountSid: true, twilioAuthToken: true, whatsappPhoneNumber: true },
+    select: {
+      twilioAccountSid: true,
+      twilioAuthToken: true,
+      whatsappPhoneNumber: true,
+      whatsappTemplateSid: true,
+    },
   });
   if (!business?.twilioAccountSid || !business.twilioAuthToken || !business.whatsappPhoneNumber) {
     return { success: false, message: "WhatsApp isn't fully connected yet — check Settings → Phone (SMS + calls)." };
   }
 
-  const params = new URLSearchParams({
-    To: `whatsapp:${to}`,
-    From: `whatsapp:${business.whatsappPhoneNumber}`,
-    Body: body,
-  });
   const auth = Buffer.from(`${business.twilioAccountSid}:${business.twilioAuthToken}`).toString("base64");
+  const messagesUrl = `https://api.twilio.com/2010-04-01/Accounts/${business.twilioAccountSid}/Messages.json`;
 
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${business.twilioAccountSid}/Messages.json`,
-    {
+  const send = (params: URLSearchParams) =>
+    fetch(messagesUrl, {
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: params.toString(),
-    }
-  );
+    });
 
+  const res = await send(
+    new URLSearchParams({
+      To: `whatsapp:${to}`,
+      From: `whatsapp:${business.whatsappPhoneNumber}`,
+      Body: body,
+    })
+  );
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    if (data.code === 63016) {
+
+  if (res.ok) return { success: true, sid: typeof data.sid === "string" ? data.sid : undefined };
+
+  if (data.code === 63016) {
+    if (!business.whatsappTemplateSid) {
       return {
         success: false,
         message:
-          "This WhatsApp conversation is more than 24 hours old — WhatsApp requires a pre-approved message template to reach them now (not yet supported here). They'll need to message you again to reopen the window, or try replying by text or email instead.",
+          "This WhatsApp conversation is more than 24 hours old — WhatsApp requires a pre-approved message template to reach them now (none is set up in Settings → Phone). They'll need to message you again to reopen the window, or try replying by text or email instead.",
       };
     }
-    return { success: false, message: typeof data.message === "string" ? data.message : "Twilio rejected this message." };
+
+    const templateRes = await send(
+      new URLSearchParams({
+        To: `whatsapp:${to}`,
+        From: `whatsapp:${business.whatsappPhoneNumber}`,
+        ContentSid: business.whatsappTemplateSid,
+        ContentVariables: JSON.stringify({ "1": options.leadFirstName ?? "there" }),
+      })
+    );
+    const templateData = await templateRes.json().catch(() => ({}));
+    if (!templateRes.ok) {
+      return {
+        success: false,
+        message:
+          typeof templateData.message === "string"
+            ? `The WhatsApp template send was rejected: ${templateData.message}`
+            : "Twilio rejected the WhatsApp template send.",
+      };
+    }
+    return { success: true, sid: typeof templateData.sid === "string" ? templateData.sid : undefined };
   }
-  return { success: true, sid: typeof data.sid === "string" ? data.sid : undefined };
+
+  return { success: false, message: typeof data.message === "string" ? data.message : "Twilio rejected this message." };
 }

@@ -230,7 +230,7 @@ export async function sendFollowUpToLead(
     const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body);
     if (!result.success) return { success: false, message: result.message ?? "Facebook didn't confirm this message sent." };
   } else if (channel === "whatsapp") {
-    const result = await sendWhatsApp(lead.businessId, lead.phone!, body);
+    const result = await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: lead.name.split(" ")[0] });
     if (!result.success) return { success: false, message: result.message ?? "WhatsApp didn't confirm this message sent." };
     externalId = result.sid;
   } else {

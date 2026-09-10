@@ -111,6 +111,20 @@ model Business {
   // new secret needed, just a new URL path.
   whatsappPhoneNumber String?
 
+  // A single pre-approved WhatsApp template (Twilio Content API), used only
+  // to reopen a WhatsApp conversation that's gone past Meta's 24-hour
+  // free-form-reply window (Twilio error 63016 — see sendWhatsApp() in
+  // src/lib/twilio.ts). whatsappTemplateSid is Twilio's Content SID for the
+  // approved template (starts "HX..."); whatsappTemplateBody is a cached
+  // copy of its approved text (containing a "{{1}}" placeholder for the
+  // lead's first name) shown back in Settings for reference — Twilio has no
+  // API to read a template's text back, so this is the only record of it
+  // FollowUp has. Approval itself happens per-business, in that business's
+  // own Twilio/Meta Business Manager — nothing FollowUp can do on their
+  // behalf, same as A2P 10DLC above.
+  whatsappTemplateSid  String?
+  whatsappTemplateBody String?
+
   // Privacy: may this business's (de-identified) conversation data be used
   // to improve FollowUp's models? Opt-in, off by default, and even when on
   // nothing leaves the production DB without the de-identification step

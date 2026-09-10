@@ -31,6 +31,11 @@ export default function TwilioConfig() {
   const [whatsappPhoneNumber, setWhatsappPhoneNumber] = useState<string | null>(null);
   const [whatsappPhoneNumberDraft, setWhatsappPhoneNumberDraft] = useState("");
   const [savingWhatsapp, setSavingWhatsapp] = useState(false);
+  const [whatsappTemplateSid, setWhatsappTemplateSid] = useState<string | null>(null);
+  const [whatsappTemplateBody, setWhatsappTemplateBody] = useState<string | null>(null);
+  const [whatsappTemplateSidDraft, setWhatsappTemplateSidDraft] = useState("");
+  const [whatsappTemplateBodyDraft, setWhatsappTemplateBodyDraft] = useState("");
+  const [savingWhatsappTemplate, setSavingWhatsappTemplate] = useState(false);
   const [voiceAgentEnabled, setVoiceAgentEnabled] = useState(false);
   const [numberStatus, setNumberStatus] = useState<NumberStatus | null>(null);
   const [numberError, setNumberError] = useState<string | null>(null);
@@ -55,6 +60,8 @@ export default function TwilioConfig() {
           accountSid?: string | null;
           phoneNumber?: string | null;
           whatsappPhoneNumber?: string | null;
+          whatsappTemplateSid?: string | null;
+          whatsappTemplateBody?: string | null;
           voiceAgentEnabled?: boolean;
         }) => {
           if (data.success) {
@@ -68,6 +75,10 @@ export default function TwilioConfig() {
             setPhoneNumberDraft(data.phoneNumber ?? "");
             setWhatsappPhoneNumber(data.whatsappPhoneNumber ?? null);
             setWhatsappPhoneNumberDraft(data.whatsappPhoneNumber ?? "");
+            setWhatsappTemplateSid(data.whatsappTemplateSid ?? null);
+            setWhatsappTemplateBody(data.whatsappTemplateBody ?? null);
+            setWhatsappTemplateSidDraft(data.whatsappTemplateSid ?? "");
+            setWhatsappTemplateBodyDraft(data.whatsappTemplateBody ?? "");
             setVoiceAgentEnabled(!!data.voiceAgentEnabled);
           }
         }
@@ -148,6 +159,27 @@ export default function TwilioConfig() {
       }
     } finally {
       setSavingWhatsapp(false);
+    }
+  }
+
+  async function saveWhatsappTemplate() {
+    setSavingWhatsappTemplate(true);
+    try {
+      const res = await fetch("/api/twilio/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          whatsappTemplateSid: whatsappTemplateSidDraft.trim(),
+          whatsappTemplateBody: whatsappTemplateBodyDraft.trim(),
+        }),
+      });
+      const data: { success: boolean } = await res.json();
+      if (data.success) {
+        setWhatsappTemplateSid(whatsappTemplateSidDraft.trim() || null);
+        setWhatsappTemplateBody(whatsappTemplateBodyDraft.trim() || null);
+      }
+    } finally {
+      setSavingWhatsappTemplate(false);
     }
   }
 
@@ -487,8 +519,8 @@ export default function TwilioConfig() {
                         Business Verification clears on your own Meta Business Manager — a separate, one-time
                         process each business does for itself, typically 2-10 business days. Replying to a lead
                         who messaged you first isn&apos;t affected by this cap. Reaching a lead who hasn&apos;t
-                        messaged in over 24 hours also needs a pre-approved message template, which FollowUp
-                        doesn&apos;t support sending yet — those follow-ups fall back to email or text instead.{" "}
+                        messaged in over 24 hours also needs a pre-approved message template — set one up below
+                        once you have one, otherwise those follow-ups fall back to email or text instead.{" "}
                         <a
                           href="https://www.twilio.com/docs/whatsapp/self-sign-up"
                           target="_blank"
@@ -547,6 +579,54 @@ export default function TwilioConfig() {
                         </button>
                       </div>
                     )
+                  )}
+
+                  {whatsappPhoneNumber && (
+                    <div className="mt-3 pt-3 border-t border-line space-y-2">
+                      <p className="text-xs font-medium">Re-opening a conversation after 24 hours</p>
+                      <p className="text-xs text-ink-soft">
+                        Create and get a template approved for this exact case in your{" "}
+                        <a
+                          href="https://console.twilio.com/us1/develop/sms/content-template-builder"
+                          target="_blank"
+                          rel="noopener"
+                          className="underline"
+                        >
+                          Twilio Content Template Builder
+                        </a>{" "}
+                        — a single variable for the lead&apos;s first name is enough (e.g. &quot;Hi {"{{1}}"}, just
+                        checking in — still interested? Reply anytime and we&apos;ll pick right back up.&quot;).
+                        Once Twilio/Meta approve it, paste its Content SID below. Until then, follow-ups past 24
+                        hours keep falling back to email or text.
+                      </p>
+                      {whatsappTemplateSid ? (
+                        <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--sage)" }}>
+                          <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" /> Configured — a reply past 24 hours will
+                          send &quot;{whatsappTemplateBody || whatsappTemplateSid}&quot; via that template instead of
+                          falling back.
+                        </p>
+                      ) : null}
+                      <input
+                        value={whatsappTemplateSidDraft}
+                        onChange={(e) => setWhatsappTemplateSidDraft(e.target.value)}
+                        placeholder="Content SID, e.g. HXa1b2c3d4e5f6..."
+                        className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs font-mono"
+                      />
+                      <input
+                        value={whatsappTemplateBodyDraft}
+                        onChange={(e) => setWhatsappTemplateBodyDraft(e.target.value)}
+                        placeholder="Approved template text, for reference — e.g. Hi {{1}}, just checking in…"
+                        className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                      />
+                      <button
+                        onClick={saveWhatsappTemplate}
+                        disabled={savingWhatsappTemplate}
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                        style={{ backgroundColor: "var(--ink)" }}
+                      >
+                        {savingWhatsappTemplate ? "Saving…" : whatsappTemplateSid ? "Update" : "Save"}
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

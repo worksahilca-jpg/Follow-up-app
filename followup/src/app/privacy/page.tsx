@@ -5,10 +5,12 @@ export const metadata = {
   title: "Privacy Policy — FollowUp",
 };
 
-// Static legal page — no auth, no DB, no client JS. Required for Google
-// OAuth verification (the consent screen links here), so the Google API
-// Services User Data Policy / Limited Use disclosure below uses Google's
-// own required wording, not paraphrased.
+// Static legal page — no auth, no DB, no client JS. Required for both
+// Google OAuth verification and Meta App Review (the consent screen and
+// the App Review submission both link here), so the Google API Services
+// User Data Policy / Limited Use section and the Meta Platform Terms
+// section below each use that platform's own required framing, not a
+// generic paraphrase.
 export default function PrivacyPage() {
   return (
     <div>
@@ -26,7 +28,7 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: September 2, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: September 10, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -55,6 +57,13 @@ export default function PrivacyPage() {
                 (sender, subject, message content, timestamps) so we can score them and draft follow-ups. We
                 only ever send email on your behalf when you click Send, or when you&apos;ve explicitly turned
                 on automated sending for a specific lead.
+              </li>
+              <li>
+                <strong className="text-ink">Instagram and Facebook data</strong> — with your explicit permission
+                (connecting your Instagram professional account or Facebook Page), we receive the direct messages
+                and lead-form submissions sent to your account, so we can identify them as leads, score them, and
+                draft replies. We only ever send a reply on your behalf when you click Send, or when
+                you&apos;ve explicitly turned on automated sending for a specific lead.
               </li>
               <li>
                 <strong className="text-ink">Leads you add yourself</strong> — manually entered leads or ones
@@ -90,6 +99,41 @@ export default function PrivacyPage() {
               <li>We never use Gmail data for advertising.</li>
               <li>We never allow humans to read Gmail data except: (a) with your explicit consent, (b) to investigate abuse or a security issue, or (c) to comply with the law.</li>
               <li>We never transfer Gmail data to third parties except our AI processing provider (to draft/score follow-ups on your behalf), or as required by law.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="font-display text-lg text-ink">Instagram and Facebook data — Meta Platform Terms</h2>
+            <p className="mt-2">
+              FollowUp&apos;s use of data received from Meta&apos;s Instagram and Facebook APIs adheres to the{" "}
+              <a
+                href="https://developers.facebook.com/terms/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                Meta Platform Terms
+              </a>
+              . Specifically:
+            </p>
+            <ul className="mt-2 space-y-2 list-disc pl-5">
+              <li>We only request the permissions needed to receive Instagram/Messenger DMs and Facebook Lead Ads submissions, and to reply to them on your behalf.</li>
+              <li>We never use this data for advertising, and never sell it.</li>
+              <li>We never allow humans to read it except: (a) with your explicit consent, (b) to investigate abuse or a security issue, or (c) to comply with the law.</li>
+              <li>We never transfer it to third parties except our AI processing provider (to draft/score follow-ups on your behalf), or as required by law.</li>
+              <li>
+                To request deletion of your Instagram/Facebook data, use the account-deletion process below, or
+                remove FollowUp&apos;s access directly from your Facebook{" "}
+                <a
+                  href="https://www.facebook.com/settings?tab=business_tools"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Business Integrations settings
+                </a>
+                .
+              </li>
             </ul>
           </section>
 
@@ -130,6 +174,8 @@ export default function PrivacyPage() {
             <h2 className="font-display text-lg text-ink">Third parties we use</h2>
             <ul className="mt-2 space-y-2 list-disc pl-5">
               <li><strong className="text-ink">Google</strong> — sign-in and Gmail access.</li>
+              <li><strong className="text-ink">Meta</strong> — Instagram DM, Messenger, and Facebook Lead Ads access.</li>
+              <li><strong className="text-ink">Twilio</strong> — SMS, WhatsApp, and voice call sending/receiving.</li>
               <li><strong className="text-ink">OpenAI</strong> — AI scoring and message drafting.</li>
               <li><strong className="text-ink">Stripe</strong> — subscription billing.</li>
               <li><strong className="text-ink">Supabase / hosting infrastructure</strong> — database and application hosting.</li>

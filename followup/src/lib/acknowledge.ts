@@ -2,7 +2,6 @@ import { prisma } from "@/lib/db";
 import { generateInstantReply, assessSendRisk, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
-import { recordAudit } from "@/lib/audit";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -217,6 +216,13 @@ export async function acknowledgeNewLead(
       subject,
       emailThreadId: input.emailThreadId,
       emailInReplyTo: input.emailMessageId,
+      // Merged into sendFollowUpToLead's own "ai.send" audit event rather
+      // than logged separately — task #63's live test showed two rows
+      // for one send: the generic "ai.send" the UI knows how to render,
+      // and a second, undetailed "ai.instant_ack" line the UI didn't
+      // recognize (see LeadTrustPanel.tsx's ACTION_COPY). One event now
+      // carries both the generic detail and the ack-specific decision.
+      extraAuditMeta: { source: decision.source, reason: decision.reason, localized: languageSample.trim().length > 0 },
     });
     if (!result.success) {
       // Release the claim so a later inbound on a working channel can
@@ -225,14 +231,6 @@ export async function acknowledgeNewLead(
       console.error(`Instant acknowledgement failed for lead ${leadId}: ${result.message}`);
       return { sent: false, reason: result.message };
     }
-    // Identifiers and the decision only — never the message text (see
-    // recordAudit's own contract). sendFollowUpToLead already logs the
-    // generic "ai.send"; this is the ack-specific why.
-    void recordAudit({ businessId: lead.businessId, userId: null }, "ai.instant_ack", {
-      targetType: "lead",
-      targetId: lead.id,
-      meta: { channel: input.channel, source: decision.source, reason: decision.reason, localized: languageSample.trim().length > 0 },
-    });
     return { sent: true };
   } catch (err) {
     // Never let the acknowledgement break the webhook that captured the lead.

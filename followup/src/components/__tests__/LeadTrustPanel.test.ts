@@ -56,4 +56,38 @@ describe("describeAckOutcome", () => {
       "Used the safe default reply."
     );
   });
+
+  // research/product/2026-09-10-instant-ack-safety-gate.md section 4.1:
+  // the reused assessSendRisk gate was replaced with a two-layer check —
+  // a deterministic shape check plus a first-touch-specific risk verdict
+  // — with its own distinct, prefix-parseable audit reasons.
+  it("explains a deterministic shape-check rejection, naming the rule", () => {
+    expect(describeAckOutcome({ trigger: "instant_ack", source: "fallback", reason: "shape: digits" })).toBe(
+      "Held back the specific reply — it didn't pass an automatic safety check (digits)."
+    );
+  });
+
+  it("explains an ack-risk-check rejection in plain language, including the check's own reason", () => {
+    expect(
+      describeAckOutcome({ trigger: "instant_ack", source: "fallback", reason: "ack not_ok: states a price the business never confirmed" })
+    ).toBe("Held back the specific reply as not safe enough to send unreviewed — states a price the business never confirmed.");
+  });
+
+  it("explains an ack-risk-check rejection even with no explanation text", () => {
+    expect(describeAckOutcome({ trigger: "instant_ack", source: "fallback", reason: "ack not_ok:" })).toBe(
+      "Held back the specific reply as not safe enough to send unreviewed."
+    );
+  });
+
+  it("explains a risk-check infrastructure failure distinctly from a generation failure", () => {
+    expect(describeAckOutcome({ trigger: "instant_ack", source: "fallback", reason: "risk check failed" })).toBe(
+      "Used the safe default reply — the safety check itself failed to run."
+    );
+  });
+
+  it("still explains a legacy risk-gated fallback from before the gate was rewritten", () => {
+    expect(
+      describeAckOutcome({ trigger: "instant_ack", source: "fallback", reason: "risk medium: states availability the business never confirmed" })
+    ).toBe("Held back the specific reply as not safe enough to send unreviewed — states availability the business never confirmed.");
+  });
 });

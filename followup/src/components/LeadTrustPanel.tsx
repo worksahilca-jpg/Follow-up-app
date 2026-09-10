@@ -41,9 +41,21 @@ export function describeAckOutcome(meta: Record<string, unknown> | null): string
   const reason = (meta?.reason as string) || "";
   if (reason === "generation failed") return "Used the safe default reply — the specific one failed to generate.";
   if (reason === "no inbound text") return "Used the safe default reply — nothing specific to respond to yet.";
-  const riskMatch = /^risk \w+:\s*(.*)$/.exec(reason);
-  if (riskMatch) {
-    const explanation = riskMatch[1];
+  if (reason === "risk check failed") return "Used the safe default reply — the safety check itself failed to run.";
+  const shapeMatch = /^shape: (.+)$/.exec(reason);
+  if (shapeMatch) return `Held back the specific reply — it didn't pass an automatic safety check (${shapeMatch[1]}).`;
+  const notOkMatch = /^ack not_ok:\s*(.*)$/.exec(reason);
+  if (notOkMatch) {
+    const explanation = notOkMatch[1];
+    return `Held back the specific reply as not safe enough to send unreviewed${explanation ? ` — ${explanation}` : ""}.`;
+  }
+  // Legacy rows from before this gate was rewritten (research/product/
+  // 2026-09-10-instant-ack-safety-gate.md) — the old assessSendRisk-based
+  // gate recorded "risk <level>: <explanation>". Kept so a lead's older
+  // audit history still renders a sentence instead of the generic line.
+  const legacyRiskMatch = /^risk \w+:\s*(.*)$/.exec(reason);
+  if (legacyRiskMatch) {
+    const explanation = legacyRiskMatch[1];
     return `Held back the specific reply as not safe enough to send unreviewed${explanation ? ` — ${explanation}` : ""}.`;
   }
   return "Used the safe default reply.";

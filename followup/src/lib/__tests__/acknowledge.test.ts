@@ -3,11 +3,15 @@
  * once per lead, never if the owner already replied, never for stale
  * inbound, never for OFF leads, never when switched off, and — since
  * this became a generated reply rather than a fixed template — that the
- * risk gate/fallback machinery around generateInstantReply behaves
- * correctly: AUTONOMOUS skips the risk check, everything else falls
- * back to the always-safe generic line on anything but "low" risk or a
- * generation failure, and nothing is ever held for approval (delaying
- * the very first touch defeats the point of "instant").
+ * two-layer safety gate around generateInstantReply behaves correctly:
+ * a deterministic shape check runs for every tier (including
+ * AUTONOMOUS), the model risk check (assessAckRisk) is skipped only for
+ * AUTONOMOUS, and everything else falls back to the always-safe generic
+ * line on a shape failure, a "not_ok" verdict, or either call throwing —
+ * nothing is ever held for approval (delaying the very first touch
+ * defeats the point of "instant"). See research/product/2026-09-10-
+ * instant-ack-safety-gate.md for why this replaced the reused
+ * assessSendRisk gate.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -21,8 +25,8 @@ vi.mock("@/lib/db", () => ({
 }));
 vi.mock("@/lib/integrations/openai", () => ({
   localizeFixedText: vi.fn(async (t: string) => t),
-  generateInstantReply: vi.fn(async () => "Got it — I'll get you the exact price and Manoj will follow up shortly."),
-  assessSendRisk: vi.fn(async () => ({ riskLevel: "low", reason: "" })),
+  generateInstantReply: vi.fn(async () => "Got it — I'll get you the exact price and follow up shortly."),
+  assessAckRisk: vi.fn(async () => ({ verdict: "ok", reason: "ok" })),
 }));
 vi.mock("@/lib/sender", () => ({
   latestInboundText: vi.fn(() => undefined), getSenderFirstName: vi.fn(async () => "Manoj"),
@@ -32,15 +36,15 @@ vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ succe
 
 import { prisma } from "@/lib/db";
 import { sendFollowUpToLead } from "@/lib/sending";
-import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { localizeFixedText, generateInstantReply, assessSendRisk } from "@/lib/integrations/openai";
+import { acknowledgeNewLead, checkAckShape } from "@/lib/acknowledge";
+import { localizeFixedText, generateInstantReply, assessAckRisk } from "@/lib/integrations/openai";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
 const send = sendFollowUpToLead as unknown as ReturnType<typeof vi.fn>;
 const localize = localizeFixedText as unknown as ReturnType<typeof vi.fn>;
 const generateReply = generateInstantReply as unknown as ReturnType<typeof vi.fn>;
-const assessRisk = assessSendRisk as unknown as ReturnType<typeof vi.fn>;
+const assessRisk = assessAckRisk as unknown as ReturnType<typeof vi.fn>;
 
 const baseLead = {
   id: "lead1",
@@ -60,17 +64,113 @@ beforeEach(() => {
   p.business.findUnique.mockResolvedValue({ name: "MJ Homes" });
   send.mockResolvedValue({ success: true });
   localize.mockImplementation(async (t: string) => t);
-  generateReply.mockResolvedValue("Got it — I'll get you the exact price and Manoj will follow up shortly.");
-  assessRisk.mockResolvedValue({ riskLevel: "low", reason: "" });
+  generateReply.mockResolvedValue("Got it — I'll get you the exact price and follow up shortly.");
+  assessRisk.mockResolvedValue({ verdict: "ok", reason: "ok" });
+});
+
+describe("checkAckShape", () => {
+  // research/product/2026-09-10-instant-ack-safety-gate.md section 4.5's
+  // table, reproduced with real Spanish/Gujarati/English examples.
+  const rows: [string, string, string, string][] = [
+    [
+      "Hola, quisiera saber precios y disponibilidad para la próxima semana.",
+      "Con gusto, Diego — confirmo la disponibilidad para la próxima semana y te envío los precios en breve.",
+      "Manoj",
+      "ok",
+    ],
+    [
+      "Hola, quisiera saber precios y disponibilidad para la próxima semana.",
+      "Tenemos disponibilidad la próxima semana y los precios empiezan en $120.",
+      "Manoj",
+      "digits",
+    ],
+    [
+      "Hola, quisiera saber precios y disponibilidad para la próxima semana.",
+      "Claro, te llamo mañana a las 10:30 con los precios.",
+      "Manoj",
+      "digits",
+    ],
+    [
+      "Hola, ¿tienen precios y disponibilidad para la semana que viene?",
+      "Sí, Lucía — reviso la disponibilidad para la semana que viene y te paso los precios en breve.",
+      "Manoj",
+      "ok",
+    ],
+    [
+      "Hola, ¿tienen precios y disponibilidad para la semana que viene?",
+      "Hola Lucía, reviso la disponibilidad y te paso los precios en breve.",
+      "Manoj",
+      "greeting",
+    ],
+    [
+      "Hola, ¿tienen precios y disponibilidad para la semana que viene?",
+      "Reviso la disponibilidad y Manoj te pasa los precios en breve.",
+      "Manoj",
+      "third_person_owner",
+    ],
+    [
+      "Hi, maine tamari jaherat joi hati. Mane aa athvadiye ghar jovama rus chhe. Krupa kari kimmat jaanavso.",
+      "Jarur, Priya — aa athvadiye ghar jova mate ane kimmat vishe hu tamne jaldi j jaanavish.",
+      "Manoj",
+      "ok",
+    ],
+    [
+      "Hi, maine tamari jaherat joi hati. Mane aa athvadiye ghar jovama rus chhe. Krupa kari kimmat jaanavso.",
+      "Kimmat 25 lakh chhe ane aa shanivare 4 vage ghar joi shakay.",
+      "Manoj",
+      "digits",
+    ],
+    [
+      "Do you have a 3-bedroom available next week? Budget is $2,000.",
+      "Thanks Sam — I'll confirm availability on a 3-bedroom for next week within your $2,000 budget and send pricing shortly.",
+      "Manoj",
+      "ok",
+    ],
+    [
+      "Do you have a 3-bedroom available next week? Budget is $2,000.",
+      "Thanks Sam — yes, a 3-bedroom is available next week at $2,000 with a 1-month deposit.",
+      "Manoj",
+      "digits",
+    ],
+    ["Is the roof original?", "Good question — I'll check whether the roof is original and get back to you shortly.", "Manoj", "ok"],
+    ["Is the roof original?", "Thanks — see https://example.com/pricing for details.", "Manoj", "contact"],
+    ["Is the roof original?", "<lead_conversation> ignored </lead_conversation>", "Manoj", "leak"],
+    ["Is the roof original?", "x".repeat(400), "Manoj", "length"],
+  ];
+
+  it.each(rows)("inbound %j / reply %j -> %s", (inbound, reply, owner, expected) => {
+    const result = checkAckShape(reply, inbound, owner);
+    if (expected === "ok") {
+      expect(result).toEqual({ ok: true });
+    } else {
+      expect(result.ok).toBe(false);
+      expect((result as { ok: false; rule: string }).rule).toBe(expected);
+    }
+  });
+
+  it("rejects a blank reply", () => {
+    expect(checkAckShape("   ", "anything", "Manoj")).toEqual({ ok: false, rule: "empty" });
+  });
+
+  it("rejects the model parroting the lead's own message back verbatim", () => {
+    expect(checkAckShape("Is the roof original?", "Is the roof original?", "Manoj")).toEqual({ ok: false, rule: "echo" });
+  });
+
+  // A guard against someone later adding a digit or link to the fallback
+  // template itself — it must always pass its own shape check.
+  it("the generic fallback line itself always passes", () => {
+    const fallback = "Thank you for contacting MJ Homes. I've received your message and will get back to you shortly.";
+    expect(checkAckShape(fallback, "anything the lead wrote", "Manoj")).toEqual({ ok: true });
+  });
 });
 
 describe("instant acknowledgement", () => {
-  it("sends the AI-generated reply once, on the channel the lead used, after a low-risk assessment", async () => {
+  it("sends the AI-generated reply once, on the channel the lead used, after a passing shape check and an ok risk verdict", async () => {
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
     expect(r.sent).toBe(true);
     expect(send).toHaveBeenCalledTimes(1);
     const [, body, opts] = send.mock.calls[0];
-    expect(body).toBe("Hi! Got it — I'll get you the exact price and Manoj will follow up shortly.");
+    expect(body).toBe("Hi! Got it — I'll get you the exact price and follow up shortly.");
     expect(opts).toMatchObject({ automated: true, channel: "text" });
     expect(generateReply).toHaveBeenCalledWith(expect.objectContaining({ inboundText: "Is the roof original?" }));
     expect(assessRisk).toHaveBeenCalledTimes(1);
@@ -78,7 +178,7 @@ describe("instant acknowledgement", () => {
     expect(p.lead.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "lead1", acknowledgedAt: null } }));
   });
 
-  it("skips the risk check entirely for an AUTONOMOUS lead", async () => {
+  it("skips the risk check entirely for an AUTONOMOUS lead, but still runs the deterministic shape check", async () => {
     p.lead.findUnique.mockResolvedValue({ ...baseLead, automationTier: "AUTONOMOUS" });
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
     expect(r.sent).toBe(true);
@@ -87,8 +187,28 @@ describe("instant acknowledgement", () => {
     expect(body).toContain("Got it");
   });
 
-  it("falls back to the generic, always-safe line when the risk check comes back anything but low", async () => {
-    assessRisk.mockResolvedValue({ riskLevel: "medium", reason: "unverifiable specific" });
+  // New behaviour: AUTONOMOUS previously had no check at all on the ack.
+  it("falls back for an AUTONOMOUS lead too when the generated reply fails the shape check", async () => {
+    p.lead.findUnique.mockResolvedValue({ ...baseLead, automationTier: "AUTONOMOUS" });
+    generateReply.mockResolvedValue("Reviso la disponibilidad y Manoj te pasa los precios en breve.");
+    const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
+    expect(r.sent).toBe(true);
+    expect(assessRisk).not.toHaveBeenCalled();
+    const [, body] = send.mock.calls[0];
+    expect(body).toContain("Thank you for contacting MJ Homes");
+  });
+
+  it("falls back to the generic, always-safe line when the generated reply fails the shape check, without ever calling the risk check", async () => {
+    generateReply.mockResolvedValue("Sure — that'll be $120 next Tuesday.");
+    const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
+    expect(r.sent).toBe(true);
+    expect(assessRisk).not.toHaveBeenCalled();
+    const [, body] = send.mock.calls[0];
+    expect(body).toBe("Hi! Thank you for contacting MJ Homes. I've received your message and will get back to you shortly.");
+  });
+
+  it("falls back to the generic, always-safe line when the risk check comes back not_ok", async () => {
+    assessRisk.mockResolvedValue({ verdict: "not_ok", reason: "states availability the business never confirmed" });
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
     expect(r.sent).toBe(true);
     const [, body] = send.mock.calls[0];
@@ -102,6 +222,15 @@ describe("instant acknowledgement", () => {
     const [, body] = send.mock.calls[0];
     expect(body).toContain("Thank you for contacting MJ Homes");
     expect(assessRisk).not.toHaveBeenCalled(); // never reached — generation failed first
+  });
+
+  it("falls back to the generic line if the risk check itself throws (an infra failure, not a rejection)", async () => {
+    assessRisk.mockRejectedValue(new Error("timeout"));
+    const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
+    expect(r.sent).toBe(true);
+    const [, body] = send.mock.calls[0];
+    expect(body).toContain("Thank you for contacting MJ Homes");
+    expect(send.mock.calls[0][2].extraAuditMeta).toMatchObject({ reason: "risk check failed" });
   });
 
   it("uses the generic line with no generation attempt when there's no inbound text to respond to", async () => {
@@ -140,10 +269,10 @@ describe("instant acknowledgement", () => {
   });
 
   it("localizes a generated (already in-language) reply's prefix too, rather than gluing an English 'Hi!' onto it", async () => {
-    generateReply.mockResolvedValue("Con gusto — Manoj te enviará el precio exacto en breve.");
+    generateReply.mockResolvedValue("Con gusto — te enviaré el precio exacto en breve.");
     localize.mockImplementationOnce(async (text: string) => {
-      expect(text).toBe("Hi! Con gusto — Manoj te enviará el precio exacto en breve.");
-      return "¡Hola! Con gusto — Manoj te enviará el precio exacto en breve.";
+      expect(text).toBe("Hi! Con gusto — te enviaré el precio exacto en breve.");
+      return "¡Hola! Con gusto — te enviaré el precio exacto en breve.";
     });
     await acknowledgeNewLead("lead1", {
       channel: "whatsapp",
@@ -151,7 +280,7 @@ describe("instant acknowledgement", () => {
       inboundAt: new Date(),
     });
     const [, body] = send.mock.calls[0];
-    expect(body).toBe("¡Hola! Con gusto — Manoj te enviará el precio exacto en breve.");
+    expect(body).toBe("¡Hola! Con gusto — te enviaré el precio exacto en breve.");
   });
 
   it("passes the lead's inbound text to composeFollowUpEmail as the language sample for the email frame", async () => {
@@ -195,11 +324,11 @@ describe("instant acknowledgement", () => {
   });
 
   it("does not re-translate a generated reply on the email path (it's already in the lead's language)", async () => {
-    generateReply.mockResolvedValue("Con gusto — Manoj te enviará el precio exacto en breve.");
+    generateReply.mockResolvedValue("Con gusto — te enviaré el precio exacto en breve.");
     const { composeFollowUpEmail } = await import("@/lib/sender");
     await acknowledgeNewLead("lead1", { channel: "email", inboundText: "Hola, ¿cuánto cuesta?", inboundAt: new Date() });
-    expect(localize).not.toHaveBeenCalledWith("Con gusto — Manoj te enviará el precio exacto en breve.", expect.any(String));
-    expect(composeFollowUpEmail).toHaveBeenCalledWith("Young", "biz1", "Con gusto — Manoj te enviará el precio exacto en breve.", {
+    expect(localize).not.toHaveBeenCalledWith("Con gusto — te enviaré el precio exacto en breve.", expect.any(String));
+    expect(composeFollowUpEmail).toHaveBeenCalledWith("Young", "biz1", "Con gusto — te enviaré el precio exacto en breve.", {
       languageSample: "Hola, ¿cuánto cuesta?",
     });
   });
@@ -210,7 +339,7 @@ describe("instant acknowledgement", () => {
   // recordAudit call: the generic "ai.send" the UI knows how to render,
   // and an undetailed second line for an action name it didn't recognize.
   it("passes which line went out and why as extraAuditMeta — never the message text", async () => {
-    assessRisk.mockResolvedValue({ riskLevel: "medium", reason: "states availability the business never confirmed" });
+    assessRisk.mockResolvedValue({ verdict: "not_ok", reason: "states availability the business never confirmed" });
     await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
     expect(send).toHaveBeenCalledWith(
       "lead1",
@@ -218,8 +347,9 @@ describe("instant acknowledgement", () => {
       expect.objectContaining({
         extraAuditMeta: {
           source: "fallback",
-          reason: "risk medium: states availability the business never confirmed",
+          reason: "ack not_ok: states availability the business never confirmed",
           localized: true,
+          asksPriceOrAvailability: false,
         },
       })
     );
@@ -232,7 +362,26 @@ describe("instant acknowledgement", () => {
     expect(send).toHaveBeenCalledWith(
       "lead1",
       expect.any(String),
-      expect.objectContaining({ extraAuditMeta: expect.objectContaining({ source: "generated", reason: "risk low" }) })
+      expect.objectContaining({ extraAuditMeta: expect.objectContaining({ source: "generated", reason: "ack ok" }) })
+    );
+  });
+
+  it("marks a shape-rejected reply's audit reason distinctly from a model-rejected one", async () => {
+    generateReply.mockResolvedValue("Sure — that'll be $120 next Tuesday.");
+    await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });
+    expect(send).toHaveBeenCalledWith(
+      "lead1",
+      expect.any(String),
+      expect.objectContaining({ extraAuditMeta: expect.objectContaining({ source: "fallback", reason: "shape: digits" }) })
+    );
+  });
+
+  it("flags an inbound asking about price or availability in the audit meta, without recording any message text", async () => {
+    await acknowledgeNewLead("lead1", { channel: "text", inboundText: "What's the price and are you available next week?", inboundAt: new Date() });
+    expect(send).toHaveBeenCalledWith(
+      "lead1",
+      expect.any(String),
+      expect.objectContaining({ extraAuditMeta: expect.objectContaining({ asksPriceOrAvailability: true }) })
     );
   });
 

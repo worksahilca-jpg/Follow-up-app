@@ -98,6 +98,18 @@ mostly in-person and evenings; Track B is mostly desk time in the morning. Pick 
   https://customerflows.com/research/contractor-lead-response-time-study/
 - 62% missed-call rate / 86% voicemail hang-up — already on file, Grade B/C
   (`2026-09-05-icp-pain-and-trust-objections.md`).
+- **Cross-industry, and the closest thing to an independent test of the email channel specifically:**
+  Workato ran an audit of **114 companies**, submitting a real inbound request to each and timing the
+  reply. Only **1 of the 114 sent a personalized email within 5 minutes**, and the average time to
+  deliver such a response was **11 hours 54 minutes**. A separate 2025 survey of 939 B2B companies
+  found responding within 5 minutes produced a **32% close rate vs 15%** for a reply up to 24 hours
+  later. [Grade B for the Workato audit — original research with a named sample size and method,
+  though run by a vendor; Grade C for the 939-company survey, relayed second-hand. Both snippet-
+  sourced.] https://www.workato.com/the-connector/lead-response-time-study/ ,
+  https://www.quo.com/blog/lead-response-time/
+  These are not GTA or trades numbers, but they are the best available evidence that the *email*
+  channel — the one FollowUp can actually serve today — is as badly served as the phone channel the
+  earlier research measured.
 - GTA revenue per job: new gas furnace installed **$4,300–$7,000** for most Toronto homes;
   Ontario average ~$6,800 before tax; replacement projects $3,500–$6,500 all-in.
   [Grade C — three GTA contractor pricing pages converge on the range; self-interested but
@@ -128,11 +140,26 @@ mostly in-person and evenings; Track B is mostly desk time in the morning. Pick 
   cross-industry and are the best available proxy. [Honest gap.]
 
 **Small law firms / paralegals / immigration consultants.**
-- Clio hired a third-party firm to contact 1,000 law firms by email and phone; **only 33% responded
-  to the email inquiry**, down from 40% in 2019. [Grade B — Clio's own press release describing its
-  Legal Trends Report methodology; a real mystery-shopper study, vendor-published.]
+- **Corrected 2026-09-10 (re-verified):** the Clio secret-shopper study covered **500 law firms**,
+  not 1,000. Clio commissioned market-research agency **Lux** to secret-shop 500 firms between
+  **June 20 and July 5, 2024**, posing as a prospective client asking about cost, process,
+  experience and booking a consultation. Results: **only 33% responded to the email inquiry**
+  (down from 40% in 2019) and **only 40% answered the phone** (down from 56% in 2019).
+  Three further findings that are directly usable in the pitch: of the firms that *did* answer
+  email, **84% replied within eight hours** — so the losing firms are not slow, they are silent;
+  **only 18% gave clear next steps or cost information**; and **73% of shoppers said they were
+  unlikely to recommend** the firm they contacted. [Grade B — Clio's own report, relayed by Clio's
+  press release and by 2Civility (Illinois Supreme Court Commission on Professionalism); a real
+  third-party mystery-shopper study with a named agency, sample and field dates, but
+  vendor-commissioned. Snippet-sourced, not fetched.]
   https://www.clio.com/about/press/clios-legal-trends-report-reveals-law-firms-struggle-to-respond-to-client-inquiries/ ,
-  https://www.2civility.org/2024-clio-legal-trends-report-fixing-the-first-impression-problem-for-law-firms/
+  https://www.2civility.org/2024-clio-legal-trends-report-fixing-the-first-impression-problem-for-law-firms/ ,
+  https://www.clio.com/guides/client-intake-legal-trends/
+  *Why the 84%-within-8-hours number matters more than the 33%:* it says the failure mode in this
+  segment is **the inquiry that is never answered at all**, not the one answered late. That is
+  precisely FollowUp's "we catch the lead you forgot to answer," and it means the demo should lead
+  with the forgotten-lead view for lawyers even though it leads with the instant reply for trades.
+  [Grade D — this document's inference from the Grade B figures above.]
 - Immigration consultants: **no response-time or inquiry-volume data found** for RCICs. Public
   review sites (Rate My RCIC) rate consultants on "responsiveness" and client complaints about
   unanswered emails exist, which is signal, not measurement. [Grade D.]
@@ -185,9 +212,26 @@ allowed; where a fee exists it is stated.
   BILD runs RenoMark awards and events. Directory is the scouting list; renomark@bildgta.ca is the
   program contact. [Grade B.] https://www.bildgta.ca/find-a-renomark-renovator/ ,
   https://renomark.ca/
-- **Ontario Plumbing Contractors Association** — searched, not found as a distinct active body;
-  plumbing contractors in the GTA cluster under HRAI (mechanical) and the FB groups below. [Honest
-  gap.]
+- **IPHCA — Independent Plumbing & Heating Contractors Association** *(gap filled 2026-09-10; the
+  earlier draft of this document said no such body was found — it exists and is the single best
+  plumbing-side venue in this list).* A not-for-profit trade association formed in **1980**, composed
+  of plumbing contractors working the **low-rise residential** sector **within the Greater Toronto
+  and Southern Ontario area** — i.e. exactly the owner-operated, quote-by-email target of Track A,
+  and geographically exact. Contact: One Greensboro Drive, Suite 305, Toronto ON M9W 1C8,
+  (416) 248-6213, iphca@angeloniinc.com. Ask for the next members' meeting and for permission to
+  attend as a guest. Membership count and meeting schedule are **not published on the site** and were
+  not obtainable by search — call to find out. [Grade B — the association's own site, snippet-sourced.]
+  https://iphca.ca/ , https://iphca.ca/about-us/ , https://iphca.ca/membership/ , https://iphca.ca/contact-us/
+- **MCAO — Mechanical Contractors Association of Ontario** — the larger mechanical/institutional
+  tier (the plumbing analogue of ECAO). Lower priority for a $29 tool for the same reason as ECAO,
+  but its member list is a scouting source. [Grade B.] https://www.mcao.org/
+- **CIPH — Canadian Institute of Plumbing & Heating** — national body, mostly manufacturers,
+  wholesalers and distributors rather than contractors; useful only for its affiliate-organization
+  list, which is a fast way to find further regional contractor associations.
+  [Grade B.] https://www.ciph.com/page/affiliate_orgs
+- **Ontario Pipe Trades Council** — the *union* side (10 UA locals, 22,000+ members). Not a buyer
+  list: these are journeymen employed by contractors, not owner-operators. Named here only so it is
+  not mistaken for a target. [Grade B.] https://www.optc.org/
 
 **Facebook groups (post value first, pitch never in the first two weeks)**
 - **HVAC-R Contractors In Ontario** — https://www.facebook.com/groups/hvaccontractorsontario/
@@ -400,6 +444,15 @@ Keep the sequence order. The instant reply is the emotional moment (it happens o
 the forgotten-lead view is the differentiator; the guarantees are the trust close; the report is the
 pilot's success criterion.
 
+**One variation, for Track B (law / paralegal / RCIC), added 2026-09-10.** Swap beats 2–5 and 5–9.
+The Clio data says the firms that answer email answer it *fast* — 84% inside eight hours — so a
+lawyer does not feel slow, they feel busy, and an "instant reply" demo lands as a solution to a
+problem they do not believe they have. What they *do* recognise is the inquiry that fell off the
+bottom of the inbox. So for this segment open on the "About to be lost" view ("this is the one you
+meant to get back to on Thursday"), and use the in-language instant reply as the second beat, framed
+as the first impression the 67% who never replied never made. For trades, keep the original order —
+their pain is genuinely speed. [Grade D — inference from the Grade B Clio figures in §1.4.]
+
 ### 3.6 The ask — 30-day pilot, then paid
 
 > "Let's run it for 30 days on your real inbox. I'll connect it with you today — it takes 10
@@ -559,8 +612,16 @@ fix, and that is the most valuable thing the pilot can tell the founder.
 
 - No response-time or inquiry-volume data for immigration consultants specifically; no
   renovation-specific response study; no Ontario-specific HVAC maintenance-plan figures.
-- No count of HVAC/plumbing/electrical *businesses* in the GTA (StatCan NAICS 238220 pages returned
-  definitions only, not counts).
+- No count of HVAC/plumbing/electrical *businesses* in the GTA. Re-searched on 2026-09-10 and still
+  not found: search returns directories (HomeStars, Toronto Construction Network, GTA Trades Daily,
+  hvacinformed.com) and one unattributed "3,283 businesses across 84 cities in Ontario" figure that
+  could not be traced to a source and is **not** cited anywhere in this document. StatCan NAICS
+  238220 pages return definitions, not counts. If a market-size number is ever needed for a deck,
+  build it by counting the directories directly rather than citing any of the above.
+- The earlier draft's claim that no Ontario plumbing contractors' association exists was **wrong** and
+  has been corrected in §2.1 (IPHCA). Treat other "not found" lines here as provisional for the same
+  reason — they mean "one search did not surface it," not "it does not exist."
+- IPHCA membership count and meeting schedule (not published; requires a phone call).
 - No benchmark for in-person / trade-association conversion; those rows in 5.2 are assumptions.
 - No measured reply rate for the "secret shopper" opener.
 - Membership counts and rules for the named Facebook groups (visible only after joining).
@@ -583,6 +644,19 @@ Internal:
   `src/app/api/billing/checkout/route.ts`, `src/app/page.tsx`, `src/app/(app)/settings/page.tsx`
 
 External (WebSearch snippets; none fetched):
+
+*Added / re-verified 2026-09-10 (second pass — Clio correction and plumbing-association gap):*
+- https://www.clio.com/guides/client-intake-legal-trends/ (Clio secret-shop: 500 firms, agency Lux,
+  field dates 20 Jun – 5 Jul 2024, 33% email / 40% phone, 84% of responders inside 8h, 18% gave next
+  steps, 73% unlikely to recommend)
+- https://iphca.ca/ , https://iphca.ca/about-us/ , https://iphca.ca/membership/ , https://iphca.ca/contact-us/
+- https://www.mcao.org/
+- https://www.ciph.com/page/affiliate_orgs
+- https://www.optc.org/
+- https://www.workato.com/the-connector/lead-response-time-study/ (114-company inbound audit)
+- https://www.quo.com/blog/lead-response-time/ (939-company survey, 5-min 32% vs 24h 15%)
+
+*First pass:*
 - https://crtc.gc.ca/eng/com500/guide.htm
 - https://crtc.gc.ca/eng/com500/faq500.htm
 - https://www.smarte.pro/blog/casl-compliance

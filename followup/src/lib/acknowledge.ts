@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { generateInstantReply, assessSendRisk, localizeFixedText } from "@/lib/integrations/openai";
+import { generateInstantReply, assessAckRisk, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
 
@@ -20,16 +20,23 @@ import { sendFollowUpToLead } from "@/lib/sending";
  *
  * This used to be a fixed template specifically because a generated
  * reply risked inventing a fact with zero human review — now it's a
- * generated reply (generateInstantReply), kept safe two ways instead of
- * by being static: the prompt itself is written to answer only from what
- * the lead already said and never invent a price/availability/timeline,
- * and (for anything but an AUTONOMOUS lead) the draft still passes
- * assessSendRisk — the same gate a normal automated follow-up passes —
- * before being sent. If generation fails, the risk check isn't "low," or
- * there's no OPENAI_API_KEY, this falls back to a fixed, always-safe
- * line rather than holding the very first touch for approval — delaying
- * it defeats the point of "instant," and the fallback line states no
- * fact about the business.
+ * generated reply (generateInstantReply), kept safe by a two-layer gate
+ * purpose-built for this first touch (buildAckLine, below) instead of by
+ * being static: a deterministic checkAckShape() catches any digit,
+ * currency, link, or the owner's name in third person, in any language,
+ * and then (for anything but an AUTONOMOUS lead) a first-touch-specific
+ * model judge, assessAckRisk(), catches an asserted fact the shape check
+ * can't see. This deliberately replaced reusing assessSendRisk — the
+ * gate written for a mid-conversation follow-up behind a human-approval
+ * queue — after a live test showed it rejecting essentially every reply
+ * to a lead who asked about price or availability, exactly the leads
+ * that matter most; see research/product/2026-09-10-instant-ack-safety-
+ * gate.md for the root-cause analysis. If generation fails, the shape
+ * check or the risk check rejects the reply, or there's no
+ * OPENAI_API_KEY, this falls back to a fixed, always-safe line rather
+ * than holding the very first touch for approval — delaying it defeats
+ * the point of "instant," and the fallback line states no fact about
+ * the business.
  *
  * Language (task #63 live-test finding): the outgoing message is
  * localized as a whole, greeting/sign-off included — not just the
@@ -60,6 +67,90 @@ const STALE_AFTER_MS = 60 * 60_000;
 
 export type AckChannel = "email" | "text" | "whatsapp" | "instagram" | "messenger";
 
+/**
+ * Deterministic, language-neutral shape check for a generated instant
+ * reply — runs before (and instead of, for AUTONOMOUS leads) the model
+ * risk check. See research/product/2026-09-10-instant-ack-safety-gate.md
+ * section 4.2: the single highest-value rule is `digits` — no price,
+ * count, time, date, or phone number the lead didn't write themselves,
+ * checked via Unicode digit runs so it also catches Devanagari/Gujarati/
+ * Arabic-Indic numerals, not just ASCII ones. Pure and model-free on
+ * purpose: it costs nothing to run on every tier, including AUTONOMOUS,
+ * which previously had no check on the ack at all.
+ *
+ * Deliberately excludes word-level deny-lists ("available", "booked") —
+ * those are language-specific, trivially evaded by paraphrase, and would
+ * recreate the exact bug this file is fixing (rejecting a reply for
+ * mentioning a topic rather than for asserting something about it).
+ * Assertions are assessAckRisk's job, not this one's.
+ */
+export function checkAckShape(
+  reply: string,
+  inboundText: string,
+  ownerFirstName: string
+): { ok: true } | { ok: false; rule: string } {
+  const fail = (rule: string) => ({ ok: false as const, rule });
+  const trimmed = reply.trim();
+
+  if (!trimmed) return fail("empty");
+  if (trimmed.length > 320) return fail("length");
+
+  const sentenceEnders = trimmed.match(/[.!?।](?=\s|$)/g) ?? [];
+  if (sentenceEnders.length > 3) return fail("sentences");
+
+  const digitRuns = trimmed.match(/\p{Nd}+/gu) ?? [];
+  if (digitRuns.some((run) => !inboundText.includes(run))) return fail("digits");
+
+  const currencyTokens = trimmed.match(/[$€£₹¥]|%|\b(USD|EUR|GBP|INR|CAD|MXN|AUD|Rs\.?)\b/gi) ?? [];
+  if (currencyTokens.some((token) => !inboundText.toLowerCase().includes(token.toLowerCase()))) return fail("currency");
+
+  if (/https?:\/\//i.test(trimmed) || /www\./i.test(trimmed) || /\S+@\S+\.\S+/.test(trimmed) || /\+\d/.test(trimmed)) {
+    return fail("contact");
+  }
+
+  const timeTokens = trimmed.match(/\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\s?(am|pm|hs?)\b/gi) ?? [];
+  if (timeTokens.some((token) => !inboundText.toLowerCase().includes(token.toLowerCase()))) return fail("time");
+
+  if (/^\s*(hi|hello|hey|dear|hola|buenos|buenas|namaste|namaskar|bonjour|olá|ola|ciao|hallo|salut)\b/i.test(trimmed)) {
+    return fail("greeting");
+  }
+
+  const lastLine = trimmed.split("\n").pop() ?? trimmed;
+  if (/^(best|regards|saludos|atentamente|gracias,|thanks,|cheers|dhanyavaad)\b/i.test(lastLine.trim())) {
+    return fail("signoff");
+  }
+
+  if (ownerFirstName.trim() && new RegExp(`\\b${escapeRegExp(ownerFirstName.trim())}\\b`, "i").test(trimmed)) {
+    return fail("third_person_owner");
+  }
+
+  if (/[<>]|lead_conversation|\bsystem\b|\[inbound\]/i.test(trimmed)) return fail("leak");
+
+  const normalize = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  if (normalize(trimmed) === normalize(inboundText)) return fail("echo");
+
+  return { ok: true };
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// A boolean about the inbound, computed once at ack time and recorded to
+// the audit trail (never the message text itself — see recordAudit's own
+// "identifiers and counts, never message bodies" contract) so the
+// fallback rate can be split by exactly the lead segment that motivated
+// this file's redesign: research/product/2026-09-10-instant-ack-safety-
+// gate.md section 4.6 found this was the single most important split,
+// since it was precisely the segment the old gate rejected almost 100%
+// of the time. Best-effort multilingual regex, not exhaustive.
+const PRICE_OR_AVAILABILITY_RE =
+  /precio|price|pricing|cost|cuánto|cuanto|quanto|combien|kimmat|kimat|keemat|rate|disponib|availab|available|book|appointment|cita|turno|slot|schedule/i;
+
+function asksPriceOrAvailability(inboundText: string): boolean {
+  return PRICE_OR_AVAILABILITY_RE.test(inboundText);
+}
+
 // The always-safe fallback: states no fact about the business, so it's
 // fine to send with zero review the same way the old fixed template
 // was. Kept as a plain function (not a module-level constant) since it
@@ -76,12 +167,16 @@ function genericAckLine(businessName: string): string {
 /**
  * What buildAckLine decided and why — `source` says whether the line is
  * the model's specific reply or the always-safe generic one, `reason` is
- * a short human-readable why (risk level + the risk check's own reason,
- * "generation failed", …). Recorded to the AI audit trail on every send
- * so a fallback that looks wrong on a real lead — task #63's live test
+ * a short, prefix-parseable why: "no inbound text", "generation failed",
+ * "shape: <rule>" (checkAckShape rejected it), "autonomous, shape ok",
+ * "risk check failed" (assessAckRisk itself errored), "ack ok", or
+ * "ack not_ok: <reason>". Recorded to the AI audit trail on every send so
+ * a fallback that looks wrong on a real lead — task #63's live test
  * shipped two generic English acknowledgements to Spanish leads with no
  * record of which step had bailed — can be diagnosed from the lead page
- * instead of from production logs nobody can reach.
+ * instead of from production logs nobody can reach, and so the fallback
+ * rate can be measured by reason (research/product/2026-09-10-instant-
+ * ack-safety-gate.md section 4.6).
  */
 type AckLine = { line: string; source: "generated" | "fallback"; reason: string };
 
@@ -89,9 +184,16 @@ type AckLine = { line: string; source: "generated" | "fallback"; reason: string 
  * Builds the one line of substantive content the caller wraps into an
  * email (composeFollowUpEmail adds the greeting/sign-off) or sends
  * with a short "Hi! " prefix for every other channel — either way
- * localized to the lead's language by the caller, not here. See this
- * file's own header comment for the safety reasoning; this function is
- * where that reasoning is actually implemented.
+ * localized to the lead's language by the caller, not here.
+ *
+ * Two layers, in order, per research/product/2026-09-10-instant-ack-
+ * safety-gate.md section 4.1 — deliberately NOT assessSendRisk (see that
+ * function's own doc comment for why reusing the follow-up gate here was
+ * the root cause of a live test failure):
+ *  1. checkAckShape — deterministic, free, language-neutral, runs for
+ *     EVERY tier including AUTONOMOUS (previously unchecked).
+ *  2. assessAckRisk — a first-touch-specific model judge, skipped only
+ *     for AUTONOMOUS leads, same as every other automated send path.
  */
 async function buildAckLine(input: {
   leadFirstName: string;
@@ -104,22 +206,30 @@ async function buildAckLine(input: {
   const fallback = genericAckLine(input.businessName);
   if (!input.inboundText.trim()) return { line: fallback, source: "fallback", reason: "no inbound text" }; // nothing specific to respond to
 
+  let reply: string;
   try {
-    const reply = await generateInstantReply({
+    reply = await generateInstantReply({
       leadFirstName: input.leadFirstName,
       ownerFirstName: input.ownerFirstName,
       inboundText: input.inboundText,
     });
-    if (input.automationTier === "AUTONOMOUS") return { line: reply, source: "generated", reason: "autonomous, risk check skipped" }; // same skip every other autonomous send path takes
-    const risk = await assessSendRisk(
-      { conversation: [{ id: "inbound", direction: "inbound", channel: input.channel, body: input.inboundText, date: new Date().toISOString() }] },
-      reply
-    );
-    if (risk.riskLevel === "low") return { line: reply, source: "generated", reason: "risk low" };
-    return { line: fallback, source: "fallback", reason: `risk ${risk.riskLevel}: ${risk.reason}`.slice(0, 160) };
   } catch (err) {
     console.error("Instant reply generation failed, falling back to the generic acknowledgement:", err);
     return { line: fallback, source: "fallback", reason: "generation failed" };
+  }
+
+  const shape = checkAckShape(reply, input.inboundText, input.ownerFirstName);
+  if (!shape.ok) return { line: fallback, source: "fallback", reason: `shape: ${shape.rule}` };
+
+  if (input.automationTier === "AUTONOMOUS") return { line: reply, source: "generated", reason: "autonomous, shape ok" }; // same skip every other autonomous send path takes
+
+  try {
+    const verdict = await assessAckRisk(input.inboundText, reply);
+    if (verdict.verdict === "ok") return { line: reply, source: "generated", reason: "ack ok" };
+    return { line: fallback, source: "fallback", reason: `ack not_ok: ${verdict.reason}`.slice(0, 160) };
+  } catch (err) {
+    console.error("Instant ack risk check failed, falling back to the generic acknowledgement:", err);
+    return { line: fallback, source: "fallback", reason: "risk check failed" };
   }
 }
 
@@ -222,7 +332,12 @@ export async function acknowledgeNewLead(
       // and a second, undetailed "ai.instant_ack" line the UI didn't
       // recognize (see LeadTrustPanel.tsx's ACTION_COPY). One event now
       // carries both the generic detail and the ack-specific decision.
-      extraAuditMeta: { source: decision.source, reason: decision.reason, localized: languageSample.trim().length > 0 },
+      extraAuditMeta: {
+        source: decision.source,
+        reason: decision.reason,
+        localized: languageSample.trim().length > 0,
+        asksPriceOrAvailability: asksPriceOrAvailability(input.inboundText ?? ""),
+      },
     });
     if (!result.success) {
       // Release the claim so a later inbound on a working channel can

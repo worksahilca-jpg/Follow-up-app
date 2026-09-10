@@ -373,7 +373,7 @@ export default function LandingPage() {
             Pricing
           </h2>
           <p className="mt-2 text-[15px]" style={{ color: "var(--ink-soft)" }}>
-            One plan. Everything included. Cancel any time.
+            One plan. Everything included. 14-day free trial, no credit card required. Cancel any time.
           </p>
           <div className="mt-10 max-w-sm">
             <div
@@ -408,6 +408,9 @@ export default function LandingPage() {
               >
                 Get started <ArrowRight className="h-3.5 w-3.5" />
               </Link>
+              <p className="mt-3 text-center text-[11px]" style={{ color: "var(--ink-soft)" }}>
+                Free for 14 days. No credit card required to start.
+              </p>
             </div>
           </div>
         </Reveal>

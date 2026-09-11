@@ -14,7 +14,14 @@ vi.mock("openai", () => ({
   },
 }));
 
-import { generateFollowUpMessage, assessSendRisk, localizeFixedText, generateInstantReply, assessAckRisk } from "@/lib/integrations/openai";
+import {
+  generateFollowUpMessage,
+  assessSendRisk,
+  localizeFixedText,
+  generateInstantReply,
+  assessAckRisk,
+  classifyAsProspect,
+} from "@/lib/integrations/openai";
 
 const conversation = [
   { id: "m1", direction: "inbound" as const, channel: "email" as const, body: "How old is the roof? Is it original?", date: new Date().toISOString(), opened: false },
@@ -299,6 +306,45 @@ describe("instant-ack risk check (assessAckRisk)", () => {
     });
     const r = await assessAckRisk("How much does it cost?", "It costs $100.");
     expect(r).toEqual({ verdict: "not_ok", reason: "states a price" });
+  });
+});
+
+// User-reported live bug: an insurance company's cold pitch ("when do you
+// need to change your glass?") to a glass-repair business's inbox scored as
+// a hot lead. The old prompt's vendor exclusion only named "advertising,
+// software, leads-for-sale" and had no guidance for a pitch phrased as a
+// customer-style question — exactly how these solicitations are written on
+// purpose, to get a reply. Fixed by widening the exclusion and telling the
+// model the test is whose product the thread is about, not its tone.
+describe("prospect classifier (classifyAsProspect) — solicitations disguised as customer questions", () => {
+  it("names insurance, financing, and warranty pitches as solicitations even when phrased as a friendly question", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ isProspect: false, reason: "insurance pitch" }) } }] });
+    await classifyAsProspect(conversation, { name: "Jamie", email: "jamie@insureco.example" }, { name: "Riverside Glass", industry: "auto glass repair" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/insurance, financing, warranties or service contracts/);
+    expect(system).toMatch(/friendly, personalized-sounding question/);
+  });
+
+  it("instructs the model to judge by whose product the thread is about, not the sender's tone", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ isProspect: false, reason: "n/a" }) } }] });
+    await classifyAsProspect(conversation, { name: "Jamie", email: "jamie@insureco.example" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/never the tone or\s+phrasing/);
+    expect(system).toMatch(/whose product or service the thread is actually about/);
+  });
+
+  it("gives the exact glass-repair/insurance example so an adjacent-sounding topic doesn't fool it", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ isProspect: false, reason: "n/a" }) } }] });
+    await classifyAsProspect(conversation, { name: "Jamie", email: "jamie@insureco.example" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/an insurer asking a glass-repair business about their own glass coverage is soliciting insurance/);
+  });
+
+  it("still says a solicitation from a named person (not just a brand/no-reply address) is a solicitation", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ isProspect: false, reason: "n/a" }) } }] });
+    await classifyAsProspect(conversation, { name: "Jamie", email: "jamie@insureco.example" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/a solicitation from a named person is still a solicitation/);
   });
 });
 

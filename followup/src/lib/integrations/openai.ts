@@ -282,11 +282,22 @@ export async function classifyAsProspect(
           "Answer false for: automated platform notifications even when they mention the business's work (showing " +
           "systems, listing alerts, e-signature completions with no human message, calendar/booking systems, " +
           "password resets, receipts); newsletters and marketing; recruiters, job offers, or employment paperwork " +
-          "directed at the OWNER; vendors or agencies selling TO the business (advertising, software, leads-for-sale); " +
-          "and purely personal correspondence. The sender's identity is a strong signal: a brand, platform, or " +
-          "no-reply style address weighs toward false; a named person writing in their own words weighs toward true. " +
-          "Documents like deposits, IDs, work permits, or signed agreements are NOT job signals when they belong to " +
-          "a client's transaction — they are only employment signals when the thread is about the owner's own job.",
+          "directed at the OWNER; and purely personal correspondence. Also answer false for any vendor, agency, " +
+          "broker, or solicitor selling something TO the business — advertising, software, insurance, financing, " +
+          "warranties or service contracts, leads-for-sale, or any other pitch — even when it's phrased as a " +
+          "friendly, personalized-sounding question ('when does your policy renew', 'when do you need to replace " +
+          "X') specifically designed to read like a genuine customer inquiry. The test is never the tone or " +
+          "phrasing; it's whose product or service the thread is actually about. If the sender is offering, " +
+          "renewing, or asking about something THEY sell — insurance, a loan, a subscription, equipment, anything " +
+          "not part of this business's own service — that is a solicitation and false, no matter how casually or " +
+          "personally it's worded, and even if the topic sounds adjacent to the business's own trade (e.g. an " +
+          "insurer asking a glass-repair business about their own glass coverage is soliciting insurance, not " +
+          "requesting glass work). Only answer true when the business's OWN service is what the thread is about. " +
+          "The sender's identity is a strong signal: a brand, platform, or no-reply style address weighs toward " +
+          "false; a named person writing in their own words weighs toward true — but a solicitation from a named " +
+          "person is still a solicitation. Documents like deposits, IDs, work permits, or signed agreements are " +
+          "NOT job signals when they belong to a client's transaction — they are only employment signals when the " +
+          "thread is about the owner's own job.",
       },
       {
         role: "user",

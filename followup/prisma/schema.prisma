@@ -52,6 +52,14 @@ model Business {
   // src/lib/booking.ts). Not yet exposed in Settings; defaults to a
   // reasonable US timezone until it is.
   timezone        String       @default("America/New_York")
+  // "followup" (default): availability is just the fixed business-hours
+  // grid minus FollowUp's own Booking rows, as it always was. "google":
+  // ALSO excludes real busy blocks from the connected Google Calendar
+  // (see getGoogleCalendarBusyTimes in src/lib/integrations/gmail.ts) —
+  // so a lead can't book over a meeting the owner already has. Only
+  // meaningful when Gmail is connected; getAvailableSlots() falls back to
+  // "followup" behavior if it isn't, rather than erroring.
+  bookingCalendarSource String  @default("followup")
   users           User[]
   leads           Lead[]
   automations     Automation[]

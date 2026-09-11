@@ -13,3 +13,9 @@ export const TIER_INFO = {
 } as const;
 
 export const VOICE_ADDON_INFO = { priceLabel: "+$39/mo", includedMinutes: 200, overagePerMinute: "$0.20" };
+
+// Free tier's hard monthly cap on AI processing (research/market/2026-09-11-
+// tier-pricing-recommendation.md §2.2). Lives here (not @/lib/billing)
+// because a "use client" component needs the number too — see the "use
+// client" note in this file's own header comment.
+export const FREE_TIER_LEAD_CAP = 20;

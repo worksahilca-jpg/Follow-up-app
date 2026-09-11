@@ -3,20 +3,24 @@
 import { useState } from "react";
 import type { AutomationTier } from "@/lib/types";
 
+// research/product/2026-09-10-ux-simplification.md §4: plain-language
+// terms lead, the mechanism (what it's actually called elsewhere in the
+// product — "Off"/"Assisted"/"Autonomous") lives in the fuller sentence
+// below instead of being the first thing an owner has to learn.
 const TIERS: { value: AutomationTier; label: string }[] = [
-  { value: "off", label: "Off" },
-  { value: "assisted", label: "Assisted" },
-  { value: "autonomous", label: "Autonomous" },
+  { value: "off", label: "I'll do it myself" },
+  { value: "assisted", label: "Ask if risky" },
+  { value: "autonomous", label: "Handle it all" },
 ];
 
 const DESCRIPTIONS: Record<AutomationTier, string> = {
-  off: "Off — every follow-up for this lead needs your approval first.",
+  off: "I'll handle this one myself — FollowUp won't message this person at all. Nothing sends without you writing it.",
   assisted:
-    "Assisted — FollowUp auto-sends a drafted check-in if this lead goes quiet, but holds anything that " +
-    "touches pricing, terms, or a negative-sounding conversation for you to approve instead.",
+    "Ask me first if it's risky — FollowUp replies for you on the easy stuff, and asks your OK before " +
+    "anything about price, terms, or a tense conversation.",
   autonomous:
-    "Autonomous — FollowUp owns this lead's entire follow-up cadence. Every draft sends automatically, " +
-    "with no risk check and no review, even if it touches pricing or a tense conversation.",
+    "Handle it all, don't ask — every reply sends automatically with no review, including price and tense " +
+    "conversations. Only for leads you're comfortable letting go.",
 };
 
 /**

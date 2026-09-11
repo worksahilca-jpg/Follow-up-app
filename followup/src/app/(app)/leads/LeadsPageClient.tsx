@@ -303,7 +303,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
                 className="text-sm hidden lg:block w-28 truncate"
                 style={lead.assignedToId ? { color: "var(--ink-soft)" } : { color: "var(--gold)", fontWeight: 500 }}
               >
-                {lead.assignedToId ? lead.assignedTo : "Up for grabs"}
+                {lead.assignedToId ? lead.assignedTo : "Unassigned"}
               </div>
               <div className="text-sm text-ink-soft hidden md:block w-24">
                 {formatDate(lead.lastContacted)}

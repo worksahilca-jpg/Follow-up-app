@@ -100,7 +100,12 @@ export default function LeadTrustPanel({
       <div className="mt-3 space-y-3">
         <div>
           <div className="flex items-center justify-between">
-            <span className="text-xs uppercase tracking-wide text-ink-soft">Consent basis</span>
+            <span
+              className="text-xs uppercase tracking-wide text-ink-soft"
+              title="How this person reached you — which is what makes replying legal and expected."
+            >
+              Why it&apos;s okay to message them
+            </span>
             <span
               className="rounded-full px-2 py-0.5 text-xs font-medium"
               style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
@@ -128,9 +133,12 @@ export default function LeadTrustPanel({
       </div>
 
       <div className="mt-4 pt-3 border-t border-line">
-        <h4 className="text-xs uppercase tracking-wide text-ink-soft flex items-center gap-1.5">
+        <h4
+          className="text-xs uppercase tracking-wide text-ink-soft flex items-center gap-1.5"
+          title="Every message FollowUp sent or held for your approval on this lead."
+        >
           <History className="h-3.5 w-3.5" />
-          AI activity log
+          What FollowUp did here
         </h4>
         {events.length === 0 ? (
           <p className="text-sm text-ink-soft mt-2">Nothing sent or held for this lead yet.</p>

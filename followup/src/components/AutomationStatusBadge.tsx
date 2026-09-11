@@ -21,20 +21,20 @@ function describe(
     case "workflow":
       return {
         icon: Workflow,
-        label: "In a workflow",
+        label: "On a follow-up plan",
         detail: status.dueInDays === 0 ? `${status.sequenceName} — next step today` : `${status.sequenceName} — next step in ${status.dueInDays}d`,
         bg: "var(--slate-soft)",
         fg: "var(--slate)",
       };
     case "workflow_paused":
-      return { icon: PauseCircle, label: "Workflow paused", detail: status.sequenceName, bg: "var(--line)", fg: "var(--ink-soft)" };
+      return { icon: PauseCircle, label: "Follow-up plan paused", detail: status.sequenceName, bg: "var(--line)", fg: "var(--ink-soft)" };
     case "off":
       return { icon: Ban, label: "Automation off", detail: "This lead is opted out of automated follow-up", bg: "var(--line)", fg: "var(--ink-soft)" };
     case "account_paused":
       return {
         icon: PauseCircle,
-        label: "Paused for your account",
-        detail: `Would otherwise follow up now (${REASON_LABEL[status.reason]}) — turn on "Auto follow-up on silence" in Settings`,
+        label: "Paused — your auto follow-up is switched off",
+        detail: `This would be followed up now (${REASON_LABEL[status.reason]}), but auto follow-up is off for your whole account — turn on "Auto follow-up on silence" in Settings.`,
         bg: "var(--coral-soft)",
         fg: "var(--coral)",
       };

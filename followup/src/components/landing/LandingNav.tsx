@@ -40,7 +40,7 @@ export default function LandingNav() {
         <Link
           href="/signin"
           className="rounded-full px-4 py-2 text-[13px] font-semibold transition-transform hover:scale-[1.04]"
-          style={{ background: "var(--ink)", color: "#f3f0ea" }}
+          style={{ background: "var(--ink)", color: "#f5f7fa" }}
         >
           Get started
         </Link>

@@ -19,7 +19,7 @@ export default function LandingFaq({ items }: { items: { q: string; a: string }[
       {items.map((item, i) => {
         const open = openIndex === i;
         return (
-          <div key={item.q} style={{ borderBottom: i < items.length - 1 ? "1px solid rgba(24,20,15,0.1)" : undefined }}>
+          <div key={item.q} style={{ borderBottom: i < items.length - 1 ? "1px solid rgba(17, 24, 39,0.1)" : undefined }}>
             <button
               onClick={() => setOpenIndex(open ? null : i)}
               className="w-full py-4 flex items-center justify-between gap-4 text-left"

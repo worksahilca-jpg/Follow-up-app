@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
-import { plusJakarta } from "@/lib/fonts";
+import { manrope } from "@/lib/fonts";
 
 // metadataBase makes every relative URL below (the OG image, icons) resolve
 // to an absolute one — required for social platforms that fetch the image
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`h-full antialiased ${plusJakarta.variable}`}>
+    <html lang="en" className={`h-full antialiased ${manrope.variable}`}>
       <body className="min-h-full flex flex-col bg-paper text-ink">
         {/* Every framer-motion animation in the app — the landing page's
             reveal/parallax/hover motion, the FAQ accordion — reads the

@@ -1,50 +1,52 @@
 @import "tailwindcss";
 
 :root {
-  /* Neutrals — warm cream instead of the old cool off-white, matching the
+  /* Neutrals — cool near-white instead of the old warm cream, matching the
      landing page and /signin (landing.module.css's --cream/--ink) so the
      whole product — marketing pages and the authenticated app alike —
      reads as one system instead of two. Cards stay pure white for
-     separation via contrast against the cream paper, same as landing's
-     own --surface. Every body-text color here was checked against its
+     separation via contrast against the paper, same as landing's own
+     --surface. Every body-text color here was checked against its
      background at normal reading size, not just eyeballed — this app has
      denser text (tables, forms) than a marketing page's captions, so
      --ink-soft is tuned a shade darker than landing's own translucent
      version for legibility at that density. */
-  --paper: #f3f0ea;
-  --ink: #18140f;
-  --ink-soft: #5c574c;
-  --line: #e2ddd0;
+  --paper: #f5f7fa;
+  --ink: #111827;
+  --ink-soft: #55606f;
+  --line: #e2e8f0;
   --card: #ffffff;
 
-  /* Brand / primary — the same amber as the landing page and /signin
-     (landing.module.css's --amber), replacing the blue this used to be.
-     The one accent color, used only on buttons, links, active states, and
+  /* Brand / primary — the same blue as the landing page and /signin
+     (landing.module.css's --amber, kept named after amber for the same
+     reason this token keeps its own name — see below), replacing the
+     amber this used to be for a cleaner, more "corporate SaaS" feel. The
+     one accent color, used only on buttons, links, active states, and
      focus rings. Never a background fill, an icon color, or a border
      outside those interactive contexts. rust-soft is for focus-ring
      halos only, not general panel fills. (Name kept as-is rather than
      renamed across its ~90 call sites — the value is what changed,
-     again — same reasoning as the last two times this token's value
-     moved.) */
-  --rust: #e8a23a;
-  --rust-soft: #f7e6c4;
+     again — same reasoning as the last few times this token's value
+     moved: blue, then amber, now a different, more saturated blue.) */
+  --rust: #2954e0;
+  --rust-soft: #e3eafb;
 
   /* Text that sits ON the accent fill (button labels on a --rust
      background). Deliberately independent of --ink: --ink tracks the
      page's own text color and flips with the theme, but a button's label
      only needs to contrast against --rust, which doesn't move with it.
-     Flipped from light to dark alongside --rust's move from a mid-tone
-     blue to a light amber — white text on this amber would fail contrast
+     Flipped from dark to light alongside --rust's move from a light amber
+     back to a saturated blue — dark text on this blue would fail contrast
      outright, so this has to move in lockstep with --rust, never on its
      own. */
-  --on-accent: #241a08;
+  --on-accent: #ffffff;
 
   /* Lead-urgency status-pill system — the one place color variety is
      allowed outside the accent. Flat, low-saturation: soft tint for the
      pill background, the saturated shade for its text. Left unchanged by
-     the warm-palette pass above: these encode meaning (cold/warm/hot,
+     the theme pass above: these encode meaning (cold/warm/hot,
      low/medium/high), not brand, and all four already read clearly
-     against the new cream/white surfaces without retuning. */
+     against the new paper/white surfaces without retuning. */
   --slate: #64748b;
   --slate-soft: #f1f5f9;
 
@@ -75,15 +77,18 @@
   --color-coral: var(--coral);
   --color-coral-soft: var(--coral-soft);
   --color-card: var(--card);
-  /* Plus Jakarta Sans for both display and body (was Space Grotesk for
-     display + Inter for body) — the same single typeface the landing page
-     and /signin already use (components/landing/font.ts's shared loader),
-     so the authenticated app reads as the same product as the pages a
-     visitor sees before signing in, not a different one underneath. Still
+  /* Manrope for both display and body (was Plus Jakarta Sans, before that
+     Space Grotesk for display + Inter for body) — the same single
+     typeface the landing page and /signin already use (src/lib/fonts.ts's
+     shared loader), so the authenticated app reads as the same product as
+     the pages a visitor sees before signing in, not a different one
+     underneath. Picked for the "clean corporate SaaS" rebrand: a
+     geometric, highly legible sans with a real 800 weight for the landing
+     page's giant display numerals, without leaning on Inter — still
      legible at the app's own density (tables, forms) — this typeface
      already carries the landing page's own body copy at similar sizes. */
-  --font-display: var(--font-plus-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--font-plus-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-manrope), "Manrope", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
@@ -196,7 +201,7 @@ textarea:focus-visible, [tabindex]:focus-visible {
    same accent as the mid-stop, not an unrelated hue) — kept in sync now
    that --rust is the same amber as that file's --amber. */
 .text-gradient-accent {
-  background: linear-gradient(100deg, var(--rust), #f3c374, var(--rust));
+  background: linear-gradient(100deg, var(--rust), #8aa4f7, var(--rust));
   background-size: 220% auto;
   background-clip: text;
   -webkit-background-clip: text;

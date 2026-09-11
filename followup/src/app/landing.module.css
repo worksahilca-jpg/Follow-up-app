@@ -9,13 +9,16 @@
    own header comment for why). */
 
 .root {
-  --cream: #f3f0ea;
+  --cream: #f5f7fa;
   --surface: #ffffff;
-  --ink: #18140f;
-  --ink-soft: rgba(24, 20, 15, 0.5);
-  --ink-faint: rgba(24, 20, 15, 0.28);
-  --amber: #e8a23a;
-  --amber-soft: rgba(232, 162, 58, 0.14);
+  --ink: #111827;
+  --ink-soft: rgba(17, 24, 39, 0.5);
+  --ink-faint: rgba(17, 24, 39, 0.28);
+  /* Still named --amber (see globals.css's --rust for the same
+     keep-the-name convention) — now the brand's blue accent, replacing
+     the amber this used to be for the "clean corporate SaaS" rebrand. */
+  --amber: #2954e0;
+  --amber-soft: rgba(41, 84, 224, 0.14);
   --coral: #d1553f;
   --blue: #4a6fa5;
 
@@ -38,8 +41,8 @@
   height: 780px;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, rgba(24, 20, 15, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(24, 20, 15, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(17, 24, 39, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 24, 39, 0.05) 1px, transparent 1px);
   background-size: 64px 64px;
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 30% 20%, black, transparent 75%);
   mask-image: radial-gradient(ellipse 70% 60% at 30% 20%, black, transparent 75%);
@@ -60,7 +63,7 @@
   background: color-mix(in srgb, var(--cream) 90%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom-color: rgba(24, 20, 15, 0.08);
+  border-bottom-color: rgba(17, 24, 39, 0.08);
 }
 
 /* ---------- headline ---------- */
@@ -106,9 +109,9 @@
   border-radius: 18px;
   background: var(--surface);
   box-shadow:
-    0 2px 0 rgba(24, 20, 15, 0.04) inset,
-    0 40px 80px -24px rgba(24, 20, 15, 0.35),
-    0 12px 28px -12px rgba(24, 20, 15, 0.25);
+    0 2px 0 rgba(17, 24, 39, 0.04) inset,
+    0 40px 80px -24px rgba(17, 24, 39, 0.35),
+    0 12px 28px -12px rgba(17, 24, 39, 0.25);
   overflow: hidden;
   transform: translateZ(0);
 }
@@ -117,7 +120,7 @@
   display: flex;
   align-items: center;
   padding: 10px 14px;
-  border-bottom: 1px solid rgba(24, 20, 15, 0.07);
+  border-bottom: 1px solid rgba(17, 24, 39, 0.07);
   position: relative;
 }
 .trafficDot {
@@ -134,7 +137,7 @@
   transform: translateZ(60px) rotateX(-2deg) rotateY(4deg);
   background: var(--surface);
   border-radius: 14px;
-  box-shadow: 0 30px 60px -20px rgba(24, 20, 15, 0.4), 0 0 0 1px rgba(24, 20, 15, 0.05);
+  box-shadow: 0 30px 60px -20px rgba(17, 24, 39, 0.4), 0 0 0 1px rgba(17, 24, 39, 0.05);
   animation: floaty-draft 5.5s ease-in-out infinite;
 }
 @keyframes floaty-draft {
@@ -156,7 +159,7 @@
   transform: translateZ(-30px) rotateX(3deg) rotateY(-5deg);
   background: var(--surface);
   border-radius: 14px;
-  box-shadow: 0 24px 50px -20px rgba(24, 20, 15, 0.3);
+  box-shadow: 0 24px 50px -20px rgba(17, 24, 39, 0.3);
 }
 
 .groundShadow {
@@ -166,7 +169,7 @@
   transform: translateX(-50%);
   width: 78%;
   height: 60px;
-  background: radial-gradient(ellipse at center, rgba(24, 20, 15, 0.28), transparent 72%);
+  background: radial-gradient(ellipse at center, rgba(17, 24, 39, 0.28), transparent 72%);
   filter: blur(4px);
   pointer-events: none;
 }
@@ -218,7 +221,7 @@
    .text-gradient-accent (globals.css), amber-toned instead of blue, kept
    to this one use on the page. */
 .shimmer {
-  background: linear-gradient(100deg, var(--amber), #f3c374, var(--amber));
+  background: linear-gradient(100deg, var(--amber), #8aa4f7, var(--amber));
   background-size: 220% auto;
   background-clip: text;
   -webkit-background-clip: text;
@@ -236,7 +239,7 @@
 
 /* Comparison table (Positioning section) */
 .compareGrid {
-  border: 1px solid rgba(24, 20, 15, 0.1);
+  border: 1px solid rgba(17, 24, 39, 0.1);
   border-radius: 16px;
   overflow: hidden;
 }
@@ -251,7 +254,7 @@
   position: absolute;
   border-radius: 14px;
   background: var(--surface);
-  box-shadow: 0 24px 50px -20px rgba(24, 20, 15, 0.32), 0 0 0 1px rgba(24, 20, 15, 0.05);
+  box-shadow: 0 24px 50px -20px rgba(17, 24, 39, 0.32), 0 0 0 1px rgba(17, 24, 39, 0.05);
   transform-style: preserve-3d;
   will-change: transform;
 }

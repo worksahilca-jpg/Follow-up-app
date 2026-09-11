@@ -6,7 +6,7 @@ import styles from "@/app/landing.module.css";
 /**
  * The hero headline's two-line treatment: line 1 static at full opacity,
  * line 2 fades letter-by-letter left to right down to near-invisible,
- * closing on an amber period. Each letter's REST opacity is a fixed
+ * closing on a blue period. Each letter's REST opacity is a fixed
  * function of its position (not animated over time) — what animates is
  * only the one-time mount reveal, staggered per letter, settling each
  * letter at its own permanent opacity rather than a uniform fade-in.

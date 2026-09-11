@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import styles from "@/app/landing.module.css";
-import { plusJakarta } from "@/lib/fonts";
+import { manrope } from "@/lib/fonts";
 import Reveal from "@/components/landing/Reveal";
 import SignInScene from "@/components/landing/SignInScene";
 
@@ -18,7 +18,7 @@ import SignInScene from "@/components/landing/SignInScene";
 // the Google button itself) is untouched from before this redesign.
 export default function SignInPage() {
   return (
-    <div className={`${styles.root} min-h-screen ${plusJakarta.variable}`} style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
+    <div className={`${styles.root} min-h-screen ${manrope.variable}`} style={{ fontFamily: "var(--font-manrope), sans-serif" }}>
       <div className={styles.gridTexture} />
       <SignInScene />
       <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-16">
@@ -94,7 +94,7 @@ function SignInPageInner() {
     <Reveal className="w-full max-w-sm">
       <div
         className="relative w-full rounded-2xl p-8 text-center"
-        style={{ background: "var(--surface)", boxShadow: "0 30px 60px -28px rgba(24,20,15,0.35), 0 0 0 1px rgba(24,20,15,0.05)" }}
+        style={{ background: "var(--surface)", boxShadow: "0 30px 60px -28px rgba(17, 24, 39,0.35), 0 0 0 1px rgba(17, 24, 39,0.05)" }}
       >
         <h1 className="text-xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
           Welcome back
@@ -110,7 +110,7 @@ function SignInPageInner() {
           }}
           disabled={redirecting || autoRetrying}
           className="mt-7 w-full inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-transform hover:scale-[1.015] disabled:opacity-60 disabled:hover:scale-100"
-          style={{ background: "#fff", color: "var(--ink)", border: "1px solid rgba(24,20,15,0.15)" }}
+          style={{ background: "#fff", color: "var(--ink)", border: "1px solid rgba(17, 24, 39,0.15)" }}
         >
           <GoogleIcon className="h-4 w-4" />
           {redirecting || autoRetrying ? "Redirecting…" : "Continue with Google"}

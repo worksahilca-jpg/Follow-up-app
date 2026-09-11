@@ -86,13 +86,13 @@ export default function HeroMockup() {
             <div className="flex items-center justify-between">
               <span
                 className="flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold"
-                style={{ background: "rgba(24,20,15,0.08)", color: "var(--ink-soft)" }}
+                style={{ background: "rgba(17, 24, 39,0.08)", color: "var(--ink-soft)" }}
               >
                 68
               </span>
               <span
                 className="rounded-full px-2 py-0.5 text-[9px] font-semibold"
-                style={{ background: "rgba(24,20,15,0.08)", color: "var(--ink-soft)" }}
+                style={{ background: "rgba(17, 24, 39,0.08)", color: "var(--ink-soft)" }}
               >
                 Warm
               </span>
@@ -127,7 +127,7 @@ export default function HeroMockup() {
             {/* Sidebar */}
             <div
               className="w-[132px] shrink-0 px-3 py-4 flex flex-col justify-between"
-              style={{ borderRight: "1px solid rgba(24,20,15,0.07)" }}
+              style={{ borderRight: "1px solid rgba(17, 24, 39,0.07)" }}
             >
               <div className="space-y-0.5 text-[12px]">
                 <SideItem label="Today" badge="2" active />
@@ -141,7 +141,7 @@ export default function HeroMockup() {
                   Gmail connected
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="relative h-5 w-5 rounded-full" style={{ background: "rgba(24,20,15,0.1)" }}>
+                  <span className="relative h-5 w-5 rounded-full" style={{ background: "rgba(17, 24, 39,0.1)" }}>
                     <span
                       className="absolute -right-0.5 -bottom-0.5 h-1.5 w-1.5 rounded-full border border-white"
                       style={{ background: "#5fb256" }}
@@ -162,7 +162,7 @@ export default function HeroMockup() {
                 className={styles.leadCard}
                 style={{
                   borderLeftColor: "var(--coral)",
-                  background: "rgba(24,20,15,0.02)",
+                  background: "rgba(17, 24, 39,0.02)",
                   borderRadius: 10,
                   padding: "12px",
                   marginTop: 10,
@@ -171,7 +171,7 @@ export default function HeroMockup() {
                 <div className="flex items-start gap-3">
                   <span
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${styles.pulseDot}`}
-                    style={{ background: "var(--amber-soft)", color: "#96631c" }}
+                    style={{ background: "var(--amber-soft)", color: "#1e3a8a" }}
                   >
                     92
                   </span>
@@ -226,12 +226,12 @@ export default function HeroMockup() {
               Happy to walk through anything that&apos;s unclear…
             </p>
             <div className="flex gap-1.5 mt-2.5">
-              <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{ background: "var(--ink)", color: "#f3f0ea" }}>
+              <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{ background: "var(--ink)", color: "#f5f7fa" }}>
                 Send email
               </span>
               <span
                 className="rounded-full px-2.5 py-1 text-[10px] font-semibold"
-                style={{ border: "1px solid rgba(24,20,15,0.15)", color: "var(--ink-soft)" }}
+                style={{ border: "1px solid rgba(17, 24, 39,0.15)", color: "var(--ink-soft)" }}
               >
                 Snooze
               </span>
@@ -250,8 +250,8 @@ function SideItem({ label, badge, active }: { label: string; badge?: string; act
     <div
       className="flex items-center justify-between rounded-md px-2 py-1.5"
       style={{
-        background: active ? "rgba(232,162,58,0.16)" : "transparent",
-        color: active ? "#96631c" : "var(--ink-soft)",
+        background: active ? "rgba(41,84,224,0.16)" : "transparent",
+        color: active ? "#1e3a8a" : "var(--ink-soft)",
         fontWeight: active ? 700 : 500,
       }}
     >

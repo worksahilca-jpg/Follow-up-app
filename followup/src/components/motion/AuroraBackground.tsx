@@ -5,7 +5,7 @@
  * and costs nothing beyond three absolutely-positioned divs; the parent
  * section just needs `relative` and `overflow-hidden`.
  *
- * Independent decorative hues (amber/coral/blue — the same three
+ * Independent decorative hues (blue/coral/blue — the same three
  * SignInScene.tsx uses) rather than the app's own --rust/--gold/--sage:
  * --rust is now the primary accent and --gold/--sage are the lead-urgency
  * status colors, so reusing either here would either wash out the accent
@@ -16,7 +16,7 @@ export default function AuroraBackground({ className }: { className?: string }) 
     <div aria-hidden className={`pointer-events-none absolute inset-0 -z-10 overflow-hidden ${className ?? ""}`}>
       <div
         className="aurora-blob aurora-blob-a"
-        style={{ top: "-15%", left: "-10%", width: "50%", height: "60%", backgroundColor: "#e8a23a" }}
+        style={{ top: "-15%", left: "-10%", width: "50%", height: "60%", backgroundColor: "#2954e0" }}
       />
       <div
         className="aurora-blob aurora-blob-b"

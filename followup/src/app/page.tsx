@@ -21,7 +21,7 @@ import HeroMockup from "@/components/landing/HeroMockup";
 import Reveal from "@/components/landing/Reveal";
 import LandingFaq from "@/components/landing/LandingFaq";
 import CountUp from "@/components/motion/CountUp";
-import { plusJakarta } from "@/lib/fonts";
+import { manrope } from "@/lib/fonts";
 
 // Same content this page has always had — restyled into the new warm
 // editorial palette/typography/3D-mockup treatment, not rewritten. Only
@@ -31,7 +31,7 @@ import { plusJakarta } from "@/lib/fonts";
 // already live.
 export default function LandingPage() {
   return (
-    <div className={`${styles.root} ${plusJakarta.variable}`} style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
+    <div className={`${styles.root} ${manrope.variable}`} style={{ fontFamily: "var(--font-manrope), sans-serif" }}>
       <LandingNav />
       <div className={styles.gridTexture} />
 
@@ -41,7 +41,7 @@ export default function LandingPage() {
           <Reveal>
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-              style={{ border: "1px solid rgba(24,20,15,0.15)", color: "var(--ink-soft)" }}
+              style={{ border: "1px solid rgba(17, 24, 39,0.15)", color: "var(--ink-soft)" }}
             >
               <Sparkles className="h-3 w-3" style={{ color: "var(--amber)" }} /> AI-native, not AI-bolted-on
             </span>
@@ -73,14 +73,14 @@ export default function LandingPage() {
               <Link
                 href="/signin"
                 className="inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-[15px] font-bold transition-transform hover:scale-[1.03]"
-                style={{ background: "var(--amber)", color: "#241a08", boxShadow: "0 16px 32px -14px rgba(232,162,58,0.65)" }}
+                style={{ background: "var(--amber)", color: "#ffffff", boxShadow: "0 16px 32px -14px rgba(41,84,224,0.65)" }}
               >
                 Get started <ArrowRight className="h-4 w-4" />
               </Link>
               <a
                 href="#how-it-works"
                 className="rounded-full px-5 py-3 text-[14px] font-semibold transition-opacity hover:opacity-70"
-                style={{ border: "1px solid rgba(24,20,15,0.15)", color: "var(--ink)" }}
+                style={{ border: "1px solid rgba(17, 24, 39,0.15)", color: "var(--ink)" }}
               >
                 See how it works
               </a>
@@ -114,7 +114,7 @@ export default function LandingPage() {
             <span
               key={name}
               className="text-sm font-bold rounded-lg px-4 py-2"
-              style={{ background: "var(--surface)", border: "1px solid rgba(24,20,15,0.1)", color: "var(--ink)" }}
+              style={{ background: "var(--surface)", border: "1px solid rgba(17,24,39,0.1)", color: "var(--ink)" }}
             >
               {name}
             </span>
@@ -156,7 +156,7 @@ export default function LandingPage() {
               <div
                 key={stat}
                 className="rounded-2xl p-6"
-                style={{ background: "var(--cream)", border: "1px solid rgba(24,20,15,0.1)" }}
+                style={{ background: "var(--cream)", border: "1px solid rgba(17,24,39,0.1)" }}
               >
                 <p style={{ fontWeight: 800, fontSize: 30, letterSpacing: "-0.02em", color: "var(--ink)" }}>
                   {stat}
@@ -209,7 +209,7 @@ export default function LandingPage() {
           </div>
           <div
             className="p-6 sm:p-7"
-            style={{ borderTop: "1px solid rgba(24,20,15,0.1)", borderLeft: "3px solid var(--amber)" }}
+            style={{ borderTop: "1px solid rgba(17,24,39,0.1)", borderLeft: "3px solid var(--amber)" }}
           >
             <p className="text-xs font-bold uppercase" style={{ letterSpacing: "0.1em", color: "var(--amber)" }}>
               FollowUp
@@ -330,7 +330,7 @@ export default function LandingPage() {
           <Reveal delay={0.15}>
             <div
               className="rounded-2xl p-5"
-              style={{ background: "var(--surface)", boxShadow: "0 30px 60px -32px rgba(24,20,15,0.35)" }}
+              style={{ background: "var(--surface)", boxShadow: "0 30px 60px -32px rgba(17, 24, 39,0.35)" }}
             >
               <p className="text-xs font-semibold mb-3" style={{ color: "var(--ink-soft)" }}>
                 Team pipeline
@@ -345,7 +345,7 @@ export default function LandingPage() {
                   <div
                     key={row.name}
                     className="flex items-center gap-3 rounded-lg px-3 py-2.5"
-                    style={{ border: "1px solid rgba(24,20,15,0.08)" }}
+                    style={{ border: "1px solid rgba(17, 24, 39,0.08)" }}
                   >
                     <span className="h-2 w-2 rounded-full shrink-0" style={{ background: row.color }} />
                     <span className="text-sm font-semibold flex-1 min-w-0 truncate">{row.name}</span>
@@ -378,7 +378,7 @@ export default function LandingPage() {
           <div className="mt-10 max-w-sm">
             <div
               className="rounded-2xl p-6"
-              style={{ background: "var(--surface)", boxShadow: "0 30px 60px -32px rgba(24,20,15,0.35)" }}
+              style={{ background: "var(--surface)", boxShadow: "0 30px 60px -32px rgba(17, 24, 39,0.35)" }}
             >
               <p className="text-sm font-bold">FollowUp</p>
               <p className={styles.priceGiant} style={{ fontSize: 44, marginTop: 4 }}>
@@ -404,7 +404,7 @@ export default function LandingPage() {
               <Link
                 href="/signin"
                 className="mt-6 flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold transition-transform hover:scale-[1.02]"
-                style={{ background: "var(--amber)", color: "#241a08", boxShadow: "0 14px 28px -12px rgba(232,162,58,0.6)" }}
+                style={{ background: "var(--amber)", color: "#ffffff", boxShadow: "0 14px 28px -12px rgba(41,84,224,0.6)" }}
               >
                 Get started <ArrowRight className="h-3.5 w-3.5" />
               </Link>
@@ -458,7 +458,7 @@ export default function LandingPage() {
             <Link
               href="/signin"
               className="inline-flex items-center gap-2 mt-7 rounded-full px-6 py-3.5 text-[15px] font-bold transition-transform hover:scale-[1.05]"
-              style={{ background: "var(--amber)", color: "#241a08", boxShadow: "0 16px 32px -14px rgba(232,162,58,0.65)" }}
+              style={{ background: "var(--amber)", color: "#ffffff", boxShadow: "0 16px 32px -14px rgba(41,84,224,0.65)" }}
             >
               Get started <ArrowRight className="h-4 w-4" />
             </Link>
@@ -503,12 +503,12 @@ function IconCard({
       className="rounded-xl p-5 transition-transform hover:-translate-y-0.5"
       style={{
         background: surface ? "var(--cream)" : "var(--surface)",
-        border: "1px solid rgba(24,20,15,0.08)",
+        border: "1px solid rgba(17, 24, 39,0.08)",
       }}
     >
       <div
         className="h-9 w-9 rounded-lg flex items-center justify-center"
-        style={{ border: "1px solid rgba(24,20,15,0.12)", color: "var(--ink-soft)" }}
+        style={{ border: "1px solid rgba(17, 24, 39,0.12)", color: "var(--ink-soft)" }}
       >
         {icon}
       </div>

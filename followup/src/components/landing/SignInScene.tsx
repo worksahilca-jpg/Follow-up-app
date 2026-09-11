@@ -18,7 +18,7 @@ import styles from "@/app/landing.module.css";
  * The sign-in card itself never moves (it holds the one thing a visitor
  * has to click precisely); depth and motion live entirely here, behind it:
  * the same aurora-blob wash globals.css already defines, recolored to
- * this page's amber/coral/blue palette, plus two small floating chips on
+ * this page's blue/coral palette, plus two small floating chips on
  * their own Z planes reacting to mouse position — the same idle-float +
  * mouse-parallax technique as HeroMockup, just simpler (no nested content,
  * no counter-parallax layer) since this is chrome, not a hero illustration.
@@ -101,7 +101,7 @@ export default function SignInScene() {
         }}
       >
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold" style={{ background: "var(--amber-soft)", color: "#96631c" }}>
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold" style={{ background: "var(--amber-soft)", color: "#1e3a8a" }}>
             92
           </span>
           <div className="min-w-0">

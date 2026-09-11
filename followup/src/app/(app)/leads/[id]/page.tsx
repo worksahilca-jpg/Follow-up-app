@@ -12,6 +12,7 @@ import DeleteLeadButton from "@/components/DeleteLeadButton";
 import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
 import LeadTrustPanel from "@/components/LeadTrustPanel";
 import AutomationStatusBadge from "@/components/AutomationStatusBadge";
+import CollapsibleSection from "@/components/CollapsibleSection";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 import { isInstagramLeadId, isSocialLeadId } from "@/lib/instagramId";
 
@@ -59,6 +60,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           )
         )}
         <CopyBookingLinkButton leadId={lead.id} />
+      </div>
+
+      {/* research/product/2026-09-10-ux-simplification.md §8: this used to
+          be one card buried at the top of a 7-card sidebar stack — moved
+          up front since it's already computed to answer the one question
+          that actually varies by lead state: what's FollowUp doing here,
+          and is anything waiting on you. See automationStatus.ts. */}
+      <div className="mt-6">
+        <AutomationStatusBadge status={lead.automationStatus} />
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 mt-8">
@@ -119,43 +129,64 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           />
         </div>
 
-        <aside className="space-y-6">
-          <AutomationStatusBadge status={lead.automationStatus} />
-          <div className="rounded-xl border border-line bg-card p-4">
-            <h3 className="text-sm font-semibold">Details</h3>
-            <dl className="mt-3 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-ink-soft">Source</dt>
-                <dd>{lead.source}</dd>
+        <aside className="space-y-1 divide-y divide-line">
+          <div className="pb-1">
+            <CollapsibleSection title="Details">
+              <div className="rounded-xl border border-line bg-card p-4">
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-ink-soft">Source</dt>
+                    <dd>{lead.source}</dd>
+                  </div>
+                  <div className="flex justify-between items-start gap-3">
+                    <dt className="text-ink-soft shrink-0">Assigned to</dt>
+                    <dd>
+                      <LeadAssignmentSelect
+                        leadId={lead.id}
+                        initialAssignedToId={lead.assignedToId}
+                        initialAssignedToName={lead.assignedTo}
+                      />
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-ink-soft">Last contacted</dt>
+                    <dd>{formatDate(lead.lastContacted)}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-ink-soft">Next follow-up</dt>
+                    <dd>{lead.nextFollowUp ? formatDate(lead.nextFollowUp) : "—"}</dd>
+                  </div>
+                </dl>
               </div>
-              <div className="flex justify-between items-start gap-3">
-                <dt className="text-ink-soft shrink-0">Assigned to</dt>
-                <dd>
-                  <LeadAssignmentSelect
-                    leadId={lead.id}
-                    initialAssignedToId={lead.assignedToId}
-                    initialAssignedToName={lead.assignedTo}
-                  />
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-ink-soft">Last contacted</dt>
-                <dd>{formatDate(lead.lastContacted)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-ink-soft">Next follow-up</dt>
-                <dd>{lead.nextFollowUp ? formatDate(lead.nextFollowUp) : "—"}</dd>
-              </div>
-            </dl>
+            </CollapsibleSection>
           </div>
-          <div className="rounded-xl border border-line bg-card p-4">
-            <h3 className="text-sm font-semibold">Notes</h3>
-            <p className="text-sm text-ink-soft mt-2 leading-relaxed">{lead.notes}</p>
+
+          <div className="py-1">
+            <CollapsibleSection title="Notes">
+              <div className="rounded-xl border border-line bg-card p-4">
+                <p className="text-sm text-ink-soft leading-relaxed">{lead.notes || "No notes yet."}</p>
+              </div>
+            </CollapsibleSection>
           </div>
-          <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} />
-          <LeadAutomationToggle leadId={lead.id} initialTier={lead.automationTier} />
-          <LeadWorkflowEnrollment leadId={lead.id} />
-          <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
+
+          <div className="py-1">
+            <CollapsibleSection title="Consent & AI activity">
+              <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} />
+            </CollapsibleSection>
+          </div>
+
+          <div className="py-1">
+            <CollapsibleSection title="Automation & follow-up plan">
+              <div className="space-y-3">
+                <LeadAutomationToggle leadId={lead.id} initialTier={lead.automationTier} />
+                <LeadWorkflowEnrollment leadId={lead.id} />
+              </div>
+            </CollapsibleSection>
+          </div>
+
+          <div className="pt-4">
+            <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
+          </div>
         </aside>
       </div>
     </div>

@@ -454,11 +454,10 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
  * from repeating every hour.
  */
 async function notifyNeglect(
-  lead: { id: string; name: string; assignedToId: string | null },
+  lead: { id: string; name: string; businessId: string; assignedToId: string | null },
   conversation: Message[],
   outcome: "held" | "sent"
 ): Promise<void> {
-  if (!lead.assignedToId) return;
   const lastInbound = [...conversation].reverse().find((m) => m.direction === "inbound");
   const waited = lastInbound ? `${hoursAgo(new Date(lastInbound.date))}h` : "a while";
   const message =
@@ -466,7 +465,19 @@ async function notifyNeglect(
       ? `${lead.name} wrote ${waited} ago and hadn't heard back — FollowUp replied for you. Check the thread.`
       : `${lead.name} wrote ${waited} ago and hasn't heard back — a reply is drafted and waiting for your approval.`;
   try {
-    await prisma.notification.create({ data: { userId: lead.assignedToId, leadId: lead.id, message } });
+    // An unassigned lead (the shared pool / "up for grabs") has nobody to
+    // hand this off to individually — this used to just return early,
+    // which meant a held draft on a pond lead notified nobody at all
+    // (research/product/2026-09-10-ux-simplification.md §0.6). Falling
+    // back to every admin on the business is the right default for the
+    // common case (one solo owner, who is the sole admin) and still
+    // reaches someone on a small team rather than silently dropping it.
+    const userIds = lead.assignedToId
+      ? [lead.assignedToId]
+      : (await prisma.user.findMany({ where: { businessId: lead.businessId, role: "ADMIN" }, select: { id: true } })).map((u) => u.id);
+    for (const userId of userIds) {
+      await prisma.notification.create({ data: { userId, leadId: lead.id, message } });
+    }
   } catch (err) {
     console.error(`Neglect notification failed for lead ${lead.id}:`, err);
   }

@@ -12,6 +12,7 @@ vi.mock("@/lib/db", () => ({
     lead: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     notification: { create: vi.fn() },
     business: { findUnique: vi.fn() },
+    user: { findMany: vi.fn() },
   },
 }));
 vi.mock("@/lib/integrations/openai", () => ({
@@ -76,6 +77,7 @@ beforeEach(() => {
   p.lead.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds by default
   p.notification.create.mockResolvedValue({});
   p.business.findUnique.mockResolvedValue({ timezone: "America/New_York" });
+  p.user.findMany.mockResolvedValue([{ id: "admin1" }]);
   send.mockResolvedValue({ success: true });
   replyChannel.mockResolvedValue("email");
   sendWindow.mockReturnValue(true);
@@ -121,6 +123,38 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
     expect(p.notification.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ leadId: "lead2", message: expect.stringMatching(/hasn't heard back/) }) })
     );
+  });
+
+  // research/product/2026-09-10-ux-simplification.md §0.6: a held draft on
+  // an unassigned/pond lead used to notify nobody at all (notifyNeglect
+  // just returned early). It now falls back to every admin on the
+  // business — the common case is one solo owner, who is that admin.
+  it("notifies every admin on the business, not nobody, when the neglected lead is unassigned", async () => {
+    p.lead.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([unansweredLead(30, "inbound", { assignedToId: null })]);
+    risk.mockResolvedValue({ riskLevel: "medium", reason: "answers a factual question" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.held).toBe(1);
+    expect(p.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { businessId: "biz1", role: "ADMIN" } })
+    );
+    expect(p.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userId: "admin1", leadId: "lead2" }) })
+    );
+  });
+
+  it("notifies nobody (no admin found) without throwing, when a business somehow has none", async () => {
+    p.user.findMany.mockResolvedValue([]);
+    p.lead.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([unansweredLead(30, "inbound", { assignedToId: null })]);
+    risk.mockResolvedValue({ riskLevel: "medium", reason: "answers a factual question" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.held).toBe(1);
+    expect(p.notification.create).not.toHaveBeenCalled();
   });
 
   // Live-test finding (task #63): a cached suggestedMessage can predate the

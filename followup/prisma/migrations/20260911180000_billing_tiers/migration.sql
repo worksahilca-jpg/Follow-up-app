@@ -1,0 +1,9 @@
+ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "tier" TEXT NOT NULL DEFAULT 'free';
+ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "voiceAddonEnabled" BOOLEAN NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS "ProcessedWebhookEvent" (
+    "eventId" TEXT NOT NULL,
+    "processedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ProcessedWebhookEvent_pkey" PRIMARY KEY ("eventId")
+);

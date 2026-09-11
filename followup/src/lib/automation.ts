@@ -329,9 +329,13 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // every single hourly tick — this isn't transient the way "outside
       // business hours" is.
       if (tier === "free") {
-        const eligible =
+        // Named distinctly from the outer `eligible` (the batch array this
+        // closure iterates, declared above) — same name, different thing,
+        // and shadowing it here was a latent footgun for a future edit
+        // inside this closure.
+        const freeTierEligible =
           isChannelAvailableOnFreeTier(lead.source) && (await isWithinFreeTierLeadCap(businessId, lead));
-        if (!eligible) {
+        if (!freeTierEligible) {
           return { kind: "skipped", note: `${lead.name}: Free plan — AI processing paused (past the 20/mo cap, or this lead's channel isn't included in Free)` };
         }
       }

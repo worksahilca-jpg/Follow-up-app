@@ -20,32 +20,55 @@ export { TIER_INFO, VOICE_ADDON_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // gating code anywhere else needed to change when this was added.
 export const TRIAL_PERIOD_DAYS = 14;
 
-// Deliberately still tier-blind — this predates Free/Plus/Pro (this file's
-// TIER_INFO above) and hasn't caught up to it yet. It answers one question
-// only, "is there a paid subscription in good standing," and every one of
-// its ~45 call sites across the API routes still uses it that way: no
-// subscription (Free, by definition) reads the same as canceled/past_due,
-// full lockout rather than the capped-but-real access the Free tier is
-// actually supposed to have. Rewiring that — a real per-feature check
-// answering "access to *what*, at *this* tier" instead of one yes/no — is
-// its own pass, deliberately not bundled into wiring the Stripe side of
-// these tiers (see the PR that introduced tier/voiceAddonEnabled on
-// Business). Anything that has to change *by tier* (the Free lead cap, the
-// Free channel restriction, Voice-gating) needs a new check that reads
-// Business.tier — not a rewrite of what this function means.
-export function hasActiveAccess(subscriptionStatus: string | null | undefined): boolean {
-  return !!subscriptionStatus && ACTIVE_STATUSES.has(subscriptionStatus);
+// Was tier-blind until this fix — it predates Free/Plus/Pro (this file's
+// TIER_INFO above) and answered one question only, "is there a paid
+// subscription in good standing." Every one of its ~45 call sites across
+// the API routes (lead capture on every channel, sync, sends, etc.) used it
+// that way, which meant Free tier — which by design has no Stripe
+// subscription at all, see checkout/route.ts — read as fully locked out,
+// identical to canceled/past_due. That made the whole Free tier
+// non-functional end to end (a Free business couldn't capture a single
+// lead) rather than the capped-but-real access it's supposed to have.
+//
+// The fix: accept the caller's tier as a second, optional argument. A
+// Business.tier of "free" now counts as access on its own, independent of
+// subscriptionStatus — because Free tier genuinely has none. This is
+// additive and opt-in per call site: omit the second argument and the
+// check is exactly what it always was (subscription-only), which is
+// deliberately still correct for call sites gating a Plus/Pro-only
+// capability (e.g. crmSync.ts's CRM import, not a Free-tier-allowed
+// channel — see FREE_TIER_ALLOWED_SOURCES below). Pass the tier at any
+// call site that gates something Free tier is meant to have (lead
+// capture/processing, Gmail/Outlook sync — both Free-tier channels).
+//
+// A canceled/past_due Plus or Pro business does NOT fall back to this
+// Free-tier bypass: the webhook (billing/webhook/route.ts's
+// syncSubscription) only ever writes tier from a live subscription's price
+// ID, so a business that has ever subscribed keeps tier "plus"/"pro"
+// (stale, deliberately — see stripe.ts's getTierFromPriceId comment on
+// grandfathering) even after cancellation, never reverting to "free". So
+// this bypass only ever applies to a business that has never subscribed,
+// which is exactly the population it's meant for.
+export function hasActiveAccess(subscriptionStatus: string | null | undefined, tier?: string | null): boolean {
+  return (!!subscriptionStatus && ACTIVE_STATUSES.has(subscriptionStatus)) || tier === "free";
 }
 
 // Convenience for API routes that need to gate a mutation on billing —
 // looks up the caller's business fresh (session JWT doesn't carry
-// subscription state, and it changes independently of login).
+// subscription state, and it changes independently of login). Passes tier
+// through to hasActiveAccess so every one of this function's ~45 call
+// sites automatically treats Free tier as real access, not lockout — see
+// hasActiveAccess's own comment for why that's safe to do unconditionally
+// here specifically (this function gates general lead-capture/processing
+// mutations, which Free tier is meant to have; a call site gating a
+// genuinely Plus/Pro-only capability calls hasActiveAccess directly
+// instead, as crmSync.ts already does).
 export async function requireActiveBilling(businessId: string): Promise<boolean> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { subscriptionStatus: true },
+    select: { subscriptionStatus: true, tier: true },
   });
-  return hasActiveAccess(business?.subscriptionStatus);
+  return hasActiveAccess(business?.subscriptionStatus, business?.tier);
 }
 
 export const BILLING_LOCKED_MESSAGE =

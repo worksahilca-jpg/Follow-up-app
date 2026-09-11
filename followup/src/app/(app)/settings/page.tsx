@@ -29,21 +29,22 @@ export default function SettingsPage() {
 // visit only ever shows the one thing you came for. Every section keeps its
 // existing id so links pointing at #billing etc. (see getIncompleteSetupSteps)
 // keep working — this map is just which tab a given id lives under.
-type SettingsTab = "connect" | "team" | "billing" | "advanced";
+type SettingsTab = "connect" | "channels" | "team" | "billing" | "advanced";
 const TAB_LABEL: Record<SettingsTab, string> = {
   connect: "Connect",
+  channels: "Channels",
   team: "Team",
   billing: "Billing",
   advanced: "Advanced",
 };
 const SECTION_TAB: Record<string, SettingsTab> = {
   integrations: "connect",
-  "website-widget": "connect",
-  "lead-webhook": "connect",
-  "outbound-webhook": "connect",
-  phone: "connect",
-  social: "connect",
   crm: "connect",
+  "website-widget": "channels",
+  "lead-webhook": "channels",
+  "outbound-webhook": "channels",
+  phone: "channels",
+  social: "channels",
   "lead-routing": "team",
   team: "team",
   billing: "billing",
@@ -717,6 +718,18 @@ function SettingsPageInner() {
         )}
       </section>
 
+      {/* Was buried inside the "Instagram" section under the wrong name —
+          it's a CRM sync, unrelated to social DMs. Grouped with Connect
+          since it's about where leads/contacts come from, not a channel. */}
+      <section id="crm" className="scroll-mt-16">
+        <h2 className="font-display text-xl">CRM sync</h2>
+        <div className="mt-4">
+          <CrmConfig />
+        </div>
+      </section>
+      </div>
+
+      <div hidden={activeTab !== "channels"} className="space-y-10">
       <section id="website-widget" className="scroll-mt-16">
         <h2 className="font-display text-xl">Website widget</h2>
         <div className="mt-4">
@@ -750,16 +763,6 @@ function SettingsPageInner() {
         <div className="mt-4">
           <InstagramConfig />
           <FacebookConfig />
-        </div>
-      </section>
-
-      {/* Was buried inside the "Instagram" section under the wrong name —
-          it's a CRM sync, unrelated to social DMs. Its own section, still
-          in Connect since it's a channel like any other integration here. */}
-      <section id="crm" className="scroll-mt-16">
-        <h2 className="font-display text-xl">CRM sync</h2>
-        <div className="mt-4">
-          <CrmConfig />
         </div>
       </section>
       </div>

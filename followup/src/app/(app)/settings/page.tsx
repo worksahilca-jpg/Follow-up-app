@@ -11,6 +11,7 @@ import TwilioConfig from "@/components/TwilioConfig";
 import InstagramConfig from "@/components/InstagramConfig";
 import FacebookConfig from "@/components/FacebookConfig";
 import CrmConfig from "@/components/CrmConfig";
+import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
@@ -625,10 +626,13 @@ function SettingsPageInner() {
           )}
           {gmailConnected && (
             <p className="ml-[52px] text-xs text-ink-soft">
-              Booking links now create real events on your Google Calendar. If you connected Gmail before this
-              feature shipped, click <strong>Reconnect</strong> once to grant calendar access.
+              If you connected Gmail before booking links existed, click <strong>Reconnect</strong> once to grant
+              calendar access.
             </p>
           )}
+          <div className="ml-[52px]">
+            <BookingCalendarConfig />
+          </div>
           {gmailConnected && (
             <div className="ml-[52px] mt-2 rounded-lg border border-line px-4 py-3">
               <div className="flex items-center gap-3 flex-wrap">

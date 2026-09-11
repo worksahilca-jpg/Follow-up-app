@@ -330,6 +330,44 @@ export async function createCalendarEvent(
   }
 }
 
+/**
+ * Real busy blocks on the business's connected Google Calendar over a
+ * window — what getAvailableSlots() (src/lib/booking.ts) excludes on top
+ * of the fixed business-hours grid when Business.bookingCalendarSource
+ * is "google", so a lead can't book over a meeting the owner already
+ * has. Uses the freebusy.query API rather than listing events: it needs
+ * no extra scope beyond calendar.events (already requested — see SCOPES
+ * above) and returns exactly the busy intervals, not event details this
+ * code has no reason to see.
+ *
+ * Best-effort, same posture as createCalendarEvent(): no connection, a
+ * pre-calendar-scope token, or any API error just means no busy blocks
+ * are known — the caller falls back to the fixed-grid-only behavior
+ * rather than failing the whole availability check over this.
+ */
+export async function getGoogleCalendarBusyTimes(
+  businessId: string,
+  timeMinIso: string,
+  timeMaxIso: string
+): Promise<{ start: string; end: string }[]> {
+  const authed = await getAuthedOAuthClient(businessId);
+  if (!authed) return [];
+
+  try {
+    const calendar = google.calendar({ version: "v3", auth: authed.oauth2Client });
+    const res = await calendar.freebusy.query({
+      requestBody: { timeMin: timeMinIso, timeMax: timeMaxIso, items: [{ id: "primary" }] },
+    });
+    const busy = res.data.calendars?.primary?.busy ?? [];
+    return busy
+      .filter((b): b is { start: string; end: string } => typeof b.start === "string" && typeof b.end === "string")
+      .map((b) => ({ start: b.start, end: b.end }));
+  } catch (err) {
+    console.error(`Failed to read Google Calendar free/busy for business ${businessId}:`, err);
+    return [];
+  }
+}
+
 function decodeBase64Url(data: string): string {
   return Buffer.from(data, "base64").toString("utf-8");
 }

@@ -10,7 +10,7 @@
  */
 
 import { prisma } from "@/lib/db";
-import { createCalendarEvent } from "@/lib/integrations/gmail";
+import { createCalendarEvent, getGoogleCalendarBusyTimes } from "@/lib/integrations/gmail";
 
 const SLOT_MINUTES = 30;
 const BUSINESS_HOURS = { start: 9, end: 17 }; // 9am–5pm, exclusive end
@@ -46,6 +46,15 @@ function roundUpToSlot(ms: number): number {
   return Math.ceil(ms / slotMs) * slotMs;
 }
 
+/** Whether a candidate [slotStart, slotStart+slotMs) overlaps any busy interval — half-open on both ends, matching how calendar busy blocks are normally compared. */
+function overlapsBusy(slotStartMs: number, slotEndMs: number, busy: { start: string; end: string }[]): boolean {
+  return busy.some((b) => {
+    const busyStart = new Date(b.start).getTime();
+    const busyEnd = new Date(b.end).getTime();
+    return slotStartMs < busyEnd && slotEndMs > busyStart;
+  });
+}
+
 export interface BookingContext {
   leadName: string;
   businessName: string;
@@ -69,7 +78,7 @@ export async function getAvailableSlots(leadId: string): Promise<string[]> {
 
   const business = await prisma.business.findUnique({
     where: { id: lead.businessId },
-    select: { timezone: true },
+    select: { timezone: true, bookingCalendarSource: true },
   });
   if (!business) return [];
 
@@ -84,11 +93,24 @@ export async function getAvailableSlots(leadId: string): Promise<string[]> {
   const horizon = now + LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000;
   const slotMs = SLOT_MINUTES * 60 * 1000;
 
+  // "google" ADDS this on top of the fixed grid below, it never replaces
+  // it — a lead should never be offered 2am just because Google Calendar
+  // happens to show nothing there. Fetched once for the whole window
+  // rather than once per candidate slot. getGoogleCalendarBusyTimes is
+  // itself best-effort (no connection, a stale token, an API error all
+  // just mean an empty list) — this can never make booking fail, only
+  // ever narrow it.
+  const googleBusy =
+    business.bookingCalendarSource === "google"
+      ? await getGoogleCalendarBusyTimes(lead.businessId, new Date(now).toISOString(), new Date(horizon).toISOString())
+      : [];
+
   const slots: string[] = [];
   for (let t = roundUpToSlot(now); t <= horizon; t += slotMs) {
     if (t < earliest || bookedTimes.has(t)) continue;
     const instant = new Date(t);
     if (!isWithinBusinessHours(instant, business.timezone)) continue;
+    if (googleBusy.length > 0 && overlapsBusy(t, t + slotMs, googleBusy)) continue;
     slots.push(instant.toISOString());
   }
   return slots;

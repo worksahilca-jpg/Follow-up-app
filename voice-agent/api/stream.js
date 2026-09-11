@@ -66,6 +66,21 @@ const OPENAI_CONNECT_TIMEOUT_MS = 6000;
 // legitimate call indefinitely instead of falling back to voicemail.
 const VOICE_AGENT_AUTH_TIMEOUT_MS = 4000;
 
+// How long a connected call can go with NO caller speech at all — since
+// the agent's greeting, or since the caller last said something — before
+// it's hung up rather than left running. Twilio keeps streaming audio the
+// whole time a call is connected (silence included), so "no media
+// events" is never a usable signal; OpenAI's own voice-activity detection
+// (the speech_started event, see onSpeechStarted below) is what actually
+// tells us a human is there. Without this, a call nobody's really on
+// (left connected on mute, a test call not hung up, a connection that
+// never cleanly closes) bills Twilio, OpenAI, AND this bridge's own
+// Vercel compute for as long as it sits open — up to the full 800s
+// maxDuration ceiling (see ../vercel.json) with nothing actually
+// happening. 45s gives a real caller comfortable room to respond to the
+// greeting without being cut off.
+const IDLE_TIMEOUT_MS = 45000;
+
 const app = express();
 // A plain GET (not a WebSocket upgrade) is just a liveness check — Twilio
 // only ever opens this as a WebSocket. Path-agnostic on purpose: Vercel
@@ -153,6 +168,7 @@ async function handleCall(twilioWs, secret) {
   let openaiReady = false;
   let agentSpeaking = false;
   let reported = false;
+  let idleTimer = null;
   const pendingAudioQueue = [];
   const turns = [];
 
@@ -171,6 +187,29 @@ async function handleCall(twilioWs, secret) {
       } catch {
         // already closed
       }
+    }
+  }
+
+  // Started once the agent's greeting has gone out, and restarted every
+  // time the caller actually speaks (onSpeechStarted below) — so it's
+  // really measuring "how long since anyone last said anything," not just
+  // "how long has the call been open."
+  function resetIdleTimer() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      console.error(`[voice-agent] No caller speech for ${IDLE_TIMEOUT_MS}ms — closing idle call.`);
+      try {
+        twilioWs.close();
+      } catch {
+        // already closed
+      }
+    }, IDLE_TIMEOUT_MS);
+  }
+
+  function clearIdleTimer() {
+    if (idleTimer) {
+      clearTimeout(idleTimer);
+      idleTimer = null;
     }
   }
 
@@ -211,6 +250,10 @@ async function handleCall(twilioWs, secret) {
           openaiWs.send(JSON.stringify({ type: "input_audio_buffer.append", audio: b64 }));
         }
         pendingAudioQueue.length = 0;
+        // The greeting is about to play — start the idle clock now so a
+        // caller who never responds (or isn't really there) doesn't sit
+        // connected indefinitely.
+        resetIdleTimer();
       });
 
       wireOpenAiEvents(openaiWs, {
@@ -221,6 +264,9 @@ async function handleCall(twilioWs, secret) {
           }
         },
         onSpeechStarted() {
+          // The caller said something — real activity, so the idle clock
+          // resets regardless of whether this is also a barge-in.
+          resetIdleTimer();
           // Barge-in: the caller started talking over the agent. Stop
           // whatever Twilio has queued to play, and tell OpenAI to
           // abandon the response it was mid-way through — otherwise the
@@ -246,6 +292,7 @@ async function handleCall(twilioWs, secret) {
       });
 
       openaiWs.on("close", () => {
+        clearIdleTimer();
         try {
           twilioWs.close();
         } catch {
@@ -272,12 +319,14 @@ async function handleCall(twilioWs, secret) {
     }
 
     if (msg.event === "stop") {
+      clearIdleTimer();
       closeOpenAi();
       reportAndClose();
     }
   });
 
   twilioWs.on("close", () => {
+    clearIdleTimer();
     closeOpenAi();
     reportAndClose();
   });

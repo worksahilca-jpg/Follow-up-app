@@ -119,6 +119,19 @@ function SettingsPageInner() {
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
+  // The 4 automation rules used to be 4 separate panels, each repeating its
+  // own "Our promise" paragraph — research/product/2026-09-10-ux-
+  // simplification.md §7: one switch + one plain-English summary up top,
+  // with the individual rules and their timings tucked behind an expander
+  // for whoever actually wants to tune them.
+  const [automationDetailsOpen, setAutomationDetailsOpen] = useState(false);
+  const previousAutomationStateRef = useRef<{
+    automationOn: boolean;
+    instantAckOn: boolean;
+    unansweredOn: boolean;
+    deadLeadOn: boolean;
+  } | null>(null);
+
   // Real connection state, fetched from the DB via the API route — not
   // local/demo state.
   useEffect(() => {
@@ -240,6 +253,80 @@ function SettingsPageInner() {
       }
     } finally {
       setInstantAckSaving(false);
+    }
+  }
+
+  // One sentence describing exactly what's active right now, built from the
+  // same 4 flags the individual rules already use — never drifts out of
+  // sync with reality the way 4 separately-worded "Our promise" blocks could.
+  function describeAutomationState(): string {
+    const clauses: string[] = [];
+    if (instantAckOn) clauses.push("sends an instant acknowledgement to every new lead");
+    if (automationOn) clauses.push(`nudges a quiet lead after ${autoAfterDays} day${autoAfterDays === 1 ? "" : "s"} of silence`);
+    if (unansweredOn) clauses.push(`steps in if you haven't answered within ${unansweredHours} hour${unansweredHours === 1 ? "" : "s"}`);
+    if (deadLeadOn) clauses.push(`switches to a reactivation message after ${deadLeadDays} days of silence on both sides`);
+    if (clauses.length === 0) return "Off — nothing goes out on its own. Every reply is one you send yourself.";
+    if (clauses.length === 1) return `Right now FollowUp ${clauses[0]}.`;
+    return `Right now FollowUp ${clauses.slice(0, -1).join(", ")}, and ${clauses[clauses.length - 1]}.`;
+  }
+
+  const anyAutomationOn = automationOn || instantAckOn || unansweredOn || deadLeadOn;
+  const automationBusy = automationSaving || instantAckSaving || unansweredSaving || deadLeadSaving;
+
+  // The master switch doesn't have its own server-side flag — it's just all
+  // 4 rules at once. Turning it off remembers which ones were actually on
+  // so turning it back on restores exactly that, instead of guessing.
+  async function handleMasterToggle() {
+    if (anyAutomationOn) {
+      if (
+        !window.confirm(
+          "Turn off every automated follow-up? Nothing will go out on its own until you turn this back on — you can still reply to leads yourself any time."
+        )
+      )
+        return;
+      previousAutomationStateRef.current = { automationOn, instantAckOn, unansweredOn, deadLeadOn };
+      if (automationOn) {
+        setAutomationOn(false);
+        saveAutomationSettings(false, autoAfterDays);
+      }
+      if (instantAckOn) {
+        setInstantAckOn(false);
+        saveInstantAck(false);
+      }
+      if (unansweredOn) {
+        setUnansweredOn(false);
+        saveUnanswered(false, unansweredHours);
+      }
+      if (deadLeadOn) {
+        setDeadLeadOn(false);
+        saveDeadLead(false, deadLeadDays);
+      }
+    } else {
+      // Nothing was on to remember (e.g. this is the first toggle this
+      // visit) — the app's own default is everything on, so restore that.
+      const prev = previousAutomationStateRef.current ?? {
+        automationOn: true,
+        instantAckOn: true,
+        unansweredOn: true,
+        deadLeadOn: true,
+      };
+      if (prev.automationOn) {
+        setAutomationOn(true);
+        saveAutomationSettings(true, autoAfterDays);
+      }
+      if (prev.instantAckOn) {
+        setInstantAckOn(true);
+        saveInstantAck(true);
+      }
+      if (prev.unansweredOn) {
+        setUnansweredOn(true);
+        saveUnanswered(true, unansweredHours);
+      }
+      if (prev.deadLeadOn) {
+        setDeadLeadOn(true);
+        saveDeadLead(true, deadLeadDays);
+      }
+      previousAutomationStateRef.current = null;
     }
   }
 
@@ -677,12 +764,45 @@ function SettingsPageInner() {
       <section id="automation" className="scroll-mt-16">
         <h2 className="font-display text-xl">Automation</h2>
         <div className="mt-4 rounded-xl border border-line bg-card p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-medium text-sm">Automatic follow-ups</p>
+              <p className="text-xs text-ink-soft mt-1">{describeAutomationState()}</p>
+            </div>
+            <button
+              onClick={handleMasterToggle}
+              disabled={!automationLoaded || automationBusy}
+              className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
+              style={{ backgroundColor: anyAutomationOn ? "var(--rust)" : "var(--line)" }}
+            >
+              <span
+                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
+                style={{ transform: anyAutomationOn ? "translateX(22px)" : "translateX(2px)" }}
+              />
+            </button>
+          </div>
+          {(automationError || instantAckError || unansweredError || deadLeadError) && (
+            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+              {automationError || instantAckError || unansweredError || deadLeadError}
+            </p>
+          )}
+          <button
+            onClick={() => setAutomationDetailsOpen((v) => !v)}
+            className="mt-4 text-xs font-medium underline underline-offset-2 text-ink-soft"
+          >
+            {automationDetailsOpen ? "Hide the individual rules" : "Change the timings"}
+          </button>
+        </div>
+
+        {automationDetailsOpen && (
+        <>
+        <div className="mt-4 rounded-xl border border-line bg-card p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Auto follow-up on silence</p>
               <p className="text-xs text-ink-soft mt-1">
-                Master switch — on by default. Leads in Assisted or Autonomous (every new lead starts in
-                Assisted) get an AI-drafted check-in after this many days of no response. <strong>Our promise:</strong>{" "}
+                Leads in Assisted or Autonomous (every new lead starts in Assisted) get an AI-drafted check-in
+                after this many days of no response. <strong>Our promise:</strong>{" "}
                 Assisted never sends anything about pricing, terms, or a tense conversation without your approval,
                 and every follow-up stops the instant the lead replies. Autonomous sends every draft with no review
                 at all — opt-in per lead only.
@@ -704,11 +824,6 @@ function SettingsPageInner() {
               />
             </button>
           </div>
-          {automationError && (
-            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
-              {automationError}
-            </p>
-          )}
           {automationOn && (
             <div className="mt-4 flex items-center gap-2 text-sm">
               <span>Wait</span>
@@ -886,6 +1001,8 @@ function SettingsPageInner() {
             </div>
           )}
         </div>
+        </>
+        )}
       </section>
       </div>
 

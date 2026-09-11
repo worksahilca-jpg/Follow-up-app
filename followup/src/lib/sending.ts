@@ -17,6 +17,7 @@ import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
 import { recordAudit } from "@/lib/audit";
+import { findOrCreateConversation } from "@/lib/conversations";
 import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 import { sendMessengerMessage } from "@/lib/facebook";
@@ -245,15 +246,7 @@ export async function sendFollowUpToLead(
     externalId = result.sid;
   }
 
-  let conversation = await prisma.conversation.findFirst({
-    where: { leadId: lead.id, channel },
-    orderBy: { createdAt: "desc" },
-  });
-  if (!conversation) {
-    conversation = await prisma.conversation.create({
-      data: { leadId: lead.id, channel, ...(emailProvider ? { emailProvider } : {}) },
-    });
-  }
+  const conversation = await findOrCreateConversation(lead.id, channel, emailProvider ? { emailProvider } : {});
 
   await prisma.message.create({
     data: {

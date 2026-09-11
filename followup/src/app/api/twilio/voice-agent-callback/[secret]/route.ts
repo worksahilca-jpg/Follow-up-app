@@ -5,6 +5,7 @@ import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { findBusinessByTwilioSecret, findOrCreateLeadByPhone, validateVoiceAgentCallbackAuth } from "@/lib/twilio";
+import { findOrCreateConversation } from "@/lib/conversations";
 import { parseJsonBody } from "@/lib/validation";
 
 type VoiceAgentTurn = { role: "caller" | "agent"; text: string };
@@ -68,10 +69,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const lead = await findOrCreateLeadByPhone(business.id, from, "Phone call");
 
-  let conversation = await prisma.conversation.findFirst({ where: { leadId: lead.id, channel: "voice-agent" } });
-  if (!conversation) {
-    conversation = await prisma.conversation.create({ data: { leadId: lead.id, channel: "voice-agent" } });
-  }
+  const conversation = await findOrCreateConversation(lead.id, "voice-agent");
 
   // sentAt is spaced out (not all `new Date()`) so the turns keep their
   // real speaking order — scoring/drafting reads a conversation's

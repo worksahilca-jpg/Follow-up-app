@@ -4,6 +4,7 @@ import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
+import { findOrCreateConversation } from "@/lib/conversations";
 import { fetchLeadgenLead, findOrCreateLeadByMessenger, upsertLeadFromLeadgen } from "@/lib/facebook";
 import {
   WEBHOOK_VERIFY_TOKEN,
@@ -108,10 +109,7 @@ export async function POST(request: NextRequest) {
 
       const lead = await findOrCreateLeadByInstagram(business.id, senderId);
 
-      let conversation = await prisma.conversation.findFirst({ where: { leadId: lead.id, channel: "instagram" } });
-      if (!conversation) {
-        conversation = await prisma.conversation.create({ data: { leadId: lead.id, channel: "instagram" } });
-      }
+      const conversation = await findOrCreateConversation(lead.id, "instagram");
       const isNewMessage = await createInboundMessageIfNew(conversation.id, text, new Date(), event.message?.mid);
       if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
 
@@ -159,10 +157,7 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       }
 
       const lead = await findOrCreateLeadByMessenger(business.id, senderId);
-      let conversation = await prisma.conversation.findFirst({ where: { leadId: lead.id, channel: "messenger" } });
-      if (!conversation) {
-        conversation = await prisma.conversation.create({ data: { leadId: lead.id, channel: "messenger" } });
-      }
+      const conversation = await findOrCreateConversation(lead.id, "messenger");
       const isNewMessage = await createInboundMessageIfNew(conversation.id, text, new Date(), event.message?.mid);
       if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
 
@@ -180,10 +175,7 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       const result = await upsertLeadFromLeadgen(business.id, data);
       if (!result) continue;
       const body = data.details || "Submitted a Facebook lead form.";
-      let conversation = await prisma.conversation.findFirst({ where: { leadId: result.lead.id, channel: "web" } });
-      if (!conversation) {
-        conversation = await prisma.conversation.create({ data: { leadId: result.lead.id, channel: "web" } });
-      }
+      const conversation = await findOrCreateConversation(result.lead.id, "web");
       // leadgen_id, not a message id, but it's unique per form submission
       // and there's exactly one synthetic Message per submission — the
       // same idempotency key this route uses for real message ids above.

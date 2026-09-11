@@ -98,8 +98,22 @@ export function checkAckShape(
   const sentenceEnders = trimmed.match(/[.!?।](?=\s|$)/g) ?? [];
   if (sentenceEnders.length > 3) return fail("sentences");
 
-  const digitRuns = trimmed.match(/\p{Nd}+/gu) ?? [];
-  if (digitRuns.some((run) => !inboundText.includes(run))) return fail("digits");
+  // A "number" is a run of digits, optionally continuing through internal
+  // thousands-separator commas or a decimal point ("$2,000", "19.99") —
+  // extracted identically from both sides and compared as whole values,
+  // never as a plain substring. A plain `inboundText.includes(run)` check
+  // (the previous version of this rule) lets a fabricated number slip
+  // through whenever it happens to appear inside a larger, unrelated
+  // number the lead already used: a hallucinated "2 days" is an
+  // `.includes("2")` hit against a lead-quoted "$2,000" budget, since
+  // "2,000" contains "2" as plain text — even bounding "2" against
+  // adjacent digits doesn't help, because the comma already splits
+  // "2,000" into separate digit-runs. Comparing whole number tokens (so
+  // "$2,000" is one token, "2,000", not two) is what actually fixes it.
+  const NUMBER_RE = /\p{Nd}(?:[\p{Nd},.]*\p{Nd})?/gu;
+  const replyNumbers = trimmed.match(NUMBER_RE) ?? [];
+  const inboundNumbers = new Set(inboundText.match(NUMBER_RE) ?? []);
+  if (replyNumbers.some((n) => !inboundNumbers.has(n))) return fail("digits");
 
   const currencyTokens = trimmed.match(/[$€£₹¥]|%|\b(USD|EUR|GBP|INR|CAD|MXN|AUD|Rs\.?)\b/gi) ?? [];
   if (currencyTokens.some((token) => !inboundText.toLowerCase().includes(token.toLowerCase()))) return fail("currency");

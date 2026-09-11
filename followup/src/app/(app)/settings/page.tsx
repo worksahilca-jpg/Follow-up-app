@@ -14,7 +14,7 @@ import CrmConfig from "@/components/CrmConfig";
 import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
-import { TIER_INFO, VOICE_ADDON_INFO } from "@/lib/pricing";
+import { TIER_INFO, VOICE_ADDON_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
@@ -115,6 +115,9 @@ function SettingsPageInner() {
   const [billingPeriodEnd, setBillingPeriodEnd] = useState<string | null>(null);
   const [billingTier, setBillingTier] = useState<"free" | "plus" | "pro">("free");
   const [voiceAddonEnabled, setVoiceAddonEnabled] = useState(false);
+  // Only meaningful on Free (0 on Plus/Pro — there's no cap to show
+  // progress against) — see /api/billing/status.
+  const [leadsUsedThisMonth, setLeadsUsedThisMonth] = useState(0);
   const [billingLoaded, setBillingLoaded] = useState(false);
   const [billingBusy, setBillingBusy] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
@@ -350,12 +353,14 @@ function SettingsPageInner() {
           currentPeriodEnd: string | null;
           tier: "free" | "plus" | "pro";
           voiceAddonEnabled: boolean;
+          leadsUsedThisMonth: number;
         }) => {
           setBillingActive(data.active);
           setBillingStatus(data.status);
           setBillingPeriodEnd(data.currentPeriodEnd);
           setBillingTier(data.tier);
           setVoiceAddonEnabled(data.voiceAddonEnabled);
+          setLeadsUsedThisMonth(data.leadsUsedThisMonth);
         }
       )
       .finally(() => setBillingLoaded(true));
@@ -1137,6 +1142,32 @@ function SettingsPageInner() {
                       ? "Every channel (SMS, WhatsApp, Instagram, CRM sync) plus autonomous send. 14-day free trial."
                       : "Everything in Plus, no lead cap, multi-agent lead routing, priority support. 14-day free trial."}
                   </p>
+                  {tier === "free" && billingLoaded && (
+                    <div className="mt-3">
+                      <div className="flex items-baseline justify-between text-xs">
+                        <span className="font-medium">
+                          {leadsUsedThisMonth}/{FREE_TIER_LEAD_CAP} leads this month
+                        </span>
+                        {leadsUsedThisMonth >= FREE_TIER_LEAD_CAP && (
+                          <span style={{ color: "var(--coral)" }}>At the cap</span>
+                        )}
+                      </div>
+                      <div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--line)" }}>
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${Math.min(100, (leadsUsedThisMonth / FREE_TIER_LEAD_CAP) * 100)}%`,
+                            backgroundColor: leadsUsedThisMonth >= FREE_TIER_LEAD_CAP ? "var(--coral)" : "var(--rust)",
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-ink-soft mt-1.5">
+                        {leadsUsedThisMonth >= FREE_TIER_LEAD_CAP
+                          ? "New leads still come in — they just won't be scored or drafted until next month, or you upgrade."
+                          : "Resets on the 1st. Leads still come in past the cap, they just stop getting scored/drafted."}
+                      </p>
+                    </div>
+                  )}
                   {tier !== "free" && (
                     <button
                       onClick={() => handleSubscribe(tier)}

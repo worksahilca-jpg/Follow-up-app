@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import type { AutomationTier } from "@/lib/types";
 
 // research/product/2026-09-10-ux-simplification.md §4: plain-language
@@ -33,9 +34,17 @@ const DESCRIPTIONS: Record<AutomationTier, string> = {
 export default function LeadAutomationToggle({
   leadId,
   initialTier,
+  // Whether this business's plan even allows "Handle it all" at all —
+  // Free is Assisted-only (research/market/2026-09-11-tier-pricing-
+  // recommendation.md), and the API already refuses to set AUTONOMOUS for
+  // a Free business (see src/app/api/leads/[id]/automation/route.ts), so
+  // the option is disabled here too rather than letting someone pick it
+  // and get a 403 with no explanation.
+  autonomousAllowed = true,
 }: {
   leadId: string;
   initialTier: AutomationTier;
+  autonomousAllowed?: boolean;
 }) {
   const [tier, setTier] = useState<AutomationTier>(initialTier);
   const [confirmingAutonomous, setConfirmingAutonomous] = useState(false);
@@ -67,6 +76,7 @@ export default function LeadAutomationToggle({
   function select(next: AutomationTier) {
     if (next === tier) return;
     if (next === "autonomous") {
+      if (!autonomousAllowed) return;
       setConfirmingAutonomous(true);
       return;
     }
@@ -79,21 +89,31 @@ export default function LeadAutomationToggle({
         Automation
       </h3>
       <div className="mt-3 flex rounded-lg border border-line overflow-hidden">
-        {TIERS.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => select(t.value)}
-            disabled={saving}
-            className="flex-1 px-2 py-1.5 text-xs font-medium disabled:opacity-60"
-            style={{
-              backgroundColor: tier === t.value ? "var(--rust)" : "transparent",
-              color: tier === t.value ? "white" : "var(--ink-soft)",
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
+        {TIERS.map((t) => {
+          const locked = t.value === "autonomous" && !autonomousAllowed;
+          return (
+            <button
+              key={t.value}
+              onClick={() => select(t.value)}
+              disabled={saving || locked}
+              title={locked ? "Handle it all needs Plus or Pro" : undefined}
+              className="flex-1 px-2 py-1.5 text-xs font-medium disabled:opacity-60 inline-flex items-center justify-center gap-1"
+              style={{
+                backgroundColor: tier === t.value ? "var(--rust)" : "transparent",
+                color: tier === t.value ? "white" : "var(--ink-soft)",
+              }}
+            >
+              {locked && <Lock className="h-3 w-3" />}
+              {t.label}
+            </button>
+          );
+        })}
       </div>
+      {!autonomousAllowed && tier !== "autonomous" && (
+        <p className="text-xs mt-2 text-ink-soft">
+          &quot;Handle it all&quot; needs Plus or Pro — see Billing in Settings.
+        </p>
+      )}
       <p className="text-xs mt-2 text-ink-soft leading-relaxed">{DESCRIPTIONS[tier]}</p>
       {tier !== "off" && (
         <p className="text-xs mt-2 text-ink-soft leading-relaxed">

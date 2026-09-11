@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db";
+import { getSessionContext } from "@/lib/session";
+import { FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
 
@@ -9,7 +11,7 @@ const ACTIVE_STATUSES = new Set(["active", "trialing"]);
 // client bundle (see the fix for issue #93, "leads/pipeline pages loading
 // Prisma into the client bundle" — the exact bug this split avoids
 // repeating).
-export { TIER_INFO, VOICE_ADDON_INFO } from "@/lib/pricing";
+export { TIER_INFO, VOICE_ADDON_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 
 // Every new subscription (src/app/api/billing/checkout/route.ts) starts
 // with this many days free, no card required, before the first real charge.
@@ -51,9 +53,9 @@ export const BILLING_LOCKED_MESSAGE =
 
 // --- Free tier: the two checks called out in the comment above as not yet
 // wired anywhere (research/market/2026-09-11-tier-pricing-recommendation.md
-// §2.2) ---
-
-export const FREE_TIER_LEAD_CAP = 20;
+// §2.2) — FREE_TIER_LEAD_CAP itself is imported from @/lib/pricing (and
+// re-exported above) since a "use client" Settings component needs the
+// number too, without pulling in this file's @/lib/db import.
 
 // Which Lead.source values count as "email or website widget" for Free
 // tier eligibility. Manual entry / CSV import / the internal test-lead
@@ -111,4 +113,45 @@ export async function isWithinFreeTierLeadCap(
     },
   });
   return rank <= FREE_TIER_LEAD_CAP;
+}
+
+export interface FreeTierStatus {
+  tier: "free" | "plus" | "pro";
+  voiceAddonEnabled: boolean;
+  // How many leads this business has captured so far in the CURRENT
+  // calendar month (UTC) — "now"'s month, unlike isWithinFreeTierLeadCap's
+  // per-lead-fixed-month rank above, because this is for a live "X/20 this
+  // month" display, not a gating decision. Always 0 on Plus/Pro — nobody
+  // needs this number once there's no cap to measure it against.
+  leadsUsedThisMonth: number;
+}
+
+/**
+ * Server-Component convenience, mirroring src/lib/leads-data.ts's own
+ * "resolve the caller's business from the session, don't make the page
+ * thread businessId through" pattern — used by the Settings billing tab
+ * (via /api/billing/status) and the per-lead automation toggle (which
+ * needs to know whether AUTONOMOUS is even choosable before rendering it),
+ * so both surfaces show the same numbers instead of each recomputing
+ * their own slightly-different version of "where does this business
+ * stand." Null only when there's no session — callers already sit behind
+ * the (app) layout's own auth gate, so this is a formality, not a real
+ * path.
+ */
+export async function getFreeTierStatus(): Promise<FreeTierStatus | null> {
+  const ctx = await getSessionContext();
+  if (!ctx) return null;
+
+  const business = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: { tier: true, voiceAddonEnabled: true },
+  });
+  const tier = (business?.tier as FreeTierStatus["tier"] | undefined) ?? "free";
+
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const leadsUsedThisMonth =
+    tier === "free" ? await prisma.lead.count({ where: { businessId: ctx.businessId, createdAt: { gte: monthStart } } }) : 0;
+
+  return { tier, voiceAddonEnabled: business?.voiceAddonEnabled ?? false, leadsUsedThisMonth };
 }

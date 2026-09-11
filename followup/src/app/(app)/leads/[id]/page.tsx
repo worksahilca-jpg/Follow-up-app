@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getLeadById, getLeadAuditTrail } from "@/lib/leads-data";
+import { getFreeTierStatus } from "@/lib/billing";
 import { formatCurrency, formatDate } from "@/lib/demo-data";
 import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
@@ -22,7 +23,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const lead = await getLeadById(id);
   if (!lead) notFound();
-  const auditTrail = await getLeadAuditTrail(id);
+  const [auditTrail, freeTierStatus] = await Promise.all([getLeadAuditTrail(id), getFreeTierStatus()]);
+  const autonomousAllowed = freeTierStatus?.tier !== "free";
 
   return (
     <div>
@@ -178,7 +180,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           <div className="py-1">
             <CollapsibleSection title="Automation & follow-up plan">
               <div className="space-y-3">
-                <LeadAutomationToggle leadId={lead.id} initialTier={lead.automationTier} />
+                <LeadAutomationToggle leadId={lead.id} initialTier={lead.automationTier} autonomousAllowed={autonomousAllowed} />
                 <LeadWorkflowEnrollment leadId={lead.id} />
               </div>
             </CollapsibleSection>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, Phone, PhoneCall, ShieldAlert, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, Lock, Phone, PhoneCall, ShieldAlert, X } from "lucide-react";
 
 type NumberStatus = {
   config: { voiceUrl: string; smsUrl: string; voiceCapable: boolean; smsCapable: boolean } | null;
@@ -37,6 +37,13 @@ export default function TwilioConfig() {
   const [whatsappTemplateBodyDraft, setWhatsappTemplateBodyDraft] = useState("");
   const [savingWhatsappTemplate, setSavingWhatsappTemplate] = useState(false);
   const [voiceAgentEnabled, setVoiceAgentEnabled] = useState(false);
+  // Whether the business is actually paying for the Voice add-on (Settings
+  // → Billing) — voiceAgentEnabled above is just the feature switch, and
+  // the API already refuses to flip it on without this (see
+  // src/app/api/twilio/config/route.ts), so the toggle is disabled here
+  // too rather than letting someone click it and get a silent no-op.
+  const [voiceAddonEnabled, setVoiceAddonEnabled] = useState(false);
+  const [voiceAgentError, setVoiceAgentError] = useState<string | null>(null);
   const [numberStatus, setNumberStatus] = useState<NumberStatus | null>(null);
   const [numberError, setNumberError] = useState<string | null>(null);
   const [numberLoading, setNumberLoading] = useState(false);
@@ -84,6 +91,13 @@ export default function TwilioConfig() {
         }
       )
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/billing/status")
+      .then((r) => r.json())
+      .then((data: { voiceAddonEnabled?: boolean }) => setVoiceAddonEnabled(!!data.voiceAddonEnabled))
+      .catch(() => {});
   }, []);
 
   // Only worth asking Twilio once there's an Account SID + number to ask about.
@@ -216,14 +230,20 @@ export default function TwilioConfig() {
 
   async function toggleVoiceAgent(next: boolean) {
     setSavingVoiceAgent(true);
+    setVoiceAgentError(null);
     try {
       const res = await fetch("/api/twilio/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ voiceAgentEnabled: next }),
       });
-      const data: { success: boolean } = await res.json();
+      const data: { success: boolean; message?: string } = await res.json();
       if (data.success) setVoiceAgentEnabled(next);
+      // Was silently dropped before — a click that the API refused (e.g. no
+      // Voice add-on) reset the "Saving…" state with no explanation at all.
+      else setVoiceAgentError(data.message ?? "Couldn't save — try again.");
+    } catch {
+      setVoiceAgentError("Couldn't save — try again.");
     } finally {
       setSavingVoiceAgent(false);
     }
@@ -660,9 +680,15 @@ export default function TwilioConfig() {
                     </span>
                   </p>
                 </div>
+                {!voiceAgentEnabled && !voiceAddonEnabled && (
+                  <p className="mt-2 text-xs flex items-center gap-1.5 text-ink-soft">
+                    <Lock className="h-3 w-3 shrink-0" />
+                    Needs the Voice add-on — <a href="#billing" className="underline">add it in Billing</a> first.
+                  </p>
+                )}
                 <button
                   onClick={() => toggleVoiceAgent(!voiceAgentEnabled)}
-                  disabled={savingVoiceAgent}
+                  disabled={savingVoiceAgent || (!voiceAgentEnabled && !voiceAddonEnabled)}
                   className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium disabled:opacity-60"
                   style={
                     voiceAgentEnabled
@@ -670,9 +696,14 @@ export default function TwilioConfig() {
                       : { backgroundColor: "var(--ink)", color: "var(--paper)" }
                   }
                 >
-                  {voiceAgentEnabled ? <Check className="h-4 w-4" /> : null}
+                  {voiceAgentEnabled ? <Check className="h-4 w-4" /> : !voiceAddonEnabled ? <Lock className="h-3.5 w-3.5" /> : null}
                   {savingVoiceAgent ? "Saving…" : voiceAgentEnabled ? "On — calls are answered live" : "Turn on"}
                 </button>
+                {voiceAgentError && (
+                  <p className="mt-2 text-xs" style={{ color: "var(--coral)" }}>
+                    {voiceAgentError}
+                  </p>
+                )}
               </div>
             </div>
           )}

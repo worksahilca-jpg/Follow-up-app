@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/db";
 import { pickAssignee } from "@/lib/assignment";
 import { applySourceRouting } from "@/lib/sourceRouting";
+import { findOrCreateConversation } from "@/lib/conversations";
 import { instagramLeadId } from "@/lib/instagramId";
 import type { Lead } from "@prisma/client";
 
@@ -183,10 +184,7 @@ export async function captureDirectReply(
   externalId: string | undefined,
   sentAt: Date
 ): Promise<void> {
-  let conversation = await prisma.conversation.findFirst({ where: { leadId, channel } });
-  if (!conversation) {
-    conversation = await prisma.conversation.create({ data: { leadId, channel } });
-  }
+  const conversation = await findOrCreateConversation(leadId, channel);
   if (externalId) {
     await prisma.message.upsert({
       where: { externalId },

@@ -5,6 +5,7 @@ import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { recordAudit } from "@/lib/audit";
+import { findOrCreateConversation } from "@/lib/conversations";
 import {
   findBusinessByTwilioSecret,
   findOrCreateLeadByPhone,
@@ -64,10 +65,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const lead = await findOrCreateLeadByPhone(business.id, from, "WhatsApp");
 
   if (body) {
-    let conversation = await prisma.conversation.findFirst({ where: { leadId: lead.id, channel: "whatsapp" } });
-    if (!conversation) {
-      conversation = await prisma.conversation.create({ data: { leadId: lead.id, channel: "whatsapp" } });
-    }
+    const conversation = await findOrCreateConversation(lead.id, "whatsapp");
     await prisma.message.create({
       data: { conversationId: conversation.id, direction: "inbound", body, sentAt: new Date() },
     });

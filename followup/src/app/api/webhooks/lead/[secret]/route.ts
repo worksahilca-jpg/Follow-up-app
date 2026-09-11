@@ -8,6 +8,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentLeads } from "@/lib/rateLimit";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
+import { findOrCreateConversation } from "@/lib/conversations";
 import { cleanedText, EMAIL_RE, parseObject } from "@/lib/validation";
 import { recordAuthFailure } from "@/lib/monitoring";
 
@@ -150,13 +151,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
       const existing = await prisma.lead.findUnique({ where: { businessId_email: { businessId, email } } });
       if (existing && message) {
-        let conversation = await prisma.conversation.findFirst({
-          where: { leadId: existing.id, channel: "web" },
-          orderBy: { createdAt: "desc" },
-        });
-        if (!conversation) {
-          conversation = await prisma.conversation.create({ data: { leadId: existing.id, channel: "web" } });
-        }
+        const conversation = await findOrCreateConversation(existing.id, "web");
         await prisma.message.create({
           data: { conversationId: conversation.id, direction: "inbound", body: message, sentAt: now },
         });

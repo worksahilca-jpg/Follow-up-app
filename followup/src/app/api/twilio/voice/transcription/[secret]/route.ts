@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { transcribeAudio } from "@/lib/integrations/openai";
+import { findOrCreateConversation } from "@/lib/conversations";
 import {
   fetchTwilioRecording,
   findBusinessByTwilioSecret,
@@ -75,10 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const lead = await prisma.lead.findFirst({ where: { businessId: business.id, phone: from } });
   if (!lead) return NextResponse.json({ received: true });
 
-  let conversation = await prisma.conversation.findFirst({ where: { leadId: lead.id, channel: "call" } });
-  if (!conversation) {
-    conversation = await prisma.conversation.create({ data: { leadId: lead.id, channel: "call" } });
-  }
+  const conversation = await findOrCreateConversation(lead.id, "call");
   await prisma.message.create({
     data: { conversationId: conversation.id, direction: "inbound", body: text, sentAt: new Date() },
   });

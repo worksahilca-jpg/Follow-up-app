@@ -148,6 +148,16 @@ describe("checkAckShape", () => {
     }
   });
 
+  // A fabricated digit run must not slip through just because it happens
+  // to appear inside a larger, unrelated number the lead already used —
+  // "2" is a plain substring of "$2,000", so a naive `.includes()` check
+  // would wrongly pass a hallucinated "2 days" commitment here.
+  it("rejects a fabricated number that's a substring of a larger number the lead used", () => {
+    const inbound = "Do you have a 3-bedroom available next week? Budget is $2,000.";
+    const reply = "Thanks Sam — I'll follow up in 2 days with the details.";
+    expect(checkAckShape(reply, inbound, "Manoj")).toEqual({ ok: false, rule: "digits" });
+  });
+
   it("rejects a blank reply", () => {
     expect(checkAckShape("   ", "anything", "Manoj")).toEqual({ ok: false, rule: "empty" });
   });

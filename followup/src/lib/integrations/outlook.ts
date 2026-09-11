@@ -422,26 +422,51 @@ async function processConversations(
 
     const lastContacted = parsedMessages[parsedMessages.length - 1].sentAt;
 
+    // See the matching comment in src/lib/integrations/gmail.ts — a
+    // push-triggered sync and the cron tick can both reach the same
+    // brand-new counterpart at nearly the same moment, both read null
+    // here, and (with a plain upsert) both would believe THEY created
+    // this lead. isNewLead has to come from whichever call's create()
+    // genuinely succeeds, not from this early read, or notifyLeadEvent
+    // (a real POST to the business's own webhook URL) and
+    // applySourceRouting fire twice for one lead.
     const existingLead = await prisma.lead.findUnique({
       where: { businessId_email: { businessId, email: counterpart.email } },
       select: { id: true, lastContacted: true },
     });
-    const isNewLead = !existingLead;
-    const touched = isNewLead || !existingLead.lastContacted || newestMessageAt > existingLead.lastContacted;
+    const touched = !existingLead || !existingLead.lastContacted || newestMessageAt > existingLead.lastContacted;
 
-    const lead = await prisma.lead.upsert({
-      where: { businessId_email: { businessId, email: counterpart.email } },
-      update: { lastContacted },
-      create: {
-        businessId,
-        name: counterpart.name,
-        email: counterpart.email,
-        source: sourceLabel,
-        stage: "NEW",
-        lastContacted,
-        assignedToId: isNewLead ? await pickAssignee(businessId) : undefined,
-      },
-    });
+    // Prisma's own Lead model shape, not the richer app-level `Lead` type
+    // (with assignedTo/conversation) imported above from @/lib/types.
+    let lead: Awaited<ReturnType<typeof prisma.lead.update>>;
+    let isNewLead = false;
+    if (existingLead) {
+      lead = await prisma.lead.update({ where: { id: existingLead.id }, data: { lastContacted } });
+    } else {
+      try {
+        lead = await prisma.lead.create({
+          data: {
+            businessId,
+            name: counterpart.name,
+            email: counterpart.email,
+            source: sourceLabel,
+            stage: "NEW",
+            lastContacted,
+            assignedToId: await pickAssignee(businessId),
+          },
+        });
+        isNewLead = true;
+      } catch (err) {
+        if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+          lead = await prisma.lead.update({
+            where: { businessId_email: { businessId, email: counterpart.email } },
+            data: { lastContacted },
+          });
+        } else {
+          throw err;
+        }
+      }
+    }
     if (isNewLead) {
       void notifyLeadEvent(businessId, "lead.created", lead);
       await applySourceRouting(businessId, lead.id, sourceLabel);

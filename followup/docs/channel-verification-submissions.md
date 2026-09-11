@@ -14,6 +14,41 @@ of the most-cited rejection reasons for both platforms.
 
 ---
 
+## 0. Pre-submission readiness check (2026-09-11)
+
+What's actually true in the code right now, checked directly rather than assumed,
+against the requirements `research/integrations/2026-09-10-meta-google-verification-playbook.md`
+flagged. Confirmed items need no action; gaps are called out with a fix.
+
+| Requirement | Status | Where |
+|---|---|---|
+| Homepage publicly describes reading Gmail | ✅ Confirmed | `src/app/page.tsx` — "Connect your inbox — FollowUp reads your sales conversations in Gmail — nothing else" (line 244) plus two FAQ answers naming Gmail explicitly |
+| Homepage describes Google Calendar event creation | ❌ Gap | `src/app/page.tsx` never mentions Calendar/scheduling anywhere. Playbook §4.2 wants the homepage copy to name every Google product the OAuth consent screen asks for, not just Gmail. **Fix:** one clause added to the "Connect your inbox" feature bullet or the FAQ — e.g. "...and creates a calendar event when a lead asks to schedule a call." Small copy change, not a design change — say the word and I'll add it. |
+| Privacy policy on the same domain as the app | ✅ Confirmed | `src/app/privacy/page.tsx`, served at `followupbase.io/privacy` |
+| Privacy policy carries the Limited Use statement | ✅ Confirmed | `src/app/privacy/page.tsx:84-103`, "Google user data — Limited Use disclosure" section, links Google's own policy |
+| Privacy policy's Limited Use section names Calendar data specifically | ❌ Gap | Same section (line 98) says "the Gmail scopes needed..." but never mentions `calendar.events` by name. Same fix as above, one line, on request. |
+| Meta data-deletion disclosure (name what's held, what's deleted, timeframe) | ✅ Confirmed | `src/app/privacy/page.tsx:106-134` ("Instagram and Facebook data") + a "Data retention & deletion" section further down committing to confirming deletion within 2 business days |
+| Scope justifications match the code exactly | ✅ Confirmed | The four Google scopes and the Meta permission lists in §1/§2 below were checked line-by-line against `src/lib/integrations/gmail.ts`, `src/lib/instagram.ts`, `src/lib/facebook.ts` on 2026-09-10 — nothing requested in code is missing from these drafts, and nothing drafted here asks for more than the code requests |
+
+What's **not** checkable from inside the repo — these are yours to do directly in
+each console, in this order (per the Phase 0 checklist in the 2026-09-10 playbook):
+
+1. Confirm `followupbase.io` resolves over HTTPS and the OAuth client's authorized
+   domain is set to `followupbase.io` exactly (not a Vercel preview URL).
+2. Set up `verification@followupbase.io` (a forwarding alias is enough) and use
+   it as the contact/verification email on both the Google and Meta submissions.
+3. Verify `followupbase.io` as a **DNS Domain property** (not URL-prefix) in
+   Google Search Console, from an account that's Owner/Editor on the GCP project.
+4. Fill in the Meta App Dashboard's Data Deletion Callback/Instructions URL field
+   with `https://followupbase.io/privacy` (or an anchor straight to the "Data
+   retention & deletion" section).
+5. Check the Meta App Dashboard's verification flow for whether it offers an
+   individual/ID-based path instead of full business verification — the 2026-09-10
+   playbook flagged this as unconfirmed and potentially the single biggest
+   time/cost saver if it exists for a Canadian individual.
+
+---
+
 ## 1. Google OAuth verification (Gmail + Calendar scopes)
 
 **Where this happens:** Google Cloud Console → APIs & Services → OAuth consent
@@ -200,6 +235,82 @@ Two flows to demonstrate in one take:
 Same rule as Instagram: narrate what's happening, and make sure the written
 use-case description above doesn't claim anything the video doesn't actually
 show.
+
+---
+
+## 4. WhatsApp Business — template drafts
+
+**Where this happens:** each customer business's own Twilio Console → Messaging
+→ Content Editor (or Settings → Phone in FollowUp once a template-picker UI
+exists) — per `research/integrations/2026-09-06-whatsapp-business-production-readiness.md`,
+this is the recommended Path A (Twilio self-sign-up), so template approval sits
+with **each business**, not with FollowUp once, app-wide. It's also fast and
+mostly automated (15-30 minutes typical, 24-48 hours if flagged for manual
+review) — nothing like the Google/Meta App Review timelines above.
+
+**Why a template is needed at all:** WhatsApp only allows free-form text replies
+within 24 hours of the lead's last inbound message. Re-engaging a lead who's
+gone quiet longer than that — FollowUp's core "rescue a cold lead" pattern —
+must open with a pre-approved template. `src/lib/twilio.ts`'s `sendWhatsApp()`
+already has the retry-via-template code path built (`ContentSid` +
+`ContentVariables`); what's missing is an actual approved template to point it
+at (`Business.whatsappTemplateSid`, set in Settings → Phone).
+
+**Current code constraint — read this before submitting more than one:** today
+the schema holds exactly **one** `whatsappTemplateSid` per business, and the
+send path fills exactly **one** variable slot (`{{1}}`, the lead's first name —
+see `sendWhatsApp()`'s `ContentVariables: JSON.stringify({ "1": ... })`). So
+only one of the drafts below can actually be wired up per business right now.
+Pick the one that fits FollowUp's most common re-engagement case (draft A,
+below, is the recommendation) and submit that one first; supporting a small
+library of templates the AI picks between is real future engineering, not a
+paperwork step — flagged in the 2026-09-06 research as "needs product design,"
+not something to build as a side effect of a template submission.
+
+**Category to select: Utility.** Every source in the 2026-09-06 research agrees
+marketing-toned language inside a utility template is the single most-cited
+rejection reason — so keep these plain, specific, and free of promotional
+language ("special offer," "limited time," exclamation points, emoji).
+
+### Draft A — general re-engagement (recommended first submission)
+
+> Hi {{1}}, just following up on your inquiry — still interested? Reply here
+> anytime and I'll get right back to you.
+
+- **Category:** Utility
+- **Variables:** `{{1}}` = lead's first name
+- **Matches:** the general "lead went quiet" case — the most common trigger for
+  FollowUp's automation, and the safest utility-toned framing per the rejection
+  research.
+
+### Draft B — quote/pricing follow-up
+
+> Hi {{1}}, wanted to check in on the quote we sent over — any questions I can
+> help with before you decide?
+
+- **Category:** Utility
+- **Variables:** `{{1}}` = lead's first name
+- **Matches:** a lead who received pricing and went silent. Slightly more
+  specific than Draft A; worth a second submission once volume through Draft A
+  shows this case comes up often enough to justify the code work to select
+  between templates.
+
+### Draft C — missed call / voicemail follow-up
+
+> Hi {{1}}, sorry we missed you on the phone — what's the best way to reach you
+> to help with your request?
+
+- **Category:** Utility
+- **Variables:** `{{1}}` = lead's first name
+- **Matches:** the voice/voicemail channel's own re-engagement case
+  (`research/*channel-deep-dive*` docs for Twilio Voice) — lowest priority of
+  the three since it only fires for leads that came in by phone.
+
+**Opt-in note before submitting any of these:** Meta can request proof of opt-in
+during template review (per the 2026-09-06 research, §4) — for FollowUp this is
+straightforward since a business-initiated WhatsApp send only ever targets a
+lead who already messaged in first (opted in by definition), but have that
+framing ready if asked, rather than scrambling for it mid-review.
 
 ---
 

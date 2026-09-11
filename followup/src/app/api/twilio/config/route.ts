@@ -93,8 +93,22 @@ export async function POST(request: NextRequest) {
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { twilioSecret: true },
+    select: { twilioSecret: true, voiceAddonEnabled: true },
   });
+
+  // Voice is Plus/Pro-eligible, but only once the business is actually
+  // paying for the Voice add-on (research/market/2026-09-11-tier-pricing-
+  // recommendation.md §4) — voiceAgentEnabled is the feature toggle,
+  // voiceAddonEnabled is the billing fact (synced from Stripe by the
+  // webhook), and turning the feature on without the add-on would mean
+  // FollowUp eats the per-minute OpenAI Realtime cost with nothing billed
+  // for it.
+  if (voiceAgentEnabled === true && !business?.voiceAddonEnabled) {
+    return NextResponse.json(
+      { success: false, message: "Add the Voice add-on in Settings → Billing before turning this on." },
+      { status: 400 }
+    );
+  }
 
   const secret = business?.twilioSecret ?? randomBytes(24).toString("base64url");
   await prisma.business.update({

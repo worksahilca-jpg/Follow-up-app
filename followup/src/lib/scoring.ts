@@ -10,6 +10,7 @@ import { prisma } from "@/lib/db";
 import { scoreLead, generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { getVoiceSamples } from "@/lib/voice";
+import { isChannelAvailableOnFreeTier, isWithinFreeTierLeadCap } from "@/lib/billing";
 import type { Message } from "@/lib/types";
 import type { Priority as DbPriority, Prisma } from "@prisma/client";
 
@@ -20,15 +21,29 @@ function priorityFromScore(score: number): DbPriority {
   return "NONE";
 }
 
-/** Scores one lead (by id) against its real conversation history and persists the result. Returns false if there's nothing to score yet (no messages) or AI isn't configured. */
+/** Scores one lead (by id) against its real conversation history and persists the result. Returns false if there's nothing to score yet (no messages), AI isn't configured, or the lead's Free-tier business has paused AI processing for it (over the monthly cap, or captured on a channel Free doesn't cover — see @/lib/billing). */
 export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   if (!process.env.OPENAI_API_KEY) return false;
 
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+    include: {
+      conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } },
+      business: { select: { tier: true } },
+    },
   });
   if (!lead) return false;
+
+  // "AI processing pauses past lead #20, and for channels Free doesn't
+  // cover" (research/market/2026-09-11-tier-pricing-recommendation.md
+  // §2.2) — capture already happened by the time this runs (every capture
+  // path creates the Lead row first, then calls this), so nothing here
+  // ever drops a real inquiry; it only skips the scoring/drafting/
+  // translation this function does. Plus/Pro have no such gate.
+  if (lead.business.tier === "free") {
+    if (!isChannelAvailableOnFreeTier(lead.source)) return false;
+    if (!(await isWithinFreeTierLeadCap(lead.businessId, lead))) return false;
+  }
 
   const conversation: Message[] = lead.conversations.flatMap((c) =>
     c.messages.map((m) => ({

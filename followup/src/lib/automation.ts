@@ -31,7 +31,7 @@ import { prisma } from "@/lib/db";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
-import { requireActiveBilling } from "@/lib/billing";
+import { requireActiveBilling, isChannelAvailableOnFreeTier, isWithinFreeTierLeadCap } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
@@ -74,7 +74,12 @@ interface AutomationResult {
   // next in-window hourly tick. Distinct from `skipped`, which is a real
   // failure.
   deferred: number;
-  skipped: string[]; // real failures (send errors, exceptions)
+  // Not sent and not held for approval, for a reason that isn't "outside
+  // the send window" (that's `deferred`) — a real failure (send errors,
+  // exceptions) or a business rule that says this lead gets no AI
+  // processing at all right now (Free tier's lead cap or channel
+  // restriction, @/lib/billing).
+  skipped: string[];
   heldReasons: string[]; // "{lead name}: {why it was held}", one per held lead
 }
 
@@ -223,8 +228,9 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // Fetched once for the whole run, not per lead — every lead in this
   // batch belongs to the same business, so the send-window check below
   // always resolves against the same timezone.
-  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true } });
+  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true, tier: true } });
   const timezone = business?.timezone ?? "America/New_York";
+  const tier = business?.tier ?? "plus";
 
   const deadLeadRule = await prisma.automation.findFirst({ where: { businessId, action: DEAD_LEAD_ACTION } });
   const deadLeadEnabled = deadLeadRule?.enabled ?? true; // on by default, like everything else here
@@ -313,6 +319,23 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         return { kind: "deferred" };
       }
 
+      // Free tier's AI processing pause (@/lib/billing) applies here too,
+      // not just at initial capture (scoring.ts) — otherwise a lead that
+      // never got scored because it was over cap or on a disallowed
+      // channel would still get a fresh draft (and possibly an autonomous
+      // send) the moment it went silent, defeating the whole point of the
+      // pause. Kept claimed (not released like the send-window case above)
+      // so it's naturally rechecked in ~20h via recheckCutoff rather than
+      // every single hourly tick — this isn't transient the way "outside
+      // business hours" is.
+      if (tier === "free") {
+        const eligible =
+          isChannelAvailableOnFreeTier(lead.source) && (await isWithinFreeTierLeadCap(businessId, lead));
+        if (!eligible) {
+          return { kind: "skipped", note: `${lead.name}: Free plan — AI processing paused (past the 20/mo cap, or this lead's channel isn't included in Free)` };
+        }
+      }
+
       const conversation: Message[] = lead.conversations.flatMap((c) =>
         c.messages.map((m) => ({
           id: m.id,
@@ -359,8 +382,14 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
 
       // AUTONOMOUS skips the risk check entirely — that's the whole point
       // of the tier. Every other opted-in lead (ASSISTED) still gets
-      // checked before anything goes out unreviewed.
-      if (lead.automationTier !== "AUTONOMOUS") {
+      // checked before anything goes out unreviewed. `tier === "free"`
+      // forces the check even for a lead whose automationTier is still
+      // AUTONOMOUS from before a downgrade — autonomous send is a Plus/Pro
+      // capability (leads/[id]/automation/route.ts refuses to set it on
+      // Free going forward), but a downgrade doesn't retroactively touch
+      // leads already set that way, so this is the belt to that route's
+      // suspenders.
+      if (lead.automationTier !== "AUTONOMOUS" || tier === "free") {
         let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
         if (process.env.OPENAI_API_KEY) {
           try {

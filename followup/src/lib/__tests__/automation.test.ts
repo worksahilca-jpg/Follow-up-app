@@ -26,7 +26,11 @@ vi.mock("@/lib/sending", () => ({
   // on sendFollowUpToLead()'s own email-if-present default.
   detectAutomatedReplyChannel: vi.fn(async () => "email"),
 }));
-vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));
+vi.mock("@/lib/billing", () => ({
+  requireActiveBilling: vi.fn(async () => true),
+  isChannelAvailableOnFreeTier: vi.fn(() => true),
+  isWithinFreeTierLeadCap: vi.fn(async () => true),
+}));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 // Real send-window logic (real time-of-day, real Intl calls) has no place
@@ -41,6 +45,7 @@ import { assessSendRisk, generateFollowUpMessage } from "@/lib/integrations/open
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
+import { isChannelAvailableOnFreeTier, isWithinFreeTierLeadCap } from "@/lib/billing";
 import { runAutomationForBusiness, DEAD_LEAD_ACTION } from "@/lib/automation";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,6 +56,8 @@ const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
 const replyChannel = detectAutomatedReplyChannel as unknown as ReturnType<typeof vi.fn>;
 const sendWindow = isWithinSendWindow as unknown as ReturnType<typeof vi.fn>;
 const draftMessage = generateFollowUpMessage as unknown as ReturnType<typeof vi.fn>;
+const freeChannelOk = isChannelAvailableOnFreeTier as unknown as ReturnType<typeof vi.fn>;
+const freeCapOk = isWithinFreeTierLeadCap as unknown as ReturnType<typeof vi.fn>;
 
 function lead(overrides: Record<string, unknown> = {}) {
   return {
@@ -81,6 +88,8 @@ beforeEach(() => {
   send.mockResolvedValue({ success: true });
   replyChannel.mockResolvedValue("email");
   sendWindow.mockReturnValue(true);
+  freeChannelOk.mockReturnValue(true);
+  freeCapOk.mockResolvedValue(true);
 });
 
 function unansweredLead(
@@ -374,6 +383,59 @@ describe("silence automation risk gate", () => {
     await runAutomationForBusiness("biz1");
     expect(replyChannel).toHaveBeenCalledWith(expect.objectContaining({ id: "lead1" }));
     expect(send).toHaveBeenCalledWith("lead1", expect.any(String), expect.objectContaining({ channel: "text" }));
+  });
+});
+
+// research/market/2026-09-11-tier-pricing-recommendation.md §2.2: Free
+// tier's AI-processing pause (@/lib/billing) has to apply here too, not
+// just at initial capture — otherwise a lead scoring.ts never scored would
+// still get drafted (or worse, auto-sent) the moment it went silent.
+describe("Free tier AI-processing pause", () => {
+  it("skips a Free-tier lead past the monthly lead cap, without drafting or risk-checking it", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    freeCapOk.mockResolvedValue(false);
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(draftMessage).not.toHaveBeenCalled();
+    expect(risk).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+    expect(r.sent).toBe(0);
+    expect(r.held).toBe(0);
+    expect(r.skipped[0]).toMatch(/Free plan/);
+  });
+
+  it("skips a Free-tier lead whose channel isn't included in Free, even if it's within the lead cap", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    freeChannelOk.mockReturnValue(false);
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(draftMessage).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+    expect(r.skipped[0]).toMatch(/Free plan/);
+  });
+
+  it("still processes a Free-tier lead that's within cap and on an eligible channel, same as any other tier", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(1);
+  });
+
+  it("forces the risk check even for a lead stuck on AUTONOMOUS from before a downgrade to Free", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(risk).toHaveBeenCalled();
+    expect(r.sent).toBe(1);
+  });
+
+  it("does not touch Plus/Pro leads at all — no business.tier means the free-tier checks are never even called", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    await runAutomationForBusiness("biz1");
+    expect(freeChannelOk).not.toHaveBeenCalled();
+    expect(freeCapOk).not.toHaveBeenCalled();
   });
 });
 

@@ -589,32 +589,61 @@ async function processThreadRefs(
 
     const lastContacted = parsedMessages[parsedMessages.length - 1].sentAt;
 
-    // upsert()'s `create` object is plain data, evaluated eagerly whether
-    // or not it ends up being the branch Prisma uses — so without this
-    // check, every resync of an already-existing lead would still run a
-    // wasted pickAssignee() query just to have its result thrown away.
-    // Checked here explicitly instead: only a brand-new lead gets routed;
-    // an existing one keeps whoever it's already assigned to.
+    // Read first so an already-existing lead skips a wasted pickAssignee()
+    // query and the once-only side effects below — but this read alone
+    // can't be trusted to decide isNewLead: a push-triggered sync and the
+    // 10-minute cron tick can both reach the same brand-new counterpart at
+    // nearly the same moment, both read null here, and (with a plain
+    // upsert) both would then believe THEY were the one who created this
+    // lead. upsert() can't tell its caller which branch it actually took,
+    // so isNewLead has to come from whichever call's create() genuinely
+    // succeeds, not from this early read — same P2002-catch shape as
+    // findOrCreateLeadByInstagram/findOrCreateLeadByPhone use for exactly
+    // this reason. Without it, both racing syncs fire notifyLeadEvent
+    // (a real POST to the business's own Zapier/webhook URL) and
+    // applySourceRouting (which can enroll the lead in a sequence) twice
+    // for one lead.
     const existingLead = await prisma.lead.findUnique({
       where: { businessId_email: { businessId, email: counterpart.email } },
       select: { id: true, lastContacted: true },
     });
-    const isNewLead = !existingLead;
-    const touched = isNewLead || !existingLead.lastContacted || newestMessageAt > existingLead.lastContacted;
+    const touched = !existingLead || !existingLead.lastContacted || newestMessageAt > existingLead.lastContacted;
 
-    const lead = await prisma.lead.upsert({
-      where: { businessId_email: { businessId, email: counterpart.email } },
-      update: { lastContacted },
-      create: {
-        businessId,
-        name: counterpart.name,
-        email: counterpart.email,
-        source: sourceLabel,
-        stage: "NEW",
-        lastContacted,
-        assignedToId: isNewLead ? await pickAssignee(businessId) : undefined,
-      },
-    });
+    // Prisma's own Lead model shape, not the richer app-level `Lead` type
+    // (with assignedTo/conversation) imported above from @/lib/types.
+    let lead: Awaited<ReturnType<typeof prisma.lead.update>>;
+    let isNewLead = false;
+    if (existingLead) {
+      lead = await prisma.lead.update({ where: { id: existingLead.id }, data: { lastContacted } });
+    } else {
+      try {
+        lead = await prisma.lead.create({
+          data: {
+            businessId,
+            name: counterpart.name,
+            email: counterpart.email,
+            source: sourceLabel,
+            stage: "NEW",
+            lastContacted,
+            assignedToId: await pickAssignee(businessId),
+          },
+        });
+        isNewLead = true;
+      } catch (err) {
+        if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+          // Lost the race to a concurrent sync (push notification and the
+          // cron tick overlapping) that created this lead a moment
+          // earlier — update it and skip the once-only side effects
+          // below; the winner already fired them.
+          lead = await prisma.lead.update({
+            where: { businessId_email: { businessId, email: counterpart.email } },
+            data: { lastContacted },
+          });
+        } else {
+          throw err;
+        }
+      }
+    }
     if (isNewLead) {
       void notifyLeadEvent(businessId, "lead.created", lead);
       await applySourceRouting(businessId, lead.id, sourceLabel);

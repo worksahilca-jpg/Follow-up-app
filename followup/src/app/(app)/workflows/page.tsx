@@ -111,12 +111,12 @@ export default function WorkflowsPage() {
     <div>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl">Workflows</h1>
+          <h1 className="font-display text-3xl">Follow-up plans</h1>
           <p className="text-ink-soft mt-1">
-            Build a multi-step follow-up sequence once, then enroll leads into it from their own page.
+            Build a multi-step follow-up plan once, then put leads on it from their own page.
           </p>
           <p className="text-sm text-ink-soft mt-1">
-            The moment a lead replies, its workflow stops automatically — you get notified, and nothing scheduled
+            The moment a lead replies, its plan stops automatically — you get notified, and nothing scheduled
             sends after that. It never talks past a conversation that&apos;s actually happening.
           </p>
         </div>
@@ -139,7 +139,7 @@ export default function WorkflowsPage() {
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
-              <Plus className="h-4 w-4" /> New workflow
+              <Plus className="h-4 w-4" /> New plan
             </button>
           </div>
         )}
@@ -179,7 +179,7 @@ export default function WorkflowsPage() {
           <div className="rounded-xl border border-line bg-card p-8 text-center">
             <WorkflowIcon className="h-6 w-6 mx-auto text-ink-soft" />
             <p className="text-sm text-ink-soft mt-3">
-              No workflows yet — try &quot;Use recommended cadence&quot; above, or build your own from scratch.
+              No follow-up plans yet — try &quot;Use recommended cadence&quot; above, or build your own from scratch.
             </p>
           </div>
         )}

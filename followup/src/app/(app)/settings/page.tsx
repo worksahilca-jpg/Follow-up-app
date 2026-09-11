@@ -667,7 +667,7 @@ function SettingsPageInner() {
           )}
           {automationOn && (
             <div className="mt-4 flex items-center gap-2 text-sm">
-              <span>Follow up automatically after</span>
+              <span>Wait</span>
               <input
                 type="number"
                 min={1}
@@ -677,7 +677,7 @@ function SettingsPageInner() {
                 onBlur={() => saveAutomationSettings(automationOn, autoAfterDays)}
                 className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
               />
-              <span>days of no response</span>
+              <span>days before nudging a quiet lead</span>
             </div>
           )}
           <p className="text-xs text-ink-soft mt-3">
@@ -698,7 +698,7 @@ function SettingsPageInner() {
                 style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
               >
                 <Zap className={`h-3.5 w-3.5 ${runningNow ? "animate-pulse" : ""}`} />
-                {runningNow ? "Checking…" : "Run automation check now"}
+                {runningNow ? "Checking…" : "Check for anyone waiting, right now"}
               </button>
               {runResult && <span className="text-xs text-ink-soft">{runResult}</span>}
             </div>

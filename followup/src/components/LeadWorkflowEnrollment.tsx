@@ -82,7 +82,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
   return (
     <div className="rounded-xl p-4" style={{ backgroundColor: "var(--slate-soft)" }}>
       <h3 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: "var(--slate)" }}>
-        <Workflow className="h-3.5 w-3.5" /> Workflow
+        <Workflow className="h-3.5 w-3.5" /> Follow-up plan
       </h3>
 
       {enrollment?.enrolled ? (
@@ -98,12 +98,12 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
             className="mt-2 text-xs font-medium disabled:opacity-60"
             style={{ color: "var(--coral)" }}
           >
-            Remove from workflow
+            Take off this plan
           </button>
         </div>
       ) : sequences.length === 0 ? (
         <p className="text-xs text-ink-soft mt-2">
-          No active workflows yet —{" "}
+          No active follow-up plans yet —{" "}
           <Link href="/workflows" className="underline">
             build one
           </Link>
@@ -116,7 +116,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
             onChange={(e) => setSelected(e.target.value)}
             className="flex-1 rounded-lg border border-line bg-paper px-2 py-1.5 text-xs"
           >
-            <option value="">Enroll in…</option>
+            <option value="">Put on…</option>
             {sequences.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -129,7 +129,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
             className="text-xs font-medium rounded-lg px-2.5 py-1.5 text-white disabled:opacity-60"
             style={{ backgroundColor: "var(--rust)" }}
           >
-            Enroll
+            Put on plan
           </button>
         </div>
       )}

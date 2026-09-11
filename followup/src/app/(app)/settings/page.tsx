@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import TeamSection from "@/components/TeamSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
@@ -23,8 +23,53 @@ export default function SettingsPage() {
   );
 }
 
+// 12 sections in one long scroll was the actual complaint — grouping them
+// into 4 tabs (research/product/2026-09-10-ux-simplification.md §6) means a
+// visit only ever shows the one thing you came for. Every section keeps its
+// existing id so links pointing at #billing etc. (see getIncompleteSetupSteps)
+// keep working — this map is just which tab a given id lives under.
+type SettingsTab = "connect" | "team" | "billing" | "advanced";
+const TAB_LABEL: Record<SettingsTab, string> = {
+  connect: "Connect",
+  team: "Team",
+  billing: "Billing",
+  advanced: "Advanced",
+};
+const SECTION_TAB: Record<string, SettingsTab> = {
+  integrations: "connect",
+  "website-widget": "connect",
+  "lead-webhook": "connect",
+  "outbound-webhook": "connect",
+  phone: "connect",
+  social: "connect",
+  crm: "connect",
+  "lead-routing": "team",
+  team: "team",
+  billing: "billing",
+  automation: "advanced",
+  feedback: "advanced",
+  data: "advanced",
+};
+
 function SettingsPageInner() {
   const searchParams = useSearchParams();
+  // A link elsewhere in the app (a Sidebar nag, the dashboard's setup strip)
+  // points at a specific section's id, e.g. /settings#billing — honor that
+  // by opening straight into the tab that section lives in, so the browser's
+  // own anchor scroll lands on it once it's actually in the DOM. Lazy
+  // initializer so this only ever reads location.hash once, on mount.
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
+    if (typeof window === "undefined") return "connect";
+    return SECTION_TAB[window.location.hash.slice(1)] ?? "connect";
+  });
+  const scrolledRef = useRef(false);
+
+  useEffect(() => {
+    if (scrolledRef.current) return;
+    scrolledRef.current = true;
+    const id = window.location.hash.slice(1);
+    if (id && SECTION_TAB[id]) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView());
+  }, []);
 
   const [gmailConnected, setGmailConnected] = useState(false);
   const [gmailPushActive, setGmailPushActive] = useState(false);
@@ -425,38 +470,27 @@ function SettingsPageInner() {
         <p className="text-ink-soft mt-1">Connect your inbox, set follow-up rules, and manage your team.</p>
       </div>
 
-      {/* 12 sections is a lot to scroll blind through to find one thing —
-          a sticky jump row turns "where's Billing again?" into one click
-          instead of a hunt. Pure navigation, no new state; each target is
-          just the section's own existing id. */}
       <nav
-        className="sticky top-0 z-10 -mx-1 flex flex-wrap gap-1 overflow-x-auto bg-paper/95 px-1 py-2 backdrop-blur-sm border-b border-line"
-        aria-label="Jump to a settings section"
+        className="sticky top-0 z-10 -mx-1 flex gap-1 bg-paper/95 px-1 py-2 backdrop-blur-sm border-b border-line"
+        aria-label="Settings sections"
       >
-        {[
-          ["integrations", "Integrations"],
-          ["website-widget", "Website widget"],
-          ["lead-webhook", "Lead webhook"],
-          ["outbound-webhook", "Outbound webhook"],
-          ["phone", "Phone"],
-          ["instagram", "Instagram"],
-          ["automation", "Automation"],
-          ["lead-routing", "Lead routing"],
-          ["team", "Team"],
-          ["billing", "Billing"],
-          ["feedback", "Feedback"],
-          ["data", "Your data"],
-        ].map(([id, label]) => (
-          <a
-            key={id}
-            href={`#${id}`}
-            className="shrink-0 rounded-full px-3 py-1.5 text-xs font-medium border border-line text-ink-soft hover:bg-card hover:text-ink transition-colors"
+        {(Object.keys(TAB_LABEL) as SettingsTab[]).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors"
+            style={
+              activeTab === tab
+                ? { backgroundColor: "var(--ink)", color: "var(--paper)" }
+                : { color: "var(--ink-soft)" }
+            }
           >
-            {label}
-          </a>
+            {TAB_LABEL[tab]}
+          </button>
         ))}
       </nav>
 
+      <div hidden={activeTab !== "connect"} className="space-y-10">
       <section id="integrations" className="scroll-mt-16">
         <h2 className="font-display text-xl">Integrations</h2>
         <div className="mt-4 space-y-3">
@@ -535,7 +569,10 @@ function SettingsPageInner() {
             </p>
           )}
 
-          {outlookOauthAvailable ? (
+          {/* Not every deployment has Outlook OAuth configured — when it
+              isn't, there's nothing a business owner can do about that row,
+              so it's not clutter to show, it's a dead end. Just leave it out. */}
+          {outlookOauthAvailable && (
             <IntegrationRow
               icon={<Mail className="h-4 w-4" />}
               name="Outlook / Microsoft 365"
@@ -548,10 +585,6 @@ function SettingsPageInner() {
               loading={!outlookStatusLoaded}
               href={outlookConnected ? undefined : "/api/integrations/outlook/connect"}
             />
-          ) : (
-            <div className="rounded-lg border border-line px-4 py-3 text-sm text-ink-soft flex items-center justify-between opacity-60">
-              <span>Outlook / Microsoft 365 — not set up yet (see docs/outlook-setup.md)</span>
-            </div>
           )}
           {outlookConnected && (
             <div className="ml-[52px] flex items-center gap-3">
@@ -621,15 +654,26 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section id="instagram" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Instagram</h2>
+      <section id="social" className="scroll-mt-16">
+        <h2 className="font-display text-xl">Instagram &amp; Facebook</h2>
         <div className="mt-4">
           <InstagramConfig />
           <FacebookConfig />
-          <CrmConfig />
         </div>
       </section>
 
+      {/* Was buried inside the "Instagram" section under the wrong name —
+          it's a CRM sync, unrelated to social DMs. Its own section, still
+          in Connect since it's a channel like any other integration here. */}
+      <section id="crm" className="scroll-mt-16">
+        <h2 className="font-display text-xl">CRM sync</h2>
+        <div className="mt-4">
+          <CrmConfig />
+        </div>
+      </section>
+      </div>
+
+      <div hidden={activeTab !== "advanced"} className="space-y-10">
       <section id="automation" className="scroll-mt-16">
         <h2 className="font-display text-xl">Automation</h2>
         <div className="mt-4 rounded-xl border border-line bg-card p-5">
@@ -843,17 +887,9 @@ function SettingsPageInner() {
           )}
         </div>
       </section>
+      </div>
 
-      <section id="lead-routing" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Lead routing</h2>
-        <p className="text-sm text-ink-soft mt-1">
-          Give a lead a head start based on where it came from — before anyone&apos;s looked at it.
-        </p>
-        <div className="mt-4">
-          <SourceRoutingSection />
-        </div>
-      </section>
-
+      <div hidden={activeTab !== "team"} className="space-y-10">
       <section id="team" className="scroll-mt-16">
         <h2 className="font-display text-xl">Team</h2>
         <p className="text-sm text-ink-soft mt-1">
@@ -864,6 +900,18 @@ function SettingsPageInner() {
         </div>
       </section>
 
+      <section id="lead-routing" className="scroll-mt-16">
+        <h2 className="font-display text-xl">Lead routing</h2>
+        <p className="text-sm text-ink-soft mt-1">
+          Give a lead a head start based on where it came from — before anyone&apos;s looked at it.
+        </p>
+        <div className="mt-4">
+          <SourceRoutingSection />
+        </div>
+      </section>
+      </div>
+
+      <div hidden={activeTab !== "billing"} className="space-y-10">
       <section id="billing" className="scroll-mt-16">
         <h2 className="font-display text-xl">Billing</h2>
         {billingRedirect === "success" && (
@@ -926,7 +974,9 @@ function SettingsPageInner() {
           )}
         </div>
       </section>
+      </div>
 
+      <div hidden={activeTab !== "advanced"} className="space-y-10">
       <section id="feedback" className="scroll-mt-16">
         <h2 className="font-display text-xl flex items-center gap-2">
           <MessageSquareHeart className="h-4 w-4 text-ink-soft" />
@@ -981,6 +1031,7 @@ function SettingsPageInner() {
           <DataPrivacySection />
         </div>
       </section>
+      </div>
     </div>
   );
 }

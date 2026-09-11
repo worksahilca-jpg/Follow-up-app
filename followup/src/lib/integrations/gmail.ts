@@ -72,6 +72,11 @@ export interface GmailConnectionStatus {
   // True while Google's push watch on this inbox is live — new mail is
   // seen in seconds. False means the ten-minute poll is the only path.
   pushActive?: boolean;
+  // When the incremental cron sync last completed — the empty dashboard's
+  // "Watching <inbox> — last checked N ago" line (research/product/
+  // 2026-09-10-ux-simplification.md §7.1) reads this instead of showing a
+  // static "connected" with no sense that anything is actually running.
+  lastSyncedAt?: string;
 }
 
 // The business's Gmail connection — whichever of its users connected one.
@@ -88,7 +93,12 @@ export async function getGmailStatus(businessId: string): Promise<GmailConnectio
   const integration = await getGmailIntegration(businessId);
   if (!integration) return { connected: false };
   const pushActive = !!integration.watchExpiration && integration.watchExpiration.getTime() > Date.now();
-  return { connected: true, email: integration.accountEmail ?? integration.user.email, pushActive };
+  return {
+    connected: true,
+    email: integration.accountEmail ?? integration.user.email,
+    pushActive,
+    lastSyncedAt: integration.lastSyncedAt?.toISOString(),
+  };
 }
 
 // `state` is a random, per-request CSRF token — see the connect/callback

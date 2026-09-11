@@ -1,18 +1,33 @@
 import Link from "next/link";
 import StatCard from "@/components/StatCard";
 import ApprovalQueue, { type ApprovalItem } from "@/components/ApprovalQueue";
+import SetupStrip from "@/components/SetupStrip";
+import TestLeadButton from "@/components/TestLeadButton";
 import { getLeads, getStats, getUpcomingBookings } from "@/lib/leads-data";
 import { formatCurrency, getGreeting } from "@/lib/demo-data";
-import EmptyState from "@/components/EmptyState";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { describeTrigger, getRescueReport } from "@/lib/rescued";
 import { getSessionContext } from "@/lib/session";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
-import { AlertTriangle, LifeBuoy, Send, MessageCircle, Inbox, CalendarClock, ArrowRight } from "lucide-react";
+import { getIncompleteSetupSteps } from "@/lib/setupStatus";
+import { getGmailStatus } from "@/lib/integrations/gmail";
+import { AlertTriangle, LifeBuoy, Send, MessageCircle, CalendarClock, ArrowRight } from "lucide-react";
 import FadeIn from "@/components/motion/FadeIn";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import AuroraBackground from "@/components/motion/AuroraBackground";
 import CountUp from "@/components/motion/CountUp";
+
+// "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
+// no seconds) since this is a status line, not a live clock.
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.max(0, Math.round(diffMs / 60_000));
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} minute${mins === 1 ? "" : "s"} ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  return `${Math.round(hours / 24)} day${Math.round(hours / 24) === 1 ? "" : "s"} ago`;
+}
 
 // This page reads live leads from the database on every request — never
 // bake a stale snapshot into the build.
@@ -46,6 +61,8 @@ export default async function DashboardPage() {
     draftSubject: a.draftSubject,
     draftMessage: a.draftMessage,
   }));
+  const setupSteps = ctx ? await getIncompleteSetupSteps(ctx.businessId) : [];
+  const gmail = ctx ? await getGmailStatus(ctx.businessId) : { connected: false };
 
   return (
     <div>
@@ -77,22 +94,33 @@ export default async function DashboardPage() {
 
       <ApprovalQueue items={approvalItems} />
 
+      <SetupStrip steps={setupSteps} />
+
       {leads.length === 0 ? (
         <FadeIn className="mt-10">
-          <EmptyState
-            icon={Inbox}
-            title="No leads yet"
-            description="Connect Gmail in Settings and sync your inbox to pull in your real sales conversations."
-            action={
-              <Link
-                href="/settings"
-                className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium"
-                style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-              >
-                Go to Settings
-              </Link>
-            }
-          />
+          {/* research/product/2026-09-10-ux-simplification.md §3/§7.1: the
+              old empty state was four zeroed stat tiles and a generic
+              "No leads yet" box — a worse first impression than one
+              honest sentence. This says what's actually true right now
+              (watching, or not yet set up) and gives one real action:
+              seeing the core promise work today rather than waiting for
+              a real lead to arrive. */}
+          <div className="rounded-2xl border border-line bg-card p-8 text-center">
+            <p className="text-lg leading-relaxed">
+              FollowUp is watching your inbox. The moment a lead writes, it replies within a minute and shows you
+              here.
+            </p>
+            {gmail.connected && (
+              <p className="text-sm text-ink-soft mt-3 flex items-center justify-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--sage)" }} />
+                Watching {gmail.email}
+                {gmail.lastSyncedAt && ` — last checked ${timeAgo(gmail.lastSyncedAt)}`}
+              </p>
+            )}
+            <div className="mt-6">
+              <TestLeadButton />
+            </div>
+          </div>
         </FadeIn>
       ) : (
         <>

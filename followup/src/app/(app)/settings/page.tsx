@@ -14,6 +14,7 @@ import CrmConfig from "@/components/CrmConfig";
 import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
+import { TIER_INFO, VOICE_ADDON_INFO } from "@/lib/pricing";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
@@ -112,9 +113,15 @@ function SettingsPageInner() {
   const [billingActive, setBillingActive] = useState(false);
   const [billingStatus, setBillingStatus] = useState<string | null>(null);
   const [billingPeriodEnd, setBillingPeriodEnd] = useState<string | null>(null);
+  const [billingTier, setBillingTier] = useState<"free" | "plus" | "pro">("free");
+  const [voiceAddonEnabled, setVoiceAddonEnabled] = useState(false);
   const [billingLoaded, setBillingLoaded] = useState(false);
   const [billingBusy, setBillingBusy] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
+  // Local choice while picking a plan — irrelevant once already subscribed
+  // (adding/removing Voice on an existing subscription is a portal action,
+  // not a new checkout; see handleSubscribe).
+  const [voiceAddonWanted, setVoiceAddonWanted] = useState(false);
 
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSending, setFeedbackSending] = useState(false);
@@ -336,11 +343,21 @@ function SettingsPageInner() {
   useEffect(() => {
     fetch("/api/billing/status")
       .then((r) => r.json())
-      .then((data: { active: boolean; status: string | null; currentPeriodEnd: string | null }) => {
-        setBillingActive(data.active);
-        setBillingStatus(data.status);
-        setBillingPeriodEnd(data.currentPeriodEnd);
-      })
+      .then(
+        (data: {
+          active: boolean;
+          status: string | null;
+          currentPeriodEnd: string | null;
+          tier: "free" | "plus" | "pro";
+          voiceAddonEnabled: boolean;
+        }) => {
+          setBillingActive(data.active);
+          setBillingStatus(data.status);
+          setBillingPeriodEnd(data.currentPeriodEnd);
+          setBillingTier(data.tier);
+          setVoiceAddonEnabled(data.voiceAddonEnabled);
+        }
+      )
       .finally(() => setBillingLoaded(true));
   }, []);
 
@@ -358,11 +375,19 @@ function SettingsPageInner() {
       attempts++;
       try {
         const res = await fetch("/api/billing/status");
-        const data: { active: boolean; status: string | null; currentPeriodEnd: string | null } = await res.json();
+        const data: {
+          active: boolean;
+          status: string | null;
+          currentPeriodEnd: string | null;
+          tier: "free" | "plus" | "pro";
+          voiceAddonEnabled: boolean;
+        } = await res.json();
         if (data.active) {
           setBillingActive(data.active);
           setBillingStatus(data.status);
           setBillingPeriodEnd(data.currentPeriodEnd);
+          setBillingTier(data.tier);
+          setVoiceAddonEnabled(data.voiceAddonEnabled);
         }
       } catch {
         // ignore — just try again next tick
@@ -373,14 +398,18 @@ function SettingsPageInner() {
     return () => clearInterval(interval);
   }, [searchParams, billingLoaded, billingActive]);
 
-  async function handleSubscribe() {
+  async function handleSubscribe(tier: "plus" | "pro") {
     setBillingBusy(true);
     setBillingError(null);
     try {
-      const res = await fetch("/api/billing/checkout", { method: "POST" });
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier, voiceAddon: voiceAddonWanted }),
+      });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't start checkout.");
-      window.location.href = data.url;
+      window.location.assign(data.url);
     } catch (err) {
       setBillingError(err instanceof Error ? err.message : "Couldn't start checkout.");
       setBillingBusy(false);
@@ -394,7 +423,7 @@ function SettingsPageInner() {
       const res = await fetch("/api/billing/portal", { method: "POST" });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't open billing portal.");
-      window.location.href = data.url;
+      window.location.assign(data.url);
     } catch (err) {
       setBillingError(err instanceof Error ? err.message : "Couldn't open billing portal.");
       setBillingBusy(false);
@@ -1046,57 +1075,98 @@ function SettingsPageInner() {
         {billingRedirect === "canceled" && (
           <p className="mt-2 text-sm text-ink-soft">Checkout canceled — no charge was made.</p>
         )}
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
-          <div className="flex items-center gap-4">
-            <div
-              className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
-              style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
-            >
-              <CreditCard className="h-4 w-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">FollowUp — $29/month after a 14-day free trial</p>
-              <p className="text-xs text-ink-soft mt-0.5">
-                {!billingLoaded
-                  ? "Checking your subscription…"
-                  : billingStatus === "trialing"
-                  ? billingPeriodEnd
-                    ? `Free trial — first charge on ${new Date(billingPeriodEnd).toLocaleDateString()}.`
-                    : "Free trial."
-                  : billingActive
-                  ? billingPeriodEnd
-                    ? `Active — renews ${new Date(billingPeriodEnd).toLocaleDateString()}.`
-                    : "Active."
-                  : billingStatus === "past_due"
-                  ? "Payment failed — update your card to keep your account active."
-                  : billingStatus === "canceled"
-                  ? "Subscription canceled — resubscribe to unlock leads, sync, and sending again."
-                  : "Not subscribed yet — start a free 14-day trial, no card required, to unlock adding leads, syncing Gmail, and sending follow-ups."}
-              </p>
-            </div>
-            {billingLoaded && (
+        {billingLoaded && (billingActive || billingStatus) ? (
+          // Already on a plan — show what it is and hand off to Stripe's
+          // portal for anything else (upgrading/downgrading tier, adding or
+          // dropping Voice, updating a card). A dedicated in-app
+          // tier-switch flow is real follow-up work, not built here — see
+          // the PR description for why.
+          <div className="mt-4 rounded-xl border border-line bg-card p-5">
+            <div className="flex items-center gap-4">
+              <div
+                className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
+              >
+                <CreditCard className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">
+                  FollowUp {TIER_INFO[billingTier].label} — {TIER_INFO[billingTier].priceLabel}
+                  {voiceAddonEnabled && ` + Voice (${VOICE_ADDON_INFO.priceLabel})`}
+                </p>
+                <p className="text-xs text-ink-soft mt-0.5">
+                  {billingStatus === "trialing"
+                    ? billingPeriodEnd
+                      ? `Free trial — first charge on ${new Date(billingPeriodEnd).toLocaleDateString()}.`
+                      : "Free trial."
+                    : billingActive
+                    ? billingPeriodEnd
+                      ? `Active — renews ${new Date(billingPeriodEnd).toLocaleDateString()}.`
+                      : "Active."
+                    : billingStatus === "past_due"
+                    ? "Payment failed — update your card to keep your account active."
+                    : "Subscription canceled — resubscribe to unlock leads, sync, and sending again."}
+                </p>
+              </div>
               <button
-                onClick={billingActive || billingStatus ? handleManageBilling : handleSubscribe}
-                disabled={billingBusy || awaitingActivation}
+                onClick={handleManageBilling}
+                disabled={billingBusy}
                 className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
                 style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
               >
-                {billingBusy
-                  ? "One sec…"
-                  : awaitingActivation
-                  ? "Activating…"
-                  : billingActive || billingStatus
-                  ? "Manage billing"
-                  : "Start free trial"}
+                {billingBusy ? "One sec…" : "Manage billing"}
               </button>
+            </div>
+            {billingError && (
+              <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+                {billingError}
+              </p>
             )}
           </div>
-          {billingError && (
-            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
-              {billingError}
-            </p>
-          )}
-        </div>
+        ) : (
+          <div className="mt-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              {(["free", "plus", "pro"] as const).map((tier) => (
+                <div key={tier} className="rounded-xl border border-line bg-card p-5">
+                  <p className="text-sm font-medium">{TIER_INFO[tier].label}</p>
+                  <p className="font-display text-2xl mt-1">{TIER_INFO[tier].priceLabel}</p>
+                  <p className="text-xs text-ink-soft mt-2">
+                    {tier === "free"
+                      ? "Email + web widget, 20 leads/mo, assisted only. No card needed — this is where you are now."
+                      : tier === "plus"
+                      ? "Every channel (SMS, WhatsApp, Instagram, CRM sync) plus autonomous send. 14-day free trial."
+                      : "Everything in Plus, no lead cap, multi-agent lead routing, priority support. 14-day free trial."}
+                  </p>
+                  {tier !== "free" && (
+                    <button
+                      onClick={() => handleSubscribe(tier)}
+                      disabled={billingBusy || awaitingActivation}
+                      className="mt-4 w-full text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
+                      style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                    >
+                      {billingBusy ? "One sec…" : awaitingActivation ? "Activating…" : "Start free trial"}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <label className="mt-3 flex items-center gap-2.5 text-sm text-ink-soft">
+              <input
+                type="checkbox"
+                checked={voiceAddonWanted}
+                onChange={(e) => setVoiceAddonWanted(e.target.checked)}
+                className="h-4 w-4"
+              />
+              Add Voice ({VOICE_ADDON_INFO.priceLabel}, {VOICE_ADDON_INFO.includedMinutes} min included, then{" "}
+              {VOICE_ADDON_INFO.overagePerMinute}/min) — applies to whichever plan you pick above
+            </label>
+            {billingError && (
+              <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+                {billingError}
+              </p>
+            )}
+          </div>
+        )}
       </section>
       </div>
 

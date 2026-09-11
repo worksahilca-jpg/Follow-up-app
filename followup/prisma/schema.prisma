@@ -73,7 +73,8 @@ model Business {
   filteredEmails  FilteredEmail[]
   crmConnection   CrmConnection?
 
-  // Billing (Stripe) — single flat plan, no trial. subscriptionStatus
+  // Billing (Stripe) — Free/Plus/Pro tiers plus an optional Voice add-on
+  // (research/market/2026-09-11-tier-pricing-recommendation.md). subscriptionStatus
   // mirrors the Stripe Subscription.status string verbatim (active,
   // trialing, past_due, canceled, unpaid, incomplete, ...); null means
   // never subscribed. See src/lib/billing.ts for the access check.
@@ -81,6 +82,21 @@ model Business {
   stripeSubscriptionId String?   @unique
   subscriptionStatus   String?
   currentPeriodEnd     DateTime?
+  // "free" (default, no Stripe subscription needed) | "plus" | "pro" —
+  // synced from the subscription's tier line item by the webhook
+  // (syncSubscription in src/app/api/billing/webhook/route.ts), never set
+  // directly by client code. A subscription whose tier price ID matches
+  // neither the current Plus nor Pro price falls back to "plus" rather than
+  // erroring — this is what grandfathers every pre-existing $29/mo
+  // subscriber onto Plus permanently, with no backfill migration needed:
+  // their subscriptionStatus is active/trialing and their stored price ID
+  // (once populated) just won't be the new Pro price.
+  tier                 String    @default("free")
+  // Whether the Voice add-on (two subscription items — a flat fee plus a
+  // metered overage — see src/lib/stripe.ts) is currently attached to this
+  // business's subscription. Independent of tier: Plus and Pro are both
+  // Voice-eligible at the same price (research doc §4).
+  voiceAddonEnabled    Boolean   @default(false)
 
   // Generic inbound lead-capture webhook (Zapier/Make/Google Forms bridge/
   // raw script) — see src/app/api/webhooks/lead/route.ts. Generated lazily
@@ -788,6 +804,20 @@ model AuditEvent {
 
   @@index([businessId, createdAt])
   @@index([targetId])
+}
+
+// Stripe does not guarantee webhook delivery is exactly-once or in order
+// (research/market/2026-09-11-stripe-tier-billing-implementation.md §5) — a
+// retried or duplicate delivery of the same event.id must not re-apply its
+// side effects. One row per successfully-processed event id; the webhook
+// handler inserts before processing and, on a unique-constraint collision,
+// returns 200 immediately without redoing the work. Rows are never read
+// back for anything other than this existence check, so no other indexes
+// or fields are needed. Not pruned yet — see the handler for why that's
+// deferred rather than a bug.
+model ProcessedWebhookEvent {
+  eventId     String   @id
+  processedAt DateTime @default(now())
 }
 
 model AIInsight {

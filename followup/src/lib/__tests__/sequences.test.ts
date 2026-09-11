@@ -9,9 +9,17 @@ vi.mock("@/lib/db", () => ({
     lead: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     notification: { create: vi.fn() },
     business: { findUnique: vi.fn() },
+    user: { findMany: vi.fn() },
   },
 }));
-vi.mock("@/lib/integrations/openai", () => ({ generateFollowUpMessage: vi.fn(async () => ({ subject: "Following up", body: "draft" })) }));
+vi.mock("@/lib/integrations/openai", () => ({
+  generateFollowUpMessage: vi.fn(async () => ({ subject: "Following up", body: "draft" })),
+  // Defaults to "safe to send" so every existing test's EMAIL step keeps
+  // sending exactly as before; the dedicated describe block below
+  // overrides this to exercise the hold path itself.
+  assessSendRisk: vi.fn(async () => ({ riskLevel: "low" as const, reason: "" })),
+}));
+vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
 vi.mock("@/lib/sender", () => ({ latestInboundText: vi.fn(() => undefined), composeFollowUpEmail: vi.fn(async (_f: string, _b: string, body: string) => body) }));
 vi.mock("@/lib/sending", () => ({
   sendFollowUpToLead: vi.fn(async () => ({ success: true })),
@@ -30,7 +38,8 @@ vi.mock("@/lib/sendWindow", () => ({ isWithinSendWindow: vi.fn(() => true) }));
 import { prisma } from "@/lib/db";
 import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
 import { composeFollowUpEmail } from "@/lib/sender";
-import { generateFollowUpMessage } from "@/lib/integrations/openai";
+import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
+import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { runSequencesForBusiness } from "@/lib/sequences";
 
@@ -41,6 +50,8 @@ const sendWindow = isWithinSendWindow as unknown as ReturnType<typeof vi.fn>;
 const nonEmailChannel = detectNonEmailChannel as unknown as ReturnType<typeof vi.fn>;
 const composeEmail = composeFollowUpEmail as unknown as ReturnType<typeof vi.fn>;
 const draftMessage = generateFollowUpMessage as unknown as ReturnType<typeof vi.fn>;
+const sendRisk = assessSendRisk as unknown as ReturnType<typeof vi.fn>;
+const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
 
 const step = { id: "s1", order: 0, delayDays: 0, action: "SEND_EMAIL", messageHint: null, stageTo: null as string | null };
 function enrolled(lastDirection: "inbound" | "outbound") {
@@ -69,8 +80,10 @@ beforeEach(() => {
   p.lead.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds by default
   p.notification.create.mockResolvedValue({});
   p.business.findUnique.mockResolvedValue({ timezone: "America/New_York" });
+  p.user.findMany.mockResolvedValue([{ id: "admin1" }]);
   sendWindow.mockReturnValue(true);
   nonEmailChannel.mockResolvedValue(null);
+  sendRisk.mockResolvedValue({ riskLevel: "low", reason: "" });
 });
 
 describe("workflow stop-on-reply", () => {
@@ -277,5 +290,88 @@ describe("send-window gate (src/lib/sendWindow.ts)", () => {
     const r = await runSequencesForBusiness("biz1");
     expect(send).toHaveBeenCalledTimes(1);
     expect(r.deferred).toBe(0);
+  });
+});
+
+// Every other automated-send path (automation.ts's silence rule,
+// acknowledge.ts's instant ack) gates its draft on a risk check before
+// sending unreviewed; this workflow path didn't — a real gap found
+// auditing this file, since a workflow step drafts fresh, real AI content
+// per lead just like those other paths do.
+describe("risk-gated hold (a workflow step's draft isn't automatically safe)", () => {
+  function enrolledOnEmailStep(overrides: Record<string, unknown> = {}) {
+    const l = enrolled("outbound");
+    l.sequence = { ...l.sequence, steps: [{ ...step, action: "EMAIL" }] };
+    return { ...l, ...overrides };
+  }
+
+  it("holds instead of sending when the risk check comes back anything but low", async () => {
+    sendRisk.mockResolvedValue({ riskLevel: "high", reason: "Mentions a specific discount." });
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(r.held).toBe(1);
+    expect(r.heldReasons).toEqual(["Young Son: Mentions a specific discount."]);
+    expect(r.advanced).toBe(0);
+  });
+
+  it("unenrolls the lead and saves the draft for manual approval on a hold", async () => {
+    sendRisk.mockResolvedValue({ riskLevel: "medium", reason: "Touches pricing." });
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    await runSequencesForBusiness("biz1");
+    expect(p.lead.update).toHaveBeenCalledWith({
+      where: { id: "lead1" },
+      data: {
+        sequenceId: null,
+        sequenceStepIndex: 0,
+        sequenceStepDueAt: null,
+        suggestedMessage: "draft",
+        suggestedSubject: "Following up",
+      },
+    });
+  });
+
+  it("records an ai.hold audit event and notifies the assigned person", async () => {
+    sendRisk.mockResolvedValue({ riskLevel: "high", reason: "Sounds like a promise." });
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    await runSequencesForBusiness("biz1");
+    expect(audit).toHaveBeenCalledWith(
+      { businessId: "biz1", userId: null },
+      "ai.hold",
+      expect.objectContaining({
+        targetType: "lead",
+        targetId: "lead1",
+        meta: expect.objectContaining({ riskLevel: "high", trigger: "sequence", sequenceName: "New lead cadence" }),
+      })
+    );
+    expect(p.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userId: "user1", leadId: "lead1" }) })
+    );
+  });
+
+  it("notifies every admin instead when the lead is unassigned", async () => {
+    sendRisk.mockResolvedValue({ riskLevel: "high", reason: "risky" });
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep({ assignedToId: null })]);
+    await runSequencesForBusiness("biz1");
+    expect(p.user.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { businessId: "biz1", role: "ADMIN" } }));
+    expect(p.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userId: "admin1", leadId: "lead1" }) })
+    );
+  });
+
+  it("holds when the risk check itself throws, rather than guessing it's safe", async () => {
+    sendRisk.mockRejectedValue(new Error("OpenAI is down"));
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(r.held).toBe(1);
+  });
+
+  it("still sends normally when the risk check comes back low, exactly as before", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(r.held).toBe(0);
+    expect(r.advanced).toBe(1);
   });
 });

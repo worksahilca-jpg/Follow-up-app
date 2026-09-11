@@ -21,12 +21,13 @@
  */
 
 import { prisma } from "@/lib/db";
-import { generateFollowUpMessage } from "@/lib/integrations/openai";
+import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
 import { requireActiveBilling } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
+import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import type { Prisma, SequenceAction, PipelineStage } from "@prisma/client";
 import type { Message } from "@/lib/types";
@@ -266,10 +267,24 @@ interface SequenceRunResult {
   // immediately. Only EMAIL steps can defer; CHANGE_STAGE never contacts
   // the lead, so it always runs on schedule regardless of the hour.
   deferred: number;
+  // Risk-gated: the step's draft was saved as the lead's suggestedMessage
+  // and the lead unenrolled from the sequence, same as pausedForReply,
+  // instead of being sent — see the risk check below.
+  held: number;
   skipped: string[]; // "{lead name}: {why}"
+  heldReasons: string[]; // "{lead name}: {why it was held}", one per held lead
 }
 
-const EMPTY_RUN: SequenceRunResult = { checked: 0, advanced: 0, completed: 0, pausedForReply: 0, deferred: 0, skipped: [] };
+const EMPTY_RUN: SequenceRunResult = {
+  checked: 0,
+  advanced: 0,
+  completed: 0,
+  pausedForReply: 0,
+  deferred: 0,
+  held: 0,
+  skipped: [],
+  heldReasons: [],
+};
 
 /**
  * research/product/2026-09-09-followup-cadence-best-practices.md §4:
@@ -284,6 +299,37 @@ function nonEmailStepHint(stepHint: string | null): string {
     "This is going out as a text message, not an email — keep it noticeably shorter and more " +
     "conversational than an email would be, and never reference an inbox, attachment, or anything email-specific.";
   return stepHint?.trim() ? `${base} ${stepHint.trim()}` : base;
+}
+
+/**
+ * Tells the assigned person a workflow step's draft needed a human look
+ * before it went out — same "held, not sent" idea as the silence-based
+ * automation's own notifyNeglect() (automation.ts), for a workflow step
+ * specifically. The lead is already unenrolled by the time this fires
+ * (see the risk check in runSequencesForBusiness below), so this points
+ * at sending the draft manually from the lead's page rather than
+ * "approving" a workflow that isn't running anymore.
+ */
+async function notifySequenceHold(
+  lead: { id: string; name: string; businessId: string; assignedToId: string | null },
+  sequenceName: string
+): Promise<void> {
+  const message =
+    `"${sequenceName}" drafted a reply for ${lead.name} that needs your OK before it goes out — the workflow ` +
+    "stopped here so you can review it.";
+  try {
+    // Same unassigned-lead fallback as notifyNeglect(): nobody to hand
+    // this off to individually, so every admin on the business hears
+    // about it instead of the hold going unnoticed.
+    const userIds = lead.assignedToId
+      ? [lead.assignedToId]
+      : (await prisma.user.findMany({ where: { businessId: lead.businessId, role: "ADMIN" }, select: { id: true } })).map((u) => u.id);
+    for (const userId of userIds) {
+      await prisma.notification.create({ data: { userId, leadId: lead.id, message } });
+    }
+  } catch (err) {
+    console.error(`Sequence-hold notification failed for lead ${lead.id}:`, err);
+  }
 }
 
 /** What a real scheduler calls for one business — see runSequencesForAllBusinesses() below for the fan-out. */
@@ -433,6 +479,54 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           channel === "email"
             ? await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft.body, { languageSample: latestInboundText(conversation) })
             : draft.body;
+
+        // Every other automated-send path in this codebase (automation.ts's
+        // silence rule, acknowledge.ts's instant ack) gates its draft on a
+        // risk check before sending unreviewed — this one didn't, which
+        // meant a workflow step's freshly-generated draft went straight out
+        // with nobody looking at it, for every enrolled lead regardless of
+        // trust tier (enrollLead() always sets automationTier to OFF, so
+        // there's no ASSISTED/AUTONOMOUS distinction to key off here the
+        // way automation.ts has). Same gate, same fallback-to-medium on a
+        // failed check: sending something that shouldn't have gone out is
+        // worse than an unnecessary manual review.
+        let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
+        try {
+          risk = await assessSendRisk({ conversation }, message);
+        } catch (err) {
+          console.error(`Risk assessment failed for lead ${lead.id} (workflow step):`, err);
+          risk = { riskLevel: "medium", reason: "Couldn't assess risk automatically — held to be safe." };
+        }
+
+        if (risk.riskLevel !== "low") {
+          // Unenrolled rather than left "stuck" on this step: the normal
+          // approval-queue send (POST /api/leads/[id]/send) knows nothing
+          // about sequence bookkeeping, so a hold that stayed enrolled
+          // would either re-draft and re-hold the same step every cron
+          // tick forever, or need new plumbing to advance the sequence on
+          // approval. Mirrors the stop-on-reply case just above: something
+          // needs a human now, so the automated script stops cleanly and
+          // hands the lead fully to the owner, same as it already does
+          // when the lead replies mid-sequence.
+          await prisma.lead.update({
+            where: { id: lead.id },
+            data: {
+              sequenceId: null,
+              sequenceStepIndex: 0,
+              sequenceStepDueAt: null,
+              suggestedMessage: message,
+              suggestedSubject: draft.subject,
+            },
+          });
+          void recordAudit({ businessId, userId: null }, "ai.hold", {
+            targetType: "lead",
+            targetId: lead.id,
+            meta: { riskLevel: risk.riskLevel, reason: risk.reason, trigger: "sequence", sequenceName: sequence.name },
+          });
+          await notifySequenceHold(lead, sequence.name);
+          return { kind: "held" as const, note: `${lead.name}: ${risk.reason}` };
+        }
+
         const result = await sendFollowUpToLead(lead.id, message, {
           automated: true,
           trigger: "sequence",
@@ -472,13 +566,17 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
     }
   });
 
+  const heldOutcomes = outcomes.filter((o): o is { kind: "held"; note: string } => o.kind === "held");
+
   return {
     checked: due.length,
     advanced: outcomes.filter((o) => o.kind === "advanced" || o.kind === "completed").length,
     completed: outcomes.filter((o) => o.kind === "completed").length,
     pausedForReply: outcomes.filter((o) => o.kind === "paused").length,
     deferred: outcomes.filter((o) => o.kind === "deferred").length,
+    held: heldOutcomes.length,
     skipped: outcomes.filter((o): o is { kind: "skipped"; note: string } => o.kind === "skipped").map((o) => o.note),
+    heldReasons: heldOutcomes.map((o) => o.note),
   };
 }
 
@@ -495,18 +593,23 @@ export async function runSequencesForAllBusinesses(): Promise<SequenceRunResult>
       return await runSequencesForBusiness(businessId);
     } catch (err) {
       console.error(`Sequence run failed for business ${businessId}:`, err);
-      return { ...EMPTY_RUN, skipped: [`Business ${businessId}: ${err instanceof Error ? err.message : "unknown error"}`] };
+      return {
+        ...EMPTY_RUN,
+        skipped: [`Business ${businessId}: ${err instanceof Error ? err.message : "unknown error"}`],
+      } satisfies SequenceRunResult;
     }
   });
 
-  const totals: SequenceRunResult = { ...EMPTY_RUN, skipped: [] };
+  const totals: SequenceRunResult = { ...EMPTY_RUN, skipped: [], heldReasons: [] };
   for (const r of results) {
     totals.checked += r.checked;
     totals.advanced += r.advanced;
     totals.completed += r.completed;
     totals.pausedForReply += r.pausedForReply;
     totals.deferred += r.deferred;
+    totals.held += r.held;
     totals.skipped.push(...r.skipped);
+    totals.heldReasons.push(...r.heldReasons);
   }
   return totals;
 }

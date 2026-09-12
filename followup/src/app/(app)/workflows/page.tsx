@@ -129,7 +129,7 @@ export default function WorkflowsPage() {
               }}
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium border border-line"
             >
-              <Sparkles className="h-4 w-4" style={{ color: "var(--rust)" }} /> Use recommended cadence
+              <Sparkles className="h-4 w-4" style={{ color: "var(--accent-text)" }} /> Use recommended cadence
             </button>
             <button
               onClick={() => {
@@ -514,7 +514,7 @@ function WorkflowEditor({
       <button
         onClick={() => setSteps((prev) => [...prev, blankStep()])}
         className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium"
-        style={{ color: "var(--rust)" }}
+        style={{ color: "var(--accent-text)" }}
       >
         <Plus className="h-3.5 w-3.5" /> Add step
       </button>

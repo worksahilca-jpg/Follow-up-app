@@ -39,22 +39,44 @@
      own. */
   --on-accent: #241a08;
 
+  /* Accent for TEXT and functional icons, as opposed to fills. --rust is a
+     light amber: white text on it is illegible (hence --on-accent above),
+     and it is equally illegible AS text — 2.17:1 on --card, 1.91:1 on
+     --paper, 1.77:1 on --rust-soft, against the 4.5:1 WCAG AA needs at the
+     12-14px these labels actually render at. A fill and a text color have
+     opposite contrast requirements, so one token cannot serve both. This is
+     the same hue darkened until it clears AA everywhere it is used:
+     5.92:1 on --card, 5.21:1 on --paper, 4.81:1 on --rust-soft.
+     Use --rust for fills, borders, focus rings and the logo mark; use this
+     for any accent-colored text or icon that carries meaning. */
+  --accent-text: #8a5a08;
+
   /* Lead-urgency status-pill system — the one place color variety is
      allowed outside the accent. Flat, low-saturation: soft tint for the
      pill background, the saturated shade for its text. Left unchanged by
      the warm-palette pass above: these encode meaning (cold/warm/hot,
      low/medium/high), not brand, and all four already read clearly
-     against the new cream/white surfaces without retuning. */
-  --slate: #64748b;
+     against the new cream/white surfaces without retuning.
+
+     Each saturated shade was then darkened (2026-09-12) until its pill text
+     clears 4.5:1 on its own soft background: these labels render at 12px
+     (text-xs), which WCAG counts as normal text, and all four were failing —
+     gold worst at 2.86:1, then sage 3.00, coral 3.95, slate 4.34. Now 4.55,
+     4.73, 4.82 and 4.73. The soft tints could not move instead: they are
+     already within a few percent of white. Each new shade also clears 4.5:1
+     on --card and --paper, so the same tokens stay safe for standalone
+     error/status text, and white-on-coral fills only got better. Hues are
+     unchanged — these are the same colors, darker. */
+  --slate: #5f6e84;
   --slate-soft: #f1f5f9;
 
-  --sage: #16a34a;
+  --sage: #117c38;
   --sage-soft: #dcfce7;
 
-  --gold: #d97706;
+  --gold: #a35904;
   --gold-soft: #fef3c7;
 
-  --coral: #dc2626;
+  --coral: #ca2323;
   --coral-soft: #fee2e2;
 }
 
@@ -66,6 +88,7 @@
   --color-rust: var(--rust);
   --color-rust-soft: var(--rust-soft);
   --color-on-accent: var(--on-accent);
+  --color-accent-text: var(--accent-text);
   --color-slate: var(--slate);
   --color-slate-soft: var(--slate-soft);
   --color-sage: var(--sage);
@@ -106,7 +129,7 @@ h1, h2, h3, .font-display {
    component: most buttons/links/inputs across the authenticated app had
    no focus ring at all (falling back to the browser's raw default) and
    inconsistent hover transitions — some instant, some eased. This gives
-   every interactive element the same on-brand blue focus ring (the one
+   every interactive element the same on-brand amber focus ring (the one
    sanctioned non-button use of the accent) and a quiet, consistent
    150ms transition, without touching each component's own classes. */
 a, button, input, select, textarea, [tabindex] {

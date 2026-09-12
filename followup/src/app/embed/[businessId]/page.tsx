@@ -80,7 +80,7 @@ export default function EmbedLeadPage() {
         >
           <Compass className="h-3.5 w-3.5" style={{ color: "var(--paper)" }} />
         </div>
-        <span className="text-xs font-semibold tracking-wide" style={{ color: "var(--rust)" }}>
+        <span className="text-xs font-semibold tracking-wide" style={{ color: "var(--accent-text)" }}>
           {businessName ?? " "}
         </span>
       </div>

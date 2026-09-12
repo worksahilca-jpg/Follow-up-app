@@ -17,7 +17,7 @@ When anything below, or any research note, seems to say otherwise, this list win
 Set by the CEO (2026-09-06). This is a standing filter, not a one-time memo — every
 agent in `.claude/agents/` and every session working on this repo applies it before
 adding anything, not just when it's freshly top of mind. `manager-agent.md` and
-`growth-agent.md` point back here; if you're proposing a feature, a roadmap item, or
+`product-ux-agent.md` point back here; if you're proposing a feature, a roadmap item, or
 a positioning change and haven't checked it against these six rules, you're not done.
 
 ## The mission — in the CEO's own words
@@ -97,7 +97,7 @@ of these, say so plainly.
 Not a self-congratulation pass — a real check, including the gaps.
 
 - **Rule 1 (vertical depth) — resolved, staying horizontal by decision.** FollowUp
-  stays explicitly horizontal ("follow-up for anyone" — see `growth-agent.md`'s
+  stays explicitly horizontal ("follow-up for anyone" — see `product-ux-agent.md`'s
   thesis), not because a vertical was never considered but because it was
   weighed and declined. `research/customers/2026-09-05-icp-pain-and-trust-objections.md`
   found the strongest quantified pain signal of any research pass in home-services

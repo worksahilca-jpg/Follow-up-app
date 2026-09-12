@@ -2,7 +2,7 @@
 
 An org chart for the custom agents in this repo, not just a tool list.
 
-**Before proposing or building anything, check it against `../../followup/PRODUCT_DIRECTION.md`** —
+**Before proposing or building anything, check it against `../../PRODUCT_DIRECTION.md`** —
 the CEO's six standing rules for 20-year survival (vertical depth, owning the data,
 trust-as-a-feature, not building free platform parity, rising autonomy, moat vs.
 table-stakes). State in one line which rule a feature serves; if none, flag it as
@@ -35,6 +35,16 @@ Check `research/` before re-researching something already on file — see `resea
 
 ## Seeing what's active right now
 Every delegated workstream is a Task (`subject`, `status`, `owner`) — check it any time in the `/tasks` view, no need to ask for a status update. `pending` = queued, `in_progress` = an agent is actually on it right now, `completed` = done and its own checks passed. No open tasks just means nobody's working on anything at the moment — the roster above is who *exists*, not who's currently busy.
+
+## Git flow for anything that writes a real file
+Every specialist that touches a real file — application code or a research write-up — works on its own branch and never commits to `main` directly:
+1. Before starting, branch off current `main`: `git checkout -b <prefix>/<short-task-slug>` (`feat`/`fix`/`research`, matching the work).
+2. Commit as you go with real messages, not one giant commit at the end.
+3. Once your own "Before you're done" checks pass, push the branch: `git push -u origin <branch>`.
+4. Report the branch name in your summary. **Never open the pull request yourself, and never merge** — whoever dispatched you (the CEO, or manager-agent relaying to the CEO) opens the PR after reading your summary, so a human always reviews before anything reaches `main`.
+5. Blocked or failed partway through? Still push what you have and say so in your summary — don't leave real work sitting only in an uncommitted working tree where it can be lost.
+
+This applies to the research agents too: a findings file under `research/**` is still a real change that deserves a reviewable diff, not a silent write to `main`.
 
 ## Conventions every agent here follows
 - Frontmatter: `name`, a `description` that says what it's for *and* what it's explicitly not for (with a pointer to the right agent instead), `tools`, `model: inherit`.

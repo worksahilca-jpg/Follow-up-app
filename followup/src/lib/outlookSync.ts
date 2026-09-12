@@ -91,13 +91,16 @@ export async function syncOutlookForBusiness(businessId: string): Promise<Outloo
 export async function syncOutlookForAllBusinesses(): Promise<{ businesses: number; synced: number; newLeads: number; failed: number }> {
   const integrations = await prisma.integration.findMany({
     where: { provider: "outlook", status: "connected" },
-    select: { user: { select: { businessId: true, business: { select: { subscriptionStatus: true } } } } },
+    select: { user: { select: { businessId: true, business: { select: { subscriptionStatus: true, tier: true } } } } },
   });
 
   const businessIds = new Set<string>();
   for (const i of integrations) {
     const businessId = i.user.businessId;
-    if (!businessId || !hasActiveAccess(i.user.business?.subscriptionStatus)) continue;
+    // Outlook is one of Free tier's allowed channels (@/lib/billing's
+    // FREE_TIER_ALLOWED_SOURCES) — pass tier through, same reasoning as
+    // gmailSync.ts's identical fix.
+    if (!businessId || !hasActiveAccess(i.user.business?.subscriptionStatus, i.user.business?.tier)) continue;
     businessIds.add(businessId);
   }
 

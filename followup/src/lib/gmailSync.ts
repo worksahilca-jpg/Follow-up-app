@@ -134,7 +134,7 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
     select: {
       lastSyncedAt: true,
       deepSyncedAt: true,
-      user: { select: { businessId: true, business: { select: { subscriptionStatus: true } } } },
+      user: { select: { businessId: true, business: { select: { subscriptionStatus: true, tier: true } } } },
     },
   });
 
@@ -143,7 +143,11 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
   const byBusiness = new Map<string, { lastSyncedAt: Date | null; deepSyncedAt: Date | null }>();
   for (const i of integrations) {
     const businessId = i.user.businessId;
-    if (!businessId || !hasActiveAccess(i.user.business?.subscriptionStatus)) continue;
+    // Gmail is one of Free tier's allowed channels (@/lib/billing's
+    // FREE_TIER_ALLOWED_SOURCES) — pass tier through so a Free-tier
+    // business's inbox still gets synced, not just Plus/Pro's. Without
+    // this, Free tier's promised Gmail detection never runs at all.
+    if (!businessId || !hasActiveAccess(i.user.business?.subscriptionStatus, i.user.business?.tier)) continue;
     const prev = byBusiness.get(businessId);
     const earlier = (a: Date | null, b: Date | null) => (!a || !b ? null : a < b ? a : b);
     byBusiness.set(businessId, {
@@ -212,8 +216,8 @@ export async function syncGmailForBusinessFromPush(businessId: string): Promise<
   if (claim.count === 0) return null;
 
   try {
-    const business = await prisma.business.findUnique({ where: { id: businessId }, select: { subscriptionStatus: true } });
-    if (!hasActiveAccess(business?.subscriptionStatus)) return null;
+    const business = await prisma.business.findUnique({ where: { id: businessId }, select: { subscriptionStatus: true, tier: true } });
+    if (!hasActiveAccess(business?.subscriptionStatus, business?.tier)) return null;
     const integration = await prisma.integration.findFirst({
       where: { provider: "gmail", status: "connected", user: { businessId } },
       select: { lastSyncedAt: true },

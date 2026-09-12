@@ -62,8 +62,58 @@ describe("getPendingApprovals", () => {
         heldAt: event().createdAt,
         draftSubject: "Re: quote",
         draftMessage: "Here is the quote.",
+        leadLastMessage: null,
+        leadLastMessageChannel: null,
       },
     ]);
+  });
+
+  it("attaches the lead's own most recent inbound message, so a reviewer sees what the draft is replying to", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([
+      lead({
+        conversations: [
+          { channel: "email", messages: [{ body: "What's the price on the Maple St place?", sentAt: new Date("2026-09-10T11:00:00Z") }] },
+        ],
+      }),
+    ]);
+    const result = await getPendingApprovals("biz1");
+    expect(result[0].leadLastMessage).toBe("What's the price on the Maple St place?");
+    expect(result[0].leadLastMessageChannel).toBe("email");
+  });
+
+  it("picks the most recent inbound message across multiple conversations/channels, not just the first one", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([
+      lead({
+        conversations: [
+          { channel: "email", messages: [{ body: "Older email question", sentAt: new Date("2026-09-09T09:00:00Z") }] },
+          { channel: "text", messages: [{ body: "Newer text follow-up", sentAt: new Date("2026-09-10T15:00:00Z") }] },
+        ],
+      }),
+    ]);
+    const result = await getPendingApprovals("biz1");
+    expect(result[0].leadLastMessage).toBe("Newer text follow-up");
+    expect(result[0].leadLastMessageChannel).toBe("text");
+  });
+
+  it("truncates a very long inbound message rather than shipping the whole body to the dashboard", async () => {
+    const longBody = "x".repeat(500);
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([
+      lead({ conversations: [{ channel: "email", messages: [{ body: longBody, sentAt: new Date() }] }] }),
+    ]);
+    const result = await getPendingApprovals("biz1");
+    expect(result[0].leadLastMessage?.length).toBeLessThan(longBody.length);
+    expect(result[0].leadLastMessage?.endsWith("…")).toBe(true);
+  });
+
+  it("leaves leadLastMessage null when the lead has conversations but no inbound message at all", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([lead({ conversations: [{ channel: "email", messages: [] }] })]);
+    const result = await getPendingApprovals("biz1");
+    expect(result[0].leadLastMessage).toBeNull();
+    expect(result[0].leadLastMessageChannel).toBeNull();
   });
 
   it("excludes a lead whose latest event is a later send, not a hold", async () => {

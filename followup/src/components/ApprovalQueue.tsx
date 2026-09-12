@@ -23,6 +23,16 @@ export type ApprovalItem = {
   reason: string;
   draftSubject: string | null;
   draftMessage: string;
+  leadLastMessage: string | null;
+  leadLastMessageChannel: string | null;
+};
+
+const CHANNEL_LABEL: Record<string, string> = {
+  email: "email",
+  call: "a call",
+  text: "text",
+  whatsapp: "WhatsApp",
+  instagram: "Instagram",
 };
 
 function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (leadId: string) => void }) {
@@ -68,7 +78,21 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
           {item.leadName}
         </Link>
       </div>
+      {/* What they actually said, before what we're about to reply with —
+          approving a draft with no visible context for what it's replying
+          to meant trusting the AI's summary of the situation ("reason")
+          instead of judging the reply against the lead's own words. This
+          is the whole reason to review a hold at all, so it goes first. */}
+      {item.leadLastMessage && (
+        <div className="mt-2 rounded-lg border border-dashed border-line p-3 text-sm leading-relaxed">
+          <p className="text-xs font-medium text-ink-soft mb-1">
+            {item.leadName.split(" ")[0]} said, over {CHANNEL_LABEL[item.leadLastMessageChannel ?? ""] ?? "message"}:
+          </p>
+          <p className="text-ink whitespace-pre-wrap">{item.leadLastMessage}</p>
+        </div>
+      )}
       <div className="mt-2 rounded-lg border border-line bg-paper p-3 text-sm leading-relaxed">
+        <p className="text-xs font-medium text-ink-soft mb-1">The draft reply:</p>
         {item.draftSubject && <p className="font-medium mb-1">{item.draftSubject}</p>}
         <p className="text-ink-soft whitespace-pre-wrap">{item.draftMessage}</p>
       </div>

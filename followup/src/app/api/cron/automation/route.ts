@@ -11,8 +11,8 @@ import { runSequencesForAllBusinesses } from "@/lib/sequences";
 // rather than one function doing all of them.
 export const maxDuration = 300;
 
-// GET /api/cron/automation — invoked automatically once a day by Vercel
-// Cron (see vercel.json). Runs the auto-send check across every business
+// GET /api/cron/automation — invoked automatically once an hour by Vercel
+// Cron (see vercel.json's "0 * * * *"). Runs the auto-send check across every business
 // with automation enabled, in one pass, in place of the manual "Run
 // automation check now" button in Settings.
 //

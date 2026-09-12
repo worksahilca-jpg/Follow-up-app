@@ -167,6 +167,74 @@ describe("EMAIL step channel handling (task #86)", () => {
     expect(r.advanced).toBe(0);
     expect(r.skipped).toEqual([expect.stringMatching(/no email or phone number on file/)]);
   });
+
+  // A no-channel lead used to just return "skipped" and stay enrolled,
+  // so the exact same check re-ran (and re-notified nobody) every single
+  // hourly cron tick forever. It must now unenroll and tell a human once,
+  // the same as every other dead-end this function has (reply, hold).
+  it("unenrolls a no-channel lead instead of leaving it to retry forever", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep({ email: null })]);
+    await runSequencesForBusiness("biz1");
+    expect(p.lead.update).toHaveBeenCalledWith({
+      where: { id: "lead1" },
+      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+    });
+  });
+
+  it("notifies the assigned person when a lead has no reachable channel", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep({ email: null })]);
+    await runSequencesForBusiness("biz1");
+    expect(p.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userId: "user1", leadId: "lead1" }) })
+    );
+  });
+});
+
+// A skip used to fail completely silently — no notification of any kind,
+// so a persistently-failing send (e.g. bad credentials) retried hourly
+// forever, at real OpenAI cost each time, with nobody ever told.
+describe("send-failure notification", () => {
+  function enrolledOnEmailStep(overrides: Record<string, unknown> = {}) {
+    const l = enrolled("outbound");
+    l.sequence = { ...l.sequence, steps: [{ ...step, action: "EMAIL" }] };
+    return { ...l, ...overrides };
+  }
+
+  it("notifies a human when the send itself fails, without unenrolling the lead", async () => {
+    send.mockResolvedValueOnce({ success: false, message: "Twilio rejected the number" });
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.skipped).toEqual([expect.stringMatching(/Twilio rejected the number/)]);
+    expect(p.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userId: "user1", leadId: "lead1", message: expect.stringMatching(/Twilio rejected the number/) }) })
+    );
+    // Left enrolled, unlike the no-channel case — a failed send attempt
+    // is plausibly transient and worth retrying, not a dead end.
+    expect(p.lead.update).not.toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ sequenceId: null }) }));
+  });
+});
+
+// A DB error from the "step gone" or "stop on reply" writes used to
+// propagate out of the per-lead callback uncaught, aborting
+// mapWithConcurrency's shared batch for every OTHER lead still in
+// flight — not just the one that actually failed.
+describe("one lead's DB error doesn't abort the rest of the batch", () => {
+  it("still processes a second lead when the first lead's stop-on-reply write throws", async () => {
+    const failing = { ...enrolled("inbound"), id: "lead-fail" };
+    const healthy = enrolled("outbound");
+    healthy.sequence = { ...healthy.sequence, steps: [{ ...step, action: "EMAIL" }] };
+    p.lead.findMany.mockResolvedValue([failing, healthy]);
+    p.lead.update.mockImplementation(async ({ where }: { where: { id: string } }) => {
+      if (where.id === "lead-fail") throw new Error("connection reset");
+      return {};
+    });
+    const r = await runSequencesForBusiness("biz1");
+    // The healthy lead (outbound last message) never hits lead.update at
+    // all on this path — its send going through at all proves the batch
+    // wasn't aborted by the first lead's thrown error.
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(r.skipped).toEqual([expect.stringMatching(/connection reset/)]);
+  });
 });
 
 // research/product/2026-09-09-followup-cadence-best-practices.md §4,

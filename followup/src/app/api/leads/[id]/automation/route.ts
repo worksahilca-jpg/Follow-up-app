@@ -21,11 +21,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const { id } = await params;
-  const owned = await prisma.lead.findFirst({ where: { id, businessId: ctx.businessId }, select: { id: true } });
+  const owned = await prisma.lead.findFirst({ where: { id, businessId: ctx.businessId }, select: { id: true, sequenceId: true } });
   if (!owned) return NextResponse.json({ success: false, message: "Lead not found." }, { status: 404 });
 
   const parsed = await parseJsonBody(request, automationTierSchema);
   if (!parsed.ok) return parsed.response;
+
+  // A lead actively enrolled in a workflow (src/lib/sequences.ts) must not
+  // also be turned on for the separate silence-based automation path —
+  // enrollLead() forces automationTier to OFF specifically to keep these
+  // two systems from both messaging the same lead on the same day (see
+  // sequences.ts's own module comment), but nothing enforced the other
+  // direction: this route would happily flip an enrolled lead to
+  // ASSISTED/AUTONOMOUS, since sequenceId isn't excluded anywhere in
+  // automation.ts's own candidate query. Refuse instead of silently
+  // risking a double-send.
+  if (parsed.data.tier !== "OFF" && owned.sequenceId) {
+    return NextResponse.json(
+      { success: false, message: "This lead is enrolled in a workflow — remove it from the workflow first, or it could get messaged twice." },
+      { status: 409 }
+    );
+  }
 
   // Autonomous send is a Plus/Pro capability (research/market/2026-09-11-
   // tier-pricing-recommendation.md: Free is "Assisted only... No

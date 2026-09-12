@@ -158,7 +158,7 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
               placeholder={micSupported ? "Type, or use Dictate below" : "e.g. asked about the 4br on Maple St, wants a showing Saturday"}
             />
             {recording && (
-              <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: "var(--rust)" }}>
+              <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: "var(--accent-text)" }}>
                 <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: "var(--rust)" }} />
                 Listening…
               </p>

@@ -110,7 +110,7 @@ export default function NotificationBell() {
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-line">
             <span className="text-sm font-medium">Notifications</span>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs font-medium" style={{ color: "var(--rust)" }}>
+              <button onClick={markAllRead} className="text-xs font-medium" style={{ color: "var(--accent-text)" }}>
                 Mark all read
               </button>
             )}

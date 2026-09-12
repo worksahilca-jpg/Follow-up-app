@@ -310,13 +310,15 @@ function nonEmailStepHint(stepHint: string | null): string {
  * at sending the draft manually from the lead's page rather than
  * "approving" a workflow that isn't running anymore.
  */
-async function notifySequenceHold(
+// Shared by every "a workflow step needs a human, right now" case — a
+// held draft awaiting approval, or a step that couldn't actually run
+// (no reachable channel, or the send itself failed). None of these
+// should ever fail silently: the alternative is a step that just quietly
+// retries every hour forever with nobody aware anything's wrong.
+async function notifySequenceIssue(
   lead: { id: string; name: string; businessId: string; assignedToId: string | null },
-  sequenceName: string
+  message: string
 ): Promise<void> {
-  const message =
-    `"${sequenceName}" drafted a reply for ${lead.name} that needs your OK before it goes out — the workflow ` +
-    "stopped here so you can review it.";
   try {
     // Same unassigned-lead fallback as notifyNeglect(): nobody to hand
     // this off to individually, so every admin on the business hears
@@ -328,7 +330,7 @@ async function notifySequenceHold(
       await prisma.notification.create({ data: { userId, leadId: lead.id, message } });
     }
   } catch (err) {
-    console.error(`Sequence-hold notification failed for lead ${lead.id}:`, err);
+    console.error(`Sequence-issue notification failed for lead ${lead.id}:`, err);
   }
 }
 
@@ -388,10 +390,26 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       // didn't actually finish the sequence as built, its step list just
       // changed size underneath it, so counting it as a real completion
       // in analytics would overstate the metric.
-      await prisma.lead.update({
-        where: { id: lead.id },
-        data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
-      });
+      //
+      // Try/catch here (and on the stop-on-reply write just below) — not
+      // just around the EMAIL-send branch further down — because a DB
+      // error thrown from either of these writes used to propagate out of
+      // this whole callback uncaught: mapWithConcurrency has no per-item
+      // catch of its own, so that rejection aborted the shared Promise.all
+      // and, with it, every OTHER lead still in flight for this business's
+      // batch, silently dropping their already-computed outcomes. This
+      // file's own earlier comment claimed "same reasoning" as
+      // automation.ts's per-lead try/catch, but didn't actually cover the
+      // same scope — this closes that gap without restructuring the whole
+      // function into one large try block.
+      try {
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+        });
+      } catch (err) {
+        return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
+      }
       return { kind: "completed" as const };
     }
 
@@ -407,18 +425,25 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       allMessages.length > 0 ? allMessages.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest)) : null;
 
     if (lastMessage?.direction === "inbound") {
-      await prisma.lead.update({
-        where: { id: lead.id },
-        data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
-      });
-      if (lead.assignedToId) {
-        await prisma.notification.create({
-          data: {
-            userId: lead.assignedToId,
-            leadId: lead.id,
-            message: `${lead.name} replied mid-sequence — "${sequence.name}" stopped so you can take it from here.`,
-          },
+      // See the "step gone" branch above for why this is wrapped — same
+      // failure mode (an uncaught DB error here aborts every other lead in
+      // this business's batch, not just this one).
+      try {
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
         });
+        if (lead.assignedToId) {
+          await prisma.notification.create({
+            data: {
+              userId: lead.assignedToId,
+              leadId: lead.id,
+              message: `${lead.name} replied mid-sequence — "${sequence.name}" stopped so you can take it from here.`,
+            },
+          });
+        }
+      } catch (err) {
+        return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
       }
       return { kind: "paused" as const, note: `${lead.name}: replied — sequence stopped` };
     }
@@ -458,6 +483,33 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // that email could still reach.
         const channel = nonEmailChannel ?? (lead.email ? "email" : null);
         if (!channel) {
+          // Structural, not transient — no reachable channel at all isn't
+          // going to fix itself by retrying next hour, indefinitely, with
+          // nobody told. Every other dead-end in this function (step
+          // gone, lead replied, draft held for risk) already unenrolls
+          // and notifies exactly once instead of leaving the lead to
+          // silently re-enter this same check on every future cron tick
+          // forever — this was the one exception, and the inconsistency
+          // was the actual bug: it used to just return "skipped" and stay
+          // enrolled, so it retried hourly forever with no one told.
+          try {
+            await prisma.lead.update({
+              where: { id: lead.id },
+              data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+            });
+          } catch (err) {
+            return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
+          }
+          await notifySequenceIssue(
+            lead,
+            `"${sequence.name}" stopped for ${lead.name} — no email or phone number on file to send the next step to.`
+          );
+          // Kept as "skipped" (not a new outcome kind, and deliberately
+          // not "paused" — that kind is specifically counted as
+          // pausedForReply below, which this isn't) so the existing
+          // summary shape and its one call site don't need to change;
+          // what changed is that the lead is now actually unenrolled and
+          // a human notified, not just silently retried forever.
           return { kind: "skipped" as const, note: `${lead.name}: this step sends a follow-up, but the lead has no email or phone number on file` };
         }
         const conversation: Message[] = lead.conversations.flatMap((c) =>
@@ -523,7 +575,10 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
             targetId: lead.id,
             meta: { riskLevel: risk.riskLevel, reason: risk.reason, trigger: "sequence", sequenceName: sequence.name },
           });
-          await notifySequenceHold(lead, sequence.name);
+          await notifySequenceIssue(
+            lead,
+            `"${sequence.name}" drafted a reply for ${lead.name} that needs your OK before it goes out — the workflow stopped here so you can review it.`
+          );
           return { kind: "held" as const, note: `${lead.name}: ${risk.reason}` };
         }
 
@@ -534,6 +589,18 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           channel,
         });
         if (!result.success) {
+          // Deliberately left enrolled (unlike the no-channel case above)
+          // rather than unenrolled — a single failed send attempt (a
+          // Twilio blip, a rate limit) is plausibly transient and worth
+          // retrying next hour rather than giving up on the whole
+          // workflow over it. The real gap this closes: a human now
+          // actually hears about it, every time it happens — before this,
+          // a persistently failing send (bad credentials, say) retried
+          // hourly forever, silently, each attempt re-running the AI
+          // draft above at real OpenAI cost, with nobody ever told.
+          // Genuine backoff/give-up-after-N-failures is real follow-up
+          // work this doesn't attempt.
+          await notifySequenceIssue(lead, `"${sequence.name}" couldn't send ${lead.name}'s next follow-up: ${result.message ?? "send failed"}.`);
           return { kind: "skipped" as const, note: `${lead.name}: ${result.message ?? "send failed"}` };
         }
       }

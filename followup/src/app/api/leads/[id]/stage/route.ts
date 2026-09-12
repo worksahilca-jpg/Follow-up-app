@@ -36,15 +36,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   if (stage === "WON" || stage === "LOST") {
-    await prisma.deal.create({
-      data: {
-        leadId: lead.id,
-        value: lead.dealValue,
-        stage,
-        wonAt: stage === "WON" ? new Date() : undefined,
-        lostAt: stage === "LOST" ? new Date() : undefined,
-      },
-    });
+    // One Deal per lead, not one per WON/LOST transition — a lead cycled
+    // WON -> NEGOTIATION -> WON again (a mis-click corrected, or genuinely
+    // re-closing after reopening) used to insert a second Deal row every
+    // time, since this always created rather than checking for an
+    // existing one first, silently inflating any count/sum over the Deal
+    // table (e.g. businessData.ts's account-data export, which reads it
+    // raw). Update the lead's existing deal record if it already has one
+    // instead of appending a duplicate.
+    const existingDeal = await prisma.deal.findFirst({ where: { leadId: lead.id }, orderBy: { createdAt: "desc" } });
+    const dealData = {
+      value: lead.dealValue,
+      stage,
+      wonAt: stage === "WON" ? new Date() : null,
+      lostAt: stage === "LOST" ? new Date() : null,
+    };
+    if (existingDeal) {
+      await prisma.deal.update({ where: { id: existingDeal.id }, data: dealData });
+    } else {
+      await prisma.deal.create({ data: { leadId: lead.id, ...dealData } });
+    }
   }
 
   void notifyLeadEvent(ctx.businessId, "lead.stage_changed", updated, { previousStage: lead.stage });

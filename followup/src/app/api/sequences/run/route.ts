@@ -6,7 +6,7 @@ import { runSequencesForBusiness } from "@/lib/sequences";
 // POST /api/sequences/run — manually runs due workflow steps for the
 // signed-in user's own business. Same per-lead AI-draft + send work as
 // /api/automation/run, just for enrolled leads instead of the silence
-// rule; this also runs automatically once a day via /api/cron/automation.
+// rule; this also runs automatically once an hour via /api/cron/automation.
 export const maxDuration = 120;
 
 export async function POST() {

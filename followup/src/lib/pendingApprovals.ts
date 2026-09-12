@@ -22,6 +22,16 @@ import { recordAudit } from "@/lib/audit";
  */
 const SCAN_LIMIT = 500;
 
+// How much of the lead's own message to carry into the queue — this is a
+// compact list view, not the full lead page; a reviewer needs enough to
+// judge the draft against, not the whole email. Truncated, never the raw
+// length, so one long inbound email can't blow out the dashboard.
+const LEAD_MESSAGE_PREVIEW_LENGTH = 400;
+
+function truncate(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
 export type PendingApproval = {
   leadId: string;
   leadName: string;
@@ -31,6 +41,13 @@ export type PendingApproval = {
   heldAt: Date;
   draftSubject: string | null;
   draftMessage: string;
+  // What the lead actually said, most recent inbound message across every
+  // channel they've used — null only when there's genuinely no inbound
+  // message on record (a manually-created lead with a draft but no real
+  // conversation yet). Without this, approving a draft meant judging it
+  // with no visible context for what it's actually replying to.
+  leadLastMessage: string | null;
+  leadLastMessageChannel: string | null;
 };
 
 export async function getPendingApprovals(businessId: string): Promise<PendingApproval[]> {
@@ -54,7 +71,23 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
 
   const leads = await prisma.lead.findMany({
     where: { id: { in: held.map((e) => e.targetId as string) }, businessId },
-    select: { id: true, name: true, suggestedSubject: true, suggestedMessage: true },
+    select: {
+      id: true,
+      name: true,
+      suggestedSubject: true,
+      suggestedMessage: true,
+      // One inbound message per conversation (the most recent), not the
+      // whole thread — a lead can have several conversations across
+      // channels (an old email thread plus a newer text, say), so the
+      // actual "what did they last say" is the max sentAt across all of
+      // these, reduced below, not just the first conversation's.
+      conversations: {
+        select: {
+          channel: true,
+          messages: { where: { direction: "inbound" }, orderBy: { sentAt: "desc" }, take: 1, select: { body: true, sentAt: true } },
+        },
+      },
+    },
   });
   const leadById = new Map(leads.map((l) => [l.id, l]));
 
@@ -65,6 +98,13 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
     // set, or the lead was deleted) — nothing for the owner to approve.
     if (!lead?.suggestedMessage) continue;
     const meta = (event.meta ?? {}) as Record<string, unknown>;
+
+    let lastInbound: { body: string; channel: string; sentAt: Date } | null = null;
+    for (const c of lead.conversations ?? []) {
+      const m = c.messages[0];
+      if (m && (!lastInbound || m.sentAt > lastInbound.sentAt)) lastInbound = { body: m.body, channel: c.channel, sentAt: m.sentAt };
+    }
+
     approvals.push({
       leadId: lead.id,
       leadName: lead.name,
@@ -74,6 +114,8 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
       heldAt: event.createdAt,
       draftSubject: lead.suggestedSubject,
       draftMessage: lead.suggestedMessage,
+      leadLastMessage: lastInbound ? truncate(lastInbound.body, LEAD_MESSAGE_PREVIEW_LENGTH) : null,
+      leadLastMessageChannel: lastInbound?.channel ?? null,
     });
   }
   return approvals.sort((a, b) => b.heldAt.getTime() - a.heldAt.getTime());

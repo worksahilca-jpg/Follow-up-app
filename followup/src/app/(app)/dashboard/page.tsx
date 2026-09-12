@@ -60,6 +60,8 @@ export default async function DashboardPage() {
     reason: a.reason,
     draftSubject: a.draftSubject,
     draftMessage: a.draftMessage,
+    leadLastMessage: a.leadLastMessage,
+    leadLastMessageChannel: a.leadLastMessageChannel,
   }));
   const setupSteps = ctx ? await getIncompleteSetupSteps(ctx.businessId) : [];
   const gmail = ctx ? await getGmailStatus(ctx.businessId) : { connected: false };

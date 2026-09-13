@@ -538,9 +538,11 @@ const INITIAL_SELECT = "id,conversationId,subject,bodyPreview,from,receivedDateT
  * Pulls inbox activity via Graph's delta query and upserts whatever passes
  * classification, exactly like Gmail's fetchSalesConversations(). The
  * first call for a connection (no stored deltaLink) does a full pass over
- * the last 90 days' worth of pages; every call after that only sees what
- * changed since the last run's deltaLink — Graph's own incremental
- * mechanism, no `since` timestamp math needed on our side.
+ * the last 180 days' worth of pages (widened from 90 on 2026-09-13, to
+ * match Gmail's own deep-pass window and recover more of a new business's
+ * pre-existing cold leads); every call after that only sees what changed
+ * since the last run's deltaLink — Graph's own incremental mechanism, no
+ * `since` timestamp math needed on our side.
  *
  * A stale/expired deltaLink (Graph returns 410 Gone after roughly a
  * month of no sync) is handled by simply dropping it and starting a fresh
@@ -559,7 +561,7 @@ export async function fetchOutlookConversations(
   if (authed.integration.deltaLink) {
     nextUrl = authed.integration.deltaLink;
   } else {
-    const since = new Date(Date.now() - 90 * 24 * 60 * 60_000).toISOString();
+    const since = new Date(Date.now() - 180 * 24 * 60 * 60_000).toISOString();
     nextUrl = `${GRAPH}/me/mailFolders/inbox/messages/delta?$select=${INITIAL_SELECT}&$filter=receivedDateTime ge ${since}`;
   }
 

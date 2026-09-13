@@ -13,15 +13,22 @@ import { withSentryConfig } from "@sentry/nextjs/config";
  * Next.js and the inline styles/scripts it emits need 'unsafe-inline', and
  * Stripe Checkout/Portal are the only third-party frames and connections.
  * Tighten (nonces) once there's a test that exercises every page.
+ *
+ * vercel.live is the Vercel Toolbar/comments script (Project Settings ->
+ * Vercel Toolbar -> Production Deployments: On) — required per
+ * https://vercel.com/docs/vercel-toolbar/managing-toolbar. Without these,
+ * the toolbar's own script/websocket/frame get silently CSP-blocked even
+ * once the script itself loads; team-only (gated by a Vercel-session
+ * cookie), so this never exposes anything to an ordinary visitor.
  */
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com data:",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://vercel.live",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://vercel.live",
+  "font-src 'self' https://fonts.gstatic.com https://assets.vercel.com data:",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://api.stripe.com https://*.supabase.co",
-  "frame-src https://js.stripe.com https://checkout.stripe.com https://billing.stripe.com",
+  "connect-src 'self' https://api.stripe.com https://*.supabase.co https://vercel.live wss://ws-us3.pusher.com",
+  "frame-src https://js.stripe.com https://checkout.stripe.com https://billing.stripe.com https://vercel.live",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self' https://checkout.stripe.com https://billing.stripe.com https://accounts.google.com",

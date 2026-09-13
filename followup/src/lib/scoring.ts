@@ -11,6 +11,7 @@ import { scoreLead, generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { getVoiceSamples } from "@/lib/voice";
 import { isChannelAvailableOnFreeTier, isWithinFreeTierLeadCap } from "@/lib/billing";
+import { notifySlack } from "@/lib/slack";
 import type { Message } from "@/lib/types";
 import type { Priority as DbPriority, Prisma } from "@prisma/client";
 
@@ -106,6 +107,15 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
         message: `${lead.name} just became a hot lead — ${scoreResult.reason}`,
       },
     });
+  }
+  // Team-wide Slack echo of the same handoff moment — see slack.ts for
+  // the "one shared webhook, not per-business" scoping note. Fires
+  // whenever a lead goes hot, independent of whether it also got an
+  // in-app Notification row above (that one needs an assignee; this one
+  // doesn't, so the team never misses a hot lead just because nobody's
+  // been assigned to it yet).
+  if (becameHot) {
+    void notifySlack(`🔥 *${lead.name}*${lead.company ? ` (${lead.company})` : ""} just became a hot lead — ${scoreResult.reason}`);
   }
 
   return true;

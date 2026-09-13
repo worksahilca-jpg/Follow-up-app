@@ -24,7 +24,7 @@ import { prisma } from "@/lib/db";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
-import { requireActiveBilling } from "@/lib/billing";
+import { requireActiveBilling, isChannelAvailableOnFreeTier, isWithinFreeTierLeadCap } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
@@ -197,6 +197,26 @@ export async function enrollLead(
   if (!sequence || sequence.businessId !== businessId) return { success: false, message: "Workflow not found." };
   if (sequence.steps.length === 0) return { success: false, message: "This workflow has no steps yet." };
 
+  // Same Free-tier restrictions runAutomationForBusiness() already applies
+  // to the silence-based automation (automation.ts) and scoreAndDraftForLead()
+  // applies at capture time (scoring.ts): a lead that's past the monthly cap,
+  // or came in on a channel Free doesn't cover, doesn't get AI-driven
+  // processing — a workflow's EMAIL step is exactly that (and can itself
+  // escalate to a non-email channel — see the escalation logic in
+  // runSequencesForBusiness below), so enrollment is refused up front rather
+  // than silently accepted and skipped by the cron forever.
+  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { tier: true } });
+  if (business?.tier === "free") {
+    const eligible = isChannelAvailableOnFreeTier(lead.source) && (await isWithinFreeTierLeadCap(businessId, lead));
+    if (!eligible) {
+      return {
+        success: false,
+        message:
+          "This lead is past the Free plan's 20/mo cap, or came in on a channel Free doesn't cover — upgrade in Settings → Billing to enroll it in a workflow.",
+      };
+    }
+  }
+
   const firstStep = sequence.steps[0];
   await prisma.lead.update({
     where: { id: leadId },
@@ -360,8 +380,9 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
   // Fetched once for the whole run — every lead here belongs to the same
   // business, so the send-window check below (EMAIL steps only) always
   // resolves against the same timezone.
-  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true } });
+  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true, tier: true } });
   const timezone = business?.timezone ?? "America/New_York";
+  const tier = business?.tier ?? "plus";
 
   const outcomes = await mapWithConcurrency(active, 3, async (lead) => {
     // Atomic check-and-claim before anything else — same reasoning as
@@ -460,6 +481,26 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // reset for this lead to be reconsidered once it's daytime.
         if (!isWithinSendWindow(new Date(), timezone)) {
           return { kind: "deferred" as const };
+        }
+
+        // Free tier's AI processing pause (@/lib/billing) applies to a
+        // workflow's EMAIL step the same way it already does to the
+        // silence-based automation (automation.ts) — enrollLead() refuses
+        // this case up front, but this is the belt to that route's
+        // suspenders: it also covers a lead enrolled before this fix
+        // shipped, or one that crossed the cap after enrolling. Left
+        // enrolled (not unenrolled) so it's automatically reconsidered the
+        // moment the business upgrades — same reasoning as the send-window
+        // defer above, just re-checked hourly instead of on a timer.
+        if (tier === "free") {
+          const freeTierEligible =
+            isChannelAvailableOnFreeTier(lead.source) && (await isWithinFreeTierLeadCap(businessId, lead));
+          if (!freeTierEligible) {
+            return {
+              kind: "skipped" as const,
+              note: `${lead.name}: Free plan — AI processing paused (past the 20/mo cap, or this lead's channel isn't included in Free)`,
+            };
+          }
         }
         // research/product/2026-09-09-followup-cadence-best-practices.md
         // §4: this step is labeled "Send email" in the workflow builder —

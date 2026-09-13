@@ -340,3 +340,55 @@ FollowUp's own tracking; whether Twilio's WhatsApp callback surfaces Meta's `rea
 are explicitly flagged as needing a direct verification pass before acting on them.
 **Written up in:**
 `followup/research/product/2026-09-13-scoring-and-drafting-accuracy.md`
+
+---
+
+## 2026-09-13 — Is "Uplift AI" a competitor, and does it matter to FollowUp?
+
+**Triggered by:** product-narrative-agent's competitive-intelligence charter — a direct
+request to research "Uplift AI" as a named company/product.
+**Question:** What does Uplift AI actually do, who is it for, and does it overlap with
+FollowUp's category (lead conversion, AI voice/messaging automation, scoring/drafting) —
+or is this an unrelated company that shouldn't be forced into a comparison?
+**Method:** WebSearch only — every WebFetch attempt this session (`upliftai.org`,
+`docs.upliftai.org`, `dawn.com`, `anandchowdhary.com`, `promptloop.com`, `news.ycombinator.com`)
+returned `EGRESS_BLOCKED`, consistent with every prior pass in this repo. First had to resolve
+a naming collision: at least four unrelated products share the name "Uplift AI" (a YC-backed
+regional-language voice-AI company at `upliftai.org`; an unrelated small-business AI-SEO SaaS
+at `upliftai.co`; a sports motion-capture company; a named feature inside Adyen's payments
+platform). Focused the pass on `upliftai.org` since it's the best-documented and the only one
+plausibly connected to the task's own voice/messaging overlap check.
+**Findings:** Full detail in
+`followup/research/competitors/2026-09-13-uplift-ai.md`. Headlines:
+1. Uplift AI (`upliftai.org`) is a voice-AI foundation-model/developer-API company for
+   underserved regional languages (Urdu, Sindhi, Balochi; Punjabi/Saraiki "coming soon"), not
+   a finished business-facing SaaS product — sold to developers/enterprises building voice
+   products (named uses: Khan Academy Urdu video dubbing, a Syngenta farming voice assistant,
+   voice banking for low-literacy users), not to small-business owners managing leads.
+2. **It is not a lead-conversion, CRM, or scoring/drafting competitor to FollowUp** — no
+   inbox, no lead scoring, no drafting, no routing, nothing resembling the "lead conversion,
+   not lead generation" thesis. Stated plainly per the task's own instruction not to force a
+   comparison that doesn't fit.
+3. It is genuinely relevant as a **possible vendor**, not a competitor, for
+   `PRODUCT_DIRECTION.md`'s still-open "every language" gap (Point 3: "no real non-English
+   lead has been tested end to end yet") — it ships a real-time voice-assistant product with a
+   public LiveKit plugin, and claims (vendor-stated, unverified) to beat OpenAI/Microsoft on
+   Urdu quality specifically, which FollowUp's current OpenAI-Realtime-API-based voice agent
+   doesn't have a specific answer for.
+4. Pricing (a metered developer-API ladder, $0/$5/$50/$300 by TTS minutes/hours, per a
+   secondhand AI summary of a pricing page never directly fetched) is structurally different
+   from and not really comparable to FollowUp's flat $29/mo model, since the two sell
+   fundamentally different things (raw model access vs. a finished product).
+5. Landing-page/UX structure **could not be assessed at all** — every fetch was blocked, so
+   the write-up explicitly declines to infer layout from content snippets rather than guessing.
+**Confidence:** Medium throughout, per D-006 — every finding is a WebSearch snippet, none
+fetched. The $3.5M seed/core investor names are corroborated across three independent outlets
+(slightly firmer within that ceiling); the pricing tiers and the vendor "beats OpenAI/
+Microsoft" quality claim are explicitly flagged as weaker even than that.
+**Conclusion / what changes:** No FollowUp positioning or roadmap change — this is a
+different-category company, not a competitive threat requiring a response. The one concrete
+follow-on this surfaces is a **vendor-evaluation candidate** (Uplift AI's Realtime Assistants /
+LiveKit plugin) for whoever eventually tackles PRODUCT_DIRECTION's open multilingual-voice gap,
+specifically for South Asian regional languages OpenAI's Realtime API may not serve as well —
+filed as a lead, not a decision.
+**Written up in:** `followup/research/competitors/2026-09-13-uplift-ai.md`

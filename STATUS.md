@@ -11,9 +11,9 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 
 ## Waiting on the founder
 
-- [ ] **Set `PLATFORM_ADMIN_EMAILS` in Vercel** (Production env vars) to `sahil@followupbase.io`,
-  confirm `ALLOWED_EMAILS` includes it if that var exists, then redeploy. Until this is set,
-  `/admin` 404s for everyone, including the founder. (Claude Chrome prompt already given.)
+- [x] `PLATFORM_ADMIN_EMAILS` set to `sahil@followupbase.io` in Vercel (Production), redeployed.
+  `ALLOWED_EMAILS` doesn't exist in this project, so nothing to check there. `/admin` should
+  now work for that account.
 - [ ] **Ghosted-lead recovery test** — set up the test Gmail account, send the 4 scripted
   test-lead emails, let real time pass to prove the "no lead goes cold" automation end to end.
 - [ ] **Logo direction** — 3 arrow-based concepts presented earlier, none picked yet.

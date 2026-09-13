@@ -109,11 +109,25 @@ to a conversation, not a justification for a decision.
 
 ## Current state
 
-**The library is empty.** No references have been added.
+**No longer empty as of 2026-09-13.** A first research pass added four files:
 
-This is honest, not a gap: references come from the founder ("I like this"), from
-purposeful research (see `workflows/research-workflow.md`), or from a real design problem
-that needs prior art. Fabricating a reference library from memory — describing screens
-that may have changed or may never have existed — would poison every decision downstream.
+- `landing-pages/2026-09-13-competitor-landing-page-research.md` and its companion
+  `landing-pages/2026-09-13-followup-synthesis-and-recommendation.md` — headline patterns,
+  content order, social proof, and pricing presentation across Structurely, Ylopo, Artisan
+  AI, Podium, Housecall Pro, HubSpot, Close, Pipedrive, Linear, Vercel, and Stripe.
+- `dashboards/2026-09-13-crm-and-adjacent-dashboard-research.md` — "what needs me right
+  now" patterns across HubSpot, Linear, Close, Follow Up Boss, and Attio.
 
-Start it by sending anything you like. See `workflows/reference-workflow.md`.
+All four are **REVIEWED**, not **APPROVED** — they haven't been walked through with the
+founder yet, so they're an input to a design conversation, not design authority to draw
+from unilaterally per the status lifecycle above. Every source in these four files was
+reached via WebSearch, not a direct WebFetch render (WebFetch is blocked in this sandbox,
+confirmed against multiple unrelated domains) — see the sourcing note at the top of each
+file before treating a quote as verbatim page copy.
+
+Before this pass, the library was empty — references come from the founder ("I like
+this"), from purposeful research (see `workflows/research-workflow.md`), or from a real
+design problem that needs prior art. Fabricating a reference library from memory —
+describing screens that may have changed or may never have existed — would poison every
+decision downstream; the four files above were built from search citations for exactly
+this reason, not from training-data memory of what these products "probably" look like.

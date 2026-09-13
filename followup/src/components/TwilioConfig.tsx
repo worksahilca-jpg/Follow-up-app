@@ -374,7 +374,7 @@ export default function TwilioConfig() {
                 <p className="text-xs font-medium">Send text replies</p>
                 <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
                   <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
-                    <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
+                    <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
                     <span>
                       <strong className="font-medium">Know your consent obligations.</strong> Automated texts
                       from FollowUp — follow-ups and the missed-call reply — fall under TCPA rules in the US:
@@ -387,7 +387,7 @@ export default function TwilioConfig() {
                 </div>
                 <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
                   <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
                     <span>
                       <strong className="font-medium">Register your number for A2P 10DLC.</strong> This is
                       separate from consent, above — it&apos;s about whether texts arrive at all. US carriers
@@ -464,17 +464,17 @@ export default function TwilioConfig() {
                     <div className="mt-2 space-y-1.5">
                       {numberStatus.config ? (
                         <>
-                          <p className="text-xs flex items-center gap-1" style={{ color: numberStatus.voiceMatches ? "var(--sage)" : "var(--gold)" }}>
+                          <p className="text-xs flex items-center gap-1" style={{ color: numberStatus.voiceMatches ? "var(--sage)" : "var(--coral)" }}>
                             {numberStatus.voiceMatches ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
                             Calls {numberStatus.voiceMatches ? "reach FollowUp" : numberStatus.config.voiceUrl ? "go somewhere else" : "aren't configured"}
                           </p>
-                          <p className="text-xs flex items-center gap-1" style={{ color: numberStatus.smsMatches ? "var(--sage)" : "var(--gold)" }}>
+                          <p className="text-xs flex items-center gap-1" style={{ color: numberStatus.smsMatches ? "var(--sage)" : "var(--coral)" }}>
                             {numberStatus.smsMatches ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
                             Texts {numberStatus.smsMatches ? "reach FollowUp" : numberStatus.config.smsUrl ? "go somewhere else" : "aren't configured"}
                           </p>
                         </>
                       ) : (
-                        <p className="text-xs flex items-center gap-1" style={{ color: "var(--gold)" }}>
+                        <p className="text-xs flex items-center gap-1" style={{ color: "var(--coral)" }}>
                           <X className="h-3.5 w-3.5" /> {phoneNumber} isn&apos;t in this Twilio account — check the number and Account SID above.
                         </p>
                       )}
@@ -496,7 +496,7 @@ export default function TwilioConfig() {
                               <li key={c.sid} className="text-xs rounded-lg border border-line bg-paper px-2.5 py-1.5">
                                 <span className="font-medium">{c.from || "unknown"}</span>
                                 <span className="text-ink-soft"> · {c.status}{c.durationSeconds ? ` · ${c.durationSeconds}s` : ""}{c.startTime ? ` · ${new Date(c.startTime).toLocaleString()}` : ""}</span>
-                                {c.error && <div className="mt-0.5" style={{ color: "var(--gold)" }}>{c.error}</div>}
+                                {c.error && <div className="mt-0.5" style={{ color: "var(--coral)" }}>{c.error}</div>}
                               </li>
                             ))}
                           </ul>
@@ -508,7 +508,7 @@ export default function TwilioConfig() {
                     </div>
                   ) : null}
                   {numberError && (
-                    <p className="text-xs mt-2" style={{ color: "var(--gold)" }}>{numberError}</p>
+                    <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>{numberError}</p>
                   )}
                 </div>
               )}
@@ -532,7 +532,7 @@ export default function TwilioConfig() {
                   </p>
                   <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
                     <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
                       <span>
                         <strong className="font-medium">Verify your WhatsApp Business Account.</strong> A newly
                         registered sender is capped at 250 business-initiated messages per 24 hours until Meta
@@ -668,7 +668,7 @@ export default function TwilioConfig() {
                 </p>
                 <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
                   <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
-                    <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
+                    <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
                     <span>
                       <strong className="font-medium">Real per-minute cost, and a compliance step that&apos;s
                       on you.</strong> Every call the agent answers costs real money (Twilio + OpenAI, on top of

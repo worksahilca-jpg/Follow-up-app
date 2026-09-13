@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const COLORS = ["var(--rust)", "var(--gold)", "var(--sage)"];
+// --gold dropped from this decorative set — it means "going cold" everywhere
+// else it appears, so a burst of it here read as more status-color noise on
+// top of the app's gold overuse rather than a neutral, decorative sparkle.
+const COLORS = ["var(--rust)", "var(--sage)"];
 const PARTICLE_COUNT = 12;
 
 /**

@@ -14,8 +14,11 @@ interface StatDef {
   label: string;
   value: string;
   icon: LucideIcon;
-  accent: string;
-  accentSoft: string;
+  // Omitted for a plain data point (currency figures, in particular —
+  // money is information, not an urgency signal) so StatCard falls back
+  // to its own neutral default instead of borrowing a status color.
+  accent?: string;
+  accentSoft?: string;
 }
 
 export default async function AnalyticsPage() {
@@ -30,8 +33,8 @@ export default async function AnalyticsPage() {
     { label: "Active", value: String(data.activeCount), icon: Activity, accent: "var(--slate)", accentSoft: "var(--slate-soft)" },
     { label: "Won", value: String(data.wonCount), icon: Trophy, accent: "var(--sage)", accentSoft: "var(--sage-soft)" },
     { label: "Conversion rate", value: `${data.conversionRate}%`, icon: TrendingUp, accent: "var(--sage)", accentSoft: "var(--sage-soft)" },
-    { label: "Revenue won", value: formatCurrency(data.totalRevenue), icon: DollarSign, accent: "var(--gold)", accentSoft: "var(--gold-soft)" },
-    { label: "Avg. deal value", value: formatCurrency(data.avgDealValue), icon: Wallet, accent: "var(--gold)", accentSoft: "var(--gold-soft)" },
+    { label: "Revenue won", value: formatCurrency(data.totalRevenue), icon: DollarSign },
+    { label: "Avg. deal value", value: formatCurrency(data.avgDealValue), icon: Wallet },
     {
       label: "Reply rate",
       value: data.followUpsSentTotal > 0 ? `${data.replyRate}%` : "—",

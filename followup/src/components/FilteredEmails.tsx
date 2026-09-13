@@ -95,7 +95,7 @@ export default function FilteredEmails() {
           ))}
         </ul>
       )}
-      {error && <p className="text-xs mt-2" style={{ color: "var(--gold)" }}>{error}</p>}
+      {error && <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>{error}</p>}
     </div>
   );
 }

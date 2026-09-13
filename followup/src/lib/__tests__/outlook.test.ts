@@ -58,7 +58,7 @@ describe("Outlook sending", () => {
   it("fails safely (no crash, no network call) when the business has no connected Outlook", async () => {
     const fetchSpy = vi.spyOn(global, "fetch");
     const result = await sendOutlookEmail("business1", { to: "lead@example.com", subject: "Hi", body: "Following up" });
-    expect(result).toEqual({ success: false });
+    expect(result).toEqual({ success: false, message: "No Outlook account is connected for this business." });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(findFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: { provider: "outlook", status: "connected", user: { businessId: "business1" } } })

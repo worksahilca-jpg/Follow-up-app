@@ -851,3 +851,104 @@ model ProductFeedback {
 
   @@index([businessId])
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// The AI office — internal, not a tenant feature.
+//
+// `.claude/agents/` already describes five lanes (manager, product/UX,
+// frontend/3D, backend/AI, QA/security), but those only exist while
+// someone has a Claude Code session open. These three models are the part
+// that survives the session: a roster, a queue of work, and a record of
+// every shift an agent actually worked — what it cost, what it produced,
+// and whether it succeeded.
+//
+// Deliberately NOT scoped to a Business. This is the founder's own office
+// for building FollowUp, and it lives behind the same PLATFORM_ADMIN_EMAILS
+// gate as /admin (src/lib/platformAdmin.ts) — never shown to a customer.
+// If the office is ever turned outward as a product, every model here gains
+// a businessId — don't retrofit tenancy by reusing these rows.
+// ─────────────────────────────────────────────────────────────────────────
+
+enum AgentRunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+  // Refused before it started — over its daily spend ceiling, or the role
+  // is disabled. Kept as a row rather than dropped silently so the floor
+  // can show "it tried and was stopped" instead of nothing at all.
+  BLOCKED
+}
+
+enum AgentTaskStatus {
+  OPEN
+  DONE
+  CANCELLED
+}
+
+// One desk. Seeded from src/lib/office/roles.ts, which mirrors the job
+// descriptions in `.claude/agents/` — that stays the source of truth for
+// what a lane *is*; this row is the source of truth for whether it's on
+// shift and what it may spend.
+model AgentRole {
+  id        String   @id @default(cuid())
+  key       String   @unique // matches the filename in .claude/agents/, e.g. "product-ux-agent"
+  title     String
+  brief     String
+  wakesOn   String // human-readable trigger, shown on the floor
+  gate      String // what it may do without a human press
+  // A lane with no runner implementation yet is still seeded so the floor
+  // shows the whole org chart, not just the parts that are live.
+  live      Boolean  @default(false)
+  enabled   Boolean  @default(true)
+  // Hard daily ceiling in USD, enforced in runner.ts before a shift opens.
+  // Low on purpose: a desk that needs more should earn it.
+  dailyCostCeilingUsd Float @default(1.0)
+  createdAt DateTime @default(now())
+  runs      AgentRun[]
+  tasks     AgentTask[]
+}
+
+// Work you (or, later, the manager lane) put on a desk. This first pass
+// creates them but only ever assigns them by hand.
+model AgentTask {
+  id        String          @id @default(cuid())
+  role      AgentRole       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId    String
+  title     String
+  detail    String          @default("")
+  status    AgentTaskStatus @default(OPEN)
+  createdBy String // email of whoever opened it
+  createdAt DateTime        @default(now())
+  closedAt  DateTime?
+  runs      AgentRun[]
+
+  @@index([roleId, status])
+}
+
+// One shift. The whole point of the office: work that happened while you
+// weren't watching, with the receipt attached.
+model AgentRun {
+  id        String         @id @default(cuid())
+  role      AgentRole      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId    String
+  task      AgentTask?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  taskId    String?
+  status    AgentRunStatus @default(RUNNING)
+  // What woke it: "cron", "manual:you@example.com".
+  trigger   String
+  startedAt DateTime       @default(now())
+  endedAt   DateTime?
+  // One line for the floor; `output` is the full thing it wrote.
+  summary   String         @default("")
+  output    String         @default("") @db.Text
+  error     String?
+  model     String         @default("")
+  inputTokens  Int         @default(0)
+  outputTokens Int         @default(0)
+  // Priced at call time from the rates in runner.ts — stored rather than
+  // recomputed so a later price change doesn't rewrite history.
+  costUsd   Float          @default(0)
+
+  @@index([roleId, startedAt])
+  @@index([startedAt])
+}

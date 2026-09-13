@@ -359,9 +359,8 @@ generic and shared elsewhere in the app) has no print/no-JS fallback of its own 
 component outside this task's stated scope (landing page visual system only), not a
 regression introduced here; it's the one known gap in an otherwise-verified fallback.
 
-**Deliberately excluded (do not re-propose on this page):** the WebGL orbit diagram and its
-flat-CSS fallback (see above — S-07 exception used for the hero mockup's parallax/float
-only, not spent on a second 3D-ish diagram); frost particles, cursor-glow, drifting
+**Deliberately excluded (do not re-propose on this page):** ~~the WebGL orbit diagram and
+its flat-CSS fallback~~ — **SUPERSEDED same-day, see D-009 below**; frost particles, cursor-glow, drifting
 background rings, animated gradient mesh, spinning conic-gradient borders (S-08 exception
 used for the hero word-reveal, hover states, and the FAQ accordion only); the ✦ sparkle
 badge icon and any other sparkle/AI-gimmick iconography elsewhere on the page (S-13 — the
@@ -373,3 +372,57 @@ under any label.
 
 **Revisit when:** The CEO reviews the live page, or a future session is asked to unify `/`
 and `/signin` onto one marketing visual system.
+
+---
+
+## D-009 — Orbit diagram reinstated in the hero, as CSS 3D rather than WebGL
+**Date:** 2026-09-13
+**Decided by:** CEO (asked for the orbit diagram back, same day as D-008; specified it
+should sit in the hero), Claude (asked which visual shape and where before building,
+implementation)
+**Status:** active — supersedes the orbit-diagram exclusion in D-008
+**Context:** After D-008 shipped, the CEO reviewed the live page and asked for the orbit
+diagram back ("the n8n 3D model as well"), confirming: (1) an orbit diagram — channel icons
+circling a glowing core, not an n8n-style connected-node canvas — and (2) placed in the
+hero, next to the headline.
+
+**Decision:** Built `OrbitDiagramAward.tsx` + supporting styles in
+`landing-award.module.css`, rendered behind (not replacing) `HeroMockupAward` in the hero's
+right column:
+- A tilted ring built from plain CSS 3D (`perspective` + `transform-style: preserve-3d` +
+  `rotateX`), not WebGL/canvas/Three.js — no new dependency, and this codebase already uses
+  CSS 3D for the hero mockup's own parallax. Five nodes (Gmail, Outlook, Twilio, Instagram,
+  WhatsApp — the same five channels as the hero's own "reads what you already use" pill
+  row, not the exploration's channel list) placed via `rotateZ + translateX`, each labeled
+  with plain text in a pill matching the page's existing chip style — no per-channel
+  "facts" invented, since the exploration's unvetted copy ("Reads live, replies drafted in
+  seconds") was exactly what D-008 flagged as copy no one asked for.
+- No frost particles, cursor-glow, firing-signal animation, or sparkle — those D-008 cuts
+  stand; only the orbit shape itself came back. The core is a static gradient square (the
+  same mark as the nav logo), not an animated glow.
+- Pure CSS `@keyframes` animation, not framer-motion — nothing here needs per-frame JS
+  control, so `prefers-reduced-motion: reduce` freezes the ring via the stylesheet directly
+  rather than a second JS-driven code path (same outcome as `HeroMockupAward`'s
+  `useReducedMotion` check, different mechanism because this element has no JS state).
+- Desktop-only (`min-width: 1024px`, matching the hero's existing `lg:` stacking
+  breakpoint) — there's no room for a ring around the mockup once the hero stacks to one
+  column, and forcing it into that layout would have meant either shrinking it past
+  legibility or overlapping the stacked copy above it.
+- `aria-hidden="true"` on the whole diagram — it's decorative reinforcement of information
+  the page states as plain text twice already (the pill row, the channel list in the
+  page's own copy), not a second source of that information.
+
+**Reasoning:** This is the CEO's own call to make — D-008 explicitly named the orbit
+diagram as page-scoped-exception territory (S-07), so reinstating it is a same-scope
+adjustment of an already-granted exception, not a fresh standing-rule violation. Asked
+before building rather than guessing which of "orbit diagram" vs. "n8n-style node graph"
+was meant, and where — real WebGL/3D work is expensive to redo, and the two shapes read
+as different products (a hub-and-spoke story vs. a pipeline/workflow story).
+
+**Trade-off accepted:** The hero's right column now composites two 3D layers (the ring's
+`rotateX` tilt, the mockup's own parallax tilt) in the same visual space. Kept them as
+independent transforms on separate elements (never combined into one nested 3D context)
+so each stays simple to reason about and neither fights the other's `will-change` hints.
+
+**Revisit when:** The CEO wants the node-graph variant instead, wants the ring's radius or
+spin speed tuned, or wants it extended to mobile.

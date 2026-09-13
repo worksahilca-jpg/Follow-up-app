@@ -455,6 +455,18 @@ export default function LandingPage() {
                   q: "What if I don't connect Gmail right away?",
                   a: "You can sign in and look around right away — the dashboard just stays empty until you connect Gmail and sync.",
                 },
+                {
+                  q: "I already use another CRM — do I have to leave it?",
+                  a: "No. FollowUp imports your existing contacts from Follow Up Boss or HubSpot and runs alongside whatever you already use. It's the layer that watches your actual conversations, not a system you have to migrate into.",
+                },
+                {
+                  q: "What happens to my inbox data?",
+                  a: "You can export or fully delete everything FollowUp has stored at any time, including every conversation it's read — see our Privacy Policy for specifics. Nothing is sold, and nothing trains a model without being stripped of identifying details first.",
+                },
+                {
+                  q: "Does this work for a team, or just one person?",
+                  a: "Both. Invite your team, see who has an overdue follow-up and on which deal, and route new leads to the right person — without anyone maintaining a shared spreadsheet.",
+                },
               ]}
             />
           </RevealAward>

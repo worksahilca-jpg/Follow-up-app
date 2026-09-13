@@ -624,14 +624,23 @@ export async function importOutlookConversation(businessId: string, conversation
 export async function sendOutlookEmail(
   businessId: string,
   params: { to: string; subject: string; body: string; replyToMessageId?: string }
-): Promise<{ success: boolean; messageId?: string }> {
+): Promise<{ success: boolean; messageId?: string; message?: string }> {
+  // graphFetch returns null only when there's no valid Outlook token to
+  // send with (see graphFetch above) — never for a genuine Graph API
+  // failure, which comes back as a real (non-ok) Response instead. That
+  // makes null a reliable "not connected" signal, distinguished here so
+  // the caller (src/lib/sending.ts) doesn't show the same misleading
+  // "Outlook didn't confirm this message sent" for both cases.
+  const notConnected = { success: false, message: "No Outlook account is connected for this business." };
+
   if (params.replyToMessageId) {
     const res = await graphFetch(businessId, `/me/messages/${encodeURIComponent(params.replyToMessageId)}/reply`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ comment: params.body }),
     });
-    if (!res || !res.ok) return { success: false };
+    if (!res) return notConnected;
+    if (!res.ok) return { success: false };
     // Graph's /reply returns 202 Accepted with no body and no new
     // message id — there's nothing else to key off here, so the sent
     // copy is picked up on the next sync like any other outbound mail.
@@ -649,6 +658,7 @@ export async function sendOutlookEmail(
       },
     }),
   });
-  if (!res || !res.ok) return { success: false };
+  if (!res) return notConnected;
+  if (!res.ok) return { success: false };
   return { success: true };
 }

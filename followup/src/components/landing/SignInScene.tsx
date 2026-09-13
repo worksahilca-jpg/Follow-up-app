@@ -17,11 +17,14 @@ import styles from "@/app/landing.module.css";
  * (HeroMockup.tsx) instead of the flat, unstyled screen it used to be.
  * The sign-in card itself never moves (it holds the one thing a visitor
  * has to click precisely); depth and motion live entirely here, behind it:
- * the same aurora-blob wash globals.css already defines, recolored to
- * this page's amber/coral/blue palette, plus two small floating chips on
- * their own Z planes reacting to mouse position — the same idle-float +
- * mouse-parallax technique as HeroMockup, just simpler (no nested content,
- * no counter-parallax layer) since this is chrome, not a hero illustration.
+ * the same aurora-blob wash globals.css already defines, using the app's
+ * own navy/blue accent (two depths of it — --rust and --accent-deep — not
+ * an unrelated hue, per the standing rule that decorative color variety
+ * outside the accent is reserved for the status-pill system), plus two
+ * small floating chips on their own Z planes reacting to mouse position —
+ * the same idle-float + mouse-parallax technique as HeroMockup, just
+ * simpler (no nested content, no counter-parallax layer) since this is
+ * chrome, not a hero illustration.
  */
 export default function SignInScene() {
   const reducedMotion = useReducedMotion();
@@ -78,8 +81,8 @@ export default function SignInScene() {
           its depth through the mockup illustration and grid texture alone
           with no color wash at all, so full-strength blobs behind a small
           sign-in card would read louder than the system they're matching. */}
-      <div className="aurora-blob aurora-blob-a" style={{ top: "6%", left: "2%", width: "34%", height: "42%", backgroundColor: "var(--amber)", opacity: 0.28 }} />
-      <div className="aurora-blob aurora-blob-b" style={{ bottom: "4%", right: "0%", width: "32%", height: "40%", backgroundColor: "var(--blue)", opacity: 0.24 }} />
+      <div className="aurora-blob aurora-blob-a" style={{ top: "6%", left: "2%", width: "34%", height: "42%", backgroundColor: "var(--rust)", opacity: 0.28 }} />
+      <div className="aurora-blob aurora-blob-b" style={{ bottom: "4%", right: "0%", width: "32%", height: "40%", backgroundColor: "var(--accent-deep)", opacity: 0.24 }} />
 
       {/* Back chip — pushed behind on Z, drifts opposite the front one.
           Hidden below sm: at narrow widths its percentage position lands
@@ -101,7 +104,10 @@ export default function SignInScene() {
         }}
       >
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold" style={{ background: "var(--amber-soft)", color: "#96631c" }}>
+          {/* A score of 92 is "hot" — coral, matching ScoreBadge.tsx's own
+              convention (score is a status, drawn from the urgency-pill
+              colors, never the blue accent reserved for buttons/links). */}
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold" style={{ background: "var(--coral-soft)", color: "var(--coral)" }}>
             92
           </span>
           <div className="min-w-0">
@@ -131,8 +137,8 @@ export default function SignInScene() {
         }}
       >
         <div className="flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full ${styles.pulseDot}`} style={{ background: "var(--amber)" }} />
-          <span className="text-[9px] font-bold tracking-wide" style={{ color: "var(--amber)" }}>
+          <span className={`h-1.5 w-1.5 rounded-full ${styles.pulseDot}`} style={{ background: "var(--rust)" }} />
+          <span className="text-[9px] font-bold tracking-wide" style={{ color: "var(--rust)" }}>
             DRAFT READY
           </span>
         </div>

@@ -218,7 +218,7 @@ export async function sendFollowUpToLead(
         // field Gmail's flow uses for its own, differently-shaped id).
         replyToMessageId: options.emailInReplyTo,
       });
-      if (!result.success) return { success: false, message: "Outlook didn't confirm this message sent." };
+      if (!result.success) return { success: false, message: result.message ?? "Outlook didn't confirm this message sent." };
     } else {
       const result = await sendEmail(lead.businessId, {
         to: lead.email,
@@ -227,7 +227,7 @@ export async function sendFollowUpToLead(
         threadId: options.emailThreadId,
         inReplyTo: options.emailInReplyTo,
       });
-      if (!result.success) return { success: false, message: "Gmail didn't confirm this message sent." };
+      if (!result.success) return { success: false, message: result.message ?? "Gmail didn't confirm this message sent." };
       externalId = result.messageId ?? undefined;
     }
   } else if (channel === "instagram") {

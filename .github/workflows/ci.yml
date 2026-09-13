@@ -64,3 +64,26 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-slack-on-failure:
+    name: Notify Slack on CI failure
+    runs-on: ubuntu-latest
+    needs: [app, voice-agent, secrets]
+    # always() so this still runs when an earlier job failed (the default
+    # `if` on a job with `needs` is "only if every dependency succeeded");
+    # the failure() check inside the step is what keeps it silent on a
+    # green run instead of posting every time.
+    if: always()
+    steps:
+      - name: Post to Slack
+        if: needs.app.result == 'failure' || needs.voice-agent.result == 'failure' || needs.secrets.result == 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL secret not set — skipping Slack notification."
+            exit 0
+          fi
+          curl -sf -X POST -H 'Content-Type: application/json' \
+            -d "{\"text\": \"🔴 CI failed on \`${{ github.ref_name }}\` (${{ github.event_name }}) — <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|view run> · ${{ github.event.head_commit.message || github.event.pull_request.title }}\"}" \
+            "$SLACK_WEBHOOK_URL"

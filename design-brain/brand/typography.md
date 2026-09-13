@@ -6,25 +6,32 @@ hierarchy has failed.
 
 ---
 
-## Current state (provisional — verified 2026-09-12)
+## Current state — decided, 2026-09-13
 
-- **One family, product-wide: Plus Jakarta Sans**, loaded via `next/font` in
-  `followup/src/lib/fonts.ts`, exposed as both `--font-display` and `--font-body`.
-- Headings (`h1, h2, h3, .font-display`): weight `600`, letter-spacing `-0.02em`.
-- Body: regular weight, Tailwind's default sizing applied ad hoc.
-- **The authenticated app and the marketing pages now use the same typeface.** The
+- **Three families, product-wide, one system: Bricolage Grotesque (display/headings),
+  Public Sans (body), IBM Plex Mono (eyebrows/labels/mono meta text)**, loaded via
+  `next/font` in `followup/src/lib/fonts.ts`, exposed as `--font-display`, `--font-body`,
+  and `--font-mono`. Promoted from the landing page's page-scoped "Award Direction"
+  typography (originally a CEO-approved exception, D-008) to the whole product in
+  D-010/A-002 — see `decisions/`.
+- Headings (`h1, h2, h3, .font-display`): weight `600`, letter-spacing `-0.02em`, set in
+  Bricolage Grotesque.
+- Body: Public Sans, regular weight, Tailwind's default sizing applied ad hoc.
+- Small uppercase labels/eyebrows: IBM Plex Mono via `.font-mono`, opt-in, not global.
+- **The authenticated app and the marketing pages now use the same typeface family.** The
   previous split (Inter in the app, Fraunces as a display serif on the landing page) is
-  gone, as is the Inter/Space Grotesk pairing before it.
+  gone, as is the Inter/Space Grotesk pairing before it, and as is the single-family
+  Plus Jakarta Sans era that preceded this one.
 
 **This is the right call and worth stating as a principle, not just a fact:** a visitor
 and a signed-in customer should feel they are in one product. A marketing page with its
 own typeface reads as a brochure attached to a different application.
 
-**Note that the typeface has also changed more than once** (Inter + Space Grotesk →
-Fraunces on landing → Plus Jakarta Sans everywhere). Like the accent color, it has drifted
-rather than been decided. Plus Jakarta Sans is a defensible choice — it's more
-characterful than Inter without costing legibility at UI sizes. It should now be
-**decided** and recorded in `decisions/approved.md` so it stops moving.
+**Note that the typeface has changed multiple times now** (Inter + Space Grotesk →
+Fraunces on landing → Plus Jakarta Sans everywhere → Bricolage Grotesque/Public
+Sans/IBM Plex Mono everywhere). Unlike the earlier changes, this one followed an actual
+founder decision (A-002) rather than drift — it was decided alongside the color system,
+as one visual-identity change, not two. It should now hold.
 
 ## Rules
 

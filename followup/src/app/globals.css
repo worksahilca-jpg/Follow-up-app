@@ -1,83 +1,100 @@
 @import "tailwindcss";
 
 :root {
-  /* Neutrals — warm cream instead of the old cool off-white, matching the
-     landing page and /signin (landing.module.css's --cream/--ink) so the
-     whole product — marketing pages and the authenticated app alike —
-     reads as one system instead of two. Cards stay pure white for
-     separation via contrast against the cream paper, same as landing's
-     own --surface. Every body-text color here was checked against its
-     background at normal reading size, not just eyeballed — this app has
-     denser text (tables, forms) than a marketing page's captions, so
-     --ink-soft is tuned a shade darker than landing's own translucent
-     version for legibility at that density. */
-  --paper: #f3f0ea;
-  --ink: #18140f;
-  --ink-soft: #5c574c;
-  --line: #e2ddd0;
+  /* Neutrals — navy/cloud-white, promoted from the landing page's
+     page-scoped "Award Direction" system (landing-award.module.css's
+     `.root`) into the app-wide baseline. See design-brain/decisions/
+     design-decisions.md D-010 and decisions/approved.md A-002: the founder
+     reviewed the navy/blue landing page against the still-cream/amber
+     authenticated app and chose to move the app to match it, rather than
+     revert the landing page. Values are IDENTICAL to landing-award's own
+     --paper/--ink/--ink-soft/--card, not just similar — the whole product
+     converges on one system now instead of two. Every pairing below was
+     re-measured at the sizes this app actually renders text at (12-14px
+     table/pill labels, not the landing page's larger marketing type) per
+     A-001's still-active principle that a fill and a text color have
+     different requirements and that low-saturation pairs must be measured,
+     not eyeballed — see the per-token notes below for the numbers. */
+  --paper: #f6f8fb;
+  --ink: #0b1f33;
+  --ink-soft: #46566b;
+  --line: rgba(11, 31, 51, 0.12);
   --card: #ffffff;
 
-  /* Brand / primary — the same amber as the landing page and /signin
-     (landing.module.css's --amber), replacing the blue this used to be.
-     The one accent color, used only on buttons, links, active states, and
-     focus rings. Never a background fill, an icon color, or a border
-     outside those interactive contexts. rust-soft is for focus-ring
-     halos only, not general panel fills. (Name kept as-is rather than
-     renamed across its ~90 call sites — the value is what changed,
-     again — same reasoning as the last two times this token's value
-     moved.) */
-  --rust: #e8a23a;
-  --rust-soft: #f7e6c4;
+  /* --ink-soft measured: 7.04:1 on --paper, 7.49:1 on --card — comfortably
+     clears 4.5:1 at any in-app text size, including 12px table/meta text. */
+
+  /* Brand / primary — the same blue as the landing page (landing-award's
+     --accent/--accent-deep), replacing the amber this used to be. The one
+     accent color: buttons, links, active nav/tab states, and focus rings
+     only. Never a decorative background fill, never an icon color outside
+     interactive contexts.
+
+     Unlike the retired amber (which needed a separate --accent-text token
+     because the light fill color failed as text — see the old A-001/D-005
+     entries), this blue clears AA in BOTH roles from one value: 5.40:1 on
+     --paper and 5.75:1 on --card as TEXT, and white-on---rust clears
+     5.75:1 as a FILL. One token, two jobs, both measured — the token split
+     D-005 introduced is no longer needed and has been removed; every call
+     site that used --accent-text now uses --rust directly (see that
+     entry's own "Revisit when," which anticipated exactly this). */
+  --rust: #2a5cdb;
+  /* --accent-deep: a darker step of the same blue, for hover/active states
+     on accent-colored elements and gradient endpoints — not a second
+     accent hue. 10.42:1 on --paper, 11.08:1 on --card; also passes as a
+     dark fill with white text (11.08:1). */
+  --accent-deep: #17348a;
+  /* Soft accent tint — focus-ring halos, active-nav-item backgrounds,
+     selected-option fills. Translucent (not a flat tint) so it composites
+     correctly on both --card and --paper without a second token per
+     surface. --rust text/icons on top of this fill measure 4.82:1 on a
+     --card-toned composite, still clears 4.5:1. */
+  --rust-soft: rgba(42, 92, 219, 0.12);
 
   /* Text that sits ON the accent fill (button labels on a --rust
-     background). Deliberately independent of --ink: --ink tracks the
-     page's own text color and flips with the theme, but a button's label
-     only needs to contrast against --rust, which doesn't move with it.
-     Flipped from light to dark alongside --rust's move from a mid-tone
-     blue to a light amber — white text on this amber would fail contrast
-     outright, so this has to move in lockstep with --rust, never on its
-     own. */
-  --on-accent: #241a08;
-
-  /* Accent for TEXT and functional icons, as opposed to fills. --rust is a
-     light amber: white text on it is illegible (hence --on-accent above),
-     and it is equally illegible AS text — 2.17:1 on --card, 1.91:1 on
-     --paper, 1.77:1 on --rust-soft, against the 4.5:1 WCAG AA needs at the
-     12-14px these labels actually render at. A fill and a text color have
-     opposite contrast requirements, so one token cannot serve both. This is
-     the same hue darkened until it clears AA everywhere it is used:
-     5.92:1 on --card, 5.21:1 on --paper, 4.81:1 on --rust-soft.
-     Use --rust for fills, borders, focus rings and the logo mark; use this
-     for any accent-colored text or icon that carries meaning. */
-  --accent-text: #8a5a08;
+     background). White clears 5.75:1 against --rust — no separate dark
+     variant needed the way the old amber required (white on that amber
+     failed outright, hence the old --on-accent: #241a08). */
+  --on-accent: #ffffff;
 
   /* Lead-urgency status-pill system — the one place color variety is
      allowed outside the accent. Flat, low-saturation: soft tint for the
-     pill background, the saturated shade for its text. Left unchanged by
-     the warm-palette pass above: these encode meaning (cold/warm/hot,
-     low/medium/high), not brand, and all four already read clearly
-     against the new cream/white surfaces without retuning.
+     pill background, the saturated shade for its text. These encode
+     meaning (cold/warm/hot, low/medium/high), not brand, so they were
+     tuned to sit well against the new navy/cloud palette rather than
+     reused byte-for-byte from the amber system's versions.
 
-     Each saturated shade was then darkened (2026-09-12) until its pill text
-     clears 4.5:1 on its own soft background: these labels render at 12px
-     (text-xs), which WCAG counts as normal text, and all four were failing —
-     gold worst at 2.86:1, then sage 3.00, coral 3.95, slate 4.34. Now 4.55,
-     4.73, 4.82 and 4.73. The soft tints could not move instead: they are
-     already within a few percent of white. Each new shade also clears 4.5:1
-     on --card and --paper, so the same tokens stay safe for standalone
-     error/status text, and white-on-coral fills only got better. Hues are
-     unchanged — these are the same colors, darker. */
-  --slate: #5f6e84;
-  --slate-soft: #f1f5f9;
+     Each saturated shade is measured at 12px (text-xs, the size these
+     pills actually render at, which WCAG counts as normal text and
+     requires 4.5:1) against its own soft background, --card, and --paper.
+     slate 5.10 / 5.77 / 5.43. sage 5.50 / 6.34 / 5.96. gold 4.73 / 5.27 /
+     4.95. coral 5.11 / 6.30 / 5.93. All four clear 4.5:1 everywhere they
+     render, including as standalone status/error text on --card or
+     --paper, not just inside their own pill.
 
-  --sage: #117c38;
-  --sage-soft: #dcfce7;
+     `--gold` is carried over unchanged from the retired amber system's own
+     already-AA-passing value — it doesn't clash with the new blue accent
+     (amber and blue read as clearly distinct hues) and there was no
+     reason to retune a value that already measured correctly.
+
+     `--coral` here is a deliberately DARKER shade than the landing page's
+     own decorative --coral (`landing-award.module.css`, #c93752, used
+     there as a 3px card border accent, not as small text) — a border
+     accent and a 12px status-pill label have different contrast floors,
+     so reusing the landing page's exact value here would have shipped a
+     pill that fails AA (4.10:1 measured on a matching soft tint). Same
+     hue family, tuned for its own use, exactly like --gold always was. */
+  --slate: #56677e;
+  --slate-soft: #eef1f6;
+
+  --sage: #0d6e3c;
+  --sage-soft: #dcf5e5;
 
   --gold: #a35904;
   --gold-soft: #fef3c7;
 
-  --coral: #ca2323;
-  --coral-soft: #fee2e2;
+  --coral: #b32a44;
+  --coral-soft: #fbe1e6;
 }
 
 @theme inline {
@@ -87,8 +104,8 @@
   --color-line: var(--line);
   --color-rust: var(--rust);
   --color-rust-soft: var(--rust-soft);
+  --color-accent-deep: var(--accent-deep);
   --color-on-accent: var(--on-accent);
-  --color-accent-text: var(--accent-text);
   --color-slate: var(--slate);
   --color-slate-soft: var(--slate-soft);
   --color-sage: var(--sage);
@@ -98,15 +115,15 @@
   --color-coral: var(--coral);
   --color-coral-soft: var(--coral-soft);
   --color-card: var(--card);
-  /* Plus Jakarta Sans for both display and body (was Space Grotesk for
-     display + Inter for body) — the same single typeface the landing page
-     and /signin already use (components/landing/font.ts's shared loader),
-     so the authenticated app reads as the same product as the pages a
-     visitor sees before signing in, not a different one underneath. Still
-     legible at the app's own density (tables, forms) — this typeface
-     already carries the landing page's own body copy at similar sizes. */
-  --font-display: var(--font-plus-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--font-plus-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Bricolage Grotesque (display) + Public Sans (body) + IBM Plex Mono
+     (labels/eyebrows), promoted from the landing page's page-scoped fonts
+     (src/lib/fonts.ts) into the app-wide baseline, replacing Plus Jakarta
+     Sans everywhere — the landing page, /signin, and the authenticated app
+     now share one typographic system exactly as they share one color
+     system (D-010/A-002). */
+  --font-display: var(--font-bricolage), "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-public-sans), "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
 }
 
 body {
@@ -121,6 +138,16 @@ h1, h2, h3, .font-display {
   letter-spacing: -0.02em;
 }
 
+/* Mono treatment for the small uppercase labels this app already had a
+   pattern for (eyebrows, timestamps, pill-adjacent meta text) — matches
+   the landing page's own .eyebrow (landing-award.module.css) rather than
+   inventing a second small-caps convention. Opt-in via class, not applied
+   globally, since most of the app's small text is plain body copy. */
+.font-mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
 * {
   border-color: var(--line);
 }
@@ -129,7 +156,7 @@ h1, h2, h3, .font-display {
    component: most buttons/links/inputs across the authenticated app had
    no focus ring at all (falling back to the browser's raw default) and
    inconsistent hover transitions — some instant, some eased. This gives
-   every interactive element the same on-brand amber focus ring (the one
+   every interactive element the same on-brand blue focus ring (the one
    sanctioned non-button use of the accent) and a quiet, consistent
    150ms transition, without touching each component's own classes. */
 a, button, input, select, textarea, [tabindex] {
@@ -152,10 +179,13 @@ textarea:focus-visible, [tabindex]:focus-visible {
   border-radius: 4px;
 }
 
-/* ---- Bold decorative primitives (landing page, dashboard) ----
+/* ---- Bold decorative primitives (dashboard) ----
    Everything below is pure CSS (no JS cost) and gated under
    prefers-reduced-motion so a visitor who's asked for less motion still
-   gets the color/shape, just not the drift/shimmer. */
+   gets the color/shape, just not the drift/shimmer. Colors below were
+   updated to the navy/blue palette; nothing about which elements use them
+   or how often changed as part of this pass — that's the open, unresolved
+   question in decisions/design-decisions.md D-004, not this one. */
 
 /* Aurora background (see AuroraBackground.tsx): three oversized, heavily
    blurred color fields drifting past each other slowly — a living wash
@@ -203,8 +233,8 @@ textarea:focus-visible, [tabindex]:focus-visible {
   width: 40%;
   /* A light sweep reads as a reflection regardless of the button's own
      fill or text color — hardcoded white rather than derived from
-     --on-accent, which now flips dark/light with --rust's own value (see
-     that token's comment) and would otherwise turn this sweep dark too. */
+     --on-accent (which is white here anyway, but this sweep should stay
+     white even if --on-accent ever needs to flip dark again). */
   background: linear-gradient(115deg, transparent, color-mix(in srgb, white 55%, transparent), transparent);
   transform: skewX(-18deg);
   transition: left 0.55s ease;
@@ -215,11 +245,10 @@ textarea:focus-visible, [tabindex]:focus-visible {
 
 /* Shimmering gradient text — used once per page, on the single phrase
    that should read as "the point," never as a running style. Same
-   treatment as landing.module.css's own .shimmer (a lighter tint of the
-   same accent as the mid-stop, not an unrelated hue) — kept in sync now
-   that --rust is the same amber as that file's --amber. */
+   two-stop-blue treatment as the landing page's own .accentText
+   (landing-award.module.css) rather than an invented third color. */
 .text-gradient-accent {
-  background: linear-gradient(100deg, var(--rust), #f3c374, var(--rust));
+  background: linear-gradient(100deg, var(--accent-deep), var(--rust) 60%, var(--accent-deep));
   background-size: 220% auto;
   background-clip: text;
   -webkit-background-clip: text;
@@ -234,4 +263,3 @@ textarea:focus-visible, [tabindex]:focus-visible {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
 }
-

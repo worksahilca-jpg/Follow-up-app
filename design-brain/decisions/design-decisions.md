@@ -426,3 +426,184 @@ so each stays simple to reason about and neither fights the other's `will-change
 
 **Revisit when:** The CEO wants the node-graph variant instead, wants the ring's radius or
 spin speed tuned, or wants it extended to mobile.
+
+---
+
+## D-010 — Unify on the "Award Direction" navy/blue system app-wide; retire the warm-cream system
+**Date:** 2026-09-13
+**Decided by:** CEO (explicit direction, asked directly: reskin the app to navy/blue rather
+than bring the landing page back to cream), Claude (finding + implementation)
+**Status:** active — supersedes D-008's scope restriction and A-001's cream/amber baseline
+**Context:** D-008 deliberately scoped "Award Direction" (navy `#0b1f33`/blue `#2a5cdb`,
+Bricolage Grotesque + Public Sans + IBM Plex Mono) to the public landing page only, keeping
+`/signin` and the authenticated app on the existing warm-cream/amber system (`globals.css`,
+`landing.module.css`) — its own "Revisit when" named exactly this: a future session asked to
+unify `/` and `/signin` onto one system. The CEO independently noticed the app now reads as
+two different products ("our landing page is cool, but I've seen our internal pages... are
+still the old ones") and, given the choice, chose to move the *app* rather than revert the
+*landing page* — meaning the unification is now larger than D-008 anticipated: every
+authenticated-app surface (dashboard, leads, pipeline, settings, workflows, analytics,
+activity, onboarding) plus `/signin`, not just the marketing pages.
+
+**Decision:** Navy/blue Award Direction becomes the one system-wide visual language.
+Retire the warm-cream/amber tokens in `globals.css` and `landing.module.css` in favor of
+tokens derived from `landing-award.module.css`'s `.root` scope, applied globally instead of
+page-scoped. Implementation (in progress — see task tracker) extracts the Award Direction
+tokens into `globals.css` as the app-wide system and reskins every authenticated-app page
+and `/signin` to match, following the existing component/typography/motion conventions
+`landing-award.module.css` already established rather than reinventing them per page.
+
+**Reasoning:** The founder's own call on which visual identity represents FollowUp now —
+not a Claude judgment call, and not something to default silently in either direction
+given neither system was "approved" over the other (`design-brain/decisions/approved.md`
+explicitly notes the cream baseline was "provisional... not ratified as final"). Once made,
+this is exactly D-008's own named revisit condition firing, just wider in scope than that
+entry anticipated.
+
+**Trade-off accepted:** This retires A-001's contrast-fix work (the accent-text token split,
+the darkened status shades) as applied to the cream/amber values specifically — the
+*principle* behind A-001 (a fill color and a text color need separate tokens; measure
+soft/saturated status pairs at their real render size, don't eyeball them) carries over and
+must be re-verified against the new navy/blue values, not re-derived from scratch. Two
+previously-separate marketing systems (`landing.module.css` for `/signin`,
+`landing-award.module.css` for `/`) collapse into one, which is the intended outcome, not a
+new trade-off. This is a large surface-area change (every authenticated page) shipped as a
+tracked, reviewed body of work rather than a single sweeping commit.
+
+**Revisit when:** The CEO reviews the reskinned app and either confirms it (record as
+`A-002`) or asks for adjustments to specific screens.
+
+---
+
+## D-011 — Implementing D-010: token mapping, contrast re-audit, and what was deliberately left alone
+**Date:** 2026-09-13
+**Decided by:** Claude (implementation of D-010, per A-002)
+**Status:** active
+**Context:** D-010/A-002 decided *that* the app moves to navy/blue; this entry records the
+concrete choices made while actually doing it, none of which the founder was asked to
+adjudicate individually.
+
+**Decision — keep token names, change values, again:** Every promoted token kept its
+existing name (`--paper`, `--ink`, `--rust`, `--rust-soft`, `--on-accent`, `--slate`,
+`--sage`, `--gold`, `--coral`, `--line`, `--card`) rather than renaming to match
+`landing-award.module.css`'s own names (`--accent`, `--accent-deep`, etc.) — with one
+addition, `--accent-deep`, since nothing existing covered "a darker step of the accent" and
+several patterns from the landing page's own component language (button hover states, the
+gradient-text mid-stop, the aurora wash) needed one. This is the same call the codebase has
+made every previous time the accent moved (blue → violet → amber → this blue): renaming
+`--rust` to something accurate is real, worthwhile cleanup, but it's an orthogonal, purely
+mechanical change across ~90 call sites and bundling it with a value change would have made
+this diff much harder to review for the thing that actually matters (are the new *values*
+right). Logged as its own open `[TO DECIDE]` in `brand/color-system.md`.
+
+**Decision — collapse `--accent-text` back into `--rust`:** D-005 introduced
+`--accent-text` because the retired amber (`#e8a23a`) failed AA as text (2.17:1) while
+working as a fill. The new blue (`#2a5cdb`) clears AA in *both* roles from one value
+(5.40–5.75:1 as text, 5.75:1 as white-on-fill) — measured, not assumed, per A-001's own
+standing principle that a fill and a text color have different requirements and must be
+checked, not just carried over from the last hue. D-005's own "Revisit when" named this
+exact condition. The four call sites that used `--accent-text` (`NotificationBell.tsx`,
+`LogCallForm.tsx`, `workflows/page.tsx`, `embed/[businessId]/page.tsx`) now use `--rust`
+directly; the token and its `@theme inline` mapping were removed from `globals.css`.
+
+**Decision — new status-pill values, not the amber system's values carried over:** `--gold`
+is unchanged (`#a35904`) — it already passed AA and doesn't visually collide with a blue
+accent the way it did with amber. `--slate`, `--sage`, and `--coral` were re-derived and
+re-measured against the new navy/cloud neutrals (see `brand/color-system.md`'s contrast
+audit for the full numbers: all four clear 4.5:1 on their own soft tint, on `--card`, and on
+`--paper`, at the 12px size these pills actually render). `--coral` in particular is
+**deliberately darker** than the landing page's own decorative `--coral` (`#c93752` in
+`landing-award.module.css`, used there as a 3px card-border accent) — reusing that exact
+value for 12px pill text measured 4.10:1, a silent AA failure. Same relationship `--gold`
+already had to nothing in particular: a shared hue family, tuned per use, not one value
+forced into two jobs with different contrast floors.
+
+**Decision — `/signin` stops carrying its own token set:** `landing.module.css`'s `.root`
+used to redeclare `--cream`/`--surface`/`--ink`/`--amber`/`--coral`/`--blue` locally so it
+could diverge from the app's tokens. Now that there's one system, those local declarations
+were deleted outright rather than just repointed to new values — the file's remaining rules
+(`.nav`, `.appWindow`, `.signinChip`, etc.) reference the app's global custom properties
+(`var(--ink)`, `var(--card)`, `var(--rust)`, ...) directly, inherited from `:root` in
+`globals.css`. This is a real simplification, not just a recolor: one less place a future
+session could accidentally let `/signin` drift from the app again. `SignInScene.tsx`'s two
+aurora blobs, which used to be amber+blue, now use `--rust` and `--accent-deep` — two depths
+of the one accent, not a second decorative hue. Its "92" score chip was recolored to
+`--coral`/`--coral-soft`, matching `ScoreBadge.tsx`'s actual convention (a lead score is a
+status, drawn from the urgency palette, never the accent) rather than reusing whatever the
+old amber system happened to use there.
+
+**Decision — `AuroraBackground.tsx` (rendered on the dashboard) recolored, not restructured:**
+Its three blobs used three independent decorative hues before (amber/blue/coral,
+deliberately *not* the app's own accent or status colors, per its own header comment). Kept
+the same "not a status color" discipline: the three blobs are now two depths of `--rust`
+(`#2a5cdb`, `#17348a`) plus a light tint of the same blue (`#b4c6f2`, not a token — pure
+decoration, not meant to mean anything), rather than reaching for `--coral`/`--gold`/`--sage`
+for the third one, which would have violated the standing rule that those colors mean
+something everywhere they appear. Whether `AuroraBackground` should be on the dashboard at
+all is D-004's still-open, still-unresolved question — out of scope here, which was a color
+pass, not a decoration audit.
+
+**Decision — fonts promoted at the layout level, not per-page:** `bricolageGrotesque`,
+`publicSans`, and `ibmPlexMono` (already defined in `src/lib/fonts.ts` for the landing
+page) are now also applied on `<html>` in the root layout, alongside `globals.css`'s
+`--font-display`/`--font-body`/`--font-mono` pointing at them. `plusJakarta` was removed
+from both the root layout and `/signin` (its only two call sites) and deleted from
+`fonts.ts` — nothing imports it anymore. The landing page's own font loading in
+`src/app/page.tsx` was left untouched (out of scope — D-010/A-002 explicitly said not to
+touch the landing page); it now duplicates a font already loaded at the layout level, which
+is harmless (same `next/font` options, same resulting `@font-face`) but is a small,
+named inefficiency, not a correctness problem.
+
+**Deliberately not done (named, not hidden):**
+- **`HeroMockup.tsx`, `LandingNav.tsx`, `LandingFaq.tsx`, `FadeHeadline.tsx`** (the pre-Award
+  landing components) still contain hardcoded amber/cream hex values. Confirmed via
+  `grep` that none of the four is imported anywhere reachable from a route — they were
+  already orphaned before this pass, when `src/app/page.tsx` moved to the Award components.
+  Left untouched: recoloring dead code that renders nowhere would be busywork masquerading
+  as thoroughness. Flagged here so a future session doesn't mistake their stale colors for
+  a live bug, and doesn't mistake their continued existence for a decision to keep them.
+- **`global-error.tsx`** intentionally stays outside the design system (documented in its
+  own header comment: it renders when the root layout itself has failed, so it can't rely
+  on `globals.css` or the app's fonts loading at all). Not touched, on purpose.
+- **The `--rust` → `--accent` rename** (see above) — logged as `[TO DECIDE]`, not done.
+- **A second re-run of D-004's decoration audit** (aurora, shine, shimmer, `Reveal`/
+  `CountUp` on dashboard/leads/pipeline) — this pass recolored those primitives to fit the
+  new palette because leaving them in the retired amber would have been a visible bug, not
+  because their presence was reconsidered. That question is still open and still the
+  founder's to decide.
+
+**Trade-off accepted:** The visual identity moved cleanly, but the app now carries the same
+few unresolved code-quality loose ends it carried before (an unrenamed `--rust` token, four
+orphaned components, an unresolved decoration audit) — this pass fixed *colors*, not every
+pre-existing gap the color system's own docs already flagged. Re-litigating those would have
+expanded this from "reskin the app to match the landing page" into "also finish three
+unrelated cleanups," which wasn't what was asked and would have made the diff harder to
+review for the one thing that mattered here.
+
+**Verification, done this session:** `npx tsc --noEmit` clean. `npx eslint` on every changed
+file clean. `npx vitest run` — 554/554 tests pass (a purely visual pass; any failure would
+have meant an accidental logic change, and there were none). `rm -rf .next && npm run
+build` succeeds (the expected sandboxed Supabase `P1001` warning during `prisma migrate
+deploy` appears and is non-fatal, exactly as expected; `next build` itself reports
+"Compiled successfully"). Screenshots taken with a locally-launched Playwright Chromium
+against the real production build: the landing page live, scrolled section-by-section at
+1440×900 (confirms it renders exactly as before — untouched, per scope); `/signin` live,
+confirming the aurora wash, chip colors, and card all read correctly on the new tokens.
+Authenticated pages can't be screenshotted live without a seeded session, so Dashboard/
+Leads/Pipeline/Settings were built as static HTML mockups **using the real token values**
+(not approximated) and screenshotted the same way, clearly labeled as mockups.
+
+**One verification note, not a regression:** a `fullPage: true` Playwright screenshot of
+the live landing page (a single resized-viewport capture, not an incremental scroll) showed
+several sections blank. Re-tested by actually scrolling the page in increments of ~850px
+(simulating a real visitor) and every section rendered correctly — this is a known
+characteristic of that specific capture method against `RevealAward`'s scroll-position
+mechanism, not a bug in the page, and nothing in this pass touched `RevealAward.tsx`,
+`reveal-registry.ts`, or `page.tsx`. Noted here rather than silently discarded, since a
+future session using the same blunt full-page-screenshot method would otherwise reasonably
+conclude the page regressed.
+
+**Revisit when:** The founder reviews the reskinned app end to end (screenshots taken this
+session: landing page live at rest — unchanged, per scope — `/signin` live, and static
+mockups of Dashboard/Leads/Pipeline/Settings since those require auth). Any of the "not
+done" items above are fair game for a follow-up session.

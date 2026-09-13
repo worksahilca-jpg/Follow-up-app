@@ -6,24 +6,24 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import styles from "@/app/landing.module.css";
-import { plusJakarta } from "@/lib/fonts";
 import Reveal from "@/components/landing/Reveal";
 import SignInScene from "@/components/landing/SignInScene";
 
-// Same editorial, warm-cream/3D-mockup system as the landing page (see
-// landing.module.css's header comment) — this used to be a bare centered
-// box on the app's own flat blue palette, which read as an afterthought
-// right after the landing page it follows. Everything below this point is
-// presentation only: the actual sign-in logic (auto-retry, error states,
-// the Google button itself) is untouched from before this redesign.
+// Same navy/blue, 3D-mockup editorial system as the landing page (see
+// landing.module.css's header comment) — unified onto the app-wide tokens
+// and fonts in D-010/A-002, 2026-09-13. This used to run its own warm-cream
+// palette; now it shares globals.css's --ink/--rust/--coral/etc. directly,
+// same as every other authenticated-app surface. Everything below this
+// point is presentation only: the actual sign-in logic (auto-retry, error
+// states, the Google button itself) is untouched from before this redesign.
 export default function SignInPage() {
   return (
-    <div className={`${styles.root} min-h-screen ${plusJakarta.variable}`} style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
+    <div className={`${styles.root} min-h-screen`}>
       <div className={styles.gridTexture} />
       <SignInScene />
       <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-16">
         <Link href="/" className="mb-10 flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${styles.pulseDot}`} style={{ background: "var(--amber)" }} />
+          <span className={`h-2 w-2 rounded-full ${styles.pulseDot}`} style={{ background: "var(--rust)" }} />
           <span className="text-[17px] font-extrabold" style={{ letterSpacing: "-0.03em" }}>
             FollowUp
           </span>
@@ -94,7 +94,7 @@ function SignInPageInner() {
     <Reveal className="w-full max-w-sm">
       <div
         className="relative w-full rounded-2xl p-8 text-center"
-        style={{ background: "var(--surface)", boxShadow: "0 30px 60px -28px rgba(24,20,15,0.35), 0 0 0 1px rgba(24,20,15,0.05)" }}
+        style={{ background: "var(--card)", boxShadow: "0 30px 60px -28px rgba(11,31,51,0.28), 0 0 0 1px rgba(11,31,51,0.06)" }}
       >
         <h1 className="text-xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
           Welcome back
@@ -110,7 +110,7 @@ function SignInPageInner() {
           }}
           disabled={redirecting || autoRetrying}
           className="mt-7 w-full inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-transform hover:scale-[1.015] disabled:opacity-60 disabled:hover:scale-100"
-          style={{ background: "#fff", color: "var(--ink)", border: "1px solid rgba(24,20,15,0.15)" }}
+          style={{ background: "#fff", color: "var(--ink)", border: "1px solid rgba(11,31,51,0.15)" }}
         >
           <GoogleIcon className="h-4 w-4" />
           {redirecting || autoRetrying ? "Redirecting…" : "Continue with Google"}

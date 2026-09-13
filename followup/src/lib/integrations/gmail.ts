@@ -843,9 +843,13 @@ export function sanitizeHeaderValue(value: string): string {
 export async function sendEmail(
   businessId: string,
   params: { to: string; subject: string; body: string; threadId?: string; inReplyTo?: string }
-): Promise<{ success: boolean; messageId?: string }> {
+): Promise<{ success: boolean; messageId?: string; message?: string }> {
   const authed = await getAuthedGmailClient(businessId);
-  if (!authed) return { success: false };
+  // Distinguished from a plain send failure below so the caller
+  // (src/lib/sending.ts) can tell "never connected Gmail" from "Gmail's
+  // API rejected the send" instead of showing the same misleading
+  // "Gmail didn't confirm this message sent" for both.
+  if (!authed) return { success: false, message: "No Gmail account is connected for this business." };
   const { gmail, integration } = authed;
 
   // In-Reply-To/References + threadId make the message land in the lead's

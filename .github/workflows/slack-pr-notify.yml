@@ -1,0 +1,43 @@
+name: Slack — PR activity
+
+# Separate from ci.yml on purpose: this fires on PR lifecycle events
+# (opened/merged), not on every push, so it doesn't need the build/test
+# matrix and stays fast and independent of CI's own pass/fail.
+on:
+  pull_request:
+    types: [opened, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Notify Slack
+    runs-on: ubuntu-latest
+    # "closed" fires on both a merge and a plain close-without-merging —
+    # merged is the one worth a team notification; an abandoned PR isn't.
+    if: github.event.action == 'opened' || github.event.pull_request.merged == true
+    steps:
+      - name: Post to Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL secret not set — skipping Slack notification."
+            exit 0
+          fi
+          if [ "${{ github.event.action }}" = "opened" ]; then
+            EMOJI="📬"
+            VERB="opened"
+          else
+            EMOJI="✅"
+            VERB="merged"
+          fi
+          # jq builds the JSON body so title/author text with quotes or
+          # backslashes in it can't break the payload the way naive shell
+          # string interpolation into a JSON literal would.
+          PAYLOAD=$(jq -n --arg text "$EMOJI PR $VERB by $PR_AUTHOR: <$PR_URL|$PR_TITLE>" '{text: $text}')
+          curl -sf -X POST -H 'Content-Type: application/json' -d "$PAYLOAD" "$SLACK_WEBHOOK_URL"

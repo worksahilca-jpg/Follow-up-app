@@ -1,25 +1,18 @@
-import { Plus_Jakarta_Sans, Bricolage_Grotesque, Public_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Public_Sans, IBM_Plex_Mono } from "next/font/google";
 
-// Shared across the whole product — /signin and (via the root layout)
-// every authenticated app page — so next/font generates exactly one
-// font-face instead of a near-duplicate per surface that happens to use
-// the same weights. Originally landing/signin-only (see git history:
-// components/landing/font.ts); promoted here once the authenticated app
-// adopted the same warm editorial system and typeface as those two pages,
-// rather than keeping its own separate Inter + Space Grotesk pairing.
-export const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-// Award Direction — src/app/page.tsx (the public landing page) only. A
-// CEO-approved, page-scoped typeface trio (see
-// design-brain/decisions/design-decisions.md, 2026-09-13): Bricolage
-// Grotesque for headings, Public Sans for body copy, IBM Plex Mono for
-// eyebrow/label text. Scoped via CSS variables inside
-// landing-award.module.css's `.root` — never applied to /signin or the
-// authenticated app, which keep Plus Jakarta Sans above.
+// The app-wide typeface trio — Bricolage Grotesque (display/headings),
+// Public Sans (body), IBM Plex Mono (eyebrows/labels/mono meta text).
+// Originally a page-scoped exception for the landing page's "Award
+// Direction" system only (see design-brain/decisions/design-decisions.md
+// D-008); promoted to the whole product in D-010/A-002, 2026-09-13, when
+// the authenticated app and /signin moved to match the landing page's
+// navy/blue system rather than the other way around. Loaded once here via
+// next/font/google (not a <link> tag) so every consumer — the root layout,
+// the landing page's own scoped wrapper — shares one font-face instead of
+// a near-duplicate per surface.
+//
+// Plus Jakarta Sans (the previous app-wide typeface, and before that Space
+// Grotesk + Inter) has been retired — no page imports it anymore.
 export const bricolageGrotesque = Bricolage_Grotesque({
   subsets: ["latin"],
   variable: "--font-bricolage",

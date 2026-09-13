@@ -63,9 +63,33 @@ Never introduce a soft/saturated pair without measuring it.
 
 ---
 
-*No design work — as opposed to token decisions — has been approved yet.*
+## A-002 — Unify the whole app on the "Award Direction" navy/blue system
+**Date:** 2026-09-13
+**Scope:** System-wide — every authenticated-app page, `/signin`, and the landing page all
+converge on one visual system (navy `#0b1f33` / blue `#2a5cdb`, Bricolage Grotesque + Public
+Sans + IBM Plex Mono — currently `landing-award.module.css`, to be promoted into
+`globals.css` as the app-wide baseline). Retires the warm-cream/amber system entirely.
+**Approved:** Given a direct choice between reskinning the app to match the landing page's
+navy/blue direction, or reverting the landing page back to the app's existing cream/amber,
+the founder chose to move the app: "Reskin the app to navy/blue."
+**Why it was liked:** The founder's own framing was that the landing page ("our landing
+page is cool") should be the standard the rest of the product is judged against, not the
+other way around — the internal app pages read as dated *by comparison* to it.
+**The generalizable principle:** When a page-scoped design experiment reads as better than
+the system it deliberately diverged from, that's a real signal the system should move, not
+a violation to correct by reverting the experiment. Don't assume the older, more broadly
+shipped system is the anchor by default.
+**Applies to:** Supersedes A-001's cream/amber baseline (the underlying contrast-fixing
+*principle* in A-001 still applies, just against the new navy/blue values — see D-010).
+Every future screen designs against Award Direction's tokens, not `globals.css`'s retired
+cream ones.
+**Evidence:** This conversation, 2026-09-13. See `design-decisions.md` D-010 for the full
+reasoning and implementation plan.
 
-*Note: the UI currently shipping in `followup/` was built before this system existed. It
-is documented in `brand/` as the current provisional state, but **nothing in it counts as
-approved** merely because it shipped. When the founder reviews an existing screen and
-confirms it, that becomes A-001.*
+---
+
+*Note: the cream/amber UI documented in `brand/color-system.md` and
+`brand/visual-direction.md` as of 2026-09-12 is now SUPERSEDED by A-002 above — those files
+need updating to describe Award Direction's navy/blue values as the real baseline once the
+app-wide reskin ships. Until then, treat their "current values" sections as historical, not
+current.*

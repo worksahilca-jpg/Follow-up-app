@@ -92,6 +92,54 @@ the trust this research describes is either earned or lost.
 
 ---
 
+## 2026-09-13 — What do inbound leads actually say, and what does that mean for scoring/drafting?
+
+**Triggered by:** product-narrative-agent's customer/copy research charter — how real leads
+(real estate first, small-service-business second) phrase first contact across channels,
+and what that implies for the AI classifier and `suggestedMessage` drafting quality.
+**Question:** What do inbound leads actually type/say in their first message and replies,
+what intent signals show up in their wording, and what causes a genuinely-still-engaged lead
+to get mislabeled cold?
+**Method:** Checked existing repo research first (2026-09-05 ICP/trust file, the 2026-09-12
+UX-patterns file above, `PRODUCT_DIRECTION.md`) — none of it covered lead *message content*
+specifically. New WebSearch research conducted; WebFetch confirmed blocked network-wide
+again this session (six direct-fetch attempts, all `EGRESS_BLOCKED`), so every citation is a
+search-snippet, not a fetched page.
+**Findings:** Six, written up in full in
+`followup/research/customers/2026-09-13-what-leads-actually-say-first-contact-patterns.md`:
+1. The three most common inbound DM/text questions are almost entirely factual — "is it
+   still available?", "when can I see it?", "what's the price?" — message length/politeness
+   is a weak intent signal on its own.
+2. Real intent signals are specificity + readiness-to-act (a named address/unit/service, a
+   stated timeline, financing/budget language, offering a specific time slot) — not
+   enthusiasm or tone.
+3. A lead going silent is more often comparison-shopping than actually disinterested;
+   one source puts "lost" leads at ~70% lost purely because follow-up stopped, not because
+   interest did (single-sourced, not cross-checked — treat cautiously).
+4. Terse/short replies from an already-engaged lead are a documented false-cold trap,
+   distinct from silence — only an explicit negative statement should score a lead down.
+5. A good automated first response answers the literal question first, then asks exactly
+   one qualifying question — never several stacked together. A concrete, checkable
+   structural bar for draft quality.
+6. Instagram DM is reportedly the top lead-generation channel for realtors — NAR's 2025
+   REALTORS® Technology Survey (primary-sourced, higher confidence than the rest of this
+   pass) puts social media at 39% vs. CRM 23% and MLS 17% — and the least automated at the
+   contact-creation step. A real Meta 24-hour DM messaging-window constraint was also
+   surfaced and flagged for independent verification against Meta's own docs.
+**Confidence:** Medium overall (search-snippet sourced per this repo's standing convention,
+see `decisions/design-decisions.md` D-006), except Finding 6's NAR percentages, which trace
+to NAR's own survey PDF and press release and are treated as higher confidence.
+**Conclusion / what changes:** Gives whoever next tunes the scoring prompt or
+`suggestedMessage` drafting a concrete, sourced signal list to work from (Findings 1, 2, 4,
+5) instead of intuition; reinforces the existing "false cold" design concern from the
+2026-09-12 pass with a distinct second mechanism (comparison-shopping, Finding 3, vs. terse
+replies, Finding 4); and adds a validated, primary-sourced case that Instagram DM is a
+high-value channel worth real design/product attention, not a secondary one (Finding 6).
+**Written up in:**
+`followup/research/customers/2026-09-13-what-leads-actually-say-first-contact-patterns.md`
+
+---
+
 
 **Known, already-available inputs that have not yet been mined for design implications:**
 - `followup/research/customers/2026-09-05-icp-pain-and-trust-objections.md` — ICP pain

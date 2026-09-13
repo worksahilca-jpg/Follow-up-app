@@ -172,6 +172,24 @@ larger size.
 
 ## Open decisions
 
+- `[TO DECIDE]` **The "going cold" gold pill, reviewed 2026-09-13.** A reviewer flagged
+  `--gold` reading as visually too close to `--coral` ("hot") to intuitively signal
+  "cooling down." Proposed resolution — **keep `--gold`** (the axis is traffic-light
+  escalation, not literal temperature; `--slate` is already spoken for by "Total" in the
+  same stat row) plus a wording fix below — is in
+  `[[design-decisions#^D-015|D-015]]`, awaiting founder confirmation.
+- `[TO DECIDE]` **`--gold`'s description below should probably drop the word "Warming."**
+  "Warming / warning / attention soon" reads as a literal temperature claim that directly
+  contradicts "going cold" using the same color — see `[[design-decisions#^D-015|D-015]]`.
+  Proposed replacement: "Caution / needs attention soon (traffic-light amber — a severity
+  step, not a temperature)." Not changed here pending the same founder confirmation as
+  above, since it's the same open question.
+- `[TO DECIDE]` **`--gold` is also used, undocumented, for every currency/deal-value amount
+  app-wide** (six call sites: `FollowUpCard`, dashboard, Leads list, lead detail, Pipeline
+  stage totals, Team performance revenue) — a real convention, but one that collides with
+  `--gold`'s documented "warning" meaning and this file's own "status colors only for
+  status, never decorative" rule. See `[[design-decisions#^D-016|D-016]]`. Needs a decision
+  (plain `--ink` text, or a formally documented fifth "currency" role), not fixed here.
 - `[TO DECIDE]` **Rename `--rust` to `--accent`.** The value is right now (see above); the
   name still isn't. Worth doing as its own mechanical pass across ~90 call sites, not
   bundled into a value change again.

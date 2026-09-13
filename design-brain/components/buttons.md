@@ -13,6 +13,14 @@ hierarchy of buttons on a screen is a statement about what the user should do.
 | **Destructive** | `[TO DECIDE]` — `--coral` text on a subtle surface, or `--coral` fill | Delete, disconnect, cancel a plan | Rare |
 | **Link** | Accent text, underline on hover | Inline navigation within text | As needed |
 
+> **The Primary row above is under active review, not settled.** A 2026-09-13 grep audit
+> found the shipped app actually uses `--ink` (near-black) fill for nearly every primary
+> button inside the authenticated app, and reserves `--rust` fill for accent-only roles
+> plus a handful of outward-facing pages. See `[[design-decisions#^D-014|D-014]]` for the
+> full evidence and a proposed rewrite of this row — **proposed, awaiting founder
+> approval**, not yet ratified. Don't "fix" the app to match the row above until that's
+> resolved.
+
 **Destructive is deliberately open.** A full red fill is loud and pulls attention on a
 screen where destruction shouldn't be prominent; red text on a neutral surface is calmer
 but easier to miss. Resolve on a real screen. Whichever wins, a destructive action must

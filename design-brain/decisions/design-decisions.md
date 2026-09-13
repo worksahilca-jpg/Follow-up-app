@@ -782,3 +782,300 @@ route table as dynamic (ƒ), with the expected sandboxed Supabase `P1001` warnin
 un-marketed placeholder text shipped here; or a future session runs the color-system
 consolidation pass this entry flags for `StatCard`'s status-color usage on Analytics/Admin
 together.
+
+---
+
+## D-014 — Ink, not the accent, is the real primary-button color in the shipped app — update `[[buttons]]` to match, don't "fix" the 37 ^D-014
+**Date:** 2026-09-13
+**Decided by:** Claude (frontend-3d-agent), proposed — awaiting founder approval
+**Status:** proposed
+**Context:** `[[buttons]]` documents "accent fill, `--on-accent` label" as the primary-button
+spec. A grep of `followup/src/` for the actual inline styles
+(`backgroundColor: "var(--ink)"` vs. `backgroundColor: "var(--rust)"`) found the audit's
+37-vs-12 split confirmed almost exactly: **38 `--ink` fills, 12 `--rust` fills.** Two prior
+reads disagreed on whether this is a problem. It isn't random — the split is a clean,
+consistent pattern by *surface*, not a mistake by *button*.
+
+**What the grep actually shows:**
+- **Every primary CTA inside the authenticated app's core screens uses `--ink`:** "Add
+  lead," "Save workflow," "New plan," "Start free trial," "Manage billing," "Send"
+  (feedback), the active Settings tab, and — the single highest-stakes button in the whole
+  product per `research/ux-patterns/2026-09-12-trust-and-approval-for-automated-follow-up.md`
+  Finding 1 — `ApprovalQueue`'s **"Approve and send."** None of these are `--rust`.
+- **`--rust` fills split into two honest categories, both already compliant with
+  `[[color-system]]`'s own rule ("accent only on interactive elements: buttons, links,
+  active nav, focus rings, selected states"):**
+  1. Genuine accent-only elements: the active-nav rail (`Sidebar.tsx`), the unread-count
+     badge (`NotificationBell.tsx`), toggle-on/selected-tab/selected-radio fills (Settings'
+     automation toggles, `BookingCalendarConfig`, `LeadAutomationToggle`, workflow step-type
+     dots), small inline text links ("Add step," the `Sparkles` icon on "Use recommended
+     cadence"). These are not "primary buttons" at all — they're exactly what the accent is
+     for.
+  2. Primary-button fills, but only on the three surfaces that sit *outside* the
+     authenticated app's own chrome: the public lead-facing booking page
+     (`book/[leadId]/page.tsx`, "Confirm [time]"), the public embeddable widget
+     (`embed/[businessId]/page.tsx`, "Send message"), and the global error boundary
+     (`error.tsx`, "Try again" — a page that by definition renders when the app shell has
+     already failed).
+- **One genuine outlier, not a second category:** `LeadWorkflowEnrollment`'s small inline
+  "Put on plan" button (`leads/[id]/page.tsx`) uses `--rust` despite living inside the core
+  app next to `--ink`-styled buttons on the same screen. This is the one real inconsistency
+  the audit found — see the trade-off below.
+
+**Options considered:**
+1. Fix the 38 to use `--rust`, matching the documented spec.
+2. Fix `[[buttons]]` to document `--ink` as the primary-button color for the authenticated
+   app, and scope `--rust`-as-primary-fill to public/outward-facing pages plus its existing
+   accent-only roles.
+3. Leave both the spec and the code as-is, unreconciled (the status quo one prior audit
+   accepted).
+
+**Decision:** Option 2. Update `[[buttons]]`'s primary-button row to: **"Primary — `--ink`
+fill, `--paper`/white label — the default for every authenticated-app screen. `--rust` fill
+is reserved for accent-only roles (nav, focus, toggles, selected states, inline links) and
+for the handful of pages a business's own customer sees directly (the public booking page,
+the embeddable widget) or that render when the app chrome itself is unavailable (the global
+error page)."** Fix the one real outlier (`LeadWorkflowEnrollment`'s "Put on plan") to
+`--ink` for internal consistency — flagged here for implementation, not done by this task
+(this task is research/recommendation only, no `followup/src/` edits).
+
+**Reasoning:** This is the founder's call to confirm, not mine to ship silently — per
+`CLAUDE.md`'s "finalizing a `[TO DECIDE]` token requires asking first" — but the case for
+option 2 over option 1 is strong on the brand principles themselves, not on which is less
+work:
+- **Brand principle 8 (precision, restraint) and standing rejection
+  [[rejected#^S-15|S-15]] ("startup template aesthetics"):** a bright accent-fill button on
+  every "Add," "Save," and "Send" in the product is *the* generic SaaS default — the first
+  thing every template ships. Reserving the accent for a narrower set of true interactive
+  signals (which nav item is active, which toggle is on, where focus is) and using the
+  calmer near-black `--ink` for ordinary action buttons is a more disciplined, Linear/
+  Notion-style restraint, not a compromise.
+- **Brand principle 2 (calm over urgent):** if `--rust` fired on every primary button, its
+  meaning would dilute from "this is the interactive/selected thing" to "this is just what
+  buttons look like" — the same failure mode `[[color-system]]` names for status colors
+  used decoratively ("once green is decorative, green can no longer mean 'fine'"), applied
+  to the accent instead of a status color.
+  Colors mean more when they're used less; a button that's *always* colored stops
+  signaling anything.
+- **Brand principle 1 (trust) — the strongest evidence:** `ApprovalQueue`'s "Approve and
+  send" is, per the design brain's own research
+  (`research/ux-patterns/2026-09-12-trust-and-approval-for-automated-follow-up.md`,
+  Finding 1: *"the approve-a-draft screen is the highest-stakes surface in the product"*),
+  the single most consequential click a user makes — it sends a real message to a real
+  customer on the business's behalf. Rendering it in calm near-black rather than a bright
+  "look-at-me" blue fill is the right instinct even if nobody articulated it as a rule when
+  it shipped: it reads as a considered, serious confirmation rather than a marketing-style
+  "click here" CTA. Making it blue to match the spec would be a regression dressed as
+  consistency.
+- **Where `--rust`-as-primary-fill *does* still make sense, it already lines up with a
+  real distinction:** the booking page and the embed widget are surfaces a business's own
+  *customer* sees and interacts with directly — closer in spirit to the landing page/
+  `/signin` (which also use `--rust` for their primary actions) than to the operator's own
+  dashboard. The operator's tool is calm and near-monochrome; the lead-facing surfaces get
+  a touch more of the brand's one accent color. That's a defensible split worth keeping and
+  naming, not collapsing into one rule.
+- **What would justify option 1 instead:** if the founder's actual reaction to a live
+  screenshot is that `--ink` primary buttons read as flat or unfinished rather than calm —
+  a real possibility this session couldn't test, since `--ink` buttons are common in the
+  navy/blue system but this specific comparison hasn't been shown to the founder since the
+  A-002 reskin. That's exactly why this is proposed, not decided.
+
+**Trade-off accepted:** Formalizing "`--ink` is primary inside the app" means the app's
+primary buttons carry less color than `[[buttons]]`'s original one-line rule implied, which
+some readers may find under-designed compared to a more colorful competitor screenshot.
+It also means `--rust` earns a second job (primary fill on three specific outward-facing
+pages) that isn't a single clean rule ("accent = interactive only") — it needs the two-part
+carve-out written above to stay legible to a future session, and a future session that
+skims only the summary line risks missing why `book/[leadId]` and `embed/[businessId]`
+get an exception. Naming the carve-out explicitly, not leaving it implicit, is meant to
+close that gap.
+**Revisit when:** The founder reviews this against the live app (screenshots/mockups) and
+either confirms (move to `[[approved]]`) or asks for the 38 to move to `--rust` instead
+(reopens as option 1). If confirmed, update `[[buttons]]`'s primary-button spec and fix
+`LeadWorkflowEnrollment`'s outlier in the same pass.
+
+---
+
+## D-015 — "Going cold" stays gold, not slate — the axis is escalation, not literal temperature; flag `[[color-system]]`'s wording, not its value ^D-015
+**Date:** 2026-09-13
+**Decided by:** Claude (frontend-3d-agent), proposed — awaiting founder approval
+**Status:** proposed
+**Context:** A reviewer flagged that `--gold` (going cold) sitting next to `--coral` (hot)
+on `LeadsPageClient`'s stat row (`Hot` / `Going cold` StatCards, coral `Flame` icon next to
+gold `Snowflake` icon) reads as "two different warm colors" rather than a clear
+hot-to-cooling gradient, and proposed something cooler — e.g. `--slate` — instead.
+
+**Options considered:**
+1. Keep `--gold` for "going cold."
+2. Reassign "going cold" to `--slate` (cooler, blue-gray, closer to a literal "cold" hue).
+3. Introduce a new, dedicated "cooling" hue distinct from both.
+
+**Decision:** Option 1 — keep `--gold`. Reject option 3 outright (violates
+`[[color-system]]`'s own foundational rule, "four color roles and nothing else" /
+"no new color without a new meaning" — introducing a fifth status hue for one label is
+exactly the drift that rule exists to prevent). Reject option 2 for the reasons below, but
+recommend a **wording fix, not a value change**, in `[[color-system]]`'s description of
+`--gold` (see Reasoning).
+
+**Measured, not eyeballed, per [[approved#^A-001|A-001]]'s and D-011's precedent (both options clear AA at
+the actual 12px pill/text size, on their own soft tint):**
+| Pair | Ratio |
+|---|---|
+| `--gold` (`#a35904`) on `--gold-soft` (`#fef3c7`) | 4.73:1 ✅ (already in `[[color-system]]`'s audit) |
+| `--slate` (`#56677e`) on `--slate-soft` (`#eef1f6`) | 5.10:1 ✅ |
+| `--slate` on `--gold-soft` (hypothetical swap, same bg) | 5.19:1 ✅ |
+| `--gold` on `--card` (white) | 5.27:1 ✅ |
+| `--slate` on `--card` (white) | 5.77:1 ✅ |
+Both hues clear 4.5:1 comfortably in every pairing checked. **This is not a contrast
+question — both are legible — so the decision has to be made on meaning, not on a
+measured failure**, unlike the four-shade darkening in [[approved#^A-001|A-001]]/D-005, which was forced
+by a real failing number.
+
+**Reasoning:**
+- **The four status colors already encode a traffic-light *severity* ramp
+  (sage → gold → coral: fine → caution/act soon → urgent), not a literal temperature
+  scale.** `[[color-system]]`'s own table defines `--gold` as "Warming / warning /
+  attention soon" — the intended reading is "this is escalating, act before it becomes
+  urgent," the same amber-before-red convention used everywhere from traffic lights to
+  battery indicators. Swapping to `--slate` (documented meaning: "Neutral / informational /
+  medium") would trade a *warning* color for a *neutral* one on a stat that exists
+  specifically to prompt action — "going cold" is not neutral information, it's the thing
+  the whole product exists to prevent (`PRODUCT_DIRECTION.md`: "no lead is lost because of
+  no follow-up, late follow-up, or wrong follow-up"). A neutral gray Snowflake reads as
+  "FYI," which undersells exactly the leads FollowUp's core mission is about.
+- **`--slate` is already spoken for in the same stat row.** `LeadsPageClient` renders
+  `Total` in `--slate` immediately to the left of `Hot`/`Going cold`/`Won` — reassigning
+  "going cold" to `--slate` would make two adjacent StatCards share one hue for two
+  unrelated meanings (a neutral count vs. a warning), which is precisely the failure mode
+  `[[color-system]]`'s rule 4 exists to prevent ("each color means exactly one thing,
+  everywhere, forever"). Trading a mild "two warm hues look similar" problem for a "one
+  hue means two different things four inches apart" problem is not an improvement.
+- **Ties to brand principle 2 ("calm over urgent"):** the reviewer's instinct — that hot
+  and cooling shouldn't read as the same register — is the right instinct, but the fix
+  brand principle 2 actually recommends is proportionate escalation (sage → gold → coral),
+  not defusing the warning into a neutral gray. Calm-over-urgent means *not manufacturing*
+  urgency for things that don't need it, not *removing* signal from a state that
+  legitimately needs a nudge before it becomes a coral-level miss.
+- **The real, narrower problem is the icon, not the color:** a literal `Snowflake` icon
+  rendered in a warm amber genuinely mixes metaphors at the icon layer (cold imagery, warm
+  hue) — that's the part of the reviewer's complaint that holds up on inspection. Per
+  `[[color-system]]` rule 3, color is never the only signal; the `Snowflake` icon *and* the
+  "Going cold" label already carry the literal meaning, so the color's job is
+  severity, not temperature-matching. **Recommend to `product-ux-agent`/founder as a
+  smaller follow-up:** either keep `Snowflake` and accept that its color encodes
+  urgency-tier rather than temperature (consistent with how `Flame`/coral doesn't literally
+  mean "hot to the touch" either), or swap the icon to something escalation-coded
+  (`Hourglass`, `Clock`, `AlertTriangle`) if the mixed metaphor still reads badly in a live
+  screenshot. This is a copy/iconography call for `product-ux-agent`, not a token change.
+- **Also recommend a documentation-only edit to `[[color-system]]`:** reword `--gold`'s
+  listed meaning from "Warming / warning / attention soon" to something that drops the
+  literal-temperature word "Warming" entirely (e.g. "Caution / needs attention soon,
+  traffic-light amber — not a temperature signal") — the current wording is what invited
+  this review question in the first place, since "warming" and "going cold" are literal
+  antonyms sitting on the same color. The *value* doesn't need to change; the sentence
+  describing it does.
+
+**Trade-off accepted:** This keeps two visually-warm colors (coral, gold) as neighbors on
+the Leads stat row, which will still read as "similar-temperature" to someone scanning
+fast rather than reading labels — brand principle 4's five-second test is not perfectly
+served by this pairing. Accepting that cost because the alternative (repurposing `--slate`)
+creates a worse, more structural problem (a collision with `Total` in the same row) than
+the one it solves, and because the labels + icons already carry the literal meaning per
+rule 3, which is the system's own designed mitigation for exactly this kind of
+same-register-color pairing.
+**Revisit when:** The founder sees a live screenshot of the Leads stat row and still reads
+`Hot`/`Going cold` as ambiguous even with labels and icons present — at that point,
+reconsider the *icon* swap named above before reconsidering the *color* again. Also revisit
+if a future screen ever needs a color for a true "medium, no warning" bucket in the same
+view as "going cold," which would surface the `--slate` collision concretely rather than
+hypothetically.
+
+---
+
+## D-016 — Broader post-reskin polish pass: one new high-priority finding, four already-known gaps re-confirmed still open ^D-016
+**Date:** 2026-09-13
+**Decided by:** Claude (frontend-3d-agent) — findings only, no `followup/src/` changes made
+**Status:** findings logged, not actioned
+**Context:** Asked to look past the two color decisions above for anything else post-reskin
+that reads as unpolished or inconsistent, prioritizing real, already-scoped gaps over
+invented busywork.
+
+**New finding (not previously flagged anywhere) — `--gold` is used for currency amounts
+app-wide, undocumented and colliding with its own "warning" meaning:**
+Every deal-value figure in the app — `FollowUpCard`'s dollar amount, the dashboard rescue
+queue's `dealValue`, `LeadsPageClient`'s list-row deal-value column, the lead detail
+page's "`$X` potential," `PipelinePageClient`'s per-stage total, `TeamPerformanceSection`'s
+per-rep revenue — renders in `--gold`, consistently, across every one of those six call
+sites. This isn't accidental (it's applied with total consistency, so it's clearly a
+deliberate "gold = money" convention someone adopted), but it's undocumented anywhere in
+`[[color-system]]`, which lists `--gold`'s only meaning as "Warming / warning / attention
+soon," and it directly violates that same file's own rule 2 ("Status colors only for
+status. Never decorative") and rule 4 ("No new color without a new meaning"). A $50,000
+deal value and a $50 one both render in the same "caution" amber regardless of whether
+anything about that lead needs attention — the color is doing a "this is a dollar figure"
+job that has nothing to do with urgency. **Priority: medium-high.** It's cosmetic, not
+broken, but it's the single most-repeated color-semantic drift found in this pass (six
+call sites, both of the highest-traffic screens — Dashboard and Leads), and a business
+owner scanning deal values in "warning" amber is a small, real friction against brand
+principle 2 (a revenue number shouldn't visually register as a caution). **Recommend:**
+`product-ux-agent`/founder decide whether currency gets its own documented convention (most
+likely just `--ink`/`--ink-soft`, i.e. plain emphasized text, since money isn't a lead-
+urgency status at all) or whether "gold = money" gets formally adopted as a fifth
+documented role distinct from the status-color system. Not fixed here — a token-meaning
+question, not an implementation task, and in scope for whoever picks up D-013's already-
+flagged "StatCard status-color consolidation" pass, since it's the same underlying tension.
+
+**Four already-known gaps, re-confirmed still open by this pass (not re-litigated, per the
+brief):**
+1. **Escape-to-close is still missing on four modals** — `ImportLeadsForm`, `LogCallForm`,
+   `SmartViewForm`, `LeadTrustPanel` — exactly the four D-012 named after fixing only
+   Add-lead's. Re-grepped for any `keydown`/`Escape` handler in each; none exists.
+   **Priority: high** — this is a real accessibility/consistency gap on components used
+   constantly (logging a call, importing leads), not a cosmetic one, and D-012 already
+   scoped the fix (a shared `useEscapeToClose` hook) — it just hasn't been picked up.
+2. **Four orphaned pre-Award landing components still exist with stale hardcoded
+   amber/cream hex values** — `HeroMockup.tsx`, `LandingNav.tsx`, `LandingFaq.tsx`,
+   `FadeHeadline.tsx` in `src/components/landing/`. Re-confirmed via grep that
+   `src/app/page.tsx` imports only their `...Award` counterparts
+   (`LandingNavAward`, `HeroMockupAward`, `LandingFaqAward`) and none of the four plain
+   names appears in any reachable route. **Priority: low** — dead code, not a live bug, but
+   worth deleting outright rather than leaving as a trap for a future grep-based color
+   audit that doesn't check reachability first (this session nearly did exactly that).
+3. **The `--rust` → `--accent` rename is still undone** — 65 remaining `var(--rust...)`
+   call sites system-wide. **Priority: low** — purely mechanical, cosmetic-to-the-codebase-
+   only (no visual effect), explicitly deferred twice already (D-011) as "worth doing once,
+   not bundled with a value change." Still true.
+4. **`StatCard`'s status-color usage on Analytics/Admin is still an unresolved looser
+   convention** per D-013 (slate/sage/gold used categorically — count/positive/money —
+   rather than for lead urgency specifically). **Priority: medium** — this pass's new
+   "gold = money" finding above is arguably the concrete instance D-013 was gesturing at in
+   the abstract; recommend whoever runs that consolidation pass treats D-013 and this
+   entry's gold-currency finding as one piece of work, not two.
+
+**Reasoning for prioritization:** The Escape-to-close gap outranks the others because it's
+a functional/accessibility miss on frequently-used components, not a color or dead-code
+issue — brand principle 8's "precision is the aesthetic" applies to interaction
+correctness at least as much as to visual polish. The gold-currency finding is next because
+it's live and visible on the two most-trafficked screens, even though nothing is "broken."
+The rename and the orphaned files are genuinely low-priority — named so a future session
+doesn't rediscover them as if new, not because they're urgent.
+
+**External research note:** This pass was asked to also gather live web references (small-
+business/real-estate CRM UI, trust-and-approval patterns for AI-drafted messages) via
+WebSearch/WebFetch. Neither tool was available in this session, and direct HTTPS egress
+(tested against a generic host) returned a `403` organization policy denial, which
+`/root/.ccr/README.md` explicitly says to report rather than route around. No external
+reference was fabricated to fill the gap — per `[[reference-workflow]]`'s own rule
+("never describe a product's interface from memory... an imagined reference... poisons
+every decision downstream"), an absent citation is safer than an invented one. Grounded
+these decisions instead in the design brain's own existing, real, sourced research
+(`research/ux-patterns/2026-09-12-trust-and-approval-for-automated-follow-up.md`, itself
+drawn from `followup/research/customers/2026-09-05-icp-pain-and-trust-objections.md`),
+which was directly relevant to D-014's "Approve and send" reasoning. **Flagging for the
+coordinator:** if live external UI research is genuinely wanted for these two decisions
+before the founder signs off, it needs a session with working WebSearch/WebFetch or
+unblocked egress — this one didn't have either.
+
+**Revisit when:** Any of the four re-confirmed gaps gets picked up (update D-012/D-011's
+entries as resolved rather than duplicating), or the gold-currency question gets a decision
+from `product-ux-agent`/the founder.

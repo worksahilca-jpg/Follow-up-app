@@ -19,7 +19,12 @@ export default function SetupStrip({ steps }: { steps: SetupStep[] }) {
       <div className="min-w-0">
         <p className="text-sm font-medium">
           {next.title}
-          {rest.length > 0 && <span className="text-ink-soft font-normal"> · {rest.length} more after this</span>}
+          {rest.length > 0 && (
+            <span className="text-ink-soft font-normal">
+              {" "}
+              · {rest.length} more setup step{rest.length === 1 ? "" : "s"} after this
+            </span>
+          )}
         </p>
         <p className="text-xs text-ink-soft mt-0.5">{next.description}</p>
       </div>

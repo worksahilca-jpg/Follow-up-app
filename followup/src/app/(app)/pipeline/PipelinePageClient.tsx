@@ -242,7 +242,14 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                   </select>
                 </div>
               ))}
-              {stage.leads.length === 0 && (
+              {/* Suppressed when the whole pipeline has zero leads — the
+                  top-level EmptyState above ("No leads yet — connect
+                  Gmail") already says this once; repeating it in all 7
+                  columns is the same message eight times on one screen.
+                  Once at least one real lead exists anywhere in the
+                  pipeline, an individual empty column is a real, useful
+                  fact again, so the per-column message comes back. */}
+              {stage.leads.length === 0 && leads.length > 0 && (
                 <p className="text-xs text-ink-soft italic">No leads at this stage</p>
               )}
             </div>

@@ -263,3 +263,113 @@ swipe-to-approve (undiscoverable, and far too easy to trigger by accident on a r
 
 **Mockup:** static HTML, phone + desktop + all-clear + send-failure. Not a live screenshot.
 **Revisit when:** The founder reviews it.
+
+---
+
+## D-008 — "Award Direction": a second, page-scoped visual system for the public landing page
+**Date:** 2026-09-13
+**Decided by:** CEO (directed the concept and the specific standing-rule exceptions), Claude
+(implementation)
+**Status:** active
+**Context:** The CEO reviewed a standalone HTML design exploration ("Award Direction" — deep
+navy / professional blue / cloud white, Bricolage Grotesque + Public Sans + IBM Plex Mono,
+with a WebGL orbit diagram, frost particles, cursor-glow, drifting background rings, an
+animated gradient mesh, and a placeholder testimonial) and asked for it to become the real
+`followup/src/app/page.tsx`, replacing the current amber/Plus Jakarta Sans landing page —
+**landing page only**; `/signin` and the authenticated app keep the shared amber system.
+
+**Decision:** Built the concept as a genuinely separate, page-scoped design system:
+- New tokens in `src/app/landing-award.module.css` (`.root`): `--paper #f6f8fb`,
+  `--ink #0b1f33`, `--ink-soft #46566b`, `--accent #2a5cdb`, `--accent-deep #17348a`,
+  `--coral #c93752`, `--success #0f7c44`, etc. — scoped to this module only, never touching
+  `globals.css`'s app-wide `--paper`/`--ink`/`--rust`, and never touching `/signin`'s
+  `landing.module.css` (the warm amber system, which a shared `LandingNav`/`HeroMockup`
+  would have forced this page to keep). New components live under
+  `src/components/landing/award/` for exactly this reason — nothing there is imported by
+  `/signin`.
+- Three new `next/font/google` exports in `src/lib/fonts.ts` (`bricolageGrotesque`,
+  `publicSans`, `ibmPlexMono`), following the existing `plusJakarta` convention rather than
+  a `<link>` tag — consistent with how this codebase already loads fonts, and avoiding a
+  render-blocking third-party font request.
+- All copy is the CEO-approved, fact-checked copy from the (unmerged)
+  `copy-fixes-conversion-thesis-audit` branch, reapplied by hand onto `main` rather than
+  merging that branch: the real channel list (Gmail, Outlook, Twilio/SMS, Instagram,
+  WhatsApp — no Stripe, which the exploration's copy had wrongly listed as a "channel"),
+  the sourced stats (62% of calls to small businesses go unanswered, 63% of companies never
+  respond to an inbound lead, 29–47 hrs average first-response time — not the exploration's
+  unsourced 79%/47hrs), and the ASSISTED-by-default automation guarantee (low-risk,
+  on-topic replies only, never once the lead has replied, everything else opt-in per lead).
+- The exploration's placeholder testimonial ("Marcus Webb, Independent Consultant") is
+  **omitted entirely**, not relabeled as an example — FollowUp has no real customers yet,
+  and inventing attributed praise is exactly the failure mode a same-day stat-fabrication
+  finding in this same design system flagged. The pricing section ships as a single
+  centered card with no testimonial beside it.
+- The exploration's WebGL/CSS orbit diagram (six channel "electrons" circling a glowing
+  core, with hover tooltips and a firing-signal animation) is **cut, not simplified** — the
+  hero's app-window mockup plus the hero's own "reads what you already use" pill row
+  already carries the same information (which channels, and that they're unified into one
+  conversation) without a several-hundred-line WebGL/fallback machine to maintain. This is
+  the "hero mockup is probably enough on its own" option, not the "simple static channel
+  row" option — a dedicated channel section would have been redundant with the hero, and
+  the exploration's own per-channel "facts" ("Reads live, replies drafted in seconds") were
+  unvetted copy no one asked for.
+- The exploration's ambient decoration is cut wholesale, not tuned down: frost particles,
+  cursor-follow glow, drifting background orbit rings, the animated multi-blob gradient
+  mesh, the pricing card's spinning conic-gradient border, and the badge's ✦ sparkle icon.
+  None of it explained anything; all of it was atmosphere. The background is flat and
+  static. The one exception is the hero mockup's own idle float + mouse parallax (kept,
+  same technique as the existing `HeroMockup.tsx` — it's the product demonstration itself,
+  not ambient decoration behind it).
+- The exploration's hero mockup used a frosted-glass treatment (`backdrop-filter: blur()`
+  over translucent white). **Not carried over** — that specific texture is the standing
+  S-03 rejection (excessive glassmorphism), and the CEO's override only named S-07 (3D),
+  S-08 (ambient animation), and S-13 (sparkle). The mockup card here is opaque white, same
+  as the shipping amber-system `HeroMockup.tsx`.
+- The reveal-on-scroll pattern was reimplemented, not copied verbatim, because the original
+  vanilla version's fix (IntersectionObserver + a `catchSkipped` scroll listener + a
+  `@media print, (scripting: none)` CSS override) doesn't translate directly into React
+  state. `RevealAward.tsx` + `reveal-registry.ts` check each element's own
+  `getBoundingClientRect()` on every scroll/resize (one shared, rAF-throttled listener for
+  the whole page) rather than relying on IntersectionObserver sampling at all — a fast
+  programmatic scroll or an instant anchor jump can't skip an element between two observed
+  instants and leave it permanently hidden, which was the actual, previously-real bug this
+  pattern exists to prevent. `landing-award.module.css`'s `.reveal` rule additionally forces
+  every section visible for `prefers-reduced-motion: reduce` and for `@media print,
+  (scripting: none)`, so a PDF export or a JS-disabled visit never depends on the check
+  running at all. Verified with a JS-disabled full-page screenshot: every section renders at
+  rest; the sole gap is the hero's `21×` counter freezing at `0×` (see below).
+
+**Reasoning:** A marketing/entry surface earning a distinct visual identity from the
+in-product UI is already an established, accepted split in this codebase (the prior
+amber-vs-token-system landing redesign) — this is the same move, once more, on the same
+page, at the CEO's explicit direction. Keeping the new system genuinely separate (own CSS
+module, own component directory, own fonts) rather than parameterizing the existing
+`landing.module.css` with a "theme" flag was the only way to satisfy "this page gets its
+own distinct visual system" *and* "do not touch `/signin`" simultaneously — a shared file
+would have coupled the two pages' color decisions by construction.
+
+**Trade-off accepted:** Two parallel marketing design systems now exist in the same
+directory (`landing.module.css` for `/signin`, `landing-award.module.css` for `/`), plus a
+second `HeroMockup`/`LandingNav`/`LandingFaq` component family under
+`components/landing/award/`. This is deliberate duplication, not an oversight — but it
+means a future visual-language unification of `/` and `/signin` (if the CEO ever wants one)
+is a real, undone piece of work, not a small flag flip. Also: `CountUp` (reused as-is,
+generic and shared elsewhere in the app) has no print/no-JS fallback of its own — the hero's
+`21×` stat freezes at `0×` under those conditions. This is pre-existing behavior in a shared
+component outside this task's stated scope (landing page visual system only), not a
+regression introduced here; it's the one known gap in an otherwise-verified fallback.
+
+**Deliberately excluded (do not re-propose on this page):** the WebGL orbit diagram and its
+flat-CSS fallback (see above — S-07 exception used for the hero mockup's parallax/float
+only, not spent on a second 3D-ish diagram); frost particles, cursor-glow, drifting
+background rings, animated gradient mesh, spinning conic-gradient borders (S-08 exception
+used for the hero word-reveal, hover states, and the FAQ accordion only); the ✦ sparkle
+badge icon and any other sparkle/AI-gimmick iconography elsewhere on the page (S-13 — the
+CEO's override was for the hero badge specifically, not a blanket pass for this page); a
+headline word-rotor cycling through synonyms ("went quiet" / "went cold" / "ghosted you") —
+present in the exploration but read as decorative wordplay rather than the "explains a
+sequence" motion the word-by-word reveal and FAQ accordion are; the fabricated testimonial,
+under any label.
+
+**Revisit when:** The CEO reviews the live page, or a future session is asked to unify `/`
+and `/signin` onto one marketing visual system.

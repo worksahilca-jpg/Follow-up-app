@@ -241,7 +241,7 @@ export default function LandingPage() {
         </Reveal>
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { icon: <Mail className="h-4 w-4" />, title: "Connect your inbox", body: "FollowUp reads your sales conversations in Gmail — nothing else." },
+            { icon: <Mail className="h-4 w-4" />, title: "Connect your inbox", body: "FollowUp reads your sales conversations in Gmail — nothing else — and can add a calendar event when a lead books a call with you." },
             { icon: <TrendingUp className="h-4 w-4" />, title: "It scores every lead", body: "Buying intent, response gaps, and deal value become a single follow-up score." },
             { icon: <Clock className="h-4 w-4" />, title: "You get a daily list", body: "A short, ranked list of who needs you today, and why — not a full CRM to dig through." },
             { icon: <Sparkles className="h-4 w-4" />, title: "It drafts the message", body: "Edit, regenerate, or send — or turn on automation once you trust it." },
@@ -438,6 +438,10 @@ export default function LandingPage() {
                 {
                   q: "What if I don't connect Gmail right away?",
                   a: "You can sign in and look around right away — the dashboard just stays empty until you connect Gmail and sync.",
+                },
+                {
+                  q: "Does FollowUp touch my Google Calendar?",
+                  a: "Only around bookings. When a lead uses your booking link to schedule a call, FollowUp can check your Google Calendar for busy times and add the confirmed booking as an event — using the same Google connection as Gmail, nothing separate to set up.",
                 },
               ]}
             />

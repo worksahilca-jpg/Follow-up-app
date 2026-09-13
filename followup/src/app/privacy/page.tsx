@@ -99,6 +99,7 @@ export default function PrivacyPage() {
               <li>We never use Gmail data for advertising.</li>
               <li>We never allow humans to read Gmail data except: (a) with your explicit consent, (b) to investigate abuse or a security issue, or (c) to comply with the law.</li>
               <li>We never transfer Gmail data to third parties except our AI processing provider (to draft/score follow-ups on your behalf), or as required by law.</li>
+              <li>We also request access to your Google Calendar, used only when a lead books a call through your FollowUp booking link: to check your existing events for busy times so we don&apos;t offer a slot you&apos;re unavailable for, and to create a single event for the confirmed booking. We never read, modify, or delete any other event on your calendar, and the same advertising, human-access, and third-party-transfer restrictions above apply to Calendar data.</li>
             </ul>
           </section>
 

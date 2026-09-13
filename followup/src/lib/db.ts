@@ -19,6 +19,7 @@ const ENCRYPTED_FIELDS: Record<string, string[]> = {
   Integration: ["accessToken", "refreshToken"],
   Business: ["twilioAuthToken", "instagramAccessToken", "facebookPageAccessToken"],
   CrmConnection: ["apiKey"],
+  A2pRegistration: ["ein"],
 };
 
 type Rec = Record<string, unknown>;

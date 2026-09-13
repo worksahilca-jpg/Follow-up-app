@@ -43,6 +43,7 @@ vi.mock("@/lib/db", () => ({
     notification: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("notification") },
     automation: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("automation") },
     crmConnection: { findUnique: vi.fn(async () => null), deleteMany: trackedDeleteMany("crmConnection") },
+    a2pRegistration: { findUnique: vi.fn(async () => null), deleteMany: trackedDeleteMany("a2pRegistration") },
     productFeedback: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("productFeedback") },
     rateLimitHit: { deleteMany: trackedDeleteMany("rateLimitHit") },
     filteredEmail: { deleteMany: trackedDeleteMany("filteredEmail") },

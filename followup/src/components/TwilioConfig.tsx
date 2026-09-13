@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle, Check, ChevronDown, Lock, Phone, PhoneCall, ShieldAlert, X } from "lucide-react";
+// A2P 10DLC registration UI — on hold (2026-09-13), see the comment near its
+// render call below. Re-import when resumed:
+// import A2pRegistration from "@/components/A2pRegistration";
 
 type NumberStatus = {
   config: { voiceUrl: string; smsUrl: string; voiceCapable: boolean; smsCapable: boolean } | null;
@@ -385,30 +388,11 @@ export default function TwilioConfig() {
                     </span>
                   </p>
                 </div>
-                <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
-                  <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
-                    <span>
-                      <strong className="font-medium">Register your number for A2P 10DLC.</strong> This is
-                      separate from consent, above — it&apos;s about whether texts arrive at all. US carriers
-                      (AT&amp;T, T-Mobile, Verizon) now block or heavily throttle automated texts from an
-                      unregistered number, so an unregistered Twilio number can look &quot;Connected&quot; here
-                      while its messages quietly never reach anyone. Registration (a Brand + Campaign) happens
-                      once per Twilio account, in Twilio&apos;s own console — real cost, and typically a few
-                      weeks to fully clear every carrier, so it&apos;s worth starting well before you&apos;re
-                      relying on this channel.{" "}
-                      <a
-                        href="https://www.twilio.com/docs/messaging/compliance/a2p-10dlc/quickstart"
-                        target="_blank"
-                        rel="noopener"
-                        className="underline"
-                      >
-                        Register in the Twilio Console
-                      </a>
-                      .
-                    </span>
-                  </p>
-                </div>
+                {/* A2P 10DLC registration — built, on hold (2026-09-13): SMS/voice/A2P
+                    paused for cost reasons until funded. Backend (schema, API routes,
+                    src/lib/integrations/twilioA2p.ts) is intact and unused; re-enable
+                    by uncommenting this line once resumed. */}
+                {/* <A2pRegistration /> */}
                 {accountSid && phoneNumber ? (
                   <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "var(--sage)" }}>
                     <Check className="h-3.5 w-3.5" /> Connected — replying to a text/call lead now sends a real SMS

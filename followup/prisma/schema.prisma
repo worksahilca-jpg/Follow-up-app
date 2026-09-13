@@ -39,19 +39,19 @@ enum TeamRole {
 }
 
 model Business {
-  id              String       @id @default(cuid())
-  name            String
-  industry        String?
-  teamSize        Int?
-  avgDealValue    Float?
-  primaryChannels String[]
-  onboarded       Boolean      @default(false)
-  createdAt       DateTime     @default(now())
+  id                    String            @id @default(cuid())
+  name                  String
+  industry              String?
+  teamSize              Int?
+  avgDealValue          Float?
+  primaryChannels       String[]
+  onboarded             Boolean           @default(false)
+  createdAt             DateTime          @default(now())
   // IANA name, e.g. "America/New_York" — drives which wall-clock hours
   // count as "business hours" when generating booking slots (see
   // src/lib/booking.ts). Not yet exposed in Settings; defaults to a
   // reasonable US timezone until it is.
-  timezone        String       @default("America/New_York")
+  timezone              String            @default("America/New_York")
   // "followup" (default): availability is just the fixed business-hours
   // grid minus FollowUp's own Booking rows, as it always was. "google":
   // ALSO excludes real busy blocks from the connected Google Calendar
@@ -59,19 +59,20 @@ model Business {
   // so a lead can't book over a meeting the owner already has. Only
   // meaningful when Gmail is connected; getAvailableSlots() falls back to
   // "followup" behavior if it isn't, rather than erroring.
-  bookingCalendarSource String  @default("followup")
-  users           User[]
-  leads           Lead[]
-  automations     Automation[]
-  bookings        Booking[]
-  sequences       Sequence[]
-  sourceRules     SourceRule[]
-  invites         Invite[]
-  feedback        ProductFeedback[]
-  rateLimitHits   RateLimitHit[]
-  savedFilters    SavedFilter[]
-  filteredEmails  FilteredEmail[]
-  crmConnection   CrmConnection?
+  bookingCalendarSource String            @default("followup")
+  users                 User[]
+  leads                 Lead[]
+  automations           Automation[]
+  bookings              Booking[]
+  sequences             Sequence[]
+  sourceRules           SourceRule[]
+  invites               Invite[]
+  feedback              ProductFeedback[]
+  rateLimitHits         RateLimitHit[]
+  savedFilters          SavedFilter[]
+  filteredEmails        FilteredEmail[]
+  crmConnection         CrmConnection?
+  a2pRegistration       A2pRegistration?
 
   // Billing (Stripe) — Free/Plus/Pro tiers plus an optional Voice add-on
   // (research/market/2026-09-11-tier-pricing-recommendation.md). subscriptionStatus
@@ -117,13 +118,13 @@ model Business {
   // business's own Twilio Auth Token (not FollowUp's), needed to validate
   // that inbound requests actually came from Twilio — see
   // src/lib/twilio.ts and src/app/api/twilio/**.
-  twilioSecret    String? @unique
-  twilioAuthToken String?
+  twilioSecret        String? @unique
+  twilioAuthToken     String?
   // Needed for OUTBOUND sending (src/lib/twilio.ts sendSms) — not secret
   // the way the Auth Token is (both are shown openly in the Twilio
   // Console), so these are safe to echo back on GET, unlike the token.
-  twilioAccountSid   String?
-  twilioPhoneNumber  String?
+  twilioAccountSid    String?
+  twilioPhoneNumber   String?
   // The Twilio WhatsApp-enabled sender number (e.g. "+14155238886") —
   // deliberately separate from twilioPhoneNumber above rather than reused,
   // since a business's plain-SMS number and its WhatsApp sender are
@@ -145,7 +146,8 @@ model Business {
   // API to read a template's text back, so this is the only record of it
   // FollowUp has. Approval itself happens per-business, in that business's
   // own Twilio/Meta Business Manager — nothing FollowUp can do on their
-  // behalf, same as A2P 10DLC above.
+  // behalf. A2P 10DLC (SMS, not WhatsApp) is different: see A2pRegistration
+  // below for the in-app guided flow.
   whatsappTemplateSid  String?
   whatsappTemplateBody String?
 
@@ -178,7 +180,7 @@ model Business {
   // src/app/api/instagram/webhook/route.ts and get routed to the right
   // business by matching instagramUserId against the event's recipient
   // ID. See src/lib/instagram.ts.
-  instagramUserId     String? @unique
+  instagramUserId      String? @unique
   instagramAccessToken String?
 
   // Facebook Page — Messenger DMs and Lead Ads (src/lib/facebook.ts). Same
@@ -292,10 +294,10 @@ model Lead {
   // enrolled" — unrelated to automationTier's silence-based cadence above,
   // and the two are mutually exclusive per lead (see sequences.ts) so they
   // never both try to send on the same lead.
-  sequence          Sequence? @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
-  sequenceId        String?
-  sequenceStepIndex Int       @default(0)
-  sequenceStepDueAt DateTime?
+  sequence            Sequence? @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
+  sequenceId          String?
+  sequenceStepIndex   Int       @default(0)
+  sequenceStepDueAt   DateTime?
   // Set once, in runSequencesForBusiness()'s "finished the last step"
   // branch — the only sequence exit path that gets a persisted timestamp.
   // Deliberately NOT set on early unenroll (manual, sequence deleted, or
@@ -326,6 +328,13 @@ model Lead {
   insights      AIInsight[]
   bookings      Booking[]
 
+  // Which outside CRM this lead came from, and its id there — set by
+  // src/lib/crmSync.ts, used both to avoid re-importing the same contact
+  // and to push a note back after FollowUp sends on their behalf (see
+  // sendFollowUpToLead in src/lib/sending.ts).
+  crmProvider String?
+  crmId       String?
+
   @@unique([businessId, email])
   // Postgres allows multiple NULLs in a unique index, so leads with no
   // phone (manual entry, CSV import, website-form-by-email-only) are
@@ -334,6 +343,7 @@ model Lead {
   // findOrCreateLeadByInstagram()'s P2002 fallback against the race two
   // concurrent inbound messages for the same new contact create.
   @@unique([businessId, phone])
+  @@unique([businessId, crmProvider, crmId])
   // getLeads() and the cron/automation eligibility query both filter on
   // businessId plus one of these — without a composite index each is a
   // full scan of the business's leads once that list gets big.
@@ -344,23 +354,14 @@ model Lead {
   @@index([businessId, sequenceStepDueAt])
   // getAnalytics()'s sequence-health "completed in the last 30 days" scan.
   @@index([businessId, sequenceCompletedAt])
-
-  // Which outside CRM this lead came from, and its id there — set by
-  // src/lib/crmSync.ts, used both to avoid re-importing the same contact
-  // and to push a note back after FollowUp sends on their behalf (see
-  // sendFollowUpToLead in src/lib/sending.ts).
-  crmProvider String?
-  crmId       String?
-
-  @@unique([businessId, crmProvider, crmId])
 }
 
 model Conversation {
-  id         String    @id @default(cuid())
-  lead       Lead      @relation(fields: [leadId], references: [id])
-  leadId     String
-  channel    String // email | call | text | whatsapp | instagram
-  externalId String?   @unique // Gmail thread id / Outlook conversationId, for idempotent sync
+  id            String    @id @default(cuid())
+  lead          Lead      @relation(fields: [leadId], references: [id])
+  leadId        String
+  channel       String // email | call | text | whatsapp | instagram
+  externalId    String?   @unique // Gmail thread id / Outlook conversationId, for idempotent sync
   // Which mailbox a channel:"email" conversation actually lives in — null
   // (a row from before this field existed, or a manual-entry lead with no
   // captured thread yet) means Gmail, the original and long-standing
@@ -503,15 +504,15 @@ model Booking {
 // takes over its automated cadence entirely while active (see
 // src/lib/sequences.ts for how the two stay mutually exclusive).
 model Sequence {
-  id         String         @id @default(cuid())
-  business   Business       @relation(fields: [businessId], references: [id])
-  businessId String
-  name       String
-  active     Boolean        @default(true)
-  steps      SequenceStep[]
-  leads      Lead[]
+  id          String         @id @default(cuid())
+  business    Business       @relation(fields: [businessId], references: [id])
+  businessId  String
+  name        String
+  active      Boolean        @default(true)
+  steps       SequenceStep[]
+  leads       Lead[]
   sourceRules SourceRule[]
-  createdAt  DateTime       @default(now())
+  createdAt   DateTime       @default(now())
 
   @@index([businessId])
 }
@@ -557,16 +558,16 @@ model SequenceStep {
 // someone on the team claims it — for a source where "whoever's
 // technically least busy" isn't who should actually work it.
 model SourceRule {
-  id                  String          @id @default(cuid())
-  business            Business        @relation(fields: [businessId], references: [id])
-  businessId          String
-  source              String
-  sequence            Sequence?       @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
-  sequenceId          String?
+  id                    String          @id @default(cuid())
+  business              Business        @relation(fields: [businessId], references: [id])
+  businessId            String
+  source                String
+  sequence              Sequence?       @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
+  sequenceId            String?
   automationTierDefault AutomationTier?
-  routeToPool         Boolean         @default(false)
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
+  routeToPool           Boolean         @default(false)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
   @@unique([businessId, source])
 }
@@ -682,33 +683,33 @@ model Notification {
 }
 
 model Integration {
-  id           String    @id @default(cuid())
-  user         User      @relation(fields: [userId], references: [id])
-  userId       String
-  provider     String // gmail | google_calendar | outlook | instagram | ...
-  status       String    @default("disconnected") // connected | disconnected | error
-  accessToken  String?
-  refreshToken String?
-  connectedAt  DateTime?
+  id                String    @id @default(cuid())
+  user              User      @relation(fields: [userId], references: [id])
+  userId            String
+  provider          String // gmail | google_calendar | outlook | instagram | ...
+  status            String    @default("disconnected") // connected | disconnected | error
+  accessToken       String?
+  refreshToken      String?
+  connectedAt       DateTime?
   // When the automatic inbox sync (src/lib/gmailSync.ts, run every few
   // minutes by /api/cron/gmail-sync) last completed for this connection —
   // the next run only asks Gmail for threads newer than this, so a
   // thread is fetched + AI-classified once when it's new, not 30 threads
   // re-classified on every tick.
-  lastSyncedAt DateTime?
+  lastSyncedAt      DateTime?
   // When the last DEEP pass ran (the full 90-day / 100-thread pull the
   // manual "Sync now" also does). The cron does one automatically once a
   // day on top of the every-ten-minutes incremental tick, so an owner
   // never has to press a button — and a classifier improvement re-judges
   // the whole inbox on its own within a day instead of only new mail.
-  deepSyncedAt DateTime?
+  deepSyncedAt      DateTime?
   // The last automatic sync failure for this connection (timestamp +
   // message), cleared by the next successful run — so a sync that keeps
   // dying shows up on the row, not only in a serverless log.
-  lastSyncError String?
+  lastSyncError     String?
   // The Gmail address actually connected (can differ from the login
   // email) — what Google's push notifications identify the mailbox by.
-  accountEmail String?
+  accountEmail      String?
   // Gmail push (src/lib/integrations/gmail.ts ensureGmailWatch): Google
   // publishes a Pub/Sub message the moment the inbox changes, and
   // /api/integrations/gmail/push runs an incremental sync within seconds
@@ -722,7 +723,7 @@ model Integration {
   // client, Microsoft Graph doesn't refresh access tokens for us — this is
   // when the current one actually expires, so a call can refresh just
   // ahead of that instead of on every request or only after a 401.
-  tokenExpiresAt DateTime?
+  tokenExpiresAt    DateTime?
   // Outlook only: Graph's delta-query cursor (the last page's
   // @odata.deltaLink) — persisted so the next sync asks Graph for
   // "what changed since here" instead of re-pulling the whole inbox.
@@ -730,23 +731,23 @@ model Integration {
   // and a delta gone stale (Graph returns 410 Gone after ~a few weeks of
   // inactivity) both look like — either way the next sync just does one
   // full pass and gets a fresh cursor back.
-  deltaLink String?
+  deltaLink         String?
 
   @@unique([userId, provider])
 }
 
 model Automation {
-  id          String   @id @default(cuid())
-  business    Business @relation(fields: [businessId], references: [id])
-  businessId  String
-  name        String
-  triggerDays Int // e.g. "after 5 days of no response"
+  id           String   @id @default(cuid())
+  business     Business @relation(fields: [businessId], references: [id])
+  businessId   String
+  name         String
+  triggerDays  Int // e.g. "after 5 days of no response"
   // Hour-granularity window for actions where a day is too coarse — the
   // "unanswered_reply" action (a lead wrote, nobody answered for N hours).
   triggerHours Int?
-  action      String // auto_send | instant_ack | unanswered_reply | create_reminder | ai_email_suggestion
-  enabled     Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  action       String // auto_send | instant_ack | unanswered_reply | create_reminder | ai_email_suggestion
+  enabled      Boolean  @default(false)
+  createdAt    DateTime @default(now())
 
   @@index([businessId])
 }
@@ -789,6 +790,117 @@ model CrmConnection {
   // opaque `after` token for HubSpot) — never parsed here, only round-tripped
   // through CrmClient.fetchPage's own cursor parameter.
   syncCursor String?
+}
+
+// A2P 10DLC registration (US SMS carrier compliance) — see
+// src/lib/integrations/twilioA2p.ts and Settings → Phone (SMS + calls).
+// Table-stakes credibility work, not a moat (research/integrations/
+// 2026-09-08-twilio-a2p-self-serve-api-scoping.md): an unregistered Twilio
+// number can look "Connected" in Settings while carriers quietly block or
+// throttle every text it sends, so this exists to make that visible and to
+// let a business register from inside FollowUp instead of Twilio's own
+// console.
+//
+// Modeled as FollowUp acting as the Twilio ISV: one FollowUp-side "Primary
+// Customer Profile" (set up once, outside this codebase, as a human/account
+// approval with Twilio — see twilioA2p.ts's isA2pAvailable()) lets FollowUp
+// create one "Secondary Customer Profile" per business here, then a Brand
+// under it, then a Campaign under the Brand. Each of those is its own async
+// Twilio/TCR vetting step, hence three separate SID + status pairs rather
+// than one — a Brand can be APPROVED while its Campaign is still PENDING.
+// `status` is the one field the rest of the app should read for "can this
+// business's texts actually deliver" — it's the coarser not_started/
+// pending/approved/rejected rollup of customerProfileStatus/brandStatus/
+// campaignStatus, recomputed by refreshA2pStatus() in twilioA2p.ts.
+model A2pRegistration {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id])
+  businessId String   @unique
+
+  // Rollup used everywhere outside this model: "not_started" (no submission
+  // yet) | "pending" (submitted, Twilio/TCR still vetting one of the three
+  // stages) | "approved" (Campaign approved — texts from this number carry
+  // full A2P throughput) | "rejected" (Twilio/TCR rejected a stage; see
+  // rejectionReason). Defaults to "not_started", never null, so every
+  // caller can treat this as a plain enum-shaped string with no extra
+  // null-check.
+  status String @default("not_started")
+
+  // "starter" (default) | "standard". Starter Brand is Twilio's free-to-
+  // the-ISV, free-to-the-customer tier for <3,000 daily SMS/MMS segments
+  // over <=5 long codes — exactly FollowUp's typical customer, per the
+  // research doc — so every new registration defaults here and only moves
+  // to "standard" if usage actually crosses that threshold (that upgrade
+  // path isn't built yet; tracked here so it has somewhere to land).
+  tier String @default("starter")
+
+  // Trust Hub: this business's Secondary Customer Profile under FollowUp's
+  // own (ISV) Twilio account.
+  customerProfileSid    String?
+  customerProfileStatus String? // Twilio's own string: draft | pending-review | in-review | twilio-approved | twilio-rejected | ...
+
+  // Messaging API: BrandRegistration.
+  brandSid    String?
+  brandStatus String? // Twilio's own string: PENDING | APPROVED | FAILED
+
+  // Messaging API: Usa2p (Campaign) — the Usa2p resource is scoped under a
+  // Messaging Service (POST .../Services/{MessagingServiceSid}/Compliance/
+  // Usa2p), so a Messaging Service under FollowUp's own ISV account is
+  // created per business the first time a Campaign is submitted for it.
+  // Actually routing THIS business's own number (Business.twilioPhoneNumber
+  // — a number in the business's own separate Twilio account, not
+  // FollowUp's ISV account) through that Messaging Service's approved
+  // throughput is the one step this build deliberately leaves for once
+  // FollowUp's ISV approval and sub-account/BYO-number model is settled —
+  // see twilioA2p.ts.
+  messagingServiceSid String?
+  campaignSid         String?
+  campaignStatus      String?
+
+  // Twilio/TCR's own rejection reason on the most recently rejected stage,
+  // surfaced as-is in Settings — "why" matters as much as "rejected" (the
+  // exact product gap the research doc named).
+  rejectionReason String?
+
+  // --- Data collected from the business for the Brand submission ---
+  legalBusinessName     String?
+  // EIN (or equivalent US tax ID) — encrypted at rest, same treatment as
+  // any other third-party credential (src/lib/db.ts ENCRYPTED_FIELDS): it's
+  // not a secret Twilio needs FollowUp to keep confidential from Twilio
+  // itself, but it is exactly the kind of legal-identity data this app
+  // otherwise never stores, so it gets the same at-rest protection as an
+  // OAuth token rather than being the one plaintext exception.
+  ein                   String?
+  businessType          String? // sole_proprietor | partnership | llc | corporation | non_profit
+  businessIndustry      String? // Twilio "vertical" — see TWILIO_BRAND_VERTICALS in twilioA2p.ts
+  websiteUrl            String?
+  addressStreet         String?
+  addressCity           String?
+  addressRegion         String? // state/province
+  addressPostalCode     String?
+  addressCountry        String  @default("US")
+  supportEmail          String?
+  supportPhone          String?
+  authorizedRepName     String?
+  authorizedRepEmail    String?
+  authorizedRepPhone    String?
+  authorizedRepJobTitle String?
+
+  // --- Data collected for the Campaign (Usa2p) submission ---
+  // Twilio's fixed use-case enum — "STARTER" for the Starter tier (a single
+  // use case covering low-volume mixed traffic), or one of the Standard
+  // enum values (e.g. CUSTOMER_CARE, MIXED) once tier is "standard".
+  useCase               String  @default("STARTER")
+  campaignDescription   String? // 40-4096 chars per Twilio's own validation
+  optInDescription      String? // exactly how/where the consumer opted in to texts
+  sampleMessage1        String?
+  sampleMessage2        String?
+  monthlyVolumeEstimate Int?
+
+  submittedAt DateTime?
+  approvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model AuditEvent {

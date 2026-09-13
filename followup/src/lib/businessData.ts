@@ -37,6 +37,7 @@ export interface BusinessExport {
   notifications: Record<string, unknown>[];
   automations: Record<string, unknown>[];
   crmConnection: Record<string, unknown> | null;
+  a2pRegistration: Record<string, unknown> | null;
   productFeedback: Record<string, unknown>[];
   auditLog: Record<string, unknown>[];
 }
@@ -70,6 +71,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     notifications,
     automations,
     crmConnection,
+    a2pRegistration,
     productFeedback,
     auditLog,
   ] = await Promise.all([
@@ -93,6 +95,24 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     prisma.crmConnection.findUnique({
       where: { businessId },
       select: { id: true, provider: true, accountLabel: true, lastSyncedAt: true, lastSyncError: true, createdAt: true },
+    }),
+    // EIN excluded (same "never a credential/sensitive-identity field"
+    // rule as safeBusiness below) — status/SIDs are the useful "what did
+    // FollowUp do with my A2P registration" answer for a GDPR-access
+    // export, not the underlying legal-identity data already visible to
+    // the business itself in Settings.
+    prisma.a2pRegistration.findUnique({
+      where: { businessId },
+      select: {
+        status: true,
+        tier: true,
+        brandStatus: true,
+        campaignStatus: true,
+        rejectionReason: true,
+        submittedAt: true,
+        approvedAt: true,
+        createdAt: true,
+      },
     }),
     prisma.productFeedback.findMany({ where: { businessId } }),
     prisma.auditEvent.findMany({ where: { businessId }, orderBy: { createdAt: "desc" } }),
@@ -143,6 +163,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     notifications,
     automations,
     crmConnection,
+    a2pRegistration,
     productFeedback,
     auditLog,
   };
@@ -198,6 +219,7 @@ export async function deleteBusinessData(
     prisma.rateLimitHit.deleteMany({ where: { businessId } }),
     prisma.filteredEmail.deleteMany({ where: { businessId } }),
     prisma.crmConnection.deleteMany({ where: { businessId } }),
+    prisma.a2pRegistration.deleteMany({ where: { businessId } }),
     prisma.notification.deleteMany({ where: { user: { businessId } } }),
     prisma.integration.deleteMany({ where: { user: { businessId } } }),
     prisma.user.deleteMany({ where: { businessId } }),

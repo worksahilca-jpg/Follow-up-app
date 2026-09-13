@@ -19,6 +19,10 @@
     {
       "path": "/api/cron/outlook-sync",
       "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/office",
+      "schedule": "0 6 * * 1"
     }
   ]
 }

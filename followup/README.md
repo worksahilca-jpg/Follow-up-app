@@ -49,10 +49,37 @@ This is a standard Next.js app — push it to a GitHub repo and import it into
 Vercel. Add the same environment variables from `.env.example` in the
 Vercel project settings.
 
+## The AI office (founder-only, not a customer feature)
+
+`.claude/agents/` describes five lanes — manager, product/UX, frontend/3D,
+backend/AI, QA/security — but they only exist while someone has a Claude Code
+session open. `/admin/office` is the part that survives the session: a roster,
+a record of every shift worked, and what each one cost.
+
+- **Who sees it**: only `PLATFORM_ADMIN_EMAILS`, the same founder-only gate as
+  the rest of `/admin` (`src/lib/platformAdmin.ts`) — not a per-business
+  TeamRole. Unset means nobody, and an unauthorized visitor gets a 404.
+- **When it runs**: Monday 06:00 UTC via `/api/cron/office` (see `vercel.json`),
+  plus **Run now** on any staffed desk.
+- **What's staffed today**: one desk, `product-ux-agent` — it reads the product
+  feedback nobody has time to read and reports the themes in people's own
+  words. The other four are on the floor with `live: false` in
+  `src/lib/office/roles.ts`; a desk opens when it has a runner, not before. A
+  competitor sweep run from model memory produces confident, stale nonsense, so
+  that work waits for a runner that can actually fetch a page.
+- **What stops it**: a per-desk daily spend ceiling, one shift per desk at a
+  time, and a shift with nothing new to read costs nothing and calls no model.
+  All of it is pinned in `src/lib/__tests__/office.test.ts`.
+
+Prompts carry what a customer *wrote*, never who wrote it — see the note at the
+top of `src/lib/office/context.ts`.
+
 ## Project structure
 
 ```
 src/app/page.tsx                 landing page
+src/app/admin/office             the AI office floor (founder-only)
+src/lib/office/                  roster, context packs, runner, floor view
 src/app/(app)/dashboard          main daily briefing
 src/app/(app)/leads              leads list + detail pages
 src/app/(app)/pipeline           pipeline view

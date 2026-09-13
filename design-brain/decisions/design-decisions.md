@@ -1206,3 +1206,41 @@ verified via a static HTML mockup built from the real tokens (all affected scree
 authenticated), screenshotted with Playwright and captioned as a mockup — showed currency
 rendering in plain `--ink`, warning/error text and icons in `--coral`, and the "Going cold"
 pill still correctly in `--gold`.
+
+---
+
+## D-018 — Status colors for a surface that isn't lead urgency: the office floor reuses the severity ramp, and `--gold` stays out of it ^D-018
+**Date:** 2026-09-13
+**Decided by:** Claude, building `/admin/office` (the founder-only AI office floor)
+**Status:** proposed — not yet reviewed by the founder
+**Context:** `/admin/office` needed to show four states of an agent shift — running,
+succeeded, failed, and *refused before it started* (over its daily spend ceiling, or the
+desk has no runner). The four status tokens were defined for lead urgency, and
+[[color-system]] is explicit that they are semantic, not a palette: `--sage` means "fine"
+everywhere, and using a status color decoratively destroys the system.
+
+**Decision:**
+1. **Succeeded → `--sage`, failed → `--coral`.** Direct reuse of the documented meanings
+   ("good / no action needed", "error"), on a non-lead surface. The ramp generalizes; the
+   subject doesn't have to be a lead.
+2. **Refused → `--slate`, not `--gold`.** The office stopping itself at a spend ceiling is
+   the system working as designed, so it is informational, not a caution. `--gold` is also
+   now scoped to "going cold" and nothing else per [[design-decisions#^D-017|D-017]] /
+   [[approved#^A-005|A-005]] — reaching for it here would have re-broken what that pass
+   just fixed, in a new file, which is exactly the repeat-offense pattern
+   [[rejected]] exists to prevent.
+3. **Running → an outlined pill (`--line` inset ring, `--ink` text), no fill.** There was no
+   fifth semantic color to spend, and inventing one would have made the other four mean
+   less. An outline reads as "in progress" without claiming a severity.
+4. **Currency in plain `--ink`**, per A-005. Sub-cent figures print to four decimals
+   (`$0.0004`) rather than the usual two, because a real shift costs well under a cent and
+   `$0.00` on every row would teach the reader nothing.
+
+**The generalizable principle:** a new surface inherits the severity ramp rather than
+defining its own, and when it needs a state the ramp doesn't have, the answer is a
+non-color device (outline, weight, position) — not a fifth hue.
+
+**Revisit when:** the office grows a state that genuinely is a caution — a desk that has
+failed several shifts in a row, say. That is a real severity step, and it would be the
+first honest case for amber on this surface — at which point `--gold`'s scope needs a
+deliberate widening decision, not a quiet call site.

@@ -39,7 +39,7 @@ under the score, in plain language, without a tooltip" shapes twenty future scre
 
 ## Decisions
 
-## A-001 — Split the accent into a fill token and a text token; darken the four status shades
+## A-001 — Split the accent into a fill token and a text token; darken the four status shades ^A-001
 **Date:** 2026-09-12
 **Scope:** System-wide — `followup/src/app/globals.css` and six call sites
 **Approved:** The founder said "go" to the proposed contrast fixes. Two changes:
@@ -59,11 +59,11 @@ actually renders — 12px counts as normal text and needs 4.5:1, not the 3:1 tha
 text" allows. Eyeballing low-saturation pairs reliably fails.
 **Applies to:** Every future use of an accent or status color. Never use `--rust` as text.
 Never introduce a soft/saturated pair without measuring it.
-**Evidence:** `design-brain/brand/color-system.md` (full audit table), D-005 below.
+**Evidence:** `design-brain/[[color-system]]` (full audit table), [[design-decisions#^D-005|D-005]] below.
 
 ---
 
-## A-002 — Unify the whole app on the "Award Direction" navy/blue system
+## A-002 — Unify the whole app on the "Award Direction" navy/blue system ^A-002
 **Date:** 2026-09-13
 **Scope:** System-wide — every authenticated-app page, `/signin`, and the landing page all
 converge on one visual system (navy `#0b1f33` / blue `#2a5cdb`, Bricolage Grotesque + Public
@@ -79,17 +79,17 @@ other way around — the internal app pages read as dated *by comparison* to it.
 the system it deliberately diverged from, that's a real signal the system should move, not
 a violation to correct by reverting the experiment. Don't assume the older, more broadly
 shipped system is the anchor by default.
-**Applies to:** Supersedes A-001's cream/amber baseline (the underlying contrast-fixing
-*principle* in A-001 still applies, just against the new navy/blue values — see D-010).
+**Applies to:** Supersedes [[approved#^A-001|A-001]]'s cream/amber baseline (the underlying contrast-fixing
+*principle* in [[approved#^A-001|A-001]] still applies, just against the new navy/blue values — see [[design-decisions#^D-010|D-010]]).
 Every future screen designs against Award Direction's tokens, not `globals.css`'s retired
 cream ones.
-**Evidence:** This conversation, 2026-09-13. See `design-decisions.md` D-010 for the full
+**Evidence:** This conversation, 2026-09-13. See `[[design-decisions]]` [[design-decisions#^D-010|D-010]] for the full
 reasoning and implementation plan.
 
 ---
 
-*Note: the cream/amber UI documented in `brand/color-system.md` and
-`brand/visual-direction.md` as of 2026-09-12 is now SUPERSEDED by A-002 above — those files
+*Note: the cream/amber UI documented in `[[color-system]]` and
+`[[visual-direction]]` as of 2026-09-12 is now SUPERSEDED by [[approved#^A-002|A-002]] above — those files
 need updating to describe Award Direction's navy/blue values as the real baseline once the
 app-wide reskin ships. Until then, treat their "current values" sections as historical, not
 current.*

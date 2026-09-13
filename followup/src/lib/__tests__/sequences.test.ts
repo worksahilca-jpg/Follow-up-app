@@ -6,7 +6,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   prisma: {
-    lead: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    lead: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    sequence: { findUnique: vi.fn() },
     notification: { create: vi.fn() },
     business: { findUnique: vi.fn() },
     user: { findMany: vi.fn() },
@@ -28,7 +29,14 @@ vi.mock("@/lib/sending", () => ({
   // block below overrides this to exercise the escalation itself.
   detectNonEmailChannel: vi.fn(async () => null),
 }));
-vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));
+vi.mock("@/lib/billing", () => ({
+  requireActiveBilling: vi.fn(async () => true),
+  // Defaults to "always eligible" so every existing test (all of which run
+  // on a "plus"-tier business per the p.business.findUnique default below)
+  // is unaffected — the dedicated free-tier describe blocks override these.
+  isChannelAvailableOnFreeTier: vi.fn(() => true),
+  isWithinFreeTierLeadCap: vi.fn(async () => true),
+}));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
 // Real send-window logic has no place in a deterministic test — defaulted
 // to "always within window" so every existing test's outcome depends only
@@ -41,7 +49,8 @@ import { composeFollowUpEmail } from "@/lib/sender";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
-import { runSequencesForBusiness } from "@/lib/sequences";
+import { isChannelAvailableOnFreeTier, isWithinFreeTierLeadCap } from "@/lib/billing";
+import { runSequencesForBusiness, enrollLead } from "@/lib/sequences";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -52,6 +61,8 @@ const composeEmail = composeFollowUpEmail as unknown as ReturnType<typeof vi.fn>
 const draftMessage = generateFollowUpMessage as unknown as ReturnType<typeof vi.fn>;
 const sendRisk = assessSendRisk as unknown as ReturnType<typeof vi.fn>;
 const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
+const channelOnFreeTier = isChannelAvailableOnFreeTier as unknown as ReturnType<typeof vi.fn>;
+const withinFreeTierCap = isWithinFreeTierLeadCap as unknown as ReturnType<typeof vi.fn>;
 
 const step = { id: "s1", order: 0, delayDays: 0, action: "SEND_EMAIL", messageHint: null, stageTo: null as string | null };
 function enrolled(lastDirection: "inbound" | "outbound") {
@@ -84,6 +95,8 @@ beforeEach(() => {
   sendWindow.mockReturnValue(true);
   nonEmailChannel.mockResolvedValue(null);
   sendRisk.mockResolvedValue({ riskLevel: "low", reason: "" });
+  channelOnFreeTier.mockReturnValue(true);
+  withinFreeTierCap.mockResolvedValue(true);
 });
 
 describe("workflow stop-on-reply", () => {
@@ -441,5 +454,126 @@ describe("risk-gated hold (a workflow step's draft isn't automatically safe)", (
     expect(send).toHaveBeenCalledTimes(1);
     expect(r.held).toBe(0);
     expect(r.advanced).toBe(1);
+  });
+});
+
+// Real cost-exposure bug: a Free-tier business could create a workflow,
+// enroll leads past the 20/mo cap (or on a channel Free doesn't cover), and
+// have the hourly cron send every one of them at full OpenAI/Twilio/Meta
+// cost — neither this cron path nor the two API routes ever called the
+// same Free-tier restriction helpers automation.ts and scoring.ts already
+// use. Mirrors those files' exact gate.
+describe("Free tier restrictions apply to a workflow's EMAIL step (cost-exposure fix)", () => {
+  function enrolledOnEmailStep(overrides: Record<string, unknown> = {}) {
+    const l = enrolled("outbound");
+    l.sequence = { ...l.sequence, steps: [{ ...step, action: "EMAIL" }] };
+    return { ...l, ...overrides };
+  }
+
+  function enrolledOnStageStep() {
+    const l = enrolled("outbound");
+    l.sequence = { ...l.sequence, steps: [{ ...step, action: "CHANGE_STAGE", stageTo: "QUALIFIED" }] };
+    return l;
+  }
+
+  it("skips (does not send, does not draft) an EMAIL step for a Free-tier business once the lead is over the monthly cap", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    withinFreeTierCap.mockResolvedValue(false);
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep({ source: "CSV import" })]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(draftMessage).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+    expect(r.advanced).toBe(0);
+    expect(r.skipped).toEqual([expect.stringMatching(/Free plan.*AI processing paused/)]);
+  });
+
+  it("skips an EMAIL step for a Free-tier business when the lead's channel isn't covered by Free", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    channelOnFreeTier.mockReturnValue(false);
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep({ source: "SMS" })]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(r.skipped).toEqual([expect.stringMatching(/Free plan.*AI processing paused/)]);
+  });
+
+  it("leaves the lead enrolled (doesn't unenroll) when skipped for a Free-tier restriction", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    withinFreeTierCap.mockResolvedValue(false);
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep({ source: "CSV import" })]);
+    await runSequencesForBusiness("biz1");
+    expect(p.lead.update).not.toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ sequenceId: null }) }));
+  });
+
+  it("still sends normally on a Free-tier business when the lead is within cap and on an allowed channel", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep({ source: "Gmail" })]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(r.advanced).toBe(1);
+  });
+
+  it("never gates a Plus/Pro business on the Free-tier restriction helpers", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "plus" });
+    withinFreeTierCap.mockResolvedValue(false); // would fail if this ever got checked
+    channelOnFreeTier.mockReturnValue(false);
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep({ source: "SMS" })]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(r.advanced).toBe(1);
+  });
+
+  it("never gates a CHANGE_STAGE step on the Free-tier restriction — it costs nothing and sends nothing", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    withinFreeTierCap.mockResolvedValue(false);
+    channelOnFreeTier.mockReturnValue(false);
+    p.lead.findMany.mockResolvedValue([enrolledOnStageStep()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.advanced).toBe(1);
+    expect(p.lead.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ stage: "QUALIFIED" }) }));
+  });
+});
+
+describe("enrollLead refuses a Free-tier-ineligible lead up front (cost-exposure fix)", () => {
+  const sequenceWithSteps = {
+    id: "seq1",
+    businessId: "biz1",
+    steps: [{ id: "s1", order: 0, delayDays: 1, action: "EMAIL", messageHint: null, stageTo: null }],
+  };
+  const baseLead = { id: "lead1", businessId: "biz1", source: "CSV import", createdAt: new Date("2026-09-10T00:00:00Z") };
+
+  beforeEach(() => {
+    p.lead.findUnique.mockResolvedValue(baseLead);
+    p.sequence.findUnique.mockResolvedValue(sequenceWithSteps);
+  });
+
+  it("enrolls normally on a Plus/Pro business regardless of the Free-tier helpers", async () => {
+    p.business.findUnique.mockResolvedValue({ tier: "plus" });
+    withinFreeTierCap.mockResolvedValue(false);
+    channelOnFreeTier.mockReturnValue(false);
+    const result = await enrollLead("lead1", "biz1", "seq1");
+    expect(result).toEqual({ success: true });
+    expect(p.lead.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "lead1" } }));
+  });
+
+  it("enrolls normally on a Free-tier business when the lead is within cap and on an allowed channel", async () => {
+    p.business.findUnique.mockResolvedValue({ tier: "free" });
+    const result = await enrollLead("lead1", "biz1", "seq1");
+    expect(result).toEqual({ success: true });
+  });
+
+  it("refuses enrollment on a Free-tier business once the lead is over the monthly cap", async () => {
+    p.business.findUnique.mockResolvedValue({ tier: "free" });
+    withinFreeTierCap.mockResolvedValue(false);
+    const result = await enrollLead("lead1", "biz1", "seq1");
+    expect(result.success).toBe(false);
+    expect(p.lead.update).not.toHaveBeenCalled();
+  });
+
+  it("refuses enrollment on a Free-tier business when the lead's channel isn't covered by Free", async () => {
+    p.business.findUnique.mockResolvedValue({ tier: "free" });
+    channelOnFreeTier.mockReturnValue(false);
+    const result = await enrollLead("lead1", "biz1", "seq1");
+    expect(result.success).toBe(false);
+    expect(p.lead.update).not.toHaveBeenCalled();
   });
 });

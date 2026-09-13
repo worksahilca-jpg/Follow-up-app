@@ -11,13 +11,16 @@
   exception to (S-07 3D, S-08 ambient animation, S-13 sparkle icons).
 
   Deliberately NOT carried over from the design exploration this is based
-  on: the WebGL/CSS orbit diagram, frost particles, cursor-follow glow,
-  drifting background rings, animated gradient mesh, a spinning conic-
-  gradient pricing border, and backdrop-blur glassmorphism on the hero
-  mockup — all either ambient decoration with no comprehension value, or a
-  standing rejection (S-03 excessive glassmorphism) this page was not
-  granted an exception to. The background here is flat and static; the
-  hero mockup card is opaque, not glassy.
+  on: frost particles, cursor-follow glow, drifting background rings,
+  animated gradient mesh, a spinning conic-gradient pricing border, and
+  backdrop-blur glassmorphism on the hero mockup — all either ambient
+  decoration with no comprehension value, or a standing rejection (S-03
+  excessive glassmorphism) this page was not granted an exception to. The
+  background here is flat and static; the hero mockup card is opaque, not
+  glassy. The orbit diagram (channels circling a core) WAS cut on
+  2026-09-13 and reinstated the same day at the CEO's explicit request —
+  see D-009 in design-decisions.md — as a CSS 3D composition (no WebGL),
+  desktop-only, sitting behind the hero mockup rather than replacing it.
 */
 
 .root {
@@ -207,6 +210,127 @@
   left: -26px;
   bottom: -40px;
   z-index: 3;
+}
+
+/* ---------- hero orbit diagram — channels circling the core, behind the mockup ---------- */
+/* Desktop only: at hero-stack widths there isn't room for a ring around the
+   mockup without it colliding with the stacked copy above it.
+
+   Built with `offset-path` (a flattened ellipse standing in for a tilted
+   circle) rather than real `perspective`/`rotateX` 3D — a true tilted ring
+   needs each node to counter-rotate against both the ring's constant tilt
+   *and* its own changing position as it spins, which turned unreadable
+   (labels went edge-on and skewed) the first time this was built with
+   `rotateZ`/`rotateX` composition. `offset-rotate: 0deg` keeps every label
+   upright by construction, for any position on the path, with no
+   counter-math to get wrong. Depth (the illusion of the tilt) comes from
+   scale/opacity keyframed on the same timeline as the movement, biggest at
+   the ellipse's near/bottom edge and smallest at its far/top edge. */
+.orbitScene {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .orbitScene {
+    display: block;
+    position: absolute;
+    inset: -70px -10px auto -10px;
+    height: 380px;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+.orbitPath {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 380px;
+  height: 156px;
+  margin: -78px 0 0 -190px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+.orbitCore {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  box-shadow:
+    0 0 0 12px var(--accent-soft),
+    0 30px 60px -20px var(--shadow-strong);
+}
+.orbitNode {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+  offset-path: ellipse(190px 78px at 50% 50%);
+  offset-rotate: 0deg;
+  animation:
+    orbitMove 25s linear infinite,
+    orbitDepth 25s linear infinite;
+}
+@keyframes orbitMove {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+@keyframes orbitDepth {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.85;
+  }
+  25% {
+    transform: translate(-50%, -50%) scale(1.12);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.85;
+  }
+  75% {
+    transform: translate(-50%, -50%) scale(0.82);
+    opacity: 0.55;
+  }
+}
+.orbitNodeLabel {
+  display: inline-block;
+  pointer-events: auto;
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  box-shadow: 0 12px 26px -16px var(--shadow-strong);
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+.orbitNodeLabel:hover {
+  color: var(--accent-deep);
+  border-color: var(--accent);
+  transform: scale(1.1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbitNode {
+    animation: none;
+    offset-distance: var(--rest, 0%);
+  }
 }
 .groundShadow {
   position: absolute;

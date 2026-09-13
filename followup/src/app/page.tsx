@@ -18,6 +18,7 @@ import {
 import styles from "./landing-award.module.css";
 import LandingNavAward from "@/components/landing/award/LandingNavAward";
 import HeroMockupAward from "@/components/landing/award/HeroMockupAward";
+import OrbitDiagramAward from "@/components/landing/award/OrbitDiagramAward";
 import RevealAward from "@/components/landing/award/RevealAward";
 import LandingFaqAward from "@/components/landing/award/LandingFaqAward";
 import CountUp from "@/components/motion/CountUp";
@@ -137,7 +138,10 @@ export default function LandingPage() {
         </div>
 
         <div className="relative flex justify-center lg:justify-end pt-8 lg:pt-0">
-          <HeroMockupAward />
+          <OrbitDiagramAward />
+          <div className="relative" style={{ zIndex: 1 }}>
+            <HeroMockupAward />
+          </div>
         </div>
       </section>
 

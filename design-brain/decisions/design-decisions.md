@@ -697,3 +697,88 @@ settling for a mockup.
 **Revisit when:** Someone picks up the flagged "shared Escape-to-close hook" cleanup for
 the other four modals, or product-ux-agent wants a further wording pass on the Analytics
 empty-state copy beyond the minimal Leads/Pipeline-matching version shipped here.
+
+---
+
+## D-013 — Platform admin dashboard (`/admin`): a founder-only, cross-tenant screen with its own visual scope
+
+**Date:** 2026-09-13
+**Decided by:** Claude (autonomous — no `product-ux-agent` copy spec existed for this internal
+tool; kept the copy minimal, literal, and un-marketed rather than inventing a voice for it)
+**Status:** active
+
+**Context:** New feature, not a redesign of anything in `approved.md`/`rejected.md` — a
+platform-wide view (total businesses, leads platform-wide, channel/tier breakdown, a rough
+MRR estimate, active-vs-dormant, recent signups) for the founder only, at `/admin`, hidden
+from the Sidebar and gated by a new `PLATFORM_ADMIN_EMAILS` allowlist independent of both
+`ALLOWED_EMAILS` (ordinary sign-in) and any business's own `TeamRole` (per-business admin).
+
+**Decision — reuse the Analytics page's visual language exactly, don't invent an "admin" look:**
+Same `StatCard`, same Recharts primitives via `src/lib/chart-colors.ts` (`CHART_PRIMARY`
+for bars that are just counts, `CHART_INK` for the horizontal channel chart, matching
+`AnalyticsCharts.tsx`'s own `CHART_PRIMARY`/`CHART_INK` split), same
+card/border/spacing tokens. No Sidebar (this route isn't part of `(app)`'s route group at
+all — no dependency on the caller having an onboarded business, since a platform admin's own
+business status is irrelevant here), no aurora/shine/count-up decoration: this is an
+internal ops tool, and brand principle 2 ("calm over urgent") plus the standing S-06/S-08
+rejections argue for the plainest possible rendering of real numbers, not a demo moment.
+
+**Decision — StatCard icon colors follow Analytics' own established (if not perfectly
+`color-system.md`-compliant) convention, not a fresh interpretation:** `color-system.md`
+states status colors (`--slate`/`--sage`/`--gold`/`--coral`) are for lead-urgency semantics
+"everywhere they appear, forever" — but the *shipped* Analytics page already uses them as a
+looser categorical convention on `StatCard` icons (slate = neutral count, sage = positive
+outcome, gold = money), unrelated to lead urgency. Matched that shipped convention here
+(slate for count metrics, sage for "Active businesses," gold for "Estimated MRR," slate
+again for "Dormant" rather than reaching for coral, since a dormant business is a normal
+SaaS fact, not an error — manufacturing urgency there would fight brand principle 2) rather
+than either inventing a third convention or unilaterally "fixing" Analytics' drift as part
+of an unrelated task. **Flagging, not resolving:** this is the same tension `color-system.md`
+already names as open (status colors used decoratively is exactly what the doc's own rule
+forbids) — a future session doing a real color-system consolidation pass should look at
+`StatCard` usage on both pages together, not just one.
+
+**Decision — no bespoke "admin chrome":** no logo swap, no "internal tool" visual signaling
+beyond the H1 and subhead saying what the page is and who it's for in plain language. The
+generic app-wide `not-found.tsx` (compass icon, "Can't find that page," a link back to
+FollowUp) is what a non-admin sees — deliberately not customized, since a distinctive 404
+for this one route would itself be a signal that something special lives behind it.
+
+**Bug found and fixed en route, not part of the original scope:** `TeamPerformanceSection.tsx`'s
+grid (`grid-cols-[minmax(0,1fr),auto,auto,auto]`) uses **commas** between Tailwind arbitrary
+`grid-template-columns` tracks. That compiles to literally invalid CSS
+(`grid-template-columns: minmax(0,1fr),auto,auto,auto`, which the browser discards outright),
+silently collapsing every row to one stacked column instead of four — confirmed by inspecting
+the actual compiled stylesheet, not assumed. This codebase's own established pattern (the
+only other place a multi-track arbitrary grid template existed) was itself broken, and the
+admin dashboard's own "Recent signups" table was built by pattern-matching it, so it shipped
+with the identical bug on first render — caught in the required screenshot-verification step,
+not by inspection. Fixed both call sites to use `_` (space) between tracks, which Tailwind's
+arbitrary-value syntax requires. Re-screenshotted after the fix to confirm the real render,
+not just the diff. **This means `TeamPerformanceSection` (Analytics → "Team performance,"
+visible only for businesses with more than one teammate) was silently broken in production
+before this change** — worth a note for whoever next touches that page, since nothing else
+in this task's scope exercises that code path.
+
+**Verification, done this session:** `npx tsc --noEmit` clean (after `npx next typegen` to
+refresh the stale route-type cache for the new `/admin` route — a one-time codegen step, not
+a code change). `npx eslint .` clean. `npx vitest run` — 571/571 pass, including new
+access-control regression tests (`isPlatformAdmin`'s fail-closed behavior, `requirePlatformAdmin`'s
+notFound()-not-a-403 behavior, and `getPlatformAdminData`'s aggregation logic). Verified
+against a real, isolated local Postgres DB (`followup_test`, freshly created, `prisma migrate
+deploy` applied), seeded with 10 synthetic businesses spanning all three tiers, several
+subscription statuses (including canceled/past_due paid tiers, to verify the revenue estimate
+correctly excludes them), varying lead volumes across many `source` values, and a mix of
+Gmail/Outlook/Instagram/Facebook connections — via a locally-run dev server (a different port
+than an unrelated concurrent session already using 3000 on this shared host) and a minted
+NextAuth JWT session cookie (no real Google OAuth needed, same technique as D-012). Screenshotted
+with Playwright Chromium: the real rendered `/admin` dashboard for an allowed email (200,
+real seeded data), and the real generic 404 for a non-admin email (404, not a distinguishable
+"not authorized" response). `rm -rf .next && npm run build` succeeds, `/admin` appears in the
+route table as dynamic (ƒ), with the expected sandboxed Supabase `P1001` warning during
+`prisma migrate deploy` and nothing else.
+
+**Revisit when:** `product-ux-agent` wants real copy for this screen instead of the literal,
+un-marketed placeholder text shipped here; or a future session runs the color-system
+consolidation pass this entry flags for `StatCard`'s status-color usage on Analytics/Admin
+together.

@@ -16,14 +16,22 @@ export default function TeamPerformanceSection({ members }: { members: TeamBreak
     // natural (min-content) width, so `truncate` never actually gets a
     // chance to fire on a long name in a narrow grid column without it.
     <div className="rounded-xl border border-line bg-card overflow-hidden overflow-x-auto">
-      <div className="grid grid-cols-[minmax(0,1fr),auto,auto,auto] gap-4 px-5 py-3 border-b border-line text-xs font-medium text-ink-soft">
+      {/* Tailwind arbitrary grid-template-columns needs `_` (space), not a
+          comma, between tracks — `minmax(0,1fr),auto,auto,auto` compiles to
+          literally invalid CSS (grid-template-columns doesn't accept
+          comma-separated tracks), which the browser then ignores outright,
+          silently collapsing every row to one stacked column instead of
+          four. Caught while building the admin dashboard (src/app/admin/page.tsx),
+          which had copied this exact pattern — see this repo's
+          design-decisions.md. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-4 px-5 py-3 border-b border-line text-xs font-medium text-ink-soft">
         <span>Teammate</span>
         <span className="text-right">Active leads</span>
         <span className="text-right">Overdue</span>
         <span className="text-right">Active revenue</span>
       </div>
       {sorted.map((m) => (
-        <div key={m.userId} className="grid grid-cols-[minmax(0,1fr),auto,auto,auto] gap-4 px-5 py-3 border-b border-line last:border-0 items-center">
+        <div key={m.userId} className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-4 px-5 py-3 border-b border-line last:border-0 items-center">
           <span className="text-sm font-medium truncate">{m.name}</span>
           <span className="text-sm text-right">{m.activeCount}</span>
           <span

@@ -12,6 +12,16 @@ export const TIER_INFO = {
   pro: { label: "Pro", priceLabel: "$79/mo" },
 } as const;
 
+// The same figures as TIER_INFO's priceLabel strings above, kept as real
+// numbers too — for anything that needs to compute with a price (e.g. the
+// platform admin dashboard's rough MRR estimate, src/lib/admin-data.ts)
+// rather than parsing "$39/mo" back out of a display string.
+export const TIER_MONTHLY_PRICE_USD: Record<keyof typeof TIER_INFO, number> = {
+  free: 0,
+  plus: 39,
+  pro: 79,
+};
+
 export const VOICE_ADDON_INFO = { priceLabel: "+$39/mo", includedMinutes: 200, overagePerMinute: "$0.20" };
 
 // Free tier's hard monthly cap on AI processing (research/market/2026-09-11-

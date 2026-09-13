@@ -11,7 +11,7 @@
     "start": "node api/stream.js"
   },
   "dependencies": {
-    "express": "^4.21.2",
+    "express": "^5.2.1",
     "ws": "^8.18.0"
   }
 }

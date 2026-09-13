@@ -92,8 +92,8 @@ export default function LandingPage() {
                 <CountUp to={21} suffix="×" />
               </p>
               <p className="text-xs leading-relaxed max-w-[15rem]" style={{ color: "var(--ink-soft)" }}>
-                higher conversion when a lead is contacted within 5 minutes instead of after 30 —
-                no credit card required to see it for yourself.
+                higher qualification rate when a lead is contacted within 5 minutes instead of
+                after 30 — no credit card required to see it for yourself.
               </p>
             </div>
           </Reveal>
@@ -110,7 +110,7 @@ export default function LandingPage() {
           Reads what you already use
         </p>
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-          {["Gmail", "Outlook", "Twilio", "Instagram", "Stripe"].map((name) => (
+          {["Gmail", "Outlook", "Twilio", "Instagram", "WhatsApp"].map((name) => (
             <span
               key={name}
               className="text-sm font-bold rounded-lg px-4 py-2"
@@ -149,9 +149,9 @@ export default function LandingPage() {
 
           <Reveal delay={0.1} className="mt-14 grid gap-6 sm:grid-cols-3">
             {[
-              { stat: "79%", copy: "of leads never convert — mostly from poor follow-up, not poor interest" },
+              { stat: "62%", copy: "of calls to small businesses go unanswered entirely" },
               { stat: "63%", copy: "of companies never respond to an inbound lead at all" },
-              { stat: "47 hrs", copy: "average time to first response, even though the first 5 minutes matter most" },
+              { stat: "29–47 hrs", copy: "average time to first response, while the first 5 minutes are what actually moves conversion" },
             ].map(({ stat, copy }) => (
               <div
                 key={stat}
@@ -241,10 +241,10 @@ export default function LandingPage() {
         </Reveal>
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { icon: <Mail className="h-4 w-4" />, title: "Connect your inbox", body: "FollowUp reads your sales conversations in Gmail — nothing else." },
+            { icon: <Mail className="h-4 w-4" />, title: "Connect your inbox", body: "FollowUp reads your sales conversations — Gmail, Outlook, SMS, Instagram DMs, WhatsApp, and more — in one place." },
             { icon: <TrendingUp className="h-4 w-4" />, title: "It scores every lead", body: "Buying intent, response gaps, and deal value become a single follow-up score." },
             { icon: <Clock className="h-4 w-4" />, title: "You get a daily list", body: "A short, ranked list of who needs you today, and why — not a full CRM to dig through." },
-            { icon: <Sparkles className="h-4 w-4" />, title: "It drafts the message", body: "Edit, regenerate, or send — or turn on automation once you trust it." },
+            { icon: <Sparkles className="h-4 w-4" />, title: "It drafts the message", body: "Edit, regenerate, or let low-risk replies send themselves automatically — you decide how much to hand off, per lead, any time." },
           ].map((item, i) => (
             <Reveal key={item.title} delay={i * 0.08}>
               <IconCard icon={item.icon} title={item.title} body={item.body} />
@@ -393,7 +393,7 @@ export default function LandingPage() {
                   "AI scoring & drafted follow-ups",
                   "Manual entry + CSV import",
                   "Analytics & weekly reports",
-                  "Automation (opt-in per lead)",
+                  "Automated follow-up on by default, safely — full autonomy is opt-in per lead",
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--amber)" }} />
@@ -412,6 +412,10 @@ export default function LandingPage() {
                 Free for 14 days. No credit card required to start.
               </p>
             </div>
+            <p className="mt-4 text-xs leading-relaxed" style={{ color: "var(--ink-soft)", opacity: 0.7 }}>
+              No seats, no per-message credits, no &ldquo;AI add-on&rdquo; — what costs $150–$500/mo
+              elsewhere is included here.
+            </p>
           </div>
         </Reveal>
       </section>
@@ -429,11 +433,11 @@ export default function LandingPage() {
               items={[
                 {
                   q: "Will FollowUp send emails without my permission?",
-                  a: "No. Every AI-drafted message needs your approval unless you explicitly turn on automation for a specific lead — and even then, automation stops the instant that lead replies to you.",
+                  a: "By default, FollowUp only sends a low-risk, on-topic follow-up on its own — never anything about price, terms, or a sensitive reply, and never once the lead has already answered you. Anything riskier is held for your approval. You can set any lead to fully autonomous or fully manual at any time.",
                 },
                 {
                   q: "Is this another CRM I have to fill out?",
-                  a: "No — FollowUp reads your existing Gmail conversations. There's nothing to manually log.",
+                  a: "No — FollowUp reads the conversations you're already having (Gmail, Outlook, SMS, Instagram, and more). There's nothing to manually log.",
                 },
                 {
                   q: "What if I don't connect Gmail right away?",

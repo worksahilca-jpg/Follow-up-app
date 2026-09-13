@@ -197,6 +197,53 @@ driving autonomy invitations) that no prior pass had surfaced.
 
 ---
 
+## 2026-09-13 — What makes a landing page effective, and how does FollowUp's current one compare?
+
+**Triggered by:** Founder's direct request for a dedicated landing-page research report (not a
+design task — research and writing only, no code touched, nothing redesigned, no tokens
+proposed).
+**Question:** What are the real mechanics of an effective/"catchy" landing page, what belongs on
+one and why, what makes visitors understand a product fast and keep reading, what is FollowUp
+actually about for a first-time visitor (grounded in `PRODUCT_DIRECTION.md`), how does premium-SaaS
+visual restraint (Stripe/Linear as principles, never screens) apply to FollowUp's already-approved
+navy/blue Award Direction system, and where does FollowUp's current page (`src/app/page.tsx`)
+fall short against all of the above?
+**Method:** Read `brand-principles.md`, `decisions/approved.md` (A-002, the navy/blue Award
+Direction unification), `decisions/rejected.md` (all sixteen standing rejections), D-008–D-011 in
+`design-decisions.md`, the (empty) `references/landing-pages/` folder, `PRODUCT_DIRECTION.md` in
+full, and the live `page.tsx` + `landing-award.module.css` in full — not from memory. New WebSearch
+research conducted (Nielsen Norman Group's own eye-tracking/scrolling-attention/F-pattern studies,
+a peer-reviewed 50ms-first-impression study, SaaS-landing-page-convention aggregators, and
+Stripe/Linear design-restraint characterizations). **WebFetch confirmed blocked again this
+session** (tested directly against `nngroup.com` and `stripe.com`, both `EGRESS_BLOCKED`) — every
+citation is a WebSearch snippet, not a fetched page.
+**Findings:** Full six-question report written up in
+`followup/research/product/2026-09-13-landing-page-research.md`. Headlines: (1) effectiveness is a
+50ms visual-complexity judgment, then an F-pattern scan concentrated in the top ~75% of attention —
+not a vague "hook"; (2) FollowUp's page already has every canonical section except proof/social
+proof, which is a deliberate, honest omission (no fabricated testimonials) rather than an oversight;
+(3) clarity/jargon-avoidance and self-selecting personas are the concrete "get it fast" levers, and
+FollowUp's page mostly follows them; (4) a tight, accurate first-time-visitor summary of FollowUp
+was written directly from `PRODUCT_DIRECTION.md`'s own canonical wording; (5) FollowUp's shipped
+`--accent` usage and three-role typography already match the Stripe/Linear *restraint principle*
+verified directly in code, not just aspired to — though this also surfaced that brand principle 8
+("one typeface," written 2026-09-12) is now stale against the three-typeface Award Direction system
+approved one day later (A-002); (6) a nine-item gap list, headlined by two real findings: the live
+AI voice agent (a shipped, hard-to-copy capability) is entirely absent from the page's copy, and the
+core "lead conversion, not lead generation" thesis doesn't reach a visitor until the third section.
+**Confidence:** Medium overall (WebSearch-snippet sourced, per this repo's standing convention),
+except the Lindgaard et al. 2006 50ms study (peer-reviewed, named, higher confidence) and the direct
+code-verification claims in Section 5/6 (verified against the actual repo, not sourced externally
+at all — highest confidence in the report).
+**Conclusion / what changes:** Nothing was changed in this pass (research-only, as scoped) — the
+report hands a future copy/design pass two significant, concrete leads (the missing voice-agent
+narrative; the buried core thesis) plus seven smaller, named items, and flags one stale brand-doc
+line (principle 8) and one possible routing-copy overclaim (the FAQ's "route to the right person"
+line) for a founder/copy review rather than resolving them unilaterally.
+**Written up in:** `followup/research/product/2026-09-13-landing-page-research.md`
+
+---
+
 **Known, already-available inputs that have not yet been mined for design implications:**
 - `followup/research/customers/2026-09-05-icp-pain-and-trust-objections.md` — ICP pain
   and, importantly, **trust objections**, which are a design problem as much as a copy one

@@ -1148,3 +1148,61 @@ which is why this needed its own entry rather than a quiet fix.
 **Revisit when:** `frontend-3d-agent` implements the sweep and reports back — if any specific
 call site's context doesn't cleanly fit "currency" or "warning," that gets flagged rather than
 forced into one of the two buckets.
+
+**Sweep completed 2026-09-13** by `frontend-3d-agent`. Re-grepped `var(--gold)` before
+touching anything — still 34 raw matches, three of which are not misuse and were left
+untouched: the `--color-gold` Tailwind wiring in `globals.css` (a token definition, not a
+usage), `urgency.ts`'s `urgencyColor()` (the same "getting stale" traffic-light step as the
+one documented pill, just generalized to a continuous function), and `LeadsPageClient.tsx`'s
+"Going cold" `StatCard` (the one documented pill itself). That leaves 30 misuse sites, matching
+the original count exactly, across 13 files:
+- **13 currency sites → plain `--ink`** (via removing the inline color so text inherits the
+  body default, or dropping the `accent`/`accentSoft` props on `StatCard` so it falls back to
+  its own neutral default): `FollowUpCard.tsx`, `TeamPerformanceSection.tsx`,
+  `TeamSection.tsx`'s `revenueGenerated`, dashboard's rescue queue + lead-row deal values,
+  `LeadsPageClient.tsx`'s deal-value column, `leads/[id]/page.tsx`, `PipelinePageClient.tsx`
+  (two `StatCard`s + the per-stage total), `analytics/page.tsx` (two `StatCard`s — `StatDef`'s
+  `accent`/`accentSoft` fields made optional to allow omitting them), `admin/page.tsx`'s
+  revenue `StatCard`.
+- **16 warning/error sites → `--coral`**: `TwilioConfig.tsx`'s 9 (consent/A2P/WhatsApp/voice-
+  agent compliance-notice icons, voice/SMS webhook-mismatch text, "number not in account,"
+  call errors, `numberError`), `TeamSection.tsx`'s invite-failure text and `notice` (backed by
+  `data.warning`), `FilteredEmails.tsx`'s sync error, `LeadAssignmentSelect.tsx`'s "Claim it"
+  unassigned-state link, `ApprovalQueue.tsx`'s hold-banner border + icon. One site was *added*
+  to this bucket beyond the original list: `LeadsPageClient.tsx`'s row-level "Unassigned" text
+  (line ~304) — not separately named in this doc's original site list, but structurally
+  identical to `LeadAssignmentSelect.tsx`'s "unassigned = needs a person" signal, so it was
+  extended the same treatment for consistency rather than left as a stray `--gold` site.
+- **1 decorative site**: `SparkleBurst.tsx` — `--gold` dropped entirely from its particle-color
+  array (left with `--rust`/`--sage`) rather than swapped for a new color, per this entry's own
+  "keep the fix total" note.
+
+**Flagged, left as `--gold`, not forced into a bucket:** `settings/page.tsx`'s "Scan spam for
+missed leads" button (`backgroundColor: var(--gold-soft)`, `color: var(--gold)`). It's a
+manual-action button, not warning/error *text*, and not a currency figure — it doesn't cleanly
+fit either bucket this entry defines. Whether it should become a plain/neutral button (matching
+the adjacent "Reconnect" button's `--slate`/`--slate-soft` treatment) or something else is a
+call for whoever owns this decision next, not a mechanical fit into `--ink` or `--coral`.
+
+**Side effect flagged, contrast checked, fill left unfixed (deliberately out of this entry's
+scope):** five sites now have a `--coral` icon/border/text sitting on an unchanged
+`--gold-soft` background fill — `ApprovalQueue.tsx`'s hold banner, and all four of
+`TwilioConfig.tsx`'s compliance-notice boxes (TCPA consent, A2P 10DLC, WhatsApp verification,
+voice-agent cost/consent). This entry's scope was `var(--gold)` call sites only (matching the
+grep the decision was built on); the `--gold-soft` background fills were never counted as
+misuse sites and weren't touched. Per this entry's own instruction to spot-check any new
+`--coral` call site not already in `[[color-system]]`'s contrast table: **measured
+`--coral` (`#b32a44`) on `--gold-soft` (`#fef3c7`) at 5.66:1** — clears both the 4.5:1 body-text
+floor and the 3:1 large-text/UI floor with real margin, so the combination is accessible even
+though it reads as a slightly odd amber-fill/red-icon pairing. Visual consistency of that
+pairing (whether the fill should eventually move off `--gold-soft` too) is a real open question,
+just not an accessibility one — worth a follow-up look, not a blocker.
+
+**Verification:** `npx tsc --noEmit`, `npx eslint` on every changed file, `npx vitest run`
+(571 tests), and a full `rm -rf .next && npm run build` all clean after the sweep (the build's
+`prisma migrate deploy` step logs the expected sandbox Supabase-unreachable warning and
+continues — not a failure). No test asserted on `--gold` usage at any of the 30 sites. Rendering
+verified via a static HTML mockup built from the real tokens (all affected screens are
+authenticated), screenshotted with Playwright and captioned as a mockup — showed currency
+rendering in plain `--ink`, warning/error text and icons in `--coral`, and the "Going cold"
+pill still correctly in `--gold`.

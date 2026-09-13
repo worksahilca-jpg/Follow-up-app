@@ -30,7 +30,7 @@ export default async function AdminPage() {
         <StatCard label="Leads captured (all businesses)" value={String(data.totalLeadsPlatformWide)} icon={Inbox} accent="var(--slate)" accentSoft="var(--slate-soft)" />
         <StatCard label="Active businesses" value={String(data.activeBusinessCount)} icon={Radio} accent="var(--sage)" accentSoft="var(--sage-soft)" />
         <StatCard label="Dormant businesses" value={String(data.dormantBusinessCount)} icon={MoonStar} accent="var(--slate)" accentSoft="var(--slate-soft)" />
-        <StatCard label="Estimated MRR" value={formatCurrency(data.estimatedMonthlyRevenueUsd)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
+        <StatCard label="Estimated MRR" value={formatCurrency(data.estimatedMonthlyRevenueUsd)} icon={DollarSign} />
       </div>
       <p className="text-xs text-ink-soft mt-3">
         {data.activeBusinessCount} of {data.totalBusinesses} businesses have captured at least one lead or connected

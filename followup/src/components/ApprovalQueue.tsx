@@ -135,9 +135,9 @@ export default function ApprovalQueue({ items }: { items: ApprovalItem[] }) {
   if (visible.length === 0) return null;
 
   return (
-    <div className="mt-6 rounded-xl border-2 overflow-hidden" style={{ borderColor: "var(--gold)" }}>
+    <div className="mt-6 rounded-xl border-2 overflow-hidden" style={{ borderColor: "var(--coral)" }}>
       <div className="flex items-center gap-2 px-5 py-3" style={{ backgroundColor: "var(--gold-soft)" }}>
-        <ShieldAlert className="h-4 w-4" style={{ color: "var(--gold)" }} />
+        <ShieldAlert className="h-4 w-4" style={{ color: "var(--coral)" }} />
         <h2 className="font-display text-lg" style={{ color: "var(--ink)" }}>
           Needs your OK ({visible.length})
         </h2>

@@ -105,10 +105,10 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
           <StatCard label="Active leads" value={<CountUp to={visible.length} />} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
         </RevealItem>
         <RevealItem>
-          <StatCard label="Total pipeline value" value={formatCurrency(totalValue)} icon={DollarSign} accent="var(--gold)" accentSoft="var(--gold-soft)" />
+          <StatCard label="Total pipeline value" value={formatCurrency(totalValue)} icon={DollarSign} />
         </RevealItem>
         <RevealItem>
-          <StatCard label="Weighted value" value={formatCurrency(Math.round(weightedValue))} icon={TrendingUp} accent="var(--gold)" accentSoft="var(--gold-soft)" />
+          <StatCard label="Weighted value" value={formatCurrency(Math.round(weightedValue))} icon={TrendingUp} />
         </RevealItem>
       </RevealGroup>
 
@@ -196,7 +196,7 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                 {stage.leads.length}
               </span>
             </div>
-            <p className="text-sm font-medium mt-0.5" style={{ color: "var(--gold)" }}>
+            <p className="text-sm font-medium mt-0.5">
               {formatCurrency(stage.value)}
             </p>
             <div className="mt-3 space-y-2">

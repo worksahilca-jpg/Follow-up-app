@@ -116,62 +116,75 @@ export async function runShift(opts: {
   if (!role.enabled) return blocked(role.id, opts.trigger, "This desk is switched off.");
   if (!role.live) return blocked(role.id, opts.trigger, "This desk has no runner yet — it is on the roster, not on shift.");
 
-  // One shift per desk at a time. Without this, a cron tick landing on top
-  // of a manual run doubles the bill and produces two half-notes.
-  const openRun = await prisma.agentRun.findFirst({
-    where: {
-      roleId: role.id,
-      status: "RUNNING",
-      startedAt: { gt: new Date(Date.now() - STALE_RUN_MINUTES * 60_000) },
-    },
-    select: { id: true },
-  });
-  if (openRun) return blocked(role.id, opts.trigger, "A shift is already open at this desk.");
+  // Claim the desk. The "no open shift" and "under ceiling" checks, and the
+  // RUNNING row that then blocks every later claim, all happen inside one
+  // Postgres-advisory-locked transaction — without this, a cron tick and a
+  // manual "Run now" landing at the same instant could both read "clear"
+  // before either writes a row, exactly the race already fixed once for the
+  // automation scheduler and again for the rate limiters. The lock is
+  // xact-scoped (`pg_advisory_xact_lock`), so it always releases when this
+  // transaction ends — a crashed function can never leave a desk locked.
+  const claim = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${role.id}))`;
 
-  const spent = await spentToday(role.id);
-  if (spent >= role.dailyCostCeilingUsd) {
-    return blocked(
-      role.id,
-      opts.trigger,
-      `Daily ceiling reached — $${spent.toFixed(3)} of $${role.dailyCostCeilingUsd.toFixed(2)} spent.`,
-    );
-  }
+    const openRun = await tx.agentRun.findFirst({
+      where: {
+        roleId: role.id,
+        status: "RUNNING",
+        startedAt: { gt: new Date(Date.now() - STALE_RUN_MINUTES * 60_000) },
+      },
+      select: { id: true },
+    });
+    if (openRun) return { ok: false as const, reason: "A shift is already open at this desk." };
+
+    const agg = await tx.agentRun.aggregate({
+      where: { roleId: role.id, startedAt: { gte: startOfUtcDay(new Date()) } },
+      _sum: { costUsd: true },
+    });
+    const spent = agg._sum.costUsd ?? 0;
+    if (spent >= role.dailyCostCeilingUsd) {
+      return {
+        ok: false as const,
+        reason: `Daily ceiling reached — $${spent.toFixed(3)} of $${role.dailyCostCeilingUsd.toFixed(2)} spent.`,
+      };
+    }
+
+    // Claimed. This RUNNING row is what makes the *next* concurrent caller's
+    // openRun check above come back non-null — the lock only needs to cover
+    // this transaction, not the model call that follows it.
+    const run = await tx.agentRun.create({
+      data: { roleId: role.id, taskId: opts.taskId ?? null, trigger: opts.trigger, status: "RUNNING", model: MODEL },
+    });
+    return { ok: true as const, runId: run.id };
+  });
+
+  if (!claim.ok) return blocked(role.id, opts.trigger, claim.reason);
+  const runId = claim.runId;
 
   const pack = await buildContextPack(role.key, role.id);
   if (pack.kind === "skip") {
     // Nothing happened since last time. That is a real answer and it is
-    // free — recorded as a successful shift so the desk's cadence stays
-    // visible, with no model call behind it.
-    const run = await prisma.agentRun.create({
-      data: {
-        roleId: role.id,
-        taskId: opts.taskId ?? null,
-        trigger: opts.trigger,
-        status: "SUCCEEDED",
-        endedAt: new Date(),
-        summary: pack.reason,
-        output: "",
-        model: "",
-      },
+    // free — the claimed row is updated to SUCCEEDED rather than left
+    // RUNNING, so the desk's cadence stays visible with no model call
+    // behind it.
+    await prisma.agentRun.update({
+      where: { id: runId },
+      data: { status: "SUCCEEDED", endedAt: new Date(), summary: pack.reason, output: "", model: "" },
     });
-    return { runId: run.id, status: "SUCCEEDED", summary: pack.reason, costUsd: 0 };
+    return { runId, status: "SUCCEEDED", summary: pack.reason, costUsd: 0 };
   }
 
   const task = opts.taskId
     ? await prisma.agentTask.findUnique({ where: { id: opts.taskId }, select: { title: true, detail: true } })
     : null;
 
-  const run = await prisma.agentRun.create({
-    data: { roleId: role.id, taskId: opts.taskId ?? null, trigger: opts.trigger, status: "RUNNING", model: MODEL },
-  });
-
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     await prisma.agentRun.update({
-      where: { id: run.id },
+      where: { id: runId },
       data: { status: "FAILED", endedAt: new Date(), error: "OPENAI_API_KEY is not set.", summary: "Could not start — no API key." },
     });
-    return { runId: run.id, status: "FAILED", summary: "Could not start — no API key.", costUsd: 0 };
+    return { runId, status: "FAILED", summary: "Could not start — no API key.", costUsd: 0 };
   }
 
   const system = [
@@ -210,7 +223,7 @@ export async function runShift(opts: {
     const costUsd = priceOf(MODEL, inputTokens, outputTokens);
 
     await prisma.agentRun.update({
-      where: { id: run.id },
+      where: { id: runId },
       data: {
         status: "SUCCEEDED",
         endedAt: new Date(),
@@ -222,13 +235,13 @@ export async function runShift(opts: {
       },
     });
 
-    return { runId: run.id, status: "SUCCEEDED", summary: parsed.summary, costUsd };
+    return { runId, status: "SUCCEEDED", summary: parsed.summary, costUsd };
   } catch (err) {
     const message = err instanceof Error ? err.message : "The shift failed.";
     await prisma.agentRun.update({
-      where: { id: run.id },
+      where: { id: runId },
       data: { status: "FAILED", endedAt: new Date(), error: message, summary: "The shift failed." },
     });
-    return { runId: run.id, status: "FAILED", summary: message, costUsd: 0 };
+    return { runId, status: "FAILED", summary: message, costUsd: 0 };
   }
 }

@@ -12,14 +12,21 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
+// $transaction runs the callback against the same mocked client plus a
+// no-op $executeRaw — good enough to exercise the claim logic without a
+// real Postgres advisory lock, since these tests care about the gating
+// decisions, not actual cross-request concurrency.
+vi.mock("@/lib/db", () => {
+  const prisma: Record<string, unknown> = {
     agentRole: { findUnique: vi.fn(), findMany: vi.fn(), upsert: vi.fn() },
     agentRun: { findFirst: vi.fn(), aggregate: vi.fn(), create: vi.fn(), update: vi.fn() },
     agentTask: { findUnique: vi.fn() },
     productFeedback: { findMany: vi.fn() },
-  },
-}));
+    $executeRaw: vi.fn().mockResolvedValue(undefined),
+  };
+  prisma.$transaction = vi.fn((fn: (tx: unknown) => unknown) => fn(prisma));
+  return { prisma };
+});
 
 const createCompletion = vi.fn();
 vi.mock("openai", () => ({

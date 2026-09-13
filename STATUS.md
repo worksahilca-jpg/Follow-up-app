@@ -17,17 +17,9 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 - [ ] **Ghosted-lead recovery test** — set up the test Gmail account, send the 4 scripted
   test-lead emails, let real time pass to prove the "no lead goes cold" automation end to end.
 - [ ] **Logo direction** — 3 arrow-based concepts presented earlier, none picked yet.
-- [ ] **Two design decisions**, pending the design agent's recommendations below — founder
-  approval needed once the agent reports back (see "Running now").
-
 ## Running now (background agents)
 
-- [ ] `frontend-3d-agent` — resolving two open color decisions (ink-vs-rust primary button;
-  the "going cold" gold status pill) plus real market-relevant UI/UX research into
-  `design-brain/references/`. Writing recommendations into
-  `[[design-decisions]]` (design-brain), marked "proposed — awaiting founder approval."
-  Has standing permission to check in with findings/questions at any point rather than
-  waiting for a single final report.
+*(none right now — check the [Agent Board](https://claude.ai/code/artifact/310ede6b-c78d-436b-a262-d6bbd40040c1) for live status)*
 
 ## Recently shipped (this session)
 
@@ -38,6 +30,8 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 - [x] Founder-only `/admin` platform dashboard — code live, gate not yet configured (PR [#201](https://github.com/worksahilca-jpg/Follow-up-app/pull/201))
 - [x] CSP fix so the Vercel Toolbar can load on production (PR [#202](https://github.com/worksahilca-jpg/Follow-up-app/pull/202))
 - [x] Design brain made Obsidian-compatible — wiki-links + `design-brain/INDEX.md` (PR [#203](https://github.com/worksahilca-jpg/Follow-up-app/pull/203))
+- [x] STATUS.md, button-color and "going cold" pill-color decisions, lead-message research (PR [#204](https://github.com/worksahilca-jpg/Follow-up-app/pull/204))
+- [x] Button-color (A-003) and pill-color (A-004) decisions approved by founder — implemented
 - [x] Team Slack notifications (CI/PR activity, hot leads, server errors)
 - [x] `followupbase.io` Google Workspace set up; Dipesh and Vansh added as teammates
 - [x] Vercel Web Analytics enabled; Speed Insights confirmed on; Toolbar production access on
@@ -61,9 +55,7 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 - Every PR gets opened for review before merging — no direct pushes to `main`, even from a
   background agent. (This was violated once, for PR #201's underlying commit — caught and
   corrected; noted here so it doesn't happen again.)
-- Two open design-brain tokens (`--ink` vs `--rust` primary button, the "going cold" pill
-  color) are not to be unilaterally finalized in shipped code — proposal only, until the
-  founder approves.
+- ~~Two open design-brain tokens...~~ RESOLVED 2026-09-13 — see A-003/A-004 in `[[approved]]`.
 
 ---
 

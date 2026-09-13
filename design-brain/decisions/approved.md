@@ -93,3 +93,48 @@ reasoning and implementation plan.
 need updating to describe Award Direction's navy/blue values as the real baseline once the
 app-wide reskin ships. Until then, treat their "current values" sections as historical, not
 current.*
+
+---
+
+## A-003 — `--ink` is the primary-button color inside the authenticated app; `--rust` stays reserved for accent roles and lead-facing pages ^A-003
+**Date:** 2026-09-13
+**Scope:** System-wide — `[[buttons]]`'s primary-button spec, plus the one shipped outlier
+(`LeadWorkflowEnrollment`'s "Put on plan") fixed to match
+**Approved:** The founder approved `[[design-decisions#^D-014|D-014]]`'s recommendation as
+proposed: update the documented spec to match the shipped app (`--ink` fill for every
+in-app primary button, `--rust` fill reserved for accent-only roles plus the public
+booking page / embed widget / global error page) rather than reskinning 38 buttons to blue.
+**Why it was liked:** Not recorded verbatim — approved via "approve both decisions" alongside
+[[approved#^A-004|A-004]], without a stated reason beyond the write-up's own reasoning.
+**The generalizable principle:** A fill color used on every button stops signaling
+anything — reserving the one accent for genuinely interactive/selected states (nav, focus,
+toggles) keeps it meaningful, and the operator's own tool can stay calm/near-monochrome while
+a lead-facing surface still gets a touch of the brand color. The highest-trust action in the
+product (`ApprovalQueue`'s "Approve & send") is correctly calm, not a marketing-style CTA.
+**Applies to:** Every future primary button inside the authenticated app defaults to `--ink`;
+`--rust` fill as a *primary* button is scoped to surfaces a business's own customer sees
+directly, not the operator's dashboard.
+**Evidence:** `[[design-decisions#^D-014|D-014]]` (full grep evidence and reasoning);
+`[[buttons]]` updated to the two-row primary spec; `LeadWorkflowEnrollment.tsx`'s outlier
+fixed from `--rust` to `--ink`.
+
+## A-004 — Keep `--gold` for "going cold"; reword its documented meaning, don't change its value ^A-004
+**Date:** 2026-09-13
+**Scope:** `[[color-system]]`'s `--gold` status color and its documented meaning
+**Approved:** The founder approved `[[design-decisions#^D-015|D-015]]`'s recommendation as
+proposed: keep `--gold` for the "going cold" lead-urgency pill rather than switching to
+`--slate`, and reword `--gold`'s documented meaning to drop "Warming" (which literally
+contradicted "going cold").
+**Why it was liked:** Not recorded verbatim — approved alongside [[approved#^A-003|A-003]]
+without a stated reason beyond the write-up's own reasoning.
+**The generalizable principle:** The four status colors are a traffic-light *severity* ramp
+(fine → caution → urgent), not a literal temperature or hue-matching scale — a color's
+job is escalation, not thematic consistency with a label's literal wording. Don't
+repurpose a color that's already meaningful elsewhere (here, `--slate` = "Total" in the same
+stat row) just to resolve a surface-level wording coincidence.
+**Applies to:** Any future status-color naming question — check what the color already means
+elsewhere before reassigning it, and prefer a wording fix over a value change when the
+underlying color choice is still correct.
+**Evidence:** `[[design-decisions#^D-015|D-015]]` (full contrast measurements and reasoning);
+`[[color-system]]`'s `--gold` row reworded from "Warming / warning / attention soon" to
+"Caution / needs attention soon (traffic-light amber — a severity step, not a temperature)."

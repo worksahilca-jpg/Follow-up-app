@@ -62,7 +62,7 @@ export default function FollowUpCard({ lead }: { lead: Lead }) {
             <Link href={`/leads/${lead.id}`} className="font-display text-lg hover:underline">
               {lead.name}
             </Link>
-            <span className="text-sm font-medium tabular-nums whitespace-nowrap" style={{ color: "var(--gold)" }}>
+            <span className="text-sm font-medium tabular-nums whitespace-nowrap">
               {formatCurrency(lead.dealValue)}
             </span>
           </div>

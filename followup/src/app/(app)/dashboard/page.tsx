@@ -183,7 +183,7 @@ export default async function DashboardPage() {
                       <span className="text-ink-soft"> — {lead.rescue.reason}</span>
                     </span>
                     <span className="flex items-center gap-3 shrink-0">
-                      {lead.dealValue > 0 && <span style={{ color: "var(--gold)" }}>{formatCurrency(lead.dealValue)}</span>}
+                      {lead.dealValue > 0 && <span>{formatCurrency(lead.dealValue)}</span>}
                       <span
                         className="rounded-full px-2 py-0.5 text-xs font-medium tabular-nums"
                         style={{ backgroundColor: "var(--coral-soft)", color: "var(--coral)" }}
@@ -218,7 +218,7 @@ export default async function DashboardPage() {
                       <span className="font-medium">{l.name}</span>
                       <span className="text-ink-soft"> — {describeTrigger(l.trigger)}, replied {l.repliedAfterHours}h later</span>
                     </span>
-                    {l.dealValue > 0 && <span style={{ color: "var(--gold)" }}>{formatCurrency(l.dealValue)}</span>}
+                    {l.dealValue > 0 && <span>{formatCurrency(l.dealValue)}</span>}
                   </Link>
                 ))}
               </div>

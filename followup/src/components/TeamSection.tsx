@@ -152,7 +152,7 @@ export default function TeamSection() {
               <span>{m.followUpsCompleted} completed</span>
               <span>{m.overdueFollowUps} overdue</span>
             </div>
-            <span className="font-medium shrink-0" style={{ color: "var(--gold)" }}>
+            <span className="font-medium shrink-0">
               {formatCurrency(m.revenueGenerated)}
             </span>
             {isAdmin && m.id !== selfId ? (
@@ -228,7 +228,7 @@ export default function TeamSection() {
         </p>
       )}
       {isAdmin && inviteEmailSent !== null && (
-        <p className="text-xs mt-1" style={{ color: inviteEmailSent ? "var(--sage)" : "var(--gold)" }}>
+        <p className="text-xs mt-1" style={{ color: inviteEmailSent ? "var(--sage)" : "var(--coral)" }}>
           {inviteEmailSent
             ? "Invite sent — they'll also join automatically the moment they sign in with this email."
             : "Invite created — no email could be sent (connect Gmail under Settings to enable that), so let them know to sign in with this email to join."}
@@ -236,7 +236,7 @@ export default function TeamSection() {
       )}
 
       {notice && (
-        <p className="text-xs mt-3" style={{ color: "var(--gold)" }}>
+        <p className="text-xs mt-3" style={{ color: "var(--coral)" }}>
           {notice}
         </p>
       )}

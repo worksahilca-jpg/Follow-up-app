@@ -301,14 +301,14 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
               </div>
               <div
                 className="text-sm hidden lg:block w-28 truncate"
-                style={lead.assignedToId ? { color: "var(--ink-soft)" } : { color: "var(--gold)", fontWeight: 500 }}
+                style={lead.assignedToId ? { color: "var(--ink-soft)" } : { color: "var(--coral)", fontWeight: 500 }}
               >
                 {lead.assignedToId ? lead.assignedTo : "Unassigned"}
               </div>
               <div className="text-sm text-ink-soft hidden md:block w-24">
                 {formatDate(lead.lastContacted)}
               </div>
-              <div className="text-sm font-medium tabular-nums w-20 text-right" style={{ color: "var(--gold)" }}>
+              <div className="text-sm font-medium tabular-nums w-20 text-right">
                 {formatCurrency(lead.dealValue)}
               </div>
             </Link>

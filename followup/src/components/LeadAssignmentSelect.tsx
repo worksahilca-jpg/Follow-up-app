@@ -115,7 +115,7 @@ export default function LeadAssignmentSelect({
           onClick={claim}
           disabled={saving}
           className="text-xs mt-1 underline disabled:opacity-60"
-          style={{ color: "var(--gold)" }}
+          style={{ color: "var(--coral)" }}
         >
           Claim it
         </button>

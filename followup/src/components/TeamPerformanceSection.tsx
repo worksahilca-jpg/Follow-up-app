@@ -40,7 +40,7 @@ export default function TeamPerformanceSection({ members }: { members: TeamBreak
           >
             {m.overdueCount}
           </span>
-          <span className="text-sm text-right font-medium" style={{ color: "var(--gold)" }}>
+          <span className="text-sm text-right font-medium">
             {formatCurrency(m.activeRevenue)}
           </span>
         </div>

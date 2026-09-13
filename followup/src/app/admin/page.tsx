@@ -1,4 +1,5 @@
-import { Building2, Inbox, Radio, MoonStar, DollarSign } from "lucide-react";
+import Link from "next/link";
+import { Building2, Inbox, Radio, MoonStar, DollarSign, ArrowRight } from "lucide-react";
 import StatCard from "@/components/StatCard";
 import AdminCharts from "@/components/AdminCharts";
 import { getPlatformAdminData } from "@/lib/admin-data";
@@ -24,6 +25,10 @@ export default async function AdminPage() {
         Cross-tenant view across every business on FollowUp — visible only to the founder, and to no one on any
         individual business&apos;s own team.
       </p>
+      <Link href="/admin/office" className="inline-flex items-center gap-1.5 text-sm mt-3" style={{ color: "var(--rust)" }}>
+        The office — what the agents did while you weren&apos;t watching
+        <ArrowRight className="h-4 w-4" aria-hidden />
+      </Link>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-6">
         <StatCard label="Businesses signed up" value={String(data.totalBusinesses)} icon={Building2} accent="var(--slate)" accentSoft="var(--slate-soft)" />

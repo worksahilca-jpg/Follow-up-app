@@ -80,7 +80,7 @@ two no longer sit as visual neighbors the way two ambers did.
 | Token | Value | Soft | Means |
 |---|---|---|---|
 | `--coral` | `#b32a44` | `#fbe1e6` | Needs attention now / error / high priority |
-| `--gold` | `#a35904` | `#fef3c7` | Warming / warning / attention soon |
+| `--gold` | `#a35904` | `#fef3c7` | Caution / needs attention soon (traffic-light amber — a severity step, not a temperature) |
 | `--sage` | `#0d6e3c` | `#dcf5e5` | Good / success / no action needed |
 | `--slate` | `#56677e` | `#eef1f6` | Neutral / informational / medium |
 
@@ -172,18 +172,11 @@ larger size.
 
 ## Open decisions
 
-- `[TO DECIDE]` **The "going cold" gold pill, reviewed 2026-09-13.** A reviewer flagged
-  `--gold` reading as visually too close to `--coral` ("hot") to intuitively signal
-  "cooling down." Proposed resolution — **keep `--gold`** (the axis is traffic-light
-  escalation, not literal temperature; `--slate` is already spoken for by "Total" in the
-  same stat row) plus a wording fix below — is in
-  `[[design-decisions#^D-015|D-015]]`, awaiting founder confirmation.
-- `[TO DECIDE]` **`--gold`'s description below should probably drop the word "Warming."**
-  "Warming / warning / attention soon" reads as a literal temperature claim that directly
-  contradicts "going cold" using the same color — see `[[design-decisions#^D-015|D-015]]`.
-  Proposed replacement: "Caution / needs attention soon (traffic-light amber — a severity
-  step, not a temperature)." Not changed here pending the same founder confirmation as
-  above, since it's the same open question.
+- **RESOLVED 2026-09-13** — the "going cold" gold pill stays `--gold`, not `--slate`: the
+  axis is traffic-light escalation (fine → caution → urgent), not literal temperature, and
+  `--slate` is already spoken for by "Total" in the same stat row. The description above was
+  reworded to drop "Warming," which invited the question by literally contradicting "going
+  cold." See `[[design-decisions#^D-015|D-015]]` and `[[approved#^A-004|A-004]]`.
 - `[TO DECIDE]` **`--gold` is also used, undocumented, for every currency/deal-value amount
   app-wide** (six call sites: `FollowUpCard`, dashboard, Leads list, lead detail, Pipeline
   stage totals, Team performance revenue) — a real convention, but one that collides with

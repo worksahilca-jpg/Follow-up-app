@@ -787,8 +787,8 @@ together.
 
 ## D-014 — Ink, not the accent, is the real primary-button color in the shipped app — update `[[buttons]]` to match, don't "fix" the 37 ^D-014
 **Date:** 2026-09-13
-**Decided by:** Claude (frontend-3d-agent), proposed — awaiting founder approval
-**Status:** proposed
+**Decided by:** Claude (frontend-3d-agent), proposed — **approved by founder 2026-09-13**, see `[[approved#^A-003|A-003]]`
+**Status:** approved — implemented (`[[buttons]]` updated, `LeadWorkflowEnrollment`'s outlier fixed)
 **Context:** `[[buttons]]` documents "accent fill, `--on-accent` label" as the primary-button
 spec. A grep of `followup/src/` for the actual inline styles
 (`backgroundColor: "var(--ink)"` vs. `backgroundColor: "var(--rust)"`) found the audit's
@@ -898,8 +898,8 @@ either confirms (move to `[[approved]]`) or asks for the 38 to move to `--rust` 
 
 ## D-015 — "Going cold" stays gold, not slate — the axis is escalation, not literal temperature; flag `[[color-system]]`'s wording, not its value ^D-015
 **Date:** 2026-09-13
-**Decided by:** Claude (frontend-3d-agent), proposed — awaiting founder approval
-**Status:** proposed
+**Decided by:** Claude (frontend-3d-agent), proposed — **approved by founder 2026-09-13**, see `[[approved#^A-004|A-004]]`
+**Status:** approved — implemented (`[[color-system]]`'s `--gold` wording reworded)
 **Context:** A reviewer flagged that `--gold` (going cold) sitting next to `--coral` (hot)
 on `LeadsPageClient`'s stat row (`Hot` / `Going cold` StatCards, coral `Flame` icon next to
 gold `Snowflake` icon) reads as "two different warm colors" rather than a clear

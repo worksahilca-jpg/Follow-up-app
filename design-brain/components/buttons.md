@@ -7,19 +7,24 @@ hierarchy of buttons on a screen is a statement about what the user should do.
 
 | Variant | Appearance | Use for | Per screen |
 |---|---|---|---|
-| **Primary** | Accent fill, `--on-accent` label | The single most important action | 0 or 1 |
+| **Primary (in-app)** | `--ink` fill, `--paper` label | The single most important action on any authenticated-app screen | 0 or 1 |
+| **Primary (lead-facing / no-chrome)** | Accent (`--rust`) fill, `--on-accent` label | The single most important action on the public booking page, the embeddable widget, or the global error page | 0 or 1 |
 | **Secondary** | Surface fill, `--line` border, `--ink` label | Alternative actions | Several |
 | **Tertiary / ghost** | No fill, no border, `--ink` or `--ink-soft` label | Low-weight actions, toolbars, table rows | Many |
 | **Destructive** | `[TO DECIDE]` — `--coral` text on a subtle surface, or `--coral` fill | Delete, disconnect, cancel a plan | Rare |
 | **Link** | Accent text, underline on hover | Inline navigation within text | As needed |
 
-> **The Primary row above is under active review, not settled.** A 2026-09-13 grep audit
-> found the shipped app actually uses `--ink` (near-black) fill for nearly every primary
-> button inside the authenticated app, and reserves `--rust` fill for accent-only roles
-> plus a handful of outward-facing pages. See `[[design-decisions#^D-014|D-014]]` for the
-> full evidence and a proposed rewrite of this row — **proposed, awaiting founder
-> approval**, not yet ratified. Don't "fix" the app to match the row above until that's
-> resolved.
+**Why two primary rows, not one:** the operator's own tool (dashboard, leads, pipeline,
+settings — everything a business owner uses to run FollowUp) stays calm and near-monochrome;
+`--ink` is the default primary fill there, including the highest-trust click in the product,
+`ApprovalQueue`'s "Approve & send." `--rust` (the one accent) is reserved for genuine
+accent-only roles — active nav, focus rings, toggles, selected states, inline links — plus
+primary-button fill on the few surfaces a business's own *customer* sees directly rather
+than the operator's internal tool. A bright accent-fill button on every "Add," "Save," and
+"Send" would be the generic SaaS-template default (standing rejection
+`[[rejected#^S-15|S-15]]`) and would dilute the accent's meaning everywhere else it appears.
+**Approved 2026-09-13** — see `[[approved#^A-003|A-003]]` and
+`[[design-decisions#^D-014|D-014]]` for the full evidence and reasoning.
 
 **Destructive is deliberately open.** A full red fill is loud and pulls attention on a
 screen where destruction shouldn't be prominent; red text on a neutral surface is calmer

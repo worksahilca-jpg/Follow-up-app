@@ -11,7 +11,7 @@ import type { Lead } from "@/lib/types";
 // message landed mid-run must never fall in a gap between two ticks.
 // Re-seeing a thread is cheap (known threads skip the classifier).
 const SYNC_OVERLAP_MS = 15 * 60_000;
-// How often the automatic sync does a DEEP pass (the same 90-day,
+// How often the automatic sync does a DEEP pass (the same 180-day,
 // 100-thread pull as the manual "Sync now") instead of the incremental
 // tick. Nobody should ever have to press "Sync now": a new connection
 // gets its first deep pass on the very next tick, and after that once a

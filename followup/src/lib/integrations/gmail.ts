@@ -748,16 +748,20 @@ export async function fetchSalesConversations(
 
   // `since` is the automatic sync's narrowing: only threads with activity
   // after that instant (Gmail's `after:` takes epoch seconds). The manual
-  // "Sync now" passes nothing and keeps the broad 90-day / 30-thread pull.
+  // "Sync now" passes nothing and keeps the broad 180-day / 100-thread pull.
   const sinceClause = options.since ? ` after:${Math.floor(options.since.getTime() / 1000)}` : "";
   // A manual sync is the "go back and find what I've been ignoring" pull,
-  // so it goes deep (a busy inbox has far more than 30 threads in 90
-  // days); the automatic tick only looks at what's new, where 30 is
-  // plenty. Known and previously-rejected threads skip the classifier, so
-  // depth costs Gmail reads, not OpenAI calls, on every run after the first.
+  // so it goes deep — 180 days rather than 90 so a brand-new connection
+  // recovers leads from further back than a business would otherwise have
+  // any way to know went cold (2026-09-13: widened from 90 to 180 at the
+  // founder's direction, so a new business's first sync surfaces roughly
+  // half a year of history, not one quarter). The automatic tick only
+  // looks at what's new, where 30 threads is plenty. Known and previously-
+  // rejected threads skip the classifier, so depth costs Gmail reads, not
+  // OpenAI calls, on every run after the first.
   const { data: listData } = await gmail.users.threads.list({
     userId: "me",
-    q: `-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d${sinceClause}`,
+    q: `-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:180d${sinceClause}`,
     maxResults: options.since ? 30 : 100,
   });
 

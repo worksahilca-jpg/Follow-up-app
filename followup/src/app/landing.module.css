@@ -1,25 +1,16 @@
-/* Editorial design system for the pre-auth marketing surface — the
-   landing page (src/app/page.tsx) and /signin (src/app/signin/page.tsx),
-   the two pages a visitor sees before they're ever signed in. Deliberately
-   its own palette, scoped entirely to this CSS module so it never touches
-   the authenticated app's --paper/--ink/--rust tokens in globals.css. A
-   marketing/entry surface earning a distinct visual identity from the
-   in-product UI is a normal, legitimate split (this file), not a fork of
-   the app's design system — the two co-exist by design (see each file's
-   own header comment for why). */
+/* /signin (src/app/signin/page.tsx) — the 3D-mockup/aurora "chrome" around
+   the sign-in card. Used to be its own warm-cream/amber palette, scoped
+   entirely to this module so it never touched the authenticated app's
+   tokens. Unified onto the app-wide navy/blue tokens in globals.css as of
+   D-010/A-002 (2026-09-13) — this file no longer redeclares --ink/--card/
+   --rust/etc. locally; it reads them straight from :root, exactly like
+   every other authenticated-app surface, so /signin, the app, and the
+   landing page are one system rather than three. Only the structural/
+   decorative rules (grid texture, 3D transforms, chip shapes) live here
+   now — the color values all come from globals.css. */
 
 .root {
-  --cream: #f3f0ea;
-  --surface: #ffffff;
-  --ink: #18140f;
-  --ink-soft: rgba(24, 20, 15, 0.5);
-  --ink-faint: rgba(24, 20, 15, 0.28);
-  --amber: #e8a23a;
-  --amber-soft: rgba(232, 162, 58, 0.14);
-  --coral: #d1553f;
-  --blue: #4a6fa5;
-
-  background: var(--cream);
+  background: var(--paper);
   color: var(--ink);
   position: relative;
   overflow-x: clip;
@@ -38,8 +29,8 @@
   height: 780px;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, rgba(24, 20, 15, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(24, 20, 15, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(11, 31, 51, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(11, 31, 51, 0.05) 1px, transparent 1px);
   background-size: 64px 64px;
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 30% 20%, black, transparent 75%);
   mask-image: radial-gradient(ellipse 70% 60% at 30% 20%, black, transparent 75%);
@@ -57,10 +48,10 @@
   border-bottom: 1px solid transparent;
 }
 .navScrolled {
-  background: color-mix(in srgb, var(--cream) 90%, transparent);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom-color: rgba(24, 20, 15, 0.08);
+  border-bottom-color: rgba(11, 31, 51, 0.08);
 }
 
 /* ---------- headline ---------- */
@@ -104,11 +95,11 @@
   width: 520px;
   max-width: 88vw;
   border-radius: 18px;
-  background: var(--surface);
+  background: var(--card);
   box-shadow:
-    0 2px 0 rgba(24, 20, 15, 0.04) inset,
-    0 40px 80px -24px rgba(24, 20, 15, 0.35),
-    0 12px 28px -12px rgba(24, 20, 15, 0.25);
+    0 2px 0 rgba(11, 31, 51, 0.04) inset,
+    0 40px 80px -24px rgba(11, 31, 51, 0.35),
+    0 12px 28px -12px rgba(11, 31, 51, 0.25);
   overflow: hidden;
   transform: translateZ(0);
 }
@@ -117,7 +108,7 @@
   display: flex;
   align-items: center;
   padding: 10px 14px;
-  border-bottom: 1px solid rgba(24, 20, 15, 0.07);
+  border-bottom: 1px solid rgba(11, 31, 51, 0.07);
   position: relative;
 }
 .trafficDot {
@@ -132,9 +123,9 @@
   bottom: -30px;
   width: 240px;
   transform: translateZ(60px) rotateX(-2deg) rotateY(4deg);
-  background: var(--surface);
+  background: var(--card);
   border-radius: 14px;
-  box-shadow: 0 30px 60px -20px rgba(24, 20, 15, 0.4), 0 0 0 1px rgba(24, 20, 15, 0.05);
+  box-shadow: 0 30px 60px -20px rgba(11, 31, 51, 0.4), 0 0 0 1px rgba(11, 31, 51, 0.05);
   animation: floaty-draft 5.5s ease-in-out infinite;
 }
 @keyframes floaty-draft {
@@ -154,9 +145,9 @@
   width: 190px;
   opacity: 0.92;
   transform: translateZ(-30px) rotateX(3deg) rotateY(-5deg);
-  background: var(--surface);
+  background: var(--card);
   border-radius: 14px;
-  box-shadow: 0 24px 50px -20px rgba(24, 20, 15, 0.3);
+  box-shadow: 0 24px 50px -20px rgba(11, 31, 51, 0.3);
 }
 
 .groundShadow {
@@ -166,7 +157,7 @@
   transform: translateX(-50%);
   width: 78%;
   height: 60px;
-  background: radial-gradient(ellipse at center, rgba(24, 20, 15, 0.28), transparent 72%);
+  background: radial-gradient(ellipse at center, rgba(11, 31, 51, 0.28), transparent 72%);
   filter: blur(4px);
   pointer-events: none;
 }
@@ -211,14 +202,14 @@
 /* ---------- misc ---------- */
 
 .chipMark {
-  color: var(--amber);
+  color: var(--rust);
 }
 
-/* The headline's one accented phrase — same idea as the app's own
-   .text-gradient-accent (globals.css), amber-toned instead of blue, kept
-   to this one use on the page. */
+/* The headline's one accented phrase — same treatment as the app's own
+   .text-gradient-accent (globals.css), now the same blue rather than a
+   separate amber-toned copy of it. */
 .shimmer {
-  background: linear-gradient(100deg, var(--amber), #f3c374, var(--amber));
+  background: linear-gradient(100deg, var(--accent-deep), var(--rust) 60%, var(--accent-deep));
   background-size: 220% auto;
   background-clip: text;
   -webkit-background-clip: text;
@@ -236,7 +227,7 @@
 
 /* Comparison table (Positioning section) */
 .compareGrid {
-  border: 1px solid rgba(24, 20, 15, 0.1);
+  border: 1px solid rgba(11, 31, 51, 0.1);
   border-radius: 16px;
   overflow: hidden;
 }
@@ -250,8 +241,8 @@
 .signinChip {
   position: absolute;
   border-radius: 14px;
-  background: var(--surface);
-  box-shadow: 0 24px 50px -20px rgba(24, 20, 15, 0.32), 0 0 0 1px rgba(24, 20, 15, 0.05);
+  background: var(--card);
+  box-shadow: 0 24px 50px -20px rgba(11, 31, 51, 0.32), 0 0 0 1px rgba(11, 31, 51, 0.05);
   transform-style: preserve-3d;
   will-change: transform;
 }

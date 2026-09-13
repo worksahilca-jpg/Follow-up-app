@@ -79,28 +79,37 @@ These are real trade-offs where the right answer is per-screen, not global:
 
 ---
 
-## Current shipping reality (verified 2026-09-12 — read this before designing)
+## Current shipping reality (verified 2026-09-13 — read this before designing)
 
 The app in `followup/` currently ships:
-- **Warm cream page** (`#f3f0ea`) with pure-white cards and a warm border (`#e2ddd0`).
-- **A single amber accent** (`#e8a23a`) — stored under the token name `--rust`, which has
-  never held a rust (blue → violet → amber). Used only on interactive elements.
-- A four-color semantic status system (slate / sage / gold / coral) for lead urgency.
-- **Plus Jakarta Sans across both the product and the marketing pages** — one typeface,
-  one product. Good.
+- **Cloud-white/navy page** (`#f6f8fb` paper, `#0b1f33` ink) with pure-white cards and a
+  translucent navy border (`rgba(11, 31, 51, 0.12)`) — promoted app-wide from the landing
+  page's page-scoped "Award Direction" system on 2026-09-13. See D-010 and A-002 in
+  `decisions/`. This is the founder-ratified baseline, not a provisional value.
+- **A single blue accent** (`#2a5cdb`) — still stored under the token name `--rust`, which
+  has never held a rust (blue → violet → amber → this blue). The *value* is decided
+  (A-002); the mismatched name is a separate, still-open `[TO DECIDE]` in
+  `brand/color-system.md`.
+- A four-color semantic status system (slate / sage / gold / coral) for lead urgency,
+  re-tuned to sit correctly against the new navy/cloud neutrals — same four meanings,
+  values re-measured (see `brand/color-system.md`'s contrast audit).
+- **Bricolage Grotesque (display) + Public Sans (body) + IBM Plex Mono (labels)** across
+  the product and the marketing pages — one typographic system, one product, replacing
+  Plus Jakarta Sans (itself a replacement for an even earlier Space Grotesk + Inter
+  pairing).
 - `rounded-xl` cards with a 1px border and no shadow.
 
-The neutral/accent/status *structure* is sound and matches the direction above. Two things
-do not:
+The neutral/accent/status *structure* is sound and matches the direction above, and is now
+also matched by the actual *values* the founder confirmed. One thing from the previous
+audit still stands, unresolved:
 
-**1. The values keep moving.** The accent has changed three times and the typeface at
-least twice, each time in place rather than by decision. See `brand/color-system.md`.
-
-**2. Decorative primitives have entered the authenticated product.** `globals.css` now
+**Decorative primitives have entered the authenticated product.** `globals.css` still
 carries an animated aurora wash (three oversized blurred drifting color fields), a
 diagonal "shine" sweep on primary buttons, and an animated shimmering gradient text
-treatment. `AuroraBackground` is rendered on the **dashboard**, and `Reveal`, `FadeIn`, and
-`CountUp` are used across dashboard, leads, and pipeline.
+treatment — recolored to the new navy/blue palette as part of the 2026-09-13 reskin (so
+they at least match the current system rather than the retired one), but not otherwise
+touched or reconsidered. `AuroraBackground` is rendered on the **dashboard**, and `Reveal`,
+`FadeIn`, and `CountUp` are used across dashboard, leads, and pipeline.
 
 These are competently built — gated behind `prefers-reduced-motion`, drawn only from
 palette colors, and each carries a thoughtful code comment defending itself. They are

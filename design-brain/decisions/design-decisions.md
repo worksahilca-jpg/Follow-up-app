@@ -426,3 +426,49 @@ so each stays simple to reason about and neither fights the other's `will-change
 
 **Revisit when:** The CEO wants the node-graph variant instead, wants the ring's radius or
 spin speed tuned, or wants it extended to mobile.
+
+---
+
+## D-010 — Unify on the "Award Direction" navy/blue system app-wide; retire the warm-cream system
+**Date:** 2026-09-13
+**Decided by:** CEO (explicit direction, asked directly: reskin the app to navy/blue rather
+than bring the landing page back to cream), Claude (finding + implementation)
+**Status:** active — supersedes D-008's scope restriction and A-001's cream/amber baseline
+**Context:** D-008 deliberately scoped "Award Direction" (navy `#0b1f33`/blue `#2a5cdb`,
+Bricolage Grotesque + Public Sans + IBM Plex Mono) to the public landing page only, keeping
+`/signin` and the authenticated app on the existing warm-cream/amber system (`globals.css`,
+`landing.module.css`) — its own "Revisit when" named exactly this: a future session asked to
+unify `/` and `/signin` onto one system. The CEO independently noticed the app now reads as
+two different products ("our landing page is cool, but I've seen our internal pages... are
+still the old ones") and, given the choice, chose to move the *app* rather than revert the
+*landing page* — meaning the unification is now larger than D-008 anticipated: every
+authenticated-app surface (dashboard, leads, pipeline, settings, workflows, analytics,
+activity, onboarding) plus `/signin`, not just the marketing pages.
+
+**Decision:** Navy/blue Award Direction becomes the one system-wide visual language.
+Retire the warm-cream/amber tokens in `globals.css` and `landing.module.css` in favor of
+tokens derived from `landing-award.module.css`'s `.root` scope, applied globally instead of
+page-scoped. Implementation (in progress — see task tracker) extracts the Award Direction
+tokens into `globals.css` as the app-wide system and reskins every authenticated-app page
+and `/signin` to match, following the existing component/typography/motion conventions
+`landing-award.module.css` already established rather than reinventing them per page.
+
+**Reasoning:** The founder's own call on which visual identity represents FollowUp now —
+not a Claude judgment call, and not something to default silently in either direction
+given neither system was "approved" over the other (`design-brain/decisions/approved.md`
+explicitly notes the cream baseline was "provisional... not ratified as final"). Once made,
+this is exactly D-008's own named revisit condition firing, just wider in scope than that
+entry anticipated.
+
+**Trade-off accepted:** This retires A-001's contrast-fix work (the accent-text token split,
+the darkened status shades) as applied to the cream/amber values specifically — the
+*principle* behind A-001 (a fill color and a text color need separate tokens; measure
+soft/saturated status pairs at their real render size, don't eyeball them) carries over and
+must be re-verified against the new navy/blue values, not re-derived from scratch. Two
+previously-separate marketing systems (`landing.module.css` for `/signin`,
+`landing-award.module.css` for `/`) collapse into one, which is the intended outcome, not a
+new trade-off. This is a large surface-area change (every authenticated page) shipped as a
+tracked, reviewed body of work rather than a single sweeping commit.
+
+**Revisit when:** The CEO reviews the reskinned app and either confirms it (record as
+`A-002`) or asks for adjustments to specific screens.

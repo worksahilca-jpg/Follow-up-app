@@ -1079,3 +1079,72 @@ unblocked egress — this one didn't have either.
 **Revisit when:** Any of the four re-confirmed gaps gets picked up (update D-012/D-011's
 entries as resolved rather than duplicating), or the gold-currency question gets a decision
 from `product-ux-agent`/the founder.
+
+---
+
+## D-017 — `--gold` overuse is far bigger than [[design-decisions#^D-016|D-016]] scoped it: 25+ call sites, not 6 — the app reads "yellowish" because of this, not the reskin ^D-017
+**Date:** 2026-09-13
+**Decided by:** Claude, prompted by the founder noticing the authenticated app "feels
+yellowish" against the navy/blue landing page
+**Status:** approved — see [[approved#^A-005|A-005]]
+**Context:** The founder's report ("we have the blue theme on our landing page, but inside
+it's totally yellowish") was checked against the actual code before acting on it, per this
+file's own anti-fabrication discipline — first against colors/fonts (confirmed identical:
+`globals.css`'s `--ink`/`--rust` match `landing-award.module.css` exactly, and `fonts.ts`
+confirms Bricolage/Public Sans/IBM Plex Mono were promoted app-wide, Jakarta/Inter fully
+retired, no stale references in any `(app)/**` file), then against `--gold` specifically,
+since D-016 had already flagged a narrower version of this same color as a live, undocumented
+convention.
+
+**Finding:** `grep -rn "var(--gold)" src` returns **30 matches across 15 files** — D-016's
+"six currency call sites" was itself an undercount of just the money-figure category; the
+full picture spans three unrelated use categories:
+1. **Currency/deal-value figures** (~10 sites) — `FollowUpCard`, `TeamPerformanceSection`,
+   the dashboard's rescue queue and lead-row deal values, `LeadsPageClient`'s deal-value
+   column, the lead detail page, `PipelinePageClient`'s stage/weighted totals, `analytics`
+   and `admin`'s revenue `StatCard`s. This is D-016's original finding, confirmed and
+   re-counted.
+2. **Warning/error/mismatch text** (~15 sites) — `TwilioConfig` alone accounts for 9 (number-
+   mismatch warnings, webhook diagnostics, error messages), plus `TeamSection` (invite
+   failures), `FilteredEmails` (sync errors), `LeadAssignmentSelect` (unassigned state),
+   `settings/page.tsx`, `ApprovalQueue`'s hold-banner border/icon.
+3. **Decorative** (1 site) — `SparkleBurst.tsx`'s confetti-style color array.
+None of these are `--gold`'s one documented meaning ("going cold" lead-urgency pill). The
+volume matters more than any single site: dollar figures and warning text appear on nearly
+every authenticated screen (dashboard, leads, leads detail, pipeline, analytics, settings,
+admin, team), so `--gold`'s warm amber is visually everywhere despite the chrome around it
+being navy/blue — which is exactly what read as "yellowish" to a founder scanning the real
+product, not a misperception to correct with reassurance.
+
+**Recommendation, approved as proposed:**
+- **Currency figures → plain `--ink`.** Money is information the user needs to read
+  accurately, not a lead-urgency signal — color-coding it adds a false "caution" read to
+  every dollar amount regardless of whether anything about that lead needs attention (the
+  same point D-016 already made). No new token: reuse the existing primary-text color.
+- **Warning/error text → `--coral`.** `[[color-system]]` already documents `--coral` as
+  "needs attention now / error / high priority" — the exact semantic these sites actually
+  need, and reusing it means zero new tokens for this fix. `--gold`'s "caution / needs
+  attention soon" is measurably weaker than what most of these sites are actually saying
+  (a broken Twilio number match, a failed invite, a sync error are current-state failures,
+  not soon-escalating ones).
+- **`SparkleBurst`'s decorative use** — left as a judgment call for whoever implements: it's
+  the one non-semantic use and the least consequential (a burst animation, not a persistent
+  color statement), but swapping it for a non-status color (or removing `--gold` from its
+  palette array) keeps the fix total rather than leaving one deliberate exception unexplained.
+- `--gold` goes back to meaning exactly the one thing `[[color-system]]` already documents —
+  no rewording needed this time, unlike [[design-decisions#^D-015|D-015]], because the *value* and *meaning* were
+  never in question, only the sites using it.
+
+**Reasoning:** This is a bug-fix-shaped decision, not a fresh aesthetic one — every
+replacement reuses an existing, already-measured, already-meaningful token
+([[approved#^A-001|A-001]]'s contrast work covers both `--ink` and `--coral` already), so
+there's no new `[TO DECIDE]` token to ratify, just a scope correction to how far a `[TO
+DECIDE]` item from D-016 actually reached once it was re-measured properly.
+
+**Trade-off accepted:** None structural — this is a straightforward token-usage correction.
+The only real cost is implementation surface (15 files) versus D-016's originally-scoped 6,
+which is why this needed its own entry rather than a quiet fix.
+
+**Revisit when:** `frontend-3d-agent` implements the sweep and reports back — if any specific
+call site's context doesn't cleanly fit "currency" or "warning," that gets flagged rather than
+forced into one of the two buckets.

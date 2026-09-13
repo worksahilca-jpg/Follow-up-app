@@ -138,3 +138,27 @@ underlying color choice is still correct.
 **Evidence:** `[[design-decisions#^D-015|D-015]]` (full contrast measurements and reasoning);
 `[[color-system]]`'s `--gold` row reworded from "Warming / warning / attention soon" to
 "Caution / needs attention soon (traffic-light amber — a severity step, not a temperature)."
+
+## A-005 — Stop using `--gold` for currency and for warning/error text; both get an existing, more-correct token instead ^A-005
+**Date:** 2026-09-13
+**Scope:** System-wide — 30 call sites across 15 files (dashboard, leads, leads detail,
+pipeline, analytics, admin, settings, `TwilioConfig`, `TeamSection`, `FilteredEmails`,
+`LeadAssignmentSelect`, `ApprovalQueue`, `SparkleBurst`)
+**Approved:** The founder noticed the authenticated app "feels totally yellowish" against the
+navy/blue landing page. Checked against the code first (colors/fonts were already unified —
+`--gold` was the actual cause, at 5x the scope [[design-decisions#^D-016|D-016]] had found).
+Approved the proposed fix as-is: currency figures move to plain `--ink` (money is information,
+not an urgency signal); warning/error text moves to `--coral` (already documented as "needs
+attention now / error" — the correct existing token for these sites, not a new one).
+**Why it was liked:** The founder's own report was the trigger — "go ahead, proceed with your
+recommendation" once the scope and fix were shown with the actual grep evidence.
+**The generalizable principle:** A status color used consistently enough to look intentional
+can still be wrong — consistency is not the same test as correctness. When a color shows up
+everywhere on the highest-traffic screens, check whether it's actually carrying its documented
+meaning at every site before assuming volume means the convention is fine. Reuse an existing,
+correctly-meaning token before minting a new one — this fix needed zero new colors.
+**Applies to:** Every current and future currency/deal-value display (`--ink`, never a status
+color) and every warning/error message in the authenticated app (`--coral`, not `--gold`,
+which stays reserved for "going cold" alone).
+**Evidence:** `[[design-decisions#^D-017|D-017]]` (full 30-site breakdown by category);
+implementation via `frontend-3d-agent`, PR pending.

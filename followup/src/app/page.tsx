@@ -262,7 +262,7 @@ export default function LandingPage() {
             { icon: <Mail className="h-4 w-4" />, title: "Connect your inbox", body: "FollowUp reads your sales conversations — Gmail, Outlook, SMS, Instagram DMs, WhatsApp, and more — in one place." },
             { icon: <TrendingUp className="h-4 w-4" />, title: "It scores every lead", body: "Buying intent, response gaps, and deal value become a single follow-up score." },
             { icon: <Clock className="h-4 w-4" />, title: "You get a daily list", body: "A short, ranked list of who needs you today, and why — not a full CRM to dig through." },
-            { icon: <Send className="h-4 w-4" />, title: "It drafts the message", body: "Edit, regenerate, or let low-risk replies send themselves automatically — you decide how much to hand off, per lead, any time." },
+            { icon: <Send className="h-4 w-4" />, title: "It drafts the message", body: "Edit, regenerate, or let low-risk replies send themselves automatically — you decide how much to hand off, per lead, any time. Ask to schedule a call, and it creates the calendar event." },
           ].map((item, i) => (
             <RevealAward key={item.title} delayMs={i * 80}>
               <IconCard icon={item.icon} title={item.title} body={item.body} />

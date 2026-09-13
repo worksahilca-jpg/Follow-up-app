@@ -95,10 +95,10 @@ export default function PrivacyPage() {
               , including the Limited Use requirements. Specifically:
             </p>
             <ul className="mt-2 space-y-2 list-disc pl-5">
-              <li>We only access the Gmail scopes needed to identify sales conversations and send follow-ups on your behalf.</li>
-              <li>We never use Gmail data for advertising.</li>
-              <li>We never allow humans to read Gmail data except: (a) with your explicit consent, (b) to investigate abuse or a security issue, or (c) to comply with the law.</li>
-              <li>We never transfer Gmail data to third parties except our AI processing provider (to draft/score follow-ups on your behalf), or as required by law.</li>
+              <li>We only access the Gmail and Google Calendar scopes needed to identify sales conversations, send follow-ups on your behalf, and create a calendar event when a lead asks to schedule a call.</li>
+              <li>We never use Gmail or Calendar data for advertising.</li>
+              <li>We never allow humans to read Gmail or Calendar data except: (a) with your explicit consent, (b) to investigate abuse or a security issue, or (c) to comply with the law.</li>
+              <li>We never transfer Gmail or Calendar data to third parties except our AI processing provider (to draft/score follow-ups on your behalf), or as required by law.</li>
             </ul>
           </section>
 

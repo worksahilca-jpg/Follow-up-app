@@ -20,25 +20,25 @@ twelve different products. With it, each session starts where the last one ended
 
 ## The map — what to read for what you're doing
 
-**Designing a new screen** → `workflows/design-workflow.md`, `brand/brand-principles.md`,
-`decisions/rejected.md`, `references/<category>/`, then the `components/` specs you'll use.
+**Designing a new screen** → `[[design-workflow]]`, `[[brand-principles]]`,
+`[[rejected]]`, `references/<category>/`, then the `components/` specs you'll use.
 
-**Changing an existing screen** → `decisions/approved.md` (is the current shape locked?),
-the relevant `components/` spec, `workflows/design-review.md`.
+**Changing an existing screen** → `[[approved]]` (is the current shape locked?),
+the relevant `components/` spec, `[[design-review]]`.
 
-**Building a component** → `components/<name>.md`, `brand/color-system.md`,
-`brand/spacing.md`, `brand/surfaces.md`, `components/states.md`.
+**Building a component** → `components/<name>.md`, `[[color-system]]`,
+`[[spacing]]`, `[[surfaces]]`, `[[states]]`.
 
 **Picking or changing a color/font/spacing value** → `brand/` — and note that most final
 values are deliberately `[TO DECIDE]`. Propose; don't unilaterally finalize.
 
-**Adding a reference** → `workflows/reference-workflow.md`, `references/reference-index.md`.
+**Adding a reference** → `[[reference-workflow]]`, `[[reference-index]]`.
 
-**Doing research** → `workflows/research-workflow.md`, log it in `research/research-log.md`.
+**Doing research** → `[[research-workflow]]`, log it in `[[research-log]]`.
 
-**Reviewing before shipping** → `workflows/design-review.md`.
+**Reviewing before shipping** → `[[design-review]]`.
 
-**Turning an approved design into code** → `workflows/design-to-code.md`.
+**Turning an approved design into code** → `[[design-to-code]]`.
 
 ## How this stays alive
 

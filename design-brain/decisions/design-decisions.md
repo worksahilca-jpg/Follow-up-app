@@ -3,7 +3,7 @@
 The chronological record of **every design decision that matters**, whether or not the
 founder was in the room.
 
-`approved.md` and `rejected.md` record the founder's verdicts. This file records the
+`[[approved]]` and `[[rejected]]` record the founder's verdicts. This file records the
 *reasoning* — including decisions Claude made autonomously while building, which future
 sessions need to understand rather than silently re-litigate.
 
@@ -44,12 +44,12 @@ costless is a marketing document, not an engineering record.
 
 ## Decisions
 
-## D-001 — The design brain precedes the design work
+## D-001 — The design brain precedes the design work ^D-001
 **Date:** 2026-09-12
 **Decided by:** Founder
 **Status:** active
 **Context:** FollowUp already ships a real application with a working token system built
-ad hoc, alongside a strong product-direction document (`followup/PRODUCT_DIRECTION.md`)
+ad hoc, alongside a strong product-direction document (`[[PRODUCT_DIRECTION]]`)
 and a research practice (`followup/research/`). There was no equivalent for design:
 each session re-derived visual decisions from scratch, and founder feedback lived only in
 conversations that ended.
@@ -69,7 +69,7 @@ arrives. An empty folder looks like incompleteness; filling it with invented con
 be worse.
 **Revisit when:** Stable. The brain evolves; the decision to have one doesn't.
 
-## D-002 — Document the shipping system as provisional rather than redesigning it
+## D-002 — Document the shipping system as provisional rather than redesigning it ^D-002
 **Date:** 2026-09-12
 **Decided by:** Claude (autonomous) — flagged to founder for confirmation
 **Status:** active
@@ -92,23 +92,23 @@ because they carry both the current state and the open question. Accuracy over t
 **Revisit when:** The founder ratifies or replaces the current values — then the
 provisional notes collapse into decided values.
 
-## D-003 — Two files added beyond the specified structure
+## D-003 — Two files added beyond the specified structure ^D-003
 **Date:** 2026-09-12
 **Decided by:** Claude (autonomous)
 **Status:** active
 **Context:** The brief specifies an exact folder tree, and separately requires
 documentation for border radius, shadows, elevation, grid, and badges. Those don't map to
 any file in the specified tree.
-**Decision:** Added `brand/surfaces.md` (radius, borders, shadows, elevation) and
-`components/badges.md` (badges, pills, score and priority indicators). Grid and
-breakpoints went into `brand/spacing.md`, which they naturally belong to.
+**Decision:** Added `[[surfaces]]` (radius, borders, shadows, elevation) and
+`[[badges]]` (badges, pills, score and priority indicators). Grid and
+breakpoints went into `[[spacing]]`, which they naturally belong to.
 **Reasoning:** The alternative was scattering elevation rules across unrelated files or
 omitting them. Two clearly-named files beat both.
 **Trade-off accepted:** The tree differs slightly from the brief. Flagged explicitly
 rather than done silently.
 **Revisit when:** The founder prefers a different organization.
 
-## D-004 — The shipping app has drifted toward the aesthetic the brief rejects
+## D-004 — The shipping app has drifted toward the aesthetic the brief rejects ^D-004
 **Date:** 2026-09-12
 **Decided by:** Claude (autonomous finding) — **founder decision required**
 **Status:** active, unresolved
@@ -126,9 +126,9 @@ Separately, the accent token `--rust` has held three different values (blue → 
 amber) and the typeface has changed at least twice — each time in place, none by a
 recorded decision.
 
-**Why this matters:** these map directly onto standing rejections S-02 (cheap gradients),
-S-07 (unnecessary 3D), S-08 (random animation), S-12 (decoration that doesn't improve
-usability), S-13 (AI gimmicks — sparkles), and S-15 (startup-template aesthetics).
+**Why this matters:** these map directly onto standing rejections [[rejected#^S-02|S-02]] (cheap gradients),
+[[rejected#^S-07|S-07]] (unnecessary 3D), [[rejected#^S-08|S-08]] (random animation), [[rejected#^S-12|S-12]] (decoration that doesn't improve
+usability), [[rejected#^S-13|S-13]] (AI gimmicks — sparkles), and [[rejected#^S-15|S-15]] (startup-template aesthetics).
 
 **What is *not* being claimed:** that this work is bad or careless. It is the opposite —
 every animation is gated behind `prefers-reduced-motion`, every color comes from the
@@ -137,8 +137,8 @@ craft is good. The drift happened anyway, one defensible commit at a time, becau
 file existed that said "not this." That is exactly the failure the design brain prevents,
 and finding it on day one is evidence the brain is worth having.
 
-**Decision:** **None taken.** Documented in `brand/visual-direction.md` and
-`brand/motion.md`, flagged to the founder, and deliberately not acted on. Ripping
+**Decision:** **None taken.** Documented in `[[visual-direction]]` and
+`[[motion]]`, flagged to the founder, and deliberately not acted on. Ripping
 decoration out of a shipped product is a product decision with real cost, and the brief
 was explicit that this pass builds the design brain and does not change the UI.
 
@@ -149,7 +149,7 @@ description of a gap is more useful than a tidy document that hides it.
 **Revisit when:** The founder decides whether to run a decoration audit. Until then,
 **new** work follows the brain; existing decoration stays until it is explicitly reviewed.
 
-## D-005 — Fix the measured contrast failures; do not touch the accent hue
+## D-005 — Fix the measured contrast failures; do not touch the accent hue ^D-005
 **Date:** 2026-09-12
 **Decided by:** Founder ("go"), implemented by Claude
 **Status:** active
@@ -163,7 +163,7 @@ rendered 12px size (gold 2.86:1, sage 3.00, coral 3.95, slate 4.34).
 **Decision:** Option 3.
 **Reasoning:** Option 1 would change the product's whole visual identity as a side effect
 of an accessibility fix, and the accent hue is an open founder decision (see
-`brand/color-system.md`) — fixing contrast must not quietly settle it. Option 2 is
+`[[color-system]]`) — fixing contrast must not quietly settle it. Option 2 is
 arithmetically impossible: the soft tints are already within a few percent of white, so
 there is no room to move. Option 3 fixes both failures without altering a single hue, and
 the new token documents the underlying rule — a fill and a text color have opposite
@@ -179,7 +179,7 @@ requirement.
 **Revisit when:** The accent hue is decided. If a darker accent is chosen, `--accent-text`
 may become redundant and should be collapsed back into `--rust`.
 
-## D-006 — First research pass: read the repo's own research through a design lens
+## D-006 — First research pass: read the repo's own research through a design lens ^D-006
 **Date:** 2026-09-12
 **Decided by:** Founder ("research"), conducted by Claude
 **Status:** active
@@ -203,11 +203,11 @@ design — ahead of the dashboard and the lead card. It is where the trust the r
 describes is either earned or lost, and it has never been designed against the brain.
 **Revisit when:** A primary source or a real FollowUp user raises the confidence.
 
-## D-007 — "Review": giving the approve-a-draft moment a place of its own
+## D-007 — "Review": giving the approve-a-draft moment a place of its own ^D-007
 **Date:** 2026-09-12
 **Decided by:** Claude (proposed) — **awaiting founder approval, not yet implemented**
 **Status:** proposed
-**Context:** Research (D-006) put this ahead of the dashboard as the product's most important
+**Context:** Research ([[design-decisions#^D-006|D-006]]) put this ahead of the dashboard as the product's most important
 screen. Investigating the code first found something bigger than a styling problem:
 **the approval moment has no home.** `suggestedMessage` is rendered in exactly one place —
 `src/app/(app)/leads/[id]/page.tsx` — and nothing on the dashboard or leads list indicates a
@@ -246,9 +246,9 @@ the product's core promise is kept or broken, but it makes the Leads/Pipeline an
 Dashboard/Activity consolidation question more urgent, not less. Also: one-at-a-time is
 slower than bulk for an owner with twenty drafts waiting. That is the intended cost.
 
-**Deliberately excluded:** bulk "approve all" (it is the blast-tool affordance, and S-13's
+**Deliberately excluded:** bulk "approve all" (it is the blast-tool affordance, and [[rejected#^S-13|S-13]]'s
 sibling); the sparkle icon and "AI-suggested follow-up" heading the current composer uses
-(S-13, and it feeds the exact fear in Finding 2); a confidence percentage (false precision);
+([[rejected#^S-13|S-13]], and it feeds the exact fear in Finding 2); a confidence percentage (false precision);
 an auto-send countdown (manufactured urgency on the calmest screen in the product);
 swipe-to-approve (undiscoverable, and far too easy to trigger by accident on a real customer).
 
@@ -266,7 +266,7 @@ swipe-to-approve (undiscoverable, and far too easy to trigger by accident on a r
 
 ---
 
-## D-008 — "Award Direction": a second, page-scoped visual system for the public landing page
+## D-008 — "Award Direction": a second, page-scoped visual system for the public landing page ^D-008
 **Date:** 2026-09-13
 **Decided by:** CEO (directed the concept and the specific standing-rule exceptions), Claude
 (implementation)
@@ -322,8 +322,8 @@ animated gradient mesh, and a placeholder testimonial) and asked for it to becom
   not ambient decoration behind it).
 - The exploration's hero mockup used a frosted-glass treatment (`backdrop-filter: blur()`
   over translucent white). **Not carried over** — that specific texture is the standing
-  S-03 rejection (excessive glassmorphism), and the CEO's override only named S-07 (3D),
-  S-08 (ambient animation), and S-13 (sparkle). The mockup card here is opaque white, same
+  [[rejected#^S-03|S-03]] rejection (excessive glassmorphism), and the CEO's override only named [[rejected#^S-07|S-07]] (3D),
+  [[rejected#^S-08|S-08]] (ambient animation), and [[rejected#^S-13|S-13]] (sparkle). The mockup card here is opaque white, same
   as the shipping amber-system `HeroMockup.tsx`.
 - The reveal-on-scroll pattern was reimplemented, not copied verbatim, because the original
   vanilla version's fix (IntersectionObserver + a `catchSkipped` scroll listener + a
@@ -360,10 +360,10 @@ component outside this task's stated scope (landing page visual system only), no
 regression introduced here; it's the one known gap in an otherwise-verified fallback.
 
 **Deliberately excluded (do not re-propose on this page):** ~~the WebGL orbit diagram and
-its flat-CSS fallback~~ — **SUPERSEDED same-day, see D-009 below**; frost particles, cursor-glow, drifting
-background rings, animated gradient mesh, spinning conic-gradient borders (S-08 exception
+its flat-CSS fallback~~ — **SUPERSEDED same-day, see [[design-decisions#^D-009|D-009]] below**; frost particles, cursor-glow, drifting
+background rings, animated gradient mesh, spinning conic-gradient borders ([[rejected#^S-08|S-08]] exception
 used for the hero word-reveal, hover states, and the FAQ accordion only); the ✦ sparkle
-badge icon and any other sparkle/AI-gimmick iconography elsewhere on the page (S-13 — the
+badge icon and any other sparkle/AI-gimmick iconography elsewhere on the page ([[rejected#^S-13|S-13]] — the
 CEO's override was for the hero badge specifically, not a blanket pass for this page); a
 headline word-rotor cycling through synonyms ("went quiet" / "went cold" / "ghosted you") —
 present in the exploration but read as decorative wordplay rather than the "explains a
@@ -375,13 +375,13 @@ and `/signin` onto one marketing visual system.
 
 ---
 
-## D-009 — Orbit diagram reinstated in the hero, as CSS 3D rather than WebGL
+## D-009 — Orbit diagram reinstated in the hero, as CSS 3D rather than WebGL ^D-009
 **Date:** 2026-09-13
-**Decided by:** CEO (asked for the orbit diagram back, same day as D-008; specified it
+**Decided by:** CEO (asked for the orbit diagram back, same day as [[design-decisions#^D-008|D-008]]; specified it
 should sit in the hero), Claude (asked which visual shape and where before building,
 implementation)
-**Status:** active — supersedes the orbit-diagram exclusion in D-008
-**Context:** After D-008 shipped, the CEO reviewed the live page and asked for the orbit
+**Status:** active — supersedes the orbit-diagram exclusion in [[design-decisions#^D-008|D-008]]
+**Context:** After [[design-decisions#^D-008|D-008]] shipped, the CEO reviewed the live page and asked for the orbit
 diagram back ("the n8n 3D model as well"), confirming: (1) an orbit diagram — channel icons
 circling a glowing core, not an n8n-style connected-node canvas — and (2) placed in the
 hero, next to the headline.
@@ -396,8 +396,8 @@ right column:
   row, not the exploration's channel list) placed via `rotateZ + translateX`, each labeled
   with plain text in a pill matching the page's existing chip style — no per-channel
   "facts" invented, since the exploration's unvetted copy ("Reads live, replies drafted in
-  seconds") was exactly what D-008 flagged as copy no one asked for.
-- No frost particles, cursor-glow, firing-signal animation, or sparkle — those D-008 cuts
+  seconds") was exactly what [[design-decisions#^D-008|D-008]] flagged as copy no one asked for.
+- No frost particles, cursor-glow, firing-signal animation, or sparkle — those [[design-decisions#^D-008|D-008]] cuts
   stand; only the orbit shape itself came back. The core is a static gradient square (the
   same mark as the nav logo), not an animated glow.
 - Pure CSS `@keyframes` animation, not framer-motion — nothing here needs per-frame JS
@@ -412,8 +412,8 @@ right column:
   the page states as plain text twice already (the pill row, the channel list in the
   page's own copy), not a second source of that information.
 
-**Reasoning:** This is the CEO's own call to make — D-008 explicitly named the orbit
-diagram as page-scoped-exception territory (S-07), so reinstating it is a same-scope
+**Reasoning:** This is the CEO's own call to make — [[design-decisions#^D-008|D-008]] explicitly named the orbit
+diagram as page-scoped-exception territory ([[rejected#^S-07|S-07]]), so reinstating it is a same-scope
 adjustment of an already-granted exception, not a fresh standing-rule violation. Asked
 before building rather than guessing which of "orbit diagram" vs. "n8n-style node graph"
 was meant, and where — real WebGL/3D work is expensive to redo, and the two shapes read
@@ -429,19 +429,19 @@ spin speed tuned, or wants it extended to mobile.
 
 ---
 
-## D-010 — Unify on the "Award Direction" navy/blue system app-wide; retire the warm-cream system
+## D-010 — Unify on the "Award Direction" navy/blue system app-wide; retire the warm-cream system ^D-010
 **Date:** 2026-09-13
 **Decided by:** CEO (explicit direction, asked directly: reskin the app to navy/blue rather
 than bring the landing page back to cream), Claude (finding + implementation)
-**Status:** active — supersedes D-008's scope restriction and A-001's cream/amber baseline
-**Context:** D-008 deliberately scoped "Award Direction" (navy `#0b1f33`/blue `#2a5cdb`,
+**Status:** active — supersedes [[design-decisions#^D-008|D-008]]'s scope restriction and [[approved#^A-001|A-001]]'s cream/amber baseline
+**Context:** [[design-decisions#^D-008|D-008]] deliberately scoped "Award Direction" (navy `#0b1f33`/blue `#2a5cdb`,
 Bricolage Grotesque + Public Sans + IBM Plex Mono) to the public landing page only, keeping
 `/signin` and the authenticated app on the existing warm-cream/amber system (`globals.css`,
 `landing.module.css`) — its own "Revisit when" named exactly this: a future session asked to
 unify `/` and `/signin` onto one system. The CEO independently noticed the app now reads as
 two different products ("our landing page is cool, but I've seen our internal pages... are
 still the old ones") and, given the choice, chose to move the *app* rather than revert the
-*landing page* — meaning the unification is now larger than D-008 anticipated: every
+*landing page* — meaning the unification is now larger than [[design-decisions#^D-008|D-008]] anticipated: every
 authenticated-app surface (dashboard, leads, pipeline, settings, workflows, analytics,
 activity, onboarding) plus `/signin`, not just the marketing pages.
 
@@ -455,14 +455,14 @@ and `/signin` to match, following the existing component/typography/motion conve
 
 **Reasoning:** The founder's own call on which visual identity represents FollowUp now —
 not a Claude judgment call, and not something to default silently in either direction
-given neither system was "approved" over the other (`design-brain/decisions/approved.md`
+given neither system was "approved" over the other (`design-brain/[[approved]]`
 explicitly notes the cream baseline was "provisional... not ratified as final"). Once made,
-this is exactly D-008's own named revisit condition firing, just wider in scope than that
+this is exactly [[design-decisions#^D-008|D-008]]'s own named revisit condition firing, just wider in scope than that
 entry anticipated.
 
-**Trade-off accepted:** This retires A-001's contrast-fix work (the accent-text token split,
+**Trade-off accepted:** This retires [[approved#^A-001|A-001]]'s contrast-fix work (the accent-text token split,
 the darkened status shades) as applied to the cream/amber values specifically — the
-*principle* behind A-001 (a fill color and a text color need separate tokens; measure
+*principle* behind [[approved#^A-001|A-001]] (a fill color and a text color need separate tokens; measure
 soft/saturated status pairs at their real render size, don't eyeball them) carries over and
 must be re-verified against the new navy/blue values, not re-derived from scratch. Two
 previously-separate marketing systems (`landing.module.css` for `/signin`,
@@ -471,15 +471,15 @@ new trade-off. This is a large surface-area change (every authenticated page) sh
 tracked, reviewed body of work rather than a single sweeping commit.
 
 **Revisit when:** The CEO reviews the reskinned app and either confirms it (record as
-`A-002`) or asks for adjustments to specific screens.
+`[[approved#^A-002|A-002]]`) or asks for adjustments to specific screens.
 
 ---
 
-## D-011 — Implementing D-010: token mapping, contrast re-audit, and what was deliberately left alone
+## D-011 — Implementing D-010: token mapping, contrast re-audit, and what was deliberately left alone ^D-011
 **Date:** 2026-09-13
-**Decided by:** Claude (implementation of D-010, per A-002)
+**Decided by:** Claude (implementation of [[design-decisions#^D-010|D-010]], per [[approved#^A-002|A-002]])
 **Status:** active
-**Context:** D-010/A-002 decided *that* the app moves to navy/blue; this entry records the
+**Context:** [[design-decisions#^D-010|D-010]]/[[approved#^A-002|A-002]] decided *that* the app moves to navy/blue; this entry records the
 concrete choices made while actually doing it, none of which the founder was asked to
 adjudicate individually.
 
@@ -494,14 +494,14 @@ made every previous time the accent moved (blue → violet → amber → this bl
 `--rust` to something accurate is real, worthwhile cleanup, but it's an orthogonal, purely
 mechanical change across ~90 call sites and bundling it with a value change would have made
 this diff much harder to review for the thing that actually matters (are the new *values*
-right). Logged as its own open `[TO DECIDE]` in `brand/color-system.md`.
+right). Logged as its own open `[TO DECIDE]` in `[[color-system]]`.
 
-**Decision — collapse `--accent-text` back into `--rust`:** D-005 introduced
+**Decision — collapse `--accent-text` back into `--rust`:** [[design-decisions#^D-005|D-005]] introduced
 `--accent-text` because the retired amber (`#e8a23a`) failed AA as text (2.17:1) while
 working as a fill. The new blue (`#2a5cdb`) clears AA in *both* roles from one value
-(5.40–5.75:1 as text, 5.75:1 as white-on-fill) — measured, not assumed, per A-001's own
+(5.40–5.75:1 as text, 5.75:1 as white-on-fill) — measured, not assumed, per [[approved#^A-001|A-001]]'s own
 standing principle that a fill and a text color have different requirements and must be
-checked, not just carried over from the last hue. D-005's own "Revisit when" named this
+checked, not just carried over from the last hue. [[design-decisions#^D-005|D-005]]'s own "Revisit when" named this
 exact condition. The four call sites that used `--accent-text` (`NotificationBell.tsx`,
 `LogCallForm.tsx`, `workflows/page.tsx`, `embed/[businessId]/page.tsx`) now use `--rust`
 directly; the token and its `@theme inline` mapping were removed from `globals.css`.
@@ -509,7 +509,7 @@ directly; the token and its `@theme inline` mapping were removed from `globals.c
 **Decision — new status-pill values, not the amber system's values carried over:** `--gold`
 is unchanged (`#a35904`) — it already passed AA and doesn't visually collide with a blue
 accent the way it did with amber. `--slate`, `--sage`, and `--coral` were re-derived and
-re-measured against the new navy/cloud neutrals (see `brand/color-system.md`'s contrast
+re-measured against the new navy/cloud neutrals (see `[[color-system]]`'s contrast
 audit for the full numbers: all four clear 4.5:1 on their own soft tint, on `--card`, and on
 `--paper`, at the 12px size these pills actually render). `--coral` in particular is
 **deliberately darker** than the landing page's own decorative `--coral` (`#c93752` in
@@ -540,7 +540,7 @@ the same "not a status color" discipline: the three blobs are now two depths of 
 decoration, not meant to mean anything), rather than reaching for `--coral`/`--gold`/`--sage`
 for the third one, which would have violated the standing rule that those colors mean
 something everywhere they appear. Whether `AuroraBackground` should be on the dashboard at
-all is D-004's still-open, still-unresolved question — out of scope here, which was a color
+all is [[design-decisions#^D-004|D-004]]'s still-open, still-unresolved question — out of scope here, which was a color
 pass, not a decoration audit.
 
 **Decision — fonts promoted at the layout level, not per-page:** `bricolageGrotesque`,
@@ -549,7 +549,7 @@ page) are now also applied on `<html>` in the root layout, alongside `globals.cs
 `--font-display`/`--font-body`/`--font-mono` pointing at them. `plusJakarta` was removed
 from both the root layout and `/signin` (its only two call sites) and deleted from
 `fonts.ts` — nothing imports it anymore. The landing page's own font loading in
-`src/app/page.tsx` was left untouched (out of scope — D-010/A-002 explicitly said not to
+`src/app/page.tsx` was left untouched (out of scope — [[design-decisions#^D-010|D-010]]/[[approved#^A-002|A-002]] explicitly said not to
 touch the landing page); it now duplicates a font already loaded at the layout level, which
 is harmless (same `next/font` options, same resulting `@font-face`) but is a small,
 named inefficiency, not a correctness problem.
@@ -566,7 +566,7 @@ named inefficiency, not a correctness problem.
   own header comment: it renders when the root layout itself has failed, so it can't rely
   on `globals.css` or the app's fonts loading at all). Not touched, on purpose.
 - **The `--rust` → `--accent` rename** (see above) — logged as `[TO DECIDE]`, not done.
-- **A second re-run of D-004's decoration audit** (aurora, shine, shimmer, `Reveal`/
+- **A second re-run of [[design-decisions#^D-004|D-004]]'s decoration audit** (aurora, shine, shimmer, `Reveal`/
   `CountUp` on dashboard/leads/pipeline) — this pass recolored those primitives to fit the
   new palette because leaving them in the retired amber would have been a visible bug, not
   because their presence was reconsidered. That question is still open and still the
@@ -610,7 +610,7 @@ done" items above are fair game for a follow-up session.
 
 ---
 
-## D-012 — Eight convergent audit findings: presentation/copy fixes, no token or IA changes
+## D-012 — Eight convergent audit findings: presentation/copy fixes, no token or IA changes ^D-012
 
 **Date:** 2026-09-13
 **Scope:** `AddLeadForm`, `OnboardingForm`, `Sidebar`, `StatCard`, `analytics/page.tsx`,
@@ -619,10 +619,10 @@ done" items above are fair game for a follow-up session.
 Two independent new-user UX audits converged on eight small, concrete defects — all
 presentation/copy bugs, none touching the ink-vs-rust accent question, the "going cold"
 gold semantic, or body-text color, which stay open founder-level questions per
-`brand/color-system.md`'s `[TO DECIDE]`s. Each fix reused an existing pattern rather than
+`[[color-system]]`'s `[TO DECIDE]`s. Each fix reused an existing pattern rather than
 inventing one; none required a new token or component.
 
-1. **Add-lead modal didn't close on Escape** — `components/modals.md` calls this
+1. **Add-lead modal didn't close on Escape** — `[[modals]]` calls this
    non-negotiable. No modal in the codebase had an Escape handler yet (checked
    `ImportLeadsForm`, `LogCallForm`, `SmartViewForm`, `LeadTrustPanel` — same gap in all
    four, not fixed here since the audit scoped this to Add-lead only). Added a
@@ -700,14 +700,14 @@ empty-state copy beyond the minimal Leads/Pipeline-matching version shipped here
 
 ---
 
-## D-013 — Platform admin dashboard (`/admin`): a founder-only, cross-tenant screen with its own visual scope
+## D-013 — Platform admin dashboard (`/admin`): a founder-only, cross-tenant screen with its own visual scope ^D-013
 
 **Date:** 2026-09-13
 **Decided by:** Claude (autonomous — no `product-ux-agent` copy spec existed for this internal
 tool; kept the copy minimal, literal, and un-marketed rather than inventing a voice for it)
 **Status:** active
 
-**Context:** New feature, not a redesign of anything in `approved.md`/`rejected.md` — a
+**Context:** New feature, not a redesign of anything in `[[approved]]`/`[[rejected]]` — a
 platform-wide view (total businesses, leads platform-wide, channel/tier breakdown, a rough
 MRR estimate, active-vs-dormant, recent signups) for the founder only, at `/admin`, hidden
 from the Sidebar and gated by a new `PLATFORM_ADMIN_EMAILS` allowlist independent of both
@@ -720,7 +720,7 @@ for bars that are just counts, `CHART_INK` for the horizontal channel chart, mat
 card/border/spacing tokens. No Sidebar (this route isn't part of `(app)`'s route group at
 all — no dependency on the caller having an onboarded business, since a platform admin's own
 business status is irrelevant here), no aurora/shine/count-up decoration: this is an
-internal ops tool, and brand principle 2 ("calm over urgent") plus the standing S-06/S-08
+internal ops tool, and brand principle 2 ("calm over urgent") plus the standing [[rejected#^S-06|S-06]]/[[rejected#^S-08|S-08]]
 rejections argue for the plainest possible rendering of real numbers, not a demo moment.
 
 **Decision — StatCard icon colors follow Analytics' own established (if not perfectly
@@ -771,7 +771,7 @@ subscription statuses (including canceled/past_due paid tiers, to verify the rev
 correctly excludes them), varying lead volumes across many `source` values, and a mix of
 Gmail/Outlook/Instagram/Facebook connections — via a locally-run dev server (a different port
 than an unrelated concurrent session already using 3000 on this shared host) and a minted
-NextAuth JWT session cookie (no real Google OAuth needed, same technique as D-012). Screenshotted
+NextAuth JWT session cookie (no real Google OAuth needed, same technique as [[design-decisions#^D-012|D-012]]). Screenshotted
 with Playwright Chromium: the real rendered `/admin` dashboard for an allowed email (200,
 real seeded data), and the real generic 404 for a non-admin email (404, not a distinguishable
 "not authorized" response). `rm -rf .next && npm run build` succeeds, `/admin` appears in the

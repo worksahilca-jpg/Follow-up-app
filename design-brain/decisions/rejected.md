@@ -55,23 +55,23 @@ a rejection made in review, and they apply system-wide, permanently.
 
 | # | Never | Why |
 |---|---|---|
-| S-01 | Scammy visual styles | FollowUp is not a spam tool and must never look like one |
-| S-02 | Cheap-looking gradients | Reads as template, not as product |
-| S-03 | Excessive glassmorphism | Fashion, not clarity; hurts legibility |
-| S-04 | Excessive neon | Wrong register entirely — this is a business tool |
-| S-05 | Overly colorful dashboards | Color must mean something; a rainbow means nothing |
-| S-06 | Clutter | Directly against "calm over urgent" |
-| S-07 | Unnecessary 3D | Ornament |
-| S-08 | Random animations | Motion must explain change or not exist |
-| S-09 | Excessive rounded cards / card-in-card soup | Symptom of unresolved hierarchy |
-| S-10 | Poor typography | Type *is* the interface at this level of restraint |
-| S-11 | Tiny unreadable text | 14px floor for real content; never below 12px |
-| S-12 | Decoration that doesn't improve usability | Everything on screen must carry information |
-| S-13 | AI gimmicks — sparkles, typing dots, bot avatars, "✨AI-powered" | AI is invisible capability, never personality |
-| S-14 | Fake complexity | Complexity that signals sophistication rather than serving a need |
-| S-15 | "Startup template" aesthetics | The default look of an unconsidered product |
-| S-16 | Copying another company's interface | References are principles; the design must be original |
+| S-01 | Scammy visual styles | FollowUp is not a spam tool and must never look like one | ^S-01
+| S-02 | Cheap-looking gradients | Reads as template, not as product | ^S-02
+| S-03 | Excessive glassmorphism | Fashion, not clarity; hurts legibility | ^S-03
+| S-04 | Excessive neon | Wrong register entirely — this is a business tool | ^S-04
+| S-05 | Overly colorful dashboards | Color must mean something; a rainbow means nothing | ^S-05
+| S-06 | Clutter | Directly against "calm over urgent" | ^S-06
+| S-07 | Unnecessary 3D | Ornament | ^S-07
+| S-08 | Random animations | Motion must explain change or not exist | ^S-08
+| S-09 | Excessive rounded cards / card-in-card soup | Symptom of unresolved hierarchy | ^S-09
+| S-10 | Poor typography | Type *is* the interface at this level of restraint | ^S-10
+| S-11 | Tiny unreadable text | 14px floor for real content; never below 12px | ^S-11
+| S-12 | Decoration that doesn't improve usability | Everything on screen must carry information | ^S-12
+| S-13 | AI gimmicks — sparkles, typing dots, bot avatars, "✨AI-powered" | AI is invisible capability, never personality | ^S-13
+| S-14 | Fake complexity | Complexity that signals sophistication rather than serving a need | ^S-14
+| S-15 | "Startup template" aesthetics | The default look of an unconsidered product | ^S-15
+| S-16 | Copying another company's interface | References are principles; the design must be original | ^S-16
 
-**S-13 and S-16 are the two most likely to be violated by accident** — the first because
+**[[rejected#^S-13|S-13]] and [[rejected#^S-16|S-16]] are the two most likely to be violated by accident** — the first because
 AI-product visual conventions are pervasive in training data, the second because
 "inspired by" drifts into "reproduced from" without anyone deciding to.

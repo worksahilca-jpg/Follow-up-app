@@ -10,9 +10,12 @@ const automationTierSchema = z.object({
 });
 
 // POST /api/leads/[id]/automation — sets the per-lead automation trust
-// tier. OFF by default (Lead.automationTier defaults to OFF in the
-// schema); this is the only way it changes for a given lead, one at a
-// time. See src/lib/automation.ts for what each tier actually does.
+// tier. ASSISTED by default since 2026-09-06 (CEO decision, see schema.prisma's
+// AutomationTier comment and git history on Lead.automationTier) — a fresh
+// lead is already eligible for the risk-gated auto-send path unless an owner
+// dials it down to OFF; this route is how a lead moves between any of the
+// three tiers, one at a time. See src/lib/automation.ts for what each tier
+// actually does.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });

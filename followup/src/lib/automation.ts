@@ -3,9 +3,11 @@
  * be CONSIDERED for an automated message:
  *   1. The business-level Automation row is enabled (Settings' "Auto
  *      follow-up on silence" toggle) — the master switch.
- *   2. That specific Lead's automationTier is not OFF (opted in
- *      individually, via the selector on its detail page) — OFF by
- *      default.
+ *   2. That specific Lead's automationTier is not OFF. Since 2026-09-06
+ *      (CEO decision, see schema.prisma's AutomationTier comment) a new
+ *      lead starts on ASSISTED, not OFF — the per-lead selector on its
+ *      detail page is how an owner dials a lead *down* to OFF or *up* to
+ *      AUTONOMOUS, not an opt-in gate a lead starts behind.
  *
  * Which tier decides what happens next:
  *   - ASSISTED: the draft still passes assessSendRisk() (see openai.ts)

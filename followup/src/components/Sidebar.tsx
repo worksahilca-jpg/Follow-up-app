@@ -23,7 +23,7 @@ const nav = [
   { href: "/dashboard", label: "Today", icon: LayoutDashboard },
   { href: "/leads", label: "Leads", icon: Users },
   { href: "/pipeline", label: "Pipeline", icon: GitBranch },
-  { href: "/workflows", label: "Workflows", icon: Workflow },
+  { href: "/workflows", label: "Follow-up plans", icon: Workflow },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/activity", label: "Activity", icon: Activity },
   { href: "/settings", label: "Settings", icon: Settings },

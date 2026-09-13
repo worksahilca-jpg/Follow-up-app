@@ -51,7 +51,7 @@ function OnboardingFormInner({
   // way, step1Done is what the server already knows to be true.
   const [step, setStep] = useState<1 | 2>(step1Done ? 2 : 1);
   const [name, setName] = useState(initialName);
-  const [industry, setIndustry] = useState(initialIndustry || INDUSTRIES[0]);
+  const [industry, setIndustry] = useState(initialIndustry || "");
   const [teamSize, setTeamSize] = useState(initialTeamSize ?? 1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +95,10 @@ function OnboardingFormInner({
     e.preventDefault();
     if (!name.trim()) {
       setError("Give your business a name to continue.");
+      return;
+    }
+    if (!industry) {
+      setError("Select an industry to continue.");
       return;
     }
     setSaving(true);
@@ -172,7 +176,11 @@ function OnboardingFormInner({
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
                   className="w-full rounded-lg border border-line bg-card px-3 py-2 text-sm"
+                  required
                 >
+                  <option value="" disabled>
+                    Select an industry
+                  </option>
                   {INDUSTRIES.map((i) => (
                     <option key={i} value={i}>
                       {i}

@@ -607,3 +607,93 @@ conclude the page regressed.
 session: landing page live at rest — unchanged, per scope — `/signin` live, and static
 mockups of Dashboard/Leads/Pipeline/Settings since those require auth). Any of the "not
 done" items above are fair game for a follow-up session.
+
+---
+
+## D-012 — Eight convergent audit findings: presentation/copy fixes, no token or IA changes
+
+**Date:** 2026-09-13
+**Scope:** `AddLeadForm`, `OnboardingForm`, `Sidebar`, `StatCard`, `analytics/page.tsx`,
+`SetupStrip`, `settings/page.tsx` (Team → Lead routing), `PipelinePageClient`.
+
+Two independent new-user UX audits converged on eight small, concrete defects — all
+presentation/copy bugs, none touching the ink-vs-rust accent question, the "going cold"
+gold semantic, or body-text color, which stay open founder-level questions per
+`brand/color-system.md`'s `[TO DECIDE]`s. Each fix reused an existing pattern rather than
+inventing one; none required a new token or component.
+
+1. **Add-lead modal didn't close on Escape** — `components/modals.md` calls this
+   non-negotiable. No modal in the codebase had an Escape handler yet (checked
+   `ImportLeadsForm`, `LogCallForm`, `SmartViewForm`, `LeadTrustPanel` — same gap in all
+   four, not fixed here since the audit scoped this to Add-lead only). Added a
+   `keydown`-listener `useEffect` calling the existing `onClose` prop. **Flag for a future
+   session:** the other four overlays share this gap and should get the same treatment —
+   ideally as one shared hook (`useEscapeToClose`) rather than four more copies of the same
+   `useEffect`, once that's in scope.
+2. **Onboarding's industry `<select>` defaulted to "Real estate"** — a real "picked the
+   wrong option by doing nothing" trap. Changed the default state to `""`, added a disabled
+   `value=""` placeholder option ("Select an industry"), marked the `<select>` `required`,
+   and added the matching client-side check before submit. Verified both the native
+   browser constraint-validation message and the custom error path fire correctly.
+3. **Sidebar said "Workflows," the page it points to calls itself "Follow-up plans"**
+   everywhere (H1, empty state, its own copy) — renamed the nav label only, left the page
+   untouched, since the page's language was already the established one and the audit
+   confirmed nav was the outlier.
+4. **`StatCard`'s label row had no reserved height**, so a two-line label ("Reply rate —
+   automated") pushed its value down relative to a one-line neighbor ("Reply rate —
+   manual") in the same grid row. Fixed generically in the shared component — `min-h-
+   [2.25rem]` on the label paragraph, `items-start` on the row — rather than shortening the
+   one label, since the same failure mode is latent for any future StatCard label anywhere
+   in the app, not just these two. Verified pixel alignment via a cropped screenshot;
+   verified no regression on Leads/Pipeline's short single-line labels.
+5. **Analytics had no empty state** — unlike Leads/Pipeline, which both show `EmptyState`
+   with "Connect Gmail in Settings..." + a "Go to Settings" action when there's no data.
+   Gated on `data.totalLeads === 0`; when true, the whole stat grid + charts + team section
+   are replaced by the same `EmptyState` component (bare, unwrapped, matching Pipeline's
+   treatment more than Leads' card-wrapped one, since Analytics has no surrounding list
+   container to justify the wrapper). Copy closely mirrors the existing Leads/Pipeline
+   phrasing rather than inventing new language — this is a UI-pattern fix directed and
+   scoped explicitly enough that it didn't need a fresh product-ux-agent spec, but any
+   *further* wording pass on this copy still belongs to that agent.
+6. **Trial banner's "· 3 more after this" was uninterpretable on its own.** Traced the
+   actual referent: `SetupStrip` renders `getIncompleteSetupSteps()`'s ordered list
+   (billing → gmail → phone → widget from `setupStatus.ts`); "N more" is a count of the
+   *other* incomplete setup steps, unrelated to `TRIAL_PERIOD_DAYS` (14, from
+   `billing.ts`) or to any billing tier. Rewrote to "N more setup step(s) after this" —
+   the minimal change that makes the referent explicit without restructuring the strip.
+7. **Settings → Team → Lead routing had the same sentence twice** — the page-level subhead
+   ("Give a lead a head start... before anyone's looked at it") and `SourceRoutingSection`'s
+   own intro line ("What happens automatically... before anyone looks at it") said the same
+   thing. Kept the box's line — more concrete (names the actual mechanism, "the moment a
+   new lead comes in from each source") — and deleted the page-level subhead entirely,
+   which matches an existing pattern already used elsewhere in the same file (CRM sync,
+   Website widget, Lead webhook, Outbound webhook sections all have an H2 with no subhead
+   at all, letting the section's own content explain itself).
+8. **Pipeline's empty state repeated 8 times** — the top-level "No leads yet" `EmptyState`
+   plus all 7 kanban columns each saying "No leads at this stage." Suppressed the
+   per-column line only when the *unfiltered* `leads` prop is empty (the whole pipeline has
+   zero leads, business-wide) — not when a "My leads only" filter merely yields zero
+   visible leads while other leads exist elsewhere, since that's a different, legitimate,
+   non-redundant empty state the audit explicitly said to preserve. Verified both branches
+   via screenshot: an all-zero business renders 7 blank columns under one top message; a
+   business with 5 real leads still shows "No leads at this stage" on its actually-empty
+   columns (Qualified, Proposal Sent, Negotiation, Won, Lost).
+
+**Why these and not others:** All eight are presentation/copy corrections inside existing
+patterns — no new component, no new token, no IA change. Deliberately did not touch: the
+ink-vs-rust primary-button question, the gold "going cold" semantic, body-text color tint
+(all explicitly out of scope per the task), or the other four modals' missing Escape
+handlers (out of scope for *this* pass, flagged above for a future one).
+
+**Verification, done this session:** `npx tsc --noEmit` clean. `npx eslint .` clean.
+`npx vitest run` — 554/554 pass. `rm -rf .next && npm run build` succeeds. Every fix
+verified against a live locally-running instance (isolated `followup_test` Postgres DB,
+`prisma migrate deploy` already current, three seeded test businesses — one with 5 leads,
+one with zero leads, one pre-onboarding — and minted NextAuth JWT session cookies, no real
+Google OAuth needed) via Playwright screenshots at 1440×900, not static mockups, since
+these are all authenticated pages but a full local stack was available and used instead of
+settling for a mockup.
+
+**Revisit when:** Someone picks up the flagged "shared Escape-to-close hook" cleanup for
+the other four modals, or product-ux-agent wants a further wording pass on the Analytics
+empty-state copy beyond the minimal Leads/Pipeline-matching version shipped here.

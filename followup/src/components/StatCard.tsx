@@ -19,8 +19,13 @@ export default function StatCard({
 }) {
   return (
     <div className="rounded-xl border border-line bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-ink-soft">{label}</p>
+      <div className="flex items-start justify-between gap-3">
+        {/* min-h reserves space for a two-line label (e.g. "Reply rate —
+            automated") so the value below always starts at the same
+            vertical offset as a neighboring card whose label fits on one
+            line — otherwise wrapping cards throw the whole row's values
+            out of alignment. */}
+        <p className="text-sm text-ink-soft leading-tight min-h-[2.25rem]">{label}</p>
         {Icon && (
           <div
             className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"

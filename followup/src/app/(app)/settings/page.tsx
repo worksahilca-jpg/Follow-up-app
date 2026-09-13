@@ -1060,9 +1060,10 @@ function SettingsPageInner() {
 
       <section id="lead-routing" className="scroll-mt-16">
         <h2 className="font-display text-xl">Lead routing</h2>
-        <p className="text-sm text-ink-soft mt-1">
-          Give a lead a head start based on where it came from — before anyone&apos;s looked at it.
-        </p>
+        {/* No subhead here — SourceRoutingSection's own intro line already
+            says what this does ("what happens automatically... before
+            anyone looks at it"); a second sentence saying the same thing
+            in different words right above it was redundant. */}
         <div className="mt-4">
           <SourceRoutingSection />
         </div>

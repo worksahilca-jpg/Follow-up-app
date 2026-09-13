@@ -177,12 +177,11 @@ larger size.
   `--slate` is already spoken for by "Total" in the same stat row. The description above was
   reworded to drop "Warming," which invited the question by literally contradicting "going
   cold." See `[[design-decisions#^D-015|D-015]]` and `[[approved#^A-004|A-004]]`.
-- `[TO DECIDE]` **`--gold` is also used, undocumented, for every currency/deal-value amount
-  app-wide** (six call sites: `FollowUpCard`, dashboard, Leads list, lead detail, Pipeline
-  stage totals, Team performance revenue) — a real convention, but one that collides with
-  `--gold`'s documented "warning" meaning and this file's own "status colors only for
-  status, never decorative" rule. See `[[design-decisions#^D-016|D-016]]`. Needs a decision
-  (plain `--ink` text, or a formally documented fifth "currency" role), not fixed here.
+- **RESOLVED 2026-09-13** — `--gold` was actually in use at 30 sites across 15 files, not
+  just the six currency call sites [[design-decisions#^D-016|D-016]] first found (it also
+  covered most warning/error text app-wide). Currency figures move to plain `--ink`; warning/
+  error text moves to `--coral` (already the correct documented token). `--gold` goes back to
+  meaning only "going cold." See `[[design-decisions#^D-017|D-017]]` and `[[approved#^A-005|A-005]]`.
 - `[TO DECIDE]` **Rename `--rust` to `--accent`.** The value is right now (see above); the
   name still isn't. Worth doing as its own mechanical pass across ~90 call sites, not
   bundled into a value change again.

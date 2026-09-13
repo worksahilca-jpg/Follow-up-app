@@ -140,6 +140,62 @@ high-value channel worth real design/product attention, not a secondary one (Fin
 
 ---
 
+## 2026-09-13 — What makes this ICP open FollowUp, trust it at a glance, and keep opening it?
+
+**Triggered by:** product-narrative-agent's UX/product-narrative charter — first-time ease
+(onboarding, first five minutes) and ongoing habit (why open it today, what causes a week-2
+abandonment) for a solo agent/small-team owner who is phone-first, busy, and often between jobs.
+**Question:** What does real evidence say about what makes small-business/solo-operator SaaS
+tools easy to start vs. abandoned after a couple of weeks, and what does that mean specifically
+for FollowUp?
+**Method:** Read `design-brain/brand/brand-principles.md` and `decisions/rejected.md` first (both
+directly constrain which "engagement" tactics are even admissible before any research starts).
+Read `followup/research/product/2026-09-10-ux-simplification.md` in full to avoid duplicating its
+onboarding/IA work — that file already covers first-five-minutes onboarding in depth; this pass
+extends into the ongoing-habit question it left largely unanswered. New WebSearch research
+conducted (14 queries); WebFetch confirmed blocked again this session (`pmc.ncbi.nlm.nih.gov`
+returned `EGRESS_BLOCKED`), so every citation is a search-result synopsis, graded A-D using the
+scale the sister file in the same folder already established.
+**Findings:** Full detail in
+`followup/research/product/2026-09-13-usability-and-engagement.md`. Headlines:
+1. Missing a real first-value moment in the first week is repeatedly (if inconsistently, on the
+   exact numbers) linked to much higher later churn — reinforces, doesn't newly justify, the
+   sister file's proof-screen onboarding fix as the top-priority open item.
+2. Nir Eyal's Hook Model is useful as an audit lens (trigger/action/reward/investment) but two of
+   its four stages — variable reward and investment — are conventionally implemented in ways
+   brand principles 2, 3, and 7 already rule out; the file maps an honest, non-manufactured
+   equivalent of each stage instead.
+3. Five evidence-graded abandonment modes are named for "why someone quits after week 2":
+   never seeing real value, the tool becoming an unremembered inbox, alerts training the owner to
+   stop looking (badge-avoidance research plus a security-alert-fatigue analogy), a single
+   unsupervised AI mistake breaking a specific, already-primed authenticity fear, and the product
+   never visibly getting easier/more autonomous over time.
+4. Gamification mechanics (streaks, points, badges-as-reward) are explicitly ruled out with
+   external evidence that they backfire specifically in professional B2B contexts — recorded so a
+   future session doesn't have to re-run this research to rule them back out.
+5. A genuinely new opportunity, tied to `PRODUCT_DIRECTION.md` Rule 5 (rising autonomy): surface
+   a business's own demonstrated AI-accuracy track record as the honest reason to invite more
+   autonomy, rather than leaving the review burden flat over time.
+6. One open, unverified question flagged rather than assumed: whether the "needs your OK" signal
+   reaches this phone-first ICP on a channel they actually check mid-workday (current signals
+   appear to be a weekly email digest and in-app notifications; not exhaustively audited in this
+   research-only pass).
+**Confidence:** Medium at best, and several individual findings capped at Grade D (direction only,
+no citable number) — consistent with every prior pass in this repo hitting the same
+WebFetch-blocked limitation. Two findings are stronger than most of this repo's UX research to
+date: the badge/notification-avoidance finding cites a real paper abstract (ResearchGate) rather
+than only marketing content, and the trust-calibration finding cites real academic venues (PMC,
+Frontiers in Robotics and AI, arXiv) — though none were fetched, so treat as "real field of study
+exists and points this way," not as verified statistics.
+**Conclusion / what changes:** Adds five concrete, prioritized recommendations (problem +
+principle, not mockups) to the design brain's live research for the next session that touches
+onboarding, notifications, or the approval queue — most notably, an explicit design-principle
+justification for why gamification tactics are inadmissible here (extending, not just restating,
+existing brand principles), and a new, moat-relevant idea (a visible AI-accuracy track record
+driving autonomy invitations) that no prior pass had surfaced.
+**Written up in:** `followup/research/product/2026-09-13-usability-and-engagement.md`
+
+---
 
 **Known, already-available inputs that have not yet been mined for design implications:**
 - `followup/research/customers/2026-09-05-icp-pain-and-trust-objections.md` — ICP pain
@@ -152,3 +208,88 @@ high-value channel worth real design/product attention, not a secondary one (Fin
 
 A first useful research pass would be reading these through a design lens and extracting
 the UX implications. That has not been done; don't cite it as though it has.
+
+---
+
+## 2026-09-13 — How can FollowUp make scoring and drafting more accurate (fewer false-colds, sharper intent detection, less-edited drafts)?
+
+**Triggered by:** product-narrative-agent's research charter — concrete, actionable ways to
+reduce false "going cold" calls, improve intent/urgency detection from inbound messages, and
+reduce how much an AI-drafted follow-up needs editing before human approval.
+**Question:** What in FollowUp's current scoring/drafting code, plus external research,
+points to specific, buildable accuracy improvements — not general AI-quality platitudes?
+**Method:** Read `src/lib/scoring.ts`, `src/lib/integrations/openai.ts` (`scoreLead`,
+`classifyAsProspect`, `assessSendRisk`, `generateFollowUpMessage`), `src/lib/automation.ts`,
+`prisma/schema.prisma` (`Message`/`Lead`), `src/components/ApprovalQueue.tsx`, and
+`src/app/api/leads/[id]/send/route.ts` directly (code facts, high confidence, not subject to
+the sourcing cap below). New WebSearch research conducted for everything external; WebFetch
+confirmed blocked network-wide again this session (`en.wikipedia.org`, `EGRESS_BLOCKED`), so
+every external citation is a search-snippet, not a fetched page.
+**Findings:** Eleven, written up in full in
+`followup/research/product/2026-09-13-scoring-and-drafting-accuracy.md`:
+1. `Message.deliveryStatus` (Twilio delivery callback) is captured in the schema but never
+   checked before treating a silent lead as "going cold" — a bad phone number and a real
+   silent lead look identical to the automation today. (Code fact, high confidence.)
+2. Gmail hard-bounce notifications (`mailer-daemon@`) are filtered out as classifier noise
+   with no path back to the lead whose message bounced — the signal "this contact info is
+   broken" is discarded rather than captured. (Code fact + standard CRM practice, medium.)
+3. Apple Mail Privacy Protection pre-fetches tracking pixels on Apple's own servers
+   regardless of human action, corrupting "opened email" — which `scoreLead`'s prompt names
+   as a weighted-up buying signal — for a large, unquantified share of leads. Needs a direct
+   check against FollowUp's own tracking implementation before acting on it. (External,
+   medium; mechanism itself is undisputed platform behavior.)
+4. `scoreLead`'s JSON schema orders `score` before `reason`/`factors`, forcing a
+   verdict-first, rationalize-after generation pattern — structured-output field-order
+   research says reasoning fields must precede the answer to causally influence it. This
+   repo's own prior research (2026-09-10 instant-ack file) already applied this fix to a
+   sibling function; `scoreLead` was missed. (External mechanism, medium; code fact, high.)
+5. The "long silence after a strong signal is still warm" rule ships as one abstract
+   sentence with zero worked examples; few-shot examples are a documented lever for exactly
+   this kind of rare, asymmetric misclassification, with a real calibration trade-off at
+   very low example counts. (External, medium.)
+6. `classifyAsProspect` runs on a concrete signal checklist (rewritten after real production
+   misses, per its own code comment) while its sibling `scoreLead` runs on one generic
+   sentence — the concrete lead-message signal list the 2026-09-13 customer-research pass
+   already assembled (named specifics, timelines, financing language, offered time slots)
+   hasn't been ported over. (Code fact, high confidence.)
+7. WhatsApp's Cloud API exposes a three-stage `sent`/`delivered`/`read` webhook status, but
+   FollowUp's `deliveryStatus` field only names `queued/sent/delivered/undelivered/failed` —
+   `read` isn't captured, losing a signal that (unlike email opens) isn't corrupted by
+   Apple's prefetch problem. Needs verification against Twilio's own WhatsApp callback
+   docs before building. (External, medium.)
+8. Comparable AI-drafting contexts converge on tracking "fraction of drafts sent unedited"
+   as the core quality metric (~30% edited is a cited diagnostic threshold in sales-email
+   vendor guidance), and a peer-reviewed clinical-messaging study (Frontiers in Digital
+   Health / PMC, 919 messages, 100 physicians) found draft adoption behaves as roughly
+   bimodal — a draft that clears a usability bar gets kept almost entirely (0.86 ROUGE-1),
+   one that doesn't gets rewritten — rather than a smooth editing gradient. Different domain
+   from sales, but a useful framing for what "less editing" should optimize for. (External;
+   one source — the clinical study — higher confidence than typical vendor content.)
+9. FollowUp cannot currently measure its own draft-edit rate at all — `POST
+   /api/leads/[id]/send`'s audit log records only message length, never whether the sent
+   text matches `lead.suggestedMessage`, despite that comparison being nearly free to add.
+   (Code fact, high confidence — the single cheapest fix in this pass.)
+10. `generateFollowUpMessage`'s prompt constrains tone, language, and factual honesty in
+    real depth but has no rule against stacking multiple questions or failing to answer the
+    lead's literal question first — a specific, previously-identified content gap (2026-09-13
+    customer-research file, Finding 5) mapped onto the exact unaddressed prompt text. (Code
+    fact, high confidence.)
+11. A visible "generic vs. specific" draft signal, distinct from the lead score, follows as
+    inference from Finding 8's bimodal-adoption pattern — flagged explicitly as internal
+    reasoning, not externally sourced.
+**Confidence:** High for every code-grounded finding (1, 2 partially, 4's code half, 6, 9,
+10 — direct reads of the current codebase, not opinion). Medium for every externally
+researched finding, per this repo's standing convention (search-snippet sourced), except
+Finding 8's clinical-study half, which is peer-reviewed and treated as somewhat stronger
+despite being a different domain (healthcare messaging, not sales).
+**Conclusion / what changes:** Gives whoever next tunes `scoreLead`/`generateFollowUpMessage`
+five concrete, low-effort prompt/schema changes (reorder the score schema, port the intent
+checklist from the customer-research pass, add two worked few-shot examples, add an
+answer-first/one-question structural rule) and two concrete, low-effort code changes (wire
+`deliveryStatus`/bounce data into the silence/cold-lead logic; log whether a sent message
+matches the stored AI draft) — all traceable to a specific line of the current codebase, not
+a general "make the AI better" directive. Two findings (Apple MPP's actual effect on
+FollowUp's own tracking; whether Twilio's WhatsApp callback surfaces Meta's `read` status)
+are explicitly flagged as needing a direct verification pass before acting on them.
+**Written up in:**
+`followup/research/product/2026-09-13-scoring-and-drafting-accuracy.md`

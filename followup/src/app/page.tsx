@@ -76,9 +76,10 @@ export default function LandingPage() {
           </RevealAward>
           <RevealAward delayMs={140}>
             <p className="mt-6 text-[16px] leading-relaxed max-w-md" style={{ color: "var(--ink-soft)" }}>
-              FollowUp reads every conversation, not just the new ones — and notices the lead who
-              already heard from you once, then went silent, before &ldquo;let me think about
-              it&rdquo; turns into a lost sale.
+              You already paid to get them. Losing them after costs more. FollowUp reads every
+              conversation, not just the new ones — and catches the lead who already heard from
+              you once, then went silent, before &ldquo;let me think about it&rdquo; turns into a
+              lost sale.
             </p>
           </RevealAward>
           <RevealAward delayMs={200}>
@@ -98,6 +99,13 @@ export default function LandingPage() {
                 See how it works
               </a>
             </div>
+            {/* The "no credit card required" reassurance used to be stapled onto the 21× stat
+                sentence below, joined by an em dash — one idea about the product, one about
+                trial friction, read as if they were the same claim. Moved next to the button it
+                actually answers ("what happens when I click Get started"). */}
+            <p className="mt-2.5 text-xs" style={{ color: "var(--ink-faint)" }}>
+              No credit card required.
+            </p>
           </RevealAward>
           <RevealAward delayMs={260}>
             <div className="mt-9 flex items-center gap-4">
@@ -115,9 +123,23 @@ export default function LandingPage() {
               </p>
               <p className="text-xs leading-relaxed max-w-[15rem]" style={{ color: "var(--ink-soft)" }}>
                 higher qualification rate when a lead is contacted within 5 minutes instead of
-                after 30 — no credit card required to see it for yourself.
+                after 30.
               </p>
             </div>
+          </RevealAward>
+          <RevealAward delayMs={290}>
+            {/* The voice agent — a real, shipped capability (opt-in, off by default) — had zero
+                mentions anywhere on the page. Per the landing-page-strategy research
+                (2026-09-14), it belongs as its own moment, not a spec line buried in a feature
+                list, the same way Beside leads with "answers, routes, and books every call"
+                instead of a bullet point. */}
+            <p className="mt-5 text-[14px] leading-relaxed max-w-md" style={{ color: "var(--ink)" }}>
+              <strong>The phone rings while you&apos;re on a job.</strong>{" "}
+              <span style={{ color: "var(--ink-soft)" }}>
+                FollowUp&apos;s own AI can pick it up, have an actual conversation — not a
+                voicemail beep — and speak back in whatever language they called in.
+              </span>
+            </p>
           </RevealAward>
           <RevealAward delayMs={320}>
             <div className="mt-9">

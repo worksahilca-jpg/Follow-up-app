@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ShieldAlert } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 /**
  * "Needs your OK" — research/product/2026-09-10-ux-simplification.md
@@ -15,6 +15,25 @@ import { ShieldAlert } from "lucide-react";
  * Reuses the same POST /api/leads/[id]/send that a human clicking
  * "Send now" in MessageComposer already uses — approving here IS sending
  * the exact drafted text, nothing new to trust.
+ *
+ * 2026-09-14 revisit (founder: dashboard reads as "weird" — layout,
+ * density, this component, and color all flagged): the original
+ * treatment wrapped this in a 2px --coral border under a --gold-soft
+ * header band, with the lead's message and the draft each in their own
+ * bordered box inside the card. Two things were wrong with that, not
+ * just one:
+ *   1. --coral/--gold read as an alarm — this is the routine, trusted,
+ *      first thing an owner does every day, not an error state. It also
+ *      quietly misused --gold outside "going cold," which A-005 already
+ *      says it's reserved for ("gold... stays reserved for 'going cold'
+ *      alone" — design-brain/decisions/approved.md).
+ *   2. said-box-in-draft-box-in-2px-bordered-card is exactly the
+ *      "card-in-card soup" design-brain/decisions/rejected.md calls out
+ *      as S-09 — a symptom of unresolved hierarchy, not a design choice.
+ * Fixed by matching the same calm, borderless-item list treatment every
+ * other dashboard section already uses (divide-y rows, no nested boxes,
+ * no status-color border) — the queue earns attention by sitting first
+ * on the page and by what it says, not by looking like a warning.
  */
 
 export type ApprovalItem = {
@@ -82,19 +101,24 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
           approving a draft with no visible context for what it's replying
           to meant trusting the AI's summary of the situation ("reason")
           instead of judging the reply against the lead's own words. This
-          is the whole reason to review a hold at all, so it goes first. */}
+          is the whole reason to review a hold at all, so it goes first.
+          Previously each of these was its own bordered box (dashed, then
+          solid) inside this already-bordered card — a nested-card look
+          the design brain's S-09 explicitly names. A single divider
+          between the two keeps the same "what they said, then what we'll
+          say" distinction without stacking boxes inside boxes. */}
       {item.leadLastMessage && (
-        <div className="mt-2 rounded-lg border border-dashed border-line p-3 text-sm leading-relaxed">
-          <p className="text-xs font-medium text-ink-soft mb-1">
+        <div className="mt-3 text-sm leading-relaxed">
+          <p className="text-xs font-medium text-ink-soft">
             {item.leadName.split(" ")[0]} said, over {CHANNEL_LABEL[item.leadLastMessageChannel ?? ""] ?? "message"}:
           </p>
-          <p className="text-ink whitespace-pre-wrap">{item.leadLastMessage}</p>
+          <p className="text-ink whitespace-pre-wrap mt-1">{item.leadLastMessage}</p>
         </div>
       )}
-      <div className="mt-2 rounded-lg border border-line bg-paper p-3 text-sm leading-relaxed">
-        <p className="text-xs font-medium text-ink-soft mb-1">The draft reply:</p>
-        {item.draftSubject && <p className="font-medium mb-1">{item.draftSubject}</p>}
-        <p className="text-ink-soft whitespace-pre-wrap">{item.draftMessage}</p>
+      <div className="mt-3 pt-3 border-t border-line text-sm leading-relaxed">
+        <p className="text-xs font-medium text-ink-soft">The draft reply:</p>
+        {item.draftSubject && <p className="font-medium mt-1">{item.draftSubject}</p>}
+        <p className="text-ink-soft whitespace-pre-wrap mt-1">{item.draftMessage}</p>
       </div>
       {item.reason && <p className="text-xs text-ink-soft mt-1.5">Held because {item.reason.toLowerCase()}.</p>}
       {error && (
@@ -135,14 +159,15 @@ export default function ApprovalQueue({ items }: { items: ApprovalItem[] }) {
   if (visible.length === 0) return null;
 
   return (
-    <div className="mt-6 rounded-xl border-2 overflow-hidden" style={{ borderColor: "var(--coral)" }}>
-      <div className="flex items-center gap-2 px-5 py-3" style={{ backgroundColor: "var(--gold-soft)" }}>
-        <ShieldAlert className="h-4 w-4" style={{ color: "var(--coral)" }} />
-        <h2 className="font-display text-lg" style={{ color: "var(--ink)" }}>
-          Needs your OK ({visible.length})
-        </h2>
-      </div>
-      <div className="divide-y divide-line bg-card">
+    <div className="mt-6">
+      <h2 className="font-display text-xl flex items-center gap-2">
+        <ShieldCheck className="h-4 w-4" style={{ color: "var(--ink)" }} />
+        Needs your OK ({visible.length})
+      </h2>
+      <p className="text-sm text-ink-soft mt-1">
+        FollowUp drafted these already — approve to send exactly what&apos;s shown, or edit it first.
+      </p>
+      <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line overflow-hidden">
         {visible.map((item) => (
           <ApprovalCard key={item.leadId} item={item} onResolved={(leadId) => setResolved((prev) => new Set(prev).add(leadId))} />
         ))}

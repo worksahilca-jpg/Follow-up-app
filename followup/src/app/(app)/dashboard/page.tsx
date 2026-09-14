@@ -77,20 +77,13 @@ export default async function DashboardPage() {
       <div className="relative overflow-hidden rounded-2xl border border-line px-6 py-8">
         <AuroraBackground className="opacity-30" />
         <FadeIn>
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <h1 className="font-display text-3xl">{getGreeting()}</h1>
-              <p className="text-ink-soft mt-1">Here&apos;s what needs your attention today.</p>
-            </div>
-            {approvalItems.length > 0 && (
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium shrink-0"
-                style={{ backgroundColor: "var(--gold-soft)", color: "var(--ink)" }}
-              >
-                {approvalItems.length} need{approvalItems.length === 1 ? "s" : ""} your OK
-              </span>
-            )}
-          </div>
+          {/* The pill that used to sit here ("N need your OK") repeated,
+              word for word, the ApprovalQueue heading immediately below
+              it — the first two things on the page said the same thing
+              twice. The queue itself is now the one place that count
+              lives; it doesn't need co-signing from the banner above it. */}
+          <h1 className="font-display text-3xl">{getGreeting()}</h1>
+          <p className="text-ink-soft mt-1">Here&apos;s what needs your attention today.</p>
         </FadeIn>
       </div>
 

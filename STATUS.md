@@ -90,10 +90,11 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 - [x] **Team structure formalized** — 5 people (Sahil, Gautam, Vansh, Pransh, Dipesh), roles and
   git ownership documented in `[[../TEAM]]`, enforced via `.github/CODEOWNERS`, workflow in
   `[[../CONTRIBUTING]]`. Branch protection on `main` is on (PR + 1 approval + CI required, no
-  bypass). GitHub invites sent to all four (2026-09-14) — all four GitHub usernames now
-  confirmed and in CODEOWNERS: `@followvansh`, `@pransh-io`, `@gautam972`, `@dipesh` (PR
-  [#225](https://github.com/worksahilca-jpg/Follow-up-app/pull/225)). Only Sahil's own
-  placeholder remains.
+  bypass). GitHub invites sent to all four (2026-09-14) — Vansh, Pransh (`pransh-io`), and
+  Gautam (`gautam972`) confirmed GitHub usernames. **Dipesh has not yet reported his** — PR
+  [#225](https://github.com/worksahilca-jpg/Follow-up-app/pull/225) briefly used "@dipesh" as
+  an unconfirmed guess (2026-09-14); that was a mistake, caught and reverted the same day. Do
+  not fill in his CODEOWNERS entry until he actually reports his real username.
 - [ ] **Vercel team access** — team already existed (`North Frame` / `north-frame3`, Pro plan),
   no new team needed. Vansh invited as **Member** (2026-09-14, pending acceptance). **Pransh
   accepted** (2026-09-14) — guided on deployment logs, env vars, and preview deployments for

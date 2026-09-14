@@ -46,7 +46,12 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
   if asked.
 - [ ] **External penetration test** (Security L3) — not started. Real customer data exists
   now (at least one live test user), so this stops being purely hypothetical at some point.
-- [ ] **Deeper GitHub/codebase access for Dipesh and Vansh** — open, not urgent.
+- [x] **Team structure formalized** — 5 people (Sahil, Gautam, Vansh, Pransh, Dipesh), roles and
+  git ownership documented in `[[../TEAM]]`, enforced via `.github/CODEOWNERS`, workflow in
+  `[[../CONTRIBUTING]]`. Branch protection on `main` is on (PR + 1 approval + CI required, no
+  bypass). GitHub invites sent to all four (2026-09-14) — Vansh accepted invite pending;
+  Gautam/Pransh/Dipesh still need to report their usernames before CODEOWNERS' placeholder
+  entries can be filled in.
 
 ## Standing constraints (don't silently violate these)
 

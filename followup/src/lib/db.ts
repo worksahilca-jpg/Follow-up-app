@@ -13,6 +13,7 @@
  * ever written that way; keep it so.
  */
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { decryptSecret, encryptSecret } from "@/lib/crypto";
 
 const ENCRYPTED_FIELDS: Record<string, string[]> = {
@@ -52,6 +53,10 @@ function decryptResult(result: unknown, fields: string[]): void {
 
 function createClient() {
   return new PrismaClient({
+    // Prisma 7 resolves no connection URL of its own — the schema no longer
+    // carries one (see prisma.config.ts), so the app hands it a pg driver
+    // adapter built from DATABASE_URL, the pooled URL it always used.
+    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   }).$extends({
     name: "credentialEncryption",

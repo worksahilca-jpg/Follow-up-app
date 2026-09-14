@@ -1,18 +1,21 @@
 // FollowUp — production data model.
 //
+// Connection URLs are NOT in this file — Prisma 7 removed `url`/`directUrl`
+// from the datasource block. Nothing about the two URLs changed except where
+// they are read:
+//
 // DATABASE_URL: pooled connection (e.g. Supabase's port-6543 pgbouncer URL) —
-//   used by the running app.
+//   used by the running app, via the pg driver adapter in src/lib/db.ts.
 // DIRECT_URL: direct connection (e.g. Supabase's port-5432 URL) — used only
 //   by `prisma migrate` / `prisma db push`, which can't run through a pooler.
+//   Read from prisma.config.ts.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 model User {

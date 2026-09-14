@@ -23,10 +23,15 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 
 ## Open, waiting on review
 
-- [ ] **7 stale Dependabot PRs** ([#97–#105](https://github.com/worksahilca-jpg/Follow-up-app/pulls))
-  open since 2026-09-07, majors: TypeScript 5→7, Prisma 6→7, ESLint 9→10, plus 3 GitHub Actions
-  bumps. Express 4→5 (#100) is done — see #214 below. Not urgent, but majors don't get easier
-  with age.
+- [ ] **PR #223** — `@types/node` 22.20.1 → 26.4.1, fully verified (tsc/eslint/vitest/build all
+  clean). Awaiting merge.
+- [ ] **3 Dependabot majors genuinely held back, not stalled by neglect** — each investigated
+  and found unsafe to ship right now, for real upstream reasons: **Prisma 7** (#102) needs a
+  full driver-adapter rewrite (`datasource url`/`directUrl` removed entirely — touches the
+  production DB layer); **TypeScript 7** (#103) is the new Go-native rewrite and
+  `typescript-eslint` doesn't support it yet (confirmed crash); **ESLint 10** (#104)
+  hard-crashes via `eslint-plugin-react` bundled in `eslint-config-next`, no compatible version
+  published yet. Re-check periodically as upstream catches up, don't force any of the three.
 
 ## Recently shipped (this session)
 
@@ -76,6 +81,9 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
   if asked.
 - [ ] **External penetration test** (Security L3) — not started. Real customer data exists
   now (at least one live test user), so this stops being purely hypothetical at some point.
+- [x] **Twilio A2P registration paused ~1 week** (2026-09-14, founder's call — cost timing,
+  not urgent to detail further here) — Vansh reassigned to WhatsApp template setup, then Meta
+  App Review submission, in the meantime. Resume A2P when the founder says go.
 - [x] **Team structure formalized** — 5 people (Sahil, Gautam, Vansh, Pransh, Dipesh), roles and
   git ownership documented in `[[../TEAM]]`, enforced via `.github/CODEOWNERS`, workflow in
   `[[../CONTRIBUTING]]`. Branch protection on `main` is on (PR + 1 approval + CI required, no
@@ -107,6 +115,12 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
   else gets `Member`/`Developer`/`Viewer` at most. Slack: he's Owner/Admin, everyone else is a
   regular member. Never grant anyone Owner/Admin-equivalent access on any platform without his
   explicit ask — access expands outward from him, never sideways or above him.
+- **"Automations" is a separate business (Sahil's own, agency-style client-automation work,
+  built to fund FollowUp) and must never be combined with FollowUp's codebase.** It briefly
+  landed directly on the shared `claude/followup-demo-to-production-4k39hr` branch from a
+  different session (2026-09-14), was preserved on its own `claude/automations-business`
+  branch, and its PR was closed without merging on the founder's explicit instruction. If it
+  needs a home, that's its own separate repository — never a merge into this one.
 - ~~Two open design-brain tokens...~~ RESOLVED 2026-09-13 — see A-003/A-004 in `[[approved]]`.
 
 ---

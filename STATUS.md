@@ -19,25 +19,45 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
   lead to myself" button (`TestLeadButton.tsx` → `POST /api/leads/test-lead`) instead — it
   already exercises the real instant-ack/scoring/draft path end to end. The fuller multi-day
   silence/rescue scenario stays a later, deliberate exercise, not a blocker right now.
-- [ ] **Logo direction** — 3 arrow-based concepts presented earlier, none picked yet.
+- [x] ~~Logo direction~~ Founder is now designing the logo himself (2026-09-14) — Claude is
+  out of this loop entirely unless he re-opens it. Two rounds of concepts (3 arrow-based, then
+  3 F/U monogram drafts per his own idea) were shown and rejected; see `[[../design-brain/decisions/rejected|R-001]]`.
+  Do not propose new logo directions unprompted.
+
 ## Running now (background agents)
 
 *(none right now — check the [Agent Board](https://claude.ai/code/artifact/310ede6b-c78d-436b-a262-d6bbd40040c1) for live status)*
 
 ## Open, waiting on review
 
-- [ ] **PR #223** — `@types/node` 22.20.1 → 26.4.1, fully verified (tsc/eslint/vitest/build all
-  clean). Awaiting merge.
-- [ ] **3 Dependabot majors genuinely held back, not stalled by neglect** — each investigated
-  and found unsafe to ship right now, for real upstream reasons: **Prisma 7** (#102) needs a
-  full driver-adapter rewrite (`datasource url`/`directUrl` removed entirely — touches the
-  production DB layer); **TypeScript 7** (#103) is the new Go-native rewrite and
-  `typescript-eslint` doesn't support it yet (confirmed crash); **ESLint 10** (#104)
-  hard-crashes via `eslint-plugin-react` bundled in `eslint-config-next`, no compatible version
-  published yet. Re-check periodically as upstream catches up, don't force any of the three.
+- [ ] **PR #229** — 10 minor/patch bumps (Sentry, lucide-react, openai, react/react-dom patch,
+  stripe, vite, postcss, etc.). CI green, Vercel preview deployed clean. Low-risk, ready to
+  merge on request.
+- [ ] **4 Dependabot majors genuinely held back, not stalled by neglect** — each investigated
+  and found unsafe to ship right now, for real upstream reasons, re-checked 2026-09-14:
+  - **Prisma 7** (#102) — still needs the full driver-adapter rewrite (`datasource url`/
+    `directUrl` removed entirely, touches the production DB layer). Re-checked: 7.x is now
+    mature (7.0–7.10 shipped, 8.0 RC out), but that was never the blocker — the architecture
+    change is real and still unstarted. Worth scoping as a deliberate project, not a drive-by
+    bump.
+  - **TypeScript 7** (#103) — still blocked. `typescript-eslint` latest (8.70.x) still pins
+    `typescript: >=4.8.4 <6.1.0` — confirmed no support for TS 7 yet.
+  - **ESLint 10** (#104) — still blocked. `eslint-plugin-react` latest (7.37.5), bundled by
+    `eslint-config-next`, still pins `eslint: ^3...^9.7` — no ESLint 10 support yet.
+  - **zod 3→4** (#230, new) — attempted a real check, not just deferred: CI actually fails on
+    this one. zod is used in 32 files across the API surface (the Security L2 "schema
+    validation on every API body" guarantee) — zod 4 has real breaking changes (error shape,
+    some renamed methods) that need a proper migration pass across every one of those call
+    sites, not a version-bump-and-hope. Held back for the same reason as the other three: real
+    breakage, not neglect.
+  
+  Re-check all four periodically as upstream catches up / as a dedicated pass gets scheduled — don't force any of them.
 
 ## Recently shipped (this session)
 
+- [x] **Correction: PR #222 (Automations preservation) was actually still open**, despite this
+  file previously recording it as closed. Verified and closed for real (2026-09-14) — no merge
+  occurred, the standing "never combine Automations with FollowUp" constraint held throughout.
 - [x] Five-person team formalized in code — `TEAM.md`, `.github/CODEOWNERS`,
   `CONTRIBUTING.md`, PR template (PR [#215](https://github.com/worksahilca-jpg/Follow-up-app/pull/215))
 - [x] README rewritten to describe the product that actually shipped (was still describing a

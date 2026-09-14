@@ -12,21 +12,21 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
-    "@sentry/core": "10.73.0",
-    "@sentry/nextjs": "^10.73.0",
+    "@sentry/core": "10.74.0",
+    "@sentry/nextjs": "^10.74.0",
     "@types/papaparse": "^5.5.2",
     "clsx": "^2.1.1",
     "framer-motion": "^13.2.0",
     "googleapis": "^178.0.0",
-    "lucide-react": "^1.41.0",
+    "lucide-react": "^1.45.0",
     "next": "16.3.4",
     "next-auth": "^4.24.15",
-    "openai": "^7.10.0",
+    "openai": "^7.15.0",
     "papaparse": "^5.7.0",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "recharts": "^3.10.1",
-    "stripe": "^22.6.1",
+    "stripe": "^22.6.2",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -39,7 +39,7 @@
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vite": "^8.2.2",
+    "vite": "^8.3.0",
     "vitest": "^5.0.0"
   }
 }

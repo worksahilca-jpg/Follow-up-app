@@ -33,7 +33,7 @@ function timeAgo(iso: string): string {
   return `${Math.round(hours / 24)}d ago`;
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({ align = "left" }: { align?: "left" | "right" }) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -106,7 +106,12 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-10 z-50 w-80 rounded-xl border border-line bg-card shadow-lg overflow-hidden">
+        <div
+          className={
+            "absolute top-10 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-line bg-card shadow-lg overflow-hidden " +
+            (align === "right" ? "right-0" : "left-0")
+          }
+        >
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-line">
             <span className="text-sm font-medium">Notifications</span>
             {unreadCount > 0 && (

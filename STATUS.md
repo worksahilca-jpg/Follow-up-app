@@ -14,8 +14,11 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 - [x] `PLATFORM_ADMIN_EMAILS` set to `sahil@followupbase.io` in Vercel (Production), redeployed.
   `ALLOWED_EMAILS` doesn't exist in this project, so nothing to check there. `/admin` should
   now work for that account.
-- [ ] **Ghosted-lead recovery test** — set up the test Gmail account, send the 4 scripted
-  test-lead emails, let real time pass to prove the "no lead goes cold" automation end to end.
+- [x] ~~Ghosted-lead recovery test — set up the test Gmail account, send the 4 scripted
+  test-lead emails...~~ Founder's call (2026-09-14): use the already-shipped "Send a test
+  lead to myself" button (`TestLeadButton.tsx` → `POST /api/leads/test-lead`) instead — it
+  already exercises the real instant-ack/scoring/draft path end to end. The fuller multi-day
+  silence/rescue scenario stays a later, deliberate exercise, not a blocker right now.
 - [ ] **Logo direction** — 3 arrow-based concepts presented earlier, none picked yet.
 ## Running now (background agents)
 
@@ -87,9 +90,10 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 - [x] **Team structure formalized** — 5 people (Sahil, Gautam, Vansh, Pransh, Dipesh), roles and
   git ownership documented in `[[../TEAM]]`, enforced via `.github/CODEOWNERS`, workflow in
   `[[../CONTRIBUTING]]`. Branch protection on `main` is on (PR + 1 approval + CI required, no
-  bypass). GitHub invites sent to all four (2026-09-14) — Vansh and Pransh (`pransh-io`) both
-  accepted, both have Write access; Gautam/Dipesh still need to report their usernames before
-  CODEOWNERS' placeholder entries can be filled in.
+  bypass). GitHub invites sent to all four (2026-09-14) — all four GitHub usernames now
+  confirmed and in CODEOWNERS: `@followvansh`, `@pransh-io`, `@gautam972`, `@dipesh` (PR
+  [#225](https://github.com/worksahilca-jpg/Follow-up-app/pull/225)). Only Sahil's own
+  placeholder remains.
 - [ ] **Vercel team access** — team already existed (`North Frame` / `north-frame3`, Pro plan),
   no new team needed. Vansh invited as **Member** (2026-09-14, pending acceptance). **Pransh
   accepted** (2026-09-14) — guided on deployment logs, env vars, and preview deployments for

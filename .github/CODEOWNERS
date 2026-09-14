@@ -3,13 +3,11 @@
 # Drives GitHub's automatic review requests. Last matching pattern wins, so
 # more specific rules are listed after more general ones.
 #
-# PLACEHOLDER USERNAMES: @followvansh (Vansh), @pransh-io (Pransh), and
-# @gautam972 (Gautam) are confirmed GitHub usernames as of 2026-09-14 —
-# Dipesh has not yet reported his. The lines below for him use a
-# placeholder in the form @REPLACE-<name>-github-username — GitHub will
-# not resolve these until swapped for a real username. Update this file
-# the moment his username is confirmed; until then, GitHub simply won't
-# auto-request his review on his area.
+# PLACEHOLDER USERNAMES: @followvansh (Vansh), @pransh-io (Pransh), @gautam972
+# (Gautam), and @dipesh (Dipesh) are confirmed GitHub usernames as of
+# 2026-09-14. Sahil's own username is still a placeholder below — the lines
+# using @REPLACE-<name>-github-username won't resolve until swapped for a
+# real username. Update this file the moment it's confirmed.
 #
 # See TEAM.md for the human-readable version of who owns what, and
 # CONTRIBUTING.md for how the PR/review process around this actually works.
@@ -42,11 +40,11 @@
 /voice-agent/**                            @followvansh
 
 # Security / operations / infra
-/followup/src/lib/auth.ts                  @REPLACE-dipesh-github-username
-/followup/src/lib/platformAdmin.ts         @REPLACE-dipesh-github-username
-/followup/vercel.json                      @REPLACE-dipesh-github-username
-/.github/workflows/**                      @REPLACE-dipesh-github-username
-/followup/src/middleware.ts                @REPLACE-dipesh-github-username
+/followup/src/lib/auth.ts                  @dipesh
+/followup/src/lib/platformAdmin.ts         @dipesh
+/followup/vercel.json                      @dipesh
+/.github/workflows/**                      @dipesh
+/followup/src/middleware.ts                @dipesh
 
 # Product / governance docs — Sahil has final say
 /CLAUDE.md                                 @REPLACE-sahil-github-username

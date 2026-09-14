@@ -14,6 +14,14 @@ escalates to a human the moment judgment is required.
 The canonical product statement is `followup/PRODUCT_DIRECTION.md`. It wins over anything
 here on *what to build*. This file wins on *how it should look, feel, and behave*.
 
+## Team
+
+Five people, real GitHub review, `main` protected. Full breakdown, responsibilities, and the
+git-ownership split are in `TEAM.md`; the enforced version of that ownership lives in
+`.github/CODEOWNERS`. How the day-to-day PR/branching workflow actually works is in
+`CONTRIBUTING.md` — read it before opening a PR, human or agent. None of that is duplicated
+here; this file stays focused on design/UX governance.
+
 ## The Design Brain
 
 `design-brain/` is FollowUp's permanent design memory. It is a **living system**, not

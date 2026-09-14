@@ -21,17 +21,42 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 
 *(none right now — check the [Agent Board](https://claude.ai/code/artifact/310ede6b-c78d-436b-a262-d6bbd40040c1) for live status)*
 
+## Open, waiting on review
+
+- [ ] **README accuracy fix** — `followup/README.md` still described the product as a demo
+  running on `demo-data.ts`, with Gmail, OpenAI scoring, Postgres and login listed as
+  not-yet-wired. All false. Rewritten to what actually ships, plus a split between the five
+  keys needed to boot and the per-capability keys. Branch pushed, PR not opened yet.
+- [ ] **8 stale Dependabot PRs** ([#97–#105](https://github.com/worksahilca-jpg/Follow-up-app/pulls))
+  open since 2026-09-07, all major bumps: TypeScript 5→7, Prisma 6→7, ESLint 9→10, Express
+  4→5. Not urgent, but majors don't get easier with age.
+
 ## Recently shipped (this session)
 
 - [x] Navy/blue app-wide reskin — landing page, `/signin`, and the full authenticated app
   unified on one visual system (PR [#198](https://github.com/worksahilca-jpg/Follow-up-app/pull/198))
 - [x] Gmail/Outlook initial sync window widened 90 → 180 days (PR [#199](https://github.com/worksahilca-jpg/Follow-up-app/pull/199))
 - [x] 8-issue UX audit fix pass from two independent new-user audits (PR [#200](https://github.com/worksahilca-jpg/Follow-up-app/pull/200))
-- [x] Founder-only `/admin` platform dashboard — code live, gate not yet configured (PR [#201](https://github.com/worksahilca-jpg/Follow-up-app/pull/201))
+- [x] Founder-only `/admin` platform dashboard (PR [#201](https://github.com/worksahilca-jpg/Follow-up-app/pull/201)) — gate configured since, see the top of this file
 - [x] CSP fix so the Vercel Toolbar can load on production (PR [#202](https://github.com/worksahilca-jpg/Follow-up-app/pull/202))
 - [x] Design brain made Obsidian-compatible — wiki-links + `design-brain/INDEX.md` (PR [#203](https://github.com/worksahilca-jpg/Follow-up-app/pull/203))
 - [x] STATUS.md, button-color and "going cold" pill-color decisions, lead-message research (PR [#204](https://github.com/worksahilca-jpg/Follow-up-app/pull/204))
 - [x] Button-color (A-003) and pill-color (A-004) decisions approved by founder — implemented
+- [x] Scoring/drafting accuracy and usability/engagement research passes (PR [#207](https://github.com/worksahilca-jpg/Follow-up-app/pull/207))
+- [x] Landing-page effectiveness research + how FollowUp's page compares (PR [#208](https://github.com/worksahilca-jpg/Follow-up-app/pull/208))
+- [x] `--gold` overuse written up as D-017/A-005 — 30 sites across 15 files, not the 6 D-016
+  found (PR [#209](https://github.com/worksahilca-jpg/Follow-up-app/pull/209))
+- [x] `--gold` sweep implemented — currency to `--ink`, warning/error text to `--coral`,
+  `--gold` back to meaning only "going cold". Plus the Uplift AI competitive check, which
+  found a 4-way name collision and no actual competitor (PR [#212](https://github.com/worksahilca-jpg/Follow-up-app/pull/212))
+- [x] **The AI office** — `/admin/office`, behind the same `PLATFORM_ADMIN_EMAILS` gate as
+  the rest of `/admin`. Roster of the five `.claude/agents/` lanes, a record of every shift
+  worked and what it cost, a Monday 06:00 UTC cron, and one staffed desk (`product-ux-agent`,
+  reading product feedback). A check-then-act race in the runner's spend/concurrency gates was
+  caught in review and fixed with a Postgres advisory lock before merge — same bug class as
+  #84 and #89 (PR [#211](https://github.com/worksahilca-jpg/Follow-up-app/pull/211))
+- [x] PR [#210](https://github.com/worksahilca-jpg/Follow-up-app/pull/210) closed unmerged — two unrelated commits had landed on the shared dev
+  branch together; split into #211 and #212 rather than reviewed as one lump
 - [x] Team Slack notifications (CI/PR activity, hot leads, server errors)
 - [x] `followupbase.io` Google Workspace set up; Dipesh and Vansh added as teammates
 - [x] Vercel Web Analytics enabled; Speed Insights confirmed on; Toolbar production access on

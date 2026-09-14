@@ -49,7 +49,7 @@ export default function Sidebar() {
           <span className="font-display text-lg">FollowUp</span>
         </Link>
         <div className="flex items-center gap-1">
-          <NotificationBell />
+          <NotificationBell align="right" />
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"

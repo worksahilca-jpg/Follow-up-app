@@ -47,7 +47,7 @@ export default function LandingPage() {
       <section className="relative max-w-6xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-16 items-center">
         <div>
           <RevealAward>
-            <span className={styles.badge}>Built for realtors, freelance consultants, and small teams</span>
+            <span className={styles.badge}>Built for small businesses that can&apos;t afford to lose a lead</span>
           </RevealAward>
           <RevealAward delayMs={80}>
             <h1
@@ -126,20 +126,6 @@ export default function LandingPage() {
                 after 30.
               </p>
             </div>
-          </RevealAward>
-          <RevealAward delayMs={290}>
-            {/* The voice agent — a real, shipped capability (opt-in, off by default) — had zero
-                mentions anywhere on the page. Per the landing-page-strategy research
-                (2026-09-14), it belongs as its own moment, not a spec line buried in a feature
-                list, the same way Beside leads with "answers, routes, and books every call"
-                instead of a bullet point. */}
-            <p className="mt-5 text-[14px] leading-relaxed max-w-md" style={{ color: "var(--ink)" }}>
-              <strong>The phone rings while you&apos;re on a job.</strong>{" "}
-              <span style={{ color: "var(--ink-soft)" }}>
-                FollowUp&apos;s own AI can pick it up, have an actual conversation — not a
-                voicemail beep — and speak back in whatever language they called in.
-              </span>
-            </p>
           </RevealAward>
           <RevealAward delayMs={320}>
             <div className="mt-9">

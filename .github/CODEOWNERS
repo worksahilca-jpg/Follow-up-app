@@ -3,13 +3,13 @@
 # Drives GitHub's automatic review requests. Last matching pattern wins, so
 # more specific rules are listed after more general ones.
 #
-# PLACEHOLDER USERNAMES: only @followvansh (Vansh) is a confirmed GitHub
-# username as of 2026-09-14 — Gautam, Pransh, and Dipesh have not yet
-# accepted their repo invites / reported their usernames. The lines below
-# for them use a placeholder in the form @REPLACE-<name>-github-username —
-# GitHub will not resolve these until swapped for real usernames. Update
-# this file the moment each person's username is confirmed; until then,
-# GitHub simply won't auto-request that person's review on their area.
+# PLACEHOLDER USERNAMES: @followvansh (Vansh) and @pransh-io (Pransh) are
+# confirmed GitHub usernames as of 2026-09-14 — Gautam and Dipesh have not
+# yet reported theirs. The lines below for them use a placeholder in the
+# form @REPLACE-<name>-github-username — GitHub will not resolve these
+# until swapped for real usernames. Update this file the moment each
+# person's username is confirmed; until then, GitHub simply won't
+# auto-request that person's review on their area.
 #
 # See TEAM.md for the human-readable version of who owns what, and
 # CONTRIBUTING.md for how the PR/review process around this actually works.
@@ -28,17 +28,17 @@
 /design-brain/**                           @REPLACE-gautam-github-username @REPLACE-sahil-github-username
 
 # Backend — Pransh
-/followup/prisma/**                        @REPLACE-pransh-github-username
-/followup/src/app/api/**                   @REPLACE-pransh-github-username
-/followup/src/lib/db.ts                    @REPLACE-pransh-github-username
+/followup/prisma/**                        @pransh-io
+/followup/src/app/api/**                   @pransh-io
+/followup/src/lib/db.ts                    @pransh-io
 
 # AI / automation / integrations — Vansh (backend overlap with Pransh is
 # expected and fine per TEAM.md — both get requested on these paths)
-/followup/src/lib/integrations/**          @followvansh @REPLACE-pransh-github-username
+/followup/src/lib/integrations/**          @followvansh @pransh-io
 /followup/src/lib/automation.ts            @followvansh
 /followup/src/lib/scoring.ts               @followvansh
 /followup/src/lib/acknowledge.ts           @followvansh
-/followup/src/app/api/cron/**              @followvansh @REPLACE-pransh-github-username
+/followup/src/app/api/cron/**              @followvansh @pransh-io
 /voice-agent/**                            @followvansh
 
 # Security / operations / infra

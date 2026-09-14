@@ -23,15 +23,20 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 
 ## Open, waiting on review
 
-- [ ] **README accuracy fix** — `followup/README.md` still described the product as a demo
-  running on `demo-data.ts`, with Gmail, OpenAI scoring, Postgres and login listed as
-  not-yet-wired. All false. Rewritten to what actually ships, plus a split between the five
-  keys needed to boot and the per-capability keys. Branch pushed, PR not opened yet.
-- [ ] **8 stale Dependabot PRs** ([#97–#105](https://github.com/worksahilca-jpg/Follow-up-app/pulls))
-  open since 2026-09-07, all major bumps: TypeScript 5→7, Prisma 6→7, ESLint 9→10, Express
-  4→5. Not urgent, but majors don't get easier with age.
+- [ ] **7 stale Dependabot PRs** ([#97–#105](https://github.com/worksahilca-jpg/Follow-up-app/pulls))
+  open since 2026-09-07, majors: TypeScript 5→7, Prisma 6→7, ESLint 9→10, plus 3 GitHub Actions
+  bumps. Express 4→5 (#100) is done — see #214 below. Not urgent, but majors don't get easier
+  with age.
 
 ## Recently shipped (this session)
+
+- [x] Five-person team formalized in code — `TEAM.md`, `.github/CODEOWNERS`,
+  `CONTRIBUTING.md`, PR template (PR [#215](https://github.com/worksahilca-jpg/Follow-up-app/pull/215))
+- [x] README rewritten to describe the product that actually shipped (was still describing a
+  demo on `demo-data.ts` with Gmail/OpenAI/login all marked not-yet-wired); STATUS caught up to
+  #207–#212 (PR [#213](https://github.com/worksahilca-jpg/Follow-up-app/pull/213))
+- [x] `voice-agent` Express 4→5 — verified live (WebSocket + liveness route) rather than just
+  by changelog; supersedes stale Dependabot #100, which is now closed (PR [#214](https://github.com/worksahilca-jpg/Follow-up-app/pull/214))
 
 - [x] Navy/blue app-wide reskin — landing page, `/signin`, and the full authenticated app
   unified on one visual system (PR [#198](https://github.com/worksahilca-jpg/Follow-up-app/pull/198))
@@ -74,9 +79,16 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 - [x] **Team structure formalized** — 5 people (Sahil, Gautam, Vansh, Pransh, Dipesh), roles and
   git ownership documented in `[[../TEAM]]`, enforced via `.github/CODEOWNERS`, workflow in
   `[[../CONTRIBUTING]]`. Branch protection on `main` is on (PR + 1 approval + CI required, no
-  bypass). GitHub invites sent to all four (2026-09-14) — Vansh accepted invite pending;
+  bypass). GitHub invites sent to all four (2026-09-14) — Vansh accepted, has Write access;
   Gautam/Pransh/Dipesh still need to report their usernames before CODEOWNERS' placeholder
   entries can be filled in.
+- [ ] **Vercel team access** — team already existed (`North Frame` / `north-frame3`, Pro plan),
+  no new team needed. Vansh invited as **Member** (2026-09-14, pending acceptance, expires in
+  1 week). Note: Member seats cost **$20/mo each** on this plan — Pro also offers a free
+  **Viewer** role and a **Developer** role ("create non-production deployments") that may fit
+  Gautam's actual need (frontend previews) cheaper than a full Member seat; check Developer's
+  cost before inviting him. Pransh and Dipesh still need Member (env vars + deploy access) once
+  they're ready. Not yet invited.
 
 ## Standing constraints (don't silently violate these)
 

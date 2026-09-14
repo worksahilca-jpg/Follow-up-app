@@ -79,16 +79,20 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 - [x] **Team structure formalized** — 5 people (Sahil, Gautam, Vansh, Pransh, Dipesh), roles and
   git ownership documented in `[[../TEAM]]`, enforced via `.github/CODEOWNERS`, workflow in
   `[[../CONTRIBUTING]]`. Branch protection on `main` is on (PR + 1 approval + CI required, no
-  bypass). GitHub invites sent to all four (2026-09-14) — Vansh accepted, has Write access;
-  Gautam/Pransh/Dipesh still need to report their usernames before CODEOWNERS' placeholder
-  entries can be filled in.
+  bypass). GitHub invites sent to all four (2026-09-14) — Vansh and Pransh (`pransh-io`) both
+  accepted, both have Write access; Gautam/Dipesh still need to report their usernames before
+  CODEOWNERS' placeholder entries can be filled in.
 - [ ] **Vercel team access** — team already existed (`North Frame` / `north-frame3`, Pro plan),
-  no new team needed. Vansh invited as **Member** (2026-09-14, pending acceptance, expires in
-  1 week). Note: Member seats cost **$20/mo each** on this plan — Pro also offers a free
-  **Viewer** role and a **Developer** role ("create non-production deployments") that may fit
-  Gautam's actual need (frontend previews) cheaper than a full Member seat; check Developer's
-  cost before inviting him. Pransh and Dipesh still need Member (env vars + deploy access) once
-  they're ready. Not yet invited.
+  no new team needed. Vansh and Pransh both invited as **Member** (2026-09-14, both pending
+  acceptance, expire in 1 week). Note: Member seats cost **$20/mo each** on this plan — Pro
+  also offers a free **Viewer** role and a **Developer** role ("create non-production
+  deployments") that may fit Gautam's actual need (frontend previews) cheaper than a full
+  Member seat; check Developer's cost before inviting him. Dipesh still needs Member (env vars
+  + deploy access) once he's ready.
+- [ ] **Slack duplicate accounts** — Gautam and Pransh each ended up with two Slack accounts,
+  one on their `@followupbase.io` email and one on their personal email
+  (`gautamwork075@gmail.com`, `mauryapransh2@gmail.com`). Founder is deactivating the personal
+  ones via the workspace admin panel; keep only the `@followupbase.io` accounts.
 
 ## Standing constraints (don't silently violate these)
 

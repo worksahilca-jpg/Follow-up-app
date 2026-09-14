@@ -83,12 +83,13 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
   accepted, both have Write access; Gautam/Dipesh still need to report their usernames before
   CODEOWNERS' placeholder entries can be filled in.
 - [ ] **Vercel team access** — team already existed (`North Frame` / `north-frame3`, Pro plan),
-  no new team needed. Vansh and Pransh both invited as **Member** (2026-09-14, both pending
-  acceptance, expire in 1 week). Note: Member seats cost **$20/mo each** on this plan — Pro
-  also offers a free **Viewer** role and a **Developer** role ("create non-production
-  deployments") that may fit Gautam's actual need (frontend previews) cheaper than a full
-  Member seat; check Developer's cost before inviting him. Dipesh still needs Member (env vars
-  + deploy access) once he's ready.
+  no new team needed. Vansh invited as **Member** (2026-09-14, pending acceptance). **Pransh
+  accepted** (2026-09-14) — guided on deployment logs, env vars, and preview deployments for
+  backend work. Note: Member seats cost **$20/mo each** on this plan — Pro also offers a free
+  **Viewer** role and a **Developer** role ("create non-production deployments") that may fit
+  Gautam's actual need (frontend previews) cheaper than a full Member seat; check Developer's
+  cost before inviting him. Dipesh still needs Member (env vars + deploy access) once he's
+  ready.
 - [ ] **Slack duplicate accounts** — Gautam and Pransh each ended up with two Slack accounts,
   one on their `@followupbase.io` email and one on their personal email
   (`gautamwork075@gmail.com`, `mauryapransh2@gmail.com`). Founder is deactivating the personal

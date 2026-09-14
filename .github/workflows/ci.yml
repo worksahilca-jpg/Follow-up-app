@@ -54,6 +54,23 @@ jobs:
       - run: npm ci
       - run: node --check api/stream.js
 
+  automations:
+    name: Automations — typecheck + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: automations
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: automations/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
   secrets:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest

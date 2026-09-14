@@ -75,3 +75,24 @@ a rejection made in review, and they apply system-wide, permanently.
 **[[rejected#^S-13|S-13]] and [[rejected#^S-16|S-16]] are the two most likely to be violated by accident** — the first because
 AI-product visual conventions are pervasive in training data, the second because
 "inspired by" drifts into "reproduced from" without anyone deciding to.
+
+---
+
+## R-001 — F/U monogram drafts (all three) ^R-001
+**Date:** 2026-09-14
+**Scope:** Logo mark — the F/U interlocked-monogram direction specifically
+**Rejected:** All three rough drafts ("Shared spine, arrow crossbar", "Flag planted in the
+tray", "Negative-space arrow") — the founder's own follow-up idea ("F within a U"), drafted
+and shown back, then rejected on sight ("no bro").
+**Stated reason:** No specific critique given. A clarifying question was asked in the same
+turn; before it was answered, the founder decided to **handle the logo himself** rather than
+continue the collaborative drafting process ("I will handle the logo part by myself").
+**Inferred principle:** [INFERRED, unconfirmed] Unknown whether the F/U monogram *concept*
+itself was the problem or just these three executions — genuinely unresolved, not settled
+either way.
+**Do not propose again:** Logo design is now the founder's own task, full stop — **do not
+propose any further logo direction, concept, or draft unprompted**, monogram or otherwise.
+If he brings it back up and wants input again, ask what specifically didn't work before
+drafting anything new, rather than assuming.
+**Would need to change for this to be reconsidered:** The founder re-opening logo work with
+Claude, on his own initiative.

@@ -3,13 +3,13 @@
 # Drives GitHub's automatic review requests. Last matching pattern wins, so
 # more specific rules are listed after more general ones.
 #
-# PLACEHOLDER USERNAMES: @followvansh (Vansh) and @pransh-io (Pransh) are
-# confirmed GitHub usernames as of 2026-09-14 — Gautam and Dipesh have not
-# yet reported theirs. The lines below for them use a placeholder in the
-# form @REPLACE-<name>-github-username — GitHub will not resolve these
-# until swapped for real usernames. Update this file the moment each
-# person's username is confirmed; until then, GitHub simply won't
-# auto-request that person's review on their area.
+# PLACEHOLDER USERNAMES: @followvansh (Vansh), @pransh-io (Pransh), and
+# @gautam972 (Gautam) are confirmed GitHub usernames as of 2026-09-14 —
+# Dipesh has not yet reported his. The lines below for him use a
+# placeholder in the form @REPLACE-<name>-github-username — GitHub will
+# not resolve these until swapped for a real username. Update this file
+# the moment his username is confirmed; until then, GitHub simply won't
+# auto-request his review on his area.
 #
 # See TEAM.md for the human-readable version of who owns what, and
 # CONTRIBUTING.md for how the PR/review process around this actually works.
@@ -19,13 +19,13 @@
 
 # Frontend / UI-UX — Gautam implements, Sahil reviews (see TEAM.md's
 # frontend-coordination note)
-/followup/src/app/(app)/**                 @REPLACE-gautam-github-username @REPLACE-sahil-github-username
-/followup/src/app/page.tsx                 @REPLACE-gautam-github-username @REPLACE-sahil-github-username
-/followup/src/app/landing.module.css       @REPLACE-gautam-github-username @REPLACE-sahil-github-username
-/followup/src/app/landing-award.module.css @REPLACE-gautam-github-username @REPLACE-sahil-github-username
-/followup/src/components/landing/**        @REPLACE-gautam-github-username @REPLACE-sahil-github-username
-/followup/src/components/**                @REPLACE-gautam-github-username
-/design-brain/**                           @REPLACE-gautam-github-username @REPLACE-sahil-github-username
+/followup/src/app/(app)/**                 @gautam972 @REPLACE-sahil-github-username
+/followup/src/app/page.tsx                 @gautam972 @REPLACE-sahil-github-username
+/followup/src/app/landing.module.css       @gautam972 @REPLACE-sahil-github-username
+/followup/src/app/landing-award.module.css @gautam972 @REPLACE-sahil-github-username
+/followup/src/components/landing/**        @gautam972 @REPLACE-sahil-github-username
+/followup/src/components/**                @gautam972
+/design-brain/**                           @gautam972 @REPLACE-sahil-github-username
 
 # Backend — Pransh
 /followup/prisma/**                        @pransh-io

@@ -102,6 +102,11 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 - Every PR gets opened for review before merging — no direct pushes to `main`, even from a
   background agent. (This was violated once, for PR #201's underlying commit — caught and
   corrected; noted here so it doesn't happen again.)
+- **Sahil stays on top of the access hierarchy on every platform, always.** GitHub: he's
+  `admin`, everyone else gets `write` at most. Vercel: he's Owner on North Frame, everyone
+  else gets `Member`/`Developer`/`Viewer` at most. Slack: he's Owner/Admin, everyone else is a
+  regular member. Never grant anyone Owner/Admin-equivalent access on any platform without his
+  explicit ask — access expands outward from him, never sideways or above him.
 - ~~Two open design-brain tokens...~~ RESOLVED 2026-09-13 — see A-003/A-004 in `[[approved]]`.
 
 ---

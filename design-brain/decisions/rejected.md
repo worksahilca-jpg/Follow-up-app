@@ -66,6 +66,46 @@ removing chrome without adding a designed layer in its place.
 several of them (why-it-was-held first, the undo grace, facts instead of a score) may
 survive inside a richer design. What is closed is *subtraction as the whole answer*.
 
+## R-002 — Keyboard-first interaction as the dashboard's organising idea ^R-002
+**Date:** 2026-09-15
+**Scope:** The authenticated app, system-wide — not just the dashboard
+**Rejected:** The "Queue Zero" prototype
+(https://claude.ai/artifact/3mucUkn3m1Ar7JjPJUXBNe) — a working, clickable approval queue
+built around `J`/`K` to move, `E` to approve, `X` to skip, `Z` to undo, `⌘K` for a command
+palette, `?` for a shortcut sheet, with visible `<kbd>` hints on screen. The reasoning was
+that a business tool feels expensive when it responds instantly and never needs the mouse
+(Superhuman's model), and that this was the kind of craft a static mockup structurally
+cannot show.
+**Stated reason:** "no keys thing" → asked whether the keys had failed or he didn't want
+the premise → **"i dont want"**.
+**Inferred principle:** partly INFERRED, but with hard evidence behind it that should have
+been read first. **FollowUp's ICP is not a keyboard user.**
+`followup/research/customers/2026-09-05-icp-pain-and-trust-objections.md` records the
+literal usage context as an owner "up a ladder" — interrupted, on a phone, 90 seconds,
+not a software person. `brand-principles.md` 4 says the same thing in the system's own
+words. A keyboard-shortcut layer is built for a desk-bound power user processing volume;
+that is Superhuman's ICP, not FollowUp's. The failure here was borrowing another product's
+*craft model* along with its interaction model, without checking the second one against
+who actually opens this screen — the research to catch it was already on file and went
+unread.
+**Do not propose again:** command palettes (`⌘K`) as a primary navigation idea; `J`/`K`
+list navigation; single-letter action keys; on-screen `<kbd>` hints as a design motif; a
+shortcut cheatsheet screen; "power user mode"; and, generally, any proposal whose pitch is
+"it's fast once you learn it." Learning is the cost this ICP will not pay.
+**Would need to change for this to be reconsidered:** a genuinely different user — a
+FollowUp customer with a full-time person at a desk working a high-volume shared queue.
+That is not the current ICP and is not on the roadmap. Treat as closed until the ICP
+itself changes. (Note: shortcuts as an *invisible accelerant* — Escape closing a dialog,
+Enter submitting a focused form — are ordinary web conventions and are not what this
+rejection covers.)
+
+**Standing note after four rejected dashboard concepts (D-020, D-021, D-022, Queue Zero):**
+all four were generated from a hypothesis about what the founder wanted rather than from a
+reference he had pointed at. That approach has now failed four times in one session and is
+itself the thing to stop, not just its outputs. Before the next dashboard proposal, get an
+external reference the founder actually chose — a screenshot or a product he names. Do not
+open a fifth concept without one.
+
 ---
 
 ## Standing rejections (from the brief, 2026-09-12)

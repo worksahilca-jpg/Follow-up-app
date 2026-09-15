@@ -71,17 +71,20 @@ describe("the daily cap", () => {
   it("does not ration the reactivation batch separately", async () => {
     expect(DAILY_REACTIVATION_SEND_CAP).toBe(DAILY_AUTOMATED_SEND_CAP);
 
-    used(300, 300);
+    used(120, 120);
     const v = await checkSendCap("biz-1", "reactivation");
     expect(v.allowed).toBe(true);
   });
 
-  // Well above any real day. A 200-lead back catalogue — the largest
-  // legitimate burst this product has — must clear in one go.
+  // The one burst this product is FOR. A 200-lead back catalogue must clear
+  // in a single sitting — an earlier derivation put the fuse at exactly 200
+  // and would have stopped it one message short, which is how a safety stop
+  // turns into a product limit by accident.
   it("lets a whole back catalogue through in one sitting", async () => {
-    used(200, 200);
+    used(199, 199);
     const v = await checkSendCap("biz-1", "reactivation");
     expect(v.allowed).toBe(true);
+    expect(DAILY_AUTOMATED_SEND_CAP).toBeGreaterThan(200);
   });
 
   it("still trips once the fuse itself is reached", async () => {
@@ -94,8 +97,12 @@ describe("the daily cap", () => {
   // external-recipient ceiling. Both halves matter: too low rations a real
   // customer, too high stops being a fuse.
   it("sits above real use and below the provider ceiling", () => {
+    // Above the largest legitimate burst...
     expect(DAILY_AUTOMATED_SEND_CAP).toBeGreaterThan(200);
-    expect(DAILY_AUTOMATED_SEND_CAP).toBeLessThan(2000);
+    // ...and below the SMALLEST provider allowance (free Gmail ~500/day),
+    // because FollowUp cannot tell which edition a mailbox is and must
+    // assume the tighter one.
+    expect(DAILY_AUTOMATED_SEND_CAP).toBeLessThan(500);
   });
 
   it("counts only this business, only automated, only sends that happened", async () => {

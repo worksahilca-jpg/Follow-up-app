@@ -34,30 +34,65 @@
 import { prisma } from "@/lib/db";
 
 /**
- * A circuit breaker, NOT a product limit — the distinction is the whole
- * reason for this number.
+ * Google's own published per-day ceilings, as of September 2026. Verify
+ * before trusting — Google moves these, and tightened enforcement in late
+ * 2025.
  *
- * An earlier version capped automated sending at 50/day. That was wrong,
- * and the founder was right to reject it: Google Workspace allows roughly
- * 2,000 external recipients per rolling 24 hours, so 50 rationed a customer
- * to 2.5% of what their own mailbox would happily send. It would have fired
- * on exactly the moment this product exists for — someone connects an inbox
- * with 200 dormant leads, presses send, and FollowUp answers "come back
- * tomorrow." Refusing to do the job it was bought for, to avoid a risk that
- * was never there.
+ *   Free @gmail.com      ~500 recipients / rolling 24h
+ *   Google Workspace   ~2,000 EXTERNAL recipients / rolling 24h
  *
- * 400 is set below Google's ceiling with room to spare, and is not
- * reachable by any legitimate use: a real back catalogue is a few hundred
- * ONCE, and steady state is a handful a week. It exists for the failure
- * case only — a loop, a misconfigured workflow, a sync that re-queues the
- * same leads. Two infinite loops were found in this codebase in a single
- * afternoon; one of them firing through a customer's own Gmail would get
- * their account suspended, and they would lose their real mail, not ours.
- *
- * If this ever fires, something is broken. It should be treated as an
- * incident, not as a customer hitting a plan limit.
+ * FollowUp cannot tell which one a connected mailbox is: the OAuth scopes
+ * it holds return the address and the profile, not the edition. So every
+ * number below is derived from the SMALLER figure. Guessing high and being
+ * wrong means the provider blocks the owner's account; guessing low and
+ * being wrong means a batch finishes on Tuesday instead of Monday.
  */
-export const DAILY_AUTOMATED_SEND_CAP = 400;
+const ASSUMED_PROVIDER_DAILY_LIMIT = 500;
+
+/**
+ * The share of that allowance reserved for the owner's own mail.
+ *
+ * This is their working mailbox — quotes, invoices, replies to their own
+ * customers — and it is why the ceiling is not simply "as much as Google
+ * permits". If FollowUp consumed the lot, the owner would discover it by
+ * finding they could not email anyone for the rest of the day, with no idea
+ * why. Whatever we get wrong, it must not be that.
+ *
+ * Half, not more. 0.6 was tried and rejected by arithmetic: it lands the
+ * fuse on exactly 200, which is the size of a typical back catalogue — so
+ * the one burst this product is FOR would have tripped the safety stop
+ * meant to catch bugs. A fuse that blows during normal use is not a fuse,
+ * it is a limit wearing one's clothes.
+ */
+const OWNER_RESERVE = 0.5;
+
+/**
+ * The fuse. NOT a product limit, and the difference is the whole point.
+ *
+ * An earlier version set this at 50/day. That was wrong and was rejected:
+ * it would have fired on precisely the moment this product exists for —
+ * connect an inbox, find 200 dormant leads, press send, and be told to come
+ * back tomorrow. It also rationed a customer to a fraction of what their
+ * own mailbox would happily have sent.
+ *
+ * Derived rather than picked, so it can be re-derived when Google moves:
+ * half of the smallest plausible provider allowance. Comfortably above the
+ * largest legitimate burst this product has (a back catalogue is a few
+ * hundred, ONCE, and steady state is a handful a week), and far below the
+ * point where a mailbox gets blocked.
+ *
+ * It should never be reached. It exists for the broken case — a loop, a
+ * misconfigured workflow, a sync re-queueing the same leads. Not
+ * hypothetical: two infinite loops were found in this codebase in a single
+ * afternoon, and one of those firing through a customer's own Gmail would
+ * get their account suspended. What they lose then is their real mail.
+ *
+ * If it ever trips, that is an incident to investigate, not a customer who
+ * has outgrown a plan — and the message below says so deliberately.
+ */
+export const DAILY_AUTOMATED_SEND_CAP = Math.floor(
+  ASSUMED_PROVIDER_DAILY_LIMIT * (1 - OWNER_RESERVE)
+);
 
 /**
  * No separate reactivation ceiling. The back catalogue is the thing the

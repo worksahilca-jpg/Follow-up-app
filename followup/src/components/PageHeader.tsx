@@ -58,8 +58,10 @@ export function PageHeader({ title, subtitle, back, actions, primary, className 
           {subtitle && <p className="text-ink-soft mt-1 max-w-xl">{subtitle}</p>}
         </div>
 
+        {/* shrink-0 AND nowrap: without both, a long title squeezes this column
+            and the primary button's label wraps onto three lines. */}
         {hasActions && (
-          <div className="mt-3 flex flex-col gap-2 sm:mt-0 sm:flex-row sm:items-center sm:gap-2 sm:shrink-0">
+          <div className="mt-3 flex flex-col gap-2 sm:mt-0 sm:flex-row sm:items-center sm:gap-2 sm:shrink-0 sm:whitespace-nowrap">
             {actions}
             {primary}
           </div>

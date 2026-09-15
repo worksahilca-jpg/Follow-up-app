@@ -213,11 +213,22 @@ button:not(:disabled):hover, a:hover, [tabindex]:hover {
   filter: brightness(0.96);
 }
 
+/* Keyboard focus. This used to remove the UA outline and draw the ring with
+   `box-shadow` instead, which made it worse than having no focus CSS at all:
+   any element that sets its own box-shadow — a Tailwind `shadow-*` utility, an
+   inline style, ItemBox's own surface shadow — replaces this one outright and
+   silently. A 2026-09-15 audit tabbed twelve times on the dashboard and landed
+   on "Approve & send", a control that sends a real message to a real customer,
+   with nothing on screen to say so.
+
+   A real `outline` cannot be clobbered that way: it is a separate property, it
+   composites above the element's own shadows and backgrounds, and it follows
+   the border radius on its own. outline-offset keeps it clear of the control's
+   edge instead of sitting on it. */
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
 textarea:focus-visible, [tabindex]:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--rust-soft), 0 0 0 1px var(--rust);
-  border-radius: 4px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ---- Bold decorative primitives (dashboard) ----

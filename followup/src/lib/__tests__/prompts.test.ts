@@ -99,6 +99,55 @@ describe("no-invention drafting", () => {
     expect(system).toMatch(/romanized Gujarati/);
   });
 
+  // The founder's hardest requirement: every message goes out in a real
+  // owner's name, to their real customer, and a lead who can tell a model
+  // wrote it is a lead the product has already lost. Before this, the
+  // banned-phrase list lived ONLY in deadLeadMessageHint (automation.ts),
+  // which applies to cold-lead reactivations and nothing else — a routine
+  // follow-up or a workflow step could open "I hope this email finds you
+  // well" with nothing in the prompt against it.
+  it("bans the stock phrases that mark a message as machine-written, in any language", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "Your roof question", body: "I will confirm the roof details for you." }) } }],
+    });
+    await generateFollowUpMessage({ name: "Young Son", conversation });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    for (const phrase of [
+      "I hope this email finds you well",
+      "I wanted to reach out",
+      "just checking in",
+      "circling back",
+      "touching base",
+      "at your earliest convenience",
+      "please don't hesitate to",
+      "thank you for your inquiry",
+      "looking forward to hearing from you",
+    ]) {
+      expect(system).toContain(phrase);
+    }
+    expect(system).toMatch(/banned outright/);
+    expect(system).toMatch(/closest equivalent phrase in whatever\s+language/);
+    expect(system).toMatch(/Use no em dashes/);
+    expect(system).toMatch(/[Dd]o not open by thanking them for writing/);
+  });
+
+  // "2-4 complete sentences" plus "reference something concrete" reliably
+  // produces a four-sentence business email. A real follow-up from a busy
+  // tradesperson is two or three, and nothing downstream trims it: the
+  // body goes straight into composeFollowUpEmail's frame and out.
+  it("asks for two or three sentences and forbids padding to reach them", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "Your roof question", body: "I will confirm the roof details for you." }) } }],
+    });
+    await generateFollowUpMessage({ name: "Young Son", conversation });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/two or three sentences/);
+    expect(system).toMatch(/[Nn]ever write a fourth, and never pad to a third/);
+    const bodySchema = create.mock.calls[0][0].response_format.json_schema.schema.properties.body.description as string;
+    expect(bodySchema).toMatch(/[Tt]wo or three sentences/);
+    expect(bodySchema).toMatch(/never four/);
+  });
+
   // research/audit/2026-09-09-sixth-pass-audit.md finding #1 — same
   // reasoning as assessSendRisk's own test below: a voice-agent-channel
   // message must not be draftable as a confirmed fact just because it's
@@ -114,6 +163,108 @@ describe("no-invention drafting", () => {
   });
 });
 
+// The voice samples (src/lib/voice.ts) are the only thing that can make a
+// draft read like the specific person whose name is on it. The instruction
+// that used them was "match their tone, formality, and sentence rhythm",
+// which named no observable property AND directly contradicted the
+// instruction higher up the same prompt to match the LEAD's tone and
+// formality, with nothing saying which wins.
+describe("voice matching (generateFollowUpMessage voiceSamples)", () => {
+  const samples = ["Got your message. Can do Tuesday morning, the lads will be there by 8. Any issue give me a ring."];
+
+  beforeEach(() => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "Tuesday", body: "Tuesday morning still works our end." }) } }],
+    });
+  });
+
+  it("asks for concrete, copyable habits rather than an unobservable 'tone'", async () => {
+    await generateFollowUpMessage({ name: "Young Son", conversation }, samples);
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/how long their sentences run/);
+    expect(system).toMatch(/whether they use contractions/);
+    expect(system).toMatch(/punctuate and capitalise strictly or loosely/);
+    expect(system).toMatch(/do not upgrade them into something more formal/);
+  });
+
+  it("resolves the samples-vs-lead conflict explicitly: samples decide manner, the lead decides language and register", async () => {
+    await generateFollowUpMessage({ name: "Young Son", conversation }, samples);
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/the samples win/);
+    expect(system).toMatch(/do NOT decide is language and register/);
+    expect(system).toMatch(/follow the LEAD for language and formality/);
+    // The instruction it used to silently contradict is still there.
+    expect(system).toMatch(/[Mm]atch the lead's own tone and formality/);
+  });
+
+  // getVoiceSamples returns whole sent emails, greeting and signature
+  // included, so imitating them means imitating the frame — which
+  // composeFollowUpEmail then adds a second time.
+  it("warns that a sample's own greeting and sign-off must not be imitated", async () => {
+    await generateFollowUpMessage({ name: "Young Son", conversation }, samples);
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/may include a greeting line or a sign-off/);
+    expect(system).toContain(samples[0]);
+  });
+
+  it("gives an explicit default instead of 'whatever the model does' when there are no samples", async () => {
+    await generateFollowUpMessage({ name: "Young Son", conversation });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/You have no samples of this business's own writing/);
+    expect(system).toMatch(/Short sentences, ordinary words, no flourish/);
+  });
+});
+
+// Unlike the instant ack (checkAckShape in src/lib/acknowledge.ts), nothing
+// on the follow-up path inspects the drafted body before src/lib/sender.ts
+// wraps it in its own "Hi <name>," / "Best, <sender>" frame — so a
+// model-added greeting ships to the customer as a visible duplicate.
+describe("drafted body frame-stripping", () => {
+  const draft = (body: string) =>
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ subject: "s", body }) } }] });
+
+  it("strips a greeting line the model added anyway", async () => {
+    draft("Hi Sarah,\n\nTuesday morning still works our end.");
+    const r = await generateFollowUpMessage({ name: "Sarah Kaur", conversation });
+    expect(r.body).toBe("Tuesday morning still works our end.");
+  });
+
+  it("strips an inline greeting clause, the likelier one-paragraph shape", async () => {
+    draft("Hi Sarah, tuesday morning still works our end.");
+    const r = await generateFollowUpMessage({ name: "Sarah Kaur", conversation });
+    expect(r.body).toBe("Tuesday morning still works our end.");
+  });
+
+  it("strips a sign-off and the name line under it", async () => {
+    draft("Tuesday morning still works our end.\n\nBest,\nSahil");
+    const r = await generateFollowUpMessage({ name: "Sarah Kaur", conversation });
+    expect(r.body).toBe("Tuesday morning still works our end.");
+  });
+
+  it("leaves a clean body untouched", async () => {
+    draft("Tuesday morning still works our end. Want me to put you down for 8?");
+    const r = await generateFollowUpMessage({ name: "Sarah Kaur", conversation });
+    expect(r.body).toBe("Tuesday morning still works our end. Want me to put you down for 8?");
+  });
+
+  it("does not mistake real content for a frame", async () => {
+    // "Best" opens a real sentence; "Hi" never appears; a long first line
+    // is not a greeting however it starts.
+    draft("Best time for us is Tuesday morning.\nHigh winds are forecast Wednesday, so I would avoid it.");
+    const r = await generateFollowUpMessage({ name: "Sarah Kaur", conversation });
+    expect(r.body).toBe("Best time for us is Tuesday morning.\nHigh winds are forecast Wednesday, so I would avoid it.");
+  });
+
+  // Fails closed: every rule requires something to be left behind, so a
+  // draft that is nothing BUT a frame still returns text rather than
+  // tripping the empty-body throw or sending a blank email.
+  it("never strips a draft down to nothing", async () => {
+    draft("Hi Sarah,\n\nBest,\nSahil");
+    const r = await generateFollowUpMessage({ name: "Sarah Kaur", conversation });
+    expect(r.body.trim()).not.toBe("");
+  });
+});
+
 describe("send-risk gate", () => {
   it("tells the model that invented specifics are never low risk", async () => {
     create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ riskLevel: "high", reason: "invented roof age" }) } }] });
@@ -122,6 +273,20 @@ describe("send-risk gate", () => {
     const system = create.mock.calls[0][0].messages[0].content as string;
     expect(system).toMatch(/does not appear in the conversation is fabricated/);
     expect(system).toMatch(/never 'low'/);
+  });
+
+  // The drafter now deliberately produces short, blunt, owner-sounding
+  // messages. This gate sits between that draft and the customer, so it
+  // has to be told that plainness is the intended output — otherwise the
+  // push for a human voice just raises the hold rate.
+  it("tells the gate to judge what the draft claims, not how polished it sounds", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ riskLevel: "low", reason: "n/a" }) } }] });
+    await assessSendRisk({ conversation }, "Tuesday morning still works our end.");
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/Judge what the draft CLAIMS, never how it sounds/);
+    expect(system).toMatch(/brevity and casual phrasing are the intended output/);
+    const lowDescription = create.mock.calls[0][0].response_format.json_schema.schema.properties.riskLevel.description as string;
+    expect(lowDescription).not.toMatch(/check-in/);
   });
 
   // research/audit/2026-09-09-fifth-pass-audit.md finding #1: assessSendRisk
@@ -209,6 +374,42 @@ describe("instant reply (generateInstantReply)", () => {
     expect(system).toMatch(/even hedged/);
     expect(system).toMatch(/'shortly' or 'as soon as I can' is the only timeframe/);
     expect(system).toMatch(/unless you are repeating something the lead themselves wrote/);
+  });
+
+  // This is the only message that goes out with no human review, within a
+  // minute, to every new lead — and the allow-list's own shape was working
+  // against it: three enumerated permitted acts read as a three-part
+  // template, so the model writes one sentence per item and produces the
+  // stiff tricolon acknowledgement no person has ever typed. The "1-2
+  // short sentences" instruction further down was losing that argument.
+  it("says the three permitted acts are not a three-sentence template, and that one sentence is the best version", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "Got it, I'll confirm the price for you." }) } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/not a template and they are not three sentences/);
+    expect(system).toMatch(/ONE sentence that does all three at once/);
+    expect(system).toMatch(/two short sentences is the absolute maximum/);
+    expect(system).toMatch(/you are writing a form letter/);
+  });
+
+  it("forbids parroting the lead's details back as a confirmation receipt", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "Got it, I'll confirm the price for you." }) } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/never list their details back at them like a confirmation receipt/);
+  });
+
+  // The fastest message is the one most at risk of sounding machine-made,
+  // so it shares the same banned-phrase list as the drafter.
+  it("bans the same machine-written stock phrases the follow-up drafter bans", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "Got it, I'll confirm the price for you." }) } }] });
+    await generateInstantReply({ leadFirstName: "Young", ownerFirstName: "Manoj", inboundText: "How old is the roof?" });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toContain("I hope this email finds you well");
+    expect(system).toContain("thank you for reaching out");
+    expect(system).toContain("at your earliest convenience");
+    expect(system).toMatch(/banned outright/);
+    expect(system).toMatch(/Use no em dashes/);
   });
 
   it("instructs the model to match the lead's language, tone, and romanized script the same way the follow-up drafter does", async () => {

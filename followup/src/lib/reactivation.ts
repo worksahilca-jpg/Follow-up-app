@@ -32,8 +32,9 @@
 
 import { prisma } from "@/lib/db";
 import { classifyThreadOutcome, type ThreadOutcome } from "@/lib/integrations/openai";
-import { DEAD_LEAD_DEFAULT_DAYS } from "@/lib/automation";
+import { DEAD_LEAD_DEFAULT_DAYS, DEAD_LEAD_ACTION } from "@/lib/automation";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { recordAudit } from "@/lib/audit";
 import type { Message } from "@/lib/types";
 import type { PipelineStage, QuietOutcome } from "@prisma/client";
 
@@ -61,6 +62,56 @@ const DEFAULT_CLASSIFY_LIMIT = 60;
  * tier key.
  */
 const CLASSIFY_CONCURRENCY = 4;
+
+/**
+ * How long a claim on an unjudged lead is honoured before another run may
+ * take it. Long enough that a slow OpenAI call is never stolen mid-flight,
+ * short enough that a lead orphaned by a crashed or frozen run comes back
+ * the same hour instead of sitting unjudged forever.
+ */
+const CLAIM_STALE_MINUTES = 10;
+
+/**
+ * The claim condition, shared by the eligibility query and the atomic
+ * claim itself so the two can never disagree about what "available" means.
+ * quietOutcomeAt does double duty: a timestamp with no verdict beside it
+ * is a claim in progress; a timestamp WITH a verdict is when that verdict
+ * was reached.
+ */
+function unclaimedOr() {
+  const stale = new Date(Date.now() - CLAIM_STALE_MINUTES * 60 * 1000);
+  return { OR: [{ quietOutcomeAt: null }, { quietOutcomeAt: { lt: stale } }] };
+}
+
+/**
+ * The silence threshold this business actually configured, not the
+ * default. The dead-lead reactivation rule already owns this number
+ * (src/lib/automation.ts) and an owner who moved it to 90 days meant it —
+ * judging their leads at 45 would offer them a batch of people they don't
+ * consider cold yet. Falls back to the shared default when no rule exists.
+ */
+async function resolveQuietDays(businessId: string): Promise<number> {
+  const rule = await prisma.automation.findFirst({ where: { businessId, action: DEAD_LEAD_ACTION } });
+  return rule?.triggerDays ?? DEAD_LEAD_DEFAULT_DAYS;
+}
+
+type LoadedConversations = { channel: string; messages: { id: string; direction: string; body: string; sentAt: Date; opened: boolean }[] }[];
+
+/** Flattens a lead's channels into one chronological transcript. */
+function toConversation(conversations: LoadedConversations): Message[] {
+  return conversations
+    .flatMap((c) =>
+      c.messages.map((m) => ({
+        id: m.id,
+        direction: m.direction as Message["direction"],
+        channel: c.channel as Message["channel"],
+        body: m.body,
+        date: m.sentAt.toISOString(),
+        opened: m.opened,
+      }))
+    )
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
 
 const OUTCOME_TO_DB: Record<ThreadOutcome, QuietOutcome> = {
   cold: "COLD",
@@ -102,6 +153,11 @@ function eligibilityWhere(businessId: string, cutoff: Date) {
     optedOutAt: null,
     lastContacted: { lte: cutoff },
     conversations: { some: { messages: { some: {} } } },
+    // Skip leads another run is mid-way through judging right now. Without
+    // this the atomic claim below still prevents the double OpenAI call,
+    // but every overlapping run would fill its whole batch with leads it
+    // then immediately skips — doing no work while reporting none left.
+    ...unclaimedOr(),
   };
 }
 
@@ -119,7 +175,7 @@ export async function classifyQuietLeads(
   options: { limit?: number; quietDays?: number } = {}
 ): Promise<ClassifyQuietLeadsResult> {
   const limit = options.limit ?? DEFAULT_CLASSIFY_LIMIT;
-  const quietDays = options.quietDays ?? DEAD_LEAD_DEFAULT_DAYS;
+  const quietDays = options.quietDays ?? (await resolveQuietDays(businessId));
   const cutoff = new Date(Date.now() - quietDays * 24 * 60 * 60 * 1000);
   const where = eligibilityWhere(businessId, cutoff);
 
@@ -142,41 +198,68 @@ export async function classifyQuietLeads(
   let failed = 0;
 
   await mapWithConcurrency(candidates, CLASSIFY_CONCURRENCY, async (lead) => {
-    const conversation: Message[] = lead.conversations.flatMap((c) =>
-      c.messages.map((m) => ({
-        id: m.id,
-        direction: m.direction as Message["direction"],
-        channel: c.channel as Message["channel"],
-        body: m.body,
-        date: m.sentAt.toISOString(),
-        opened: m.opened,
-      }))
-    );
-    conversation.sort((a, b) => a.date.localeCompare(b.date));
+    const conversation = toConversation(lead.conversations);
     if (conversation.length === 0) return;
 
+    // Claim the lead BEFORE paying for the verdict, with the same atomic
+    // conditional update the rest of the codebase uses for exactly this
+    // (see Lead.lastRapidEngagementNotifiedAt). Two runs overlapping — a
+    // cron tick and an owner opening the batch screen — would otherwise
+    // both read quietOutcome null, both call OpenAI for the same lead, and
+    // bill twice for one answer. The claim writes the timestamp only;
+    // quietOutcome stays null so a crash between here and the verdict
+    // below leaves the lead re-judgeable rather than permanently blank.
+    const claim = await prisma.lead.updateMany({
+      where: { id: lead.id, quietOutcome: null, ...unclaimedOr() },
+      data: { quietOutcomeAt: new Date() },
+    });
+    if (claim.count === 0) return; // someone else got there first
+
+    const last = conversation[conversation.length - 1];
+    const daysQuiet = Math.floor((Date.now() - new Date(last.date).getTime()) / (24 * 60 * 60 * 1000));
+
     try {
-      const { outcome, reason } = await classifyThreadOutcome(
-        conversation,
-        business ? { name: business.name, industry: business.industry } : undefined
-      );
+      const { outcome, reason } = await classifyThreadOutcome(conversation, {
+        business: business ? { name: business.name, industry: business.industry } : undefined,
+        daysQuiet,
+        lastMessageFrom: last.direction === "inbound" ? "lead" : "business",
+      });
+
+      // Who dropped it is a fact, not a judgment: the last message's
+      // direction says it exactly. The model is only ever asked whether
+      // the thread was dropped at all — splitting COLD here rather than
+      // adding a fifth thing for it to get wrong.
+      const stored: QuietOutcome =
+        outcome === "cold" && last.direction === "inbound" ? "COLD_UNANSWERED" : OUTCOME_TO_DB[outcome];
+
       await prisma.lead.update({
         where: { id: lead.id },
-        data: {
-          quietOutcome: OUTCOME_TO_DB[outcome],
-          quietOutcomeReason: reason,
-          quietOutcomeAt: new Date(),
-        },
+        data: { quietOutcome: stored, quietOutcomeReason: reason, quietOutcomeAt: new Date() },
       });
       classified += 1;
+
+      // An AI decision that gates whether a real person gets messaged
+      // belongs in the audit trail next to every other one. Without it,
+      // "why did FollowUp write to a customer I'd already closed" has no
+      // answer anywhere in the product — and that question is exactly the
+      // one an owner asks at the worst possible moment.
+      void recordAudit({ businessId }, "ai.quiet_outcome_classified", {
+        targetType: "lead",
+        targetId: lead.id,
+        meta: { outcome: stored, reason, daysQuiet, lastMessageFrom: last.direction },
+      });
     } catch (err) {
-      // A failed verdict must never look like a verdict. Leaving
-      // quietOutcome null keeps the lead out of every bucket below — it is
-      // not cold, not closed, not anything — and the next run retries it.
-      // The alternative (defaulting to UNCLEAR on error) would quietly
-      // turn an outage into a screen full of "we couldn't tell", which
-      // reads to an owner like a judgment rather than a failure.
+      // A failed verdict must never look like a verdict. Releasing the
+      // claim (quietOutcomeAt back to null) keeps the lead out of every
+      // bucket below — it is not cold, not closed, not anything — and the
+      // next run retries it. The alternative (defaulting to UNCLEAR on
+      // error) would quietly turn an outage into a screen full of "we
+      // couldn't tell", which reads to an owner like a judgment about
+      // their leads rather than a failure of ours.
       console.error(`Failed to classify quiet lead ${lead.id}:`, err);
+      await prisma.lead
+        .updateMany({ where: { id: lead.id, quietOutcome: null }, data: { quietOutcomeAt: null } })
+        .catch(() => {});
       failed += 1;
     }
   });
@@ -192,18 +275,43 @@ export type ReactivationLead = {
   reason: string | null;
 };
 
+/** A bucket as the screen needs it: the true total, and enough rows to show. */
+export type ReactivationBucket = {
+  total: number;
+  leads: ReactivationLead[];
+};
+
 export type ReactivationBatch = {
-  /** Judged dropped, and the only bucket a message may be drafted for. */
-  cold: ReactivationLead[];
+  /**
+   * Judged dropped by the LEAD — they stopped replying to us. The only
+   * bucket a "still interested?" message may be drafted for.
+   */
+  cold: ReactivationBucket;
+  /**
+   * Judged dropped by US — the lead's own message was the last thing in
+   * the thread and nobody here ever answered it. Split out of `cold`
+   * because the correct message is not the same message. "Just checking
+   * in — still interested?" to someone whose question you ignored for two
+   * months is not a follow-up, it's an insult; that person is owed an
+   * apology and an actual answer. Computed from the thread, not guessed.
+   */
+  neverReplied: ReactivationBucket;
   /** Judged finished — shown as a count, left alone. */
-  closed: ReactivationLead[];
+  closed: ReactivationBucket;
   /** The conversation moved somewhere FollowUp can't see. Needs one human answer each. */
-  offPlatform: ReactivationLead[];
+  offPlatform: ReactivationBucket;
   /** Judged, but not confidently. Shown, never messaged on its own. */
-  unclear: ReactivationLead[];
+  unclear: ReactivationBucket;
   /** Eligible leads with no verdict yet — the "still counting" number. */
   unjudged: number;
 };
+
+/**
+ * How many rows of each bucket come back. The screen shows a handful and a
+ * count, never a wall of 200 cards — and an unbounded findMany on a
+ * five-year inbox would load thousands of rows to render a number.
+ */
+const BUCKET_PREVIEW = 25;
 
 const REACTIVATION_SELECT = {
   id: true,
@@ -214,19 +322,20 @@ const REACTIVATION_SELECT = {
 } as const;
 
 /**
- * The three-bucket view behind the batch consent screen.
+ * The bucketed view behind the batch consent screen.
  *
  * The buckets are shown together on purpose. An owner asked "send to 43
  * cold leads?" with no other context has no way to judge whether 43 is
- * right — but "43 cold · 112 look finished · 9 moved to a phone call"
- * shows them the whole catalogue and what was done with each part of it.
- * That is the difference between a permission request and a number.
+ * right — but "43 went cold · 9 you never replied to · 112 look finished ·
+ * 6 moved to a phone call" shows them the whole catalogue and what was
+ * done with each part of it. That is the difference between a permission
+ * request and a number.
  */
 export async function getReactivationBatch(
   businessId: string,
   options: { quietDays?: number } = {}
 ): Promise<ReactivationBatch> {
-  const quietDays = options.quietDays ?? DEAD_LEAD_DEFAULT_DAYS;
+  const quietDays = options.quietDays ?? (await resolveQuietDays(businessId));
   const cutoff = new Date(Date.now() - quietDays * 24 * 60 * 60 * 1000);
 
   const base = {
@@ -236,44 +345,40 @@ export async function getReactivationBatch(
     lastContacted: { lte: cutoff },
   };
 
-  const [cold, closed, offPlatform, unclear, unjudged] = await Promise.all([
-    prisma.lead.findMany({
-      where: { ...base, quietOutcome: "COLD" },
-      select: REACTIVATION_SELECT,
-      orderBy: { lastContacted: "asc" },
-    }),
-    prisma.lead.findMany({
-      where: { ...base, quietOutcome: "CLOSED" },
-      select: REACTIVATION_SELECT,
-      orderBy: { lastContacted: "asc" },
-    }),
-    prisma.lead.findMany({
-      where: { ...base, quietOutcome: "OFF_PLATFORM" },
-      select: REACTIVATION_SELECT,
-      orderBy: { lastContacted: "asc" },
-    }),
-    prisma.lead.findMany({
-      where: { ...base, quietOutcome: "UNCLEAR" },
-      select: REACTIVATION_SELECT,
-      orderBy: { lastContacted: "asc" },
-    }),
+  // Every bucket is one indexed count plus a short preview. Nothing here
+  // loads a whole back catalogue to render a number — a five-year inbox can
+  // hold thousands of closed threads, and the screen shows a handful of
+  // each and a total.
+  const bucket = async (outcome: QuietOutcome): Promise<ReactivationBucket> => {
+    const [total, leads] = await Promise.all([
+      prisma.lead.count({ where: { ...base, quietOutcome: outcome } }),
+      prisma.lead.findMany({
+        where: { ...base, quietOutcome: outcome },
+        select: REACTIVATION_SELECT,
+        orderBy: { lastContacted: "asc" },
+        take: BUCKET_PREVIEW,
+      }),
+    ]);
+    return {
+      total,
+      leads: leads.map((l) => ({
+        id: l.id,
+        name: l.name,
+        email: l.email,
+        lastContacted: l.lastContacted,
+        reason: l.quietOutcomeReason,
+      })),
+    };
+  };
+
+  const [cold, neverReplied, closed, offPlatform, unclear, unjudged] = await Promise.all([
+    bucket("COLD"),
+    bucket("COLD_UNANSWERED"),
+    bucket("CLOSED"),
+    bucket("OFF_PLATFORM"),
+    bucket("UNCLEAR"),
     prisma.lead.count({ where: { ...base, quietOutcome: null } }),
   ]);
 
-  const shape = (rows: typeof cold): ReactivationLead[] =>
-    rows.map((l) => ({
-      id: l.id,
-      name: l.name,
-      email: l.email,
-      lastContacted: l.lastContacted,
-      reason: l.quietOutcomeReason,
-    }));
-
-  return {
-    cold: shape(cold),
-    closed: shape(closed),
-    offPlatform: shape(offPlatform),
-    unclear: shape(unclear),
-    unjudged,
-  };
+  return { cold, neverReplied, closed, offPlatform, unclear, unjudged };
 }

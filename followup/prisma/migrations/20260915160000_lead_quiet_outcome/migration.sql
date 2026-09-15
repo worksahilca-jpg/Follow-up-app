@@ -7,7 +7,7 @@
 
 -- CreateEnum
 DO $$ BEGIN
-  CREATE TYPE "QuietOutcome" AS ENUM ('COLD', 'CLOSED', 'OFF_PLATFORM', 'UNCLEAR');
+  CREATE TYPE "QuietOutcome" AS ENUM ('COLD', 'COLD_UNANSWERED', 'CLOSED', 'OFF_PLATFORM', 'UNCLEAR');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 

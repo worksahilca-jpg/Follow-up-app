@@ -386,12 +386,32 @@ const THREAD_OUTCOME_SCHEMA = {
  * a thread's opening looks identical whether it closed, died, or moved to
  * a phone call — but without the opening the model can't tell a resolved
  * ask from a resolved pleasantry.
+ *
+ * Two facts are computed in code and handed to the model rather than left
+ * for it to infer, because both are exact and neither is guessable from
+ * the text:
+ *
+ *   daysQuiet — a thread dropped seven weeks ago and one dropped four
+ *     years ago read identically on the page, and they are not remotely
+ *     the same decision. "Still interested?" about a kitchen quote from
+ *     2022 is not a follow-up, it's a cold email.
+ *   lastMessageFrom — who stopped replying. It is the single most
+ *     load-bearing fact in the whole judgment and the transcript makes it
+ *     easy to lose track of. When the BUSINESS sent last and got nothing
+ *     back, the lead went quiet. When the LEAD sent last, nobody here ever
+ *     answered them — a completely different situation that a breezy
+ *     "just checking in" makes worse, not better.
  */
 export async function classifyThreadOutcome(
   conversation: Message[],
-  business?: ClassifierBusinessContext
+  context: {
+    business?: ClassifierBusinessContext;
+    daysQuiet?: number;
+    lastMessageFrom?: "business" | "lead";
+  } = {}
 ): Promise<{ outcome: ThreadOutcome; reason: string }> {
   const client = getClient();
+  const { business, daysQuiet, lastMessageFrom } = context;
 
   // First + last three, de-duplicated (a short thread overlaps), quoted
   // replies stripped for the same reason classifyAsProspect strips them:
@@ -408,13 +428,22 @@ export async function classifyThreadOutcome(
       `Judge how this thread ended the way an experienced person in that exact line of work would.`
     : "The inbox belongs to a small business.";
 
+  const facts = [
+    daysQuiet !== undefined ? `It has been quiet for ${daysQuiet} days.` : null,
+    lastMessageFrom === "lead"
+      ? "The LAST message was from the lead, and nobody at the business ever replied to it."
+      : lastMessageFrom === "business"
+        ? "The LAST message was from the business, and the lead never replied to it."
+        : null,
+  ].filter(Boolean);
+
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
       {
         role: "system",
         content:
-          `You are reading an email thread that went quiet weeks ago, to decide whether it is safe to send ` +
+          `You are reading an email thread that went quiet, to decide whether it is safe to send ` +
           `this person a "still interested?" message today. ${businessLine} ` +
           "You are not scoring the lead and not judging whether it was a good one — only what state the " +
           "conversation was left in. Silence alone means nothing: a thread can go quiet because it finished " +
@@ -422,15 +451,23 @@ export async function classifyThreadOutcome(
           "messages actually say. Gratitude, a completed job, a signed document, a payment, a delivery, or a " +
           "polite decline all mean it CONCLUDED, even when no one said the word. A question left hanging, an " +
           "unanswered quote, or a proposed next step nobody took means it was DROPPED. A swapped phone number " +
-          "or a booked call means the rest of it happened where you cannot see it. When the thread does not " +
-          "clearly show one of those, say so — 'unclear' is a correct, useful answer, and much cheaper than a " +
-          "confident wrong one." +
+          "or a booked call means the rest of it happened where you cannot see it. " +
+          // Elapsed time is a real input, not background colour: the older a
+          // thread is, the more likely it concluded somewhere off-thread and
+          // the less a "checking in" message reads as a follow-up at all.
+          "Weigh how long it has been quiet. A few months is a follow-up; a year or more is long enough that " +
+          "whatever was going to happen almost certainly already did, off this thread, so lean away from " +
+          "'cold' and toward 'unclear' as the gap grows. " +
+          "When the thread does not clearly show one of those, say so — 'unclear' is a correct, useful " +
+          "answer, and much cheaper than a confident wrong one." +
           UNTRUSTED_CONVERSATION_NOTICE +
           VOICE_AGENT_TRUST_NOTICE,
       },
       {
         role: "user",
-        content: `Conversation (opening message and how it ended):\n${formatTranscript(forClassification)}`,
+        content:
+          (facts.length > 0 ? `Known facts about this thread:\n${facts.join("\n")}\n\n` : "") +
+          `Conversation (opening message and how it ended):\n${formatTranscript(forClassification)}`,
       },
     ],
     response_format: { type: "json_schema", json_schema: THREAD_OUTCOME_SCHEMA },

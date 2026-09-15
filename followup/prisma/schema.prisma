@@ -209,6 +209,14 @@ enum PipelineStage {
 // next happened where FollowUp cannot see it.
 enum QuietOutcome {
   COLD
+  // Dropped by US, not by them: the lead's own message is the last thing in
+  // the thread and nobody here ever answered it. Split out of COLD because
+  // the right message is a different message — "just checking in, still
+  // interested?" to someone whose question you ignored for two months is
+  // not a follow-up, it's an insult. Decided in code from the last
+  // message's direction, never by the model; the model only ever says
+  // whether the thread was dropped at all.
+  COLD_UNANSWERED
   CLOSED
   OFF_PLATFORM
   UNCLEAR

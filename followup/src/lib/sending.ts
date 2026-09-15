@@ -13,6 +13,8 @@
  */
 
 import { prisma } from "@/lib/db";
+import { isSuppressed } from "@/lib/suppression";
+import { checkSendCap } from "@/lib/sendCaps";
 import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
@@ -202,10 +204,72 @@ export async function sendFollowUpToLead(
     return { success: false, message: "This lead texted STOP — SMS/WhatsApp sending is blocked until they text START to opt back in." };
   }
 
+  // No unsubscribe line, and no List-Unsubscribe header, on ANY message.
+  // Founder's call, 2026-09-15, and the reasoning is sound enough to write
+  // down rather than just obey.
+  //
+  // Every message this product sends is a reply to someone who contacted
+  // the business first. Even the coldest one in the reactivation batch goes
+  // to a person who filled in a form or sent an email and then never heard
+  // back — and deadLeadMessageHint() now requires the draft to say exactly
+  // that: you got in touch about X, sorry we never came back to you. A
+  // recipient reading that recognises it instantly. It is an overdue reply,
+  // not an approach, and an "unsubscribe" line stapled to the bottom would
+  // misdescribe it as a mailing — which is both untrue and corrosive to the
+  // one thing this product sells, that its messages read as if the owner
+  // wrote them.
+  //
+  // The suppression list itself is deliberately KEPT and still enforced
+  // below. What changed is how an address gets onto it: not a link, but a
+  // person saying so — which is how the SMS side already works, and how
+  // someone would actually do it in an email anyway ("please stop emailing
+  // me"). Volume is also bounded (see sendCaps.ts), which is what makes
+  // relying on a reply rather than a button reasonable: this is 25 messages
+  // a day to people who asked, not a list blast.
+  //
+  // What would make this wrong: if the drafts stopped naming the original
+  // enquiry and the missed reply, or if volume rose to where recipients no
+  // longer recognise the sender. Both are worth re-checking together.
+  // Daily volume ceiling. Applies to AUTOMATED sends only — a human
+  // emailing their own customer is never rate-limited by us — and lives
+  // here, in the one funnel every automated path goes through, so a caller
+  // added later cannot forget it.
+  //
+  // This carries more weight now that there is no unsubscribe line: volume
+  // discipline IS the protection. A handful of recognisable, overdue
+  // replies a day is a different thing from a list blast, and the cap is
+  // what keeps it the first one. See src/lib/sendCaps.ts.
+  if (options.automated) {
+    const capKind = options.trigger === "dead_lead_reactivation" ? "reactivation" : "automated";
+    const cap = await checkSendCap(lead.businessId, capKind);
+    if (!cap.allowed) return { success: false, message: cap.reason };
+  }
+
+  const isCampaignSend = options.automated && options.trigger === "dead_lead_reactivation";
+
+  const emailSuppressed = channel === "email" && (await isSuppressed(lead.businessId, lead.email));
+  if (emailSuppressed && isCampaignSend) {
+    return {
+      success: false,
+      message: "This person unsubscribed from automated follow-ups. You can still reply to them yourself.",
+    };
+  }
+
   let externalId: string | undefined;
   let emailProvider: "gmail" | "outlook" | undefined;
   if (channel === "email") {
     if (!lead.email) return { success: false, message: "This lead has no email address on file." };
+
+    // Only AUTOMATED mail carries the unsubscribe footer and headers. A
+    // human typing a reply to a customer is not a mailing they should be
+    // offered a way out of — putting "unsubscribe" under a personal reply
+    // would be both odd and, by implying the message was bulk, untrue.
+    //
+    // Deliberately a SEPARATE value rather than appended to `body`: the
+    // footer is transport decoration, like the List-Unsubscribe header
+    // beside it. `body` is what gets stored on the Message row, shown in
+    // the thread, and measured in the audit trail — and none of those
+    // should carry a link that isn't part of what anyone wrote.
     emailProvider = await detectEmailProvider(lead.businessId, lead.id);
     if (emailProvider === "outlook") {
       const result = await sendOutlookEmail(lead.businessId, {

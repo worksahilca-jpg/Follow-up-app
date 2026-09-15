@@ -216,6 +216,16 @@ describe("classifyThreadOutcome prompt", () => {
     expect(user).toContain("message 7"); // how it actually ended
     expect(user).not.toContain("message 3"); // the middle is not what decides this
   });
+
+  // The verdict is written once and never revisited (classifyQuietLeads only
+  // ever selects quietOutcome: null), and 'cold' is the one bucket that gets
+  // a real message sent to a real past customer. Without an explicit
+  // temperature the API default is 1.0, which makes a borderline thread's
+  // verdict a coin flip recorded permanently as a judgment.
+  it("judges at temperature 0, because the verdict is permanent", async () => {
+    await classifyThreadOutcome(thread);
+    expect(create.mock.calls[0][0].temperature).toBe(0);
+  });
 });
 
 describe("classifyQuietLeads", () => {

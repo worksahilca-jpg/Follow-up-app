@@ -1638,3 +1638,35 @@ was hit mid-pass and cost a full re-shoot. Screenshots at 1440, and at 390 via a
 Recharts charts on `/analytics` (need a live DOM), everything on `/settings`
 past its loading state (gated behind a `useEffect` fetch), all modals, the
 notification panel, the workflow editor, and real motion timing.
+
+---
+
+## 2026-09-15 — ScoreBadge and PriorityPill contradicted each other on the same card
+
+**Repair, not a redesign.** `scoring.ts`'s `priorityFromScore` cut at 70/40;
+`ScoreBadge.tsx` cut at 75/45. `FollowUpCard` renders both, so every score from
+70-74 and from 40-44 disagreed with itself on screen: a lead at 72 showed a
+"high priority" pill beside a badge coloured medium whose tooltip read
+"Worth chasing: medium".
+
+**70/40 kept, 75/45 dropped.** Not because those numbers are better — neither
+pair is backed by research, and that is still open — but because 70/40 already
+drives behaviour: `Lead.priority` decides the handoff notification, the Slack
+ping and the default ordering. Moving it changes when a business is told a lead
+went hot. Moving the badge changes a colour. When two sources of truth disagree,
+keep the one with consequences.
+
+Both now read `@/lib/scoreThresholds`, and a test walks every score 0-100
+asserting the two agree, so the gap cannot reopen quietly.
+
+**Tooltip corrected too.** It said the number was "how likely this person is to
+buy". `scoreLead` actually asks the model "how urgently should they follow up
+with this lead TODAY". Those come apart — a certain-to-buy customer who wrote an
+hour ago is not urgent, and a wavering one who has waited three days is. The
+label now names the quantity being measured. This is a truthfulness fix: a
+tooltip that misdescribes its own number teaches the owner to mistrust the
+number.
+
+**Still open:** the cut-points themselves are inherited and undocumented. Every
+other threshold in this codebase cites its research (`rescue.ts`,
+`reactivation.ts`); these two cite nothing. Worth settling separately.

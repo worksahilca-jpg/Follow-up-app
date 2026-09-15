@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { generateInstantReply, assessAckRisk, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
+import { checkAiEligibility } from "@/lib/billing";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -271,7 +272,19 @@ export async function acknowledgeNewLead(
   try {
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },
-      select: { id: true, businessId: true, name: true, email: true, phone: true, automationTier: true, acknowledgedAt: true },
+      select: {
+        id: true,
+        businessId: true,
+        name: true,
+        email: true,
+        phone: true,
+        automationTier: true,
+        acknowledgedAt: true,
+        // For the tier gate below — createdAt fixes this lead's rank in its
+        // own month, source decides whether Free covers the channel.
+        createdAt: true,
+        source: true,
+      },
     });
     if (!lead) return { sent: false, reason: "no lead" };
     if (lead.acknowledgedAt) return { sent: false, reason: "already acknowledged" };
@@ -290,6 +303,37 @@ export async function acknowledgeNewLead(
     if (priorOutbound) return { sent: false, reason: "owner already replied" };
 
     if (!(await isInstantAckEnabled(lead.businessId))) return { sent: false, reason: "switched off" };
+
+    // The tier gate this path never had.
+    //
+    // Every other AI entry point (scoring.ts, automation.ts, sequences.ts,
+    // the regenerate route) checks the plan's monthly AI allowance before
+    // spending a call. This one did not, so generateInstantReply +
+    // assessAckRisk + localizeFixedText ran for every lead on every tier
+    // regardless of the cap — directly contradicting the published "AI
+    // processing pauses past lead #20"
+    // (research/market/2026-09-11-tier-pricing-recommendation.md §2.2).
+    //
+    // Skipping, rather than falling back to the fixed line, is what the
+    // other four gates do and is the honest behaviour here: the fixed line
+    // is only safe because localizeFixedText puts it in the lead's own
+    // language, and that is itself an AI call. Sending it un-localized
+    // would ship the exact bug task #63 fixed — an English sentence to a
+    // lead who wrote in Gujarati — on purpose.
+    //
+    // Checked BEFORE the claim below, so a lead skipped here keeps
+    // acknowledgedAt null and is acknowledged normally next month or on
+    // upgrade, rather than being silently marked as handled.
+    const ackBusiness = await prisma.business.findUnique({
+      where: { id: lead.businessId },
+      select: { tier: true },
+    });
+    const ackEligible = await checkAiEligibility(
+      lead.businessId,
+      lead,
+      (ackBusiness?.tier ?? "free") as "free" | "plus" | "pro"
+    );
+    if (!ackEligible.ok) return { sent: false, reason: ackEligible.reason };
 
     // Claim first, send second — two webhooks for the same new lead
     // (a double-tap text, an email + a form) can't both win.

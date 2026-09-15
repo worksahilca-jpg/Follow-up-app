@@ -30,6 +30,11 @@ vi.mock("@/lib/sender", () => ({
 
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: async () => [] }));
 
+const checkSendCap = vi.fn();
+vi.mock("@/lib/sendCaps", () => ({
+  checkSendCap: (...a: unknown[]) => checkSendCap(...a),
+}));
+
 const leadFindFirst = vi.fn();
 const leadUpdateMany = vi.fn();
 const leadCount = vi.fn();
@@ -93,6 +98,7 @@ beforeEach(() => {
   runUpdate.mockResolvedValue({});
   runUpdateMany.mockResolvedValue({ count: 1 });
   leadCount.mockResolvedValue(0);
+  checkSendCap.mockResolvedValue({ allowed: true, used: 0, cap: 250 });
 });
 
 describe("startReactivationRun", () => {
@@ -324,6 +330,73 @@ describe("runReactivationSend — progress survives being resumed", () => {
         }),
       })
     );
+  });
+});
+
+/**
+ * The circuit breaker in sendCaps.ts must not EAT the batch.
+ *
+ * The claim on Lead.reactivationSentAt is permanent by design — "we might
+ * have already emailed them" resolves to "don't email them again". That is
+ * right for a send that may have left, and catastrophic for one that was
+ * refused before it ever reached a provider: the lead is claimed, nothing
+ * went out, and sendableWhere excludes them from every future batch.
+ *
+ * 300 cold leads against a 250/day fuse used to mean fifty of the owner's
+ * past customers were silently spent and could never be reached again — and
+ * because `remaining` counted those same claims down to zero, the run was
+ * recorded COMPLETED.
+ */
+describe("runReactivationSend — a tripped daily cap must not consume leads", () => {
+  it("claims and spends nothing once the circuit breaker refuses", async () => {
+    runFindFirst.mockResolvedValue({ id: "run-1", status: "RUNNING", sent: 250, failed: 0, skipped: 0 });
+    runFindUnique.mockResolvedValue({ status: "RUNNING" });
+    leadFindFirst.mockImplementation(async () => coldLead("lead-251"));
+    // The fifty leads the fuse would otherwise have burned.
+    leadCount.mockResolvedValue(50);
+    checkSendCap.mockResolvedValue({
+      allowed: false,
+      used: 250,
+      cap: 250,
+      reason: "FollowUp has stopped after 250 messages today as a safety measure.",
+    });
+    // What sending.ts actually returns for a capped send: refused, never
+    // handed to a provider.
+    sendFollowUpToLead.mockResolvedValue({ success: false, message: "capped" });
+
+    const result = await runReactivationSend("biz-1", "run-1", { spacingMs: 0 });
+
+    // Nothing was claimed. This is the whole finding: a claim here is
+    // permanent, so claiming a lead the cap then refuses removes them from
+    // every future batch without ever messaging them.
+    const claims = leadUpdateMany.mock.calls.filter(
+      (c) => (c[0] as { data: { reactivationSentAt?: unknown } }).data.reactivationSentAt instanceof Date
+    );
+    expect(claims).toHaveLength(0);
+    expect(sendFollowUpToLead).not.toHaveBeenCalled();
+    expect(generateFollowUpMessage).not.toHaveBeenCalled();
+
+    // And the run is NOT finished — those fifty are still owed a message,
+    // so the batch stays resumable once the rolling window moves.
+    expect(result.status).toBe("RUNNING");
+    expect(result.remaining).toBe(50);
+    expect(result.blockedReason).toMatch(/safety measure/i);
+    expect(runUpdateMany).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: "COMPLETED" }) })
+    );
+  });
+
+  it("still sends normally while the cap has room", async () => {
+    runFindFirst.mockResolvedValue({ id: "run-1", status: "RUNNING", sent: 0, failed: 0, skipped: 0 });
+    runFindUnique.mockResolvedValueOnce({ status: "RUNNING" }).mockResolvedValue({ status: "STOPPED" });
+    leadFindFirst.mockResolvedValue(coldLead("lead-1"));
+
+    const result = await runReactivationSend("biz-1", "run-1", { spacingMs: 0 });
+
+    expect(checkSendCap).toHaveBeenCalledWith("biz-1", "reactivation");
+    expect(sendFollowUpToLead).toHaveBeenCalledTimes(1);
+    expect(result.sent).toBe(1);
+    expect(result.blockedReason).toBeUndefined();
   });
 });
 

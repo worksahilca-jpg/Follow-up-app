@@ -24,11 +24,13 @@ vi.mock("@/lib/sender", () => ({
 }));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
 
-const { channelOk, capOk } = vi.hoisted(() => ({
-  channelOk: vi.fn(() => true),
-  capOk: vi.fn(async () => true),
+// One gate for every tier since 2026-09-15, not two Free-only helpers:
+// Plus's 1,500/mo and Pro's 10,000/mo were published policy with nothing
+// enforcing them, so a paid account had no AI ceiling at all.
+const { aiEligible } = vi.hoisted(() => ({
+  aiEligible: vi.fn(async (): Promise<{ ok: true } | { ok: false; reason: string }> => ({ ok: true })),
 }));
-vi.mock("@/lib/billing", () => ({ isChannelAvailableOnFreeTier: channelOk, isWithinFreeTierLeadCap: capOk }));
+vi.mock("@/lib/billing", () => ({ checkAiEligibility: aiEligible }));
 
 import { scoreAndDraftForLead } from "@/lib/scoring";
 
@@ -55,40 +57,42 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("OPENAI_API_KEY", "test-key");
   findUnique.mockResolvedValue(leadRow());
-  channelOk.mockReturnValue(true);
-  capOk.mockResolvedValue(true);
+  aiEligible.mockResolvedValue({ ok: true });
 });
 
-describe("scoreAndDraftForLead — Free tier gate", () => {
-  it("scores normally for a Plus/Pro business, without even asking the Free-tier checks", async () => {
+describe("scoreAndDraftForLead — the tier's AI allowance", () => {
+  // Was "without even asking the Free-tier checks" until 2026-09-15, which
+  // is exactly what left Plus and Pro unbounded. A paid tier is checked
+  // against its OWN ceiling, so a normal customer notices nothing.
+  it("checks a paid business against its own tier, not Free's", async () => {
     const ok = await scoreAndDraftForLead("lead1");
     expect(ok).toBe(true);
-    expect(channelOk).not.toHaveBeenCalled();
-    expect(capOk).not.toHaveBeenCalled();
+    expect(aiEligible).toHaveBeenCalledWith("biz1", expect.anything(), "plus");
     expect(update).toHaveBeenCalled();
   });
 
-  it("skips scoring for a Free-tier lead over the monthly cap", async () => {
+  it("skips scoring once the gate refuses", async () => {
     findUnique.mockResolvedValue(leadRow({ business: { tier: "free" } }));
-    capOk.mockResolvedValue(false);
+    aiEligible.mockResolvedValue({ ok: false, reason: "past this month's 20-lead AI cap on the Free plan" });
     const ok = await scoreAndDraftForLead("lead1");
     expect(ok).toBe(false);
     expect(update).not.toHaveBeenCalled();
   });
 
-  it("skips scoring for a Free-tier lead captured on a channel Free doesn't cover", async () => {
+  it("passes the lead itself, so the gate can rank it and read its channel", async () => {
     findUnique.mockResolvedValue(leadRow({ business: { tier: "free" }, source: "WhatsApp" }));
-    channelOk.mockReturnValue(false);
-    const ok = await scoreAndDraftForLead("lead1");
-    expect(ok).toBe(false);
-    expect(update).not.toHaveBeenCalled();
+    await scoreAndDraftForLead("lead1");
+    expect(aiEligible).toHaveBeenCalledWith(
+      "biz1",
+      expect.objectContaining({ source: "WhatsApp" }),
+      "free"
+    );
   });
 
-  it("still scores a Free-tier lead that's within cap and on an eligible channel", async () => {
+  it("still scores a Free-tier lead the gate allows", async () => {
     findUnique.mockResolvedValue(leadRow({ business: { tier: "free" } }));
     const ok = await scoreAndDraftForLead("lead1");
     expect(ok).toBe(true);
-    expect(channelOk).toHaveBeenCalledWith("Gmail");
     expect(update).toHaveBeenCalled();
   });
 

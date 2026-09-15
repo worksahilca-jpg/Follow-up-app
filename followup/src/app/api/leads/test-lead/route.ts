@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { getSessionContext } from "@/lib/session";
-import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
+import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { tooManyRecentActions } from "@/lib/rateLimit";
@@ -33,7 +33,7 @@ export async function POST() {
     return NextResponse.json({ success: false, message: "Too many requests — try again in a few minutes." }, { status: 429 });
   }
   if (!(await requireActiveBilling(ctx.businessId))) {
-    return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+    return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
 
   const user = await prisma.user.findUnique({ where: { id: ctx.userId }, select: { email: true, name: true } });

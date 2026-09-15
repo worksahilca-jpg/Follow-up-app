@@ -496,7 +496,7 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
     });
   }
 
-  it("always drafts fresh instead of reusing a cached suggestedMessage, and tags the send with its own trigger", async () => {
+  it("always drafts fresh instead of reusing a cached suggestedMessage", async () => {
     p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([coldLead(60)]).mockResolvedValueOnce([]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
@@ -507,7 +507,69 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
       [],
       expect.stringContaining("gone genuinely cold")
     );
+  });
+
+  /**
+   * The guarantee this block exists for, added 2026-09-15 on the founder's
+   * call after a trust audit.
+   *
+   * Reactivation is the one automation that reaches BACKWARDS — it messages
+   * someone who went quiet 45+ days ago. On a business's first sync that
+   * means the imported back catalogue, up to six months of threads, all
+   * eligible at once, all going out in the owner's name. A "low risk"
+   * verdict is a judgement about one message's wording; it says nothing
+   * about whether the owner wanted last spring contacted on their behalf.
+   *
+   * So a cold lead is offered, never assumed: drafted, held, and put in the
+   * approval queue with its reason. If this test ever goes red because
+   * something started auto-sending reactivations again, that is the
+   * regression, not the test.
+   */
+  it("never auto-sends a reactivation, even when the risk classifier says low", async () => {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([coldLead(60)]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+
+    expect(send).not.toHaveBeenCalled();
+    expect(r.sent).toBe(0);
+    expect(r.held).toBe(1);
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({ businessId: "biz1" }),
+      "ai.hold",
+      expect.objectContaining({ meta: expect.objectContaining({ trigger: DEAD_LEAD_ACTION }) })
+    );
+  });
+
+  it("gives a low-risk reactivation hold a real reason instead of an empty one", async () => {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([coldLead(60)]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+
+    // The approval card renders "Held because {reason}" — an empty reason
+    // ships "Held because ." to the owner on the one screen whose whole job
+    // is explaining why FollowUp stopped and asked.
+    expect(r.heldReasons[0]).toContain("went quiet");
+    expect(r.heldReasons[0]).toContain("60 days ago");
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({ businessId: "biz1" }),
+      "ai.hold",
+      expect.objectContaining({ meta: expect.objectContaining({ reason: expect.stringContaining("went quiet") }) })
+    );
+  });
+
+  it("still lets a lead the owner explicitly set to AUTONOMOUS send without review", async () => {
+    // The per-lead opt-in is a deliberate act by the owner, so it outranks
+    // the batch default — otherwise "autonomous" would silently stop
+    // meaning autonomous for exactly the leads it was turned on for.
+    p.lead.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([coldLead(60, { automationTier: "AUTONOMOUS" })])
+      .mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+
     expect(send).toHaveBeenCalledWith("lead4", expect.any(String), expect.objectContaining({ trigger: DEAD_LEAD_ACTION }));
+    expect(r.sent).toBe(1);
   });
 
   it("overwrites the stale cached draft (not just skips redrafting) when held for approval", async () => {

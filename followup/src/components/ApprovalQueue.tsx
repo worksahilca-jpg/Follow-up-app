@@ -91,12 +91,25 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
   }
 
   return (
-    <div className="px-5 py-4">
-      <div className="flex items-center justify-between gap-3">
-        <Link href={`/leads/${item.leadId}`} className="font-medium hover:underline">
-          {item.leadName}
-        </Link>
-      </div>
+    <div className="rounded-[var(--radius-box)] bg-card px-4 py-4" style={{ boxShadow: "var(--shadow-box)" }}>
+      <Link href={`/leads/${item.leadId}`} className="font-medium hover:underline">
+        {item.leadName}
+      </Link>
+      {/* The reason moves directly under the name, above everything else. It
+          used to render last, at 12px, after the draft — but the reason is
+          what tells you what to check the draft FOR. Reading it afterwards
+          means re-reading the draft, or approving without having done the one
+          piece of judgement you were asked for.
+
+          Also no longer lowercased mid-sentence: `.toLowerCase()` on the most
+          trust-critical string in the product mangled names and acronyms, and
+          paired with a trailing period after a reason that already ended in
+          one, it produced "Held because the lead asked about pricing.." */}
+      {item.reason && (
+        <p className="mt-1 text-xs text-ink-soft">
+          Held because {item.reason.replace(/\.\s*$/, "")}.
+        </p>
+      )}
       {/* What they actually said, before what we're about to reply with —
           approving a draft with no visible context for what it's replying
           to meant trusting the AI's summary of the situation ("reason")
@@ -120,7 +133,6 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
         {item.draftSubject && <p className="font-medium mt-1">{item.draftSubject}</p>}
         <p className="text-ink-soft whitespace-pre-wrap mt-1">{item.draftMessage}</p>
       </div>
-      {item.reason && <p className="text-xs text-ink-soft mt-1.5">Held because {item.reason.toLowerCase()}.</p>}
       {error && (
         <p className="text-xs mt-1.5" style={{ color: "var(--coral)" }}>
           {error}
@@ -153,10 +165,45 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
   );
 }
 
-export default function ApprovalQueue({ items }: { items: ApprovalItem[] }) {
+export default function ApprovalQueue({
+  items,
+  answeredForYou = 0,
+}: {
+  items: ApprovalItem[];
+  /** Replies FollowUp sent on its own this week — what it did instead of asking. */
+  answeredForYou?: number;
+}) {
   const [resolved, setResolved] = useState<Set<string>>(new Set());
   const visible = items.filter((i) => !resolved.has(i.leadId));
-  if (visible.length === 0) return null;
+
+  // An empty queue used to `return null`, so a good day rendered as a greeting,
+  // three tiles and a link — and the screen read as broken rather than as calm.
+  // This product had no way, anywhere, to say "all clear": silence looked
+  // identical to something having gone wrong. An empty queue is a real state
+  // and it is the state the owner most wants to be in, so it gets said out
+  // loud, with what FollowUp did instead of asking.
+  if (visible.length === 0) {
+    return (
+      <div className="mt-6">
+        <div
+          className="relative rounded-[var(--radius-box)] bg-card py-3 pl-4 pr-3"
+          style={{ boxShadow: "var(--shadow-box)" }}
+        >
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-0 left-0 w-[3px] rounded-l-[var(--radius-box)]"
+            style={{ backgroundColor: "var(--sage)" }}
+          />
+          <p className="text-sm font-medium">Nothing needs your OK right now.</p>
+          <p className="mt-1 text-xs text-ink-soft">
+            {answeredForYou > 0
+              ? `FollowUp answered ${answeredForYou} ${answeredForYou === 1 ? "lead" : "leads"} on its own this week. Anything it wasn't sure about would be here.`
+              : "Anything FollowUp isn't sure about will show up here before it sends."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6">
@@ -167,7 +214,7 @@ export default function ApprovalQueue({ items }: { items: ApprovalItem[] }) {
       <p className="text-sm text-ink-soft mt-1">
         FollowUp drafted these already — approve to send exactly what&apos;s shown, or edit it first.
       </p>
-      <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line overflow-hidden">
+      <div className="mt-4 flex flex-col gap-2">
         {visible.map((item) => (
           <ApprovalCard key={item.leadId} item={item} onResolved={(leadId) => setResolved((prev) => new Set(prev).add(leadId))} />
         ))}

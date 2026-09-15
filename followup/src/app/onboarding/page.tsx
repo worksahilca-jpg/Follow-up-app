@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getGmailStatus } from "@/lib/integrations/gmail";
+import { getOutlookStatus, outlookOAuthAvailable } from "@/lib/integrations/outlook";
 import OnboardingForm from "@/components/OnboardingForm";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function OnboardingPage() {
   });
   if (business?.onboarded) redirect("/dashboard");
 
-  const gmail = await getGmailStatus(ctx.businessId);
+  const [gmail, outlook] = await Promise.all([getGmailStatus(ctx.businessId), getOutlookStatus(ctx.businessId)]);
 
   return (
     <OnboardingForm
@@ -28,8 +29,13 @@ export default async function OnboardingPage() {
       // "Connect Gmail" for someone resuming (or bouncing back from the
       // Google OAuth round trip, which loses all client-side page state).
       step1Done={Boolean(business?.industry)}
-      gmailConnected={gmail.connected}
-      gmailEmail={gmail.email}
+      // Either inbox finishes this step. Onboarding used to offer Gmail
+      // alone, so a business on Microsoft 365 had no way through it at all —
+      // and then got nagged to "Connect Gmail" forever once inside the app.
+      inboxConnected={gmail.connected || outlook.connected}
+      inboxEmail={gmail.email ?? outlook.email}
+      inboxProvider={gmail.connected ? "gmail" : outlook.connected ? "outlook" : null}
+      outlookAvailable={outlookOAuthAvailable()}
     />
   );
 }

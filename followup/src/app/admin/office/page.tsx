@@ -61,7 +61,7 @@ function money(usd: number): string {
 function Desk({ desk }: { desk: DeskView }) {
   const atCeiling = desk.spentTodayUsd >= desk.dailyCostCeilingUsd;
   return (
-    <div className="rounded-xl border border-line bg-card p-5 flex flex-col gap-3">
+    <div className="rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-display text-lg leading-tight">{desk.title}</h3>
@@ -209,7 +209,7 @@ export default async function OfficePage() {
 
       <section className="mt-10">
         <h2 className="font-display text-xl">Latest shifts</h2>
-        <div className="mt-4 rounded-xl border border-line bg-card px-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] px-5">
           {floor.recent.length === 0 ? (
             <p className="text-sm text-ink-soft py-8 text-center">
               Nobody has worked a shift yet. Press <span className="font-medium">Run now</span> on a staffed desk, or

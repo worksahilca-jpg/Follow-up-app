@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
+import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { importGmailThread } from "@/lib/integrations/gmail";
 import { importOutlookConversation } from "@/lib/integrations/outlook";
 import { scoreAndDraftForLead } from "@/lib/scoring";
@@ -18,7 +18,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireActiveBilling(ctx.businessId))) {
-    return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+    return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
 
   const { id } = await params;

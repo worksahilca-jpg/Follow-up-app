@@ -95,6 +95,46 @@
 
   --coral: #b32a44;
   --coral-soft: #fbe1e6;
+
+  /* --accent is the canonical name for the brand blue from here on.
+     `--rust` is the name the token still has above for historical reasons
+     — it was literally a rust/amber colour before A-002 moved the whole
+     app onto the navy/blue Award Direction, and only the value changed.
+     A token whose name says "rust" and whose value is #2a5cdb misleads
+     every session that greps for it, so this alias gives the colour a
+     name that matches what it is. `--rust` is kept pointing at the same
+     value rather than removed: it ships at a large number of call sites
+     and a rename-in-one-go is churn with no user-visible benefit. New
+     code uses --accent; --rust is not a second hue and must never be
+     given a different value. */
+  --accent: var(--rust);
+
+  /* Box surface — the app's one container treatment, from the founder's
+     2026-09-15 A/B calibration (approved.md A-006: soft corners + real
+     shadow, each item in its own box, no crisp hairline edges).
+
+     The shadow is not a new invention: it is the value already shipping on
+     the sign-in card (components/landing/SignInClient.tsx) stepped down for
+     list density, so the app and the sign-in screen share one surface idea
+     at two scales. --shadow-box-lift is that original, for the rare
+     single hero surface. The `0 0 0 1px` layer is a hairline *inside* the
+     shadow rather than a `border`, which is what lets a box read as lifted
+     instead of outlined — a real border is the "crisp + flat" option the
+     calibration voted against.
+
+     Boxes sit directly on --paper and are never nested inside another box
+     (S-09). One box level, everywhere. */
+  --radius-box: 12px;
+  --shadow-box: 0 1px 2px rgba(11, 31, 51, 0.05), 0 8px 20px -14px rgba(11, 31, 51, 0.2);
+  --shadow-box-hover: 0 2px 4px rgba(11, 31, 51, 0.07), 0 14px 28px -16px rgba(11, 31, 51, 0.26);
+  --shadow-box-lift: 0 30px 60px -28px rgba(11, 31, 51, 0.28), 0 0 0 1px rgba(11, 31, 51, 0.06);
+
+  /* Height of the fixed mobile top bar in components/Sidebar.tsx
+     (py-3 + a 32px control row + the 1px bottom border). It exists as a
+     token because two unrelated places need to agree with it: the app
+     shell's top padding, and anything `sticky` that would otherwise slide
+     underneath the bar — which is exactly the live defect on /settings. */
+  --app-header-h: 57px;
 }
 
 @theme inline {
@@ -104,6 +144,7 @@
   --color-line: var(--line);
   --color-rust: var(--rust);
   --color-rust-soft: var(--rust-soft);
+  --color-accent: var(--accent);
   --color-accent-deep: var(--accent-deep);
   --color-on-accent: var(--on-accent);
   --color-slate: var(--slate);
@@ -172,11 +213,22 @@ button:not(:disabled):hover, a:hover, [tabindex]:hover {
   filter: brightness(0.96);
 }
 
+/* Keyboard focus. This used to remove the UA outline and draw the ring with
+   `box-shadow` instead, which made it worse than having no focus CSS at all:
+   any element that sets its own box-shadow — a Tailwind `shadow-*` utility, an
+   inline style, ItemBox's own surface shadow — replaces this one outright and
+   silently. A 2026-09-15 audit tabbed twelve times on the dashboard and landed
+   on "Approve & send", a control that sends a real message to a real customer,
+   with nothing on screen to say so.
+
+   A real `outline` cannot be clobbered that way: it is a separate property, it
+   composites above the element's own shadows and backgrounds, and it follows
+   the border radius on its own. outline-offset keeps it clear of the control's
+   edge instead of sitting on it. */
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
 textarea:focus-visible, [tabindex]:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--rust-soft), 0 0 0 1px var(--rust);
-  border-radius: 4px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ---- Bold decorative primitives (dashboard) ----

@@ -106,6 +106,17 @@ itself the thing to stop, not just its outputs. Before the next dashboard propos
 external reference the founder actually chose — a screenshot or a product he names. Do not
 open a fifth concept without one.
 
+> **GATE SATISFIED (2026-09-15) → [[approved#^A-006|A-006]].** The reference is not an
+> external screenshot in the end — it is the founder's own six-axis A/B taste test
+> (`B A A - A B`: dense · soft+shadow · colour-coded · no preference on numbers · boxed ·
+> accent held back). Asked directly whether that counted, he said "YES USE MY ANSWERS."
+> The dashboard is unblocked and is to be assembled from those answers.
+>
+> **The note itself still stands for everything after this one.** A-006 satisfies it once,
+> for this round of work. It is not a permanent exemption: the next time a design direction
+> is genuinely unknown, run another paired comparison or get a reference he names — do not
+> fall back on a hypothesis and cite A-006 as cover.
+
 ---
 
 ## Standing rejections (from the brief, 2026-09-12)

@@ -414,7 +414,29 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           risk = { riskLevel: "low", reason: "" };
         }
 
-        if (risk.riskLevel !== "low") {
+        // A cold-lead reactivation ALWAYS waits for a human, whatever the
+        // risk classifier thinks.
+        //
+        // This is the one automation that reaches backwards. Everything else
+        // here answers a conversation the lead started or continued; this one
+        // messages someone who went quiet 45+ days ago, and on a business's
+        // first sync that means the back catalogue — up to six months of
+        // imported threads, all eligible at once, all sent in the owner's
+        // name. "Low risk" is a judgement about the wording of one message;
+        // it says nothing about whether the owner wanted the whole of last
+        // spring contacted on their behalf.
+        //
+        // So these become a batch the owner is offered rather than a batch
+        // that happens to them: FollowUp finds the cold leads, writes each
+        // draft, and puts them in the approval queue with the reason
+        // attached. Same work, same drafts — the owner just gets to say yes.
+        // Founder's call, 2026-09-15, after a trust audit found a new
+        // business could message six months of contacts within an hour of
+        // signing up without ever being told it would.
+        //
+        // A lead the owner has deliberately set to AUTONOMOUS never reaches
+        // this branch, so an explicit per-lead opt-in still wins.
+        if (risk.riskLevel !== "low" || isDeadLead) {
           // Always (re)write for a dead lead or an unanswered reply, even
           // if suggestedMessage already existed — it was regenerated above
           // specifically because the cached draft can't be trusted for
@@ -423,6 +445,15 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           if (!lead.suggestedMessage || isDeadLead || isUnanswered) {
             await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message, suggestedSubject: subject } });
           }
+          // A cold-lead hold isn't a risk finding, so it needs its own
+          // sentence — risk.reason is empty when the classifier said "low"
+          // and we held anyway, and "Held because ." is what the owner
+          // would otherwise read on the approval card.
+          const holdReason =
+            risk.riskLevel === "low" && isDeadLead
+              ? `${lead.name.split(" ")[0]} went quiet ${Math.floor((Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000)} days ago — reaching back out is your call`
+              : risk.reason;
+
           if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
           // Held-not-sent is as much a real AI decision as a send — the
           // risk gate is exactly the guarantee Rule 3 (trust ships like a
@@ -434,11 +465,11 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
             targetId: lead.id,
             meta: {
               riskLevel: risk.riskLevel,
-              reason: risk.reason,
+              reason: holdReason,
               trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence",
             },
           });
-          return { kind: "held", note: `${lead.name}: ${risk.reason}` };
+          return { kind: "held", note: `${lead.name}: ${holdReason}` };
         }
       }
 

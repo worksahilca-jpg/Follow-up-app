@@ -10,9 +10,8 @@ import { PIPELINE_STAGES } from "@/lib/demo-data";
 import { urgencyColor } from "@/lib/urgency";
 import ScoreBadge from "@/components/ScoreBadge";
 import StatCard from "@/components/StatCard";
-import PipelineSnapshot from "@/components/PipelineSnapshot";
 import EmptyState from "@/components/EmptyState";
-import { DollarSign, TrendingUp, Users, Inbox } from "lucide-react";
+import { Inbox } from "lucide-react";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import CountUp from "@/components/motion/CountUp";
 
@@ -55,7 +54,6 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
   const stages = useMemo(() => getPipelineData(visible), [visible]);
   const totalValue = stages.filter((s) => s.id !== "won" && s.id !== "lost").reduce((sum, s) => sum + s.value, 0);
   const weightedValue = stages.reduce((sum, s) => sum + s.value * (STAGE_WEIGHT[s.id] ?? 0), 0);
-  const valueSnapshot = stages.map((s) => ({ label: s.label, count: s.leads.length, value: s.value }));
 
   async function moveLead(leadId: string, toStage: PipelineStage) {
     const lead = localLeads.find((l) => l.id === leadId);
@@ -102,15 +100,25 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
 
       <RevealGroup on="mount" className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
         <RevealItem>
-          <StatCard label="Active leads" value={<CountUp to={visible.length} />} icon={Users} accent="var(--slate)" accentSoft="var(--slate-soft)" />
+          <StatCard label="Active leads" value={<CountUp to={visible.length} />} accent="var(--slate)" />
         </RevealItem>
         <RevealItem>
-          <StatCard label="Total pipeline value" value={formatCurrency(totalValue)} icon={DollarSign} />
+          <StatCard label="Total pipeline value" value={formatCurrency(totalValue)} />
         </RevealItem>
         <RevealItem>
-          <StatCard label="Weighted value" value={formatCurrency(Math.round(weightedValue))} icon={TrendingUp} />
+          {/* Was "Weighted value" — jargon, and a number computed from a
+              hardcoded per-stage probability table (STAGE_WEIGHT above) that
+              is never shown anywhere. An owner can neither derive it nor
+              disagree with it. Renamed to what it's actually estimating, with
+              the basis stated underneath rather than hidden in the source. */}
+          <StatCard label="Likely to close" value={formatCurrency(Math.round(weightedValue))} />
         </RevealItem>
       </RevealGroup>
+
+      <p className="mt-2 text-xs text-ink-soft">
+        &ldquo;Likely to close&rdquo; weights each deal by how far along it is — 10% at New, rising to 80% at
+        Negotiation. It&apos;s an estimate from stage alone, not a forecast.
+      </p>
 
       {visible.length === 0 ? (
         <EmptyState
@@ -133,14 +141,13 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
             )
           }
         />
-      ) : (
-        <section className="mt-8">
-          <h2 className="font-display text-xl">Value by stage</h2>
-          <div className="mt-4">
-            <PipelineSnapshot stages={valueSnapshot} metric="value" height={200} />
-          </div>
-        </section>
-      )}
+      ) : null}
+
+      {/* The "Value by stage" bar chart that used to sit here showed exactly
+          the numbers the board prints in each column header, immediately
+          below it — the same data twice, with the chart going first. The
+          board is the better of the two because you can act on it. Deleted;
+          PipelineSnapshot still serves /analytics. */}
 
       {moveError && (
         <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
@@ -148,15 +155,29 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
         </p>
       )}
 
-      {/* One-time cascade on load, like the stat row above — a handful of
-          columns (not a long scrolling list, where the same per-child
-          delay would just feel slow) is exactly the case a stagger reads
-          as deliberate. */}
-      <RevealGroup on="mount" className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* A pipeline is read left to right, and this was a `lg:grid-cols-4`
+          holding SEVEN stages — so the board wrapped 4 + 3 with a gap, which
+          destroys the one thing the visual exists for. Below lg it was worse:
+          two columns and four rows at sm, and at 390px seven stacked columns
+          and an endless vertical scroll.
+
+          It's a real horizontal scroller now — seven fixed columns in stage
+          order at every width. On a phone that turns a seven-screen scroll
+          into one sideways swipe, which is also how every kanban the owner
+          has ever used behaves. The negative margins let the board bleed to
+          the screen edge so the next column is visibly cut off, which is what
+          tells someone it scrolls.
+
+          One-time cascade on load, like the stat row above — a handful of
+          columns is exactly the case a stagger reads as deliberate. */}
+      <RevealGroup
+        on="mount"
+        className="mt-8 flex gap-4 overflow-x-auto -mx-4 px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+      >
         {stages.map((stage) => {
           const closed = stage.id === "won" || stage.id === "lost";
           return (
-          <RevealItem key={stage.id}>
+          <RevealItem key={stage.id} className="w-[260px] shrink-0">
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -232,7 +253,7 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                     onChange={(e) => moveLead(lead.id, e.target.value as PipelineStage)}
                     onClick={(e) => e.stopPropagation()}
                     aria-label={`Move ${lead.name} to a different stage`}
-                    className="shrink-0 text-[10px] rounded border border-line bg-paper px-1 py-0.5 text-ink-soft"
+                    className="shrink-0 text-xs rounded border border-line bg-paper px-1.5 py-1 text-ink-soft"
                   >
                     {PIPELINE_STAGES.map((s) => (
                       <option key={s.id} value={s.id}>

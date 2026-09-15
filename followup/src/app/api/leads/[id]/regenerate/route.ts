@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
-import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
+import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
@@ -15,7 +15,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (await tooManyRecentActions(ctx.businessId, "leads.regenerate", { windowMinutes: 10, max: 30 })) return NextResponse.json({ success: false, message: "Too many requests — try again in a few minutes." }, { status: 429 });
   if (!(await requireActiveBilling(ctx.businessId))) {
-    return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+    return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
   // 15 per 10 minutes — comfortably more than a person clicking "regenerate"
   // needs, tight enough to stop a runaway retry loop or a compromised

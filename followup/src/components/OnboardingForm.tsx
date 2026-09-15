@@ -19,8 +19,13 @@ interface OnboardingFormProps {
   initialIndustry?: string | null;
   initialTeamSize?: number | null;
   step1Done: boolean;
-  gmailConnected: boolean;
-  gmailEmail?: string;
+  /** Gmail OR Outlook — either one finishes this step. */
+  inboxConnected: boolean;
+  inboxEmail?: string;
+  /** Which provider is connected — decides which sync endpoint to kick. */
+  inboxProvider: "gmail" | "outlook" | null;
+  /** Whether the Microsoft one-click button can be offered at all. */
+  outlookAvailable: boolean;
 }
 
 // Wrapped in Suspense because the inner component reads useSearchParams()
@@ -39,8 +44,10 @@ function OnboardingFormInner({
   initialIndustry,
   initialTeamSize,
   step1Done,
-  gmailConnected,
-  gmailEmail,
+  inboxConnected,
+  inboxEmail,
+  inboxProvider,
+  outlookAvailable,
 }: OnboardingFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,10 +76,15 @@ function OnboardingFormInner({
   const autoSyncStarted = useRef(false);
 
   useEffect(() => {
-    if (!gmailConnected || autoSyncStarted.current) return;
+    if (!inboxConnected || !inboxProvider || autoSyncStarted.current) return;
     autoSyncStarted.current = true;
     setAutoSyncState("syncing");
-    fetch("/api/integrations/gmail/sync", { method: "POST" })
+    // Kick the sync for whichever provider actually connected. This was
+    // hardcoded to the Gmail endpoint, so an Outlook business finished
+    // onboarding and landed on an empty dashboard with nothing pulled in —
+    // the failure was swallowed by the catch below, exactly as designed for
+    // a billing wall, so nothing surfaced it.
+    fetch(`/api/integrations/${inboxProvider}/sync`, { method: "POST" })
       .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
       .then(({ ok, data }) => {
         if (ok && data.success) {
@@ -87,9 +99,18 @@ function OnboardingFormInner({
         // Silent — see comment above.
       })
       .finally(() => setAutoSyncState("done"));
-  }, [gmailConnected]);
+  }, [inboxConnected, inboxProvider]);
 
-  const gmailError = searchParams.get("gmail") === "error" ? searchParams.get("message") ?? "Couldn't connect Gmail." : null;
+  // Either provider's callback can bounce back here with an error. Reading
+  // only `gmail` meant an Outlook failure returned to a screen that said
+  // nothing at all about it — the owner just saw the connect step again with
+  // no explanation of why it hadn't worked.
+  const connectError =
+    searchParams.get("gmail") === "error"
+      ? searchParams.get("message") ?? "Couldn't connect Gmail."
+      : searchParams.get("outlook") === "error"
+        ? searchParams.get("message") ?? "Couldn't connect Outlook."
+        : null;
 
   async function handleStep1Submit(e: React.FormEvent) {
     e.preventDefault();
@@ -142,17 +163,23 @@ function OnboardingFormInner({
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <Compass className="h-6 w-6" style={{ color: "var(--rust)" }} />
+          <Compass className="h-6 w-6" style={{ color: "var(--ink)" }} />
           <span className="font-display text-2xl">FollowUp</span>
         </div>
 
         {/* Two-step progress — just enough structure to signal "one more
-            thing" rather than "here's an open-ended checklist". */}
+            thing" rather than "here's an open-ended checklist".
+
+            The logo and both pips used to be --rust. That put three blue marks
+            on a screen whose ONE blue moment is meant to be the Connect Gmail
+            button — which is the best example of "accent held back" (A-006)
+            already shipping anywhere in the product. Ink here, so the button
+            keeps the only blue on the screen. */}
         <div className="flex items-center justify-center gap-1.5 mt-4">
-          <span className="h-1.5 w-6 rounded-full" style={{ backgroundColor: "var(--rust)" }} />
+          <span className="h-1.5 w-6 rounded-full" style={{ backgroundColor: "var(--ink)" }} />
           <span
             className="h-1.5 w-6 rounded-full"
-            style={{ backgroundColor: step === 2 ? "var(--rust)" : "var(--line)" }}
+            style={{ backgroundColor: step === 2 ? "var(--ink)" : "var(--line)" }}
           />
         </div>
 
@@ -161,8 +188,9 @@ function OnboardingFormInner({
             <p className="text-ink-soft text-center mt-4">A couple quick questions and you&apos;re set up.</p>
             <form onSubmit={handleStep1Submit} className="mt-8 space-y-4">
               <div>
-                <label className="text-sm font-medium block mb-1.5">Business name</label>
+                <label htmlFor="onboarding-business-name" className="text-sm font-medium block mb-1.5">Business name</label>
                 <input
+                  id="onboarding-business-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full rounded-lg border border-line bg-card px-3 py-2 text-sm"
@@ -171,8 +199,9 @@ function OnboardingFormInner({
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-1.5">What kind of business?</label>
+                <label htmlFor="onboarding-industry" className="text-sm font-medium block mb-1.5">What kind of business?</label>
                 <select
+                  id="onboarding-industry"
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
                   className="w-full rounded-lg border border-line bg-card px-3 py-2 text-sm"
@@ -190,8 +219,9 @@ function OnboardingFormInner({
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-1.5">How many people on your team?</label>
+                <label htmlFor="onboarding-team-size" className="text-sm font-medium block mb-1.5">How many people on your team?</label>
                 <input
+                  id="onboarding-team-size"
                   type="number"
                   min={1}
                   max={500}
@@ -219,7 +249,7 @@ function OnboardingFormInner({
           </>
         ) : (
           <div className="mt-8">
-            {gmailConnected ? (
+            {inboxConnected ? (
               <>
                 <div
                   className="h-14 w-14 rounded-2xl flex items-center justify-center mx-auto"
@@ -229,7 +259,7 @@ function OnboardingFormInner({
                 </div>
                 <h2 className="font-display text-xl text-center mt-4">Gmail connected</h2>
                 <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
-                  Connected as <span className="font-medium text-ink">{gmailEmail}</span>.
+                  Connected as <span className="font-medium text-ink">{inboxEmail}</span>.
                 </p>
 
                 {/* Real-time status of the auto-sync kicked off in the
@@ -270,14 +300,58 @@ function OnboardingFormInner({
                   <Mail className="h-6 w-6" />
                 </div>
                 <h2 className="font-display text-xl text-center mt-4">Connect Gmail</h2>
+                {/* This said FollowUp "reads your sales conversations and tells
+                    you who needs a follow-up today" — which describes a
+                    READ-ONLY product, at the exact moment the owner grants send
+                    access. It isn't read-only: connecting imports the last 180
+                    days of threads, automation is already enabled at signup
+                    (auth.ts), and dead-lead reactivation defaults to on at a
+                    45-day threshold — so imported threads between 45 and 180
+                    days old become eligible for an automated message, sent in
+                    the owner's name, immediately.
+
+                    Nobody decided that; three separate defaults stack into it.
+                    Changing the defaults is a product call and is flagged
+                    separately. What this screen can do is stop understating
+                    what the owner is agreeing to, which is the thing that
+                    turns a surprise into a betrayal. Say it plainly, before
+                    the OAuth screen, not after the first message goes out. */}
                 <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
-                  This is the whole point — FollowUp reads your sales conversations and tells you who
-                  needs a follow-up today. Without it, the dashboard stays empty.
+                  This is the whole point — FollowUp reads your sales conversations and tells you who needs a
+                  follow-up today. Without it, the dashboard stays empty.
                 </p>
 
-                {gmailError && (
+                <div
+                  className="relative mt-4 rounded-[var(--radius-box)] bg-card py-3 pl-4 pr-3 text-left"
+                  style={{ boxShadow: "var(--shadow-box)" }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-0 w-[3px] rounded-l-[var(--radius-box)]"
+                    style={{ backgroundColor: "var(--gold)" }}
+                  />
+                  <p className="text-sm font-medium">What happens when you connect</p>
+                  <ul className="mt-1.5 space-y-1 text-xs text-ink-soft">
+                    <li>
+                      FollowUp imports your conversations from the <strong className="font-medium">last 6 months</strong>{" "}
+                      so it has something to work with.
+                    </li>
+                    <li>
+                      It can then <strong className="font-medium">send follow-ups from your address</strong>, including
+                      to people who went quiet a while ago.
+                    </li>
+                    <li>
+                      Anything it isn&apos;t sure about waits for your OK first. It stops the moment someone replies.
+                    </li>
+                    <li>
+                      You can turn sending off for everyone, or for one person, at any time in Settings.
+                    </li>
+                  </ul>
+                </div>
+
+                {connectError && (
                   <p className="text-sm text-center mt-4" style={{ color: "var(--coral)" }}>
-                    {gmailError}
+                    {connectError}
                   </p>
                 )}
 
@@ -288,6 +362,26 @@ function OnboardingFormInner({
                 >
                   <Mail className="h-4 w-4" /> Connect Gmail
                 </a>
+
+                {/* Outlook was missing from this screen entirely. A business on
+                    Microsoft 365 had no way to finish onboarding — and once
+                    inside the app, setupStatus checked Gmail alone, so it got
+                    nagged "Connect Gmail" forever with a step count it could
+                    never clear. The connect route already accepted
+                    `next=onboarding`; nothing linked to it from here.
+
+                    Secondary styling deliberately: Gmail keeps the one accent
+                    moment on this screen (A-006), and Gmail is the majority
+                    case. Hidden entirely when MICROSOFT_CLIENT_ID isn't
+                    configured, rather than offering a button that errors. */}
+                {outlookAvailable && (
+                  <a
+                    href="/api/integrations/outlook/connect?next=onboarding"
+                    className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-lg border border-line px-4 py-2.5 text-sm font-medium"
+                  >
+                    <Mail className="h-4 w-4" /> Connect Outlook instead
+                  </a>
+                )}
                 <button
                   onClick={finishOnboarding}
                   disabled={finishing}

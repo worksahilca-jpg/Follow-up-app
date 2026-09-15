@@ -593,8 +593,13 @@ function SettingsPageInner() {
         <p className="text-ink-soft mt-1">Connect your inbox, set follow-up rules, and manage your team.</p>
       </div>
 
+      {/* Below lg a fixed top bar (Sidebar.tsx) covers the top of the viewport,
+          so `top-0` parked this tab row underneath it and the tabs vanished as
+          soon as the page scrolled. Offset by the bar's own height; at lg the
+          bar doesn't render, so it goes back to 0. overflow-x-auto because the
+          tabs don't all fit across a 390px phone. */}
       <nav
-        className="sticky top-0 z-10 -mx-1 flex gap-1 bg-paper/95 px-1 py-2 backdrop-blur-sm border-b border-line"
+        className="sticky top-[var(--app-header-h)] lg:top-0 z-10 -mx-1 flex gap-1 overflow-x-auto bg-paper/95 px-1 py-2 backdrop-blur-sm border-b border-line"
         aria-label="Settings sections"
       >
         {(Object.keys(TAB_LABEL) as SettingsTab[]).map((tab) => (
@@ -630,7 +635,7 @@ function SettingsPageInner() {
             href={gmailConnected ? undefined : "/api/integrations/gmail/connect"}
           />
           {gmailConnected && (
-            <div className="ml-[52px] flex items-center gap-3">
+            <div className="sm:ml-[52px] flex items-center gap-3">
               <button
                 onClick={handleGmailSync}
                 disabled={syncing}
@@ -660,22 +665,27 @@ function SettingsPageInner() {
             </div>
           )}
           {gmailConnected && (
-            <p className="ml-[52px] text-xs text-ink-soft">
+            <p className="sm:ml-[52px] text-xs text-ink-soft">
               If you connected Gmail before booking links existed, click <strong>Reconnect</strong> once to grant
               calendar access.
             </p>
           )}
-          <div className="ml-[52px]">
+          <div className="sm:ml-[52px]">
             <BookingCalendarConfig />
           </div>
           {gmailConnected && (
-            <div className="ml-[52px] mt-2 rounded-lg border border-line px-4 py-3">
+            <div className="sm:ml-[52px] mt-3 border-t border-line pt-3">
               <div className="flex items-center gap-3 flex-wrap">
+                {/* Neutral, not --gold. A-005 reserves gold for "going cold" —
+                    a lead state — and this is an action the owner takes, not a
+                    status the app is reporting. Scanning the spam folder isn't
+                    urgent either: painting it amber told the owner something
+                    was wrong when nothing is. */}
                 <button
                   onClick={handleScanSpam}
                   disabled={scanningSpam}
-                  className="text-sm font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
-                  style={{ backgroundColor: "var(--gold-soft)", color: "var(--gold)" }}
+                  className="text-sm font-medium rounded-lg border border-line px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60 hover:bg-paper transition-colors"
+                  style={{ color: "var(--ink-soft)" }}
                 >
                   <Search className={`h-3.5 w-3.5 ${scanningSpam ? "animate-pulse" : ""}`} />
                   {scanningSpam ? "Checking…" : "Scan spam for missed leads"}
@@ -713,7 +723,7 @@ function SettingsPageInner() {
             />
           )}
           {outlookConnected && (
-            <div className="ml-[52px] flex items-center gap-3">
+            <div className="sm:ml-[52px] flex items-center gap-3">
               <button
                 onClick={handleOutlookSync}
                 disabled={outlookSyncing}
@@ -740,7 +750,7 @@ function SettingsPageInner() {
             </p>
           )}
           {(gmailConnected || outlookConnected) && (
-            <div className="ml-[52px] rounded-lg border border-line px-4 py-3">
+            <div className="sm:ml-[52px] border-t border-line pt-3">
               <FilteredEmails />
             </div>
           )}
@@ -804,7 +814,7 @@ function SettingsPageInner() {
       <div hidden={activeTab !== "advanced"} className="space-y-10">
       <section id="automation" className="scroll-mt-16">
         <h2 className="font-display text-xl">Automation</h2>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-medium text-sm">Automatic follow-ups</p>
@@ -837,7 +847,7 @@ function SettingsPageInner() {
 
         {automationDetailsOpen && (
         <>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Auto follow-up on silence</p>
@@ -910,7 +920,7 @@ function SettingsPageInner() {
             </p>
           )}
         </div>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Instant reply to new leads</p>
@@ -944,7 +954,7 @@ function SettingsPageInner() {
             </p>
           )}
         </div>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Reply for me when I haven&apos;t</p>
@@ -993,7 +1003,7 @@ function SettingsPageInner() {
             </div>
           )}
         </div>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Reactivate cold leads</p>
@@ -1087,7 +1097,7 @@ function SettingsPageInner() {
           // dropping Voice, updating a card). A dedicated in-app
           // tier-switch flow is real follow-up work, not built here — see
           // the PR description for why.
-          <div className="mt-4 rounded-xl border border-line bg-card p-5">
+          <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
             <div className="flex items-center gap-4">
               <div
                 className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
@@ -1133,7 +1143,7 @@ function SettingsPageInner() {
           <div className="mt-4">
             <div className="grid gap-3 sm:grid-cols-3">
               {(["free", "plus", "pro"] as const).map((tier) => (
-                <div key={tier} className="rounded-xl border border-line bg-card p-5">
+                <div key={tier} className="rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
                   <p className="text-sm font-medium">{TIER_INFO[tier].label}</p>
                   <p className="font-display text-2xl mt-1">{TIER_INFO[tier].priceLabel}</p>
                   <p className="text-xs text-ink-soft mt-2">
@@ -1212,7 +1222,7 @@ function SettingsPageInner() {
           Not a support ticket — just a place to tell us what&apos;s working or what isn&apos;t. Entirely optional,
           only here if you want it.
         </p>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           {feedbackSent ? (
             <p className="text-sm flex items-center gap-1.5" style={{ color: "var(--sage)" }}>
               <Check className="h-4 w-4" /> Sent — thank you.

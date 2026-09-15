@@ -142,7 +142,13 @@ export default function CrmConfig() {
                   {saveError}
                 </p>
               )}
-              <div className="flex gap-2">
+              {/* Was a single non-wrapping row of select + input + button. At
+                  390px, inside this section's own indent, the whole row
+                  overflowed and the Connect button sat ~80px off-screen — so
+                  someone could paste their API key and then have no way to
+                  submit it. Wraps now, and the key field takes the full width
+                  on its own line below sm. */}
+              <div className="flex flex-wrap gap-2">
                 <select
                   value={draftProvider}
                   onChange={(e) => setDraftProvider(e.target.value as Provider)}
@@ -156,7 +162,8 @@ export default function CrmConfig() {
                   value={keyDraft}
                   onChange={(e) => setKeyDraft(e.target.value)}
                   placeholder={KEY_LABEL[draftProvider]}
-                  className="flex-1 rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                  aria-label={KEY_LABEL[draftProvider]}
+                  className="w-full sm:w-auto sm:flex-1 min-w-0 rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
                 />
                 <button
                   onClick={connect}

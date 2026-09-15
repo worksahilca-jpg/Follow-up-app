@@ -12,7 +12,8 @@
  */
 
 import { useEffect, useState } from "react";
-import { Plus, Sparkles, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft, Workflow as WorkflowIcon } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
+import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft, Workflow as WorkflowIcon } from "lucide-react";
 
 type SequenceAction = "EMAIL" | "CHANGE_STAGE";
 
@@ -54,7 +55,7 @@ function blankStep(): StepDraft {
 // for review/editing, never saved automatically — a business should see
 // exactly what it's agreeing to send before it goes near a real lead.
 const RECOMMENDED_CADENCE: { name: string; steps: StepDraft[] } = {
-  name: "Recommended follow-up cadence",
+  name: "Recommended follow-up plan",
   steps: [
     {
       delayDays: 3,
@@ -109,40 +110,65 @@ export default function WorkflowsPage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl">Follow-up plans</h1>
-          <p className="text-ink-soft mt-1">
-            Build a multi-step follow-up plan once, then put leads on it from their own page.
-          </p>
-          <p className="text-sm text-ink-soft mt-1">
-            The moment a lead replies, its plan stops automatically — you get notified, and nothing scheduled
-            sends after that. It never talks past a conversation that&apos;s actually happening.
-          </p>
-        </div>
-        {!creating && (
-          <div className="flex items-center gap-2 shrink-0">
+      {/* The third paragraph that used to sit here was the stop-on-reply
+          guarantee — the single most trust-bearing sentence in the product,
+          and PRODUCT_DIRECTION.md's Rule 3 — set as body copy in --ink-soft,
+          third in a stack of three paragraphs nobody reads to the end. It has
+          its own box below now.
+
+          "Use recommended cadence" lost both its Sparkles icon (S-13 names
+          sparkle icons specifically; it sat on a button whose action is
+          "load a template", so it was pure decoration) and the word
+          "cadence" — which is jargon this page's own h1, button and empty
+          state all avoid by saying "plan". */}
+      <PageHeader
+        title="Follow-up plans"
+        subtitle="Build a multi-step follow-up plan once, then put leads on it from their own page."
+        actions={
+          !creating && (
             <button
               onClick={() => {
                 setTemplate(RECOMMENDED_CADENCE);
                 setCreating(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium border border-line"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium border border-line sm:w-auto"
             >
-              <Sparkles className="h-4 w-4" style={{ color: "var(--rust)" }} /> Use recommended cadence
+              Use our recommended plan
             </button>
+          )
+        }
+        primary={
+          !creating && (
             <button
               onClick={() => {
                 setTemplate(null);
                 setCreating(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
               <Plus className="h-4 w-4" /> New plan
             </button>
-          </div>
-        )}
+          )
+        }
+      />
+
+      {/* The guarantee, stated once, where it's relevant, as its own object
+          rather than as the tail of a paragraph. */}
+      <div
+        className="relative mt-6 rounded-[var(--radius-box)] bg-card py-3 pl-4 pr-3"
+        style={{ boxShadow: "var(--shadow-box)" }}
+      >
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-0 left-0 w-[3px] rounded-l-[var(--radius-box)]"
+          style={{ backgroundColor: "var(--sage)" }}
+        />
+        <p className="text-sm font-medium">A plan stops the moment the lead replies.</p>
+        <p className="mt-1 text-xs text-ink-soft">
+          You get notified, and nothing scheduled sends after that. FollowUp never talks past a conversation
+          that&apos;s actually happening.
+        </p>
       </div>
 
       {error && (
@@ -155,7 +181,7 @@ export default function WorkflowsPage() {
         <div className="mt-6">
           {template && (
             <p className="text-xs text-ink-soft mb-2">
-              Starting from our recommended 4-step cadence (day 3, 7, 14, 30) — edit anything below before saving.
+              Starting from our recommended 4-step plan (days 3, 7, 14 and 30) — edit anything below before saving.
             </p>
           )}
           <WorkflowEditor
@@ -179,7 +205,7 @@ export default function WorkflowsPage() {
           <div className="rounded-xl border border-line bg-card p-8 text-center">
             <WorkflowIcon className="h-6 w-6 mx-auto text-ink-soft" />
             <p className="text-sm text-ink-soft mt-3">
-              No follow-up plans yet — try &quot;Use recommended cadence&quot; above, or build your own from scratch.
+              No follow-up plans yet — try &quot;Use our recommended plan&quot; above, or build your own from scratch.
             </p>
           </div>
         )}
@@ -305,30 +331,52 @@ function WorkflowCard({
         </div>
       </div>
 
-      <ol className="mt-4 space-y-2">
-        {sequence.steps.map((step, i) => (
-          <li key={step.id} className="flex items-start gap-2.5 text-sm">
-            <span
-              className="mt-0.5 shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-[11px] font-semibold"
-              style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
-            >
-              {i + 1}
-            </span>
-            <span className="text-ink-soft">
-              {i === 0 ? `${step.delayDays}d after enrollment` : `${step.delayDays}d later`} —{" "}
-              {step.action === "EMAIL" ? (
-                <>
-                  send an AI-drafted follow-up{step.messageHint ? ` (focused on: ${step.messageHint})` : ""} — falls
-                  back to text if the lead has no email, or hasn&apos;t replied to an earlier email step and has a
-                  phone on file
-                </>
-              ) : (
-                <>move to {STAGE_OPTIONS.find((s) => s.value === step.stageTo)?.label ?? step.stageTo}</>
-              )}
-            </span>
-          </li>
-        ))}
+      {/* Two changes here, both about the same confusion.
+
+          One: the step line used to read "3d after enrollment" / "4d later" —
+          gaps between steps — while the template hint above the editor said
+          "(day 3, 7, 14, 30)", which is cumulative. Two mental models for the
+          same plan, on the same screen. People think about a plan in
+          cumulative days ("what happens on day 7"), so that is what shows;
+          the stored delayDays stay gaps because that is what the scheduler
+          runs on.
+
+          Two: the channel-fallback rule was repeated inside every step, so
+          four steps meant that same clause four times, three lines each. It
+          is stated once, below the list. */}
+      <ol className="mt-4 space-y-1.5">
+        {sequence.steps.map((step, i) => {
+          const dayOf = sequence.steps.slice(0, i + 1).reduce((sum, s) => sum + s.delayDays, 0);
+          return (
+            <li key={step.id} className="flex items-start gap-2.5 text-sm">
+              <span
+                className="mt-0.5 shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-xs font-semibold"
+                style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
+              >
+                {i + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="font-medium">
+                  Day {dayOf} ·{" "}
+                  {step.action === "EMAIL"
+                    ? "Email"
+                    : `Move to ${STAGE_OPTIONS.find((s) => s.value === step.stageTo)?.label ?? step.stageTo}`}
+                </span>
+                {step.action === "EMAIL" && step.messageHint && (
+                  <span className="block text-ink-soft">{step.messageHint}</span>
+                )}
+              </span>
+            </li>
+          );
+        })}
       </ol>
+
+      {sequence.steps.some((s) => s.action === "EMAIL") && (
+        <p className="mt-3 text-xs text-ink-soft">
+          Email steps send a text instead if the lead has no email address, or hasn&apos;t replied to an earlier
+          email step and has a phone number on file.
+        </p>
+      )}
     </div>
   );
 }

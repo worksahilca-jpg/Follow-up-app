@@ -162,3 +162,68 @@ color) and every warning/error message in the authenticated app (`--coral`, not 
 which stays reserved for "going cold" alone).
 **Evidence:** `[[design-decisions#^D-017|D-017]]` (full 30-site breakdown by category);
 implementation via `frontend-3d-agent`, PR pending.
+
+## A-006 — The founder's A/B taste test is the design reference for the authenticated app ^A-006
+**Date:** 2026-09-15
+**Scope:** The authenticated app, system-wide — and, procedurally, it satisfies the gate
+`rejected.md`'s standing note placed after four rejected dashboard concepts
+**Approved:** Two things, in one answer.
+
+*First, the calibration itself.* After D-020, D-021, D-022 and Queue Zero were all rejected,
+the method changed: instead of proposing a whole concept, six paired A/B comparisons were
+rendered with FollowUp's own components and tokens, one visual axis each, and the founder
+picked between them with no explanation attached. His answers, `B A A - A B`:
+
+| # | Axis | Chose | Reads as |
+|---|---|---|---|
+| 1 | Density — roomy vs tight | **B · Tight** | dense, more on screen |
+| 2 | Edges — soft+shadow vs crisp+hairline | **A · Soft + shadow** | soft corners and real shadow |
+| 3 | Colour — colour-coded vs near-monochrome | **A · Colour-coded** | status colour doing the work |
+| 4 | Numbers — big display vs modest | **– · No preference** | not a live axis; don't design around it |
+| 5 | Grouping — boxed vs lines only | **A · Each in a box** | everything in its own container |
+| 6 | Accent blue — used freely vs held back | **B · Held back** | accent saved for one moment |
+
+*Second, that these answers count as the founder-chosen reference* the standing note demanded.
+Asked directly whether the taste test satisfied that gate, he said **"YES USE MY ANSWERS."**
+The dashboard work is therefore unblocked, and it is to be assembled from these six answers —
+not from a fifth hypothesis, and not from an external product's screenshot.
+
+**Why it was liked:** Not stated, and deliberately not asked per-axis — the point of the
+format was to get preference without argument. What *is* known is why the format worked: it
+showed real FollowUp surfaces side by side, so each answer is a reaction to this product
+rather than to a description of it. The four rejections were all reactions to a whole concept,
+where a single wrong element sinks every other decision in the proposal.
+
+**The generalizable principle:** two, and the second matters more than the first.
+
+1. **Status colour does the work; brand blue stays quiet.** Axes 3 and 6 together are one
+   instruction, not two — the screen is allowed to be colourful, but the colour must be
+   *meaning* (coral/sage/gold/slate), and `--rust` (#2a5cdb) is spent once, on the single
+   thing the owner should act on. Paired with axes 1, 2 and 5: dense, boxed, lifted —
+   an opaque card with a real shadow and no border, carrying a status rail, sitting on
+   `--paper`. This directly retires `rounded-xl border border-line bg-card divide-y` —
+   flat edges plus bare hairline rows, which loses axes 2 and 5 at once.
+2. **When whole-concept proposals keep failing, change the unit, not the concept.** Four
+   rejections came from asking one big question repeatedly; six small forced choices with
+   nothing riding on them produced more usable direction in one pass than all four concepts
+   combined. Reach for the paired comparison whenever this founder's taste is the unknown.
+
+**A hard constraint that travels with axis 3** — and the founder raised it himself, asking
+"HOW WOULD I KNOW THIS COLOUR LANGUAGE": *"colour-coded" means colour makes the screen
+scannable, never that colour carries the meaning alone.* Every coloured element names its
+state in words in the same box — coral with "Needs you", gold with "Going cold — 6 days",
+sage with "Replied", slate with "Waiting on them". Cover the colour and the screen still
+reads; cover the word and it doesn't. That is the test. A colour legend, key, or any element
+the owner must *learn* is forbidden — that is R-002's failure in new clothing, and this ICP
+is an owner on a phone with ninety seconds, not someone who studies an interface.
+
+**Applies to:** every authenticated screen. Concretely: the caps the layout plan derives from
+it — one hue per box, a hue never without its word, at most three hues per screen, exactly one
+box level anywhere (S-09), and any screen gaining density must lose elements to pay for it
+(S-06). Also applies to the *procedure*: the standing note in `rejected.md` is satisfied by
+this entry and no other; a future concept still needs a reference the founder chose.
+
+**Evidence:** the taste test (`taste-test.html`, rendered with FollowUp's real tokens and
+components); the founder's answers `B A A - A B`; his "YES USE MY ANSWERS" on 2026-09-15;
+`[[design-decisions#^D-023|D-023]]` — the app-wide layout plan built on this calibration,
+`design-brain/decisions/2026-09-15-app-layout-plan.md`.

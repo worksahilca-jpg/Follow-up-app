@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
-import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
+import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { deleteLeadCascade } from "@/lib/leads-admin";
 import { classifyAsProspect } from "@/lib/integrations/openai";
@@ -32,7 +32,7 @@ export async function POST() {
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
   void recordAudit(ctx, "leads.cleanup");
   if (!(await requireActiveBilling(ctx.businessId))) {
-    return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+    return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(

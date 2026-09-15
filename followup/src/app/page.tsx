@@ -7,7 +7,6 @@ import {
   Check,
   X,
   ArrowRight,
-  Home,
   Briefcase,
   Building2,
   Eye,
@@ -47,7 +46,7 @@ export default function LandingPage() {
       <section className="relative max-w-6xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-16 items-center">
         <div>
           <RevealAward>
-            <span className={styles.badge}>Built for realtors, freelance consultants, and small teams</span>
+            <span className={styles.badge}>Built for small businesses that can&apos;t afford to lose a lead</span>
           </RevealAward>
           <RevealAward delayMs={80}>
             <h1
@@ -76,9 +75,10 @@ export default function LandingPage() {
           </RevealAward>
           <RevealAward delayMs={140}>
             <p className="mt-6 text-[16px] leading-relaxed max-w-md" style={{ color: "var(--ink-soft)" }}>
-              FollowUp reads every conversation, not just the new ones — and notices the lead who
-              already heard from you once, then went silent, before &ldquo;let me think about
-              it&rdquo; turns into a lost sale.
+              You already paid to get them. Losing them after costs more. FollowUp reads every
+              conversation, not just the new ones — and catches the lead who already heard from
+              you once, then went silent, before &ldquo;let me think about it&rdquo; turns into a
+              lost sale.
             </p>
           </RevealAward>
           <RevealAward delayMs={200}>
@@ -98,6 +98,13 @@ export default function LandingPage() {
                 See how it works
               </a>
             </div>
+            {/* The "no credit card required" reassurance used to be stapled onto the 21× stat
+                sentence below, joined by an em dash — one idea about the product, one about
+                trial friction, read as if they were the same claim. Moved next to the button it
+                actually answers ("what happens when I click Get started"). */}
+            <p className="mt-2.5 text-xs" style={{ color: "var(--ink-faint)" }}>
+              No credit card required.
+            </p>
           </RevealAward>
           <RevealAward delayMs={260}>
             <div className="mt-9 flex items-center gap-4">
@@ -115,7 +122,7 @@ export default function LandingPage() {
               </p>
               <p className="text-xs leading-relaxed max-w-[15rem]" style={{ color: "var(--ink-soft)" }}>
                 higher qualification rate when a lead is contacted within 5 minutes instead of
-                after 30 — no credit card required to see it for yourself.
+                after 30.
               </p>
             </div>
           </RevealAward>
@@ -281,9 +288,8 @@ export default function LandingPage() {
             If leads reach you before they reach a CRM, this is built for you.
           </p>
         </RevealAward>
-        <div className="mt-10 grid sm:grid-cols-3 gap-5">
+        <div className="mt-10 grid sm:grid-cols-2 gap-5">
           {[
-            { icon: <Home className="h-4 w-4" />, title: "The realtor", body: "Five open houses on Saturday. By Monday, three of those leads have already gone quiet in your inbox — FollowUp tells you which one to call first." },
             { icon: <Briefcase className="h-4 w-4" />, title: "The freelance consultant", body: "One inbox, a dozen open conversations, and no time to triage them by hand. FollowUp turns “I’ll get to it” into a short list you actually get to." },
             { icon: <Building2 className="h-4 w-4" />, title: "The 4-person agency", body: "You're doing client work and new business at the same time. FollowUp watches the pipeline in the background so nothing slips between calls." },
           ].map((item, i) => (

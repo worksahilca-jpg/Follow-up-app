@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { hasActiveAccess } from "@/lib/billing";
-import { ensureGmailWatch, fetchSalesConversations } from "@/lib/integrations/gmail";
+import { ensureGmailWatch, fetchSalesConversations, isAuthRevoked } from "@/lib/integrations/gmail";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { detectReplies } from "@/lib/outcomes";
 import { mapWithConcurrency } from "@/lib/concurrency";
@@ -177,10 +177,40 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
       // A failing sync must be visible somewhere other than a log nobody
       // reads — record what went wrong on the connection itself.
       const message = err instanceof Error ? err.message : String(err);
+
+      // `invalid_grant` is different in kind from every other sync failure.
+      // A rate limit or a timeout is worth retrying in ten minutes; a revoked
+      // refresh token never recovers — only the owner reconnecting fixes it.
+      //
+      // Left as "connected" (which is what happened before this), the
+      // connection kept reporting healthy while capturing nothing: Settings
+      // said Connected, the dashboard said "watching your inbox", and the
+      // cron quietly re-failed every ten minutes indefinitely. That is the
+      // worst shape a failure can take in this product — the owner believes
+      // leads are being caught while they are being missed.
+      //
+      // Parking it at "needs_reconnect" makes every "is Gmail connected?"
+      // lookup in the app fall through to false, stops the pointless retry
+      // loop, and gives getGmailStatus a state it can put a sentence to.
+      const revoked = isAuthRevoked(err);
       await prisma.integration
         .updateMany({
           where: { provider: "gmail", status: "connected", user: { businessId } },
-          data: { lastSyncError: `${new Date().toISOString()} ${message}`.slice(0, 1000) },
+          data: {
+            lastSyncError: `${new Date().toISOString()} ${message}`.slice(0, 1000),
+            ...(revoked
+              ? {
+                  status: "needs_reconnect",
+                  // The tokens are dead at Google. Holding copies of dead
+                  // credentials buys nothing and is one more thing to leak.
+                  accessToken: null,
+                  refreshToken: null,
+                  // The push watch is gone with the grant.
+                  watchExpiration: null,
+                  watchHistoryId: null,
+                }
+              : {}),
+          },
         })
         .catch((e) => console.error(`Failed to record sync error for business ${businessId}:`, e));
     }

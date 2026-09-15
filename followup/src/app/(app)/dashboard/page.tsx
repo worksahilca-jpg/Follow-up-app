@@ -188,6 +188,29 @@ export default async function DashboardPage() {
                   {inbox.lastSyncedAt && ` — last checked ${timeAgo(inbox.lastSyncedAt)}`}
                 </p>
               </>
+            ) : gmail.needsReconnect ? (
+              /* Google revoked the token — the owner disconnected FollowUp in
+                 their Google account, changed their password, or (while the
+                 OAuth app is still in Testing mode) hit the seven-day test
+                 token expiry. This is NOT the same as never having connected:
+                 leads were being captured and have silently stopped, and only
+                 the owner can fix it. It gets its own sentence. */
+              <>
+                <p className="text-lg leading-relaxed">
+                  FollowUp has lost access to {gmail.email ?? "your inbox"}, so it isn&apos;t catching new leads
+                  right now. This happens when access is removed in Google or a password changes.
+                </p>
+                <div className="mt-4">
+                  <Link
+                    href="/settings#integrations"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
+                    style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                  >
+                    Reconnect Gmail
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </>
             ) : (
               <>
                 <p className="text-lg leading-relaxed">

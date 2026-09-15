@@ -66,8 +66,36 @@ function getOAuthClient() {
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
 }
 
+/**
+ * True when Google has told us the stored refresh token is dead —
+ * `invalid_grant`. It means one of: the owner revoked FollowUp's access in
+ * their Google account, the password changed, the token went six months
+ * unused, or (on an app still in Testing mode) the seven-day test-token
+ * expiry fired.
+ *
+ * It is NOT retryable and never recovers on its own. The only fix is the
+ * owner reconnecting, so a connection in this state has to say so instead of
+ * failing quietly forever.
+ */
+export function isAuthRevoked(err: unknown): boolean {
+  if (!err) return false;
+  // googleapis surfaces this on the error itself, on a `response.data`
+  // payload, or only in the message depending on which call failed — check
+  // all three rather than assuming a shape.
+  const e = err as { message?: string; response?: { data?: { error?: string } } };
+  if (e.response?.data?.error === "invalid_grant") return true;
+  return typeof e.message === "string" && e.message.includes("invalid_grant");
+}
+
 export interface GmailConnectionStatus {
   connected: boolean;
+  /**
+   * The connection exists but Google has revoked the token — leads are NOT
+   * being captured and only the owner can fix it. Distinct from
+   * `connected: false`, which means they never connected an inbox at all;
+   * these need completely different sentences on screen.
+   */
+  needsReconnect?: boolean;
   email?: string;
   // True while Google's push watch on this inbox is live — new mail is
   // seen in seconds. False means the ten-minute poll is the only path.
@@ -91,7 +119,24 @@ async function getGmailIntegration(businessId: string) {
 
 export async function getGmailStatus(businessId: string): Promise<GmailConnectionStatus> {
   const integration = await getGmailIntegration(businessId);
-  if (!integration) return { connected: false };
+  if (!integration) {
+    // A revoked connection is parked at status "needs_reconnect", so the
+    // "connected" lookup above misses it — but the business DID connect an
+    // inbox and needs to be told it stopped working, not shown the
+    // never-connected empty state.
+    const revoked = await prisma.integration.findFirst({
+      where: { provider: "gmail", status: "needs_reconnect", user: { businessId } },
+      include: { user: true },
+    });
+    if (revoked) {
+      return {
+        connected: false,
+        needsReconnect: true,
+        email: revoked.accountEmail ?? revoked.user.email,
+      };
+    }
+    return { connected: false };
+  }
   const pushActive = !!integration.watchExpiration && integration.watchExpiration.getTime() > Date.now();
   return {
     connected: true,

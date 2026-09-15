@@ -1303,3 +1303,93 @@ without also being styled like an incident.
 about something this pass didn't touch (the 3-tile grid, the list-row density further down,
 the overall type scale), that needs a fresh, specific description — don't assume this pass
 closes the complaint until he confirms it does.
+
+
+---
+
+## D-020 — Dashboard redesign proposal, Stage 1 of the app-wide redesign: "Today, in one sentence" ^D-020
+**Date:** 2026-09-15
+**Decided by:** Claude, as the first stage of the founder's ask to "redesign the whole app
+like a human expert made it," using the newly connected 21st.dev component catalog as an
+input. Scoped to the dashboard only, on purpose — one screen to agree a direction on before
+anything else is touched.
+**Status:** proposed — not yet reviewed by the founder. Nothing in the app is changed by
+this entry. Prototype: `design-brain/prototypes/2026-09-15-dashboard-today-in-one-sentence.html`
+(static HTML on the real tokens, opens in any browser; screenshots at 1280px and 390px were
+reviewed before this was written).
+
+**Inputs, and what was and wasn't taken from each:**
+- *Design brain:* `brand-principles.md` (2 calm over urgent, 6 show the reasoning, 8
+  precision is the aesthetic — polish by subtraction), [[approved#^A-002|A-002]] /
+  [[approved#^A-003|A-003]] / [[approved#^A-005|A-005]] (tokens, ink buttons, no gold outside
+  "going cold"), all of `rejected.md`. **Tokens are unchanged** — navy/blue, Bricolage +
+  Public Sans + Plex Mono. Nothing found in the research argued for new values, so there is
+  no `[TO DECIDE]` reopened here.
+- *21st.dev* (`mcp__21st__get_inspiration` + `search`, plus the source of two components,
+  "Message Draft" by tool-ui and "Collaborative Requests Dropdown" by shadcnspace; preview
+  images could not be fetched from this sandbox). Taken as *principles*: a cancellable grace
+  period after "send" (reversibility as trust), a "read more" fold for long drafts, an
+  explicit all-caught-up state. **Explicitly not taken:** the generic shadcn dashboard look
+  itself (icon-in-tinted-square KPI tiles, trend badges, bento grids, gradient area charts)
+  — that is exactly [[rejected#^S-15|S-15]]'s template aesthetic and [[rejected#^S-05|S-05]]'s
+  over-colored dashboard; bulk "approve all / reject all" — a blast affordance
+  (`brand-principles.md` 7); and the row-slide/confetti-style motion.
+- *ui-ux-pro-max* (`--domain ux`): supported "confirm before irreversible actions" (→ the
+  undo grace), "don't encode status with color alone" (→ time facts as text, not a colored
+  number), sequential heading levels. Its database returned **no match** for stat-card /
+  metric density — the decision to fold the stat tiles into a sentence rests on brand
+  principle 8, not on the skill.
+
+**What the current dashboard does that a senior designer would cut, and the proposal:**
+1. *The aurora "welcome banner"* is a full-width bordered box whose only content is a
+   greeting and a fixed subtitle — chrome carrying no information ([[rejected#^S-12|S-12]]).
+   → Replaced by a plain header: mono date eyebrow, `h1` greeting, and **one computed
+   sentence that is the day**: "2 drafts need your OK and 5 leads are about to be lost. This
+   week FollowUp answered 12 for you and 3 came back." Each number is a link to its list.
+   This is also the all-caught-up state — "Nothing needs your OK today" reads as calm in a
+   sentence where an empty box reads as apologetic.
+2. *The three `StatCard` tiles* (colored icon chips: coral / slate / sage) sit between
+   "decide" and "act", and are the one place the page looks like a generic SaaS template.
+   → Removed from this screen; their three numbers live in the sentence above. `StatCard`
+   stays as a component (`/analytics` uses it).
+3. *Flat section hierarchy* (every section same size, same treatment).
+   → Two tiers: **work** ("Needs your OK", "About to be lost" — `h2`, first) and
+   **reassurance** ("What FollowUp did this week", "Upcoming calls" — `h3`, lighter, last).
+   The setup strip moves between the tiers, unchanged as a component.
+4. *Approval row information order.* Today: name → what they said → draft → "held because"
+   → actions. → Name + **why it was held** first (the reason tells you what to check the
+   draft for — principle 6), channel and age as mono meta on the right, then what they
+   said, then the draft set off by a single 2px left rule (a quotation, not a box —
+   [[rejected#^S-09|S-09]] stays closed), then actions. After "Approve & send" the row does
+   not vanish: it becomes "Sending to Dan in 4s · Undo" (`aria-live`), then "Sent".
+5. *"About to be lost" rows* today end in a coral 0–100 score pill — a verdict without a
+   unit. → Replaced by the concrete fact the score is built from, as text: "waiting 26h"
+   (in `--coral` only past the day mark) or "silent 6d" (in `--ink-soft`). The score stays
+   on the lead page. Currency stays plain `--ink` per A-005.
+
+**Open questions for the founder, not decided here:**
+- The undo grace on "Approve & send" is a *behavior* change (a 5-second delayed send, with
+  a cancel path) — `PRODUCT_DIRECTION.md` territory, needs a backend change and his OK.
+  The proposal works without it; it is the single best thing 21st.dev surfaced.
+- Whether he wants the three numbers glanceable as tiles anyway. The sentence is the
+  stronger design; a tile row is the more conventional one.
+
+**Self-critique (design-review.md), the honest part:** the setup strip's filled `--ink`
+"Set up" button is the only other filled button on the page and competes a little with
+"Approve & send" — it should probably be the outline style. The mono meta and time facts
+sit at 12px, the floor; "waiting 26h" is arguably must-read and could be 13px. The at-risk
+row description ("wrote 26h ago and is still waiting…") repeats the fact on the right —
+one of the two should shorten. Empty and error states are described, not rendered. Weakest
+part: the whole header depends on the sentence generator handling every zero/one/many
+combination gracefully; a clumsy sentence would be worse than the tiles it replaces.
+
+**The generalizable principle:** the expert version of a screen FollowUp already has is
+usually the same information with less chrome, not a new layout — a computed sentence
+beats a row of tiles, a left rule beats a nested box, a fact ("waiting 26h") beats a score
+("72"). When a component catalog is an input, take its *interactions* (undo, fold, empty
+state) and leave its *look*; the look is what makes every AI-era SaaS dashboard identical.
+
+**Revisit when:** the founder reacts. Approved → log in `approved.md`, implement as its own
+PR (dashboard only), then apply the same subtraction pass screen by screen — leads list,
+lead detail, pipeline, settings — each as a proposal first. Rejected → record which of the
+five moves was wrong and why, so the next screen doesn't repeat it.

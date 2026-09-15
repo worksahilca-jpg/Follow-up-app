@@ -35,7 +35,7 @@ import { classifyThreadOutcome, type ThreadOutcome } from "@/lib/integrations/op
 import { DEAD_LEAD_DEFAULT_DAYS, DEAD_LEAD_ACTION } from "@/lib/automation";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { recordAudit } from "@/lib/audit";
-import type { Message } from "@/lib/types";
+import { toTranscript } from "@/lib/transcript";
 import type { PipelineStage, QuietOutcome } from "@prisma/client";
 
 /**
@@ -95,54 +95,22 @@ async function resolveQuietDays(businessId: string): Promise<number> {
   return rule?.triggerDays ?? DEAD_LEAD_DEFAULT_DAYS;
 }
 
-type LoadedConversations = { channel: string; messages: { id: string; direction: string; body: string; sentAt: Date; opened: boolean }[] }[];
-
 /**
- * Tie-break rank for two messages sent in the same millisecond: outbound
- * sorts before inbound, so a tie leaves the LEAD's message last. See
- * toConversation.
- */
-const TIE_RANK: Record<string, number> = { outbound: 0, inbound: 1 };
-
-/**
- * Flattens a lead's channels into one chronological transcript.
+ * The total ordering this file used to define itself now lives in
+ * src/lib/transcript.ts, unchanged, because POST /api/leads/cleanup needs
+ * exactly the same guarantee for a far more destructive decision: it reads
+ * the first three messages of a multi-thread lead and deletes on the
+ * answer. Two callers, one ordering.
  *
- * The ordering has to be total, not merely chronological. `last.direction`
- * is what splits COLD from COLD_UNANSWERED, and a lead with two channels
- * can hold two messages with an identical sentAt — an inbound text and the
- * outbound acknowledgement written in the same millisecond, or a batch
- * import that stamped several rows from one API response. Sorting on the
- * timestamp alone leaves such a pair in whatever order Postgres happened
- * to return the conversations in, which this query never asks it to order,
- * so the same data could be judged COLD on one run and COLD_UNANSWERED on
- * the next.
- *
- * Ties break toward the lead's message being last — toward
- * COLD_UNANSWERED. If we genuinely cannot tell whether anyone here
- * answered them, the safe assumption is that nobody did: that lead is owed
- * an apology and an answer, and a breezy "still interested?" to someone
- * whose question was ignored is the one message that makes it worse. `id`
- * settles anything still tied, so the result is deterministic.
+ * What the tie-break buys HERE specifically: `last.direction` is what
+ * splits COLD from COLD_UNANSWERED, and ties break toward the lead's
+ * message being last — toward COLD_UNANSWERED. If we genuinely cannot tell
+ * whether anyone here answered them, the safe assumption is that nobody
+ * did: that lead is owed an apology and an answer, and a breezy "still
+ * interested?" to someone whose question was ignored is the one message
+ * that makes it worse.
  */
-function toConversation(conversations: LoadedConversations): Message[] {
-  return conversations
-    .flatMap((c) =>
-      c.messages.map((m) => ({
-        id: m.id,
-        direction: m.direction as Message["direction"],
-        channel: c.channel as Message["channel"],
-        body: m.body,
-        date: m.sentAt.toISOString(),
-        opened: m.opened,
-      }))
-    )
-    .sort(
-      (a, b) =>
-        a.date.localeCompare(b.date) ||
-        (TIE_RANK[a.direction] ?? 0) - (TIE_RANK[b.direction] ?? 0) ||
-        a.id.localeCompare(b.id)
-    );
-}
+const toConversation = toTranscript;
 
 const OUTCOME_TO_DB: Record<ThreadOutcome, QuietOutcome> = {
   cold: "COLD",

@@ -42,6 +42,7 @@ vi.mock("@/lib/stripe", () => ({
 
 import { POST } from "@/app/api/billing/checkout/route";
 import { TRIAL_PERIOD_DAYS } from "@/lib/billing";
+import { VOICE_ADDON_AVAILABLE } from "@/lib/pricing";
 
 function postRequest(body: unknown = { tier: "plus" }) {
   return new Request("https://followupbase.io/api/billing/checkout", {
@@ -105,13 +106,34 @@ describe("POST /api/billing/checkout — free trial", () => {
     );
   });
 
-  it("adds both Voice line items (flat + metered) when requested", async () => {
+  // The Voice add-on is deferred (VOICE_ADDON_AVAILABLE in @/lib/pricing),
+  // so this used to assert both Voice line items were added and now asserts
+  // the opposite. The line-item shape it pinned still matters and is not
+  // lost — it is asserted below against the same code path, guarded by the
+  // flag, so whoever turns Voice back on gets the metered-item rule
+  // (a metered price takes no quantity, or Stripe rejects it) enforced
+  // again the moment they flip it.
+  it("refuses the Voice add-on while it is deferred", async () => {
+    const res = await POST(postRequest({ tier: "plus", voiceAddon: true }));
+    expect(res.status).toBe(400);
+    // Refused, not silently downgraded to a plain Plus subscription: a
+    // customer who asked for Voice and got a Plus-only subscription with a
+    // success page would believe they had bought it.
+    expect(sessionsCreate).not.toHaveBeenCalled();
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.message).toMatch(/voice add-on isn't available/i);
+  });
+
+  it("still builds the right Voice line items once it is available again", async () => {
+    if (!VOICE_ADDON_AVAILABLE) return; // deferred — the refusal above is the live behaviour
     await POST(postRequest({ tier: "plus", voiceAddon: true }));
     expect(sessionsCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         line_items: [
           { price: "price_plus", quantity: 1 },
           { price: "price_voice_flat", quantity: 1 },
+          // No quantity — Stripe rejects a metered line item that carries one.
           { price: "price_voice_metered" },
         ],
       })

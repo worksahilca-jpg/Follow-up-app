@@ -477,6 +477,30 @@ model Lead {
   // them again."
   reactivationSentAt DateTime?
 
+  // When a human overruled the AI prospect classifier for this lead —
+  // Settings → filtered emails → "this was a lead", which re-imports the
+  // thread through importGmailThread/importOutlookConversation with
+  // skipClassification and drops the FilteredEmail row.
+  //
+  // That override used to leave NO trace on the lead. The restored lead
+  // comes back tagged source "Gmail" like any other, and the FilteredEmail
+  // row that held the classifier's verdict is deleted, so the retroactive
+  // clean-up pass (POST /api/leads/cleanup) would re-ask the same model
+  // about the same thread and could delete the very lead the owner had
+  // just rescued — silently reversing them, with the same AI judgment they
+  // had already rejected once.
+  //
+  // A column rather than a lookup in AuditEvent because this has to be
+  // enforceable in a WHERE clause: the clean-up query has to be able to
+  // exclude rescued leads before it spends anything on them, and AuditEvent
+  // holds targetId as a loose String with no relation to walk. It is also a
+  // property of the lead, not of a session. Null means "never overruled",
+  // which is every lead that came straight from sync.
+  //
+  // Read as a hard stop, never as a signal to weigh: a lead a human rescued
+  // is never auto-deleted again, by this pass or any future one.
+  classificationOverriddenAt DateTime?
+
   conversations Conversation[]
   deals         Deal[]
   followUps     FollowUp[]

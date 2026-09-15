@@ -98,6 +98,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return twiml("<Response><Reject/></Response>");
   }
 
+  // Deliberately still gated, unlike the SMS/WhatsApp/Meta/widget capture
+  // paths (which now capture regardless of billing state — see
+  // checkAiEligibility in @/lib/billing for why). A live call is not a
+  // message someone handed us to store: everything this route does after
+  // this point spends money in real time and cannot be deferred — the
+  // voice-agent bridge, the missed-call text-back, the voicemail recording
+  // and its transcription. And unlike a silently-dropped webhook, the
+  // caller HEARS this: they're told the line isn't taking calls and can
+  // reach the business another way, rather than being swallowed. Recording
+  // the missed call as a lead while skipping the paid handling is a
+  // worthwhile follow-up, but it's a change to what a call costs, not a
+  // billing-gate bug, so it isn't made here.
   if (!(await requireActiveBilling(business.id))) {
     return twiml(
       `<Response><Say>Sorry, this line isn't accepting calls right now.</Say><Reject/></Response>`

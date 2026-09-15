@@ -115,11 +115,13 @@ export async function parseTwilioForm(request: Request): Promise<Record<string, 
 /**
  * Twilio's own webhooks need a phone number, not businessId+secret, to
  * find the right business — that's what twilioSecret in the URL path is
- * for. Also checks requireActiveBilling isn't needed here the way the
- * other inbound webhooks do it inline, since SMS/voice callers can't see
- * any error response anyway (Twilio just gets an empty TwiML reply either
- * way) — so callers check billing themselves and decide what TwiML to
- * return.
+ * for. No billing check here, and the inbound SMS/WhatsApp routes don't
+ * make one either: capture never pauses on billing state, because an
+ * inbound Twilio webhook that's refused is a lead deleted rather than
+ * deferred (nothing retries it, and the sender is told nothing). The
+ * spending half pauses instead, inside checkAiEligibility (@/lib/billing).
+ * The voice route is the exception and still gates itself — see the
+ * comment there.
  */
 export async function findBusinessByTwilioSecret(secret: string): Promise<{
   id: string;

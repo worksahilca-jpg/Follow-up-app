@@ -415,13 +415,25 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // owed an answer, not a "still interested?" — so the two subsystems
       // were reaching opposite conclusions about the same person.
       //
-      // Mirrors the `deadLeads` query's own predicate exactly (non-null
-      // lastContacted at or before deadCutoff, and only while the rule is
-      // enabled), so this is strictly a superset of `isDeadLead` and
-      // changes nothing about who is eligible, drafted, or how a message
-      // is worded — only about who is allowed to send without a human.
-      const isCold =
-        deadLeadEnabled && lead.lastContacted !== null && lead.lastContacted <= deadCutoff;
+      // Deliberately NOT scoped to `deadLeadEnabled`, unlike the
+      // `deadLeads` query it otherwise mirrors.
+      //
+      // "Reactivate cold leads" is a MESSAGING-CAMPAIGN toggle: it decides
+      // whether FollowUp goes looking for the back catalogue at all. This
+      // is a SAFETY hold: it decides whether a human sees a message before
+      // it goes to someone who has been silent for months. Tying the second
+      // to the first meant switching the campaign OFF also switched the
+      // protection off — cold leads fell through to the `silent` bucket
+      // (line ~294 only excludes them while the rule is enabled) and
+      // auto-sent unreviewed on a low-risk verdict. A safety property that
+      // a settings toggle can quietly disable is not a safety property.
+      //
+      // `lastContacted ?? createdAt` rather than a null check: a lead with
+      // no recorded contact is not evidence of recency. Falling back to the
+      // null branch would have made an ancient lead with a missing
+      // timestamp the one kind that could still auto-send.
+      const coldReference = lead.lastContacted ?? lead.createdAt;
+      const isCold = coldReference <= deadCutoff;
 
       // task #63 (live-test finding): a cached suggestedMessage can predate
       // the lead's actual most recent inbound message — scoring.ts drafts

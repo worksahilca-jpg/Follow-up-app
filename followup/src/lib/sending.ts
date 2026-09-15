@@ -14,6 +14,7 @@
 
 import { prisma } from "@/lib/db";
 import { isSuppressed, unsubscribeFooter, unsubscribeHeaders } from "@/lib/suppression";
+import { checkSendCap } from "@/lib/sendCaps";
 import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
@@ -203,20 +204,47 @@ export async function sendFollowUpToLead(
     return { success: false, message: "This lead texted STOP — SMS/WhatsApp sending is blocked until they text START to opt back in." };
   }
 
-  // Email unsubscribe — the equivalent mechanism for the channel STOP does
-  // not cover. See src/lib/suppression.ts for why it is keyed on the
-  // address rather than this lead row.
+  // Email unsubscribe — the mechanism STOP does not cover. See
+  // src/lib/suppression.ts for why it is keyed on the address, not on this
+  // lead row.
   //
-  // Scoped to AUTOMATED sends on purpose, and the unsubscribe copy is
-  // written to match exactly ("stop automated follow-ups", not "never
-  // contact me"). Someone who clicks unsubscribe on an automated nudge has
-  // not asked their builder to stop answering their questions, and silently
-  // severing that conversation would harm them in the name of consent —
-  // which is the same line CAN-SPAM's relationship-message exemption draws.
-  // A human send still goes through, and is recorded below as having gone
-  // to a suppressed address so the question is answerable later.
+  // Scoped to the REACTIVATION BATCH alone, not to automated sends
+  // generally, and the distinction is the product rather than a legal
+  // hedge. FollowUp's whole proposition is that its messages read as if
+  // the owner wrote them; an "unsubscribe" line under a reply to someone
+  // who emailed yesterday announces that a machine wrote it, and is a
+  // worse lie than no line at all, because that reply IS a continuation of
+  // a conversation the lead started.
+  //
+  // The cold batch is the opposite case, and is the only genuinely
+  // campaign-shaped thing this product does: many people at once, none of
+  // whom asked today, triggered by one button. Unique wording per
+  // recipient does not change that — a mailbox provider weighs volume in a
+  // window and complaint rate, never prose. Those are the recipients who
+  // reach for "report spam" when there is no way out, and the complaint
+  // lands on the owner's own domain.
+  //
+  // So: the batch carries a way out; a reply does not. Same line CAN-SPAM
+  // draws between a commercial mailing and a relationship message.
+  // Daily volume cap. Applies to AUTOMATED sends only — a human choosing
+  // to email their own customer is never rate-limited by us — and sits
+  // here, in the one funnel every automated path goes through, so no
+  // caller can be added later that forgets it. See src/lib/sendCaps.ts for
+  // why a ceiling exists at all: without one, a first sync could push a
+  // few hundred messages out of a small business's own Gmail in an
+  // afternoon and get their real mailbox throttled.
+  if (options.automated) {
+    const capKind = options.trigger === "dead_lead_reactivation" ? "reactivation" : "automated";
+    const cap = await checkSendCap(lead.businessId, capKind);
+    if (!cap.allowed) return { success: false, message: cap.reason };
+  }
+
+  // Only the REACTIVATION batch is treated as a mailing someone can opt out
+  // of — see the block above the footer for why.
+  const isCampaignSend = options.automated && options.trigger === "dead_lead_reactivation";
+
   const emailSuppressed = channel === "email" && (await isSuppressed(lead.businessId, lead.email));
-  if (emailSuppressed && options.automated) {
+  if (emailSuppressed && isCampaignSend) {
     return {
       success: false,
       message: "This person unsubscribed from automated follow-ups. You can still reply to them yourself.",
@@ -238,7 +266,7 @@ export async function sendFollowUpToLead(
     // beside it. `body` is what gets stored on the Message row, shown in
     // the thread, and measured in the audit trail — and none of those
     // should carry a link that isn't part of what anyone wrote.
-    const emailBody = options.automated
+    const emailBody = isCampaignSend
       ? `${body}${unsubscribeFooter(lead.businessId, lead.email)}`
       : body;
 
@@ -262,7 +290,7 @@ export async function sendFollowUpToLead(
         body: emailBody,
         threadId: options.emailThreadId,
         inReplyTo: options.emailInReplyTo,
-        extraHeaders: options.automated ? unsubscribeHeaders(lead.businessId, lead.email) : undefined,
+        extraHeaders: isCampaignSend ? unsubscribeHeaders(lead.businessId, lead.email) : undefined,
       });
       if (!result.success) return { success: false, message: result.message ?? "Gmail didn't confirm this message sent." };
       externalId = result.messageId ?? undefined;

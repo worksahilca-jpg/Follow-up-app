@@ -35,6 +35,7 @@ vi.mock("@/lib/instagram", () => ({ sendInstagramMessage: vi.fn(async () => ({ s
 vi.mock("@/lib/facebook", () => ({ sendMessengerMessage: vi.fn(async () => ({ success: true })) }));
 vi.mock("@/lib/crm", () => ({ CRM_PROVIDERS: {}, isCrmProvider: vi.fn(() => false) }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
+vi.mock("@/lib/sendCaps", () => ({ checkSendCap: vi.fn(async () => ({ allowed: true, used: 0, cap: 50 })) }));
 vi.mock("@/lib/suppression", () => ({
   isSuppressed: vi.fn(async () => false),
   unsubscribeFooter: () => "\n\n—\nDon't want automated follow-ups like this? https://app/api/unsubscribe?t=tok",
@@ -269,15 +270,36 @@ describe("email unsubscribe", () => {
     suppressed.mockResolvedValue(false);
   });
 
-  it("refuses an AUTOMATED email once the address is suppressed", async () => {
+  it("refuses a REACTIVATION email once the address is suppressed", async () => {
     p.lead.findUnique.mockResolvedValue(lead());
     suppressed.mockResolvedValue(true);
 
-    const result = await sendFollowUpToLead("lead1", "Still interested?", { automated: true });
+    const result = await sendFollowUpToLead("lead1", "Still interested?", {
+      automated: true,
+      trigger: "dead_lead_reactivation",
+    });
 
     expect(result.success).toBe(false);
     expect(result.message).toMatch(/unsubscribed from automated follow-ups/i);
     expect(gmailSend).not.toHaveBeenCalled();
+  });
+
+  // The narrowing that makes the product honest. An unsubscribe is an
+  // opt-out from a MAILING. A reply to someone who wrote yesterday is not a
+  // mailing, and treating it as one would stop a business answering a
+  // customer who is mid-conversation with them.
+  it("still sends an ordinary automated REPLY to a suppressed address", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.conversation.findFirst.mockResolvedValue({ id: "c1" });
+    suppressed.mockResolvedValue(true);
+
+    const result = await sendFollowUpToLead("lead1", "Following up on your question.", {
+      automated: true,
+      trigger: "unanswered",
+    });
+
+    expect(result.success).toBe(true);
+    expect(gmailSend).toHaveBeenCalled();
   });
 
   // The other half. A human replying to their own customer must still get
@@ -293,11 +315,14 @@ describe("email unsubscribe", () => {
     expect(gmailSend).toHaveBeenCalled();
   });
 
-  it("puts the unsubscribe footer and headers on automated mail", async () => {
+  it("puts the unsubscribe footer and headers on the reactivation batch", async () => {
     p.lead.findUnique.mockResolvedValue(lead());
     p.conversation.findFirst.mockResolvedValue({ id: "c1" });
 
-    await sendFollowUpToLead("lead1", "Just checking in.", { automated: true });
+    await sendFollowUpToLead("lead1", "Just checking in.", {
+      automated: true,
+      trigger: "dead_lead_reactivation",
+    });
 
     const sent = gmailSend.mock.calls.at(-1)![1] as { body: string; extraHeaders?: string[] };
     expect(sent.body).toMatch(/automated follow-ups/i);
@@ -308,15 +333,25 @@ describe("email unsubscribe", () => {
 
   // An unsubscribe line under a personal reply would be odd, and would
   // imply the message was bulk when it wasn't.
-  it("puts neither on a human reply", async () => {
-    p.lead.findUnique.mockResolvedValue(lead());
-    p.conversation.findFirst.mockResolvedValue({ id: "c1" });
+  // The reason the narrowing exists at all: FollowUp's proposition is that
+  // its messages read as if the owner wrote them. An unsubscribe line under
+  // a reply to yesterday's email announces that a machine wrote it.
+  it("puts neither on an ordinary reply, automated or human", async () => {
+    for (const options of [
+      { automated: false } as const,
+      { automated: true, trigger: "unanswered" } as const,
+      { automated: true, trigger: "silence" } as const,
+    ]) {
+      gmailSend.mockClear();
+      p.lead.findUnique.mockResolvedValue(lead());
+      p.conversation.findFirst.mockResolvedValue({ id: "c1" });
 
-    await sendFollowUpToLead("lead1", "Yes — Tuesday works.", { automated: false });
+      await sendFollowUpToLead("lead1", "Yes — Tuesday works.", options);
 
-    const sent = gmailSend.mock.calls.at(-1)![1] as { body: string; extraHeaders?: string[] };
-    expect(sent.body).not.toMatch(/unsubscribe/i);
-    expect(sent.extraHeaders).toBeUndefined();
+      const sent = gmailSend.mock.calls.at(-1)![1] as { body: string; extraHeaders?: string[] };
+      expect(sent.body).not.toMatch(/unsubscribe/i);
+      expect(sent.extraHeaders).toBeUndefined();
+    }
   });
 
   it("never blocks a text because of an EMAIL unsubscribe", async () => {
@@ -324,7 +359,11 @@ describe("email unsubscribe", () => {
     p.conversation.findFirst.mockResolvedValue({ id: "c1" });
     suppressed.mockResolvedValue(true);
 
-    const result = await sendFollowUpToLead("lead1", "Quick update.", { automated: true, channel: "text" });
+    const result = await sendFollowUpToLead("lead1", "Quick update.", {
+      automated: true,
+      channel: "text",
+      trigger: "dead_lead_reactivation",
+    });
 
     expect(result.success).toBe(true);
     expect(sms).toHaveBeenCalled();

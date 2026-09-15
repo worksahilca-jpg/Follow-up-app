@@ -1244,3 +1244,62 @@ non-color device (outline, weight, position) — not a fifth hue.
 failed several shifts in a row, say. That is a real severity step, and it would be the
 first honest case for amber on this surface — at which point `--gold`'s scope needs a
 deliberate widening decision, not a quiet call site.
+
+
+---
+
+## D-019 — Dashboard read as "weird": traced to ApprovalQueue's alarm styling and a duplicated header, not the page's structure ^D-019
+**Date:** 2026-09-14
+**Decided by:** Claude, in response to the founder flagging the dashboard as "weird" across
+all four axes asked about (layout/structure, information density, the draft-reply cards,
+colors/visual style).
+**Status:** proposed — not yet reviewed by the founder. Shipped on a branch for review, not
+merged to `main`.
+**Context:** The current dashboard is the direct, deliberate output of
+`followup/research/product/2026-09-10-ux-simplification.md` — 13 stat tiles cut to 3, the
+approval queue added and pinned to the top, "About to be lost" / "What FollowUp did for
+you" / "Upcoming calls" below it, everything else behind "See all numbers." Re-opening that
+IA on a vague "too weird" would risk re-deriving the same structure and having it rejected
+again for the same unnamed reason, so before proposing anything the actual current render
+was reproduced from the real code and tokens (not redrawn from memory) and looked at
+directly.
+
+**What that showed, checked against the design brain:**
+1. `ApprovalQueue`'s container used a 2px `--coral` border under a `--gold-soft` header
+   band — the visual grammar of an alarm/error state, on what is actually the routine,
+   trusted, first thing an owner does every day. This also used `--gold` for something
+   other than "going cold," which [[approved#^A-005|A-005]]'s own applies-to clause already
+   closes off ("`--gold`... stays reserved for 'going cold' alone").
+2. Inside each card, the lead's message and the draft reply each sat in their own bordered
+   box (dashed, then solid), nested inside the queue's own bordered card — a literal match
+   for [[rejected#^S-09|S-09]], "excessive rounded cards / card-in-card soup... symptom of
+   unresolved hierarchy."
+3. The greeting banner's "N need your OK" pill repeated, word for word, the ApprovalQueue
+   heading directly below it — the first two things on the page said the same thing twice.
+
+None of this is an information-architecture problem — the page's section order, the
+3-tile cut, and the approval-queue-first placement all still hold and were not touched.
+
+**Decision:** Fix scoped to `ApprovalQueue.tsx` and the dashboard greeting banner only:
+- Queue container restyled to the same calm treatment every other dashboard section already
+  uses (`rounded-xl border border-line bg-card divide-y divide-line`, plain `font-display`
+  heading, icon in `--ink`) instead of the coral/gold alarm band.
+- The said-message and draft-reply boxes de-nested into one flowing block separated by a
+  single `border-t` divider, keeping the "what they said, then what we'll say" distinction
+  without stacking bordered boxes inside a bordered card.
+- The greeting banner's duplicate pill removed; the queue's own heading is now the one
+  place the count lives.
+- `ShieldAlert` (coral) swapped for `ShieldCheck` (ink) — a queue of things to approve, not
+  a warning.
+
+**The generalizable principle:** a color and a border are load-bearing signals, not free
+emphasis — reaching for the "urgent" treatment (coral border, gold band) on a screen's most
+routine, positive-trust interaction teaches the opposite of what FollowUp is trying to be
+("calm over urgent," "trust outranks sophistication" — `brand/brand-principles.md`). A
+component can be the most important thing on the page by where it sits and what it says,
+without also being styled like an incident.
+
+**Revisit when:** the founder reviews the before/after screenshots. If "weird" was actually
+about something this pass didn't touch (the 3-tile grid, the list-row density further down,
+the overall type scale), that needs a fresh, specific description — don't assume this pass
+closes the complaint until he confirms it does.

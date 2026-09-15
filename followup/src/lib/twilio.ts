@@ -494,7 +494,13 @@ export async function sendSms(
   businessId: string,
   to: string,
   body: string
-): Promise<{ success: boolean; message?: string; sid?: string }> {
+  // `status` is Twilio's own HTTP status on a failure, passed through
+  // deliberately: src/lib/sending.ts classifies a failed send as transient or
+  // permanent, and a 503 and a 400 both arrive here as prose ("Twilio
+  // rejected this message"). Without the number, an outage was
+  // indistinguishable from a bad phone number and the message was dropped
+  // rather than retried.
+): Promise<{ success: boolean; message?: string; sid?: string; status?: number }> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: { twilioAccountSid: true, twilioAuthToken: true, twilioPhoneNumber: true, twilioSecret: true },
@@ -521,7 +527,11 @@ export async function sendSms(
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return { success: false, message: typeof data.message === "string" ? data.message : "Twilio rejected this message." };
+    return {
+      success: false,
+      message: typeof data.message === "string" ? data.message : "Twilio rejected this message.",
+      status: res.status,
+    };
   }
   return { success: true, sid: typeof data.sid === "string" ? data.sid : undefined };
 }
@@ -551,7 +561,8 @@ export async function sendWhatsApp(
   to: string,
   body: string,
   options: { leadFirstName?: string } = {}
-): Promise<{ success: boolean; message?: string; sid?: string }> {
+  // See sendSms above for why `status` is passed through on a failure.
+): Promise<{ success: boolean; message?: string; sid?: string; status?: number }> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: {
@@ -618,10 +629,15 @@ export async function sendWhatsApp(
           typeof templateData.message === "string"
             ? `The WhatsApp template send was rejected: ${templateData.message}`
             : "Twilio rejected the WhatsApp template send.",
+        status: templateRes.status,
       };
     }
     return { success: true, sid: typeof templateData.sid === "string" ? templateData.sid : undefined };
   }
 
-  return { success: false, message: typeof data.message === "string" ? data.message : "Twilio rejected this message." };
+  return {
+    success: false,
+    message: typeof data.message === "string" ? data.message : "Twilio rejected this message.",
+    status: res.status,
+  };
 }

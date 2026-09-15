@@ -38,7 +38,9 @@ export async function sendMessengerMessage(
   businessId: string,
   psid: string,
   text: string
-): Promise<{ success: boolean; message?: string }> {
+  // `status` is Meta's own HTTP status on a failure — see
+  // sendInstagramMessage in src/lib/instagram.ts for why it's passed through.
+): Promise<{ success: boolean; message?: string; status?: number }> {
   const pt = await pageToken(businessId);
   if (!pt) return { success: false, message: "Facebook isn't connected yet — check Settings → Facebook." };
   const res = await fetch(`${GRAPH}/${pt.pageId}/messages?access_token=${encodeURIComponent(pt.token)}`, {
@@ -49,7 +51,11 @@ export async function sendMessengerMessage(
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     const message = data?.error?.message;
-    return { success: false, message: typeof message === "string" ? message : "Facebook rejected this message." };
+    return {
+      success: false,
+      message: typeof message === "string" ? message : "Facebook rejected this message.",
+      status: res.status,
+    };
   }
   return { success: true };
 }

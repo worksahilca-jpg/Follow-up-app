@@ -66,6 +66,7 @@ model Business {
   automations           Automation[]
   reactivationRuns      ReactivationRun[]
   suppressions          Suppression[]
+  outboundSends         OutboundSend[]
   bookings              Booking[]
   sequences             Sequence[]
   sourceRules           SourceRule[]
@@ -507,6 +508,7 @@ model Lead {
   tasks         Task[]
   insights      AIInsight[]
   bookings      Booking[]
+  outboundSends OutboundSend[]
 
   // Which outside CRM this lead came from, and its id there — set by
   // src/lib/crmSync.ts, used both to avoid re-importing the same contact
@@ -642,6 +644,99 @@ model FollowUp {
   // detectReplies()'s "sent, still waiting on a reply, for this business's
   // leads" query.
   @@index([status, repliedAt])
+}
+
+/**
+ * One automated outbound message that a provider refused for a reason that
+ * resolves on its own — a Twilio 500, a Gmail rate limit, a socket that hung
+ * up — held so it can be tried again instead of being lost.
+ *
+ * Why this is not a FollowUp row with status "queued"
+ * --------------------------------------------------
+ * FollowUp is the record of what WAS sent. It is read by the weekly report,
+ * the rescued-leads attribution, reply-outcome detection and the daily send
+ * cap (sendCaps.ts counts FollowUp rows), and every one of those queries
+ * means "a real message went to a real person". Putting unsent attempts in
+ * that table would silently change the meaning of all of them — a queued row
+ * would count against the fuse before anything left, and "sent" would stop
+ * being a fact about the world. It also carries none of the envelope a retry
+ * needs (subject, thread id, in-reply-to, audit meta) and none of the queue
+ * mechanics (attempt count, backoff, lock), so it would have to grow them
+ * anyway, on the one table the reporting layer depends on.
+ *
+ * The cost of the separate table is that two rows now describe one send: this
+ * one until it lands, a FollowUp once it does. That is the trade accepted —
+ * the queue stays entirely out of the way of every existing query, and
+ * "delivered" remains a single unambiguous fact rather than a status filter
+ * every caller has to remember.
+ *
+ * Never sent twice: a worker takes a row with the same atomic conditional
+ * updateMany the rest of this codebase claims with (see
+ * Lead.reactivationSentAt, Lead.lastAutomationCheckedAt) — WHERE status =
+ * 'queued' AND nextAttemptAt <= now, SET status = 'sending'. Two overlapping
+ * invocations cannot both match.
+ */
+model OutboundSend {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id])
+  businessId String
+  lead       Lead     @relation(fields: [leadId], references: [id])
+  leadId     String
+
+  // The full envelope of the send, exactly as sendFollowUpToLead() was
+  // asked for it. Stored rather than re-derived because a retry must send
+  // the message the risk gate already approved — re-drafting would put a
+  // message nobody reviewed on the wire, and would pay OpenAI again to do
+  // it.
+  channel        String // email | text | whatsapp | instagram | messenger
+  body           String
+  subject        String?
+  emailThreadId  String?
+  emailInReplyTo String?
+  trigger        String? // instant_ack | unanswered | silence | sequence | dead_lead_reactivation
+  auditMeta      Json? // sendFollowUpToLead's extraAuditMeta, replayed on the successful attempt
+
+  // queued   — waiting for nextAttemptAt
+  // sending  — claimed by an invocation right now
+  // sent     — a later attempt got through; a FollowUp row exists for it
+  // failed   — terminal: attempts exhausted, a permanent provider rejection,
+  //            or an invocation killed mid-attempt (see lastError)
+  // canceled — terminal: a guard refused it at retry time (the lead opted
+  //            out, the address was suppressed, the daily fuse tripped).
+  //            Deliberately distinct from `failed`: nothing went wrong, the
+  //            product correctly declined to send.
+  // A String rather than an enum, like FollowUp.status, so a sixth outcome
+  // needs no migration to the type.
+  status String @default("queued")
+
+  // Includes the original inline attempt inside sendFollowUpToLead, so a row
+  // is created at 1. Bounded by maxAttempts; growing delays between them.
+  attempts      Int      @default(1)
+  maxAttempts   Int      @default(5)
+  nextAttemptAt DateTime
+
+  // When the current attempt claimed this row. A row left `sending` with a
+  // stale lock is an invocation that was killed mid-attempt: its outcome is
+  // unknown, so it is retired to `failed` rather than retried. "We might
+  // have already sent it" resolves to "don't send it again" here for the
+  // same reason it does on Lead.reactivationSentAt.
+  lockedAt DateTime?
+
+  // Owner-facing on the terminal states — this is what someone reads when
+  // they ask why a message never went out.
+  lastError  String?
+  resolvedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // The worker's "what is due right now" scan, across all businesses.
+  @@index([status, nextAttemptAt])
+  // "Is there already a send in flight for this lead" — the guard that stops
+  // a caller (a workflow step, the hourly rule) from starting a second send
+  // while a retry for the same lead is still pending.
+  @@index([leadId, status])
+  @@index([businessId, status])
 }
 
 model Task {
@@ -1002,6 +1097,77 @@ model AuditEvent {
 model ProcessedWebhookEvent {
   eventId     String   @id
   processedAt DateTime @default(now())
+}
+
+// The durable landing pad for every inbound lead-bearing payload, written
+// BEFORE any of the work it implies (find-or-create the lead, store the
+// message, acknowledge, score). Deliberately NOT the same table as
+// ProcessedWebhookEvent above, which is Stripe's exactly-once marker: that
+// one is keyed on a provider event id, carries no payload, and is DELETED
+// again when processing fails (see the rollback in
+// src/app/api/billing/webhook/route.ts) — the precise opposite of what is
+// needed here, where a failed row must survive so it can be replayed.
+// Merging the two would also merge two very different retention lifetimes
+// and force Stripe rows to carry columns that mean nothing to them.
+//
+// Why this exists at all: Twilio and Meta both stop retrying the moment
+// they get a 2xx, and these routes must answer 2xx (TwiML / `{success}`)
+// or the providers retry in ways that cause their own problems. So the
+// provider's copy of the message is gone the instant we answer. If the
+// processing that follows throws — an OpenAI timeout, a cold start, a
+// provider hiccup, a bug — there has to be a row on disk that proves the
+// message arrived and holds enough to redo the work. That is this table.
+//
+// `payload` is the raw provider body, stored only AFTER signature
+// validation has passed (see each route) — an unverified payload is never
+// written here, so nothing in this table is attacker-controlled noise.
+//
+// De-duplication is NOT this table's job. Replaying a row is safe because
+// the downstream writes are already idempotent on Message.externalId
+// (createInboundMessageIfNew in src/lib/instagram.ts) and on Lead's
+// businessId_email / businessId_phone uniques — that existing guarantee is
+// what makes replay non-destructive, and it must stay intact.
+model InboundWebhookEvent {
+  id String @id @default(cuid())
+
+  // Null only when the payload cannot be attributed to one business at the
+  // point it is persisted — a Meta envelope is app-wide and can carry
+  // entries for several connected accounts at once, so attribution happens
+  // per-entry during processing, not here. Intentionally not a relation:
+  // a raw-capture log must never be the thing that blocks a business from
+  // being deleted, and deleteBusinessData() clears these explicitly.
+  businessId String?
+
+  // twilio | meta | http — who sent it.
+  provider String
+  // sms | whatsapp | instagram_or_messenger | webhook_lead | embed_form —
+  // which capture path replay should hand it back to. A string, not an
+  // enum, so a new channel needs no type migration.
+  channel String
+
+  // The provider's own id for this delivery when it has one (a Twilio
+  // MessageSid). Meta envelopes carry per-event ids inside the payload
+  // instead, so this stays null for them. Informational only — de-dup is
+  // enforced downstream on Message.externalId, not here.
+  externalId String?
+
+  payload    Json
+  receivedAt DateTime @default(now())
+
+  // pending | processed | failed. A row that is still `pending` long after
+  // receivedAt means the process died mid-request — replayable exactly
+  // like a `failed` one.
+  status      String    @default("pending")
+  processedAt DateTime?
+  attempts    Int       @default(0)
+  // The failure that stopped processing, truncated. Recorded rather than
+  // swallowed: several of these routes used to catch-and-continue, which
+  // left no trace anywhere that a lead had been dropped.
+  error String?
+
+  // The replay query: everything not yet processed, oldest first.
+  @@index([status, receivedAt])
+  @@index([businessId, receivedAt])
 }
 
 model AIInsight {

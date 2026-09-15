@@ -24,6 +24,17 @@ import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 import { sendMessengerMessage } from "@/lib/facebook";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
+import { isTransientError } from "@/lib/transientError";
+import { requireActiveBilling } from "@/lib/billing";
+import {
+  claimNextDueSend,
+  hasSendInFlight,
+  markSendDelivered,
+  queueSendForRetry,
+  reapStaleSends,
+  rescheduleSend,
+  retireSend,
+} from "@/lib/sendQueue";
 
 /**
  * SMS and WhatsApp both live on Lead.phone (the same phone number
@@ -156,6 +167,52 @@ export async function detectNonEmailChannel(lead: {
   return detectPhoneChannel(lead.id);
 }
 
+/**
+ * Why a send didn't happen — the distinction the retry queue is built on.
+ *
+ *  - "refused"   a guard said no (opt-out, suppression, the daily fuse, no
+ *                channel on file). Nothing went wrong and nothing is owed a
+ *                retry; trying again would be the loop that burns money and
+ *                looks like abuse.
+ *  - "permanent" the provider rejected the message itself — a bad number, a
+ *                disconnected mailbox, a closed WhatsApp window. Sending the
+ *                same bytes again gets the same answer.
+ *  - "transient" the provider had a bad moment: a 429, a 5xx, a socket that
+ *                hung up. This is the ONLY kind that is worth trying again,
+ *                and the classifier is the existing narrow allowlist in
+ *                @/lib/transientError — not a second, more generous one.
+ */
+export type SendFailureKind = "refused" | "permanent" | "transient";
+
+/**
+ * Turns a provider wrapper's `{ success: false }` into a labelled failure.
+ *
+ * `status` is the load-bearing field: it's the first thing isTransientError
+ * looks at, and it is the only way to tell a Twilio 503 from a Twilio 400,
+ * both of which arrive as prose otherwise. A wrapper that doesn't supply one
+ * falls back to matching on the message, which is how the classifier has
+ * always handled errors without a status.
+ */
+function providerFailure(
+  result: { message?: string; status?: number },
+  fallback: string
+): { ok: false; message: string; failure: SendFailureKind } {
+  const message = result.message ?? fallback;
+  return {
+    ok: false,
+    message,
+    failure: isTransientError({ status: result.status, message }) ? "transient" : "permanent",
+  };
+}
+
+export type SendResult = {
+  success: boolean;
+  message?: string;
+  failure?: SendFailureKind;
+  /** Set when this failure was parked for a retry rather than dropped. */
+  queuedRetryAt?: Date;
+};
+
 export async function sendFollowUpToLead(
   leadId: string,
   body: string,
@@ -176,10 +233,16 @@ export async function sendFollowUpToLead(
     // every other audit meta. Kept separate from `trigger` since it's
     // caller-specific detail, not something every automated send has.
     extraAuditMeta?: Record<string, unknown>;
+    // Set ONLY by runOutboundRetries() below, when this call is a retry of
+    // an already-queued send. It does two things: it stops this attempt
+    // queueing a second row for the same message, and it exempts the attempt
+    // from the "is a send already in flight for this lead" guard — which
+    // would otherwise refuse the retry on the strength of its own queue row.
+    queuedSendId?: string;
   } = {}
-): Promise<{ success: boolean; message?: string }> {
+): Promise<SendResult> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
-  if (!lead) return { success: false, message: "Lead not found." };
+  if (!lead) return { success: false, message: "Lead not found.", failure: "refused" };
 
   const channel =
     options.channel ??
@@ -192,7 +255,8 @@ export async function sendFollowUpToLead(
           : lead.phone
           ? await detectPhoneChannel(lead.id)
           : null);
-  if (!channel) return { success: false, message: "This lead has no email or phone number on file." };
+  if (!channel)
+    return { success: false, message: "This lead has no email or phone number on file.", failure: "refused" };
 
   // TCPA/CTIA opt-out — see Lead.optedOutAt and isOptOutMessage() in
   // src/lib/twilio.ts. A hard stop, not a risk signal: applies to every
@@ -201,7 +265,11 @@ export async function sendFollowUpToLead(
   // overridable from here. Scoped to text/whatsapp only — STOP is the
   // SMS-specific legal mechanism, not a "never contact this lead again."
   if ((channel === "text" || channel === "whatsapp") && lead.optedOutAt) {
-    return { success: false, message: "This lead texted STOP — SMS/WhatsApp sending is blocked until they text START to opt back in." };
+    return {
+      success: false,
+      message: "This lead texted STOP — SMS/WhatsApp sending is blocked until they text START to opt back in.",
+      failure: "refused",
+    };
   }
 
   // No unsubscribe line, and no List-Unsubscribe header, on ANY message.
@@ -242,7 +310,7 @@ export async function sendFollowUpToLead(
   if (options.automated) {
     const capKind = options.trigger === "dead_lead_reactivation" ? "reactivation" : "automated";
     const cap = await checkSendCap(lead.businessId, capKind);
-    if (!cap.allowed) return { success: false, message: cap.reason };
+    if (!cap.allowed) return { success: false, message: cap.reason, failure: "refused" };
   }
 
   const isCampaignSend = options.automated && options.trigger === "dead_lead_reactivation";
@@ -252,63 +320,170 @@ export async function sendFollowUpToLead(
     return {
       success: false,
       message: "This person unsubscribed from automated follow-ups. You can still reply to them yourself.",
+      failure: "refused",
     };
   }
 
-  let externalId: string | undefined;
-  let emailProvider: "gmail" | "outlook" | undefined;
-  if (channel === "email") {
-    if (!lead.email) return { success: false, message: "This lead has no email address on file." };
-
-    // Only AUTOMATED mail carries the unsubscribe footer and headers. A
-    // human typing a reply to a customer is not a mailing they should be
-    // offered a way out of — putting "unsubscribe" under a personal reply
-    // would be both odd and, by implying the message was bulk, untrue.
-    //
-    // Deliberately a SEPARATE value rather than appended to `body`: the
-    // footer is transport decoration, like the List-Unsubscribe header
-    // beside it. `body` is what gets stored on the Message row, shown in
-    // the thread, and measured in the audit trail — and none of those
-    // should carry a link that isn't part of what anyone wrote.
-    emailProvider = await detectEmailProvider(lead.businessId, lead.id);
-    if (emailProvider === "outlook") {
-      const result = await sendOutlookEmail(lead.businessId, {
-        to: lead.email,
-        subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
-        body,
-        // Graph's /reply endpoint takes the specific message's own id,
-        // not an RFC822 Message-ID header — acknowledgeNewLead's Outlook
-        // path passes that Graph id through as emailInReplyTo (same
-        // field Gmail's flow uses for its own, differently-shaped id).
-        replyToMessageId: options.emailInReplyTo,
-      });
-      if (!result.success) return { success: false, message: result.message ?? "Outlook didn't confirm this message sent." };
-    } else {
-      const result = await sendEmail(lead.businessId, {
-        to: lead.email,
-        subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
-        body,
-        threadId: options.emailThreadId,
-        inReplyTo: options.emailInReplyTo,
-      });
-      if (!result.success) return { success: false, message: result.message ?? "Gmail didn't confirm this message sent." };
-      externalId = result.messageId ?? undefined;
-    }
-  } else if (channel === "instagram") {
-    const result = await sendInstagramMessage(lead.businessId, instagramRecipientId(lead.phone!), body);
-    if (!result.success) return { success: false, message: result.message ?? "Instagram didn't confirm this message sent." };
-  } else if (channel === "messenger") {
-    const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body);
-    if (!result.success) return { success: false, message: result.message ?? "Facebook didn't confirm this message sent." };
-  } else if (channel === "whatsapp") {
-    const result = await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: lead.name.split(" ")[0] });
-    if (!result.success) return { success: false, message: result.message ?? "WhatsApp didn't confirm this message sent." };
-    externalId = result.sid;
-  } else {
-    const result = await sendSms(lead.businessId, lead.phone!, body);
-    if (!result.success) return { success: false, message: result.message ?? "Twilio didn't confirm this message sent." };
-    externalId = result.sid;
+  // Is an earlier message to this lead still waiting to go out?
+  //
+  // Deliberately the LAST guard — after opt-out, after the daily fuse, after
+  // suppression, so it can never stand in front of any of them — and only on
+  // automated sends: a human typing a reply is never blocked by our
+  // bookkeeping.
+  //
+  // It exists because the queue is not the only thing that retries.
+  // sequences.ts leaves a lead enrolled on the same step after a failed send
+  // and re-drafts it on the next hourly tick (see the `!result.success`
+  // branch there), and automation.ts re-considers a lead once its claim
+  // ages out. Without this, the queue would deliver the parked copy and the
+  // caller would deliver a fresh one — the same follow-up twice, in the
+  // owner's name, which is the exact failure the retry was added to avoid.
+  if (options.automated && !options.queuedSendId && (await hasSendInFlight(lead.id))) {
+    return {
+      success: false,
+      message:
+        "An earlier message to this lead is still waiting to go out after a provider failure — FollowUp is retrying that one rather than sending another.",
+      failure: "refused",
+    };
   }
+
+  // ---------------------------------------------------------------
+  // The provider call, and the one place a failure gets classified.
+  //
+  // Every wire in here used to fail the same way — a `return { success:
+  // false }` that the caller shrugged at — so a Twilio 500 and a wrong phone
+  // number were indistinguishable, and the transient one cost a real
+  // follow-up. Now each failure leaves here labelled (see SendFailureKind),
+  // and exactly one of those labels leads to a retry.
+  //
+  // The classifier is @/lib/transientError, used unchanged. What it needed
+  // was evidence: the fetch-based wrappers (Twilio, Meta, Graph) were
+  // throwing away the HTTP status and handing back only a prose message, so
+  // "503 Service Unavailable" arrived here as "Twilio rejected this
+  // message." and read as permanent. They now pass `status` through, which
+  // is the field isTransientError already looks at first.
+  //
+  // Gmail is the other shape: googleapis THROWS a GaxiosError carrying
+  // .status, so the whole dispatch runs inside a try — and note that a throw
+  // no longer escapes this function. That matters: automation.ts treats an
+  // escaped transient throw by releasing its claim and re-drafting the lead
+  // next hour, which would race this queue and send twice.
+  // ---------------------------------------------------------------
+  const dispatch = async (): Promise<
+    { ok: true; externalId?: string; emailProvider?: "gmail" | "outlook" } | { ok: false; message: string; failure: SendFailureKind }
+  > => {
+    let externalId: string | undefined;
+    let emailProvider: "gmail" | "outlook" | undefined;
+    if (channel === "email") {
+      if (!lead.email) return { ok: false, message: "This lead has no email address on file.", failure: "refused" };
+
+      // Only AUTOMATED mail carries the unsubscribe footer and headers. A
+      // human typing a reply to a customer is not a mailing they should be
+      // offered a way out of — putting "unsubscribe" under a personal reply
+      // would be both odd and, by implying the message was bulk, untrue.
+      //
+      // Deliberately a SEPARATE value rather than appended to `body`: the
+      // footer is transport decoration, like the List-Unsubscribe header
+      // beside it. `body` is what gets stored on the Message row, shown in
+      // the thread, and measured in the audit trail — and none of those
+      // should carry a link that isn't part of what anyone wrote.
+      emailProvider = await detectEmailProvider(lead.businessId, lead.id);
+      if (emailProvider === "outlook") {
+        const result = await sendOutlookEmail(lead.businessId, {
+          to: lead.email,
+          subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
+          body,
+          // Graph's /reply endpoint takes the specific message's own id,
+          // not an RFC822 Message-ID header — acknowledgeNewLead's Outlook
+          // path passes that Graph id through as emailInReplyTo (same
+          // field Gmail's flow uses for its own, differently-shaped id).
+          replyToMessageId: options.emailInReplyTo,
+        });
+        if (!result.success) return providerFailure(result, "Outlook didn't confirm this message sent.");
+      } else {
+        const result = await sendEmail(lead.businessId, {
+          to: lead.email,
+          subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
+          body,
+          threadId: options.emailThreadId,
+          inReplyTo: options.emailInReplyTo,
+        });
+        if (!result.success) return providerFailure(result, "Gmail didn't confirm this message sent.");
+        externalId = result.messageId ?? undefined;
+      }
+    } else if (channel === "instagram") {
+      const result = await sendInstagramMessage(lead.businessId, instagramRecipientId(lead.phone!), body);
+      if (!result.success) return providerFailure(result, "Instagram didn't confirm this message sent.");
+    } else if (channel === "messenger") {
+      const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body);
+      if (!result.success) return providerFailure(result, "Facebook didn't confirm this message sent.");
+    } else if (channel === "whatsapp") {
+      const result = await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: lead.name.split(" ")[0] });
+      if (!result.success) return providerFailure(result, "WhatsApp didn't confirm this message sent.");
+      externalId = result.sid;
+    } else {
+      const result = await sendSms(lead.businessId, lead.phone!, body);
+      if (!result.success) return providerFailure(result, "Twilio didn't confirm this message sent.");
+      externalId = result.sid;
+    }
+    return { ok: true, externalId, emailProvider };
+  };
+
+  let sent: Awaited<ReturnType<typeof dispatch>>;
+  try {
+    sent = await dispatch();
+  } catch (err) {
+    // A throw from the wire (Gmail's GaxiosError, a DNS failure, a socket
+    // reset mid-request) — classified exactly like a returned failure, and
+    // deliberately not re-thrown, so the callers' own ad-hoc retries can't
+    // race the queue below.
+    sent = {
+      ok: false,
+      message: err instanceof Error ? err.message : "The message couldn't be sent.",
+      failure: isTransientError(err) ? "transient" : "permanent",
+    };
+  }
+
+  if (!sent.ok) {
+    // The whole point of the exercise: a provider outage delays this
+    // message, it does not lose it.
+    //
+    // Only automated sends are parked. A person who pressed Send is looking
+    // at the screen, gets told it failed, and can decide for themselves —
+    // queueing that behind their back would mean their message goes out
+    // twice the moment they press it again.
+    if (options.automated && sent.failure === "transient" && !options.queuedSendId) {
+      const queued = await queueSendForRetry(
+        {
+          businessId: lead.businessId,
+          leadId: lead.id,
+          channel,
+          body,
+          subject: options.subject,
+          emailThreadId: options.emailThreadId,
+          emailInReplyTo: options.emailInReplyTo,
+          trigger: options.trigger ?? "silence",
+          auditMeta: options.extraAuditMeta,
+        },
+        sent.message
+      );
+      if (queued) {
+        void recordAudit({ businessId: lead.businessId, userId: null }, "ai.send_queued", {
+          targetType: "lead",
+          targetId: lead.id,
+          meta: { channel, trigger: options.trigger ?? "silence", reason: sent.message, nextAttemptAt: queued.nextAttemptAt.toISOString() },
+        });
+        return {
+          success: false,
+          message: `${sent.message} FollowUp will try again shortly.`,
+          failure: "transient",
+          queuedRetryAt: queued.nextAttemptAt,
+        };
+      }
+    }
+    return { success: false, message: sent.message, failure: sent.failure };
+  }
+  const { externalId, emailProvider } = sent;
 
   // ---------------------------------------------------------------
   // Past this line the message has LEFT. Gmail/Outlook/Twilio/Meta has
@@ -420,4 +595,218 @@ async function pushCrmNote(businessId: string, provider: string, crmId: string, 
   } catch (err) {
     console.error(`CRM note push errored for business ${businessId}:`, err);
   }
+}
+
+// ---------------------------------------------------------------------
+// The retry worker.
+// ---------------------------------------------------------------------
+
+const CHANNEL_LABELS: Record<string, string> = {
+  email: "by email",
+  text: "by text",
+  whatsapp: "on WhatsApp",
+  instagram: "on Instagram",
+  messenger: "on Facebook Messenger",
+};
+
+function isSendableChannel(channel: string): channel is "email" | "text" | "whatsapp" | "instagram" | "messenger" {
+  return channel in CHANNEL_LABELS;
+}
+
+/**
+ * Tells a human that a follow-up did not go out.
+ *
+ * This is the "someone can see it" half of the terminal state — a row in a
+ * table nobody opens is not visibility. Goes to whoever owns the lead, or to
+ * every admin when it's in the shared pool, exactly like the neglect
+ * notification in automation.ts.
+ */
+async function notifyUndeliveredSend(leadId: string, message: string): Promise<void> {
+  try {
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { businessId: true, assignedToId: true },
+    });
+    if (!lead) return;
+    const userIds = lead.assignedToId
+      ? [lead.assignedToId]
+      : (
+          await prisma.user.findMany({
+            where: { businessId: lead.businessId, role: "ADMIN" },
+            select: { id: true },
+          })
+        ).map((u) => u.id);
+    for (const userId of userIds) {
+      await prisma.notification.create({ data: { userId, leadId, message } });
+    }
+  } catch (err) {
+    console.error(`Could not notify anyone that the send to lead ${leadId} failed:`, err);
+  }
+}
+
+export type OutboundRetryResult = {
+  /** Rows claimed and attempted this invocation. */
+  attempted: number;
+  sent: number;
+  /** Failed again, still has budget — waiting for a longer backoff. */
+  requeued: number;
+  /** Terminal: out of attempts, or a permanent rejection. */
+  failed: number;
+  /** Terminal: a guard refused it at retry time (opt-out, suppression, cap). */
+  canceled: number;
+  /** Terminal: an earlier invocation was killed mid-attempt; never retried. */
+  abandoned: number;
+};
+
+/**
+ * Works the queue of sends a provider refused for a reason that fixes itself.
+ *
+ * Called from /api/cron/outbound-retry every five minutes. Safe to call
+ * concurrently with itself: nothing is held in local state, every row is
+ * taken with an atomic claim, and a row this invocation is working cannot be
+ * claimed by another.
+ *
+ * The budget is WALL-CLOCK first, count second, and deliberately so. The
+ * lesson is next door in reactivationSend.ts, whose loop budgets by count
+ * (40 sends) against a spacing (6s) that multiplies out to 240s under a 300s
+ * ceiling — so the invocation is killed part-way through and the lead it had
+ * claimed is lost. A count budget is only a time budget if you already know
+ * how long a send takes, and nobody does when the provider is having a bad
+ * day, which is exactly when this function runs.
+ */
+export async function runOutboundRetries(
+  options: { maxSends?: number; deadlineMs?: number } = {}
+): Promise<OutboundRetryResult> {
+  const maxSends = options.maxSends ?? 50;
+  // Well inside the route's maxDuration (300s), with room for one slow
+  // attempt to finish after the last check rather than being killed in the
+  // middle of it.
+  const deadlineMs = options.deadlineMs ?? 200_000;
+  const startedAt = Date.now();
+  const result: OutboundRetryResult = { attempted: 0, sent: 0, requeued: 0, failed: 0, canceled: 0, abandoned: 0 };
+
+  // Rows whose invocation died mid-attempt. Retired, never retried — see
+  // reapStaleSends().
+  for (const stale of await reapStaleSends()) {
+    result.abandoned += 1;
+    console.error(`Outbound send ${stale.id} (lead ${stale.leadId}) was interrupted mid-attempt — not retried.`);
+    await notifyUndeliveredSend(
+      stale.leadId,
+      "A follow-up was interrupted while it was being sent. We couldn't tell whether it arrived, so we didn't send it again — worth checking the thread before you message them."
+    );
+    void recordAudit({ businessId: stale.businessId, userId: null }, "ai.send_abandoned", {
+      targetType: "lead",
+      targetId: stale.leadId,
+      meta: { channel: stale.channel, reason: "interrupted mid-attempt" },
+    });
+  }
+
+  // One lookup per business per invocation, not per row.
+  const billingCache = new Map<string, boolean>();
+
+  while (result.attempted < maxSends && Date.now() - startedAt < deadlineMs) {
+    const row = await claimNextDueSend();
+    if (!row) break;
+    result.attempted += 1;
+
+    try {
+      // A business that lapsed between the first attempt and this one gets
+      // nothing sent on its behalf, same rule as every other automated path
+      // (automation.ts, sequences.ts). Terminal rather than parked: the
+      // subscription isn't coming back inside a two-hour backoff.
+      let billingOk = billingCache.get(row.businessId);
+      if (billingOk === undefined) {
+        billingOk = await requireActiveBilling(row.businessId);
+        billingCache.set(row.businessId, billingOk);
+      }
+      if (!billingOk) {
+        await retireSend(row.id, "canceled", "The subscription isn't active, so nothing was sent.");
+        result.canceled += 1;
+        continue;
+      }
+
+      if (!isSendableChannel(row.channel)) {
+        await retireSend(row.id, "failed", `There's no way to send ${row.channel} messages.`);
+        result.failed += 1;
+        continue;
+      }
+
+      // Back in at the TOP of the funnel, not at the provider call — which
+      // is the whole reason the retry lives here rather than in the queue
+      // module. Opt-out, the daily fuse and suppression are all re-evaluated
+      // now, against the world as it is now. A lead who texted STOP five
+      // minutes after the first attempt is not messaged.
+      const attempt = await sendFollowUpToLead(row.leadId, row.body, {
+        automated: true,
+        channel: row.channel,
+        subject: row.subject ?? undefined,
+        emailThreadId: row.emailThreadId ?? undefined,
+        emailInReplyTo: row.emailInReplyTo ?? undefined,
+        trigger: (row.trigger ?? "silence") as NonNullable<Parameters<typeof sendFollowUpToLead>[2]>["trigger"],
+        extraAuditMeta: {
+          ...(row.auditMeta && typeof row.auditMeta === "object" ? (row.auditMeta as Record<string, unknown>) : {}),
+          retriedAttempt: row.attempts,
+        },
+        queuedSendId: row.id,
+      });
+
+      if (attempt.success) {
+        await markSendDelivered(row.id);
+        result.sent += 1;
+        continue;
+      }
+
+      const reason = attempt.message ?? "The message couldn't be sent.";
+
+      // A guard said no. Nothing went wrong — the product declined, which is
+      // it working. No notification: an owner does not need to be told that
+      // someone who opted out wasn't messaged.
+      if (attempt.failure === "refused") {
+        await retireSend(row.id, "canceled", reason);
+        result.canceled += 1;
+        continue;
+      }
+
+      if (attempt.failure === "transient") {
+        const nextAttemptAt = await rescheduleSend(row, reason);
+        if (nextAttemptAt) {
+          result.requeued += 1;
+          continue;
+        }
+      }
+
+      // Terminal: out of attempts, or a rejection that won't change.
+      await retireSend(row.id, "failed", reason);
+      result.failed += 1;
+      await notifyUndeliveredSend(
+        row.leadId,
+        `A follow-up couldn't be delivered ${CHANNEL_LABELS[row.channel]} after ${row.attempts} tries — ${reason} Nothing was sent, so it's worth reaching out yourself.`
+      );
+      void recordAudit({ businessId: row.businessId, userId: null }, "ai.send_failed", {
+        targetType: "lead",
+        targetId: row.leadId,
+        meta: { channel: row.channel, trigger: row.trigger, attempts: row.attempts, reason },
+      });
+    } catch (err) {
+      // sendFollowUpToLead no longer throws on a provider failure, so this is
+      // the database itself (a pool timeout, a deploy cycling Postgres). The
+      // row must not be left claimed: give it back if there is budget, retire
+      // it if there isn't. Both writes can fail too, in which case
+      // reapStaleSends() picks the row up later.
+      console.error(`Retrying outbound send ${row.id} (lead ${row.leadId}) threw:`, err);
+      const reason = err instanceof Error ? err.message : "The message couldn't be sent.";
+      try {
+        if (isTransientError(err) && (await rescheduleSend(row, reason))) {
+          result.requeued += 1;
+        } else {
+          await retireSend(row.id, "failed", reason);
+          result.failed += 1;
+        }
+      } catch (writeErr) {
+        console.error(`Could not record the outcome of outbound send ${row.id}:`, writeErr);
+      }
+    }
+  }
+
+  return result;
 }

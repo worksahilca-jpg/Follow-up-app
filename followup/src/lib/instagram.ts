@@ -103,7 +103,10 @@ export async function sendInstagramMessage(
   businessId: string,
   recipientId: string,
   text: string
-): Promise<{ success: boolean; message?: string }> {
+  // `status` is Meta's own HTTP status on a failure — src/lib/sending.ts
+  // needs it to tell a Graph 500 (worth retrying) from a permanently closed
+  // messaging window (not).
+): Promise<{ success: boolean; message?: string; status?: number }> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: { instagramAccessToken: true },
@@ -121,7 +124,11 @@ export async function sendInstagramMessage(
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     const message = data?.error?.message;
-    return { success: false, message: typeof message === "string" ? message : "Instagram rejected this message." };
+    return {
+      success: false,
+      message: typeof message === "string" ? message : "Instagram rejected this message.",
+      status: res.status,
+    };
   }
   return { success: true };
 }

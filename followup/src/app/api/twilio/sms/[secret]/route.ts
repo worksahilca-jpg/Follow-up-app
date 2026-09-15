@@ -1,23 +1,6 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/db";
-import { scoreAndDraftForLead } from "@/lib/scoring";
-import { checkRapidEngagement } from "@/lib/engagement";
-import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { recordAudit } from "@/lib/audit";
-import { findOrCreateConversation } from "@/lib/conversations";
-// Named for its first caller (the Meta webhook) but channel-agnostic: a
-// plain create keyed on Message.externalId that reports a unique-constraint
-// collision as "already recorded" instead of throwing.
-import { createInboundMessageIfNew } from "@/lib/instagram";
-import {
-  findBusinessByTwilioSecret,
-  findOrCreateLeadByPhone,
-  isOptInMessage,
-  isOptOutMessage,
-  parseTwilioForm,
-  twiml,
-  validateTwilioRequestSignature,
-} from "@/lib/twilio";
+import { processInboundEvent, recordInboundWebhookEvent } from "@/lib/inboundEvents";
+import { findBusinessByTwilioSecret, parseTwilioForm, twiml, validateTwilioRequestSignature } from "@/lib/twilio";
 
 /**
  * POST /api/twilio/sms/[secret] — configure this as a Twilio phone
@@ -31,6 +14,17 @@ import {
  * so every path here returns 200 + TwiML even on a config/billing
  * problem — there's no human on the other end of an SMS webhook to show
  * an error message to, unlike the embed widget or generic lead webhook.
+ *
+ * PERSIST FIRST, PROCESS AFTER. This route's only job is to verify the
+ * request and get the payload onto disk; everything the message implies
+ * happens in processTwilioInbound (@/lib/inbound/twilioMessage), driven
+ * from the stored row. That ordering is the whole point: Twilio does not
+ * redeliver a webhook it already answered 200 to, so before this row
+ * existed, anything that threw partway through the work — an OpenAI
+ * timeout, a cold start, a bug — destroyed the message with nothing left
+ * anywhere to recover it from. Now a failure is a `failed`
+ * InboundWebhookEvent row holding the original payload, replayable by
+ * replayInboundWebhookEvent().
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ secret: string }> }) {
   const { secret } = await params;
@@ -43,6 +37,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // the request came from Twilio. Both are required — a business that
   // hasn't saved its Auth Token yet (Settings → Phone) can't be served
   // safely, so its inbound is dropped and logged rather than trusted.
+  // Nothing is persisted until this passes: an unverified payload must
+  // never be stored as though it were a real message.
   if (!business.twilioAuthToken) {
     console.warn(`Twilio inbound for business ${business.id} dropped: no Auth Token saved, signature can't be verified.`);
     return twiml("<Response/>");
@@ -51,75 +47,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!validateTwilioRequestSignature(business.twilioAuthToken, request, formParams, signature)) {
     return twiml("<Response/>");
   }
-  // No twilioAuthToken saved yet — signature check is skipped rather than
-  // hard-blocked, so the number works the moment it's configured in
-  // Twilio and the auth token can be added moments later without an
-  // outage in between. Settings nudges toward adding it.
 
   // No billing gate here, on purpose. Twilio does not retry a webhook that
   // answered with 200 + TwiML, and the person who texted sees nothing at
   // all — so refusing here didn't pause anything, it deleted the lead
   // permanently, and fixing the card afterwards could never bring it back.
   // Capture is free; the parts that cost money (the instant
-  // acknowledgement's send and scoreAndDraftForLead's OpenAI calls, both
-  // below) pause on their own through checkAiEligibility — see its comment
-  // in @/lib/billing.
-  const from = formParams.From;
-  const ownWords = (formParams.Body ?? "").trim();
-  // An MMS whose only content is a picture ("here's the thing that's
-  // broken" — an extremely ordinary first contact for a trades business)
-  // arrives with NumMedia >= 1 and an EMPTY Body. The whole `if (body)`
-  // block below used to be skipped for it: the Lead row was created, but
-  // no Message was ever stored, no acknowledgement went out, and nothing
-  // was scored — the owner saw a bare phone number with an empty
-  // conversation and no idea anyone had sent them anything. Recording a
-  // placeholder makes the contact visible; `ownWords` stays empty so the
-  // acknowledgement below falls through to its always-safe fixed line
-  // rather than generating a reply to text nobody wrote.
-  const mediaCount = Number(formParams.NumMedia ?? "0");
-  const body = ownWords || (Number.isFinite(mediaCount) && mediaCount > 0
-    ? `[Sent ${mediaCount} media attachment${mediaCount === 1 ? "" : "s"} with no message text]`
-    : "");
-  if (!from) return twiml("<Response/>");
+  // acknowledgement's send and scoreAndDraftForLead's OpenAI calls) pause
+  // on their own through checkAiEligibility — see its comment in @/lib/billing.
+  const event = await recordInboundWebhookEvent({
+    provider: "twilio",
+    channel: "sms",
+    businessId: business.id,
+    externalId: formParams.MessageSid ?? null,
+    payload: formParams,
+  });
 
-  const lead = await findOrCreateLeadByPhone(business.id, from, "SMS");
-
-  if (body) {
-    const conversation = await findOrCreateConversation(lead.id, "text");
-    // Keyed on Twilio's own MessageSid (Message.externalId is unique) so a
-    // redelivery — Twilio's fallback URL pointed at this same route after
-    // the primary attempt timed out, or a platform-level retry — appends
-    // nothing and re-acknowledges nobody. Returns false only when this
-    // exact SID is already recorded.
-    const isNew = await createInboundMessageIfNew(conversation.id, body, new Date(), formParams.MessageSid);
-    if (!isNew) return twiml("<Response/>");
-
-    // STOP/START are handled before anything else touches this lead: a
-    // STOP must never be answered by an automated "we got your message"
-    // (see acknowledgeNewLead below) — that would be exactly the kind of
-    // unwanted automated text the opt-out exists to stop. See
-    // Lead.optedOutAt and sendFollowUpToLead() in src/lib/sending.ts,
-    // which every send path — manual, automated, sequence — funnels
-    // through and refuses to text/WhatsApp an opted-out lead.
-    const optingOut = isOptOutMessage(ownWords);
-    const optingIn = isOptInMessage(ownWords);
-    if (optingOut || optingIn) {
-      await prisma.lead.update({ where: { id: lead.id }, data: { optedOutAt: optingOut ? new Date() : null } });
-      void recordAudit({ businessId: business.id, userId: null }, optingOut ? "lead.opt_out" : "lead.opt_in", {
-        targetType: "lead",
-        targetId: lead.id,
-        meta: { channel: "text", via: "keyword" },
-      });
-    }
-
-    if (!optingOut) {
-      // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
-      // `ownWords`, never the synthesized media placeholder above.
-      await acknowledgeNewLead(lead.id, { channel: "text", inboundText: ownWords, inboundAt: new Date() });
-    }
-    await scoreAndDraftForLead(lead.id);
-    await checkRapidEngagement(lead.id);
-  }
+  // Never throws — a processing failure is written onto the row above, and
+  // Twilio still gets its TwiML. Answering anything else would make Twilio
+  // fall back / alert on a message that is already safely on disk.
+  await processInboundEvent({ ...event, channel: "sms", businessId: business.id, payload: formParams });
 
   return twiml("<Response/>");
 }

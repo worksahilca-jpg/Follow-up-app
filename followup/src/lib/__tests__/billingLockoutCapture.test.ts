@@ -44,6 +44,14 @@ vi.mock("@/lib/db", () => ({
     lead: { findFirst: leadFindFirst, update: leadUpdate, create: leadCreate, count: leadCount },
     conversation: { create: conversationCreate },
     message: { create: messageCreate },
+    // Every capture route now writes the raw payload here before doing any
+    // work (see @/lib/inboundEvents) — the durability envelope, not the
+    // subject of this file. Stubbed so the capture assertions below still
+    // reach the processing they're about.
+    inboundWebhookEvent: {
+      create: async () => ({ id: "evt-test", receivedAt: new Date() }),
+      update: async () => ({}),
+    },
   },
 }));
 
@@ -248,8 +256,16 @@ describe("the embed widget during a billing lockout", () => {
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
     expect(leadCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ source: "Website form" }) }));
-    expect(messageCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ body: "Looking for a quote on a bathroom reno." }) })
+    // The form's message goes through the same idempotent writer the Twilio
+    // and Meta paths use (createInboundMessageIfNew, mocked above), keyed on
+    // the InboundWebhookEvent row id — these two channels have no
+    // provider-supplied message id of their own, so that id is what keeps a
+    // replay from appending the visitor's message twice.
+    expect(createInboundMessageIfNew).toHaveBeenCalledWith(
+      "conv1",
+      "Looking for a quote on a bathroom reno.",
+      expect.any(Date),
+      "evt-test"
     );
     // Capture is the whole point, so the per-source rules that fire on
     // capture still fire. See src/lib/sourceRouting.ts.

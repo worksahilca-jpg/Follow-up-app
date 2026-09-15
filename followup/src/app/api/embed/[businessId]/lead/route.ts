@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { pickAssignee } from "@/lib/assignment";
-import { scoreAndDraftForLead } from "@/lib/scoring";
-import { notifyLeadEvent } from "@/lib/outboundWebhook";
-import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentLeads } from "@/lib/rateLimit";
-import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { findOrCreateConversation } from "@/lib/conversations";
-import { findConflictingLead } from "@/lib/leadConflict";
+import { processInboundEvent, recordInboundWebhookEvent } from "@/lib/inboundEvents";
 import { cleanedText, EMAIL_RE, parseJsonBody } from "@/lib/validation";
 
 const MAX_TEXT = 200;
@@ -118,68 +112,36 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ success: false, message: "That email doesn't look right." }, { status: 400 });
   }
 
-  const now = new Date();
+  // PERSIST FIRST, PROCESS AFTER. Everything above this line is a real
+  // answer the visitor can act on — a broken embed id, a rate-limit
+  // refusal, a missing name are all shown in the form. Past this point the
+  // submission is a lead, and this request is the only copy of it in
+  // existence: nothing retries a form post, and the visitor has closed the
+  // tab. The lead-creating work below used to run inline, so a throw
+  // anywhere in it (an OpenAI timeout inside scoreAndDraftForLead was the
+  // likeliest) took the enquiry down with it. It is written down first now.
+  const event = await recordInboundWebhookEvent({
+    provider: "http",
+    channel: "embed_form",
+    businessId,
+    payload: { name, email, phone, message },
+  });
 
-  try {
-    const lead = await prisma.lead.create({
-      data: {
-        businessId,
-        name,
-        email: email || null,
-        phone: phone || null,
-        source: "Website form",
-        stage: "NEW",
-        lastContacted: now,
-        assignedToId: await pickAssignee(businessId),
-      },
-    });
-    void notifyLeadEvent(businessId, "lead.created", lead);
-    await applySourceRouting(businessId, lead.id, "Website form");
+  // Never throws — a processing failure is recorded on the row above. The
+  // scoring inside is still awaited rather than backgrounded, so the
+  // visitor's short spinner reflects real work and the business gets a
+  // fully-scored lead immediately instead of a blank one waiting on a sync.
+  const { ok } = await processInboundEvent({
+    ...event,
+    channel: "embed_form",
+    businessId,
+    payload: { name, email, phone, message },
+  });
 
-    if (message) {
-      const conversation = await prisma.conversation.create({
-        data: { leadId: lead.id, channel: "web" },
-      });
-      await prisma.message.create({
-        data: { conversationId: conversation.id, direction: "inbound", body: message, sentAt: now },
-      });
-      // Awaited so the visitor's page (a short spinner, not a whole app
-      // load) sees the real outcome — a single form submit can afford the
-      // extra second or two this costs, and the business gets a fully
-      // scored lead immediately instead of a blank one waiting on a sync.
-      await scoreAndDraftForLead(lead.id);
-    }
-
-    // A form/webhook lead gave us an email on purpose — acknowledge by
-    // email only (never text a number nobody texted from). See src/lib/acknowledge.ts.
-    if (email) {
-      await acknowledgeNewLead(lead.id, { channel: "email", inboundText: message, inboundAt: now });
-    }
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    // Duplicate email OR phone for this business (Lead carries both a
-    // businessId_email and a businessId_phone unique constraint — see
-    // findConflictingLead) — the same person submitting twice shouldn't 500. This
-    // used to just return success and drop the new submission entirely —
-    // a genuine follow-up question ("actually, can you also quote me for
-    // X") from a returning visitor vanished with no record anywhere. Find
-    // the existing lead instead and treat this the same as any other new
-    // inbound message on it: appended, re-scored, and (subject to its own
-    // once-only guard) re-acknowledged — same "conflict -> find and
-    // continue" shape findOrCreateLeadByPhone() already uses for the SMS
-    // side of this same problem.
-    if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
-      const existing = await findConflictingLead(businessId, email, phone);
-      if (existing && message) {
-        const conversation = await findOrCreateConversation(existing.id, "web");
-        await prisma.message.create({
-          data: { conversationId: conversation.id, direction: "inbound", body: message, sentAt: now },
-        });
-        await scoreAndDraftForLead(existing.id);
-        if (email) await acknowledgeNewLead(existing.id, { channel: "email", inboundText: message, inboundAt: now });
-      }
-      return NextResponse.json({ success: true });
-    }
-    throw err;
-  }
+  // Success either way, and truthfully so: `ok: false` means the enquiry is
+  // durably stored and replayable, just not yet worked. Telling the visitor
+  // it failed would invite a re-submit that creates a duplicate, and would
+  // be the one thing this product must never do — imply their message
+  // didn't land when it did.
+  return NextResponse.json({ success: true, ...(ok ? {} : { queued: true }) });
 }

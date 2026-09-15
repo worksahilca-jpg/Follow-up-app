@@ -658,7 +658,10 @@ export async function importOutlookConversation(businessId: string, conversation
 export async function sendOutlookEmail(
   businessId: string,
   params: { to: string; subject: string; body: string; replyToMessageId?: string }
-): Promise<{ success: boolean; messageId?: string; message?: string }> {
+  // `status` is Graph's own HTTP status on a failure — src/lib/sending.ts
+  // classifies a failed send by it, and a 503 that gets dropped instead of
+  // retried is a lost follow-up.
+): Promise<{ success: boolean; messageId?: string; message?: string; status?: number }> {
   // graphFetch returns null only when there's no valid Outlook token to
   // send with (see graphFetch above) — never for a genuine Graph API
   // failure, which comes back as a real (non-ok) Response instead. That
@@ -674,7 +677,7 @@ export async function sendOutlookEmail(
       body: JSON.stringify({ comment: params.body }),
     });
     if (!res) return notConnected;
-    if (!res.ok) return { success: false };
+    if (!res.ok) return { success: false, status: res.status };
     // Graph's /reply returns 202 Accepted with no body and no new
     // message id — there's nothing else to key off here, so the sent
     // copy is picked up on the next sync like any other outbound mail.
@@ -693,6 +696,6 @@ export async function sendOutlookEmail(
     }),
   });
   if (!res) return notConnected;
-  if (!res.ok) return { success: false };
+  if (!res.ok) return { success: false, status: res.status };
   return { success: true };
 }

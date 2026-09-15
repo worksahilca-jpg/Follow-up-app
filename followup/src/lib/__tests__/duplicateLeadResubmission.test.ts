@@ -28,6 +28,13 @@ vi.mock("@/lib/db", () => ({
     lead: { create, findUnique: findUniqueLead },
     conversation: { findFirst: conversationFindFirst, create: conversationCreate },
     message: { create: messageCreate },
+    // Both routes now persist the raw submission here before processing it
+    // (see @/lib/inboundEvents). Stubbed — the durability envelope has its
+    // own coverage in inboundWebhookDurability.test.ts.
+    inboundWebhookEvent: {
+      create: async () => ({ id: "evt-test", receivedAt: new Date() }),
+      update: async () => ({}),
+    },
   },
 }));
 vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));

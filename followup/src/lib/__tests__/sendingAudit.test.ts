@@ -17,6 +17,10 @@ vi.mock("@/lib/db", () => ({
     conversation: { findFirst: vi.fn(), create: vi.fn() },
     message: { create: vi.fn() },
     followUp: { create: vi.fn() },
+    // The retry queue (src/lib/sendQueue.ts). sendFollowUpToLead asks it
+    // whether a message to this lead is already waiting to go out before it
+    // starts a second one — see the in-flight guard.
+    outboundSend: { findFirst: vi.fn(), create: vi.fn() },
   },
 }));
 vi.mock("@/lib/integrations/gmail", () => ({
@@ -78,6 +82,7 @@ beforeEach(() => {
   p.message.create.mockResolvedValue({});
   p.followUp.create.mockResolvedValue({});
   p.lead.update.mockResolvedValue({});
+  p.outboundSend.findFirst.mockResolvedValue(null);
   sms.mockResolvedValue({ success: true, sid: "s1" });
   whatsapp.mockResolvedValue({ success: true, sid: "w1" });
 });

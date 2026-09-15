@@ -400,7 +400,16 @@ export async function acknowledgeNewLead(
     if (!result.success) {
       // Release the claim so a later inbound on a working channel can
       // still be acknowledged — e.g. Twilio not configured yet.
-      await prisma.lead.updateMany({ where: { id: leadId }, data: { acknowledgedAt: null } });
+      //
+      // Unless the send was PARKED rather than dropped (a provider blip; see
+      // the retry queue in src/lib/sending.ts). That message is still going
+      // out, a couple of minutes late, so the lead has been acknowledged and
+      // releasing the claim here would set up a second one. The in-flight
+      // guard in sendFollowUpToLead would refuse that second ack anyway —
+      // this just stops it being attempted at all.
+      if (!result.queuedRetryAt) {
+        await prisma.lead.updateMany({ where: { id: leadId }, data: { acknowledgedAt: null } });
+      }
       console.error(`Instant acknowledgement failed for lead ${leadId}: ${result.message}`);
       return { sent: false, reason: result.message };
     }

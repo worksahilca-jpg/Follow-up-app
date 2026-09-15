@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { pickAssignee } from "@/lib/assignment";
-import { scoreAndDraftForLead } from "@/lib/scoring";
-import { notifyLeadEvent } from "@/lib/outboundWebhook";
-import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentLeads } from "@/lib/rateLimit";
-import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { findOrCreateConversation } from "@/lib/conversations";
-import { findConflictingLead } from "@/lib/leadConflict";
+import { processInboundEvent, recordInboundWebhookEvent } from "@/lib/inboundEvents";
 import { cleanedText, EMAIL_RE, parseObject } from "@/lib/validation";
 import { recordAuthFailure } from "@/lib/monitoring";
 
@@ -104,65 +98,35 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ success: false, message: "`email` doesn't look like a real address." }, { status: 400 });
   }
 
-  const now = new Date();
+  // PERSIST FIRST, PROCESS AFTER. Everything above this line is a real
+  // answer to the caller — an invalid secret, a rate-limit refusal, a
+  // malformed body are all reported back to a sender that can see the
+  // response and fix it, so there's nothing to lose yet. From here on the
+  // submission is a lead, and the only copy of it is this request: the
+  // lead-creating work below used to run inline, so a throw anywhere in it
+  // (an OpenAI timeout inside scoreAndDraftForLead, a DB blip) returned a
+  // 500 to a Zapier task that a free plan does not auto-replay, and the
+  // lead existed nowhere. It is written down before any of that runs.
+  const event = await recordInboundWebhookEvent({
+    provider: "http",
+    channel: "webhook_lead",
+    businessId,
+    payload: { name, email, phone, message },
+  });
 
-  try {
-    const lead = await prisma.lead.create({
-      data: {
-        businessId,
-        name,
-        email: email || null,
-        phone: phone || null,
-        source: "Webhook",
-        stage: "NEW",
-        lastContacted: now,
-        assignedToId: await pickAssignee(businessId),
-      },
-    });
-    void notifyLeadEvent(businessId, "lead.created", lead);
-    await applySourceRouting(businessId, lead.id, "Webhook");
+  // Never throws — a processing failure is recorded on the row above.
+  const { ok, leadId } = await processInboundEvent({
+    ...event,
+    channel: "webhook_lead",
+    businessId,
+    payload: { name, email, phone, message },
+  });
 
-    if (message) {
-      const conversation = await prisma.conversation.create({
-        data: { leadId: lead.id, channel: "web" },
-      });
-      await prisma.message.create({
-        data: { conversationId: conversation.id, direction: "inbound", body: message, sentAt: now },
-      });
-      await scoreAndDraftForLead(lead.id);
-    }
-
-    // A form/webhook lead gave us an email on purpose — acknowledge by
-    // email only (never text a number nobody texted from). See src/lib/acknowledge.ts.
-    if (email) {
-      await acknowledgeNewLead(lead.id, { channel: "email", inboundText: message, inboundAt: now });
-    }
-    return NextResponse.json({ success: true, leadId: lead.id });
-  } catch (err) {
-    // Duplicate email OR phone for this business (Lead carries both unique
-    // constraints — see findConflictingLead) — same lead re-sent (a retried
-    // Zapier run, a re-submitted form) shouldn't error. This used to just
-    // return success and drop the resend's content entirely — an
-    // integration re-sending an updated payload for a lead it already
-    // pushed once (a Google Form edit-response sync, a CRM export re-run)
-    // was a total no-op beyond the row already existing. Find the
-    // existing lead instead and treat this the same as any other new
-    // inbound message on it: appended, re-scored, and (subject to its own
-    // once-only guard) re-acknowledged — same "conflict -> find and
-    // continue" shape findOrCreateLeadByPhone() already uses for the SMS
-    // side of this same problem.
-    if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
-      const existing = await findConflictingLead(businessId, email, phone);
-      if (existing && message) {
-        const conversation = await findOrCreateConversation(existing.id, "web");
-        await prisma.message.create({
-          data: { conversationId: conversation.id, direction: "inbound", body: message, sentAt: now },
-        });
-        await scoreAndDraftForLead(existing.id);
-        if (email) await acknowledgeNewLead(existing.id, { channel: "email", inboundText: message, inboundAt: now });
-      }
-      return NextResponse.json({ success: true, leadId: existing?.id });
-    }
-    throw err;
-  }
+  // `queued: true` is the honest answer when the work didn't finish: the
+  // submission IS durably stored and replayable, so reporting a failure
+  // here would be the worse lie — it would make Zapier re-send (a
+  // duplicate) or, on a free plan, simply drop the task. leadId is omitted
+  // because there may not be one yet.
+  if (!ok) return NextResponse.json({ success: true, queued: true });
+  return NextResponse.json({ success: true, leadId });
 }

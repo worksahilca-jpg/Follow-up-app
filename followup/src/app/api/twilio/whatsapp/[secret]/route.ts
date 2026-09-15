@@ -6,6 +6,8 @@ import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { recordAudit } from "@/lib/audit";
 import { findOrCreateConversation } from "@/lib/conversations";
+// Channel-agnostic despite its home module — see the SMS route's import comment.
+import { createInboundMessageIfNew } from "@/lib/instagram";
 import {
   findBusinessByTwilioSecret,
   findOrCreateLeadByPhone,
@@ -59,24 +61,33 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!(await requireActiveBilling(business.id))) return twiml("<Response/>");
 
   const from = formParams.From?.replace(/^whatsapp:/, "");
-  const body = (formParams.Body ?? "").trim();
+  const ownWords = (formParams.Body ?? "").trim();
+  // Media-only inbound (a photo, a voice note — very common on WhatsApp
+  // specifically) arrives with NumMedia >= 1 and an empty Body, and used
+  // to skip this whole block: lead row created, message never recorded,
+  // nothing acknowledged or scored. See the matching comment in the SMS
+  // route (src/app/api/twilio/sms/[secret]/route.ts).
+  const mediaCount = Number(formParams.NumMedia ?? "0");
+  const body = ownWords || (Number.isFinite(mediaCount) && mediaCount > 0
+    ? `[Sent ${mediaCount} media attachment${mediaCount === 1 ? "" : "s"} with no message text]`
+    : "");
   if (!from) return twiml("<Response/>");
 
   const lead = await findOrCreateLeadByPhone(business.id, from, "WhatsApp");
 
   if (body) {
     const conversation = await findOrCreateConversation(lead.id, "whatsapp");
-    await prisma.message.create({
-      data: { conversationId: conversation.id, direction: "inbound", body, sentAt: new Date() },
-    });
+    // Idempotent on Twilio's MessageSid — see the SMS route's comment.
+    const isNew = await createInboundMessageIfNew(conversation.id, body, new Date(), formParams.MessageSid);
+    if (!isNew) return twiml("<Response/>");
 
     // STOP/START handled before anything else touches this lead — see the
     // matching comment in the SMS webhook (src/app/api/twilio/sms/[secret]/
     // route.ts) for why. Lead.phone is shared between SMS and WhatsApp
     // (see findOrCreateLeadByPhone), so a STOP here also blocks SMS sends
     // to the same lead, and vice versa — one person, one opt-out.
-    const optingOut = isOptOutMessage(body);
-    const optingIn = isOptInMessage(body);
+    const optingOut = isOptOutMessage(ownWords);
+    const optingIn = isOptInMessage(ownWords);
     if (optingOut || optingIn) {
       await prisma.lead.update({ where: { id: lead.id }, data: { optedOutAt: optingOut ? new Date() : null } });
       void recordAudit({ businessId: business.id, userId: null }, optingOut ? "lead.opt_out" : "lead.opt_in", {
@@ -88,7 +99,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (!optingOut) {
       // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
-      await acknowledgeNewLead(lead.id, { channel: "whatsapp", inboundText: body, inboundAt: new Date() });
+      // `ownWords`, never the synthesized media placeholder above.
+      await acknowledgeNewLead(lead.id, { channel: "whatsapp", inboundText: ownWords, inboundAt: new Date() });
     }
     await scoreAndDraftForLead(lead.id);
     await checkRapidEngagement(lead.id);

@@ -6,6 +6,10 @@ import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { recordAudit } from "@/lib/audit";
 import { findOrCreateConversation } from "@/lib/conversations";
+// Named for its first caller (the Meta webhook) but channel-agnostic: a
+// plain create keyed on Message.externalId that reports a unique-constraint
+// collision as "already recorded" instead of throwing.
+import { createInboundMessageIfNew } from "@/lib/instagram";
 import {
   findBusinessByTwilioSecret,
   findOrCreateLeadByPhone,
@@ -56,16 +60,34 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!(await requireActiveBilling(business.id))) return twiml("<Response/>");
 
   const from = formParams.From;
-  const body = (formParams.Body ?? "").trim();
+  const ownWords = (formParams.Body ?? "").trim();
+  // An MMS whose only content is a picture ("here's the thing that's
+  // broken" — an extremely ordinary first contact for a trades business)
+  // arrives with NumMedia >= 1 and an EMPTY Body. The whole `if (body)`
+  // block below used to be skipped for it: the Lead row was created, but
+  // no Message was ever stored, no acknowledgement went out, and nothing
+  // was scored — the owner saw a bare phone number with an empty
+  // conversation and no idea anyone had sent them anything. Recording a
+  // placeholder makes the contact visible; `ownWords` stays empty so the
+  // acknowledgement below falls through to its always-safe fixed line
+  // rather than generating a reply to text nobody wrote.
+  const mediaCount = Number(formParams.NumMedia ?? "0");
+  const body = ownWords || (Number.isFinite(mediaCount) && mediaCount > 0
+    ? `[Sent ${mediaCount} media attachment${mediaCount === 1 ? "" : "s"} with no message text]`
+    : "");
   if (!from) return twiml("<Response/>");
 
   const lead = await findOrCreateLeadByPhone(business.id, from, "SMS");
 
   if (body) {
     const conversation = await findOrCreateConversation(lead.id, "text");
-    await prisma.message.create({
-      data: { conversationId: conversation.id, direction: "inbound", body, sentAt: new Date() },
-    });
+    // Keyed on Twilio's own MessageSid (Message.externalId is unique) so a
+    // redelivery — Twilio's fallback URL pointed at this same route after
+    // the primary attempt timed out, or a platform-level retry — appends
+    // nothing and re-acknowledges nobody. Returns false only when this
+    // exact SID is already recorded.
+    const isNew = await createInboundMessageIfNew(conversation.id, body, new Date(), formParams.MessageSid);
+    if (!isNew) return twiml("<Response/>");
 
     // STOP/START are handled before anything else touches this lead: a
     // STOP must never be answered by an automated "we got your message"
@@ -74,8 +96,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Lead.optedOutAt and sendFollowUpToLead() in src/lib/sending.ts,
     // which every send path — manual, automated, sequence — funnels
     // through and refuses to text/WhatsApp an opted-out lead.
-    const optingOut = isOptOutMessage(body);
-    const optingIn = isOptInMessage(body);
+    const optingOut = isOptOutMessage(ownWords);
+    const optingIn = isOptInMessage(ownWords);
     if (optingOut || optingIn) {
       await prisma.lead.update({ where: { id: lead.id }, data: { optedOutAt: optingOut ? new Date() : null } });
       void recordAudit({ businessId: business.id, userId: null }, optingOut ? "lead.opt_out" : "lead.opt_in", {
@@ -87,7 +109,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (!optingOut) {
       // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
-      await acknowledgeNewLead(lead.id, { channel: "text", inboundText: body, inboundAt: new Date() });
+      // `ownWords`, never the synthesized media placeholder above.
+      await acknowledgeNewLead(lead.id, { channel: "text", inboundText: ownWords, inboundAt: new Date() });
     }
     await scoreAndDraftForLead(lead.id);
     await checkRapidEngagement(lead.id);

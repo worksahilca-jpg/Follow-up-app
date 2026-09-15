@@ -98,6 +98,44 @@ describe("CRM sync", () => {
     );
   });
 
+  /**
+   * Follow Up Boss pages by numeric OFFSET, so its client always returns a
+   * non-empty nextCursor string ("100", "200", and "0" for an empty first
+   * page — every one of them truthy in JS); only `hasMore` ever goes
+   * false. Every other test in this file uses HubSpot's shape
+   * (nextCursor: null at the end), which is precisely why looping on the
+   * cursor instead of on hasMore went unnoticed: it spun forever
+   * re-fetching the same past-the-end offset until the cron function hit
+   * its 120s ceiling, so the run never stamped lastSyncedAt, never
+   * cleared syncCursor, and — because syncCrmForAllBusinesses() walks
+   * businesses sequentially — every business after the first Follow Up
+   * Boss connection never got synced at all.
+   *
+   * Without the fix this test does not fail, it HANGS (mockResolvedValue,
+   * not Once, so the page repeats indefinitely) — the timeout is the
+   * assertion, alongside the call count below.
+   */
+  it("stops when hasMore is false even though the provider's cursor is always a truthy offset string", async () => {
+    fetchPage.mockResolvedValue({ people: [person("101")], nextCursor: "100", hasMore: false });
+
+    const r = await syncCrmForBusiness("biz1");
+
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+    expect(r.truncated).toBe(false);
+    // A completed pass: the watermark advances and the resume cursor clears.
+    expect(p.crmConnection.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ lastSyncedAt: expect.any(Date), syncCursor: null }) })
+    );
+  }, 5000);
+
+  it("stops on an empty past-the-end page whose offset cursor is the string \"0\"", async () => {
+    fetchPage.mockResolvedValue({ people: [], nextCursor: "0", hasMore: false });
+
+    await syncCrmForBusiness("biz1");
+
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+  }, 5000);
+
   it("records the error and never throws when the provider call fails", async () => {
     fetchPage.mockRejectedValue(new Error("rate limited"));
     const r = await syncCrmForBusiness("biz1");

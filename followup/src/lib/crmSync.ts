@@ -52,9 +52,22 @@ export async function syncCrmForBusiness(businessId: string): Promise<CrmSyncRes
   // finished) behaves exactly as before this fix.
   let cursor: string | null = conn.syncCursor;
   let pages = 0;
+  // `hasMore`, NOT a truthy `cursor`, is what ends this loop — see
+  // CrmClient.fetchPage's own contract ("callers page until `hasMore` is
+  // false"). Looping on the cursor instead only *happened* to terminate
+  // for HubSpot, whose nextCursor goes null at exactly the moment
+  // hasMore goes false. Follow Up Boss pages by numeric offset and so
+  // always returns a non-empty cursor string ("200", and "0" for an
+  // empty first page — both truthy in JS), which made a completed pass
+  // spin forever re-fetching the same past-the-end offset until the cron
+  // function hit its 120s ceiling: the run never stamped lastSyncedAt,
+  // never cleared syncCursor, and — because syncCrmForAllBusinesses()
+  // walks businesses sequentially — every business ordered after the
+  // first Follow Up Boss connection never got synced at all.
+  let hasMore = true;
 
   try {
-    do {
+    while (hasMore) {
       const page = await client.fetchPage(conn.apiKey, cursor, since);
       for (const person of page.people) {
         const result = await upsertCrmLead(businessId, conn.provider, person);
@@ -62,12 +75,13 @@ export async function syncCrmForBusiness(businessId: string): Promise<CrmSyncRes
         else if (result === "touched") touched++;
       }
       cursor = page.nextCursor;
+      hasMore = page.hasMore && cursor !== null;
       pages++;
-      if (pages >= MAX_PAGES_PER_RUN && page.hasMore) {
+      if (pages >= MAX_PAGES_PER_RUN && hasMore) {
         truncated = true;
         break;
       }
-    } while (cursor);
+    }
 
     await prisma.crmConnection.update({
       where: { businessId },

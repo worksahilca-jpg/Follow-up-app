@@ -35,6 +35,54 @@ export async function GET(request: NextRequest) {
 }
 
 /**
+ * What to record for one Meta message event, and what (if anything) the
+ * lead actually said in words.
+ *
+ * Both inbound paths below used to read `event.message.text` and `continue`
+ * the moment it was missing. A DM whose only content is an attachment —
+ * a photo of the broken thing, a voice note, a shared reel or post — has
+ * NO `text` field at all, so the whole event was skipped: no Lead row, no
+ * Message, no acknowledgement, nothing anywhere in the app. "Here's a
+ * picture of my roof" is a completely ordinary first contact for exactly
+ * the trades/realtor businesses this product is for, and it was a
+ * silently dropped lead every single time.
+ *
+ * `body` is what gets stored, so an attachment-only DM becomes a real,
+ * visible message rather than a void. `ownWords` is ONLY what the lead
+ * typed themselves, and is what the instant acknowledgement is allowed to
+ * answer — feeding it a placeholder FollowUp wrote itself would invite a
+ * generated reply to a message nobody sent. Empty `ownWords` makes
+ * acknowledgeNewLead fall through to its always-safe fixed line (see its
+ * "no inbound text" branch), which is the honest behavior here: the owner
+ * is told someone got in touch, without a machine pretending to have
+ * understood a photo.
+ *
+ * Returns null for an event that genuinely carries no message content at
+ * all (a read receipt, a delivery receipt, a reaction) — those are not
+ * lead messages and were correctly skipped before.
+ */
+function messageContent(message: unknown): { body: string; ownWords: string } | null {
+  const m = (message ?? {}) as { text?: unknown; attachments?: unknown };
+  const ownWords = typeof m.text === "string" ? m.text.trim() : "";
+  if (ownWords) return { body: ownWords, ownWords };
+
+  const attachments = Array.isArray(m.attachments) ? m.attachments : [];
+  if (attachments.length === 0) return null;
+
+  // Meta's attachment `type` is a short lowercase tag (image, video,
+  // audio, file, share, story_mention, ...). Kept verbatim rather than
+  // mapped to prettier words so an unfamiliar future type still reads as
+  // something rather than as "unknown".
+  const kinds = attachments.map((a) => {
+    const type = (a as { type?: unknown } | null)?.type;
+    return typeof type === "string" && type ? type : "attachment";
+  });
+  const unique = [...new Set(kinds)];
+  const label = attachments.length > 1 ? `${attachments.length} ${unique.join("/")} attachments` : unique[0];
+  return { body: `[Sent ${label} with no message text]`, ownWords: "" };
+}
+
+/**
  * POST /api/instagram/webhook — real inbound DM events. App-wide (single
  * shared endpoint, see src/lib/instagram.ts doc comment), so every
  * event's recipient ID has to be matched against a business's
@@ -60,7 +108,15 @@ export async function POST(request: NextRequest) {
   // all. See research/integrations/2026-09-08-meta-business-agent-webhook-behavior.md
   // and the warning on captureDirectReply() (src/lib/instagram.ts)
   // before trusting the is_echo capture path below at scale.
-  const payload = JSON.parse(rawBody || "{}");
+  let payload: { object?: string; entry?: unknown };
+  try {
+    payload = JSON.parse(rawBody || "{}");
+  } catch {
+    // A signed-but-unparseable body has nothing to retry into. Throwing
+    // here would surface as a 500, which Meta retries indefinitely.
+    console.error("Meta webhook: signed payload wasn't valid JSON, ignoring.");
+    return NextResponse.json({ success: true });
+  }
   if (payload.object === "page" && Array.isArray(payload.entry)) {
     await handlePageEvents(payload.entry);
     return NextResponse.json({ success: true });
@@ -82,8 +138,8 @@ export async function POST(request: NextRequest) {
 
     for (const event of entry.messaging ?? []) {
       const senderId: string | undefined = event.sender?.id;
-      const text: string | undefined = event.message?.text;
-      if (!senderId || !text) continue;
+      const content = messageContent(event.message);
+      if (!senderId || !content) continue;
 
       // is_echo marks a message the connected account itself sent — not
       // through FollowUp, so not an inbound lead message. Task #68: this
@@ -103,18 +159,20 @@ export async function POST(request: NextRequest) {
         if (!recipientId) continue;
         const lead = await findOrCreateLeadByInstagram(business.id, recipientId);
         const sentAt = typeof event.timestamp === "number" ? new Date(event.timestamp) : new Date();
-        await captureDirectReply(lead.id, "instagram", text, "instagram_direct", event.message?.mid, sentAt);
+        await captureDirectReply(lead.id, "instagram", content.body, "instagram_direct", event.message?.mid, sentAt);
         continue;
       }
 
       const lead = await findOrCreateLeadByInstagram(business.id, senderId);
 
       const conversation = await findOrCreateConversation(lead.id, "instagram");
-      const isNewMessage = await createInboundMessageIfNew(conversation.id, text, new Date(), event.message?.mid);
+      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid);
       if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
 
       // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
-      await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: text, inboundAt: new Date() });
+      // `ownWords`, not `body`: an attachment-only DM must not get a
+      // generated reply to a placeholder FollowUp wrote itself (see messageContent).
+      await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: content.ownWords, inboundAt: new Date() });
       await scoreAndDraftForLead(lead.id);
       await checkRapidEngagement(lead.id);
     }
@@ -139,8 +197,8 @@ async function handlePageEvents(entries: any[]): Promise<void> {
 
     for (const event of entry.messaging ?? []) {
       const senderId: string | undefined = event.sender?.id;
-      const text: string | undefined = event.message?.text;
-      if (!senderId || !text) continue;
+      const content = messageContent(event.message);
+      if (!senderId || !content) continue;
 
       // Same "capture, don't drop" treatment as Instagram's echo path
       // above — see the comment there for why. Messenger's own Business
@@ -152,16 +210,17 @@ async function handlePageEvents(entries: any[]): Promise<void> {
         if (!recipientId || recipientId === pageId) continue;
         const lead = await findOrCreateLeadByMessenger(business.id, recipientId);
         const sentAt = typeof event.timestamp === "number" ? new Date(event.timestamp) : new Date();
-        await captureDirectReply(lead.id, "messenger", text, "messenger_direct", event.message?.mid, sentAt);
+        await captureDirectReply(lead.id, "messenger", content.body, "messenger_direct", event.message?.mid, sentAt);
         continue;
       }
 
       const lead = await findOrCreateLeadByMessenger(business.id, senderId);
       const conversation = await findOrCreateConversation(lead.id, "messenger");
-      const isNewMessage = await createInboundMessageIfNew(conversation.id, text, new Date(), event.message?.mid);
+      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid);
       if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
 
-      await acknowledgeNewLead(lead.id, { channel: "messenger", inboundText: text, inboundAt: new Date() });
+      // `ownWords`, not `body` — see the matching comment on the Instagram path above.
+      await acknowledgeNewLead(lead.id, { channel: "messenger", inboundText: content.ownWords, inboundAt: new Date() });
       await scoreAndDraftForLead(lead.id);
       await checkRapidEngagement(lead.id);
     }

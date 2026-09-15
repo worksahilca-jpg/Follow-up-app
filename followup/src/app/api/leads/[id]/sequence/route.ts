@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
-import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
+import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { enrollLead, unenrollLead, getLeadEnrollment } from "@/lib/sequences";
 import { parseJsonBody } from "@/lib/validation";
 
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireActiveBilling(ctx.businessId))) {
-    return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+    return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
 
   const { id } = await params;

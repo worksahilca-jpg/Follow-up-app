@@ -71,8 +71,59 @@ export async function requireActiveBilling(businessId: string): Promise<boolean>
   return hasActiveAccess(business?.subscriptionStatus, business?.tier);
 }
 
+/**
+ * The generic lock message, for the common case: nobody has subscribed yet.
+ *
+ * Prefer `billingLockedMessage(businessId)` below. This constant is still
+ * exported for the handful of places that genuinely have no business context
+ * to look up, and as the fallback when the lookup fails.
+ */
 export const BILLING_LOCKED_MESSAGE =
   "Start your free 14-day trial to unlock this — see Billing in Settings.";
+
+/**
+ * Why access is locked, in words the owner can act on.
+ *
+ * Every one of the ~40 gated routes used to return BILLING_LOCKED_MESSAGE
+ * verbatim, whatever the actual reason. So a paying customer whose card was
+ * declined — `past_due` — was told to "start your free 14-day trial" when they
+ * tried to send a follow-up, invite a teammate, or run automation. They are
+ * already a customer. The one place that told them the truth ("Payment failed
+ * — update your card") was the Billing tab, which is the one screen they had
+ * no reason to open, because as far as every other screen was concerned they
+ * had simply never subscribed.
+ *
+ * Losing a customer to a silently-expired card is bad; losing them because the
+ * product couldn't tell them their card had expired is worse.
+ *
+ * Statuses come from Stripe via the billing webhook — see syncSubscription.
+ */
+export async function billingLockedMessage(businessId: string): Promise<string> {
+  try {
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
+      select: { subscriptionStatus: true },
+    });
+    switch (business?.subscriptionStatus) {
+      case "past_due":
+      case "unpaid":
+        return "Your last payment didn't go through — update your card under Billing in Settings to switch this back on.";
+      case "canceled":
+        return "Your subscription was cancelled. Resubscribe under Billing in Settings to switch this back on.";
+      case "incomplete":
+      case "incomplete_expired":
+        return "Your subscription was never finished — complete checkout under Billing in Settings.";
+      case "paused":
+        return "Your subscription is paused. Resume it under Billing in Settings.";
+      default:
+        return BILLING_LOCKED_MESSAGE;
+    }
+  } catch {
+    // The gate has already decided to refuse; a failed lookup here must not
+    // turn a clean 402 into a 500. Fall back to the generic wording.
+    return BILLING_LOCKED_MESSAGE;
+  }
+}
 
 // --- Free tier: the two checks called out in the comment above as not yet
 // wired anywhere (research/market/2026-09-11-tier-pricing-recommendation.md

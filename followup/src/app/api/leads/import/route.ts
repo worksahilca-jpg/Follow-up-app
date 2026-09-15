@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 import { getSessionContext } from "@/lib/session";
-import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
+import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { makeBatchAssigner } from "@/lib/assignment";
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   if (await tooManyRecentActions(ctx.businessId, "leads.import", { windowMinutes: 10, max: 5 })) return NextResponse.json({ success: false, message: "Too many requests — try again in a few minutes." }, { status: 429 });
   void recordAudit(ctx, "leads.import");
   if (!(await requireActiveBilling(ctx.businessId))) {
-    return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+    return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
 
   const form = await request.formData().catch(() => null);

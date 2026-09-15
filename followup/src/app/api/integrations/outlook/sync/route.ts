@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
-import { requireActiveBilling, BILLING_LOCKED_MESSAGE } from "@/lib/billing";
+import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { syncOutlookForBusiness } from "@/lib/outlookSync";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 
@@ -16,7 +16,7 @@ export async function POST() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireActiveBilling(ctx.businessId))) {
-    return NextResponse.json({ success: false, message: BILLING_LOCKED_MESSAGE }, { status: 402 });
+    return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
   if (await tooManyRecentActions(ctx.businessId, "outlook-sync", { windowMinutes: 10, max: 5 })) {
     return NextResponse.json({ success: false, message: "Too many syncs right now — try again in a few minutes." }, { status: 429 });

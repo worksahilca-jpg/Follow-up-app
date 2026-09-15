@@ -65,6 +65,46 @@ export const DEAD_LEAD_NAME = "Reactivate cold leads";
 // for the main rule.
 export const DEAD_LEAD_DEFAULT_DAYS = 45;
 
+/**
+ * Is this error worth trying again on the next tick, rather than after the
+ * full recheck window?
+ *
+ * Deliberately a narrow allowlist, not a denylist. Everything not listed here
+ * keeps the existing behaviour — the lead stays claimed and is reconsidered at
+ * the normal recheck — because the cost of getting this wrong in the generous
+ * direction is a lead that gets re-drafted every hour forever, paying for an
+ * OpenAI call each time to produce a message that can never send.
+ *
+ * The classes below are the ones that genuinely resolve on their own: provider
+ * rate limits, upstream 5xx, and network/timeout failures.
+ */
+export function isTransientError(err: unknown): boolean {
+  if (!err) return false;
+  const e = err as { status?: number; code?: string; message?: string };
+
+  // OpenAI, Google and Twilio all surface an HTTP status on the error.
+  if (typeof e.status === "number" && (e.status === 429 || e.status >= 500)) return true;
+
+  // Node/undici network failures.
+  if (typeof e.code === "string" && ["ETIMEDOUT", "ECONNRESET", "ECONNREFUSED", "EAI_AGAIN", "UND_ERR_CONNECT_TIMEOUT"].includes(e.code)) {
+    return true;
+  }
+
+  if (typeof e.message !== "string") return false;
+  const m = e.message.toLowerCase();
+  return (
+    m.includes("rate limit") ||
+    m.includes("timeout") ||
+    m.includes("timed out") ||
+    m.includes("etimedout") ||
+    m.includes("econnreset") ||
+    m.includes("socket hang up") ||
+    m.includes("service unavailable") ||
+    m.includes("temporarily unavailable") ||
+    m.includes("overloaded")
+  );
+}
+
 interface AutomationResult {
   checked: number;
   unanswered: number; // of `checked`, how many were picked up because the LEAD wrote last and nobody answered
@@ -489,6 +529,27 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         ? { kind: "sent" }
         : { kind: "skipped", note: `${lead.name}: ${result.message ?? "unknown error"}` };
     } catch (err) {
+      // The claim taken above is what stops two ticks racing the same lead.
+      // It was never released on this path, so a lead that threw stayed
+      // claimed until `recheckCutoff` — twenty hours — while the automation
+      // badge went on saying "Following up soon". One OpenAI 429, or a cron
+      // invocation that times out mid-lead, and that lead is silently out of
+      // the running for the rest of the day. On a product whose whole promise
+      // is that nothing gets missed, a swallowed twenty-hour gap is the
+      // failure, not the 429.
+      //
+      // The claim is released only for errors that are actually worth
+      // retrying soon. Releasing on EVERY error would be worse than the bug:
+      // a permanently-failing lead (malformed address, unsupported channel)
+      // would be re-drafted every single hour forever, burning OpenAI spend
+      // on a message that can never send. So the default is unchanged —
+      // stay claimed, retry after the normal recheck — and only the known
+      // transient classes get an early retry.
+      if (isTransientError(err)) {
+        await prisma.lead
+          .updateMany({ where: { id: lead.id }, data: { lastAutomationCheckedAt: null } })
+          .catch((e) => console.error(`Failed to release automation claim for lead ${lead.id}:`, e));
+      }
       return { kind: "skipped", note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
     }
   });

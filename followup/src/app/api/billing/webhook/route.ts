@@ -42,6 +42,28 @@ export async function POST(request: NextRequest) {
     throw err;
   }
 
+  // The marker above is written BEFORE the work below, so it has to be
+  // rolled back if the work doesn't actually happen — otherwise a
+  // transient failure here (Stripe API timeout on the re-fetch, a DB blip
+  // in syncSubscription) is permanent: this returns 500, Stripe retries,
+  // the retry collides with the marker, and the handler reports "already
+  // handled" for an event whose side effects never ran. A business that
+  // just paid would stay locked out with no second chance at the event.
+  try {
+    await processEvent(stripe, event);
+  } catch (err) {
+    await prisma.processedWebhookEvent
+      .delete({ where: { eventId: event.id } })
+      // Best-effort: if the rollback itself fails there's nothing further
+      // to do here, and the original error is the one worth surfacing.
+      .catch((cleanupErr) => console.error(`[billing] failed to roll back the processed-event marker for ${event.id}:`, cleanupErr));
+    throw err;
+  }
+
+  return NextResponse.json({ received: true });
+}
+
+async function processEvent(stripe: Stripe, event: Stripe.Event) {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -91,8 +113,6 @@ export async function POST(request: NextRequest) {
     default:
       break;
   }
-
-  return NextResponse.json({ received: true });
 }
 
 async function syncSubscription(businessId: string, subscription: Stripe.Subscription) {

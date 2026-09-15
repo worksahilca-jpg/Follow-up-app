@@ -123,8 +123,20 @@ export function computeAutomationStatus(
   let etaHours: number | null = null;
 
   if (lastIsInbound && rules.unansweredEnabled) {
+    // Both ways a substantive outbound reply can exist, matching
+    // findUnansweredLeads() in automation.ts exactly: a FollowUp row whose
+    // trigger isn't the instant-ack template, OR a directly-captured
+    // Instagram/Messenger echo, which captureDirectReply() records on the
+    // Message (source set) and never gives a FollowUp row at all. Checking
+    // only the first made this badge disagree with the automation that
+    // actually sends: an owner who replied in the Instagram app got the
+    // 3-hour first-reply threshold here instead of the business's real
+    // 24-hour window, so the lead read "Following up soon" ~21h before
+    // anything was going to happen.
+    const hasDirectEchoReply = lead.conversation.some((m) => m.direction === "outbound" && m.source);
     const hasSubstantiveFollowUp = lead.followUpTriggers.some((t) => t !== "instant_ack");
-    const thresholdHours = hasSubstantiveFollowUp ? rules.unansweredHours : UNANSWERED_FIRST_REPLY_HOURS;
+    const hasSubstantiveOutbound = hasDirectEchoReply || hasSubstantiveFollowUp;
+    const thresholdHours = hasSubstantiveOutbound ? rules.unansweredHours : UNANSWERED_FIRST_REPLY_HOURS;
     const hoursSince = (now.getTime() - new Date(last!.date).getTime()) / 3_600_000;
     if (hoursSince >= thresholdHours) due = "unanswered";
     else etaHours = thresholdHours - hoursSince;

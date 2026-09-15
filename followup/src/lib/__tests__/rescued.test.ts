@@ -61,6 +61,38 @@ describe("rescue report", () => {
     expect(p.booking.count.mock.calls[0][0].where.leadId.in.sort()).toEqual(["a", "b", "c"]);
   });
 
+  // The query is ordered sentAt DESC, so the oldest follow-up is iterated
+  // LAST. The dedup used to compare `f.repliedAt > new Date(existing.repliedAfterHours)`
+  // — a real Date against a DURATION-in-hours reinterpreted as epoch
+  // milliseconds (new Date(2) is 2ms past 1970) — which is always true, so
+  // the last row always won and every lead was attributed to its OLDEST
+  // follow-up.
+  it("attributes a lead to the follow-up it replied to MOST recently, not the oldest one", async () => {
+    p.followUp.findMany.mockResolvedValue([
+      // Newest send first, as the sentAt: "desc" query returns them.
+      sentRow("a", { trigger: "unanswered", sentAt: h(10), repliedAt: h(6) }),
+      sentRow("a", { trigger: "silence", sentAt: h(100), repliedAt: h(98) }),
+    ]);
+
+    const r = await getRescueReport("biz1", 7);
+
+    expect(r.rescued).toBe(1);
+    // Was { trigger: "silence", repliedAfterHours: 2 } — the 100-hour-old
+    // message, not the one that actually brought them back.
+    expect(r.leads[0]).toMatchObject({ id: "a", trigger: "unanswered", repliedAfterHours: 4 });
+  });
+
+  it("orders leads by most recent reply first, which is what the digest's top-10 slice depends on", async () => {
+    p.followUp.findMany.mockResolvedValue([
+      sentRow("older", { sentAt: h(20), repliedAt: h(19) }),
+      sentRow("newer", { sentAt: h(30), repliedAt: h(2) }),
+    ]);
+
+    const r = await getRescueReport("biz1", 7);
+
+    expect(r.leads.map((l) => l.id)).toEqual(["newer", "older"]);
+  });
+
   it("renders a digest an owner can read in ten seconds", async () => {
     p.followUp.findMany.mockResolvedValue([sentRow("a")]);
     const r = await getRescueReport("biz1", 7);

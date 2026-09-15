@@ -215,6 +215,26 @@ AI-native-competitor-crowded space rather than an open gap. Don't re-litigate th
 by defaulting back into a vertical pick from a future research pass; if new
 evidence changes the calculus, that's a fresh CEO decision, not a reversion.
 
+## Rule 1 re-confirmed against an outside brief (2026-09-15)
+
+An external strategy brief (repositioning FollowUp as a multilingual AI lead-response
+assistant, pasted into a session by the CEO for review) argued the strongest launch is to
+narrow to one industry + region. Compared line by line against this document:
+
+- Its core positioning and workflow (capture → qualify → score → book → human handoff, in
+  every language) are not new — they're this document's mission, already shipped.
+- Its "pick one vertical" advice directly re-argues Rule 1, already closed above with a
+  documented reason (Structurely/Ylopo already own that exact pitch in real estate).
+
+**No direction change.** This is a confirming note so the same advice doesn't get
+re-litigated from scratch next time it shows up in different packaging — the evidence base
+(`research/market/2026-09-06-realtor-tool-landscape.md`) hasn't changed.
+
+Two things from the same brief *were* real, actionable gaps, logged separately rather than
+here since they're not direction disputes: the multilingual claim has no defined tested
+language set (Point 3 below already flags this), and no primary owner interviews are on
+file (desk research only, so far).
+
 ## Where we are right now, against the main goal (updated 2026-09-07, end of day)
 
 Measured against the four points at the top of this file, code-verified.

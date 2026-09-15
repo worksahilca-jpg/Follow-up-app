@@ -16,17 +16,18 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String?
-  createdAt     DateTime       @default(now())
-  business      Business?      @relation(fields: [businessId], references: [id])
-  businessId    String?
-  role          TeamRole       @default(ADMIN)
-  assignedLeads Lead[]         @relation("AssignedLeads")
-  integrations  Integration[]
-  notifications Notification[]
-  savedFilters  SavedFilter[]
+  id                      String            @id @default(cuid())
+  email                   String            @unique
+  name                    String?
+  createdAt               DateTime          @default(now())
+  business                Business?         @relation(fields: [businessId], references: [id])
+  businessId              String?
+  role                    TeamRole          @default(ADMIN)
+  assignedLeads           Lead[]            @relation("AssignedLeads")
+  integrations            Integration[]
+  notifications           Notification[]
+  savedFilters            SavedFilter[]
+  stoppedReactivationRuns ReactivationRun[] @relation("StoppedReactivationRuns")
 
   // Every Gmail sync/automation lookup resolves the connected account via
   // "the user(s) on this business" — without this, that's a table scan.
@@ -39,19 +40,19 @@ enum TeamRole {
 }
 
 model Business {
-  id              String       @id @default(cuid())
-  name            String
-  industry        String?
-  teamSize        Int?
-  avgDealValue    Float?
-  primaryChannels String[]
-  onboarded       Boolean      @default(false)
-  createdAt       DateTime     @default(now())
+  id                    String            @id @default(cuid())
+  name                  String
+  industry              String?
+  teamSize              Int?
+  avgDealValue          Float?
+  primaryChannels       String[]
+  onboarded             Boolean           @default(false)
+  createdAt             DateTime          @default(now())
   // IANA name, e.g. "America/New_York" — drives which wall-clock hours
   // count as "business hours" when generating booking slots (see
   // src/lib/booking.ts). Not yet exposed in Settings; defaults to a
   // reasonable US timezone until it is.
-  timezone        String       @default("America/New_York")
+  timezone              String            @default("America/New_York")
   // "followup" (default): availability is just the fixed business-hours
   // grid minus FollowUp's own Booking rows, as it always was. "google":
   // ALSO excludes real busy blocks from the connected Google Calendar
@@ -59,19 +60,20 @@ model Business {
   // so a lead can't book over a meeting the owner already has. Only
   // meaningful when Gmail is connected; getAvailableSlots() falls back to
   // "followup" behavior if it isn't, rather than erroring.
-  bookingCalendarSource String  @default("followup")
-  users           User[]
-  leads           Lead[]
-  automations     Automation[]
-  bookings        Booking[]
-  sequences       Sequence[]
-  sourceRules     SourceRule[]
-  invites         Invite[]
-  feedback        ProductFeedback[]
-  rateLimitHits   RateLimitHit[]
-  savedFilters    SavedFilter[]
-  filteredEmails  FilteredEmail[]
-  crmConnection   CrmConnection?
+  bookingCalendarSource String            @default("followup")
+  users                 User[]
+  leads                 Lead[]
+  automations           Automation[]
+  reactivationRuns      ReactivationRun[]
+  bookings              Booking[]
+  sequences             Sequence[]
+  sourceRules           SourceRule[]
+  invites               Invite[]
+  feedback              ProductFeedback[]
+  rateLimitHits         RateLimitHit[]
+  savedFilters          SavedFilter[]
+  filteredEmails        FilteredEmail[]
+  crmConnection         CrmConnection?
 
   // Billing (Stripe) — Free/Plus/Pro tiers plus an optional Voice add-on
   // (research/market/2026-09-11-tier-pricing-recommendation.md). subscriptionStatus
@@ -117,13 +119,13 @@ model Business {
   // business's own Twilio Auth Token (not FollowUp's), needed to validate
   // that inbound requests actually came from Twilio — see
   // src/lib/twilio.ts and src/app/api/twilio/**.
-  twilioSecret    String? @unique
-  twilioAuthToken String?
+  twilioSecret        String? @unique
+  twilioAuthToken     String?
   // Needed for OUTBOUND sending (src/lib/twilio.ts sendSms) — not secret
   // the way the Auth Token is (both are shown openly in the Twilio
   // Console), so these are safe to echo back on GET, unlike the token.
-  twilioAccountSid   String?
-  twilioPhoneNumber  String?
+  twilioAccountSid    String?
+  twilioPhoneNumber   String?
   // The Twilio WhatsApp-enabled sender number (e.g. "+14155238886") —
   // deliberately separate from twilioPhoneNumber above rather than reused,
   // since a business's plain-SMS number and its WhatsApp sender are
@@ -178,7 +180,7 @@ model Business {
   // src/app/api/instagram/webhook/route.ts and get routed to the right
   // business by matching instagramUserId against the event's recipient
   // ID. See src/lib/instagram.ts.
-  instagramUserId     String? @unique
+  instagramUserId      String? @unique
   instagramAccessToken String?
 
   // Facebook Page — Messenger DMs and Lead Ads (src/lib/facebook.ts). Same
@@ -207,6 +209,56 @@ enum PipelineStage {
 // sends to. OFF_PLATFORM is the case with no honest answer from the thread
 // alone: numbers were swapped, or a call was booked, and whatever happened
 // next happened where FollowUp cannot see it.
+/**
+ * One press of "Send all" on the reactivation batch.
+ * It exists as a ROW, not as a variable, for one reason: STOP has to work.
+ * The owner presses Stop in one serverless invocation while the sending
+ * loop is running in a different one — there is no shared memory between
+ * them, and no way to signal the loop except through something both can
+ * see. So the loop re-reads this row's status before every single send,
+ * and Stop is a one-field UPDATE. That read is the entire difference
+ * between a Stop button that works and one that just hides itself.
+ */
+model ReactivationRun {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id])
+  businessId String
+
+  status ReactivationRunStatus @default(RUNNING)
+
+  // What the owner was told they were approving, captured at the moment
+  // they approved it. Kept even as the world moves on, so "you said yes to
+  // 43" stays checkable against what actually went out.
+  totalPlanned Int
+  sent         Int @default(0)
+  failed       Int @default(0)
+  // Reached but deliberately not sent — already messaged by another run,
+  // opted out since, or replied since the batch was built.
+  skipped      Int @default(0)
+
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  // Who pressed Stop. Null on a run that finished on its own.
+  stoppedBy   User?   @relation("StoppedReactivationRuns", fields: [stoppedById], references: [id])
+  stoppedById String?
+
+  @@index([businessId, status])
+  @@index([businessId, startedAt])
+}
+
+enum ReactivationRunStatus {
+  RUNNING
+  // The owner pressed Stop. Distinct from COMPLETED on purpose: "you
+  // stopped this after 12 of 43" is a different thing to tell someone
+  // than "43 sent", and conflating them loses the only record that the
+  // remaining 31 were a choice rather than a failure.
+  STOPPED
+  COMPLETED
+  // The run itself broke, as opposed to individual sends failing.
+  FAILED
+}
+
 enum QuietOutcome {
   COLD
   // Dropped by US, not by them: the lead's own message is the last thing in
@@ -314,10 +366,10 @@ model Lead {
   // enrolled" — unrelated to automationTier's silence-based cadence above,
   // and the two are mutually exclusive per lead (see sequences.ts) so they
   // never both try to send on the same lead.
-  sequence          Sequence? @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
-  sequenceId        String?
-  sequenceStepIndex Int       @default(0)
-  sequenceStepDueAt DateTime?
+  sequence            Sequence? @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
+  sequenceId          String?
+  sequenceStepIndex   Int       @default(0)
+  sequenceStepDueAt   DateTime?
   // Set once, in runSequencesForBusiness()'s "finished the last step"
   // branch — the only sequence exit path that gets a persisted timestamp.
   // Deliberately NOT set on early unenroll (manual, sequence deleted, or
@@ -359,12 +411,36 @@ model Lead {
   quietOutcomeReason String?
   quietOutcomeAt     DateTime?
 
+  // Claimed the instant a reactivation message is about to go out, and
+  // never cleared. This is the hard guarantee that ONE lead gets AT MOST
+  // ONE reactivation message, ever — across repeated batches, a stopped
+  // run that's restarted, an owner double-tapping "Send all", and two
+  // serverless invocations overlapping. Claimed with the same atomic
+  // conditional updateMany the rest of the codebase uses (see
+  // lastRapidEngagementNotifiedAt): whoever's UPDATE matches the
+  // `reactivationSentAt: null` row wins, the loser's matches nothing and
+  // skips. A per-run guard alone could not promise this — runs are rows,
+  // and two of them can exist.
+  //
+  // Deliberately NOT cleared on failure: a send that threw after the
+  // provider accepted it is indistinguishable from one that didn't, and
+  // "we might have already emailed them" has to resolve to "don't email
+  // them again."
+  reactivationSentAt DateTime?
+
   conversations Conversation[]
   deals         Deal[]
   followUps     FollowUp[]
   tasks         Task[]
   insights      AIInsight[]
   bookings      Booking[]
+
+  // Which outside CRM this lead came from, and its id there — set by
+  // src/lib/crmSync.ts, used both to avoid re-importing the same contact
+  // and to push a note back after FollowUp sends on their behalf (see
+  // sendFollowUpToLead in src/lib/sending.ts).
+  crmProvider String?
+  crmId       String?
 
   @@unique([businessId, email])
   // Postgres allows multiple NULLs in a unique index, so leads with no
@@ -374,6 +450,7 @@ model Lead {
   // findOrCreateLeadByInstagram()'s P2002 fallback against the race two
   // concurrent inbound messages for the same new contact create.
   @@unique([businessId, phone])
+  @@unique([businessId, crmProvider, crmId])
   // getLeads() and the cron/automation eligibility query both filter on
   // businessId plus one of these — without a composite index each is a
   // full scan of the business's leads once that list gets big.
@@ -387,23 +464,14 @@ model Lead {
   @@index([businessId, sequenceStepDueAt])
   // getAnalytics()'s sequence-health "completed in the last 30 days" scan.
   @@index([businessId, sequenceCompletedAt])
-
-  // Which outside CRM this lead came from, and its id there — set by
-  // src/lib/crmSync.ts, used both to avoid re-importing the same contact
-  // and to push a note back after FollowUp sends on their behalf (see
-  // sendFollowUpToLead in src/lib/sending.ts).
-  crmProvider String?
-  crmId       String?
-
-  @@unique([businessId, crmProvider, crmId])
 }
 
 model Conversation {
-  id         String    @id @default(cuid())
-  lead       Lead      @relation(fields: [leadId], references: [id])
-  leadId     String
-  channel    String // email | call | text | whatsapp | instagram
-  externalId String?   @unique // Gmail thread id / Outlook conversationId, for idempotent sync
+  id            String    @id @default(cuid())
+  lead          Lead      @relation(fields: [leadId], references: [id])
+  leadId        String
+  channel       String // email | call | text | whatsapp | instagram
+  externalId    String?   @unique // Gmail thread id / Outlook conversationId, for idempotent sync
   // Which mailbox a channel:"email" conversation actually lives in — null
   // (a row from before this field existed, or a manual-entry lead with no
   // captured thread yet) means Gmail, the original and long-standing
@@ -546,15 +614,15 @@ model Booking {
 // takes over its automated cadence entirely while active (see
 // src/lib/sequences.ts for how the two stay mutually exclusive).
 model Sequence {
-  id         String         @id @default(cuid())
-  business   Business       @relation(fields: [businessId], references: [id])
-  businessId String
-  name       String
-  active     Boolean        @default(true)
-  steps      SequenceStep[]
-  leads      Lead[]
+  id          String         @id @default(cuid())
+  business    Business       @relation(fields: [businessId], references: [id])
+  businessId  String
+  name        String
+  active      Boolean        @default(true)
+  steps       SequenceStep[]
+  leads       Lead[]
   sourceRules SourceRule[]
-  createdAt  DateTime       @default(now())
+  createdAt   DateTime       @default(now())
 
   @@index([businessId])
 }
@@ -600,16 +668,16 @@ model SequenceStep {
 // someone on the team claims it — for a source where "whoever's
 // technically least busy" isn't who should actually work it.
 model SourceRule {
-  id                  String          @id @default(cuid())
-  business            Business        @relation(fields: [businessId], references: [id])
-  businessId          String
-  source              String
-  sequence            Sequence?       @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
-  sequenceId          String?
+  id                    String          @id @default(cuid())
+  business              Business        @relation(fields: [businessId], references: [id])
+  businessId            String
+  source                String
+  sequence              Sequence?       @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
+  sequenceId            String?
   automationTierDefault AutomationTier?
-  routeToPool         Boolean         @default(false)
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
+  routeToPool           Boolean         @default(false)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
   @@unique([businessId, source])
 }
@@ -725,33 +793,33 @@ model Notification {
 }
 
 model Integration {
-  id           String    @id @default(cuid())
-  user         User      @relation(fields: [userId], references: [id])
-  userId       String
-  provider     String // gmail | google_calendar | outlook | instagram | ...
-  status       String    @default("disconnected") // connected | disconnected | error
-  accessToken  String?
-  refreshToken String?
-  connectedAt  DateTime?
+  id                String    @id @default(cuid())
+  user              User      @relation(fields: [userId], references: [id])
+  userId            String
+  provider          String // gmail | google_calendar | outlook | instagram | ...
+  status            String    @default("disconnected") // connected | disconnected | error
+  accessToken       String?
+  refreshToken      String?
+  connectedAt       DateTime?
   // When the automatic inbox sync (src/lib/gmailSync.ts, run every few
   // minutes by /api/cron/gmail-sync) last completed for this connection —
   // the next run only asks Gmail for threads newer than this, so a
   // thread is fetched + AI-classified once when it's new, not 30 threads
   // re-classified on every tick.
-  lastSyncedAt DateTime?
+  lastSyncedAt      DateTime?
   // When the last DEEP pass ran (the full 90-day / 100-thread pull the
   // manual "Sync now" also does). The cron does one automatically once a
   // day on top of the every-ten-minutes incremental tick, so an owner
   // never has to press a button — and a classifier improvement re-judges
   // the whole inbox on its own within a day instead of only new mail.
-  deepSyncedAt DateTime?
+  deepSyncedAt      DateTime?
   // The last automatic sync failure for this connection (timestamp +
   // message), cleared by the next successful run — so a sync that keeps
   // dying shows up on the row, not only in a serverless log.
-  lastSyncError String?
+  lastSyncError     String?
   // The Gmail address actually connected (can differ from the login
   // email) — what Google's push notifications identify the mailbox by.
-  accountEmail String?
+  accountEmail      String?
   // Gmail push (src/lib/integrations/gmail.ts ensureGmailWatch): Google
   // publishes a Pub/Sub message the moment the inbox changes, and
   // /api/integrations/gmail/push runs an incremental sync within seconds
@@ -765,7 +833,7 @@ model Integration {
   // client, Microsoft Graph doesn't refresh access tokens for us — this is
   // when the current one actually expires, so a call can refresh just
   // ahead of that instead of on every request or only after a 401.
-  tokenExpiresAt DateTime?
+  tokenExpiresAt    DateTime?
   // Outlook only: Graph's delta-query cursor (the last page's
   // @odata.deltaLink) — persisted so the next sync asks Graph for
   // "what changed since here" instead of re-pulling the whole inbox.
@@ -773,23 +841,23 @@ model Integration {
   // and a delta gone stale (Graph returns 410 Gone after ~a few weeks of
   // inactivity) both look like — either way the next sync just does one
   // full pass and gets a fresh cursor back.
-  deltaLink String?
+  deltaLink         String?
 
   @@unique([userId, provider])
 }
 
 model Automation {
-  id          String   @id @default(cuid())
-  business    Business @relation(fields: [businessId], references: [id])
-  businessId  String
-  name        String
-  triggerDays Int // e.g. "after 5 days of no response"
+  id           String   @id @default(cuid())
+  business     Business @relation(fields: [businessId], references: [id])
+  businessId   String
+  name         String
+  triggerDays  Int // e.g. "after 5 days of no response"
   // Hour-granularity window for actions where a day is too coarse — the
   // "unanswered_reply" action (a lead wrote, nobody answered for N hours).
   triggerHours Int?
-  action      String // auto_send | instant_ack | unanswered_reply | create_reminder | ai_email_suggestion
-  enabled     Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  action       String // auto_send | instant_ack | unanswered_reply | create_reminder | ai_email_suggestion
+  enabled      Boolean  @default(false)
+  createdAt    DateTime @default(now())
 
   @@index([businessId])
 }
@@ -933,22 +1001,22 @@ enum AgentTaskStatus {
 // what a lane *is*; this row is the source of truth for whether it's on
 // shift and what it may spend.
 model AgentRole {
-  id        String   @id @default(cuid())
-  key       String   @unique // matches the filename in .claude/agents/, e.g. "product-ux-agent"
-  title     String
-  brief     String
-  wakesOn   String // human-readable trigger, shown on the floor
-  gate      String // what it may do without a human press
+  id                  String      @id @default(cuid())
+  key                 String      @unique // matches the filename in .claude/agents/, e.g. "product-ux-agent"
+  title               String
+  brief               String
+  wakesOn             String // human-readable trigger, shown on the floor
+  gate                String // what it may do without a human press
   // A lane with no runner implementation yet is still seeded so the floor
   // shows the whole org chart, not just the parts that are live.
-  live      Boolean  @default(false)
-  enabled   Boolean  @default(true)
+  live                Boolean     @default(false)
+  enabled             Boolean     @default(true)
   // Hard daily ceiling in USD, enforced in runner.ts before a shift opens.
   // Low on purpose: a desk that needs more should earn it.
-  dailyCostCeilingUsd Float @default(1.0)
-  createdAt DateTime @default(now())
-  runs      AgentRun[]
-  tasks     AgentTask[]
+  dailyCostCeilingUsd Float       @default(1.0)
+  createdAt           DateTime    @default(now())
+  runs                AgentRun[]
+  tasks               AgentTask[]
 }
 
 // Work you (or, later, the manager lane) put on a desk. This first pass
@@ -971,26 +1039,26 @@ model AgentTask {
 // One shift. The whole point of the office: work that happened while you
 // weren't watching, with the receipt attached.
 model AgentRun {
-  id        String         @id @default(cuid())
-  role      AgentRole      @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId    String
-  task      AgentTask?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  taskId    String?
-  status    AgentRunStatus @default(RUNNING)
+  id           String         @id @default(cuid())
+  role         AgentRole      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId       String
+  task         AgentTask?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  taskId       String?
+  status       AgentRunStatus @default(RUNNING)
   // What woke it: "cron", "manual:you@example.com".
-  trigger   String
-  startedAt DateTime       @default(now())
-  endedAt   DateTime?
+  trigger      String
+  startedAt    DateTime       @default(now())
+  endedAt      DateTime?
   // One line for the floor; `output` is the full thing it wrote.
-  summary   String         @default("")
-  output    String         @default("") @db.Text
-  error     String?
-  model     String         @default("")
-  inputTokens  Int         @default(0)
-  outputTokens Int         @default(0)
+  summary      String         @default("")
+  output       String         @default("") @db.Text
+  error        String?
+  model        String         @default("")
+  inputTokens  Int            @default(0)
+  outputTokens Int            @default(0)
   // Priced at call time from the rates in runner.ts — stored rather than
   // recomputed so a later price change doesn't rewrite history.
-  costUsd   Float          @default(0)
+  costUsd      Float          @default(0)
 
   @@index([roleId, startedAt])
   @@index([startedAt])

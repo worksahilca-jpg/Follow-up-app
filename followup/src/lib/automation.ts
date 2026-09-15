@@ -146,7 +146,7 @@ const EMPTY_RESULT: AutomationResult = {
  * mechanism sequences.ts already uses per-step — this is deliberately
  * NOT a second system prompt, just a stronger steer on the existing one.
  */
-function deadLeadMessageHint(daysSinceContact: number): string {
+export function deadLeadMessageHint(daysSinceContact: number): string {
   return (
     `This lead has gone genuinely cold — nobody, on either side, has said anything in about ${daysSinceContact} ` +
     "days. This is a reactivation message, not a routine follow-up: name that actual elapsed time plainly " +

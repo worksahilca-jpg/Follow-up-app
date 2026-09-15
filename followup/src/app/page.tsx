@@ -7,7 +7,6 @@ import {
   Check,
   X,
   ArrowRight,
-  Home,
   Briefcase,
   Building2,
   Eye,
@@ -289,9 +288,8 @@ export default function LandingPage() {
             If leads reach you before they reach a CRM, this is built for you.
           </p>
         </RevealAward>
-        <div className="mt-10 grid sm:grid-cols-3 gap-5">
+        <div className="mt-10 grid sm:grid-cols-2 gap-5">
           {[
-            { icon: <Home className="h-4 w-4" />, title: "The realtor", body: "Five open houses on Saturday. By Monday, three of those leads have already gone quiet in your inbox — FollowUp tells you which one to call first." },
             { icon: <Briefcase className="h-4 w-4" />, title: "The freelance consultant", body: "One inbox, a dozen open conversations, and no time to triage them by hand. FollowUp turns “I’ll get to it” into a short list you actually get to." },
             { icon: <Building2 className="h-4 w-4" />, title: "The 4-person agency", body: "You're doing client work and new business at the same time. FollowUp watches the pipeline in the background so nothing slips between calls." },
           ].map((item, i) => (

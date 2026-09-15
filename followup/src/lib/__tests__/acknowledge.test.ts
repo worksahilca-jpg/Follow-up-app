@@ -68,7 +68,10 @@ beforeEach(() => {
   p.lead.count.mockResolvedValue(1); // first lead of the month — well inside any tier's cap
   p.message.findFirst.mockResolvedValue(null);
   p.automation.findFirst.mockResolvedValue(null); // absent row = on by default
-  p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "plus" });
+  // subscriptionStatus is read by the same tier gate (checkAiEligibility):
+  // AI and sends pause on a lapsed card, even though capture doesn't.
+  // A paying business in good standing unless a case says otherwise.
+  p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "plus", subscriptionStatus: "active" });
   send.mockResolvedValue({ success: true });
   localize.mockImplementation(async (t: string) => t);
   generateReply.mockResolvedValue("Got it — I'll get you the exact price and follow up shortly.");
@@ -477,14 +480,14 @@ describe("instant acknowledgement", () => {
  */
 describe("the tier's AI allowance", () => {
   it("acknowledges a Free lead inside the cap", async () => {
-    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free", subscriptionStatus: null });
     p.lead.count.mockResolvedValue(20); // exactly the cap — inside it, not past it
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(r.sent).toBe(true);
   });
 
   it("spends no model call on a Free lead past the cap", async () => {
-    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free", subscriptionStatus: null });
     p.lead.count.mockResolvedValue(21);
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(r.sent).toBe(false);
@@ -499,7 +502,7 @@ describe("the tier's AI allowance", () => {
   // acknowledged again — not next month, not on upgrade. Hence the gate
   // sits before the atomic claim rather than after it.
   it("leaves a skipped lead unclaimed, so it can still be acknowledged later", async () => {
-    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free", subscriptionStatus: null });
     p.lead.count.mockResolvedValue(21);
     await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(p.lead.updateMany).not.toHaveBeenCalled();
@@ -507,7 +510,7 @@ describe("the tier's AI allowance", () => {
 
   // Free covers email and the website widget; SMS is a paid channel.
   it("spends no model call on a channel Free doesn't cover", async () => {
-    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free", subscriptionStatus: null });
     p.lead.findUnique.mockResolvedValue({ ...baseLead, source: "SMS" });
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(r.sent).toBe(false);
@@ -534,7 +537,7 @@ describe("the tier's AI allowance", () => {
   // and the wrong one on a paid tier, where nothing purchasable has run
   // out and the real news is that something looks broken.
   it("does not tell a paying customer to upgrade", async () => {
-    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "pro" });
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "pro", subscriptionStatus: "active" });
     p.lead.count.mockResolvedValue(10_001);
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(r.reason).toMatch(/safety measure/i);

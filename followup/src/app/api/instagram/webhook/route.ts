@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
@@ -134,7 +133,13 @@ export async function POST(request: NextRequest) {
       select: { id: true },
     });
     if (!business) continue; // event for an Instagram account no business here has connected
-    if (!(await requireActiveBilling(business.id))) continue;
+    // No billing gate here, on purpose. Meta only retries on a non-2xx,
+    // and this route always answers 200 (see the doc comment above), so
+    // skipping a business's events for a lapsed card didn't defer those
+    // DMs — it destroyed them, with nothing left to replay once the card
+    // was fixed. Capture runs for every account; the money-spending half
+    // (acknowledgeNewLead's send, scoreAndDraftForLead's OpenAI calls)
+    // pauses inside checkAiEligibility — see @/lib/billing.
 
     for (const event of entry.messaging ?? []) {
       const senderId: string | undefined = event.sender?.id;
@@ -193,7 +198,9 @@ async function handlePageEvents(entries: any[]): Promise<void> {
     if (!pageId) continue;
     const business = await prisma.business.findUnique({ where: { facebookPageId: pageId }, select: { id: true } });
     if (!business) continue;
-    if (!(await requireActiveBilling(business.id))) continue;
+    // Same as the Instagram loop above: capture a Messenger DM or a Lead
+    // Ad submission whatever the billing state, and let the AI/send half
+    // pause itself downstream.
 
     for (const event of entry.messaging ?? []) {
       const senderId: string | undefined = event.sender?.id;

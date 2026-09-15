@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireActiveBilling } from "@/lib/billing";
 import { pickAssignee } from "@/lib/assignment";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -73,15 +72,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!business) {
     return NextResponse.json({ success: false, message: "This form isn't set up correctly." }, { status: 404 });
   }
-  // Same "costs money to run" gate as every other way a lead gets created —
-  // phrased for a stranger on the business's own site, not the business
-  // owner, since they're the one who'll see this if it ever fires.
-  if (!(await requireActiveBilling(businessId))) {
-    return NextResponse.json(
-      { success: false, message: "This form isn't currently accepting submissions — please reach out another way." },
-      { status: 503 }
-    );
-  }
+  // Deliberately NOT billing-gated. This used to 503 a lapsed business's
+  // form with "please reach out another way": the visitor closed the tab,
+  // nothing about them was ever written down, and the business owner never
+  // learned that someone had tried. A submitted form is the one copy of
+  // that lead in existence — no sender holds it, nothing retries it — so
+  // it gets written down whatever the card is doing. What pauses instead
+  // is the spend: scoreAndDraftForLead and acknowledgeNewLead below both
+  // refuse on their own through checkAiEligibility (@/lib/billing), so a
+  // locked account captures the lead without a single OpenAI call or
+  // outbound message going out on FollowUp's dime.
 
   // 20 per 10 minutes — generous for a real burst of interest (an ad
   // campaign, a busy open house), tight enough to blunt a script hammering

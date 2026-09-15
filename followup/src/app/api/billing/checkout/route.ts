@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { TRIAL_PERIOD_DAYS } from "@/lib/billing";
+import { VOICE_ADDON_AVAILABLE } from "@/lib/pricing";
 
 const bodySchema = z.object({
   tier: z.enum(["plus", "pro"]),
@@ -28,6 +29,21 @@ export async function POST(request: NextRequest) {
   const parsed = await parseJsonBody(request, bodySchema);
   if (!parsed.ok) return parsed.response;
   const { tier, voiceAddon } = parsed.data;
+
+  // The Voice add-on is deferred (VOICE_ADDON_AVAILABLE, @/lib/pricing).
+  // Settings hides the checkbox, but a hidden control is not a gate —
+  // this endpoint takes `voiceAddon` straight from the request body, so
+  // the refusal has to live here too or a direct POST still buys it.
+  //
+  // Refused rather than silently dropped: quietly ignoring a paid option
+  // someone asked for is how a customer ends up believing they bought
+  // something they didn't.
+  if (voiceAddon && !VOICE_ADDON_AVAILABLE) {
+    return NextResponse.json(
+      { success: false, message: "The Voice add-on isn't available to add right now." },
+      { status: 400 }
+    );
+  }
 
   const tierPriceId = priceIdForTier(tier);
   if (!tierPriceId || (voiceAddon && (!VOICE_FLAT_PRICE_ID || !VOICE_METERED_PRICE_ID))) {

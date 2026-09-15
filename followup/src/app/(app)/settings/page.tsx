@@ -14,7 +14,7 @@ import CrmConfig from "@/components/CrmConfig";
 import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
-import { TIER_INFO, VOICE_ADDON_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
+import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
@@ -1192,16 +1192,22 @@ function SettingsPageInner() {
                 </div>
               ))}
             </div>
-            <label className="mt-3 flex items-center gap-2.5 text-sm text-ink-soft">
-              <input
-                type="checkbox"
-                checked={voiceAddonWanted}
-                onChange={(e) => setVoiceAddonWanted(e.target.checked)}
-                className="h-4 w-4"
-              />
-              Add Voice ({VOICE_ADDON_INFO.priceLabel}, {VOICE_ADDON_INFO.includedMinutes} min included, then{" "}
-              {VOICE_ADDON_INFO.overagePerMinute}/min) — applies to whichever plan you pick above
-            </label>
+            {/* Hidden while the voice agent is deferred (VOICE_ADDON_AVAILABLE,
+                see @/lib/pricing). The checkout affordance only: a business
+                that already has the add-on keeps it, keeps being billed, and
+                still sees it in the plan summary above. */}
+            {VOICE_ADDON_AVAILABLE && (
+              <label className="mt-3 flex items-center gap-2.5 text-sm text-ink-soft">
+                <input
+                  type="checkbox"
+                  checked={voiceAddonWanted}
+                  onChange={(e) => setVoiceAddonWanted(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                Add Voice ({VOICE_ADDON_INFO.priceLabel}, {VOICE_ADDON_INFO.includedMinutes} min included, then{" "}
+                {VOICE_ADDON_INFO.overagePerMinute}/min) — applies to whichever plan you pick above
+              </label>
+            )}
             {billingError && (
               <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
                 {billingError}

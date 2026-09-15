@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
@@ -58,8 +57,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return twiml("<Response/>");
   }
 
-  if (!(await requireActiveBilling(business.id))) return twiml("<Response/>");
-
+  // No billing gate here — see the matching comment in the SMS webhook
+  // (src/app/api/twilio/sms/[secret]/route.ts): refusing an inbound Twilio
+  // webhook loses the lead outright rather than deferring it, because
+  // nothing retries and the sender is never told. Capture runs; the
+  // spending half pauses inside checkAiEligibility (@/lib/billing).
   const from = formParams.From?.replace(/^whatsapp:/, "");
   const ownWords = (formParams.Body ?? "").trim();
   // Media-only inbound (a photo, a voice note — very common on WhatsApp

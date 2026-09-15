@@ -24,6 +24,32 @@ export const TIER_MONTHLY_PRICE_USD: Record<keyof typeof TIER_INFO, number> = {
 
 export const VOICE_ADDON_INFO = { priceLabel: "+$39/mo", includedMinutes: 200, overagePerMinute: "$0.20" };
 
+/**
+ * Whether the Voice add-on can be BOUGHT right now. Founder's call,
+ * 2026-09-15: the live voice agent is deferred, so it stops being
+ * purchasable until it has been verified end to end with a real call.
+ *
+ * A flag, not a deletion, and deliberately so. Nothing about the voice
+ * agent is removed — the bridge, the Twilio wiring, the webhook and the
+ * billing path all stay exactly as they are, because the work is
+ * postponed, not abandoned, and one boolean is the cheapest possible way
+ * back.
+ *
+ * What made this urgent rather than tidy: the add-on was live at $39/mo
+ * while the channel's weakest link is unverified. The voicemail
+ * transcription path may read a `From` field Twilio does not send, which
+ * if true means the whole channel is dead — and one real call settles it.
+ * Selling a channel nobody has proven works is the part that had to stop
+ * today; deciding its future can wait.
+ *
+ * Scope is deliberately narrow: this hides the CHECKOUT affordance only.
+ * A business that already has the add-on keeps it, keeps being billed for
+ * it, and still sees it in their plan summary — silently disabling
+ * something a customer is paying for would be a worse failure than
+ * selling it.
+ */
+export const VOICE_ADDON_AVAILABLE = false;
+
 // Free tier's hard monthly cap on AI processing (research/market/2026-09-11-
 // tier-pricing-recommendation.md §2.2). Lives here (not @/lib/billing)
 // because a "use client" component needs the number too — see the "use

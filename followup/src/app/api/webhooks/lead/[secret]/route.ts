@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireActiveBilling } from "@/lib/billing";
 import { pickAssignee } from "@/lib/assignment";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -54,12 +53,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
   const businessId = business.id;
 
-  if (!(await requireActiveBilling(businessId))) {
-    return NextResponse.json(
-      { success: false, message: "This account isn't on an active plan — leads sent here won't be captured." },
-      { status: 503 }
-    );
-  }
+  // Deliberately NOT billing-gated — see the embed widget's matching
+  // comment. The old 503 here said out loud what the bug was ("leads sent
+  // here won't be captured"): Zapier/Make treat a 503 as a failed task and
+  // drop it (a free Zap doesn't auto-replay), a curl in someone's script
+  // ignores the body entirely, and the lead existed nowhere else. Capture
+  // now always happens; scoreAndDraftForLead and acknowledgeNewLead below
+  // pause themselves via checkAiEligibility (@/lib/billing) while billing
+  // is lapsed, so nothing here spends money for a locked account.
 
   // 100 per 10 minutes — this is machine-to-machine (Zapier/Make/a script),
   // so real usage can legitimately burst higher than a human-filled form

@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
@@ -57,8 +56,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // Twilio and the auth token can be added moments later without an
   // outage in between. Settings nudges toward adding it.
 
-  if (!(await requireActiveBilling(business.id))) return twiml("<Response/>");
-
+  // No billing gate here, on purpose. Twilio does not retry a webhook that
+  // answered with 200 + TwiML, and the person who texted sees nothing at
+  // all — so refusing here didn't pause anything, it deleted the lead
+  // permanently, and fixing the card afterwards could never bring it back.
+  // Capture is free; the parts that cost money (the instant
+  // acknowledgement's send and scoreAndDraftForLead's OpenAI calls, both
+  // below) pause on their own through checkAiEligibility — see its comment
+  // in @/lib/billing.
   const from = formParams.From;
   const ownWords = (formParams.Body ?? "").trim();
   // An MMS whose only content is a picture ("here's the thing that's

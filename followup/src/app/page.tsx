@@ -400,7 +400,13 @@ export default function LandingPage() {
             <div className={styles.pricingCard}>
               <p className="text-sm font-bold">FollowUp</p>
               <p className={styles.priceGiant}>
-                $29<span style={{ fontSize: "0.4em", color: "var(--ink-soft)", fontWeight: 600 }}>/mo</span>
+                {/* $39, matching TIER_INFO.plus in src/lib/pricing.ts and the
+                    Stripe price it maps to. This read $29 while Settings and
+                    checkout charged $39 — a page stating a price the product
+                    does not honour, which is the one kind of copy error that
+                    costs trust at exactly the moment someone decides to pay.
+                    Founder's call, 2026-09-15: "price is 39 for now." */}
+                $39<span style={{ fontSize: "0.4em", color: "var(--ink-soft)", fontWeight: 600 }}>/mo</span>
               </p>
               <p className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>
                 For freelancers, consultants, and small teams

@@ -11,7 +11,9 @@ import { getSessionContext } from "@/lib/session";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { getGmailStatus } from "@/lib/integrations/gmail";
-import { AlertTriangle, LifeBuoy, Send, MessageCircle, CalendarClock, ArrowRight } from "lucide-react";
+import { getOutlookStatus } from "@/lib/integrations/outlook";
+import { ArrowRight } from "lucide-react";
+import { ItemBox, ItemBoxList, type ItemTone } from "@/components/ItemBox";
 import FadeIn from "@/components/motion/FadeIn";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import AuroraBackground from "@/components/motion/AuroraBackground";
@@ -27,6 +29,30 @@ function timeAgo(iso: string): string {
   const hours = Math.round(mins / 60);
   if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
   return `${Math.round(hours / 24)} day${Math.round(hours / 24) === 1 ? "" : "s"} ago`;
+}
+
+/**
+ * The rail tone for an at-risk row, and the word it stands for.
+ *
+ * The rescue model already computes the two facts that matter — hours someone
+ * has been waiting on an answer, days of silence after we wrote — so the
+ * severity here is read off those rather than off the 0–100 score, which is a
+ * blend the owner can't take apart. Waiting on a human beats going quiet:
+ * somebody wrote in and nobody answered is the worse failure.
+ */
+function atRiskStatus(rescue: { waitingHours: number | null; silentDays: number | null }): {
+  tone: ItemTone;
+  label: string;
+} {
+  if (rescue.waitingHours !== null) {
+    const h = Math.round(rescue.waitingHours);
+    return { tone: h >= 4 ? "coral" : "gold", label: h < 1 ? "Waiting <1h" : `Waiting ${h}h` };
+  }
+  if (rescue.silentDays !== null) {
+    const d = Math.round(rescue.silentDays);
+    return { tone: d >= 7 ? "coral" : "gold", label: `Silent ${d} ${d === 1 ? "day" : "days"}` };
+  }
+  return { tone: "gold", label: "Needs a look" };
 }
 
 // This page reads live leads from the database on every request — never
@@ -65,6 +91,46 @@ export default async function DashboardPage() {
   }));
   const setupSteps = ctx ? await getIncompleteSetupSteps(ctx.businessId) : [];
   const gmail = ctx ? await getGmailStatus(ctx.businessId) : { connected: false };
+  const outlook = ctx ? await getOutlookStatus(ctx.businessId) : { connected: false };
+  // An inbox is connected if EITHER provider is. Checking only Gmail is what
+  // made the empty state claim "FollowUp is watching your inbox" to a business
+  // that had connected Outlook and never got the confirmation line, and to a
+  // business that had connected nothing at all. Normalised to one shape here
+  // so the view doesn't have to know which provider it got — only Gmail
+  // reports a last-sync time, so that field is optional.
+  const inbox: { email?: string; lastSyncedAt?: string | null } | null = gmail.connected
+    ? { email: gmail.email, lastSyncedAt: gmail.lastSyncedAt }
+    : outlook.connected
+      ? { email: outlook.email }
+      : null;
+
+  /**
+   * The banner's one computed sentence, replacing the fixed string "Here's
+   * what needs your attention today." — which was the same words whether the
+   * owner had nine drafts waiting or a completely clear morning. A line that
+   * never changes tells you nothing, and it sat at the top of the screen this
+   * ICP opens twenty times a day (S-12).
+   *
+   * Order matters: the thing blocked on a human first, then the thing the
+   * product exists to prevent. When neither is true the sentence says so
+   * outright rather than leaving the owner to infer calm from an empty page.
+   */
+  function headline(): string {
+    const parts: string[] = [];
+    if (approvalItems.length > 0) {
+      parts.push(`${approvalItems.length} draft${approvalItems.length === 1 ? "" : "s"} need${approvalItems.length === 1 ? "s" : ""} your OK`);
+    }
+    if (stats.atRisk > 0) {
+      parts.push(`${stats.atRisk} lead${stats.atRisk === 1 ? "" : "s"} going quiet`);
+    }
+    if (parts.length > 0) return parts.join(" · ");
+
+    const answered = rescue?.answeredForYou ?? 0;
+    if (answered > 0) {
+      return `Nothing needs your OK. FollowUp answered ${answered} for you this week.`;
+    }
+    return "Nothing needs your OK right now.";
+  }
 
   return (
     <div>
@@ -83,13 +149,11 @@ export default async function DashboardPage() {
               twice. The queue itself is now the one place that count
               lives; it doesn't need co-signing from the banner above it. */}
           <h1 className="font-display text-3xl">{getGreeting()}</h1>
-          <p className="text-ink-soft mt-1">Here&apos;s what needs your attention today.</p>
+          <p className="text-ink-soft mt-1">{headline()}</p>
         </FadeIn>
       </div>
 
-      <ApprovalQueue items={approvalItems} />
-
-      <SetupStrip steps={setupSteps} />
+      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} />
 
       {leads.length === 0 ? (
         <FadeIn className="mt-10">
@@ -100,17 +164,47 @@ export default async function DashboardPage() {
               (watching, or not yet set up) and gives one real action:
               seeing the core promise work today rather than waiting for
               a real lead to arrive. */}
-          <div className="rounded-2xl border border-line bg-card p-8 text-center">
-            <p className="text-lg leading-relaxed">
-              FollowUp is watching your inbox. The moment a lead writes, it replies within a minute and shows you
-              here.
-            </p>
-            {gmail.connected && (
-              <p className="text-sm text-ink-soft mt-3 flex items-center justify-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--sage)" }} />
-                Watching {gmail.email}
-                {gmail.lastSyncedAt && ` — last checked ${timeAgo(gmail.lastSyncedAt)}`}
-              </p>
+          {/* This sentence used to be printed unconditionally: an owner who
+              tapped "I'll do this later" in onboarding was told, on their very
+              first screen, that FollowUp was watching an inbox it had no access
+              to. The comment above this block always said it should say
+              "watching, OR not yet set up" — that branch was never written.
+              Claiming a capability you don't have is the worst possible first
+              impression for a product whose entire pitch is being trusted to
+              act on its own. */}
+          <div
+            className="rounded-[var(--radius-box)] bg-card p-8 text-center"
+            style={{ boxShadow: "var(--shadow-box)" }}
+          >
+            {inbox ? (
+              <>
+                <p className="text-lg leading-relaxed">
+                  FollowUp is watching your inbox. The moment a lead writes, it replies within a minute and shows you
+                  here.
+                </p>
+                <p className="text-sm text-ink-soft mt-3 flex items-center justify-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--sage)" }} />
+                  Watching {inbox.email}
+                  {inbox.lastSyncedAt && ` — last checked ${timeAgo(inbox.lastSyncedAt)}`}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-lg leading-relaxed">
+                  No inbox is connected yet, so FollowUp isn&apos;t watching for leads. Connect one and it starts
+                  replying within a minute of someone writing in.
+                </p>
+                <div className="mt-4">
+                  <Link
+                    href="/settings"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
+                    style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                  >
+                    Connect an inbox
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </>
             )}
             <div className="mt-6">
               <TestLeadButton />
@@ -129,121 +223,113 @@ export default async function DashboardPage() {
               <StatCard
                 label="At risk right now"
                 value={<CountUp to={stats.atRisk} />}
-                icon={AlertTriangle}
                 accent="var(--coral)"
-                accentSoft="var(--coral-soft)"
               />
             </RevealItem>
             <RevealItem>
               <StatCard
                 label="Answered for you"
                 value={<CountUp to={rescue?.answeredForYou ?? 0} />}
-                icon={Send}
                 accent="var(--slate)"
-                accentSoft="var(--slate-soft)"
               />
             </RevealItem>
             <RevealItem>
               <StatCard
                 label="Came back"
                 value={<CountUp to={rescue?.rescued ?? 0} />}
-                icon={MessageCircle}
                 accent="var(--sage)"
-                accentSoft="var(--sage-soft)"
               />
             </RevealItem>
           </RevealGroup>
 
           {atRisk.length > 0 && (
             <FadeIn className="mt-10">
-              <h2 className="font-display text-xl flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" style={{ color: "var(--coral)" }} />
-                About to be lost
-              </h2>
+              <h2 className="font-display text-xl">About to be lost</h2>
               <p className="text-sm text-ink-soft mt-1">
-                Ranked by how long they&apos;ve waited, how interested they are, and how cold the trail is. Automation is
-                already working these; the ones at the top need you.
+                Automation is already working these — the ones at the top need you.
               </p>
-              <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line overflow-hidden">
+              {/* Each row used to end in a coral 0–100 pill whose meaning lived
+                  in a `title` tooltip ("Rescue score, 0–100"). A number nobody
+                  can interpret without hovering — which a phone cannot do at
+                  all — fails the design brain's own test: if it needed a
+                  tooltip to be understood, redesign it rather than add the
+                  tooltip. The concrete fact underneath the score ("wrote 26h
+                  ago and is still waiting") is what the owner can actually act
+                  on, and the rescue model already computes it. The score stays
+                  on the lead page, where its full reasoning lives. */}
+              <ItemBoxList className="mt-4">
                 {atRisk.map((lead) => (
-                  <Link
+                  <ItemBox
                     key={lead.id}
                     href={`/leads/${lead.id}`}
-                    className="flex items-center justify-between gap-4 px-5 py-3 text-sm hover:bg-paper transition-all hover:-translate-y-px hover:shadow-sm relative"
-                  >
-                    <span className="min-w-0">
-                      <span className="font-medium">{lead.name}</span>
-                      <span className="text-ink-soft"> — {lead.rescue.reason}</span>
-                    </span>
-                    <span className="flex items-center gap-3 shrink-0">
-                      {lead.dealValue > 0 && <span>{formatCurrency(lead.dealValue)}</span>}
-                      <span
-                        className="rounded-full px-2 py-0.5 text-xs font-medium tabular-nums"
-                        style={{ backgroundColor: "var(--coral-soft)", color: "var(--coral)" }}
-                        title="Rescue score, 0–100"
-                      >
-                        {lead.rescue.score}
-                      </span>
-                    </span>
-                  </Link>
+                    title={lead.name}
+                    figure={
+                      lead.dealValue > 0 ? (
+                        <span className="text-ink font-medium">{formatCurrency(lead.dealValue)}</span>
+                      ) : undefined
+                    }
+                    status={atRiskStatus(lead.rescue)}
+                    fact={lead.rescue.reason}
+                  />
                 ))}
-              </div>
+              </ItemBoxList>
             </FadeIn>
           )}
 
+          {/* Configuration sits below the two work sections, not between them.
+              It used to interrupt the approval queue and the at-risk list —
+              an incomplete-setup nag cutting the page's two actual jobs in
+              half. */}
+          <SetupStrip steps={setupSteps} />
+
           {rescue && rescue.leads.length > 0 && (
             <FadeIn className="mt-10">
-              <h2 className="font-display text-xl flex items-center gap-2">
-                <LifeBuoy className="h-4 w-4" style={{ color: "var(--sage)" }} />
-                What FollowUp did for you this week
-              </h2>
+              <h2 className="font-display text-xl">What FollowUp did for you this week</h2>
+              {/* This sentence stays exactly as written. It is a trust claim —
+                  it tells the owner the number below is not padded with their
+                  own work — and it earns its space where the other section
+                  intros didn't. */}
               <p className="text-sm text-ink-soft mt-1">
                 Only replies to messages FollowUp sent on its own count here — your own replies are yours.
               </p>
-              <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line overflow-hidden">
+              <ItemBoxList className="mt-4">
                 {rescue.leads.slice(0, 6).map((l) => (
-                  <Link
+                  <ItemBox
                     key={l.id}
                     href={`/leads/${l.id}`}
-                    className="flex items-center justify-between gap-4 px-5 py-3 text-sm hover:bg-paper transition-all hover:-translate-y-px hover:shadow-sm relative"
-                  >
-                    <span className="min-w-0">
-                      <span className="font-medium">{l.name}</span>
-                      <span className="text-ink-soft"> — {describeTrigger(l.trigger)}, replied {l.repliedAfterHours}h later</span>
-                    </span>
-                    {l.dealValue > 0 && <span>{formatCurrency(l.dealValue)}</span>}
-                  </Link>
+                    title={l.name}
+                    figure={
+                      l.dealValue > 0 ? (
+                        <span className="text-ink font-medium">{formatCurrency(l.dealValue)}</span>
+                      ) : undefined
+                    }
+                    status={{ tone: "sage", label: "Came back" }}
+                    fact={`${describeTrigger(l.trigger)}, replied ${l.repliedAfterHours}h later`}
+                  />
                 ))}
-              </div>
+              </ItemBoxList>
             </FadeIn>
           )}
 
           {upcomingBookings.length > 0 && (
             <FadeIn className="mt-10">
-              <h2 className="font-display text-xl flex items-center gap-2">
-                <CalendarClock className="h-4 w-4" style={{ color: "var(--sage)" }} />
-                Upcoming calls
-              </h2>
-              <div className="mt-4 rounded-xl border border-line bg-card divide-y divide-line overflow-hidden">
+              <h2 className="font-display text-xl">Upcoming calls</h2>
+              <ItemBoxList className="mt-4">
                 {upcomingBookings.map((b) => (
-                  <Link
+                  <ItemBox
                     key={b.id}
                     href={`/leads/${b.leadId}`}
-                    className="flex items-center justify-between px-5 py-3 text-sm hover:bg-paper transition-all hover:-translate-y-px hover:shadow-sm relative"
-                  >
-                    <span className="font-medium">{b.leadName}</span>
-                    <span className="text-ink-soft">
-                      {new Date(b.scheduledAt).toLocaleString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </Link>
+                    title={b.leadName}
+                    figure={new Date(b.scheduledAt).toLocaleString(undefined, {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  />
                 ))}
-              </div>
+              </ItemBoxList>
             </FadeIn>
           )}
 

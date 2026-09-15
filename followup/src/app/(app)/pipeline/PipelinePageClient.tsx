@@ -232,7 +232,7 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                     onChange={(e) => moveLead(lead.id, e.target.value as PipelineStage)}
                     onClick={(e) => e.stopPropagation()}
                     aria-label={`Move ${lead.name} to a different stage`}
-                    className="shrink-0 text-[10px] rounded border border-line bg-paper px-1 py-0.5 text-ink-soft"
+                    className="shrink-0 text-xs rounded border border-line bg-paper px-1.5 py-1 text-ink-soft"
                   >
                     {PIPELINE_STAGES.map((s) => (
                       <option key={s.id} value={s.id}>

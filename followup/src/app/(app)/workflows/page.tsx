@@ -309,7 +309,7 @@ function WorkflowCard({
         {sequence.steps.map((step, i) => (
           <li key={step.id} className="flex items-start gap-2.5 text-sm">
             <span
-              className="mt-0.5 shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-[11px] font-semibold"
+              className="mt-0.5 shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-xs font-semibold"
               style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
             >
               {i + 1}

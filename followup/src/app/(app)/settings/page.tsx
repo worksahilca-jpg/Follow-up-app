@@ -593,8 +593,13 @@ function SettingsPageInner() {
         <p className="text-ink-soft mt-1">Connect your inbox, set follow-up rules, and manage your team.</p>
       </div>
 
+      {/* Below lg a fixed top bar (Sidebar.tsx) covers the top of the viewport,
+          so `top-0` parked this tab row underneath it and the tabs vanished as
+          soon as the page scrolled. Offset by the bar's own height; at lg the
+          bar doesn't render, so it goes back to 0. overflow-x-auto because the
+          tabs don't all fit across a 390px phone. */}
       <nav
-        className="sticky top-0 z-10 -mx-1 flex gap-1 bg-paper/95 px-1 py-2 backdrop-blur-sm border-b border-line"
+        className="sticky top-[var(--app-header-h)] lg:top-0 z-10 -mx-1 flex gap-1 overflow-x-auto bg-paper/95 px-1 py-2 backdrop-blur-sm border-b border-line"
         aria-label="Settings sections"
       >
         {(Object.keys(TAB_LABEL) as SettingsTab[]).map((tab) => (
@@ -671,11 +676,16 @@ function SettingsPageInner() {
           {gmailConnected && (
             <div className="ml-[52px] mt-2 rounded-lg border border-line px-4 py-3">
               <div className="flex items-center gap-3 flex-wrap">
+                {/* Neutral, not --gold. A-005 reserves gold for "going cold" —
+                    a lead state — and this is an action the owner takes, not a
+                    status the app is reporting. Scanning the spam folder isn't
+                    urgent either: painting it amber told the owner something
+                    was wrong when nothing is. */}
                 <button
                   onClick={handleScanSpam}
                   disabled={scanningSpam}
-                  className="text-sm font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
-                  style={{ backgroundColor: "var(--gold-soft)", color: "var(--gold)" }}
+                  className="text-sm font-medium rounded-lg border border-line px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60 hover:bg-paper transition-colors"
+                  style={{ color: "var(--ink-soft)" }}
                 >
                   <Search className={`h-3.5 w-3.5 ${scanningSpam ? "animate-pulse" : ""}`} />
                   {scanningSpam ? "Checking…" : "Scan spam for missed leads"}

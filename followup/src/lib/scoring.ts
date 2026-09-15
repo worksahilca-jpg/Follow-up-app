@@ -11,13 +11,18 @@ import { scoreLead, generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { getVoiceSamples } from "@/lib/voice";
 import { checkAiEligibility } from "@/lib/billing";
+import { SCORE_HIGH, SCORE_MEDIUM } from "@/lib/scoreThresholds";
 import { notifySlack } from "@/lib/slack";
 import type { Message } from "@/lib/types";
 import type { Priority as DbPriority, Prisma } from "@prisma/client";
 
+// Cut-points come from @/lib/scoreThresholds, shared with ScoreBadge —
+// the two used to carry their own copies (70/40 here, 75/45 there) and
+// both render on the same card, so a lead at 72 read "high priority"
+// beside a badge coloured medium.
 function priorityFromScore(score: number): DbPriority {
-  if (score >= 70) return "HIGH";
-  if (score >= 40) return "MEDIUM";
+  if (score >= SCORE_HIGH) return "HIGH";
+  if (score >= SCORE_MEDIUM) return "MEDIUM";
   if (score > 0) return "LOW";
   return "NONE";
 }

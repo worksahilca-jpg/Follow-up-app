@@ -24,6 +24,33 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
 
 *(none right now — check the [Agent Board](https://claude.ai/code/artifact/310ede6b-c78d-436b-a262-d6bbd40040c1) for live status)*
 
+## Always-on routines (scheduled, unattended)
+
+Set up 2026-09-15 on the founder's instruction ("I want them working 24/7"). Each one fires
+a **fresh** Claude session on a schedule — they do not share memory with each other or with
+an interactive session, so the repo is the only thing they carry forward. Both send a push
+notification when they find something.
+
+| Routine | Schedule (UTC) | What it does | Can it merge/deploy? |
+|---|---|---|---|
+| **PR watchdog** | every 2h, at :31 | Checks every open PR. Fixes red CI and merge conflicts, pushes to the PR's own branch. Silent when everything is green. | **No** — hard rule in its prompt |
+| **Nightly security scan** | 06:00 (2am EDT) | Audits only the last 24h of commits to `main` for multi-tenant scoping, auth, validation, send-path and secret leaks, plus `npm audit`. Reports; does not fix. | **No** — report-only, except a dependency bump on its own branch |
+
+Both are bound by the same rules everything else here is: never merge, never push to `main`,
+never deploy, never touch production or secrets, never disable a test to get green. Merging
+stays the founder's explicit call.
+
+**Known limitation to verify on the first runs:** these routines were created without
+connector grants, so the fired sessions may not have the GitHub API tools
+(`mcp__github__*`). Plain `git` works (fetch, push, branches), so code work is unaffected,
+but reading PR status and posting comments/issues may not be. If that turns out to be the
+case, recreate them from the claude.ai Routines UI where connectors can be attached. The
+security scan's prompt already has a file-based fallback; the PR watchdog's does not.
+
+**To stop or change one:** claude.ai → Routines. Or ask Claude in a session — they're
+`trig_01UhKfqnjtq4VU59fDqiRv6N` (PR watchdog) and `trig_016R5i3wX7xEHRMd5UiqPZpN` (security
+scan). Every firing costs tokens whether or not there was work to do.
+
 ## Open, waiting on review
 
 - [ ] **PR #223** — `@types/node` 22.20.1 → 26.4.1, fully verified (tsc/eslint/vitest/build all

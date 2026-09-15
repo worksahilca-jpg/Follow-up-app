@@ -82,6 +82,34 @@ describe("computeAutomationStatus", () => {
     expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
   });
 
+  // findUnansweredLeads() in automation.ts counts TWO kinds of substantive
+  // outbound reply: a FollowUp row whose trigger isn't "instant_ack", and a
+  // directly-captured Instagram/Messenger echo (Message.source set, no
+  // FollowUp row ever created — see captureDirectReply). This badge only
+  // counted the first, so an owner who answered in the Instagram app got
+  // the 3h first-reply threshold here while automation was really waiting
+  // the full 24h — "Following up soon" for ~21h before anything happened.
+  it("counts a directly-captured Instagram/Messenger reply as substantive outbound, matching automation.ts", () => {
+    const echo: Message = { ...msg("outbound", 5), channel: "instagram", source: "instagram_direct" };
+    const l = lead({ conversation: [echo, msg("inbound", 4)], followUpTriggers: [] });
+
+    // 4h since the lead wrote: past the 3h first-reply window, but the
+    // owner HAS replied, so the business's real 24h window applies.
+    const status = computeAutomationStatus(l, RULES, NOW);
+    expect(status.kind).toBe("waiting");
+    expect((status as { etaHours: number }).etaHours).toBe(20);
+  });
+
+  it("still uses the short first-reply window when the only outbound echo is inbound-direction noise", () => {
+    // An INBOUND message carrying a source must not be mistaken for a reply
+    // the business sent.
+    const l = lead({
+      conversation: [{ ...msg("inbound", 4), channel: "instagram", source: "instagram_direct" }],
+      followUpTriggers: [],
+    });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+  });
+
   it("shows account_paused(unanswered) instead of due_soon when the master switch is off", () => {
     const l = lead({ conversation: [msg("outbound", 48), msg("inbound", 25)], followUpTriggers: ["manual"] });
     expect(computeAutomationStatus(l, { ...RULES, masterEnabled: false }, NOW)).toEqual({ kind: "account_paused", reason: "unanswered" });

@@ -8,14 +8,15 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { eventCreate, businessFindUnique, businessUpdate } = vi.hoisted(() => ({
+const { eventCreate, eventDelete, businessFindUnique, businessUpdate } = vi.hoisted(() => ({
   eventCreate: vi.fn(async () => ({ eventId: "evt_1" })),
+  eventDelete: vi.fn(async () => ({ eventId: "evt_1" })),
   businessFindUnique: vi.fn(async () => ({ id: "biz1" })),
   businessUpdate: vi.fn(async () => ({})),
 }));
 vi.mock("@/lib/db", () => ({
   prisma: {
-    processedWebhookEvent: { create: eventCreate },
+    processedWebhookEvent: { create: eventCreate, delete: eventDelete },
     business: { findUnique: businessFindUnique, update: businessUpdate },
   },
 }));
@@ -57,6 +58,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
   eventCreate.mockResolvedValue({ eventId: "evt_1" });
+  eventDelete.mockResolvedValue({ eventId: "evt_1" });
   businessFindUnique.mockResolvedValue({ id: "biz1" });
 });
 
@@ -169,5 +171,36 @@ describe("POST /api/billing/webhook", () => {
     constructEvent.mockReturnValue({ id: "evt_8", type: "some.future.event", data: { object: {} } });
     const res = await POST(webhookRequest());
     expect(res.status).toBe(200);
+  });
+
+  // The "already processed" marker is written BEFORE the work. If the work
+  // then fails, the marker has to come back out — otherwise Stripe's retry
+  // collides with it, this reports "duplicate, already handled", and the
+  // event's side effects never run at all. For checkout.session.completed
+  // that means a business that has genuinely paid never gets its
+  // subscriptionStatus written, and stays locked out of the product.
+  it("rolls back the processed-event marker when handling the event throws, so Stripe's retry can reprocess it", async () => {
+    constructEvent.mockReturnValue({
+      id: "evt_9",
+      type: "checkout.session.completed",
+      data: { object: { client_reference_id: "biz1", subscription: "sub_1" } },
+    });
+    subscriptionsRetrieve.mockRejectedValue(new Error("Stripe API timeout"));
+
+    await expect(POST(webhookRequest())).rejects.toThrow("Stripe API timeout");
+
+    expect(eventCreate).toHaveBeenCalledWith({ data: { eventId: "evt_9" } });
+    expect(eventDelete).toHaveBeenCalledWith({ where: { eventId: "evt_9" } });
+    expect(businessUpdate).not.toHaveBeenCalled();
+  });
+
+  it("keeps the marker when the event is handled successfully", async () => {
+    constructEvent.mockReturnValue({ id: "evt_10", type: "customer.subscription.updated", data: { object: subscription() } });
+    subscriptionsRetrieve.mockResolvedValue(subscription());
+
+    const res = await POST(webhookRequest());
+
+    expect(res.status).toBe(200);
+    expect(eventDelete).not.toHaveBeenCalled();
   });
 });

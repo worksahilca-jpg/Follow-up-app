@@ -9,6 +9,7 @@ import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentLeads } from "@/lib/rateLimit";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { findOrCreateConversation } from "@/lib/conversations";
+import { findConflictingLead } from "@/lib/leadConflict";
 import { cleanedText, EMAIL_RE, parseJsonBody } from "@/lib/validation";
 
 const MAX_TEXT = 200;
@@ -156,8 +157,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
     return NextResponse.json({ success: true });
   } catch (err) {
-    // Duplicate email for this business (Lead's businessId_email unique
-    // constraint) — the same person submitting twice shouldn't 500. This
+    // Duplicate email OR phone for this business (Lead carries both a
+    // businessId_email and a businessId_phone unique constraint — see
+    // findConflictingLead) — the same person submitting twice shouldn't 500. This
     // used to just return success and drop the new submission entirely —
     // a genuine follow-up question ("actually, can you also quote me for
     // X") from a returning visitor vanished with no record anywhere. Find
@@ -167,7 +169,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // continue" shape findOrCreateLeadByPhone() already uses for the SMS
     // side of this same problem.
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
-      const existing = await prisma.lead.findUnique({ where: { businessId_email: { businessId, email } } });
+      const existing = await findConflictingLead(businessId, email, phone);
       if (existing && message) {
         const conversation = await findOrCreateConversation(existing.id, "web");
         await prisma.message.create({

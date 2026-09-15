@@ -92,6 +92,68 @@ describe("POST /api/embed/[businessId]/lead — duplicate-email resubmission", (
     expect(acknowledgeNewLead).toHaveBeenCalledWith("existingLead1", expect.objectContaining({ channel: "email" }));
   });
 
+  // Lead has TWO unique constraints, businessId_email AND businessId_phone.
+  // The recovery above only ever looked up by email, so a collision on the
+  // PHONE index found nothing and the submission was dropped with a
+  // "thanks, we'll be in touch" shown to the visitor.
+  it("recovers a PHONE collision — same number, different email address", async () => {
+    // Exactly what the DB would say: this email is new, the phone is the
+    // index that actually raised P2002.
+    findUniqueLead.mockImplementation(async (args: { where: Record<string, unknown> }) =>
+      args.where.businessId_phone ? { id: "existingLead1" } : null
+    );
+
+    const { POST } = await import("@/app/api/embed/[businessId]/lead/route");
+    const res = await POST(
+      jsonRequest("https://followupbase.io/api/embed/biz1/lead", {
+        hp: "",
+        name: "Jamie",
+        email: "jamie.work@example.com",
+        phone: "+15551234567",
+        message: "following up on the quote from last week",
+      }),
+      ctxBusiness("biz1")
+    );
+
+    expect(res.status).toBe(200);
+    expect(findUniqueLead).toHaveBeenCalledWith({ where: { businessId_phone: { businessId: "biz1", phone: "+15551234567" } } });
+    expect(messageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ conversationId: "conv1", direction: "inbound", body: "following up on the quote from last week" }) })
+    );
+    expect(scoreAndDraftForLead).toHaveBeenCalledWith("existingLead1");
+  });
+
+  // A phone-only lead is stored with email: null, so an email lookup can
+  // never match one — every repeat submission from a phone-only visitor was
+  // dropped, not just the different-email case above.
+  it("recovers a PHONE collision on a phone-only submission, where no email lookup could ever match", async () => {
+    findUniqueLead.mockImplementation(async (args: { where: Record<string, unknown> }) =>
+      args.where.businessId_phone ? { id: "existingLead1" } : null
+    );
+
+    const { POST } = await import("@/app/api/embed/[businessId]/lead/route");
+    const res = await POST(
+      jsonRequest("https://followupbase.io/api/embed/biz1/lead", {
+        hp: "",
+        name: "Jamie",
+        email: "",
+        phone: "+15551234567",
+        message: "can someone call me back today?",
+      }),
+      ctxBusiness("biz1")
+    );
+
+    expect(res.status).toBe(200);
+    // No email to look up — it must go straight to the phone index rather
+    // than probing businessId_email with an empty string.
+    expect(findUniqueLead).toHaveBeenCalledTimes(1);
+    expect(findUniqueLead).toHaveBeenCalledWith({ where: { businessId_phone: { businessId: "biz1", phone: "+15551234567" } } });
+    expect(messageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ body: "can someone call me back today?" }) })
+    );
+    expect(scoreAndDraftForLead).toHaveBeenCalledWith("existingLead1");
+  });
+
   it("does nothing beyond returning success when the resubmission carries no message", async () => {
     const { POST } = await import("@/app/api/embed/[businessId]/lead/route");
     const res = await POST(
@@ -125,6 +187,29 @@ describe("POST /api/webhooks/lead/[secret] — duplicate-email resubmission", ()
     expect(messageCreate).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ body: "edited response: also interested in financing" }) })
     );
+    expect(scoreAndDraftForLead).toHaveBeenCalledWith("existingLead1");
+  });
+
+  it("recovers a PHONE collision instead of returning success with an undefined leadId", async () => {
+    findUniqueLead.mockImplementation(async (args: { where: Record<string, unknown> }) =>
+      args.where.businessId_phone ? { id: "existingLead1" } : null
+    );
+
+    const { POST } = await import("@/app/api/webhooks/lead/[secret]/route");
+    const res = await POST(
+      jsonRequest("https://followupbase.io/api/webhooks/lead/sec_123", {
+        name: "Jamie",
+        email: "",
+        phone: "+15551234567",
+        message: "re-sent by the Zapier run with an updated note",
+      }),
+      ctxSecret("sec_123")
+    );
+
+    expect(res.status).toBe(200);
+    // The integration on the other end keys off this id — it used to come
+    // back undefined because the email lookup found nothing.
+    expect(await res.json()).toEqual({ success: true, leadId: "existingLead1" });
     expect(scoreAndDraftForLead).toHaveBeenCalledWith("existingLead1");
   });
 });

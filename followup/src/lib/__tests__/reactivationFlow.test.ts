@@ -201,6 +201,13 @@ vi.mock("@/lib/sender", () => ({
   latestInboundText: () => "",
 }));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: async () => [] }));
+// The daily circuit breaker is exercised in reactivationSend.test.ts; here it
+// is always open, so these end-to-end flows test the batch itself rather than
+// the fuse. The fake store below has no FollowUp table for the real one to
+// count.
+vi.mock("@/lib/sendCaps", () => ({
+  checkSendCap: async () => ({ allowed: true, used: 0, cap: 250 }),
+}));
 
 import { classifyQuietLeads, getReactivationBatch } from "@/lib/reactivation";
 import {

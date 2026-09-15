@@ -33,7 +33,7 @@ import { prisma } from "@/lib/db";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
-import { requireActiveBilling, isChannelAvailableOnFreeTier, isWithinFreeTierLeadCap } from "@/lib/billing";
+import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
@@ -154,7 +154,27 @@ export function deadLeadMessageHint(daysSinceContact: number): string {
     "Never fall back to a vague \"just checking in\" or \"circling back\" — research on real reactivation " +
     "campaigns found that's the single most-cited reason this kind of message gets ignored, since it signals " +
     "nothing new to offer. Lead with something concrete and useful instead: reference a specific detail from " +
-    "what they were originally interested in, not a generic status question."
+    "what they were originally interested in, not a generic status question. " +
+    // The two facts that make this message land as a belated reply rather
+    // than an unsolicited approach — founder's call, 2026-09-15, and the
+    // reasoning is worth keeping: THEY made contact first, and nobody here
+    // answered. A recipient who is reminded of both recognises the message
+    // instantly and reads it as overdue courtesy. One who isn't is being
+    // emailed by a stranger about nothing in particular, months later,
+    // which is the definition of the thing people report as spam.
+    //
+    // This is also what makes the absence of an unsubscribe line defensible
+    // rather than merely convenient: the message is a continuation of a
+    // conversation the recipient started. If these two instructions are
+    // ever dropped, that stops being true, and the decision to omit the
+    // unsubscribe should be revisited at the same time.
+    "Two things must be unmistakable. First, that THEY got in touch originally — say so plainly, in their " +
+    "own terms (\"you got in touch about...\", \"you asked us about...\"), so there is no moment where they " +
+    "wonder who this is or why they are hearing from you. Second, acknowledge honestly that they never got a " +
+    "proper reply — one short, unfussy line, no grovelling and no excuses (\"sorry we never came back to you " +
+    "on this\"). Then ask one clear question about whether they still need it. The whole message should read " +
+    "like a person who just found this in their inbox and felt bad about it, because that is exactly what " +
+    "happened."
   );
 }
 
@@ -272,7 +292,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // always resolves against the same timezone.
   const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true, tier: true } });
   const timezone = business?.timezone ?? "America/New_York";
-  const tier = business?.tier ?? "plus";
+  const tier = (business?.tier ?? "plus") as "free" | "plus" | "pro";
 
   const deadLeadRule = await prisma.automation.findFirst({ where: { businessId, action: DEAD_LEAD_ACTION } });
   const deadLeadEnabled = deadLeadRule?.enabled ?? true; // on by default, like everything else here
@@ -370,16 +390,17 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // so it's naturally rechecked in ~20h via recheckCutoff rather than
       // every single hourly tick — this isn't transient the way "outside
       // business hours" is.
-      if (tier === "free") {
-        // Named distinctly from the outer `eligible` (the batch array this
-        // closure iterates, declared above) — same name, different thing,
-        // and shadowing it here was a latent footgun for a future edit
-        // inside this closure.
-        const freeTierEligible =
-          isChannelAvailableOnFreeTier(lead.source) && (await isWithinFreeTierLeadCap(businessId, lead));
-        if (!freeTierEligible) {
-          return { kind: "skipped", note: `${lead.name}: Free plan — AI processing paused (past the 20/mo cap, or this lead's channel isn't included in Free)` };
-        }
+      // Named distinctly from the outer `eligible` (the batch array this
+      // closure iterates, declared above) — same name, different thing,
+      // and shadowing it here was a latent footgun for a future edit
+      // inside this closure.
+      //
+      // Now runs on every tier, not just Free: Plus's 1,500/mo and Pro's
+      // 10,000/mo ceilings were published and unenforced, so a paid account
+      // had no upper bound on AI processing at all.
+      const aiEligible = await checkAiEligibility(businessId, lead, tier);
+      if (!aiEligible.ok) {
+        return { kind: "skipped", note: `${lead.name}: ${aiEligible.reason}` };
       }
 
       const conversation: Message[] = lead.conversations.flatMap((c) =>
@@ -415,13 +436,25 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // owed an answer, not a "still interested?" — so the two subsystems
       // were reaching opposite conclusions about the same person.
       //
-      // Mirrors the `deadLeads` query's own predicate exactly (non-null
-      // lastContacted at or before deadCutoff, and only while the rule is
-      // enabled), so this is strictly a superset of `isDeadLead` and
-      // changes nothing about who is eligible, drafted, or how a message
-      // is worded — only about who is allowed to send without a human.
-      const isCold =
-        deadLeadEnabled && lead.lastContacted !== null && lead.lastContacted <= deadCutoff;
+      // Deliberately NOT scoped to `deadLeadEnabled`, unlike the
+      // `deadLeads` query it otherwise mirrors.
+      //
+      // "Reactivate cold leads" is a MESSAGING-CAMPAIGN toggle: it decides
+      // whether FollowUp goes looking for the back catalogue at all. This
+      // is a SAFETY hold: it decides whether a human sees a message before
+      // it goes to someone who has been silent for months. Tying the second
+      // to the first meant switching the campaign OFF also switched the
+      // protection off — cold leads fell through to the `silent` bucket
+      // (line ~294 only excludes them while the rule is enabled) and
+      // auto-sent unreviewed on a low-risk verdict. A safety property that
+      // a settings toggle can quietly disable is not a safety property.
+      //
+      // `lastContacted ?? createdAt` rather than a null check: a lead with
+      // no recorded contact is not evidence of recency. Falling back to the
+      // null branch would have made an ancient lead with a missing
+      // timestamp the one kind that could still auto-send.
+      const coldReference = lead.lastContacted ?? lead.createdAt;
+      const isCold = coldReference <= deadCutoff;
 
       // task #63 (live-test finding): a cached suggestedMessage can predate
       // the lead's actual most recent inbound message — scoring.ts drafts
@@ -437,14 +470,45 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // lead, for the same underlying reason.
       const isUnanswered = unansweredIds.has(lead.id);
 
+      // Whether the cached draft was written against this conversation as
+      // it stands now. This is the test the two cases above actually need:
+      // the reason a dead-lead or unanswered draft "can't be trusted" is
+      // that new inbound content may have arrived since it was written —
+      // so compare the draft's stamp to the newest message rather than
+      // rebuilding unconditionally.
+      //
+      // Without this the product had a cost that grew with time instead of
+      // with leads. A lead held for approval sends nothing, so
+      // lastContacted never moves, so it re-enters this window every 20
+      // hours forever — and each pass paid for a fresh draft, a fresh
+      // localization and a fresh risk check on a byte-identical
+      // conversation ($0.026/lead/month, unbounded;
+      // research/product/2026-09-15-ai-cost-per-lead.md §5). Cold leads are
+      // held by design, so there is always a standing population of them.
+      //
+      // A null stamp means the draft predates the column, so it counts as
+      // stale: the first pass after deploy rebuilds and stamps it, and
+      // every pass after that is free. The task #63 guarantee is preserved
+      // exactly — a lead who wrote again in another language has a newer
+      // message than the stamp, so the draft is stale and IS rebuilt.
+      const newestMessageAt = conversation.length
+        ? new Date(conversation[conversation.length - 1].date)
+        : null;
+      const draftIsCurrent =
+        lead.suggestedDraftedFor != null &&
+        newestMessageAt != null &&
+        newestMessageAt <= lead.suggestedDraftedFor;
+
       // Reuse an existing draft (subject + body) when this lead already has
       // one from a normal scoring pass — only draft fresh here if it
       // somehow doesn't (e.g. scoring never ran, most commonly no
       // OPENAI_API_KEY configured), or if it's a dead lead or unanswered
-      // reply (see above) — either way the cached draft can't be trusted.
+      // reply whose draft is no longer current (see above).
       let subject = lead.suggestedSubject ?? undefined;
       let message = lead.suggestedMessage;
-      if (!message || isDeadLead || isUnanswered) {
+      let regenerated = false;
+      if (!message || ((isDeadLead || isUnanswered) && !draftIsCurrent)) {
+        regenerated = true;
         const messageHint = isDeadLead
           ? deadLeadMessageHint(Math.floor((Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000))
           : undefined;
@@ -511,13 +575,25 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         // the hole that distinction was hiding. `isDeadLead` implies
         // `isCold`, so this only ever holds MORE than before, never less.
         if (risk.riskLevel !== "low" || isCold) {
-          // Always (re)write for a dead lead or an unanswered reply, even
-          // if suggestedMessage already existed — it was regenerated above
-          // specifically because the cached draft can't be trusted for
-          // either (see the comment above isUnanswered), so the stale one
-          // must not linger as what the owner sees waiting for approval.
-          if (!lead.suggestedMessage || isDeadLead || isUnanswered) {
-            await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: message, suggestedSubject: subject } });
+          // Persist whatever was just written, so the stale draft doesn't
+          // linger as what the owner sees waiting for approval — and stamp
+          // it with the message it was written against, which is what lets
+          // the next pass reuse it instead of paying to rebuild it.
+          //
+          // Keyed on `regenerated` rather than re-deriving the condition:
+          // the two had to agree, and writing the same test twice is how
+          // they stop agreeing. A draft that was NOT regenerated is by
+          // definition already current and already stored, so there is
+          // nothing to write.
+          if (regenerated) {
+            await prisma.lead.update({
+              where: { id: lead.id },
+              data: {
+                suggestedMessage: message,
+                suggestedSubject: subject,
+                suggestedDraftedFor: newestMessageAt,
+              },
+            });
           }
           // A cold-lead hold isn't a risk finding, so it needs its own
           // sentence — risk.reason is empty when the classifier said "low"

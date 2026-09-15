@@ -933,7 +933,20 @@ export function sanitizeHeaderValue(value: string): string {
 
 export async function sendEmail(
   businessId: string,
-  params: { to: string; subject: string; body: string; threadId?: string; inReplyTo?: string }
+  params: {
+    to: string;
+    subject: string;
+    body: string;
+    threadId?: string;
+    inReplyTo?: string;
+    /**
+     * Extra RFC822 header lines, each already a complete `Name: value`
+     * — used for List-Unsubscribe on automated mail (see
+     * src/lib/suppression.ts). Sanitised like every other header below,
+     * so a value carrying CRLF can't inject headers of its own.
+     */
+    extraHeaders?: string[];
+  }
 ): Promise<{ success: boolean; messageId?: string; message?: string }> {
   const authed = await getAuthedGmailClient(businessId);
   // Distinguished from a plain send failure below so the caller
@@ -955,6 +968,9 @@ export async function sendEmail(
     `To: ${to}`,
     `Subject: ${subject}`,
     ...(inReplyTo ? [`In-Reply-To: ${inReplyTo}`, `References: ${inReplyTo}`] : []),
+    // Sanitised the same way every other header value is: a header line
+    // carrying a CR or LF would let its content inject further headers.
+    ...(params.extraHeaders ?? []).map((h: string) => sanitizeHeaderValue(h)),
     "Content-Type: text/plain; charset=utf-8",
     "",
     params.body,

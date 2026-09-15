@@ -65,6 +65,7 @@ model Business {
   leads                 Lead[]
   automations           Automation[]
   reactivationRuns      ReactivationRun[]
+  suppressions          Suppression[]
   bookings              Booking[]
   sequences             Sequence[]
   sourceRules           SourceRule[]
@@ -259,6 +260,38 @@ enum ReactivationRunStatus {
   FAILED
 }
 
+/**
+ * An address that has asked a business to stop sending it automated mail.
+ * Keyed on the ADDRESS, not on a Lead row, because that is what the person
+ * actually opted out. A lead can be deleted and re-imported from the same
+ * mailbox tomorrow, arrive again through another channel, or exist twice
+ * before a merge — a column on Lead would forget in every one of those
+ * cases and start mailing them again with no way for them to tell anyone.
+ * Deliberately separate from Lead.optedOutAt, which is the SMS/WhatsApp
+ * STOP mechanism (TCPA). Different law, different channel, different
+ * lifecycle: a STOP can be undone by texting START, this can only be
+ * cleared by the business owner in Settings.
+ */
+model Suppression {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id])
+  businessId String
+  // "email" today. Left as a string rather than an enum so a future
+  // channel (a DM opt-out, which Instagram and Messenger still lack) needs
+  // no migration to the type.
+  channel    String
+  /// Normalised: trimmed and lowercased. See normaliseAddress().
+  address    String
+  /// unsubscribe_link | one_click | manual | complaint
+  reason     String
+  createdAt  DateTime @default(now())
+
+  // The send path's only question is "is this exact address suppressed",
+  // asked before every automated email — so the lookup is the unique index.
+  @@unique([businessId, channel, address])
+  @@index([businessId, channel])
+}
+
 enum QuietOutcome {
   COLD
   // Dropped by US, not by them: the lead's own message is the last thing in
@@ -317,6 +350,22 @@ model Lead {
   scoreFactors     Json? // ScoreFactor[] — [{ label, weight }], from AI scoring
   suggestedMessage String? // AI-drafted follow-up, edited/approved before sending
   suggestedSubject String? // AI-drafted subject line for the same email, same edited/approved-before-sending path
+  // The sentAt of the newest message the cached draft above was written
+  // against. Null means "unknown" (any draft written before this column
+  // existed), which is treated as stale so nothing silently reuses a draft
+  // whose provenance can't be established.
+  //
+  // This is what makes a held lead free. A lead parked in the approval
+  // queue changes nothing about itself — no outbound is sent, so
+  // lastContacted never moves — and it therefore re-enters the automation
+  // window every 20 hours (lastAutomationCheckedAt, below) forever. Before
+  // this column, each of those passes paid for a fresh draft, a fresh
+  // translation and a fresh risk check on a byte-identical conversation:
+  // $0.026/lead/month with no end, the only cost in the product that grew
+  // with time rather than with leads, and the mandatory hold on cold leads
+  // guarantees a standing population of them
+  // (research/product/2026-09-15-ai-cost-per-lead.md §5).
+  suggestedDraftedFor DateTime?
   priority         Priority       @default(NONE)
   lastContacted    DateTime?
   nextFollowUp     DateTime?

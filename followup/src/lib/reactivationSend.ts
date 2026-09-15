@@ -38,6 +38,7 @@
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { sendFollowUpToLead } from "@/lib/sending";
+import { checkSendCap } from "@/lib/sendCaps";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { recordAudit } from "@/lib/audit";
 import { getVoiceSamples } from "@/lib/voice";
@@ -115,6 +116,15 @@ export type ReactivationSendResult = {
   skipped: number;
   /** Eligible leads still unsent — > 0 means call again to resume. */
   remaining: number;
+  /**
+   * Set when this invocation handed back early for a reason that resuming
+   * immediately will not clear — today, only the daily circuit breaker in
+   * sendCaps.ts. `status` is still RUNNING and `remaining` is still > 0,
+   * because those leads have NOT been consumed; they are waiting for the
+   * rolling 24h window to move. A caller that polls must show this rather
+   * than spin.
+   */
+  blockedReason?: string;
 };
 
 /** Leads this business may still send a reactivation message to. */
@@ -259,6 +269,7 @@ export async function runReactivationSend(
   let failed = run.failed;
   let skipped = run.skipped;
   let stopped = false;
+  let blockedReason: string | undefined;
 
   for (let i = 0; i < SENDS_PER_INVOCATION; i++) {
     // THE read that makes Stop real. Before every send, not once per
@@ -270,6 +281,37 @@ export async function runReactivationSend(
     });
     if (current?.status !== "RUNNING") {
       stopped = true;
+      break;
+    }
+
+    // The daily circuit breaker (sendCaps.ts), asked HERE rather than only
+    // inside sendFollowUpToLead — because of what the claim below costs.
+    //
+    // sendFollowUpToLead refuses a capped send by returning
+    // { success: false }, which is the correct answer to "did this go
+    // out". But by then this loop has already written reactivationSentAt
+    // on the lead, and that claim is deliberately never released
+    // (see the catch below): it is the "nobody is messaged twice, ever"
+    // guarantee, and sendableWhere excludes a claimed lead permanently.
+    //
+    // So a tripped fuse used to CONSUME the rest of the batch. A business
+    // with 300 cold leads and a 250 ceiling: leads 251-300 were each
+    // claimed, refused by the cap, counted as `failed`, and left
+    // reactivationSentAt — permanently ineligible, with no way for the
+    // owner to reach them tomorrow or ever. `remaining` then counted to
+    // zero on those same claims, so the run was written COMPLETED and the
+    // batch_completed audit event recorded a batch that had in fact
+    // dropped fifty of the owner's past customers on the floor.
+    //
+    // Checked before the claim, and it BREAKS rather than continues: the
+    // cap is a property of the business and the last 24 hours, not of this
+    // lead, so every remaining iteration would refuse too. Nothing is
+    // claimed, nothing is spent, `remaining` still counts the untouched
+    // leads, and the run stays RUNNING — so once the rolling window moves,
+    // resuming picks up exactly the people who were never reached.
+    const cap = await checkSendCap(businessId, "reactivation");
+    if (!cap.allowed) {
+      blockedReason = cap.reason;
       break;
     }
 
@@ -362,7 +404,7 @@ export async function runReactivationSend(
     });
   }
 
-  return { runId, status, sent, failed, skipped, remaining };
+  return { runId, status, sent, failed, skipped, remaining, ...(blockedReason ? { blockedReason } : {}) };
 }
 
 export type ReactivationDraftPreview = {

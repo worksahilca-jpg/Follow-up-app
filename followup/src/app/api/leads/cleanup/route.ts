@@ -54,6 +54,17 @@ export async function POST() {
     return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
 
+  // The rate limit below bounds how OFTEN this runs; this bounds how much
+  // one run can spend. Without it the findMany below took every Gmail lead
+  // the business had, so the ceiling on a single call was the size of the
+  // backlog — the last unbounded-per-run AI path in the app. At 5,000 leads
+  // and the 2-runs-per-hour limit that is roughly $46/day of classification
+  // on one $39 account (research/product/2026-09-15-ai-cost-per-lead.md
+  // §5). A batch is not a restriction on the feature: clean-up is
+  // resumable by design, each run works forward through the oldest leads,
+  // and the response says how many are left.
+  const CLEANUP_BATCH_SIZE = 200;
+
   // 2 per hour. This was the only AI-spending route in the app with no rate
   // limit at all (Gmail sync, spam scan, regenerate and reactivation/classify
   // all have one), while being the most expensive of them: every call is one
@@ -77,6 +88,10 @@ export async function POST() {
   const leads = await prisma.lead.findMany({
     where: { businessId: ctx.businessId, source: "Gmail" },
     include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+    // Oldest first, so repeated runs work forward through the backlog
+    // rather than re-checking the same newest leads every time.
+    orderBy: { createdAt: "asc" },
+    take: CLEANUP_BATCH_SIZE,
   });
 
   // Diagnostic-grade outcome for every checked lead, not just the removed
@@ -139,10 +154,21 @@ export async function POST() {
   const checked = outcomes.filter((o): o is NonNullable<Outcome> => o !== undefined);
   const removed = checked.filter((o) => o.removed);
 
+  // A batched run has to say so, or "checked: 200" on a 5,000-lead account
+  // reads as "we looked at everything and it was fine". Counted after the
+  // deletions above, so it reflects what is actually left to do.
+  const remaining = Math.max(
+    0,
+    (await prisma.lead.count({ where: { businessId: ctx.businessId, source: "Gmail" } })) - checked.length
+  );
+
   return NextResponse.json({
     success: true,
     checked: checked.length,
     removedCount: removed.length,
+    // How many Gmail leads this run did not reach. Non-zero means run it
+    // again; the next run picks up where this one stopped.
+    remaining,
     removed,
     // Every lead the AI looked at and kept, with its stated reason — the
     // diagnostic trail for "why didn't this get removed."

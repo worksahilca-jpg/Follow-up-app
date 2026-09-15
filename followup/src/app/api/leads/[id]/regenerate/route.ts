@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
-import {
-  requireActiveBilling,
-  billingLockedMessage,
-  isChannelAvailableOnFreeTier,
-  isWithinFreeTierLeadCap,
-} from "@/lib/billing";
+import { requireActiveBilling, billingLockedMessage, checkAiEligibility } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
@@ -51,19 +46,23 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   // (15 per 10 minutes, ~2,000 model calls a day) on the platform's shared
   // OpenAI key. The cap is only meaningful if every route that reaches the
   // model honours it.
-  if (lead.business.tier === "free") {
-    const eligible =
-      isChannelAvailableOnFreeTier(lead.source) && (await isWithinFreeTierLeadCap(lead.businessId, lead));
-    if (!eligible) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Free plan AI drafting is paused for this lead — it's past this month's 20-lead cap, or on a channel the Free plan doesn't cover. Upgrade under Billing in Settings.",
-        },
-        { status: 402 }
-      );
-    }
+  const tier = (lead.business.tier ?? "free") as "free" | "plus" | "pro";
+  const eligible = await checkAiEligibility(lead.businessId, lead, tier);
+  if (!eligible.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        // 402 ("payment required") is right for Free, where there is
+        // genuinely something to buy. A paid account that trips its
+        // circuit breaker has not run out of anything purchasable, so it
+        // gets 429 and a message that doesn't try to sell it an upgrade.
+        message:
+          tier === "free"
+            ? `AI drafting is paused for this lead — it is ${eligible.reason}. Upgrade under Billing in Settings.`
+            : eligible.reason,
+      },
+      { status: tier === "free" ? 402 : 429 }
+    );
   }
 
   const conversation: Message[] = lead.conversations.flatMap((c) =>
@@ -83,7 +82,20 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     const newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
       languageSample: latestInboundText(conversation),
     });
-    await prisma.lead.update({ where: { id: lead.id }, data: { suggestedMessage: newMessage, suggestedSubject: draft.subject } });
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: {
+        suggestedMessage: newMessage,
+        suggestedSubject: draft.subject,
+        // Stamp what this draft was written against, the same as every
+        // other writer of suggestedMessage. Without it a hand-regenerated
+        // draft reads as provenance-unknown, and the next automation pass
+        // would pay to rebuild the draft the owner just asked for.
+        suggestedDraftedFor: conversation.length
+          ? new Date(conversation[conversation.length - 1].date)
+          : null,
+      },
+    });
     return NextResponse.json({ success: true, message: newMessage, subject: draft.subject });
   } catch (err) {
     const reason = err instanceof Error ? err.message : "Regeneration failed.";

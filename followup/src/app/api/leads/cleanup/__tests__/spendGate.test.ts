@@ -14,11 +14,19 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { businessFindUnique, leadFindMany } = vi.hoisted(() => ({
+const { businessFindUnique, leadFindMany, leadCount } = vi.hoisted(() => ({
   businessFindUnique: vi.fn(),
   leadFindMany: vi.fn(async () => []),
+  // Backs the "remaining" figure the response now reports, since a run is
+  // capped at CLEANUP_BATCH_SIZE leads rather than taking the whole backlog.
+  leadCount: vi.fn(async () => 0),
 }));
-vi.mock("@/lib/db", () => ({ prisma: { business: { findUnique: businessFindUnique }, lead: { findMany: leadFindMany } } }));
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    business: { findUnique: businessFindUnique },
+    lead: { findMany: leadFindMany, count: leadCount },
+  },
+}));
 
 const { getSessionContext, requireAdmin } = vi.hoisted(() => ({
   getSessionContext: vi.fn(),

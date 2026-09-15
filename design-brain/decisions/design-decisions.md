@@ -1572,3 +1572,70 @@ ends.
 screen — D-020 (subtraction, rejected), D-021 (rich, landing-page language), D-022 (Apple
 restraint). If he picks one, log it in `approved.md` with what specifically was liked and
 implement the dashboard as its own PR before touching any other screen.
+
+
+---
+
+## D-023 — App-wide layout plan, built on the founder's measured A/B calibration ^D-023
+**Date:** 2026-09-15
+**Decided by:** Claude, on the founder's ask for a layout plan covering every authenticated
+screen. **Proposal only — no app code written.**
+**Status:** proposed. Full document:
+`design-brain/decisions/2026-09-15-app-layout-plan.md`.
+
+**The input that makes this different from D-020/D-021/D-022:** a six-pair A/B calibration
+the founder ran today, each pair isolating one variable. Results: **tight** density, **soft
+corners + real shadow**, **colour-coded**, *no preference* on numbers, **each item in its
+own box**, **accent blue held back**. The principle underneath — *status colour does the
+work; the brand blue stays quiet* — is the opposite of how colour is usually spent and is
+the single strongest constraint on file. The three prior dashboard concepts were generated
+from a hypothesis about the founder's taste; this one is generated from his own measured
+answers, which is the failure mode `rejected.md`'s standing note was written to stop.
+Whether that satisfies the note's "a reference he actually chose" is **open question 1** in
+the plan and it gates the dashboard work specifically.
+
+**The structural output:** one repeating primitive — the **item box** (opaque `--card`, 12px
+radius, no border, real shadow, 3px left status rail, two text lines, 8px gaps) — replacing
+the `rounded-xl border border-line bg-card divide-y divide-line` container that ships at six
+call sites and is exactly what the calibration voted against on two axes at once.
+
+**How the standing rejections are kept on the right side** (the part worth reusing): S-05 is
+held by three hard caps — one hue per box, a hue never without its word in the same box, no
+more than three hues per screen. S-06 is held by a rule that every screen gaining density
+must also lose elements. S-09 is held by exactly one box level everywhere, boxes sitting on
+`--paper` rather than inside a container.
+
+**Explicitly not a re-proposal:** not D-020 (which was subtraction-only; this adds a designed
+surface and keeps the banner and tiles — two D-020 moves are reused and flagged, per R-001's
+own "the individual moves may survive"); not D-021 (whose richness was spent on accent blue
+everywhere — hero band, gradient numbers, dashed accent borders — which "held back" retires);
+not D-022 (which the calibration contradicts on three of six axes: roomy, almost-no-colour,
+hairline rows); and nothing keyboard, per R-002.
+
+**Implementation order proposed:** tokens/defects → `ItemBox` + `PageHeader` proven on
+`/activity` → `/leads` → **then** `/dashboard`, assembled from parts already seen working
+rather than opened as a fifth concept → lead detail → pipeline → workflows → analytics →
+settings → onboarding/signin → admin.
+
+**Live violations of already-approved decisions found while reading the code** (worth acting
+on regardless of whether the plan is approved): `settings/page.tsx:678` uses `--gold` as a
+button fill against [[approved#^A-005|A-005]]; `activity/page.tsx:19` uses the accent blue as
+a status colour; `pipeline/PipelinePageClient.tsx:235` (`text-[10px]`) and
+`workflows/page.tsx:312` (`text-[11px]`) are below [[rejected#^S-11|S-11]]'s 12px floor;
+`workflows/page.tsx:132` ships a `Sparkles` icon against [[rejected#^S-13|S-13]];
+`leads/[id]/page.tsx:134-192` is three box levels against [[rejected#^S-09|S-09]]; and
+`settings/page.tsx:597`'s `sticky top-0` sticks behind the mobile header the app shell
+renders `fixed top-0` at `Sidebar.tsx:46`.
+
+**The gap the plan names that isn't a layout problem at all:** the app has no way anywhere to
+say "all clear." `ApprovalQueue.tsx:159` returns `null` when empty, so a good day renders as
+a greeting, three tiles and a link — indistinguishable from a broken screen. `brand-principles.md`
+2 says silence is a valid state; the product currently cannot express it. Related: a failed
+data fetch renders identically to a genuinely quiet day, which principle 6 explicitly rules
+out ("not reviewed yet" must be distinct from "nothing needed").
+
+**Revisit when:** the founder answers the nine open questions in §15 of the plan — four
+design-system (two of them `[TO DECIDE]` tokens) and five product-behaviour ones that are
+`PRODUCT_DIRECTION.md` territory, including what the actual shipped default tier is for a new
+lead, which decides a line of onboarding copy that principle 1 currently isn't satisfied
+without.

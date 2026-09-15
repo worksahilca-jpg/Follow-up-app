@@ -1,16 +1,21 @@
 /**
- * The daily ceiling on automated sending, which did not exist at all.
+ * The circuit breaker on automated sending.
  *
- * The hourly automation queried every eligible lead with no `take`, and the
- * reactivation batch worked through a whole back catalogue, resuming across
- * invocations until it ran out of people. On a first sync that is several
- * hundred messages out of one small business's own Gmail in an afternoon.
+ * Not a product limit, and the difference is the point. An earlier version
+ * capped this at 50/day, which would have fired on exactly the moment the
+ * product exists for: connect an inbox, find 200 dormant leads, press send,
+ * and be told to come back tomorrow. Google Workspace itself allows roughly
+ * 2,000 external recipients per rolling 24 hours, so 50 rationed a customer
+ * to a fraction of what their own mailbox would happily send.
  *
- * Two things break there, and the worse one isn't ours: crossing a
- * provider's per-day recipient limit doesn't just fail FollowUp's send, it
- * makes the provider start refusing the OWNER'S OWN mail for the rest of
- * the day. We would have broken the thing they run their business on, to
- * deliver follow-ups nobody asked us to send that fast.
+ * What is left is a fuse for when the product is BROKEN — a loop, a
+ * misconfigured workflow, a sync re-queueing the same leads. Two infinite
+ * loops were found in this codebase in one afternoon, and one of those
+ * firing through a customer's own Gmail gets their account suspended: what
+ * they lose is their real mail, not ours.
+ *
+ * So these tests pin both directions. Too low rations a real customer on
+ * their first day; too high stops being a fuse at all.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -46,44 +51,51 @@ describe("the daily cap", () => {
     expect(v.cap).toBe(DAILY_AUTOMATED_SEND_CAP);
   });
 
-  it("explains itself in words an owner can act on", async () => {
+  // It is a fuse, not a plan limit, and the message has to say so — an
+  // owner who reads "you have reached your daily limit" concludes they
+  // need a bigger plan, when what has actually happened is that something
+  // is broken.
+  it("reads like a safety stop, not a plan limit", async () => {
     used(DAILY_AUTOMATED_SEND_CAP, 0);
     const v = await checkSendCap("biz-1", "automated");
-    // Not "rate limit exceeded". It has to say what happened, why, and
-    // what they can still do.
-    expect(v.reason).toMatch(/paused until tomorrow/i);
-    expect(v.reason).toMatch(/rate-limited/i);
-    expect(v.reason).toMatch(/you can still send anything yourself/i);
+    expect(v.reason).toMatch(/safety measure/i);
+    expect(v.reason).toMatch(/something may be wrong/i);
+    expect(v.reason).toMatch(/nothing you send yourself is affected/i);
+    expect(v.reason).not.toMatch(/upgrade|plan|limit reached/i);
   });
 
-  // The campaign-shaped send gets the tighter number, because it is the
-  // one that looks like a campaign from the outside.
-  it("caps the reactivation batch well below the general cap", async () => {
-    expect(DAILY_REACTIVATION_SEND_CAP).toBeLessThan(DAILY_AUTOMATED_SEND_CAP);
+  // The back catalogue is not rationed. The owner pressed the button having
+  // been shown the count and three real drafts; slowing it afterwards would
+  // second-guess a decision they already made on purpose. It shares the
+  // fuse and nothing else.
+  it("does not ration the reactivation batch separately", async () => {
+    expect(DAILY_REACTIVATION_SEND_CAP).toBe(DAILY_AUTOMATED_SEND_CAP);
 
-    used(DAILY_REACTIVATION_SEND_CAP, DAILY_REACTIVATION_SEND_CAP);
-    const v = await checkSendCap("biz-1", "reactivation");
-    expect(v.allowed).toBe(false);
-    expect(v.cap).toBe(DAILY_REACTIVATION_SEND_CAP);
-    expect(v.reason).toMatch(/go out tomorrow/i);
-  });
-
-  // A back catalogue spread over days is the entire point — it is what a
-  // person doing this by hand looks like, and it is slow enough that the
-  // owner sees the first replies before the last messages leave.
-  it("lets a reactivation batch continue while it is under its own cap", async () => {
-    used(DAILY_REACTIVATION_SEND_CAP - 1, DAILY_REACTIVATION_SEND_CAP - 1);
+    used(300, 300);
     const v = await checkSendCap("biz-1", "reactivation");
     expect(v.allowed).toBe(true);
   });
 
-  // Reactivation counts INSIDE the general cap, not on top of it, so a big
-  // batch can't push the total past what the mailbox will take.
-  it("still blocks a reactivation send once the overall cap is reached", async () => {
-    used(DAILY_AUTOMATED_SEND_CAP, 2);
+  // Well above any real day. A 200-lead back catalogue — the largest
+  // legitimate burst this product has — must clear in one go.
+  it("lets a whole back catalogue through in one sitting", async () => {
+    used(200, 200);
+    const v = await checkSendCap("biz-1", "reactivation");
+    expect(v.allowed).toBe(true);
+  });
+
+  it("still trips once the fuse itself is reached", async () => {
+    used(DAILY_AUTOMATED_SEND_CAP, DAILY_AUTOMATED_SEND_CAP);
     const v = await checkSendCap("biz-1", "reactivation");
     expect(v.allowed).toBe(false);
-    expect(v.cap).toBe(DAILY_AUTOMATED_SEND_CAP);
+  });
+
+  // Far above a normal day, far below Google Workspace's own ~2,000/day
+  // external-recipient ceiling. Both halves matter: too low rations a real
+  // customer, too high stops being a fuse.
+  it("sits above real use and below the provider ceiling", () => {
+    expect(DAILY_AUTOMATED_SEND_CAP).toBeGreaterThan(200);
+    expect(DAILY_AUTOMATED_SEND_CAP).toBeLessThan(2000);
   });
 
   it("counts only this business, only automated, only sends that happened", async () => {

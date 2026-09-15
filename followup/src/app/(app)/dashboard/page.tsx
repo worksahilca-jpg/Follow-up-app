@@ -241,7 +241,13 @@ export default async function DashboardPage() {
               question an owner asks ("is anyone about to fall through the
               cracks," "is this thing earning its keep") rather than every
               number the app happens to be able to compute. */}
-          <RevealGroup on="mount" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
+          {/* Three across at every width, not stacked below sm. These three
+              values are single- or double-digit counts, and StatCard already
+              reserves two lines for a wrapping label — so three-up fits at
+              390px, where one-per-row spent ~370px of the first screen on
+              three numbers and pushed "About to be lost", the thing the page
+              is for, below the fold. */}
+          <RevealGroup on="mount" className="grid grid-cols-3 gap-3 mt-6">
             <RevealItem>
               <StatCard
                 label="At risk right now"

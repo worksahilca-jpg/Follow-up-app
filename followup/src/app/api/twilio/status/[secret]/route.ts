@@ -42,14 +42,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const status = formParams.MessageStatus;
   if (!messageSid || !status) return NextResponse.json({ received: true });
 
-  // Message.externalId is globally unique (it's a Twilio SID), so no
-  // businessId filter is needed here beyond what the signature check
-  // already guarantees. updateMany (not update) so a callback for a SID
-  // that doesn't match any row (never sent, or sent before this shipped)
-  // matches zero rows and returns cleanly instead of throwing.
+  // Scoped to the business this secret belongs to, NOT keyed on the SID
+  // alone. The signature proves the request came from whoever holds THIS
+  // business's Twilio Auth Token — and that token is a value the business
+  // itself pastes into Settings → Phone, so a malicious tenant can sign
+  // any payload it likes with its own token, POST it to its own
+  // /api/twilio/status/<its own secret>, and pass every check above. With
+  // an unscoped `where`, a MessageSid copied from another tenant would
+  // then let it overwrite that tenant's deliveryStatus and (attacker-
+  // controlled, free-text) deliveryErrorMessage. Message has no
+  // businessId of its own; the ownership path is
+  // message → conversation → lead → businessId.
+  //
+  // updateMany (not update) so a callback for a SID that doesn't match any
+  // row (never sent, sent before this shipped, or belonging to someone
+  // else) matches zero rows and returns cleanly instead of throwing.
   await prisma.message
     .updateMany({
-      where: { externalId: messageSid },
+      where: { externalId: messageSid, conversation: { lead: { businessId: business.id } } },
       data: {
         deliveryStatus: status,
         deliveryErrorCode: formParams.ErrorCode || null,

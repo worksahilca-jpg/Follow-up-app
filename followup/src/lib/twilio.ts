@@ -212,11 +212,28 @@ export async function findOrCreateLeadByPhone(
  * answers — a very normal "missed call, try again" pattern — gets one
  * text, not three) and a concurrency guard (two near-simultaneous calls
  * from the same number can't both win the race and both send).
+ *
+ * `optedOutAt: null` is part of the claim, not a separate pre-check, and
+ * it is the one condition here that is a legal requirement rather than a
+ * UX nicety. The missed-call text-back is the ONLY outbound message in
+ * this app that does not go through sendFollowUpToLead() (see
+ * src/app/api/twilio/voice/[secret], which calls sendSms() directly), so
+ * it was also the only one that never met that funnel's TCPA/CTIA
+ * opt-out hard stop: a lead who replied STOP and later called the
+ * business got an automated text anyway. Enforcing it inside the claim
+ * — rather than in the caller — keeps it atomic with the cooldown and
+ * keeps the guarantee stated in this file's own STOP_KEYWORDS comment
+ * ("no send path here — manual, automated, or a sequence — can ignore
+ * it") actually true.
  */
 export async function claimMissedCallTextBack(leadId: string, cooldownMinutes: number): Promise<boolean> {
   const since = new Date(Date.now() - cooldownMinutes * 60_000);
   const claim = await prisma.lead.updateMany({
-    where: { id: leadId, OR: [{ lastMissedCallTextAt: null }, { lastMissedCallTextAt: { lt: since } }] },
+    where: {
+      id: leadId,
+      optedOutAt: null,
+      OR: [{ lastMissedCallTextAt: null }, { lastMissedCallTextAt: { lt: since } }],
+    },
     data: { lastMissedCallTextAt: new Date() },
   });
   return claim.count === 1;

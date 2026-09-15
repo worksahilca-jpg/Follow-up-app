@@ -146,7 +146,7 @@ const EMPTY_RESULT: AutomationResult = {
  * mechanism sequences.ts already uses per-step — this is deliberately
  * NOT a second system prompt, just a stronger steer on the existing one.
  */
-function deadLeadMessageHint(daysSinceContact: number): string {
+export function deadLeadMessageHint(daysSinceContact: number): string {
   return (
     `This lead has gone genuinely cold — nobody, on either side, has said anything in about ${daysSinceContact} ` +
     "days. This is a reactivation message, not a routine follow-up: name that actual elapsed time plainly " +
@@ -394,6 +394,35 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       );
 
       const isDeadLead = deadIds.has(lead.id);
+
+      // Is this lead ACTUALLY past the dead-lead threshold — asked directly,
+      // rather than inferred from which framing won the merge above?
+      //
+      // The two are not the same question, and treating them as one was a
+      // real hole. `deadIds` deliberately subtracts the unanswered set
+      // (see its construction above) so that a lead who is both cold AND
+      // unanswered gets the better, more urgent framing and only one
+      // message. That's right for framing. But `isDeadLead` was also what
+      // the mandatory human hold below keyed on — so the very act of
+      // choosing the kinder wording switched the approval requirement off.
+      //
+      // The lead it let through is the worst one to get wrong: someone who
+      // wrote in, was never answered, and has been waiting 45+ days. On a
+      // business's first sync the imported back catalogue is full of
+      // exactly that shape, so it fired within the first hourly tick after
+      // signup. src/lib/reactivation.ts classifies that same population as
+      // COLD_UNANSWERED and refuses to bulk-message them at all — they are
+      // owed an answer, not a "still interested?" — so the two subsystems
+      // were reaching opposite conclusions about the same person.
+      //
+      // Mirrors the `deadLeads` query's own predicate exactly (non-null
+      // lastContacted at or before deadCutoff, and only while the rule is
+      // enabled), so this is strictly a superset of `isDeadLead` and
+      // changes nothing about who is eligible, drafted, or how a message
+      // is worded — only about who is allowed to send without a human.
+      const isCold =
+        deadLeadEnabled && lead.lastContacted !== null && lead.lastContacted <= deadCutoff;
+
       // task #63 (live-test finding): a cached suggestedMessage can predate
       // the lead's actual most recent inbound message — scoring.ts drafts
       // once per inbound webhook, but a lead that fires off several
@@ -476,7 +505,12 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         //
         // A lead the owner has deliberately set to AUTONOMOUS never reaches
         // this branch, so an explicit per-lead opt-in still wins.
-        if (risk.riskLevel !== "low" || isDeadLead) {
+        //
+        // Keyed on `isCold` (the threshold itself), NOT on `isDeadLead`
+        // (which framing won the merge) — see isCold's definition above for
+        // the hole that distinction was hiding. `isDeadLead` implies
+        // `isCold`, so this only ever holds MORE than before, never less.
+        if (risk.riskLevel !== "low" || isCold) {
           // Always (re)write for a dead lead or an unanswered reply, even
           // if suggestedMessage already existed — it was regenerated above
           // specifically because the cached draft can't be trusted for
@@ -488,11 +522,25 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           // A cold-lead hold isn't a risk finding, so it needs its own
           // sentence — risk.reason is empty when the classifier said "low"
           // and we held anyway, and "Held because ." is what the owner
-          // would otherwise read on the approval card.
+          // would otherwise read on the approval card. Reaching the hold
+          // with a "low" verdict is only possible via isCold, so these two
+          // branches cover that case completely.
+          //
+          // The unanswered variant says something different on purpose. A
+          // lead who merely went quiet is a judgement call about whether to
+          // reach back out; a lead who WROTE and never got an answer is a
+          // different fact about the business, and the approval card should
+          // not describe it as if the lead simply drifted away.
+          const daysQuiet = Math.floor(
+            (Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000
+          );
+          const firstName = lead.name.split(" ")[0];
           const holdReason =
-            risk.riskLevel === "low" && isDeadLead
-              ? `${lead.name.split(" ")[0]} went quiet ${Math.floor((Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000)} days ago — reaching back out is your call`
-              : risk.reason;
+            risk.riskLevel !== "low"
+              ? risk.reason
+              : isUnanswered
+                ? `${firstName} wrote ${daysQuiet} days ago and never got an answer — this reply is yours to send`
+                : `${firstName} went quiet ${daysQuiet} days ago — reaching back out is your call`;
 
           if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
           // Held-not-sent is as much a real AI decision as a send — the

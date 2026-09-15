@@ -4,6 +4,7 @@ import { pickAssignee } from "@/lib/assignment";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { instagramLeadId } from "@/lib/instagramId";
+import { recordAuthFailure } from "@/lib/monitoring";
 import type { Lead } from "@prisma/client";
 
 const GRAPH_API = "https://graph.instagram.com";
@@ -46,23 +47,47 @@ export const WEBHOOK_VERIFY_TOKEN = "followup_ig_a8f3c1e0d92b47";
 
 /**
  * Validates Meta's X-Hub-Signature-256 header (HMAC-SHA256 of the raw
- * request body, keyed by the Meta app's App Secret — Settings → Basic in
- * the developer console, separate from any per-user access token).
- * Optional the same way Twilio's Auth Token is optional: skipped (not
- * hard-blocked) when INSTAGRAM_APP_SECRET isn't set yet, so the webhook
- * works the moment it's registered and tightens up whenever the secret
- * is added to Vercel's env vars.
+ * request body, keyed by the app secret Meta signed it with).
+ *
+ * TWO secrets are tried, not one. docs/meta-oauth-setup.md is explicit
+ * that this single callback URL serves **two separate products with two
+ * separate credential pairs** under the one "FollowUp" Meta app:
+ * "Instagram API with Instagram Login" has its own Instagram app secret
+ * (INSTAGRAM_APP_SECRET), while Facebook Login for Business / Page
+ * webhooks use the app's own App Secret from Settings → Basic
+ * (FACEBOOK_APP_SECRET). Checking only the Instagram one meant every
+ * `object: "page"` delivery — every Facebook Messenger DM and every Lead
+ * Ads submission, both handled by handlePageEvents() in
+ * src/app/api/instagram/webhook/route.ts — failed verification and was
+ * answered with a 403, which Meta retries for a while and then disables
+ * the subscription over. Two whole inbound lead channels, silently gone.
+ * Each candidate still has to produce an exact HMAC match; this only
+ * widens which of OUR OWN secrets is accepted, never the payload.
+ *
+ * Fails CLOSED when neither secret is configured. It used to return true
+ * in that case, which left the endpoint fully open: `entry[0].id` is
+ * matched against Business.instagramUserId / facebookPageId — both public
+ * identifiers — so anyone could forge inbound "lead" messages into a
+ * stranger's account, each one spending the platform's OpenAI budget on
+ * scoring/drafting and firing a real outbound instant-acknowledgement DM.
+ * Same posture (and the same recordAuthFailure "not_configured" reason)
+ * as validateVoiceAgentCallbackAuth() in src/lib/twilio.ts.
  */
 export function validateMetaSignature(rawBody: string, signatureHeader: string | null): boolean {
-  const appSecret = process.env.INSTAGRAM_APP_SECRET;
-  if (!appSecret) return true; // not configured yet — see doc comment above
+  const appSecrets = [process.env.INSTAGRAM_APP_SECRET, process.env.FACEBOOK_APP_SECRET].filter(
+    (s): s is string => !!s
+  );
+  if (appSecrets.length === 0) {
+    recordAuthFailure("meta_webhook_verify", { reason: "not_configured" });
+    return false;
+  }
   if (!signatureHeader?.startsWith("sha256=")) return false;
 
-  const expected = createHmac("sha256", appSecret).update(rawBody, "utf8").digest("hex");
-  const provided = signatureHeader.slice("sha256=".length);
-  const a = Buffer.from(expected);
-  const b = Buffer.from(provided);
-  return a.length === b.length && timingSafeEqual(a, b);
+  const provided = Buffer.from(signatureHeader.slice("sha256=".length));
+  return appSecrets.some((appSecret) => {
+    const expected = Buffer.from(createHmac("sha256", appSecret).update(rawBody, "utf8").digest("hex"));
+    return expected.length === provided.length && timingSafeEqual(expected, provided);
+  });
 }
 
 /** Resolves the Instagram-scoped user ID for an access token, via the Graph API's own /me. Called once, when a token is saved in Settings. */

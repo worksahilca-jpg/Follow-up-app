@@ -441,7 +441,36 @@ async function processConversations(
     let lead: Awaited<ReturnType<typeof prisma.lead.update>>;
     let isNewLead = false;
     if (existingLead) {
-      lead = await prisma.lead.update({ where: { id: existingLead.id }, data: { lastContacted } });
+    // Only ever FORWARD. `touched` above already computes whether this
+    // thread is actually newer than what the lead has; the write used to
+    // ignore it and set lastContacted unconditionally, which let the field
+    // run BACKWARDS.
+    //
+    // A lead is keyed (businessId, email), so one contact routinely has
+    // several threads, and a 90-day import window means several are in
+    // scope. Process Jane's live thread from this morning, then her
+    // 80-day-old thread about a different quote, and lastContacted lands
+    // on the older one. Everything in the product that asks "has this
+    // person gone quiet" reads that field: the silence automation, the
+    // dead-lead threshold, and now reactivation. So Jane — mid-
+    // conversation, answered an hour ago — becomes eligible for an
+    // automated "haven't heard from you in a while", and for the cold
+    // batch. That is the single worst message this product can send.
+    //
+    // Written as a conditional updateMany rather than a read-then-write so
+    // two overlapping syncs (a push notification and the cron tick) can't
+    // interleave and still regress it: the UPDATE itself carries the
+    // "only if this is newer" test.
+      if (touched) {
+        await prisma.lead.updateMany({
+          where: {
+            id: existingLead.id,
+            OR: [{ lastContacted: null }, { lastContacted: { lt: lastContacted } }],
+          },
+          data: { lastContacted },
+        });
+      }
+      lead = await prisma.lead.findUniqueOrThrow({ where: { id: existingLead.id } });
     } else {
       try {
         lead = await prisma.lead.create({

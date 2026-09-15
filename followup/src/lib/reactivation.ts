@@ -97,7 +97,33 @@ async function resolveQuietDays(businessId: string): Promise<number> {
 
 type LoadedConversations = { channel: string; messages: { id: string; direction: string; body: string; sentAt: Date; opened: boolean }[] }[];
 
-/** Flattens a lead's channels into one chronological transcript. */
+/**
+ * Tie-break rank for two messages sent in the same millisecond: outbound
+ * sorts before inbound, so a tie leaves the LEAD's message last. See
+ * toConversation.
+ */
+const TIE_RANK: Record<string, number> = { outbound: 0, inbound: 1 };
+
+/**
+ * Flattens a lead's channels into one chronological transcript.
+ *
+ * The ordering has to be total, not merely chronological. `last.direction`
+ * is what splits COLD from COLD_UNANSWERED, and a lead with two channels
+ * can hold two messages with an identical sentAt — an inbound text and the
+ * outbound acknowledgement written in the same millisecond, or a batch
+ * import that stamped several rows from one API response. Sorting on the
+ * timestamp alone leaves such a pair in whatever order Postgres happened
+ * to return the conversations in, which this query never asks it to order,
+ * so the same data could be judged COLD on one run and COLD_UNANSWERED on
+ * the next.
+ *
+ * Ties break toward the lead's message being last — toward
+ * COLD_UNANSWERED. If we genuinely cannot tell whether anyone here
+ * answered them, the safe assumption is that nobody did: that lead is owed
+ * an apology and an answer, and a breezy "still interested?" to someone
+ * whose question was ignored is the one message that makes it worse. `id`
+ * settles anything still tied, so the result is deterministic.
+ */
 function toConversation(conversations: LoadedConversations): Message[] {
   return conversations
     .flatMap((c) =>
@@ -110,7 +136,12 @@ function toConversation(conversations: LoadedConversations): Message[] {
         opened: m.opened,
       }))
     )
-    .sort((a, b) => a.date.localeCompare(b.date));
+    .sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) ||
+        (TIE_RANK[a.direction] ?? 0) - (TIE_RANK[b.direction] ?? 0) ||
+        a.id.localeCompare(b.id)
+    );
 }
 
 const OUTCOME_TO_DB: Record<ThreadOutcome, QuietOutcome> = {
@@ -145,6 +176,14 @@ export type ClassifyQuietLeadsResult = {
  *   has at least one message — a manual-entry or CSV lead with an empty
  *     thread gives the classifier nothing to read.
  */
+/**
+ * Shared by the classify pass and the batch screen's "still counting"
+ * number, because the two have to mean the same thing: a lead with no
+ * messages is never judged, so counting it as awaiting judgment leaves the
+ * screen reporting a number that can never reach zero.
+ */
+const HAS_A_MESSAGE = { conversations: { some: { messages: { some: {} } } } } as const;
+
 function eligibilityWhere(businessId: string, cutoff: Date) {
   return {
     businessId,
@@ -152,7 +191,7 @@ function eligibilityWhere(businessId: string, cutoff: Date) {
     quietOutcome: null,
     optedOutAt: null,
     lastContacted: { lte: cutoff },
-    conversations: { some: { messages: { some: {} } } },
+    ...HAS_A_MESSAGE,
     // Skip leads another run is mid-way through judging right now. Without
     // this the atomic claim below still prevents the double OpenAI call,
     // but every overlapping run would fill its whole batch with leads it
@@ -201,6 +240,55 @@ export async function classifyQuietLeads(
     const conversation = toConversation(lead.conversations);
     if (conversation.length === 0) return;
 
+    const last = conversation[conversation.length - 1];
+
+    // "Quiet" is selected on Lead.lastContacted, but the thing that
+    // actually decides whether this person is quiet is when they last
+    // said something — and the two can disagree. Both mailbox syncs write
+    // lastContacted from the newest message of the thread they happen to
+    // be processing, unconditionally (src/lib/integrations/gmail.ts and
+    // outlook.ts), so importing an older thread for a contact who already
+    // has a newer one drags their lastContacted BACKWARDS. A lead who
+    // emailed this morning can therefore look 80 days silent, and a verdict
+    // written on that basis is the first half of sending "still
+    // interested?" into a live conversation.
+    //
+    // The transcript already loaded here settles it for free. If the real
+    // last message is newer than the cutoff, this lead is not quiet — no
+    // claim, no OpenAI call, no verdict.
+    //
+    // But it does not just skip: it REPAIRS. Skipping alone would leave the
+    // lead matching the eligibility query forever, so every run would fetch
+    // it, spend a slot in the batch on it, and skip it again — while
+    // getReactivationBatch's `unjudged` count (which can only select on
+    // lastContacted) kept counting it. The owner would see "12 still being
+    // judged" that never reaches zero and that nothing they do can clear.
+    //
+    // Since the true last message is right here, the corrupt field is
+    // fixable rather than merely detectable. Writing it back drops the lead
+    // out of the eligible set for good, the count settles, and the rest of
+    // the product — the silence automation and the dead-lead threshold both
+    // read this same field — stops treating a live conversation as
+    // abandoned. Conditional and forward-only, so this can never itself
+    // become another way for lastContacted to move the wrong way.
+    //
+    // The root cause is fixed in gmail.ts/outlook.ts, which no longer write
+    // the field backwards. This stays for the rows already written that way,
+    // and as a standing guard: anything that corrupts this field again gets
+    // caught here instead of being sent a message.
+    const trueLastContacted = new Date(last.date);
+    if (trueLastContacted > cutoff) {
+      await prisma.lead.updateMany({
+        where: {
+          id: lead.id,
+          businessId,
+          OR: [{ lastContacted: null }, { lastContacted: { lt: trueLastContacted } }],
+        },
+        data: { lastContacted: trueLastContacted },
+      });
+      return;
+    }
+
     // Claim the lead BEFORE paying for the verdict, with the same atomic
     // conditional update the rest of the codebase uses for exactly this
     // (see Lead.lastRapidEngagementNotifiedAt). Two runs overlapping — a
@@ -209,13 +297,29 @@ export async function classifyQuietLeads(
     // bill twice for one answer. The claim writes the timestamp only;
     // quietOutcome stays null so a crash between here and the verdict
     // below leaves the lead re-judgeable rather than permanently blank.
+    //
+    // claimedAt is kept because it is also this run's proof that it still
+    // HOLDS the claim: every write below is conditional on the stored
+    // timestamp still being this exact one. Without that, a run whose
+    // OpenAI call outlives CLAIM_STALE_MINUTES (the openai SDK's own
+    // default is a 10-minute timeout with retries on top, so this is a
+    // normal slow call, not a freak event) comes back to find the lead
+    // re-claimed and re-judged by a later run — and happily overwrites
+    // that fresh verdict with its own stale one. A lead judged CLOSED at
+    // 10:11 could be flipped to COLD at 10:12 by a run that started at
+    // 10:00, which is precisely how someone who already bought ends up in
+    // the only bucket that gets messaged.
+    const claimedAt = new Date();
     const claim = await prisma.lead.updateMany({
-      where: { id: lead.id, quietOutcome: null, ...unclaimedOr() },
-      data: { quietOutcomeAt: new Date() },
+      // businessId is redundant given the id (these rows came from a
+      // businessId-scoped read) and included anyway: every write in this
+      // file states the tenant it belongs to, so no future edit can widen
+      // one of these into a cross-tenant write by loosening the read.
+      where: { id: lead.id, businessId, quietOutcome: null, ...unclaimedOr() },
+      data: { quietOutcomeAt: claimedAt },
     });
     if (claim.count === 0) return; // someone else got there first
 
-    const last = conversation[conversation.length - 1];
     const daysQuiet = Math.floor((Date.now() - new Date(last.date).getTime()) / (24 * 60 * 60 * 1000));
 
     try {
@@ -232,10 +336,20 @@ export async function classifyQuietLeads(
       const stored: QuietOutcome =
         outcome === "cold" && last.direction === "inbound" ? "COLD_UNANSWERED" : OUTCOME_TO_DB[outcome];
 
-      await prisma.lead.update({
-        where: { id: lead.id },
+      // Conditional on this run still holding the claim it took above —
+      // see claimedAt. A verdict that comes back after the claim expired
+      // is thrown away rather than written over whatever was decided in
+      // the meantime: it was reached from a transcript that is by then at
+      // least CLAIM_STALE_MINUTES stale, and the run that superseded it
+      // read the lead more recently than this one did.
+      const written = await prisma.lead.updateMany({
+        where: { id: lead.id, businessId, quietOutcome: null, quietOutcomeAt: claimedAt },
         data: { quietOutcome: stored, quietOutcomeReason: reason, quietOutcomeAt: new Date() },
       });
+      if (written.count === 0) {
+        console.warn(`Discarded a late verdict for quiet lead ${lead.id}: its claim had already been taken over.`);
+        return;
+      }
       classified += 1;
 
       // An AI decision that gates whether a real person gets messaged
@@ -256,9 +370,19 @@ export async function classifyQuietLeads(
       // error) would quietly turn an outage into a screen full of "we
       // couldn't tell", which reads to an owner like a judgment about
       // their leads rather than a failure of ours.
+      //
+      // Scoped to the claim this run actually took (quietOutcomeAt still
+      // equal to claimedAt), not to "any unjudged lead with this id": a
+      // slow call that failed after its claim went stale would otherwise
+      // release a claim a DIFFERENT run is holding right now, handing the
+      // same lead to a third run while the second is still mid-flight —
+      // the double OpenAI bill this claim exists to prevent.
       console.error(`Failed to classify quiet lead ${lead.id}:`, err);
       await prisma.lead
-        .updateMany({ where: { id: lead.id, quietOutcome: null }, data: { quietOutcomeAt: null } })
+        .updateMany({
+          where: { id: lead.id, businessId, quietOutcome: null, quietOutcomeAt: claimedAt },
+          data: { quietOutcomeAt: null },
+        })
         .catch(() => {});
       failed += 1;
     }
@@ -377,7 +501,13 @@ export async function getReactivationBatch(
     bucket("CLOSED"),
     bucket("OFF_PLATFORM"),
     bucket("UNCLEAR"),
-    prisma.lead.count({ where: { ...base, quietOutcome: null } }),
+    // HAS_A_MESSAGE, because this number's only job is to say how much of
+    // the catalogue is still being judged — and classifyQuietLeads will
+    // never judge a lead with an empty thread (same constant, same
+    // reason). Counting those here would leave a CSV-imported or
+    // manually-added contact stuck in "12 still being judged" forever,
+    // with nothing an owner could do to make the number move.
+    prisma.lead.count({ where: { ...base, quietOutcome: null, ...HAS_A_MESSAGE } }),
   ]);
 
   return { cold, neverReplied, closed, offPlatform, unclear, unjudged };

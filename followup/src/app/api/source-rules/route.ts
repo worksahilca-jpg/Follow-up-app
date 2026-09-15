@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin } from "@/lib/session";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { KNOWN_LEAD_SOURCES } from "@/lib/sourceRouting";
@@ -45,9 +45,21 @@ export async function GET() {
 // sequenceId and automationTierDefault as null clears the rule back to
 // "do nothing special" rather than deleting the row outright — simpler to
 // always upsert than to branch on whether a row already exists.
+//
+// Admin-only, matching POST /api/automation/settings. A source rule is an
+// automation default for the whole business, not per-lead work: it decides
+// what happens to EVERY future lead from a channel the moment it is created
+// (src/lib/sourceRouting.ts), including silently setting automationTier to
+// AUTONOMOUS — unreviewed sending — for all of them. That is the same class
+// of account-level decision requireAdmin() already guards for the automation
+// master switch; GET stays open to everyone so a SALES rep can still see
+// what the rules are.
 export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (!(await requireAdmin(ctx))) {
+    return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  }
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }

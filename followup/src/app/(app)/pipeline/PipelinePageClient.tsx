@@ -231,17 +231,39 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                     setDraggingId(lead.id);
                   }}
                   onDragEnd={() => setDraggingId(null)}
-                  className="flex items-center gap-2 rounded-lg border border-line pl-2 pr-2.5 py-2 text-xs hover:bg-paper cursor-grab active:cursor-grabbing border-l-[3px]"
+                  className="rounded-lg border border-line pl-2 pr-2.5 py-2 text-xs hover:bg-paper cursor-grab active:cursor-grabbing border-l-[3px]"
                   style={{
                     opacity: draggingId === lead.id ? 0.4 : 1,
                     borderLeftColor: closed ? "var(--line)" : urgencyColor(daysSince(lead.lastContacted)),
                   }}
-                  title={closed ? undefined : `${daysSince(lead.lastContacted)} days since last contact`}
                 >
-                  <ScoreBadge score={lead.score} size="sm" />
-                  <Link href={`/leads/${lead.id}`} className="truncate flex-1 hover:underline">
-                    {lead.name}
-                  </Link>
+                  {/* The name and the stage select used to share one row
+                      inside a 260px column. The select is ~120px and was
+                      shrink-0, the score badge 36px, so the name — the only
+                      thing that identifies the card — got about 30px and
+                      rendered as "Der…", "Kon…", "Sar…". Two rows instead:
+                      the lead reads first, the control sits under it. */}
+                  <div className="flex items-center gap-2">
+                    <ScoreBadge score={lead.score} size="sm" />
+                    <Link href={`/leads/${lead.id}`} className="min-w-0 truncate flex-1 font-medium hover:underline">
+                      {lead.name}
+                    </Link>
+                  </div>
+                  {/* The left rail's colour used to be the card's only
+                      urgency signal, with its meaning in a `title` tooltip —
+                      unreachable on a touch screen, and exactly the "colour
+                      carrying the meaning alone" that A-006 rules out. The
+                      same fact, in words, on the card. Closed columns say
+                      nothing: "silent 40 days" is not a problem on a deal
+                      that's already won or lost, which is why their rail is
+                      neutral too. */}
+                  {!closed && (
+                    <p className="mt-1 pl-1" style={{ color: urgencyColor(daysSince(lead.lastContacted)) }}>
+                      {daysSince(lead.lastContacted) === 0
+                        ? "Touched today"
+                        : `Silent ${daysSince(lead.lastContacted)} ${daysSince(lead.lastContacted) === 1 ? "day" : "days"}`}
+                    </p>
+                  )}
                   {/* Dragging a card between columns needs a mouse — HTML5
                       drag-and-drop has no touch support on any mobile
                       browser, so this select is the only way to move a
@@ -253,7 +275,7 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                     onChange={(e) => moveLead(lead.id, e.target.value as PipelineStage)}
                     onClick={(e) => e.stopPropagation()}
                     aria-label={`Move ${lead.name} to a different stage`}
-                    className="shrink-0 text-xs rounded border border-line bg-paper px-1.5 py-1 text-ink-soft"
+                    className="mt-1.5 w-full text-xs rounded border border-line bg-paper px-1.5 py-1 text-ink-soft"
                   >
                     {PIPELINE_STAGES.map((s) => (
                       <option key={s.id} value={s.id}>

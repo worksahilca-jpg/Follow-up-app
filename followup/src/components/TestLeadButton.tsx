@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { Send } from "lucide-react";
 
 /**
  * "Send a test lead to myself" — research/product/2026-09-10-ux-
@@ -38,7 +38,13 @@ export default function TestLeadButton() {
         disabled={state === "sending"}
         className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium border border-line disabled:opacity-60"
       >
-        <Sparkles className="h-4 w-4" style={{ color: "var(--rust)" }} />
+        {/* Was a sparkle in the brand blue. Two rules at once: rejected.md
+            S-13 rules out sparkle icons as a stand-in for "AI", and A-006
+            holds the accent back for interactive/selected states rather than
+            spending it on a decorative glyph. This button sends a test lead,
+            so it gets the same send glyph the composer uses, in the button's
+            own text colour. */}
+        <Send className="h-4 w-4" />
         {state === "sending" ? "Sending…" : "Send a test lead to myself"}
       </button>
       {message && <p className="text-xs text-ink-soft mt-2 max-w-xs">{message}</p>}

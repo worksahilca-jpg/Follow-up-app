@@ -108,7 +108,13 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 mt-8">
-        <div className="md:col-span-2 space-y-8">
+        {/* min-w-0 on the grid items. An `auto` grid track's minimum is its
+            item's min-content size, and min-width:0 on an inner flex item
+            only lets that item shrink — it does not stop the nowrap text
+            inside it (the composer's "To Name <email>" row) from propagating
+            its full width up through the track. Without this the whole lead
+            page was 539px wide on a 390px phone and scrolled sideways. */}
+        <div className="min-w-0 md:col-span-2 space-y-8">
           {/* The composer is the page's actual job and it used to be THIRD in
               this column, under an unbounded conversation list. It comes
               first now — the reason to be on this screen is reachable without
@@ -147,7 +153,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             which wrapped their own `rounded-xl border bg-card` card — three
             box levels deep, the clearest S-09 violation in the app. Each
             section is now the box, sitting directly on the paper, one level. */}
-        <aside className="space-y-2">
+        <aside className="min-w-0 space-y-2">
           <div>
             <CollapsibleSection title="Details">
               <dl className="space-y-2 text-sm">

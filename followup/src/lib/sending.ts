@@ -246,33 +246,77 @@ export async function sendFollowUpToLead(
     externalId = result.sid;
   }
 
-  const conversation = await findOrCreateConversation(lead.id, channel, emailProvider ? { emailProvider } : {});
+  // ---------------------------------------------------------------
+  // Past this line the message has LEFT. Gmail/Outlook/Twilio/Meta has
+  // accepted it and the lead's phone is already buzzing — nothing below
+  // can un-send it, so nothing below may be allowed to make this look
+  // like a send that didn't happen.
+  //
+  // It used to. Every write here ran unguarded, so a Prisma failure
+  // after the provider said yes — a pool timeout ("Timed out fetching a
+  // new connection from the connection pool", the single most common
+  // serverless+Postgres failure), an ECONNRESET, a deploy cycling the
+  // DB — threw straight out of this function, and each caller read that
+  // as "the send failed" and retried it:
+  //   - automation.ts treats ECONNRESET/ETIMEDOUT as transient
+  //     (isTransientError), RELEASES its lastAutomationCheckedAt claim,
+  //     and re-drafts and re-sends the lead on the next hourly tick —
+  //     and because the lastContacted update below never ran either,
+  //     the lead is still inside the silence window, so it qualifies
+  //     again. Two follow-ups, an hour apart, to the same person.
+  //   - sequences.ts catches the throw as "skipped" and leaves the lead
+  //     enrolled on the SAME sequenceStepIndex with only the 5-minute
+  //     claim lock on sequenceStepDueAt, which expires long before the
+  //     next hourly tick — so that step re-sends, unconditionally, with
+  //     no transient-error test required at all.
+  //
+  // So: the bookkeeping is best-effort and the send is reported as what
+  // it actually is — successful. The cost of losing a Message row is a
+  // gap in the thread view; the cost of retrying is a duplicate message
+  // to a customer in the owner's name, which is the failure this whole
+  // module exists to prevent.
+  //
+  // lastContacted goes FIRST, deliberately: it is the one field that
+  // takes the lead back out of every re-eligibility window, so it gets
+  // the best chance of landing if the database is only intermittently
+  // reachable.
+  // ---------------------------------------------------------------
+  try {
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: { lastContacted: new Date() },
+    });
 
-  await prisma.message.create({
-    data: {
-      conversationId: conversation.id,
-      direction: "outbound",
-      body,
-      externalId,
-    },
-  });
+    const conversation = await findOrCreateConversation(lead.id, channel, emailProvider ? { emailProvider } : {});
 
-  await prisma.followUp.create({
-    data: {
-      leadId: lead.id,
-      channel,
-      message: body,
-      status: "sent",
-      automated: options.automated ?? false,
-      trigger: options.trigger ?? (options.automated ? "silence" : "manual"),
-      sentAt: new Date(),
-    },
-  });
+    await prisma.message.create({
+      data: {
+        conversationId: conversation.id,
+        direction: "outbound",
+        body,
+        externalId,
+      },
+    });
 
-  await prisma.lead.update({
-    where: { id: lead.id },
-    data: { lastContacted: new Date() },
-  });
+    await prisma.followUp.create({
+      data: {
+        leadId: lead.id,
+        channel,
+        message: body,
+        status: "sent",
+        automated: options.automated ?? false,
+        trigger: options.trigger ?? (options.automated ? "silence" : "manual"),
+        sentAt: new Date(),
+      },
+    });
+  } catch (err) {
+    // Loud, because a send that isn't in the thread is genuinely wrong —
+    // just less wrong than sending it twice.
+    console.error(
+      `Send to lead ${lead.id} on ${channel} was accepted by the provider but could not be recorded — NOT retrying (the message already went out):`,
+      err
+    );
+  }
 
   // Push a note to the CRM this lead came from — best-effort, never lets
   // a CRM hiccup fail a send that already succeeded. See src/lib/crmSync.ts.

@@ -11,7 +11,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { findUniqueBusiness, updateMany } = vi.hoisted(() => ({
   findUniqueBusiness: vi.fn(),
-  updateMany: vi.fn(async () => ({ count: 1 })),
+  // Typed so `updateMany.mock.calls[0][0].where` is inspectable below —
+  // an untyped vi.fn() infers its calls as an empty tuple.
+  updateMany: vi.fn<(args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<{ count: number }>>(
+    async () => ({ count: 1 })
+  ),
 }));
 vi.mock("@/lib/db", () => ({ prisma: { business: { findUnique: findUniqueBusiness }, message: { updateMany } } }));
 vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn() }));
@@ -68,7 +72,7 @@ describe("POST /api/twilio/status/[secret]", () => {
 
     expect(res.status).toBe(200);
     expect(updateMany).toHaveBeenCalledWith({
-      where: { externalId: "SM123" },
+      where: { externalId: "SM123", conversation: { lead: { businessId: "biz1" } } },
       data: {
         deliveryStatus: "delivered",
         deliveryErrorCode: null,
@@ -86,13 +90,43 @@ describe("POST /api/twilio/status/[secret]", () => {
     await POST(req, ctx("sekret123"));
 
     expect(updateMany).toHaveBeenCalledWith({
-      where: { externalId: "SM124" },
+      where: { externalId: "SM124", conversation: { lead: { businessId: "biz1" } } },
       data: {
         deliveryStatus: "undelivered",
         deliveryErrorCode: "30003",
         deliveryErrorMessage: "Unreachable",
         deliveryUpdatedAt: expect.any(Date),
       },
+    });
+  });
+
+  /**
+   * Cross-tenant write. The Twilio Auth Token this signature is checked
+   * against is a value the BUSINESS pastes into Settings → Phone, so a
+   * malicious tenant can legitimately sign any payload it wants with its
+   * own token and POST it to its own /api/twilio/status/<own secret>.
+   * Every gate above passes. Before the fix the update was keyed on
+   * `{ externalId }` alone, so a MessageSid lifted from another tenant let
+   * this tenant overwrite that tenant's delivery status and its
+   * attacker-controlled free-text deliveryErrorMessage. Message has no
+   * businessId column; ownership is message → conversation → lead.
+   */
+  it("scopes the update to the signing business, so one tenant can't overwrite another tenant's message row", async () => {
+    findUniqueBusiness.mockResolvedValue({ id: "attacker-biz", twilioAuthToken: AUTH_TOKEN });
+    const form = {
+      MessageSid: "SM-belonging-to-victim",
+      MessageStatus: "failed",
+      ErrorMessage: "Your account has been suspended, call 555-0100",
+    };
+    const req = formRequest(URL_PATH, form, sign(form));
+
+    await POST(req, ctx("sekret123"));
+
+    expect(updateMany).toHaveBeenCalledTimes(1);
+    const where = updateMany.mock.calls[0]?.[0].where;
+    expect(where).toEqual({
+      externalId: "SM-belonging-to-victim",
+      conversation: { lead: { businessId: "attacker-biz" } },
     });
   });
 

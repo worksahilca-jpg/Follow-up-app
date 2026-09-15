@@ -15,7 +15,12 @@ export default function SetupStrip({ steps }: { steps: SetupStep[] }) {
   const [next, ...rest] = steps;
 
   return (
-    <div className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-line bg-card px-5 py-3.5">
+    /* Stacks below sm. Side by side, a shrink-0 button left the text column
+       about 170px wide on a 390px phone: the title wrapped to two lines, the
+       description to three, and the strip turned into a six-line block of
+       ragged text next to a button. Full width, button underneath, in thumb
+       reach — same shape the page header already uses at this width. */
+    <div className="mt-6 flex flex-col gap-3 rounded-xl border border-line bg-card px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div className="min-w-0">
         <p className="text-sm font-medium">
           {next.title}
@@ -30,7 +35,7 @@ export default function SetupStrip({ steps }: { steps: SetupStep[] }) {
       </div>
       <Link
         href={next.ctaHref}
-        className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium shrink-0"
+        className="inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium sm:shrink-0 sm:py-1.5"
         style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
       >
         {next.ctaLabel}

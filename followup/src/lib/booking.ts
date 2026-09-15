@@ -142,10 +142,30 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
     return { success: false, message: "That time is outside business hours — pick another." };
   }
 
+  // Only the create is inside the slot-taken try. It used to wrap all three
+  // statements below while its catch asserted a single cause — "someone else
+  // just took this slot" — so ANY failure after the booking was committed
+  // told the lead their booking hadn't happened.
+  //
+  // The damaging case: the Booking row commits, `lead.update` then fails, and
+  // the lead is told the slot was taken. They pick another time and book
+  // again. Now there are two bookings, the first is a phantom nobody is going
+  // to attend, it blocks that slot against everyone else, and it counts in
+  // the digest. The business shows up for one of them.
+  let booking;
   try {
-    const booking = await prisma.booking.create({
+    booking = await prisma.booking.create({
       data: { businessId: lead.businessId, leadId: lead.id, scheduledAt },
     });
+  } catch {
+    // Unique constraint on (businessId, scheduledAt) — this one really is
+    // "someone else got there first", and nothing has been committed.
+    return { success: false, message: "That time was just booked by someone else — pick another." };
+  }
+
+  // Past this point the booking EXISTS. Everything below is bookkeeping, and
+  // no failure in it may be reported to the lead as a failed booking.
+  try {
     // Surface it wherever the salesperson already looks for what's coming up.
     await prisma.lead.update({ where: { id: lead.id }, data: { nextFollowUp: scheduledAt } });
 
@@ -164,9 +184,14 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
       attendeeEmail: lead.email ?? undefined,
     });
 
-    return { success: true, scheduledAt: booking.scheduledAt.toISOString() };
-  } catch {
-    // Unique constraint on (businessId, scheduledAt) — someone else just took this slot.
-    return { success: false, message: "That time was just booked by someone else — pick another." };
+  } catch (err) {
+    // The booking is real and the slot is held. Telling the lead it failed
+    // would make them book a second one, so this is logged and swallowed:
+    // the worst case is a confirmed call that isn't mirrored onto
+    // `nextFollowUp` or a calendar, which is a far smaller problem than a
+    // duplicate booking and a no-show.
+    console.error(`Booking ${booking.id} committed but post-booking steps failed:`, err);
   }
+
+  return { success: true, scheduledAt: booking.scheduledAt.toISOString() };
 }

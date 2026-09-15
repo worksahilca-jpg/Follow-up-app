@@ -793,20 +793,33 @@ export async function fetchSalesConversations(
 
   // `since` is the automatic sync's narrowing: only threads with activity
   // after that instant (Gmail's `after:` takes epoch seconds). The manual
-  // "Sync now" passes nothing and keeps the broad 180-day / 100-thread pull.
+  // "Sync now" passes nothing and keeps the broad 90-day / 100-thread pull.
   const sinceClause = options.since ? ` after:${Math.floor(options.since.getTime() / 1000)}` : "";
   // A manual sync is the "go back and find what I've been ignoring" pull,
-  // so it goes deep — 180 days rather than 90 so a brand-new connection
-  // recovers leads from further back than a business would otherwise have
-  // any way to know went cold (2026-09-13: widened from 90 to 180 at the
-  // founder's direction, so a new business's first sync surfaces roughly
-  // half a year of history, not one quarter). The automatic tick only
-  // looks at what's new, where 30 threads is plenty. Known and previously-
-  // rejected threads skip the classifier, so depth costs Gmail reads, not
-  // OpenAI calls, on every run after the first.
+  // so it goes deeper than the incremental tick — but only one quarter, not
+  // half a year.
+  //
+  // History: 90 originally, widened to 180 on 2026-09-13, narrowed back to
+  // 90 on 2026-09-15 at the founder's direction. The reasoning changed
+  // because the consequence changed. When these leads were only ever
+  // *displayed*, more history was strictly better — free recall. Now that a
+  // cold lead can be messaged (approval-first, but messaged), the window
+  // stopped being a display setting and became "how far back are we willing
+  // to reopen a conversation". Six months is past the point where "it's been
+  // a while, still interested?" reads as attentive; it reads as a mailing
+  // list. Ninety days is the honest edge of a conversation someone might
+  // still remember having.
+  //
+  // It also lines the buckets up: the dead-lead threshold is 45 days
+  // (DEAD_LEAD_DEFAULT_DAYS), so the reactivation batch is now 45-90 days
+  // rather than 45-180 — a range an owner can actually reason about.
+  //
+  // The automatic tick only looks at what's new, where 30 threads is plenty.
+  // Known and previously-rejected threads skip the classifier, so depth
+  // costs Gmail reads, not OpenAI calls, on every run after the first.
   const { data: listData } = await gmail.users.threads.list({
     userId: "me",
-    q: `-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:180d${sinceClause}`,
+    q: `-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d${sinceClause}`,
     maxResults: options.since ? 30 : 100,
   });
 

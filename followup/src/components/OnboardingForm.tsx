@@ -303,12 +303,11 @@ function OnboardingFormInner({
                 {/* This said FollowUp "reads your sales conversations and tells
                     you who needs a follow-up today" — which describes a
                     READ-ONLY product, at the exact moment the owner grants send
-                    access. It isn't read-only: connecting imports the last 180
+                    access. It isn't read-only: connecting imports the last 90
                     days of threads, automation is already enabled at signup
                     (auth.ts), and dead-lead reactivation defaults to on at a
-                    45-day threshold — so imported threads between 45 and 180
-                    days old become eligible for an automated message, sent in
-                    the owner's name, immediately.
+                    45-day threshold — so imported threads between 45 and 90
+                    days old are the reactivation batch.
 
                     Nobody decided that; three separate defaults stack into it.
                     Changing the defaults is a product call and is flagged
@@ -333,8 +332,8 @@ function OnboardingFormInner({
                   <p className="text-sm font-medium">What happens when you connect</p>
                   <ul className="mt-1.5 space-y-1 text-xs text-ink-soft">
                     <li>
-                      FollowUp imports your conversations from the <strong className="font-medium">last 6 months</strong>{" "}
-                      so it has something to work with.
+                      FollowUp imports your conversations from the{" "}
+                      <strong className="font-medium">last 3 months</strong> so it has something to work with.
                     </li>
                     <li>
                       It can then <strong className="font-medium">send follow-ups from your address</strong>, including

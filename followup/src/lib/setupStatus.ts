@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { hasActiveAccess } from "@/lib/billing";
 import { getGmailStatus } from "@/lib/integrations/gmail";
+import { getOutlookStatus } from "@/lib/integrations/outlook";
 
 /**
  * research/product/2026-09-10-ux-simplification.md §2 and §7.1: the
@@ -26,18 +27,26 @@ export type SetupStep = {
 };
 
 export async function getIncompleteSetupSteps(businessId: string): Promise<SetupStep[]> {
-  const [business, gmail, hasWidgetLead] = await Promise.all([
+  const [business, gmail, outlook, hasWidgetLead] = await Promise.all([
     prisma.business.findUnique({
       where: { id: businessId },
-      select: { subscriptionStatus: true, twilioPhoneNumber: true },
+      // `tier` was missing, which is the whole of the billing bug below.
+      select: { subscriptionStatus: true, tier: true, twilioPhoneNumber: true },
     }),
     getGmailStatus(businessId),
+    getOutlookStatus(businessId),
     prisma.lead.findFirst({ where: { businessId, source: "Website form" }, select: { id: true } }),
   ]);
 
   const steps: SetupStep[] = [];
 
-  if (!hasActiveAccess(business?.subscriptionStatus)) {
+  // `tier` was being dropped here, and hasActiveAccess treats tier === "free"
+  // as real access. So a Free business — which can capture and process leads
+  // perfectly well, proven by POST /api/leads returning 200 — was told on its
+  // dashboard that it had to start a trial, while Settings → Billing told it
+  // "Free… this is where you are now". Two screens, opposite claims, which
+  // reads as a dark pattern rather than the bug it is.
+  if (!hasActiveAccess(business?.subscriptionStatus, business?.tier)) {
     steps.push({
       id: "billing",
       title: "Start your free trial",
@@ -47,12 +56,32 @@ export async function getIncompleteSetupSteps(businessId: string): Promise<Setup
     });
   }
 
-  if (!gmail.connected) {
+  // Outlook counts. This checked Gmail alone, so a business fully connected
+  // to Outlook — capturing leads, running automation, working exactly as
+  // intended — was nagged "Connect your inbox → Connect Gmail" forever, with
+  // a permanently inflated remaining-steps count it could never clear.
+  //
+  // A revoked Gmail grant is deliberately NOT treated as "no inbox" here: it
+  // has its own state (needsReconnect) and its own sentence on the dashboard,
+  // because "you never connected one" and "the one you connected stopped
+  // working" are different problems with different fixes.
+  const hasInbox = gmail.connected || outlook.connected;
+  if (!hasInbox && !gmail.needsReconnect) {
     steps.push({
       id: "gmail",
       title: "Connect your inbox",
       description: "This is where most of your leads already are.",
-      ctaLabel: "Connect Gmail",
+      ctaLabel: "Connect an inbox",
+      ctaHref: "/settings#integrations",
+    });
+  }
+
+  if (gmail.needsReconnect && !outlook.connected) {
+    steps.push({
+      id: "gmail",
+      title: "Reconnect your inbox",
+      description: `FollowUp has lost access to ${gmail.email ?? "your inbox"} and isn't catching new leads.`,
+      ctaLabel: "Reconnect",
       ctaHref: "/settings#integrations",
     });
   }

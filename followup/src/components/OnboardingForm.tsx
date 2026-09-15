@@ -19,8 +19,13 @@ interface OnboardingFormProps {
   initialIndustry?: string | null;
   initialTeamSize?: number | null;
   step1Done: boolean;
-  gmailConnected: boolean;
-  gmailEmail?: string;
+  /** Gmail OR Outlook — either one finishes this step. */
+  inboxConnected: boolean;
+  inboxEmail?: string;
+  /** Which provider is connected — decides which sync endpoint to kick. */
+  inboxProvider: "gmail" | "outlook" | null;
+  /** Whether the Microsoft one-click button can be offered at all. */
+  outlookAvailable: boolean;
 }
 
 // Wrapped in Suspense because the inner component reads useSearchParams()
@@ -39,8 +44,10 @@ function OnboardingFormInner({
   initialIndustry,
   initialTeamSize,
   step1Done,
-  gmailConnected,
-  gmailEmail,
+  inboxConnected,
+  inboxEmail,
+  inboxProvider,
+  outlookAvailable,
 }: OnboardingFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,10 +76,15 @@ function OnboardingFormInner({
   const autoSyncStarted = useRef(false);
 
   useEffect(() => {
-    if (!gmailConnected || autoSyncStarted.current) return;
+    if (!inboxConnected || !inboxProvider || autoSyncStarted.current) return;
     autoSyncStarted.current = true;
     setAutoSyncState("syncing");
-    fetch("/api/integrations/gmail/sync", { method: "POST" })
+    // Kick the sync for whichever provider actually connected. This was
+    // hardcoded to the Gmail endpoint, so an Outlook business finished
+    // onboarding and landed on an empty dashboard with nothing pulled in —
+    // the failure was swallowed by the catch below, exactly as designed for
+    // a billing wall, so nothing surfaced it.
+    fetch(`/api/integrations/${inboxProvider}/sync`, { method: "POST" })
       .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
       .then(({ ok, data }) => {
         if (ok && data.success) {
@@ -87,9 +99,18 @@ function OnboardingFormInner({
         // Silent — see comment above.
       })
       .finally(() => setAutoSyncState("done"));
-  }, [gmailConnected]);
+  }, [inboxConnected, inboxProvider]);
 
-  const gmailError = searchParams.get("gmail") === "error" ? searchParams.get("message") ?? "Couldn't connect Gmail." : null;
+  // Either provider's callback can bounce back here with an error. Reading
+  // only `gmail` meant an Outlook failure returned to a screen that said
+  // nothing at all about it — the owner just saw the connect step again with
+  // no explanation of why it hadn't worked.
+  const connectError =
+    searchParams.get("gmail") === "error"
+      ? searchParams.get("message") ?? "Couldn't connect Gmail."
+      : searchParams.get("outlook") === "error"
+        ? searchParams.get("message") ?? "Couldn't connect Outlook."
+        : null;
 
   async function handleStep1Submit(e: React.FormEvent) {
     e.preventDefault();
@@ -228,7 +249,7 @@ function OnboardingFormInner({
           </>
         ) : (
           <div className="mt-8">
-            {gmailConnected ? (
+            {inboxConnected ? (
               <>
                 <div
                   className="h-14 w-14 rounded-2xl flex items-center justify-center mx-auto"
@@ -238,7 +259,7 @@ function OnboardingFormInner({
                 </div>
                 <h2 className="font-display text-xl text-center mt-4">Gmail connected</h2>
                 <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
-                  Connected as <span className="font-medium text-ink">{gmailEmail}</span>.
+                  Connected as <span className="font-medium text-ink">{inboxEmail}</span>.
                 </p>
 
                 {/* Real-time status of the auto-sync kicked off in the
@@ -328,9 +349,9 @@ function OnboardingFormInner({
                   </ul>
                 </div>
 
-                {gmailError && (
+                {connectError && (
                   <p className="text-sm text-center mt-4" style={{ color: "var(--coral)" }}>
-                    {gmailError}
+                    {connectError}
                   </p>
                 )}
 
@@ -341,6 +362,26 @@ function OnboardingFormInner({
                 >
                   <Mail className="h-4 w-4" /> Connect Gmail
                 </a>
+
+                {/* Outlook was missing from this screen entirely. A business on
+                    Microsoft 365 had no way to finish onboarding — and once
+                    inside the app, setupStatus checked Gmail alone, so it got
+                    nagged "Connect Gmail" forever with a step count it could
+                    never clear. The connect route already accepted
+                    `next=onboarding`; nothing linked to it from here.
+
+                    Secondary styling deliberately: Gmail keeps the one accent
+                    moment on this screen (A-006), and Gmail is the majority
+                    case. Hidden entirely when MICROSOFT_CLIENT_ID isn't
+                    configured, rather than offering a button that errors. */}
+                {outlookAvailable && (
+                  <a
+                    href="/api/integrations/outlook/connect?next=onboarding"
+                    className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-lg border border-line px-4 py-2.5 text-sm font-medium"
+                  >
+                    <Mail className="h-4 w-4" /> Connect Outlook instead
+                  </a>
+                )}
                 <button
                   onClick={finishOnboarding}
                   disabled={finishing}

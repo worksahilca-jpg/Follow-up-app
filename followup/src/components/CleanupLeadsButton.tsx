@@ -20,7 +20,13 @@ interface CleanupResult {
  * The confirm/result panel is absolutely positioned under the button
  * (dropdown-style) so opening it doesn't reflow the header's button row.
  */
-export default function CleanupLeadsButton() {
+export default function CleanupLeadsButton({
+  /** Lets a caller (the /leads "More" menu) render the trigger as one of its
+   *  own rows instead of a standalone bordered button. */
+  triggerClassName,
+}: {
+  triggerClassName?: string;
+} = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [running, setRunning] = useState(false);
@@ -53,15 +59,21 @@ export default function CleanupLeadsButton() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium border border-line"
+        aria-expanded={open}
+        className={
+          triggerClassName ??
+          "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium border border-line"
+        }
       >
-        <Wand2 className="h-4 w-4" />
+        <Wand2 className="h-4 w-4 text-ink-soft" />
         Clean up leads
       </button>
 
       {open && (
+        // w-96 is 384px — on a 390px phone this panel ran off the screen on
+        // its own. Capped to the viewport with the page's own 16px gutters.
         <div
-          className="absolute right-0 top-full mt-2 w-96 rounded-xl border border-line bg-card p-4 shadow-lg z-10"
+          className="absolute right-0 top-full mt-2 w-[min(24rem,calc(100vw-2rem))] rounded-xl border border-line bg-card p-4 shadow-lg z-10"
           style={result ? undefined : { borderColor: "var(--coral)", backgroundColor: "var(--coral-soft)" }}
         >
           {result ? (

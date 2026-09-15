@@ -56,7 +56,10 @@ export type ItemBoxProps = {
    * these lines up. Optional: most boxes don't need one.
    */
   figure?: ReactNode;
-  /** Line 2. One plain-language fact. Keep it to one line's worth. */
+  /**
+   * Line 2. One plain-language fact. Write it short — it clamps at two
+   * lines, which is a safety net for a narrow screen, not room to fill.
+   */
   fact?: ReactNode;
   /**
    * The status rail plus the word that says what it means. Both or neither —
@@ -80,13 +83,23 @@ export function ItemBox({ title, figure, fact, status, href, className = "" }: I
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-3">
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">{title}</span>
+          {/* Clamped to two lines, not truncated to one. `truncate` assumes
+              line 1 is always a short name; on /activity it is a whole
+              sentence ("Automation sent Sarah Johnson a follow-up about the
+              Riverside quote") and at 390px every row on the page — a page
+              whose entire job is proof — ended in an ellipsis. Two lines is
+              still tight (A-006 axis 1) and a name that fits keeps behaving
+              exactly as before. */}
+          <span className="min-w-0 flex-1 line-clamp-2 text-sm font-medium">{title}</span>
           {figure != null && (
             <span className="shrink-0 text-xs text-ink-soft tabular-nums">{figure}</span>
           )}
         </div>
         {(status || fact) && (
-          <p className="mt-1 truncate text-xs text-ink-soft">
+          /* Same reason: the fact is the part the owner acts on ("wrote 5
+             days ago and is still waiting"), and one line of it at phone
+             width is the half that doesn't say anything. */
+          <p className="mt-1 line-clamp-2 text-xs text-ink-soft">
             {/* The status word and the rail colour always travel together. */}
             {status && <span style={{ color: RAIL[status.tone] }}>{status.label}</span>}
             {status && fact ? <span aria-hidden="true"> · </span> : null}

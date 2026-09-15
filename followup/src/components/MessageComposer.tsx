@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Send, RotateCcw } from "lucide-react";
+import { Send, RotateCcw } from "lucide-react";
 
 /**
  * The one place a real follow-up email actually goes out (via
@@ -85,10 +85,12 @@ export default function MessageComposer({
 
   return (
     <section>
-      <h2 className="font-display text-xl flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-ink-soft" />
-        AI-suggested follow-up
-      </h2>
+      {/* No sparkle icon. rejected.md S-13 names sparkles specifically —
+          "AI is invisible capability, never personality" — and the sentence
+          underneath already says what drafted this and that nothing sends
+          without approval, which is the part that earns trust. The icon was
+          decoration standing in for an explanation that's already there. */}
+      <h2 className="font-display text-xl">AI-suggested follow-up</h2>
       <p className="text-xs text-ink-soft mt-1">
         FollowUp drafted this based on your conversation. Nothing sends without your approval.
       </p>
@@ -98,7 +100,12 @@ export default function MessageComposer({
           <>
             <div className="flex items-center gap-2 px-3 py-2 border-b border-line text-sm">
               <span className="text-ink-soft w-16 shrink-0">To</span>
-              <span className="truncate">{leadName} &lt;{leadEmail}&gt;</span>
+              {/* min-w-0 is load-bearing, not belt-and-braces: a flex item's
+                  default min-width is `auto`, so without it this span refuses
+                  to shrink below its own text and `truncate` never fires. A
+                  long name + address pushed the whole lead page 149px wider
+                  than a 390px phone — the page itself scrolled sideways. */}
+              <span className="min-w-0 truncate">{leadName} &lt;{leadEmail}&gt;</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-2 border-b border-line">
               <label htmlFor="composer-subject" className="text-sm text-ink-soft w-16 shrink-0">

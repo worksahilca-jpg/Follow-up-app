@@ -1572,3 +1572,69 @@ ends.
 screen — D-020 (subtraction, rejected), D-021 (rich, landing-page language), D-022 (Apple
 restraint). If he picks one, log it in `approved.md` with what specifically was liked and
 implement the dashboard as its own PR before touching any other screen.
+
+---
+
+## 2026-09-15 — Verification pass on PR #243's redesign
+
+PR #243 moved every authenticated screen onto `ItemBox`/`PageHeader` and shipped
+with an honest admission in its own description: the screens typechecked and
+built, but nobody had looked at them. This is the pass that looked.
+
+Method worth repeating: the screens were rendered by importing the **real page
+modules** (mocking only the Prisma/session boundary) through a copy of the real
+`(app)/layout.tsx`, against CSS from a **production build**. The dev server's
+CSS lacks newly-used Tailwind classes and will show a stale layout — that trap
+was hit mid-pass and cost a full re-shoot. Screenshots at 1440, and at 390 via a
+520px-viewport iframe crop (headless Chromium clamps the viewport at ~500px).
+
+### Fixed — these were defects, not preferences
+
+1. **`/leads/[id]` scrolled horizontally at 390px** (page width 539px). The
+   composer's "To <name> <email>" row: `min-w-0` on the flex item alone is not
+   enough, because an `auto` grid track's minimum is its item's min-content, so
+   nowrap text propagates up through the track. Needed `min-w-0` on the span
+   *and* both grid items.
+2. **`/pipeline` rendered lead names as "Der…", "Kon…", "Sar…"** — a 260px
+   column split between a score badge and a `shrink-0` stage select left ~30px
+   for the only thing identifying the card.
+3. **`/pipeline` urgency was colour-only**, with the meaning in a `title`
+   tooltip — against A-006's hard constraint, and unreachable on touch. Now
+   stated in words on the card, using the same 3/7-day cutoffs `/leads` uses.
+4. **"Clean up leads" was a dead button.** Its confirm panel is absolutely
+   positioned inside a menu with `overflow-hidden`, so it clipped to nothing;
+   at `w-96` it also overran a 390px screen. This is the only irreversible
+   destructive action in the product, and it was unreachable.
+5. **`/activity` truncated every event sentence at 390px** — on the page whose
+   stated job is "Proof, not a promise". `ItemBox` hard-`truncate`d line 1,
+   which assumes a short name. Now `line-clamp-2`; also fixes the dashboard's
+   at-risk reasons.
+6. **`/workflows` plan card broke at 390px** — the delete button sat 6px
+   off-screen.
+7. **Two S-13 sparkle icons survived** the PR that removed the third and cited
+   S-13 by name.
+
+### Open — decisions, not repairs
+
+- **The dashboard renders blank without JS.** `FadeIn` is `whileInView` with
+  `initial: opacity 0`, so ~1200px of the page is invisible-but-space-occupying
+  until an IntersectionObserver fires. `CountUp` is worse: it SSRs **"0"**, so a
+  no-JS dashboard states "At risk right now: 0" beside eight at-risk leads.
+  This is the landing page's own failure mode reproduced inside the app.
+  Fixing it is a motion-policy change.
+- **`/pipeline` is still card-in-card** (S-09), and `ScoreBadge` is a coloured
+  circle with a bare number and a tooltip — a second hue in the box with no
+  word. `LeadsPageClient` deleted exactly this component for exactly these
+  reasons and left it on `/pipeline`. Removing it loses the score entirely.
+- **`/leads` shows four status hues at once**; A-006 caps a screen at three.
+- **PageHeader puts the secondary action above the primary at phone width.**
+  `flex-col-reverse` fixes the hierarchy and breaks focus order; the clean fix
+  changes desktop button order.
+- **PR #243's "one page header" is two-thirds done** — `/pipeline` and
+  `/settings` still roll their own h1 blocks.
+
+### Not verified, and should not be assumed working
+
+Recharts charts on `/analytics` (need a live DOM), everything on `/settings`
+past its loading state (gated behind a `useEffect` fetch), all modals, the
+notification panel, the workflow editor, and real motion timing.

@@ -108,7 +108,8 @@ function LeadsMoreMenu({ onLogCall, onImport }: { onLogCall: () => void; onImpor
     };
   }, [open]);
 
-  const item = "flex w-full items-center gap-2 px-3 py-2 text-sm text-left hover:bg-paper transition-colors";
+  const item =
+    "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-left hover:bg-paper transition-colors";
 
   return (
     <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -122,9 +123,15 @@ function LeadsMoreMenu({ onLogCall, onImport }: { onLogCall: () => void; onImpor
         More
       </button>
       {open && (
+        /* No overflow-hidden. "Clean up leads" opens its own confirm panel,
+           absolutely positioned inside this box — with overflow-hidden the
+           panel was clipped away entirely, so the menu item looked like a
+           dead button that did nothing when pressed, on the one destructive
+           action in the product. The item hovers are rounded instead, which
+           is what the clipping was doing for them. */
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-1 w-52 overflow-hidden rounded-[var(--radius-box)] bg-card py-1"
+          className="absolute right-0 z-20 mt-1 w-52 rounded-[var(--radius-box)] bg-card p-1"
           style={{ boxShadow: "var(--shadow-box-hover)" }}
         >
           <button role="menuitem" className={item} onClick={() => { setOpen(false); onLogCall(); }}>
@@ -135,9 +142,9 @@ function LeadsMoreMenu({ onLogCall, onImport }: { onLogCall: () => void; onImpor
             <Upload className="h-4 w-4 text-ink-soft" />
             Import CSV
           </button>
-          <div className="px-3 py-1">
-            <CleanupLeadsButton />
-          </div>
+          {/* Wears the menu row's own styling rather than arriving as a
+              bordered button inside a list of plain rows. */}
+          <CleanupLeadsButton triggerClassName={item} />
         </div>
       )}
     </div>

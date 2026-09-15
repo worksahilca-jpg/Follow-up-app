@@ -286,9 +286,16 @@ function WorkflowCard({
 
   return (
     <div className="rounded-xl border border-line bg-card p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
+      {/* Stacks below sm, and the title column gets min-w-0.
+          Side by side at 390px, three shrink-0 buttons left the title about
+          110px: "Cold reactivation — winter maintenance contracts" wrapped to
+          one word per line, the Active/Paused pill floated into the middle of
+          it, and the delete button sat 6px past the right edge of the screen.
+          A destructive control you cannot fully see is the part that made
+          this a fix rather than a nicety. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-display text-lg">{sequence.name}</h3>
             <span
               className="text-xs font-medium rounded-full px-2 py-0.5"
@@ -305,7 +312,7 @@ function WorkflowCard({
             {sequence.enrolledCount === 1 ? "" : "s"} enrolled
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 sm:shrink-0">
           <button
             onClick={toggleActive}
             disabled={busy}
@@ -320,13 +327,16 @@ function WorkflowCard({
           >
             Edit
           </button>
+          {/* Icon-only, so it needs a name a screen reader can read out —
+              and it is the one destructive control on the card. */}
           <button
             onClick={remove}
             disabled={busy}
+            aria-label={`Delete ${sequence.name}`}
             className="text-xs font-medium rounded-lg px-2.5 py-1.5 disabled:opacity-60"
             style={{ color: "var(--coral)" }}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>

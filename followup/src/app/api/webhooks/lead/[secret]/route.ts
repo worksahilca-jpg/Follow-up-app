@@ -9,6 +9,7 @@ import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentLeads } from "@/lib/rateLimit";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { findOrCreateConversation } from "@/lib/conversations";
+import { findConflictingLead } from "@/lib/leadConflict";
 import { cleanedText, EMAIL_RE, parseObject } from "@/lib/validation";
 import { recordAuthFailure } from "@/lib/monitoring";
 
@@ -137,7 +138,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
     return NextResponse.json({ success: true, leadId: lead.id });
   } catch (err) {
-    // Duplicate email for this business — same lead re-sent (a retried
+    // Duplicate email OR phone for this business (Lead carries both unique
+    // constraints — see findConflictingLead) — same lead re-sent (a retried
     // Zapier run, a re-submitted form) shouldn't error. This used to just
     // return success and drop the resend's content entirely — an
     // integration re-sending an updated payload for a lead it already
@@ -149,7 +151,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // continue" shape findOrCreateLeadByPhone() already uses for the SMS
     // side of this same problem.
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
-      const existing = await prisma.lead.findUnique({ where: { businessId_email: { businessId, email } } });
+      const existing = await findConflictingLead(businessId, email, phone);
       if (existing && message) {
         const conversation = await findOrCreateConversation(existing.id, "web");
         await prisma.message.create({

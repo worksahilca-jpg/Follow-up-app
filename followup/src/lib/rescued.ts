@@ -47,23 +47,42 @@ export async function getRescueReport(businessId: string, days = 7): Promise<Res
     orderBy: { sentAt: "desc" },
   });
 
+  // One row per lead, keeping the follow-up they replied to MOST recently —
+  // a lead can reply to several over the window, and the newest reply is
+  // the one that describes what actually brought them back.
+  //
+  // repliedAt is tracked in its own map rather than compared off the stored
+  // RescuedLead: `repliedAfterHours` is a DURATION in hours, not a
+  // timestamp, so the previous `f.repliedAt > new Date(existing.repliedAfterHours)`
+  // compared a real date against ~1970-01-01 (new Date(3) is 3ms past the
+  // epoch) and was therefore always true. Every lead ended up attributed to
+  // whichever of its follow-ups was iterated last — the OLDEST, since
+  // `sent` is ordered sentAt desc — so the digest named the wrong trigger
+  // and the wrong "replied Nh later" for any lead with more than one.
   const rescuedByLead = new Map<string, RescuedLead>();
+  const latestReplyByLead = new Map<string, Date>();
   for (const f of sent) {
     if (!f.repliedAt || !f.sentAt) continue;
-    const existing = rescuedByLead.get(f.leadId);
+    const bestSoFar = latestReplyByLead.get(f.leadId);
+    if (bestSoFar && f.repliedAt <= bestSoFar) continue;
+    latestReplyByLead.set(f.leadId, f.repliedAt);
     const hours = Math.max(1, Math.round((f.repliedAt.getTime() - f.sentAt.getTime()) / 3_600_000));
-    if (!existing || f.repliedAt > new Date(existing.repliedAfterHours)) {
-      rescuedByLead.set(f.leadId, {
-        id: f.lead.id,
-        name: f.lead.name,
-        trigger: f.trigger ?? "silence",
-        repliedAfterHours: hours,
-        dealValue: f.lead.dealValue,
-        stage: f.lead.stage,
-      });
-    }
+    rescuedByLead.set(f.leadId, {
+      id: f.lead.id,
+      name: f.lead.name,
+      trigger: f.trigger ?? "silence",
+      repliedAfterHours: hours,
+      dealValue: f.lead.dealValue,
+      stage: f.lead.stage,
+    });
   }
-  const leads = [...rescuedByLead.values()];
+  // Sorted explicitly rather than relying on Map insertion order, which
+  // follows each lead's FIRST-seen follow-up (i.e. sentAt), not its reply —
+  // and the digest only prints the top 10, so the order decides who a
+  // business actually reads about.
+  const leads = [...rescuedByLead.values()].sort(
+    (a, b) => (latestReplyByLead.get(b.id)?.getTime() ?? 0) - (latestReplyByLead.get(a.id)?.getTime() ?? 0)
+  );
   const rescuedIds = leads.map((l) => l.id);
 
   const booked = rescuedIds.length

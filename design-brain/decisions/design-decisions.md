@@ -1313,8 +1313,9 @@ closes the complaint until he confirms it does.
 like a human expert made it," using the newly connected 21st.dev component catalog as an
 input. Scoped to the dashboard only, on purpose — one screen to agree a direction on before
 anything else is touched.
-**Status:** proposed — not yet reviewed by the founder. Nothing in the app is changed by
-this entry. Prototype: `design-brain/prototypes/2026-09-15-dashboard-today-in-one-sentence.html`
+**Status:** REJECTED (2026-09-15) → see [[rejected#^R-001|R-001]] ("very basic") and the
+follow-up concept [[design-decisions#^D-021|D-021]]. Kept here as the record of what was
+tried. Prototype: `design-brain/prototypes/2026-09-15-dashboard-today-in-one-sentence.html`
 (static HTML on the real tokens, opens in any browser; screenshots at 1280px and 390px were
 reviewed before this was written).
 
@@ -1393,3 +1394,95 @@ state) and leave its *look*; the look is what makes every AI-era SaaS dashboard 
 PR (dashboard only), then apply the same subtraction pass screen by screen — leads list,
 lead detail, pipeline, settings — each as a proposal first. Rejected → record which of the
 five moves was wrong and why, so the next screen doesn't repeat it.
+
+*Outcome, same day:* rejected as "very basic" → [[rejected#^R-001|R-001]]. Superseded by
+D-021 below.
+
+
+---
+
+## D-021 — Dashboard concept 2, "Live Desk": the landing page's approved language applied to the real screen ^D-021
+**Date:** 2026-09-15
+**Decided by:** Claude, directly after [[rejected#^R-001|R-001]] ("make it more creative and
+enhanced, it's very basic"). Dashboard only; still a proposal.
+**Status:** proposed — not yet reviewed by the founder. Prototype:
+`design-brain/prototypes/2026-09-15-dashboard-live-desk.html`. Screenshots reviewed at
+1280px and a true 390px viewport before this was written.
+
+**Where the richness comes from — and why it isn't a violation of the standing rejections:**
+the reference is not a component catalog, it is the founder's own approved landing page
+([[approved#^A-002|A-002]]: "our landing page is cool"). Every visual device below already
+ships there and was approved there; this concept moves them into the authenticated app so
+the product reads as one designed thing (A-002's own principle) rather than a marketing
+page in front of an admin list.
+- *The dark band* — `landing-award.module.css`'s closing gradient (`#050d17 → --ink →
+  --accent-deep`) with `AuroraBackground`'s three blue depths, blurred. Now the page's
+  hero, carrying the day: greeting, three display numbers, and the timeline.
+- *Big display numbers* — Bricolage 800 at 46px with the landing page's `accentText`
+  gradient-clip treatment (white → light blue here), the count-up stat from the landing
+  hero. "2 need your OK · 5 about to be lost · $17,300 at stake", each a link, each with
+  one line of who/what underneath.
+- *Opaque cards with deep soft shadows, 16px radius* — `HeroMockupAward`'s card language
+  (`0 40px 80px -28px` shadow family), not glass ([[rejected#^S-03|S-03]] stays closed).
+- *The score circle* — the mockup's "92" circle, back on the at-risk rows (D-020 had
+  removed it; the founder's approved mockup has it). Coral tint only when the trail is
+  past the day mark.
+- *The "DRAFT READY" pulse motif* — the mockup's floating draft card, now the outgoing
+  bubble in each approval card: dashed accent border, mono eyebrow "Draft — not sent yet"
+  with the pulse dot. Honest by construction: it looks unsent because it is.
+
+**What is genuinely new (the "creative" part), all of it information, none of it ornament:**
+1. **A 24-hour response timeline** across the hero band: every inbound message today as a
+   dot at its hour — light blue = FollowUp answered it, white outline = waiting for the
+   owner's OK, coral with halo = nobody has answered — with a "now" marker. The gaps *are*
+   the product's argument, made visible. Ticks at 6a/9a/12p/3p/6p/9p, mono.
+2. **Conversation bubbles** in the approval card: what the lead said (incoming, `--paper-2`,
+   timestamped) and the draft (outgoing, dashed accent). The owner reads it the way the
+   lead will.
+3. **Decay bars** on the at-risk rows: a 4px bar for how long the trail has gone cold
+   against its threshold (24h for "waiting", 10d for "silent"), `--coral` past the mark,
+   `--slate` otherwise, with the mono fact ("waiting 26h" / "silent 6d") beside it.
+4. **Money made legible**: "$ at stake" as the third big number; in "This week", a two-tone
+   bar — `--sage` "$4,150 came back" against `--coral-soft` "$17,300 still at stake".
+5. **Two-column board on desktop** (7/5): decisions left, what's going cold / what came
+   back / what's booked right. Stacks on phones.
+
+Kept from D-020: why-it-was-held stated first (top-right of each card), the undo grace
+with a draining progress bar (still a behavior change needing the founder's OK and a
+backend delayed send), the setup strip demoted to the bottom of the right column (now in
+`--accent-soft`, not a second filled ink button).
+
+**Color check against [[rejected#^S-05|S-05]]:** three meaningful hues on a light page —
+accent blue (decision / interactive), `--coral` (nobody answered / at stake), `--sage`
+(came back). The dark band is monochrome blue. No status color used decoratively.
+
+**Motion (not in the static mockup, all existing patterns):** aurora drift (`aurora-blob`
+keyframes), count-up on the three numbers (`CountUp`), reveal stagger on the cards
+(`RevealGroup on="mount"`), pulse on the coral timeline dot and the draft eyebrow
+(`pulseDot`). Reduced-motion honored by each already.
+
+**Self-critique, the honest part:** the hero band is a lot of dark at the top of a screen
+an owner opens 20 times a day — it earns it on a busy day; on a quiet one it must still
+read as calm ("FollowUp answered everything" is a fine timeline), and that empty state is
+described, not rendered. The score circle is back, which D-020 argued against; the decay
+bar now explains it, but it is still a number the owner can't derive. Two-column layouts
+give two things "first" — the left column is the deliberate first, and the 7/5 split
+keeps it so. Timeline labels collide when messages cluster (Priya/Dan at 9:05 and 9:30) —
+production needs collision handling or hover-only labels. Weakest part: the "held because"
+text top-right competes with the name for the eye on desktop; it may want to move under
+the meta line.
+
+**Open, for the founder:** (1) direction yes/no; (2) the founder said he will change "that
+send message kind of thing in front" — the approve/send card is therefore the part of this
+concept most likely to change and was kept simplest; (3) the undo grace as before.
+
+**The generalizable principle:** for this product, "more creative" means moving the
+approved marketing-page craft *into* the tool and spending it on real data (a timeline of
+today's messages, a bar for how cold a trail is, money at stake) — never on a component
+catalog's generic dashboard look. Richness has to be information the owner didn't have a
+second ago; the ornament budget was spent on the landing page and is not to be spent
+twice.
+
+**Revisit when:** the founder reacts. Approved → `approved.md` entry, implement dashboard
+as its own PR (hero band + timeline + board), then carry the same language to leads,
+lead detail, pipeline, settings — each as a proposal first.

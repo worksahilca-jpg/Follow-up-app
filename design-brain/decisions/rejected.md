@@ -44,7 +44,27 @@ believe its variant is a new idea.
 
 ## Decisions
 
-*Empty. Nothing has been rejected yet — the design brain was established 2026-09-12.*
+## R-001 — Dashboard proposal D-020 ("Today, in one sentence"): subtraction-only redesign ^R-001
+**Date:** 2026-09-15
+**Scope:** Dashboard — and, as a principle, any "redesign" pass on an existing screen
+**Rejected:** [[design-decisions#^D-020|D-020]] — the proposal that removed the greeting
+banner and the three stat tiles, replaced them with one computed sentence, reordered the
+approval row, and swapped the score pill for a text fact. Same tokens, same components,
+less chrome.
+**Stated reason:** "make it more creative and enhanced i mean its very basic."
+**Inferred principle:** INFERRED — for this founder, a redesign that is *only* subtraction
+reads as unfinished, not as restraint. The bar he judges the product against is the
+landing page he approved ([[approved#^A-002|A-002]]: atmosphere, depth, a designed hero
+mockup, big display numbers, motion) — the authenticated app has to feel like the same
+designed product, not a cleaner version of a plain admin list. "Precision is the
+aesthetic" (`brand-principles.md` 8) still holds; it is not a license to strip a screen
+down to text and hairlines. Confirm this reading on the next review.
+**Do not propose again:** the same proposal with a different sentence; the same list
+treatment with icons added back; "expert polish" passes on other screens that consist of
+removing chrome without adding a designed layer in its place.
+**Would need to change for this to be reconsidered:** nothing about the individual moves —
+several of them (why-it-was-held first, the undo grace, facts instead of a score) may
+survive inside a richer design. What is closed is *subtraction as the whole answer*.
 
 ---
 

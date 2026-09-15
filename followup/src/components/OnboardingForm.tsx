@@ -270,10 +270,54 @@ function OnboardingFormInner({
                   <Mail className="h-6 w-6" />
                 </div>
                 <h2 className="font-display text-xl text-center mt-4">Connect Gmail</h2>
+                {/* This said FollowUp "reads your sales conversations and tells
+                    you who needs a follow-up today" — which describes a
+                    READ-ONLY product, at the exact moment the owner grants send
+                    access. It isn't read-only: connecting imports the last 180
+                    days of threads, automation is already enabled at signup
+                    (auth.ts), and dead-lead reactivation defaults to on at a
+                    45-day threshold — so imported threads between 45 and 180
+                    days old become eligible for an automated message, sent in
+                    the owner's name, immediately.
+
+                    Nobody decided that; three separate defaults stack into it.
+                    Changing the defaults is a product call and is flagged
+                    separately. What this screen can do is stop understating
+                    what the owner is agreeing to, which is the thing that
+                    turns a surprise into a betrayal. Say it plainly, before
+                    the OAuth screen, not after the first message goes out. */}
                 <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
-                  This is the whole point — FollowUp reads your sales conversations and tells you who
-                  needs a follow-up today. Without it, the dashboard stays empty.
+                  This is the whole point — FollowUp reads your sales conversations and tells you who needs a
+                  follow-up today. Without it, the dashboard stays empty.
                 </p>
+
+                <div
+                  className="relative mt-4 rounded-[var(--radius-box)] bg-card py-3 pl-4 pr-3 text-left"
+                  style={{ boxShadow: "var(--shadow-box)" }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-0 w-[3px] rounded-l-[var(--radius-box)]"
+                    style={{ backgroundColor: "var(--gold)" }}
+                  />
+                  <p className="text-sm font-medium">What happens when you connect</p>
+                  <ul className="mt-1.5 space-y-1 text-xs text-ink-soft">
+                    <li>
+                      FollowUp imports your conversations from the <strong className="font-medium">last 6 months</strong>{" "}
+                      so it has something to work with.
+                    </li>
+                    <li>
+                      It can then <strong className="font-medium">send follow-ups from your address</strong>, including
+                      to people who went quiet a while ago.
+                    </li>
+                    <li>
+                      Anything it isn&apos;t sure about waits for your OK first. It stops the moment someone replies.
+                    </li>
+                    <li>
+                      You can turn sending off for everyone, or for one person, at any time in Settings.
+                    </li>
+                  </ul>
+                </div>
 
                 {gmailError && (
                   <p className="text-sm text-center mt-4" style={{ color: "var(--coral)" }}>

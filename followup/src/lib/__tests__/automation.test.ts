@@ -605,7 +605,152 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
     expect(r.checked).toBe(1); // counted once — never a double-send
     expect(r.unanswered).toBe(1);
     expect(r.reactivated).toBe(0); // the more urgent framing won, not reactivation
-    expect(send).toHaveBeenCalledWith("lead5", expect.any(String), expect.objectContaining({ trigger: "unanswered" }));
+    // The framing is now observable on the hold, not on a send — this lead
+    // is 60 days cold, so it waits for a human either way (see the test
+    // directly below). This assertion used to read `expect(send)
+    // .toHaveBeenCalledWith(... trigger: "unanswered")`, which quietly
+    // encoded the bug that test documents as correct behaviour.
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({ businessId: "biz1" }),
+      "ai.hold",
+      expect.objectContaining({ meta: expect.objectContaining({ trigger: "unanswered" }) })
+    );
+  });
+
+  /**
+   * The hole the framing merge opened, and the reason it was invisible.
+   *
+   * `deadIds` deliberately subtracts the unanswered set so a lead that is
+   * both cold AND unanswered gets the better wording and only one message.
+   * But `isDeadLead` was ALSO what the mandatory human hold keyed on — so
+   * choosing the kinder framing switched the approval requirement off, and
+   * a low-risk verdict sent the message.
+   *
+   * The lead this let through is the worst one to get wrong: someone who
+   * wrote in, was never answered, and has been waiting 45+ days. On a
+   * business's first sync the imported back catalogue is full of exactly
+   * that shape, so it fired within the first hourly tick after signup —
+   * and src/lib/reactivation.ts classifies that same population as
+   * COLD_UNANSWERED and refuses to bulk-message them at all.
+   *
+   * If this test ever goes red, a cold lead is being auto-sent to again.
+   */
+  it("holds a cold lead that is ALSO unanswered, instead of auto-sending on a low-risk verdict", async () => {
+    const coldAndUnanswered = coldLead(60, {
+      id: "lead6",
+      name: "Priya Raman",
+      assignedToId: "user1",
+      conversations: [
+        {
+          channel: "email",
+          messages: [
+            {
+              id: "z",
+              direction: "inbound",
+              body: "Are you still taking bookings for the spring?",
+              sentAt: new Date(Date.now() - 60 * 86_400_000),
+              opened: false,
+            },
+          ],
+        },
+      ],
+    });
+    // Present in BOTH buckets — which is exactly what makes isDeadLead
+    // false for it, since deadIds subtracts the unanswered set.
+    p.lead.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([coldAndUnanswered])
+      .mockResolvedValueOnce([coldAndUnanswered]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const r = await runAutomationForBusiness("biz1");
+
+    expect(send).not.toHaveBeenCalled();
+    expect(r.sent).toBe(0);
+    expect(r.held).toBe(1);
+
+    // And the owner is actually told, on the neglect path.
+    expect(p.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ leadId: "lead6", message: expect.stringMatching(/waiting for your approval/) }),
+      })
+    );
+  });
+
+  // A lead who WROTE and never got an answer is a different fact about the
+  // business than one who simply drifted away, and the approval card must
+  // not describe it as the latter. It also must not be the empty string —
+  // risk.reason is "" on a low verdict, which renders "Held because .".
+  it("explains a cold-and-unanswered hold as never having been answered, not as having gone quiet", async () => {
+    const coldAndUnanswered = coldLead(60, {
+      id: "lead6",
+      name: "Priya Raman",
+      assignedToId: "user1",
+      conversations: [
+        {
+          channel: "email",
+          messages: [
+            { id: "z", direction: "inbound", body: "Are you still taking bookings?", sentAt: new Date(Date.now() - 60 * 86_400_000), opened: false },
+          ],
+        },
+      ],
+    });
+    p.lead.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([coldAndUnanswered])
+      .mockResolvedValueOnce([coldAndUnanswered]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const r = await runAutomationForBusiness("biz1");
+
+    expect(r.heldReasons[0]).toContain("Priya");
+    expect(r.heldReasons[0]).toContain("never got an answer");
+    expect(r.heldReasons[0]).not.toContain("went quiet");
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({ businessId: "biz1" }),
+      "ai.hold",
+      expect.objectContaining({ meta: expect.objectContaining({ reason: expect.stringContaining("never got an answer") }) })
+    );
+  });
+
+  // The per-lead opt-in still outranks the batch default on this path too,
+  // exactly as it does for a plain cold lead — otherwise "autonomous"
+  // would silently stop meaning autonomous for the leads it was set on.
+  it("still lets an AUTONOMOUS cold-and-unanswered lead send without review", async () => {
+    const both = coldLead(60, {
+      id: "lead7",
+      automationTier: "AUTONOMOUS",
+      assignedToId: "user1",
+      conversations: [
+        {
+          channel: "email",
+          messages: [
+            { id: "z", direction: "inbound", body: "Still interested?", sentAt: new Date(Date.now() - 60 * 86_400_000), opened: false },
+          ],
+        },
+      ],
+    });
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([both]).mockResolvedValueOnce([both]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const r = await runAutomationForBusiness("biz1");
+
+    expect(r.sent).toBe(1);
+    expect(send).toHaveBeenCalledWith("lead7", expect.any(String), expect.objectContaining({ trigger: "unanswered" }));
+  });
+
+  // The counterpart: an unanswered lead that is NOT cold is the ordinary
+  // human-neglect case and must keep auto-sending on a low-risk verdict.
+  // Widening the hold to every unanswered lead would break the product's
+  // main promise, so this pins the boundary at the dead-lead threshold.
+  it("still auto-sends a recent unanswered lead that is not cold", async () => {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([unansweredLead(30)]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const r = await runAutomationForBusiness("biz1");
+
+    expect(r.sent).toBe(1);
+    expect(send).toHaveBeenCalledWith("lead2", expect.any(String), expect.objectContaining({ trigger: "unanswered" }));
   });
 
   it("never queries for dead leads at all when the rule is turned off", async () => {

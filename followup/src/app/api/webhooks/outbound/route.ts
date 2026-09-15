@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { assertSafeWebhookUrl, UnsafeWebhookUrlError } from "@/lib/ssrf";
 
@@ -34,6 +35,19 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  // Admin-only, and audited — 2026-09-15 bug hunt, finding 1
+  // (`research/audit/2026-09-15-bug-hunt.md`). This endpoint decides where a
+  // copy of every lead event goes, and that payload carries the lead's name,
+  // email, phone and deal value (`src/lib/outboundWebhook.ts`). With only a
+  // signed-in check, any teammate — and team invites default to SALES
+  // (`prisma/schema.prisma`) — could point it at a server they control and
+  // receive the whole book quietly. Every comparable setting (CRM config,
+  // Twilio, Facebook, the inbound webhook secret, Gmail/Outlook connect,
+  // business export) was already admin-gated and audited; this one was
+  // missed. The earlier SSRF work hardened *where* the URL may point and
+  // never revisited *who* may set it.
+  if (!(await requireAdmin(ctx)))
+    return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
 
   const parsedBody = await parseJsonBody(request, outboundWebhookSchema);
   if (!parsedBody.ok) return parsedBody.response;
@@ -41,6 +55,7 @@ export async function POST(request: NextRequest) {
 
   if (!raw) {
     await prisma.business.update({ where: { id: ctx.businessId }, data: { outboundWebhookUrl: null } });
+    void recordAudit(ctx, "integration.outbound_webhook.clear");
     return NextResponse.json({ success: true, url: null });
   }
 
@@ -58,6 +73,10 @@ export async function POST(request: NextRequest) {
   }
 
   await prisma.business.update({ where: { id: ctx.businessId }, data: { outboundWebhookUrl: parsedUrl.toString() } });
+  // The host, not the full URL — a webhook URL routinely carries a secret in
+  // its path or query (Zapier and Make both do this), and the audit log is
+  // readable by the whole team.
+  void recordAudit(ctx, "integration.outbound_webhook.update", { meta: { host: parsedUrl.host } });
   return NextResponse.json({ success: true, url: parsedUrl.toString() });
 }
 
@@ -71,6 +90,13 @@ export async function POST(request: NextRequest) {
 export async function PUT() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  // Same gate as POST. Lower stakes now that only an admin can choose the
+  // URL, but this handler fetches it immediately and reports reachability
+  // back to the caller — the SSRF oracle the comment below describes — so
+  // it stays with the setting it belongs to rather than being the one
+  // ungated door on this resource.
+  if (!(await requireAdmin(ctx)))
+    return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },

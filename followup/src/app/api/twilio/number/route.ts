@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { appUrl } from "@/lib/stripe";
 import { getTwilioNumberConfig, listRecentTwilioCalls, setTwilioNumberWebhooks } from "@/lib/twilio";
@@ -64,6 +64,14 @@ export async function GET() {
 export async function POST() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  // Admin-only, for consistency with every other Twilio setting — this
+  // rewrites the number's webhook config in the business's own Twilio
+  // account using their stored credentials. It only ever writes FollowUp's
+  // own expected URLs, so there's no exfiltration path here the way there
+  // was on the outbound webhook; it's gated because a third-party account
+  // mutation isn't a SALES teammate's call. Same 2026-09-15 bug-hunt pass.
+  if (!(await requireAdmin(ctx)))
+    return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
 
   const t = await loadTwilio(ctx.businessId);
   if ("error" in t) return NextResponse.json({ success: false, message: t.error });

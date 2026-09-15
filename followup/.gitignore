@@ -31,3 +31,10 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# Audit/debug scratch. An agent auditing this app as a signed-in user mints a
+# real NextAuth session JWT here (signed with NEXTAUTH_SECRET, valid for days)
+# so it can click through the product the way a customer does. That token is a
+# live credential for whoever's account it was minted for — it must never be
+# committed, and neither should the scripts that mint it.
+.audit-scratch/

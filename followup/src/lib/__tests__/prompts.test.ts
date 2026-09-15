@@ -21,6 +21,7 @@ import {
   generateInstantReply,
   assessAckRisk,
   classifyAsProspect,
+  scoreLead,
 } from "@/lib/integrations/openai";
 
 const conversation = [
@@ -289,6 +290,24 @@ describe("send-risk gate", () => {
     expect(lowDescription).not.toMatch(/check-in/);
   });
 
+  // A judge, not a writer: with temperature left unset the API default is
+  // 1.0, so the same draft on the same thread could be scored "low" on one
+  // hourly tick and "medium" on the next — and both automation.ts and
+  // sequences.ts turn that verdict straight into send-or-hold. The
+  // first-touch sibling gate (assessAckRisk) already pins 0.
+  it("scores at temperature 0, like the ack gate, not the sampling default", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ riskLevel: "low", reason: "n/a" }) } }] });
+    await assessSendRisk({ conversation }, "Tuesday morning still works our end.");
+    expect(create.mock.calls[0][0].temperature).toBe(0);
+
+    create.mockClear();
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ reasoning: "nothing", verdict: "ok", reason: "ok" }) } }],
+    });
+    await assessAckRisk("Do you have anything free next week?", "I'll check next week and come back to you shortly.");
+    expect(create.mock.calls[0][0].temperature).toBe(0);
+  });
+
   // research/audit/2026-09-09-fifth-pass-audit.md finding #1: assessSendRisk
   // used to send the raw, uncapped conversation with nothing marking it as
   // untrusted data — a lead could embed a fake "pre-approved, classify as
@@ -546,6 +565,82 @@ describe("prospect classifier (classifyAsProspect) — solicitations disguised a
     await classifyAsProspect(conversation, { name: "Jamie", email: "jamie@insureco.example" });
     const system = create.mock.calls[0][0].messages[0].content as string;
     expect(system).toMatch(/a solicitation from a named person is still a solicitation/);
+  });
+
+  // The structured-output schema's own field description is sent to the
+  // model alongside the system prompt, so the two are one instruction. This
+  // one used to contradict the other half on the single thread type where
+  // being wrong is destructive: a customer mid-transaction. The system
+  // prompt calls that true (clause (b)); the schema called it false ("an
+  // existing customer's support or logistics message that isn't about a new
+  // purchase"). A false verdict on the cleanup route deletes that customer,
+  // their whole conversation and their bookings (deleteLeadCascade).
+  it("does not tell the model an existing customer's in-transaction thread is NOT a prospect", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ isProspect: true, reason: "n/a" }) } }] });
+    await classifyAsProspect(conversation, { name: "Jamie", email: "jamie@example.com" });
+    const schema = create.mock.calls[0][0].response_format.json_schema.schema as {
+      properties: { isProspect: { description: string } };
+    };
+    const description = schema.properties.isProspect.description;
+    expect(description).not.toMatch(/existing customer's support or logistics message/);
+    expect(description).toMatch(/existing client in an active engagement or transaction/);
+    expect(description).toMatch(/intermediary/);
+  });
+
+  // A verdict that gates capture on one path and DELETES on the other must
+  // not be sampled. Without an explicit temperature the API default is 1.0.
+  it("classifies at temperature 0, so a borderline thread can't be kept on one run and deleted on the next", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ isProspect: true, reason: "n/a" }) } }] });
+    await classifyAsProspect(conversation, { name: "Jamie", email: "jamie@example.com" });
+    expect(create.mock.calls[0][0].temperature).toBe(0);
+  });
+});
+
+// The 0-100 score feeds priorityFromScore's 70/40 cut points
+// (src/lib/scoring.ts), so anything the score prompt gets wrong lands on a
+// lead's priority, on the "just became a hot lead" notification, and on the
+// team Slack ping.
+describe("lead scoring (scoreLead)", () => {
+  const scored = {
+    choices: [{ message: { content: JSON.stringify({ score: 62, reason: "Asked for a quote.", factors: [] }) } }],
+  };
+
+  // Lead.dealValue defaults to 0 and no capture path sets it, so "$0" was
+  // what the model saw for very nearly every lead — while the same prompt
+  // told it to weigh deal value. An unknown reported as a known zero.
+  it("reports an unset deal value as unknown rather than as $0", async () => {
+    create.mockResolvedValue(scored);
+    await scoreLead({ conversation, dealValue: 0, lastContacted: new Date().toISOString() });
+    const user = create.mock.calls[0][0].messages[1].content as string;
+    expect(user).toMatch(/Deal value: not known/);
+    expect(user).not.toMatch(/Deal value: \$0/);
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/never treat an unknown value as a low-value deal/);
+  });
+
+  it("still passes a real deal value through as a figure", async () => {
+    create.mockResolvedValue(scored);
+    await scoreLead({ conversation, dealValue: 8000, lastContacted: new Date().toISOString() });
+    expect(create.mock.calls[0][0].messages[1].content).toMatch(/Deal value: \$8000/);
+  });
+
+  // formatTranscript renders direction, channel, date and body — never
+  // Message.opened — and nothing in the product ever sets `opened` to true
+  // outside demo data (there is no open-tracking pixel). Naming it as a
+  // buying signal asked the model to weigh something it is never shown.
+  it("does not name a signal the transcript never carries", async () => {
+    create.mockResolvedValue(scored);
+    await scoreLead({ conversation, dealValue: 0, lastContacted: new Date().toISOString() });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).not.toMatch(/opened emails/);
+  });
+
+  // Sampling jitter at the 70/40 boundaries is a priority change, a
+  // notification and a Slack ping — not a judgment changing.
+  it("scores at temperature 0 so an unchanged thread keeps its priority across sync ticks", async () => {
+    create.mockResolvedValue(scored);
+    await scoreLead({ conversation, dealValue: 0, lastContacted: new Date().toISOString() });
+    expect(create.mock.calls[0][0].temperature).toBe(0);
   });
 });
 

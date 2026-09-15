@@ -203,6 +203,18 @@ export async function scoreLead(
     (Date.now() - new Date(lead.lastContacted).getTime()) / 86400000
   );
 
+  // Lead.dealValue defaults to 0 (prisma/schema.prisma) and NO capture path
+  // sets it — Gmail/Outlook sync, the Instagram and Twilio webhooks, the
+  // embed form and the inbound lead webhook all create the row without one,
+  // so it stays 0 until a human types a figure into the lead screen. Sending
+  // the model "Deal value: $0" while also telling it to weigh deal value
+  // reports an unknown as a known zero, on very nearly every lead this
+  // product ever scores. The rest of the app already treats 0 as "not known"
+  // rather than as a number (the dashboard hides the figure entirely when
+  // dealValue is 0), so say so here instead.
+  const dealValueLine =
+    lead.dealValue > 0 ? `Deal value: $${lead.dealValue}` : "Deal value: not known (the owner hasn't set one)";
+
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
@@ -211,8 +223,19 @@ export async function scoreLead(
         content:
           "You are a sales follow-up assistant for a small business owner. Score how urgently they should " +
           "follow up with this lead TODAY, from 0 (cold, no urgency) to 100 (extremely hot, follow up now). " +
-          "Weigh buying signals (pricing/timeline questions, opened emails, requests for a call), deal value, " +
+          // "opened emails" used to be listed here as a buying signal. It is
+          // not one this function can see: formatTranscript() renders only
+          // direction, channel, date and body, and nothing in the product
+          // ever sets Message.opened to true outside demo data — there is no
+          // open-tracking pixel. Naming a signal the model is never shown
+          // invites it to infer one from the text.
+          "Weigh buying signals (pricing/timeline questions, requests for a call or a quote, a stated budget " +
+          "or deadline), deal value, " +
           "and days since last contact — a long silence after a strong signal is often still warm, not cold. " +
+          // Deal value is frequently unknown rather than zero — see
+          // dealValueLine. An unknown must not be weighed as a small deal.
+          "When the deal value is given as not known, judge urgency on the conversation alone and neither " +
+          "reward nor penalise the lead for it; never treat an unknown value as a low-value deal. " +
           "Give 3-5 short factors explaining the score, each with a signed integer weight roughly summing to " +
           "the score. Write the reason in plain, concrete language — no corporate jargon." +
           UNTRUSTED_CONVERSATION_NOTICE,
@@ -220,11 +243,22 @@ export async function scoreLead(
       {
         role: "user",
         content:
-          `Deal value: $${lead.dealValue}\n` +
+          `${dealValueLine}\n` +
           `Days since last contact: ${daysSinceContact}\n\n` +
           `Conversation:\n${formatTranscript(lead.conversation)}`,
       },
     ],
+    // A judge, not a writer. Left unset the API default is 1.0, so the same
+    // unchanged thread re-scored on the next sync tick comes back a
+    // different number — and priorityFromScore (src/lib/scoring.ts) turns a
+    // few points of sampling jitter into a different PRIORITY at the 70 and
+    // 40 cut points. A lead sitting near 70 flips HIGH -> MEDIUM -> HIGH
+    // across ticks, and every upward crossing re-fires the "just became a
+    // hot lead" in-app notification AND the team Slack ping, because
+    // `becameHot` only asks whether the stored priority was not HIGH.
+    // Nothing about this is a judgment changing; it is the same input
+    // sampled twice.
+    temperature: 0,
     response_format: { type: "json_schema", json_schema: SCORE_JSON_SCHEMA },
   });
 
@@ -247,11 +281,33 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
     properties: {
       isProspect: {
         type: "boolean",
+        // This description is sent to the model as part of the structured-
+        // output schema, alongside the system prompt below — so the two have
+        // to agree, and they did not. This field used to read "True ONLY if
+        // this is a genuine sales conversation with someone showing interest
+        // in BUYING", and to list "an existing customer's support or
+        // logistics message that isn't about a new purchase" as FALSE. The
+        // system prompt says the opposite, deliberately and for a reason
+        // paid for in real leads: clause (b) makes an existing client in an
+        // active engagement TRUE, and clause (c) makes an intermediary
+        // acting for a customer TRUE, because judging a realtor's live deals
+        // as "not about a new purchase" threw away seven of them.
+        //
+        // The contradiction is not cosmetic. This verdict is the gate on
+        // mailbox capture AND the delete condition in POST
+        // /api/leads/cleanup — a false verdict there destroys the lead, its
+        // whole conversation, and its bookings. On the one thread type where
+        // the two halves of the prompt disagree (a customer mid-transaction:
+        // deposits, documents, scheduling, signatures), the half that loses
+        // decides whether that customer is deleted.
         description:
-          "True only if this is a genuine sales conversation with someone showing interest in buying the " +
-          "business's product or service. False for personal correspondence, recruiters and job applications, " +
-          "vendors/suppliers pitching the business, an existing customer's support or logistics message that " +
-          "isn't about a new purchase, or a newsletter/notification sent from a real-looking address.",
+          "True when the thread is customer business for this company: a prospective customer asking about or " +
+          "negotiating the business's own service, an existing client in an active engagement or transaction " +
+          "(documents, deposits, signatures, scheduling, questions about work in progress), or an intermediary " +
+          "acting on a customer's behalf. False for personal correspondence, recruiters, job offers and " +
+          "employment paperwork aimed at the owner, any vendor/agency/broker/insurer soliciting the business " +
+          "(however personally worded), automated platform notifications, and newsletters — see the system " +
+          "message for the full rules, which this summary never overrides.",
       },
       reason: {
         type: "string",
@@ -364,6 +420,15 @@ export async function classifyAsProspect(
           `Conversation (earliest messages only):\n${formatTranscript(forClassification)}`,
       },
     ],
+    // Pinned for the same reason scoreLead and classifyThreadOutcome are,
+    // and more urgently than either: a false verdict here is not a number
+    // moving on a screen. It keeps a real inquiry out of the CRM on the
+    // sync path, and on POST /api/leads/cleanup it deletes the lead, its
+    // messages and its bookings outright (deleteLeadCascade). At the API's
+    // default temperature of 1.0 the same borderline thread can be judged
+    // a prospect on one run and deleted on the next, with nothing about
+    // the thread having changed.
+    temperature: 0,
     response_format: { type: "json_schema", json_schema: PROSPECT_CLASSIFICATION_SCHEMA },
   });
 
@@ -529,6 +594,12 @@ export async function classifyThreadOutcome(
           `Conversation (opening message and how it ended):\n${formatTranscript(forClassification)}`,
       },
     ],
+    // Same reasoning as the two classifiers above. This verdict is written
+    // once and never revisited (src/lib/reactivation.ts: "judged once. A
+    // verdict doesn't expire"), and 'cold' is the one bucket that gets a
+    // real message sent to a real past customer. A sampled verdict on a
+    // borderline thread is a coin flip recorded permanently as a judgment.
+    temperature: 0,
     response_format: { type: "json_schema", json_schema: THREAD_OUTCOME_SCHEMA },
   });
 
@@ -622,6 +693,16 @@ export async function assessSendRisk(
           `Drafted follow-up (the message being considered for auto-send):\n${draftMessage}`,
       },
     ],
+    // This is a judge, not a writer. Left unset, the API default is 1.0 —
+    // so the one gate standing between an unreviewed draft and a real
+    // customer was sampling its own verdict, and the same (conversation,
+    // draft) pair could come back "low" on one hourly tick and "medium"
+    // on the next, with the hold/send decision (automation.ts, and the
+    // per-step gate in sequences.ts, both of which test only
+    // riskLevel !== "low") flipping with it. assessAckRisk — the newer,
+    // first-touch sibling of this function — already pins 0 for exactly
+    // this reason; this brings the older gate in line with it.
+    temperature: 0,
     response_format: { type: "json_schema", json_schema: SEND_RISK_SCHEMA },
   });
 

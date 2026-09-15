@@ -1486,3 +1486,89 @@ twice.
 **Revisit when:** the founder reacts. Approved → `approved.md` entry, implement dashboard
 as its own PR (hero band + timeline + board), then carry the same language to leads,
 lead detail, pipeline, settings — each as a proposal first.
+
+*Outcome, same day:* not taken — the founder's next instruction was "I want something
+minimal, I mean like Apple." Not recorded as a rejection of D-021's individual moves (he
+didn't react to them one by one); the direction simply went elsewhere. See D-022.
+
+
+---
+
+## D-022 — Dashboard concept 3, "Quiet Desk": minimal, in the Apple sense ^D-022
+**Date:** 2026-09-15
+**Decided by:** Claude, on the founder's instruction "i want something minimal i mean like
+apple", given immediately after seeing D-021's dense concept and one turn after rejecting
+D-020 as "very basic."
+**Status:** proposed — not yet reviewed. Prototype:
+`design-brain/prototypes/2026-09-15-dashboard-quiet-desk.html`. Reviewed at 1280px and a
+true 390px viewport.
+
+**Reading the two data points together — this is the useful part of the entry.** "Very
+basic" (R-001) and "minimal like Apple" look contradictory and are not. What D-020 did was
+*strip*: remove the banner, remove the tiles, leave 14px text on hairline rows at the same
+scale as everything else. What Apple-minimal actually does is *spend* — on whitespace, on
+type scale, on grouped surfaces with real radius and soft shadow, on one accent used
+sparingly — while removing color, borders, badges and ornament. Stripping reads cheap;
+restraint reads expensive. **The difference is where the money goes, not how much is on
+screen.**
+
+**The system, stated concretely so it can be reproduced:**
+- *One column, 640px, centered, 64px top padding.* No two-column board, no sidebar cards.
+  A phone-shaped page on a desktop screen — the ICP is on a phone anyway.
+- *Type does the hierarchy.* Greeting at 38px Bricolage 600 with -0.025em tracking (the
+  biggest type in the app); section labels at 11.5px mono uppercase, `--ink-faint`, sitting
+  *outside* the card, indented to the card's text column; body at 15px.
+- *Grouped inset lists.* Every section is one 18px-radius white card with a barely-there
+  shadow (`0 1px 2px` + `0 10px 30px -22px`), rows divided by a hairline that starts at the
+  text, not at the card edge. Nothing is bordered. Nothing is nested. This is the one
+  structural device on the page and it repeats.
+- *Almost no color.* Ink, two greys, one accent blue for text actions only ("Edit", "Set
+  up", "See all numbers"), one 7px coral dot for "nobody has answered", one green figure
+  for money recovered. No pills, no chips, no tinted icon squares, no score circles, no
+  progress bars, no gradient, no dark band.
+- *One filled control on the page:* "Approve & send", ink, pill. Everything else is text or
+  a row.
+- *Row anatomy:* name, one line of plain-language state ("Waiting 26h · high intent",
+  "Silent 6 days"), value right-aligned, 8×13 chevron. The chevron is the only affordance
+  marking.
+- *The open approval* is the first row of its group, expanded in place: who, why held, what
+  they wrote, the draft behind a 2px hairline rule, then the actions. The second is
+  collapsed to a quoted first line — the queue reads as a list with one item open, the way
+  a mail app does.
+
+**What was dropped from D-021 and why:** the dark hero band (atmosphere is the landing
+page's job, not the tool's), the 24-hour timeline (genuinely good information, but it is a
+second thing competing to be first — it belongs on `/analytics` or as a detail), decay
+bars and score circles (a sentence says it), every pill and chip, the two-column layout,
+the money bar (replaced by "3 came back · $4,150" as one line).
+
+**Standing rejections check:** [[rejected#^S-16|S-16]] is the live risk here — "like Apple"
+is an instruction to borrow. What is borrowed is *discipline* (whitespace, grouped inset
+lists, type-led hierarchy, minimal color), which is exactly what `brand-principles.md` 8
+already asks for and what the CLAUDE.md standing rules name as the legitimate use of a
+reference. No Apple UI element is reproduced: no segmented control, no SF-style icon set,
+no system blue, no frosted material. The typefaces and the one blue stay FollowUp's own
+([[approved#^A-002|A-002]]). If the result would read as "an Apple app," it is wrong; it
+should read as FollowUp with nothing extra.
+
+**Self-critique, honest:** (1) At 640px the desktop page is a lot of empty flank — on a
+27" monitor it may read as under-using the screen rather than as composed; that is the
+main risk and it is a real one. (2) Removing the score and the decay bar removes the
+owner's ability to disagree with the ranking (`brand-principles.md` 6, "show the reasoning")
+— "Waiting 26h · high intent" carries the reason but not the weighting, and this is a
+genuine trade, not a free win. (3) With this little color, the single coral dot is doing a
+lot of work; at a glance the at-risk list reads uniform. (4) A busy day (12 held drafts)
+turns this into a long scroll with no density control — D-021's board handled volume
+better. (5) The three summary numbers are not links to anything new (they jump down the
+page); on Apple's own surfaces a number that big is usually a destination.
+
+**The generalizable principle:** minimal is a budget decision, not a subtraction exercise.
+Spend on space, scale and one clean surface treatment; remove color, borders, badges and
+ornament. When this founder says "basic" he means *unspent*; when he says "minimal" he
+means *spent on the right things*. Both complaints point at the same axis from opposite
+ends.
+
+**Revisit when:** the founder reacts to concept 3. Three concepts now exist for the same
+screen — D-020 (subtraction, rejected), D-021 (rich, landing-page language), D-022 (Apple
+restraint). If he picks one, log it in `approved.md` with what specifically was liked and
+implement the dashboard as its own PR before touching any other screen.

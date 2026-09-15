@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getSessionContext } from "@/lib/session";
-import { FREE_TIER_LEAD_CAP } from "@/lib/pricing";
+import { TIER_AI_LEAD_CAP } from "@/lib/pricing";
 
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
 
@@ -11,7 +11,7 @@ const ACTIVE_STATUSES = new Set(["active", "trialing"]);
 // client bundle (see the fix for issue #93, "leads/pipeline pages loading
 // Prisma into the client bundle" — the exact bug this split avoids
 // repeating).
-export { TIER_INFO, VOICE_ADDON_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
+export { TIER_INFO, VOICE_ADDON_INFO, FREE_TIER_LEAD_CAP, TIER_AI_LEAD_CAP } from "@/lib/pricing";
 
 // Every new subscription (src/app/api/billing/checkout/route.ts) starts
 // with this many days free, no card required, before the first real charge.
@@ -178,6 +178,31 @@ export async function isWithinFreeTierLeadCap(
   businessId: string,
   lead: { id: string; createdAt: Date }
 ): Promise<boolean> {
+  return isWithinTierLeadCap(businessId, lead, "free");
+}
+
+/**
+ * The same rank check, for any tier.
+ *
+ * Plus's 1,500/mo and Pro's 10,000/mo were published in the pricing
+ * recommendation and implemented nowhere: FREE_TIER_LEAD_CAP was the only
+ * ceiling in the codebase, so a paid account had no upper bound on AI
+ * processing at all. That is not a margin problem — the measured cost of
+ * a Plus customer at their full 1,500 is $3.26 against $39
+ * (research/product/2026-09-15-ai-cost-per-lead.md) — it is a runaway
+ * problem, and the shape of the runaway is a broken integration looping,
+ * which is exactly what an unbounded path lets run all month.
+ *
+ * See TIER_AI_LEAD_CAP for why the paid ceilings are circuit breakers and
+ * Free's is a real cap. Callers must keep that distinction in what they
+ * tell the user: "upgrade" is the honest answer on Free and the wrong one
+ * on Pro.
+ */
+export async function isWithinTierLeadCap(
+  businessId: string,
+  lead: { id: string; createdAt: Date },
+  tier: keyof typeof TIER_AI_LEAD_CAP
+): Promise<boolean> {
   const monthStart = new Date(Date.UTC(lead.createdAt.getUTCFullYear(), lead.createdAt.getUTCMonth(), 1));
   const rank = await prisma.lead.count({
     where: {
@@ -186,7 +211,38 @@ export async function isWithinFreeTierLeadCap(
       OR: [{ createdAt: { lt: lead.createdAt } }, { createdAt: lead.createdAt, id: { lte: lead.id } }],
     },
   });
-  return rank <= FREE_TIER_LEAD_CAP;
+  return rank <= TIER_AI_LEAD_CAP[tier];
+}
+
+/**
+ * The one place that decides whether a lead may consume AI processing,
+ * so the channel rule and the rank rule can never drift apart between
+ * the five call sites that need them (scoring, automation, sequences,
+ * regenerate, and — newly — the instant acknowledgement, which had no
+ * gate of any kind).
+ *
+ * Returns the reason when it refuses, because the reasons are different
+ * enough that callers were already writing their own strings: a Free
+ * account past 20 should be told to upgrade, and a Pro account past
+ * 10,000 should be told something looks wrong.
+ */
+export async function checkAiEligibility(
+  businessId: string,
+  lead: { id: string; createdAt: Date; source: string | null },
+  tier: "free" | "plus" | "pro"
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  if (tier === "free" && !isChannelAvailableOnFreeTier(lead.source)) {
+    return { ok: false, reason: "on a channel the Free plan doesn't cover" };
+  }
+  if (await isWithinTierLeadCap(businessId, lead, tier)) return { ok: true };
+
+  return {
+    ok: false,
+    reason:
+      tier === "free"
+        ? `past this month's ${TIER_AI_LEAD_CAP.free}-lead AI cap on the Free plan`
+        : `FollowUp paused AI processing after ${TIER_AI_LEAD_CAP[tier].toLocaleString()} leads this month as a safety measure — that is far more than a normal month, so something may be wrong`,
+  };
 }
 
 export interface FreeTierStatus {

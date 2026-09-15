@@ -17,7 +17,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   prisma: {
-    lead: { findUnique: vi.fn(), updateMany: vi.fn() },
+    // lead.count is the rank query behind the tier's monthly AI cap
+    // (@/lib/billing) — this path had no such gate until 2026-09-15.
+    lead: { findUnique: vi.fn(), updateMany: vi.fn(), count: vi.fn() },
     message: { findFirst: vi.fn() },
     automation: { findFirst: vi.fn() },
     business: { findUnique: vi.fn() },
@@ -54,14 +56,19 @@ const baseLead = {
   phone: "+15551234567",
   automationTier: "ASSISTED",
   acknowledgedAt: null,
+  // Both read by the tier gate: createdAt fixes this lead's rank within
+  // its own month, source decides whether Free covers the channel.
+  createdAt: new Date("2026-09-15T10:00:00Z"),
+  source: "Gmail",
 };
 
 beforeEach(() => {
   p.lead.findUnique.mockResolvedValue({ ...baseLead });
   p.lead.updateMany.mockResolvedValue({ count: 1 });
+  p.lead.count.mockResolvedValue(1); // first lead of the month — well inside any tier's cap
   p.message.findFirst.mockResolvedValue(null);
   p.automation.findFirst.mockResolvedValue(null); // absent row = on by default
-  p.business.findUnique.mockResolvedValue({ name: "MJ Homes" });
+  p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "plus" });
   send.mockResolvedValue({ success: true });
   localize.mockImplementation(async (t: string) => t);
   generateReply.mockResolvedValue("Got it — I'll get you the exact price and follow up shortly.");
@@ -455,5 +462,83 @@ describe("instant acknowledgement", () => {
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(r.sent).toBe(false);
     expect(p.lead.updateMany).toHaveBeenLastCalledWith({ where: { id: "lead1" }, data: { acknowledgedAt: null } });
+  });
+});
+
+/**
+ * The plan's monthly AI allowance, which this path did not honour at all.
+ *
+ * Every other entry point to the model — scoring.ts, automation.ts,
+ * sequences.ts, the regenerate route — checked the cap before spending a
+ * call. This one didn't, so generateInstantReply + assessAckRisk +
+ * localizeFixedText ran for every lead on every tier regardless, directly
+ * contradicting the published "AI processing pauses past lead #20"
+ * (research/market/2026-09-11-tier-pricing-recommendation.md §2.2).
+ */
+describe("the tier's AI allowance", () => {
+  it("acknowledges a Free lead inside the cap", async () => {
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.lead.count.mockResolvedValue(20); // exactly the cap — inside it, not past it
+    const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
+    expect(r.sent).toBe(true);
+  });
+
+  it("spends no model call on a Free lead past the cap", async () => {
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.lead.count.mockResolvedValue(21);
+    const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
+    expect(r.sent).toBe(false);
+    // The whole point: not one of the three AI calls this path makes.
+    expect(generateReply).not.toHaveBeenCalled();
+    expect(assessRisk).not.toHaveBeenCalled();
+    expect(localize).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  // A skipped lead must not look acknowledged, or it would never be
+  // acknowledged again — not next month, not on upgrade. Hence the gate
+  // sits before the atomic claim rather than after it.
+  it("leaves a skipped lead unclaimed, so it can still be acknowledged later", async () => {
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.lead.count.mockResolvedValue(21);
+    await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
+    expect(p.lead.updateMany).not.toHaveBeenCalled();
+  });
+
+  // Free covers email and the website widget; SMS is a paid channel.
+  it("spends no model call on a channel Free doesn't cover", async () => {
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.lead.findUnique.mockResolvedValue({ ...baseLead, source: "SMS" });
+    const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
+    expect(r.sent).toBe(false);
+    expect(generateReply).not.toHaveBeenCalled();
+  });
+
+  // Plus's ceiling is a circuit breaker, not a cap a customer is expected
+  // to reach: a normal month is nowhere near it, and reaching it is far
+  // more likely to mean a broken integration than a very good month.
+  it("does not get in a paying customer's way at a realistic volume", async () => {
+    p.lead.count.mockResolvedValue(600); // a busy month on Plus
+    const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
+    expect(r.sent).toBe(true);
+  });
+
+  it("still trips for a paid tier once the breaker itself is reached", async () => {
+    p.lead.count.mockResolvedValue(1501);
+    const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
+    expect(r.sent).toBe(false);
+    expect(generateReply).not.toHaveBeenCalled();
+  });
+
+  // The reason is read by a human. "Upgrade" is the honest answer on Free
+  // and the wrong one on a paid tier, where nothing purchasable has run
+  // out and the real news is that something looks broken.
+  it("does not tell a paying customer to upgrade", async () => {
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "pro" });
+    p.lead.count.mockResolvedValue(10_001);
+    const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
+    expect(r.reason).toMatch(/safety measure/i);
+    expect(r.reason).toMatch(/something may be wrong/i);
+    expect(r.reason).not.toMatch(/upgrade|plan/i);
   });
 });

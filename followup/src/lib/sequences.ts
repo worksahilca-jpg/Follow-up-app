@@ -24,7 +24,7 @@ import { prisma } from "@/lib/db";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
-import { requireActiveBilling, isChannelAvailableOnFreeTier, isWithinFreeTierLeadCap } from "@/lib/billing";
+import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
@@ -206,15 +206,19 @@ export async function enrollLead(
   // runSequencesForBusiness below), so enrollment is refused up front rather
   // than silently accepted and skipped by the cron forever.
   const business = await prisma.business.findUnique({ where: { id: businessId }, select: { tier: true } });
-  if (business?.tier === "free") {
-    const eligible = isChannelAvailableOnFreeTier(lead.source) && (await isWithinFreeTierLeadCap(businessId, lead));
-    if (!eligible) {
-      return {
-        success: false,
-        message:
-          "This lead is past the Free plan's 20/mo cap, or came in on a channel Free doesn't cover — upgrade in Settings → Billing to enroll it in a workflow.",
-      };
-    }
+  const enrollTier = (business?.tier ?? "free") as "free" | "plus" | "pro";
+  const enrollEligible = await checkAiEligibility(businessId, lead, enrollTier);
+  if (!enrollEligible.ok) {
+    return {
+      success: false,
+      // Only Free has an upgrade to sell. On a paid tier this is a circuit
+      // breaker, and telling a Pro customer to upgrade out of it would be
+      // both useless and untrue.
+      message:
+        enrollTier === "free"
+          ? `This lead is ${enrollEligible.reason} — upgrade in Settings → Billing to enroll it in a workflow.`
+          : enrollEligible.reason,
+    };
   }
 
   const firstStep = sequence.steps[0];
@@ -382,7 +386,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
   // resolves against the same timezone.
   const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true, tier: true } });
   const timezone = business?.timezone ?? "America/New_York";
-  const tier = business?.tier ?? "plus";
+  const tier = (business?.tier ?? "plus") as "free" | "plus" | "pro";
 
   const outcomes = await mapWithConcurrency(active, 3, async (lead) => {
     // Atomic check-and-claim before anything else — same reasoning as
@@ -492,15 +496,9 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // enrolled (not unenrolled) so it's automatically reconsidered the
         // moment the business upgrades — same reasoning as the send-window
         // defer above, just re-checked hourly instead of on a timer.
-        if (tier === "free") {
-          const freeTierEligible =
-            isChannelAvailableOnFreeTier(lead.source) && (await isWithinFreeTierLeadCap(businessId, lead));
-          if (!freeTierEligible) {
-            return {
-              kind: "skipped" as const,
-              note: `${lead.name}: Free plan — AI processing paused (past the 20/mo cap, or this lead's channel isn't included in Free)`,
-            };
-          }
+        const stepEligible = await checkAiEligibility(businessId, lead, tier);
+        if (!stepEligible.ok) {
+          return { kind: "skipped" as const, note: `${lead.name}: ${stepEligible.reason}` };
         }
         // research/product/2026-09-09-followup-cadence-best-practices.md
         // §4: this step is labeled "Send email" in the workflow builder —

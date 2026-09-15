@@ -28,8 +28,10 @@ vi.mock("@/lib/sending", () => ({
 }));
 vi.mock("@/lib/billing", () => ({
   requireActiveBilling: vi.fn(async () => true),
-  isChannelAvailableOnFreeTier: vi.fn(() => true),
-  isWithinFreeTierLeadCap: vi.fn(async () => true),
+  // One gate now, for every tier — not two Free-only helpers. Plus's
+  // 1,500/mo and Pro's 10,000/mo were published and unenforced until
+  // 2026-09-15, so a paid account had no AI ceiling at all.
+  checkAiEligibility: vi.fn(async () => ({ ok: true })),
 }));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
@@ -45,7 +47,7 @@ import { assessSendRisk, generateFollowUpMessage } from "@/lib/integrations/open
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
-import { isChannelAvailableOnFreeTier, isWithinFreeTierLeadCap } from "@/lib/billing";
+import { checkAiEligibility } from "@/lib/billing";
 import { runAutomationForBusiness, DEAD_LEAD_ACTION } from "@/lib/automation";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,8 +58,7 @@ const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
 const replyChannel = detectAutomatedReplyChannel as unknown as ReturnType<typeof vi.fn>;
 const sendWindow = isWithinSendWindow as unknown as ReturnType<typeof vi.fn>;
 const draftMessage = generateFollowUpMessage as unknown as ReturnType<typeof vi.fn>;
-const freeChannelOk = isChannelAvailableOnFreeTier as unknown as ReturnType<typeof vi.fn>;
-const freeCapOk = isWithinFreeTierLeadCap as unknown as ReturnType<typeof vi.fn>;
+const aiEligible = checkAiEligibility as unknown as ReturnType<typeof vi.fn>;
 
 function lead(overrides: Record<string, unknown> = {}) {
   return {
@@ -65,7 +66,11 @@ function lead(overrides: Record<string, unknown> = {}) {
     name: "Young Son",
     businessId: "biz1",
     automationTier: "ASSISTED",
-    suggestedMessage: null,
+    suggestedMessage: null as string | null,
+    // The newest message the cached draft was written against. Null =
+    // provenance unknown = treated as stale, which is what a row from
+    // before this column looks like.
+    suggestedDraftedFor: null as Date | null,
     conversations: [{ channel: "email", messages: [{ id: "m1", direction: "inbound", body: "Is the roof original?", sentAt: new Date(), opened: false }] }],
     followUps: [],
     ...overrides,
@@ -88,8 +93,7 @@ beforeEach(() => {
   send.mockResolvedValue({ success: true });
   replyChannel.mockResolvedValue("email");
   sendWindow.mockReturnValue(true);
-  freeChannelOk.mockReturnValue(true);
-  freeCapOk.mockResolvedValue(true);
+  aiEligible.mockResolvedValue({ ok: true });
 });
 
 function unansweredLead(
@@ -172,6 +176,68 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
   // recent message came in. Reusing that draft verbatim is exactly what
   // shipped a real English reply to a lead whose latest message was in a
   // different language.
+  /**
+   * The redraft loop, and why it was the most expensive thing in the app.
+   *
+   * A lead held for approval sends nothing, so lastContacted never moves,
+   * so it re-enters the automation window every 20 hours — forever. Until
+   * suggestedDraftedFor existed, each of those passes paid for a fresh
+   * draft, a fresh localization and a fresh risk check on a conversation
+   * that had not changed by a single byte: $0.026/lead/month with no end,
+   * the only cost in the product that grew with time rather than with
+   * leads (research/product/2026-09-15-ai-cost-per-lead.md §5). Cold leads
+   * are held by design, so there was always a standing population of them.
+   *
+   * The two tests below are the whole fix: same conversation, no redraft;
+   * new message, redraft. Removing the stamp check makes the first fail.
+   */
+  it("does not pay to redraft when nothing has changed since the draft", async () => {
+    const l = unansweredLead(30, "inbound", {
+      suggestedMessage: "A draft written against this exact conversation",
+      suggestedSubject: "Freehold?",
+    });
+    // Stamped with the conversation's newest message — i.e. current.
+    const newest = l.conversations[0].messages[1].sentAt;
+    l.suggestedDraftedFor = newest;
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([l]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const r = await runAutomationForBusiness("biz1");
+    expect(draftMessage).not.toHaveBeenCalled();
+    expect(r.sent).toBe(1);
+    expect(send).toHaveBeenCalledWith(
+      "lead2",
+      "A draft written against this exact conversation",
+      expect.objectContaining({ trigger: "unanswered" })
+    );
+  });
+
+  // The task #63 guarantee, unchanged: a lead who wrote again — possibly
+  // in another language — has a message newer than the stamp, so the
+  // cached draft is stale and IS rebuilt. That is the reason the
+  // unconditional redraft existed, and it still holds.
+  it("still redrafts when the lead has written since the draft was made", async () => {
+    const l = unansweredLead(30, "inbound", {
+      suggestedMessage: "A stale draft from before the lead's latest message",
+    });
+    // Stamped an hour BEFORE the newest message — i.e. stale.
+    l.suggestedDraftedFor = new Date(l.conversations[0].messages[1].sentAt.getTime() - 3_600_000);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([l]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const r = await runAutomationForBusiness("biz1");
+    expect(draftMessage).toHaveBeenCalled();
+    expect(r.sent).toBe(1);
+    expect(send).toHaveBeenCalledWith(
+      "lead2",
+      expect.not.stringContaining("A stale draft from before the lead's latest message"),
+      expect.objectContaining({ trigger: "unanswered" })
+    );
+  });
+
+  // A draft from before the column existed has no provenance, so it is
+  // treated as stale and rebuilt once. That is what makes the deploy
+  // self-healing rather than trusting drafts nobody can date.
   it("always drafts fresh for an unanswered lead, even when a stale draft is already cached", async () => {
     p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([
       unansweredLead(30, "inbound", { suggestedMessage: "A stale draft from before the lead's latest message" }),
@@ -393,7 +459,7 @@ describe("silence automation risk gate", () => {
 describe("Free tier AI-processing pause", () => {
   it("skips a Free-tier lead past the monthly lead cap, without drafting or risk-checking it", async () => {
     p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
-    freeCapOk.mockResolvedValue(false);
+    aiEligible.mockResolvedValue({ ok: false, reason: "past this month's 20-lead AI cap on the Free plan" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     const r = await runAutomationForBusiness("biz1");
     expect(draftMessage).not.toHaveBeenCalled();
@@ -406,7 +472,7 @@ describe("Free tier AI-processing pause", () => {
 
   it("skips a Free-tier lead whose channel isn't included in Free, even if it's within the lead cap", async () => {
     p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
-    freeChannelOk.mockReturnValue(false);
+    aiEligible.mockResolvedValue({ ok: false, reason: "on a channel the Free plan doesn't cover" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     const r = await runAutomationForBusiness("biz1");
     expect(draftMessage).not.toHaveBeenCalled();
@@ -431,11 +497,24 @@ describe("Free tier AI-processing pause", () => {
     expect(r.sent).toBe(1);
   });
 
-  it("does not touch Plus/Pro leads at all — no business.tier means the free-tier checks are never even called", async () => {
+  // Was the opposite assertion until 2026-09-15: the gate ran for Free
+  // only, which is precisely what left the paid tiers unbounded. A Plus
+  // account is checked against Plus's own ceiling, not Free's, so this
+  // costs a normal customer nothing.
+  it("checks the paid tiers too, against their own ceiling", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "pro" });
     p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
     await runAutomationForBusiness("biz1");
-    expect(freeChannelOk).not.toHaveBeenCalled();
-    expect(freeCapOk).not.toHaveBeenCalled();
+    expect(aiEligible).toHaveBeenCalledWith("biz1", expect.anything(), "pro");
+  });
+
+  it("skips a paid lead once its tier's ceiling trips, without drafting it", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "plus" });
+    aiEligible.mockResolvedValue({ ok: false, reason: "something may be wrong" });
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(draftMessage).not.toHaveBeenCalled();
+    expect(r.sent).toBe(0);
   });
 });
 

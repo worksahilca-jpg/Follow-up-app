@@ -350,6 +350,22 @@ model Lead {
   scoreFactors     Json? // ScoreFactor[] — [{ label, weight }], from AI scoring
   suggestedMessage String? // AI-drafted follow-up, edited/approved before sending
   suggestedSubject String? // AI-drafted subject line for the same email, same edited/approved-before-sending path
+  // The sentAt of the newest message the cached draft above was written
+  // against. Null means "unknown" (any draft written before this column
+  // existed), which is treated as stale so nothing silently reuses a draft
+  // whose provenance can't be established.
+  //
+  // This is what makes a held lead free. A lead parked in the approval
+  // queue changes nothing about itself — no outbound is sent, so
+  // lastContacted never moves — and it therefore re-enters the automation
+  // window every 20 hours (lastAutomationCheckedAt, below) forever. Before
+  // this column, each of those passes paid for a fresh draft, a fresh
+  // translation and a fresh risk check on a byte-identical conversation:
+  // $0.026/lead/month with no end, the only cost in the product that grew
+  // with time rather than with leads, and the mandatory hold on cold leads
+  // guarantees a standing population of them
+  // (research/product/2026-09-15-ai-cost-per-lead.md §5).
+  suggestedDraftedFor DateTime?
   priority         Priority       @default(NONE)
   lastContacted    DateTime?
   nextFollowUp     DateTime?

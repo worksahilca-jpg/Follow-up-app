@@ -94,7 +94,14 @@ async function processEvent(stripe: Stripe, event: Stripe.Event) {
           ? eventSubscription
           : await stripe.subscriptions.retrieve(eventSubscription.id);
       const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
-      const business = await prisma.business.findUnique({ where: { stripeCustomerId: customerId } });
+      // Only the id — Business carries AES-GCM encrypted third-party
+      // secrets (ENCRYPTED_FIELDS in src/lib/db.ts), and a whole-row read
+      // would decrypt Gmail/Twilio/CRM credentials this handler never
+      // touches, on every Stripe event.
+      const business = await prisma.business.findUnique({
+        where: { stripeCustomerId: customerId },
+        select: { id: true },
+      });
       if (business) await syncSubscription(business.id, subscription);
       break;
     }
@@ -115,7 +122,48 @@ async function processEvent(stripe: Stripe, event: Stripe.Event) {
   }
 }
 
+// A subscription in one of these states is genuinely live, and is allowed
+// to take over as the business's subscription of record even if a
+// different subscription id is currently mirrored. Mirrors
+// ACTIVE_STATUSES in @/lib/billing deliberately: "may supersede" and "has
+// access" are the same question asked twice.
+const LIVE_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>(["active", "trialing"]);
+
 async function syncSubscription(businessId: string, subscription: Stripe.Subscription) {
+  // Stripe delivers out of order, and one customer can hold more than one
+  // subscription over time. Without this guard, an event about a SUPERSEDED
+  // subscription overwrites the live one and locks a paying customer out:
+  //
+  //   1. Sub A is cancelled at period end — it stays `active` until then.
+  //   2. Before that date the owner resubscribes; checkout creates sub B,
+  //      and checkout.session.completed mirrors B as active/trialing.
+  //   3. Period end arrives and Stripe fires customer.subscription.deleted
+  //      for A — later in wall-clock time than everything about B.
+  //   4. The old code mirrored A's terminal status over B's live one:
+  //      subscriptionStatus "canceled" on a business that is paying.
+  //      Every gated route 402s, sync stops, inbound leads stop being
+  //      captured, and nothing ever corrects it (Stripe has no more events
+  //      to send for A, and B is stable so it sends none for B either).
+  //
+  // Rule: an event about a subscription other than the one on record is
+  // applied only when that subscription is itself live, i.e. only a real
+  // takeover moves the mirror. A terminal state on a subscription the
+  // business already moved off is dropped.
+  const current = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { stripeSubscriptionId: true },
+  });
+  if (
+    current?.stripeSubscriptionId &&
+    current.stripeSubscriptionId !== subscription.id &&
+    !LIVE_SUBSCRIPTION_STATUSES.has(subscription.status)
+  ) {
+    console.warn(
+      `[billing] ignoring ${subscription.status} event for superseded subscription ${subscription.id}; business ${businessId} is on ${current.stripeSubscriptionId}`
+    );
+    return;
+  }
+
   const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
   const items = subscription.items.data;
   // The tier item is whichever one isn't a Voice item — Plus/Pro and Voice

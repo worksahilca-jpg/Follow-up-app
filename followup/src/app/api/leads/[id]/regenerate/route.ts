@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
-import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
+import {
+  requireActiveBilling,
+  billingLockedMessage,
+  isChannelAvailableOnFreeTier,
+  isWithinFreeTierLeadCap,
+} from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
@@ -27,10 +32,38 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   const { id } = await params;
   const lead = await prisma.lead.findUnique({
     where: { id },
-    include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+    include: {
+      conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } },
+      business: { select: { tier: true } },
+    },
   });
   if (!lead || lead.businessId !== ctx.businessId) {
     return NextResponse.json({ success: false, message: "Lead not found." }, { status: 404 });
+  }
+
+  // Free tier's AI processing pause applies to drafting on demand exactly
+  // as it does to drafting automatically — same two conditions
+  // scoreAndDraftForLead() (src/lib/scoring.ts), runAutomationForBusiness()
+  // and runSequencesForBusiness() already apply. Without this, "regenerate"
+  // was a way to walk straight past the cap: requireActiveBilling() admits
+  // Free tier by design, so a $0 business could draft against lead #500 of
+  // the month, on a channel Free doesn't cover, up to the rate limit above
+  // (15 per 10 minutes, ~2,000 model calls a day) on the platform's shared
+  // OpenAI key. The cap is only meaningful if every route that reaches the
+  // model honours it.
+  if (lead.business.tier === "free") {
+    const eligible =
+      isChannelAvailableOnFreeTier(lead.source) && (await isWithinFreeTierLeadCap(lead.businessId, lead));
+    if (!eligible) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Free plan AI drafting is paused for this lead — it's past this month's 20-lead cap, or on a channel the Free plan doesn't cover. Upgrade under Billing in Settings.",
+        },
+        { status: 402 }
+      );
+    }
   }
 
   const conversation: Message[] = lead.conversations.flatMap((c) =>

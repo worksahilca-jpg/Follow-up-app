@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
-import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
+import { hasActiveAccess, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { deleteLeadCascade } from "@/lib/leads-admin";
 import { classifyAsProspect } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { tooManyRecentActions } from "@/lib/rateLimit";
 import type { Message } from "@/lib/types";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
@@ -31,8 +32,40 @@ export async function POST() {
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
   void recordAudit(ctx, "leads.cleanup");
-  if (!(await requireActiveBilling(ctx.businessId))) {
+
+  // A live paid subscription, checked with hasActiveAccess directly rather
+  // than through requireActiveBilling — identical reasoning to POST
+  // /api/reactivation/classify, which this route is the older twin of. Both
+  // run one OpenAI call per lead across an unbounded Gmail backlog on the
+  // platform's own shared key, and Free tier's defining restriction is that
+  // AI processing stops after 20 leads a month
+  // (research/market/2026-09-11-tier-pricing-recommendation.md §2.2).
+  // requireActiveBilling() admits Free tier by design, so it is not the
+  // right gate here: it let a $0 account classify its entire back catalogue,
+  // which is precisely the spend that cap exists to prevent.
+  //
+  // Only the plain column this decision needs — Business carries AES-GCM
+  // encrypted third-party secrets (ENCRYPTED_FIELDS in src/lib/db.ts).
+  const gate = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: { subscriptionStatus: true },
+  });
+  if (!hasActiveAccess(gate?.subscriptionStatus)) {
     return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
+  }
+
+  // 2 per hour. This was the only AI-spending route in the app with no rate
+  // limit at all (Gmail sync, spam scan, regenerate and reactivation/classify
+  // all have one), while being the most expensive of them: every call is one
+  // OpenAI classification per Gmail lead the business has, with no ceiling on
+  // how many that is. A retry loop or a compromised admin session could
+  // re-run the whole backlog as fast as the function returns. Two runs an
+  // hour is more than a genuine one-off clean-up ever needs.
+  if (await tooManyRecentActions(ctx.businessId, "leads.cleanup", { windowMinutes: 60, max: 2 })) {
+    return NextResponse.json(
+      { success: false, message: "Clean-up already ran recently — try again in an hour." },
+      { status: 429 }
+    );
   }
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(

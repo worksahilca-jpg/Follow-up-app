@@ -30,6 +30,19 @@ export async function GET() {
   }
 
   return NextResponse.json({
+    // `tier` is deliberately NOT passed to hasActiveAccess here, unlike
+    // almost every other call site (see the comment on hasActiveAccess, and
+    // the same-shaped bug fixed in src/lib/setupStatus.ts). This field does
+    // not mean "does this business have access" — it means "is there a paid
+    // Stripe subscription in good standing", and the Settings billing tab
+    // branches on exactly that: `active || status` picks the "you're on a
+    // plan / Manage billing" panel, and its absence is what renders the
+    // Free/Plus/Pro picker with Free's "this is where you are now" usage
+    // meter. Passing tier through would report active:true for every Free
+    // business, hiding the upgrade picker behind a "Manage billing" button
+    // that 400s (no Stripe customer exists on Free). Tier and status are
+    // both in this response for callers that need the access question;
+    // answer it with hasActiveAccess(status, tier), not with this field.
     active: hasActiveAccess(business?.subscriptionStatus),
     status: business?.subscriptionStatus ?? null,
     currentPeriodEnd: business?.currentPeriodEnd?.toISOString() ?? null,

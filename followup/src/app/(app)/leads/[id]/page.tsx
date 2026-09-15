@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { getLeadById, getLeadAuditTrail } from "@/lib/leads-data";
 import { getFreeTierStatus } from "@/lib/billing";
 import { formatCurrency, formatDate } from "@/lib/demo-data";
-import ScoreBadge from "@/components/ScoreBadge";
 import PriorityPill from "@/components/PriorityPill";
 import StageSelector from "@/components/StageSelector";
 import MessageComposer from "@/components/MessageComposer";
@@ -14,6 +13,8 @@ import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
 import LeadTrustPanel from "@/components/LeadTrustPanel";
 import AutomationStatusBadge from "@/components/AutomationStatusBadge";
 import CollapsibleSection from "@/components/CollapsibleSection";
+import ConversationThread from "@/components/ConversationThread";
+import { PageHeader } from "@/components/PageHeader";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 import { isInstagramLeadId, isSocialLeadId } from "@/lib/instagramId";
 
@@ -28,12 +29,32 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl">{lead.name}</h1>
-          <p className="text-ink-soft">{lead.company}</p>
-        </div>
-        <ScoreBadge score={lead.score} size="lg" />
+      {/* There was no way back to the list from here — a real dead end on a
+          phone, where the browser's own back button is the only escape and
+          people don't reliably reach for it inside an app. */}
+      <PageHeader back={{ href: "/leads", label: "Leads" }} title={lead.name} subtitle={lead.company} />
+
+      {/* The 64px score circle used to sit top-right — the second-largest
+          element on the page, containing a bare number — while the sentence
+          explaining it ("Why this score") sat several hundred pixels below in
+          the left column. A verdict and its reasoning separated by the entire
+          layout. They are one thing now: the sentence leads, the number is a
+          small figure beside it, and the weighted factors stay available
+          under the fold rather than being the first thing read.
+
+          When the AI hasn't looked at this lead yet, say so — the same
+          honesty PriorityPill already applies. "No reason given" is very
+          different from "we haven't looked", and on an unanswered buyer
+          question the difference is the whole product. */}
+      <div className="mt-4 flex items-start gap-3">
+        <p className="flex-1 text-sm leading-relaxed text-ink-soft">
+          {lead.scoreReason || "FollowUp hasn't reviewed this lead yet — no score reasoning available."}
+        </p>
+        {lead.scoreReason && (
+          <span className="shrink-0 font-mono text-sm tabular-nums text-ink-soft" title="Lead score, 0–100">
+            {lead.score}/100
+          </span>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -44,12 +65,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         </span>
       </div>
 
-      <div className="mt-4 flex gap-2">
-        {lead.email && (
-          <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium" style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}>
-            <Mail className="h-3.5 w-3.5" /> Email
-          </a>
-        )}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         {lead.phone && isSocialLeadId(lead.phone) ? (
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft">
             <MessageSquare className="h-3.5 w-3.5" /> {isInstagramLeadId(lead.phone) ? "Instagram DM" : "Facebook Messenger"}
@@ -62,6 +78,24 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           )
         )}
         <CopyBookingLinkButton leadId={lead.id} />
+        {/* Demoted from the page's one filled button to a plain link. It opens
+            mailto:, which leaves FollowUp entirely — whatever gets sent has no
+            record here, no audit trail and no effect on scoring, which is a
+            direct hole in "own the conversation". Making it the most prominent
+            control on the page actively pushed people out of the product. The
+            composer below is the real way to reply; this stays for the cases
+            where someone genuinely wants their own mail client.
+
+            Whether it should exist at all is a product call, not a design one
+            — flagged for Sahil, not decided here. */}
+        {lead.email && (
+          <a
+            href={`mailto:${lead.email}`}
+            className="inline-flex items-center gap-1.5 text-sm text-ink-soft underline underline-offset-2"
+          >
+            <Mail className="h-3.5 w-3.5" /> Open in your mail app
+          </a>
+        )}
       </div>
 
       {/* research/product/2026-09-10-ux-simplification.md §8: this used to
@@ -75,53 +109,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
       <div className="grid md:grid-cols-3 gap-8 mt-8">
         <div className="md:col-span-2 space-y-8">
-          <section>
-            <h2 className="font-display text-xl">Why this score</h2>
-            <p className="text-sm text-ink-soft mt-2 leading-relaxed">{lead.scoreReason}</p>
-            <div className="mt-3 space-y-1.5">
-              {lead.scoreFactors.map((f) => (
-                <div key={f.label} className="flex items-center justify-between text-sm">
-                  <span className="text-ink-soft">{f.label}</span>
-                  <span className="font-medium tabular-nums" style={{ color: f.weight >= 0 ? "var(--sage)" : "var(--coral)" }}>
-                    {f.weight >= 0 ? "+" : ""}
-                    {f.weight}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h2 className="font-display text-xl">Conversation</h2>
-            <div className="mt-3 space-y-3">
-              {lead.conversation.map((m) => (
-                <div
-                  key={m.id}
-                  className="rounded-lg border border-line p-3 text-sm"
-                  style={{
-                    marginLeft: m.direction === "outbound" ? "1.5rem" : 0,
-                    backgroundColor: m.direction === "outbound" ? "var(--slate-soft)" : "var(--card)",
-                  }}
-                >
-                  <div className="flex items-center justify-between text-xs text-ink-soft mb-1">
-                    <span className="uppercase tracking-wide">
-                      {m.direction === "outbound" ? "You" : lead.name} · {m.channel}
-                    </span>
-                    <span>{formatDate(m.date)}</span>
-                  </div>
-                  <p>{m.body}</p>
-                  {m.source && (
-                    <p className="text-xs mt-1" style={{ color: "var(--slate)" }}>
-                      Sent directly on {m.source === "messenger_direct" ? "Messenger" : "Instagram"} — not through FollowUp
-                      {m.source.endsWith("_direct") ? " (likely Meta's own AI or a teammate replying from the native app)" : ""}
-                    </p>
-                  )}
-                  {m.opened && <p className="text-xs mt-1" style={{ color: "var(--sage)" }}>Opened</p>}
-                </div>
-              ))}
-            </div>
-          </section>
-
+          {/* The composer is the page's actual job and it used to be THIRD in
+              this column, under an unbounded conversation list. It comes
+              first now — the reason to be on this screen is reachable without
+              scrolling past twenty old messages. */}
           <MessageComposer
             leadId={lead.id}
             initialMessage={lead.suggestedMessage}
@@ -129,13 +120,37 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             leadName={lead.name}
             leadEmail={lead.email || undefined}
           />
+
+          <ConversationThread messages={lead.conversation} leadName={lead.name} />
+
+          {lead.scoreFactors.length > 0 && (
+            <CollapsibleSection title="See the factors behind the score">
+              <div className="space-y-1.5">
+                {lead.scoreFactors.map((f) => (
+                  <div key={f.label} className="flex items-center justify-between text-sm">
+                    <span className="text-ink-soft">{f.label}</span>
+                    <span
+                      className="font-medium tabular-nums"
+                      style={{ color: f.weight >= 0 ? "var(--sage)" : "var(--coral)" }}
+                    >
+                      {f.weight >= 0 ? "+" : ""}
+                      {f.weight}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CollapsibleSection>
+          )}
         </div>
 
-        <aside className="space-y-1 divide-y divide-line">
-          <div className="pb-1">
+        {/* Was: a `divide-y` wrapper around four CollapsibleSections, two of
+            which wrapped their own `rounded-xl border bg-card` card — three
+            box levels deep, the clearest S-09 violation in the app. Each
+            section is now the box, sitting directly on the paper, one level. */}
+        <aside className="space-y-2">
+          <div>
             <CollapsibleSection title="Details">
-              <div className="rounded-xl border border-line bg-card p-4">
-                <dl className="space-y-2 text-sm">
+              <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <dt className="text-ink-soft">Source</dt>
                     <dd>{lead.source}</dd>
@@ -158,26 +173,23 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                     <dt className="text-ink-soft">Next follow-up</dt>
                     <dd>{lead.nextFollowUp ? formatDate(lead.nextFollowUp) : "—"}</dd>
                   </div>
-                </dl>
-              </div>
+              </dl>
             </CollapsibleSection>
           </div>
 
-          <div className="py-1">
+          <div>
             <CollapsibleSection title="Notes">
-              <div className="rounded-xl border border-line bg-card p-4">
-                <p className="text-sm text-ink-soft leading-relaxed">{lead.notes || "No notes yet."}</p>
-              </div>
+              <p className="text-sm text-ink-soft leading-relaxed">{lead.notes || "No notes yet."}</p>
             </CollapsibleSection>
           </div>
 
-          <div className="py-1">
+          <div>
             <CollapsibleSection title="Consent & AI activity">
               <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} />
             </CollapsibleSection>
           </div>
 
-          <div className="py-1">
+          <div>
             <CollapsibleSection title="Automation & follow-up plan">
               <div className="space-y-3">
                 <LeadAutomationToggle leadId={lead.id} initialTier={lead.automationTier} autonomousAllowed={autonomousAllowed} />

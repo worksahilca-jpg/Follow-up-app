@@ -315,38 +315,23 @@ describe("email unsubscribe", () => {
     expect(gmailSend).toHaveBeenCalled();
   });
 
-  it("puts the unsubscribe footer and headers on the reactivation batch", async () => {
-    p.lead.findUnique.mockResolvedValue(lead());
-    p.conversation.findFirst.mockResolvedValue({ id: "c1" });
-
-    await sendFollowUpToLead("lead1", "Just checking in.", {
-      automated: true,
-      trigger: "dead_lead_reactivation",
-    });
-
-    const sent = gmailSend.mock.calls.at(-1)![1] as { body: string; extraHeaders?: string[] };
-    expect(sent.body).toMatch(/automated follow-ups/i);
-    expect(sent.extraHeaders).toEqual(
-      expect.arrayContaining([expect.stringContaining("List-Unsubscribe-Post")])
-    );
-  });
-
-  // An unsubscribe line under a personal reply would be odd, and would
-  // imply the message was bulk when it wasn't.
-  // The reason the narrowing exists at all: FollowUp's proposition is that
-  // its messages read as if the owner wrote them. An unsubscribe line under
-  // a reply to yesterday's email announces that a machine wrote it.
-  it("puts neither on an ordinary reply, automated or human", async () => {
+  // Founder's call, 2026-09-15: no unsubscribe line and no
+  // List-Unsubscribe header on ANY message, including the cold batch.
+  // Every message goes to someone who contacted the business first, and the
+  // draft is required to say so — an "unsubscribe" line would misdescribe
+  // an overdue reply as a mailing. This pins the absence, so it can't drift
+  // back in unnoticed.
+  it("puts no unsubscribe line or header on anything, batch included", async () => {
     for (const options of [
       { automated: false } as const,
       { automated: true, trigger: "unanswered" } as const,
-      { automated: true, trigger: "silence" } as const,
+      { automated: true, trigger: "dead_lead_reactivation" } as const,
     ]) {
       gmailSend.mockClear();
       p.lead.findUnique.mockResolvedValue(lead());
       p.conversation.findFirst.mockResolvedValue({ id: "c1" });
 
-      await sendFollowUpToLead("lead1", "Yes — Tuesday works.", options);
+      await sendFollowUpToLead("lead1", "You asked about the refit — sorry we never came back.", options);
 
       const sent = gmailSend.mock.calls.at(-1)![1] as { body: string; extraHeaders?: string[] };
       expect(sent.body).not.toMatch(/unsubscribe/i);

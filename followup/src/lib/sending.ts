@@ -13,7 +13,7 @@
  */
 
 import { prisma } from "@/lib/db";
-import { isSuppressed, unsubscribeFooter, unsubscribeHeaders } from "@/lib/suppression";
+import { isSuppressed } from "@/lib/suppression";
 import { checkSendCap } from "@/lib/sendCaps";
 import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
@@ -204,43 +204,47 @@ export async function sendFollowUpToLead(
     return { success: false, message: "This lead texted STOP — SMS/WhatsApp sending is blocked until they text START to opt back in." };
   }
 
-  // Email unsubscribe — the mechanism STOP does not cover. See
-  // src/lib/suppression.ts for why it is keyed on the address, not on this
-  // lead row.
+  // No unsubscribe line, and no List-Unsubscribe header, on ANY message.
+  // Founder's call, 2026-09-15, and the reasoning is sound enough to write
+  // down rather than just obey.
   //
-  // Scoped to the REACTIVATION BATCH alone, not to automated sends
-  // generally, and the distinction is the product rather than a legal
-  // hedge. FollowUp's whole proposition is that its messages read as if
-  // the owner wrote them; an "unsubscribe" line under a reply to someone
-  // who emailed yesterday announces that a machine wrote it, and is a
-  // worse lie than no line at all, because that reply IS a continuation of
-  // a conversation the lead started.
+  // Every message this product sends is a reply to someone who contacted
+  // the business first. Even the coldest one in the reactivation batch goes
+  // to a person who filled in a form or sent an email and then never heard
+  // back — and deadLeadMessageHint() now requires the draft to say exactly
+  // that: you got in touch about X, sorry we never came back to you. A
+  // recipient reading that recognises it instantly. It is an overdue reply,
+  // not an approach, and an "unsubscribe" line stapled to the bottom would
+  // misdescribe it as a mailing — which is both untrue and corrosive to the
+  // one thing this product sells, that its messages read as if the owner
+  // wrote them.
   //
-  // The cold batch is the opposite case, and is the only genuinely
-  // campaign-shaped thing this product does: many people at once, none of
-  // whom asked today, triggered by one button. Unique wording per
-  // recipient does not change that — a mailbox provider weighs volume in a
-  // window and complaint rate, never prose. Those are the recipients who
-  // reach for "report spam" when there is no way out, and the complaint
-  // lands on the owner's own domain.
+  // The suppression list itself is deliberately KEPT and still enforced
+  // below. What changed is how an address gets onto it: not a link, but a
+  // person saying so — which is how the SMS side already works, and how
+  // someone would actually do it in an email anyway ("please stop emailing
+  // me"). Volume is also bounded (see sendCaps.ts), which is what makes
+  // relying on a reply rather than a button reasonable: this is 25 messages
+  // a day to people who asked, not a list blast.
   //
-  // So: the batch carries a way out; a reply does not. Same line CAN-SPAM
-  // draws between a commercial mailing and a relationship message.
-  // Daily volume cap. Applies to AUTOMATED sends only — a human choosing
-  // to email their own customer is never rate-limited by us — and sits
-  // here, in the one funnel every automated path goes through, so no
-  // caller can be added later that forgets it. See src/lib/sendCaps.ts for
-  // why a ceiling exists at all: without one, a first sync could push a
-  // few hundred messages out of a small business's own Gmail in an
-  // afternoon and get their real mailbox throttled.
+  // What would make this wrong: if the drafts stopped naming the original
+  // enquiry and the missed reply, or if volume rose to where recipients no
+  // longer recognise the sender. Both are worth re-checking together.
+  // Daily volume ceiling. Applies to AUTOMATED sends only — a human
+  // emailing their own customer is never rate-limited by us — and lives
+  // here, in the one funnel every automated path goes through, so a caller
+  // added later cannot forget it.
+  //
+  // This carries more weight now that there is no unsubscribe line: volume
+  // discipline IS the protection. A handful of recognisable, overdue
+  // replies a day is a different thing from a list blast, and the cap is
+  // what keeps it the first one. See src/lib/sendCaps.ts.
   if (options.automated) {
     const capKind = options.trigger === "dead_lead_reactivation" ? "reactivation" : "automated";
     const cap = await checkSendCap(lead.businessId, capKind);
     if (!cap.allowed) return { success: false, message: cap.reason };
   }
 
-  // Only the REACTIVATION batch is treated as a mailing someone can opt out
-  // of — see the block above the footer for why.
   const isCampaignSend = options.automated && options.trigger === "dead_lead_reactivation";
 
   const emailSuppressed = channel === "email" && (await isSuppressed(lead.businessId, lead.email));
@@ -266,16 +270,12 @@ export async function sendFollowUpToLead(
     // beside it. `body` is what gets stored on the Message row, shown in
     // the thread, and measured in the audit trail — and none of those
     // should carry a link that isn't part of what anyone wrote.
-    const emailBody = isCampaignSend
-      ? `${body}${unsubscribeFooter(lead.businessId, lead.email)}`
-      : body;
-
     emailProvider = await detectEmailProvider(lead.businessId, lead.id);
     if (emailProvider === "outlook") {
       const result = await sendOutlookEmail(lead.businessId, {
         to: lead.email,
         subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
-        body: emailBody,
+        body,
         // Graph's /reply endpoint takes the specific message's own id,
         // not an RFC822 Message-ID header — acknowledgeNewLead's Outlook
         // path passes that Graph id through as emailInReplyTo (same
@@ -287,10 +287,9 @@ export async function sendFollowUpToLead(
       const result = await sendEmail(lead.businessId, {
         to: lead.email,
         subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
-        body: emailBody,
+        body,
         threadId: options.emailThreadId,
         inReplyTo: options.emailInReplyTo,
-        extraHeaders: isCampaignSend ? unsubscribeHeaders(lead.businessId, lead.email) : undefined,
       });
       if (!result.success) return { success: false, message: result.message ?? "Gmail didn't confirm this message sent." };
       externalId = result.messageId ?? undefined;

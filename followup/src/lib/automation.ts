@@ -154,7 +154,27 @@ export function deadLeadMessageHint(daysSinceContact: number): string {
     "Never fall back to a vague \"just checking in\" or \"circling back\" — research on real reactivation " +
     "campaigns found that's the single most-cited reason this kind of message gets ignored, since it signals " +
     "nothing new to offer. Lead with something concrete and useful instead: reference a specific detail from " +
-    "what they were originally interested in, not a generic status question."
+    "what they were originally interested in, not a generic status question. " +
+    // The two facts that make this message land as a belated reply rather
+    // than an unsolicited approach — founder's call, 2026-09-15, and the
+    // reasoning is worth keeping: THEY made contact first, and nobody here
+    // answered. A recipient who is reminded of both recognises the message
+    // instantly and reads it as overdue courtesy. One who isn't is being
+    // emailed by a stranger about nothing in particular, months later,
+    // which is the definition of the thing people report as spam.
+    //
+    // This is also what makes the absence of an unsubscribe line defensible
+    // rather than merely convenient: the message is a continuation of a
+    // conversation the recipient started. If these two instructions are
+    // ever dropped, that stops being true, and the decision to omit the
+    // unsubscribe should be revisited at the same time.
+    "Two things must be unmistakable. First, that THEY got in touch originally — say so plainly, in their " +
+    "own terms (\"you got in touch about...\", \"you asked us about...\"), so there is no moment where they " +
+    "wonder who this is or why they are hearing from you. Second, acknowledge honestly that they never got a " +
+    "proper reply — one short, unfussy line, no grovelling and no excuses (\"sorry we never came back to you " +
+    "on this\"). Then ask one clear question about whether they still need it. The whole message should read " +
+    "like a person who just found this in their inbox and felt bad about it, because that is exactly what " +
+    "happened."
   );
 }
 

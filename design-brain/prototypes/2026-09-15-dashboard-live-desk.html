@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ---- tokens: globals.css (app) + landing-award.module.css (approved landing language) ---- */
+  :root {
+    --paper: #f6f8fb; --paper-2: #ecf1f7; --card: #ffffff; --card-2: #f8fafd;
+    --ink: #0b1f33; --ink-soft: #46566b; --ink-faint: #5b6b80;
+    --line: rgba(11, 31, 51, 0.09); --line-strong: rgba(11, 31, 51, 0.15);
+    --accent: #2a5cdb; --accent-deep: #17348a; --accent-soft: rgba(42, 92, 219, 0.12); --on-accent: #fff;
+    --sage: #0d6e3c; --sage-soft: #dcf5e5;
+    --coral: #b32a44; --coral-soft: #fbe1e6;
+    --slate: #56677e; --slate-soft: #eef1f6;
+    --shadow: rgba(11, 31, 51, 0.10); --shadow-strong: rgba(11, 31, 51, 0.16);
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+  button { font: inherit; }
+  .num { font-variant-numeric: tabular-nums; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; }
+
+  /* ---- shell ---- */
+  .shell { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+  .main, .wrap { min-width: 0; }
+  .side { border-right: 1px solid var(--line); background: var(--card); padding: 24px 18px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; padding: 0 8px; }
+  .brand svg { width: 22px; height: 22px; }
+  .nav { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 2px; }
+  .nav a { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; color: var(--ink-soft); font-size: 14px; }
+  .nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent-deep); font-weight: 600; }
+  .nav .count { font-family: var(--font-mono); font-size: 11px; background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 7px; }
+  .conn { margin-top: 28px; padding: 0 12px; font-size: 12px; color: var(--ink-soft); display: flex; align-items: center; gap: 8px; }
+  .conn i { width: 7px; height: 7px; border-radius: 50%; background: var(--sage); display: inline-block; }
+  .menu { display: none; }
+  .main { padding: 28px 36px 56px; }
+  .wrap { max-width: 1120px; }
+
+  /* ---- hero band: the landing page's dark closing gradient + aurora, now carrying the day ---- */
+  .hero { position: relative; overflow: hidden; border-radius: 20px; padding: 30px 34px 26px; color: #fff;
+    background: linear-gradient(165deg, #050d17, var(--ink) 55%, var(--accent-deep)); box-shadow: 0 30px 60px -32px var(--shadow-strong); }
+  .blob { position: absolute; border-radius: 50%; filter: blur(70px); pointer-events: none; }
+  .blob.a { width: 46%; height: 120%; left: 30%; top: -60%; background: var(--accent); opacity: .55; }
+  .blob.b { width: 40%; height: 120%; right: -12%; top: -20%; background: #17348a; opacity: .7; }
+  .blob.c { width: 34%; height: 90%; left: -8%; bottom: -60%; background: #b4c6f2; opacity: .22; }
+  .hero > * { position: relative; }
+  .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .hero .eyebrow { color: rgba(255,255,255,.62); }
+  .watch { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11.5px; color: rgba(255,255,255,.72); border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 6px 12px; }
+  .watch i { width: 7px; height: 7px; border-radius: 50%; background: #7fd6a3; box-shadow: 0 0 0 4px rgba(127,214,163,.18); }
+  .hero h1 { font-size: 30px; line-height: 1.15; margin-top: 10px; color: #fff; }
+  .bignums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 22px; }
+  .bignum { display: grid; align-content: start; padding: 14px 16px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.05); }
+  .bignum:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.22); }
+  .bignum .v { font-family: var(--font-display); font-weight: 800; font-size: 46px; line-height: 1; letter-spacing: -0.02em;
+    background: linear-gradient(100deg, #ffffff, #c9d7f7 70%, #b4c6f2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .bignum .v small { font-size: 22px; font-weight: 700; letter-spacing: 0; }
+  .bignum .l { margin-top: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,.78); }
+  .bignum .s { margin-top: 4px; font-size: 13px; color: rgba(255,255,255,.62); }
+  .bignum .s b { color: #fff; font-weight: 600; }
+
+  /* 24-hour response timeline */
+  .tl { margin-top: 26px; }
+  .tl-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .tl-head .eyebrow { color: rgba(255,255,255,.62); }
+  .legend { display: flex; gap: 16px; font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,.72); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .i-done { background: #9db7f0; }
+  .i-held { background: transparent; border: 2px solid #fff; }
+  .i-late { background: #ff6b81; box-shadow: 0 0 0 4px rgba(255,107,129,.22); }
+  .track { position: relative; height: 56px; margin-top: 10px; }
+  .track .line { position: absolute; left: 0; right: 0; top: 24px; height: 2px; background: rgba(255,255,255,.18); }
+  .track .line.past { right: auto; width: 60.4%; background: rgba(255,255,255,.38); }
+  .track .h { position: absolute; top: 40px; transform: translateX(-50%); font-family: var(--font-mono); font-size: 10.5px; color: rgba(255,255,255,.5); }
+  .track .h::before { content: ""; position: absolute; left: 50%; top: -12px; width: 1px; height: 6px; background: rgba(255,255,255,.3); }
+  .dot { position: absolute; top: 25px; width: 11px; height: 11px; border-radius: 50%; transform: translate(-50%, -50%); }
+  .dot.done { background: #9db7f0; }
+  .dot.held { background: #0f2547; border: 2px solid #fff; width: 12px; height: 12px; }
+  .dot.late { background: #ff6b81; box-shadow: 0 0 0 5px rgba(255,107,129,.22); }
+  .dot .tip { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); white-space: nowrap; font-family: var(--font-mono); font-size: 10.5px; color: rgba(255,255,255,.85); }
+  .now { position: absolute; left: 60.4%; top: 10px; width: 1px; height: 30px; background: #fff; }
+  .now::after { content: "now"; position: absolute; left: 6px; top: -4px; font-family: var(--font-mono); font-size: 10.5px; color: #fff; }
+
+  /* ---- two-column board ---- */
+  .board { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 28px; margin-top: 30px; align-items: start; }
+  .col { min-width: 0; display: grid; gap: 28px; }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .sec-head h2 { font-size: 20px; line-height: 1.25; }
+  .sec-head p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13.5px; }
+  .pill { font-family: var(--font-mono); font-size: 11px; padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-deep); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 20px 44px -26px var(--shadow-strong); }
+  .card:hover { box-shadow: 0 26px 54px -26px var(--shadow-strong); }
+  .stack { display: grid; gap: 16px; margin-top: 14px; }
+
+  /* approval card — conversation as it will actually read */
+  .appr { padding: 18px 20px 18px; border-left: 3px solid var(--accent); border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
+  .who { display: flex; align-items: center; gap: 12px; }
+  .ava { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-deep); font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .who .n { font-weight: 600; font-size: 15px; }
+  .who .m { font-size: 12.5px; color: var(--ink-soft); margin-top: 1px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .chip { font-family: var(--font-mono); font-size: 10.5px; padding: 2px 7px; border-radius: 999px; background: var(--slate-soft); color: var(--slate); }
+  .held { margin-left: auto; font-size: 12.5px; color: var(--ink-soft); text-align: right; }
+  .held b { color: var(--ink); font-weight: 600; }
+  .thread { margin-top: 14px; display: grid; gap: 10px; }
+  .bub { max-width: 86%; padding: 11px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
+  .bub .t { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); margin-bottom: 4px; letter-spacing: 0.02em; }
+  .bub.in { background: var(--paper-2); border-bottom-left-radius: 4px; justify-self: start; }
+  .bub.out { background: #fff; border: 1px dashed var(--accent); border-bottom-right-radius: 4px; justify-self: end; box-shadow: 0 10px 24px -18px var(--shadow-strong); }
+  .bub.out .t { color: var(--accent-deep); font-weight: 600; display: flex; align-items: center; gap: 6px; letter-spacing: 0.12em; }
+  .bub.out .t i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+  .bub .subj { font-weight: 600; margin-bottom: 2px; }
+  .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 8px 15px; font-size: 14px; font-weight: 600; border: 1px solid transparent; cursor: pointer; min-height: 36px; }
+  .btn-primary { background: var(--ink); color: var(--paper); }
+  .btn-outline { background: var(--card); border-color: var(--line-strong); color: var(--ink); }
+  .btn-ghost { background: transparent; color: var(--ink-soft); font-weight: 500; }
+  .status { margin-top: 14px; display: flex; align-items: center; gap: 12px; color: var(--ink-soft); flex-wrap: wrap; }
+  .status .btn { padding: 6px 12px; min-height: 32px; }
+  .prog { margin-top: 10px; height: 3px; background: var(--slate-soft); border-radius: 2px; overflow: hidden; }
+  .prog i { display: block; height: 100%; width: 78%; background: var(--accent); border-radius: 2px; }
+
+  /* at-risk rows with decay bars */
+  .risk { padding: 0; }
+  .risk .row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; padding: 13px 16px; align-items: center; border-top: 1px solid var(--line); }
+  .risk .row:first-child { border-top: 0; }
+  .risk .row:hover { background: var(--card-2); }
+  .score { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; font-weight: 600; background: var(--accent-soft); color: var(--accent-deep); }
+  .score.hot { background: var(--coral-soft); color: var(--coral); }
+  .risk .n { font-weight: 600; }
+  .risk .r { color: var(--ink-soft); font-size: 12.5px; margin-top: 1px; }
+  .risk .money { font-weight: 600; text-align: right; }
+  .decay { grid-column: 2 / 4; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; margin-top: 2px; }
+  .decay .bar { height: 4px; border-radius: 2px; background: var(--slate-soft); overflow: hidden; }
+  .decay .bar i { display: block; height: 100%; background: var(--slate); border-radius: 2px; }
+  .decay .bar i.hot { background: var(--coral); }
+  .decay .lab { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); }
+  .decay .lab.hot { color: var(--coral); }
+
+  /* week + calls */
+  .week { padding: 18px 20px; }
+  .week .nums { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .week .v { font-family: var(--font-display); font-weight: 700; font-size: 34px; line-height: 1; letter-spacing: -0.02em; }
+  .week .l { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+  .money-bar { margin-top: 16px; }
+  .money-bar .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--coral-soft); }
+  .money-bar .bar i { display: block; height: 100%; background: var(--sage); width: 19%; }
+  .money-bar .lab { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12.5px; }
+  .money-bar .lab b { font-weight: 600; }
+  .money-bar .lab .g { color: var(--sage); }
+  .money-bar .lab .c { color: var(--coral); }
+  .calls .row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-top: 1px solid var(--line); }
+  .calls .row:first-child { border-top: 0; }
+  .date { width: 44px; text-align: center; border-radius: 10px; background: var(--paper-2); padding: 5px 0; line-height: 1.1; }
+  .date b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+  .date span { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; color: var(--ink-soft); }
+  .calls .n { font-weight: 600; }
+  .calls .t { font-size: 12.5px; color: var(--ink-soft); }
+  .setup { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px 12px 16px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-deep); }
+  .setup .t { font-size: 13.5px; font-weight: 600; }
+  .setup .d { font-size: 12px; opacity: .8; }
+  .setup .btn { background: var(--accent-deep); color: #fff; padding: 7px 13px; min-height: 32px; font-size: 13px; }
+
+  svg.i { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  @media (max-width: 1000px) {
+    .shell { grid-template-columns: minmax(0, 1fr); }
+    .side { border-right: 0; border-bottom: 1px solid var(--line); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .nav, .conn { display: none; }
+    .menu { display: block; width: 22px; height: 22px; stroke: var(--ink); fill: none; stroke-width: 2; stroke-linecap: round; }
+    .main { padding: 16px 14px 40px; }
+    .hero { padding: 22px 18px 20px; border-radius: 18px; }
+    .hero h1 { font-size: 26px; }
+    .bignums { gap: 8px; margin-top: 18px; }
+    .bignum { padding: 10px 10px 10px; }
+    .bignum .v { font-size: 26px; }
+    .bignum .v small { font-size: 14px; }
+    .bignum .l { font-size: 9.5px; letter-spacing: 0.08em; }
+    .bignum .s { display: none; }
+    .dot .tip { display: none; }
+    .board { grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 22px; }
+    .held { margin-left: 0; text-align: left; width: 100%; }
+    .who { flex-wrap: wrap; }
+    .bub { max-width: 100%; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .btn { transition: background-color 150ms ease, color 150ms ease; }
+    .card { transition: box-shadow 300ms var(--ease), transform 300ms var(--ease); }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="6" fill="#0b1f33"/><path d="M8 12h8m-3-3 3 3-3 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      FollowUp
+    </a>
+    <svg class="menu" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    <ul class="nav">
+      <li><a href="#" aria-current="page">Today <span class="count">2</span></a></li>
+      <li><a href="#">Leads</a></li>
+      <li><a href="#">Pipeline</a></li>
+      <li><a href="#">Follow-up plans</a></li>
+      <li><a href="#">Analytics</a></li>
+      <li><a href="#">Activity</a></li>
+      <li><a href="#">Settings</a></li>
+    </ul>
+    <p class="conn"><i></i> 3 inboxes watched</p>
+  </aside>
+
+  <main class="main"><div class="wrap">
+
+    <!-- ===== HERO BAND ===== -->
+    <section class="hero" aria-label="Today at a glance">
+      <div class="blob a"></div><div class="blob b"></div><div class="blob c"></div>
+      <div class="hero-top">
+        <p class="eyebrow" style="margin:0">Tuesday, September 15 · 2:30 pm</p>
+        <span class="watch"><i></i> watching 3 inboxes · last checked 40s ago</span>
+      </div>
+      <h1>Good afternoon, Manoj</h1>
+
+      <div class="bignums">
+        <a class="bignum" href="#ok">
+          <span class="v num">2</span>
+          <span class="l">need your OK</span>
+          <span class="s"><b>Priya</b> and <b>Dan</b> — drafts are ready</span>
+        </a>
+        <a class="bignum" href="#lost">
+          <span class="v num">5</span>
+          <span class="l">about to be lost</span>
+          <span class="s"><b>Aisha</b> first — waiting 26h, $8,400</span>
+        </a>
+        <a class="bignum" href="#lost">
+          <span class="v num"><small>$</small>17,300</span>
+          <span class="l">at stake</span>
+          <span class="s">across those 5 · <b>$4,150</b> came back this week</span>
+        </a>
+      </div>
+
+      <div class="tl" aria-label="Today's inbound messages and how fast they were answered">
+        <div class="tl-head">
+          <p class="eyebrow" style="margin:0">Today, message by message</p>
+          <div class="legend">
+            <span><i class="i-done"></i> answered by FollowUp</span>
+            <span><i class="i-held"></i> waiting for your OK</span>
+            <span><i class="i-late"></i> nobody has answered</span>
+          </div>
+        </div>
+        <div class="track">
+          <div class="line"></div><div class="line past"></div>
+          <span class="h" style="left:25%">6 am</span>
+          <span class="h" style="left:37.5%">9 am</span>
+          <span class="h" style="left:50%">12 pm</span>
+          <span class="h" style="left:62.5%">3 pm</span>
+          <span class="h" style="left:75%">6 pm</span>
+          <span class="h" style="left:87.5%">9 pm</span>
+          <span class="dot late" style="left:31.9%"><span class="tip">Marcus · 3h</span></span>
+          <span class="dot done" style="left:34.4%"></span>
+          <span class="dot held" style="left:37.8%"><span class="tip" style="transform:translateX(-30%)">Priya · Dan</span></span>
+          <span class="dot held" style="left:39.6%"></span>
+          <span class="dot done" style="left:43.1%"></span>
+          <span class="dot done" style="left:46.5%"></span>
+          <span class="dot done" style="left:53.1%"></span>
+          <span class="dot done" style="left:57.3%"></span>
+          <span class="now"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BOARD ===== -->
+    <div class="board">
+
+      <!-- LEFT: decisions -->
+      <div class="col">
+        <section id="ok">
+          <div class="sec-head">
+            <div><h2>Needs your OK</h2><p>Read it the way they will. Approve sends exactly this.</p></div>
+            <span class="pill">2 held</span>
+          </div>
+          <div class="stack">
+
+            <article class="card appr">
+              <div class="who">
+                <span class="ava">PR</span>
+                <div>
+                  <div class="n">Priya Raman</div>
+                  <div class="m"><span class="chip">email</span> wrote 2h ago · new lead from your website</div>
+                </div>
+                <div class="held">Held because it<br><b>mentions a price</b></div>
+              </div>
+              <div class="thread">
+                <div class="bub in">
+                  <div class="t">Priya · 9:05 am</div>
+                  Hi — what would a full re-pipe cost for a 3-bedroom? Kind of urgent, pipes are making noise.
+                </div>
+                <div class="bub out">
+                  <div class="t"><i></i>Draft — not sent yet</div>
+                  <div class="subj">Re: full re-pipe quote</div>
+                  Hi Priya — a full re-pipe on a 3-bed usually runs $4–6k depending on access. Happy to come look Thursday?
+                </div>
+              </div>
+              <div class="actions">
+                <button class="btn btn-primary">Approve &amp; send</button>
+                <a class="btn btn-outline" href="#">Edit</a>
+                <button class="btn btn-ghost">Don't send</button>
+              </div>
+            </article>
+
+            <article class="card appr">
+              <div class="who">
+                <span class="ava">DW</span>
+                <div>
+                  <div class="n">Dan Whitmore</div>
+                  <div class="m"><span class="chip">text</span> wrote 5h ago · returning customer</div>
+                </div>
+                <div class="held">Held because the<br><b>conversation reads as tense</b></div>
+              </div>
+              <div class="thread">
+                <div class="bub in">
+                  <div class="t">Dan · 9:30 am</div>
+                  This is the second time I've had to wait a week. Not thrilled.
+                </div>
+                <div class="bub out">
+                  <div class="t"><i></i>Sending</div>
+                  Hi Dan, I completely understand the frustration — let me personally make sure this gets sorted this week. Can I call you this afternoon?
+                </div>
+              </div>
+              <div class="status" role="status" aria-live="polite">
+                <span>Sending to Dan in <span class="num">4</span>s</span>
+                <button class="btn btn-outline"><svg class="i" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 7"/></svg>Undo</button>
+              </div>
+              <div class="prog"><i></i></div>
+            </article>
+
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT: what's going cold, what came back, what's booked -->
+      <div class="col">
+        <section id="lost">
+          <div class="sec-head">
+            <div><h2>About to be lost</h2><p>The bar is how long the trail has gone cold.</p></div>
+            <span class="pill">$17,300</span>
+          </div>
+          <div class="card risk" style="margin-top:14px">
+            <a class="row" href="#">
+              <span class="score hot num">84</span>
+              <div><div class="n">Aisha Nwosu</div><div class="r">Wrote yesterday, still waiting. High intent.</div></div>
+              <div class="money num">$8,400</div>
+              <div class="decay"><div class="bar"><i class="hot" style="width:100%"></i></div><span class="lab hot num">waiting 26h</span></div>
+            </a>
+            <a class="row" href="#">
+              <span class="score hot num">71</span>
+              <div><div class="n">Marcus Lee</div><div class="r">Wrote this morning, nobody has answered.</div></div>
+              <div class="money num">—</div>
+              <div class="decay"><div class="bar"><i class="hot" style="width:14%"></i></div><span class="lab hot num">waiting 3h</span></div>
+            </a>
+            <a class="row" href="#">
+              <span class="score num">63</span>
+              <div><div class="n">Lena Ortiz</div><div class="r">No reply to your last message.</div></div>
+              <div class="money num">$5,600</div>
+              <div class="decay"><div class="bar"><i style="width:60%"></i></div><span class="lab num">silent 6d</span></div>
+            </a>
+            <a class="row" href="#">
+              <span class="score num">58</span>
+              <div><div class="n">Tom Becker</div><div class="r">No reply to your last message.</div></div>
+              <div class="money num">$2,100</div>
+              <div class="decay"><div class="bar"><i style="width:40%"></i></div><span class="lab num">silent 4d</span></div>
+            </a>
+            <a class="row" href="#">
+              <span class="score num">52</span>
+              <div><div class="n">Rohan Patel</div><div class="r">No reply to your last message.</div></div>
+              <div class="money num">$1,200</div>
+              <div class="decay"><div class="bar"><i style="width:90%"></i></div><span class="lab num">silent 9d</span></div>
+            </a>
+          </div>
+        </section>
+
+        <section id="week">
+          <div class="sec-head"><div><h2>This week</h2><p>Only replies to messages FollowUp sent on its own.</p></div></div>
+          <div class="card week" style="margin-top:14px">
+            <div class="nums">
+              <div><div class="v num">12</div><div class="l">answered for you</div></div>
+              <div><div class="v num">3</div><div class="l">came back — Sofia, Ben, Nadia</div></div>
+            </div>
+            <div class="money-bar">
+              <div class="bar"><i></i></div>
+              <div class="lab"><span class="g"><b>$4,150</b> came back</span><span class="c"><b>$17,300</b> still at stake</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="calls">
+          <div class="sec-head"><div><h2>Upcoming calls</h2><p>Booked from your follow-ups.</p></div></div>
+          <div class="card calls" style="margin-top:14px">
+            <a class="row" href="#"><span class="date"><b>17</b><span>Sep</span></span><div><div class="n">Priya Raman</div><div class="t">Thursday · 2:30 pm · site visit</div></div></a>
+            <a class="row" href="#"><span class="date"><b>18</b><span>Sep</span></span><div><div class="n">Omar Haddad</div><div class="t">Friday · 10:00 am · quote call</div></div></a>
+          </div>
+        </section>
+
+        <div class="setup">
+          <div><div class="t">Catch the calls you miss too</div><div class="d">Next setup step · needs a Twilio number, about 10 minutes</div></div>
+          <a class="btn" href="#">Set up <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+        </div>
+      </div>
+
+    </div>
+  </div></main>
+</div>
+</body>
+</html>

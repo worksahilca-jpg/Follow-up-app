@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiet Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f8fb; --paper-2: #eef1f6; --card: #ffffff;
+    --ink: #0b1f33; --ink-soft: #46566b; --ink-faint: #7a8799;
+    --line: rgba(11, 31, 51, 0.08);
+    --accent: #2a5cdb; --accent-deep: #17348a; --accent-soft: rgba(42, 92, 219, 0.10);
+    --coral: #b32a44; --sage: #0d6e3c;
+    --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  h1, h2 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.025em; margin: 0; }
+  button { font: inherit; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---- shell ---- */
+  .shell { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+  .main, .wrap { min-width: 0; }
+  .side { padding: 28px 18px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; padding: 0 10px; }
+  .brand svg { width: 22px; height: 22px; }
+  .nav { list-style: none; margin: 32px 0 0; padding: 0; display: grid; gap: 2px; }
+  .nav a { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 9px; color: var(--ink-soft); font-size: 14.5px; }
+  .nav a[aria-current="page"] { background: rgba(11,31,51,.06); color: var(--ink); font-weight: 600; }
+  .nav .count { font-size: 13px; color: var(--ink-faint); font-weight: 400; }
+  .menu { display: none; }
+  .main { padding: 64px 48px 96px; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+
+  /* ---- header ---- */
+  .date { font-size: 14px; color: var(--ink-faint); }
+  h1 { font-size: 38px; line-height: 1.1; margin-top: 6px; }
+
+  /* ---- summary ---- */
+  .summary { margin-top: 32px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--card); border-radius: 18px; box-shadow: 0 1px 2px rgba(11,31,51,.04), 0 10px 30px -22px rgba(11,31,51,.18); overflow: hidden; }
+  .summary a { padding: 22px 22px 20px; border-left: 1px solid var(--line); }
+  .summary a:first-child { border-left: 0; }
+  .summary a:hover { background: var(--paper-2); }
+  .summary .v { display: block; font-family: var(--font-display); font-weight: 600; font-size: 40px; line-height: 1; letter-spacing: -0.03em; }
+  .summary .v small { font-size: 22px; font-weight: 600; margin-right: 1px; }
+  .summary .l { display: block; margin-top: 8px; font-size: 14px; color: var(--ink-soft); }
+
+  /* ---- grouped inset lists ---- */
+  .sec { margin-top: 40px; }
+  .label { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 10px 20px; }
+  .group { background: var(--card); border-radius: 18px; box-shadow: 0 1px 2px rgba(11,31,51,.04), 0 10px 30px -22px rgba(11,31,51,.18); overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 14px; padding: 15px 18px 15px 20px; position: relative; }
+  .row + .row::before, .row + .open::before, .open + .row::before { content: ""; position: absolute; left: 20px; right: 0; top: 0; height: 1px; background: var(--line); }
+  a.row:hover { background: var(--paper-2); }
+  .row .b { min-width: 0; flex: 1; }
+  .row .n { font-weight: 600; font-size: 15.5px; }
+  .row .d { color: var(--ink-soft); font-size: 14px; margin-top: 1px; }
+  .row .d.q { color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .r { flex-shrink: 0; display: flex; align-items: center; gap: 12px; color: var(--ink-soft); font-size: 15px; }
+  .row .r .num { color: var(--ink); }
+  .chev { width: 8px; height: 13px; flex-shrink: 0; color: var(--ink-faint); }
+  .late::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--coral); margin-right: 9px; vertical-align: 1px; }
+
+  /* expanded approval row */
+  .open { padding: 18px 20px 18px; position: relative; }
+  .open .n { font-weight: 600; font-size: 15.5px; }
+  .open .d { color: var(--ink-soft); font-size: 14px; margin-top: 1px; }
+  .msg { margin-top: 16px; font-size: 15.5px; line-height: 1.55; }
+  .msg .t, .draft .t { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 4px; }
+  .msg p, .draft p { margin: 0; }
+  .draft { margin-top: 16px; padding-left: 14px; border-left: 2px solid var(--line); }
+  .draft p { color: var(--ink-soft); font-size: 15px; line-height: 1.55; }
+  .draft .subj { color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+  .acts { margin-top: 18px; display: flex; align-items: center; gap: 18px; }
+  .pillbtn { background: var(--ink); color: var(--paper); border: 0; border-radius: 999px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .textbtn { background: none; border: 0; padding: 0; color: var(--accent); font-size: 14.5px; font-weight: 500; cursor: pointer; }
+  .textbtn.q { color: var(--ink-faint); }
+
+  /* week */
+  .week { display: grid; grid-template-columns: 1fr 1fr; }
+  .week a { padding: 20px 22px; border-left: 1px solid var(--line); }
+  .week a:first-child { border-left: 0; }
+  .week .v { display: block; font-family: var(--font-display); font-weight: 600; font-size: 32px; line-height: 1; letter-spacing: -0.03em; }
+  .week .l { display: block; margin-top: 8px; font-size: 14px; color: var(--ink-soft); }
+  .week .l b { color: var(--sage); font-weight: 600; }
+
+  .foot { margin-top: 40px; margin-left: 20px; font-size: 14.5px; color: var(--accent); font-weight: 500; }
+
+  @media (max-width: 1000px) {
+    .shell { grid-template-columns: minmax(0, 1fr); }
+    .side { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); background: var(--card); }
+    .nav { display: none; }
+    .menu { display: block; width: 22px; height: 22px; stroke: var(--ink); fill: none; stroke-width: 2; stroke-linecap: round; }
+    .main { padding: 28px 16px 64px; }
+    h1 { font-size: 32px; }
+    .summary { margin-top: 24px; }
+    .summary a { padding: 16px 12px 14px; }
+    .summary .v { font-size: 26px; }
+    .summary .v small { font-size: 15px; }
+    .summary .l { font-size: 12.5px; }
+    .sec { margin-top: 32px; }
+    .row .r { font-size: 14px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="6" fill="#0b1f33"/><path d="M8 12h8m-3-3 3 3-3 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      FollowUp
+    </a>
+    <svg class="menu" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    <ul class="nav">
+      <li><a href="#" aria-current="page">Today <span class="count">2</span></a></li>
+      <li><a href="#">Leads</a></li>
+      <li><a href="#">Pipeline</a></li>
+      <li><a href="#">Follow-up plans</a></li>
+      <li><a href="#">Analytics</a></li>
+      <li><a href="#">Activity</a></li>
+      <li><a href="#">Settings</a></li>
+    </ul>
+  </aside>
+
+  <main class="main"><div class="wrap">
+
+    <p class="date" style="margin:0">Tuesday, September 15</p>
+    <h1>Good afternoon, Manoj</h1>
+
+    <div class="summary">
+      <a href="#ok"><span class="v num">2</span><span class="l">need your OK</span></a>
+      <a href="#lost"><span class="v num">5</span><span class="l">about to be lost</span></a>
+      <a href="#lost"><span class="v num"><small>$</small>17,300</span><span class="l">at stake</span></a>
+    </div>
+
+    <section class="sec" id="ok">
+      <p class="label">Needs your OK</p>
+      <div class="group">
+
+        <div class="open">
+          <div class="n">Priya Raman</div>
+          <div class="d">Held — mentions a price · email · 2h ago</div>
+          <div class="msg">
+            <div class="t">Priya wrote</div>
+            <p>Hi — what would a full re-pipe cost for a 3-bedroom? Kind of urgent, pipes are making noise.</p>
+          </div>
+          <div class="draft">
+            <div class="t">Reply, ready to send</div>
+            <p class="subj">Re: full re-pipe quote</p>
+            <p>Hi Priya — a full re-pipe on a 3-bed usually runs $4–6k depending on access. Happy to come look Thursday?</p>
+          </div>
+          <div class="acts">
+            <button class="pillbtn">Approve &amp; send</button>
+            <button class="textbtn">Edit</button>
+            <button class="textbtn q">Don't send</button>
+          </div>
+        </div>
+
+        <a class="row" href="#">
+          <div class="b">
+            <div class="n">Dan Whitmore</div>
+            <div class="d">Held — conversation reads as tense · text · 5h ago</div>
+            <div class="d q">“Hi Dan, I completely understand the frustration — let me personally make sure this gets sorted…”</div>
+          </div>
+          <svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6.5 6.5l-5 5"/></svg>
+        </a>
+
+      </div>
+    </section>
+
+    <section class="sec" id="lost">
+      <p class="label">About to be lost</p>
+      <div class="group">
+        <a class="row" href="#">
+          <div class="b"><div class="n late">Aisha Nwosu</div><div class="d">Waiting 26h · high intent</div></div>
+          <div class="r"><span class="num">$8,400</span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6.5 6.5l-5 5"/></svg></div>
+        </a>
+        <a class="row" href="#">
+          <div class="b"><div class="n late">Marcus Lee</div><div class="d">Waiting 3h · wrote this morning</div></div>
+          <div class="r"><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6.5 6.5l-5 5"/></svg></div>
+        </a>
+        <a class="row" href="#">
+          <div class="b"><div class="n">Lena Ortiz</div><div class="d">Silent 6 days</div></div>
+          <div class="r"><span class="num">$5,600</span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6.5 6.5l-5 5"/></svg></div>
+        </a>
+        <a class="row" href="#">
+          <div class="b"><div class="n">Tom Becker</div><div class="d">Silent 4 days</div></div>
+          <div class="r"><span class="num">$2,100</span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6.5 6.5l-5 5"/></svg></div>
+        </a>
+        <a class="row" href="#">
+          <div class="b"><div class="n">Rohan Patel</div><div class="d">Silent 9 days</div></div>
+          <div class="r"><span class="num">$1,200</span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6.5 6.5l-5 5"/></svg></div>
+        </a>
+      </div>
+    </section>
+
+    <section class="sec" id="week">
+      <p class="label">This week</p>
+      <div class="group week">
+        <a href="#"><span class="v num">12</span><span class="l">answered for you</span></a>
+        <a href="#"><span class="v num">3</span><span class="l">came back · <b>$4,150</b></span></a>
+      </div>
+    </section>
+
+    <section class="sec" id="calls">
+      <p class="label">Upcoming calls</p>
+      <div class="group">
+        <a class="row" href="#">
+          <div class="b"><div class="n">Priya Raman</div><div class="d">Site visit</div></div>
+          <div class="r"><span>Thu, 2:30 pm</span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6.5 6.5l-5 5"/></svg></div>
+        </a>
+        <a class="row" href="#">
+          <div class="b"><div class="n">Omar Haddad</div><div class="d">Quote call</div></div>
+          <div class="r"><span>Fri, 10:00 am</span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6.5 6.5l-5 5"/></svg></div>
+        </a>
+      </div>
+    </section>
+
+    <section class="sec">
+      <p class="label">Setup</p>
+      <div class="group">
+        <a class="row" href="#">
+          <div class="b"><div class="n">Catch the calls you miss too</div><div class="d">Needs a Twilio number · about 10 minutes · 2 more steps after this</div></div>
+          <div class="r"><span style="color:var(--accent);font-weight:500">Set up</span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6.5 6.5l-5 5"/></svg></div>
+        </a>
+      </div>
+    </section>
+
+    <p class="foot"><a href="#">See all numbers</a></p>
+
+  </div></main>
+</div>
+</body>
+</html>

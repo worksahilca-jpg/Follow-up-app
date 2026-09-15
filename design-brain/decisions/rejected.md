@@ -44,7 +44,67 @@ believe its variant is a new idea.
 
 ## Decisions
 
-*Empty. Nothing has been rejected yet — the design brain was established 2026-09-12.*
+## R-001 — Dashboard proposal D-020 ("Today, in one sentence"): subtraction-only redesign ^R-001
+**Date:** 2026-09-15
+**Scope:** Dashboard — and, as a principle, any "redesign" pass on an existing screen
+**Rejected:** [[design-decisions#^D-020|D-020]] — the proposal that removed the greeting
+banner and the three stat tiles, replaced them with one computed sentence, reordered the
+approval row, and swapped the score pill for a text fact. Same tokens, same components,
+less chrome.
+**Stated reason:** "make it more creative and enhanced i mean its very basic."
+**Inferred principle:** INFERRED — for this founder, a redesign that is *only* subtraction
+reads as unfinished, not as restraint. The bar he judges the product against is the
+landing page he approved ([[approved#^A-002|A-002]]: atmosphere, depth, a designed hero
+mockup, big display numbers, motion) — the authenticated app has to feel like the same
+designed product, not a cleaner version of a plain admin list. "Precision is the
+aesthetic" (`brand-principles.md` 8) still holds; it is not a license to strip a screen
+down to text and hairlines. Confirm this reading on the next review.
+**Do not propose again:** the same proposal with a different sentence; the same list
+treatment with icons added back; "expert polish" passes on other screens that consist of
+removing chrome without adding a designed layer in its place.
+**Would need to change for this to be reconsidered:** nothing about the individual moves —
+several of them (why-it-was-held first, the undo grace, facts instead of a score) may
+survive inside a richer design. What is closed is *subtraction as the whole answer*.
+
+## R-002 — Keyboard-first interaction as the dashboard's organising idea ^R-002
+**Date:** 2026-09-15
+**Scope:** The authenticated app, system-wide — not just the dashboard
+**Rejected:** The "Queue Zero" prototype
+(https://claude.ai/artifact/3mucUkn3m1Ar7JjPJUXBNe) — a working, clickable approval queue
+built around `J`/`K` to move, `E` to approve, `X` to skip, `Z` to undo, `⌘K` for a command
+palette, `?` for a shortcut sheet, with visible `<kbd>` hints on screen. The reasoning was
+that a business tool feels expensive when it responds instantly and never needs the mouse
+(Superhuman's model), and that this was the kind of craft a static mockup structurally
+cannot show.
+**Stated reason:** "no keys thing" → asked whether the keys had failed or he didn't want
+the premise → **"i dont want"**.
+**Inferred principle:** partly INFERRED, but with hard evidence behind it that should have
+been read first. **FollowUp's ICP is not a keyboard user.**
+`followup/research/customers/2026-09-05-icp-pain-and-trust-objections.md` records the
+literal usage context as an owner "up a ladder" — interrupted, on a phone, 90 seconds,
+not a software person. `brand-principles.md` 4 says the same thing in the system's own
+words. A keyboard-shortcut layer is built for a desk-bound power user processing volume;
+that is Superhuman's ICP, not FollowUp's. The failure here was borrowing another product's
+*craft model* along with its interaction model, without checking the second one against
+who actually opens this screen — the research to catch it was already on file and went
+unread.
+**Do not propose again:** command palettes (`⌘K`) as a primary navigation idea; `J`/`K`
+list navigation; single-letter action keys; on-screen `<kbd>` hints as a design motif; a
+shortcut cheatsheet screen; "power user mode"; and, generally, any proposal whose pitch is
+"it's fast once you learn it." Learning is the cost this ICP will not pay.
+**Would need to change for this to be reconsidered:** a genuinely different user — a
+FollowUp customer with a full-time person at a desk working a high-volume shared queue.
+That is not the current ICP and is not on the roadmap. Treat as closed until the ICP
+itself changes. (Note: shortcuts as an *invisible accelerant* — Escape closing a dialog,
+Enter submitting a focused form — are ordinary web conventions and are not what this
+rejection covers.)
+
+**Standing note after four rejected dashboard concepts (D-020, D-021, D-022, Queue Zero):**
+all four were generated from a hypothesis about what the founder wanted rather than from a
+reference he had pointed at. That approach has now failed four times in one session and is
+itself the thing to stop, not just its outputs. Before the next dashboard proposal, get an
+external reference the founder actually chose — a screenshot or a product he names. Do not
+open a fifth concept without one.
 
 ---
 

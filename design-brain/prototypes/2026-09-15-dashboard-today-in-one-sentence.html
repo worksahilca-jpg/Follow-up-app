@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today, in One Sentence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ---- tokens: verbatim from followup/src/app/globals.css (origin/main) ---- */
+  :root {
+    --paper: #f6f8fb;
+    --ink: #0b1f33;
+    --ink-soft: #46566b;
+    --line: rgba(11, 31, 51, 0.12);
+    --line-strong: rgba(11, 31, 51, 0.22);
+    --card: #ffffff;
+    --rust: #2a5cdb;
+    --accent-deep: #17348a;
+    --rust-soft: rgba(42, 92, 219, 0.12);
+    --on-accent: #ffffff;
+    --slate: #56677e;  --slate-soft: #eef1f6;
+    --sage:  #0d6e3c;  --sage-soft:  #dcf5e5;
+    --gold:  #a35904;  --gold-soft:  #fef3c7;
+    --coral: #b32a44;  --coral-soft: #fbe1e6;
+    --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+  button { font: inherit; }
+  .num { font-variant-numeric: tabular-nums; }
+  .mono { font-family: var(--font-mono); }
+
+  /* ---- shell ---- */
+  .shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
+  .main, .wrap { min-width: 0; }
+  .menu { display: none; }
+  .side {
+    border-right: 1px solid var(--line);
+    background: var(--card);
+    padding: 24px 20px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; padding: 0 8px; }
+  .brand svg { width: 22px; height: 22px; }
+  .nav { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 2px; }
+  .nav a { display: block; padding: 8px 12px; border-radius: 8px; color: var(--ink-soft); font-size: 14px; }
+  .nav a[aria-current="page"] { background: var(--rust-soft); color: var(--rust); font-weight: 600; }
+  .main { padding: 40px 48px 64px; }
+  .wrap { max-width: 820px; }
+
+  /* ---- header: no box, one sentence ---- */
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+  h1 { font-size: 30px; line-height: 1.15; margin-top: 6px; }
+  .summary { font-size: 16px; line-height: 1.55; margin: 12px 0 0; max-width: 60ch; color: var(--ink); }
+  .summary a { font-weight: 600; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  .summary a:hover, .summary a:focus-visible { color: var(--rust); text-decoration-color: currentColor; }
+  .summary .quiet { color: var(--ink-soft); }
+  .summary .quiet .num { color: var(--ink); font-weight: 600; }
+
+  /* ---- sections ---- */
+  section { margin-top: 40px; }
+  .sec-head h2 { font-size: 20px; line-height: 1.25; }
+  .sec-head h3 { font-size: 17px; line-height: 1.3; }
+  .sec-head p { margin: 4px 0 0; color: var(--ink-soft); font-size: 14px; }
+  .list { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .list > * + * { border-top: 1px solid var(--line); }
+
+  /* ---- approval row ---- */
+  .appr { padding: 18px 20px 20px; }
+  .row-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .who { font-weight: 600; font-size: 15px; }
+  .who:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .why { color: var(--ink-soft); font-size: 13px; margin-top: 2px; }
+  .meta { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+  .label { font-size: 12px; font-weight: 500; color: var(--ink-soft); margin: 0 0 4px; }
+  .said { margin-top: 14px; }
+  .said p:last-child { margin: 0; white-space: pre-wrap; }
+  .draft { margin-top: 14px; padding-left: 14px; border-left: 2px solid var(--line-strong); }
+  .draft .subject { font-weight: 600; margin: 0 0 2px; }
+  .draft .body { margin: 0; color: var(--ink-soft); white-space: pre-wrap; }
+  .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 8px 14px; font-size: 14px; font-weight: 500; border: 1px solid transparent; cursor: pointer; min-height: 36px; }
+  .btn-primary { background: var(--ink); color: var(--paper); }
+  .btn-outline { background: var(--card); border-color: var(--line); color: var(--ink); }
+  .btn-ghost { background: transparent; color: var(--ink-soft); }
+  .btn:focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; }
+  .status { display: flex; align-items: center; gap: 12px; margin-top: 16px; font-size: 14px; color: var(--ink-soft); flex-wrap: wrap; }
+  .status .btn { padding: 6px 12px; min-height: 32px; }
+
+  /* ---- plain rows (at-risk, week, calls) ---- */
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; }
+  .row:hover { background: var(--paper); }
+  .row .l { min-width: 0; }
+  .row .name { font-weight: 500; }
+  .row .desc { color: var(--ink-soft); }
+  .row .r { display: flex; align-items: center; gap: 14px; flex-shrink: 0; font-size: 13px; }
+  .row .money { color: var(--ink); }
+  .row .fact { color: var(--ink-soft); font-family: var(--font-mono); font-size: 12px; }
+  .row .fact.hot { color: var(--coral); }
+  .more { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 14px; font-weight: 500; }
+  .more:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ---- setup strip (unchanged component, moved) ---- */
+  .setup { margin-top: 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 20px; }
+  .setup .t { font-weight: 500; }
+  .setup .t span { color: var(--ink-soft); font-weight: 400; }
+  .setup .d { color: var(--ink-soft); font-size: 12px; margin-top: 2px; }
+
+  /* ---- quiet tier ---- */
+  .quiet-tier { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; margin-top: 40px; }
+  .quiet-tier section { margin-top: 0; }
+  .foot { margin-top: 40px; }
+
+  svg.i { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: minmax(0, 1fr); }
+    .side { border-right: 0; border-bottom: 1px solid var(--line); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .nav { display: none; }
+    .menu { display: block; width: 22px; height: 22px; stroke: var(--ink); fill: none; stroke-width: 2; stroke-linecap: round; }
+    .main { padding: 24px 16px 48px; }
+    h1 { font-size: 26px; }
+    
+    .row { align-items: flex-start; flex-direction: column; gap: 4px; }
+    .row .r { gap: 12px; }
+    .setup { flex-direction: column; align-items: flex-start; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .btn { transition: background-color 150ms ease, color 150ms ease; }
+    .btn-outline:hover { background: var(--paper); }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="6" fill="#0b1f33"/><path d="M8 12h8m-3-3 3 3-3 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      FollowUp
+    </a>
+    <svg class="menu" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    <ul class="nav">
+      <li><a href="#" aria-current="page">Today</a></li>
+      <li><a href="#">Leads</a></li>
+      <li><a href="#">Pipeline</a></li>
+      <li><a href="#">Follow-up plans</a></li>
+      <li><a href="#">Analytics</a></li>
+      <li><a href="#">Activity</a></li>
+      <li><a href="#">Settings</a></li>
+    </ul>
+  </aside>
+
+  <main class="main"><div class="wrap">
+
+    <!-- Header: no banner box. The greeting plus one computed sentence that IS the day. -->
+    <header>
+      <p class="eyebrow">Tuesday, September 15</p>
+      <h1>Good afternoon, Manoj</h1>
+      <p class="summary">
+        <a href="#ok"><span class="num">2</span> drafts need your OK</a> and
+        <a href="#lost"><span class="num">5</span> leads are about to be lost</a>.
+        <span class="quiet">This week FollowUp answered <span class="num">12</span> for you and</span>
+        <a href="#week"><span class="num">3</span> came back</a>.
+      </p>
+    </header>
+
+    <!-- Work tier 1: decisions -->
+    <section id="ok">
+      <div class="sec-head">
+        <h2>Needs your OK</h2>
+        <p>Approve to send exactly what's shown, or edit it first. Nothing goes out until you say so.</p>
+      </div>
+      <div class="list">
+
+        <article class="appr">
+          <div class="row-head">
+            <div>
+              <a class="who" href="#">Priya Raman</a>
+              <p class="why">Held because it mentions a price.</p>
+            </div>
+            <span class="meta">email · 2h ago</span>
+          </div>
+          <div class="said">
+            <p class="label">Priya said:</p>
+            <p>Hi — what would a full re-pipe cost for a 3-bedroom? Kind of urgent, pipes are making noise.</p>
+          </div>
+          <div class="draft">
+            <p class="label">The reply FollowUp will send:</p>
+            <p class="subject">Re: full re-pipe quote</p>
+            <p class="body">Hi Priya — a full re-pipe on a 3-bed usually runs $4–6k depending on access. Happy to come look Thursday?</p>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary">Approve &amp; send</button>
+            <a class="btn btn-outline" href="#">Edit</a>
+            <button class="btn btn-ghost">Don't send</button>
+          </div>
+        </article>
+
+        <article class="appr">
+          <div class="row-head">
+            <div>
+              <a class="who" href="#">Dan Whitmore</a>
+              <p class="why">Held because the conversation reads as tense.</p>
+            </div>
+            <span class="meta">text · 5h ago</span>
+          </div>
+          <div class="said">
+            <p class="label">Dan said:</p>
+            <p>This is the second time I've had to wait a week. Not thrilled.</p>
+          </div>
+          <div class="draft">
+            <p class="label">The reply FollowUp will send:</p>
+            <p class="body">Hi Dan, I completely understand the frustration — let me personally make sure this gets sorted this week. Can I call you this afternoon?</p>
+          </div>
+          <!-- After "Approve & send": the row doesn't vanish. A short, cancellable grace. -->
+          <div class="status" role="status" aria-live="polite">
+            <span>Sending to Dan in <span class="num">4</span>s</span>
+            <button class="btn btn-outline"><svg class="i" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 7"/></svg>Undo</button>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- Work tier 2: act -->
+    <section id="lost">
+      <div class="sec-head">
+        <h2>About to be lost</h2>
+        <p>Most urgent first. FollowUp is already working these — the top ones need you.</p>
+      </div>
+      <div class="list">
+        <a class="row" href="#">
+          <span class="l"><span class="name">Aisha Nwosu</span> <span class="desc">— wrote 26h ago and is still waiting for an answer. High intent.</span></span>
+          <span class="r"><span class="money num">$8,400</span><span class="fact hot num">waiting 26h</span></span>
+        </a>
+        <a class="row" href="#">
+          <span class="l"><span class="name">Marcus Lee</span> <span class="desc">— wrote 3h ago and is still waiting for an answer.</span></span>
+          <span class="r"><span class="fact num">waiting 3h</span></span>
+        </a>
+        <a class="row" href="#">
+          <span class="l"><span class="name">Lena Ortiz</span> <span class="desc">— no reply for 6 days since your last message.</span></span>
+          <span class="r"><span class="money num">$5,600</span><span class="fact num">silent 6d</span></span>
+        </a>
+        <a class="row" href="#">
+          <span class="l"><span class="name">Tom Becker</span> <span class="desc">— no reply for 4 days since your last message.</span></span>
+          <span class="r"><span class="money num">$2,100</span><span class="fact num">silent 4d</span></span>
+        </a>
+        <a class="row" href="#">
+          <span class="l"><span class="name">Rohan Patel</span> <span class="desc">— no reply for 9 days since your last message.</span></span>
+          <span class="r"><span class="money num">$1,200</span><span class="fact num">silent 9d</span></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Setup: same component, moved below the work -->
+    <div class="setup">
+      <div>
+        <p class="t" style="margin:0">Catch the calls you miss too <span>· 2 more setup steps after this</span></p>
+        <p class="d">Needs a Twilio number, about 10 minutes.</p>
+      </div>
+      <a class="btn btn-primary" href="#">Set up <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+    </div>
+
+    <!-- Quiet tier: reassurance, lighter, side by side on desktop -->
+    <div class="quiet-tier">
+      <section id="week">
+        <div class="sec-head">
+          <h3>What FollowUp did this week</h3>
+          <p>Only replies to messages FollowUp sent on its own count here.</p>
+        </div>
+        <div class="list">
+          <a class="row" href="#">
+            <span class="l"><span class="name">Sofia Chen</span> <span class="desc">— replied when you hadn't · came back 3h later</span></span>
+            <span class="r"><span class="money num">$3,200</span></span>
+          </a>
+          <a class="row" href="#">
+            <span class="l"><span class="name">Ben Aldana</span> <span class="desc">— follow-up on silence · came back 19h later</span></span>
+          </a>
+          <a class="row" href="#">
+            <span class="l"><span class="name">Nadia Karim</span> <span class="desc">— reactivated a cold lead · came back 2 days later</span></span>
+            <span class="r"><span class="money num">$950</span></span>
+          </a>
+        </div>
+      </section>
+
+      <section id="calls">
+        <div class="sec-head">
+          <h3>Upcoming calls</h3>
+          <p>Booked from your follow-ups.</p>
+        </div>
+        <div class="list">
+          <a class="row" href="#">
+            <span class="l"><span class="name">Priya Raman</span></span>
+            <span class="r"><span class="desc num">Thu, Sep 17 · 2:30 pm</span></span>
+          </a>
+          <a class="row" href="#">
+            <span class="l"><span class="name">Omar Haddad</span></span>
+            <span class="r"><span class="desc num">Fri, Sep 18 · 10:00 am</span></span>
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <p class="foot"><a class="more" href="#">See all numbers <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></p>
+
+  </div></main>
+</div>
+</body>
+</html>

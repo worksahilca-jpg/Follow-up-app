@@ -17,6 +17,7 @@ twelve different products. With it, each session starts where the last one ended
 | `research/` | Competitor analysis, UX patterns, interaction patterns, research log | When a question needs a real answer |
 | `components/` | Specs for each component: anatomy, variants, states, rules | When building or changing a component |
 | `workflows/` | The processes: research, design, review, references, design-to-code | Every substantial screen |
+| `prototypes/` | Static HTML mockups behind a `decisions/` entry — real tokens, realistic data, openable in a browser | When a decision entry points you at one; never as a spec on its own |
 
 ## The map — what to read for what you're doing
 

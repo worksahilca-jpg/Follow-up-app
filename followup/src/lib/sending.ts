@@ -13,6 +13,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { isSuppressed, unsubscribeFooter, unsubscribeHeaders } from "@/lib/suppression";
 import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
@@ -202,16 +203,51 @@ export async function sendFollowUpToLead(
     return { success: false, message: "This lead texted STOP — SMS/WhatsApp sending is blocked until they text START to opt back in." };
   }
 
+  // Email unsubscribe — the equivalent mechanism for the channel STOP does
+  // not cover. See src/lib/suppression.ts for why it is keyed on the
+  // address rather than this lead row.
+  //
+  // Scoped to AUTOMATED sends on purpose, and the unsubscribe copy is
+  // written to match exactly ("stop automated follow-ups", not "never
+  // contact me"). Someone who clicks unsubscribe on an automated nudge has
+  // not asked their builder to stop answering their questions, and silently
+  // severing that conversation would harm them in the name of consent —
+  // which is the same line CAN-SPAM's relationship-message exemption draws.
+  // A human send still goes through, and is recorded below as having gone
+  // to a suppressed address so the question is answerable later.
+  const emailSuppressed = channel === "email" && (await isSuppressed(lead.businessId, lead.email));
+  if (emailSuppressed && options.automated) {
+    return {
+      success: false,
+      message: "This person unsubscribed from automated follow-ups. You can still reply to them yourself.",
+    };
+  }
+
   let externalId: string | undefined;
   let emailProvider: "gmail" | "outlook" | undefined;
   if (channel === "email") {
     if (!lead.email) return { success: false, message: "This lead has no email address on file." };
+
+    // Only AUTOMATED mail carries the unsubscribe footer and headers. A
+    // human typing a reply to a customer is not a mailing they should be
+    // offered a way out of — putting "unsubscribe" under a personal reply
+    // would be both odd and, by implying the message was bulk, untrue.
+    //
+    // Deliberately a SEPARATE value rather than appended to `body`: the
+    // footer is transport decoration, like the List-Unsubscribe header
+    // beside it. `body` is what gets stored on the Message row, shown in
+    // the thread, and measured in the audit trail — and none of those
+    // should carry a link that isn't part of what anyone wrote.
+    const emailBody = options.automated
+      ? `${body}${unsubscribeFooter(lead.businessId, lead.email)}`
+      : body;
+
     emailProvider = await detectEmailProvider(lead.businessId, lead.id);
     if (emailProvider === "outlook") {
       const result = await sendOutlookEmail(lead.businessId, {
         to: lead.email,
         subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
-        body,
+        body: emailBody,
         // Graph's /reply endpoint takes the specific message's own id,
         // not an RFC822 Message-ID header — acknowledgeNewLead's Outlook
         // path passes that Graph id through as emailInReplyTo (same
@@ -223,9 +259,10 @@ export async function sendFollowUpToLead(
       const result = await sendEmail(lead.businessId, {
         to: lead.email,
         subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
-        body,
+        body: emailBody,
         threadId: options.emailThreadId,
         inReplyTo: options.emailInReplyTo,
+        extraHeaders: options.automated ? unsubscribeHeaders(lead.businessId, lead.email) : undefined,
       });
       if (!result.success) return { success: false, message: result.message ?? "Gmail didn't confirm this message sent." };
       externalId = result.messageId ?? undefined;

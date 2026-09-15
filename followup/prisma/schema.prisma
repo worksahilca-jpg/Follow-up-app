@@ -65,6 +65,7 @@ model Business {
   leads                 Lead[]
   automations           Automation[]
   reactivationRuns      ReactivationRun[]
+  suppressions          Suppression[]
   bookings              Booking[]
   sequences             Sequence[]
   sourceRules           SourceRule[]
@@ -257,6 +258,38 @@ enum ReactivationRunStatus {
   COMPLETED
   // The run itself broke, as opposed to individual sends failing.
   FAILED
+}
+
+/**
+ * An address that has asked a business to stop sending it automated mail.
+ * Keyed on the ADDRESS, not on a Lead row, because that is what the person
+ * actually opted out. A lead can be deleted and re-imported from the same
+ * mailbox tomorrow, arrive again through another channel, or exist twice
+ * before a merge — a column on Lead would forget in every one of those
+ * cases and start mailing them again with no way for them to tell anyone.
+ * Deliberately separate from Lead.optedOutAt, which is the SMS/WhatsApp
+ * STOP mechanism (TCPA). Different law, different channel, different
+ * lifecycle: a STOP can be undone by texting START, this can only be
+ * cleared by the business owner in Settings.
+ */
+model Suppression {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id])
+  businessId String
+  // "email" today. Left as a string rather than an enum so a future
+  // channel (a DM opt-out, which Instagram and Messenger still lack) needs
+  // no migration to the type.
+  channel    String
+  /// Normalised: trimmed and lowercased. See normaliseAddress().
+  address    String
+  /// unsubscribe_link | one_click | manual | complaint
+  reason     String
+  createdAt  DateTime @default(now())
+
+  // The send path's only question is "is this exact address suppressed",
+  // asked before every automated email — so the lookup is the unique index.
+  @@unique([businessId, channel, address])
+  @@index([businessId, channel])
 }
 
 enum QuietOutcome {

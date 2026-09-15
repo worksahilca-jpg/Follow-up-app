@@ -35,10 +35,17 @@ vi.mock("@/lib/instagram", () => ({ sendInstagramMessage: vi.fn(async () => ({ s
 vi.mock("@/lib/facebook", () => ({ sendMessengerMessage: vi.fn(async () => ({ success: true })) }));
 vi.mock("@/lib/crm", () => ({ CRM_PROVIDERS: {}, isCrmProvider: vi.fn(() => false) }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
+vi.mock("@/lib/suppression", () => ({
+  isSuppressed: vi.fn(async () => false),
+  unsubscribeFooter: () => "\n\n—\nDon't want automated follow-ups like this? https://app/api/unsubscribe?t=tok",
+  unsubscribeHeaders: () => ["List-Unsubscribe: <https://app/api/unsubscribe?t=tok>", "List-Unsubscribe-Post: List-Unsubscribe=One-Click"],
+}));
 
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
+import { isSuppressed } from "@/lib/suppression";
+import { sendEmail } from "@/lib/integrations/gmail";
 import { sendFollowUpToLead } from "@/lib/sending";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,6 +53,8 @@ const p = prisma as any;
 const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
 const sms = sendSms as unknown as ReturnType<typeof vi.fn>;
 const whatsapp = sendWhatsApp as unknown as ReturnType<typeof vi.fn>;
+const suppressed = isSuppressed as unknown as ReturnType<typeof vi.fn>;
+const gmailSend = sendEmail as unknown as ReturnType<typeof vi.fn>;
 
 function lead(overrides: Record<string, unknown> = {}) {
   return {
@@ -240,5 +249,84 @@ describe("sendFollowUpToLead — AI audit trail", () => {
         },
       })
     );
+  });
+});
+
+/**
+ * Email unsubscribe. `optedOutAt` above is the SMS/WhatsApp STOP mechanism;
+ * this is the email equivalent, which did not exist at all until now — no
+ * link, no header, no list.
+ *
+ * The line it draws is deliberate: it stops AUTOMATED mail and nothing
+ * else. Someone who clicks unsubscribe on an automated nudge has not asked
+ * their builder to stop answering their questions, and the copy on the link
+ * says exactly that. These tests pin both halves, because either one
+ * failing alone is a real harm — silently mailing someone who opted out, or
+ * silently severing a live conversation.
+ */
+describe("email unsubscribe", () => {
+  beforeEach(() => {
+    suppressed.mockResolvedValue(false);
+  });
+
+  it("refuses an AUTOMATED email once the address is suppressed", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    suppressed.mockResolvedValue(true);
+
+    const result = await sendFollowUpToLead("lead1", "Still interested?", { automated: true });
+
+    expect(result.success).toBe(false);
+    expect(result.message).toMatch(/unsubscribed from automated follow-ups/i);
+    expect(gmailSend).not.toHaveBeenCalled();
+  });
+
+  // The other half. A human replying to their own customer must still get
+  // through, or the product stops doing its job in the name of consent.
+  it("still lets a HUMAN reply to the same person", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.conversation.findFirst.mockResolvedValue({ id: "c1" });
+    suppressed.mockResolvedValue(true);
+
+    const result = await sendFollowUpToLead("lead1", "Yes — Tuesday works.", { automated: false });
+
+    expect(result.success).toBe(true);
+    expect(gmailSend).toHaveBeenCalled();
+  });
+
+  it("puts the unsubscribe footer and headers on automated mail", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.conversation.findFirst.mockResolvedValue({ id: "c1" });
+
+    await sendFollowUpToLead("lead1", "Just checking in.", { automated: true });
+
+    const sent = gmailSend.mock.calls.at(-1)![1] as { body: string; extraHeaders?: string[] };
+    expect(sent.body).toMatch(/automated follow-ups/i);
+    expect(sent.extraHeaders).toEqual(
+      expect.arrayContaining([expect.stringContaining("List-Unsubscribe-Post")])
+    );
+  });
+
+  // An unsubscribe line under a personal reply would be odd, and would
+  // imply the message was bulk when it wasn't.
+  it("puts neither on a human reply", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.conversation.findFirst.mockResolvedValue({ id: "c1" });
+
+    await sendFollowUpToLead("lead1", "Yes — Tuesday works.", { automated: false });
+
+    const sent = gmailSend.mock.calls.at(-1)![1] as { body: string; extraHeaders?: string[] };
+    expect(sent.body).not.toMatch(/unsubscribe/i);
+    expect(sent.extraHeaders).toBeUndefined();
+  });
+
+  it("never blocks a text because of an EMAIL unsubscribe", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "+15551234567" }));
+    p.conversation.findFirst.mockResolvedValue({ id: "c1" });
+    suppressed.mockResolvedValue(true);
+
+    const result = await sendFollowUpToLead("lead1", "Quick update.", { automated: true, channel: "text" });
+
+    expect(result.success).toBe(true);
+    expect(sms).toHaveBeenCalled();
   });
 });

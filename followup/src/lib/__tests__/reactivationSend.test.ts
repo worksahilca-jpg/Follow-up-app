@@ -276,6 +276,57 @@ describe("runReactivationSend — nobody is messaged twice", () => {
   });
 });
 
+/**
+ * A batch larger than SENDS_PER_INVOCATION is finished by a SECOND call to
+ * runReactivationSend, and the progress counters are written straight onto
+ * the run row. Starting them at zero each time meant invocation two
+ * overwrote invocation one's totals: the owner's progress bar reset, and
+ * the reactivation.batch_completed audit event — the record of how many of
+ * their past customers were actually messaged on their say-so — reported
+ * only the last slice.
+ */
+describe("runReactivationSend — progress survives being resumed", () => {
+  it("continues the run's totals instead of restarting them at zero", async () => {
+    // A resumed run: 40 already went out in an earlier invocation.
+    runFindFirst.mockResolvedValue({ id: "run-1", status: "RUNNING", sent: 40, failed: 2, skipped: 1 });
+    runFindUnique.mockResolvedValueOnce({ status: "RUNNING" }).mockResolvedValue({ status: "STOPPED" });
+    leadFindFirst.mockResolvedValue(coldLead("lead-41"));
+
+    const result = await runReactivationSend("biz-1", "run-1", { spacingMs: 0 });
+
+    expect(sendFollowUpToLead).toHaveBeenCalledTimes(1);
+    expect(result.sent).toBe(41);
+    expect(result.failed).toBe(2);
+    expect(result.skipped).toBe(1);
+    // And the row the owner's screen polls carries the cumulative figure,
+    // not this invocation's one send.
+    expect(runUpdate).toHaveBeenCalledWith({
+      where: { id: "run-1" },
+      data: { sent: 41, failed: 2, skipped: 1 },
+    });
+  });
+
+  it("reports the whole run's totals on the completion audit event", async () => {
+    runFindFirst.mockResolvedValue({ id: "run-1", status: "RUNNING", sent: 40, failed: 0, skipped: 0 });
+    runFindUnique.mockResolvedValue({ status: "RUNNING" });
+    leadFindFirst.mockResolvedValueOnce(coldLead("lead-41")).mockResolvedValue(null);
+    leadCount.mockResolvedValue(0);
+
+    const result = await runReactivationSend("biz-1", "run-1", { spacingMs: 0 });
+    await new Promise((r) => setTimeout(r, 0)); // recordAudit is fire-and-forget
+
+    expect(result.status).toBe("COMPLETED");
+    expect(auditCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "reactivation.batch_completed",
+          meta: expect.objectContaining({ sent: 41 }),
+        }),
+      })
+    );
+  });
+});
+
 describe("runReactivationSend — who can be reached", () => {
   it("only ever sends to the COLD bucket", async () => {
     runFindFirst.mockResolvedValue({ id: "run-1", status: "RUNNING", sent: 0, failed: 0, skipped: 0 });

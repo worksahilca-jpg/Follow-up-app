@@ -29,7 +29,12 @@ export async function getSenderFirstName(businessId: string): Promise<string> {
   if (user?.name) return user.name.trim().split(" ")[0];
   if (user?.email) return user.email.split("@")[0];
 
-  const business = await prisma.business.findUnique({ where: { id: businessId } });
+  // Only the one plain column this needs. Business carries AES-GCM
+  // encrypted third-party secrets (ENCRYPTED_FIELDS in src/lib/db.ts), and
+  // a whole-row read here decrypted the business's Twilio auth token and
+  // Instagram/Facebook page tokens on every single automated send, purely
+  // to read a display name.
+  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { name: true } });
   return business?.name ?? "the team";
 }
 

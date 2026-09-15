@@ -110,6 +110,86 @@ describe("sendFollowUpToLead — opt-out enforcement", () => {
   });
 });
 
+/**
+ * The half-failed send. The provider has accepted the message — it is on
+ * its way to a real customer's phone or inbox — and only then does the
+ * database write fail (a Prisma connection-pool timeout, an ECONNRESET, a
+ * deploy cycling Postgres mid-request).
+ *
+ * This must resolve to "sent", not to a throw, because of what the
+ * callers do with a throw:
+ *  - automation.ts classifies ECONNRESET/ETIMEDOUT as transient, RELEASES
+ *    its lastAutomationCheckedAt claim, and re-drafts and re-sends the
+ *    lead on the next hourly tick. lastContacted never updated either, so
+ *    the lead is still inside the silence window and qualifies again.
+ *  - sequences.ts leaves the lead enrolled on the same sequenceStepIndex
+ *    behind only a 5-minute claim lock, which expires long before the
+ *    next hourly tick — that step re-sends unconditionally.
+ * Either way the customer gets the same message twice, in the owner's
+ * name. Losing the Message row is a gap in the thread view; retrying is a
+ * duplicate message to a stranger's customer.
+ */
+describe("sendFollowUpToLead — a send the provider already accepted is never reported as failed", () => {
+  beforeEach(() => {
+    p.lead.findUnique.mockResolvedValue(lead());
+  });
+
+  it("returns success when the conversation/message write fails after the provider accepted", async () => {
+    p.conversation.create.mockRejectedValue(new Error("Timed out fetching a new connection from the connection pool"));
+
+    const result = await sendFollowUpToLead("lead1", "Following up on your inquiry", {
+      channel: "email",
+      automated: true,
+      trigger: "silence",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("returns success when the FollowUp write fails after the provider accepted", async () => {
+    p.followUp.create.mockRejectedValue(Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" }));
+
+    const result = await sendFollowUpToLead("lead1", "Still interested?", {
+      channel: "text",
+      automated: true,
+      trigger: "sequence",
+    });
+
+    expect(result.success).toBe(true);
+    expect(sms).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns success when the lastContacted write fails after the provider accepted", async () => {
+    p.lead.update.mockRejectedValue(Object.assign(new Error("connection terminated"), { code: "ECONNRESET" }));
+
+    const result = await sendFollowUpToLead("lead1", "Still interested?", { channel: "text" });
+
+    expect(result.success).toBe(true);
+    expect(sms).toHaveBeenCalledTimes(1);
+  });
+
+  // lastContacted is the one field that takes the lead back out of every
+  // re-eligibility window, so on a flaky database it gets the first and
+  // best chance of landing.
+  it("writes lastContacted before the conversation/message bookkeeping", async () => {
+    await sendFollowUpToLead("lead1", "Following up", { channel: "email" });
+
+    expect(p.lead.update.mock.invocationCallOrder[0]).toBeLessThan(p.message.create.mock.invocationCallOrder[0]);
+  });
+
+  // The counterpart guarantee: a provider that did NOT accept must still
+  // fail loudly, or the caller would advance a sequence step nothing was
+  // sent for.
+  it("still reports failure when the provider itself rejects the message", async () => {
+    sms.mockResolvedValue({ success: false, message: "Twilio rejected this message." });
+
+    const result = await sendFollowUpToLead("lead1", "Still interested?", { channel: "text" });
+
+    expect(result.success).toBe(false);
+    expect(p.message.create).not.toHaveBeenCalled();
+  });
+});
+
 describe("sendFollowUpToLead — AI audit trail", () => {
   beforeEach(() => {
     p.lead.findUnique.mockResolvedValue(lead());

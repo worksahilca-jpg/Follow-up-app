@@ -245,9 +245,19 @@ export async function runReactivationSend(
   // set applies to every lead in this business.
   const voiceSamples = await getVoiceSamples(businessId);
 
-  let sent = 0;
-  let failed = 0;
-  let skipped = 0;
+  // Seeded from the run row, not from zero. A batch bigger than
+  // SENDS_PER_INVOCATION is finished by a SECOND call to this function,
+  // and these counters are written straight onto the run row below — so
+  // starting them at 0 made invocation two OVERWRITE invocation one's
+  // totals. A 120-lead batch showed the owner "40 sent", then "40 sent",
+  // then "40 sent", and the reactivation.batch_completed audit event —
+  // the record of how many of their past customers were actually
+  // messaged on their say-so — recorded 40 instead of 120. The counts
+  // this function returns are cumulative-for-the-run for the same
+  // reason: a progress indicator that resets is worse than none.
+  let sent = run.sent;
+  let failed = run.failed;
+  let skipped = run.skipped;
   let stopped = false;
 
   for (let i = 0; i < SENDS_PER_INVOCATION; i++) {

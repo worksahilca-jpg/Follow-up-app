@@ -1,7 +1,8 @@
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
-import { Users, Activity, Trophy, TrendingUp, DollarSign, Wallet, MessageCircle, Clock, Zap, Workflow, CheckCircle2, Inbox } from "lucide-react";
+import { Inbox } from "lucide-react";
 import StatCard from "@/components/StatCard";
+import { FactList } from "@/components/FactList";
+import { PageHeader } from "@/components/PageHeader";
 import AnalyticsCharts from "@/components/AnalyticsCharts";
 import TeamPerformanceSection from "@/components/TeamPerformanceSection";
 import EmptyState from "@/components/EmptyState";
@@ -10,81 +11,17 @@ import { formatCurrency } from "@/lib/demo-data";
 
 export const dynamic = "force-dynamic";
 
-interface StatDef {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-  // Omitted for a plain data point (currency figures, in particular —
-  // money is information, not an urgency signal) so StatCard falls back
-  // to its own neutral default instead of borrowing a status color.
-  accent?: string;
-  accentSoft?: string;
-}
-
 export default async function AnalyticsPage() {
   const data = await getAnalytics();
 
-  if (!data) {
-    return <p className="text-sm text-ink-soft">Sign in to view analytics.</p>;
-  }
-
-  const stats: StatDef[] = [
-    { label: "Total leads", value: String(data.totalLeads), icon: Users, accent: "var(--slate)", accentSoft: "var(--slate-soft)" },
-    { label: "Active", value: String(data.activeCount), icon: Activity, accent: "var(--slate)", accentSoft: "var(--slate-soft)" },
-    { label: "Won", value: String(data.wonCount), icon: Trophy, accent: "var(--sage)", accentSoft: "var(--sage-soft)" },
-    { label: "Conversion rate", value: `${data.conversionRate}%`, icon: TrendingUp, accent: "var(--sage)", accentSoft: "var(--sage-soft)" },
-    { label: "Revenue won", value: formatCurrency(data.totalRevenue), icon: DollarSign },
-    { label: "Avg. deal value", value: formatCurrency(data.avgDealValue), icon: Wallet },
-    {
-      label: "Reply rate",
-      value: data.followUpsSentTotal > 0 ? `${data.replyRate}%` : "—",
-      icon: MessageCircle,
-      accent: "var(--sage)",
-      accentSoft: "var(--sage-soft)",
-    },
-    // The core "how fast do we get leads to respond" number behind the
-    // product's whole pitch — never shown anywhere in the app until now.
-    {
-      label: "Median reply time",
-      value: data.medianReplyHours !== null ? `${data.medianReplyHours}h` : "—",
-      icon: Clock,
-      accent: "var(--sage)",
-      accentSoft: "var(--sage-soft)",
-    },
-    {
-      label: "Reply rate — automated",
-      value: data.automatedReplyRate !== null ? `${data.automatedReplyRate}%` : "—",
-      icon: Zap,
-      accent: "var(--sage)",
-      accentSoft: "var(--sage-soft)",
-    },
-    {
-      label: "Reply rate — manual",
-      value: data.manualReplyRate !== null ? `${data.manualReplyRate}%` : "—",
-      icon: MessageCircle,
-      accent: "var(--slate)",
-      accentSoft: "var(--slate-soft)",
-    },
-    {
-      label: "In a workflow",
-      value: String(data.sequenceHealth.enrolledCount),
-      icon: Workflow,
-      accent: "var(--slate)",
-      accentSoft: "var(--slate-soft)",
-    },
-    {
-      label: "Workflows completed (30d)",
-      value: String(data.sequenceHealth.completedLast30Days),
-      icon: CheckCircle2,
-      accent: "var(--sage)",
-      accentSoft: "var(--sage-soft)",
-    },
-  ];
+  // No signed-out branch: (app)/layout.tsx redirects before this page is
+  // reached, so the bare "Sign in to view analytics." paragraph that used to
+  // live here was unreachable, unstyled dead code.
+  if (!data) return null;
 
   return (
     <div>
-      <h1 className="font-display text-3xl">Analytics</h1>
-      <p className="text-ink-soft mt-1">How your pipeline is performing.</p>
+      <PageHeader title="Analytics" subtitle="How your pipeline is performing." />
 
       {data.totalLeads === 0 ? (
         // Same "connect Gmail to get started" treatment as Leads and
@@ -108,16 +45,66 @@ export default async function AnalyticsPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-6">
-            {stats.map((s) => (
-              <StatCard key={s.label} label={s.label} value={s.value} icon={s.icon} accent={s.accent} accentSoft={s.accentSoft} />
-            ))}
-          </div>
-          {data.followUpsSentTotal > 0 && (
-            <p className="text-xs text-ink-soft mt-3">
-              {data.repliedCount} of {data.followUpsSentTotal} sent follow-ups have gotten a reply so far.
+          {/* This was twelve StatCards in one flat 4-column grid. Twelve equal
+              things is no hierarchy at all, and six of the twelve were
+              reply-rate variants. Worse: median reply time — described in this
+              file's own comment as "the core how-fast-do-we-get-leads-to-
+              respond number behind the product's whole pitch" — was tile eight
+              of twelve, rendered the same size as "Avg. deal value".
+
+              Three tiers now. The headline the owner would repeat to someone
+              else; then the money; then everything else as a reference table
+              they glance at rather than read. */}
+          <div
+            className="relative mt-6 overflow-hidden rounded-[var(--radius-box)] bg-card p-5"
+            style={{ boxShadow: "var(--shadow-box)" }}
+          >
+            {data.medianReplyHours !== null && (
+              <span
+                aria-hidden="true"
+                className="absolute inset-y-0 left-0 w-[3px]"
+                style={{ backgroundColor: "var(--sage)" }}
+              />
+            )}
+            <p className="text-sm text-ink-soft">Median reply time</p>
+            <p className="font-display text-5xl mt-1 tabular-nums">
+              {data.medianReplyHours !== null ? `${data.medianReplyHours}h` : "—"}
             </p>
-          )}
+            {/* This sentence used to be a 12px grey line under the grid, and
+                it was already the clearest writing on the page. */}
+            <p className="mt-2 text-sm text-ink-soft">
+              {data.followUpsSentTotal > 0
+                ? `${data.repliedCount} of ${data.followUpsSentTotal} sent follow-ups have gotten a reply so far.`
+                : "Nothing sent yet — this fills in once FollowUp has sent its first follow-ups."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+            <StatCard label="Revenue won" value={formatCurrency(data.totalRevenue)} />
+            <StatCard label="Avg. deal value" value={formatCurrency(data.avgDealValue)} />
+            <StatCard label="Conversion rate" value={`${data.conversionRate}%`} />
+          </div>
+
+          <div className="mt-8">
+            <p
+              className="font-mono text-xs uppercase tracking-wider text-ink-soft mb-1"
+              style={{ letterSpacing: "0.08em" }}
+            >
+              Everything else
+            </p>
+            <FactList
+              facts={[
+                { label: "Total leads", value: String(data.totalLeads) },
+                { label: "Active", value: String(data.activeCount) },
+                { label: "Won", value: String(data.wonCount) },
+                { label: "Reply rate", value: data.followUpsSentTotal > 0 ? `${data.replyRate}%` : "—" },
+                { label: "Reply rate — automated", value: data.automatedReplyRate !== null ? `${data.automatedReplyRate}%` : "—" },
+                { label: "Reply rate — manual", value: data.manualReplyRate !== null ? `${data.manualReplyRate}%` : "—" },
+                { label: "On a follow-up plan", value: String(data.sequenceHealth.enrolledCount) },
+                { label: "Plans finished (30 days)", value: String(data.sequenceHealth.completedLast30Days) },
+              ]}
+            />
+          </div>
 
           <div className="mt-10">
             <AnalyticsCharts data={data} />

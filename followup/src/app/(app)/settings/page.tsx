@@ -635,7 +635,7 @@ function SettingsPageInner() {
             href={gmailConnected ? undefined : "/api/integrations/gmail/connect"}
           />
           {gmailConnected && (
-            <div className="ml-[52px] flex items-center gap-3">
+            <div className="sm:ml-[52px] flex items-center gap-3">
               <button
                 onClick={handleGmailSync}
                 disabled={syncing}
@@ -665,16 +665,16 @@ function SettingsPageInner() {
             </div>
           )}
           {gmailConnected && (
-            <p className="ml-[52px] text-xs text-ink-soft">
+            <p className="sm:ml-[52px] text-xs text-ink-soft">
               If you connected Gmail before booking links existed, click <strong>Reconnect</strong> once to grant
               calendar access.
             </p>
           )}
-          <div className="ml-[52px]">
+          <div className="sm:ml-[52px]">
             <BookingCalendarConfig />
           </div>
           {gmailConnected && (
-            <div className="ml-[52px] mt-2 rounded-lg border border-line px-4 py-3">
+            <div className="sm:ml-[52px] mt-3 border-t border-line pt-3">
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Neutral, not --gold. A-005 reserves gold for "going cold" —
                     a lead state — and this is an action the owner takes, not a
@@ -723,7 +723,7 @@ function SettingsPageInner() {
             />
           )}
           {outlookConnected && (
-            <div className="ml-[52px] flex items-center gap-3">
+            <div className="sm:ml-[52px] flex items-center gap-3">
               <button
                 onClick={handleOutlookSync}
                 disabled={outlookSyncing}
@@ -750,7 +750,7 @@ function SettingsPageInner() {
             </p>
           )}
           {(gmailConnected || outlookConnected) && (
-            <div className="ml-[52px] rounded-lg border border-line px-4 py-3">
+            <div className="sm:ml-[52px] border-t border-line pt-3">
               <FilteredEmails />
             </div>
           )}
@@ -814,7 +814,7 @@ function SettingsPageInner() {
       <div hidden={activeTab !== "advanced"} className="space-y-10">
       <section id="automation" className="scroll-mt-16">
         <h2 className="font-display text-xl">Automation</h2>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-medium text-sm">Automatic follow-ups</p>
@@ -847,7 +847,7 @@ function SettingsPageInner() {
 
         {automationDetailsOpen && (
         <>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Auto follow-up on silence</p>
@@ -920,7 +920,7 @@ function SettingsPageInner() {
             </p>
           )}
         </div>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Instant reply to new leads</p>
@@ -954,7 +954,7 @@ function SettingsPageInner() {
             </p>
           )}
         </div>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Reply for me when I haven&apos;t</p>
@@ -1003,7 +1003,7 @@ function SettingsPageInner() {
             </div>
           )}
         </div>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Reactivate cold leads</p>
@@ -1097,7 +1097,7 @@ function SettingsPageInner() {
           // dropping Voice, updating a card). A dedicated in-app
           // tier-switch flow is real follow-up work, not built here — see
           // the PR description for why.
-          <div className="mt-4 rounded-xl border border-line bg-card p-5">
+          <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
             <div className="flex items-center gap-4">
               <div
                 className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
@@ -1143,7 +1143,7 @@ function SettingsPageInner() {
           <div className="mt-4">
             <div className="grid gap-3 sm:grid-cols-3">
               {(["free", "plus", "pro"] as const).map((tier) => (
-                <div key={tier} className="rounded-xl border border-line bg-card p-5">
+                <div key={tier} className="rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
                   <p className="text-sm font-medium">{TIER_INFO[tier].label}</p>
                   <p className="font-display text-2xl mt-1">{TIER_INFO[tier].priceLabel}</p>
                   <p className="text-xs text-ink-soft mt-2">
@@ -1222,7 +1222,7 @@ function SettingsPageInner() {
           Not a support ticket — just a place to tell us what&apos;s working or what isn&apos;t. Entirely optional,
           only here if you want it.
         </p>
-        <div className="mt-4 rounded-xl border border-line bg-card p-5">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
           {feedbackSent ? (
             <p className="text-sm flex items-center gap-1.5" style={{ color: "var(--sage)" }}>
               <Check className="h-4 w-4" /> Sent — thank you.

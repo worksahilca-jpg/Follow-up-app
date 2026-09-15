@@ -142,17 +142,23 @@ function OnboardingFormInner({
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <Compass className="h-6 w-6" style={{ color: "var(--rust)" }} />
+          <Compass className="h-6 w-6" style={{ color: "var(--ink)" }} />
           <span className="font-display text-2xl">FollowUp</span>
         </div>
 
         {/* Two-step progress — just enough structure to signal "one more
-            thing" rather than "here's an open-ended checklist". */}
+            thing" rather than "here's an open-ended checklist".
+
+            The logo and both pips used to be --rust. That put three blue marks
+            on a screen whose ONE blue moment is meant to be the Connect Gmail
+            button — which is the best example of "accent held back" (A-006)
+            already shipping anywhere in the product. Ink here, so the button
+            keeps the only blue on the screen. */}
         <div className="flex items-center justify-center gap-1.5 mt-4">
-          <span className="h-1.5 w-6 rounded-full" style={{ backgroundColor: "var(--rust)" }} />
+          <span className="h-1.5 w-6 rounded-full" style={{ backgroundColor: "var(--ink)" }} />
           <span
             className="h-1.5 w-6 rounded-full"
-            style={{ backgroundColor: step === 2 ? "var(--rust)" : "var(--line)" }}
+            style={{ backgroundColor: step === 2 ? "var(--ink)" : "var(--line)" }}
           />
         </div>
 
@@ -161,8 +167,9 @@ function OnboardingFormInner({
             <p className="text-ink-soft text-center mt-4">A couple quick questions and you&apos;re set up.</p>
             <form onSubmit={handleStep1Submit} className="mt-8 space-y-4">
               <div>
-                <label className="text-sm font-medium block mb-1.5">Business name</label>
+                <label htmlFor="onboarding-business-name" className="text-sm font-medium block mb-1.5">Business name</label>
                 <input
+                  id="onboarding-business-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full rounded-lg border border-line bg-card px-3 py-2 text-sm"
@@ -171,8 +178,9 @@ function OnboardingFormInner({
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-1.5">What kind of business?</label>
+                <label htmlFor="onboarding-industry" className="text-sm font-medium block mb-1.5">What kind of business?</label>
                 <select
+                  id="onboarding-industry"
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
                   className="w-full rounded-lg border border-line bg-card px-3 py-2 text-sm"
@@ -190,8 +198,9 @@ function OnboardingFormInner({
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-1.5">How many people on your team?</label>
+                <label htmlFor="onboarding-team-size" className="text-sm font-medium block mb-1.5">How many people on your team?</label>
                 <input
+                  id="onboarding-team-size"
                   type="number"
                   min={1}
                   max={500}

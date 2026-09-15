@@ -100,8 +100,12 @@ function SignInPageInner() {
         className="relative w-full rounded-2xl p-8 text-center"
         style={{ background: "var(--card)", boxShadow: "0 30px 60px -28px rgba(11,31,51,0.28), 0 0 0 1px rgba(11,31,51,0.06)" }}
       >
+        {/* Not "Welcome back": the landing page's "Get started" button lands
+            first-time visitors on this exact screen, so roughly half the
+            traffic here has never signed in before and was being greeted as a
+            returning user on their first ever visit. */}
         <h1 className="text-xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
-          Welcome back
+          Sign in to FollowUp
         </h1>
         <p className="mt-2 text-sm" style={{ color: "var(--ink-soft)" }}>
           Sign in to see your real leads and follow-ups.

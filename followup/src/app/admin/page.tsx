@@ -15,6 +15,13 @@ function channelLabel(provider: string): string {
   return provider.charAt(0).toUpperCase() + provider.slice(1);
 }
 
+// One definition of the signups table's column tracks. It was written out
+// twice — once in the header row, once in the body row — and two copies of a
+// layout contract diverge the first time a column is added.
+// `_` (space), not a comma, between grid tracks — see the note on this same
+// pattern in TeamPerformanceSection.tsx.
+const SIGNUP_GRID = "grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1.5fr)_auto]";
+
 export default async function AdminPage() {
   const data = await getPlatformAdminData();
 
@@ -25,7 +32,10 @@ export default async function AdminPage() {
         Cross-tenant view across every business on FollowUp — visible only to the founder, and to no one on any
         individual business&apos;s own team.
       </p>
-      <Link href="/admin/office" className="inline-flex items-center gap-1.5 text-sm mt-3" style={{ color: "var(--rust)" }}>
+      <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-ink-soft hover:text-ink transition-colors mt-3">
+        &larr; Back to FollowUp
+      </Link>
+      <Link href="/admin/office" className="inline-flex items-center gap-1.5 text-sm mt-3 ml-4" style={{ color: "var(--rust)" }}>
         The office — what the agents did while you weren&apos;t watching
         <ArrowRight className="h-4 w-4" aria-hidden />
       </Link>
@@ -54,10 +64,10 @@ export default async function AdminPage() {
       <section className="mt-10">
         <h2 className="font-display text-xl">Recent signups</h2>
         <p className="text-sm text-ink-soft mt-1">The most recently created businesses, newest first.</p>
-        <div className="mt-4 rounded-xl border border-line bg-card overflow-hidden overflow-x-auto">
+        <div className="mt-4 rounded-[var(--radius-box)] bg-card overflow-hidden overflow-x-auto [box-shadow:var(--shadow-box)]">
           {/* `_` (space), not a comma, between grid tracks — see the note
               on this same pattern in TeamPerformanceSection.tsx. */}
-          <div className="grid grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1.5fr)_auto] gap-4 px-5 py-3 border-b border-line text-xs font-medium text-ink-soft">
+          <div className={`grid ${SIGNUP_GRID} gap-4 px-5 py-3 border-b border-line text-xs font-medium text-ink-soft`}>
             <span>Business</span>
             <span>Signed up</span>
             <span>Connected channels</span>
@@ -69,7 +79,7 @@ export default async function AdminPage() {
             data.recentSignups.map((b) => (
               <div
                 key={b.id}
-                className="grid grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1.5fr)_auto] gap-4 px-5 py-3 border-b border-line last:border-0 items-center"
+                className={`grid ${SIGNUP_GRID} gap-4 px-5 py-3 border-b border-line last:border-0 items-center`}
               >
                 <span className="text-sm font-medium truncate">{b.name}</span>
                 <span className="text-sm text-ink-soft whitespace-nowrap">{formatFullDate(b.createdAt)}</span>

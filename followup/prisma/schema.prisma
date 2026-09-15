@@ -200,6 +200,20 @@ enum PipelineStage {
   LOST
 }
 
+// The four verdicts classifyThreadOutcome() can reach about a thread that
+// went quiet. Asymmetric on purpose: COLD is the narrow bucket — the only
+// one a reactivation message may be drafted for — and anything the model
+// can't place confidently lands in UNCLEAR, which a human sees and nothing
+// sends to. OFF_PLATFORM is the case with no honest answer from the thread
+// alone: numbers were swapped, or a call was booked, and whatever happened
+// next happened where FollowUp cannot see it.
+enum QuietOutcome {
+  COLD
+  CLOSED
+  OFF_PLATFORM
+  UNCLEAR
+}
+
 enum Priority {
   HIGH
   MEDIUM
@@ -319,6 +333,24 @@ model Lead {
   // specific legal mechanism (TCPA), not a general "never contact again."
   optedOutAt DateTime?
 
+  // What classifyThreadOutcome() judged happened to this lead's
+  // conversation before it went quiet (src/lib/integrations/openai.ts).
+  // Deliberately NOT the same field as `stage`: stage is what the owner
+  // says is true and is theirs to set, this is what an AI inferred from
+  // the thread text and may well be wrong. Writing an inferred WON or
+  // LOST straight into stage would silently rewrite the owner's own
+  // pipeline on the strength of a guess — the two are kept apart so a
+  // wrong verdict costs a tap, not a customer record.
+  //
+  // Null means "never judged", which is every lead that isn't a quiet
+  // imported one: the classifier runs only on threads already past the
+  // silence threshold, since a live conversation needs no verdict and
+  // judging every imported thread would double a sync's OpenAI cost.
+  // Only COLD leads are eligible for a reactivation draft.
+  quietOutcome       QuietOutcome?
+  quietOutcomeReason String?
+  quietOutcomeAt     DateTime?
+
   conversations Conversation[]
   deals         Deal[]
   followUps     FollowUp[]
@@ -338,6 +370,9 @@ model Lead {
   // businessId plus one of these — without a composite index each is a
   // full scan of the business's leads once that list gets big.
   @@index([businessId, stage])
+  // The reactivation batch's "which of this business's quiet leads are cold"
+  // scan — see quietOutcome above.
+  @@index([businessId, quietOutcome])
   @@index([businessId, score])
   @@index([businessId, source])
   // The workflow cron's "which enrolled leads are due right now" scan.

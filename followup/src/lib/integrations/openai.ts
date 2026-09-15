@@ -315,6 +315,133 @@ export async function classifyAsProspect(
   return JSON.parse(raw) as { isProspect: boolean; reason: string };
 }
 
+/**
+ * What happened to a thread that has gone quiet — the missing half of
+ * import triage.
+ *
+ * classifyAsProspect answers "is this a sales conversation at all". It
+ * never answers "and how did it end", so every imported thread lands
+ * stage NEW regardless of whether the deal closed six weeks ago. That was
+ * harmless while imported leads were only ever DISPLAYED. It stops being
+ * harmless the moment a quiet lead can be messaged: "still interested?"
+ * sent to someone who already bought, or who already said no, is worse
+ * than sending nothing at all — it tells the recipient this business
+ * doesn't know who its own customers are.
+ *
+ * The four verdicts are deliberately asymmetric. "cold" is the NARROW
+ * bucket — the only one that gets a reactivation draft — and everything
+ * the model cannot place confidently falls to "unclear", which gets shown
+ * to the owner and never messaged on its own. A false "unclear" costs one
+ * tap. A false "cold" costs a customer.
+ *
+ * "off_platform" exists because of a case with no clean answer: the lead
+ * who says "here's my number, call me" and then vanishes from this inbox.
+ * Nothing in the thread says what happened next, because what happened
+ * next happened somewhere FollowUp can't see. Guessing either way is
+ * wrong, so it gets its own bucket and one question to a human.
+ */
+export type ThreadOutcome = "cold" | "closed" | "off_platform" | "unclear";
+
+const THREAD_OUTCOME_SCHEMA = {
+  name: "thread_outcome",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      outcome: {
+        type: "string",
+        enum: ["cold", "closed", "off_platform", "unclear"],
+        description:
+          "'cold' ONLY when the thread shows a live, unresolved interest that simply stopped — a question, a " +
+          "quote, a proposal, or a next step that was never answered, with nothing indicating it concluded. " +
+          "'closed' when the thread shows it reached an end either way: the work was done, paid for, delivered, " +
+          "signed, or thanked for; or the lead declined, went elsewhere, said the timing was wrong, or the " +
+          "business turned it down. 'off_platform' when the last exchange moves the conversation somewhere this " +
+          "inbox cannot see — a phone number or WhatsApp handle swapped, 'call me', 'text me', 'let's talk " +
+          "Monday', a meeting booked — so what happened after is genuinely unknown. 'unclear' for anything else, " +
+          "including a thread too short, too vague, or too ambiguous to place. Prefer 'unclear' whenever two " +
+          "verdicts are plausible: only 'cold' leads get messaged, so a wrong 'cold' contacts someone who " +
+          "already bought or already said no.",
+      },
+      reason: {
+        type: "string",
+        description:
+          "One short sentence, in plain words, that a business owner can read in three seconds and check " +
+          "against their own memory of this conversation — what in the thread led to this verdict.",
+      },
+    },
+    required: ["outcome", "reason"],
+    additionalProperties: false,
+  },
+} as const;
+
+/**
+ * Judges how a quiet thread ended. Run only on threads already accepted as
+ * leads and already past the silence threshold — a live conversation needs
+ * no verdict, and paying for one on every imported thread would double the
+ * cost of a sync for no gain.
+ *
+ * The model sees the FIRST message (what they originally wanted) and the
+ * LAST three (how it actually ended). The tail is where the answer lives —
+ * a thread's opening looks identical whether it closed, died, or moved to
+ * a phone call — but without the opening the model can't tell a resolved
+ * ask from a resolved pleasantry.
+ */
+export async function classifyThreadOutcome(
+  conversation: Message[],
+  business?: ClassifierBusinessContext
+): Promise<{ outcome: ThreadOutcome; reason: string }> {
+  const client = getClient();
+
+  // First + last three, de-duplicated (a short thread overlaps), quoted
+  // replies stripped for the same reason classifyAsProspect strips them:
+  // re-quoted history drowns the few lines that actually ended the thread.
+  const tail = conversation.slice(-3);
+  const head = conversation.length > 3 ? conversation.slice(0, 1) : [];
+  const forClassification = [...head, ...tail].map((m) => ({
+    ...m,
+    body: stripQuotedReply(m.body).slice(0, 1200),
+  }));
+
+  const businessLine = business
+    ? `The inbox belongs to "${business.name}"${business.industry ? `, a ${business.industry} business` : ""}. ` +
+      `Judge how this thread ended the way an experienced person in that exact line of work would.`
+    : "The inbox belongs to a small business.";
+
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content:
+          `You are reading an email thread that went quiet weeks ago, to decide whether it is safe to send ` +
+          `this person a "still interested?" message today. ${businessLine} ` +
+          "You are not scoring the lead and not judging whether it was a good one — only what state the " +
+          "conversation was left in. Silence alone means nothing: a thread can go quiet because it finished " +
+          "perfectly well, because it moved to a phone call, or because it was dropped. Read what the last " +
+          "messages actually say. Gratitude, a completed job, a signed document, a payment, a delivery, or a " +
+          "polite decline all mean it CONCLUDED, even when no one said the word. A question left hanging, an " +
+          "unanswered quote, or a proposed next step nobody took means it was DROPPED. A swapped phone number " +
+          "or a booked call means the rest of it happened where you cannot see it. When the thread does not " +
+          "clearly show one of those, say so — 'unclear' is a correct, useful answer, and much cheaper than a " +
+          "confident wrong one." +
+          UNTRUSTED_CONVERSATION_NOTICE +
+          VOICE_AGENT_TRUST_NOTICE,
+      },
+      {
+        role: "user",
+        content: `Conversation (opening message and how it ended):\n${formatTranscript(forClassification)}`,
+      },
+    ],
+    response_format: { type: "json_schema", json_schema: THREAD_OUTCOME_SCHEMA },
+  });
+
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("OpenAI returned no content for classifyThreadOutcome.");
+
+  return JSON.parse(raw) as { outcome: ThreadOutcome; reason: string };
+}
+
 const SEND_RISK_SCHEMA = {
   name: "send_risk_assessment",
   strict: true,

@@ -22,7 +22,7 @@
  * is never called from it, so nothing here can affect what actually sends.
  */
 
-import { UNANSWERED_ACTION, UNANSWERED_DEFAULT_HOURS, UNANSWERED_FIRST_REPLY_HOURS, DEAD_LEAD_ACTION, DEAD_LEAD_DEFAULT_DAYS } from "@/lib/automation";
+import { UNANSWERED_ACTION, UNANSWERED_DEFAULT_HOURS, DEAD_LEAD_ACTION, DEAD_LEAD_DEFAULT_DAYS, effectiveUnansweredHours } from "@/lib/automation";
 import { prisma } from "@/lib/db";
 import type { Message, PipelineStage, AutomationTier } from "@/lib/types";
 
@@ -136,7 +136,13 @@ export function computeAutomationStatus(
     const hasDirectEchoReply = lead.conversation.some((m) => m.direction === "outbound" && m.source);
     const hasSubstantiveFollowUp = lead.followUpTriggers.some((t) => t !== "instant_ack");
     const hasSubstantiveOutbound = hasDirectEchoReply || hasSubstantiveFollowUp;
-    const thresholdHours = hasSubstantiveOutbound ? rules.unansweredHours : UNANSWERED_FIRST_REPLY_HOURS;
+    // Shared with findUnansweredLeads() rather than recomputed, so the badge
+    // cannot promise time that the engine is not going to give. That matters
+    // more since the Meta ceiling landed: on an Instagram or Messenger lead
+    // the wait is capped below whatever the business configured, and a badge
+    // still counting down from 24 hours would say "Following up in 3h" on a
+    // lead the next cron tick is about to send.
+    const thresholdHours = effectiveUnansweredHours(rules.unansweredHours, hasSubstantiveOutbound, last!.channel);
     const hoursSince = (now.getTime() - new Date(last!.date).getTime()) / 3_600_000;
     if (hoursSince >= thresholdHours) due = "unanswered";
     else etaHours = thresholdHours - hoursSince;

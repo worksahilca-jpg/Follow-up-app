@@ -862,3 +862,106 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
     expect(daysAgo).toBe(90);
   });
 });
+
+/**
+ * Meta's 24-hour messaging window versus the unanswered-reply rule.
+ *
+ * Both clocks start on the same event — the lead's last inbound message —
+ * so the 24-hour default put every Instagram and Messenger follow-up an
+ * hour or so PAST the deadline, every time, with no variance to hope for.
+ * These tests pin the ceiling that fixes it (UNANSWERED_META_DM_MAX_HOURS),
+ * and, just as importantly, pin what it must NOT touch: email, WhatsApp,
+ * the 3-hour first-reply path, and any business that configured something
+ * already inside the window.
+ */
+describe("Meta's 24-hour window ceiling on the unanswered rule", () => {
+  function dmLead(hoursAgo: number, channel: string, overrides: Record<string, unknown> = {}) {
+    return lead({
+      id: "leadDm",
+      name: "Aanya",
+      assignedToId: "user1",
+      conversations: [
+        {
+          channel,
+          messages: [
+            { id: "a", direction: "outbound", body: "Yes, we cover that area.", sentAt: new Date(Date.now() - (hoursAgo + 5) * 3_600_000), opened: false },
+            { id: "b", direction: "inbound", body: "How much for a two-bed?", sentAt: new Date(Date.now() - hoursAgo * 3_600_000), opened: false },
+          ],
+        },
+      ],
+      // A real reply, so this lead is on the long window rather than the
+      // 3-hour first-reply one — which is the only place the bug lived.
+      followUps: [{ trigger: "manual" }],
+      ...overrides,
+    });
+  }
+
+  /** Business-configured unanswered window, in hours. */
+  function configureUnansweredHours(triggerHours: number) {
+    p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
+      where.action === "auto_send" ? { enabled: true, triggerDays: 5 } : { enabled: true, triggerHours }
+    );
+  }
+
+  function queueUnanswered(l: unknown) {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([l]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+  }
+
+  it("follows up on an Instagram lead at 21 hours, inside Meta's window", async () => {
+    // The whole point. At the 24h default this lead was invisible until
+    // hour 24-25, by which time Meta refuses the send outright.
+    queueUnanswered(dmLead(21, "instagram"));
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
+  });
+
+  it("does the same on Messenger", async () => {
+    queueUnanswered(dmLead(21, "messenger"));
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
+  });
+
+  it("leaves email alone — no window, so it still waits the configured 24 hours", async () => {
+    // Guards against the ceiling leaking into every channel, which would
+    // silently make the whole product more aggressive than the owner chose.
+    queueUnanswered(dmLead(21, "email"));
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(0);
+  });
+
+  it("leaves WhatsApp alone — it has approved templates as a way through", async () => {
+    queueUnanswered(dmLead(21, "whatsapp"));
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(0);
+  });
+
+  it("is a ceiling, not a default: it overrides a business that configured 72 hours", async () => {
+    // The reason changing UNANSWERED_DEFAULT_HOURS alone would not have
+    // been a fix. Automation.triggerHours is the real value, and "follow up
+    // after 3 days on Instagram" is not a slower cadence — it is one that
+    // never arrives.
+    configureUnansweredHours(72);
+    queueUnanswered(dmLead(21, "instagram"));
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
+  });
+
+  it("never DELAYS a send: a business on a 6-hour window still fires at 8 hours", async () => {
+    // A ceiling can only pull a send earlier. If this ever returns 0, the
+    // comparison has been inverted and every fast-cadence business just got
+    // slower on DMs.
+    configureUnansweredHours(6);
+    queueUnanswered(dmLead(8, "instagram"));
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
+  });
+
+  it("still waits: an Instagram lead at 19 hours is not neglected yet", async () => {
+    queueUnanswered(dmLead(19, "instagram"));
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(0);
+  });
+
+  it("does not disturb the 3-hour first-reply path on a DM channel", async () => {
+    // 4 hours, nothing substantive sent yet. This has always qualified via
+    // UNANSWERED_FIRST_REPLY_HOURS and must continue to — the ceiling is
+    // 20 hours, and taking it here would have made this lead wait 16 hours
+    // longer than before.
+    queueUnanswered(dmLead(4, "instagram", { followUps: [{ trigger: "instant_ack" }] }));
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
+  });
+});

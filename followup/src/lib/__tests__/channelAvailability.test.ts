@@ -15,22 +15,28 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { PHONE_CHANNELS_AVAILABLE, VOICE_ADDON_AVAILABLE } from "@/lib/pricing";
+import { CARRIER_CHANNELS_AVAILABLE, META_CHANNELS_AVAILABLE, VOICE_ADDON_AVAILABLE } from "@/lib/pricing";
 
 const root = join(__dirname, "..", "..");
 const read = (p: string) => readFileSync(join(root, p), "utf8");
 
 describe("dropped channels", () => {
-  it("has phone and the voice add-on switched off", () => {
-    expect(PHONE_CHANNELS_AVAILABLE).toBe(false);
+  // The line is the CARRIER, not the vendor and not "is it a phone
+  // number". WhatsApp runs through the same Twilio account as SMS and is
+  // still on, because A2P 10DLC is an SMS rule and WhatsApp gates on Meta's
+  // approval instead. Grouping them cost a round trip on 2026-09-15; this
+  // test is where that stays fixed.
+  it("drops the carrier channels and keeps the Meta ones", () => {
+    expect(CARRIER_CHANNELS_AVAILABLE).toBe(false);
     expect(VOICE_ADDON_AVAILABLE).toBe(false);
+    expect(META_CHANNELS_AVAILABLE).toBe(true);
   });
 
   // The flag is the switch; these are the places that would otherwise
   // keep advertising it. Asserted against the real source rather than a
   // rendered page so it fails in unit tests, where someone will see it.
   it("does not promise a channel it cannot connect", () => {
-    if (PHONE_CHANNELS_AVAILABLE) return; // re-enabled — the claims are true again
+    if (CARRIER_CHANNELS_AVAILABLE) return; // re-enabled — the claims are true again
 
     // Only the visitor-facing strings. Comments in that file legitimately
     // discuss the dropped channels — that is where the reason for dropping
@@ -43,13 +49,16 @@ describe("dropped channels", () => {
       .replace(/^\s*\/\/.*$/gm, "");
 
     expect(copy).not.toMatch(/SMS/);
-    expect(copy).not.toMatch(/WhatsApp/);
+    // "Twilio" is vendor jargon that stood in for SMS on the logo row. It
+    // goes whether or not carrier channels come back — a visitor does not
+    // buy Twilio.
     expect(copy).not.toMatch(/Twilio/);
+    expect(copy).not.toMatch(/voicemail/i);
   });
 
   it("still names the channels that do work", () => {
     const landing = read("app/page.tsx");
-    for (const live of ["Gmail", "Outlook", "Instagram"]) {
+    for (const live of ["Gmail", "Outlook", "Instagram", "Messenger", "WhatsApp"]) {
       expect(landing).toContain(live);
     }
   });

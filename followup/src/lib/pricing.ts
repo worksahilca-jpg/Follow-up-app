@@ -51,32 +51,43 @@ export const VOICE_ADDON_INFO = { priceLabel: "+$39/mo", includedMinutes: 200, o
 export const VOICE_ADDON_AVAILABLE = false;
 
 /**
- * Whether the phone channels — SMS, voicemail and the live voice agent —
- * are offered at all. Founder's call, 2026-09-15: inbound leads are the
- * core; phone is dropped for now and picked back up later.
+ * Whether the CARRIER channels — SMS, voicemail and the live voice agent —
+ * are offered. Founder's call, 2026-09-16: inbound leads are the core, and
+ * anything that goes through a phone carrier is dropped for now.
  *
- * The reason is not that the code is bad. It is that every phone channel
- * sits behind A2P 10DLC registration, which is a CARRIER requirement —
- * Bell, Rogers, AT&T — not a Twilio one, so no amount of provider-
- * switching avoids it. Each customer would have to register their own
- * business, with their own business number, and wait, before they could
- * send a single text. That is a telecom onboarding process bolted to the
- * front of a lead-follow-up product, and it gates the whole thing on
- * paperwork nobody wants to do to try software.
+ * The line is drawn at the carrier, not at Twilio, and not at "phone".
+ * SMS, voice and voicemail all sit behind A2P 10DLC registration, which is
+ * a requirement of Bell, Rogers and AT&T rather than of any provider — so
+ * no amount of provider-switching avoids it, and every customer would have
+ * to register their own business and wait before sending one text. That is
+ * a telecom onboarding process bolted to the front of a lead-follow-up
+ * product.
  *
- * Email, the website widget, the lead webhook, Instagram/Messenger,
- * manual entry and CSV have no such gate. Dropping phone removes the
- * launch blocker entirely.
+ * WhatsApp is deliberately NOT behind this flag even though it is
+ * delivered through the same Twilio account. A2P 10DLC is an SMS rule and
+ * does not touch WhatsApp; what WhatsApp needs is Meta's approval of the
+ * business, which is the same approval Instagram and Messenger already
+ * need and which the founder is doing. Grouping it with SMS was my error
+ * on 2026-09-15 — the shared vendor made it look like a shared blocker,
+ * and it is not one.
  *
- * A flag, not a deletion, for the same reason as VOICE_ADDON_AVAILABLE:
- * this is postponed work, and one boolean is the cheapest way back. The
- * Twilio webhook routes stay live and unchanged — a business with no
- * configured number simply has nothing pointed at them, and any business
- * that DID configure one keeps working rather than having its number go
- * dark without warning. What this turns off is the offer: the setup UI,
- * and the claim on the landing page that FollowUp reads texts.
+ * A flag, not a deletion: the work is postponed, and one boolean is the
+ * cheapest way back. The Twilio webhook routes stay live and unchanged, so
+ * a business that already configured a number keeps working rather than
+ * having it go dark without warning. What this turns off is the offer.
  */
-export const PHONE_CHANNELS_AVAILABLE = false;
+export const CARRIER_CHANNELS_AVAILABLE = false;
+
+/**
+ * The Meta channels — Instagram DMs, Facebook Messenger, WhatsApp. All
+ * available: they gate on Meta business verification, which the founder is
+ * completing, not on anything a carrier controls.
+ *
+ * Named as a constant rather than left implicit so the distinction that
+ * caused the mistake above stays written down: the question is never "is
+ * this a phone number" but "who has to approve it".
+ */
+export const META_CHANNELS_AVAILABLE = true;
 
 // Free tier's hard monthly cap on AI processing (research/market/2026-09-11-
 // tier-pricing-recommendation.md §2.2). Lives here (not @/lib/billing)

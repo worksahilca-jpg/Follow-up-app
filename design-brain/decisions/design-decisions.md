@@ -1772,3 +1772,45 @@ bordered-card surface (`rounded-xl border border-line bg-card`) that A-006
 retires, because every one of its neighbours in Settings › Channels is too.
 Moving one panel to the shadow-box surface would have made it the odd one out.
 The whole Channels tab should move together, as its own piece of work.
+
+---
+
+## 2026-09-16 — The DM grace period, and the notification that goes with it
+
+**Product decision (founder's, not a design proposal):** on Instagram, Messenger
+and WhatsApp, FollowUp waits ~2 minutes before sending its instant reply. If the
+owner answers the DM themselves inside that window, FollowUp stays silent. If
+they don't, it sends — and then tells the owner it replied for them. Email and
+SMS are unchanged. Implementation lives in `followup/src/lib/acknowledge.ts`
+(`DM_ACK_GRACE_PERIOD_MS`) and `/api/cron/instant-ack`.
+
+**The only UI surface is one notification string**, and it is written to the
+copy rules in `brand/typography.md` — plain, specific, short, no
+anthropomorphising, says what happened rather than that something "was
+detected":
+
+> Priya Shah messaged on Instagram and hadn't heard back after 2 minutes, so
+> FollowUp replied for you: "…" Check the thread.
+
+Three deliberate choices in that one sentence, for future sessions:
+
+1. **It quotes the message verbatim** (truncated at 180 characters). "FollowUp
+   sent a reply" would force the owner to open the thread to find out what was
+   said in their name — the answer to *what happened?* has to be in the
+   notification itself, not one tap away.
+2. **It states the wait as a number** ("after 2 minutes"), because the owner's
+   first reaction to an automated reply is "why did it do that, I was about to
+   answer" — the reason is the delay having elapsed, so the delay is named.
+3. **Same mechanism and same shape as `notifyNeglect`** in `automation.ts` (a
+   `Notification` row per recipient, assignee first, every admin when the lead is
+   unassigned). The bell must not develop a second dialect per feature.
+
+**Honest limitation, recorded rather than buried:** the real delay is 2–3
+minutes, not 2, because the worker runs on a one-minute cron. The product should
+say "two to three minutes" wherever this is ever described to a customer, not
+"instantly, unless you reply first".
+
+**Not done, deliberately:** no new UI anywhere else. No badge on the lead, no
+"waiting" state in the conversation view. A 2-minute pending state that resolves
+itself is not worth a widget an owner would have to learn — and showing it would
+invite them to wait and watch, which is the opposite of the point.

@@ -89,7 +89,15 @@ export async function processTwilioInbound(
   }
 
   if (!optingOut) {
-    // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
+    // SMS replies within the minute, before the slower scoring — see
+    // src/lib/acknowledge.ts. WhatsApp does NOT: it is a DM channel, so the
+    // acknowledgement is parked for ~2 minutes and sent by
+    // /api/cron/instant-ack only if the owner hasn't answered themselves by
+    // then (DM_ACK_GRACE_PERIOD_MS). Nothing changes at this call site —
+    // the wait belongs to the acknowledgement, not to this webhook — and a
+    // STOP arriving inside that window sets Lead.optedOutAt above, which
+    // acknowledgeNewLead re-reads at SEND time and refuses on.
+    //
     // `ownWords`, never the synthesized media placeholder above.
     await acknowledgeNewLead(lead.id, { channel, inboundText: ownWords, inboundAt: new Date() });
   }

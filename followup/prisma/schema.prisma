@@ -406,6 +406,37 @@ model Lead {
   // per lead, never twice, no matter how many channels or webhooks fire.
   acknowledgedAt DateTime?
 
+  // The DM grace period (src/lib/acknowledge.ts, DM_ACK_GRACE_PERIOD_MS).
+  //
+  // On Instagram, Messenger and WhatsApp the acknowledgement is no longer
+  // sent from the webhook: it is parked here and sent ~2 minutes later by
+  // /api/cron/instant-ack, so an owner who is holding their phone and
+  // answers the DM themselves wins and FollowUp stays quiet. Two slightly
+  // different replies from the same business, seconds apart, is the thing
+  // this prevents.
+  //
+  // `ackDueAt` is both the due-at and the lock: a worker claims a row by
+  // pushing it forward one lease (ACK_CLAIM_LEASE_MS) in the same atomic
+  // updateMany that matches `ackDueAt <= now`, so two overlapping cron
+  // ticks can never both work the same lead. It is cleared when the ack is
+  // sent or is refused for good; an invocation killed mid-flight leaves it
+  // in the future and the next tick picks it up, which is the answer to
+  // "what if the deferred ack never runs". Lead.acknowledgedAt above is
+  // still the once-ever guarantee — this queue never weakens it.
+  //
+  // The other three are the envelope, stored rather than re-derived at
+  // send time: `ackInboundText` is the lead's OWN words (never the
+  // synthesized "[Sent 1 image…]" placeholder the DM paths write for an
+  // attachment-only message, which must never be fed to the model), and
+  // `ackInboundAt` is when THEY wrote, so the staleness check still
+  // measures from their message rather than from whenever the cron ran.
+  // All four are cleared together; a second DM inside the window refreshes
+  // the text without pushing the due time back.
+  ackDueAt       DateTime?
+  ackChannel     String? // instagram | messenger | whatsapp
+  ackInboundText String?
+  ackInboundAt   DateTime?
+
   // When the silence automation (src/lib/automation.ts) last considered
   // this lead. The check runs hourly so a lead going quiet is caught the
   // same day, but a lead it HELD for approval (risk not low) would
@@ -547,6 +578,12 @@ model Lead {
   @@index([businessId, sequenceStepDueAt])
   // getAnalytics()'s sequence-health "completed in the last 30 days" scan.
   @@index([businessId, sequenceCompletedAt])
+  // The instant-ack worker's "which deferred acknowledgements are due right
+  // now" scan. Deliberately NOT prefixed with businessId, unlike the five
+  // above: that query runs once a minute across every tenant at once (same
+  // shape as OutboundSend's status/nextAttemptAt index), and a
+  // business-prefixed index cannot serve it.
+  @@index([ackDueAt])
 }
 
 model Conversation {

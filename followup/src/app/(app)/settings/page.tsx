@@ -949,9 +949,11 @@ function SettingsPageInner() {
             <div>
               <p className="font-medium text-sm">Instant reply to new leads</p>
               <p className="text-xs text-ink-soft mt-1">
-                Within a minute of a new lead&apos;s first message — email, WhatsApp, Instagram or Messenger — FollowUp
-                sends a short &ldquo;thanks, we got your message, I&apos;ll get back to you shortly,&rdquo; in the language
-                they wrote in. <strong>Our promise:</strong> it&apos;s a fixed sentence, not an AI reply — it never
+                Within a minute of a new lead&apos;s first email, FollowUp sends a short &ldquo;thanks, we got your
+                message, I&apos;ll get back to you shortly,&rdquo; in the language they wrote in. On WhatsApp, Instagram
+                and Messenger it waits two to three minutes first, so you get the chance to answer the message yourself
+                — reply in that time and FollowUp stays quiet. If it does reply, it tells you what it sent.{" "}
+                <strong>Our promise:</strong> it&apos;s a fixed sentence, not an AI reply — it never
                 states a fact about your business, never answers a question, goes out once per lead only, and never
                 goes out if you&apos;ve already replied. Your real reply still comes from you.
               </p>

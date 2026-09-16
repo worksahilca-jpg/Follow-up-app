@@ -182,7 +182,17 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
       const optedOut = await applyDmConsentKeyword(business.id, lead.id, "instagram", senderId, content.ownWords);
 
       if (!optedOut) {
-        // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
+        // Parks the acknowledgement for ~2 minutes rather than sending it
+        // now — the owner gets that window to answer the DM themselves and
+        // FollowUp only replies if they don't (DM_ACK_GRACE_PERIOD_MS in
+        // src/lib/acknowledge.ts; /api/cron/instant-ack does the sending).
+        // Nothing changes at this call site: the wait belongs to the
+        // acknowledgement, not to each webhook.
+        //
+        // A STOP arriving during that window takes the `optedOut` branch
+        // above and never reaches here — the already-queued ack is refused
+        // by the suppression check acknowledgeNewLead runs at SEND time.
+        //
         // `ownWords`, not `body`: an attachment-only DM must not get a
         // generated reply to a placeholder FollowUp wrote itself (see messageContent).
         await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: content.ownWords, inboundAt: new Date() });
@@ -237,7 +247,8 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       const optedOut = await applyDmConsentKeyword(business.id, lead.id, "messenger", senderId, content.ownWords);
 
       if (!optedOut) {
-        // `ownWords`, not `body` — see the matching comment on the Instagram path above.
+        // Same two-minute grace period as Instagram, and `ownWords` not
+        // `body` — see the matching comment on the Instagram path above.
         await acknowledgeNewLead(lead.id, { channel: "messenger", inboundText: content.ownWords, inboundAt: new Date() });
       }
       await scoreAndDraftForLead(lead.id);

@@ -208,7 +208,24 @@ describe("an inbound message that is itself an opt-out", () => {
   // Not just "doesn't send" — doesn't spend the one acknowledgement this
   // lead ever gets. Someone who says STOP and later says START should
   // still get a real first reply.
+  //
+  // On a DM channel that reply is now queued rather than sent inline (the
+  // two-minute grace period — see instantAckGracePeriod.test.ts), so the
+  // "still acknowledged later" half is asserted on SMS, which is unchanged,
+  // and the queueing half on Instagram.
   it("does not claim acknowledgedAt, so a later real message is still acknowledged", async () => {
+    await acknowledgeNewLead("lead1", { channel: "text", inboundText: "stop", inboundAt: new Date() });
+    expect(p.lead.updateMany).not.toHaveBeenCalled();
+
+    const later = await acknowledgeNewLead("lead1", {
+      channel: "text",
+      inboundText: "Actually — start. Is the roof original?",
+      inboundAt: new Date(),
+    });
+    expect(later.sent).toBe(true);
+  });
+
+  it("does not even queue a deferred DM acknowledgement in reply to a STOP", async () => {
     await acknowledgeNewLead("lead1", { channel: "instagram", inboundText: "stop", inboundAt: new Date() });
     expect(p.lead.updateMany).not.toHaveBeenCalled();
 
@@ -217,7 +234,9 @@ describe("an inbound message that is itself an opt-out", () => {
       inboundText: "Actually — start. Is the roof original?",
       inboundAt: new Date(),
     });
-    expect(later.sent).toBe(true);
+    expect(later.sent).toBe(false);
+    expect(later.queuedFor).toBeInstanceOf(Date);
+    expect(send).not.toHaveBeenCalled();
   });
 
   it("acknowledges an ordinary sentence that merely contains the word", async () => {
@@ -345,6 +364,10 @@ describe("instant acknowledgement", () => {
       channel: "whatsapp",
       inboundText: "Hola, ¿cuánto cuesta?",
       inboundAt: new Date(),
+      // WhatsApp is a DM channel, so it waits out the grace period before
+      // any of this runs. This is the worker's call, after the wait — what
+      // is under test here is the localization, not the delay.
+      skipGracePeriod: true,
     });
     const [, body] = send.mock.calls[0];
     expect(body).toBe("¡Hola! Con gusto — te enviaré el precio exacto en breve.");

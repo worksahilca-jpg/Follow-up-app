@@ -201,6 +201,14 @@ export async function deleteBusinessData(
     prisma.invite.deleteMany({ where: { businessId } }),
     prisma.productFeedback.deleteMany({ where: { businessId } }),
     prisma.rateLimitHit.deleteMany({ where: { businessId } }),
+    // Both reference Business with ON DELETE RESTRICT and were missing, so
+    // any business holding one unsubscribe/STOP or one reactivation run got
+    // a 500 from its own erasure request — after Stripe had already been
+    // cancelled above (audit 2026-09-16, H-1). The mocked test could not
+    // see it; businessData.test.ts now reads schema.prisma and fails on any
+    // Business relation absent from this list.
+    prisma.suppression.deleteMany({ where: { businessId } }),
+    prisma.reactivationRun.deleteMany({ where: { businessId } }),
     // Raw inbound payloads (phone numbers, message text, names) — not a
     // relation to Business on purpose (see schema.prisma), so it has to be
     // cleared explicitly here or a deleted business's inbound messages

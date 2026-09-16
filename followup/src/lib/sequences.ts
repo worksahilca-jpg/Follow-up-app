@@ -9,8 +9,14 @@
  * from that other path (see the query in automation.ts) so the two never
  * both try to message the same lead on the same day.
  *
- * Step timing: each step's delayDays counts from when the PREVIOUS step
- * ran (or from enrollment, for step 0) — not from a fixed calendar date.
+ * Step timing: each step's delay counts from when the PREVIOUS step ran
+ * (or from enrollment, for step 0) — not from a fixed calendar date. The
+ * unit is HOURS (SequenceStep.delayHours) since 2026-09-16; delayDays is the
+ * older column, still written for anything reading it, and read only as a
+ * fallback for rows from before the backfill. stepDelayHours() is the one
+ * place the two are reconciled. Why hours: Meta shuts the Instagram /
+ * Messenger door 24 h after the lead's last message, and a plan that can
+ * only count in days cannot place a second touch inside it at all.
  * Lead.sequenceStepDueAt is recomputed after every step runs, so the cron
  * executor is a plain "is anything due right now" scan instead of having
  * to replay delays at read time.
@@ -33,10 +39,41 @@ import type { Prisma, SequenceAction, PipelineStage } from "@prisma/client";
 import type { Message } from "@/lib/types";
 
 export interface SequenceStepInput {
-  delayDays: number;
+  /** Hours after the previous step (or enrollment). Preferred. */
+  delayHours?: number;
+  /** Older clients send days. Accepted and converted; at least one of the two is required. */
+  delayDays?: number;
   action: SequenceAction;
   stageTo?: PipelineStage | null;
   messageHint?: string | null;
+}
+
+/** Longest a single step may wait: 90 days, the same ceiling delayDays had. */
+export const MAX_STEP_DELAY_HOURS = 90 * 24;
+
+/**
+ * How long a step waits, in hours — from either column, whichever is set.
+ * The single reconciliation point for the hours/days split: the scheduler,
+ * the summary the UI reads, and the writes below all go through it, so a
+ * row from before the backfill (delayHours null) and a row written today
+ * schedule identically.
+ */
+export function stepDelayHours(step: { delayHours?: number | null; delayDays?: number | null }): number {
+  if (typeof step.delayHours === "number") return step.delayHours;
+  return (step.delayDays ?? 0) * 24;
+}
+
+/** What a step is stored as: both columns, kept in step, from one number. */
+function toStepRow(s: SequenceStepInput, order: number) {
+  const delayHours = stepDelayHours(s);
+  return {
+    order,
+    delayHours,
+    delayDays: Math.floor(delayHours / 24),
+    action: s.action,
+    stageTo: s.stageTo ?? null,
+    messageHint: s.messageHint ?? null,
+  };
 }
 
 export interface SequenceSummary {
@@ -47,6 +84,8 @@ export interface SequenceSummary {
   steps: {
     id: string;
     order: number;
+    delayHours: number;
+    /** Derived: floor(delayHours / 24). Kept so older readers see a number, not the unit change. */
     delayDays: number;
     action: SequenceAction;
     stageTo: PipelineStage | null;
@@ -68,7 +107,8 @@ function toSummary(seq: Prisma.SequenceGetPayload<{ include: typeof sequenceIncl
     steps: seq.steps.map((s) => ({
       id: s.id,
       order: s.order,
-      delayDays: s.delayDays,
+      delayHours: stepDelayHours(s),
+      delayDays: Math.floor(stepDelayHours(s) / 24),
       action: s.action,
       stageTo: s.stageTo,
       messageHint: s.messageHint,
@@ -95,8 +135,12 @@ function validateSteps(steps: SequenceStepInput[]): string | null {
   if (steps.length === 0) return "A workflow needs at least one step.";
   if (steps.length > 20) return "That's a lot of steps — keep it to 20 or fewer.";
   for (const s of steps) {
-    if (!Number.isInteger(s.delayDays) || s.delayDays < 0 || s.delayDays > 90) {
-      return "Each step's delay must be a whole number of days, 0–90.";
+    if (typeof s.delayHours !== "number" && typeof s.delayDays !== "number") {
+      return "Each step needs a wait time.";
+    }
+    const hours = stepDelayHours(s);
+    if (!Number.isInteger(hours) || hours < 0 || hours > MAX_STEP_DELAY_HOURS) {
+      return `Each step's wait must be a whole number of hours, 0–${MAX_STEP_DELAY_HOURS} (90 days).`;
     }
     if (s.action === "CHANGE_STAGE" && !s.stageTo) {
       return "A \"change stage\" step needs a target stage.";
@@ -119,7 +163,7 @@ export async function createSequence(
     data: {
       businessId,
       name: trimmedName,
-      steps: { create: steps.map((s, i) => ({ order: i, ...s })) },
+      steps: { create: steps.map(toStepRow) },
     },
     include: sequenceInclude,
   });
@@ -159,7 +203,7 @@ export async function updateSequence(
       data: {
         ...(trimmedName !== undefined ? { name: trimmedName } : {}),
         ...(updates.active !== undefined ? { active: updates.active } : {}),
-        ...(updates.steps ? { steps: { create: updates.steps.map((s, i) => ({ order: i, ...s })) } } : {}),
+        ...(updates.steps ? { steps: { create: updates.steps.map(toStepRow) } } : {}),
       },
       include: sequenceInclude,
     });
@@ -227,7 +271,7 @@ export async function enrollLead(
     data: {
       sequenceId,
       sequenceStepIndex: 0,
-      sequenceStepDueAt: new Date(Date.now() + firstStep.delayDays * 24 * 60 * 60 * 1000),
+      sequenceStepDueAt: new Date(Date.now() + stepDelayHours(firstStep) * 60 * 60 * 1000),
       // A lead can't be run by both the silence-based automation and a
       // workflow at once — enrolling turns the former off for this lead so
       // the workflow's own cadence is the only thing steering it.
@@ -651,7 +695,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         data: nextStep
           ? {
               sequenceStepIndex: nextIndex,
-              sequenceStepDueAt: new Date(Date.now() + nextStep.delayDays * 24 * 60 * 60 * 1000),
+              sequenceStepDueAt: new Date(Date.now() + stepDelayHours(nextStep) * 60 * 60 * 1000),
             }
           : {
               // Finished the sequence — the one exit path that gets a

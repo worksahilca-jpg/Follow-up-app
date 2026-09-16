@@ -274,3 +274,25 @@ default" is a product decision, not a build.
 **So: Phases A and B of the plan are done. Next is Phase C (languages and
 platforms) and the security roadmap's Level 2 remainder; Phase D (autonomy by
 default, consent record) after real customers have watched Assisted work.**
+
+## Instagram and Messenger follow-up is DM-only (CEO decision, 2026-09-16)
+
+A lead who writes on Instagram is answered on Instagram. No automatic switch to email or
+any other channel, ever. Messenger is treated the same (identical Meta rules; CEO has not
+separately ruled on it — assumption, flagged).
+
+Meta's constraint, accepted as the shape of the feature rather than worked around: no
+automated DM after 24 hours from the lead's last message; nothing at all after 7 days
+unless the lead writes first. Therefore:
+
+- **Inside 24 h:** up to three automatic touches, each ending with an easy question, since
+  any reply from the lead reopens the window. Stops on any reply.
+- **Days 2–7:** one drafted message, sent by the owner with one tap under Meta's
+  human-agent allowance (requires the App Review permission already being requested).
+- **After day 7:** stop. Restart only if the lead writes.
+
+Rule 3 (trust ships like a feature): the owner is told what went out, what is waiting on
+their tap, and why nothing more will be sent. Rule 6: the day-1 automation is table
+stakes; timing a follow-up *into* the window on purpose is the moat-leaning part (window
+research §6.2). Build order and the rejected alternative: `design-brain/decisions/`,
+entries dated 2026-09-16 (R-003).

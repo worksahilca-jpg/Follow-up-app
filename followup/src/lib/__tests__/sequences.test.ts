@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/db", () => ({
   prisma: {
     lead: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
-    sequence: { findUnique: vi.fn() },
+    sequence: { findUnique: vi.fn(), create: vi.fn() },
     notification: { create: vi.fn() },
     business: { findUnique: vi.fn() },
     user: { findMany: vi.fn() },
@@ -50,7 +50,7 @@ import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/open
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { checkAiEligibility } from "@/lib/billing";
-import { runSequencesForBusiness, enrollLead } from "@/lib/sequences";
+import { runSequencesForBusiness, enrollLead, createSequence, stepDelayHours, MAX_STEP_DELAY_HOURS } from "@/lib/sequences";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -595,5 +595,122 @@ describe("enrollLead refuses a Free-tier-ineligible lead up front (cost-exposure
     const result = await enrollLead("lead1", "biz1", "seq1");
     expect(result.success).toBe(false);
     expect(p.lead.update).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Workflow steps count in hours (2026-09-16).
+ *
+ * Meta shuts the Instagram / Messenger door 24 h after the lead's last
+ * message. A plan whose smallest unit is one day cannot place a second
+ * touch inside that window at all — `delayDays: 1` is already at the
+ * boundary. So the scheduler runs on SequenceStep.delayHours, with
+ * delayDays kept and read only as a fallback for rows from before the
+ * backfill. These pin: the scheduler honours hours; an old row still
+ * schedules exactly as it did; a write stores both columns in step; and
+ * the bounds moved with the unit rather than silently shrinking to 90 h.
+ */
+describe("workflow steps in hours", () => {
+  const nowPlusHours = (h: number) => Date.now() + h * 3_600_000;
+  const closeTo = (actual: Date, expectedMs: number) => Math.abs(actual.getTime() - expectedMs) < 5_000;
+  const baseLead = { id: "lead1", businessId: "biz1", source: "CSV import", createdAt: new Date("2026-09-10T00:00:00Z") };
+
+  function sequenceWithFirstStep(step: Record<string, unknown>) {
+    return { id: "seq1", businessId: "biz1", steps: [{ id: "s1", order: 0, action: "EMAIL", messageHint: null, stageTo: null, ...step }] };
+  }
+
+  beforeEach(() => {
+    p.lead.findUnique.mockResolvedValue(baseLead);
+    p.business.findUnique.mockResolvedValue({ tier: "plus", timezone: "America/New_York" });
+    // A create returns what toSummary needs, built from what was written —
+    // so the assertion below reads the stored row shape, not a canned one.
+    p.sequence.create.mockImplementation(async ({ data }: { data: { name: string; steps: { create: Record<string, unknown>[] } } }) => ({
+      id: "seq-new",
+      name: data.name,
+      active: true,
+      _count: { leads: 0 },
+      steps: data.steps.create.map((s, i) => ({ id: `s${i}`, ...s })),
+    }));
+  });
+
+  it("schedules the first step in hours — 20 lands inside Meta's window, which no whole-day value can", async () => {
+    p.sequence.findUnique.mockResolvedValue(sequenceWithFirstStep({ delayHours: 20, delayDays: 0 }));
+    await enrollLead("lead1", "biz1", "seq1");
+    const dueAt = p.lead.update.mock.calls[0][0].data.sequenceStepDueAt as Date;
+    expect(closeTo(dueAt, nowPlusHours(20))).toBe(true);
+  });
+
+  it("schedules a row from before the backfill exactly as it always did (delayDays only)", async () => {
+    // delayHours null = the column exists but this row predates it.
+    p.sequence.findUnique.mockResolvedValue(sequenceWithFirstStep({ delayHours: null, delayDays: 3 }));
+    await enrollLead("lead1", "biz1", "seq1");
+    const dueAt = p.lead.update.mock.calls[0][0].data.sequenceStepDueAt as Date;
+    expect(closeTo(dueAt, nowPlusHours(72))).toBe(true);
+  });
+
+  it("prefers delayHours when both are present, so the backfill's floor(hours/24) never wins over the real value", async () => {
+    // 30 h stored as delayHours 30 / delayDays 1. Reading days would fire 6 h early.
+    p.sequence.findUnique.mockResolvedValue(sequenceWithFirstStep({ delayHours: 30, delayDays: 1 }));
+    await enrollLead("lead1", "biz1", "seq1");
+    const dueAt = p.lead.update.mock.calls[0][0].data.sequenceStepDueAt as Date;
+    expect(closeTo(dueAt, nowPlusHours(30))).toBe(true);
+  });
+
+  it("schedules the NEXT step in hours after a step runs", async () => {
+    const l: Record<string, unknown> = {
+      ...enrolled("outbound"),
+      sequence: {
+        id: "seq1",
+        name: "Instagram day one",
+        active: true,
+        steps: [
+          { ...step, order: 0, action: "EMAIL", delayHours: 3, delayDays: 0 },
+          { ...step, id: "s2", order: 1, action: "EMAIL", delayHours: 17, delayDays: 0 }, // 20 h cumulative
+        ],
+      },
+    };
+    p.lead.findMany.mockResolvedValue([l]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.advanced).toBe(1);
+    const advance = p.lead.update.mock.calls.map((c: [{ data: Record<string, unknown> }]) => c[0].data).find((d: Record<string, unknown>) => d.sequenceStepIndex === 1);
+    expect(advance).toBeDefined();
+    expect(closeTo(advance!.sequenceStepDueAt as Date, nowPlusHours(17))).toBe(true);
+  });
+
+  it("stores both columns in step from one number, so an older reader still sees a sane day count", async () => {
+    const r = await createSequence("biz1", "Instagram day one", [{ delayHours: 20, action: "EMAIL" }]);
+    expect(r.success).toBe(true);
+    const written = p.sequence.create.mock.calls[0][0].data.steps.create[0];
+    expect(written).toMatchObject({ order: 0, delayHours: 20, delayDays: 0 });
+  });
+
+  it("still accepts a client that only knows days, and converts it", async () => {
+    const r = await createSequence("biz1", "Old client", [{ delayDays: 3, action: "EMAIL" }]);
+    expect(r.success).toBe(true);
+    const written = p.sequence.create.mock.calls[0][0].data.steps.create[0];
+    expect(written).toMatchObject({ delayHours: 72, delayDays: 3 });
+  });
+
+  it("refuses a step with no wait time at all", async () => {
+    const r = await createSequence("biz1", "Broken", [{ action: "EMAIL" }]);
+    expect(r).toMatchObject({ success: false, message: expect.stringMatching(/wait time/i) });
+    expect(p.sequence.create).not.toHaveBeenCalled();
+  });
+
+  it("keeps the 90-day ceiling in the new unit rather than shrinking it to 90 hours", async () => {
+    expect(MAX_STEP_DELAY_HOURS).toBe(2160);
+    const ok = await createSequence("biz1", "Long", [{ delayHours: 2160, action: "EMAIL" }]);
+    expect(ok.success).toBe(true);
+    const over = await createSequence("biz1", "Too long", [{ delayHours: 2161, action: "EMAIL" }]);
+    expect(over.success).toBe(false);
+    const fractional = await createSequence("biz1", "Half hour", [{ delayHours: 20.5, action: "EMAIL" }]);
+    expect(fractional.success).toBe(false);
+  });
+
+  it("stepDelayHours is the one reconciliation point", () => {
+    expect(stepDelayHours({ delayHours: 20, delayDays: 5 })).toBe(20);
+    expect(stepDelayHours({ delayHours: null, delayDays: 2 })).toBe(48);
+    expect(stepDelayHours({ delayDays: 0 })).toBe(0);
+    expect(stepDelayHours({})).toBe(0);
   });
 });

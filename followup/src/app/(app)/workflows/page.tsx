@@ -18,7 +18,8 @@ import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft, Workflow as
 type SequenceAction = "EMAIL" | "CHANGE_STAGE";
 
 interface StepDraft {
-  delayDays: number;
+  /** Hours after the previous step (or after enrollment, for the first). */
+  delayHours: number;
   action: SequenceAction;
   stageTo: string | null;
   messageHint: string;
@@ -29,7 +30,23 @@ interface SequenceSummary {
   name: string;
   active: boolean;
   enrolledCount: number;
-  steps: { id: string; order: number; delayDays: number; action: SequenceAction; stageTo: string | null; messageHint: string | null }[];
+  steps: { id: string; order: number; delayHours: number; action: SequenceAction; stageTo: string | null; messageHint: string | null }[];
+}
+
+/**
+ * How a cumulative offset reads in the step list. People think about a
+ * plan in days ("what happens on day 7"), which is what this showed before
+ * the unit changed to hours — so whole days still read as "Day N", and only
+ * a sub-day offset (the Instagram case: a touch at 3 h, another by 20 h,
+ * inside Meta's window) shows hours at all. Nobody who never types an hour
+ * sees the word.
+ */
+function describeOffset(hours: number): string {
+  if (hours === 0) return "Right away";
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} in`;
+  const days = Math.floor(hours / 24);
+  const rest = hours % 24;
+  return rest === 0 ? `Day ${days}` : `Day ${days}, +${rest}h`;
 }
 
 const STAGE_OPTIONS: { value: string; label: string }[] = [
@@ -42,13 +59,13 @@ const STAGE_OPTIONS: { value: string; label: string }[] = [
 ];
 
 function blankStep(): StepDraft {
-  return { delayDays: 3, action: "EMAIL", stageTo: null, messageHint: "" };
+  return { delayHours: 72, action: "EMAIL", stageTo: null, messageHint: "" };
 }
 
 // A real bounded, escalating cadence rather than a blank sheet to fill in
 // — cumulative days 3 / 7 / 14 / 30 from enrollment (stored below as the
-// gap-from-previous-step delayDays sequences.ts actually runs on: 3, 4,
-// 7, 16), matching research/product/2026-09-09-followup-cadence-best-
+// gap-from-previous-step delayHours sequences.ts actually runs on: 72, 96,
+// 168, 384), matching research/product/2026-09-09-followup-cadence-best-
 // practices.md's escalating-then-widening shape — the same pattern every
 // competitor surveyed there (Follow Up Boss, kvCORE, BoomTown) already
 // uses instead of one flat repeating interval. Loaded into the editor
@@ -58,25 +75,25 @@ const RECOMMENDED_CADENCE: { name: string; steps: StepDraft[] } = {
   name: "Recommended follow-up plan",
   steps: [
     {
-      delayDays: 3,
+      delayHours: 72, // day 3
       action: "EMAIL",
       stageTo: null,
       messageHint: "A light, low-pressure check-in — just making sure this didn't get buried, nothing pushy.",
     },
     {
-      delayDays: 4, // day 7 cumulative
+      delayHours: 96, // day 7 cumulative
       action: "EMAIL",
       stageTo: null,
       messageHint: "More direct — ask plainly if they're still interested and what would help them decide.",
     },
     {
-      delayDays: 7, // day 14 cumulative
+      delayHours: 168, // day 14 cumulative
       action: "EMAIL",
       stageTo: null,
       messageHint: "Offer something of real value — answer a likely objection or suggest a concrete next step, not another check-in.",
     },
     {
-      delayDays: 16, // day 30 cumulative
+      delayHours: 384, // day 30 cumulative
       action: "EMAIL",
       stageTo: null,
       messageHint:
@@ -348,7 +365,7 @@ function WorkflowCard({
           "(day 3, 7, 14, 30)", which is cumulative. Two mental models for the
           same plan, on the same screen. People think about a plan in
           cumulative days ("what happens on day 7"), so that is what shows;
-          the stored delayDays stay gaps because that is what the scheduler
+          the stored delayHours stay gaps because that is what the scheduler
           runs on.
 
           Two: the channel-fallback rule was repeated inside every step, so
@@ -356,7 +373,7 @@ function WorkflowCard({
           is stated once, below the list. */}
       <ol className="mt-4 space-y-1.5">
         {sequence.steps.map((step, i) => {
-          const dayOf = sequence.steps.slice(0, i + 1).reduce((sum, s) => sum + s.delayDays, 0);
+          const hoursIn = sequence.steps.slice(0, i + 1).reduce((sum, s) => sum + s.delayHours, 0);
           return (
             <li key={step.id} className="flex items-start gap-2.5 text-sm">
               <span
@@ -367,7 +384,7 @@ function WorkflowCard({
               </span>
               <span className="min-w-0">
                 <span className="font-medium">
-                  Day {dayOf} ·{" "}
+                  {describeOffset(hoursIn)} ·{" "}
                   {step.action === "EMAIL"
                     ? "Email"
                     : `Move to ${STAGE_OPTIONS.find((s) => s.value === step.stageTo)?.label ?? step.stageTo}`}
@@ -410,7 +427,7 @@ function WorkflowEditor({
   const [name, setName] = useState(sequence?.name ?? template?.name ?? "");
   const [steps, setSteps] = useState<StepDraft[]>(
     sequence
-      ? sequence.steps.map((s) => ({ delayDays: s.delayDays, action: s.action, stageTo: s.stageTo, messageHint: s.messageHint ?? "" }))
+      ? sequence.steps.map((s) => ({ delayHours: s.delayHours, action: s.action, stageTo: s.stageTo, messageHint: s.messageHint ?? "" }))
       : (template?.steps ?? [blankStep()])
   );
   const [saving, setSaving] = useState(false);
@@ -436,7 +453,7 @@ function WorkflowEditor({
       const payload = {
         name,
         steps: steps.map((s) => ({
-          delayDays: s.delayDays,
+          delayHours: s.delayHours,
           action: s.action,
           stageTo: s.action === "CHANGE_STAGE" ? s.stageTo : null,
           messageHint: s.action === "EMAIL" && s.messageHint.trim() ? s.messageHint.trim() : null,
@@ -477,15 +494,23 @@ function WorkflowEditor({
                 >
                   {i + 1}
                 </span>
-                <span>{i === 0 ? "days after enrollment" : "days after the previous step"}</span>
+                <span>{i === 0 ? "hours after enrollment" : "hours after the previous step"}</span>
                 <input
                   type="number"
                   min={0}
-                  max={90}
-                  value={step.delayDays}
-                  onChange={(e) => updateStep(i, { delayDays: Number(e.target.value) })}
-                  className="w-14 rounded-lg border border-line bg-paper px-2 py-1 text-center"
+                  max={2160}
+                  value={step.delayHours}
+                  onChange={(e) => updateStep(i, { delayHours: Number(e.target.value) })}
+                  className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
                 />
+                {/* The same number in the unit most people actually plan in,
+                    so "72" is never a sum they have to do in their head. */}
+                {step.delayHours >= 24 && (
+                  <span>
+                    = {Math.floor(step.delayHours / 24)} day{Math.floor(step.delayHours / 24) === 1 ? "" : "s"}
+                    {step.delayHours % 24 !== 0 ? ` ${step.delayHours % 24}h` : ""}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <button

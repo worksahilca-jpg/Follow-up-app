@@ -854,6 +854,16 @@ model SequenceStep {
   // step 0), not from a fixed start date.
   order       Int
   delayDays   Int
+  // Hours between the previous step and this one — the unit the scheduler
+  // actually runs on since 2026-09-16. Nullable only so the column could be
+  // added without a rewrite: sequences.ts treats null as delayDays * 24, and
+  // every write since then sets both. Why hours at all: Meta shuts the
+  // Instagram / Messenger door 24 hours after the lead's last message, so a
+  // plan that can only count in whole days cannot place a second touch
+  // inside it (research/product/2026-09-16-meta-window-close-what-shipped-
+  // products-do.md §5.1). delayDays stays for anything still reading it and
+  // is kept in step (floor(delayHours / 24)) on every write.
+  delayHours  Int?
   action      SequenceAction
   stageTo     PipelineStage? // required (validated in sequences.ts) when action is CHANGE_STAGE
   messageHint String? // optional steer for the AI draft when action is EMAIL

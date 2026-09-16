@@ -1871,3 +1871,54 @@ was written to avoid.
 channel exception in one breath. It is true, and it is the one place a cautious
 owner reads before trusting the product, which is why it had to be true first and
 short second. Making it both is the next job on that screen.
+
+## 2026-09-16 — Instagram and Messenger follow-up is DM-only; the strategy that replaces the email fallback
+
+**Product decision (founder's):** on Instagram, follow-ups go in the lead's DMs and
+nowhere else — see `rejected.md` R-003. Messenger is being treated identically because
+Meta's rules are identical; the founder has not separately confirmed Messenger, and that
+is recorded here as an assumption, not a decision.
+
+**The consequence, accepted:** Meta refuses any automated DM more than 24 hours after
+the lead's last message, and refuses even a human-sent one after 7 days. Nothing FollowUp
+builds gets around either. So on these two channels the plan is shaped by the door, not
+by a cadence chart:
+
+| When | What FollowUp does |
+|---|---|
+| **First 24 hours** | Automatic, up to three touches: instant reply at ~2 min (built), a real follow-up at ~3 h if quiet (built), a last one by 20 h before the door shuts (built 2026-09-16, #252). Every one ends with an easy question — something answerable in a word — because **any reply from the lead reopens the 24-hour door**, and that is the whole game. |
+| **Days 2–7** | FollowUp drafts one message, written to the reactivation rules (name the gap, lead with something worth their time, never "just checking in"), and puts it on the owner's dashboard. **The owner taps send.** It goes as a DM under Meta's human-agent allowance, which needs the permission the founder is already requesting in App Review. |
+| **After day 7** | Leave them. Anything more is spam and Meta blocks it regardless. If the lead ever writes again, everything restarts. |
+
+**What has to be built, in order** (each its own PR):
+1. Workflow steps in **hours**, not days — a plan that counts only in days cannot place a
+   second touch inside a 24-hour window at all (`SequenceStep.delayDays`, found in the
+   2026-09-16 window research §5.1). Additive column, backfilled; existing plans keep their
+   exact timing.
+2. **DM-shaped drafts** — `generateFollowUpMessage` writes an email with a subject line
+   whatever the channel (research finding, verified). Instagram needs short, no subject,
+   one question at the end. Then **reply buttons** on every Instagram/Messenger message: a
+   tap counts as a reply and resets Meta's clock (window research §1, grade B).
+3. **Tap-to-send** for days 2–7 — the out-of-window step is drafted and held, not failed;
+   the owner's one-tap send carries the human-agent tag; past day 7 it refuses with a
+   plain sentence.
+4. Settings still promises a past-24h DM "goes by email instead." That is now false
+   twice over (never built; now rejected). Replace it.
+
+**The workflow builder, after the unit change (PR A):** the field reads "hours after
+enrollment / the previous step" and the step list keeps saying "Day 3", "Day 7" for anything
+that is a whole number of days — the unit most people plan in, which is what the list showed
+before. Hours appear only when someone actually types a sub-day value ("3 hours in", "Day 1,
++6h"), and a small "= 3 days" hint sits next to the field so 72 is never mental arithmetic.
+Nobody building an email plan sees the word "hours" in the list at all. Visuals untouched:
+same input, same row, one label and one derived hint. Not rendered live (Google sign-in
+gate); the change is one label string, one number input's bounds, and one conditional
+`<span>` in the same row.
+
+**Principle to carry forward:** on a channel with a closing door, the message's job is to
+get *a reaction*, not to deliver information. "Morning or afternoon?" beats "Let me know
+if you're interested." This is a copy rule for every DM draft, not a one-off.
+
+**Not done, deliberately:** no channel switch of any kind on these two channels (R-003).
+No fourth automatic touch inside the day — three is already the ceiling the brand's
+"never the spam tool" principle will bear, and each stops the moment the lead replies.

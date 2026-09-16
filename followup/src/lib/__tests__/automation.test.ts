@@ -289,16 +289,20 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
         {
           channel: "email",
           messages: [
-            ...(outboundTrigger
-              ? [{ id: "a", direction: "outbound", body: "Thanks for reaching out...", sentAt: new Date(Date.now() - (hoursAgo + 1) * 3_600_000), opened: false }]
-              : []),
             { id: "b", direction: "inbound", body: "What's the price?", sentAt: new Date(Date.now() - hoursAgo * 3_600_000), opened: false },
+            // The ack lands ~2 minutes AFTER the lead's message, tagged as
+            // what it is. The old fixture placed it an hour BEFORE, which is
+            // not a sequence that can happen, and it hid the bug: with the
+            // ack newest, the direction check rejected the lead before the
+            // ack-exclusion logic ever ran.
+            ...(outboundTrigger
+              ? [{ id: "a", direction: "outbound", body: "Thanks for reaching out...", sentAt: new Date(Date.now() - hoursAgo * 3_600_000 + 120_000), opened: false, trigger: outboundTrigger }]
+              : []),
           ],
         },
       ],
-      // The instant-ack's own FollowUp row is what marks it non-substantive
-      // — see the comment above findUnansweredLeads's hasSubstantiveFollowUp
-      // check; Message itself carries no such marker.
+      // Message.trigger on the ack row is the marker now; the FollowUp list
+      // is no longer consulted for this judgment.
       followUps: outboundTrigger ? [{ trigger: outboundTrigger }] : [],
     });
   }
@@ -961,7 +965,91 @@ describe("Meta's 24-hour window ceiling on the unanswered rule", () => {
     // UNANSWERED_FIRST_REPLY_HOURS and must continue to — the ceiling is
     // 20 hours, and taking it here would have made this lead wait 16 hours
     // longer than before.
-    queueUnanswered(dmLead(4, "instagram", { followUps: [{ trigger: "instant_ack" }] }));
+    queueUnanswered(
+      dmLead(4, "instagram", {
+        conversations: [
+          {
+            channel: "instagram",
+            messages: [
+              { id: "b", direction: "inbound", body: "How much for a two-bed?", sentAt: new Date(Date.now() - 4 * 3_600_000), opened: false },
+              { id: "a", direction: "outbound", body: "Got it — back to you shortly.", sentAt: new Date(Date.now() - 4 * 3_600_000 + 120_000), opened: false, trigger: "instant_ack" },
+            ],
+          },
+        ],
+      })
+    );
     expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
+  });
+});
+
+/**
+ * The instant acknowledgement is not an answer (audit 2026-09-16, F2).
+ *
+ * Every send writes an outbound Message, the ack included. The neglect
+ * judgment rejected any lead whose newest message was outbound BEFORE its
+ * "ignore the ack" logic ran — so a lead who wrote once and got the ack was
+ * never selected, and the 3-hour first-reply rule and the 20-hour Meta
+ * ceiling only fired if the lead wrote a second time. The day-1 cadence the
+ * product is built on did not run for its main case. Message.trigger now
+ * marks the ack; these pin what it must and must not change.
+ */
+describe("the instant ack is transparent to the unanswered rule", () => {
+  const H = 3_600_000;
+  function wroteOnceAndGotAck(hoursAgo: number, ackTrigger: string | undefined) {
+    return lead({
+      id: "leadAck",
+      name: "Meera",
+      assignedToId: "user1",
+      conversations: [
+        {
+          channel: "email",
+          messages: [
+            { id: "in", direction: "inbound", body: "Do you do Saturdays?", sentAt: new Date(Date.now() - hoursAgo * H), opened: false },
+            { id: "ack", direction: "outbound", body: "Got your message — back to you shortly.", sentAt: new Date(Date.now() - hoursAgo * H + 120_000), opened: false, trigger: ackTrigger },
+          ],
+        },
+      ],
+      followUps: [{ trigger: "instant_ack" }],
+    });
+  }
+
+  it("picks up a lead who wrote once and got only the ack, once 3 hours pass", async () => {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([wroteOnceAndGotAck(4, "instant_ack")]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
+  });
+
+  it("still waits inside the 3-hour first-reply window", async () => {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([wroteOnceAndGotAck(2, "instant_ack")]);
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(0);
+  });
+
+  it("treats an UNTAGGED ack (a row from before the column) as a real reply — conservative, never a false send", async () => {
+    // The backfill can miss a row. Missing the marker must fail towards
+    // silence, which is today's behaviour, not towards a send.
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([wroteOnceAndGotAck(30, undefined)]);
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(0);
+  });
+
+  it("counts an owner's reply synced from Gmail — no FollowUp row, no source, no trigger — as an answer", async () => {
+    // The trap the obvious fix falls into: judging on the newest inbound
+    // whenever there is no FollowUp row would reply on top of the owner.
+    const l = lead({
+      id: "leadGmail",
+      name: "Tom",
+      assignedToId: "user1",
+      conversations: [
+        {
+          channel: "email",
+          messages: [
+            { id: "in", direction: "inbound", body: "Is it still available?", sentAt: new Date(Date.now() - 30 * H), opened: false },
+            { id: "owner", direction: "outbound", body: "Yes — want to see it Thursday?", sentAt: new Date(Date.now() - 29 * H), opened: false },
+          ],
+        },
+      ],
+      followUps: [],
+    });
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([l]);
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(0);
   });
 });

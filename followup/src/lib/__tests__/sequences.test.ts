@@ -714,3 +714,51 @@ describe("workflow steps in hours", () => {
     expect(stepDelayHours({})).toBe(0);
   });
 });
+
+/**
+ * A send parked for retry is a send (audit 2026-09-16, F1 — Critical).
+ *
+ * A transient provider failure returns { success: false, queuedRetryAt }
+ * and the OutboundSend worker delivers it minutes later. Treating that as
+ * "not sent" kept the lead on the same step; the next hourly tick saw the
+ * retry's own outbound message as ours-with-no-reply, re-drafted the same
+ * step and sent it again — two follow-ups an hour apart in the owner's
+ * name. acknowledge.ts already handled this result correctly; this was
+ * the one caller that did not.
+ */
+describe("a queued retry advances the workflow step", () => {
+  function twoStepLead() {
+    const l: Record<string, unknown> = {
+      ...enrolled("outbound"),
+      sequence: {
+        id: "seq1",
+        name: "New lead cadence",
+        active: true,
+        steps: [
+          { ...step, order: 0, action: "EMAIL", delayHours: 0, delayDays: 0 },
+          { ...step, id: "s2", order: 1, action: "EMAIL", delayHours: 72, delayDays: 3 },
+        ],
+      },
+    };
+    return l;
+  }
+
+  it("advances to the next step when the send is queued, and does not raise a 'couldn't send' notification", async () => {
+    send.mockResolvedValueOnce({ success: false, failure: "transient", message: "Twilio 503", queuedRetryAt: new Date(Date.now() + 120_000) });
+    p.lead.findMany.mockResolvedValue([twoStepLead()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.advanced).toBe(1);
+    expect(r.skipped).toEqual([]);
+    expect(p.lead.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ sequenceStepIndex: 1 }) }));
+    const notes = p.notification.create.mock.calls.map((c: [{ data: { message: string } }]) => c[0].data.message);
+    expect(notes.some((m: string) => /couldn't send/i.test(m))).toBe(false);
+  });
+
+  it("still leaves the lead on the step and tells the owner when the failure is permanent (no retry queued)", async () => {
+    send.mockResolvedValueOnce({ success: false, failure: "permanent", message: "Twilio rejected the number" });
+    p.lead.findMany.mockResolvedValue([twoStepLead()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.advanced).toBe(0);
+    expect(r.skipped).toHaveLength(1);
+  });
+});

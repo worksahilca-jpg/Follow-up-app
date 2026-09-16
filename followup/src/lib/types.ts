@@ -31,6 +31,11 @@ export interface Message {
   // a Meta webhook echo (see Message.source in schema.prisma). Undefined
   // means FollowUp sent it, same as before this field existed.
   source?: string;
+  // What FollowUp sent an outbound message under (instant_ack | unanswered
+  // | silence | sequence | manual) — see Message.trigger in schema.prisma.
+  // Undefined on inbound, on anything FollowUp didn't send, and on rows
+  // from before the column existed that the backfill couldn't match.
+  trigger?: string;
 }
 
 export interface ScoreFactor {

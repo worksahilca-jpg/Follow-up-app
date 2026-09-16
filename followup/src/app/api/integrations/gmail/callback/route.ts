@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin } from "@/lib/session";
 import { ensureGmailWatch, exchangeCodeForTokens } from "@/lib/integrations/gmail";
 import { recordAudit } from "@/lib/audit";
 
@@ -30,6 +30,11 @@ export async function GET(request: NextRequest) {
     res.cookies.delete("gmail_oauth_next");
     return res;
   };
+
+  // The connect route gates on admin; this end of the flow did not, so a
+  // member who set the state cookie themselves could complete a connection
+  // the start route would have refused (audit 2026-09-16, auth M-1).
+  if (!(await requireAdmin(ctx))) return fail("Only an admin can connect an inbox.");
 
   if (oauthError) return fail(oauthError);
   if (!code) return fail("No authorization code returned by Google.");

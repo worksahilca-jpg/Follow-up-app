@@ -81,12 +81,11 @@ export interface AutomationStatusLead {
   stage: PipelineStage;
   automationTier: AutomationTier;
   lastContacted: string; // ISO date — already coalesced with createdAt by the caller
+  // Each outbound carries Message.trigger, so "the instant ack is the only
+  // thing that has gone out" is readable here directly — no separate list
+  // of FollowUp triggers, which could not tell an owner's reply synced from
+  // Gmail (no FollowUp row) from nothing having gone out at all.
   conversation: Message[];
-  // FollowUp.trigger values for every FollowUp this lead has ever had,
-  // regardless of status — only used to tell "the instant-ack template is
-  // the only thing that's gone out" from "a real reply already went out,"
-  // same distinction findUnansweredLeads() draws in automation.ts.
-  followUpTriggers: string[];
   sequence: { name: string; active: boolean; dueAt: string | null } | null;
 }
 
@@ -112,7 +111,14 @@ export function computeAutomationStatus(
 
   if (lead.automationTier === "off") return { kind: "off" };
 
-  const last = mostRecentMessage(lead.conversation);
+  // The instant ack is transparent here exactly as in findUnansweredLeads():
+  // the judgment runs over everything except that boilerplate. Before this,
+  // a lead who wrote once and got the ack read "sent" on their own page
+  // while the engine (which had the same bug) never picked them up either
+  // — see Message.trigger in schema.prisma.
+  const isAck = (m: Message) => m.direction === "outbound" && m.trigger === "instant_ack";
+  const judged = lead.conversation.filter((m) => !isAck(m));
+  const last = mostRecentMessage(judged);
   const lastIsInbound = last?.direction === "inbound";
 
   // Priority order mirrors automation.ts's own merge: unanswered (the lead
@@ -123,19 +129,13 @@ export function computeAutomationStatus(
   let etaHours: number | null = null;
 
   if (lastIsInbound && rules.unansweredEnabled) {
-    // Both ways a substantive outbound reply can exist, matching
-    // findUnansweredLeads() in automation.ts exactly: a FollowUp row whose
-    // trigger isn't the instant-ack template, OR a directly-captured
-    // Instagram/Messenger echo, which captureDirectReply() records on the
-    // Message (source set) and never gives a FollowUp row at all. Checking
-    // only the first made this badge disagree with the automation that
-    // actually sends: an owner who replied in the Instagram app got the
-    // 3-hour first-reply threshold here instead of the business's real
-    // 24-hour window, so the lead read "Following up soon" ~21h before
-    // anything was going to happen.
-    const hasDirectEchoReply = lead.conversation.some((m) => m.direction === "outbound" && m.source);
-    const hasSubstantiveFollowUp = lead.followUpTriggers.some((t) => t !== "instant_ack");
-    const hasSubstantiveOutbound = hasDirectEchoReply || hasSubstantiveFollowUp;
+    // "Substantive" is any outbound that is not the ack — the same rule as
+    // findUnansweredLeads(), and it must stay the same rule, because this
+    // badge disagreeing with the engine has shipped twice now (once over an
+    // Instagram echo, once over the ack itself). It includes a Meta echo
+    // (source set) and an owner's reply synced from Gmail/Outlook (nothing
+    // set at all); only the ack is excluded.
+    const hasSubstantiveOutbound = lead.conversation.some((m) => m.direction === "outbound" && !isAck(m));
     // Shared with findUnansweredLeads() rather than recomputed, so the badge
     // cannot promise time that the engine is not going to give. That matters
     // more since the Meta ceiling landed: on an Instagram or Messenger lead

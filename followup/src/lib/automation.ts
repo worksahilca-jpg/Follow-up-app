@@ -219,10 +219,6 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
     },
     include: {
       conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } },
-      // Message itself carries no "was this the instant-ack" marker —
-      // that only lives on the separate FollowUp row sendFollowUpToLead()
-      // creates alongside every real send (see below).
-      followUps: { select: { trigger: true } },
     },
   });
   // The query finds "has an old-enough inbound"; only "the LAST message is
@@ -230,22 +226,29 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
   // gets" counts — if anyone has replied since, it's not neglected.
   return candidates.filter((lead) => {
     const all = lead.conversations.flatMap((c) => c.messages);
-    if (all.length === 0) return false;
-    const last = all.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
+    // The instant acknowledgement is boilerplate everyone gets, not a
+    // reply. For "did anyone answer this lead" it is transparent: the
+    // judgment runs over everything else. Before Message.trigger existed
+    // the ack was an ordinary outbound row, so a lead who wrote once and
+    // got the ack read as "answered" here and was never selected — the
+    // 3-hour first-reply rule and the 20-hour Meta ceiling only ever fired
+    // if the lead wrote a SECOND time (audit 2026-09-16, F2). The old
+    // FollowUp-row exclusion sat below the direction check that had
+    // already thrown the lead out, so it never got the chance to help.
+    const isAck = (m: { direction: string; trigger: string | null }) => m.direction === "outbound" && m.trigger === "instant_ack";
+    const judged = all.filter((m) => !isAck(m));
+    if (judged.length === 0) return false;
+    const last = judged.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
     if (last.direction !== "inbound") return false;
-    // A lead with no substantive outbound reply yet — not counting the
-    // instant-ack template, fixed boilerplate rather than a real reply —
-    // gets the shorter first-reply threshold; everyone already in a real
-    // back-and-forth keeps the business's normal unanswered-reply window.
-    // Two ways a "real reply" shows up: a FollowUp row (created by
-    // sendFollowUpToLead for every automated/manual send this app itself
-    // made) whose trigger isn't "instant_ack", or a directly-captured
-    // Instagram/Messenger echo (Message.source set — see captureDirectReply
-    // in instagram.ts, which never creates a FollowUp row at all, so it
-    // has to be checked on the Message itself).
-    const hasDirectEchoReply = all.some((m) => m.direction === "outbound" && m.source);
-    const hasSubstantiveFollowUp = lead.followUps.some((f) => f.trigger !== "instant_ack");
-    const hasSubstantiveOutbound = hasDirectEchoReply || hasSubstantiveFollowUp;
+    // A lead with no substantive outbound reply yet gets the shorter
+    // first-reply threshold; everyone already in a real back-and-forth
+    // keeps the business's normal unanswered-reply window. "Substantive"
+    // is any outbound that is not the ack. That deliberately includes an
+    // owner's reply synced from Gmail/Outlook — which has no FollowUp row,
+    // no `source` and no trigger — and a Meta echo (`source` set). "Has a
+    // FollowUp row" was never a safe test for that reason: a lead the owner
+    // answered from their mail app would have looked untouched.
+    const hasSubstantiveOutbound = all.some((m) => m.direction === "outbound" && !isAck(m));
     // Channel is read off the conversation `last` belongs to rather than via
     // detectAutomatedReplyChannel(), which would be a query per candidate
     // lead. That function's first and strongest rule is the channel the last

@@ -1,4 +1,4 @@
-import type { ErrorEvent } from "@sentry/core";
+import type { ErrorEvent, TransactionEvent } from "@sentry/core";
 
 /**
  * Shared `beforeSend` for every Sentry entry point (server, edge, client —
@@ -44,6 +44,30 @@ function redactSecretPaths(text: string): string {
   return text.replace(SECRET_PATH_RE, (match) => match.replace(/\/[^/]+$/, "/[redacted]"));
 }
 
+// The third shape a live secret takes on the way to Sentry: a NAMED query
+// parameter inside a URL that Sentry's own instrumentation recorded. Every
+// Graph API call this app makes puts the Meta token in the query string
+// (`?access_token=…`, and the app secret as `?client_secret=…` on the two
+// OAuth exchanges), and @sentry/node-core's outgoing-fetch breadcrumb keeps
+// the full query string under `data["http.query"]` by default —
+// node_modules/@sentry/node-core/build/cjs/utils/outgoingFetchRequest.js:152.
+// beforeSend below already walks breadcrumb data through scrubText, but
+// nothing in scrubText matched a token. Any error captured later in the
+// same request — a thrown OAuth exchange, an unhandled throw in a cron tick
+// after a DM send — shipped every preceding token and, for the exchanges,
+// the secret that signs our webhooks (audit 2026-09-16, Meta surface #1).
+//
+// Value-only, name-anchored: safe to run over arbitrary text, unlike
+// stripQueryString, because it only ever touches `name=value` where `name`
+// is one of these. `code` is the OAuth authorization code; `hub.verify_token`
+// is the webhook verification challenge.
+const SECRET_QUERY_PARAM_RE =
+  /([?&](?:access_token|client_secret|client_id|fb_exchange_token|code|secret|token|api_key|apikey|key|signature|hub\.verify_token)=)[^&\s"'<>]+/gi;
+
+function redactSecretQueryParams(text: string): string {
+  return text.replace(SECRET_QUERY_PARAM_RE, "$1[redacted]");
+}
+
 // The other shape a live secret leaks through this path: a query
 // parameter, not a path segment (GMAIL_PUSH_SECRET, passed as
 // `?secret=...` on the Gmail push webhook). Only applied to fields known
@@ -63,7 +87,9 @@ function stripQueryString(text: string): string {
 // applied everywhere free-form text could end up: the top-level message,
 // an exception's own message, breadcrumbs, and (below) extra/contexts.
 function scrubText(text: string): string {
-  return redactSecretPaths(scrubPii(text));
+  // Params first: a token is a long alphanumeric run the phone regex can
+  // partially eat, and a half-redacted token is still a token.
+  return redactSecretPaths(scrubPii(redactSecretQueryParams(text)));
 }
 
 function scrubIfString(value: unknown): unknown {
@@ -144,5 +170,31 @@ export function beforeSend(event: ErrorEvent): ErrorEvent | null {
     delete event.user.username;
   }
 
+  return event;
+}
+
+/**
+ * The same scrub for the 5%-sampled performance traces. A transaction
+ * event carries every span's `data` — including the outgoing-fetch span's
+ * own copy of the query string — and beforeSend never sees transactions,
+ * so the token-in-query leak closed above had a second, unguarded exit.
+ * Walks the same fields the SDK populates from a URL: span descriptions
+ * and data, the trace context's data, and the transaction name.
+ */
+export function beforeSendTransaction(event: TransactionEvent): TransactionEvent | null {
+  for (const span of event.spans ?? []) {
+    if (span.description) span.description = scrubText(span.description);
+    if (span.data) {
+      for (const key of Object.keys(span.data)) {
+        const value = span.data[key];
+        if (typeof value === "string") span.data[key] = scrubText(value);
+      }
+    }
+  }
+  const trace = event.contexts?.trace as { data?: Record<string, unknown> } | undefined;
+  if (trace?.data) {
+    for (const key of Object.keys(trace.data)) trace.data[key] = scrubIfString(trace.data[key]);
+  }
+  if (event.transaction) event.transaction = scrubText(event.transaction);
   return event;
 }

@@ -5,7 +5,7 @@
  * would ever actually be sent.
  */
 import { describe, it, expect } from "vitest";
-import { scrubPii, beforeSend } from "@/lib/sentryScrub";
+import { scrubPii, beforeSend, beforeSendTransaction } from "@/lib/sentryScrub";
 import type { ErrorEvent } from "@sentry/core";
 
 describe("scrubPii", () => {
@@ -134,5 +134,53 @@ describe("beforeSend", () => {
     const event = fakeEvent({ contexts: { runtime: { name: "node", version: "20.0.0" } } });
     const result = beforeSend(event)!;
     expect(result.contexts!.runtime).toEqual({ name: "node", version: "20.0.0" });
+  });
+});
+
+/**
+ * The third shape a secret takes on the way out (audit 2026-09-16, Meta
+ * surface #1): a named query parameter in a URL Sentry's own fetch
+ * instrumentation recorded. Every Graph call carries the Meta token as
+ * ?access_token=, the two OAuth exchanges carry the app secret as
+ * ?client_secret=, and @sentry/node-core keeps the query string in
+ * breadcrumb data["http.query"] by default. The scrub covered paths and
+ * PII; a token matched neither.
+ */
+describe("secrets in query parameters", () => {
+  it("redacts access_token and client_secret inside a breadcrumb's http.query", () => {
+    const event = fakeEvent({
+      breadcrumbs: [
+        { category: "fetch", data: { url: "https://graph.facebook.com/v21.0/oauth/access_token", "http.query": "?client_id=123&client_secret=fake-app-secret&code=AQxyz&redirect_uri=https%3A%2F%2Fx" } },
+        { category: "fetch", data: { "http.query": "?fields=id,name&access_token=EAAB-fake-token-for-this-test" } },
+      ],
+    });
+    const out = beforeSend(event)!;
+    expect(out.breadcrumbs![0].data!["http.query"]).toBe("?client_id=[redacted]&client_secret=[redacted]&code=[redacted]&redirect_uri=https%3A%2F%2Fx");
+    expect(out.breadcrumbs![1].data!["http.query"]).toBe("?fields=id,name&access_token=[redacted]");
+  });
+
+  it("redacts a token embedded in a message or exception string, not only structured data", () => {
+    const event = fakeEvent({ message: "GET https://graph.instagram.com/me/messages?access_token=IGQV-fake-token failed: 400" });
+    expect(beforeSend(event)!.message).toBe("GET https://graph.instagram.com/me/messages?access_token=[redacted] failed: 400");
+  });
+
+  it("leaves ordinary query strings alone — name-anchored, not a blanket strip", () => {
+    const event = fakeEvent({ breadcrumbs: [{ data: { "http.query": "?page=2&access=granted&tokens=3" } }] });
+    expect(beforeSend(event)!.breadcrumbs![0].data!["http.query"]).toBe("?page=2&access=granted&tokens=3");
+  });
+
+  it("scrubs the same fields on a sampled transaction, which beforeSend never sees", () => {
+    const tx = {
+      type: "transaction",
+      transaction: "GET /api/instagram/oauth/callback?code=AQabc",
+      contexts: { trace: { data: { "http.query": "?access_token=EAAB1" } } },
+      spans: [{ description: "GET https://graph.facebook.com/me?access_token=EAAB2", data: { "http.query": "?access_token=EAAB2", "http.method": "GET" } }],
+    } as unknown as Parameters<typeof beforeSendTransaction>[0];
+    const out = beforeSendTransaction(tx)!;
+    expect(out.transaction).toBe("GET /api/instagram/oauth/callback?code=[redacted]");
+    expect((out.contexts!.trace as { data: Record<string, unknown> }).data["http.query"]).toBe("?access_token=[redacted]");
+    expect(out.spans![0].description).toBe("GET https://graph.facebook.com/me?access_token=[redacted]");
+    expect(out.spans![0].data!["http.query"]).toBe("?access_token=[redacted]");
+    expect(out.spans![0].data!["http.method"]).toBe("GET");
   });
 });

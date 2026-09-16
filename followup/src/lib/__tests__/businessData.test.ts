@@ -8,6 +8,8 @@
  * the one thing meant to survive.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const callOrder: string[] = [];
 function trackedDeleteMany(name: string) {
@@ -50,6 +52,8 @@ vi.mock("@/lib/db", () => ({
     aIInsight: { deleteMany: trackedDeleteMany("aIInsight") },
     outboundSend: { deleteMany: trackedDeleteMany("outboundSend") },
     inboundWebhookEvent: { deleteMany: trackedDeleteMany("inboundWebhookEvent") },
+    suppression: { deleteMany: trackedDeleteMany("suppression") },
+    reactivationRun: { deleteMany: trackedDeleteMany("reactivationRun") },
     auditEvent: { findMany: vi.fn(async () => []) },
     $transaction: vi.fn(async (queries: Promise<unknown>[]) => Promise.all(queries)),
   },
@@ -162,5 +166,36 @@ describe("exportBusinessData", () => {
   it("keeps ordinary, non-secret business fields", async () => {
     const result = await exportBusinessData("biz1");
     expect(result?.business).toMatchObject({ id: "biz1", name: "Acme Realty" });
+  });
+});
+
+/**
+ * Reach (audit 2026-09-16, H-1). Suppression and ReactivationRun both
+ * reference Business with ON DELETE RESTRICT and were absent from the
+ * delete list, so any business holding one STOP or one reactivation run
+ * got a 500 from its own erasure — after Stripe had already been
+ * cancelled. The mocked tests above cannot see a missing table; this one
+ * reads the schema and fails on any Business relation the transaction
+ * does not clear, so the next table added with a businessId cannot repeat
+ * it silently.
+ */
+describe("erasure reaches every table that points at Business", () => {
+  it("deletes from every model with a businessId relation before deleting the business", async () => {
+    const schema = readFileSync(join(__dirname, "..", "..", "..", "prisma", "schema.prisma"), "utf8");
+    const models: string[] = [];
+    for (const block of schema.split(/^model /m).slice(1)) {
+      const name = block.split(/\s/)[0];
+      if (/@relation\(fields: \[businessId\]/.test(block)) models.push(name);
+    }
+    expect(models.length).toBeGreaterThanOrEqual(15);
+
+    callOrder.length = 0;
+    await deleteBusinessData("biz1", { userId: "u1", email: "a@b.com" });
+
+    const delegate = (m: string) => m.charAt(0).toLowerCase() + m.slice(1);
+    for (const model of models) {
+      expect(callOrder, `deleteBusinessData never clears ${model} (prisma.${delegate(model)}.deleteMany) — its FK would block the delete`).toContain(delegate(model));
+    }
+    expect(p.business.delete).toHaveBeenCalled();
   });
 });

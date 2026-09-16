@@ -615,6 +615,19 @@ model Message {
   externalId     String?      @unique // Gmail message id, for idempotent sync
   sentAt         DateTime     @default(now())
 
+  // What FollowUp sent this under — the same value as the FollowUp row
+  // written beside it (instant_ack | unanswered | silence | sequence |
+  // manual). Null for every inbound message and for any outbound FollowUp
+  // did not send itself: an owner's reply synced from Gmail/Outlook, a Meta
+  // echo (see `source` below). Exists so the one outbound that is NOT a
+  // reply — the instant acknowledgement, boilerplate sent to everyone — can
+  // be told apart from every outbound that is, without a join. Before this,
+  // findUnansweredLeads() saw the ack as "someone answered", so the 3-hour
+  // first-reply rule and the 20-hour Meta ceiling never fired for a lead
+  // who wrote once and got the ack (audit 2026-09-16, F2). Backfilled by
+  // matching FollowUp.message to Message.body per lead.
+  trigger        String?
+
   // Twilio delivery status for an outbound text/WhatsApp send — set from
   // Twilio's own MessageStatus callback (queued/sent/delivered/undelivered/
   // failed), not from the synchronous send response, which only confirms

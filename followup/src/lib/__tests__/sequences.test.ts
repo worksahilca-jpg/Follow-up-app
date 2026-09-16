@@ -105,7 +105,7 @@ describe("workflow stop-on-reply", () => {
     expect(send).not.toHaveBeenCalled();
     expect(p.lead.update).toHaveBeenCalledWith({
       where: { id: "lead1" },
-      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
     });
     expect(p.notification.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ userId: "user1", leadId: "lead1" }) })
@@ -188,7 +188,7 @@ describe("EMAIL step channel handling (task #86)", () => {
     await runSequencesForBusiness("biz1");
     expect(p.lead.update).toHaveBeenCalledWith({
       where: { id: "lead1" },
-      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
     });
   });
 
@@ -404,6 +404,7 @@ describe("risk-gated hold (a workflow step's draft isn't automatically safe)", (
         sequenceId: null,
         sequenceStepIndex: 0,
         sequenceStepDueAt: null,
+        sequenceStepScheduledAt: null,
         suggestedMessage: "draft",
         suggestedSubject: "Following up",
       },
@@ -760,5 +761,65 @@ describe("a queued retry advances the workflow step", () => {
     const r = await runSequencesForBusiness("biz1");
     expect(r.advanced).toBe(0);
     expect(r.skipped).toHaveLength(1);
+  });
+});
+
+/**
+ * Stop-on-reply means "replied since the workflow last acted" (audit
+ * 2026-09-16, F4). Before Lead.sequenceStepScheduledAt existed, any inbound
+ * being the newest message stopped the workflow — so a lead enrolled while
+ * their last message was already unanswered (every lead at the moment of
+ * capture) was cancelled at step 0 with a "replied mid-sequence" note,
+ * before a single step had run.
+ */
+describe("stop-on-reply only counts a reply since the step was scheduled", () => {
+  const H = 3_600_000;
+  function enrolledWithInbound(inboundHoursAgo: number, scheduledHoursAgo: number | null) {
+    const l: Record<string, unknown> = {
+      ...enrolled("outbound"),
+      sequenceStepScheduledAt: scheduledHoursAgo == null ? null : new Date(Date.now() - scheduledHoursAgo * H),
+      sequence: { id: "seq1", name: "New lead cadence", active: true, steps: [{ ...step, action: "EMAIL", delayHours: 0, delayDays: 0 }] },
+      conversations: [
+        {
+          channel: "email",
+          messages: [{ id: "m1", direction: "inbound", body: "Is it still available?", sentAt: new Date(Date.now() - inboundHoursAgo * H), opened: false }],
+        },
+      ],
+    };
+    return l;
+  }
+
+  it("runs step 0 for a lead enrolled AFTER their unanswered message — the capture case", async () => {
+    // Lead wrote 5h ago; enrolled 1h ago. That message is what the plan is for.
+    p.lead.findMany.mockResolvedValue([enrolledWithInbound(5, 1)]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.pausedForReply).toBe(0);
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("still stops when the lead writes AFTER the step was scheduled", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledWithInbound(0.5, 1)]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.pausedForReply).toBe(1);
+    expect(send).not.toHaveBeenCalled();
+    expect(p.lead.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ sequenceId: null, sequenceStepScheduledAt: null }) })
+    );
+  });
+
+  it("keeps the old rule for a row from before the column (null stamp): errs towards stopping", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledWithInbound(5, null)]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.pausedForReply).toBe(1);
+  });
+
+  it("stamps the schedule time on enrolment and again on every advance", async () => {
+    p.lead.findUnique.mockResolvedValue({ id: "lead1", businessId: "biz1", source: "CSV import", createdAt: new Date("2026-09-10T00:00:00Z") });
+    p.sequence.findUnique.mockResolvedValue({ id: "seq1", businessId: "biz1", steps: [{ id: "s1", order: 0, action: "EMAIL", messageHint: null, stageTo: null, delayHours: 3, delayDays: 0 }] });
+    p.business.findUnique.mockResolvedValue({ tier: "plus", timezone: "America/New_York" });
+    await enrollLead("lead1", "biz1", "seq1");
+    const enrol = p.lead.update.mock.calls[0][0].data;
+    expect(enrol.sequenceStepScheduledAt).toBeInstanceOf(Date);
+    expect(Math.abs(enrol.sequenceStepScheduledAt.getTime() - Date.now())).toBeLessThan(5_000);
   });
 });

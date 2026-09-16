@@ -456,6 +456,16 @@ model Lead {
   sequenceId          String?
   sequenceStepIndex   Int       @default(0)
   sequenceStepDueAt   DateTime?
+  // When the CURRENT step was scheduled — enrollment for step 0, the
+  // previous step's run for every later one. Stop-on-reply compares the
+  // lead's newest inbound against this: only a message that arrived AFTER
+  // the workflow last acted counts as "replied mid-sequence". Without it,
+  // enrolling any lead whose newest message was already inbound — every
+  // DM/SMS/email lead the moment they are captured — self-cancelled at
+  // step 0 with a "replied mid-sequence" note, before a single step ran
+  // (audit 2026-09-16, F4). Null on rows from before the column: those keep
+  // the old rule, which errs towards stopping.
+  sequenceStepScheduledAt DateTime?
   // Set once, in runSequencesForBusiness()'s "finished the last step"
   // branch — the only sequence exit path that gets a persisted timestamp.
   // Deliberately NOT set on early unenroll (manual, sequence deleted, or

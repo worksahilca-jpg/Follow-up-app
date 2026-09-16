@@ -184,6 +184,53 @@ describe("checkAckShape", () => {
   });
 });
 
+/**
+ * Never be cheerful at a STOP.
+ *
+ * An instant "thanks for reaching out, I'll get back to you shortly!" sent
+ * in reply to a message whose entire content is an opt-out keyword is an
+ * automated message answering a request for no more automated messages —
+ * the single worst moment this feature can fire, and the first thing a
+ * recipient would screenshot. The SMS webhook has always skipped it; the
+ * guarantee belongs here instead of in each caller, so a channel added
+ * later inherits it rather than having to remember.
+ */
+describe("an inbound message that is itself an opt-out", () => {
+  for (const word of ["stop", "STOP", "  Stop  ", "unsubscribe", "cancel", "quit"]) {
+    it(`sends nothing in reply to "${word.trim()}"`, async () => {
+      const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: word, inboundAt: new Date() });
+      expect(r.sent).toBe(false);
+      expect(send).not.toHaveBeenCalled();
+      expect(generateReply).not.toHaveBeenCalled();
+    });
+  }
+
+  // Not just "doesn't send" — doesn't spend the one acknowledgement this
+  // lead ever gets. Someone who says STOP and later says START should
+  // still get a real first reply.
+  it("does not claim acknowledgedAt, so a later real message is still acknowledged", async () => {
+    await acknowledgeNewLead("lead1", { channel: "instagram", inboundText: "stop", inboundAt: new Date() });
+    expect(p.lead.updateMany).not.toHaveBeenCalled();
+
+    const later = await acknowledgeNewLead("lead1", {
+      channel: "instagram",
+      inboundText: "Actually — start. Is the roof original?",
+      inboundAt: new Date(),
+    });
+    expect(later.sent).toBe(true);
+  });
+
+  it("acknowledges an ordinary sentence that merely contains the word", async () => {
+    const r = await acknowledgeNewLead("lead1", {
+      channel: "text",
+      inboundText: "can you stop by the office tomorrow?",
+      inboundAt: new Date(),
+    });
+    expect(r.sent).toBe(true);
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("instant acknowledgement", () => {
   it("sends the AI-generated reply once, on the channel the lead used, after a passing shape check and an ok risk verdict", async () => {
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: "Is the roof original?", inboundAt: new Date() });

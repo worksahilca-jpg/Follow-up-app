@@ -8,7 +8,10 @@ import { findOrCreateConversation } from "@/lib/conversations";
 // plain create keyed on Message.externalId that reports a unique-constraint
 // collision as "already recorded" instead of throwing.
 import { createInboundMessageIfNew } from "@/lib/instagram";
-import { findOrCreateLeadByPhone, isOptInMessage, isOptOutMessage } from "@/lib/twilio";
+import { findOrCreateLeadByPhone } from "@/lib/twilio";
+// One matcher for every channel — see src/lib/optOutKeywords.ts for why it
+// no longer lives in twilio.ts.
+import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 
 /**
  * Everything an inbound Twilio SMS/WhatsApp webhook does AFTER the payload

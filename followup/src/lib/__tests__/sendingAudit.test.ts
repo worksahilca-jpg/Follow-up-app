@@ -40,7 +40,12 @@ vi.mock("@/lib/facebook", () => ({ sendMessengerMessage: vi.fn(async () => ({ su
 vi.mock("@/lib/crm", () => ({ CRM_PROVIDERS: {}, isCrmProvider: vi.fn(() => false) }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 vi.mock("@/lib/sendCaps", () => ({ checkSendCap: vi.fn(async () => ({ allowed: true, used: 0, cap: 50 })) }));
-vi.mock("@/lib/suppression", () => ({
+// Only isSuppressed is stubbed — dmSuppressionKey stays REAL, so these
+// tests exercise the actual derivation of an IGSID/PSID from Lead.phone
+// that the send path depends on. A hand-written fake of it would prove
+// nothing about the value the guard looks up.
+vi.mock("@/lib/suppression", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/suppression")>()),
   isSuppressed: vi.fn(async () => false),
   unsubscribeFooter: () => "\n\n—\nDon't want automated follow-ups like this? https://app/api/unsubscribe?t=tok",
   unsubscribeHeaders: () => ["List-Unsubscribe: <https://app/api/unsubscribe?t=tok>", "List-Unsubscribe-Post: List-Unsubscribe=One-Click"],
@@ -49,6 +54,8 @@ vi.mock("@/lib/suppression", () => ({
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
+import { sendInstagramMessage } from "@/lib/instagram";
+import { sendMessengerMessage } from "@/lib/facebook";
 import { isSuppressed } from "@/lib/suppression";
 import { sendEmail } from "@/lib/integrations/gmail";
 import { sendFollowUpToLead } from "@/lib/sending";
@@ -59,6 +66,8 @@ const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
 const sms = sendSms as unknown as ReturnType<typeof vi.fn>;
 const whatsapp = sendWhatsApp as unknown as ReturnType<typeof vi.fn>;
 const suppressed = isSuppressed as unknown as ReturnType<typeof vi.fn>;
+const instagramSend = sendInstagramMessage as unknown as ReturnType<typeof vi.fn>;
+const messengerSend = sendMessengerMessage as unknown as ReturnType<typeof vi.fn>;
 const gmailSend = sendEmail as unknown as ReturnType<typeof vi.fn>;
 
 function lead(overrides: Record<string, unknown> = {}) {
@@ -85,6 +94,8 @@ beforeEach(() => {
   p.outboundSend.findFirst.mockResolvedValue(null);
   sms.mockResolvedValue({ success: true, sid: "s1" });
   whatsapp.mockResolvedValue({ success: true, sid: "w1" });
+  instagramSend.mockResolvedValue({ success: true });
+  messengerSend.mockResolvedValue({ success: true });
 });
 
 describe("sendFollowUpToLead — opt-out enforcement", () => {
@@ -122,6 +133,114 @@ describe("sendFollowUpToLead — opt-out enforcement", () => {
     const result = await sendFollowUpToLead("lead1", "Hey, still interested?", { channel: "text" });
     expect(result.success).toBe(true);
     expect(sms).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * The DM opt-out, which this funnel did not enforce at all.
+ *
+ * Instagram and Messenger are the channels this product is launching on,
+ * and a lead who DMed "stop" kept receiving automated follow-ups: the
+ * opt-out check here was scoped to text/whatsapp, and nothing on the Meta
+ * inbound path ever recorded consent in the first place. The business
+ * believed they were compliant because STOP works over SMS.
+ *
+ * The consent record is the Suppression table keyed on the platform user
+ * id, so what these tests pin is not just "it refuses" but WHAT IT LOOKS
+ * UP: the raw IGSID/PSID and the right channel. Looking up the wrong key
+ * is the same failure as not looking at all — it just fails silently, in
+ * the shape of a message going out.
+ */
+describe("sendFollowUpToLead — Instagram and Messenger opt-out", () => {
+  beforeEach(() => {
+    suppressed.mockResolvedValue(false);
+  });
+
+  it("refuses an Instagram DM to a lead who sent STOP, and looks it up by IGSID", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "ig:17841400000000001" }));
+    suppressed.mockResolvedValue(true);
+
+    const result = await sendFollowUpToLead("lead1", "Still interested?", { automated: true, trigger: "silence" });
+
+    expect(suppressed).toHaveBeenCalledWith("biz1", "17841400000000001", "instagram");
+    expect(result.success).toBe(false);
+    expect(result.failure).toBe("refused");
+    expect(result.message).toMatch(/STOP on Instagram/i);
+    expect(instagramSend).not.toHaveBeenCalled();
+    expect(p.message.create).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it("refuses a Messenger DM to a lead who sent STOP, and looks it up by PSID", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "fb:9988776655" }));
+    suppressed.mockResolvedValue(true);
+
+    const result = await sendFollowUpToLead("lead1", "Still interested?", { automated: true, trigger: "silence" });
+
+    expect(suppressed).toHaveBeenCalledWith("biz1", "9988776655", "messenger");
+    expect(result.success).toBe(false);
+    expect(result.message).toMatch(/STOP on Messenger/i);
+    expect(messengerSend).not.toHaveBeenCalled();
+  });
+
+  // A DM STOP is the same act as an SMS STOP: the person typed the word at
+  // the business. The email suppression deliberately still allows a human
+  // reply; this deliberately does not.
+  it("refuses a MANUAL DM too, not only automated ones", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "ig:17841400000000001" }));
+    suppressed.mockResolvedValue(true);
+
+    const result = await sendFollowUpToLead("lead1", "Hey, following up myself", { channel: "instagram" });
+
+    expect(result.success).toBe(false);
+    expect(instagramSend).not.toHaveBeenCalled();
+  });
+
+  it("sends the DM normally when they never opted out", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "ig:17841400000000001" }));
+
+    const result = await sendFollowUpToLead("lead1", "Still interested?", { automated: true, trigger: "silence" });
+
+    expect(result.success).toBe(true);
+    expect(instagramSend).toHaveBeenCalledTimes(1);
+  });
+
+  // Opting back in is undoing the row, so the same call that blocked the
+  // send must let it through again with nothing else changed.
+  it("sends again once the suppression is gone (they sent START)", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "fb:9988776655" }));
+    suppressed.mockResolvedValueOnce(true);
+    const blocked = await sendFollowUpToLead("lead1", "Still interested?", { channel: "messenger" });
+    expect(blocked.success).toBe(false);
+
+    suppressed.mockResolvedValue(false);
+    const allowed = await sendFollowUpToLead("lead1", "Still interested?", { channel: "messenger" });
+    expect(allowed.success).toBe(true);
+    expect(messengerSend).toHaveBeenCalledTimes(1);
+  });
+
+  // An opt-out on one platform is not an opt-out on the other: the ids are
+  // separate namespaces and can collide as strings, which is why the row
+  // carries a channel at all.
+  it("does not treat an Instagram opt-out as a Messenger one", async () => {
+    suppressed.mockImplementation(async (_b: string, _a: string, channel: string) => channel === "instagram");
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "fb:17841400000000001" }));
+
+    const result = await sendFollowUpToLead("lead1", "Still interested?", { channel: "messenger" });
+
+    expect(result.success).toBe(true);
+    expect(messengerSend).toHaveBeenCalledTimes(1);
+  });
+
+  // Email is a different address and a different mechanism; a DM STOP must
+  // not quietly become a blanket "never contact again."
+  it("still allows email to a lead who opted out of Instagram", async () => {
+    suppressed.mockImplementation(async (_b: string, _a: string, channel: string) => channel === "instagram");
+    p.lead.findUnique.mockResolvedValue(lead({ phone: "ig:17841400000000001" }));
+
+    const result = await sendFollowUpToLead("lead1", "Following up on your enquiry", { channel: "email" });
+
+    expect(result.success).toBe(true);
   });
 });
 

@@ -13,7 +13,7 @@
  */
 
 import { prisma } from "@/lib/db";
-import { isSuppressed } from "@/lib/suppression";
+import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
 import { checkSendCap } from "@/lib/sendCaps";
 import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
@@ -259,8 +259,8 @@ export async function sendFollowUpToLead(
     return { success: false, message: "This lead has no email or phone number on file.", failure: "refused" };
 
   // TCPA/CTIA opt-out — see Lead.optedOutAt and isOptOutMessage() in
-  // src/lib/twilio.ts. A hard stop, not a risk signal: applies to every
-  // caller (manual send, automation.ts, sequences.ts, acknowledge.ts —
+  // src/lib/optOutKeywords.ts. A hard stop, not a risk signal: applies to
+  // every caller (manual send, automation.ts, sequences.ts, acknowledge.ts —
   // this is the one funnel all of them send through) and is never
   // overridable from here. Scoped to text/whatsapp only — STOP is the
   // SMS-specific legal mechanism, not a "never contact this lead again."
@@ -268,6 +268,34 @@ export async function sendFollowUpToLead(
     return {
       success: false,
       message: "This lead texted STOP — SMS/WhatsApp sending is blocked until they text START to opt back in.",
+      failure: "refused",
+    };
+  }
+
+  // The same hard stop for Instagram and Messenger DMs, which had none at
+  // all until now: a lead could DM "stop" and keep receiving automated
+  // follow-ups on the two channels this product is being launched on.
+  //
+  // The consent record is the Suppression table rather than
+  // Lead.optedOutAt, keyed on the platform-scoped user id — see the
+  // argument in src/lib/suppression.ts. The short version: that row
+  // survives the Lead being deleted and re-created by the next DM, and
+  // Lead.optedOutAt is documented (schema.prisma) and queried
+  // (reactivation.ts, twilio.ts's missed-call claim) as the SMS/WhatsApp
+  // mechanism, so overloading it would change what those queries mean.
+  //
+  // Checked before the send-cap and the suppression checks below for the
+  // same reason the SMS one is: nothing may stand in front of an opt-out,
+  // and no caller may reach the provider without passing it. Unlike the
+  // email suppression further down, this blocks a MANUAL send too — a
+  // person who typed STOP at a business meant it, exactly as they would
+  // have over SMS.
+  const dmKey = channel === "instagram" || channel === "messenger" ? dmSuppressionKey(lead.phone) : null;
+  if (dmKey && (await isSuppressed(lead.businessId, dmKey.address, dmKey.channel))) {
+    const platform = dmKey.channel === "instagram" ? "Instagram" : "Messenger";
+    return {
+      success: false,
+      message: `This lead sent STOP on ${platform} — messages there are blocked until they send START to opt back in.`,
       failure: "refused",
     };
   }

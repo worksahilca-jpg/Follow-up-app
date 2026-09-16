@@ -270,20 +270,25 @@ enum ReactivationRunStatus {
  * cases and start mailing them again with no way for them to tell anyone.
  * Deliberately separate from Lead.optedOutAt, which is the SMS/WhatsApp
  * STOP mechanism (TCPA). Different law, different channel, different
- * lifecycle: a STOP can be undone by texting START, this can only be
- * cleared by the business owner in Settings.
+ * lifecycle: an email suppression can only be cleared by the business
+ * owner in Settings, while a DM suppression — the same STOP keyword,
+ * arriving over Instagram or Messenger — is cleared by the lead sending
+ * START, exactly as it would be over SMS.
  */
 model Suppression {
   id         String   @id @default(cuid())
   business   Business @relation(fields: [businessId], references: [id])
   businessId String
-  // "email" today. Left as a string rather than an enum so a future
-  // channel (a DM opt-out, which Instagram and Messenger still lack) needs
-  // no migration to the type.
+  // "email" | "instagram" | "messenger". Left as a string rather than an
+  // enum so a new channel needs no migration to the type — which is
+  // exactly what the two DM channels then needed: none.
   channel    String
   /// Normalised: trimmed and lowercased. See normaliseAddress().
+  /// For a DM this is the platform-scoped user id (IGSID / PSID) — the
+  /// only identifier those platforms give us, and the same one
+  /// src/lib/sending.ts addresses the message to.
   address    String
-  /// unsubscribe_link | one_click | manual | complaint
+  /// unsubscribe_link | one_click | manual | complaint | keyword
   reason     String
   createdAt  DateTime @default(now())
 
@@ -434,13 +439,16 @@ model Lead {
 
   // TCPA/CTIA consent: set the moment a lead texts STOP (or an equivalent
   // opt-out keyword) on SMS or WhatsApp — see isOptOutMessage() in
-  // src/lib/twilio.ts and the two inbound webhooks that call it. Every
+  // src/lib/optOutKeywords.ts and the inbound webhooks that call it. Every
   // send path funnels through sendFollowUpToLead() (src/lib/sending.ts),
   // which refuses to text/WhatsApp an opted-out lead regardless of which
   // caller asked (manual, automated, sequence) — this is a hard stop, not
   // a risk signal to weigh. A later START/UNSTOP clears it. Deliberately
   // does NOT block email/Instagram/Messenger sends — STOP is the SMS-
   // specific legal mechanism (TCPA), not a general "never contact again."
+  // Those channels have their own opt-out record in Suppression below
+  // (email: an unsubscribe click; Instagram/Messenger: the same STOP
+  // keyword, keyed on the platform user id so it outlives the Lead row).
   optedOutAt DateTime?
 
   // What classifyThreadOutcome() judged happened to this lead's

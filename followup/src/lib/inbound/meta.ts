@@ -2,9 +2,14 @@ import { prisma } from "@/lib/db";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
+import { recordAudit } from "@/lib/audit";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { fetchLeadgenLead, findOrCreateLeadByMessenger, upsertLeadFromLeadgen } from "@/lib/facebook";
 import { captureDirectReply, createInboundMessageIfNew, findOrCreateLeadByInstagram } from "@/lib/instagram";
+// The SAME matcher the SMS/WhatsApp webhook uses — one definition of "they
+// asked us to stop" for every channel. See src/lib/optOutKeywords.ts.
+import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
+import { suppress, unsuppress, type DmSuppressionChannel } from "@/lib/suppression";
 
 /**
  * What to record for one Meta message event, and what (if anything) the
@@ -52,6 +57,53 @@ export function messageContent(message: unknown): { body: string; ownWords: stri
   const unique = [...new Set(kinds)];
   const label = attachments.length > 1 ? `${attachments.length} ${unique.join("/")} attachments` : unique[0];
   return { body: `[Sent ${label} with no message text]`, ownWords: "" };
+}
+
+/**
+ * STOP / START in a DM, handled before anything else touches this lead.
+ *
+ * Instagram and Messenger had no opt-out at all: `isOptOutMessage` was
+ * called from exactly one place in the codebase, the Twilio webhook, so a
+ * lead who DMed "stop" kept receiving automated follow-ups while the
+ * business believed the product was honouring opt-outs because it does on
+ * SMS. That is the failure mode worth the most care — a silent one that
+ * looks like compliance.
+ *
+ * The consent record is the Suppression table keyed on (businessId,
+ * channel, platform user id), NOT Lead.optedOutAt — the full argument is in
+ * src/lib/suppression.ts, and the short version is that the row has to
+ * outlive the Lead. `senderId` is the IGSID/PSID straight off the webhook
+ * event, the same id src/lib/sending.ts derives from Lead.phone before
+ * sending, so the two agree by construction even if the Lead row is
+ * deleted and rebuilt by the next DM.
+ *
+ * Returns whether this message was a STOP, because the caller must then
+ * NOT acknowledge it (see src/lib/acknowledge.ts, which also refuses on its
+ * own — this is the belt, that's the braces).
+ */
+async function applyDmConsentKeyword(
+  businessId: string,
+  leadId: string,
+  channel: DmSuppressionChannel,
+  senderId: string,
+  ownWords: string
+): Promise<boolean> {
+  const optingOut = isOptOutMessage(ownWords);
+  const optingIn = isOptInMessage(ownWords);
+  if (!optingOut && !optingIn) return false;
+
+  if (optingOut) await suppress(businessId, senderId, "keyword", channel);
+  else await unsuppress(businessId, senderId, channel);
+
+  // Same audit actions the SMS path writes (src/lib/inbound/twilioMessage.ts),
+  // so the lead's trust panel tells the same story whichever channel the
+  // person used to say it. Identifiers only, never the message body.
+  void recordAudit({ businessId, userId: null }, optingOut ? "lead.opt_out" : "lead.opt_in", {
+    targetType: "lead",
+    targetId: leadId,
+    meta: { channel, via: "keyword" },
+  });
+  return optingOut;
 }
 
 /**
@@ -124,10 +176,17 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
       const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid);
       if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
 
-      // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
-      // `ownWords`, not `body`: an attachment-only DM must not get a
-      // generated reply to a placeholder FollowUp wrote itself (see messageContent).
-      await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: content.ownWords, inboundAt: new Date() });
+      // STOP/START first — nothing else may touch this lead before consent
+      // is recorded. `ownWords`, so an attachment whose placeholder body
+      // happened to read "stop" could never opt someone out.
+      const optedOut = await applyDmConsentKeyword(business.id, lead.id, "instagram", senderId, content.ownWords);
+
+      if (!optedOut) {
+        // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
+        // `ownWords`, not `body`: an attachment-only DM must not get a
+        // generated reply to a placeholder FollowUp wrote itself (see messageContent).
+        await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: content.ownWords, inboundAt: new Date() });
+      }
       await scoreAndDraftForLead(lead.id);
       await checkRapidEngagement(lead.id);
     }
@@ -174,8 +233,13 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid);
       if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
 
-      // `ownWords`, not `body` — see the matching comment on the Instagram path above.
-      await acknowledgeNewLead(lead.id, { channel: "messenger", inboundText: content.ownWords, inboundAt: new Date() });
+      // STOP/START before anything else — see the Instagram path above.
+      const optedOut = await applyDmConsentKeyword(business.id, lead.id, "messenger", senderId, content.ownWords);
+
+      if (!optedOut) {
+        // `ownWords`, not `body` — see the matching comment on the Instagram path above.
+        await acknowledgeNewLead(lead.id, { channel: "messenger", inboundText: content.ownWords, inboundAt: new Date() });
+      }
       await scoreAndDraftForLead(lead.id);
       await checkRapidEngagement(lead.id);
     }

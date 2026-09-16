@@ -3,6 +3,7 @@ import { generateInstantReply, assessAckRisk, localizeFixedText } from "@/lib/in
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
 import { checkAiEligibility } from "@/lib/billing";
+import { isOptOutMessage } from "@/lib/optOutKeywords";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -56,6 +57,7 @@ import { checkAiEligibility } from "@/lib/billing";
  *    the email thread already contains their reply);
  *  - never for a message older than STALE_AFTER_MS — a deep inbox pass
  *    finds months-old threads and must not "acknowledge" them;
+ *  - never in reply to a message that is itself an opt-out keyword;
  *  - never for a lead the owner set to OFF;
  *  - never when the business switch (Settings → Automation) is off;
  *  - only on a channel the lead wrote to us on (a web form is
@@ -270,6 +272,24 @@ export async function acknowledgeNewLead(
   }
 ): Promise<{ sent: boolean; reason?: string }> {
   try {
+    // Never be cheerful at a STOP.
+    //
+    // A message whose ENTIRE content is an opt-out keyword is the one
+    // moment an instant "thanks for reaching out, I'll get back to you
+    // shortly!" is actively harmful: it is an automated message sent in
+    // direct reply to someone asking for no more automated messages, and
+    // it is the first thing they'd screenshot. The SMS path has always
+    // skipped the ack for this (src/lib/inbound/twilioMessage.ts) and the
+    // DM path now does too; this check lives HERE as well so the guarantee
+    // belongs to the acknowledgement itself rather than to each caller
+    // remembering — including the email path, where "unsubscribe" as the
+    // whole body means exactly what it says.
+    //
+    // Before the acknowledgedAt claim, deliberately: a person who says
+    // STOP and later changes their mind with START should still get a real
+    // first reply, not a lead silently marked as already acknowledged.
+    if (isOptOutMessage(input.inboundText ?? "")) return { sent: false, reason: "opt-out message" };
+
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },
       select: {

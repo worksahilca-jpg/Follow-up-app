@@ -3,6 +3,43 @@
 Five people, one repo, `main` protected. This is the actual workflow — not aspirational, this
 is what's enforced.
 
+## Local setup
+
+You do not need any production credential to work on this repo, and you should never be given
+one. Config is not in the repo by design — `.env*` is gitignored — so you supply your own.
+
+```bash
+cd followup
+cp .env.local.example .env.local     # every value in it is fake and points at your own machine
+npm install
+npx prisma generate
+npx next typegen                     # generates .next/types that tsc needs; a fresh clone has none
+```
+
+That's it for writing code and running the checks. The test suite mocks Prisma entirely
+(`vi.mock("@/lib/db")` at the top of any test file), so it opens no database connection and
+needs no config at all — verified by deleting the env file and running the full gate.
+
+If you want to click through the app in a browser you need two more things, both your own:
+
+- **A database.** `docker run -d --name followup-db -e POSTGRES_PASSWORD=localdev -p 5432:5432
+  postgres:16`, then `npx prisma migrate dev`. `.env.local.example` already points at it.
+- **A Google OAuth client.** Sign-in is Google-only — no password login, no dev bypass
+  (`src/lib/auth.ts`) — so without one you cannot log in. Make your own free client in testing
+  mode; `.env.local.example` lists the two redirect URIs it needs. It is yours, not the
+  company's.
+
+Read the comments in `.env.local.example` before filling anything in. Each blank says what
+goes dark while it's blank, because a feature that's off for want of a key looks identical to
+a feature that's broken.
+
+**Two things that are never okay**, regardless of who asks:
+
+- Pointing `DATABASE_URL` at production. `prisma migrate dev` and `prisma db push` rewrite the
+  schema of whatever they're aimed at, on live customer data, with no undo.
+- Running `npm run build`. That script runs `prisma migrate deploy` first, against whatever
+  `DATABASE_URL` is set. Use `npx next build`.
+
 ## Branching
 
 - Never work directly on `main`. It's protected: pull request required, 1 approval required, CI

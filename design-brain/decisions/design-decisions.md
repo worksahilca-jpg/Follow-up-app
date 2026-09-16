@@ -1709,3 +1709,66 @@ the *offer*, not the capability.
 A test asserts the flag's effect against the real source — including that the
 code is still present — so re-enabling is one boolean and nobody has to
 rediscover where the pieces went.
+
+---
+
+## 2026-09-16 — WhatsApp gets its own setup panel; the carrier split, in the UI
+
+Extends the 2026-09-15 entry above, which is where the reasoning for dropping
+the carrier channels lives. Two things changed since it was written: the flag
+is now `CARRIER_CHANNELS_AVAILABLE` (not `PHONE_CHANNELS_AVAILABLE`) with
+`META_CHANNELS_AVAILABLE` beside it, and WhatsApp is explicitly **not** behind
+it — it rides the same Twilio account but gates on Meta's review of the
+business, the same review Instagram and Messenger already need.
+
+**The defect that followed from the rename.** Hiding the offer hid the setup.
+WhatsApp was configured from inside the "Phone (SMS + calls)" panel, so when
+that section went behind the flag, a channel the product still sells had no way
+to be connected at all. That is a worse version of the landing-page failure the
+2026-09-15 entry warned about: there, a visitor read a promise; here, a paying
+customer read the promise, signed up, and found no switch.
+
+**The shape of the fix.** `TwilioConfig` keeps SMS, voice, the number
+auto-configuration and the voice-agent toggle, and stays behind the flag.
+A new `WhatsAppConfig` carries the inbound URL, the Twilio credentials, the
+WhatsApp sender number and the 24-hour template, and renders unconditionally
+in Settings › Channels, next to Instagram and Messenger.
+
+Not a flag inside the old panel, because the two setups are different jobs, not
+one job with a filter on it:
+
+- the Auth Token is **required** for WhatsApp (`sendWhatsApp` refuses without
+  it) and was merely recommended for SMS, where it only verified signatures;
+- the number is the *sender's* number, which is not always the voice/SMS one;
+- the wait is Meta's review, not a carrier's registration.
+
+The three credential fields are duplicated across the two panels on purpose.
+They are the same two database columns and the same endpoint; whichever panel a
+business saves from, the other reads back as saved. A shared sub-component would
+have coupled a live channel's UI to a switched-off one for no user-visible gain.
+
+**Copy rule applied, and worth restating:** *don't apologise for an absent
+feature — just don't mention it.* The WhatsApp panel never says why SMS isn't
+there, never writes "A2P", and never uses the words text, call or voicemail.
+It names only the two things the owner has to go and do. A settings screen that
+explains what it no longer offers teaches the owner to wonder what else is gone.
+
+**Small UX repairs carried in the split**, all inherited defects rather than new
+ideas: one Save for the three credentials instead of three separate saves that
+each claimed success while the channel still could not send; a visible failure
+path (the old panel silently swallowed every save error except the voice one);
+real `<label>`s instead of placeholder-only fields; and the primary button moved
+out of the inline row it shared with "How does this work?", where it read as
+part of the sentence.
+
+**Deliberately not done.** The route (`/api/twilio/config`) got no new guard.
+Its existing refusal — no voice agent without the Voice add-on — is the gate
+that matters, and it stays. Gating the endpoint on `CARRIER_CHANNELS_AVAILABLE`
+would turn a hidden offer into a removed capability and break the businesses the
+2026-09-15 decision explicitly protected.
+
+**Known weakness, recorded rather than hidden:** the panel is still the old
+bordered-card surface (`rounded-xl border border-line bg-card`) that A-006
+retires, because every one of its neighbours in Settings › Channels is too.
+Moving one panel to the shadow-box surface would have made it the odd one out.
+The whole Channels tab should move together, as its own piece of work.

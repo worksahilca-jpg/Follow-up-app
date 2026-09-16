@@ -8,6 +8,7 @@ import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
+import WhatsAppConfig from "@/components/WhatsAppConfig";
 import InstagramConfig from "@/components/InstagramConfig";
 import FacebookConfig from "@/components/FacebookConfig";
 import CrmConfig from "@/components/CrmConfig";
@@ -796,12 +797,17 @@ function SettingsPageInner() {
       </section>
 
       {/* Carrier channels are dropped for now (CARRIER_CHANNELS_AVAILABLE,
-          @/lib/pricing). WhatsApp is NOT dropped and still needs its setup —
-          see the note in that section; splitting this panel is separate work.
-          The section is hidden rather than removed: the Twilio routes stay
-          live, so a business that already configured a number keeps working
-          instead of having it go dark without warning. What is switched off
-          is the offer to set one up. */}
+          @/lib/pricing). The section is hidden rather than removed: the
+          Twilio routes stay live, so a business that already configured a
+          number keeps working instead of having it go dark without warning.
+          What is switched off is the offer to set one up.
+
+          WhatsApp used to be configured inside this same panel and is NOT
+          behind this flag — it rides the same Twilio account but gates on
+          Meta's approval, not a carrier's (META_CHANNELS_AVAILABLE). It has
+          its own section below, which must stay reachable whatever this
+          flag says; that is what src/lib/__tests__/channelAvailability.test.ts
+          asserts. */}
       {CARRIER_CHANNELS_AVAILABLE && (
         <section id="phone" className="scroll-mt-16">
           <h2 className="font-display text-xl">Phone (SMS + calls)</h2>
@@ -810,6 +816,15 @@ function SettingsPageInner() {
           </div>
         </section>
       )}
+
+      {/* The three Meta channels sit together, in the order a business is
+          most likely to already have them. */}
+      <section id="whatsapp" className="scroll-mt-16">
+        <h2 className="font-display text-xl">WhatsApp</h2>
+        <div className="mt-4">
+          <WhatsAppConfig />
+        </div>
+      </section>
 
       <section id="social" className="scroll-mt-16">
         <h2 className="font-display text-xl">Instagram &amp; Facebook</h2>
@@ -934,7 +949,7 @@ function SettingsPageInner() {
             <div>
               <p className="font-medium text-sm">Instant reply to new leads</p>
               <p className="text-xs text-ink-soft mt-1">
-                Within a minute of a new lead&apos;s first message — email, text, WhatsApp, or Instagram — FollowUp
+                Within a minute of a new lead&apos;s first message — email, WhatsApp, Instagram or Messenger — FollowUp
                 sends a short &ldquo;thanks, we got your message, I&apos;ll get back to you shortly,&rdquo; in the language
                 they wrote in. <strong>Our promise:</strong> it&apos;s a fixed sentence, not an AI reply — it never
                 states a fact about your business, never answers a question, goes out once per lead only, and never
@@ -1159,7 +1174,7 @@ function SettingsPageInner() {
                     {tier === "free"
                       ? "Email + web widget, 20 leads/mo, assisted only. No card needed — this is where you are now."
                       : tier === "plus"
-                      ? "Every channel (SMS, WhatsApp, Instagram, CRM sync) plus autonomous send. 14-day free trial."
+                      ? "Every channel (WhatsApp, Instagram, Messenger, CRM sync) plus autonomous send. 14-day free trial."
                       : "Everything in Plus, no lead cap, multi-agent lead routing, priority support. 14-day free trial."}
                   </p>
                   {tier === "free" && billingLoaded && (

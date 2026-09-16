@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin } from "@/lib/session";
 import { exchangeOutlookAuthCode } from "@/lib/integrations/outlook";
 import { recordAudit } from "@/lib/audit";
 
@@ -30,6 +30,10 @@ export async function GET(request: NextRequest) {
     res.cookies.delete("outlook_oauth_next");
     return res;
   };
+
+  // Mirrors the Gmail callback: the connect route gates on admin, so this
+  // end must too (audit 2026-09-16, auth M-1).
+  if (!(await requireAdmin(ctx))) return fail("Only an admin can connect an inbox.");
 
   if (oauthError) return fail(oauthError);
   if (!code) return fail("No authorization code returned by Microsoft.");

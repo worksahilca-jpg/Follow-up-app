@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { appUrl } from "@/lib/stripe";
 import { exchangeInstagramAuthCode, resolveInstagramUserId } from "@/lib/instagram";
@@ -23,6 +23,13 @@ export async function GET(request: NextRequest) {
     res.cookies.delete("ig_oauth_state");
     return res;
   };
+
+  // The start route gates on admin; this end of the flow did not. A member
+  // could set the ig_oauth_state cookie in their own devtools, open the
+  // authorize URL with the public app id, and land here to overwrite the
+  // business's Instagram connection with their own account (audit
+  // 2026-09-16, Meta surface #2). Same shape as the Facebook callback.
+  if (!(await requireAdmin(ctx))) return fail("Only an admin can connect Instagram.");
 
   if (oauthError) return fail(oauthError);
   if (!code) return fail("No authorization code returned by Instagram.");

@@ -12,7 +12,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const ctx = { userId: "u1", businessId: "b1", email: "owner@example.com", authTime: Date.now() };
-const { getSessionContext } = vi.hoisted(() => ({ getSessionContext: vi.fn(async () => ctx) }));
+const { getSessionContext, requireAdmin } = vi.hoisted(() => ({
+  getSessionContext: vi.fn(async () => ctx),
+  // Admin by default so every CSRF case below is unchanged; the admin-gate
+  // block flips it.
+  requireAdmin: vi.fn(async () => true),
+}));
 const { exchangeCodeForTokens, ensureGmailWatch } = vi.hoisted(() => ({
   exchangeCodeForTokens: vi.fn(async () => ({ email: "owner@gmail.com" })),
   ensureGmailWatch: vi.fn(async () => null),
@@ -22,7 +27,7 @@ const { exchangeOutlookAuthCode } = vi.hoisted(() => ({
 }));
 const { recordAudit } = vi.hoisted(() => ({ recordAudit: vi.fn() }));
 
-vi.mock("@/lib/session", () => ({ getSessionContext }));
+vi.mock("@/lib/session", () => ({ getSessionContext, requireAdmin }));
 vi.mock("@/lib/integrations/gmail", () => ({ exchangeCodeForTokens, ensureGmailWatch }));
 vi.mock("@/lib/integrations/outlook", () => ({ exchangeOutlookAuthCode }));
 vi.mock("@/lib/audit", () => ({ recordAudit }));
@@ -38,6 +43,7 @@ beforeEach(() => {
   exchangeCodeForTokens.mockClear();
   exchangeOutlookAuthCode.mockClear();
   recordAudit.mockClear();
+  requireAdmin.mockReset().mockResolvedValue(true);
 });
 
 describe.each([
@@ -79,5 +85,31 @@ describe.each([
     const res = await callback(req(`${base}?code=abc123&state=wrong`, `${stateCookie}=real-token`));
     const setCookie = res.headers.get("set-cookie") ?? "";
     expect(setCookie).toContain(`${stateCookie}=`);
+  });
+});
+
+/**
+ * Both connect routes gate on admin; the callbacks did not (audit
+ * 2026-09-16, auth M-1). A member who set the state cookie themselves and
+ * opened the provider's authorize URL landed here with a valid state and
+ * completed a connection the start route would have refused.
+ */
+describe.each([
+  { name: "Gmail", callback: gmailCallback, exchange: exchangeCodeForTokens, path: "gmail", stateCookie: "gmail_oauth_state" },
+  { name: "Outlook", callback: outlookCallback, exchange: exchangeOutlookAuthCode, path: "outlook", stateCookie: "outlook_oauth_state" },
+])("$name OAuth callback admin gate", ({ callback, exchange, path, stateCookie }) => {
+  const base = `https://followupbase.io/api/integrations/${path}/callback`;
+
+  it("refuses a non-admin before the code is ever exchanged, even with a perfect state", async () => {
+    requireAdmin.mockResolvedValue(false);
+    const res = await callback(req(`${base}?code=abc123&state=real-token`, `${stateCookie}=real-token`));
+    expect(res.headers.get("location")).toContain(`${path}=error`);
+    expect(exchange).not.toHaveBeenCalled();
+  });
+
+  it("checks the role against the session, not a client-supplied claim", async () => {
+    requireAdmin.mockResolvedValue(false);
+    await callback(req(`${base}?code=abc123&state=real-token`, `${stateCookie}=real-token`));
+    expect(requireAdmin).toHaveBeenCalledWith(ctx);
   });
 });

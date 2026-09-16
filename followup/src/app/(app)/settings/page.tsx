@@ -953,9 +953,12 @@ function SettingsPageInner() {
                 message, I&apos;ll get back to you shortly,&rdquo; in the language they wrote in. On WhatsApp, Instagram
                 and Messenger it waits two to three minutes first, so you get the chance to answer the message yourself
                 — reply in that time and FollowUp stays quiet. If it does reply, it tells you what it sent.{" "}
-                <strong>Our promise:</strong> it&apos;s a fixed sentence, not an AI reply — it never
-                states a fact about your business, never answers a question, goes out once per lead only, and never
-                goes out if you&apos;ve already replied. Your real reply still comes from you.
+                <strong>Our promise:</strong> it&apos;s written for that specific message, so it reads like you
+                rather than a template &mdash; but it is checked twice before it goes out, and it never states a fact
+                about your business. It cannot quote a price, a date, a time or a number the lead didn&apos;t write
+                themselves, and it cannot answer their question. If either check has any doubt, it falls back to a
+                fixed, always-safe line instead. It goes out once per lead only, never if you&apos;ve already replied,
+                and never to someone who asked us to stop. Your real answer still comes from you.
               </p>
             </div>
             <button

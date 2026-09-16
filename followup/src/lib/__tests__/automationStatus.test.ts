@@ -169,3 +169,54 @@ describe("computeAutomationStatus", () => {
     expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "sent" });
   });
 });
+
+/**
+ * The badge and the engine must agree about Meta's 24-hour window.
+ *
+ * This file's own header says a wrong answer here is "a lie on the lead's
+ * own page". The Meta ceiling (UNANSWERED_META_DM_MAX_HOURS) made that a
+ * live risk again: it shortens the wait on Instagram and Messenger below
+ * whatever the business configured, so a badge still counting down from 24
+ * would tell the owner "Following up in 3h" about a lead the next hourly
+ * tick is going to send. Both sides now call effectiveUnansweredHours().
+ */
+describe("the unanswered badge against Meta's window ceiling", () => {
+  function dmMsg(direction: "inbound" | "outbound", hoursAgo: number, channel: Message["channel"]): Message {
+    return { id: `m-${direction}-${hoursAgo}`, direction, channel, body: "x", date: new Date(NOW.getTime() - hoursAgo * 3_600_000).toISOString() };
+  }
+
+  /** A lead in a real back-and-forth, so it's on the long window, last word theirs. */
+  function dmLead(hoursAgo: number, channel: Message["channel"]) {
+    return lead({
+      conversation: [dmMsg("outbound", hoursAgo + 5, channel), dmMsg("inbound", hoursAgo, channel)],
+      followUpTriggers: ["manual"],
+      lastContacted: new Date(NOW.getTime() - (hoursAgo + 5) * 3_600_000).toISOString(),
+    });
+  }
+
+  it("reads an Instagram lead at 21 hours as due, not as three hours away", () => {
+    // The exact lie this guards against: at 24h the badge said "in 3h"
+    // while the engine was about to send — and Meta was about to refuse.
+    expect(computeAutomationStatus(dmLead(21, "instagram"), RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+  });
+
+  it("reads a Messenger lead at 21 hours as due", () => {
+    expect(computeAutomationStatus(dmLead(21, "messenger"), RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+  });
+
+  it("leaves an email lead at 21 hours still counting down, as the owner configured", () => {
+    const status = computeAutomationStatus(dmLead(21, "email"), RULES, NOW);
+    expect(status.kind).not.toBe("due_soon");
+  });
+
+  it("holds the ceiling against a business that configured 72 hours", () => {
+    const slow: BusinessAutomationRules = { ...RULES, unansweredHours: 72 };
+    expect(computeAutomationStatus(dmLead(21, "instagram"), slow, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+    // …and the same lead on email genuinely does have days to go.
+    expect(computeAutomationStatus(dmLead(21, "email"), slow, NOW).kind).not.toBe("due_soon");
+  });
+
+  it("still counts down on an Instagram lead at 19 hours", () => {
+    expect(computeAutomationStatus(dmLead(19, "instagram"), RULES, NOW).kind).not.toBe("due_soon");
+  });
+});

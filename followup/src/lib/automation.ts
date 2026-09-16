@@ -56,6 +56,72 @@ export const UNANSWERED_DEFAULT_HOURS = 24;
 // fixed safety net rather than another setting to tune.
 export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 
+/**
+ * Meta's messaging window: 24 hours from the lead's last INBOUND message,
+ * on Instagram and Messenger. Past it the Send API refuses, and unlike
+ * WhatsApp there is no approved-template escape on those two channels —
+ * see research/product/2026-09-16-meta-window-close-what-shipped-products-do.md
+ * §1 and §5.1, and research/integrations/2026-09-16-meta-channels-production-audit.md §3a.
+ *
+ * The collision this fixes: the window is measured from the lead's last
+ * inbound message, and so is the unanswered rule. They start the same
+ * instant. With the 24-hour default and an hourly cron, the send is
+ * attempted somewhere in [24h, 25h) — i.e. AFTER the window shut, every
+ * time, with no variance to hope for. FollowUp's most human-sounding
+ * safety net ("Reply for me when I haven't") was calibrated to miss by
+ * roughly an hour, permanently, on two of the three channels the product
+ * now leads with.
+ *
+ * Four hours of headroom rather than one: the cron is hourly, a send can
+ * be held for approval and re-attempted, and the drafting call itself
+ * takes time. One hour of margin would put the retry back outside.
+ *
+ * A CAP, not a default. UNANSWERED_DEFAULT_HOURS is only the fallback —
+ * the real value is Automation.triggerHours, which the business sets. A
+ * business that chose 48 or 72 hours was not choosing a slower cadence on
+ * Instagram; it was choosing one that never arrives. So this ceiling
+ * applies whatever they configured, and is deliberately invisible to
+ * them: there is no honest way to offer "follow up after 3 days on
+ * Instagram" as a working option, because it isn't one.
+ *
+ * NOT applied to WhatsApp, deliberately. It has the same 24-hour window
+ * but does have approved templates as a sanctioned way through, and
+ * sendWhatsApp already retries as a template on error 63016. Capping it
+ * here would pre-empt a path that is supposed to work. (That path has its
+ * own doubt — the audit flags that 63016 may arrive asynchronously — but
+ * that is a separate bug with a separate fix, not something to paper over
+ * by changing when we send.)
+ */
+export const META_DM_WINDOW_HOURS = 24;
+export const UNANSWERED_META_DM_MAX_HOURS = 20;
+
+/** The channels this ceiling applies to — those with no way through a shut window. */
+const META_DM_CHANNELS = new Set(["instagram", "messenger"]);
+
+/**
+ * How long this particular lead waits before the unanswered rule fires, in
+ * hours. The one place that decision is made.
+ *
+ * A shared function rather than a shared constant because the rule now has
+ * three inputs, and automationStatus.ts has to reach the same answer: it
+ * renders the "Following up in Nh" badge, and its own header exists because
+ * that badge silently disagreeing with the engine was already shipped once.
+ * A ceiling applied in only one of the two would recreate exactly that bug —
+ * the badge promising three more hours on a lead the cron is about to send.
+ */
+export function effectiveUnansweredHours(
+  configuredHours: number,
+  hasSubstantiveOutbound: boolean,
+  channel: string | null | undefined
+): number {
+  // No substantive reply yet → the short first-reply safety net, which at 3
+  // hours is already far inside any window and is never lengthened by the
+  // ceiling below.
+  const base = hasSubstantiveOutbound ? configuredHours : UNANSWERED_FIRST_REPLY_HOURS;
+  if (channel && META_DM_CHANNELS.has(channel)) return Math.min(base, UNANSWERED_META_DM_MAX_HOURS);
+  return base;
+}
+
 export const DEAD_LEAD_ACTION = "dead_lead_reactivation";
 export const DEAD_LEAD_NAME = "Reactivate cold leads";
 // research/product/2026-09-09-followup-cadence-best-practices.md, §3: a
@@ -159,8 +225,11 @@ export function deadLeadMessageHint(daysSinceContact: number): string {
  * owner is told either way (a held draft is a reply waiting for one click).
  */
 async function findUnansweredLeads(businessId: string, hours: number, recheckCutoff: Date) {
-  const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000);
-  const firstReplyCutoff = new Date(Date.now() - UNANSWERED_FIRST_REPLY_HOURS * 60 * 60 * 1000);
+  // Captured once so every lead in the batch is judged against the same
+  // instant rather than a clock that moves as the filter runs.
+  const nowMs = Date.now();
+  const cutoff = new Date(nowMs - hours * 60 * 60 * 1000);
+  const firstReplyCutoff = new Date(nowMs - UNANSWERED_FIRST_REPLY_HOURS * 60 * 60 * 1000);
   // The DB-level filter has to be broad enough to catch both cases the
   // per-lead check below distinguishes — an established conversation
   // silent past the full `hours` window, and a lead's still-unanswered
@@ -168,6 +237,10 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
   // window — so it uses whichever cutoff is more recent (further hours
   // means a smaller/older Date, so the later Date is the broader filter,
   // catching more candidates than either threshold alone would).
+  // The Meta ceiling (effectiveUnansweredHours) needs no widening here: it
+  // only ever SHORTENS a wait, and this filter is already at least as broad
+  // as the 3-hour first-reply cutoff, which catches everything a 20-hour
+  // threshold could.
   const queryCutoff = firstReplyCutoff > cutoff ? firstReplyCutoff : cutoff;
   const candidates = await prisma.lead.findMany({
     where: {
@@ -206,8 +279,15 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
     const hasDirectEchoReply = all.some((m) => m.direction === "outbound" && m.source);
     const hasSubstantiveFollowUp = lead.followUps.some((f) => f.trigger !== "instant_ack");
     const hasSubstantiveOutbound = hasDirectEchoReply || hasSubstantiveFollowUp;
-    const effectiveCutoff = hasSubstantiveOutbound ? cutoff : firstReplyCutoff;
-    return last.sentAt <= effectiveCutoff;
+    // Channel is read off the conversation `last` belongs to rather than via
+    // detectAutomatedReplyChannel(), which would be a query per candidate
+    // lead. That function's first and strongest rule is the channel the last
+    // inbound arrived on, which is exactly this value. Where the two could
+    // diverge it resolves to email, which has no window — so the worst case
+    // is a send four hours early on a channel that did not need it.
+    const lastChannel = lead.conversations.find((c) => c.messages.some((m) => m.id === last.id))?.channel;
+    const thresholdHours = effectiveUnansweredHours(hours, hasSubstantiveOutbound, lastChannel);
+    return last.sentAt <= new Date(nowMs - thresholdHours * 60 * 60 * 1000);
   });
 }
 

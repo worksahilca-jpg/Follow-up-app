@@ -5,9 +5,20 @@ import { applySourceRouting } from "@/lib/sourceRouting";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { instagramLeadId } from "@/lib/instagramId";
 import { recordAuthFailure } from "@/lib/monitoring";
+import { quickRepliesForGraph, validateQuickReplies, type QuickReply } from "@/lib/quickReplies";
+import { readMetaError, type MetaSendResult } from "@/lib/metaGraph";
 import type { Lead } from "@prisma/client";
 
-const GRAPH_API = "https://graph.instagram.com";
+// Pinned, like src/lib/facebook.ts. An unversioned Graph call is "converted
+// to the oldest available version an app can access" (Meta's FAQ), so
+// every send used to run on whatever that happened to be, silently.
+// v21.0 is usable until 2027-01-21 (research/integrations/2026-09-16-meta-
+// human-agent-and-quick-replies-api-facts.md §C); bump both files together.
+const GRAPH_VERSION = "v21.0";
+const GRAPH_API = `https://graph.instagram.com/${GRAPH_VERSION}`;
+// The long-lived token exchange is documented unversioned
+// (graph.instagram.com/access_token) and was working that way; left alone.
+const GRAPH_OAUTH = "https://graph.instagram.com";
 
 /**
  * Instagram DM capture via the Instagram Graph API (Meta Developer App
@@ -98,38 +109,48 @@ export async function resolveInstagramUserId(accessToken: string): Promise<{ id:
   return data?.id ? { id: data.id, username: data.username } : null;
 }
 
-/** Sends a real Instagram DM reply via the Graph API's Messenger-style /me/messages endpoint. */
+/**
+ * Sends a real Instagram DM via the Graph API's /{IG_USER_ID}/messages
+ * endpoint (the documented path; /me/messages is the fallback for a
+ * business connected before instagramUserId was stored).
+ *
+ * `quickReplies` are the reply chips under the message — see
+ * src/lib/quickReplies.ts for why they exist and what Meta allows. They
+ * render in the Instagram app only, never on desktop, so nothing
+ * owner-facing may promise the lead "will see buttons". Validated here at
+ * the boundary so a bad set is a plain refusal rather than a Graph 400.
+ *
+ * `status` is Meta's own HTTP status on a failure — src/lib/sending.ts
+ * needs it to tell a Graph 500 (worth retrying) from a permanently closed
+ * messaging window (not).
+ */
 export async function sendInstagramMessage(
   businessId: string,
   recipientId: string,
-  text: string
-  // `status` is Meta's own HTTP status on a failure — src/lib/sending.ts
-  // needs it to tell a Graph 500 (worth retrying) from a permanently closed
-  // messaging window (not).
-): Promise<{ success: boolean; message?: string; status?: number }> {
+  text: string,
+  options: { quickReplies?: QuickReply[] } = {}
+): Promise<MetaSendResult> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { instagramAccessToken: true },
+    select: { instagramAccessToken: true, instagramUserId: true },
   });
   if (!business?.instagramAccessToken) {
     return { success: false, message: "Instagram isn't connected yet — check Settings → Instagram." };
   }
+  const checked = validateQuickReplies(options.quickReplies);
+  if (!checked.ok) return { success: false, message: checked.reason };
 
-  const res = await fetch(`${GRAPH_API}/me/messages?access_token=${encodeURIComponent(business.instagramAccessToken)}`, {
+  const message: Record<string, unknown> = { text };
+  if (checked.quickReplies) message.quick_replies = quickRepliesForGraph(checked.quickReplies);
+
+  const path = business.instagramUserId ? `/${encodeURIComponent(business.instagramUserId)}/messages` : "/me/messages";
+  const res = await fetch(`${GRAPH_API}${path}?access_token=${encodeURIComponent(business.instagramAccessToken)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipient: { id: recipientId }, message: { text } }),
+    body: JSON.stringify({ recipient: { id: recipientId }, message }),
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    const message = data?.error?.message;
-    return {
-      success: false,
-      message: typeof message === "string" ? message : "Instagram rejected this message.",
-      status: res.status,
-    };
-  }
+  if (!res.ok) return readMetaError(res, "Instagram rejected this message.", "Instagram");
   return { success: true };
 }
 
@@ -248,10 +269,18 @@ export async function captureDirectReply(
  * false means the caller should skip the rest of this event (ack/scoring
  * already ran the first time).
  */
-export async function createInboundMessageIfNew(conversationId: string, body: string, sentAt: Date, externalId?: string): Promise<boolean> {
+export async function createInboundMessageIfNew(
+  conversationId: string,
+  body: string,
+  sentAt: Date,
+  externalId?: string,
+  // The chip payload when this inbound was a tap on one of FollowUp's own
+  // reply buttons — see Message.quickReplyPayload in schema.prisma.
+  quickReplyPayload?: string
+): Promise<boolean> {
   try {
     await prisma.message.create({
-      data: { conversationId, direction: "inbound", body, sentAt, externalId },
+      data: { conversationId, direction: "inbound", body, sentAt, externalId, quickReplyPayload },
     });
     return true;
   } catch (err) {
@@ -321,7 +350,7 @@ export async function exchangeInstagramAuthCode(
   if (typeof shortLivedToken !== "string") return { error: "Instagram didn't return an access token." };
 
   const longLivedRes = await fetch(
-    `${GRAPH_API}/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(appSecret)}&access_token=${encodeURIComponent(shortLivedToken)}`
+    `${GRAPH_OAUTH}/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(appSecret)}&access_token=${encodeURIComponent(shortLivedToken)}`
   );
   if (!longLivedRes.ok) return { error: "Couldn't extend that Instagram sign-in — try again." };
   const longLived = await longLivedRes.json().catch(() => ({}));

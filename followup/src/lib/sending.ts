@@ -23,6 +23,7 @@ import { findOrCreateConversation } from "@/lib/conversations";
 import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 import { sendMessengerMessage } from "@/lib/facebook";
+import type { QuickReply } from "@/lib/quickReplies";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import { isTransientError } from "@/lib/transientError";
 import { requireActiveBilling } from "@/lib/billing";
@@ -239,6 +240,11 @@ export async function sendFollowUpToLead(
     // from the "is a send already in flight for this lead" guard — which
     // would otherwise refuse the retry on the strength of its own queue row.
     queuedSendId?: string;
+    // Reply chips under an Instagram/Messenger DM — see src/lib/quickReplies.ts.
+    // Ignored on every other channel. Not carried into the retry queue: a
+    // send parked after a provider blip goes out later as plain text (the
+    // question is still in the words; only the chips are lost).
+    quickReplies?: QuickReply[];
   } = {}
 ): Promise<SendResult> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
@@ -440,10 +446,10 @@ export async function sendFollowUpToLead(
         externalId = result.messageId ?? undefined;
       }
     } else if (channel === "instagram") {
-      const result = await sendInstagramMessage(lead.businessId, instagramRecipientId(lead.phone!), body);
+      const result = await sendInstagramMessage(lead.businessId, instagramRecipientId(lead.phone!), body, { quickReplies: options.quickReplies });
       if (!result.success) return providerFailure(result, "Instagram didn't confirm this message sent.");
     } else if (channel === "messenger") {
-      const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body);
+      const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body, { quickReplies: options.quickReplies });
       if (!result.success) return providerFailure(result, "Facebook didn't confirm this message sent.");
     } else if (channel === "whatsapp") {
       const result = await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: lead.name.split(" ")[0] });
@@ -512,6 +518,7 @@ export async function sendFollowUpToLead(
     return { success: false, message: sent.message, failure: sent.failure };
   }
   const { externalId, emailProvider } = sent;
+  const quickRepliesSent = (channel === "instagram" || channel === "messenger") ? options.quickReplies?.length ?? 0 : 0;
 
   // ---------------------------------------------------------------
   // Past this line the message has LEFT. Gmail/Outlook/Twilio/Meta has
@@ -610,7 +617,15 @@ export async function sendFollowUpToLead(
     void recordAudit({ businessId: lead.businessId, userId: null }, "ai.send", {
       targetType: "lead",
       targetId: lead.id,
-      meta: { channel, trigger: options.trigger ?? "silence", length: body.length, ...options.extraAuditMeta },
+      meta: {
+        channel,
+        trigger: options.trigger ?? "silence",
+        length: body.length,
+        // How many chips went under a DM — a count, never the titles, per
+        // the "identifiers and counts, never message bodies" contract.
+        ...(quickRepliesSent ? { quickReplies: quickRepliesSent } : {}),
+        ...options.extraAuditMeta,
+      },
     });
   }
 

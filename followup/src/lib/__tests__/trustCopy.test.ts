@@ -57,3 +57,49 @@ describe("the instant-reply promise", () => {
     expect(settings()).toMatch(/two to three minutes/i);
   });
 });
+
+/**
+ * The unanswered rule's number, after the Meta ceiling (2026-09-16).
+ *
+ * effectiveUnansweredHours() caps Instagram and Messenger at
+ * UNANSWERED_META_DM_MAX_HOURS whatever the owner configured. The Settings
+ * sentence that describes "what is active right now" was still built from
+ * the configured number alone — so an owner on the 24-hour default read
+ * "within 24 hours" while the engine sent at 20 on two channels. A setting
+ * that silently means something else is the surprise brand principle 1
+ * forbids, and it is the same class of defect as the "fixed sentence" one
+ * above: a true sentence that went stale when the code moved.
+ */
+describe("the unanswered-rule promise", () => {
+  it("tells the owner the Meta channels are capped, in the sentence that describes what is active", () => {
+    // Matched on source shape: the clause is built in describeAutomationState()
+    // from the same constant the engine uses, so this also fails if someone
+    // rewrites it around a literal number that could drift.
+    // The interpolation itself, closing paren included — so this pins the
+    // summary sentence specifically, not the explanatory note below the
+    // field, which has its own assertion.
+    expect(settings()).toMatch(/\$\{UNANSWERED_META_DM_MAX_HOURS\} on Instagram and Messenger\)/);
+  });
+
+  it("does not hardcode the ceiling anywhere in Settings", () => {
+    // The number has one home (@/lib/metaWindow). "20 hours" typed into a
+    // sentence would be true today and wrong the day the constant moves.
+    expect(settings()).not.toMatch(/\b20 hours?\b/);
+  });
+
+  it("explains WHY, next to the field, in the owner's words", () => {
+    // Brand principle 3: every automated behaviour must let the owner
+    // answer "why did that happen" unaided. "Meta only lets a business
+    // reply within a day" is the reason, with no platform jargon.
+    expect(settings()).toMatch(/Meta only lets a business reply within a day/i);
+  });
+
+  it("imports the constant from the leaf module, never from automation.ts", () => {
+    // automation.ts imports Prisma. Pulling it into this "use client"
+    // component ships the database client to the browser — the exact bug
+    // fixed for issue #93, and the reason @/lib/metaWindow exists.
+    const raw = readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "page.tsx"), "utf8");
+    expect(raw).toMatch(/from "@\/lib\/metaWindow"/);
+    expect(raw).not.toMatch(/from "@\/lib\/automation"/);
+  });
+});

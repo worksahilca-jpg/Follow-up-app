@@ -1814,3 +1814,60 @@ say "two to three minutes" wherever this is ever described to a customer, not
 "waiting" state in the conversation view. A 2-minute pending state that resolves
 itself is not worth a widget an owner would have to learn — and showing it would
 invite them to wait and watch, which is the opposite of the point.
+
+## 2026-09-16 — Settings tells the truth about the Meta 20-hour ceiling
+
+**Product decision (founder's, shipped in #252):** on Instagram and Messenger the
+"Reply for me when I haven't" rule never waits past 20 hours, whatever the owner set,
+because Meta refuses any business reply more than 24 hours after the lead's last
+message and an hourly cron at 24 lands after the door shuts every time. Engine and
+lead-page badge share one function (`effectiveUnansweredHours`). Constants live in
+`followup/src/lib/metaWindow.ts`, a leaf module, so the client-side Settings page can
+read them without pulling Prisma into the browser bundle.
+
+**The UI change is two sentences, both conditional on the configured number being
+above the ceiling.** Below 20 the ceiling changes nothing, and a note that changes
+nothing is noise (principle 8). At 21 and up:
+
+1. The "what's active right now" sentence gains a parenthetical:
+   *"…steps in if you haven't answered within 24 hours (20 on Instagram and
+   Messenger)…"*. That sentence exists to state what is true, so it has to carry the
+   real number — an owner-set value that silently means something else on two
+   channels is the surprise principle 1 forbids.
+2. A one-line note under the hours field:
+   *"On Instagram and Messenger, FollowUp steps in by 20 hours whatever you set here.
+   Meta only lets a business reply within a day of the lead's last message — after
+   that, nothing gets through."* This is the *why* (principle 3's five questions),
+   placed where the "why did it go out early" question would otherwise be asked,
+   with no platform jargon — "window" does not appear.
+
+**Both channels are named, not just "Meta".** A 90-second owner may not map "Meta"
+to "Instagram and Messenger" (principle 4); the sentence does it for them.
+
+**The number is never typed.** `trustCopy.test.ts` fails if `20 hours` appears as
+a literal in Settings, and fails if Settings imports from `@/lib/automation` rather
+than the leaf module. One home for the number; one way for it to change.
+
+**Honest limitations, recorded rather than buried:**
+- Not rendered live. Settings sits behind Google sign-in and this sandbox cannot
+  authenticate. The change is one `<p>` in the same `text-xs text-ink-soft` classes
+  as its two neighbours and one longer string in an existing sentence, so layout
+  risk is low — but "low" is a judgment, not a screenshot.
+- The parenthetical makes an already-long summary sentence longer. At the 24-hour
+  default, the majority case, every owner now reads it. Two words shorter was not
+  found; a future pass on that whole sentence is worth doing.
+- The note appears *after* the owner types 21 or more, not before. That is correct
+  for principle 8, but means the first time most owners see it is when they read
+  their existing default — which is fine, and is the case it was written for.
+
+**Not done, deliberately:** the input's `max` stays 168. An owner may still set 72
+hours; it is honoured on email and capped on the two DM channels, and the copy says
+so. Removing the option would take a working email behaviour away to simplify a DM
+one. WhatsApp is not named in either sentence because it is not capped — it has
+templates as a way through — and naming it would be the false claim the sentence
+was written to avoid.
+
+**Weakest part, named:** the summary sentence. It now describes four rules and a
+channel exception in one breath. It is true, and it is the one place a cautious
+owner reads before trusting the product, which is why it had to be true first and
+short second. Making it both is the next job on that screen.

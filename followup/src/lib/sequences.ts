@@ -671,7 +671,15 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           subject: channel === "email" ? draft.subject : undefined,
           channel,
         });
-        if (!result.success) {
+        // A transient provider failure is parked in OutboundSend and delivered
+        // by the retry worker (queuedRetryAt set) — the queue owns it from
+        // here, exactly as acknowledge.ts treats the same result. It must
+        // advance the step like a success. Left on the same step, the next
+        // hourly tick found the retry's own outbound message as "ours, no
+        // reply since", re-drafted the SAME step and sent it again: two
+        // follow-ups an hour apart in the owner's name (audit 2026-09-16,
+        // F1). hasSendInFlight only guards while the queue row is unresolved.
+        if (!result.success && !result.queuedRetryAt) {
           // Deliberately left enrolled (unlike the no-channel case above)
           // rather than unenrolled — a single failed send attempt (a
           // Twilio blip, a rate limit) is plausibly transient and worth

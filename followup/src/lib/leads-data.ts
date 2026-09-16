@@ -28,7 +28,6 @@ type DbLead = Prisma.LeadGetPayload<{
     conversations: { include: { messages: true } };
     assignedTo: true;
     sequence: { select: { name: true; active: true } };
-    followUps: { select: { trigger: true } };
   };
 }>;
 
@@ -43,6 +42,7 @@ function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules): Lead
         date: m.sentAt.toISOString(),
         opened: m.opened,
         source: m.source ?? undefined,
+        trigger: m.trigger ?? undefined,
       }))
     )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -80,10 +80,6 @@ function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules): Lead
         automationTier,
         lastContacted,
         conversation,
-        // null covers a manual send predating the trigger column — still
-        // a real, substantive reply, so it must count the same as "manual"
-        // does, not get treated as if nothing had gone out at all.
-        followUpTriggers: dbLead.followUps.map((f) => f.trigger ?? "manual"),
         sequence: dbLead.sequence ? { name: dbLead.sequence.name, active: dbLead.sequence.active, dueAt: dbLead.sequenceStepDueAt?.toISOString() ?? null } : null,
       },
       rules
@@ -98,7 +94,6 @@ const leadInclude = {
   // Only the trigger is needed — see computeAutomationStatus's
   // hasSubstantiveFollowUp check, mirroring findUnansweredLeads() in
   // automation.ts.
-  followUps: { select: { trigger: true } },
 } satisfies Prisma.LeadInclude;
 
 export async function getLeads(): Promise<Lead[]> {

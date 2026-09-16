@@ -29,7 +29,6 @@ function lead(overrides: Partial<AutomationStatusLead> = {}): AutomationStatusLe
     automationTier: "assisted",
     lastContacted: NOW.toISOString(),
     conversation: [],
-    followUpTriggers: [],
     sequence: null,
     ...overrides,
   };
@@ -72,12 +71,12 @@ describe("computeAutomationStatus", () => {
   });
 
   it("shows due_soon(unanswered) once the lead's own message is older than the unanswered threshold", () => {
-    const l = lead({ conversation: [msg("outbound", 48), msg("inbound", 25)], followUpTriggers: ["manual"] });
+    const l = lead({ conversation: [msg("outbound", 48), msg("inbound", 25)] });
     expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
   });
 
   it("uses the shorter first-reply window when the only outbound so far is the instant-ack template", () => {
-    const l = lead({ conversation: [msg("outbound", 5), msg("inbound", 4)], followUpTriggers: ["instant_ack"] });
+    const l = lead({ conversation: [msg("inbound", 4), { ...msg("outbound", 3.95), trigger: "instant_ack" }] });
     // 4h since the lead's message: past the 3h first-reply threshold, well inside the normal 24h one
     expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
   });
@@ -91,7 +90,7 @@ describe("computeAutomationStatus", () => {
   // the full 24h — "Following up soon" for ~21h before anything happened.
   it("counts a directly-captured Instagram/Messenger reply as substantive outbound, matching automation.ts", () => {
     const echo: Message = { ...msg("outbound", 5), channel: "instagram", source: "instagram_direct" };
-    const l = lead({ conversation: [echo, msg("inbound", 4)], followUpTriggers: [] });
+    const l = lead({ conversation: [echo, msg("inbound", 4)] });
 
     // 4h since the lead wrote: past the 3h first-reply window, but the
     // owner HAS replied, so the business's real 24h window applies.
@@ -105,18 +104,17 @@ describe("computeAutomationStatus", () => {
     // the business sent.
     const l = lead({
       conversation: [{ ...msg("inbound", 4), channel: "instagram", source: "instagram_direct" }],
-      followUpTriggers: [],
     });
     expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
   });
 
   it("shows account_paused(unanswered) instead of due_soon when the master switch is off", () => {
-    const l = lead({ conversation: [msg("outbound", 48), msg("inbound", 25)], followUpTriggers: ["manual"] });
+    const l = lead({ conversation: [msg("outbound", 48), msg("inbound", 25)] });
     expect(computeAutomationStatus(l, { ...RULES, masterEnabled: false }, NOW)).toEqual({ kind: "account_paused", reason: "unanswered" });
   });
 
   it("shows waiting with a rough ETA before the unanswered threshold is reached", () => {
-    const l = lead({ conversation: [msg("outbound", 48), msg("inbound", 20)], followUpTriggers: ["manual"] });
+    const l = lead({ conversation: [msg("outbound", 48), msg("inbound", 20)] });
     const status = computeAutomationStatus(l, RULES, NOW);
     expect(status.kind).toBe("waiting");
     expect((status as { etaHours: number }).etaHours).toBe(4); // 24h threshold - 20h elapsed
@@ -145,7 +143,6 @@ describe("computeAutomationStatus", () => {
     const l = lead({
       lastContacted: new Date(NOW.getTime() - 100 * 86_400_000).toISOString(),
       conversation: [msg("outbound", 200), msg("inbound", 30)],
-      followUpTriggers: ["manual"],
     });
     expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
   });
@@ -154,7 +151,6 @@ describe("computeAutomationStatus", () => {
     const l = lead({
       lastContacted: new Date(NOW.getTime() - 6 * 86_400_000).toISOString(),
       conversation: [msg("inbound", 1)],
-      followUpTriggers: [],
     });
     expect(computeAutomationStatus(l, { ...RULES, unansweredEnabled: false }, NOW)).toEqual({ kind: "due_soon", reason: "silence" });
   });
@@ -189,7 +185,6 @@ describe("the unanswered badge against Meta's window ceiling", () => {
   function dmLead(hoursAgo: number, channel: Message["channel"]) {
     return lead({
       conversation: [dmMsg("outbound", hoursAgo + 5, channel), dmMsg("inbound", hoursAgo, channel)],
-      followUpTriggers: ["manual"],
       lastContacted: new Date(NOW.getTime() - (hoursAgo + 5) * 3_600_000).toISOString(),
     });
   }
@@ -218,5 +213,29 @@ describe("the unanswered badge against Meta's window ceiling", () => {
 
   it("still counts down on an Instagram lead at 19 hours", () => {
     expect(computeAutomationStatus(dmLead(19, "instagram"), RULES, NOW).kind).not.toBe("due_soon");
+  });
+});
+
+/**
+ * The badge must agree with the engine about the instant ack (F2). It read
+ * "sent" for a lead who wrote once and got the ack — the exact lead the
+ * engine was also failing to pick up — so nothing anywhere said the
+ * 3-hour rule was due.
+ */
+describe("the instant ack does not make a lead read as answered", () => {
+  it("shows the first-reply countdown for a lead who wrote once and got only the ack", () => {
+    const l = lead({ conversation: [msg("inbound", 2), { ...msg("outbound", 1.95), trigger: "instant_ack" }] });
+    const s = computeAutomationStatus(l, RULES, NOW);
+    expect(s.kind).not.toBe("sent");
+  });
+
+  it("reads that lead as due once 3 hours have passed", () => {
+    const l = lead({ conversation: [msg("inbound", 4), { ...msg("outbound", 3.95), trigger: "instant_ack" }] });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+  });
+
+  it("reads an owner's synced Gmail reply (no trigger) as answered", () => {
+    const l = lead({ conversation: [msg("inbound", 30), msg("outbound", 29)] });
+    expect(computeAutomationStatus(l, RULES, NOW).kind).toBe("sent");
   });
 });

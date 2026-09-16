@@ -556,12 +556,19 @@ export async function sendFollowUpToLead(
 
     const conversation = await findOrCreateConversation(lead.id, channel, emailProvider ? { emailProvider } : {});
 
+    // One value, written to both rows. The Message copy is what lets the
+    // neglect judgment (automation.ts, automationStatus.ts) see the instant
+    // ack as boilerplate rather than as "someone answered" — see
+    // Message.trigger in schema.prisma for the bug that was.
+    const trigger = options.trigger ?? (options.automated ? "silence" : "manual");
+
     await prisma.message.create({
       data: {
         conversationId: conversation.id,
         direction: "outbound",
         body,
         externalId,
+        trigger,
       },
     });
 
@@ -572,7 +579,7 @@ export async function sendFollowUpToLead(
         message: body,
         status: "sent",
         automated: options.automated ?? false,
-        trigger: options.trigger ?? (options.automated ? "silence" : "manual"),
+        trigger,
         sentAt: new Date(),
       },
     });

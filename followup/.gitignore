@@ -23,8 +23,16 @@ yarn-debug.log*
 yarn-error.log*
 
 # env files
+# Deny every variant, then re-admit the two committed templates by name.
+# The previous pair (`.env` + `.env*.local`) only caught those exact shapes:
+# `.env.prod`, `.env.production` and `.env.development` were all committable,
+# and those are precisely the names someone reaches for when they are about to
+# write production values into a file. Deny-all-then-allow means a new name
+# nobody predicted is ignored by default rather than committed by default.
 .env
-.env*.local
+.env.*
+!.env.example
+!.env.local.example
 
 # vercel
 .vercel

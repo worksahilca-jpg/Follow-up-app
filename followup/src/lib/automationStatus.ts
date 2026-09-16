@@ -23,6 +23,7 @@
  */
 
 import { UNANSWERED_ACTION, UNANSWERED_DEFAULT_HOURS, DEAD_LEAD_ACTION, DEAD_LEAD_DEFAULT_DAYS, effectiveUnansweredHours } from "@/lib/automation";
+import { isExitPayload } from "@/lib/quickReplies";
 import { prisma } from "@/lib/db";
 import type { Message, PipelineStage, AutomationTier } from "@/lib/types";
 
@@ -119,7 +120,10 @@ export function computeAutomationStatus(
   const isAck = (m: Message) => m.direction === "outbound" && m.trigger === "instant_ack";
   const judged = lead.conversation.filter((m) => !isAck(m));
   const last = mostRecentMessage(judged);
-  const lastIsInbound = last?.direction === "inbound";
+  // A tap on the honest-no chip ends the automatic follow-ups (the same
+  // rule as findUnansweredLeads(), and it must stay the same rule): the
+  // badge must not count down to a message the engine will never send.
+  const lastIsInbound = last?.direction === "inbound" && !isExitPayload(last.quickReplyPayload);
 
   // Priority order mirrors automation.ts's own merge: unanswered (the lead
   // wrote and got ignored) beats dead-lead reactivation, which beats plain

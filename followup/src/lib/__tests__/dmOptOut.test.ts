@@ -144,7 +144,7 @@ describe("Instagram DM opt-out", () => {
   it("still records the message itself — the opt-out has to be visible in the thread", async () => {
     await POST(webhookRequest(instagramDm("Stop")));
 
-    expect(createInboundMessageIfNew).toHaveBeenCalledWith("conv1", "Stop", expect.any(Date), "mid_1");
+    expect(createInboundMessageIfNew).toHaveBeenCalledWith("conv1", "Stop", expect.any(Date), "mid_1", undefined);
   });
 
   it("writes the same audit action the SMS path writes", async () => {

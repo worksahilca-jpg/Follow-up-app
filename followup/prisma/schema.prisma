@@ -372,6 +372,14 @@ model Lead {
   // guarantees a standing population of them
   // (research/product/2026-09-15-ai-cost-per-lead.md §5).
   suggestedDraftedFor DateTime?
+  // The reply buttons drafted alongside suggestedMessage when that draft
+  // is DM-shaped (the lead last wrote on Instagram or Messenger) — shape
+  // { question, buttons: [{ title, exit }] }, see StoredQuickReplies in
+  // src/lib/quickReplies.ts. Null means the draft is an email (or predates
+  // this column), which is how the automation pass knows an old
+  // email-framed draft must be rebuilt before it goes out as a DM. An
+  // empty `buttons` list is a DM draft that passed without chips.
+  suggestedQuickReplies Json?
   priority         Priority       @default(NONE)
   lastContacted    DateTime?
   nextFollowUp     DateTime?
@@ -637,6 +645,16 @@ model Message {
   // who wrote once and got the ack (audit 2026-09-16, F2). Backfilled by
   // matching FollowUp.message to Message.body per lead.
   trigger        String?
+
+  // Set on an INBOUND Instagram/Messenger message that was a tap on one of
+  // FollowUp's reply buttons rather than typed: the chip's payload, as
+  // src/lib/quickReplies.ts encoded it (which message carried the chip,
+  // which question it answered, and whether it was the honest-no exit).
+  // The body holds the chip's title, exactly as Meta posts it to the
+  // conversation, so the thread reads naturally; this column is what lets
+  // the engine tell "tapped 'Not now'" from "typed 'Not now'" — the first
+  // stops every further automatic message, the second is just words.
+  quickReplyPayload String?
 
   // Twilio delivery status for an outbound text/WhatsApp send — set from
   // Twilio's own MessageStatus callback (queued/sent/delivered/undelivered/

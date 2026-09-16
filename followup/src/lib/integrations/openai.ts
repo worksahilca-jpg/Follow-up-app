@@ -8,6 +8,8 @@
 
 import OpenAI, { toFile } from "openai";
 import { Lead, Message, ScoreFactor } from "@/lib/types";
+import { DM_SHAPE_RULES, type DmSituation } from "@/lib/dmDrafts";
+import { DM_MAX_BUTTONS, type DmButton } from "@/lib/quickReplies";
 
 const MODEL = "gpt-4o-mini";
 const TRANSCRIBE_MODEL = "gpt-4o-mini-transcribe";
@@ -739,6 +741,45 @@ const FOLLOW_UP_JSON_SCHEMA = {
   },
 } as const;
 
+// The DM shape: no subject, a short body ending in one question, and the
+// chips that answer it. `kind: "no"` marks the honest exit ("Not now"),
+// which the engine treats as "stop every further automatic message" — so
+// the model decides which button that is, and a deterministic check
+// (checkDmDraftShape, src/lib/dmDrafts.ts) refuses a set with two of them.
+const FOLLOW_UP_DM_JSON_SCHEMA = {
+  name: "follow_up_dm",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      body: {
+        type: "string",
+        description:
+          "The DM itself: 8 to 30 words, one or two sentences, no greeting, no sign-off, no subject. Exactly one " +
+          "question, and it is the last sentence — unless the instructions say to end on a statement.",
+      },
+      buttons: {
+        type: "array",
+        description:
+          "Two or three reply buttons, each a plain one-word-ish answer to the question, 20 characters or fewer, " +
+          "in the lead's language. Empty when the instructions say to provide no buttons. At most one button " +
+          "has kind \"no\" — the honest way out (\"Not now\", \"Leave it\"); every other button is kind \"answer\".",
+        items: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            kind: { type: "string", enum: ["answer", "no"] },
+          },
+          required: ["title", "kind"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["body", "buttons"],
+    additionalProperties: false,
+  },
+} as const;
+
 // Deliberately conservative lists: a first line only counts as a greeting
 // if it also LOOKS like one (short, and followed by the rest of the
 // message), and a last line only counts as a sign-off if the sign-off word
@@ -842,11 +883,25 @@ function stripFrame(body: string): string {
  * src/lib/sequences.ts). Guidance, not a script: the draft still has to
  * read as a real reply to the actual conversation above it.
  */
+export interface FollowUpDraft {
+  /** Empty for a DM draft — there is no subject line to send. */
+  subject: string;
+  body: string;
+  /** Present only for a DM draft: the reply chips, at most DM_MAX_BUTTONS. */
+  buttons?: DmButton[];
+}
+
 export async function generateFollowUpMessage(
   lead: Pick<Lead, "name" | "conversation">,
   voiceSamples: string[] = [],
-  messageHint?: string
-): Promise<{ subject: string; body: string }> {
+  messageHint?: string,
+  // When set, the draft is an Instagram/Messenger DM rather than an email:
+  // short, no subject, one question last, with reply buttons. The
+  // situation (which of the research's sets applies) is decided by the
+  // caller from database facts — see pickDmSituation in src/lib/dmDrafts.ts
+  // — never by the model.
+  dm?: DmSituation
+): Promise<FollowUpDraft> {
   const client = getClient();
 
   // Voice matching, stated as something the model can actually act on.
@@ -888,28 +943,48 @@ export async function generateFollowUpMessage(
     ? `\n\nWhat this particular follow-up should focus on: ${messageHint.trim()}`
     : "";
 
+  // The DM shape (src/lib/dmDrafts.ts) replaces the email framing; the
+  // situation hint says what THIS message is for. Everything after — tone,
+  // language, no invented facts, the trust notices, the voice samples — is
+  // the same instruction set the email gets, because none of it is about
+  // the envelope.
+  const opening = dm
+    ? "You draft a short follow-up DM. You represent the business " +
+      "that was CONTACTED — the person in this conversation reached out about the business's services. You " +
+      "are not the one requesting anything; never write as if you're the one who needs a vendor, contractor, " +
+      "or service. Reference something concrete and specific from the conversation so the message never reads " +
+      "as generic. " +
+      DM_SHAPE_RULES +
+      " The message's one job on this channel is to get a reaction: an easy question a real person answers " +
+      "in a word, never a sales pitch and never pressure. What this particular message is for: " +
+      dm.hint +
+      " Complete sentences, proper capitalization, no sentence fragments, no trailing off mid-thought. "
+    : "You draft a follow-up email — a subject line and the body paragraph. You represent the business " +
+      "that was CONTACTED — the person in this conversation reached out about the business's services. You " +
+      "are not the one requesting anything; never write as if you're the one who needs a vendor, contractor, " +
+      "or service. Reference something concrete and specific from the conversation so neither the subject " +
+      "nor the body reads as generic. The body: two or three sentences, and two is usually the right answer — " +
+      "one is fine if the whole point fits in one. Never write a fourth, and never pad to a third: if you have " +
+      "said the thing and asked the question, stop. Open on the substance, so the first sentence is the actual " +
+      "reason you are writing rather than a preamble to it. Complete sentences, proper capitalization, no " +
+      "sentence fragments, no trailing off mid-thought, no run-on clauses joined by a dash. ";
+  const languageSubject = dm ? "Write the message and every button title" : "Write both the subject and the body";
+
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
       {
         role: "system",
         content:
-          "You draft a follow-up email — a subject line and the body paragraph. You represent the business " +
-          "that was CONTACTED — the person in this conversation reached out about the business's services. You " +
-          "are not the one requesting anything; never write as if you're the one who needs a vendor, contractor, " +
-          "or service. Reference something concrete and specific from the conversation so neither the subject " +
-          "nor the body reads as generic. The body: two or three sentences, and two is usually the right answer — " +
-          "one is fine if the whole point fits in one. Never write a fourth, and never pad to a third: if you have " +
-          "said the thing and asked the question, stop. Open on the substance, so the first sentence is the actual " +
-          "reason you are writing rather than a preamble to it. Complete sentences, proper capitalization, no " +
-          "sentence fragments, no trailing off mid-thought, no run-on clauses joined by a dash. Match the lead's own tone " +
+          opening +
+          "Match the lead's own tone " +
           "and formality from their most recent message, not a fixed house style — if they wrote briefly and " +
           "casually (short sentences, informal phrasing, a romanized/colloquial way of writing their language), " +
           "reply the same way; if they wrote formally, reply formally. Staying appropriately polished for a " +
           "business reply always outranks mirroring casualness — never become sloppy, rude, or unprofessional " +
           "just because the lead was casual. Do not include a greeting ('Hi ...', " +
           "'Dear ...') or a sign-off/signature of any kind in the body — output only the body paragraph itself. " +
-          "Write both the subject and the body in the same language as the lead's most recent message in the " +
+          `${languageSubject} in the same language as the lead's most recent message in the ` +
           "conversation below — do not default to English unless that's the language they're actually writing " +
           "in. If earlier messages in this conversation are in a different language than the most recent one " +
           "(a lead who switched languages mid-thread, or contacted the business more than once in different " +
@@ -944,19 +1019,27 @@ export async function generateFollowUpMessage(
       },
     ],
     max_tokens: 260,
-    response_format: { type: "json_schema", json_schema: FOLLOW_UP_JSON_SCHEMA },
+    response_format: { type: "json_schema", json_schema: dm ? FOLLOW_UP_DM_JSON_SCHEMA : FOLLOW_UP_JSON_SCHEMA },
   });
 
   const raw = completion.choices[0]?.message?.content;
   if (!raw) throw new Error("OpenAI returned no content for generateFollowUpMessage.");
 
-  const parsed = JSON.parse(raw) as { subject: string; body: string };
+  const parsed = JSON.parse(raw) as { subject?: string; body: string; buttons?: Array<{ title: string; kind: "answer" | "no" }> };
   if (!parsed.body?.trim()) throw new Error("OpenAI returned an empty body for generateFollowUpMessage.");
   const body = parsed.body.trim();
   // `|| body` so a strip that somehow consumed the whole message (a
   // one-line reply that was ALL greeting) degrades to the model's own
   // text rather than to the empty-body throw above.
-  return { subject: parsed.subject?.trim() || "Following up", body: stripFrame(body) || body };
+  const cleanBody = stripFrame(body) || body;
+  if (dm) {
+    const buttons: DmButton[] = (Array.isArray(parsed.buttons) ? parsed.buttons : [])
+      .filter((b) => typeof b?.title === "string" && b.title.trim())
+      .slice(0, DM_MAX_BUTTONS)
+      .map((b) => ({ title: b.title.trim(), exit: b.kind === "no" }));
+    return { subject: "", body: cleanBody, buttons };
+  }
+  return { subject: parsed.subject?.trim() || "Following up", body: cleanBody };
 }
 
 /**

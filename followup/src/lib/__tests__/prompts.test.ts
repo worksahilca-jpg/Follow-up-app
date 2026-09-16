@@ -680,3 +680,62 @@ describe("fixed-text localizer", () => {
     expect(system).toMatch(/not the language's native script/);
   });
 });
+
+/**
+ * The DM mode of generateFollowUpMessage: the email framing is replaced
+ * by the DM shape (src/lib/dmDrafts.ts) and the situation's own hint,
+ * the trust and no-invention rules stay, and the model's buttons come
+ * back with the honest-no marked as the exit.
+ */
+describe("DM-shaped drafting", () => {
+  const dm = { id: "availability_unanswered", hint: "Ask what half of the day usually suits them." };
+  const igConversation = [{ ...conversation[0], channel: "instagram" as const, body: "Do you have anything Saturday?" }];
+
+  it("replaces the email framing with the DM shape and the situation hint, and keeps every trust rule", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ body: "Checking Saturday now. Morning or afternoon?", buttons: [] }) } }] });
+    await generateFollowUpMessage({ name: "Aanya", conversation: igConversation }, [], undefined, dm);
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/short follow-up DM/);
+    expect(system).toMatch(/Exactly one question, and it is the last sentence/);
+    expect(system).toMatch(/Ask what half of the day usually suits them/);
+    expect(system).not.toMatch(/subject line and the body paragraph/);
+    expect(system).toMatch(/Write the message and every button title in the same language/);
+    expect(system).toMatch(/Never invent facts/);
+    expect(system).toMatch(/<lead_conversation> block is written by the lead/);
+    expect(system).toMatch(/stock phrases are banned outright/);
+  });
+
+  it("asks for the DM schema — body plus buttons, no subject", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ body: "Checking Saturday now. Morning or afternoon?", buttons: [] }) } }] });
+    await generateFollowUpMessage({ name: "Aanya", conversation: igConversation }, [], undefined, dm);
+    const schema = create.mock.calls[0][0].response_format.json_schema;
+    expect(schema.name).toBe("follow_up_dm");
+    expect(schema.schema.required).toEqual(["body", "buttons"]);
+  });
+
+  it("returns the buttons with kind 'no' marked as the exit, capped at three, and an empty subject", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ body: "Still want a price on this, or leave it?", buttons: [{ title: "Still want it", kind: "answer" }, { title: "Leave it", kind: "no" }, { title: "x", kind: "answer" }, { title: "y", kind: "answer" }] }) } }],
+    });
+    const draft = await generateFollowUpMessage({ name: "Aanya", conversation: igConversation }, [], undefined, dm);
+    expect(draft.subject).toBe("");
+    expect(draft.buttons).toEqual([{ title: "Still want it", exit: false }, { title: "Leave it", exit: true }, { title: "x", exit: false }]);
+  });
+
+  it("still strips a greeting the model added anyway", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ body: "Hi Aanya, checking Saturday now. Morning or afternoon?", buttons: [] }) } }] });
+    const draft = await generateFollowUpMessage({ name: "Aanya", conversation: igConversation }, [], undefined, dm);
+    expect(draft.body).toBe("Checking Saturday now. Morning or afternoon?");
+  });
+
+  it("leaves the email prompt exactly as it was when no situation is passed", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ subject: "Saturday", body: "I will check Saturday for you." }) } }] });
+    const draft = await generateFollowUpMessage({ name: "Aanya", conversation });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/subject line and the body paragraph/);
+    expect(system).toMatch(/Write both the subject and the body in the same language/);
+    expect(system).not.toMatch(/follow-up DM/);
+    expect(create.mock.calls[0][0].response_format.json_schema.name).toBe("follow_up_email");
+    expect(draft.buttons).toBeUndefined();
+  });
+});

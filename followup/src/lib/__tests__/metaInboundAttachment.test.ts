@@ -154,7 +154,9 @@ describe("Instagram DM with an attachment and no text", () => {
       "conv1",
       "do you do emergency callouts?",
       expect.any(Date),
-      "mid_text"
+      "mid_text",
+      // No quick-reply payload: typed, not tapped.
+      undefined
     );
     expect(acknowledgeNewLead).toHaveBeenCalledWith(
       "lead1",

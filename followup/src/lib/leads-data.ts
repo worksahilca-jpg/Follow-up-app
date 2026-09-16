@@ -43,6 +43,7 @@ function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules): Lead
         opened: m.opened,
         source: m.source ?? undefined,
         trigger: m.trigger ?? undefined,
+        quickReplyPayload: m.quickReplyPayload ?? undefined,
       }))
     )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());

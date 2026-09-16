@@ -33,6 +33,10 @@ const { aiEligible } = vi.hoisted(() => ({
 vi.mock("@/lib/billing", () => ({ checkAiEligibility: aiEligible }));
 
 import { scoreAndDraftForLead } from "@/lib/scoring";
+import { generateFollowUpMessage as generateFollowUpMessageMock } from "@/lib/integrations/openai";
+import { Prisma } from "@prisma/client";
+
+const generateFollowUpMessage = generateFollowUpMessageMock as unknown as ReturnType<typeof vi.fn>;
 
 function leadRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -56,6 +60,7 @@ function leadRow(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("OPENAI_API_KEY", "test-key");
+  generateFollowUpMessage.mockResolvedValue({ subject: "Re: your question", body: "Happy to help." });
   findUnique.mockResolvedValue(leadRow());
   aiEligible.mockResolvedValue({ ok: true });
 });
@@ -107,5 +112,50 @@ describe("scoreAndDraftForLead — the tier's AI allowance", () => {
     findUnique.mockResolvedValue(leadRow({ conversations: [] }));
     const ok = await scoreAndDraftForLead("lead1");
     expect(ok).toBe(false);
+  });
+});
+
+/**
+ * The suggested reply takes the shape of the channel the lead last wrote
+ * on. Before this, a lead who wrote on Instagram got an email — greeting,
+ * sign-off, subject — as their suggested DM, and that is what the
+ * automation pass sent into their inbox.
+ */
+describe("scoreAndDraftForLead — DM-shaped drafts for Instagram and Messenger leads", () => {
+  const dmDraft = { subject: "", body: "Happy to price the two-bed. Is this for this week or later in the month?", buttons: [{ title: "This week", exit: false }, { title: "Later", exit: false }] };
+
+  it("stores the bare DM body, no subject, and the buttons beside it", async () => {
+    generateFollowUpMessage.mockResolvedValue(dmDraft);
+    findUnique.mockResolvedValue(leadRow({ conversations: [{ channel: "instagram", messages: [{ id: "m1", direction: "inbound", body: "How much for a two-bed clean?", sentAt: new Date(), opened: false }] }] }));
+    await scoreAndDraftForLead("lead1");
+    expect(generateFollowUpMessage.mock.calls[0][3]).toEqual(expect.objectContaining({ id: "price_unanswered" }));
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          suggestedMessage: dmDraft.body,
+          suggestedSubject: null,
+          suggestedQuickReplies: { question: "price_unanswered", buttons: dmDraft.buttons },
+        }),
+      })
+    );
+  });
+
+  it("keeps the draft but stores NO buttons when it fails the shape check twice", async () => {
+    generateFollowUpMessage.mockResolvedValue({ subject: "", body: "Is it a two-bed? And is this week ok?", buttons: dmDraft.buttons });
+    findUnique.mockResolvedValue(leadRow({ conversations: [{ channel: "messenger", messages: [{ id: "m1", direction: "inbound", body: "How much for a two-bed clean?", sentAt: new Date(), opened: false }] }] }));
+    await scoreAndDraftForLead("lead1");
+    expect(generateFollowUpMessage).toHaveBeenCalledTimes(2);
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ suggestedQuickReplies: { question: "price_unanswered", buttons: [] } }) })
+    );
+  });
+
+  it("still frames an email lead's draft and stores no buttons", async () => {
+    await scoreAndDraftForLead("lead1");
+    expect(generateFollowUpMessage.mock.calls[0][3]).toBeUndefined();
+    const data = (update.mock.calls[0] as unknown as [{ data: Record<string, unknown> }])[0].data;
+    expect(data.suggestedMessage).toBe("Hi,\n\nHappy to help.");
+    expect(data.suggestedSubject).toBe("Re: your question");
+    expect(data.suggestedQuickReplies).toEqual(Prisma.JsonNull);
   });
 });

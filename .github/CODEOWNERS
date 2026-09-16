@@ -4,17 +4,16 @@
 # more specific rules are listed after more general ones.
 #
 # PLACEHOLDER USERNAMES: @followvansh (Vansh), @pransh-io (Pransh) and
-# @gautam972 (Gautam) were confirmed 2026-09-14. @followupbase is Dipesh,
-# confirmed by him directly on 2026-09-15 (he sent the profile URL,
-# github.com/followupbase, and the account is newly created — account id
-# 329314659 — which is consistent with the account he made for this).
+# @gautam972 (Gautam) were confirmed 2026-09-14. @dipesh-followupbase is
+# Dipesh, confirmed by him directly on 2026-09-15.
 #
-# Note for whoever reads this next: "followupbase" is the COMPANY name on
-# a personal account. It resolves correctly and CODEOWNERS works, but it
-# is not a neutral handle — it reads as the company's official account
-# while belonging to one person, and it takes the name this company would
-# most likely want for its own GitHub organisation. Raised with the
-# founder 2026-09-15; recorded here rather than silently accepted.
+# He first registered as plain "followupbase" — the company name on a
+# personal account, which read as the company's official account while
+# belonging to one person, and which held the handle this company would
+# most likely want for its own GitHub organisation. He renamed on request
+# the same day; the account id is unchanged (329314659), so this is the
+# same account, not a second one. Recorded because the old name still
+# redirects and may appear in older links.
 #
 # Sahil's own lines still use a placeholder in the form
 # @REPLACE-<name>-github-username — GitHub will not resolve these until
@@ -51,11 +50,11 @@
 /voice-agent/**                            @followvansh
 
 # Security / operations / infra
-/followup/src/lib/auth.ts                  @followupbase
-/followup/src/lib/platformAdmin.ts         @followupbase
-/followup/vercel.json                      @followupbase
-/.github/workflows/**                      @followupbase
-/followup/src/middleware.ts                @followupbase
+/followup/src/lib/auth.ts                  @dipesh-followupbase
+/followup/src/lib/platformAdmin.ts         @dipesh-followupbase
+/followup/vercel.json                      @dipesh-followupbase
+/.github/workflows/**                      @dipesh-followupbase
+/followup/src/middleware.ts                @dipesh-followupbase
 
 # Product / governance docs — Sahil has final say
 /CLAUDE.md                                 @REPLACE-sahil-github-username

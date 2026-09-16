@@ -5,6 +5,7 @@ import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { importGmailThread } from "@/lib/integrations/gmail";
 import { importOutlookConversation } from "@/lib/integrations/outlook";
 import { scoreAndDraftForLead } from "@/lib/scoring";
+import { recordAudit } from "@/lib/audit";
 
 // POST /api/integrations/gmail/filtered/[id]/restore — "this was a lead":
 // the owner overrules the classifier, the thread is imported as a real
@@ -34,6 +35,30 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       const mailbox = row.provider === "outlook" ? "Outlook" : "Gmail";
       return NextResponse.json({ success: false, message: `That email couldn't be found in ${mailbox} anymore.` });
     }
+
+    // Record that a HUMAN decided this is a lead, on the lead itself.
+    // Without this the override leaves no trace anywhere: the importer
+    // tags the restored lead source "Gmail" like any other and deletes the
+    // FilteredEmail row that held the verdict, so the retroactive clean-up
+    // pass would put the same thread back in front of the same classifier
+    // and could delete it again — reversing the owner in silence. Written
+    // before the scoring below because scoring is best-effort and may
+    // throw; the override must not depend on it.
+    //
+    // updateMany + businessId, not update by id: importGmailThread keys
+    // the lead on (businessId, email) and this route is the tenant
+    // boundary for it, so the write states the tenant it belongs to rather
+    // than trusting an id to be in scope.
+    await prisma.lead.updateMany({
+      where: { id: lead.id, businessId: ctx.businessId },
+      data: { classificationOverriddenAt: new Date() },
+    });
+    void recordAudit(ctx, "lead.classification_overridden", {
+      targetType: "lead",
+      targetId: lead.id,
+      meta: { threadId: row.threadId, provider: row.provider, classifierReason: row.reason },
+    });
+
     try {
       await scoreAndDraftForLead(lead.id);
     } catch (err) {

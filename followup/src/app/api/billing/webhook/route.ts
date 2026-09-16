@@ -129,6 +129,16 @@ async function processEvent(stripe: Stripe, event: Stripe.Event) {
 // access" are the same question asked twice.
 const LIVE_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>(["active", "trialing"]);
 
+// Statuses that mean there is no subscription to come back to. Stripe
+// never revives one of these — resubscribing always creates a NEW
+// subscription — so a business sitting in one of them owns no paid plan
+// and must land on Free rather than keeping a paid tier it isn't paying
+// for. Deliberately NOT past_due/unpaid: those are dunning states on a
+// subscription that still exists, Stripe is still retrying the card, and
+// the business keeps its tier (and its paused AI) until it either
+// recovers or is canceled outright.
+const TERMINAL_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>(["canceled", "incomplete_expired"]);
+
 async function syncSubscription(businessId: string, subscription: Stripe.Subscription) {
   // Stripe delivers out of order, and one customer can hold more than one
   // subscription over time. Without this guard, an event about a SUPERSEDED
@@ -176,6 +186,39 @@ async function syncSubscription(businessId: string, subscription: Stripe.Subscri
   const voiceAddonEnabled = items.some((item) => item.price.id === VOICE_FLAT_PRICE_ID);
   const periodEndUnix = tierItem?.current_period_end;
 
+  // Cancellation has to be a door that swings both ways.
+  //
+  // tier was only ever written from a live subscription's price ID, so a
+  // canceled Plus/Pro business kept tier "plus"/"pro" forever. hasActiveAccess()
+  // grants access without a subscription only to tier "free", so that
+  // business was locked out of everything — including the Free plan it
+  // would have qualified for the moment it stopped paying, and which a
+  // business that had simply never subscribed gets for nothing. Nothing
+  // could ever put it back: Stripe has no further events to send for a
+  // dead subscription.
+  //
+  // So a terminal status resets the plan to Free, which is the truth
+  // about what that business is now entitled to. The grandfathering this
+  // tier field exists for (see getTierFromPriceId in @/lib/stripe: an
+  // unrecognized/legacy price ID resolves to Plus rather than erroring)
+  // is untouched — it is about which tier a LIVE subscription maps to,
+  // and a legacy $29/mo subscriber stays on Plus for exactly as long as
+  // their subscription is alive, price ID unrecognized or not. What is
+  // dropped is only the stale echo of a plan that no longer exists. If
+  // they resubscribe, checkout's own subscription re-mirrors the real
+  // tier here, legacy price ID included.
+  //
+  // voiceAddonEnabled goes with it — it mirrors "is the Voice add-on on
+  // this subscription", and there is no subscription. voiceAgentEnabled
+  // (the feature switch) has to go too, not just the billing fact:
+  // /api/twilio/config refuses to turn it on unless voiceAddonEnabled is
+  // true, so leaving it on would be a state the app itself won't let you
+  // create — and, now that a canceled business reads as Free, it would
+  // leave the live voice agent answering calls (real per-minute spend)
+  // for an account that stopped paying. Re-enabled in Settings in one
+  // click after resubscribing with Voice.
+  const terminal = TERMINAL_SUBSCRIPTION_STATUSES.has(subscription.status);
+
   await prisma.business.update({
     where: { id: businessId },
     data: {
@@ -183,8 +226,9 @@ async function syncSubscription(businessId: string, subscription: Stripe.Subscri
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
       currentPeriodEnd: periodEndUnix ? new Date(periodEndUnix * 1000) : null,
-      tier: getTierFromPriceId(tierItem?.price.id),
-      voiceAddonEnabled,
+      tier: terminal ? "free" : getTierFromPriceId(tierItem?.price.id),
+      voiceAddonEnabled: terminal ? false : voiceAddonEnabled,
+      ...(terminal ? { voiceAgentEnabled: false } : {}),
     },
   });
 }

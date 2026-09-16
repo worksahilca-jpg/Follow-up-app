@@ -41,14 +41,22 @@ export const TRIAL_PERIOD_DAYS = 14;
 // call site that gates something Free tier is meant to have (lead
 // capture/processing, Gmail/Outlook sync — both Free-tier channels).
 //
-// A canceled/past_due Plus or Pro business does NOT fall back to this
-// Free-tier bypass: the webhook (billing/webhook/route.ts's
-// syncSubscription) only ever writes tier from a live subscription's price
-// ID, so a business that has ever subscribed keeps tier "plus"/"pro"
-// (stale, deliberately — see stripe.ts's getTierFromPriceId comment on
-// grandfathering) even after cancellation, never reverting to "free". So
-// this bypass only ever applies to a business that has never subscribed,
-// which is exactly the population it's meant for.
+// Who this Free-tier bypass reaches, exactly:
+//
+//  - a business that has never subscribed (subscriptionStatus null, tier
+//    "free") — the population it was written for;
+//  - a business whose subscription reached a terminal state (canceled,
+//    incomplete_expired). The webhook resets tier to "free" in that case
+//    (syncSubscription in billing/webhook/route.ts), so cancellation
+//    lands them on the Free plan instead of locking them out of a
+//    product a never-subscribed stranger can use. It used to leave tier
+//    at the stale "plus"/"pro", which made cancelling a one-way door
+//    with no way back short of resubscribing.
+//
+// It does NOT reach a past_due/unpaid business: that subscription is
+// alive and in dunning, tier stays "plus"/"pro", and access stays
+// paused until the card recovers. Capture still runs for them — that
+// happens below this gate entirely, see checkAiEligibility.
 export function hasActiveAccess(subscriptionStatus: string | null | undefined, tier?: string | null): boolean {
   return (!!subscriptionStatus && ACTIVE_STATUSES.has(subscriptionStatus)) || tier === "free";
 }
@@ -215,6 +223,15 @@ export async function isWithinTierLeadCap(
 }
 
 /**
+ * What the gate below says when it refuses on billing state alone. Kept
+ * as a constant because it's the one refusal reason that is about the
+ * ACCOUNT rather than about the lead, and the automation/sequence call
+ * sites surface it to the owner verbatim.
+ */
+export const AI_PAUSED_BILLING_REASON =
+  "paused while the subscription is inactive — the lead is still captured, and processing resumes as soon as billing is sorted out";
+
+/**
  * The one place that decides whether a lead may consume AI processing,
  * so the channel rule and the rank rule can never drift apart between
  * the five call sites that need them (scoring, automation, sequences,
@@ -225,12 +242,48 @@ export async function isWithinTierLeadCap(
  * enough that callers were already writing their own strings: a Free
  * account past 20 should be told to upgrade, and a Pro account past
  * 10,000 should be told something looks wrong.
+ *
+ * Billing state is checked HERE, not at the capture routes, and that
+ * split is the whole point. A lapsed card used to be enforced at the
+ * front door of every inbound channel — the Twilio SMS/WhatsApp
+ * webhooks, the Meta webhook, the embed widget, the generic lead webhook
+ * — which meant an inbound event arriving during a `past_due` window was
+ * DISCARDED. None of those senders retry (Twilio and Meta got their
+ * 200/TwiML, the widget's visitor got a polite "not accepting
+ * submissions"), so the lead was gone permanently and fixing the card
+ * did not bring it back. Email escaped only by accident, because Gmail/
+ * Outlook still hold the mail until the next sync.
+ *
+ * So: capture always runs, and the money-spending half — OpenAI calls
+ * and anything that sends a message — pauses instead. That is the same
+ * shape the Free tier already uses ("capture continues, AI pauses",
+ * research/market/2026-09-11-tier-pricing-recommendation.md §2.2), now
+ * applied to lapsed billing too. Putting it inside this function rather
+ * than at each caller is deliberate: this is already the single gate
+ * every AI entry point funnels through, so there is no call site left
+ * that can forget it.
+ *
+ * hasActiveAccess(status, tier) — not a bare status check — because a
+ * genuine Free business has no Stripe subscription at all and must stay
+ * eligible for its capped allowance.
  */
 export async function checkAiEligibility(
   businessId: string,
   lead: { id: string; createdAt: Date; source: string | null },
   tier: "free" | "plus" | "pro"
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
+  // Only the one plain column — Business carries AES-GCM encrypted
+  // third-party secrets (ENCRYPTED_FIELDS in src/lib/db.ts) that a
+  // whole-row read would decrypt for nothing. `tier` is already the
+  // caller's, so it isn't re-read here.
+  const billing = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { subscriptionStatus: true },
+  });
+  if (!hasActiveAccess(billing?.subscriptionStatus, tier)) {
+    return { ok: false, reason: AI_PAUSED_BILLING_REASON };
+  }
+
   if (tier === "free" && !isChannelAvailableOnFreeTier(lead.source)) {
     return { ok: false, reason: "on a channel the Free plan doesn't cover" };
   }

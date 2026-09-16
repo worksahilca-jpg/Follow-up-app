@@ -34,6 +34,12 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     business: { findUnique: businessFindUnique },
     lead: { findFirst: leadFindFirst, update: leadUpdate, create: leadCreate },
+    // The persist-first durability row every capture route writes before
+    // processing (see @/lib/inboundEvents) — stubbed, not the subject here.
+    inboundWebhookEvent: {
+      create: async () => ({ id: "evt-test", receivedAt: new Date() }),
+      update: async () => ({}),
+    },
   },
 }));
 

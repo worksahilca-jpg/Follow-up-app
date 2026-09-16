@@ -27,6 +27,14 @@
     {
       "path": "/api/cron/reactivation",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/outbound-retry",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/instant-ack",
+      "schedule": "* * * * *"
     }
   ]
 }

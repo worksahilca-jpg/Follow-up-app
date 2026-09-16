@@ -21,7 +21,17 @@ import { NextRequest } from "next/server";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { businessFindUnique } = vi.hoisted(() => ({ businessFindUnique: vi.fn() }));
-vi.mock("@/lib/db", () => ({ prisma: { business: { findUnique: businessFindUnique } } }));
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    business: { findUnique: businessFindUnique },
+    // The persist-first durability row the webhook writes before processing
+    // (see @/lib/inboundEvents) — stubbed, not the subject here.
+    inboundWebhookEvent: {
+      create: async () => ({ id: "evt-test", receivedAt: new Date() }),
+      update: async () => ({}),
+    },
+  },
+}));
 
 // Explicitly typed so their recorded call arguments stay inspectable —
 // an untyped vi.fn() infers `mock.calls` as an empty tuple.

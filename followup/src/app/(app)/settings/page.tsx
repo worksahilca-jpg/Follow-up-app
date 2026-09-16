@@ -8,13 +8,14 @@ import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
+import WhatsAppConfig from "@/components/WhatsAppConfig";
 import InstagramConfig from "@/components/InstagramConfig";
 import FacebookConfig from "@/components/FacebookConfig";
 import CrmConfig from "@/components/CrmConfig";
 import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
-import { TIER_INFO, VOICE_ADDON_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
+import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
@@ -795,10 +796,33 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section id="phone" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Phone (SMS + calls)</h2>
+      {/* Carrier channels are dropped for now (CARRIER_CHANNELS_AVAILABLE,
+          @/lib/pricing). The section is hidden rather than removed: the
+          Twilio routes stay live, so a business that already configured a
+          number keeps working instead of having it go dark without warning.
+          What is switched off is the offer to set one up.
+
+          WhatsApp used to be configured inside this same panel and is NOT
+          behind this flag — it rides the same Twilio account but gates on
+          Meta's approval, not a carrier's (META_CHANNELS_AVAILABLE). It has
+          its own section below, which must stay reachable whatever this
+          flag says; that is what src/lib/__tests__/channelAvailability.test.ts
+          asserts. */}
+      {CARRIER_CHANNELS_AVAILABLE && (
+        <section id="phone" className="scroll-mt-16">
+          <h2 className="font-display text-xl">Phone (SMS + calls)</h2>
+          <div className="mt-4">
+            <TwilioConfig />
+          </div>
+        </section>
+      )}
+
+      {/* The three Meta channels sit together, in the order a business is
+          most likely to already have them. */}
+      <section id="whatsapp" className="scroll-mt-16">
+        <h2 className="font-display text-xl">WhatsApp</h2>
         <div className="mt-4">
-          <TwilioConfig />
+          <WhatsAppConfig />
         </div>
       </section>
 
@@ -925,11 +949,16 @@ function SettingsPageInner() {
             <div>
               <p className="font-medium text-sm">Instant reply to new leads</p>
               <p className="text-xs text-ink-soft mt-1">
-                Within a minute of a new lead&apos;s first message — email, text, WhatsApp, or Instagram — FollowUp
-                sends a short &ldquo;thanks, we got your message, I&apos;ll get back to you shortly,&rdquo; in the language
-                they wrote in. <strong>Our promise:</strong> it&apos;s a fixed sentence, not an AI reply — it never
-                states a fact about your business, never answers a question, goes out once per lead only, and never
-                goes out if you&apos;ve already replied. Your real reply still comes from you.
+                Within a minute of a new lead&apos;s first email, FollowUp sends a short &ldquo;thanks, we got your
+                message, I&apos;ll get back to you shortly,&rdquo; in the language they wrote in. On WhatsApp, Instagram
+                and Messenger it waits two to three minutes first, so you get the chance to answer the message yourself
+                — reply in that time and FollowUp stays quiet. If it does reply, it tells you what it sent.{" "}
+                <strong>Our promise:</strong> it&apos;s written for that specific message, so it reads like you
+                rather than a template &mdash; but it is checked twice before it goes out, and it never states a fact
+                about your business. It cannot quote a price, a date, a time or a number the lead didn&apos;t write
+                themselves, and it cannot answer their question. If either check has any doubt, it falls back to a
+                fixed, always-safe line instead. It goes out once per lead only, never if you&apos;ve already replied,
+                and never to someone who asked us to stop. Your real answer still comes from you.
               </p>
             </div>
             <button
@@ -1150,7 +1179,7 @@ function SettingsPageInner() {
                     {tier === "free"
                       ? "Email + web widget, 20 leads/mo, assisted only. No card needed — this is where you are now."
                       : tier === "plus"
-                      ? "Every channel (SMS, WhatsApp, Instagram, CRM sync) plus autonomous send. 14-day free trial."
+                      ? "Every channel (WhatsApp, Instagram, Messenger, CRM sync) plus autonomous send. 14-day free trial."
                       : "Everything in Plus, no lead cap, multi-agent lead routing, priority support. 14-day free trial."}
                   </p>
                   {tier === "free" && billingLoaded && (
@@ -1192,16 +1221,22 @@ function SettingsPageInner() {
                 </div>
               ))}
             </div>
-            <label className="mt-3 flex items-center gap-2.5 text-sm text-ink-soft">
-              <input
-                type="checkbox"
-                checked={voiceAddonWanted}
-                onChange={(e) => setVoiceAddonWanted(e.target.checked)}
-                className="h-4 w-4"
-              />
-              Add Voice ({VOICE_ADDON_INFO.priceLabel}, {VOICE_ADDON_INFO.includedMinutes} min included, then{" "}
-              {VOICE_ADDON_INFO.overagePerMinute}/min) — applies to whichever plan you pick above
-            </label>
+            {/* Hidden while the voice agent is deferred (VOICE_ADDON_AVAILABLE,
+                see @/lib/pricing). The checkout affordance only: a business
+                that already has the add-on keeps it, keeps being billed, and
+                still sees it in the plan summary above. */}
+            {VOICE_ADDON_AVAILABLE && (
+              <label className="mt-3 flex items-center gap-2.5 text-sm text-ink-soft">
+                <input
+                  type="checkbox"
+                  checked={voiceAddonWanted}
+                  onChange={(e) => setVoiceAddonWanted(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                Add Voice ({VOICE_ADDON_INFO.priceLabel}, {VOICE_ADDON_INFO.includedMinutes} min included, then{" "}
+                {VOICE_ADDON_INFO.overagePerMinute}/min) — applies to whichever plan you pick above
+              </label>
+            )}
             {billingError && (
               <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
                 {billingError}

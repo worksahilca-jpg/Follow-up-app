@@ -38,6 +38,7 @@ import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
+import { isTransientError } from "@/lib/transientError";
 import type { Message } from "@/lib/types";
 
 export const UNANSWERED_ACTION = "unanswered_reply";
@@ -66,44 +67,14 @@ export const DEAD_LEAD_NAME = "Reactivate cold leads";
 export const DEAD_LEAD_DEFAULT_DAYS = 45;
 
 /**
- * Is this error worth trying again on the next tick, rather than after the
- * full recheck window?
- *
- * Deliberately a narrow allowlist, not a denylist. Everything not listed here
- * keeps the existing behaviour — the lead stays claimed and is reconsidered at
- * the normal recheck — because the cost of getting this wrong in the generous
- * direction is a lead that gets re-drafted every hour forever, paying for an
- * OpenAI call each time to produce a message that can never send.
- *
- * The classes below are the ones that genuinely resolve on their own: provider
- * rate limits, upstream 5xx, and network/timeout failures.
+ * The narrow allowlist of failures worth retrying — moved to
+ * src/lib/transientError.ts (a leaf module with no imports) now that the
+ * outbound send queue needs the same judgement, and re-exported here so this
+ * stays the name everything already imports. One classifier, one definition:
+ * a second one would drift, and the whole reason this is an allowlist rather
+ * than a denylist is that being generous costs real money (see that file).
  */
-export function isTransientError(err: unknown): boolean {
-  if (!err) return false;
-  const e = err as { status?: number; code?: string; message?: string };
-
-  // OpenAI, Google and Twilio all surface an HTTP status on the error.
-  if (typeof e.status === "number" && (e.status === 429 || e.status >= 500)) return true;
-
-  // Node/undici network failures.
-  if (typeof e.code === "string" && ["ETIMEDOUT", "ECONNRESET", "ECONNREFUSED", "EAI_AGAIN", "UND_ERR_CONNECT_TIMEOUT"].includes(e.code)) {
-    return true;
-  }
-
-  if (typeof e.message !== "string") return false;
-  const m = e.message.toLowerCase();
-  return (
-    m.includes("rate limit") ||
-    m.includes("timeout") ||
-    m.includes("timed out") ||
-    m.includes("etimedout") ||
-    m.includes("econnreset") ||
-    m.includes("socket hang up") ||
-    m.includes("service unavailable") ||
-    m.includes("temporarily unavailable") ||
-    m.includes("overloaded")
-  );
-}
+export { isTransientError };
 
 interface AutomationResult {
   checked: number;

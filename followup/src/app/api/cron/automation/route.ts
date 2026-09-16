@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
 import { runAutomationForAllBusinesses } from "@/lib/automation";
 import { runSequencesForAllBusinesses } from "@/lib/sequences";
+import { pruneInboundWebhookEvents } from "@/lib/inboundEvents";
 
 // One invocation covers every business with automation enabled — at real
 // tenant counts that's comfortably past a default serverless timeout even
@@ -34,7 +35,19 @@ export async function GET(request: NextRequest) {
       runAutomationForAllBusinesses(),
       runSequencesForAllBusinesses(),
     ]);
-    return NextResponse.json({ success: true, automation, sequences });
+    // Retention for the raw inbound-capture log (InboundWebhookEvent):
+    // processed rows after 14 days, unreplayed failures after 90. It is
+    // written once per inbound message forever, so it needs a policy from
+    // day one rather than joining AuditEvent / RateLimitHit /
+    // ProcessedWebhookEvent on the unretained list
+    // (research/product/2026-09-15-cost-to-serve-one-customer.md §2.1).
+    // Deliberately outside the Promise.all and after it: a pruning failure
+    // must never be able to fail the actual automation run.
+    const pruned = await pruneInboundWebhookEvents().catch((err) => {
+      console.error("[cron] inbound webhook event pruning failed:", err);
+      return { deleted: 0 };
+    });
+    return NextResponse.json({ success: true, automation, sequences, pruned });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Automation run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });

@@ -16,26 +16,26 @@ type NumberStatus = {
  * yet (a paid Twilio account + phone number) — so it's written to be
  * useful to set up in advance: generate the URLs now, paste an Auth Token
  * in whenever the Twilio account exists, no rush either way.
+ *
+ * Hidden while CARRIER_CHANNELS_AVAILABLE is false (@/lib/pricing) — the
+ * whole section, including everything below, is the carrier offer. WhatsApp
+ * used to live in here too and no longer does: it rides the same Twilio
+ * account but is not gated on anything a carrier controls, so it moved to
+ * its own always-available panel, @/components/WhatsAppConfig (2026-09-16).
+ * The Account SID / Auth Token fields below are deliberately duplicated
+ * there rather than shared — they are the same two database columns, and
+ * whichever panel a business connects from, the other shows it as saved.
  */
 export default function TwilioConfig() {
   const [loading, setLoading] = useState(true);
   const [smsUrl, setSmsUrl] = useState<string | null>(null);
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
-  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
   const [hasAuthToken, setHasAuthToken] = useState(false);
   const [authTokenDraft, setAuthTokenDraft] = useState("");
   const [accountSid, setAccountSid] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [accountSidDraft, setAccountSidDraft] = useState("");
   const [phoneNumberDraft, setPhoneNumberDraft] = useState("");
-  const [whatsappPhoneNumber, setWhatsappPhoneNumber] = useState<string | null>(null);
-  const [whatsappPhoneNumberDraft, setWhatsappPhoneNumberDraft] = useState("");
-  const [savingWhatsapp, setSavingWhatsapp] = useState(false);
-  const [whatsappTemplateSid, setWhatsappTemplateSid] = useState<string | null>(null);
-  const [whatsappTemplateBody, setWhatsappTemplateBody] = useState<string | null>(null);
-  const [whatsappTemplateSidDraft, setWhatsappTemplateSidDraft] = useState("");
-  const [whatsappTemplateBodyDraft, setWhatsappTemplateBodyDraft] = useState("");
-  const [savingWhatsappTemplate, setSavingWhatsappTemplate] = useState(false);
   const [voiceAgentEnabled, setVoiceAgentEnabled] = useState(false);
   // Whether the business is actually paying for the Voice add-on (Settings
   // → Billing) — voiceAgentEnabled above is just the feature switch, and
@@ -51,7 +51,7 @@ export default function TwilioConfig() {
   const [savingVoiceAgent, setSavingVoiceAgent] = useState(false);
   const [savingOutbound, setSavingOutbound] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [copied, setCopied] = useState<"sms" | "voice" | "whatsapp" | null>(null);
+  const [copied, setCopied] = useState<"sms" | "voice" | null>(null);
   const [showExamples, setShowExamples] = useState(false);
 
   useEffect(() => {
@@ -62,30 +62,19 @@ export default function TwilioConfig() {
           success: boolean;
           smsUrl?: string | null;
           voiceUrl?: string | null;
-          whatsappUrl?: string | null;
           hasAuthToken?: boolean;
           accountSid?: string | null;
           phoneNumber?: string | null;
-          whatsappPhoneNumber?: string | null;
-          whatsappTemplateSid?: string | null;
-          whatsappTemplateBody?: string | null;
           voiceAgentEnabled?: boolean;
         }) => {
           if (data.success) {
             setSmsUrl(data.smsUrl ?? null);
             setVoiceUrl(data.voiceUrl ?? null);
-            setWhatsappUrl(data.whatsappUrl ?? null);
             setHasAuthToken(!!data.hasAuthToken);
             setAccountSid(data.accountSid ?? null);
             setPhoneNumber(data.phoneNumber ?? null);
             setAccountSidDraft(data.accountSid ?? "");
             setPhoneNumberDraft(data.phoneNumber ?? "");
-            setWhatsappPhoneNumber(data.whatsappPhoneNumber ?? null);
-            setWhatsappPhoneNumberDraft(data.whatsappPhoneNumber ?? "");
-            setWhatsappTemplateSid(data.whatsappTemplateSid ?? null);
-            setWhatsappTemplateBody(data.whatsappTemplateBody ?? null);
-            setWhatsappTemplateSidDraft(data.whatsappTemplateSid ?? "");
-            setWhatsappTemplateBodyDraft(data.whatsappTemplateBody ?? "");
             setVoiceAgentEnabled(!!data.voiceAgentEnabled);
           }
         }
@@ -109,11 +98,10 @@ export default function TwilioConfig() {
     setSaving(true);
     try {
       const res = await fetch("/api/twilio/config", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      const data: { success: boolean; smsUrl?: string; voiceUrl?: string; whatsappUrl?: string } = await res.json();
+      const data: { success: boolean; smsUrl?: string; voiceUrl?: string } = await res.json();
       if (data.success) {
         setSmsUrl(data.smsUrl ?? null);
         setVoiceUrl(data.voiceUrl ?? null);
-        setWhatsappUrl(data.whatsappUrl ?? null);
       }
     } finally {
       setSaving(false);
@@ -155,45 +143,6 @@ export default function TwilioConfig() {
       }
     } finally {
       setSavingOutbound(false);
-    }
-  }
-
-  async function saveWhatsapp() {
-    if (!whatsappPhoneNumberDraft.trim()) return;
-    setSavingWhatsapp(true);
-    try {
-      const res = await fetch("/api/twilio/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ whatsappPhoneNumber: whatsappPhoneNumberDraft.trim() }),
-      });
-      const data: { success: boolean } = await res.json();
-      if (data.success) {
-        setWhatsappPhoneNumber(whatsappPhoneNumberDraft.trim());
-      }
-    } finally {
-      setSavingWhatsapp(false);
-    }
-  }
-
-  async function saveWhatsappTemplate() {
-    setSavingWhatsappTemplate(true);
-    try {
-      const res = await fetch("/api/twilio/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          whatsappTemplateSid: whatsappTemplateSidDraft.trim(),
-          whatsappTemplateBody: whatsappTemplateBodyDraft.trim(),
-        }),
-      });
-      const data: { success: boolean } = await res.json();
-      if (data.success) {
-        setWhatsappTemplateSid(whatsappTemplateSidDraft.trim() || null);
-        setWhatsappTemplateBody(whatsappTemplateBodyDraft.trim() || null);
-      }
-    } finally {
-      setSavingWhatsappTemplate(false);
     }
   }
 
@@ -249,7 +198,7 @@ export default function TwilioConfig() {
     }
   }
 
-  async function copy(which: "sms" | "voice" | "whatsapp", value: string) {
+  async function copy(which: "sms" | "voice", value: string) {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(which);
@@ -509,144 +458,6 @@ export default function TwilioConfig() {
                   ) : null}
                   {numberError && (
                     <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>{numberError}</p>
-                  )}
-                </div>
-              )}
-
-              {whatsappUrl && (
-                <div className="pt-3 border-t border-line">
-                  <p className="text-xs font-medium">WhatsApp</p>
-                  <p className="text-xs text-ink-soft mt-1">
-                    Same Twilio account, a separate{" "}
-                    <a
-                      href="https://console.twilio.com/us1/develop/sms/senders/whatsapp-senders"
-                      target="_blank"
-                      rel="noopener"
-                      className="underline"
-                    >
-                      WhatsApp Sender
-                    </a>
-                    . Paste the URL below into that sender&apos;s &quot;When a message comes in&quot; webhook. A
-                    WhatsApp message merges into the same lead as a text from that number — it&apos;s just another
-                    way they can reach you.
-                  </p>
-                  <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
-                    <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
-                      <span>
-                        <strong className="font-medium">Verify your WhatsApp Business Account.</strong> A newly
-                        registered sender is capped at 250 business-initiated messages per 24 hours until Meta
-                        Business Verification clears on your own Meta Business Manager — a separate, one-time
-                        process each business does for itself, typically 2-10 business days. Replying to a lead
-                        who messaged you first isn&apos;t affected by this cap. Reaching a lead who hasn&apos;t
-                        messaged in over 24 hours also needs a pre-approved message template — set one up below
-                        once you have one, otherwise those follow-ups fall back to email or text instead.{" "}
-                        <a
-                          href="https://www.twilio.com/docs/whatsapp/self-sign-up"
-                          target="_blank"
-                          rel="noopener"
-                          className="underline"
-                        >
-                          WhatsApp sender setup &amp; verification
-                        </a>
-                        .
-                      </span>
-                    </p>
-                  </div>
-                  <div className="mt-2">
-                    <pre className="rounded-lg bg-paper border border-line p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all">
-                      {whatsappUrl}
-                    </pre>
-                    <button onClick={() => copy("whatsapp", whatsappUrl)} className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line">
-                      {copied === "whatsapp" ? <Check className="h-3 w-3" /> : null}
-                      {copied === "whatsapp" ? "Copied!" : "Copy"}
-                    </button>
-                  </div>
-
-                  {!accountSid && (
-                    <p className="text-xs text-ink-soft mt-2">
-                      Save your Account SID above first — replying over WhatsApp uses the same Twilio credentials as
-                      texting.
-                    </p>
-                  )}
-
-                  {whatsappPhoneNumber ? (
-                    <p className="text-xs mt-2 flex items-center gap-1" style={{ color: "var(--sage)" }}>
-                      <Check className="h-3.5 w-3.5" /> Connected — replying to a WhatsApp lead sends a real WhatsApp
-                      message from {whatsappPhoneNumber}.
-                    </p>
-                  ) : (
-                    accountSid && (
-                      <div className="mt-2 space-y-2">
-                        <p className="text-xs text-ink-soft">
-                          The WhatsApp-enabled number Twilio gave your sender (shown on that sender&apos;s page in
-                          the Console) — often the same digits as your Twilio number above, sometimes a different
-                          one.
-                        </p>
-                        <input
-                          value={whatsappPhoneNumberDraft}
-                          onChange={(e) => setWhatsappPhoneNumberDraft(e.target.value)}
-                          placeholder="Your WhatsApp number, e.g. +18609358202"
-                          className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
-                        />
-                        <button
-                          onClick={saveWhatsapp}
-                          disabled={savingWhatsapp || !whatsappPhoneNumberDraft.trim()}
-                          className="rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
-                          style={{ backgroundColor: "var(--ink)" }}
-                        >
-                          {savingWhatsapp ? "Saving…" : "Save"}
-                        </button>
-                      </div>
-                    )
-                  )}
-
-                  {whatsappPhoneNumber && (
-                    <div className="mt-3 pt-3 border-t border-line space-y-2">
-                      <p className="text-xs font-medium">Re-opening a conversation after 24 hours</p>
-                      <p className="text-xs text-ink-soft">
-                        Create and get a template approved for this exact case in your{" "}
-                        <a
-                          href="https://console.twilio.com/us1/develop/sms/content-template-builder"
-                          target="_blank"
-                          rel="noopener"
-                          className="underline"
-                        >
-                          Twilio Content Template Builder
-                        </a>{" "}
-                        — a single variable for the lead&apos;s first name is enough (e.g. &quot;Hi {"{{1}}"}, just
-                        checking in — still interested? Reply anytime and we&apos;ll pick right back up.&quot;).
-                        Once Twilio/Meta approve it, paste its Content SID below. Until then, follow-ups past 24
-                        hours keep falling back to email or text.
-                      </p>
-                      {whatsappTemplateSid ? (
-                        <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--sage)" }}>
-                          <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" /> Configured — a reply past 24 hours will
-                          send &quot;{whatsappTemplateBody || whatsappTemplateSid}&quot; via that template instead of
-                          falling back.
-                        </p>
-                      ) : null}
-                      <input
-                        value={whatsappTemplateSidDraft}
-                        onChange={(e) => setWhatsappTemplateSidDraft(e.target.value)}
-                        placeholder="Content SID, e.g. HXa1b2c3d4e5f6..."
-                        className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs font-mono"
-                      />
-                      <input
-                        value={whatsappTemplateBodyDraft}
-                        onChange={(e) => setWhatsappTemplateBodyDraft(e.target.value)}
-                        placeholder="Approved template text, for reference — e.g. Hi {{1}}, just checking in…"
-                        className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
-                      />
-                      <button
-                        onClick={saveWhatsappTemplate}
-                        disabled={savingWhatsappTemplate}
-                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
-                        style={{ backgroundColor: "var(--ink)" }}
-                      >
-                        {savingWhatsappTemplate ? "Saving…" : whatsappTemplateSid ? "Update" : "Save"}
-                      </button>
-                    </div>
                   )}
                 </div>
               )}

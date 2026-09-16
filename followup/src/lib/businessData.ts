@@ -184,6 +184,11 @@ export async function deleteBusinessData(
     prisma.aIInsight.deleteMany({ where: { lead: { businessId } } }),
     prisma.deal.deleteMany({ where: { lead: { businessId } } }),
     prisma.followUp.deleteMany({ where: { lead: { businessId } } }),
+    // Queued/failed outbound sends (see OutboundSend in schema.prisma) —
+    // before Lead, which they reference, and they carry real message text
+    // so an erasure that skipped them would leave drafts of this business's
+    // messages behind.
+    prisma.outboundSend.deleteMany({ where: { businessId } }),
     prisma.task.deleteMany({ where: { lead: { businessId } } }),
     prisma.booking.deleteMany({ where: { businessId } }),
     prisma.lead.deleteMany({ where: { businessId } }),
@@ -196,6 +201,11 @@ export async function deleteBusinessData(
     prisma.invite.deleteMany({ where: { businessId } }),
     prisma.productFeedback.deleteMany({ where: { businessId } }),
     prisma.rateLimitHit.deleteMany({ where: { businessId } }),
+    // Raw inbound payloads (phone numbers, message text, names) — not a
+    // relation to Business on purpose (see schema.prisma), so it has to be
+    // cleared explicitly here or a deleted business's inbound messages
+    // would outlive the erasure.
+    prisma.inboundWebhookEvent.deleteMany({ where: { businessId } }),
     prisma.filteredEmail.deleteMany({ where: { businessId } }),
     prisma.crmConnection.deleteMany({ where: { businessId } }),
     prisma.notification.deleteMany({ where: { user: { businessId } } }),

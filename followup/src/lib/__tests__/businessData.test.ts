@@ -48,6 +48,8 @@ vi.mock("@/lib/db", () => ({
     filteredEmail: { deleteMany: trackedDeleteMany("filteredEmail") },
     integration: { deleteMany: trackedDeleteMany("integration") },
     aIInsight: { deleteMany: trackedDeleteMany("aIInsight") },
+    outboundSend: { deleteMany: trackedDeleteMany("outboundSend") },
+    inboundWebhookEvent: { deleteMany: trackedDeleteMany("inboundWebhookEvent") },
     auditEvent: { findMany: vi.fn(async () => []) },
     $transaction: vi.fn(async (queries: Promise<unknown>[]) => Promise.all(queries)),
   },
@@ -119,6 +121,15 @@ describe("deleteBusinessData", () => {
     expect(callOrder.indexOf("savedFilter")).toBeLessThan(callOrder.indexOf("user"));
     expect(callOrder.indexOf("notification")).toBeLessThan(callOrder.indexOf("user"));
     expect(callOrder.indexOf("integration")).toBeLessThan(callOrder.indexOf("user"));
+    // A queued outbound send holds a required FK to Lead — and it carries
+    // real message text, so an erasure that skipped it would leave this
+    // business's drafts behind.
+    expect(callOrder.indexOf("outboundSend")).toBeLessThan(callOrder.indexOf("lead"));
+    // The raw inbound-capture log holds provider payloads — phone numbers,
+    // names, the text of what people sent — under a plain businessId column
+    // with no FK to cascade it, so an erasure that skipped it would leave
+    // this business's inbound messages on disk after the business is gone.
+    expect(callOrder).toContain("inboundWebhookEvent");
     // Business itself is always the very last thing removed.
     expect(p.business.delete).toHaveBeenCalledWith({ where: { id: "biz1" } });
   });

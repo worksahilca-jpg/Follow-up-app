@@ -3,14 +3,21 @@
 # Drives GitHub's automatic review requests. Last matching pattern wins, so
 # more specific rules are listed after more general ones.
 #
-# PLACEHOLDER USERNAMES: @followvansh (Vansh), @pransh-io (Pransh), and
-# @gautam972 (Gautam) are confirmed GitHub usernames as of 2026-09-14 —
-# Dipesh has not yet reported his (an earlier commit briefly used
-# "@REPLACE-dipesh-github-username" as a guess; that was wrong and has been reverted — do not
-# reuse it without an actual confirmation from him). The lines below for
-# him use a placeholder in the form @REPLACE-<name>-github-username —
-# GitHub will not resolve these until swapped for a real username. Update
-# this file the moment his username is confirmed.
+# PLACEHOLDER USERNAMES: @followvansh (Vansh), @pransh-io (Pransh) and
+# @gautam972 (Gautam) were confirmed 2026-09-14. @dipesh-followupbase is
+# Dipesh, confirmed by him directly on 2026-09-15.
+#
+# He first registered as plain "followupbase" — the company name on a
+# personal account, which read as the company's official account while
+# belonging to one person, and which held the handle this company would
+# most likely want for its own GitHub organisation. He renamed on request
+# the same day; the account id is unchanged (329314659), so this is the
+# same account, not a second one. Recorded because the old name still
+# redirects and may appear in older links.
+#
+# Sahil's own lines still use a placeholder in the form
+# @REPLACE-<name>-github-username — GitHub will not resolve these until
+# swapped for a real username.
 #
 # See TEAM.md for the human-readable version of who owns what, and
 # CONTRIBUTING.md for how the PR/review process around this actually works.
@@ -43,11 +50,11 @@
 /voice-agent/**                            @followvansh
 
 # Security / operations / infra
-/followup/src/lib/auth.ts                  @REPLACE-dipesh-github-username
-/followup/src/lib/platformAdmin.ts         @REPLACE-dipesh-github-username
-/followup/vercel.json                      @REPLACE-dipesh-github-username
-/.github/workflows/**                      @REPLACE-dipesh-github-username
-/followup/src/middleware.ts                @REPLACE-dipesh-github-username
+/followup/src/lib/auth.ts                  @dipesh-followupbase
+/followup/src/lib/platformAdmin.ts         @dipesh-followupbase
+/followup/vercel.json                      @dipesh-followupbase
+/.github/workflows/**                      @dipesh-followupbase
+/followup/src/middleware.ts                @dipesh-followupbase
 
 # Product / governance docs — Sahil has final say
 /CLAUDE.md                                 @REPLACE-sahil-github-username

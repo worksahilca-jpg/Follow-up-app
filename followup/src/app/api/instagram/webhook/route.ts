@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { requireActiveBilling } from "@/lib/billing";
-import { scoreAndDraftForLead } from "@/lib/scoring";
-import { checkRapidEngagement } from "@/lib/engagement";
-import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { findOrCreateConversation } from "@/lib/conversations";
-import { fetchLeadgenLead, findOrCreateLeadByMessenger, upsertLeadFromLeadgen } from "@/lib/facebook";
-import {
-  WEBHOOK_VERIFY_TOKEN,
-  captureDirectReply,
-  createInboundMessageIfNew,
-  findOrCreateLeadByInstagram,
-  validateMetaSignature,
-} from "@/lib/instagram";
+import { processInboundEvent, recordInboundWebhookEvent } from "@/lib/inboundEvents";
+import { WEBHOOK_VERIFY_TOKEN, validateMetaSignature } from "@/lib/instagram";
 import { recordAuthFailure } from "@/lib/monitoring";
 
 /**
@@ -35,217 +23,77 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * What to record for one Meta message event, and what (if anything) the
- * lead actually said in words.
+ * POST /api/instagram/webhook — real inbound events for all three Meta
+ * paths that share this one callback URL: Instagram DMs, Messenger DMs,
+ * and Facebook Lead Ads submissions. App-wide (single shared endpoint,
+ * see src/lib/instagram.ts doc comment), so attribution to a business
+ * happens per-entry inside processMetaEnvelope (@/lib/inbound/meta), not
+ * here. Meta expects a fast 200 regardless of what's inside — it retries
+ * aggressively on non-2xx — so every path here returns 200, the same "no
+ * human is reading this response" shape as the Twilio webhooks.
  *
- * Both inbound paths below used to read `event.message.text` and `continue`
- * the moment it was missing. A DM whose only content is an attachment —
- * a photo of the broken thing, a voice note, a shared reel or post — has
- * NO `text` field at all, so the whole event was skipped: no Lead row, no
- * Message, no acknowledgement, nothing anywhere in the app. "Here's a
- * picture of my roof" is a completely ordinary first contact for exactly
- * the trades/realtor businesses this product is for, and it was a
- * silently dropped lead every single time.
+ * PERSIST FIRST, PROCESS AFTER. The signed envelope is written to
+ * InboundWebhookEvent before any of the work it implies. That ordering is
+ * what makes the 200 above honest: Meta stops retrying the moment it sees
+ * one, so before this row existed, a throw anywhere in the entry loop — a
+ * Graph API hiccup on a leadgen fetch, an OpenAI timeout, a cold start —
+ * erased every DM in that envelope with nothing on disk to replay.
  *
- * `body` is what gets stored, so an attachment-only DM becomes a real,
- * visible message rather than a void. `ownWords` is ONLY what the lead
- * typed themselves, and is what the instant acknowledgement is allowed to
- * answer — feeding it a placeholder FollowUp wrote itself would invite a
- * generated reply to a message nobody sent. Empty `ownWords` makes
- * acknowledgeNewLead fall through to its always-safe fixed line (see its
- * "no inbound text" branch), which is the honest behavior here: the owner
- * is told someone got in touch, without a machine pretending to have
- * understood a photo.
- *
- * Returns null for an event that genuinely carries no message content at
- * all (a read receipt, a delivery receipt, a reaction) — those are not
- * lead messages and were correctly skipped before.
- */
-function messageContent(message: unknown): { body: string; ownWords: string } | null {
-  const m = (message ?? {}) as { text?: unknown; attachments?: unknown };
-  const ownWords = typeof m.text === "string" ? m.text.trim() : "";
-  if (ownWords) return { body: ownWords, ownWords };
-
-  const attachments = Array.isArray(m.attachments) ? m.attachments : [];
-  if (attachments.length === 0) return null;
-
-  // Meta's attachment `type` is a short lowercase tag (image, video,
-  // audio, file, share, story_mention, ...). Kept verbatim rather than
-  // mapped to prettier words so an unfamiliar future type still reads as
-  // something rather than as "unknown".
-  const kinds = attachments.map((a) => {
-    const type = (a as { type?: unknown } | null)?.type;
-    return typeof type === "string" && type ? type : "attachment";
-  });
-  const unique = [...new Set(kinds)];
-  const label = attachments.length > 1 ? `${attachments.length} ${unique.join("/")} attachments` : unique[0];
-  return { body: `[Sent ${label} with no message text]`, ownWords: "" };
-}
-
-/**
- * POST /api/instagram/webhook — real inbound DM events. App-wide (single
- * shared endpoint, see src/lib/instagram.ts doc comment), so every
- * event's recipient ID has to be matched against a business's
- * instagramUserId before anything else. Meta expects a fast 200 response
- * regardless of what's inside — retries aggressively on non-2xx — so
- * every path here returns success even when a business/lead lookup
- * fails, the same "no human is reading this response" shape as the
- * Twilio webhooks.
+ * ⚠️ Only entry.messaging is read (see processMetaEnvelope). This is
+ * UNVERIFIED against Meta's actual Business-Agent behavior — there's a
+ * real, unresolved possibility that a conversation Meta's AI is actively
+ * handling arrives on a separate `standby` field (Messenger's older
+ * Handover Protocol) instead, which this route doesn't read at all. See
+ * research/integrations/2026-09-08-meta-business-agent-webhook-behavior.md
+ * and the warning on captureDirectReply() (src/lib/instagram.ts) before
+ * trusting the is_echo capture path at scale.
  */
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
 
+  // Nothing is persisted until the signature passes — an unverified
+  // payload must never be stored as though it were real.
   if (!validateMetaSignature(rawBody, request.headers.get("x-hub-signature-256"))) {
     recordAuthFailure("meta_webhook_verify", { stage: "post_signature" });
     return NextResponse.json({ success: false }, { status: 403 });
   }
 
-  // ⚠️ Only entry.messaging is read below (both branches). This is
-  // UNVERIFIED against Meta's actual Business-Agent behavior — there's a
-  // real, unresolved possibility that a conversation Meta's AI is
-  // actively handling arrives on a separate `standby` field (Messenger's
-  // older Handover Protocol) instead, which this route doesn't read at
-  // all. See research/integrations/2026-09-08-meta-business-agent-webhook-behavior.md
-  // and the warning on captureDirectReply() (src/lib/instagram.ts)
-  // before trusting the is_echo capture path below at scale.
-  let payload: { object?: string; entry?: unknown };
+  let payload: Record<string, unknown>;
   try {
     payload = JSON.parse(rawBody || "{}");
-  } catch {
-    // A signed-but-unparseable body has nothing to retry into. Throwing
-    // here would surface as a 500, which Meta retries indefinitely.
-    console.error("Meta webhook: signed payload wasn't valid JSON, ignoring.");
-    return NextResponse.json({ success: true });
-  }
-  if (payload.object === "page" && Array.isArray(payload.entry)) {
-    await handlePageEvents(payload.entry);
-    return NextResponse.json({ success: true });
-  }
-  if (payload.object !== "instagram" || !Array.isArray(payload.entry)) {
-    return NextResponse.json({ success: true });
-  }
-
-  for (const entry of payload.entry) {
-    const recipientId: string | undefined = entry.id;
-    if (!recipientId) continue;
-
-    const business = await prisma.business.findUnique({
-      where: { instagramUserId: recipientId },
-      select: { id: true },
-    });
-    if (!business) continue; // event for an Instagram account no business here has connected
-    if (!(await requireActiveBilling(business.id))) continue;
-
-    for (const event of entry.messaging ?? []) {
-      const senderId: string | undefined = event.sender?.id;
-      const content = messageContent(event.message);
-      if (!senderId || !content) continue;
-
-      // is_echo marks a message the connected account itself sent — not
-      // through FollowUp, so not an inbound lead message. Task #68: this
-      // used to just skip it. Now it's captured as a real outbound
-      // Message instead of dropped — the recipient of an echo is who
-      // FollowUp is talking to, so the lead lookup is symmetric with the
-      // inbound path below. See Message.source in schema.prisma for why:
-      // this is what lets a lead Meta's own Business AI already answered
-      // (a very real, very common case now that Meta ships one free on
-      // Instagram) show up as answered here too, instead of FollowUp
-      // racing to send its own reply on top of one that already went
-      // out — and still lets the existing human-neglect trigger
-      // (src/lib/automation.ts) rescue it later if Meta's agent replied
-      // once and then the thread went quiet.
-      if (event.message?.is_echo) {
-        const recipientId: string | undefined = event.recipient?.id;
-        if (!recipientId) continue;
-        const lead = await findOrCreateLeadByInstagram(business.id, recipientId);
-        const sentAt = typeof event.timestamp === "number" ? new Date(event.timestamp) : new Date();
-        await captureDirectReply(lead.id, "instagram", content.body, "instagram_direct", event.message?.mid, sentAt);
-        continue;
-      }
-
-      const lead = await findOrCreateLeadByInstagram(business.id, senderId);
-
-      const conversation = await findOrCreateConversation(lead.id, "instagram");
-      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid);
-      if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
-
-      // Reply within the minute, before the slower scoring — see src/lib/acknowledge.ts.
-      // `ownWords`, not `body`: an attachment-only DM must not get a
-      // generated reply to a placeholder FollowUp wrote itself (see messageContent).
-      await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: content.ownWords, inboundAt: new Date() });
-      await scoreAndDraftForLead(lead.id);
-      await checkRapidEngagement(lead.id);
+    if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
+      payload = { __unparsedBody: rawBody };
     }
+  } catch {
+    // A signed-but-unparseable body used to be logged and forgotten. It's
+    // stored verbatim now instead: there's nothing to process it into, but
+    // if this ever fires it's a genuine mystery about Meta's own format
+    // and the bytes are the only evidence of it. dispatch() marks the row
+    // failed with that explanation.
+    payload = { __unparsedBody: rawBody };
   }
+
+  // No billing gate here, on purpose. Meta only retries on a non-2xx, and
+  // this route always answers 200, so skipping a business's events for a
+  // lapsed card didn't defer those DMs — it destroyed them, with nothing
+  // left to replay once the card was fixed. Capture runs for every
+  // account; the money-spending half pauses inside checkAiEligibility —
+  // see @/lib/billing.
+  //
+  // businessId is null: one envelope can legitimately carry entries for
+  // several connected accounts, so there is no single business to attribute
+  // it to at this point.
+  const event = await recordInboundWebhookEvent({
+    provider: "meta",
+    channel: "instagram_or_messenger",
+    businessId: null,
+    payload,
+  });
+
+  // Never throws — a processing failure is recorded on the row, and Meta
+  // still gets its 200. Returning a 500 instead would start Meta's retry
+  // storm against an envelope that is already safely on disk.
+  await processInboundEvent({ ...event, channel: "instagram_or_messenger", businessId: null, payload });
 
   return NextResponse.json({ success: true });
-}
-
-/**
- * Facebook Page events (same Meta app, same callback URL): Messenger DMs
- * arrive as entry.messaging[], Lead Ads submissions as entry.changes[]
- * with field "leadgen". Routed to the business whose Page ID is entry.id.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handlePageEvents(entries: any[]): Promise<void> {
-  for (const entry of entries) {
-    const pageId: string | undefined = entry.id;
-    if (!pageId) continue;
-    const business = await prisma.business.findUnique({ where: { facebookPageId: pageId }, select: { id: true } });
-    if (!business) continue;
-    if (!(await requireActiveBilling(business.id))) continue;
-
-    for (const event of entry.messaging ?? []) {
-      const senderId: string | undefined = event.sender?.id;
-      const content = messageContent(event.message);
-      if (!senderId || !content) continue;
-
-      // Same "capture, don't drop" treatment as Instagram's echo path
-      // above — see the comment there for why. Messenger's own Business
-      // AI reply (or a teammate answering from the native Messenger
-      // inbox) arrives the same way: an is_echo event whose sender is
-      // the Page itself.
-      if (event.message?.is_echo || senderId === pageId) {
-        const recipientId: string | undefined = event.recipient?.id;
-        if (!recipientId || recipientId === pageId) continue;
-        const lead = await findOrCreateLeadByMessenger(business.id, recipientId);
-        const sentAt = typeof event.timestamp === "number" ? new Date(event.timestamp) : new Date();
-        await captureDirectReply(lead.id, "messenger", content.body, "messenger_direct", event.message?.mid, sentAt);
-        continue;
-      }
-
-      const lead = await findOrCreateLeadByMessenger(business.id, senderId);
-      const conversation = await findOrCreateConversation(lead.id, "messenger");
-      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid);
-      if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
-
-      // `ownWords`, not `body` — see the matching comment on the Instagram path above.
-      await acknowledgeNewLead(lead.id, { channel: "messenger", inboundText: content.ownWords, inboundAt: new Date() });
-      await scoreAndDraftForLead(lead.id);
-      await checkRapidEngagement(lead.id);
-    }
-
-    for (const change of entry.changes ?? []) {
-      if (change.field !== "leadgen") continue;
-      const leadgenId: string | undefined = change.value?.leadgen_id;
-      if (!leadgenId) continue;
-      const data = await fetchLeadgenLead(business.id, leadgenId);
-      if (!data) continue;
-      const result = await upsertLeadFromLeadgen(business.id, data);
-      if (!result) continue;
-      const body = data.details || "Submitted a Facebook lead form.";
-      const conversation = await findOrCreateConversation(result.lead.id, "web");
-      // leadgen_id, not a message id, but it's unique per form submission
-      // and there's exactly one synthetic Message per submission — the
-      // same idempotency key this route uses for real message ids above.
-      const isNewMessage = await createInboundMessageIfNew(conversation.id, body, data.createdTime, leadgenId);
-      if (!isNewMessage) continue; // Meta redelivered this leadgen change — already recorded
-
-      // A form lead gave an email on purpose — acknowledge by email only.
-      if (result.isNew && result.lead.email) {
-        await acknowledgeNewLead(result.lead.id, { channel: "email", inboundText: body, inboundAt: data.createdTime });
-      }
-      await scoreAndDraftForLead(result.lead.id);
-    }
-  }
 }

@@ -1670,3 +1670,147 @@ number.
 **Still open:** the cut-points themselves are inherited and undocumented. Every
 other threshold in this codebase cites its research (`rescue.ts`,
 `reactivation.ts`); these two cite nothing. Worth settling separately.
+
+---
+
+## 2026-09-15 — Phone channels dropped from the offer, not from the codebase
+
+**Founder's call:** inbound leads are the core. SMS, voicemail and the live
+voice agent are dropped for now and picked up later.
+
+**Why it is a product decision and not a technical one:** every phone channel
+sits behind A2P 10DLC registration, which is a *carrier* requirement — Bell,
+Rogers, AT&T — not a Twilio one, so switching providers does not avoid it. Each
+customer would have to register their own business, with their own business
+number, and wait, before sending a single text. That is a telecom onboarding
+process bolted to the front of a lead-follow-up product. Email, the website
+widget, the lead webhook, Instagram/Messenger, manual entry and CSV have no such
+gate.
+
+**What changed on screen:**
+- Settings' "Phone (SMS + calls)" section is hidden behind
+  `PHONE_CHANNELS_AVAILABLE`.
+- The landing page stopped naming SMS, WhatsApp and Twilio. The integrations row
+  now reads Gmail · Outlook · Instagram · Messenger, and "Messenger" was added
+  because it is live and was missing.
+
+**The rule this follows, and it is worth keeping:** *a logo row is a promise
+about what works today.* Naming a channel a visitor cannot then connect is worse
+than never mentioning it — they discover the gap after signing up, which is the
+cheapest possible way to lose trust. The same argument applied to the $29/$39
+price mismatch fixed the same day.
+
+**Hidden, not deleted, on purpose.** `TwilioConfig`, `lib/twilio.ts` and the
+inbound Twilio routes all stay. Two reasons: the work is postponed rather than
+abandoned, and a business that already pointed a number at FollowUp keeps
+working instead of having it go dark with no warning. What is switched off is
+the *offer*, not the capability.
+
+A test asserts the flag's effect against the real source — including that the
+code is still present — so re-enabling is one boolean and nobody has to
+rediscover where the pieces went.
+
+---
+
+## 2026-09-16 — WhatsApp gets its own setup panel; the carrier split, in the UI
+
+Extends the 2026-09-15 entry above, which is where the reasoning for dropping
+the carrier channels lives. Two things changed since it was written: the flag
+is now `CARRIER_CHANNELS_AVAILABLE` (not `PHONE_CHANNELS_AVAILABLE`) with
+`META_CHANNELS_AVAILABLE` beside it, and WhatsApp is explicitly **not** behind
+it — it rides the same Twilio account but gates on Meta's review of the
+business, the same review Instagram and Messenger already need.
+
+**The defect that followed from the rename.** Hiding the offer hid the setup.
+WhatsApp was configured from inside the "Phone (SMS + calls)" panel, so when
+that section went behind the flag, a channel the product still sells had no way
+to be connected at all. That is a worse version of the landing-page failure the
+2026-09-15 entry warned about: there, a visitor read a promise; here, a paying
+customer read the promise, signed up, and found no switch.
+
+**The shape of the fix.** `TwilioConfig` keeps SMS, voice, the number
+auto-configuration and the voice-agent toggle, and stays behind the flag.
+A new `WhatsAppConfig` carries the inbound URL, the Twilio credentials, the
+WhatsApp sender number and the 24-hour template, and renders unconditionally
+in Settings › Channels, next to Instagram and Messenger.
+
+Not a flag inside the old panel, because the two setups are different jobs, not
+one job with a filter on it:
+
+- the Auth Token is **required** for WhatsApp (`sendWhatsApp` refuses without
+  it) and was merely recommended for SMS, where it only verified signatures;
+- the number is the *sender's* number, which is not always the voice/SMS one;
+- the wait is Meta's review, not a carrier's registration.
+
+The three credential fields are duplicated across the two panels on purpose.
+They are the same two database columns and the same endpoint; whichever panel a
+business saves from, the other reads back as saved. A shared sub-component would
+have coupled a live channel's UI to a switched-off one for no user-visible gain.
+
+**Copy rule applied, and worth restating:** *don't apologise for an absent
+feature — just don't mention it.* The WhatsApp panel never says why SMS isn't
+there, never writes "A2P", and never uses the words text, call or voicemail.
+It names only the two things the owner has to go and do. A settings screen that
+explains what it no longer offers teaches the owner to wonder what else is gone.
+
+**Small UX repairs carried in the split**, all inherited defects rather than new
+ideas: one Save for the three credentials instead of three separate saves that
+each claimed success while the channel still could not send; a visible failure
+path (the old panel silently swallowed every save error except the voice one);
+real `<label>`s instead of placeholder-only fields; and the primary button moved
+out of the inline row it shared with "How does this work?", where it read as
+part of the sentence.
+
+**Deliberately not done.** The route (`/api/twilio/config`) got no new guard.
+Its existing refusal — no voice agent without the Voice add-on — is the gate
+that matters, and it stays. Gating the endpoint on `CARRIER_CHANNELS_AVAILABLE`
+would turn a hidden offer into a removed capability and break the businesses the
+2026-09-15 decision explicitly protected.
+
+**Known weakness, recorded rather than hidden:** the panel is still the old
+bordered-card surface (`rounded-xl border border-line bg-card`) that A-006
+retires, because every one of its neighbours in Settings › Channels is too.
+Moving one panel to the shadow-box surface would have made it the odd one out.
+The whole Channels tab should move together, as its own piece of work.
+
+---
+
+## 2026-09-16 — The DM grace period, and the notification that goes with it
+
+**Product decision (founder's, not a design proposal):** on Instagram, Messenger
+and WhatsApp, FollowUp waits ~2 minutes before sending its instant reply. If the
+owner answers the DM themselves inside that window, FollowUp stays silent. If
+they don't, it sends — and then tells the owner it replied for them. Email and
+SMS are unchanged. Implementation lives in `followup/src/lib/acknowledge.ts`
+(`DM_ACK_GRACE_PERIOD_MS`) and `/api/cron/instant-ack`.
+
+**The only UI surface is one notification string**, and it is written to the
+copy rules in `brand/typography.md` — plain, specific, short, no
+anthropomorphising, says what happened rather than that something "was
+detected":
+
+> Priya Shah messaged on Instagram and hadn't heard back after 2 minutes, so
+> FollowUp replied for you: "…" Check the thread.
+
+Three deliberate choices in that one sentence, for future sessions:
+
+1. **It quotes the message verbatim** (truncated at 180 characters). "FollowUp
+   sent a reply" would force the owner to open the thread to find out what was
+   said in their name — the answer to *what happened?* has to be in the
+   notification itself, not one tap away.
+2. **It states the wait as a number** ("after 2 minutes"), because the owner's
+   first reaction to an automated reply is "why did it do that, I was about to
+   answer" — the reason is the delay having elapsed, so the delay is named.
+3. **Same mechanism and same shape as `notifyNeglect`** in `automation.ts` (a
+   `Notification` row per recipient, assignee first, every admin when the lead is
+   unassigned). The bell must not develop a second dialect per feature.
+
+**Honest limitation, recorded rather than buried:** the real delay is 2–3
+minutes, not 2, because the worker runs on a one-minute cron. The product should
+say "two to three minutes" wherever this is ever described to a customer, not
+"instantly, unless you reply first".
+
+**Not done, deliberately:** no new UI anywhere else. No badge on the lead, no
+"waiting" state in the conversation view. A 2-minute pending state that resolves
+itself is not worth a widget an owner would have to learn — and showing it would
+invite them to wait and watch, which is the opposite of the point.

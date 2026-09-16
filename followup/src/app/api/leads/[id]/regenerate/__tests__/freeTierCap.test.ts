@@ -10,13 +10,21 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { leadFindUnique, leadUpdate, leadCount } = vi.hoisted(() => ({
+const { leadFindUnique, leadUpdate, leadCount, businessFindUnique } = vi.hoisted(() => ({
   leadFindUnique: vi.fn(),
   leadUpdate: vi.fn(async () => ({})),
   leadCount: vi.fn(async () => 0),
+  // checkAiEligibility reads the business's subscription status directly —
+  // AI pauses on a lapsed card even though capture no longer does. These
+  // cases are all about the TIER cap, so the subscription is in good
+  // standing throughout (see billingLockout.test.ts for the other axis).
+  businessFindUnique: vi.fn(async () => ({ subscriptionStatus: "active" })),
 }));
 vi.mock("@/lib/db", () => ({
-  prisma: { lead: { findUnique: leadFindUnique, update: leadUpdate, count: leadCount } },
+  prisma: {
+    lead: { findUnique: leadFindUnique, update: leadUpdate, count: leadCount },
+    business: { findUnique: businessFindUnique },
+  },
 }));
 
 const { getSessionContext } = vi.hoisted(() => ({ getSessionContext: vi.fn() }));
@@ -68,6 +76,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   getSessionContext.mockResolvedValue({ businessId: "biz1", userId: "user1", email: "owner@acme.com" });
   requireActiveBilling.mockResolvedValue(true);
+  businessFindUnique.mockResolvedValue({ subscriptionStatus: "active" });
   tooManyRecentActions.mockResolvedValue(false);
   leadCount.mockResolvedValue(1);
 });

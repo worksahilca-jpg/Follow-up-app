@@ -1,14 +1,16 @@
 /**
- * Keyword matching for the SMS/WhatsApp opt-out (see Lead.optedOutAt and
- * every send path's check against it in src/lib/sending.ts). Tested
- * against the real implementation, unmocked — the enforcement behavior
- * itself (sendFollowUpToLead refusing an opted-out lead, and the AI audit
- * trail) lives in sendingAudit.test.ts, where @/lib/twilio's network-
- * calling sendSms/sendWhatsApp need mocking but these pure functions
- * don't.
+ * Keyword matching for the opt-out — now shared by all four channels that
+ * honour it: SMS and WhatsApp (Lead.optedOutAt), Instagram and Messenger
+ * DMs (the Suppression table). Moved out of @/lib/twilio into its own
+ * zero-dependency module when it stopped being a Twilio concept; one
+ * matcher is the point, so this file guards its behaviour for everyone.
+ *
+ * Tested against the real implementation, unmocked. Enforcement lives
+ * elsewhere: sendingAudit.test.ts for sendFollowUpToLead's refusals, and
+ * dmOptOut.test.ts for the DM inbound path end to end.
  */
 import { describe, it, expect } from "vitest";
-import { isOptInMessage, isOptOutMessage } from "@/lib/twilio";
+import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 
 describe("isOptOutMessage / isOptInMessage", () => {
   it("matches the standard STOP-family keywords, any case, trimmed", () => {

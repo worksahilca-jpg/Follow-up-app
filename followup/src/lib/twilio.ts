@@ -115,11 +115,13 @@ export async function parseTwilioForm(request: Request): Promise<Record<string, 
 /**
  * Twilio's own webhooks need a phone number, not businessId+secret, to
  * find the right business — that's what twilioSecret in the URL path is
- * for. Also checks requireActiveBilling isn't needed here the way the
- * other inbound webhooks do it inline, since SMS/voice callers can't see
- * any error response anyway (Twilio just gets an empty TwiML reply either
- * way) — so callers check billing themselves and decide what TwiML to
- * return.
+ * for. No billing check here, and the inbound SMS/WhatsApp routes don't
+ * make one either: capture never pauses on billing state, because an
+ * inbound Twilio webhook that's refused is a lead deleted rather than
+ * deferred (nothing retries it, and the sender is told nothing). The
+ * spending half pauses instead, inside checkAiEligibility (@/lib/billing).
+ * The voice route is the exception and still gates itself — see the
+ * comment there.
  */
 export async function findBusinessByTwilioSecret(secret: string): Promise<{
   id: string;
@@ -451,33 +453,16 @@ export function twiml(xml: string): Response {
 }
 
 /**
- * The standard CTIA/Twilio opt-out and opt-in keywords, matched as the
- * WHOLE trimmed message body (case-insensitive) — not a substring check,
- * so "please stop texting me" doesn't trip it but "STOP" or "Stop" does.
- * This is the app's OWN record of a lead's consent (see Lead.optedOutAt
- * and every check against it in src/lib/sending.ts) — it is deliberately
- * NOT a substitute for Twilio's own Advanced Opt-Out feature (Console →
- * Messaging → Settings), which blocks delivery at the carrier level
- * before it even reaches this webhook. Enable both: Twilio's for the
- * legal carrier-level guarantee, this for the app's own guarantee that no
- * send path here — manual, automated, or a sequence — can ignore it.
+ * isOptOutMessage / isOptInMessage MOVED to src/lib/optOutKeywords.ts.
  *
- * "YES" is deliberately excluded from the opt-in set even though some
- * CTIA guidance lists it: outside of a real Twilio Advanced Opt-Out flow,
- * a bare "yes" is far more likely to be a normal reply mid-conversation
- * than an intentional re-subscribe, and silently clearing an opt-out on
- * that would be the wrong failure mode.
+ * They were never Twilio-specific — they are the app's own record of a
+ * lead's consent — and they now serve four channels: SMS and WhatsApp
+ * (src/lib/inbound/twilioMessage.ts), Instagram and Messenger DMs
+ * (src/lib/inbound/meta.ts), plus the instant acknowledgement's
+ * don't-be-cheerful-at-a-STOP gate (src/lib/acknowledge.ts). Keeping the
+ * one matcher in a zero-dependency leaf module is what stops a second,
+ * subtly different copy appearing for the DM channels.
  */
-const STOP_KEYWORDS = new Set(["stop", "stopall", "unsubscribe", "cancel", "end", "quit"]);
-const START_KEYWORDS = new Set(["start", "unstop"]);
-
-export function isOptOutMessage(body: string): boolean {
-  return STOP_KEYWORDS.has(body.trim().toLowerCase());
-}
-
-export function isOptInMessage(body: string): boolean {
-  return START_KEYWORDS.has(body.trim().toLowerCase());
-}
 
 /**
  * Sends a real outbound SMS via Twilio's REST API — the reverse of
@@ -492,7 +477,13 @@ export async function sendSms(
   businessId: string,
   to: string,
   body: string
-): Promise<{ success: boolean; message?: string; sid?: string }> {
+  // `status` is Twilio's own HTTP status on a failure, passed through
+  // deliberately: src/lib/sending.ts classifies a failed send as transient or
+  // permanent, and a 503 and a 400 both arrive here as prose ("Twilio
+  // rejected this message"). Without the number, an outage was
+  // indistinguishable from a bad phone number and the message was dropped
+  // rather than retried.
+): Promise<{ success: boolean; message?: string; sid?: string; status?: number }> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: { twilioAccountSid: true, twilioAuthToken: true, twilioPhoneNumber: true, twilioSecret: true },
@@ -519,7 +510,11 @@ export async function sendSms(
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return { success: false, message: typeof data.message === "string" ? data.message : "Twilio rejected this message." };
+    return {
+      success: false,
+      message: typeof data.message === "string" ? data.message : "Twilio rejected this message.",
+      status: res.status,
+    };
   }
   return { success: true, sid: typeof data.sid === "string" ? data.sid : undefined };
 }
@@ -549,7 +544,8 @@ export async function sendWhatsApp(
   to: string,
   body: string,
   options: { leadFirstName?: string } = {}
-): Promise<{ success: boolean; message?: string; sid?: string }> {
+  // See sendSms above for why `status` is passed through on a failure.
+): Promise<{ success: boolean; message?: string; sid?: string; status?: number }> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: {
@@ -616,10 +612,15 @@ export async function sendWhatsApp(
           typeof templateData.message === "string"
             ? `The WhatsApp template send was rejected: ${templateData.message}`
             : "Twilio rejected the WhatsApp template send.",
+        status: templateRes.status,
       };
     }
     return { success: true, sid: typeof templateData.sid === "string" ? templateData.sid : undefined };
   }
 
-  return { success: false, message: typeof data.message === "string" ? data.message : "Twilio rejected this message." };
+  return {
+    success: false,
+    message: typeof data.message === "string" ? data.message : "Twilio rejected this message.",
+    status: res.status,
+  };
 }

@@ -68,7 +68,10 @@ beforeEach(() => {
   p.lead.count.mockResolvedValue(1); // first lead of the month — well inside any tier's cap
   p.message.findFirst.mockResolvedValue(null);
   p.automation.findFirst.mockResolvedValue(null); // absent row = on by default
-  p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "plus" });
+  // subscriptionStatus is read by the same tier gate (checkAiEligibility):
+  // AI and sends pause on a lapsed card, even though capture doesn't.
+  // A paying business in good standing unless a case says otherwise.
+  p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "plus", subscriptionStatus: "active" });
   send.mockResolvedValue({ success: true });
   localize.mockImplementation(async (t: string) => t);
   generateReply.mockResolvedValue("Got it — I'll get you the exact price and follow up shortly.");
@@ -178,6 +181,72 @@ describe("checkAckShape", () => {
   it("the generic fallback line itself always passes", () => {
     const fallback = "Thank you for contacting MJ Homes. I've received your message and will get back to you shortly.";
     expect(checkAckShape(fallback, "anything the lead wrote", "Manoj")).toEqual({ ok: true });
+  });
+});
+
+/**
+ * Never be cheerful at a STOP.
+ *
+ * An instant "thanks for reaching out, I'll get back to you shortly!" sent
+ * in reply to a message whose entire content is an opt-out keyword is an
+ * automated message answering a request for no more automated messages —
+ * the single worst moment this feature can fire, and the first thing a
+ * recipient would screenshot. The SMS webhook has always skipped it; the
+ * guarantee belongs here instead of in each caller, so a channel added
+ * later inherits it rather than having to remember.
+ */
+describe("an inbound message that is itself an opt-out", () => {
+  for (const word of ["stop", "STOP", "  Stop  ", "unsubscribe", "cancel", "quit"]) {
+    it(`sends nothing in reply to "${word.trim()}"`, async () => {
+      const r = await acknowledgeNewLead("lead1", { channel: "text", inboundText: word, inboundAt: new Date() });
+      expect(r.sent).toBe(false);
+      expect(send).not.toHaveBeenCalled();
+      expect(generateReply).not.toHaveBeenCalled();
+    });
+  }
+
+  // Not just "doesn't send" — doesn't spend the one acknowledgement this
+  // lead ever gets. Someone who says STOP and later says START should
+  // still get a real first reply.
+  //
+  // On a DM channel that reply is now queued rather than sent inline (the
+  // two-minute grace period — see instantAckGracePeriod.test.ts), so the
+  // "still acknowledged later" half is asserted on SMS, which is unchanged,
+  // and the queueing half on Instagram.
+  it("does not claim acknowledgedAt, so a later real message is still acknowledged", async () => {
+    await acknowledgeNewLead("lead1", { channel: "text", inboundText: "stop", inboundAt: new Date() });
+    expect(p.lead.updateMany).not.toHaveBeenCalled();
+
+    const later = await acknowledgeNewLead("lead1", {
+      channel: "text",
+      inboundText: "Actually — start. Is the roof original?",
+      inboundAt: new Date(),
+    });
+    expect(later.sent).toBe(true);
+  });
+
+  it("does not even queue a deferred DM acknowledgement in reply to a STOP", async () => {
+    await acknowledgeNewLead("lead1", { channel: "instagram", inboundText: "stop", inboundAt: new Date() });
+    expect(p.lead.updateMany).not.toHaveBeenCalled();
+
+    const later = await acknowledgeNewLead("lead1", {
+      channel: "instagram",
+      inboundText: "Actually — start. Is the roof original?",
+      inboundAt: new Date(),
+    });
+    expect(later.sent).toBe(false);
+    expect(later.queuedFor).toBeInstanceOf(Date);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("acknowledges an ordinary sentence that merely contains the word", async () => {
+    const r = await acknowledgeNewLead("lead1", {
+      channel: "text",
+      inboundText: "can you stop by the office tomorrow?",
+      inboundAt: new Date(),
+    });
+    expect(r.sent).toBe(true);
+    expect(send).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -295,6 +364,10 @@ describe("instant acknowledgement", () => {
       channel: "whatsapp",
       inboundText: "Hola, ¿cuánto cuesta?",
       inboundAt: new Date(),
+      // WhatsApp is a DM channel, so it waits out the grace period before
+      // any of this runs. This is the worker's call, after the wait — what
+      // is under test here is the localization, not the delay.
+      skipGracePeriod: true,
     });
     const [, body] = send.mock.calls[0];
     expect(body).toBe("¡Hola! Con gusto — te enviaré el precio exacto en breve.");
@@ -477,14 +550,14 @@ describe("instant acknowledgement", () => {
  */
 describe("the tier's AI allowance", () => {
   it("acknowledges a Free lead inside the cap", async () => {
-    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free", subscriptionStatus: null });
     p.lead.count.mockResolvedValue(20); // exactly the cap — inside it, not past it
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(r.sent).toBe(true);
   });
 
   it("spends no model call on a Free lead past the cap", async () => {
-    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free", subscriptionStatus: null });
     p.lead.count.mockResolvedValue(21);
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(r.sent).toBe(false);
@@ -499,7 +572,7 @@ describe("the tier's AI allowance", () => {
   // acknowledged again — not next month, not on upgrade. Hence the gate
   // sits before the atomic claim rather than after it.
   it("leaves a skipped lead unclaimed, so it can still be acknowledged later", async () => {
-    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free", subscriptionStatus: null });
     p.lead.count.mockResolvedValue(21);
     await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(p.lead.updateMany).not.toHaveBeenCalled();
@@ -507,7 +580,7 @@ describe("the tier's AI allowance", () => {
 
   // Free covers email and the website widget; SMS is a paid channel.
   it("spends no model call on a channel Free doesn't cover", async () => {
-    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "free", subscriptionStatus: null });
     p.lead.findUnique.mockResolvedValue({ ...baseLead, source: "SMS" });
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(r.sent).toBe(false);
@@ -534,7 +607,7 @@ describe("the tier's AI allowance", () => {
   // and the wrong one on a paid tier, where nothing purchasable has run
   // out and the real news is that something looks broken.
   it("does not tell a paying customer to upgrade", async () => {
-    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "pro" });
+    p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "pro", subscriptionStatus: "active" });
     p.lead.count.mockResolvedValue(10_001);
     const r = await acknowledgeNewLead("lead1", { channel: "text", inboundAt: new Date() });
     expect(r.reason).toMatch(/safety measure/i);

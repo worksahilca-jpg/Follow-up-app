@@ -50,6 +50,34 @@ export const VOICE_ADDON_INFO = { priceLabel: "+$39/mo", includedMinutes: 200, o
  */
 export const VOICE_ADDON_AVAILABLE = false;
 
+/**
+ * Whether the phone channels — SMS, voicemail and the live voice agent —
+ * are offered at all. Founder's call, 2026-09-15: inbound leads are the
+ * core; phone is dropped for now and picked back up later.
+ *
+ * The reason is not that the code is bad. It is that every phone channel
+ * sits behind A2P 10DLC registration, which is a CARRIER requirement —
+ * Bell, Rogers, AT&T — not a Twilio one, so no amount of provider-
+ * switching avoids it. Each customer would have to register their own
+ * business, with their own business number, and wait, before they could
+ * send a single text. That is a telecom onboarding process bolted to the
+ * front of a lead-follow-up product, and it gates the whole thing on
+ * paperwork nobody wants to do to try software.
+ *
+ * Email, the website widget, the lead webhook, Instagram/Messenger,
+ * manual entry and CSV have no such gate. Dropping phone removes the
+ * launch blocker entirely.
+ *
+ * A flag, not a deletion, for the same reason as VOICE_ADDON_AVAILABLE:
+ * this is postponed work, and one boolean is the cheapest way back. The
+ * Twilio webhook routes stay live and unchanged — a business with no
+ * configured number simply has nothing pointed at them, and any business
+ * that DID configure one keeps working rather than having its number go
+ * dark without warning. What this turns off is the offer: the setup UI,
+ * and the claim on the landing page that FollowUp reads texts.
+ */
+export const PHONE_CHANNELS_AVAILABLE = false;
+
 // Free tier's hard monthly cap on AI processing (research/market/2026-09-11-
 // tier-pricing-recommendation.md §2.2). Lives here (not @/lib/billing)
 // because a "use client" component needs the number too — see the "use

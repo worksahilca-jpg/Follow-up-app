@@ -130,7 +130,14 @@ export default function LandingPage() {
             <div className="mt-9">
               <p className={styles.eyebrow}>Reads what you already use</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                {["Gmail", "Outlook", "Twilio", "Instagram", "WhatsApp"].map((name) => (
+                {/* Phone channels are dropped for now (PHONE_CHANNELS_AVAILABLE in
+                    @/lib/pricing), so "Twilio" and "WhatsApp" came out — both
+                    run through a Twilio number nobody can configure while the
+                    setup UI is hidden. "Messenger" replaces them because it is
+                    live and was missing. A logo row is a promise about what
+                    works today; naming something a visitor then cannot connect
+                    is the cheapest possible way to lose their trust. */}
+                {["Gmail", "Outlook", "Instagram", "Messenger"].map((name) => (
                   <span
                     key={name}
                     className="text-[12.5px] font-bold rounded-lg px-3 py-1.5"
@@ -266,7 +273,7 @@ export default function LandingPage() {
         </RevealAward>
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { icon: <Mail className="h-4 w-4" />, title: "Connect your inbox", body: "FollowUp reads your sales conversations — Gmail, Outlook, SMS, Instagram DMs, WhatsApp, and more — in one place." },
+            { icon: <Mail className="h-4 w-4" />, title: "Connect your inbox", body: "FollowUp reads your sales conversations — Gmail, Outlook, Instagram and Messenger DMs, your website form — in one place." },
             { icon: <TrendingUp className="h-4 w-4" />, title: "It scores every lead", body: "Buying intent, response gaps, and deal value become a single follow-up score." },
             { icon: <Clock className="h-4 w-4" />, title: "You get a daily list", body: "A short, ranked list of who needs you today, and why — not a full CRM to dig through." },
             { icon: <Send className="h-4 w-4" />, title: "It drafts the message", body: "Edit, regenerate, or let low-risk replies send themselves automatically — you decide how much to hand off, per lead, any time. Ask to schedule a call, and it creates the calendar event." },
@@ -461,7 +468,7 @@ export default function LandingPage() {
                 },
                 {
                   q: "Is this another CRM I have to fill out?",
-                  a: "No — FollowUp reads the conversations you're already having (Gmail, Outlook, SMS, Instagram, and more). There's nothing to manually log.",
+                  a: "No — FollowUp reads the conversations you're already having (Gmail, Outlook, Instagram, your website form). There's nothing to manually log.",
                 },
                 {
                   q: "What if I don't connect Gmail right away?",

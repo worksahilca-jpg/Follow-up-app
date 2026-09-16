@@ -1670,3 +1670,42 @@ number.
 **Still open:** the cut-points themselves are inherited and undocumented. Every
 other threshold in this codebase cites its research (`rescue.ts`,
 `reactivation.ts`); these two cite nothing. Worth settling separately.
+
+---
+
+## 2026-09-15 — Phone channels dropped from the offer, not from the codebase
+
+**Founder's call:** inbound leads are the core. SMS, voicemail and the live
+voice agent are dropped for now and picked up later.
+
+**Why it is a product decision and not a technical one:** every phone channel
+sits behind A2P 10DLC registration, which is a *carrier* requirement — Bell,
+Rogers, AT&T — not a Twilio one, so switching providers does not avoid it. Each
+customer would have to register their own business, with their own business
+number, and wait, before sending a single text. That is a telecom onboarding
+process bolted to the front of a lead-follow-up product. Email, the website
+widget, the lead webhook, Instagram/Messenger, manual entry and CSV have no such
+gate.
+
+**What changed on screen:**
+- Settings' "Phone (SMS + calls)" section is hidden behind
+  `PHONE_CHANNELS_AVAILABLE`.
+- The landing page stopped naming SMS, WhatsApp and Twilio. The integrations row
+  now reads Gmail · Outlook · Instagram · Messenger, and "Messenger" was added
+  because it is live and was missing.
+
+**The rule this follows, and it is worth keeping:** *a logo row is a promise
+about what works today.* Naming a channel a visitor cannot then connect is worse
+than never mentioning it — they discover the gap after signing up, which is the
+cheapest possible way to lose trust. The same argument applied to the $29/$39
+price mismatch fixed the same day.
+
+**Hidden, not deleted, on purpose.** `TwilioConfig`, `lib/twilio.ts` and the
+inbound Twilio routes all stay. Two reasons: the work is postponed rather than
+abandoned, and a business that already pointed a number at FollowUp keeps
+working instead of having it go dark with no warning. What is switched off is
+the *offer*, not the capability.
+
+A test asserts the flag's effect against the real source — including that the
+code is still present — so re-enabling is one boolean and nobody has to
+rediscover where the pieces went.

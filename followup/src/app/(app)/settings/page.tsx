@@ -14,7 +14,7 @@ import CrmConfig from "@/components/CrmConfig";
 import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
-import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
+import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, PHONE_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
@@ -795,12 +795,19 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section id="phone" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Phone (SMS + calls)</h2>
-        <div className="mt-4">
-          <TwilioConfig />
-        </div>
-      </section>
+      {/* Phone is dropped for now (PHONE_CHANNELS_AVAILABLE, @/lib/pricing).
+          The section is hidden rather than removed: the Twilio routes stay
+          live, so a business that already configured a number keeps working
+          instead of having it go dark without warning. What is switched off
+          is the offer to set one up. */}
+      {PHONE_CHANNELS_AVAILABLE && (
+        <section id="phone" className="scroll-mt-16">
+          <h2 className="font-display text-xl">Phone (SMS + calls)</h2>
+          <div className="mt-4">
+            <TwilioConfig />
+          </div>
+        </section>
+      )}
 
       <section id="social" className="scroll-mt-16">
         <h2 className="font-display text-xl">Instagram &amp; Facebook</h2>

@@ -16,6 +16,8 @@ import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
+// A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
+import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
@@ -276,7 +278,18 @@ function SettingsPageInner() {
     const clauses: string[] = [];
     if (instantAckOn) clauses.push("sends an instant acknowledgement to every new lead");
     if (automationOn) clauses.push(`nudges a quiet lead after ${autoAfterDays} day${autoAfterDays === 1 ? "" : "s"} of silence`);
-    if (unansweredOn) clauses.push(`steps in if you haven't answered within ${unansweredHours} hour${unansweredHours === 1 ? "" : "s"}`);
+    if (unansweredOn) {
+      // On Instagram and Messenger the engine caps this at
+      // UNANSWERED_META_DM_MAX_HOURS whatever is configured (see
+      // @/lib/metaWindow). This sentence describes what is ACTIVE, so it has
+      // to say so, or it is the exact false promise trustCopy.test.ts exists
+      // to catch — a number the owner set, silently meaning something else.
+      const dmCapped = unansweredHours > UNANSWERED_META_DM_MAX_HOURS;
+      clauses.push(
+        `steps in if you haven't answered within ${unansweredHours} hour${unansweredHours === 1 ? "" : "s"}` +
+          (dmCapped ? ` (${UNANSWERED_META_DM_MAX_HOURS} on Instagram and Messenger)` : "")
+      );
+    }
     if (deadLeadOn) clauses.push(`switches to a reactivation message after ${deadLeadDays} days of silence on both sides`);
     if (clauses.length === 0) return "Off — nothing goes out on its own. Every reply is one you send yourself.";
     if (clauses.length === 1) return `Right now FollowUp ${clauses[0]}.`;
@@ -1030,6 +1043,19 @@ function SettingsPageInner() {
               />
               <span>hours without a reply from you</span>
             </div>
+          )}
+          {/* Only while the number is actually being overridden. At 20 or
+              below the ceiling changes nothing, and a note that changes
+              nothing is noise (brand principle 8). It appears the moment the
+              owner types 21, on the same screen as the field, which is
+              where the "why did it go out early" question would otherwise
+              be asked. */}
+          {unansweredOn && unansweredHours > UNANSWERED_META_DM_MAX_HOURS && (
+            <p className="text-xs text-ink-soft mt-2">
+              On Instagram and Messenger, FollowUp steps in by {UNANSWERED_META_DM_MAX_HOURS} hours whatever you set
+              here. Meta only lets a business reply within a day of the lead&apos;s last message — after that,
+              nothing gets through.
+            </p>
           )}
         </div>
         <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">

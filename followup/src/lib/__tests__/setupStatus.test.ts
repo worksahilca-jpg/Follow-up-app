@@ -6,6 +6,8 @@
  * derivation from facts already stored elsewhere — nothing new tracked.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 vi.mock("@/lib/db", () => ({
   prisma: {
@@ -20,6 +22,7 @@ import { prisma } from "@/lib/db";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
 import { getIncompleteSetupSteps } from "@/lib/setupStatus";
+import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -52,10 +55,12 @@ describe("getIncompleteSetupSteps", () => {
     expect(steps.map((s) => s.id)).toContain("gmail");
   });
 
-  it("flags phone when no Twilio number is on file", async () => {
+  it("flags phone when no Twilio number is on file — only while carrier channels are offered", async () => {
     p.business.findUnique.mockResolvedValue({ subscriptionStatus: "active", tier: "plus", twilioPhoneNumber: null });
     const steps = await getIncompleteSetupSteps("biz1");
-    expect(steps.map((s) => s.id)).toContain("phone");
+    // Kept rather than deleted so re-enabling the flag restores this coverage
+    // instead of silently losing it — same shape as channelAvailability.test.ts.
+    expect(steps.map((s) => s.id).includes("phone")).toBe(CARRIER_CHANNELS_AVAILABLE);
   });
 
   it("flags the website widget when no lead has ever come from it", async () => {
@@ -69,7 +74,10 @@ describe("getIncompleteSetupSteps", () => {
     gmailStatus.mockResolvedValue({ connected: false });
     p.lead.findFirst.mockResolvedValue(null);
     const steps = await getIncompleteSetupSteps("biz1");
-    expect(steps.map((s) => s.id)).toEqual(["billing", "gmail", "phone", "widget"]);
+    const expected = CARRIER_CHANNELS_AVAILABLE
+      ? ["billing", "gmail", "phone", "widget"]
+      : ["billing", "gmail", "widget"];
+    expect(steps.map((s) => s.id)).toEqual(expected);
   });
 
   it("every step names a real place to fix it", async () => {
@@ -128,5 +136,66 @@ describe("getIncompleteSetupSteps", () => {
     outlookStatus.mockResolvedValue({ connected: true, email: "owner@contoso.com" });
     const steps = await getIncompleteSetupSteps("biz1");
     expect(steps.map((s) => s.id)).not.toContain("gmail");
+  });
+});
+
+/**
+ * The bug this file's own subject caused for every new account, 2026-09-16.
+ *
+ * Dropping the carrier channels hid Settings' phone section behind
+ * CARRIER_CHANNELS_AVAILABLE, but the step kept being offered — and
+ * twilioPhoneNumber's only writer lives inside that same gate, so the step
+ * could never be cleared by anyone. SetupStrip renders steps[0] only, so
+ * the consequence was not one dud row in a list: it was every new business
+ * stuck on a single unfinishable instruction, with the website widget — the
+ * one capture channel needing no third party, no Google review and no Meta
+ * approval — never shown to a single person.
+ *
+ * The rule these pin: never offer a setup step the product will not let
+ * them finish.
+ */
+describe("the setup strip never offers a step nobody can complete", () => {
+  beforeEach(() => {
+    // The state every brand-new business is in: nothing connected, no
+    // Twilio number, no widget lead yet.
+    p.business.findUnique.mockResolvedValue({ subscriptionStatus: "active", tier: "plus", twilioPhoneNumber: null });
+    gmailStatus.mockResolvedValue({ connected: true, email: "owner@example.com" });
+    outlookStatus.mockResolvedValue({ connected: false });
+    p.lead.findFirst.mockResolvedValue(null);
+  });
+
+  it("does not offer phone setup while the carrier channels are switched off", async () => {
+    if (CARRIER_CHANNELS_AVAILABLE) return; // offered again — the step is real
+    const steps = await getIncompleteSetupSteps("biz1");
+    expect(steps.map((s) => s.id)).not.toContain("phone");
+  });
+
+  it("shows the website widget as the next step instead", async () => {
+    if (CARRIER_CHANNELS_AVAILABLE) return;
+    const steps = await getIncompleteSetupSteps("biz1");
+    // steps[0] specifically: SetupStrip renders only the first one, so a
+    // widget step buried behind a dead phone step is a widget step nobody
+    // ever sees. This is the assertion that would have caught the bug.
+    expect(steps[0]?.id).toBe("widget");
+  });
+
+  it("offers only steps whose Settings anchor actually exists", async () => {
+    // The deeper rule. "/settings#phone" pointed at an id rendered inside
+    // {CARRIER_CHANNELS_AVAILABLE && (...)}, so the link opened Settings,
+    // scrolled nowhere and raised nothing — indistinguishable from a page
+    // that simply ignored the click.
+    const settings = readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "page.tsx"), "utf8");
+    const gatedStart = settings.indexOf("CARRIER_CHANNELS_AVAILABLE && (");
+    const steps = await getIncompleteSetupSteps("biz1");
+    for (const step of steps) {
+      const anchor = step.ctaHref.split("#")[1];
+      if (!anchor) continue;
+      const idAt = settings.indexOf(`id="${anchor}"`);
+      expect(idAt, `no id="${anchor}" in Settings for step "${step.id}"`).toBeGreaterThan(-1);
+      // …and not inside the carrier-gated region, which renders nothing today.
+      if (!CARRIER_CHANNELS_AVAILABLE && gatedStart > -1) {
+        expect(idAt, `step "${step.id}" points at an anchor hidden behind CARRIER_CHANNELS_AVAILABLE`).toBeLessThan(gatedStart);
+      }
+    }
   });
 });

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { hasActiveAccess } from "@/lib/billing";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
+import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
 
 /**
  * research/product/2026-09-10-ux-simplification.md §2 and §7.1: the
@@ -86,7 +87,24 @@ export async function getIncompleteSetupSteps(businessId: string): Promise<Setup
     });
   }
 
-  if (!business?.twilioPhoneNumber) {
+  // Gated on the flag, which it was not, and the omission was expensive in a
+  // way worth spelling out. Dropping the carrier channels hid Settings'
+  // `id="phone"` section behind CARRIER_CHANNELS_AVAILABLE, but this step
+  // kept being pushed for anyone without a twilioPhoneNumber — which is
+  // everyone, because TwilioConfig is the only writer of that column and it
+  // lives inside the same gate. So the step could never be completed:
+  // "/settings#phone" opens Settings, getElementById("phone") returns null,
+  // nothing scrolls, nothing errors.
+  //
+  // And SetupStrip renders steps[0] only. So every new business saw one
+  // permanently unfinishable instruction, and "Add your website widget" —
+  // the one capture channel needing no third party at all, no Google review,
+  // no Meta approval — was never shown to anybody.
+  //
+  // channelAvailability.test.ts was written for exactly this class of bug
+  // (a surface still promising a dropped channel) and did not reach this
+  // file. It does now.
+  if (CARRIER_CHANNELS_AVAILABLE && !business?.twilioPhoneNumber) {
     steps.push({
       id: "phone",
       title: "Catch the calls you miss too",

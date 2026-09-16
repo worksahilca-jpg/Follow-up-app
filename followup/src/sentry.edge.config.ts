@@ -6,7 +6,7 @@
  * Node SDK build relies on.
  */
 import * as Sentry from "@sentry/nextjs";
-import { beforeSend } from "@/lib/sentryScrub";
+import { beforeSend, beforeSendTransaction } from "@/lib/sentryScrub";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -14,4 +14,5 @@ Sentry.init({
   tracesSampleRate: 0.05,
   sendDefaultPii: false,
   beforeSend,
+  beforeSendTransaction,
 });

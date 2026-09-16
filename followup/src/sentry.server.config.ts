@@ -8,7 +8,7 @@
  * exists. See docs/error-monitoring-setup.md.
  */
 import * as Sentry from "@sentry/nextjs";
-import { beforeSend } from "@/lib/sentryScrub";
+import { beforeSend, beforeSendTransaction } from "@/lib/sentryScrub";
 import { notifySlack } from "@/lib/slack";
 
 Sentry.init({
@@ -30,6 +30,8 @@ Sentry.init({
   // ships to a browser the way importing this from sentryScrub.ts itself
   // (shared by client/edge/server) would risk. Fire-and-forget: a slow or
   // failing Slack call must never delay or drop the actual Sentry report.
+  // Same scrub for the sampled traces; no Slack echo for those.
+  beforeSendTransaction,
   beforeSend(event) {
     const scrubbed = beforeSend(event);
     if (scrubbed) {

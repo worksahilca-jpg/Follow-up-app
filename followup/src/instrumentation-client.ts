@@ -11,7 +11,7 @@
  * as the server/edge config.
  */
 import * as Sentry from "@sentry/nextjs";
-import { beforeSend } from "@/lib/sentryScrub";
+import { beforeSend, beforeSendTransaction } from "@/lib/sentryScrub";
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -19,6 +19,7 @@ Sentry.init({
   tracesSampleRate: 0.05,
   sendDefaultPii: false,
   beforeSend,
+  beforeSendTransaction,
 });
 
 // Lets Sentry's performance monitoring see App Router navigations as

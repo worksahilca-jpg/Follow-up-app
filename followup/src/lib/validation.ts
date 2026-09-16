@@ -84,7 +84,11 @@ export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * 400.
  */
 export const sequenceStepSchema = z.object({
-  delayDays: z.coerce.number(),
+  // Hours is the unit since 2026-09-16; days is still accepted from any
+  // client that has not reloaded. validateSteps() in sequences.ts rejects a
+  // step with neither, and bounds the result — this only pins the shapes.
+  delayHours: z.coerce.number().optional(),
+  delayDays: z.coerce.number().optional(),
   action: z.enum(["EMAIL", "CHANGE_STAGE"]),
   stageTo: z.enum(["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"]).nullable().optional(),
   messageHint: z.string().nullable().optional(),

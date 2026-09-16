@@ -146,3 +146,28 @@ a rejection made in review, and they apply system-wide, permanently.
 **[[rejected#^S-13|S-13]] and [[rejected#^S-16|S-16]] are the two most likely to be violated by accident** — the first because
 AI-product visual conventions are pervasive in training data, the second because
 "inspired by" drifts into "reproduced from" without anyone deciding to.
+
+## R-003 — Email as the fallback channel for an Instagram/Messenger follow-up past Meta's 24-hour window ^R-003
+**Date:** 2026-09-16
+**Scope:** Instagram and Messenger leads, system-wide — workflows, the unanswered rule,
+reactivation, and any future sender.
+**Rejected:** The research recommendation in
+`followup/research/product/2026-09-16-meta-window-close-what-shipped-products-do.md` §6.3
+("past the window, send by email if there is an email") and the option put to the founder
+in plain words: *"Workflow steps after day 1 can't be delivered on Instagram or Messenger —
+send them by email instead, or hold for you."* Seven shipped competitors do some form of
+this; it was the recommended pick.
+**Stated reason:** *"no on instagram we will be sending them in their dms only"*.
+**Inferred principle:** NOT inferred — stated. A lead who chose to write on Instagram is
+answered on Instagram. Switching channel on them is FollowUp deciding where the
+conversation happens; that is the lead's choice, not ours. It lines up with brand
+principle 1 (trust) and with the 2026-09-15 fix that stopped automated replies defaulting
+to email over the channel the lead actually used.
+**Do not propose again:** any automatic channel switch away from the DM the lead used, on
+Instagram or Messenger — email fallback, SMS fallback, "we'll continue this by email."
+Asking the lead, inside the window, for a number so the *owner* can call them is a
+different thing and is not covered here.
+**Would need to change for this to be reconsidered:** the founder saying so. The cost was
+named before the decision and accepted: on these channels nothing automatic goes out after
+24 hours, and nothing at all after 7 days unless the lead writes first. What replaces the
+fallback is in `design-decisions.md`, same date.

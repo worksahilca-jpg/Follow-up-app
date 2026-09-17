@@ -7,7 +7,7 @@
  */
 
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
-import { checkDmDraftShape, conversationText, pickDmSituation } from "@/lib/dmDrafts";
+import { checkDmDraftShape, conversationText, pickDmSituation, type DmTouch } from "@/lib/dmDrafts";
 import type { StoredQuickReplies } from "@/lib/quickReplies";
 import type { Message } from "@/lib/types";
 
@@ -34,9 +34,10 @@ export async function draftDm(
   leadName: string,
   conversation: Message[],
   voiceSamples: string[],
-  messageHint: string | undefined
+  messageHint: string | undefined,
+  touch: DmTouch = "reply"
 ): Promise<{ body: string; quickReplies: StoredQuickReplies; shapeFailed: string | null }> {
-  const situation = pickDmSituation(conversation, "reply");
+  const situation = pickDmSituation(conversation, touch);
   const text = conversationText(conversation);
   let lastRule: string | null = null;
   for (let attempt = 0; attempt < 2; attempt++) {

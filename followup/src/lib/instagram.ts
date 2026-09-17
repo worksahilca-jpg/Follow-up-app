@@ -128,7 +128,7 @@ export async function sendInstagramMessage(
   businessId: string,
   recipientId: string,
   text: string,
-  options: { quickReplies?: QuickReply[] } = {}
+  options: { quickReplies?: QuickReply[]; humanAgent?: boolean } = {}
 ): Promise<MetaSendResult> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
@@ -137,17 +137,32 @@ export async function sendInstagramMessage(
   if (!business?.instagramAccessToken) {
     return { success: false, message: "Instagram isn't connected yet — check Settings → Instagram." };
   }
-  const checked = validateQuickReplies(options.quickReplies);
+  // A human-agent send never carries chips: whether Meta accepts the two
+  // together is unverified (api-facts §C, "not found"), and a rejected
+  // send would cost the owner the one message they are allowed. The
+  // question is still in the words; the lead can type.
+  const checked = validateQuickReplies(options.humanAgent ? undefined : options.quickReplies);
   if (!checked.ok) return { success: false, message: checked.reason };
 
   const message: Record<string, unknown> = { text };
   if (checked.quickReplies) message.quick_replies = quickRepliesForGraph(checked.quickReplies);
 
+  // The out-of-window shape (api-facts §C3, best reconstruction — the
+  // first live send with the Human Agent feature granted pins whether
+  // the Instagram Login host wants messaging_type as well as tag).
+  // Only sendFollowUpToLead sets this, and only for a send an
+  // authenticated person tapped; see META_HUMAN_AGENT_MAX_HOURS.
+  const envelope: Record<string, unknown> = { recipient: { id: recipientId }, message };
+  if (options.humanAgent) {
+    envelope.messaging_type = "MESSAGE_TAG";
+    envelope.tag = "HUMAN_AGENT";
+  }
+
   const path = business.instagramUserId ? `/${encodeURIComponent(business.instagramUserId)}/messages` : "/me/messages";
   const res = await fetch(`${GRAPH_API}${path}?access_token=${encodeURIComponent(business.instagramAccessToken)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipient: { id: recipientId }, message }),
+    body: JSON.stringify(envelope),
   });
 
   if (!res.ok) return readMetaError(res, "Instagram rejected this message.", "Instagram");

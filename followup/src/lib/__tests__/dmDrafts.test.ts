@@ -177,3 +177,19 @@ describe("the shared rules the prompt repeats", () => {
     expect(DM_SHAPE_RULES).toMatch(/are you interested/);
   });
 });
+
+describe("the day-2–7 owner draft (handoff)", () => {
+  it("names the gap, answers what it can, ends on one question with the way out inside it, and has no buttons", () => {
+    const s = pickDmSituation([msg("inbound", "How much for a two-bed clean?"), msg("outbound", "Whole flat or just the kitchen?", { trigger: "unanswered" })], "handoff");
+    expect(s.id).toBe("day2_7_owner");
+    expect(s.hint).toMatch(/Name the gap/);
+    expect(s.hint).toMatch(/Do not apologise/);
+    expect(s.hint).toMatch(/never mention any window or limit/);
+    expect(s.hint).toMatch(/Provide NO buttons/);
+  });
+
+  it("still confirms an answer tap first — a lead who tapped has replied, so nothing needs handing off", () => {
+    const s = pickDmSituation([msg("inbound", "How much?"), msg("outbound", "This week or later?", { trigger: "unanswered" }), msg("inbound", "This week", { quickReplyPayload: "fu1;unanswered;price_unanswered;this_week;a" })], "handoff");
+    expect(s.id).toBe("after_tap");
+  });
+});

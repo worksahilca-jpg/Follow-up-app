@@ -345,7 +345,9 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
       where.action === "auto_send" ? { enabled: true, triggerDays: 5 } : { enabled: false, triggerHours: 24 }
     );
     await runAutomationForBusiness("biz1");
-    expect(p.lead.findMany).toHaveBeenCalledTimes(1); // only the silence query ran
+    // The silence query, plus the day-2–7 handoff scan (draftDmHandoffs),
+    // which runs on every tick regardless of this rule.
+    expect(p.lead.findMany).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -844,10 +846,11 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
           ? { enabled: false, triggerDays: 45 }
           : { enabled: true, triggerHours: 24 }
     );
-    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]); // silent, then unanswered — no third call
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]); // silent, then unanswered — no dead-lead call
     const r = await runAutomationForBusiness("biz1");
     expect(r.reactivated).toBe(0);
-    expect(p.lead.findMany).toHaveBeenCalledTimes(2);
+    // Silent, unanswered, and the day-2–7 handoff scan — never a dead-lead query.
+    expect(p.lead.findMany).toHaveBeenCalledTimes(3);
   });
 
   it("respects a business-configured dead-lead day threshold instead of the 45-day default", async () => {
@@ -1227,5 +1230,147 @@ describe("DM-shaped follow-ups with reply buttons on Instagram and Messenger", (
       queueUnanswered(tapped(EXIT, 30, { body: "actually, could you do next week?", hoursAgo: 21 }));
       expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
     });
+  });
+});
+
+/**
+ * Days 2–7 on Instagram and Messenger (PRODUCT_DIRECTION, DM-only): once
+ * the 24-hour window shuts with nothing further from the lead, no
+ * automation may send — so the engine drafts ONE message for the owner,
+ * holds it in the approval queue, and tells them how long they have. The
+ * owner's tap sends it under Meta's human-agent tag (sending.ts). Pinned
+ * here: no automatic send past the window, one draft per lead per
+ * message, none after "Not now", none past 7 days.
+ */
+describe("the day-2–7 handoff on Instagram and Messenger", () => {
+  const H = 3_600_000;
+  function quietDmLead(hoursSinceTheyWrote: number, overrides: Record<string, unknown> = {}) {
+    return lead({
+      id: "leadHandoff",
+      name: "Aanya Shah",
+      phone: "ig:17841400000000001",
+      assignedToId: "user1",
+      suggestedQuickReplies: null,
+      suggestedDraftedFor: null,
+      lastContacted: new Date(Date.now() - (hoursSinceTheyWrote - 3) * H),
+      conversations: [
+        {
+          channel: "instagram",
+          messages: [
+            { id: "q", direction: "inbound", body: "How much for a two-bed clean?", sentAt: new Date(Date.now() - hoursSinceTheyWrote * H), opened: false },
+            { id: "f", direction: "outbound", body: "Whole flat or just the kitchen?", sentAt: new Date(Date.now() - (hoursSinceTheyWrote - 3) * H), opened: false, trigger: "unanswered" },
+          ],
+        },
+      ],
+      ...overrides,
+    });
+  }
+  // silent, dead, unanswered → empty; the 4th findMany is the handoff scan.
+  function queueHandoff(...leads: unknown[]) {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce(leads);
+  }
+  const handoffDraft = { subject: "", body: "A couple of days on from your two-bed question, I can price it from a quick photo of the flat, or shall I leave it?", buttons: [] };
+
+  beforeEach(() => {
+    draftMessage.mockResolvedValue(handoffDraft);
+  });
+
+  it("drafts one owner message for a DM lead 30 hours quiet, holds it, and tells the owner how long they have", async () => {
+    queueHandoff(quietDmLead(30));
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.handedOff).toBe(1);
+    expect(draftMessage.mock.calls[0][3]).toEqual(expect.objectContaining({ id: "day2_7_owner" }));
+    expect(p.lead.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "leadHandoff" },
+        data: expect.objectContaining({
+          suggestedMessage: handoffDraft.body,
+          suggestedSubject: null,
+          suggestedQuickReplies: { question: "day2_7_owner", buttons: [] },
+        }),
+      })
+    );
+    expect(audit).toHaveBeenCalledWith(
+      expect.anything(),
+      "ai.hold",
+      expect.objectContaining({ targetId: "leadHandoff", meta: expect.objectContaining({ trigger: "dm_handoff", riskLevel: "window", daysLeft: 5 }) })
+    );
+    expect(p.notification.create).toHaveBeenCalledWith({
+      data: { userId: "user1", leadId: "leadHandoff", message: expect.stringMatching(/Aanya didn't reply to the automatic follow-ups on Instagram.*you have 5 days/) },
+    });
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("never sends automatically past the window — the silence rule skips the lead without drafting", async () => {
+    replyChannel.mockResolvedValue("instagram");
+    p.lead.findMany.mockResolvedValueOnce([quietDmLead(30)]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(risk).not.toHaveBeenCalled();
+    expect(r.skipped[0]).toMatch(/Meta's window on Instagram has closed/);
+  });
+
+  it("does not draft twice for the same message", async () => {
+    queueHandoff(quietDmLead(40, { suggestedQuickReplies: { question: "day2_7_owner", buttons: [] }, suggestedDraftedFor: new Date(Date.now() - 39 * H) }));
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.handedOff).toBe(0);
+    expect(draftMessage).not.toHaveBeenCalled();
+  });
+
+  it("drafts again once the lead has written again since the last handoff draft", async () => {
+    queueHandoff(quietDmLead(30, { suggestedQuickReplies: { question: "day2_7_owner", buttons: [] }, suggestedDraftedFor: new Date(Date.now() - 100 * H) }));
+    expect((await runAutomationForBusiness("biz1")).handedOff).toBe(1);
+  });
+
+  it("drafts nothing while the window is still open (the automatic touches own that time)", async () => {
+    queueHandoff(quietDmLead(20));
+    expect((await runAutomationForBusiness("biz1")).handedOff).toBe(0);
+    expect(draftMessage).not.toHaveBeenCalled();
+  });
+
+  it("drafts nothing past 7 days — Meta refuses it, so there is nothing to hand off", async () => {
+    queueHandoff(quietDmLead(8 * 24));
+    expect((await runAutomationForBusiness("biz1")).handedOff).toBe(0);
+    expect(draftMessage).not.toHaveBeenCalled();
+  });
+
+  it("drafts nothing after a 'Not now' tap", async () => {
+    const l = quietDmLead(30);
+    (l.conversations as Array<{ messages: Record<string, unknown>[] }>)[0].messages = [
+      { id: "q", direction: "inbound", body: "How much?", sentAt: new Date(Date.now() - 40 * H), opened: false },
+      { id: "f", direction: "outbound", body: "Still want a price, or leave it?", sentAt: new Date(Date.now() - 32 * H), opened: false, trigger: "unanswered" },
+      { id: "t", direction: "inbound", body: "Leave it", sentAt: new Date(Date.now() - 30 * H), opened: false, quickReplyPayload: "fu1;unanswered;price_last;leave_it;x" },
+      { id: "c", direction: "outbound", body: "No problem, I'll leave it with you.", sentAt: new Date(Date.now() - 29 * H), opened: false, trigger: "unanswered" },
+    ];
+    queueHandoff(l);
+    expect((await runAutomationForBusiness("biz1")).handedOff).toBe(0);
+    expect(draftMessage).not.toHaveBeenCalled();
+  });
+
+  it("leaves a lead whose newest message is their own to the unanswered rule", async () => {
+    const l = quietDmLead(30);
+    (l.conversations as Array<{ messages: Record<string, unknown>[] }>)[0].messages.push({
+      id: "again", direction: "inbound", body: "hello?", sentAt: new Date(Date.now() - 28 * H), opened: false,
+    });
+    queueHandoff(l);
+    expect((await runAutomationForBusiness("biz1")).handedOff).toBe(0);
+  });
+
+  it("only scans DM leads that are not in a workflow", async () => {
+    queueHandoff();
+    await runAutomationForBusiness("biz1");
+    const handoffQuery = p.lead.findMany.mock.calls[3][0];
+    expect(handoffQuery.where).toEqual(
+      expect.objectContaining({ sequenceId: null, OR: [{ phone: { startsWith: "ig:" } }, { phone: { startsWith: "fb:" } }] })
+    );
+  });
+
+  it("holds a draft that fails the shape check too — the owner still gets something to edit, without chips", async () => {
+    draftMessage.mockResolvedValue({ subject: "", body: "Two questions here? And another?", buttons: [] });
+    queueHandoff(quietDmLead(30));
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.handedOff).toBe(1);
+    expect(p.lead.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ suggestedQuickReplies: { question: "day2_7_owner", buttons: [] } }) }));
   });
 });

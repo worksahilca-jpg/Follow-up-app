@@ -134,3 +134,38 @@ describe("Messenger", () => {
     expect(result).toEqual({ success: false, message: "(#100) Unsupported message tag", status: 400, code: 100, subcode: undefined });
   });
 });
+
+/**
+ * The out-of-window shape: a person's reply between 24 hours and 7 days
+ * after the lead's last message goes out as MESSAGE_TAG + HUMAN_AGENT
+ * (api-facts §C3 best reconstruction for Instagram, §C4 confirmed for
+ * Messenger). Never combined with chips — unverified, and a rejected send
+ * would cost the owner the one message they are allowed.
+ */
+describe("the human-agent tag", () => {
+  it("Instagram: sends messaging_type MESSAGE_TAG and tag HUMAN_AGENT, and drops any chips", async () => {
+    await sendInstagramMessage("biz1", "igsid-1", "Here's the quote you asked for.", { quickReplies: chips, humanAgent: true });
+    expect(sentBody()).toEqual({
+      recipient: { id: "igsid-1" },
+      messaging_type: "MESSAGE_TAG",
+      tag: "HUMAN_AGENT",
+      message: { text: "Here's the quote you asked for." },
+    });
+  });
+
+  it("Messenger: replaces RESPONSE with MESSAGE_TAG + HUMAN_AGENT, and drops any chips", async () => {
+    await sendMessengerMessage("biz1", "psid-1", "Here's the quote.", { quickReplies: chips, humanAgent: true });
+    expect(sentBody()).toEqual({
+      recipient: { id: "psid-1" },
+      messaging_type: "MESSAGE_TAG",
+      tag: "HUMAN_AGENT",
+      message: { text: "Here's the quote." },
+    });
+  });
+
+  it("sends no tag at all when humanAgent is false or absent", async () => {
+    await sendInstagramMessage("biz1", "igsid-1", "Morning?", { humanAgent: false });
+    expect(sentBody()).not.toHaveProperty("tag");
+    expect(sentBody()).not.toHaveProperty("messaging_type");
+  });
+});

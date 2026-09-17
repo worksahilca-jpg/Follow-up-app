@@ -36,7 +36,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!parsed.ok) return parsed.response;
   const { message, subject } = parsed.data;
 
-  const result = await sendFollowUpToLead(id, message, { trigger: "manual", subject });
-  if (result.success) void recordAudit(ctx, "lead.send", { targetType: "lead", targetId: id, meta: { length: message.length } });
+  // `humanSend` is what lets an Instagram/Messenger reply go out between
+  // 24 hours and 7 days after the lead's last message, under Meta's
+  // human-agent allowance: this route is the one place a signed-in person
+  // has the whole message in front of them and tapped Send for it. The
+  // acting user is recorded beside the tag below (api-facts §B5).
+  const result = await sendFollowUpToLead(id, message, { trigger: "manual", subject, humanSend: { userId: ctx.userId } });
+  if (result.success) {
+    void recordAudit(ctx, "lead.send", {
+      targetType: "lead",
+      targetId: id,
+      meta: { length: message.length, ...(result.messagingTag ? { messagingTag: result.messagingTag } : {}) },
+    });
+  }
   return NextResponse.json(result, { status: result.success ? 200 : 500 });
 }

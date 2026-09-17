@@ -1976,3 +1976,50 @@ No fourth automatic touch inside the day — three is already the ceiling the br
 
 **Weakest part, named:** the shape check's banned-closer list is English only, like the
 prompt's opener ban. A "¿te interesa?" gets through the check and relies on the prompt alone.
+
+## 2026-09-17 — Days 2–7 on Instagram and Messenger: the owner's one tap (PR C)
+
+**What shipped (backend; no screen changed):** step 3 of the DM-only build order.
+
+- **Meta's window is judged before any send, in words the owner can act on.** Inside 24 hours
+  of the lead's last message: any send. Between 24 hours and 7 days: only a *person's* send,
+  under Meta's human-agent allowance. Past 7 days, or before the lead has ever written on the
+  channel: nothing, with a plain sentence ("Aanya last wrote on Instagram more than 7 days ago
+  — Meta doesn't allow a business to message them now. They'll need to write first, and then
+  everything restarts."). No fallback to another channel, ever (R-003).
+- **The tag is structurally human-only.** It can be attached only by the manual send route,
+  the one place a signed-in person has the whole message in front of them and tapped Send
+  for it; the acting user is recorded beside the tag in the audit trail. Cron, sequences,
+  auto-send and retries cannot carry it whatever they pass. Chips are never combined with a
+  tagged send (unverified with Meta; a rejected send would cost the owner their one message).
+- **The engine writes the day-2–7 draft once and hands it over.** For a DM lead whose window
+  has shut with nothing further from them, one draft to the reactivation rules: name the gap
+  in a clause, lead with something concrete (answer what they asked if the thread allows,
+  otherwise say what you'd need), one question with the way out inside it, no apology, never
+  a mention of any limit. It lands in the approval queue and the owner gets one line: "Aanya
+  didn't reply to the automatic follow-ups on Instagram, and Meta now only lets a person send
+  the next one — you have 5 days. This draft is yours to send, or leave."
+- **Nothing automatic goes out past the window.** The silence and unanswered rules skip a
+  DM lead past 24 hours without drafting or risk-checking, so no OpenAI spend on a message
+  Meta would refuse.
+
+**Copy rules carried into code:** the owner-facing refusal and hand-off lines say *what
+happened, why, what they can do, and how long they have* (CLAUDE.md's five questions) and
+never use Meta's own jargon ("messaging window", "human agent tag") in front of the owner.
+
+**Decided by default, pending the founder (flagged in the code):** a lead who tapped
+"Not now" gets no day-2–7 draft. This is the one place the reaction strategy and the rescue
+strategy disagree; until the founder rules, "Not now" means not now.
+
+**Not in this PR:**
+1. The App Review request for the "Human Agent" feature (founder; needs a screencast of an
+   owner replying from FollowUp's inbox to a DM older than 24 hours). Until it is granted,
+   Meta rejects the tagged send — the first live run pins the exact error, which both senders
+   now log verbatim.
+2. Live verification of the Instagram request shape for the tag (api-facts §E3).
+3. Sequence steps on DM channels past the window: they now fail cleanly and notify the
+   owner, but do not produce the hand-off draft themselves.
+
+**Weakest part, named:** the hand-off draft is written without the model risk gate. The
+owner reading the whole text before tapping is the gate, which is the documented shape, but
+a draft that misstates a price the business never gave would reach their screen unflagged.

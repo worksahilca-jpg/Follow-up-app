@@ -1,5 +1,17 @@
+import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { recordAuthFailure } from "@/lib/monitoring";
+
+// Constant-time, matching how every other shared-secret check in this
+// codebase compares (Twilio's signature, the unsubscribe token) — a plain
+// `!==` is a timing side-channel against a secret an attacker gets to
+// probe repeatedly. Length-checked first since timingSafeEqual throws on a
+// length mismatch rather than returning false.
+function secretsMatch(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
+}
 
 /**
  * The CRON_SECRET check every /api/cron/* route runs first — was
@@ -15,7 +27,7 @@ import { recordAuthFailure } from "@/lib/monitoring";
 export function requireCronSecret(request: NextRequest, route: string): NextResponse | null {
   const secret = process.env.CRON_SECRET;
   const auth = request.headers.get("authorization");
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if (!secret || !auth || !secretsMatch(auth, `Bearer ${secret}`)) {
     recordAuthFailure("cron_secret", { route });
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }

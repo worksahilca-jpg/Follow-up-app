@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       id: true,
       name: true,
       subscriptionStatus: true,
+      tier: true,
       users: { where: { role: "ADMIN" }, select: { email: true } },
     },
   });
@@ -33,7 +34,14 @@ export async function GET(request: NextRequest) {
   let sent = 0;
   let skipped = 0;
   await mapWithConcurrency(businesses, 3, async (b) => {
-    if (!hasActiveAccess(b.subscriptionStatus) || b.users.length === 0) {
+    // B-004 (research/audit/backend-backlog.md): this doc comment says
+    // "every active business", and the only documented exclusion is "no
+    // connected Gmail" — so a tier-blind hasActiveAccess call silently
+    // dropped every Free business (which by design has no Stripe
+    // subscription at all, see @/lib/billing) was a bug, not a paywall.
+    // Passing tier makes Free count as access here, same as lead
+    // capture/sync already do.
+    if (!hasActiveAccess(b.subscriptionStatus, b.tier) || b.users.length === 0) {
       skipped += 1;
       return;
     }

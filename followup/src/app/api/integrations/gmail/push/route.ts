@@ -1,8 +1,20 @@
+import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse, after } from "next/server";
 import { z } from "zod";
 import { findBusinessIdByGmailAddress } from "@/lib/integrations/gmail";
 import { syncGmailForBusinessFromPush } from "@/lib/gmailSync";
 import { recordAuthFailure } from "@/lib/monitoring";
+
+// Constant-time, matching every other shared-secret check in this codebase
+// (Twilio's signature, the cron secret, the unsubscribe token) — a plain
+// `!==` against a query-string secret is a timing side-channel an attacker
+// can probe by request volume alone. Length-checked first since
+// timingSafeEqual throws on a length mismatch rather than returning false.
+function secretsMatch(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
+}
 
 // Google's own Pub/Sub push envelope — https://cloud.google.com/pubsub/docs/push.
 // Loosely typed on purpose: only `message.data` is ever read, and this
@@ -34,7 +46,8 @@ export const maxDuration = 120;
 export async function POST(request: NextRequest) {
   const secret = process.env.GMAIL_PUSH_SECRET;
   if (!secret) return NextResponse.json({ success: false }, { status: 404 });
-  if (request.nextUrl.searchParams.get("secret") !== secret) {
+  const provided = request.nextUrl.searchParams.get("secret");
+  if (!provided || !secretsMatch(provided, secret)) {
     recordAuthFailure("gmail_push_secret");
     return NextResponse.json({ success: false }, { status: 403 });
   }

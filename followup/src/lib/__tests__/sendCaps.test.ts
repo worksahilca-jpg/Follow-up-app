@@ -19,18 +19,46 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const count = vi.fn();
-vi.mock("@/lib/db", () => ({ prisma: { followUp: { count: (...a: unknown[]) => count(...a) } } }));
+const { executeRaw, count, create } = vi.hoisted(() => ({
+  executeRaw: vi.fn(async () => 0),
+  count: vi.fn(),
+  create: vi.fn(async () => ({})),
+}));
 
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    $transaction: vi.fn(async (fn: (tx: unknown) => unknown) =>
+      fn({
+        $executeRaw: executeRaw,
+        followUp: { count: (...a: unknown[]) => count(...a) },
+        rateLimitHit: { count: (...a: unknown[]) => count(...a), create },
+      })
+    ),
+  },
+}));
+
+import { prisma } from "@/lib/db";
 import {
   checkSendCap,
   DAILY_AUTOMATED_SEND_CAP,
   DAILY_REACTIVATION_SEND_CAP,
 } from "@/lib/sendCaps";
 
-/** First call counts all automated sends; second counts reactivation only. */
-function used(automated: number, reactivation: number) {
-  count.mockResolvedValueOnce(automated).mockResolvedValueOnce(reactivation);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const transaction = (prisma as any).$transaction as ReturnType<typeof vi.fn>;
+
+/**
+ * Calls, in order: followUp.count(automated), followUp.count(reactivation),
+ * rateLimitHit.count(automated reservations), rateLimitHit.count
+ * (reactivation reservations). Reservations default to 0 — most tests
+ * aren't about the race itself, which has its own dedicated case below.
+ */
+function used(automated: number, reactivation: number, reservedAutomated = 0, reservedReactivation = 0) {
+  count
+    .mockResolvedValueOnce(automated)
+    .mockResolvedValueOnce(reactivation)
+    .mockResolvedValueOnce(reservedAutomated)
+    .mockResolvedValueOnce(reservedReactivation);
 }
 
 beforeEach(() => {
@@ -126,5 +154,64 @@ describe("the daily cap", () => {
     const hours = (before - since.getTime()) / (60 * 60 * 1000);
     expect(hours).toBeGreaterThan(23.9);
     expect(hours).toBeLessThan(24.1);
+  });
+});
+
+/**
+ * B-006 (research/audit/backend-backlog.md): a plain count()-then-compare
+ * let several concurrent callers (the automation loop's own
+ * mapWithConcurrency(3)) all read the same pre-send count and all pass,
+ * before any of their eventual FollowUp rows existed to stop the next one.
+ * These tests can't reproduce the race itself under mocks — nothing
+ * actually runs concurrently here — but they pin the observable contract
+ * that closes it: one $transaction per check, the lock acquired before any
+ * count, and a reservation recorded inside that same transaction on the
+ * allowed path only, exactly like rateLimit.ts's checkAndRecordHit.
+ */
+describe("the atomic check-and-reserve", () => {
+  it("runs the lock, the counts and the reservation inside one transaction", async () => {
+    used(0, 0);
+    await checkSendCap("biz-1", "automated");
+    expect(transaction).toHaveBeenCalledTimes(1);
+    const lockOrder = executeRaw.mock.invocationCallOrder[0];
+    const countOrder = count.mock.invocationCallOrder[0];
+    const createOrder = create.mock.invocationCallOrder[0];
+    expect(lockOrder).toBeLessThan(countOrder);
+    expect(countOrder).toBeLessThan(createOrder);
+  });
+
+  it("counts an in-flight reservation from a concurrent caller against the same cap", async () => {
+    // Simulates the exact race: 249 real sends already landed, and one
+    // concurrent call already reserved a slot (not yet a real FollowUp
+    // row) before this one acquired the lock.
+    used(DAILY_AUTOMATED_SEND_CAP - 1, 0, /* reservedAutomated */ 1);
+    const v = await checkSendCap("biz-1", "automated");
+    expect(v.allowed).toBe(false);
+    expect(v.used).toBe(DAILY_AUTOMATED_SEND_CAP);
+  });
+
+  it("reserves a slot on the allowed path so the very next concurrent caller sees it", async () => {
+    used(0, 0);
+    await checkSendCap("biz-1", "automated");
+    expect(create).toHaveBeenCalledWith({ data: { businessId: "biz-1", action: "sendcap:automated" } });
+  });
+
+  it("never reserves a slot on the blocked path — a refused check never reaches the provider", async () => {
+    used(DAILY_AUTOMATED_SEND_CAP, 0);
+    await checkSendCap("biz-1", "automated");
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("a reactivation reservation counts toward both the reactivation and the overall automated pool", async () => {
+    used(0, 0);
+    await checkSendCap("biz-1", "reactivation");
+    expect(create).toHaveBeenCalledWith({ data: { businessId: "biz-1", action: "sendcap:automated" } });
+    expect(create).toHaveBeenCalledWith({ data: { businessId: "biz-1", action: "sendcap:reactivation" } });
+  });
+
+  it("a plain automated reservation does NOT count toward the reactivation-only pool", async () => {
+    used(0, 0);
+    await checkSendCap("biz-1", "automated");
+    expect(create).not.toHaveBeenCalledWith({ data: { businessId: "biz-1", action: "sendcap:reactivation" } });
   });
 });

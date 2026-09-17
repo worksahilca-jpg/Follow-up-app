@@ -215,7 +215,14 @@ export async function removeMember(
   if (!admin.ok) return { success: false, message: admin.message };
   if (targetUserId === actingUserId) return { success: false, message: "You can't remove yourself — ask another admin." };
 
-  const target = await prisma.user.findUnique({ where: { id: targetUserId }, include: { integrations: true } });
+  // Only `status` is ever read below — selecting the encrypted
+  // accessToken/refreshToken columns here would decrypt a departing
+  // teammate's live OAuth tokens on every team-removal call for no
+  // reason (see the credentialEncryption extension in @/lib/db).
+  const target = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    include: { integrations: { select: { status: true } } },
+  });
   if (!target || target.businessId !== businessId) return { success: false, message: "Team member not found." };
 
   if (target.role === "ADMIN" && (await countAdmins(businessId)) <= 1) {

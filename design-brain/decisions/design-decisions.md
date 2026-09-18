@@ -2222,3 +2222,26 @@ live wordmark text, not the outlined lockup.
 
 **Verified.** Preview sheet at 160/64/32/16 on paper and ink, app icon at 128/64, lockup at
 120/40/22, favicon at 32/16. PNG set regenerated. Typecheck and lint clean.
+
+## 2026-09-18 — The landing page now lives in Figma for the founder's review
+
+**Trigger.** After R-007 the founder asked to comment "directly" in whatever tool made the design,
+then named Framer/Figma. A claude.ai review artifact was tried first (free) but its comment wake
+could not register; he chose to buy Figma Professional (1 Full seat, monthly) so the page could be
+rebuilt there and commented on.
+
+**What exists.** Figma file "FollowUp Landing Page", team "Sahil's team":
+https://www.figma.com/design/aGklS1sUNbgfYdu3s1BTF9 — one 1440-wide auto-layout frame,
+"FollowUp Landing — v1 (2026-09-18)", built section by section from the code with the product's
+fonts (Bricolage Grotesque, Public Sans, IBM Plex Mono, Instrument Serif), the leaf logo as SVG,
+and every section named. It mirrors the branch at commit 92d8c3f, not a new design.
+
+**Rule for the loop.** Figma is the review surface, code is the source of truth. Founder comments
+or edits in Figma → the session reads the file, records the decision here, changes the code, and
+re-syncs the Figma frame. The Figma MCP cannot read comments; the founder tells the session when
+to look, and edits made directly to the frame are readable.
+
+**Gotcha recorded.** `figma.createAutoLayout()` gives every frame a white fill by default; 133
+layout-only containers had to be cleared afterwards. Set `fills = []` on containers at creation.
+
+**Cost.** Figma Pro ≈ $16/month, added to the expenses sheet as "confirm from receipt".

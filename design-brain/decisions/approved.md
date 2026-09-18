@@ -267,3 +267,18 @@ dark grounds, and the app icon crop. Those are the next round, built on this dir
 
 **Evidence:** the "FollowUp Logo Concepts" artifact (three directions), shown 2026-09-14 and
 again 2026-09-18; the founder's pick; the 2026-09-18 entry in `[[design-decisions]]`.
+
+## A-009 — The landing page as a black → grey → white → grey → black gradient, and the logo as concepts #69 / #71 ^A-009
+
+**Approved:** 2026-09-18, founder: "this is sick, just I want the logo to be 69 and 71", on the
+render of the page with the dark hero, the light middle and the dark close.
+
+**What specifically was approved:**
+- The page's ground moving through black, grey and white: dark hero with the white thread card
+  floating on it, a fade to the light middle, a fade back to black for the CTA and footer.
+- The thread-story hero (already the direction after R-005) on the dark ground.
+- The logo: two leaves as drawn in #69 (favicon) and #71 (horizontal lockup) of the exploration
+  sheet. Supersedes the F-with-a-stem build from the brief's text the same day. Geometry and
+  ratios in `followup/public/brand/README.md`; decision entry in `[[design-decisions]]`.
+
+**Not covered:** the accent colour (still the placeholder indigo, unchosen); the app's restyle.

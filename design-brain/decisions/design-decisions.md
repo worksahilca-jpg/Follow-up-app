@@ -2189,3 +2189,36 @@ Left symmetrical for now because it is the simpler thing and the founder has not
 close, footer, and the nav in both states. Typecheck and lint clean.
 
 **Awaiting.** The founder's reaction to the render.
+
+## 2026-09-18 — The logo is #69 and #71: two leaves (supersedes the F-with-a-stem build of the same day)
+
+**Trigger.** The founder sent the full exploration sheet (72 concepts, twelve families) with
+"this is sick, just I want the logo to be 69 and 71". #69 is the favicon on that sheet, #71 the
+horizontal lockup. The earlier build of the same day drew an abstract F with a full stem from the
+brief's *words*; the sheet shows what the words meant, and it is not that.
+
+**What #69/#71 are.** Two leaves. Each is a parallelogram leaning forward (top and bottom edges
+rise to the right at ≈23°, sides lean ≈10°) with the two acute corners left sharp and the two
+obtuse corners generously rounded. The upper leaf is larger; the lower leaf is ≈70% the size,
+tucked under and to the left with the same lean, its sharp tip sitting just below the upper
+leaf's bottom edge with a thin parallel channel between them. No stem, no arm, no arrow. It reads
+as a shape first, as two stages of one movement second, as an F only if you look for it.
+
+**What was built (`followup/public/brand/`, `LogoMark.tsx`, `icon.tsx`).** Master geometry in an
+81.79 × 120 box, generated from the parameters above (not traced from the sheet's raster).
+Channel 6 units in the master, 9.5 in the favicon variant with rounder corners for 16 px. App
+icon is #67's rounded square, symbol at 58% of the canvas. The lockup follows #71's proportions,
+which are unusual: the symbol is tall beside the word, cap height = symbol ÷ 3.2, gap 12% of the
+symbol's height, cap block centred. Wordmark outlined from **Manrope 600** with −0.35 tracking;
+on the sheet the word is a rounded geometric grotesque and Manrope is the closest of the three
+faces the brief allowed (Inter is too neutral beside the leaves, Geist too narrow).
+
+**Cost named.** At #71's ratio the wordmark is small: at 22 px tall the word is 7 px and
+unreadable. Minimum lockup height is therefore 28 px, and the nav keeps using the symbol plus the
+live wordmark text, not the outlined lockup.
+
+**Also approved in the same message:** the black → grey → white → grey → black landing page
+("this is sick"). Logged as A-009.
+
+**Verified.** Preview sheet at 160/64/32/16 on paper and ink, app icon at 128/64, lockup at
+120/40/22, favicon at 32/16. PNG set regenerated. Typecheck and lint clean.

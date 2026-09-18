@@ -7,6 +7,7 @@ every Claude on the team starts from the same place.
 | File | For |
 |---|---|
 | `pransh.md` | Pransh — backend |
+| `vansh.md` | Vansh — AI, automation and integrations |
 
 More follow, one per person.
 
@@ -16,7 +17,7 @@ Claude Code auto-loads a `CLAUDE.local.md` at the repo root and never commits it
 `.gitignore`). Create it once with a single line pointing at your brief:
 
 ```
-@.claude/briefs/pransh.md
+@.claude/briefs/<yourname>.md
 ```
 
 That is all. Every session in this repo then starts with the brief, on top of `CLAUDE.md`

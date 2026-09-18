@@ -300,3 +300,20 @@ any page direction. A product mockup can still live further down (the Product ca
 
 **Replaced by:** the lead-flow illustration (sources → FollowUp → warmed leads), see
 `[[design-decisions]]` 2026-09-18, "Hero illustration".
+
+## R-010 — The black → white gradient across the page ^R-010
+
+**Rejected:** 2026-09-18, founder, on the live preview, minutes after the device-theme rule:
+"we will do full black with dark mode and white with light, so no transition."
+
+**What was rejected:** the page changing tone from top to bottom at all: the slow ramp across
+the Features section and the flipped lower zone (built today after "can we go with white
+black gradient", then mirrored per device theme).
+
+**Stated reason:** none beyond "no transition". Inferred (marked inferred): with the device theme
+in play, a page that is half one tone and half the other is the wrong half for someone on either
+setting; one tone per setting is simpler and calmer, which is the brand.
+
+**Do not propose again:** any top-to-bottom tone change on the landing page, ramp or hard edge.
+Section-level surfaces (cards, the CTA band) still lift with borders and shadow; the ground stays
+one tone. The A-011 amendment about the gradient is superseded by this entry.

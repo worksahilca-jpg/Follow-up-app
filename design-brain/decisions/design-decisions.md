@@ -2393,3 +2393,16 @@ the file; it is inert and can go in a cleanup pass.
 
 **Not done, by choice:** no in-page theme toggle. The founder's rule is about the device
 setting, and a toggle would be a product-behaviour decision (his call).
+
+## 2026-09-18 — No transition: one tone per device theme
+
+**Trigger.** R-010. The ramp and the flipped lower zone are gone from `page.tsx` and the
+stylesheet. Two token sets remain: ink-on-black is the default on `.root`; under
+`@media (prefers-color-scheme: light)` the root takes paper-on-white (`--bg: #ffffff`, white
+cards lifted by a 9% border and a soft shadow, black buttons, black hub with the white logo).
+The ramp stops and zone tokens were deleted rather than left dormant.
+
+**What this settles for future sessions.** The landing page's ground is one tone, chosen by
+the device. Any future "make the bottom lighter/darker" ask should be read against R-010 first.
+
+**Verified** in both schemes at 1280 from a production build; typecheck and build clean.

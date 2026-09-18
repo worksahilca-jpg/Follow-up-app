@@ -64,13 +64,6 @@
   --warm-from: #3f3f46;
   --warm-to: #ffffff;
   --bar-to: rgba(255, 255, 255, 0.5);
-  --zone-from: #0a0a0a;
-  --zone-to: #050505;
-  --ramp-0: #0a0a0a;
-  --ramp-1: #1c1c1f;
-  --ramp-2: #6b6b70;
-  --ramp-3: #d9d9dc;
-  --ramp-4: #f4f4f5;
   --radius: 16px;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -1334,74 +1327,8 @@
   color: var(--text);
 }
 
-/* ---------- black → grey → white gradient (founder ask, 2026-09-18) ----------
-   The page starts black and ends white, but the shift is a slow ramp across
-   one whole section (the six feature cards, ~800px), never a hard edge
-   (R-007). Sections below the ramp flip to light tokens; the cards inside
-   the ramp are opaque, so nothing readable sits on the mid-grey band. */
+/* ---------- surfaces that lift on paper, sit flat on ink ---------- */
 
-.ramp {
-  background: linear-gradient(180deg, var(--ramp-0) 0%, var(--ramp-1) 22%, var(--ramp-2) 55%, var(--ramp-3) 82%, var(--ramp-4) 100%);
-}
-.lightZone {
-  --bg: #f4f4f5;
-  --card: #ffffff;
-  --card-2: #f4f4f5;
-  --line: rgba(0, 0, 0, 0.09);
-  --line-strong: rgba(0, 0, 0, 0.16);
-  --text: #0a0a0a;
-  --muted: #52525b;
-  --faint: #71717a;
-  --accent: #0a0a0a;
-  --accent-hover: #27272a;
-  --accent-soft: rgba(0, 0, 0, 0.07);
-  --on-accent: #ffffff;
-  --green: #0a0a0a;
-  --green-soft: rgba(0, 0, 0, 0.07);
-  --amber: #52525b;
-  --amber-soft: rgba(0, 0, 0, 0.05);
-  --rose: #0a0a0a;
-  --rose-soft: rgba(0, 0, 0, 0.1);
-  --ink-soft: rgba(0, 0, 0, 0.06);
-  --ink-mid: rgba(0, 0, 0, 0.12);
-  --ink-strong: rgba(0, 0, 0, 0.2);
-  --ink-hover: rgba(0, 0, 0, 0.3);
-  --glow: rgba(0, 0, 0, 0.045);
-  --glow-soft: rgba(0, 0, 0, 0.05);
-  --hero-glow: rgba(0, 0, 0, 0.06);
-  --cta-glow: rgba(0, 0, 0, 0.08);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -20px rgba(0, 0, 0, 0.18);
-  --hover-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.35);
-  --hot-border: rgba(0, 0, 0, 0.55);
-  --hot-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 30px 80px -30px rgba(0, 0, 0, 0.35);
-  --hot-bg: rgba(0, 0, 0, 0.04);
-  --btn-inset: rgba(0, 0, 0, 0.06);
-  --btn-glow: 0 12px 30px -12px rgba(0, 0, 0, 0.45);
-  --nav-bg: rgba(244, 244, 245, 0.72);
-  --strip-ink: rgba(0, 0, 0, 0.42);
-  --wire: rgba(0, 0, 0, 0.14);
-  --token-in: #71717a;
-  --token-out: #0a0a0a;
-  --token-glow: rgba(0, 0, 0, 0.3);
-  --token-out-glow: rgba(0, 0, 0, 0.5);
-  --hub-a: #27272a;
-  --hub-b: #0a0a0a;
-  --ring-1: rgba(0, 0, 0, 0.06);
-  --ring-2: rgba(0, 0, 0, 0.03);
-  --hub-glow: rgba(0, 0, 0, 0.35);
-  --warm-from: #d4d4d8;
-  --warm-to: #0a0a0a;
-  --bar-to: rgba(0, 0, 0, 0.5);
-  --zone-from: #f4f4f5;
-  --zone-to: #ffffff;
-  --ramp-0: #f4f4f5;
-  --ramp-1: #d9d9dc;
-  --ramp-2: #6b6b70;
-  --ramp-3: #1c1c1f;
-  --ramp-4: #0a0a0a;
-  background: linear-gradient(180deg, var(--zone-from) 0%, var(--zone-to) 100%);
-  color: var(--text);
-}
 .card,
 .priceCard:not(.priceHot),
 .faqItem,
@@ -1409,13 +1336,14 @@
   box-shadow: var(--shadow-card);
 }
 
-/* ---------- device theme: the two sets swap ends ----------
-   Dark scheme (default): black top, white bottom. Light scheme: white top,
-   black bottom. Same page, same ramp, mirrored. */
+/* ---------- device theme (founder, 2026-09-18: "full black with dark
+   mode and white with light, so no transition") ----------
+   The default set above is ink on black. Under the light scheme the root
+   takes the paper set instead. One page, one tone, no ramp. */
 
 @media (prefers-color-scheme: light) {
   .root {
-  --bg: #f4f4f5;
+  --bg: #ffffff;
   --card: #ffffff;
   --card-2: #f4f4f5;
   --line: rgba(0, 0, 0, 0.09);
@@ -1448,7 +1376,7 @@
   --hot-bg: rgba(0, 0, 0, 0.04);
   --btn-inset: rgba(0, 0, 0, 0.06);
   --btn-glow: 0 12px 30px -12px rgba(0, 0, 0, 0.45);
-  --nav-bg: rgba(244, 244, 245, 0.72);
+  --nav-bg: rgba(255, 255, 255, 0.72);
   --strip-ink: rgba(0, 0, 0, 0.42);
   --wire: rgba(0, 0, 0, 0.14);
   --token-in: #71717a;
@@ -1463,70 +1391,6 @@
   --warm-from: #d4d4d8;
   --warm-to: #0a0a0a;
   --bar-to: rgba(0, 0, 0, 0.5);
-  --zone-from: #f4f4f5;
-  --zone-to: #ffffff;
-  --ramp-0: #f4f4f5;
-  --ramp-1: #d9d9dc;
-  --ramp-2: #6b6b70;
-  --ramp-3: #1c1c1f;
-  --ramp-4: #0a0a0a;
-  }
-  .lightZone {
-  --bg: #0a0a0a;
-  --card: #111214;
-  --card-2: #16171a;
-  --line: rgba(255, 255, 255, 0.1);
-  --line-strong: rgba(255, 255, 255, 0.18);
-  --text: #ffffff;
-  --muted: #9ca3af;
-  --faint: #6b7280;
-  --accent: #ffffff;
-  --accent-hover: #e4e4e7;
-  --accent-soft: rgba(255, 255, 255, 0.12);
-  --on-accent: #0a0a0a;
-  --green: #e4e4e7;
-  --green-soft: rgba(255, 255, 255, 0.12);
-  --amber: #a1a1aa;
-  --amber-soft: rgba(255, 255, 255, 0.07);
-  --rose: #ffffff;
-  --rose-soft: rgba(255, 255, 255, 0.16);
-  --ink-soft: rgba(255, 255, 255, 0.08);
-  --ink-mid: rgba(255, 255, 255, 0.14);
-  --ink-strong: rgba(255, 255, 255, 0.25);
-  --ink-hover: rgba(255, 255, 255, 0.34);
-  --glow: rgba(255, 255, 255, 0.07);
-  --glow-soft: rgba(255, 255, 255, 0.08);
-  --hero-glow: rgba(255, 255, 255, 0.11);
-  --cta-glow: rgba(255, 255, 255, 0.12);
-  --shadow-card: none;
-  --hover-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.9);
-  --hot-border: rgba(255, 255, 255, 0.5);
-  --hot-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 30px 80px -30px rgba(255, 255, 255, 0.25);
-  --hot-bg: rgba(255, 255, 255, 0.06);
-  --btn-inset: rgba(255, 255, 255, 0.06);
-  --btn-glow: 0 12px 30px -12px rgba(255, 255, 255, 0.28);
-  --nav-bg: rgba(10, 10, 10, 0.72);
-  --strip-ink: rgba(255, 255, 255, 0.42);
-  --wire: rgba(255, 255, 255, 0.12);
-  --token-in: #9ca3af;
-  --token-out: #ffffff;
-  --token-glow: rgba(255, 255, 255, 0.55);
-  --token-out-glow: rgba(255, 255, 255, 0.95);
-  --hub-a: #ffffff;
-  --hub-b: #d4d4d8;
-  --ring-1: rgba(255, 255, 255, 0.08);
-  --ring-2: rgba(255, 255, 255, 0.035);
-  --hub-glow: rgba(255, 255, 255, 0.35);
-  --warm-from: #3f3f46;
-  --warm-to: #ffffff;
-  --bar-to: rgba(255, 255, 255, 0.5);
-  --zone-from: #0a0a0a;
-  --zone-to: #050505;
-  --ramp-0: #0a0a0a;
-  --ramp-1: #1c1c1f;
-  --ramp-2: #6b6b70;
-  --ramp-3: #d9d9dc;
-  --ramp-4: #f4f4f5;
   }
 }
 

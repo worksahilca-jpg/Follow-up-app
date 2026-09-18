@@ -401,8 +401,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---------- Features 3×2, on the black → white ramp ---------- */}
-      <div className={styles.ramp}>
+      {/* ---------- Features 3×2 ---------- */}
       <section id="features" className={styles.section} style={{ paddingTop: 0 }}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <h2 className={styles.h2} style={{ fontSize: "clamp(28px, 3.4vw, 40px)" }}>
@@ -430,10 +429,7 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
-      </div>
 
-      {/* ---------- Light zone: pricing, FAQ, CTA, footer ---------- */}
-      <div className={styles.lightZone}>
       {/* ---------- Pricing ---------- */}
       <section id="pricing" className={styles.section}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
@@ -580,7 +576,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-      </div>
     </div>
   );
 }

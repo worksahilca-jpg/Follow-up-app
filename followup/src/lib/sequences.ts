@@ -221,7 +221,7 @@ export async function deleteSequence(id: string, businessId: string): Promise<{ 
   await prisma.$transaction([
     prisma.lead.updateMany({
       where: { sequenceId: id },
-      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
     }),
     prisma.sequence.delete({ where: { id } }),
   ]);
@@ -272,6 +272,7 @@ export async function enrollLead(
       sequenceId,
       sequenceStepIndex: 0,
       sequenceStepDueAt: new Date(Date.now() + stepDelayHours(firstStep) * 60 * 60 * 1000),
+      sequenceStepScheduledAt: new Date(),
       // A lead can't be run by both the silence-based automation and a
       // workflow at once — enrolling turns the former off for this lead so
       // the workflow's own cadence is the only thing steering it.
@@ -320,7 +321,7 @@ export async function unenrollLead(leadId: string, businessId: string): Promise<
   if (!lead || lead.businessId !== businessId) return { success: false };
   await prisma.lead.update({
     where: { id: leadId },
-    data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+    data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
   });
   return { success: true };
 }
@@ -474,7 +475,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       try {
         await prisma.lead.update({
           where: { id: lead.id },
-          data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+          data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
         });
       } catch (err) {
         return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
@@ -489,18 +490,29 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
     // one of this lead's conversations is inbound — if a human (or the
     // AI, on an AUTONOMOUS lead) already answered it, the last message is
     // outbound again and the sequence is free to continue normally.
+    //
+    // AND it arrived after the workflow last acted. Without that second
+    // clause, a lead enrolled while their newest message was already
+    // unanswered — every DM, SMS and email lead at the moment of capture —
+    // was "replied mid-sequence" at step 0 and cancelled before anything
+    // ran, owner notified of a reply that predated the plan (audit
+    // 2026-09-16, F4). A null stamp is a row from before the column; it
+    // keeps the old rule, which errs towards stopping.
     const allMessages = lead.conversations.flatMap((c) => c.messages);
     const lastMessage =
       allMessages.length > 0 ? allMessages.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest)) : null;
+    const repliedSinceScheduled =
+      lastMessage?.direction === "inbound" &&
+      (lead.sequenceStepScheduledAt == null || lastMessage.sentAt > lead.sequenceStepScheduledAt);
 
-    if (lastMessage?.direction === "inbound") {
+    if (repliedSinceScheduled) {
       // See the "step gone" branch above for why this is wrapped — same
       // failure mode (an uncaught DB error here aborts every other lead in
       // this business's batch, not just this one).
       try {
         await prisma.lead.update({
           where: { id: lead.id },
-          data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+          data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
         });
         if (lead.assignedToId) {
           await prisma.notification.create({
@@ -578,7 +590,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           try {
             await prisma.lead.update({
               where: { id: lead.id },
-              data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null },
+              data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
             });
           } catch (err) {
             return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
@@ -648,7 +660,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
             data: {
               sequenceId: null,
               sequenceStepIndex: 0,
-              sequenceStepDueAt: null,
+              sequenceStepDueAt: null, sequenceStepScheduledAt: null,
               suggestedMessage: message,
               suggestedSubject: draft.subject,
             },
@@ -704,6 +716,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           ? {
               sequenceStepIndex: nextIndex,
               sequenceStepDueAt: new Date(Date.now() + stepDelayHours(nextStep) * 60 * 60 * 1000),
+              sequenceStepScheduledAt: new Date(),
             }
           : {
               // Finished the sequence — the one exit path that gets a
@@ -714,7 +727,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
               // pause above, none of which set this).
               sequenceId: null,
               sequenceStepIndex: 0,
-              sequenceStepDueAt: null,
+              sequenceStepDueAt: null, sequenceStepScheduledAt: null,
               sequenceCompletedAt: new Date(),
             },
       });

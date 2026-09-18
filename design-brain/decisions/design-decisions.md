@@ -2047,3 +2047,16 @@ each. Recorded here so no future session re-opens them as "flagged, pending".
 recommends spacing toward the end of the window; still to be built and reviewed), and
 whether Messenger's rules diverge from Instagram's anywhere — still the flagged assumption
 from 2026-09-16.
+
+## 2026-09-18 — Logo direction chosen: the forward chevron
+
+The three arrow-based concepts presented on 2026-09-14 (forward chevron, reply turn, return
+loop) were shown again and the founder picked the first. → `[[approved#^A-008|A-008]]`.
+
+**Why it is the right one, in retrospect:** the two rejected concepts both encode "coming
+back" — a reply, a loop — which is the *mechanism* of follow-up, not its *result*. The
+chevron encodes the result: the conversation moves on. It is also the only one of the three
+that survives at 16 px without the counter-form collapsing.
+
+**Next round (not started):** wordmark pairing, stroke weight, light/dark treatment, app
+icon crop. Reuse the existing tokens (`--ink`, `--rust`, navy/blue) before inventing any.

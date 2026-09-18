@@ -7,7 +7,7 @@ import { getStripe, priceIdForTier, VOICE_FLAT_PRICE_ID, VOICE_METERED_PRICE_ID,
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
-import { TRIAL_PERIOD_DAYS } from "@/lib/billing";
+import { TRIAL_PERIOD_DAYS, hasActiveAccess } from "@/lib/billing";
 import { VOICE_ADDON_AVAILABLE } from "@/lib/pricing";
 
 const bodySchema = z.object({
@@ -57,10 +57,26 @@ export async function POST(request: NextRequest) {
 
     const business = await prisma.business.findUnique({
       where: { id: ctx.businessId },
-      select: { stripeCustomerId: true, name: true },
+      select: { stripeCustomerId: true, stripeSubscriptionId: true, subscriptionStatus: true, name: true },
     });
     if (!business) {
       return NextResponse.json({ success: false, message: "Business not found." }, { status: 404 });
+    }
+
+    // Refuse a second checkout rather than silently creating a second live
+    // Stripe subscription on the same customer (B-002,
+    // research/audit/backend-backlog.md) — two browser tabs both landing
+    // on "start Plus"/"start Pro" is enough to trigger this with no direct
+    // API access needed. `hasActiveAccess` is deliberately called WITHOUT
+    // a tier here: this is asking "is there already a paid subscription in
+    // good standing," not "does this business have product access" — a
+    // Free business (no stripeSubscriptionId at all) must still fall
+    // through and be allowed to check out for the first time.
+    if (business.stripeSubscriptionId && hasActiveAccess(business.subscriptionStatus)) {
+      return NextResponse.json(
+        { success: false, message: "You already have a plan — use Manage billing to change it." },
+        { status: 409 }
+      );
     }
 
     let customerId = business.stripeCustomerId;

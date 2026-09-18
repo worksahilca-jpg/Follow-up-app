@@ -119,52 +119,120 @@ export type SendCapVerdict = {
 const WINDOW_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Counted from FollowUp rows — the record written for every real send —
- * rather than a separate counter, so the number can never drift from what
- * actually went out. A rolling 24 hours rather than a calendar day: a
- * midnight reset would let a batch run twice in a few hours.
+ * How long a reservation (see below) counts as "possibly still in flight".
+ * Comfortably above the slowest realistic provider call this product makes
+ * (Gmail/Twilio/Meta send APIs) — long enough that a real send can't
+ * outlive it, short enough that a failed attempt's reservation doesn't
+ * shadow the cap for long. Deliberately generous rather than tight: this
+ * fuse should never be reached in normal use (see file header), so erring
+ * conservative here costs nothing a real customer would notice.
+ */
+const RESERVATION_TTL_MS = 10 * 60 * 1000;
+
+const RESERVATION_ACTION = {
+  automated: "sendcap:automated",
+  reactivation: "sendcap:reactivation",
+} as const;
+
+/**
+ * B-006 (research/audit/backend-backlog.md): counting from FollowUp rows
+ * alone — the record written for every real send — is honest about what
+ * actually went out, but it is a plain count-then-act: nothing stopped
+ * several concurrent callers (the automation loop's mapWithConcurrency(3))
+ * from all reading the same pre-send count and all passing, each of them
+ * committing its FollowUp row only much later, after a slow external send.
+ *
+ * The fix mirrors src/lib/rateLimit.ts's checkAndRecordHit — an advisory
+ * lock serializes concurrent callers for the same business, and a
+ * reservation is written before the lock is released so the very next
+ * concurrent caller sees it. The difference from rateLimit.ts: that
+ * function's own "hit" IS the completed action, recorded in the same beat
+ * as the check. A send cannot work that way — the real record (the
+ * FollowUp row) can only be written after the external provider call
+ * returns, which may take seconds, and holding this lock (or a DB
+ * transaction at all) open across that call risks starving the connection
+ * pool and blowing Prisma's own interactive-transaction timeout for no
+ * real gain — this lock only ever contends against the same business's
+ * own concurrent sends (at most 3, the automation loop's own concurrency
+ * limit), never across businesses.
+ *
+ * So the count blends two sources: real FollowUp rows (truth, persists the
+ * full 24h window) plus RateLimitHit reservations younger than
+ * RESERVATION_TTL_MS (a stand-in for "a send this business started but
+ * hasn't landed a FollowUp row for yet"). A reservation is written only on
+ * the allowed path — a blocked check never reaches the provider, so there
+ * is nothing in flight to reserve. If the send that follows ultimately
+ * fails, the reservation still ages out on its own after
+ * RESERVATION_TTL_MS; nothing needs to release it.
  */
 export async function checkSendCap(
   businessId: string,
   kind: SendCapKind
 ): Promise<SendCapVerdict> {
   const since = new Date(Date.now() - WINDOW_MS);
+  const reservedSince = new Date(Date.now() - RESERVATION_TTL_MS);
 
-  const [automatedUsed, reactivationUsed] = await Promise.all([
-    prisma.followUp.count({
-      where: { lead: { businessId }, automated: true, sentAt: { gte: since } },
-    }),
-    prisma.followUp.count({
-      where: {
-        lead: { businessId },
-        automated: true,
-        trigger: "dead_lead_reactivation",
-        sentAt: { gte: since },
-      },
-    }),
-  ]);
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`sendcap:${businessId}`}))`;
 
-  if (kind === "reactivation" && reactivationUsed >= DAILY_REACTIVATION_SEND_CAP) {
+    const [automatedSent, reactivationSent, automatedReserved, reactivationReserved] = await Promise.all([
+      tx.followUp.count({
+        where: { lead: { businessId }, automated: true, sentAt: { gte: since } },
+      }),
+      tx.followUp.count({
+        where: {
+          lead: { businessId },
+          automated: true,
+          trigger: "dead_lead_reactivation",
+          sentAt: { gte: since },
+        },
+      }),
+      // Every reservation (plain automated or reactivation) is recorded
+      // under the automated key too — see below — so this alone mirrors
+      // what automatedSent counts: every automated send, of any trigger.
+      tx.rateLimitHit.count({
+        where: { businessId, action: RESERVATION_ACTION.automated, createdAt: { gte: reservedSince } },
+      }),
+      tx.rateLimitHit.count({
+        where: { businessId, action: RESERVATION_ACTION.reactivation, createdAt: { gte: reservedSince } },
+      }),
+    ]);
+
+    const automatedUsed = automatedSent + automatedReserved;
+    const reactivationUsed = reactivationSent + reactivationReserved;
+
+    if (kind === "reactivation" && reactivationUsed >= DAILY_REACTIVATION_SEND_CAP) {
+      return {
+        allowed: false,
+        used: reactivationUsed,
+        cap: DAILY_REACTIVATION_SEND_CAP,
+        reason: `FollowUp has stopped after ${DAILY_REACTIVATION_SEND_CAP} messages today as a safety measure — that is far more than a normal day, so something may be wrong. Nothing you send yourself is affected.`,
+      };
+    }
+
+    if (automatedUsed >= DAILY_AUTOMATED_SEND_CAP) {
+      return {
+        allowed: false,
+        used: automatedUsed,
+        cap: DAILY_AUTOMATED_SEND_CAP,
+        reason: `FollowUp has stopped after ${DAILY_AUTOMATED_SEND_CAP} messages today as a safety measure — that is far more than a normal day, so something may be wrong. Nothing you send yourself is affected.`,
+      };
+    }
+
+    // Reserve this slot now, inside the same locked transaction, so the
+    // very next concurrent caller for this business — still waiting on
+    // the lock above — counts it. A reactivation send reserves under both
+    // keys, matching how its eventual FollowUp row counts toward both
+    // automatedSent and reactivationSent above.
+    await tx.rateLimitHit.create({ data: { businessId, action: RESERVATION_ACTION.automated } });
+    if (kind === "reactivation") {
+      await tx.rateLimitHit.create({ data: { businessId, action: RESERVATION_ACTION.reactivation } });
+    }
+
     return {
-      allowed: false,
-      used: reactivationUsed,
-      cap: DAILY_REACTIVATION_SEND_CAP,
-      reason: `FollowUp has stopped after ${DAILY_REACTIVATION_SEND_CAP} messages today as a safety measure — that is far more than a normal day, so something may be wrong. Nothing you send yourself is affected.`,
+      allowed: true,
+      used: kind === "reactivation" ? reactivationUsed : automatedUsed,
+      cap: kind === "reactivation" ? DAILY_REACTIVATION_SEND_CAP : DAILY_AUTOMATED_SEND_CAP,
     };
-  }
-
-  if (automatedUsed >= DAILY_AUTOMATED_SEND_CAP) {
-    return {
-      allowed: false,
-      used: automatedUsed,
-      cap: DAILY_AUTOMATED_SEND_CAP,
-      reason: `FollowUp has stopped after ${DAILY_AUTOMATED_SEND_CAP} messages today as a safety measure — that is far more than a normal day, so something may be wrong. Nothing you send yourself is affected.`,
-    };
-  }
-
-  return {
-    allowed: true,
-    used: kind === "reactivation" ? reactivationUsed : automatedUsed,
-    cap: kind === "reactivation" ? DAILY_REACTIVATION_SEND_CAP : DAILY_AUTOMATED_SEND_CAP,
-  };
+  });
 }

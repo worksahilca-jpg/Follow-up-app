@@ -5,9 +5,56 @@ verified defect with a concrete failure path, not a hunch. Hand to `backend-ai-a
 
 Opened 2026-09-15 by the second-pass bug hunt (`b0c823c`). Newest first.
 
+**Re-verified 2026-09-17** against current code rather than assumed current: B-001 and
+B-003 were already fixed (PR #245, see their entries below) and are kept here rather than
+deleted, per this doc's own history-over-deletion practice. B-002, B-004 and B-005 were
+each independently re-confirmed still open by reading today's code. B-006 is new this
+pass.
+
+---
+
+## B-006 — `checkSendCap` is a check-then-act race, unlike every other volume gate
+
+**Found:** 2026-09-17, backend audit pass. **Area:** `src/lib/sendCaps.ts` (`checkSendCap`,
+a plain `count()` then compare, no lock), called from `src/lib/sending.ts:340` inside
+`sendFollowUpToLead`, itself invoked concurrently via `mapWithConcurrency(eligible, 3, ...)`
+in `src/lib/automation.ts:324`.
+
+Every other volume/rate gate in this codebase (`src/lib/rateLimit.ts`'s
+`checkAndRecordHit`) was rewritten specifically because a plain count-then-act let
+concurrent callers all read the same pre-flood count and all pass — see that file's own
+doc comment. `checkSendCap` still has that exact shape.
+
+**Someone does X, and Y breaks.** A business has 249 automated sends logged in the last
+24h (cap is 250). The hourly cron's 3-way concurrency picks up 3 more eligible leads for
+that business in the same tick; all 3 read `automatedUsed = 249` before any of the other
+two has committed its `FollowUp` row, all pass, all send — landing at 252, two over the
+fuse that exists specifically to stop a runaway loop from getting a customer's mailbox
+suspended.
+
+Bounded (max overshoot = concurrency limit − 1 = 2) and not an urgent production risk
+today — the cap is deliberately conservative (half of the smallest plausible provider
+limit). **Why this isn't an audit-PR fix:** unlike `checkAndRecordHit`, the "record" side
+of this check (the `FollowUp` row) isn't written until well after a slow external send
+(Gmail/Twilio API call) completes — copying the `pg_advisory_xact_lock` pattern verbatim
+would mean holding a Postgres transaction open across that external call, which trades a
+rare, bounded overshoot for real connection-pool exhaustion risk under load. The right
+fix is a reservation (claim a slot before sending, release it if the send fails), which is
+a real design decision, not a copy-paste.
+
 ---
 
 ## B-001 — A transient API error permanently strands a lead for 20 hours
+
+**RESOLVED 2026-09-17** (verified against current code, not assumed) — fixed in PR #245
+("Fix B-001 and B-003"). `src/lib/automation.ts`'s per-lead `catch` now runs the error
+through `isTransientError()` (`src/lib/transientError.ts`, extracted so `sendQueue.ts` can
+share the same classifier) and releases the claim only for the transient classes
+(provider rate limits, upstream 5xx, network/timeout) — a permanent failure still stays
+claimed until the normal 20h recheck, so it isn't retried forever burning OpenAI calls.
+The maxDuration-timeout half of this finding (every lead claimed-but-unsent when the whole
+invocation is killed at 300s) is unchanged and inherent to the timeout, not addressed by
+this fix — worth knowing if it resurfaces.
 
 **Found:** 2026-09-15. **Area:** `src/lib/automation.ts`.
 
@@ -105,6 +152,13 @@ current one.
 ---
 
 ## B-003 — A booking can be created and then reported to the lead as failed
+
+**RESOLVED 2026-09-17** (verified against current code, not assumed) — fixed in the same
+PR #245. `createBooking()` now wraps only `prisma.booking.create` in the slot-taken `try`;
+`lead.update` and `createCalendarEvent` run afterward in their own `try`, and any failure
+there is logged and swallowed rather than reported to the lead as a failed booking —
+the booking already exists at that point and telling them otherwise would cause a real
+double-booking, which is exactly what this fixes.
 
 **Found:** 2026-09-15. **Area:** `src/lib/booking.ts`.
 

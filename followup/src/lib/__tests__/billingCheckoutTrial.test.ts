@@ -5,10 +5,17 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+type MockBusiness = {
+  stripeCustomerId: string | null;
+  stripeSubscriptionId?: string | null;
+  subscriptionStatus?: string | null;
+  name: string;
+};
+
 const { findUnique, update } = vi.hoisted(() => ({
-  findUnique: vi.fn(async (query: unknown) => {
+  findUnique: vi.fn(async (query: unknown): Promise<MockBusiness> => {
     void query;
-    return { stripeCustomerId: "cus_existing" as string | null, name: "Acme Plumbing" };
+    return { stripeCustomerId: "cus_existing", name: "Acme Plumbing" };
   }),
   update: vi.fn(async (query: unknown) => {
     void query;
@@ -138,5 +145,65 @@ describe("POST /api/billing/checkout — free trial", () => {
         ],
       })
     );
+  });
+});
+
+/**
+ * B-002 (research/audit/backend-backlog.md): checkout used to reuse the
+ * Stripe *customer* but never checked for an existing *subscription* — two
+ * browser tabs both starting checkout while on Free was enough to create
+ * two live subscriptions on one customer, billed twice every month, with
+ * no direct API access needed.
+ */
+describe("POST /api/billing/checkout — refuses a second subscription", () => {
+  it("refuses checkout when the business already has an active subscription", async () => {
+    findUnique.mockResolvedValue({
+      stripeCustomerId: "cus_existing",
+      stripeSubscriptionId: "sub_existing",
+      subscriptionStatus: "active",
+      name: "Acme Plumbing",
+    });
+    const res = await POST(postRequest());
+    expect(res.status).toBe(409);
+    expect(sessionsCreate).not.toHaveBeenCalled();
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.message).toMatch(/already have a plan/i);
+  });
+
+  it("also refuses while the existing subscription is still trialing", async () => {
+    findUnique.mockResolvedValue({
+      stripeCustomerId: "cus_existing",
+      stripeSubscriptionId: "sub_existing",
+      subscriptionStatus: "trialing",
+      name: "Acme Plumbing",
+    });
+    const res = await POST(postRequest());
+    expect(res.status).toBe(409);
+    expect(sessionsCreate).not.toHaveBeenCalled();
+  });
+
+  it("lets a Free business (never subscribed) check out for the first time", async () => {
+    findUnique.mockResolvedValue({
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionStatus: null,
+      name: "Acme Plumbing",
+    });
+    const res = await POST(postRequest());
+    expect(res.status).toBe(200);
+    expect(sessionsCreate).toHaveBeenCalled();
+  });
+
+  it("lets a canceled business (subscription id present, status terminal) start a new one", async () => {
+    findUnique.mockResolvedValue({
+      stripeCustomerId: "cus_existing",
+      stripeSubscriptionId: "sub_old_canceled",
+      subscriptionStatus: "canceled",
+      name: "Acme Plumbing",
+    });
+    const res = await POST(postRequest());
+    expect(res.status).toBe(200);
+    expect(sessionsCreate).toHaveBeenCalled();
   });
 });

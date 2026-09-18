@@ -247,3 +247,19 @@ so plainly: "If they tap Not now, that's the end of it unless they write again."
 **Evidence:** PR #258 (exit tap stops the unanswered rule and the badge), PR #259 (no
 hand-off draft after an exit tap; mutation-tested), and the 2026-09-18 entry in
 `[[design-decisions]]`.
+
+## A-008 — Logo direction: the forward chevron ^A-008
+
+**Approved:** 2026-09-18, founder, choosing the first of three arrow-based concepts ("1st is
+better") over the reply turn and the return loop.
+
+**What was approved:** the logo is built on a single forward chevron — one clean arrow, no
+bend, no loop. Of the three, it is the simplest mark and the one that reads at favicon size;
+it says "next step" rather than "we go back", which fits the product's promise (the follow-up
+happens, the lead moves forward) better than either of the two that curve back on themselves.
+
+**Not yet decided:** wordmark pairing, exact stroke weight, colour treatment on light and
+dark grounds, and the app icon crop. Those are the next round, built on this direction only.
+
+**Evidence:** the "FollowUp Logo Concepts" artifact (three directions), shown 2026-09-14 and
+again 2026-09-18; the founder's pick; the 2026-09-18 entry in `[[design-decisions]]`.

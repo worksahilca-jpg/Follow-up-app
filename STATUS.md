@@ -19,7 +19,7 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
   lead to myself" button (`TestLeadButton.tsx` → `POST /api/leads/test-lead`) instead — it
   already exercises the real instant-ack/scoring/draft path end to end. The fuller multi-day
   silence/rescue scenario stays a later, deliberate exercise, not a blocker right now.
-- [ ] **Logo direction** — 3 arrow-based concepts presented earlier, none picked yet.
+- [x] **Logo direction** — forward chevron chosen 2026-09-18 (A-008). Wordmark and icon crop are the next round.
 ## Running now (background agents)
 
 *(none right now — check the [Agent Board](https://claude.ai/code/artifact/310ede6b-c78d-436b-a262-d6bbd40040c1) for live status)*

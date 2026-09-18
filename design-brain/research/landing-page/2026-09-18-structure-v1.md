@@ -33,8 +33,8 @@ order, to press "Start free"?*
    whole job; everything below is for the minority who keep going. Six sections, not twelve.
 2. **The thesis belongs in the hero, not three sections down.** Follow Up Boss puts its
    category reframe in the headline. Ours is: *the leads you already have go quiet because
-   nobody wrote back.* The approved headline ("Never lose a lead because nobody followed up.")
-   already says it. Keep it.
+   nobody wrote back.* The headline says it. The founder chose the wording: "Never lose a lead because
+   you forgot to follow up." ("Forgot" is the word a real person uses; "nobody" was mine.)
 3. **Pick one buyer.** The 09-16 pass found the old page promising DM coverage to B2B email
    buyers who don't use DMs. The product as shipped is email-automatic and DM-assisted; Meta
    channels are the launch channels by the founder's call. The page should name the buyer
@@ -57,7 +57,7 @@ Order is the order of attention, not of importance to us.
 | # | Section | Its one job | The one sentence it must say | Proof / what shows | Out |
 |---|---|---|---|---|---|
 | 0 | **Top bar** | Get out of the way | How it works · Prices · Questions · **Start free** | | Features, Integrations, "New" badges |
-| 1 | **Hero** | In five seconds: what this is, who it's for, the one thing to do | **Never lose a lead because nobody followed up.** Under it, one line naming the buyer and the job: *For businesses whose customers write first on Instagram, WhatsApp or email. FollowUp writes back when you can't.* | The moving diagram (A-012). Under the button, one reassurance: *No card. It stops the moment they reply.* | Stats, badges, a second button, a product screenshot (R-009), a photo (R-011) |
+| 1 | **Hero** | In five seconds: what this is, who it's for, the one thing to do | **Never lose a lead because you forgot to follow up.** (founder's line, chosen 2026-09-18 over "because nobody followed up") Under it, one line naming the buyer and the job: *For businesses whose customers write first on Instagram, WhatsApp or email. FollowUp writes back when you can't.* | The moving diagram (A-012). Under the button, one reassurance: *No card. It stops the moment they reply.* | Stats, badges, a second button, a product screenshot (R-009), a photo (R-011) |
 | 2 | **Three steps** | Give them the mental model before asking for anything | 1 Connect your inbox. 2 FollowUp spots who is going quiet. 3 It writes back for you. Then the honest line: *On email it sends for you. On Instagram and WhatsApp it writes the message and you tap send.* | The steps themselves | Feature tiles, a second diagram |
 | 3 | **Our promises, in writing** | Be the proof, since there are no customers yet | *When a customer replies, it stops. It never talks about money without you. Every message it sends is written down, with the reason. You can delete everything, any time.* | Four short cards, each a built and tested guarantee | Testimonials, logos, numbers |
 | 4 | **Who it's for** | Let the right person recognise themselves and the wrong one leave | *Salons, clinics, studios, coaches, realtors, small local services: anyone who gets customers by message.* | One line, maybe three tiny examples | Persona cards with invented people |

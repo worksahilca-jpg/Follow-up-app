@@ -332,3 +332,16 @@ diagram; the monochrome rule and the fixed first line stand.
 
 **Asked for in the same breath:** "make this come in from everywhere", the entrance animation
 recorded in `[[design-decisions]]` 2026-09-18, "From everywhere".
+
+## A-013 — The headline: "Never lose a lead because you forgot to follow up." ^A-013
+
+**Approved:** 2026-09-18, founder, choosing between three wordings. His own dictated line
+from earlier in the day, over the README's "because nobody followed up" (which I had used
+without asking) and a middle option ("because a message went unanswered").
+
+**Why his wins, in his words and mine:** "forgot" is the word a real person uses for what
+actually happens; "nobody" is safe but points at no one. It is said kindly and it is true.
+Brand principle 9 in one sentence.
+
+**Standing:** this is the fixed first line of the landing page. Sub-lines, buyer line and
+lede are separate decisions (structure v1, questions 1 to 4).

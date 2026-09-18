@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check, Inbox, Eye, Languages, Send, MessageCircle, Users, Mail, Camera, MessageSquare } from "lucide-react";
+import { ArrowRight, Check, Inbox, Eye, Languages, Send, MessageCircle, Users } from "lucide-react";
 import styles from "./landing-dark.module.css";
 import NavDark from "@/components/landing/dark/NavDark";
 import HeroFlow from "@/components/landing/dark/HeroFlow";
@@ -36,7 +36,9 @@ export default function LandingPage() {
           </RevealLight>
           <RevealLight mode="mount" delay={0.05}>
             <h1 className={styles.h1}>
-              Never lose a <span className={styles.em}>lead.</span>
+              Never lose a lead
+              <br />
+              <span className={styles.em}>because nobody followed up.</span>
             </h1>
           </RevealLight>
           <RevealLight mode="mount" delay={0.1}>
@@ -53,27 +55,6 @@ export default function LandingPage() {
               <a href="#product" className={styles.btnGhost}>
                 See the product
               </a>
-            </div>
-          </RevealLight>
-          <RevealLight mode="mount" delay={0.2}>
-            <div className={styles.strip}>
-              <p className={styles.stripLabel}>Works inside the tools your leads already use</p>
-              <div className={styles.stripRow}>
-                {(
-                  [
-                    ["Gmail", Mail],
-                    ["Outlook", Inbox],
-                    ["Instagram", Camera],
-                    ["Messenger", MessageSquare],
-                    ["WhatsApp", MessageCircle],
-                  ] as const
-                ).map(([n, Icon]) => (
-                  <span key={n} className={styles.stripMark}>
-                    <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-                    {n}
-                  </span>
-                ))}
-              </div>
             </div>
           </RevealLight>
         </div>

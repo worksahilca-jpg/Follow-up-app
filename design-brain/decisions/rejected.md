@@ -317,3 +317,25 @@ setting; one tone per setting is simpler and calmer, which is the brand.
 **Do not propose again:** any top-to-bottom tone change on the landing page, ramp or hard edge.
 Section-level surfaces (cards, the CTA band) still lift with borders and shadow; the ground stays
 one tone. The A-011 amendment about the gradient is superseded by this entry.
+
+## R-011 — A photograph of a person as the hero image, and the Aer layout with it ^R-011
+
+**Rejected:** 2026-09-18, founder, on a first cut sent as a screenshot: "no, it doesn't make
+sense with FollowUp." Asked what exactly: "the photo of a person." Then, before the second cut
+shipped: "I just wanted to use the colour, that's it" and "no person, I want same as previous."
+
+**What was rejected:** (1) a generated black-and-white photograph of a business owner from
+behind, phone in hand, as the hero image (two variations on his ElevenLabs account, about 4
+cents; the file is deleted); (2) the Aer layout itself (framed panel, left rail, index block,
+headline right, bottom strip), which he never asked for. He pasted the Aer shot for its
+charcoal colour only.
+
+**Stated reason:** a person says nothing about the product; and the layout was my reading, not
+his ask. **Inferred (marked inferred):** when this founder pastes a reference and says "use
+this", ask *what* about it before building — colour, layout, type, or all of it. The same
+lesson as A-010 from the other side: the literal thing he pointed at, and only that.
+
+**Do not propose again:** photography of people as the hero image; the Aer hero layout.
+
+**Replaced by:** the approved page (A-011) unchanged, with the dark ground moved to charcoal;
+see `[[design-decisions]]` 2026-09-18, "Charcoal, not black".

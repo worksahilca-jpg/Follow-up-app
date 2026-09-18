@@ -2406,3 +2406,56 @@ The ramp stops and zone tokens were deleted rather than left dormant.
 the device. Any future "make the bottom lighter/darker" ask should be read against R-010 first.
 
 **Verified** in both schemes at 1280 from a production build; typecheck and build clean.
+
+## 2026-09-18 — Charcoal, not black: the Aer reference was about its colour
+
+**Trigger.** The founder pasted an Aer "Work Anywhere" hero: "let's use this." I asked three
+questions (image slot, scope, ground) and built a full Aer-style hero with a generated photo.
+Wrong: "I just wanted to use the colour, that's it. No person, I want same as previous."
+Everything from that cut is reverted (component deleted, photo deleted, page and nav restored
+to the last commit). Only the colour survives.
+
+**What changed:** the dark-mode ground goes from pure black (`#0a0a0a` / cards `#111214` /
+`#16171a`) to the shot's charcoal (`--bg: #1e1e20`, `--card: #27272a`, `--card-2: #2e2e31`,
+scrolled nav `rgba(30,30,32,.72)`). No other token moved; light mode is untouched. This
+amends R-010's "full black with dark mode" to "charcoal with dark mode"; "no transition"
+still holds.
+
+**Reference notes** in `references/landing-pages/2026-09-18-aer-editorial-hero.md` record the
+layout so nobody rebuilds it.
+
+**Verified** in dark mode at 1280 from a production build; typecheck and build clean.
+
+## 2026-09-18 — The diagram is the hero: full width, moving, under the title
+
+**Trigger.** The founder pasted a rendered concept (FollowUp mark in the middle, lead cards
+on the left, wires converging, reply cards on the right, a tagline under the mark) and said:
+"don't copy-paste, get the idea of what it is and why I like it: they have the whole diagram.
+We have to animate this at the back of the hero page. The title and punchline on top."
+
+**What changed** (`components/landing/dark/HeroFlow.tsx`, `page.tsx`):
+- The hero is now title on top, diagram full width beneath (1400px, not the 1120px column),
+  with the channel strip removed because the diagram names the channels itself.
+- The headline keeps the fixed first line and gains the punchline as the second, in the
+  italic serif: "Never lose a lead / *because nobody followed up.*" (the product statement's
+  own words; his dictation was "never lose a lead because you forgot to follow up, something
+  like that").
+- Left column: the ways a lead shows up, each with an icon tile, a title and a "via"
+  line (New inquiry via Gmail, Direct message via Instagram, Form submission via your
+  website, Missed call via your phone line, New message via WhatsApp). Every one is a real
+  capture channel we have built; none is decorative.
+- Middle: FollowUp as an app-tile (112px, 28px corners, white-to-grey) with the leaf mark,
+  pulsing; "reads · scores · follows up" under it.
+- Right column: the lead answering, as message cards (initials, name, the reply, a time
+  stamp, a live dot): "Thursday works, see you then." "Yes, send the proposal over." a tapped
+  reply button, a reply in Spanish, a booked call. Example week, labelled so in the aria text.
+- Motion: source cards slide in from the left one after another, the tile scales in, dots run
+  the wires on a loop (grey in, white out), reply cards slide in from the right one after
+  another as the follow-ups land. Reduced motion: final state, nothing moves.
+
+**Not copied from the picture:** the plant, books and mug (a rendered room, not a page), the
+"more conversations / higher conversions / real growth" claims, the LinkedIn source (we do not
+capture LinkedIn), the tagline in caps. Charcoal ground per the earlier decision.
+
+**Verified** at 1440 and 390 from a production build; typecheck, lint, build clean. Video
+`landing-v12.mp4`; live artifact republished. **Awaiting** his reaction.

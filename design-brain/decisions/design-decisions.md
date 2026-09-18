@@ -2023,3 +2023,27 @@ strategy disagree; until the founder rules, "Not now" means not now.
 **Weakest part, named:** the hand-off draft is written without the model risk gate. The
 owner reading the whole text before tapping is the gate, which is the documented shape, but
 a draft that misstates a price the business never gave would reach their screen unflagged.
+
+## 2026-09-18 — Four founder rulings that close the DM-only build's open defaults
+
+Asked as four forced choices in one message; the founder took the recommended option on
+each. Recorded here so no future session re-opens them as "flagged, pending".
+
+1. **"Not now" means not now.** A lead who taps the exit button on Instagram or Messenger
+   gets no day-2–7 draft. The reaction strategy wins over the rescue strategy at this one
+   point; anything the lead *types* later still restarts everything. Was the coded default
+   since PR C (#259); now a decision, not a default. → `[[approved#^A-007|A-007]]`.
+2. **Up to three automatic touches inside Meta's 24-hour window.** Re-confirms the
+   2026-09-16 decision against the quieter alternative (stop at two). Each touch ends in one
+   easy question with reply buttons; any reply reopens the window and stops the sequence.
+3. **The Monday "what FollowUp saved you" digest goes to every business, Free tier
+   included.** What PR #257 (B-004) shipped is the intended behaviour; the digest is the
+   product's strongest upgrade prompt, not a paid feature.
+4. **Sign-up is invite-only for now. No public sign-up, no trial.** Product behaviour, so
+   the canonical record is `followup/PRODUCT_DIRECTION.md`; noted here because Settings and
+   the sign-in page carry its copy. Dipesh owns the gate (`src/lib/auth.ts`).
+
+**What this does not decide:** a third-touch *timing* inside the window (the research
+recommends spacing toward the end of the window; still to be built and reviewed), and
+whether Messenger's rules diverge from Instagram's anywhere — still the flagged assumption
+from 2026-09-16.

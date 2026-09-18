@@ -296,3 +296,16 @@ their tap, and why nothing more will be sent. Rule 6: the day-1 automation is ta
 stakes; timing a follow-up *into* the window on purpose is the moat-leaning part (window
 research §6.2). Build order and the rejected alternative: `design-brain/decisions/`,
 entries dated 2026-09-16 (R-003).
+
+## Sign-up is invite-only for now (CEO decision, 2026-09-18)
+
+No public sign-up and no free trial until the CEO says otherwise. A person gets in because
+Sahil added them or an existing business invited them to its team. What "in" means
+technically is Dipesh's lane (`src/lib/auth.ts`, the `ALLOWED_EMAILS` gate, and Google's
+own OAuth testing-mode user list, which already limits sign-in today); what it means for
+the product is that the Free tier exists for invited businesses, not as a public funnel.
+
+Three related defaults were confirmed the same day, recorded in
+`design-brain/decisions/design-decisions.md` (2026-09-18): "Not now" from a lead ends the
+DM sequence (A-007); up to three automatic touches inside Meta's 24-hour window; the Monday
+digest goes to every business including Free.

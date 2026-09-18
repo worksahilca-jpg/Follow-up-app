@@ -253,3 +253,30 @@ guess. The comments are the brief.
 
 **Evidence:** the recording `landing-preview.mp4` (session scratchpad); this entry's date in
 `[[design-decisions]]`.
+
+## R-008 — The 2026-09-18 landing page, whole: look, layout, words and feel ^R-008
+
+**Rejected:** 2026-09-18, founder, after the third animated preview (dark hero, timeline card,
+long fades, half the cards removed, floating card, drifting light): "no bro" → "the page still
+isn't it" → what's off: **the look, the layout, the words, the feel** → where: **all of it**.
+
+**What this closes.** Not one element: the whole page as built this day, in all three states
+(all-light R-006, dark-grey-white A-009, and the R-007 rework). A-009 is superseded by this
+entry. The "this is sick" reaction was to a still image; the moving page did not hold up.
+
+**Stated reason:** none beyond the four boxes. REASON UNKNOWN in the sense that matters — which
+*quality* is missing. Asked next: a reference he actually wants, per the standing note under
+R-002 (do not open another concept from a hypothesis; get a reference the founder names).
+
+**Do not propose again:** another variation of this page generated from the session's own
+reading of the Scalable template. Three variations from that reading have now failed. The next
+build starts from something the founder points at, or from a faithful adaptation of the
+template he chose in the first place (his words then: "same template and design, animation,
+graphics and all, with our own information"), which this session never actually delivered — it
+inverted it, then re-darkened it, then subtracted from it.
+
+**Inferred principle (marked inferred):** when the founder names a template and says "same
+results", the safe first build is the template's home page as literally as our content allows,
+not a designer's take on it. Show that first; diverge only on his reaction.
+
+**Evidence:** `landing-preview-v3.mp4`, the Figma frame, PR #265 (unmerged); entries above.

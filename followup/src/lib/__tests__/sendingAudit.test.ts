@@ -15,7 +15,10 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     lead: { findUnique: vi.fn(), update: vi.fn() },
     conversation: { findFirst: vi.fn(), create: vi.fn() },
-    message: { create: vi.fn() },
+    // findFirst is the Meta window pre-flight (metaWindowFor): the lead's
+    // last inbound on the DM channel. Defaulted to "just now" in beforeEach
+    // so every existing DM test stays inside the 24-hour window.
+    message: { create: vi.fn(), findFirst: vi.fn() },
     followUp: { create: vi.fn() },
     // The retry queue (src/lib/sendQueue.ts). sendFollowUpToLead asks it
     // whether a message to this lead is already waiting to go out before it
@@ -89,6 +92,7 @@ beforeEach(() => {
   p.conversation.findFirst.mockResolvedValue(null);
   p.conversation.create.mockResolvedValue({ id: "conv1" });
   p.message.create.mockResolvedValue({});
+  p.message.findFirst.mockResolvedValue({ sentAt: new Date() });
   p.followUp.create.mockResolvedValue({});
   p.lead.update.mockResolvedValue({});
   p.outboundSend.findFirst.mockResolvedValue(null);
@@ -502,13 +506,13 @@ describe("sendFollowUpToLead — reply buttons", () => {
     p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "ig:17841400000000001" }));
     const result = await sendFollowUpToLead("lead1", "Morning or afternoon?", { automated: true, trigger: "unanswered", channel: "instagram", quickReplies: chips });
     expect(result).toEqual({ success: true });
-    expect(instagramSend).toHaveBeenCalledWith("biz1", "17841400000000001", "Morning or afternoon?", { quickReplies: chips });
+    expect(instagramSend).toHaveBeenCalledWith("biz1", "17841400000000001", "Morning or afternoon?", { quickReplies: chips, humanAgent: false });
   });
 
   it("hands the chips to the Messenger sender", async () => {
     p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "fb:9988776655" }));
     await sendFollowUpToLead("lead1", "Morning or afternoon?", { automated: true, trigger: "unanswered", channel: "messenger", quickReplies: chips });
-    expect(messengerSend).toHaveBeenCalledWith("biz1", "9988776655", "Morning or afternoon?", { quickReplies: chips });
+    expect(messengerSend).toHaveBeenCalledWith("biz1", "9988776655", "Morning or afternoon?", { quickReplies: chips, humanAgent: false });
   });
 
   it("drops them silently on a channel that has no such thing", async () => {
@@ -525,5 +529,107 @@ describe("sendFollowUpToLead — reply buttons", () => {
     expect(action).toBe("ai.send");
     expect(detail.meta.quickReplies).toBe(2);
     expect(JSON.stringify(detail.meta)).not.toContain("Morning");
+  });
+});
+
+/**
+ * Meta's window on Instagram and Messenger, judged BEFORE the provider is
+ * called (sendFollowUpToLead → metaWindowFor). Inside 24 hours of the
+ * lead's last message: any send. Between 24 hours and 7 days: only a
+ * person's send, tagged human_agent, and only when the call carries that
+ * person's id — nothing automated can ever carry the tag. Past 7 days:
+ * nothing, in a sentence the owner can act on. No fallback to another
+ * channel, ever (PRODUCT_DIRECTION, DM-only).
+ */
+describe("sendFollowUpToLead — Meta's window on Instagram and Messenger", () => {
+  const H = 3_600_000;
+  const igLead = () => lead({ email: null, phone: "ig:17841400000000001", name: "Aanya Shah" });
+  const lastWrote = (hoursAgo: number) => p.message.findFirst.mockResolvedValue({ sentAt: new Date(Date.now() - hoursAgo * H) });
+
+  beforeEach(() => {
+    suppressed.mockReset();
+    suppressed.mockResolvedValue(false);
+    p.lead.findUnique.mockResolvedValue(igLead());
+  });
+
+  it("sends an automated DM inside the window as a plain in-window message", async () => {
+    lastWrote(3);
+    const result = await sendFollowUpToLead("lead1", "Morning or afternoon?", { automated: true, trigger: "unanswered", channel: "instagram" });
+    expect(result).toEqual({ success: true });
+    expect(instagramSend).toHaveBeenCalledWith("biz1", "17841400000000001", "Morning or afternoon?", { quickReplies: undefined, humanAgent: false });
+  });
+
+  it("refuses an automated DM past 24 hours before touching the provider, and says only the owner can send it", async () => {
+    lastWrote(30);
+    const result = await sendFollowUpToLead("lead1", "Still there?", { automated: true, trigger: "silence", channel: "instagram" });
+    expect(result.success).toBe(false);
+    expect(result.failure).toBe("refused");
+    expect(result.message).toMatch(/24-hour window on Instagram has closed for Aanya/);
+    expect(result.message).toMatch(/Only you can send one/);
+    expect(instagramSend).not.toHaveBeenCalled();
+    expect(p.outboundSend.create).not.toHaveBeenCalled();
+  });
+
+  it("sends a PERSON's reply between 24 hours and 7 days under the human-agent tag, and says so in the result", async () => {
+    lastWrote(3 * 24);
+    const result = await sendFollowUpToLead("lead1", "Here's the quote you asked for.", { trigger: "manual", humanSend: { userId: "user1" } });
+    expect(result).toEqual({ success: true, messagingTag: "HUMAN_AGENT" });
+    expect(instagramSend).toHaveBeenCalledWith("biz1", "17841400000000001", "Here's the quote you asked for.", { quickReplies: undefined, humanAgent: true });
+  });
+
+  it("does the same on Messenger", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "fb:9988776655", name: "Ben" }));
+    lastWrote(2 * 24);
+    const result = await sendFollowUpToLead("lead1", "Here's the quote.", { trigger: "manual", humanSend: { userId: "user1" } });
+    expect(result.messagingTag).toBe("HUMAN_AGENT");
+    expect(messengerSend).toHaveBeenCalledWith("biz1", "9988776655", "Here's the quote.", { quickReplies: undefined, humanAgent: true });
+  });
+
+  it("never lets an automated send carry the tag, even if a caller passes humanSend", async () => {
+    lastWrote(3 * 24);
+    const result = await sendFollowUpToLead("lead1", "Still there?", { automated: true, trigger: "sequence", channel: "instagram", humanSend: { userId: "user1" } });
+    expect(result.success).toBe(false);
+    expect(instagramSend).not.toHaveBeenCalled();
+  });
+
+  it("sends a person's reply inside 24 hours WITHOUT the tag — in-window is in-window", async () => {
+    lastWrote(5);
+    const result = await sendFollowUpToLead("lead1", "Yes, Saturday works.", { trigger: "manual", humanSend: { userId: "user1" } });
+    expect(result).toEqual({ success: true });
+    expect(instagramSend).toHaveBeenCalledWith("biz1", "17841400000000001", "Yes, Saturday works.", { quickReplies: undefined, humanAgent: false });
+  });
+
+  it("refuses everyone past 7 days with a plain sentence, before touching the provider", async () => {
+    lastWrote(8 * 24);
+    const result = await sendFollowUpToLead("lead1", "Still there?", { trigger: "manual", humanSend: { userId: "user1" } });
+    expect(result.success).toBe(false);
+    expect(result.failure).toBe("refused");
+    expect(result.message).toMatch(/Aanya last wrote on Instagram more than 7 days ago/);
+    expect(result.message).toMatch(/They'll need to write first/);
+    expect(instagramSend).not.toHaveBeenCalled();
+  });
+
+  it("refuses a lead who has never written on the channel", async () => {
+    p.message.findFirst.mockResolvedValue(null);
+    const result = await sendFollowUpToLead("lead1", "Hello?", { trigger: "manual", humanSend: { userId: "user1" } });
+    expect(result.success).toBe(false);
+    expect(result.message).toMatch(/hasn't messaged you on Instagram yet/);
+    expect(instagramSend).not.toHaveBeenCalled();
+  });
+
+  it("measures the window from the lead's last message on THAT channel", async () => {
+    lastWrote(3);
+    await sendFollowUpToLead("lead1", "Morning?", { automated: true, trigger: "unanswered", channel: "instagram" });
+    expect(p.message.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { conversation: { leadId: "lead1", channel: "instagram" }, direction: "inbound" } })
+    );
+  });
+
+  it("leaves email, SMS and WhatsApp alone — no window check at all", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.message.findFirst.mockResolvedValue(null);
+    const result = await sendFollowUpToLead("lead1", "Following up", { automated: true, trigger: "silence", channel: "text" });
+    expect(result.success).toBe(true);
+    expect(p.message.findFirst).not.toHaveBeenCalled();
   });
 });

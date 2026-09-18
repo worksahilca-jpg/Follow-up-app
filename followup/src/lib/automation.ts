@@ -65,8 +65,9 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 // file pulls in Prisma. Re-exported here so nothing that already imports
 // them from automation.ts has to move. The full reasoning is on the
 // constants themselves.
-import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
+import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
+import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -118,6 +119,11 @@ interface AutomationResult {
   reactivated: number; // of `checked`, how many were picked up because the lead has gone genuinely cold (DEAD_LEAD_ACTION)
   sent: number;
   held: number; // risk-gated: drafted and saved for manual approval instead of auto-sent
+  // Instagram/Messenger leads whose 24-hour window has shut with nothing
+  // from them: one message drafted for the OWNER to send under Meta's
+  // human-agent allowance (days 2–7). Counted separately from `held`
+  // because nothing was risk-gated — an automation simply may not send it.
+  handedOff: number;
   // Outside the business's local send window (see sendWindow.ts) — not
   // sent this tick, not held for approval either, just retried on the
   // next in-window hourly tick. Distinct from `skipped`, which is a real
@@ -138,6 +144,7 @@ const EMPTY_RESULT: AutomationResult = {
   reactivated: 0,
   sent: 0,
   held: 0,
+  handedOff: 0,
   deferred: 0,
   skipped: [],
   heldReasons: [],
@@ -549,6 +556,20 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // paragraph it always was.
       const sendChannel = (await detectAutomatedReplyChannel(lead)) ?? undefined;
       const isDm = sendChannel === "instagram" || sendChannel === "messenger";
+      // Past Meta's 24-hour window nothing automatic may go out on these
+      // channels, and sendFollowUpToLead would refuse it anyway — so no
+      // draft, no risk check, no OpenAI spend. The owner's own day-2–7
+      // draft is written by draftDmHandoffs() below, once, and sits on the
+      // lead's page and in the approval queue until they tap it.
+      if (isDm) {
+        const hours = hoursSinceLastInbound(conversation, sendChannel);
+        if (hours === null || hours > META_DM_WINDOW_HOURS) {
+          return {
+            kind: "skipped",
+            note: `${lead.name}: Meta's window on ${sendChannel === "instagram" ? "Instagram" : "Messenger"} has closed — only a person can send now; the draft is on the lead's page`,
+          };
+        }
+      }
       // A cached draft written as an email (suggestedQuickReplies null —
       // every row from before that column, and every lead whose last
       // message was an email at the time) must not go out as a DM: the
@@ -764,6 +785,8 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     }
   });
 
+  const handedOff = await draftDmHandoffs(businessId, voiceSamples, tier);
+
   const sent = outcomes.filter((o) => o.kind === "sent").length;
   const heldOutcomes = outcomes.filter((o): o is { kind: "held"; note: string } => o.kind === "held");
   const deferred = outcomes.filter((o) => o.kind === "deferred").length;
@@ -777,10 +800,132 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     reactivated: deadIds.size,
     sent,
     held: heldOutcomes.length,
+    handedOff,
     deferred,
     skipped,
     heldReasons: heldOutcomes.map((o) => o.note),
   };
+}
+
+/** Hours since the lead's last inbound on this channel; null if they never wrote there. */
+function hoursSinceLastInbound(conversation: Message[], channel: string | undefined): number | null {
+  const last = [...conversation].reverse().find((m) => m.direction === "inbound" && m.channel === channel);
+  return last ? (Date.now() - new Date(last.date).getTime()) / 3_600_000 : null;
+}
+
+export const DM_HANDOFF_QUESTION = "day2_7_owner";
+
+/**
+ * Days 2–7 on Instagram and Messenger: the one message only a person may
+ * send (PRODUCT_DIRECTION, "DM-only", 2026-09-16).
+ *
+ * For every DM lead whose 24-hour window has shut with nothing further
+ * from them — they got the automatic touches and did not reply — this
+ * writes ONE draft to the reactivation rules (src/lib/dmDrafts.ts, the
+ * handoff set), stores it as the suggested reply, records an "ai.hold" so
+ * it appears in the approval queue, and tells the owner in one line how
+ * long they have. The owner's tap on the lead's page sends it through
+ * POST /api/leads/[id]/send, which is where the human-agent tag is
+ * attached. Nothing here sends anything.
+ *
+ * Once per lead per inbound: a draft already written against the lead's
+ * current last message is left alone. Skipped for a lead who tapped the
+ * exit chip (buttons research §8 — this is the one place the reaction
+ * strategy and the rescue strategy disagree; the founder's call is
+ * pending, and until then "Not now" means not now), for a lead in a
+ * workflow (the workflow owns them), and for anyone past 7 days (Meta
+ * refuses it, so there is nothing to draft).
+ */
+export async function draftDmHandoffs(businessId: string, voiceSamples: string[], tier: "free" | "plus" | "pro"): Promise<number> {
+  const H = 3_600_000;
+  const now = Date.now();
+  const candidates = await prisma.lead.findMany({
+    where: {
+      businessId,
+      automationTier: { not: "OFF" },
+      stage: { notIn: ["WON", "LOST"] },
+      sequenceId: null,
+      OR: [{ phone: { startsWith: "ig:" } }, { phone: { startsWith: "fb:" } }],
+      // Cheap prefilter: anything the lead did in the last 8 days moves
+      // lastContacted, so a lead outside this has no window left.
+      lastContacted: { gte: new Date(now - (META_HUMAN_AGENT_MAX_HOURS + 24) * H) },
+    },
+    include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+  });
+
+  let drafted = 0;
+  for (const lead of candidates) {
+    const channel = isInstagramLeadId(lead.phone) ? "instagram" : isMessengerLeadId(lead.phone) ? "messenger" : null;
+    if (!channel) continue;
+    const conversation: Message[] = lead.conversations.flatMap((c) =>
+      c.messages.map((m) => ({
+        id: m.id,
+        direction: m.direction as Message["direction"],
+        channel: c.channel as Message["channel"],
+        body: m.body,
+        date: m.sentAt.toISOString(),
+        opened: m.opened,
+        source: m.source ?? undefined,
+        trigger: m.trigger ?? undefined,
+        quickReplyPayload: m.quickReplyPayload ?? undefined,
+      }))
+    );
+    const inbound = [...conversation].reverse().find((m) => m.direction === "inbound" && m.channel === channel);
+    if (!inbound) continue;
+    const hours = (now - new Date(inbound.date).getTime()) / H;
+    if (hours <= META_DM_WINDOW_HOURS || hours > META_HUMAN_AGENT_MAX_HOURS) continue;
+    // They must have gone quiet on US: if their message is the newest thing
+    // in the thread, the unanswered rule owns them (and the window is
+    // shut for it too — that lead is the owner's to answer, and the
+    // approval queue already says so via the unanswered hold).
+    const newest = conversation[conversation.length - 1];
+    if (!newest || newest.direction !== "outbound") continue;
+    if (isExitPayload(inbound.quickReplyPayload)) continue;
+    const already = readStoredQuickReplies(lead.suggestedQuickReplies);
+    if (already?.question === DM_HANDOFF_QUESTION && lead.suggestedDraftedFor && lead.suggestedDraftedFor >= new Date(inbound.date)) continue;
+    if (!(await checkAiEligibility(businessId, lead, tier)).ok) continue;
+
+    try {
+      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, "handoff");
+      await prisma.lead.update({
+        where: { id: lead.id },
+        data: {
+          suggestedMessage: dm.body,
+          suggestedSubject: null,
+          suggestedQuickReplies: { question: DM_HANDOFF_QUESTION, buttons: [] },
+          suggestedDraftedFor: new Date(inbound.date),
+        },
+      });
+      const platform = channel === "instagram" ? "Instagram" : "Messenger";
+      const daysLeft = Math.max(1, Math.floor((META_HUMAN_AGENT_MAX_HOURS - hours) / 24));
+      const firstName = lead.name.split(" ")[0];
+      const reason = `${firstName} didn't reply to the automatic follow-ups on ${platform}, and Meta now only lets a person send the next one — you have ${daysLeft} day${daysLeft === 1 ? "" : "s"}. This draft is yours to send, or leave.`;
+      void recordAudit({ businessId, userId: null }, "ai.hold", {
+        targetType: "lead",
+        targetId: lead.id,
+        meta: { riskLevel: "window", reason, trigger: "dm_handoff", channel, daysLeft },
+      });
+      await notifyLeadOwners(lead, reason);
+      drafted++;
+    } catch (err) {
+      console.error(`Day-2–7 handoff draft failed for lead ${lead.id}:`, err);
+    }
+  }
+  return drafted;
+}
+
+/** The assignee, or every admin when nobody is assigned — same fallback as notifyNeglect(). */
+async function notifyLeadOwners(lead: { id: string; businessId: string; assignedToId: string | null }, message: string): Promise<void> {
+  try {
+    const userIds = lead.assignedToId
+      ? [lead.assignedToId]
+      : (await prisma.user.findMany({ where: { businessId: lead.businessId, role: "ADMIN" }, select: { id: true } })).map((u) => u.id);
+    for (const userId of userIds) {
+      await prisma.notification.create({ data: { userId, leadId: lead.id, message } });
+    }
+  } catch (err) {
+    console.error(`Handoff notification failed for lead ${lead.id}:`, err);
+  }
 }
 
 /** What a real scheduler calls: every business with automation on, in one pass. */

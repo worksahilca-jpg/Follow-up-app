@@ -24,6 +24,7 @@ import { sendInstagramMessage } from "@/lib/instagram";
 import { instagramRecipientId, isInstagramLeadId, isMessengerLeadId, messengerRecipientId } from "@/lib/instagramId";
 import { sendMessengerMessage } from "@/lib/facebook";
 import type { QuickReply } from "@/lib/quickReplies";
+import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS } from "@/lib/metaWindow";
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import { isTransientError } from "@/lib/transientError";
 import { requireActiveBilling } from "@/lib/billing";
@@ -212,7 +213,37 @@ export type SendResult = {
   failure?: SendFailureKind;
   /** Set when this failure was parked for a retry rather than dropped. */
   queuedRetryAt?: Date;
+  /**
+   * Set on a successful Instagram/Messenger send that went out under
+   * Meta's human-agent allowance — a person's reply between 24 hours and
+   * 7 days after the lead's last message. The manual send route records
+   * it in the audit trail beside the acting user.
+   */
+  messagingTag?: "HUMAN_AGENT";
 };
+
+/**
+ * Meta's window on Instagram and Messenger, judged before the provider is
+ * called — so an automated send past 24 hours is a plain refusal here,
+ * never a Graph 400 read back from cron JSON (audit 2026-09-16, P1), and
+ * a person's send past 7 days is refused with a sentence they can act on.
+ *
+ * Measured from the lead's last INBOUND message on that channel — a tap on
+ * a reply button is an inbound row and counts (api-facts §A5, grade C,
+ * verify live); nothing the business sends restarts either clock.
+ */
+export async function metaWindowFor(
+  leadId: string,
+  channel: "instagram" | "messenger"
+): Promise<{ hoursSinceLead: number | null }> {
+  const lastInbound = await prisma.message.findFirst({
+    where: { conversation: { leadId, channel }, direction: "inbound" },
+    orderBy: { sentAt: "desc" },
+    select: { sentAt: true },
+  });
+  if (!lastInbound) return { hoursSinceLead: null };
+  return { hoursSinceLead: (Date.now() - lastInbound.sentAt.getTime()) / 3_600_000 };
+}
 
 export async function sendFollowUpToLead(
   leadId: string,
@@ -245,6 +276,15 @@ export async function sendFollowUpToLead(
     // send parked after a provider blip goes out later as plain text (the
     // question is still in the words; only the chips are lost).
     quickReplies?: QuickReply[];
+    // Set ONLY by POST /api/leads/[id]/send — the one route where a
+    // signed-in person has the full message in front of them and tapped
+    // Send for this one message. It is what allows an Instagram/Messenger
+    // send between 24 hours and 7 days after the lead's last message to
+    // go out under Meta's human-agent tag (api-facts §B5: human-sent
+    // only, one tap per message, a real user id on the record). Ignored
+    // when `automated` is set, so no cron, sequence, retry or auto-send
+    // path can ever carry the tag, whatever it passes.
+    humanSend?: { userId: string };
   } = {}
 ): Promise<SendResult> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
@@ -304,6 +344,48 @@ export async function sendFollowUpToLead(
       message: `This lead sent STOP on ${platform} — messages there are blocked until they send START to opt back in.`,
       failure: "refused",
     };
+  }
+
+  // Meta's window, judged here rather than discovered as a Graph 400.
+  //
+  // Inside 24 hours of the lead's last message: any send. Between 24
+  // hours and 7 days: a PERSON's send only, tagged human_agent, and only
+  // when this call carries that person's id (see `humanSend`). Past 7
+  // days, or before the lead has ever written on this channel: nothing —
+  // Meta refuses it regardless, so the refusal happens here, in words the
+  // owner can act on, and never spends an API call or a retry slot.
+  // Founder's decision 2026-09-16 (PRODUCT_DIRECTION, "DM-only"): no
+  // fallback to another channel, ever.
+  let humanAgent = false;
+  if (channel === "instagram" || channel === "messenger") {
+    const platform = channel === "instagram" ? "Instagram" : "Messenger";
+    const firstName = lead.name.split(" ")[0];
+    const { hoursSinceLead } = await metaWindowFor(lead.id, channel);
+    const humanSend = options.automated ? undefined : options.humanSend;
+    if (hoursSinceLead === null) {
+      return {
+        success: false,
+        message: `${firstName} hasn't messaged you on ${platform} yet, so Meta doesn't allow a message to them there. They'll need to write first.`,
+        failure: "refused",
+      };
+    }
+    if (hoursSinceLead > META_HUMAN_AGENT_MAX_HOURS) {
+      return {
+        success: false,
+        message: `${firstName} last wrote on ${platform} more than 7 days ago — Meta doesn't allow a business to message them now. They'll need to write first, and then everything restarts.`,
+        failure: "refused",
+      };
+    }
+    if (hoursSinceLead > META_DM_WINDOW_HOURS) {
+      if (!humanSend) {
+        return {
+          success: false,
+          message: `Meta's 24-hour window on ${platform} has closed for ${firstName} — an automatic reply can't go out now. Only you can send one, from their page, for the next ${Math.max(1, Math.floor((META_HUMAN_AGENT_MAX_HOURS - hoursSinceLead) / 24))} day(s).`,
+          failure: "refused",
+        };
+      }
+      humanAgent = true;
+    }
   }
 
   // No unsubscribe line, and no List-Unsubscribe header, on ANY message.
@@ -446,10 +528,10 @@ export async function sendFollowUpToLead(
         externalId = result.messageId ?? undefined;
       }
     } else if (channel === "instagram") {
-      const result = await sendInstagramMessage(lead.businessId, instagramRecipientId(lead.phone!), body, { quickReplies: options.quickReplies });
+      const result = await sendInstagramMessage(lead.businessId, instagramRecipientId(lead.phone!), body, { quickReplies: options.quickReplies, humanAgent });
       if (!result.success) return providerFailure(result, "Instagram didn't confirm this message sent.");
     } else if (channel === "messenger") {
-      const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body, { quickReplies: options.quickReplies });
+      const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body, { quickReplies: options.quickReplies, humanAgent });
       if (!result.success) return providerFailure(result, "Facebook didn't confirm this message sent.");
     } else if (channel === "whatsapp") {
       const result = await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: lead.name.split(" ")[0] });
@@ -629,7 +711,7 @@ export async function sendFollowUpToLead(
     });
   }
 
-  return { success: true };
+  return humanAgent ? { success: true, messagingTag: "HUMAN_AGENT" } : { success: true };
 }
 
 async function pushCrmNote(businessId: string, provider: string, crmId: string, body: string): Promise<void> {

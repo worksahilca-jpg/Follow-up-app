@@ -28,7 +28,10 @@ export type DmTouch =
   | "reply"
   // The last automatic message before Meta's door shuts (~20 h). Not sent
   // by anything yet — the mechanism is its own PR — but the sets exist.
-  | "last";
+  | "last"
+  // Days 2–7: the one message only a person may send, under Meta's
+  // human-agent allowance. Drafted by the engine, sent by the owner's tap.
+  | "handoff";
 
 export interface DmSituation {
   /** Stable id, recorded in the chip payload and the audit trail. */
@@ -105,6 +108,26 @@ export function pickDmSituation(conversation: Message[], touch: DmTouch): DmSitu
         "answer: confirm it in their own word and say what happens next. Do not ask another question unless one " +
         "specific fact is still missing before anyone can act on their answer; if nothing is missing, end on a " +
         "plain statement and provide NO buttons. Never chain questions to keep them tapping.",
+    };
+  }
+
+  // Set 12 — the owner's day-2–7 message. Written to the reactivation
+  // rules: name the gap in one clause, lead with something concrete from
+  // the thread, one question, the way out in the sentence, no apology
+  // (they stopped replying to us, not the reverse). Plain text: chips on a
+  // tagged send are unverified (api-facts §C). Meta's allowed usage is
+  // "resolve what the lead asked", so the draft answers their question
+  // where the thread lets it, and never a bare "still interested?".
+  if (touch === "handoff") {
+    return {
+      id: "day2_7_owner",
+      hint:
+        "This message is sent by the business owner personally, a few days after the lead's last message, " +
+        "because automatic replies are no longer allowed. Name the gap in one short clause (\"a couple of days " +
+        "on\"), then lead with the most useful concrete thing the conversation allows: answer what they asked if " +
+        "the business has already said it in this thread, otherwise say exactly what you'd need from them to " +
+        "answer it. One question at the end, with the way out inside the sentence (\"...or shall I leave it?\"). " +
+        "Do not apologise, do not say \"just checking in\", never mention any window or limit. Provide NO buttons.",
     };
   }
 

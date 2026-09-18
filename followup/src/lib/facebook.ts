@@ -47,20 +47,28 @@ export async function sendMessengerMessage(
   businessId: string,
   psid: string,
   text: string,
-  options: { quickReplies?: QuickReply[] } = {}
+  options: { quickReplies?: QuickReply[]; humanAgent?: boolean } = {}
 ): Promise<MetaSendResult> {
   const pt = await pageToken(businessId);
   if (!pt) return { success: false, message: "Facebook isn't connected yet — check Settings → Facebook." };
-  const checked = validateQuickReplies(options.quickReplies);
+  // Never chips on a tagged send — see sendInstagramMessage.
+  const checked = validateQuickReplies(options.humanAgent ? undefined : options.quickReplies);
   if (!checked.ok) return { success: false, message: checked.reason };
 
   const message: Record<string, unknown> = { text };
   if (checked.quickReplies) message.quick_replies = quickRepliesForGraph(checked.quickReplies);
 
+  // RESPONSE inside the 24-hour window; MESSAGE_TAG + HUMAN_AGENT for a
+  // human's reply within 7 days of the lead's last message (api-facts
+  // §C4, confirmed shape). The two are mutually exclusive, never both.
+  const envelope = options.humanAgent
+    ? { recipient: { id: psid }, messaging_type: "MESSAGE_TAG", tag: "HUMAN_AGENT", message }
+    : { recipient: { id: psid }, messaging_type: "RESPONSE", message };
+
   const res = await fetch(`${GRAPH}/${pt.pageId}/messages?access_token=${encodeURIComponent(pt.token)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipient: { id: psid }, messaging_type: "RESPONSE", message }),
+    body: JSON.stringify(envelope),
   });
   if (!res.ok) return readMetaError(res, "Facebook rejected this message.", "Messenger");
   return { success: true };

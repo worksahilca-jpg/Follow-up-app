@@ -50,5 +50,17 @@
 export const META_DM_WINDOW_HOURS = 24;
 export const UNANSWERED_META_DM_MAX_HOURS = 20;
 
+/**
+ * How long after the lead's last message a HUMAN may still reply, under
+ * Meta's human-agent allowance: 7 days, measured from the person's last
+ * message, and nothing the business sends restarts it (api-facts §B4,
+ * grade B). Human-sent only — an automated message inside this window
+ * is a policy violation Meta is described as detecting and revoking the
+ * feature over (§B5). The code enforces that structurally: the tag can
+ * only be attached by a send that carries an authenticated user's id,
+ * never by cron, sequences or auto-send.
+ */
+export const META_HUMAN_AGENT_MAX_HOURS = 7 * 24;
+
 /** The channels the ceiling applies to — those with no way through a shut window. */
 export const META_DM_CHANNELS: ReadonlySet<string> = new Set(["instagram", "messenger"]);

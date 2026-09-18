@@ -2307,3 +2307,32 @@ numbers labelled as an example week. If he rejects it again the reason will fina
 
 **Awaiting** his reaction to the live preview. Figma not rebuilt for this version: rebuilding a
 whole frame costs ~15 tool calls, and he reacts to the moving page, not the still.
+
+## 2026-09-18 — Enhancement pass on the faithful build, then the black → grey → white ground
+
+**Trigger.** A-010: "this is close, let's enhance this more." Mid-pass the founder added: "can we
+go with white black gradient." Both applied to the same build; nothing about the section order,
+copy or card system changed.
+
+**Enhancements, all from the template's own playbook.** The hero dashboard card got a window
+chrome bar (three dots, `app.followup · Dashboard`), a third row of three small stats (waiting on
+you / going cold today / booked this week), a slow 8s float and a stronger indigo glow behind it.
+The Product grid got the template's signature full-width composite card ("Your week, at a
+glance": a total with two buttons and three key-value rows, a replies-by-day bar panel with tabs
+and an inline day legend, and a five-row status list with pills). The channel strip got icons
+(generic lucide glyphs: mail, inbox, camera, two chat bubbles, since lucide ships no brand marks).
+Every section head has a faint indigo radial behind it; cards glow and lift on hover.
+
+**The gradient.** The page now starts black and ends white. The shift is not an edge: it is one
+`linear-gradient` ramp across the whole Features section (`.ramp`, ~800px, five stops from
+`#0a0a0a` through `#6b6b70` to `#f4f4f5`). The six feature cards are opaque and sit on the
+mid-grey band, so no running text ever lands on grey; the section's only text outside a card is
+its heading, which sits in the top fifth where the ground is still near-black. Everything below
+(Pricing, FAQ, CTA band, footer) is wrapped in `.lightZone`, which re-declares the tokens (white
+cards, black text, `rgba(0,0,0,.09)` lines, a softer accent glow) and fades `#f4f4f5` → `#fff`.
+The nav stays a dark bar over the light sections. This is the R-007 lesson applied: the founder
+rejected a *hard* black→white shift, not the idea of a light bottom.
+
+**Verified** at 1280 and 390 from a production build: the ramp reads as one continuous grade,
+cards hold on both grounds, no horizontal overflow, typecheck and lint clean. Preview video
+`landing-v5.mp4`; live artifact republished. **Awaiting** the founder's reaction to the gradient.

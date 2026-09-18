@@ -298,3 +298,8 @@ only, no annual pricing. The masonry of enforced rules and the channel strip are
 
 **Lesson (inferred, marked inferred):** for this founder, "make it look like X" means X, not a
 designer's reading of X. Build the literal thing first; earn the divergence with his reaction.
+
+**Amendment, later the same day:** the founder asked for the black → white gradient ground on
+this build ("can we go with white black gradient"). Applied as a slow ramp across the Features
+section with a light Pricing/FAQ/CTA/footer zone, never a hard edge (R-007). Details in
+`[[design-decisions]]` 2026-09-18, "Enhancement pass". Not yet reacted to.

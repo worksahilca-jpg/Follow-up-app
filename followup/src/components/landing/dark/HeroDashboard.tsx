@@ -23,6 +23,15 @@ export default function HeroDashboard() {
   return (
     <motion.div className={styles.dash} {...anim}>
       <div className={styles.dashCard} aria-label="Example of the FollowUp dashboard for one week">
+        <div className={styles.chrome} aria-hidden="true">
+          <span className={styles.chromeDots}>
+            <span />
+            <span />
+            <span />
+          </span>
+          <span className={styles.chromeUrl}>app.followup · Dashboard</span>
+        </div>
+        <div className={styles.dashBody}>
         <div className={styles.tiles}>
           <div className={styles.tile}>
             <div className={styles.tileLabel}>Leads brought back</div>
@@ -101,6 +110,20 @@ export default function HeroDashboard() {
               ))}
             </div>
           </div>
+        </div>
+
+        <div className={styles.miniRow}>
+          {[
+            ["Waiting on you", "3"],
+            ["Going cold today", "5"],
+            ["Booked this week", "9"],
+          ].map(([k, v]) => (
+            <div key={k} className={styles.mini}>
+              <span>{k}</span>
+              <span className={styles.miniVal}>{v}</span>
+            </div>
+          ))}
+        </div>
         </div>
       </div>
     </motion.div>

@@ -272,13 +272,91 @@
   margin: 56px auto 0;
   padding: 0 24px;
 }
+.dash::before {
+  content: "";
+  position: absolute;
+  inset: -12% 10% auto 10%;
+  height: 60%;
+  background: radial-gradient(60% 60% at 50% 40%, rgba(91, 44, 224, 0.28), transparent 70%);
+  pointer-events: none;
+}
 .dashCard {
+  position: relative;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 22px;
-  padding: 22px;
+  padding: 0;
+  overflow: hidden;
   box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.02);
   text-align: left;
+  animation: floaty 8s ease-in-out infinite;
+}
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.chrome {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.chromeDots {
+  display: inline-flex;
+  gap: 6px;
+}
+.chromeDots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+.chromeUrl {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+.dashBody {
+  padding: 22px;
+}
+.miniRow {
+  margin-top: 14px;
+  display: grid;
+  gap: 14px;
+}
+@media (min-width: 720px) {
+  .miniRow {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.mini {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.miniVal {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 .tiles {
   display: grid;
@@ -459,15 +537,127 @@
 /* ---------- cards ---------- */
 
 .card {
+  position: relative;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 24px;
-  transition: border-color 0.25s, transform 0.35s var(--ease);
+  transition: border-color 0.25s, transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(60% 40% at 50% 0%, rgba(91, 44, 224, 0.16), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+  pointer-events: none;
 }
 .card:hover {
-  border-color: var(--line-strong);
+  border-color: rgba(139, 92, 246, 0.45);
   transform: translateY(-3px);
+  box-shadow: 0 30px 60px -30px rgba(91, 44, 224, 0.45);
+}
+.card:hover::after {
+  opacity: 1;
+}
+.wide {
+  grid-column: 1 / -1;
+}
+.wideGrid {
+  margin-top: 20px;
+  display: grid;
+  gap: 14px;
+}
+@media (min-width: 900px) {
+  .wideGrid {
+    grid-template-columns: 1fr 1.5fr 1fr;
+  }
+}
+.totalPanel {
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+}
+.totalLabel {
+  font-size: 13px;
+  color: var(--muted);
+}
+.totalValue {
+  margin-top: 6px;
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.totalBtns {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+}
+.kv {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+.kvRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--muted);
+}
+.kvRow b {
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.roleList {
+  display: grid;
+  gap: 8px;
+}
+.role {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13.5px;
+  background: var(--card-2);
+}
+.legendInline {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.legendInline .legendRow {
+  gap: 6px;
+}
+.sectionGlow {
+  position: relative;
+}
+.sectionGlow::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 720px;
+  height: 320px;
+  transform: translateX(-50%);
+  background: radial-gradient(50% 50% at 50% 30%, rgba(91, 44, 224, 0.16), transparent 70%);
+  pointer-events: none;
+}
+.stripMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 .cardTitle {
   font-size: 19px;
@@ -896,13 +1086,55 @@
   color: var(--text);
 }
 
+/* ---------- black → grey → white gradient (founder ask, 2026-09-18) ----------
+   The page starts black and ends white, but the shift is a slow ramp across
+   one whole section (the six feature cards, ~800px), never a hard edge
+   (R-007). Sections below the ramp flip to light tokens; the cards inside
+   the ramp are opaque, so nothing readable sits on the mid-grey band. */
+
+.ramp {
+  background: linear-gradient(180deg, var(--bg) 0%, #1c1c1f 22%, #6b6b70 55%, #d9d9dc 82%, #f4f4f5 100%);
+}
+.lightZone {
+  --bg: #f4f4f5;
+  --card: #ffffff;
+  --card-2: #f4f4f5;
+  --line: rgba(0, 0, 0, 0.09);
+  --line-strong: rgba(0, 0, 0, 0.16);
+  --text: #0a0a0a;
+  --muted: #52525b;
+  --faint: #71717a;
+  --accent-soft: rgba(91, 44, 224, 0.12);
+  background: linear-gradient(180deg, #f4f4f5 0%, #ffffff 100%);
+  color: var(--text);
+}
+.lightZone .card,
+.lightZone .priceCard,
+.lightZone .faqItem,
+.lightZone .ctaInner {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -20px rgba(0, 0, 0, 0.18);
+}
+.lightZone .priceHot {
+  box-shadow: 0 0 0 1px rgba(91, 44, 224, 0.35), 0 30px 80px -30px rgba(91, 44, 224, 0.45);
+}
+.lightZone .faqIcon {
+  background: rgba(0, 0, 0, 0.06);
+}
+.lightZone .sectionGlow::before {
+  background: radial-gradient(50% 50% at 50% 30%, rgba(91, 44, 224, 0.1), transparent 70%);
+}
+.lightZone .btn {
+  box-shadow: 0 12px 30px -12px rgba(91, 44, 224, 0.55);
+}
+
 /* ---------- motion safety ---------- */
 
 @media (prefers-reduced-motion: reduce) {
   .bar,
   .progressFill,
   .linePath,
-  .lineArea {
+  .lineArea,
+  .dashCard {
     animation: none;
   }
   .linePath {

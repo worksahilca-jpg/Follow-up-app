@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check, Inbox, Eye, Languages, Send, MessageCircle, Users } from "lucide-react";
+import { ArrowRight, Check, Inbox, Eye, Languages, Send, MessageCircle, Users, Mail, Camera, MessageSquare } from "lucide-react";
 import styles from "./landing-dark.module.css";
 import NavDark from "@/components/landing/dark/NavDark";
 import HeroDashboard from "@/components/landing/dark/HeroDashboard";
@@ -59,8 +59,17 @@ export default function LandingPage() {
             <div className={styles.strip}>
               <p className={styles.stripLabel}>Works inside the tools your leads already use</p>
               <div className={styles.stripRow}>
-                {["Gmail", "Outlook", "Instagram", "Messenger", "WhatsApp"].map((n) => (
+                {(
+                  [
+                    ["Gmail", Mail],
+                    ["Outlook", Inbox],
+                    ["Instagram", Camera],
+                    ["Messenger", MessageSquare],
+                    ["WhatsApp", MessageCircle],
+                  ] as const
+                ).map(([n, Icon]) => (
                   <span key={n} className={styles.stripMark}>
+                    <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
                     {n}
                   </span>
                 ))}
@@ -73,7 +82,7 @@ export default function LandingPage() {
 
       {/* ---------- Product ---------- */}
       <section id="product" className={styles.section}>
-        <RevealLight className={styles.headCenter}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <span className={styles.badge}>Product</span>
           <h2 className={styles.h2}>
             Track the leads that matter <span className={styles.em}>most to you.</span>
@@ -175,12 +184,92 @@ export default function LandingPage() {
               </div>
             </div>
           </RevealLight>
+
+          <RevealLight className={styles.wide}>
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}>Your week, at a glance</h3>
+              <p className={styles.cardBody}>One screen that answers the only question that matters on a Monday: who is about to slip, and what has already been handled.</p>
+              <div className={styles.wideGrid}>
+                <div className={styles.totalPanel}>
+                  <div className={styles.totalLabel}>Open leads this week</div>
+                  <div className={styles.totalValue}>86</div>
+                  <div className={styles.totalBtns}>
+                    <span className={`${styles.btn} ${styles.btnSmall}`} style={{ boxShadow: "none" }}>
+                      Review
+                    </span>
+                    <span className={`${styles.btnGhost} ${styles.btnSmall}`}>Export</span>
+                  </div>
+                  <div className={styles.kv}>
+                    {[
+                      ["New this week", "27"],
+                      ["Followed up for you", "148"],
+                      ["Booked", "9"],
+                    ].map(([k, v]) => (
+                      <div key={k} className={styles.kvRow}>
+                        <span>{k}</span>
+                        <b>{v}</b>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.totalPanel}>
+                  <div className={styles.panelHead}>
+                    <span>Replies by day</span>
+                    <span className={styles.tabs} aria-hidden="true">
+                      <span className={`${styles.tab} ${styles.tabOn}`}>This week</span>
+                      <span className={styles.tab}>Last week</span>
+                    </span>
+                  </div>
+                  <div className={styles.bars} aria-hidden="true">
+                    {[42, 58, 50, 76, 64, 30, 22].map((h, i) => (
+                      <span key={i} className={`${styles.bar} ${i > 4 ? styles.barMuted : ""}`} style={{ ["--h" as string]: `${h}%`, ["--d" as string]: `${0.2 + i * 0.06}s` }} />
+                    ))}
+                  </div>
+                  <div className={styles.legendInline}>
+                    {[
+                      ["Mon", "42"],
+                      ["Tue", "58"],
+                      ["Wed", "50"],
+                      ["Thu", "76"],
+                      ["Fri", "64"],
+                    ].map(([k, v]) => (
+                      <div key={k} className={styles.legendRow}>
+                        <span className={styles.legendKey}>{k}</span>
+                        <span className={styles.legendVal}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.totalPanel}>
+                  <div className={styles.totalLabel} style={{ marginBottom: 12 }}>
+                    Where every lead stands
+                  </div>
+                  <div className={styles.roleList}>
+                    {[
+                      ["Needs you", "3", styles.pillRose],
+                      ["Going cold", "5", styles.pillAmber],
+                      ["Waiting on them", "14", styles.pillMuted],
+                      ["Replied", "38", styles.pillGreen],
+                      ["Booked", "9", styles.pillGreen],
+                    ].map(([k, v, cls]) => (
+                      <div key={k} className={styles.role}>
+                        <span>{k}</span>
+                        <span className={`${styles.pill} ${cls}`}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </RevealLight>
         </div>
       </section>
 
       {/* ---------- Stories grid, with our rules instead of invented customers ---------- */}
       <section className={styles.section} style={{ paddingTop: 0 }}>
-        <RevealLight className={styles.headCenter}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <span className={styles.badge}>What it will and won&apos;t do</span>
           <h2 className={styles.h2}>
             Built to make a difference, <span className={styles.em}>not noise.</span>
@@ -312,9 +401,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---------- Features 3×2 ---------- */}
+      {/* ---------- Features 3×2, on the black → white ramp ---------- */}
+      <div className={styles.ramp}>
       <section id="features" className={styles.section} style={{ paddingTop: 0 }}>
-        <RevealLight className={styles.headCenter}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <h2 className={styles.h2} style={{ fontSize: "clamp(28px, 3.4vw, 40px)" }}>
             We&apos;ve built features that will actually make a difference <span className={styles.em}>to your business.</span>
           </h2>
@@ -340,10 +430,13 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+      </div>
 
+      {/* ---------- Light zone: pricing, FAQ, CTA, footer ---------- */}
+      <div className={styles.lightZone}>
       {/* ---------- Pricing ---------- */}
       <section id="pricing" className={styles.section}>
-        <RevealLight className={styles.headCenter}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <span className={styles.badge}>Pricing</span>
           <h2 className={styles.h2}>
             Pricing that <span className={styles.em}>makes sense.</span>
@@ -428,7 +521,7 @@ export default function LandingPage() {
 
       {/* ---------- FAQ ---------- */}
       <section id="faq" className={styles.section} style={{ paddingTop: 0 }}>
-        <RevealLight className={styles.headCenter}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <span className={styles.badge}>FAQs</span>
           <h2 className={styles.h2}>
             You asked, <span className={styles.em}>we answered.</span>
@@ -453,7 +546,7 @@ export default function LandingPage() {
       <div className={styles.cta}>
         <RevealLight>
           <div className={styles.ctaInner}>
-            <div className={styles.ctaBrand} style={{ color: "#fff" }}>
+            <div className={styles.ctaBrand} style={{ color: "var(--text)" }}>
               <LogoMark height={26} />
               <span className={styles.wordmark} style={{ fontSize: 19 }}>
                 FollowUp
@@ -476,7 +569,7 @@ export default function LandingPage() {
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <div className="flex items-center gap-2.5" style={{ color: "#fff" }}>
+          <div className="flex items-center gap-2.5" style={{ color: "var(--text)" }}>
             <LogoMark height={18} />
             <span style={{ color: "var(--muted)" }}>Built to make sure no lead gets forgotten.</span>
           </div>
@@ -487,6 +580,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }

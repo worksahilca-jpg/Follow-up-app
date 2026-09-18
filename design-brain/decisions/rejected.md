@@ -189,3 +189,18 @@ screenshot, and change the one token on reaction.
 
 **Evidence:** `followup-light-directions` and `followup-colour-picker` artifacts (2026-09-18); the
 2026-09-18 "light direction" entry in `[[design-decisions]]`.
+
+## R-005 — A dashboard-style product card as the hero visual ^R-005
+
+**Rejected:** 2026-09-18, founder, on seeing the first render of the light-direction landing page:
+"let's remove this dashboard kind of thing from the start, let's cook something else."
+
+**What was rejected:** the reference template's hero device — one wide app-window card with stat
+tiles, a bar chart and a ranked list — even when filled with FollowUp's own numbers.
+
+**Inferred principle (marked inferred):** a dashboard says "software you will have to look at";
+the promise is the opposite, that the owner does *not* have to. The hero should show the moment
+the product exists for, not the screen it lives in. Replaced by the thread: lead writes, owner
+answers, five days of silence, one short FollowUp question with buttons, the lead comes back.
+
+**Evidence:** the 2026-09-18 "light direction" entry in `[[design-decisions]]`; `HeroStoryLight.tsx`.

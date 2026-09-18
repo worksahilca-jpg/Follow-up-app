@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import styles from "./landing-light.module.css";
 import LandingNavLight from "@/components/landing/light/LandingNavLight";
-import HeroMockupLight from "@/components/landing/light/HeroMockupLight";
+import HeroStoryLight from "@/components/landing/light/HeroStoryLight";
 import RevealLight from "@/components/landing/light/RevealLight";
 import FaqLight from "@/components/landing/light/FaqLight";
 import LogoMark from "@/components/landing/light/LogoMark";
@@ -83,10 +83,8 @@ export default function LandingPage() {
             </div>
           </RevealLight>
         </div>
-        <RevealLight mode="mount" delay={0.25} y={30}>
-          <HeroMockupLight />
-        </RevealLight>
-        <div style={{ height: 72 }} />
+        <HeroStoryLight />
+        <div style={{ height: 64 }} />
       </header>
 
       {/* ---------- Product ---------- */}

@@ -31,7 +31,7 @@ export default function LandingPage() {
           <RevealLight mode="mount" y={10}>
             <span className={styles.badge}>
               <span className={styles.badgeDot} aria-hidden="true" />
-              New feature: reply buttons in Instagram follow-ups
+              New: on Instagram, customers can reply with one tap
             </span>
           </RevealLight>
           <RevealLight mode="mount" delay={0.05}>
@@ -43,8 +43,8 @@ export default function LandingPage() {
           </RevealLight>
           <RevealLight mode="mount" delay={0.1}>
             <p className={styles.heroLede}>
-              FollowUp reads every conversation you already have, scores who you are about to lose, and sends the
-              follow-up before &ldquo;let me think about it&rdquo; becomes a lost sale.
+              FollowUp watches the messages you already get, notices which customers are going quiet, and sends
+              the follow-up for you before they forget you.
             </p>
           </RevealLight>
           <RevealLight mode="mount" delay={0.15}>
@@ -66,21 +66,21 @@ export default function LandingPage() {
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <span className={styles.badge}>Product</span>
           <h2 className={styles.h2}>
-            Track the leads that matter <span className={styles.em}>most to you.</span>
+            See who needs you, <span className={styles.em}>and why.</span>
           </h2>
-          <p className={styles.lede}>From the first reply to the last nudge, FollowUp does the part an owner never has time for.</p>
+          <p className={styles.lede}>FollowUp does the part nobody has time for: remembering every customer and writing back.</p>
         </RevealLight>
 
         <div className={styles.grid2}>
           <RevealLight>
             <div className={styles.card}>
               <h3 className={styles.cardTitle}>Who needs you today</h3>
-              <p className={styles.cardBody}>Every open lead ranked by how likely you are to lose them, with the reason in plain words.</p>
+              <p className={styles.cardBody}>Your customers, in order of who you are most likely to lose. The reason is written next to each name.</p>
               <div className={styles.figure}>
                 {[
-                  ["SJ", "Sarah Johnson", "Asked about pricing, no reply in 5 days", "Needs you", styles.pillRose],
-                  ["MP", "Mike Patel", "Requested a proposal 3 days ago", "Going cold", styles.pillAmber],
-                  ["DR", "Devon Ruiz", "Waiting on their answer since Tuesday", "Waiting", styles.pillMuted],
+                  ["SJ", "Sarah Johnson", "Asked about price. No reply for 5 days.", "Needs you", styles.pillRose],
+                  ["MP", "Mike Patel", "Asked for a quote 3 days ago.", "Going quiet", styles.pillAmber],
+                  ["DR", "Devon Ruiz", "We replied. Waiting on him since Tuesday.", "Waiting", styles.pillMuted],
                 ].map(([i, n, w, p, cls]) => (
                   <div key={n} className={styles.row}>
                     <div className="flex items-center gap-3 min-w-0">
@@ -99,13 +99,13 @@ export default function LandingPage() {
 
           <RevealLight delay={0.08}>
             <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Every message, on the record</h3>
-              <p className={styles.cardBody}>What went out, why, and what was held for you. Nothing is a surprise you hear from a customer.</p>
+              <h3 className={styles.cardTitle}>Everything it did, in one list</h3>
+              <p className={styles.cardBody}>What it sent, why, and what it held back for you. No surprises.</p>
               <div className={styles.figure}>
                 {[
-                  ["Sent a check-in to Sarah", "5 days quiet after a pricing question", "Sent", styles.pillGreen],
-                  ["Held a draft for Mike", "It mentions a price. That is yours to say.", "Held", styles.pillAmber],
-                  ["Stopped the sequence for Priya", "She replied. Nothing more goes out.", "Stopped", styles.pillMuted],
+                  ["Checked in with Sarah", "She went quiet after asking about price.", "Sent", styles.pillGreen],
+                  ["Waiting for you: Mike", "The reply mentions money, so it is yours to send.", "Held", styles.pillAmber],
+                  ["Stopped for Priya", "She replied. Nothing more goes out.", "Stopped", styles.pillMuted],
                 ].map(([t, w, p, cls]) => (
                   <div key={t} className={styles.row}>
                     <div className="min-w-0">
@@ -121,8 +121,8 @@ export default function LandingPage() {
 
           <RevealLight>
             <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Invite your whole team</h3>
-              <p className={styles.cardBody}>Route new leads to the right person and see who is overdue on which deal, without a spreadsheet.</p>
+              <h3 className={styles.cardTitle}>Bring your team</h3>
+              <p className={styles.cardBody}>New customers go to the right person. Everyone can see what is waiting.</p>
               <div className={styles.figure}>
                 <div className={styles.rowName} style={{ fontSize: 13, marginBottom: 6 }}>
                   Pending invitations
@@ -148,13 +148,13 @@ export default function LandingPage() {
 
           <RevealLight delay={0.08}>
             <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Drafts that sound like you</h3>
-              <p className={styles.cardBody}>Written from how you actually talk to that lead, in their language, never stating a fact that is not in the thread.</p>
+              <h3 className={styles.cardTitle}>Replies that sound like you</h3>
+              <p className={styles.cardBody}>Written the way you talk, in the customer&apos;s language. It never makes anything up.</p>
               <div className={styles.figure}>
-                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", color: "var(--muted)" }}>DRAFT READY FOR SARAH</div>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", color: "var(--muted)" }}>READY TO SEND TO SARAH</div>
                 <p className="mt-1.5 text-[14px] font-medium">Re: Your proposal</p>
                 <p className="mt-1 text-[13.5px] leading-relaxed" style={{ color: "var(--muted)" }}>
-                  Wanted to check in, I know you&apos;ve had a look at the numbers a couple of times. Happy to walk through anything that&apos;s unclear.
+                  Just checking in. I know you&apos;ve looked at the numbers a couple of times. Happy to talk through anything.
                 </p>
                 <div className="mt-3 flex gap-2">
                   <span className={`${styles.btn} ${styles.btnSmall}`} style={{ boxShadow: "none" }}>
@@ -166,108 +166,26 @@ export default function LandingPage() {
             </div>
           </RevealLight>
 
-          <RevealLight className={styles.wide}>
-            <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Your week, at a glance</h3>
-              <p className={styles.cardBody}>One screen that answers the only question that matters on a Monday: who is about to slip, and what has already been handled.</p>
-              <div className={styles.wideGrid}>
-                <div className={styles.totalPanel}>
-                  <div className={styles.totalLabel}>Open leads this week</div>
-                  <div className={styles.totalValue}>86</div>
-                  <div className={styles.totalBtns}>
-                    <span className={`${styles.btn} ${styles.btnSmall}`} style={{ boxShadow: "none" }}>
-                      Review
-                    </span>
-                    <span className={`${styles.btnGhost} ${styles.btnSmall}`}>Export</span>
-                  </div>
-                  <div className={styles.kv}>
-                    {[
-                      ["New this week", "27"],
-                      ["Followed up for you", "148"],
-                      ["Booked", "9"],
-                    ].map(([k, v]) => (
-                      <div key={k} className={styles.kvRow}>
-                        <span>{k}</span>
-                        <b>{v}</b>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className={styles.totalPanel}>
-                  <div className={styles.panelHead}>
-                    <span>Replies by day</span>
-                    <span className={styles.tabs} aria-hidden="true">
-                      <span className={`${styles.tab} ${styles.tabOn}`}>This week</span>
-                      <span className={styles.tab}>Last week</span>
-                    </span>
-                  </div>
-                  <div className={styles.bars} aria-hidden="true">
-                    {[42, 58, 50, 76, 64, 30, 22].map((h, i) => (
-                      <span key={i} className={`${styles.bar} ${i > 4 ? styles.barMuted : ""}`} style={{ ["--h" as string]: `${h}%`, ["--d" as string]: `${0.2 + i * 0.06}s` }} />
-                    ))}
-                  </div>
-                  <div className={styles.legendInline}>
-                    {[
-                      ["Mon", "42"],
-                      ["Tue", "58"],
-                      ["Wed", "50"],
-                      ["Thu", "76"],
-                      ["Fri", "64"],
-                    ].map(([k, v]) => (
-                      <div key={k} className={styles.legendRow}>
-                        <span className={styles.legendKey}>{k}</span>
-                        <span className={styles.legendVal}>{v}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className={styles.totalPanel}>
-                  <div className={styles.totalLabel} style={{ marginBottom: 12 }}>
-                    Where every lead stands
-                  </div>
-                  <div className={styles.roleList}>
-                    {[
-                      ["Needs you", "3", styles.pillRose],
-                      ["Going cold", "5", styles.pillAmber],
-                      ["Waiting on them", "14", styles.pillMuted],
-                      ["Replied", "38", styles.pillGreen],
-                      ["Booked", "9", styles.pillGreen],
-                    ].map(([k, v, cls]) => (
-                      <div key={k} className={styles.role}>
-                        <span>{k}</span>
-                        <span className={`${styles.pill} ${cls}`}>{v}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </RevealLight>
         </div>
       </section>
 
       {/* ---------- Stories grid, with our rules instead of invented customers ---------- */}
       <section className={styles.section} style={{ paddingTop: 0 }}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
-          <span className={styles.badge}>What it will and won&apos;t do</span>
+          <span className={styles.badge}>The rules</span>
           <h2 className={styles.h2}>
-            Built to make a difference, <span className={styles.em}>not noise.</span>
+            What it will <span className={styles.em}>and won&apos;t do.</span>
           </h2>
-          <p className={styles.lede}>FollowUp isn&apos;t another fancy piece of software. Every rule below is enforced in code, and most have a test that proves it.</p>
+          <p className={styles.lede}>Six promises. Each one is built into the product, not just written here.</p>
         </RevealLight>
         <div className={styles.masonry}>
           {[
-            ["Stops the instant a lead replies. Every scheduled follow-up for them is cancelled, no exceptions.", "Automation"],
-            ["Never talks price or terms without you. Anything about money or a tense thread waits for your approval.", "Safety"],
-            ["Answers in the lead's language. Spanish in, Spanish out. Same for any language.", "Drafting"],
-            ["On Instagram and Messenger it asks one short question with reply buttons, inside Meta's window.", "Instagram"],
-            ["Never switches a DM lead to email behind their back. They chose where to talk.", "Instagram"],
-            ["Every automated message is on the record with the reason it was sent.", "Trust"],
-            ["Reads the inbox you already have. Nothing to log, nothing to migrate.", "Setup"],
-            ["Acknowledges a new lead within seconds, day or night, before you have seen it.", "Speed"],
-            ["You can export or delete everything it has stored, any time.", "Privacy"],
+            ["The moment a customer replies, it stops. No more messages to them.", "Stops"],
+            ["It never talks about money without you. Anything about price waits for you to send.", "Safe"],
+            ["It answers in the customer's language. Spanish in, Spanish out. Any language.", "Language"],
+            ["Every message it sends is written down, with the reason it was sent.", "Honest"],
+            ["It uses the inbox you already have. Nothing to set up, nothing to move.", "Simple"],
+            ["You can download or delete everything it has, whenever you want.", "Yours"],
           ].map(([q, tag], i) => (
             <RevealLight key={q} delay={(i % 3) * 0.06}>
               <div className={styles.story}>
@@ -282,7 +200,7 @@ export default function LandingPage() {
                     F
                   </span>
                   <span>
-                    FollowUp rule · <span style={{ color: "var(--text)" }}>{tag}</span>
+                    Promise · <span style={{ color: "var(--text)" }}>{tag}</span>
                   </span>
                 </div>
               </div>
@@ -295,12 +213,12 @@ export default function LandingPage() {
       <section id="integrations" className={styles.section}>
         <div className={styles.split}>
           <RevealLight>
-            <span className={styles.badge}>Integrations</span>
+            <span className={styles.badge}>Works with</span>
             <h2 className={styles.h2}>
-              Integrate <span className={styles.em}>seamlessly.</span>
+              Works with what <span className={styles.em}>you already use.</span>
             </h2>
             <p className={styles.lede}>
-              Effortlessly connect the inbox and the channels your leads actually write to. Keep the CRM you have; FollowUp imports its contacts and pushes notes back.
+              Connect your inbox and the apps your customers message you on. Keep the tools you have. FollowUp works alongside them.
             </p>
             <div className="mt-7">
               <Link href="/signin" className={styles.btn}>
@@ -311,17 +229,17 @@ export default function LandingPage() {
           <RevealLight delay={0.1}>
             <div className={styles.card}>
               <h3 className={styles.cardTitle} style={{ fontSize: 16 }}>
-                Integrations
+                Connected
               </h3>
               <div className="mt-3">
                 {[
-                  ["G", "Gmail", "Push, within seconds", "100%", true],
-                  ["O", "Outlook", "Microsoft 365", "100%", true],
-                  ["I", "Instagram", "Reply buttons inside Meta's window", "100%", true],
-                  ["W", "WhatsApp", "Business account", "100%", true],
-                  ["H", "HubSpot", "Contacts imported, notes pushed back", "86%", true],
-                  ["Z", "Zapier", "Any form, any tool", "72%", false],
-                ].map(([k, name, sub, w, on], i) => (
+                  ["G", "Gmail", "New emails, within seconds", true],
+                  ["O", "Outlook", "Same as Gmail", true],
+                  ["I", "Instagram", "Messages, with one-tap reply buttons", true],
+                  ["W", "WhatsApp", "Messages", true],
+                  ["H", "HubSpot", "Your contacts come in. Notes go back.", true],
+                  ["Z", "Zapier", "Any form or app", false],
+                ].map(([k, name, sub, on]) => (
                   <div key={name as string} className={styles.row} style={{ padding: "12px 0" }}>
                     <div className="flex items-center gap-3 min-w-0" style={{ flex: 1 }}>
                       <span className={styles.logoBox} aria-hidden="true">
@@ -330,9 +248,6 @@ export default function LandingPage() {
                       <div className="min-w-0" style={{ flex: 1 }}>
                         <div className={styles.rowName}>{name as string}</div>
                         <div className={styles.rowSub}>{sub as string}</div>
-                        <div className={styles.progress} style={{ marginTop: 7, maxWidth: 220 }}>
-                          <div className={styles.progressFill} style={{ ["--w" as string]: w as string, ["--d" as string]: `${i * 0.08}s` }} />
-                        </div>
                       </div>
                     </div>
                     <span className={`${styles.toggle} ${on ? "" : styles.toggleOff}`} aria-hidden="true" />
@@ -350,14 +265,14 @@ export default function LandingPage() {
           <RevealLight delay={0.1}>
             <div className={styles.card}>
               <h3 className={styles.cardTitle} style={{ fontSize: 16 }}>
-                Real-time
+                Just now
               </h3>
               <div className="mt-3">
                 {[
-                  ["Sarah Johnson replied", "Your check-in worked. She wants Thursday.", "1 min ago"],
-                  ["Draft ready for Mike Patel", "Short, on topic, waiting for your tap.", "3 mins ago"],
-                  ["Priya tapped “This week”", "Instagram. Window reopened, no chase needed.", "12 mins ago"],
-                  ["New lead from your website", "Acknowledged in Spanish, scored, in the queue.", "26 mins ago"],
+                  ["Sarah Johnson replied", "She wants Thursday.", "1 min ago"],
+                  ["A reply is ready for Mike Patel", "Tap once to send it.", "3 min ago"],
+                  ["Priya tapped “This week”", "On Instagram. FollowUp keeps going.", "12 min ago"],
+                  ["New customer from your website", "Answered in Spanish, right away.", "26 min ago"],
                 ].map(([t, w, when]) => (
                   <div key={t} className={styles.row}>
                     <div className="min-w-0">
@@ -371,12 +286,12 @@ export default function LandingPage() {
             </div>
           </RevealLight>
           <RevealLight>
-            <span className={styles.badge}>Real-time</span>
+            <span className={styles.badge}>As it happens</span>
             <h2 className={styles.h2}>
-              Your leads <span className={styles.em}>in real time.</span>
+              See what changed, <span className={styles.em}>the moment it does.</span>
             </h2>
             <p className={styles.lede}>
-              A new message lands, FollowUp acknowledges it in the lead&apos;s language, scores it, and tells you the moment one comes back to life. You see what changed, not a list to dig through.
+              A customer replies. A new one writes in. FollowUp sends something for you. You see each one as it happens, in plain words.
             </p>
           </RevealLight>
         </div>
@@ -386,17 +301,17 @@ export default function LandingPage() {
       <section id="features" className={styles.section} style={{ paddingTop: 0 }}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <h2 className={styles.h2} style={{ fontSize: "clamp(28px, 3.4vw, 40px)" }}>
-            We&apos;ve built features that will actually make a difference <span className={styles.em}>to your business.</span>
+            Everything you need, <span className={styles.em}>nothing you don&apos;t.</span>
           </h2>
         </RevealLight>
         <div className={styles.grid3}>
           {[
-            [<Inbox key="i" className="h-5 w-5" />, "One inbox for every lead", "Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form, read in one place."],
-            [<Eye key="e" className="h-5 w-5" />, "Scores you can see through", "Every urgency score comes with the exact detail that raised or lowered it."],
-            [<Languages key="l" className="h-5 w-5" />, "In their language", "A lead who writes in Spanish is acknowledged, scored and answered in Spanish."],
-            [<Send key="s" className="h-5 w-5" />, "Follow-up on by default, safely", "Low-risk replies send themselves. Anything else waits for you."],
-            [<MessageCircle key="m" className="h-5 w-5" />, "Meta's rules built in", "Short questions with reply buttons inside the window, one tap from you after it."],
-            [<Users key="u" className="h-5 w-5" />, "Routes leads to the right person", "New leads go to whoever should own them. Everyone sees what is overdue."],
+            [<Inbox key="i" className="h-5 w-5" />, "Every customer in one place", "Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form. One list."],
+            [<Eye key="e" className="h-5 w-5" />, "Know who is slipping", "FollowUp tells you which customers are going quiet, and why."],
+            [<Languages key="l" className="h-5 w-5" />, "Speaks their language", "They write in Spanish, they get answered in Spanish. Any language."],
+            [<Send key="s" className="h-5 w-5" />, "Follows up for you", "Simple replies go out on their own. Anything about money waits for you."],
+            [<MessageCircle key="m" className="h-5 w-5" />, "Made for Instagram and WhatsApp", "Short messages with buttons, so a customer can answer with one tap."],
+            [<Users key="u" className="h-5 w-5" />, "Works for a team", "New customers go to the right person. Everyone sees what is waiting."],
           ].map(([icon, t, b], i) => (
             <RevealLight key={t as string} delay={(i % 3) * 0.07}>
               <div className={styles.card}>
@@ -418,7 +333,7 @@ export default function LandingPage() {
           <h2 className={styles.h2}>
             Pricing that <span className={styles.em}>makes sense.</span>
           </h2>
-          <p className={styles.lede}>No seats, no per-message credits, no &ldquo;AI add-on&rdquo;. Start free, pay when it is doing the job.</p>
+          <p className={styles.lede}>Start free. Pay when it is working for you. No add-ons, no surprises.</p>
         </RevealLight>
         <div className={styles.priceGrid}>
           <RevealLight>
@@ -427,14 +342,14 @@ export default function LandingPage() {
               <p className={styles.priceAmount}>
                 $0<small>/month</small>
               </p>
-              <p className={styles.priceDesc}>For seeing it work on your real inbox. No card.</p>
+              <p className={styles.priceDesc}>Try it on your real inbox. No card needed.</p>
               <Link href="/signin" className={`${styles.btnGhost} w-full justify-center`} style={{ marginTop: 18 }}>
                 Get started
               </Link>
               <p className={styles.priceNote}>No credit card required.</p>
               <p className={styles.priceListLabel}>Including:</p>
               <ul className={styles.priceList}>
-                {["Gmail or Outlook, plus your website form", `Up to ${FREE_TIER_LEAD_CAP} leads a month`, "Scoring with the reason shown", "Drafts you approve before they send"].map((f) => (
+                {["Gmail or Outlook, plus your website form", `Up to ${FREE_TIER_LEAD_CAP} customers a month`, "See who is slipping, and why", "You approve every reply before it goes out"].map((f) => (
                   <li key={f}>
                     <span className={styles.check}>
                       <Check className="h-3 w-3" />
@@ -451,14 +366,14 @@ export default function LandingPage() {
               <p className={styles.priceAmount}>
                 $39<small>/month</small>
               </p>
-              <p className={styles.priceDesc}>Every channel, follow-up on by default, and the safety that makes that okay.</p>
+              <p className={styles.priceDesc}>Every channel, with FollowUp replying for you.</p>
               <Link href="/signin" className={`${styles.btn} w-full justify-center`} style={{ marginTop: 18 }}>
                 Start 14 days free
               </Link>
               <p className={styles.priceNote}>No credit card required to start.</p>
               <p className={styles.priceListLabel}>Free plus:</p>
               <ul className={styles.priceList}>
-                {["Instagram, Messenger and WhatsApp", "Automated follow-up, full autonomy per lead when you want it", "Drafts in the lead's language", "HubSpot and Follow Up Boss import", "Weekly report of what FollowUp saved you"].map((f) => (
+                {["Instagram, Messenger and WhatsApp", "FollowUp replies for you", "Replies in your customer's language", "Bring in contacts from HubSpot or Follow Up Boss", "A weekly report of what it did for you"].map((f) => (
                   <li key={f}>
                     <span className={styles.check}>
                       <Check className="h-3 w-3" />
@@ -475,14 +390,14 @@ export default function LandingPage() {
               <p className={styles.priceAmount}>
                 $79<small>/month</small>
               </p>
-              <p className={styles.priceDesc}>For a team that shares the leads and needs to see who is dropping what.</p>
+              <p className={styles.priceDesc}>For a team that shares customers.</p>
               <Link href="/signin" className={`${styles.btnGhost} w-full justify-center`} style={{ marginTop: 18 }}>
                 Start 14 days free
               </Link>
               <p className={styles.priceNote}>No credit card required to start.</p>
               <p className={styles.priceListLabel}>Plus plus:</p>
               <ul className={styles.priceList}>
-                {["Team view: who is overdue, on which deal", "Leads routed to the right person", "No lead cap", "Priority support"].map((f) => (
+                {["See who on your team is behind, and where", "New customers go to the right person", "No limit on customers", "Priority support"].map((f) => (
                   <li key={f}>
                     <span className={styles.check}>
                       <Check className="h-3 w-3" />
@@ -503,17 +418,17 @@ export default function LandingPage() {
           <h2 className={styles.h2}>
             You asked, <span className={styles.em}>we answered.</span>
           </h2>
-          <p className={styles.lede}>Still got questions? Straight answers below, and a real person on email if you want one.</p>
+          <p className={styles.lede}>Straight answers. And a real person on email if you want one.</p>
         </RevealLight>
         <RevealLight delay={0.08}>
           <FaqDark
             items={[
-              { q: "What is FollowUp, and how can it help my business?", a: "FollowUp reads the conversations you already have (Gmail, Outlook, Instagram, Messenger, WhatsApp, your website form), scores which leads you are about to lose, drafts the reply in your voice, and sends the low-risk ones itself. It exists so a lead never goes quiet because nobody followed up." },
-              { q: "Will it send messages without my permission?", a: "By default it only sends a low-risk, on-topic follow-up on its own, never anything about price, terms, or a sensitive reply, and never once the lead has already answered you. Anything riskier is held for your approval. You can set any lead to fully autonomous or fully manual at any time." },
-              { q: "What happens on Instagram after 24 hours?", a: "Meta only allows automatic replies within 24 hours of the lead's last message. Inside that window FollowUp sends up to three short follow-ups with reply buttons. After it, FollowUp writes one message for you to send with a tap, and after seven days it stops until the lead writes again. Nothing switches to email behind their back." },
-              { q: "Can I keep my existing CRM?", a: "Yes. FollowUp imports your contacts from HubSpot or Follow Up Boss, runs alongside it, and pushes notes back. It is the layer that watches your actual conversations, not a system you migrate into." },
-              { q: "How secure is my data?", a: "Your inbox data is read only for the leads you connect, stored under your business alone, and you can export or fully delete everything at any time. Nothing is sold, and nothing trains a model without being stripped of identifying details first." },
-              { q: "Does it work for a team, or just one person?", a: "Both. Invite your team, see who has an overdue follow-up and on which deal, and route new leads to the right person, without anyone maintaining a shared spreadsheet." },
+              { q: "What does FollowUp actually do?", a: "It reads the messages you already get (email, Instagram, Messenger, WhatsApp, your website form), notices when a customer is going quiet, and sends a friendly follow-up for you. So no customer is lost just because nobody wrote back." },
+              { q: "Will it send things I did not approve?", a: "Only simple, safe replies go out on their own. Anything about price, or anything sensitive, waits for you. Once a customer answers, it stops. You can turn it fully on or fully off for any customer." },
+              { q: "What about Instagram's 24-hour rule?", a: "Instagram only lets apps reply within 24 hours of a customer's last message. Inside that time, FollowUp sends up to three short follow-ups with buttons. After that, it writes one message you can send with a tap. It never moves the conversation to email without them." },
+              { q: "Can I keep the tools I use now?", a: "Yes. FollowUp works alongside them. It can bring in your contacts from HubSpot or Follow Up Boss and send notes back." },
+              { q: "Is my data safe?", a: "It only reads the conversations you connect. Everything is stored for your business only, and you can download or delete all of it whenever you want. Nothing is sold." },
+              { q: "Is it for a team, or just me?", a: "Both. Add your team, see who is behind, and send new customers to the right person." },
             ]}
           />
         </RevealLight>
@@ -533,7 +448,7 @@ export default function LandingPage() {
               Get started <span className={styles.em}>today.</span>
             </h2>
             <p className={styles.lede} style={{ maxWidth: 520, margin: "14px auto 0" }}>
-              Connect your inbox, and FollowUp starts catching the leads you were about to lose. Free to start, on your real inbox.
+              Connect your inbox. FollowUp starts catching the customers you were about to lose. Free to start.
             </p>
             <div className="mt-8">
               <Link href="/signin" className={styles.btn}>
@@ -548,7 +463,7 @@ export default function LandingPage() {
         <div className={styles.footerInner}>
           <div className="flex items-center gap-2.5" style={{ color: "var(--text)" }}>
             <LogoMark height={18} />
-            <span style={{ color: "var(--muted)" }}>Built to make sure no lead gets forgotten.</span>
+            <span style={{ color: "var(--muted)" }}>So no customer gets forgotten.</span>
           </div>
           <div className={styles.footerLinks}>
             <Link href="/privacy">Privacy</Link>

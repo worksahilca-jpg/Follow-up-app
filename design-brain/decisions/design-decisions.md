@@ -2479,3 +2479,33 @@ no rotation past 7°, no blur. The page's own rule is motion only where it expla
 here it explains the product's one sentence.
 
 **Verified** at 1440 and 390 from a production build; video `landing-v13.mp4`.
+
+## 2026-09-18 — Plain words: the landing page rewritten for someone who has never used software like this
+
+**Trigger.** Founder, on the approved page (A-012): "the information is very complex. I want to
+make it very simple so that every single user can understand. Even someone who wants to use it
+without any tough things should understand." Recorded as a brand principle (principle 9 in
+`brand/brand-principles.md`); this entry is the first application.
+
+**What changed, copy only** (`page.tsx`; nothing about what the product does moved):
+- Every sentence shortened; one idea each. "Lead" became "customer" everywhere a customer would
+  read it (the diagram's labels keep "leads come in from everywhere", his own phrase).
+- Jargon out: "scores", "sequence", "draft", "autonomy", "CRM", "Meta's window", "routed",
+  "urgency score", "on the record", "integrations", "real-time". In: "notices who is going
+  quiet", "stops", "reply", "the tools you use now", "Instagram's 24-hour rule", "goes to the
+  right person", "written down with the reason", "works with", "as it happens".
+- Fewer things: the "Your week, at a glance" card (the densest object on the page) is gone; the
+  nine rules are six promises (the two Instagram-window rules and "acknowledges within seconds"
+  were the hardest to read cold); the percentage bars under the connected apps are gone (they
+  meant nothing to a reader).
+- Section heads now say the job in the reader's words: "See who needs you, and why." "What it
+  will and won't do." "Works with what you already use." "See what changed, the moment it
+  does." "Everything you need, nothing you don't."
+- FAQ answers cut to two or three short sentences each; questions asked the way a customer
+  would ask them ("Will it send things I did not approve?").
+
+**Kept honest:** no claim was added; every line still describes a built behaviour (the 24-hour
+rule, the money hold, stop-on-reply, download-or-delete, HubSpot and Follow Up Boss import).
+
+**Verified** at 1280 from a production build; typecheck, lint, build clean. **Awaiting** his
+read.

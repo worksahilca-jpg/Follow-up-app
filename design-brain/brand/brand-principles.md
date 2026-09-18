@@ -147,3 +147,18 @@ order. Trust beats calm; calm beats clarity-of-density; nothing beats trust.
 
 When a design decision is hard, name which principle it serves. If it serves none, it's
 probably decoration.
+
+
+## 9 — Every word must be understood by someone who has never used software like this
+
+Added 2026-09-18, founder's words on the landing page: "the information is very complex. I want
+to make it very simple so that every single user can understand. Even if someone wants to use it
+without any tough things, they should understand."
+
+**In practice:** one idea per sentence. The customer's word, not ours ("customer" over "lead"
+where a customer would read it, "going quiet" over "scored at risk", "written down" over "on
+the record"). No product-internal names on a public screen (sequence, draft, autonomy, window,
+CRM, integration, real-time). Fewer things on the screen beats a clearer explanation of many.
+
+**Test:** read the section aloud to someone who runs a shop and has never used a CRM. If they
+ask "what does that mean?", the line is wrong, not the reader.

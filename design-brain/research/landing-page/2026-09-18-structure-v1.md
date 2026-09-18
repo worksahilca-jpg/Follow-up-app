@@ -96,7 +96,9 @@ names (sequence, draft, autonomy, window, CRM, integration). One idea per senten
    channel or industry list; the channels stay in the diagram, where they are already shown.
 2. **The honest channel line.** DECIDED 2026-09-18: no. Not on the landing page. It stays in
    the Questions answer on Instagram's 24-hour rule, and in the app where the tap happens.
-3. **The fourth promise** ("every message is written down, with the reason"). Yes / no.
+3. **The fourth promise.** DECIDED 2026-09-18: yes. Four promises: stops when they reply;
+   never talks about money without you; every message written down, with the reason; delete
+   everything, any time.
 4. **Section 4, who it's for.** Keep it or fold the buyer into the hero line only.
 
 Say yes / no to each, and design starts against this list and nothing else.

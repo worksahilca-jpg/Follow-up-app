@@ -2561,3 +2561,13 @@ trust line; he chose to keep the page to the promise. The fact is still told in 
 person will look for it: the Questions answer on Instagram's 24-hour rule, and the app itself
 at the moment the tap is needed. If trial users report feeling misled about Instagram, this
 is the first thing to revisit.
+
+## 2026-09-18 — Structure v1, question 3: four promises
+
+**Founder's call:** yes to the fourth. The promises section, which stands in for proof while
+there are no customers to quote, is now: *When a customer replies, it stops. It never talks
+about money without you. Every message it sends is written down, with the reason. You can
+delete everything, any time.* All four are built and tested (stop-on-reply, the money hold,
+the audit trail, export-and-erase). His check before saying yes, worth keeping: "but we send
+on Instagram and WhatsApp too, no?" Yes: within Meta's 24-hour window it sends by itself;
+after it, it writes and the owner taps. The fourth promise covers every channel.

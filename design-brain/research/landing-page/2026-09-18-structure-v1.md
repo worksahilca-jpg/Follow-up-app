@@ -1,6 +1,6 @@
 # Landing page structure, v1 — for the founder to say yes / no per section
 
-**Date:** 2026-09-18. **Status:** proposed, nothing built against it yet.
+**Date:** 2026-09-18. **Status:** all four questions answered by the founder the same day; this is now the structure design builds against.
 **Why this exists:** after a day of building pages first (five directions, four rejected, one
 approved and then rewritten three times), the founder called it: "let's not design directly.
 Research, then a structure, then design." This is the structure. No visuals. One job per
@@ -60,7 +60,7 @@ Order is the order of attention, not of importance to us.
 | 1 | **Hero** | In five seconds: what this is, who it's for, the one thing to do | **Never lose a lead because you forgot to follow up.** (founder's line, chosen 2026-09-18 over "because nobody followed up") Under it, the buyer line, the founder's own poke (chosen 2026-09-18 from twelve options): *Only for owners who have leads and don't have time to reply.* | The moving diagram (A-012). Under the button, one reassurance: *No card. It stops the moment they reply.* | Stats, badges, a second button, a product screenshot (R-009), a photo (R-011) |
 | 2 | **Three steps** | Give them the mental model before asking for anything | 1 Connect your inbox. 2 FollowUp spots who is going quiet. 3 It writes back for you. (The per-channel line was proposed here and the founder said no, 2026-09-18; the Instagram 24-hour rule is answered in Questions and inside the app.) | The steps themselves | Feature tiles, a second diagram |
 | 3 | **Our promises, in writing** | Be the proof, since there are no customers yet | *When a customer replies, it stops. It never talks about money without you. Every message it sends is written down, with the reason. You can delete everything, any time.* | Four short cards, each a built and tested guarantee | Testimonials, logos, numbers |
-| 4 | **Who it's for** | Let the right person recognise themselves and the wrong one leave | *Salons, clinics, studios, coaches, realtors, small local services: anyone who gets customers by message.* | One line, maybe three tiny examples | Persona cards with invented people |
+| 4 | ~~Who it's for~~ | SKIPPED 2026-09-18, founder: the hero's buyer line already does this job | | | |
 | 5 | **Works with** | Answer "does it work with my stuff?" in one glance | Gmail · Outlook · Instagram · Messenger · WhatsApp · Your website · HubSpot | Names only | Toggles, percentages, descriptions |
 | 6 | **Prices** | Remove the fear of enterprise pricing | *Start free. No card. No seats, no per-message fees, no AI add-on.* Free / Plus $39 / Pro $79, three lines each | The metering argument, not a competitor's number | Annual toggle, long feature lists, "$150–500 elsewhere" |
 | 7 | **Questions** | Kill the last objections | First question: *Will it send things I didn't approve?* Then: Instagram's 24-hour rule, is my data safe, is it for a team | Four questions, two sentences each | Six or more |
@@ -99,7 +99,7 @@ names (sequence, draft, autonomy, window, CRM, integration). One idea per senten
 3. **The fourth promise.** DECIDED 2026-09-18: yes. Four promises: stops when they reply;
    never talks about money without you; every message written down, with the reason; delete
    everything, any time.
-4. **Section 4, who it's for.** Keep it or fold the buyer into the hero line only.
+4. **Section 4, who it's for.** DECIDED 2026-09-18: skipped. The hero line is the buyer line.
 
 Say yes / no to each, and design starts against this list and nothing else.
 

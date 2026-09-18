@@ -2571,3 +2571,14 @@ delete everything, any time.* All four are built and tested (stop-on-reply, the 
 the audit trail, export-and-erase). His check before saying yes, worth keeping: "but we send
 on Instagram and WhatsApp too, no?" Yes: within Meta's 24-hour window it sends by itself;
 after it, it writes and the owner taps. The fourth promise covers every channel.
+
+## 2026-09-18 — Structure v1, question 4: no "who it's for" section; the structure is settled
+
+**Founder's call:** skip it. The hero's second line ("Only for owners who have leads and don't
+have time to reply", A-014) already tells the right person it is for them.
+
+**The settled structure**, in order: top bar (How it works · Prices · Questions · Start free);
+hero (A-013 headline, A-014 buyer line, the moving diagram A-012, "Start free", one reassurance
+under the button); three steps; four promises; works with (names only); prices (three cards,
+three lines each, the no-metering line); four questions, the permission one first; start free;
+footer. Eight blocks. Design now builds against this and nothing else.

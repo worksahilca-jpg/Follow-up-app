@@ -2509,3 +2509,34 @@ rule, the money hold, stop-on-reply, download-or-delete, HubSpot and Follow Up B
 
 **Verified** at 1280 from a production build; typecheck, lint, build clean. **Awaiting** his
 read.
+
+## 2026-09-18 — As simple as it goes: six things on the page
+
+**Trigger.** Founder, after the plain-words pass: "simplify it as much as you can."
+
+**What the page is now** (`page.tsx`), top to bottom:
+1. The promise and the moving diagram. Headline unchanged; the lede is one sentence
+   ("FollowUp writes back to your customers, so nobody is forgotten."); the "New:" badge is
+   gone; buttons say "Start free" and "How it works".
+2. **Three steps**: connect your inbox · FollowUp spots who is going quiet · it writes back
+   for you. One line under each.
+3. **Three promises**: when a customer replies, it stops · it never talks about money without
+   you · you can delete everything, any time.
+4. **Works with what you use**: one row of names. No card, no toggles, no descriptions.
+5. **Simple prices**: three cards, three lines each, "Start free. No card needed."
+6. **Questions**: four, one or two sentences each.
+Then "Start free. Connect your inbox. That's it." and the footer. Nav: How it works ·
+Prices · Questions · Start free.
+
+**Gone from the page** (not from the product): the four product cards with in-card mockups,
+the six-promise grid (three kept), the connected-apps card, the "as it happens" feed, the
+six feature tiles, the fourteen-line price lists, two of the six questions, the "New:" badge,
+the Integrations and Features nav links. Nothing on the page is untrue; the diagram in the
+hero now carries what the removed sections used to explain.
+
+**Cost named.** The page no longer mentions Meta's 24-hour rule, HubSpot / Follow Up Boss
+import, the team routing detail, or the language promise in words (the diagram still shows a
+reply in Spanish). If any of those turns out to matter for a buyer, it comes back as one
+line, not a section.
+
+**Verified** at 1280 and 390 from a production build; typecheck, lint, build clean.

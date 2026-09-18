@@ -2276,3 +2276,34 @@ Pricing and the FAQ.
 
 **Figma** synced to match (same file, same frame). **Verified** locally at 1440: hero, fade,
 Product, The gap; typecheck and lint clean. **Awaiting** the founder's reaction.
+
+## 2026-09-18 — Fourth build: the founder's reference copied faithfully (the "Scalable" home page with FollowUp's content)
+
+**Trigger.** R-008: the whole page as built this day, in all three states, rejected on look, layout,
+words and feel. Asked what next, the founder chose "copy the Scalable template faithfully: its home
+page as it is; only the words, numbers and logo are ours. You react to that, then we diverge."
+
+**What was built** (`landing-dark.module.css`, `components/landing/dark/*`, `page.tsx`): the
+template's system from his own transcription — `#0A0A0A` ground, `#111214` cards with a 1px
+white/10% border and 16px corners, indigo `#5B2CE0` buttons/checks/toggles, green `#22C55E`
+badges, white headings and gray-400 copy, 48–72px tight-tracked headlines with one italic serif
+word, pill buttons, sticky transparent nav with a "New" badge on one link — and its section order:
+hero (badge, H1, subtext, button, wordmark strip, dashboard card with three stat tiles, bar chart
+with tabs, line chart with legend), Product 2×2 with in-card mockups (ranked list, activity rows,
+pending invitations, a draft), the masonry stories grid, Integrations split (card with logos,
+toggles, progress bars), Real-time split (rows with "1 min ago"), features 3×2 with icon chips,
+pricing with the middle card glowing, FAQ with the first open, CTA band, footer.
+
+**What was not copied, and why.** Standing rules, not taste: no invented testimonials (the
+masonry holds nine of FollowUp's enforced rules, each attributed "FollowUp rule · Safety", with
+five small logo marks where the template puts five stars); no fake customer-logo strip (the strip
+names the channels we read instead); no "Book a demo" as the only action (we have a free plan);
+no monthly/annual toggle (we sell monthly only). Three price cards, not two, because Free is real.
+No new font: the template's grotesk is played by Public Sans at 600, which is what we load.
+
+**Cost named.** R-005 rejected a dashboard-card hero on the light page; the founder now asked for
+the template "as it is", which includes that card, so it is back, with FollowUp's own dashboard
+numbers labelled as an example week. If he rejects it again the reason will finally be clear.
+
+**Awaiting** his reaction to the live preview. Figma not rebuilt for this version: rebuilding a
+whole frame costs ~15 tool calls, and he reacts to the moving page, not the still.

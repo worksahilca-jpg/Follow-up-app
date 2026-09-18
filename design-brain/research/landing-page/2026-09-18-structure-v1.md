@@ -57,7 +57,7 @@ Order is the order of attention, not of importance to us.
 | # | Section | Its one job | The one sentence it must say | Proof / what shows | Out |
 |---|---|---|---|---|---|
 | 0 | **Top bar** | Get out of the way | How it works · Prices · Questions · **Start free** | | Features, Integrations, "New" badges |
-| 1 | **Hero** | In five seconds: what this is, who it's for, the one thing to do | **Never lose a lead because you forgot to follow up.** (founder's line, chosen 2026-09-18 over "because nobody followed up") Under it, one line naming the buyer and the job: *For businesses whose customers write first on Instagram, WhatsApp or email. FollowUp writes back when you can't.* | The moving diagram (A-012). Under the button, one reassurance: *No card. It stops the moment they reply.* | Stats, badges, a second button, a product screenshot (R-009), a photo (R-011) |
+| 1 | **Hero** | In five seconds: what this is, who it's for, the one thing to do | **Never lose a lead because you forgot to follow up.** (founder's line, chosen 2026-09-18 over "because nobody followed up") Under it, the buyer line, the founder's own poke (chosen 2026-09-18 from twelve options): *Only for owners who have leads and don't have time to reply.* | The moving diagram (A-012). Under the button, one reassurance: *No card. It stops the moment they reply.* | Stats, badges, a second button, a product screenshot (R-009), a photo (R-011) |
 | 2 | **Three steps** | Give them the mental model before asking for anything | 1 Connect your inbox. 2 FollowUp spots who is going quiet. 3 It writes back for you. Then the honest line: *On email it sends for you. On Instagram and WhatsApp it writes the message and you tap send.* | The steps themselves | Feature tiles, a second diagram |
 | 3 | **Our promises, in writing** | Be the proof, since there are no customers yet | *When a customer replies, it stops. It never talks about money without you. Every message it sends is written down, with the reason. You can delete everything, any time.* | Four short cards, each a built and tested guarantee | Testimonials, logos, numbers |
 | 4 | **Who it's for** | Let the right person recognise themselves and the wrong one leave | *Salons, clinics, studios, coaches, realtors, small local services: anyone who gets customers by message.* | One line, maybe three tiny examples | Persona cards with invented people |
@@ -91,9 +91,9 @@ names (sequence, draft, autonomy, window, CRM, integration). One idea per senten
 
 ## Needs you (the founder), before design starts
 
-1. **The buyer line in the hero.** "Businesses whose customers write first on Instagram,
-   WhatsApp or email" is my recommendation, from the 09-16 finding. Say yes, or name the
-   buyer you actually want.
+1. **The buyer line in the hero.** DECIDED 2026-09-18: "Only for owners who have leads and
+   don't have time to reply." The founder wanted "only for…" plus a poke at the owner, not a
+   channel or industry list; the channels stay in the diagram, where they are already shown.
 2. **The honest channel line** ("on email it sends for you; on Instagram and WhatsApp you tap
    send"). I recommend saying it on the page. Yes / no.
 3. **The fourth promise** ("every message is written down, with the reason"). Yes / no.

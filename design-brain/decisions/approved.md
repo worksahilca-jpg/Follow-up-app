@@ -345,3 +345,16 @@ Brand principle 9 in one sentence.
 
 **Standing:** this is the fixed first line of the landing page. Sub-lines, buyer line and
 lede are separate decisions (structure v1, questions 1 to 4).
+
+## A-014 — The buyer line: "Only for owners who have leads and don't have time to reply." ^A-014
+
+**Approved:** 2026-09-18, founder, from twelve options across three rounds. His brief, in his
+words: "write something crazy like 'this is only for those who have leads', I want to poke the
+owners." Chosen over a channel line ("for businesses whose customers write first on Instagram,
+WhatsApp or email"), an industry list, and the sharper poke ("great at the work and terrible at
+replying").
+
+**What this settles:** the hero's second line is a wry, exclusive "only for…", not a category
+description. The channels are shown by the diagram, not named in the line. Tone rule for
+future copy in this spot: a poke is allowed when it is true, kind, and the reader would say it
+about themselves.

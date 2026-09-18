@@ -12,7 +12,7 @@ import { bricolageGrotesque, publicSans, ibmPlexMono, instrumentSerif } from "@/
 export default function NotFound() {
   return (
     <div className={`${styles.root} ${styles.center} ${bricolageGrotesque.variable} ${publicSans.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable}`}>
-      <LogoMark size={34} />
+      <span style={{ color: "var(--ink)" }}><LogoMark height={40} /></span>
       <span className={styles.badge} style={{ marginTop: 22 }}>
         Page not found
       </span>

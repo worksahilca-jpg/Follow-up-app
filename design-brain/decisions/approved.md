@@ -250,6 +250,10 @@ hand-off draft after an exit tap; mutation-tested), and the 2026-09-18 entry in
 
 ## A-008 — Logo direction: the forward chevron ^A-008
 
+**SUPERSEDED (2026-09-18)** by the founder's logo brief (concepts #69/#71: an abstract F in two
+forward-moving forms, no literal arrows, monochrome). See the 2026-09-18 logo entry in
+`[[design-decisions]]`. Kept for the record; the "forward, nothing dropped" idea carries over.
+
 **Approved:** 2026-09-18, founder, choosing the first of three arrow-based concepts ("1st is
 better") over the reply turn and the return loop.
 

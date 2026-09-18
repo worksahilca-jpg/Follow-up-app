@@ -18,8 +18,8 @@ export default function LandingNavLight() {
   return (
     <nav className={`${styles.nav} ${scrolled ? styles.navScrolled : ""}`}>
       <div className={styles.navInner}>
-        <Link href="/" className="flex items-center gap-2.5" aria-label="FollowUp home">
-          <LogoMark />
+        <Link href="/" className="flex items-center gap-2.5" aria-label="FollowUp home" style={{ color: "var(--ink)" }}>
+          <LogoMark height={22} />
           <span className={styles.wordmark}>FollowUp</span>
         </Link>
         <div className={styles.navLinks}>

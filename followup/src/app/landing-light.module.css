@@ -215,18 +215,8 @@
   color: var(--accent-deep);
 }
 
-/* ---------- logo mark: the forward chevron (A-008) ---------- */
+/* ---------- logo: the symbol inherits currentColor; wordmark beside it ---------- */
 
-.mark {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  background: var(--ink);
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
 .wordmark {
   font-family: var(--font-bricolage), system-ui, sans-serif;
   font-weight: 800;

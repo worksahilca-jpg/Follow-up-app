@@ -14,8 +14,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "The AI teammate that catches the lead that went quiet.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f6f8fb",
-    theme_color: "#2a5cdb",
+    background_color: "#fbfbfd",
+    theme_color: "#111312",
     icons: [{ src: "/icon", sizes: "32x32", type: "image/png" }],
   };
 }

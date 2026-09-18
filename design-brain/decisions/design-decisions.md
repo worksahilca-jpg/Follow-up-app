@@ -2116,3 +2116,37 @@ against `billing.ts` when the tier gates change.
 
 **Next:** founder picks the accent (or keeps indigo); the logo brief replaces the placeholder chevron
 mark; then the authenticated app follows the same ground in its own PR.
+
+## 2026-09-18 — The logo, built from the founder's brief: an abstract F in two forward-moving forms (supersedes A-008's chevron)
+
+**Trigger:** the founder supplied a full logo brief ("Responsive Brand Logo System", concepts #69
+and #71, from another session) hours after picking the forward chevron (A-008). The brief rules
+out literal arrows, so the chevron is superseded; the *idea* it carried — forward movement, no
+lead dropped — is exactly what the brief asks for, expressed differently.
+
+**What was built (`followup/public/brand/`, `LogoMark.tsx`, `icon.tsx`):** one master geometry
+in a 100.8 × 120 box: an upper form (top arm + full stem) carrying ≈65% of the mass and a lower
+bar carrying ≈35%, separated by a 16-unit channel (13% of height) on both axes, the whole thing
+leaned forward by 0.14, terminals cut on a 1:3 chisel. Reads as a distinctive shape first, an
+italic F second, two stages of one movement third — the order the brief asked for. Symbol,
+white symbol, favicon variant (wider channels, less lean), dark and light app icons at 56%
+occupancy with a 1.2% optical shift left, and a horizontal lockup with the wordmark outlined
+from **Inter 600** (tested against Manrope 700 and Geist 600 on one sheet; Inter gave the most
+neutral, even relationship with the symbol's chisels — Manrope read rounder than the mark,
+Geist near-identical to Inter with slightly looser fit). Symbol height = 1.2 × cap height,
+gap = 0.46 × symbol width. Monochrome only: `#111312` / `#FFFFFF`. PNG previews 16 → 1024.
+
+**QA against the brief's six checks:** reads at 16 px (the channel survives as a visible
+notch); negative space visible at every size; recognisable without the wordmark; does not read
+as a generic arrow (no arrowhead, two forms not one); no obvious resemblance to a common tech
+mark found on the sheet (an italic F is a family, not a specific logo — a proper trademark
+search is still required before registration); every variant is the one geometry.
+
+**Not yet decided — this is a first drawing awaiting the founder's reaction, not an
+approval:** the founder has not seen it. A-008 is marked superseded by the brief; a new
+approval entry comes only when he says yes. `[[approved#^A-008|A-008]]` → superseded.
+
+**Weakest part, named:** the lower form's left edge and the stem run parallel with a constant
+16-unit gap, which is honest but a little mechanical at 128 px and up; a hair of taper on the
+lower bar's left edge would make the channel read as opening forward. Left for round two so
+the founder reacts to the plain construction first.

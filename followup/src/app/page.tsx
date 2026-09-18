@@ -548,8 +548,8 @@ export default function LandingPage() {
       <div className={styles.cta}>
         <RevealLight>
           <div className={styles.ctaInner}>
-            <div className={styles.ctaBrand}>
-              <LogoMark size={30} />
+            <div className={styles.ctaBrand} style={{ color: "var(--ink)" }}>
+              <LogoMark height={28} />
               <span className={styles.wordmark} style={{ fontSize: 19 }}>
                 FollowUp
               </span>
@@ -571,8 +571,8 @@ export default function LandingPage() {
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <div className="flex items-center gap-2.5">
-            <LogoMark size={22} />
+          <div className="flex items-center gap-2.5" style={{ color: "var(--ink)" }}>
+            <LogoMark height={20} />
             <span>Built to make sure no lead gets forgotten.</span>
           </div>
           <div className={styles.footerLinks}>

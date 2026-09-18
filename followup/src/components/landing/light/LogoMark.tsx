@@ -1,18 +1,30 @@
-import styles from "@/app/landing-light.module.css";
-
 /**
- * The forward chevron — the logo direction the founder chose on 2026-09-18
- * (design-brain/decisions/approved.md A-008). A first drawing, not the final
- * mark: single stroke, rounded joins, sitting in a dark rounded square so it
- * reads at 16px. Wordmark pairing, exact stroke weight and the app-icon crop
- * are the next round and are deliberately not decided here.
+ * The FollowUp symbol, inline. Same master geometry as public/brand/
+ * followup-symbol.svg (viewBox 0 0 100.8 120): two forward-leaning forms
+ * that read as an abstract F, separated by the channel that stands for the
+ * moment between first contact and the follow-up. Monochrome by design; it
+ * inherits `currentColor`, so the surface decides whether it is ink on
+ * white or white on ink. `height` is the rendered height in px.
+ *
+ * Built 2026-09-18 from the founder's logo brief (concepts #69 / #71),
+ * which supersedes the earlier chevron direction (A-008). See
+ * design-brain/decisions/design-decisions.md, 2026-09-18, and
+ * public/brand/README.md for the clear-space and usage rules.
  */
-export default function LogoMark({ size = 26 }: { size?: number }) {
+export default function LogoMark({ height = 22, className }: { height?: number; className?: string }) {
+  const width = Math.round((height * 100.8) / 120 * 100) / 100;
   return (
-    <span className={styles.mark} style={{ width: size, height: size, borderRadius: Math.round(size * 0.31) }} aria-hidden="true">
-      <svg width={Math.round(size * 0.54)} height={Math.round(size * 0.54)} viewBox="0 0 24 24" fill="none">
-        <path d="M8 4.5 L15.5 12 L8 19.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
+    <svg
+      className={className}
+      width={width}
+      height={height}
+      viewBox="0 0 100.8 120"
+      fill="currentColor"
+      role="img"
+      aria-label="FollowUp"
+    >
+      <path d="M16.8 0 100.8 0 89.44 24 35.44 24 22 120 0 120Z" />
+      <path d="M49.2 40 95.2 40 77.6 80 43.6 80Z" />
+    </svg>
   );
 }

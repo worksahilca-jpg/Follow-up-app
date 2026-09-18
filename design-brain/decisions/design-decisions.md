@@ -2459,3 +2459,23 @@ capture LinkedIn), the tagline in caps. Charcoal ground per the earlier decision
 
 **Verified** at 1440 and 390 from a production build; typecheck, lint, build clean. Video
 `landing-v12.mp4`; live artifact republished. **Awaiting** his reaction.
+
+## 2026-09-18 — From everywhere: the diagram's entrance
+
+**Trigger.** A-012, and the founder's note with it: "just try to make this overlay come in
+from everywhere."
+
+**What it does now** (`HeroFlow.tsx`): on first paint the FollowUp tile lands first (springs
+up from below); each source card then starts far off in its own direction, one from high
+above-left, one from far left, one from below, one from low-right of the column, each slightly
+turned, and springs into its slot, 160ms apart; each reply then appears at the tile and travels
+out to its place on the right, 400ms apart, scaling up as it arrives. After the entrance the
+dots keep running the wires. Springs (stiffness 120, damping 18) rather than eased tweens, so
+the cards overshoot a touch and settle, which is what makes "arriving" read. Reduced motion:
+everything already in place.
+
+**Kept quiet on purpose:** no loop of the entrance (it would compete with reading the title),
+no rotation past 7°, no blur. The page's own rule is motion only where it explains something;
+here it explains the product's one sentence.
+
+**Verified** at 1440 and 390 from a production build; video `landing-v13.mp4`.

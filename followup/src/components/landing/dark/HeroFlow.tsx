@@ -65,11 +65,43 @@ function Wires({ side, animate }: { side: "in" | "out"; animate: boolean }) {
   );
 }
 
+/**
+ * Entrance, on the founder's note ("make this come in from everywhere"):
+ * each source card starts far off in its own direction, above, beside,
+ * below, slightly turned, and settles into the column; the FollowUp tile
+ * lands first; each reply then bursts out of the tile and travels to its
+ * place on the right. One pass on mount; the dots keep running after.
+ */
+const FROM: { x: number; y: number; r: number }[] = [
+  { x: -180, y: -190, r: -7 },
+  { x: -300, y: -60, r: 5 },
+  { x: -240, y: 70, r: -4 },
+  { x: -150, y: 200, r: 6 },
+  { x: -60, y: 280, r: -5 },
+];
+const SPRING = { type: "spring", stiffness: 120, damping: 18, mass: 0.9 } as const;
+
 export default function HeroFlow() {
   const reduced = useReducedMotion();
   const animate = !reduced;
-  const enter = (delay: number, x = 0) =>
-    reduced ? {} : { initial: { opacity: 0, x, y: 6 }, animate: { opacity: 1, x: 0, y: 0 }, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const, delay } };
+  const fromEverywhere = (i: number) =>
+    reduced
+      ? {}
+      : {
+          initial: { opacity: 0, x: FROM[i].x, y: FROM[i].y, rotate: FROM[i].r, scale: 0.9 },
+          animate: { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 },
+          transition: { ...SPRING, delay: 0.35 + i * 0.16, opacity: { duration: 0.4, delay: 0.35 + i * 0.16 } },
+        };
+  // replies start where the tile is (about 340px to the left of the reply
+  // column on desktop, and above it on phones) and travel out
+  const outOfTile = (i: number) =>
+    reduced
+      ? {}
+      : {
+          initial: { opacity: 0, x: -340, y: MID - centreY(i), scale: 0.6 },
+          animate: { opacity: 1, x: 0, y: 0, scale: 1 },
+          transition: { ...SPRING, stiffness: 110, delay: 1.7 + i * 0.4, opacity: { duration: 0.35, delay: 1.7 + i * 0.4 } },
+        };
 
   return (
     <div className={styles.flow}>
@@ -83,7 +115,7 @@ export default function HeroFlow() {
           <div className={styles.flowLabel}>Leads come in from everywhere</div>
           <div className={styles.flowList}>
             {SOURCES.map(({ title, via, Icon }, i) => (
-              <motion.div key={title} className={styles.src} {...enter(0.5 + i * 0.12, -12)}>
+              <motion.div key={title} className={styles.src} {...fromEverywhere(i)}>
                 <span className={styles.srcIcon}>
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
@@ -101,7 +133,7 @@ export default function HeroFlow() {
         </div>
 
         <div className={styles.flowHub}>
-          <motion.div className={`${styles.hub} ${animate ? styles.hubPulse : ""}`} {...(reduced ? {} : { initial: { opacity: 0, scale: 0.9 }, animate: { opacity: 1, scale: 1 }, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const, delay: 0.35 } })}>
+          <motion.div className={`${styles.hub} ${animate ? styles.hubPulse : ""}`} {...(reduced ? {} : { initial: { opacity: 0, scale: 0.7, y: 40 }, animate: { opacity: 1, scale: 1, y: 0 }, transition: { ...SPRING, delay: 0.15 } })}>
             <LogoMark height={46} />
           </motion.div>
           <div className={styles.hubName}>FollowUp</div>
@@ -116,7 +148,7 @@ export default function HeroFlow() {
           <div className={styles.flowLabel}>and they answer</div>
           <div className={styles.flowList}>
             {REPLIES.map(({ initials, name, text, when }, i) => (
-              <motion.div key={name} className={styles.lead} {...enter(1.6 + i * 0.5, 14)}>
+              <motion.div key={name} className={styles.lead} {...outOfTile(i)}>
                 <span className={styles.avatar}>{initials}</span>
                 <span className={styles.leadText}>
                   <span className={styles.leadName}>

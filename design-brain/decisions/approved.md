@@ -318,3 +318,17 @@ indigo (the layout and section order from A-010 stand).
 **Rule added in the same breath:** the page follows the device theme. Dark device: black top
 fading to white. Light device: white top fading to black. "Vice versa", his words. Recorded in
 `[[design-decisions]]` 2026-09-18, "Device theme".
+
+## A-012 — The moving diagram as the hero, on charcoal ^A-012
+
+**Approved:** 2026-09-18, founder, on the live preview: "this is sick."
+
+**What specifically was approved:** the hero as title-and-punchline on top ("Never lose a lead /
+*because nobody followed up.*") with the lead-flow diagram full width beneath it: five ways a
+lead shows up on the left (icon tile, title, "via" line), FollowUp as an app tile in the middle,
+five replies on the right as message cards with a time stamp, dots running the wires, on the
+charcoal ground (`#1e1e20`). Supersedes A-011's black ground and its smaller, framed
+diagram; the monochrome rule and the fixed first line stand.
+
+**Asked for in the same breath:** "make this come in from everywhere", the entrance animation
+recorded in `[[design-decisions]]` 2026-09-18, "From everywhere".

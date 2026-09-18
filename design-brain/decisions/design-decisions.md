@@ -2540,3 +2540,15 @@ reply in Spanish). If any of those turns out to matter for a buyer, it comes bac
 line, not a section.
 
 **Verified** at 1280 and 390 from a production build; typecheck, lint, build clean.
+
+## 2026-09-18 — Process reset: no more building first
+
+**Trigger.** Founder, at the end of a day with five page directions: "I am cooked. Let's not
+design directly. Let's do some research, then make a structure, then focus on designing."
+
+**What changes.** Design on the landing page is paused. The v15 page stays on PR #265,
+unmerged, as the current state. The next step is his yes / no on the four questions in
+`design-brain/research/landing-page/2026-09-18-structure-v1.md`; design starts against that
+structure and nothing else. For future sessions: this is the research workflow the design brain
+already prescribes (`workflows/research-workflow.md`, step 1: "if you can't write this, you
+don't have enough to design"); today it was skipped under pressure, five times.

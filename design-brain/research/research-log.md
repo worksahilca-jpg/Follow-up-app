@@ -392,3 +392,24 @@ LiveKit plugin) for whoever eventually tackles PRODUCT_DIRECTION's open multilin
 specifically for South Asian regional languages OpenAI's Realtime API may not serve as well —
 filed as a lead, not a decision.
 **Written up in:** `followup/research/competitors/2026-09-13-uplift-ai.md`
+
+
+## 2026-09-18 — Landing page structure before design (founder: "research, then a structure, then design")
+
+**Question:** a shop owner opens the page on a phone with 90 seconds; what must they understand,
+in what order, to press "Start free"?
+**Method:** no new external search. Re-read and combined what is already on file: the 09-13
+landing mechanics report, the unmerged 09-14 company-strategy report, the 09-16 positioning
+pass, the 09-05 ICP/trust pass, all nine brand principles, A-010 to A-012, R-005 to R-011.
+**Findings:** the top two screens carry ~75% of attention, so six content sections, not twelve;
+the thesis goes in the headline (already there); pick the DM-and-email local-business buyer and
+say so in the hero; say plainly what each channel does ("on email it sends for you; on Instagram
+and WhatsApp you tap send"); with no customers, the built guarantees are the proof; "will it
+send without my permission?" is the first question.
+**Confidence:** medium, per D-006 — everything upstream is search-snippet research; the buyer
+choice is the one call only the founder can make.
+**Conclusion / what changes:** a nine-block structure (top bar, hero, three steps, four
+promises, who it's for, works with, prices, four questions, start free) with four yes/no
+questions for the founder before any design starts. Written up in
+`design-brain/research/landing-page/2026-09-18-structure-v1.md`. Design is paused until he
+answers.

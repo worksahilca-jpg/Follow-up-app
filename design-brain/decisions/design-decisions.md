@@ -2552,3 +2552,12 @@ unmerged, as the current state. The next step is his yes / no on the four questi
 structure and nothing else. For future sessions: this is the research workflow the design brain
 already prescribes (`workflows/research-workflow.md`, step 1: "if you can't write this, you
 don't have enough to design"); today it was skipped under pressure, five times.
+
+## 2026-09-18 — Structure v1, question 2: the per-channel line stays off the page
+
+**Founder's call:** no. The line "On email it sends for you; on Instagram and WhatsApp it
+writes the message and you tap send" does not go on the landing page. I recommended it as a
+trust line; he chose to keep the page to the promise. The fact is still told in two places a
+person will look for it: the Questions answer on Instagram's 24-hour rule, and the app itself
+at the moment the tap is needed. If trial users report feeling misled about Instagram, this
+is the first thing to revisit.

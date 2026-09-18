@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Check, Inbox, Eye, Languages, Send, MessageCircle, Users, Mail, Camera, MessageSquare } from "lucide-react";
 import styles from "./landing-dark.module.css";
 import NavDark from "@/components/landing/dark/NavDark";
-import HeroDashboard from "@/components/landing/dark/HeroDashboard";
+import HeroFlow from "@/components/landing/dark/HeroFlow";
 import FaqDark from "@/components/landing/dark/FaqDark";
 import RevealLight from "@/components/landing/light/RevealLight";
 import LogoMark from "@/components/landing/light/LogoMark";
@@ -36,7 +36,7 @@ export default function LandingPage() {
           </RevealLight>
           <RevealLight mode="mount" delay={0.05}>
             <h1 className={styles.h1}>
-              Catch the leads that went quiet, <span className={styles.em}>automatically.</span>
+              Never lose a <span className={styles.em}>lead.</span>
             </h1>
           </RevealLight>
           <RevealLight mode="mount" delay={0.1}>
@@ -77,7 +77,7 @@ export default function LandingPage() {
             </div>
           </RevealLight>
         </div>
-        <HeroDashboard />
+        <HeroFlow />
       </header>
 
       {/* ---------- Product ---------- */}
@@ -170,7 +170,7 @@ export default function LandingPage() {
               <h3 className={styles.cardTitle}>Drafts that sound like you</h3>
               <p className={styles.cardBody}>Written from how you actually talk to that lead, in their language, never stating a fact that is not in the thread.</p>
               <div className={styles.figure}>
-                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", color: "#c4b5fd" }}>DRAFT READY FOR SARAH</div>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", color: "var(--muted)" }}>DRAFT READY FOR SARAH</div>
                 <p className="mt-1.5 text-[14px] font-medium">Re: Your proposal</p>
                 <p className="mt-1 text-[13.5px] leading-relaxed" style={{ color: "var(--muted)" }}>
                   Wanted to check in, I know you&apos;ve had a look at the numbers a couple of times. Happy to walk through anything that&apos;s unclear.

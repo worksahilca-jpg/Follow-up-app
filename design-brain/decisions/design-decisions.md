@@ -2336,3 +2336,36 @@ rejected a *hard* black→white shift, not the idea of a light bottom.
 **Verified** at 1280 and 390 from a production build: the ramp reads as one continuous grade,
 cards hold on both grounds, no horizontal overflow, typecheck and lint clean. Preview video
 `landing-v5.mp4`; live artifact republished. **Awaiting** the founder's reaction to the gradient.
+
+## 2026-09-18 — Hero line fixed, hero illustration replaces the dashboard, and the page goes black and white
+
+Three founder instructions in one live-editing session on the artifact preview, applied in order.
+
+**1. Hero line.** "Hero line should be 'never lose a lead', one, fixed." H1 is now
+`Never lose a *lead.*` (the product's canonical line from `followup/README.md`; the italic
+serif falls on the last word, as the template does). The lede is unchanged.
+
+**2. Hero illustration** (`components/landing/dark/HeroFlow.tsx`). R-009 removed the dashboard
+card. In its place, an original diagram of the job: five channel rows on the left (Gmail,
+Outlook, Instagram, Messenger, WhatsApp, each with a small "3 new"-style count), curved wires
+converging on a round FollowUp hub in the middle ("catches · scores · follows up"), wires fanning
+out to five lead rows on the right, each with the plain-words state it reached ("Replied · wants
+Thursday", "Follow-up sent, on topic", "Booked a call", "Acknowledged in Spanish") and a small
+warmth bar that fills from dark grey to white. Dots travel the wires on a loop (SMIL
+`animateMotion` on zero-length round-capped strokes with `non-scaling-stroke`, so they stay round
+while the wire boxes stretch); the hub pulses; the bars fill once. Reduced motion: no dots, no
+pulse, bars full. On phones the wires hide and the three groups stack. Names are an example week,
+not customers (standing rule). Nothing is a screenshot of the app.
+
+**3. Black and white.** "I want black and white theme." The indigo accent and the green/amber/rose
+status hues are gone from the whole system. Dark zone: white buttons with black text, white
+"New" badge, white hub with the black logo, grey→white warmth, white bars, neutral pills at
+three weights of white, glows are faint white. Light zone: black buttons with white text, black
+checks, a dark-bordered "Plus" card, glows are faint black. New token `--on-accent` carries the
+ink on the accent in both zones. Trade-off named: the status pills ("Needs you", "Going cold",
+"Sent") no longer differ by hue, only by tone and weight; if he misses the colour signal, one
+semantic hue can come back without touching the rest.
+
+**Verified** at 1280 and 390 from a production build; typecheck, lint clean; every colour
+literal from the indigo system grepped out. Live artifact republished; `landing-v7.mp4`.
+**Awaiting** his reaction to the illustration and the monochrome.

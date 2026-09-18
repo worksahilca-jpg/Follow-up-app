@@ -280,3 +280,23 @@ results", the safe first build is the template's home page as literally as our c
 not a designer's take on it. Show that first; diverge only on his reaction.
 
 **Evidence:** `landing-preview-v3.mp4`, the Figma frame, PR #265 (unmerged); entries above.
+
+## R-009 — An app-dashboard mockup as the hero device (second time) ^R-009
+
+**Rejected:** 2026-09-18, founder, on the live preview of the enhanced faithful build: "I don't
+want app dashboard. What I want is an illustration where it shows that leads are being caught
+from the sources and FollowUp is warming every lead."
+
+**What was rejected:** the hero's dashboard card (stat tiles, bar chart, line chart, window
+chrome) — the template's own hero device, kept in the faithful copy because he had asked for the
+template "as it is". R-005 had already rejected a dashboard-card hero on the light page. Two
+rejections, two very different pages: the objection is to the *object*, not its styling.
+
+**Stated reason:** he wants the hero to show what FollowUp *does* (catch leads from every
+channel, warm each one up), not what the app *looks like*.
+
+**Do not propose again:** a screenshot-style or mockup-style app dashboard as the hero device, on
+any page direction. A product mockup can still live further down (the Product cards are fine).
+
+**Replaced by:** the lead-flow illustration (sources → FollowUp → warmed leads), see
+`[[design-decisions]]` 2026-09-18, "Hero illustration".

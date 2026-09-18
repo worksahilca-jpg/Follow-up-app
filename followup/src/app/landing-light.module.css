@@ -289,11 +289,33 @@
 
 .hero {
   position: relative;
-  /* Black at the top, lifting to charcoal, with one soft grey light behind
-     the headline. The fade below carries it the rest of the way to paper. */
-  background:
-    radial-gradient(70% 55% at 50% 0%, rgba(120, 124, 134, 0.34) 0%, rgba(120, 124, 134, 0) 70%),
-    linear-gradient(180deg, #08090b 0%, #111318 45%, #1c1e24 100%);
+  overflow: hidden;
+  /* Black at the top, lifting to charcoal. The Product section below carries
+     it the rest of the way to paper. */
+  background: linear-gradient(180deg, #08090b 0%, #111318 45%, #1c1e24 100%);
+}
+/* One soft grey light behind the headline that drifts very slowly, so the
+   black is a space and not a flat fill. No colour, no blur trick: a radial
+   gradient moving 3% over 16 seconds. */
+.heroGlow {
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 70%;
+  background: radial-gradient(45% 55% at 50% 30%, rgba(140, 144, 156, 0.34) 0%, rgba(140, 144, 156, 0) 70%);
+  animation: drift 16s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes drift {
+  from {
+    transform: translate3d(-3%, 0, 0);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0);
+  }
+}
+.heroInner,
+.story {
+  position: relative;
 }
 /* The first section after the hero carries the transition: it starts on the
    hero's charcoal and lightens slowly to paper behind its own cards, so the
@@ -850,7 +872,9 @@
   .bar,
   .progressFill,
   .linePath,
-  .liveDot {
+  .liveDot,
+  .heroGlow,
+  .tl {
     animation: none;
   }
   .linePath {
@@ -1003,6 +1027,18 @@
   box-shadow: var(--shadow-lift);
   padding: 10px 22px;
   text-align: left;
+  /* The card breathes: 6px over 7 seconds, the one motion carried over from
+     the founder's reference (its hero card floats). */
+  animation: floaty 7s ease-in-out infinite;
+}
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 .dark .tl {
   box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.06);

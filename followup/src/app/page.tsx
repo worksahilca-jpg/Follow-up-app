@@ -28,11 +28,12 @@ export default function LandingPage() {
 
       {/* ---------- Hero ---------- */}
       <header id="hero" className={`${styles.hero} ${styles.dark}`}>
+        <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.heroInner}>
           <RevealLight mode="mount" y={10}>
             <span className={styles.badge}>
               <span className={styles.badgeDot} aria-hidden="true" />
-              New: reply buttons on Instagram and Messenger follow-ups
+              New: reply buttons in Instagram follow-ups
             </span>
           </RevealLight>
           <RevealLight mode="mount" delay={0.05}>

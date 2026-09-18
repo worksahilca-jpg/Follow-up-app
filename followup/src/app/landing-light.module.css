@@ -112,7 +112,7 @@
 .section {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 88px 24px;
+  padding: 112px 24px;
 }
 .sectionTight {
   padding-top: 56px;
@@ -295,9 +295,12 @@
     radial-gradient(70% 55% at 50% 0%, rgba(120, 124, 134, 0.34) 0%, rgba(120, 124, 134, 0) 70%),
     linear-gradient(180deg, #08090b 0%, #111318 45%, #1c1e24 100%);
 }
-.heroFade {
-  height: 180px;
-  background: linear-gradient(180deg, #1c1e24 0%, #4a4d55 38%, #b9bcc4 72%, var(--paper) 100%);
+/* The first section after the hero carries the transition: it starts on the
+   hero's charcoal and lightens slowly to paper behind its own cards, so the
+   eye never meets an edge. Founder, 2026-09-18: "I don't like it directly
+   shifted to white from black." */
+.productFade {
+  background: linear-gradient(180deg, #1c1e24 0%, #2b2e35 16%, #6b6f78 36%, #b9bcc4 54%, #e4e5e9 70%, var(--paper) 88%);
 }
 .dark .thread {
   box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.06);
@@ -783,8 +786,8 @@
 /* The close: paper fades down through grey to black, and the CTA and footer
    sit on the black. The mirror of the hero. */
 .ctaBand {
-  background: linear-gradient(180deg, #fbfbfd 0%, #b9bcc4 22%, #4a4d55 48%, #1c1e24 70%, #0b0c0f 100%);
-  padding-top: 200px;
+  background: linear-gradient(180deg, #fbfbfd 0%, #e4e5e9 12%, #b9bcc4 28%, #6b6f78 46%, #2b2e35 64%, #0b0c0f 84%);
+  padding-top: 340px;
 }
 .cta {
   max-width: 1120px;
@@ -989,4 +992,104 @@
   text-align: center;
   font-size: 13px;
   color: var(--ink-faint);
+}
+
+/* ---------- hero timeline: three quiet lines, not a chat ---------- */
+
+.tl {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lift);
+  padding: 10px 22px;
+  text-align: left;
+}
+.dark .tl {
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.tlRow {
+  display: grid;
+  grid-template-columns: 52px 14px 1fr;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.tlRow:first-child {
+  border-top: 0;
+}
+.tlWhen {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.tlDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transform: translateY(-1px);
+}
+.tlQuiet {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+.tlQuiet .tlDot {
+  background: transparent;
+  border: 1px dashed var(--ink-faint);
+}
+.tlAuto .tlDot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.tlTag {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transform: translateY(-1px);
+}
+
+/* ---------- plain list: three facts without three cards ---------- */
+
+.facts {
+  margin-top: 40px;
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line-strong);
+}
+.fact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+@media (min-width: 720px) {
+  .fact {
+    grid-template-columns: 300px 1fr;
+    gap: 32px;
+  }
+}
+.factTitle {
+  font-family: var(--font-bricolage), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+.factBody {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 620px;
 }

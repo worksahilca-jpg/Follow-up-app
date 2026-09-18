@@ -1,20 +1,8 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Check,
-  Inbox,
-  Eye,
-  Languages,
-  ShieldCheck,
-  MessageCircle,
-  Users,
-  Send,
-  PauseCircle,
-  FileText,
-} from "lucide-react";
+import { ArrowRight, Check, Inbox, Eye, Send } from "lucide-react";
 import styles from "./landing-light.module.css";
 import LandingNavLight from "@/components/landing/light/LandingNavLight";
-import HeroStoryLight from "@/components/landing/light/HeroStoryLight";
+import HeroTimelineLight from "@/components/landing/light/HeroTimelineLight";
 import RevealLight from "@/components/landing/light/RevealLight";
 import FaqLight from "@/components/landing/light/FaqLight";
 import LogoMark from "@/components/landing/light/LogoMark";
@@ -54,9 +42,8 @@ export default function LandingPage() {
           </RevealLight>
           <RevealLight mode="mount" delay={0.1}>
             <p className={styles.heroLede}>
-              You already paid to get them. Losing them after costs more. FollowUp reads every conversation, not just the
-              new ones, and catches the lead who heard from you once and then went silent, before &ldquo;let me think
-              about it&rdquo; turns into a lost sale.
+              FollowUp reads every conversation you already have and catches the lead who went silent, before
+              &ldquo;let me think about it&rdquo; becomes a lost sale.
             </p>
           </RevealLight>
           <RevealLight mode="mount" delay={0.15}>
@@ -83,14 +70,14 @@ export default function LandingPage() {
             </div>
           </RevealLight>
         </div>
-        <HeroStoryLight />
+        <HeroTimelineLight />
         <div style={{ height: 72 }} />
       </header>
-      <div className={styles.heroFade} aria-hidden="true" />
 
-      {/* ---------- Product ---------- */}
-      <section id="product" className={styles.section}>
-        <RevealLight className={styles.sectionHeadCenter}>
+      {/* ---------- Product: carries the fade from charcoal to paper ---------- */}
+      <section id="product" className={styles.productFade}>
+        <div className={styles.section}>
+        <RevealLight className={`${styles.sectionHeadCenter} ${styles.dark}`}>
           <span className={styles.badge}>Product</span>
           <h2 className={styles.title}>
             The follow-up, <span className={styles.em}>handled.</span>
@@ -129,31 +116,6 @@ export default function LandingPage() {
           </RevealLight>
 
           <RevealLight delay={0.08}>
-            <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Every message, on the record</h3>
-              <p className={styles.cardBody}>
-                What went out, why, and what was held for you. Nothing FollowUp does is a surprise you find out about
-                from a customer.
-              </p>
-              <div className={styles.cardFigure}>
-                {[
-                  { t: "Sent a check-in to Sarah", w: "5 days quiet after a pricing question", when: "9:14", cls: styles.pillSage, pill: "Sent" },
-                  { t: "Held a draft for Mike", w: "It mentions a price. That is yours to say.", when: "8:50", cls: styles.pillGold, pill: "Needs you" },
-                  { t: "Stopped the sequence for Priya", w: "She replied. Nothing more goes out.", when: "8:02", cls: styles.pillSlate, pill: "Stopped" },
-                ].map((r) => (
-                  <div key={r.t} className={styles.liveRow}>
-                    <div className="min-w-0">
-                      <div className={styles.leadName}>{r.t}</div>
-                      <div className={styles.leadWhy}>{r.w}</div>
-                    </div>
-                    <span className={`${styles.pill} ${r.cls}`}>{r.pill}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </RevealLight>
-
-          <RevealLight>
             <div className={styles.card}>
               <h3 className={styles.cardTitle}>Drafts that sound like you</h3>
               <p className={styles.cardBody}>
@@ -194,30 +156,7 @@ export default function LandingPage() {
             </div>
           </RevealLight>
 
-          <RevealLight delay={0.08}>
-            <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Works for a team, not just you</h3>
-              <p className={styles.cardBody}>
-                See who has an overdue follow-up and on which deal, route new leads to the right person, and skip the
-                status meeting.
-              </p>
-              <div className={styles.cardFigure}>
-                {[
-                  { n: "Alex", d: "3 overdue · $12,400 open", pill: "Needs a nudge", cls: styles.pillGold },
-                  { n: "You", d: "1 overdue · $3,500 open", pill: "On track", cls: styles.pillSage },
-                  { n: "Sam", d: "0 overdue · $6,100 open", pill: "On track", cls: styles.pillSage },
-                ].map((r) => (
-                  <div key={r.n} className={styles.liveRow}>
-                    <div className="min-w-0">
-                      <div className={styles.leadName}>{r.n}</div>
-                      <div className={styles.leadWhy}>{r.d}</div>
-                    </div>
-                    <span className={`${styles.pill} ${r.cls}`}>{r.pill}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </RevealLight>
+        </div>
         </div>
       </section>
 
@@ -253,23 +192,20 @@ export default function LandingPage() {
             Industry-wide lead-response benchmarks, not FollowUp&apos;s own results.
           </p>
 
-          <div className={styles.grid3}>
-            {[
-              { icon: <PauseCircle className="h-5 w-5" />, t: "Stops the instant a lead replies", b: "The moment they write back, every scheduled follow-up for them is cancelled. No exceptions, and there is a test that proves it." },
-              { icon: <ShieldCheck className="h-5 w-5" />, t: "Never talks price or terms without you", b: "Anything about money, contracts or a tense thread is held for your approval. Only low-risk, on-topic replies go out on their own." },
-              { icon: <FileText className="h-5 w-5" />, t: "Nothing goes out unexplained", b: "Every automated message is on the record with the reason it was sent. You can always answer: what happened, why, and what next." },
-            ].map((g, i) => (
-              <RevealLight key={g.t} delay={i * 0.07}>
-                <div className={styles.card}>
-                  <span className={styles.iconChip}>{g.icon}</span>
-                  <h3 className={styles.cardTitle} style={{ fontSize: 16.5 }}>
-                    {g.t}
-                  </h3>
-                  <p className={styles.cardBody}>{g.b}</p>
+          <RevealLight>
+            <div className={styles.facts}>
+              {[
+                { t: "Stops the instant a lead replies", b: "The moment they write back, every scheduled follow-up for them is cancelled. No exceptions, and there is a test that proves it." },
+                { t: "Never talks price or terms without you", b: "Anything about money, contracts or a tense thread is held for your approval. Only low-risk, on-topic replies go out on their own." },
+                { t: "Nothing goes out unexplained", b: "Every automated message is on the record with the reason it was sent. What happened, why, and what next." },
+              ].map((g) => (
+                <div key={g.t} className={styles.fact}>
+                  <h3 className={styles.factTitle}>{g.t}</h3>
+                  <p className={styles.factBody}>{g.b}</p>
                 </div>
-              </RevealLight>
-            ))}
-          </div>
+              ))}
+            </div>
+          </RevealLight>
         </div>
       </section>
 
@@ -379,18 +315,15 @@ export default function LandingPage() {
           <h2 className={styles.title}>
             Built to make a difference, not a <span className={styles.em}>dashboard.</span>
           </h2>
-          <p className={styles.lede}>Six things FollowUp does that a reminder never will.</p>
+          <p className={styles.lede}>Three things FollowUp does that a reminder never will.</p>
         </RevealLight>
         <div className={styles.grid3}>
           {[
             { icon: <Inbox className="h-5 w-5" />, t: "One inbox for every lead", b: "Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form, read in one place. Nothing to log." },
             { icon: <Eye className="h-5 w-5" />, t: "Scores you can see through", b: "Every urgency score comes with the exact detail that raised or lowered it. Never a black-box number." },
-            { icon: <Languages className="h-5 w-5" />, t: "In their language", b: "A lead who writes in Spanish is acknowledged, scored and answered in Spanish. Same for any language." },
             { icon: <Send className="h-5 w-5" />, t: "Follow-up on by default, safely", b: "Low-risk replies send themselves. Anything else waits for you. You choose how much to hand off, per lead." },
-            { icon: <MessageCircle className="h-5 w-5" />, t: "Meta's rules built in", b: "Instagram and Messenger get short questions with reply buttons inside the window, and one tap from you after it." },
-            { icon: <Users className="h-5 w-5" />, t: "Routes leads to the right person", b: "New leads go to whoever should own them. Everyone sees what is overdue, without a spreadsheet." },
           ].map((f, i) => (
-            <RevealLight key={f.t} delay={(i % 3) * 0.07}>
+            <RevealLight key={f.t} delay={i * 0.07}>
               <div className={styles.card}>
                 <span className={styles.iconChip}>{f.icon}</span>
                 <h3 className={styles.cardTitle} style={{ fontSize: 16.5 }}>

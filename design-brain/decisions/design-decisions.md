@@ -2245,3 +2245,34 @@ to look, and edits made directly to the frame are readable.
 layout-only containers had to be cleared afterwards. Set `fills = []` on containers at creation.
 
 **Cost.** Figma Pro ≈ $16/month, added to the expenses sheet as "confirm from receipt".
+
+## 2026-09-18 — R-007 acted on: leaf logo re-measured, the fade becomes a section, the chat becomes a timeline, half the cards go
+
+**Trigger.** After R-007 the founder was asked to mark the design; he answered "I don't know,
+help me now, change whatever I gave you." His four objections are the brief; no guessing beyond
+them.
+
+**1. Logo ("not accurate").** The leaves were re-measured from #69 on the sheet rather than eyeballed:
+side edge 0.8 × top edge (was 1.0), corners rounded over most of each side so each leaf reads as
+one curve and one point (handle 0.8, tangent 30 of a 45-unit side), lower leaf 57% as wide and 81%
+as tall (was a uniform 70%), tip at 55% of the upper's width. Side-by-side with the sketch in the
+session scratchpad. Bounding box now 77.7 × 120.
+
+**2. The black-to-white flip.** The 180 px fade band is gone. The Product section itself carries
+the gradient: it starts on the hero's charcoal, its head is white on dark, and the ground lightens
+to paper over ~900 px behind its own cards, so the eye crosses no edge. The close mirrors it: a
+340 px run from paper to black before the CTA.
+
+**3. The Sarah Johnson thread.** Replaced by `HeroTimelineLight`: five quiet rows in one card
+(Tue: a lead asks · Tue: you reply · 5 days: nothing · Sun: FollowUp asks one question · Sun:
+"Saturday works."). No avatar, no bubbles, no named person, no pretend screenshot. The rows
+appear one after another so the silence is felt. `HeroStoryLight` deleted.
+
+**4. Density.** Product: four cards → two (Who needs you today, Drafts that sound like you). The
+gap: three guarantee cards → three plain rows under the stats. How it works: six cards → three
+(One inbox, Scores you can see through, Follow-up on by default). Section padding 88 → 112. Hero
+lede cut to one sentence. Nothing removed is lost: teams, language and Meta's rules stay in
+Pricing and the FAQ.
+
+**Figma** synced to match (same file, same frame). **Verified** locally at 1440: hero, fade,
+Product, The gap; typecheck and lint clean. **Awaiting** the founder's reaction.

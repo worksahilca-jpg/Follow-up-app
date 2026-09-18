@@ -17,12 +17,15 @@ before any colour is added.
 | `png/` | Previews of the symbol (transparent) and app icon at 16 → 1024 px. |
 
 **The symbol.** Two leaves. Each is a parallelogram leaning forward (top and bottom edges
-rise to the right at about 23°, sides lean about 10°) with its two acute corners left sharp
-and its two obtuse corners rounded. The upper leaf is the first contact; the lower leaf,
-70% the size and tucked under to the left with the same lean, is the follow-through. The
-channel between them is the moment in between, and it is the part that must never close:
-at any size the gap stays visible. Bounding box 81.79 × 120 (1 : 1.47). Channel ≈ 6 units
-(5% of height) in the master, 9.5 units in the favicon variant.
+rise to the right at about 23°, sides lean about 10°, sides are 0.8 × the top edge) with
+its two acute corners left sharp and its two obtuse corners rounded over most of each side,
+so each leaf reads as one curve and one point. The upper leaf is the first contact; the lower
+leaf, 57% as wide and 81% as tall, tucked under to the left with the same lean and its tip at
+55% of the upper's width, is the follow-through. The channel between them is the moment in
+between, and it is the part that must never close: at any size the gap stays visible.
+Bounding box 77.7 × 120 (1 : 1.54). Channel ≈ 5.4 units (4.5% of height) in the master,
+8.4 units in the favicon variant. Proportions measured from the founder's sheet (#69) on
+2026-09-18 after his "logo is not accurate" on the first build.
 
 **Colour.** Primary dark `#111312`, primary light `#FFFFFF`. No blue, purple or gradient.
 

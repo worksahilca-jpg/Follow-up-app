@@ -10,6 +10,7 @@ import { captureDirectReply, createInboundMessageIfNew, findOrCreateLeadByInstag
 // asked us to stop" for every channel. See src/lib/optOutKeywords.ts.
 import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import { suppress, unsuppress, type DmSuppressionChannel } from "@/lib/suppression";
+import { decodeQuickReplyPayload, type QuickReplyAnswer } from "@/lib/quickReplies";
 
 /**
  * What to record for one Meta message event, and what (if anything) the
@@ -38,10 +39,19 @@ import { suppress, unsuppress, type DmSuppressionChannel } from "@/lib/suppressi
  * all (a read receipt, a delivery receipt, a reaction) — those are not
  * lead messages and were correctly skipped before.
  */
-export function messageContent(message: unknown): { body: string; ownWords: string } | null {
-  const m = (message ?? {}) as { text?: unknown; attachments?: unknown };
+export function messageContent(
+  message: unknown
+): { body: string; ownWords: string; quickReplyPayload?: string } | null {
+  const m = (message ?? {}) as { text?: unknown; attachments?: unknown; quick_reply?: unknown };
   const ownWords = typeof m.text === "string" ? m.text.trim() : "";
-  if (ownWords) return { body: ownWords, ownWords };
+  // A tap on a reply button arrives as an ordinary `messages` event whose
+  // `text` is the button's title and whose `quick_reply.payload` is what
+  // FollowUp put on the chip (api-facts §A4). The title is stored as the
+  // body so the thread reads naturally; the payload rides alongside so
+  // the engine knows it was a tap, not typing — see Message.quickReplyPayload.
+  const payload = (m.quick_reply as { payload?: unknown } | null | undefined)?.payload;
+  const quickReplyPayload = typeof payload === "string" && payload ? payload : undefined;
+  if (ownWords) return quickReplyPayload ? { body: ownWords, ownWords, quickReplyPayload } : { body: ownWords, ownWords };
 
   const attachments = Array.isArray(m.attachments) ? m.attachments : [];
   if (attachments.length === 0) return null;
@@ -104,6 +114,76 @@ async function applyDmConsentKeyword(
     meta: { channel, via: "keyword" },
   });
   return optingOut;
+}
+
+/**
+ * What happens when a lead taps one of FollowUp's reply buttons.
+ *
+ * The tap is already stored as an inbound Message (with its payload) by
+ * the time this runs — that row is what makes Meta's 24-hour door count
+ * as reopened in every window check. What this decides is everything
+ * else:
+ *
+ *  - An ANSWER chip ("Morning", "This week", "Hold a slot"): the lead has
+ *    replied and the owner is now the right sender. The owner is told in
+ *    one line, a fresh draft is written against the answer (the after_tap
+ *    set in src/lib/dmDrafts.ts: confirm, say what happens next, no new
+ *    question), and the usual engagement check runs. No acknowledgement —
+ *    "thanks for your message" in reply to a button press is exactly the
+ *    machine-sounding reply the whole strategy is trying not to send.
+ *  - The EXIT chip ("Not now", "Leave it", "Sorted elsewhere"): FollowUp
+ *    stops. No acknowledgement, no draft, no further automatic message —
+ *    findUnansweredLeads() and the status badge both read the stored
+ *    payload and stand down. One line to the owner, and the door stays
+ *    open: anything the lead types later restarts everything. This is the
+ *    Rule 3 guarantee the buttons research (§5.1) puts first; the test
+ *    pins it.
+ *
+ * Audit trail gets the decoded payload (which message, which question,
+ * which answer key) — identifiers, never the message text.
+ */
+async function handleQuickReplyTap(
+  businessId: string,
+  lead: { id: string; name: string; assignedToId: string | null },
+  channel: "instagram" | "messenger",
+  buttonTitle: string,
+  tap: QuickReplyAnswer
+): Promise<void> {
+  const platform = channel === "instagram" ? "Instagram" : "Messenger";
+  void recordAudit({ businessId, userId: null }, tap.exit ? "lead.dm_exit" : "lead.dm_answer", {
+    targetType: "lead",
+    targetId: lead.id,
+    meta: { channel, touch: tap.touch, question: tap.question, answer: tap.answer },
+  });
+  // The title is quoted back to the owner (it is FollowUp's own words, not
+  // the lead's), clipped so a chip can never carry a paragraph into a
+  // notification.
+  const label = buttonTitle.slice(0, 40);
+  const message = tap.exit
+    ? `${lead.name} tapped "${label}" on ${platform}, so FollowUp has stopped. They can write again any time.`
+    : `${lead.name} tapped "${label}" on ${platform} — they answered you, and this one needs you now.`;
+  await notifyLeadOwners(businessId, lead, message);
+  if (tap.exit) return;
+  await scoreAndDraftForLead(lead.id);
+  await checkRapidEngagement(lead.id);
+}
+
+/**
+ * The assignee, or every admin when nobody is assigned — the same fallback
+ * notifyNeglect() in src/lib/automation.ts uses, for the same reason: a
+ * pond lead that notified nobody was a real gap once.
+ */
+async function notifyLeadOwners(businessId: string, lead: { id: string; assignedToId: string | null }, message: string): Promise<void> {
+  try {
+    const userIds = lead.assignedToId
+      ? [lead.assignedToId]
+      : (await prisma.user.findMany({ where: { businessId, role: "ADMIN" }, select: { id: true } })).map((u) => u.id);
+    for (const userId of userIds) {
+      await prisma.notification.create({ data: { userId, leadId: lead.id, message } });
+    }
+  } catch (err) {
+    console.error(`Reply-button notification failed for lead ${lead.id}:`, err);
+  }
 }
 
 /**
@@ -173,8 +253,18 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
       const lead = await findOrCreateLeadByInstagram(business.id, senderId);
 
       const conversation = await findOrCreateConversation(lead.id, "instagram");
-      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid);
+      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid, content.quickReplyPayload);
       if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
+
+      // A tap on one of FollowUp's own reply buttons is an answer, not a
+      // new enquiry: no acknowledgement (the lead did not write anything
+      // to acknowledge), and on the honest-no chip nothing at all — see
+      // handleQuickReplyTap.
+      const tap = content.quickReplyPayload ? decodeQuickReplyPayload(content.quickReplyPayload) : null;
+      if (tap) {
+        await handleQuickReplyTap(business.id, lead, "instagram", content.body, tap);
+        continue;
+      }
 
       // STOP/START first — nothing else may touch this lead before consent
       // is recorded. `ownWords`, so an attachment whose placeholder body
@@ -240,8 +330,15 @@ async function handlePageEvents(entries: any[]): Promise<void> {
 
       const lead = await findOrCreateLeadByMessenger(business.id, senderId);
       const conversation = await findOrCreateConversation(lead.id, "messenger");
-      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid);
+      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid, content.quickReplyPayload);
       if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
+
+      // A reply-button tap — same handling as the Instagram path above.
+      const tap = content.quickReplyPayload ? decodeQuickReplyPayload(content.quickReplyPayload) : null;
+      if (tap) {
+        await handleQuickReplyTap(business.id, lead, "messenger", content.body, tap);
+        continue;
+      }
 
       // STOP/START before anything else — see the Instagram path above.
       const optedOut = await applyDmConsentKeyword(business.id, lead.id, "messenger", senderId, content.ownWords);

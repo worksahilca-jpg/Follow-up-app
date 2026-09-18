@@ -239,3 +239,36 @@ describe("the instant ack does not make a lead read as answered", () => {
     expect(computeAutomationStatus(l, RULES, NOW).kind).toBe("sent");
   });
 });
+
+/**
+ * A tap on the honest-no chip stops the automatic follow-ups (see
+ * handleQuickReplyTap in src/lib/inbound/meta.ts and findUnansweredLeads in
+ * src/lib/automation.ts). The badge must read the same stored payload, or
+ * it counts down to a message the engine will never send.
+ */
+describe("a 'Not now' tap on the lead's own page", () => {
+  const EXIT = "fu1;unanswered;interest_last;not_now;x";
+  const ANSWER = "fu1;unanswered;availability_unanswered;morning;a";
+
+  it("shows no countdown after an exit tap — FollowUp has stopped", () => {
+    const l = lead({ conversation: [{ ...msg("outbound", 6), trigger: "unanswered", channel: "instagram" }, { ...msg("inbound", 5), channel: "instagram", quickReplyPayload: EXIT }] });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "sent" });
+  });
+
+  it("still counts down after an ANSWER tap — the owner is expected to reply, and FollowUp will if they don't", () => {
+    const l = lead({ conversation: [{ ...msg("outbound", 6), trigger: "unanswered", channel: "instagram" }, { ...msg("inbound", 5), channel: "instagram", quickReplyPayload: ANSWER }] });
+    const status = computeAutomationStatus(l, RULES, NOW);
+    expect(status.kind).toBe("waiting");
+  });
+
+  it("restarts everything once the lead types again after an exit tap", () => {
+    const l = lead({
+      conversation: [
+        { ...msg("outbound", 30), trigger: "unanswered", channel: "instagram" },
+        { ...msg("inbound", 29), channel: "instagram", quickReplyPayload: EXIT },
+        { ...msg("inbound", 21), channel: "instagram", body: "actually, can you do next week?" },
+      ],
+    });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+  });
+});

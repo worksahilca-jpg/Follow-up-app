@@ -478,3 +478,52 @@ describe("email unsubscribe", () => {
     expect(sms).toHaveBeenCalled();
   });
 });
+
+/**
+ * Reply buttons ride through the one funnel every send takes
+ * (src/lib/quickReplies.ts): they reach the two Meta senders and nothing
+ * else, and the audit trail records how many went — a count, never the
+ * titles.
+ */
+describe("sendFollowUpToLead — reply buttons", () => {
+  const chips = [
+    { title: "Morning", payload: "fu1;unanswered;availability_unanswered;morning;a" },
+    { title: "Afternoon", payload: "fu1;unanswered;availability_unanswered;afternoon;a" },
+  ];
+
+  // An earlier block leaves isSuppressed answering "yes" for Instagram;
+  // clearAllMocks keeps implementations, so this block sets its own.
+  beforeEach(() => {
+    suppressed.mockReset();
+    suppressed.mockResolvedValue(false);
+  });
+
+  it("hands the chips to the Instagram sender", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "ig:17841400000000001" }));
+    const result = await sendFollowUpToLead("lead1", "Morning or afternoon?", { automated: true, trigger: "unanswered", channel: "instagram", quickReplies: chips });
+    expect(result).toEqual({ success: true });
+    expect(instagramSend).toHaveBeenCalledWith("biz1", "17841400000000001", "Morning or afternoon?", { quickReplies: chips });
+  });
+
+  it("hands the chips to the Messenger sender", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "fb:9988776655" }));
+    await sendFollowUpToLead("lead1", "Morning or afternoon?", { automated: true, trigger: "unanswered", channel: "messenger", quickReplies: chips });
+    expect(messengerSend).toHaveBeenCalledWith("biz1", "9988776655", "Morning or afternoon?", { quickReplies: chips });
+  });
+
+  it("drops them silently on a channel that has no such thing", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    await sendFollowUpToLead("lead1", "Morning or afternoon?", { automated: true, trigger: "unanswered", channel: "text", quickReplies: chips });
+    expect(sms).toHaveBeenCalledWith("biz1", "+15551234567", "Morning or afternoon?");
+    expect(audit).toHaveBeenCalledWith(expect.anything(), "ai.send", expect.objectContaining({ meta: expect.not.objectContaining({ quickReplies: expect.anything() }) }));
+  });
+
+  it("records the count in the ai.send audit event, never the titles", async () => {
+    p.lead.findUnique.mockResolvedValue(lead({ email: null, phone: "ig:17841400000000001" }));
+    await sendFollowUpToLead("lead1", "Morning or afternoon?", { automated: true, trigger: "unanswered", channel: "instagram", quickReplies: chips });
+    const [, action, detail] = audit.mock.calls.find((c) => c[1] === "ai.send")!;
+    expect(action).toBe("ai.send");
+    expect(detail.meta.quickReplies).toBe(2);
+    expect(JSON.stringify(detail.meta)).not.toContain("Morning");
+  });
+});

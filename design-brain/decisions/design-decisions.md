@@ -1922,3 +1922,57 @@ if you're interested." This is a copy rule for every DM draft, not a one-off.
 **Not done, deliberately:** no channel switch of any kind on these two channels (R-003).
 No fourth automatic touch inside the day — three is already the ceiling the brand's
 "never the spam tool" principle will bear, and each stops the moment the lead replies.
+
+## 2026-09-16 — DM drafts take the DM's shape, and every automatic DM ends in a question with reply buttons (PR B)
+
+**What shipped (backend; no screen changed):** step 2 of the DM-only build order above.
+
+- **The draft matches the channel.** A lead who last wrote on Instagram or Messenger now
+  gets a DM-shaped suggested reply: 8–30 words, no subject, no greeting frame, exactly one
+  question and it is the last sentence. Before this, the suggested reply for a DM lead was
+  an email with "Hi <name>," and a sign-off, and the automation pass sent exactly that into
+  their Instagram inbox (research finding, verified in code). Email leads are untouched.
+- **Which question is decided by facts, not by the model.** `src/lib/dmDrafts.ts` picks the
+  situation from the thread — did they ask a price or a day, has the business replied, did
+  that reply name a price or slots, was their last message a button tap — and hands the model
+  the matching instruction from the buttons research §6. The model never chooses the set.
+- **Two or three reply buttons under every automatic DM**, each a plain one-word answer, in
+  the lead's language, 20 characters or fewer, with an honest "no" marked as the exit
+  wherever the question is yes/no. Never more than three; volume is the spam signal.
+- **A deterministic shape check runs before anything is stored or sent** — same posture as
+  the instant ack's `checkAckShape`. One question, question last, length, no bot closers
+  ("let me know if you have any questions", "sound good?", "are you interested?"), no number
+  nobody wrote, no link, ≤3 buttons, one exit at most. A draft that fails twice is held for
+  the owner on every tier, including AUTONOMOUS.
+- **"Not now" stops everything.** A tap on the exit chip is recorded, the owner gets one
+  plain line ("…tapped "Not now" on Instagram, so FollowUp has stopped. They can write again
+  any time."), and no further automatic message goes out — engine and badge both read the
+  stored tap. Anything the lead types later restarts everything. This is the guarantee the
+  whole reply-button strategy rests on (buttons research §5.1) and it is pinned by tests.
+- **An answer chip hands the lead to the owner** ("they answered you, and this one needs you
+  now"), with a fresh draft that confirms the answer and does not ask again. A tap is never
+  acknowledged by the instant-ack path — "thanks for your message" in reply to a button press
+  is exactly the machine-sounding reply this is trying not to send.
+
+**Copy rules carried into code, for any future screen that shows these drafts:**
+- Owner-facing copy must never promise the lead "will see buttons" — chips render in the
+  Instagram app only, never on desktop (api-facts §A3).
+- The exit chip says "Not now" / "Leave it" / "Sorted elsewhere" and nothing else. No
+  confirmshaming, no "last chance", no slot counts, no mention of the 24-hour window.
+
+**Deliberately not in this PR, each its own piece of work:**
+1. **The third touch (≤20 h).** The situation sets for it exist (`price_last`,
+   `interest_last`) but nothing sends it yet — today's engine sends the ~3 h follow-up and
+   then waits for the lead. The mechanism is a small follow-on PR.
+2. **Buttons on the instant ack (touch 1).** The ack's allow-list of three speech acts is a
+   safety design; adding a question to it is a product decision, not a code change.
+3. **Chips on the approval card.** A held DM draft stores its buttons, but the owner's
+   approve-and-send path still sends plain text. Showing the chips on the card and sending
+   them on approval is UI work through the design-brain loop.
+4. **Workflow steps on DM channels** still use the old non-email hint, not the DM shape.
+5. **Reactions** (`message_reactions`) are still dropped at the webhook.
+6. **Live verification** of what a tap does to Meta's window (api-facts §E) — the code
+   assumes a tap reopens it, which is grade C until a real token settles it.
+
+**Weakest part, named:** the shape check's banned-closer list is English only, like the
+prompt's opener ban. A "¿te interesa?" gets through the check and relies on the prompt alone.

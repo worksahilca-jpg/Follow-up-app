@@ -36,6 +36,10 @@ export interface Message {
   // Undefined on inbound, on anything FollowUp didn't send, and on rows
   // from before the column existed that the backfill couldn't match.
   trigger?: string;
+  // Set on an inbound Instagram/Messenger message that was a tap on one of
+  // FollowUp's reply buttons — see Message.quickReplyPayload in
+  // schema.prisma and src/lib/quickReplies.ts. Undefined for anything typed.
+  quickReplyPayload?: string;
 }
 
 export interface ScoreFactor {

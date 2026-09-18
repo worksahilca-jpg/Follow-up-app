@@ -7,6 +7,9 @@ import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { getVoiceSamples } from "@/lib/voice";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import type { Message } from "@/lib/types";
+import { dmChannelOf } from "@/lib/dmDrafts";
+import { draftDm } from "@/lib/dmDrafting";
+import { Prisma } from "@prisma/client";
 
 // POST /api/leads/[id]/regenerate — asks the AI for a fresh draft against
 // this lead's real conversation, and saves it as the new suggested message.
@@ -73,20 +76,40 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       body: m.body,
       date: m.sentAt.toISOString(),
       opened: m.opened,
+      source: m.source ?? undefined,
+      trigger: m.trigger ?? undefined,
+      quickReplyPayload: m.quickReplyPayload ?? undefined,
     }))
   );
 
   try {
     const voiceSamples = await getVoiceSamples(lead.businessId);
-    const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
-    const newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
-      languageSample: latestInboundText(conversation),
-    });
+    // Same shape rule as scoreAndDraftForLead (src/lib/scoring.ts): a lead
+    // who last wrote on Instagram or Messenger gets a DM with reply
+    // buttons, everyone else the framed email.
+    const dmChannel = dmChannelOf(conversation);
+    let newMessage: string;
+    let newSubject: string | null;
+    let newQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
+    if (dmChannel) {
+      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined);
+      newMessage = dm.body;
+      newSubject = null;
+      newQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
+    } else {
+      const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
+      newMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
+        languageSample: latestInboundText(conversation),
+      });
+      newSubject = draft.subject;
+      newQuickReplies = Prisma.JsonNull;
+    }
     await prisma.lead.update({
       where: { id: lead.id },
       data: {
         suggestedMessage: newMessage,
-        suggestedSubject: draft.subject,
+        suggestedSubject: newSubject,
+        suggestedQuickReplies: newQuickReplies,
         // Stamp what this draft was written against, the same as every
         // other writer of suggestedMessage. Without it a hand-regenerated
         // draft reads as provenance-unknown, and the next automation pass
@@ -96,7 +119,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
           : null,
       },
     });
-    return NextResponse.json({ success: true, message: newMessage, subject: draft.subject });
+    return NextResponse.json({ success: true, message: newMessage, subject: newSubject ?? undefined });
   } catch (err) {
     const reason = err instanceof Error ? err.message : "Regeneration failed.";
     return NextResponse.json({ success: false, message: reason }, { status: 500 });

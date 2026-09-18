@@ -1053,3 +1053,179 @@ describe("the instant ack is transparent to the unanswered rule", () => {
     expect((await runAutomationForBusiness("biz1")).unanswered).toBe(0);
   });
 });
+
+/**
+ * Instagram and Messenger follow-ups are DMs, not emails (design-brain
+ * design-decisions.md 2026-09-16, DM-only): short, no subject, one question
+ * last, with reply buttons. The engine drafts them through the DM path
+ * (src/lib/dmDrafting.ts), refuses to reuse an email-shaped cache on a DM
+ * channel, holds a draft the shape check rejects twice, and stands down
+ * for good on a "Not now" tap.
+ */
+describe("DM-shaped follow-ups with reply buttons on Instagram and Messenger", () => {
+  const H = 3_600_000;
+  function igLead(overrides: Record<string, unknown> = {}) {
+    return lead({
+      id: "leadIg",
+      name: "Aanya Shah",
+      assignedToId: "user1",
+      suggestedQuickReplies: null,
+      conversations: [
+        {
+          channel: "instagram",
+          messages: [
+            { id: "b", direction: "inbound", body: "Do you have anything Saturday?", sentAt: new Date(Date.now() - 4 * H), opened: false },
+            { id: "a", direction: "outbound", body: "Got it, back to you shortly.", sentAt: new Date(Date.now() - 4 * H + 120_000), opened: false, trigger: "instant_ack" },
+          ],
+        },
+      ],
+      ...overrides,
+    });
+  }
+  function queueUnanswered(l: unknown) {
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([l]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+  }
+  const goodDm = {
+    subject: "",
+    body: "Checking Saturday for you now. Is morning or afternoon usually better for you?",
+    buttons: [{ title: "Morning", exit: false }, { title: "Afternoon", exit: false }, { title: "Either", exit: false }],
+  };
+
+  beforeEach(() => {
+    replyChannel.mockResolvedValue("instagram");
+    draftMessage.mockResolvedValue(goodDm);
+  });
+
+  it("drafts through the DM path — a situation picked from the thread, not an email", async () => {
+    queueUnanswered(igLead());
+    await runAutomationForBusiness("biz1");
+    const [, , hint, situation] = draftMessage.mock.calls[0];
+    expect(hint).toBeUndefined();
+    expect(situation).toEqual(expect.objectContaining({ id: "availability_unanswered" }));
+  });
+
+  it("sends the bare body with the chips, and no subject — nothing gets a greeting frame inside an Instagram bubble", async () => {
+    queueUnanswered(igLead());
+    await runAutomationForBusiness("biz1");
+    expect(send).toHaveBeenCalledWith(
+      "leadIg",
+      goodDm.body,
+      expect.objectContaining({
+        channel: "instagram",
+        subject: undefined,
+        quickReplies: [
+          expect.objectContaining({ title: "Morning" }),
+          expect.objectContaining({ title: "Afternoon" }),
+          expect.objectContaining({ title: "Either" }),
+        ],
+      })
+    );
+    const sentBody = send.mock.calls[0][1] as string;
+    expect(sentBody).not.toMatch(/^Hi,/);
+  });
+
+  it("tags every chip with the send's trigger and the question, so a tap comes back as an answer", async () => {
+    queueUnanswered(igLead());
+    await runAutomationForBusiness("biz1");
+    const chips = send.mock.calls[0][2].quickReplies as Array<{ payload: string }>;
+    expect(chips[0].payload).toBe("fu1;unanswered;availability_unanswered;morning;a");
+  });
+
+  it("refuses to reuse a cached EMAIL draft on a DM channel, even when it is current", async () => {
+    // suggestedQuickReplies null = the cache is an email with a greeting
+    // frame. It used to go out exactly like that.
+    queueUnanswered(igLead({ suggestedMessage: "Hi Aanya,\n\nI'll check Saturday.\n\nBest,\nSam", suggestedDraftedFor: new Date() }));
+    await runAutomationForBusiness("biz1");
+    expect(draftMessage).toHaveBeenCalled();
+    expect(send.mock.calls[0][1]).toBe(goodDm.body);
+  });
+
+  it("reuses a current DM-shaped cache, chips included, without paying to redraft", async () => {
+    queueUnanswered(
+      igLead({
+        suggestedMessage: "Is Saturday morning or afternoon better for you?",
+        suggestedDraftedFor: new Date(),
+        suggestedQuickReplies: { question: "availability_unanswered", buttons: [{ title: "Morning", exit: false }, { title: "Afternoon", exit: false }] },
+      })
+    );
+    await runAutomationForBusiness("biz1");
+    expect(draftMessage).not.toHaveBeenCalled();
+    expect(send.mock.calls[0][2].quickReplies).toHaveLength(2);
+  });
+
+  it("retries once when the draft fails the shape check, then holds it — a two-question DM never goes out unreviewed", async () => {
+    draftMessage.mockResolvedValue({ subject: "", body: "Is Saturday still fine for you? And morning or afternoon?", buttons: [] });
+    queueUnanswered(igLead());
+    const result = await runAutomationForBusiness("biz1");
+    expect(draftMessage).toHaveBeenCalledTimes(2);
+    expect(send).not.toHaveBeenCalled();
+    expect(result.held).toBe(1);
+    expect(result.heldReasons[0]).toMatch(/two_questions/);
+    expect(audit).toHaveBeenCalledWith(expect.anything(), "ai.hold", expect.objectContaining({ meta: expect.objectContaining({ riskLevel: "shape", reason: "two_questions" }) }));
+  });
+
+  it("holds a shape failure even for an AUTONOMOUS lead — the check is free, no tier skips it", async () => {
+    draftMessage.mockResolvedValue({ subject: "", body: "Is Saturday still fine for you? And morning or afternoon?", buttons: [] });
+    queueUnanswered(igLead({ automationTier: "AUTONOMOUS" }));
+    await runAutomationForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("stores the chips beside a draft the risk gate holds, so the owner's approval can carry them later", async () => {
+    draftMessage.mockResolvedValue(goodDm);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([igLead()]);
+    risk.mockResolvedValue({ riskLevel: "medium", reason: "Mentions a time the business hasn't confirmed." });
+    await runAutomationForBusiness("biz1");
+    expect(p.lead.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          suggestedMessage: goodDm.body,
+          suggestedSubject: null,
+          suggestedQuickReplies: { question: "availability_unanswered", buttons: goodDm.buttons },
+        }),
+      })
+    );
+  });
+
+  it("still frames an email follow-up exactly as before", async () => {
+    replyChannel.mockResolvedValue("email");
+    draftMessage.mockResolvedValue({ subject: "Saturday", body: "I'll check Saturday for you." });
+    queueUnanswered(igLead({ conversations: [{ channel: "email", messages: [{ id: "b", direction: "inbound", body: "Saturday?", sentAt: new Date(Date.now() - 30 * H), opened: false }] }] }));
+    await runAutomationForBusiness("biz1");
+    expect(draftMessage.mock.calls[0][3]).toBeUndefined();
+    expect(send).toHaveBeenCalledWith("leadIg", "Hi,\n\nI'll check Saturday for you.", expect.objectContaining({ subject: "Saturday", quickReplies: undefined }));
+  });
+
+  describe("a 'Not now' tap stops every further automatic message", () => {
+    const EXIT = "fu1;unanswered;interest_last;not_now;x";
+    const ANSWER = "fu1;unanswered;availability_unanswered;morning;a";
+    function tapped(payload: string, hoursAgo: number, then?: { body: string; hoursAgo: number }) {
+      const messages: Record<string, unknown>[] = [
+        { id: "q", direction: "inbound", body: "Do you have anything Saturday?", sentAt: new Date(Date.now() - (hoursAgo + 3) * H), opened: false },
+        { id: "f", direction: "outbound", body: "Morning or afternoon?", sentAt: new Date(Date.now() - (hoursAgo + 1) * H), opened: false, trigger: "unanswered" },
+        { id: "t", direction: "inbound", body: "Not now", sentAt: new Date(Date.now() - hoursAgo * H), opened: false, quickReplyPayload: payload },
+      ];
+      if (then) messages.push({ id: "n", direction: "inbound", body: then.body, sentAt: new Date(Date.now() - then.hoursAgo * H), opened: false });
+      return igLead({ conversations: [{ channel: "instagram", messages }] });
+    }
+
+    it("never selects a lead whose newest message is the exit tap, however long ago", async () => {
+      queueUnanswered(tapped(EXIT, 21));
+      const result = await runAutomationForBusiness("biz1");
+      expect(result.unanswered).toBe(0);
+      expect(send).not.toHaveBeenCalled();
+    });
+
+    it("does follow up after an ANSWER tap the owner then ignored — the lead replied and is waiting", async () => {
+      queueUnanswered(tapped(ANSWER, 21));
+      expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
+      expect(draftMessage.mock.calls[0][3]).toEqual(expect.objectContaining({ id: "after_tap" }));
+    });
+
+    it("restarts once the lead types again after the exit tap", async () => {
+      queueUnanswered(tapped(EXIT, 30, { body: "actually, could you do next week?", hoursAgo: 21 }));
+      expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
+    });
+  });
+});

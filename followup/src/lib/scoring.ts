@@ -9,12 +9,14 @@
 import { prisma } from "@/lib/db";
 import { scoreLead, generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
+import { dmChannelOf } from "@/lib/dmDrafts";
+import { draftDm } from "@/lib/dmDrafting";
 import { getVoiceSamples } from "@/lib/voice";
 import { checkAiEligibility } from "@/lib/billing";
 import { SCORE_HIGH, SCORE_MEDIUM } from "@/lib/scoreThresholds";
 import { notifySlack } from "@/lib/slack";
 import type { Message } from "@/lib/types";
-import type { Priority as DbPriority, Prisma } from "@prisma/client";
+import { Prisma, type Priority as DbPriority } from "@prisma/client";
 
 // Cut-points come from @/lib/scoreThresholds, shared with ScoreBadge —
 // the two used to carry their own copies (70/40 here, 75/45 there) and
@@ -63,6 +65,9 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       body: m.body,
       date: m.sentAt.toISOString(),
       opened: m.opened,
+      source: m.source ?? undefined,
+      trigger: m.trigger ?? undefined,
+      quickReplyPayload: m.quickReplyPayload ?? undefined,
     }))
   );
   if (conversation.length === 0) return false;
@@ -75,10 +80,33 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     }),
     getVoiceSamples(lead.businessId),
   ]);
-  const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
-  const suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
-    languageSample: latestInboundText(conversation),
-  });
+  // The draft takes the shape of the channel the lead last wrote on. An
+  // Instagram or Messenger lead gets a DM — short, no subject, one
+  // question, reply buttons (src/lib/dmDrafts.ts) — stored bare, with the
+  // buttons beside it; everyone else gets the framed email this always
+  // wrote. Before this, a DM lead's suggested reply was an email with
+  // "Hi <name>," and a sign-off, and that is what the automation pass sent
+  // into their Instagram inbox (research 2026-09-16, verified).
+  const dmChannel = dmChannelOf(conversation);
+  let suggestedMessage: string;
+  let suggestedSubject: string | null;
+  let suggestedQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
+  if (dmChannel) {
+    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined);
+    suggestedMessage = dm.body;
+    suggestedSubject = null;
+    // Buttons only when the draft passed the shape check — an owner may
+    // still send a draft that failed it (they can edit), but never with
+    // chips under a message that had two questions.
+    suggestedQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
+  } else {
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
+    suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
+      languageSample: latestInboundText(conversation),
+    });
+    suggestedSubject = draft.subject;
+    suggestedQuickReplies = Prisma.JsonNull;
+  }
 
   const newPriority = priorityFromScore(scoreResult.score);
   // "Handoff" — the explicit "this one's ready, go close it" moment the
@@ -102,7 +130,8 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       scoreFactors: scoreResult.factors as unknown as Prisma.InputJsonValue,
       priority: newPriority,
       suggestedMessage,
-      suggestedSubject: draft.subject,
+      suggestedSubject,
+      suggestedQuickReplies,
       // Stamp what this draft was written against, so the automation pass
       // can tell a still-current draft from a stale one instead of
       // rebuilding it every 20 hours (see schema.prisma).

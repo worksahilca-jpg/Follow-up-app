@@ -218,7 +218,7 @@ describe("inbound Instagram DM during a billing lockout", () => {
     const res = await metaPost(metaRequest(payload));
 
     expect(res.status).toBe(200);
-    expect(createInboundMessageIfNew).toHaveBeenCalledWith("conv1", "Hi, are you taking bookings?", expect.any(Date), "mid_1");
+    expect(createInboundMessageIfNew).toHaveBeenCalledWith("conv1", "Hi, are you taking bookings?", expect.any(Date), "mid_1", undefined);
   });
 });
 
@@ -237,7 +237,7 @@ describe("inbound Messenger DM during a billing lockout", () => {
     const res = await metaPost(metaRequest(payload));
 
     expect(res.status).toBe(200);
-    expect(createInboundMessageIfNew).toHaveBeenCalledWith("conv1", "What do you charge for a quote?", expect.any(Date), "mid_2");
+    expect(createInboundMessageIfNew).toHaveBeenCalledWith("conv1", "What do you charge for a quote?", expect.any(Date), "mid_2", undefined);
   });
 });
 

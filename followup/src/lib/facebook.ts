@@ -3,6 +3,8 @@ import { pickAssignee } from "@/lib/assignment";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { messengerLeadId } from "@/lib/instagramId";
+import { readMetaError, type MetaSendResult } from "@/lib/metaGraph";
+import { quickRepliesForGraph, validateQuickReplies, type QuickReply } from "@/lib/quickReplies";
 import type { Lead } from "@prisma/client";
 
 /**
@@ -34,29 +36,33 @@ async function pageToken(businessId: string): Promise<{ pageId: string; token: s
   return { pageId: b.facebookPageId, token: b.facebookPageAccessToken };
 }
 
+/**
+ * Sends a Messenger DM from the connected Page. `quickReplies` are the
+ * reply chips under it — same rules and same boundary check as
+ * sendInstagramMessage in src/lib/instagram.ts. `messaging_type: RESPONSE`
+ * is the in-window shape; the out-of-window human-agent tag is a separate,
+ * human-only path that does not exist yet (api-facts §C4).
+ */
 export async function sendMessengerMessage(
   businessId: string,
   psid: string,
-  text: string
-  // `status` is Meta's own HTTP status on a failure — see
-  // sendInstagramMessage in src/lib/instagram.ts for why it's passed through.
-): Promise<{ success: boolean; message?: string; status?: number }> {
+  text: string,
+  options: { quickReplies?: QuickReply[] } = {}
+): Promise<MetaSendResult> {
   const pt = await pageToken(businessId);
   if (!pt) return { success: false, message: "Facebook isn't connected yet — check Settings → Facebook." };
+  const checked = validateQuickReplies(options.quickReplies);
+  if (!checked.ok) return { success: false, message: checked.reason };
+
+  const message: Record<string, unknown> = { text };
+  if (checked.quickReplies) message.quick_replies = quickRepliesForGraph(checked.quickReplies);
+
   const res = await fetch(`${GRAPH}/${pt.pageId}/messages?access_token=${encodeURIComponent(pt.token)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipient: { id: psid }, messaging_type: "RESPONSE", message: { text } }),
+    body: JSON.stringify({ recipient: { id: psid }, messaging_type: "RESPONSE", message }),
   });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    const message = data?.error?.message;
-    return {
-      success: false,
-      message: typeof message === "string" ? message : "Facebook rejected this message.",
-      status: res.status,
-    };
-  }
+  if (!res.ok) return readMetaError(res, "Facebook rejected this message.", "Messenger");
   return { success: true };
 }
 

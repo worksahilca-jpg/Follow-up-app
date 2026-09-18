@@ -31,6 +31,9 @@
 
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
+import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
+import { isExitPayload, toQuickReplies, type StoredQuickReplies } from "@/lib/quickReplies";
+import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
@@ -240,6 +243,13 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
     if (judged.length === 0) return false;
     const last = judged.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
     if (last.direction !== "inbound") return false;
+    // A tap on the honest-no chip ("Not now", "Leave it") is the lead
+    // answering "leave me", and it stops every further automatic message —
+    // the one guarantee the reply-button strategy rests on (buttons research
+    // §5.1, "reset-farming"). It is still an inbound row, so the lead is
+    // not "unanswered": they were answered, and they declined. Anything they
+    // TYPE later is a newer inbound and everything restarts.
+    if (isExitPayload(last.quickReplyPayload)) return false;
     // A lead with no substantive outbound reply yet gets the shorter
     // first-reply threshold; everyone already in a real back-and-forth
     // keeps the business's normal unanswered-reply window. "Substantive"
@@ -432,6 +442,9 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           body: m.body,
           date: m.sentAt.toISOString(),
           opened: m.opened,
+          source: m.source ?? undefined,
+          trigger: m.trigger ?? undefined,
+          quickReplyPayload: m.quickReplyPayload ?? undefined,
         }))
       );
 
@@ -525,19 +538,47 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // somehow doesn't (e.g. scoring never ran, most commonly no
       // OPENAI_API_KEY configured), or if it's a dead lead or unanswered
       // reply whose draft is no longer current (see above).
+      // Explicit channel, not sendFollowUpToLead()'s own email-if-present
+      // default — a lead that only ever texted or DM'd, but happens to
+      // also have an email on file, would otherwise get an automated
+      // reply sent to an inbox they never check (see
+      // detectAutomatedReplyChannel's doc comment). Resolved up here
+      // because the SHAPE of the draft depends on it: an Instagram or
+      // Messenger DM is short, has no subject and ends in one question
+      // with reply buttons (src/lib/dmDrafts.ts); an email is the framed
+      // paragraph it always was.
+      const sendChannel = (await detectAutomatedReplyChannel(lead)) ?? undefined;
+      const isDm = sendChannel === "instagram" || sendChannel === "messenger";
+      // A cached draft written as an email (suggestedQuickReplies null —
+      // every row from before that column, and every lead whose last
+      // message was an email at the time) must not go out as a DM: the
+      // greeting/sign-off frame and the subject would ship inside the
+      // bubble. So on a DM channel "current" also requires a DM-shaped draft.
+      const cachedShapeFits = !isDm || lead.suggestedQuickReplies != null;
+
       let subject = lead.suggestedSubject ?? undefined;
       let message = lead.suggestedMessage;
+      let quickReplies: StoredQuickReplies | null = isDm ? readStoredQuickReplies(lead.suggestedQuickReplies) : null;
       let regenerated = false;
-      if (!message || ((isDeadLead || isUnanswered) && !draftIsCurrent)) {
+      let dmShapeFailed: string | null = null;
+      if (!message || !cachedShapeFits || ((isDeadLead || isUnanswered) && !draftIsCurrent)) {
         regenerated = true;
         const messageHint = isDeadLead
           ? deadLeadMessageHint(Math.floor((Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000))
           : undefined;
-        const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples, messageHint);
-        subject = draft.subject;
-        message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
-          languageSample: latestInboundText(conversation),
-        });
+        if (isDm) {
+          const dm = await draftDm(lead.name, conversation, voiceSamples, messageHint);
+          message = dm.body;
+          subject = undefined;
+          quickReplies = dm.quickReplies;
+          dmShapeFailed = dm.shapeFailed;
+        } else {
+          const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples, messageHint);
+          subject = draft.subject;
+          message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
+            languageSample: latestInboundText(conversation),
+          });
+        }
       }
 
       // AUTONOMOUS skips the risk check entirely — that's the whole point
@@ -549,6 +590,29 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // Free going forward), but a downgrade doesn't retroactively touch
       // leads already set that way, so this is the belt to that route's
       // suspenders.
+      // A DM that twice failed the deterministic shape check (two
+      // questions, a banned closer, a number nobody wrote, four chips) is
+      // held for the owner whatever the tier — including AUTONOMOUS, which
+      // skips the model risk gate below. The check is free and
+      // model-free, so there is no reason to let any tier bypass it: the
+      // whole point of a DM here is its shape.
+      if (dmShapeFailed) {
+        if (regenerated) {
+          await prisma.lead.update({
+            where: { id: lead.id },
+            data: { suggestedMessage: message, suggestedSubject: null, suggestedQuickReplies: { question: "shape_failed", buttons: [] }, suggestedDraftedFor: newestMessageAt },
+          });
+        }
+        const reason = `FollowUp couldn't write a short enough DM for ${lead.name.split(" ")[0]} (${dmShapeFailed}) — this one needs your eye before it goes`;
+        if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
+        void recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
+          targetType: "lead",
+          targetId: lead.id,
+          meta: { riskLevel: "shape", reason: dmShapeFailed, trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence" },
+        });
+        return { kind: "held", note: `${lead.name}: ${reason}` };
+      }
+
       if (lead.automationTier !== "AUTONOMOUS" || tier === "free") {
         let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
         if (process.env.OPENAI_API_KEY) {
@@ -611,7 +675,8 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
               where: { id: lead.id },
               data: {
                 suggestedMessage: message,
-                suggestedSubject: subject,
+                suggestedSubject: subject ?? null,
+                suggestedQuickReplies: quickReplies ? (quickReplies as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
                 suggestedDraftedFor: newestMessageAt,
               },
             });
@@ -658,16 +723,16 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         }
       }
 
-      // Explicit channel, not sendFollowUpToLead()'s own email-if-present
-      // default — a lead that only ever texted or DM'd, but happens to
-      // also have an email on file, would otherwise get an automated
-      // reply sent to an inbox they never check (see
-      // detectAutomatedReplyChannel's doc comment).
+      const trigger = unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence";
       const result = await sendFollowUpToLead(lead.id, message, {
         automated: true,
-        trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence",
+        trigger,
         subject,
-        channel: (await detectAutomatedReplyChannel(lead)) ?? undefined,
+        channel: sendChannel,
+        // The chips under a DM, each tagged with which message carried it
+        // and which question it answers, so a tap comes back as an answer
+        // rather than a bare word (src/lib/quickReplies.ts).
+        quickReplies: quickReplies && quickReplies.buttons.length > 0 ? toQuickReplies(quickReplies, trigger) : undefined,
       });
       if (result.success && unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "sent");
       return result.success

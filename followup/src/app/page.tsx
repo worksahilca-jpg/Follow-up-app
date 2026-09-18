@@ -24,6 +24,7 @@ const STEPS = [
 const PROMISES = [
   "When a customer replies, it stops.",
   "It never talks about money without you.",
+  "Every message it sends is written down, with the reason.",
   "You can delete everything, any time.",
 ] as const;
 
@@ -42,21 +43,19 @@ export default function LandingPage() {
             <h1 className={styles.h1}>
               Never lose a lead
               <br />
-              <span className={styles.em}>because nobody followed up.</span>
+              <span className={styles.em}>because you forgot to follow up.</span>
             </h1>
           </RevealLight>
           <RevealLight mode="mount" delay={0.1}>
-            <p className={styles.heroLede}>FollowUp writes back to your customers, so nobody is forgotten.</p>
+            <p className={styles.heroLede}>Only for owners who have leads and don&apos;t have time to reply.</p>
           </RevealLight>
           <RevealLight mode="mount" delay={0.15}>
             <div className={styles.heroActions}>
               <Link href="/signin" className={styles.btn}>
                 Start free <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="#how" className={styles.btnGhost}>
-                How it works
-              </a>
             </div>
+            <p className={styles.heroNote}>No card. It stops the moment they reply.</p>
           </RevealLight>
         </div>
         <HeroFlow />
@@ -90,10 +89,10 @@ export default function LandingPage() {
       <section className={styles.section} style={{ paddingTop: 0 }}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <h2 className={styles.h2}>
-            Three <span className={styles.em}>promises.</span>
+            Four <span className={styles.em}>promises.</span>
           </h2>
         </RevealLight>
-        <div className={styles.grid3}>
+        <div className={styles.grid4}>
           {PROMISES.map((q, i) => (
             <RevealLight key={q} delay={i * 0.08}>
               <div className={styles.story} style={{ marginBottom: 0 }}>
@@ -131,7 +130,7 @@ export default function LandingPage() {
           <h2 className={styles.h2}>
             Simple <span className={styles.em}>prices.</span>
           </h2>
-          <p className={styles.lede}>Start free. No card needed.</p>
+          <p className={styles.lede}>Start free. No card. No seats, no per-message fees, no AI add-on.</p>
         </RevealLight>
         <div className={styles.priceGrid}>
           <RevealLight>
@@ -213,8 +212,8 @@ export default function LandingPage() {
         <RevealLight delay={0.08}>
           <FaqDark
             items={[
-              { q: "What does it do?", a: "It writes back to your customers when they go quiet, so you don't lose them." },
               { q: "Will it send things I didn't approve?", a: "Only simple replies. Anything about money waits for you. When a customer answers, it stops." },
+              { q: "What about Instagram's 24-hour rule?", a: "Instagram only lets apps reply within 24 hours of a customer's message. Inside that time, FollowUp replies by itself. After it, FollowUp writes the message and you send it with one tap." },
               { q: "Is my data safe?", a: "It only reads what you connect. You can delete everything any time. Nothing is sold." },
               { q: "Is it for a team?", a: "Yes. Add your team and share customers." },
             ]}

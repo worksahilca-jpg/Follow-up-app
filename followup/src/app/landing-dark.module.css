@@ -951,6 +951,26 @@
   gap: 18px;
   margin-top: 44px;
 }
+.grid4 {
+  display: grid;
+  gap: 18px;
+  margin-top: 44px;
+}
+@media (min-width: 600px) {
+  .grid4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1000px) {
+  .grid4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.heroNote {
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: var(--faint);
+}
 @media (min-width: 720px) {
   .grid2 {
     grid-template-columns: repeat(2, 1fr);

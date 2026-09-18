@@ -2582,3 +2582,14 @@ hero (A-013 headline, A-014 buyer line, the moving diagram A-012, "Start free", 
 under the button); three steps; four promises; works with (names only); prices (three cards,
 three lines each, the no-metering line); four questions, the permission one first; start free;
 footer. Eight blocks. Design now builds against this and nothing else.
+
+## 2026-09-18 — Built against structure v1
+
+**Founder:** "build." The page now matches the settled structure and nothing else. Changes
+from v15, all copy and one grid: headline A-013; buyer line A-014 in place of the lede; one
+button ("Start free") with the reassurance under it ("No card. It stops the moment they
+reply."); four promises in a four-column grid (two on tablets, one on phones); the
+no-metering line in Prices; Questions reordered so "Will it send things I didn't approve?" is
+first, with the Instagram 24-hour answer second (the per-channel fact lives here, per
+question 2). Nothing visual changed beyond the fourth card. Verified at 1280 and 390 from a
+production build; typecheck, lint, build clean. **Awaiting** the founder's read.

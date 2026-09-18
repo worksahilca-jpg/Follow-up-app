@@ -17,8 +17,10 @@ page's structure was studied.
 "Book your demo" as the only action; About/Blog/Coming Soon pages we have no content for; the
 Framer "use template" pill; annual pricing we do not offer.
 
-**Where FollowUp diverged on purpose:** inverted to white and grey (founder's ask); every figure is
-FollowUp's own product state or a sourced benchmark; no claim about a customer anywhere.
+**Where FollowUp diverged on purpose:** the template is dark throughout; FollowUp's page travels
+black → grey → white → grey → black (dark hero and close, light middle) after the founder corrected
+the first all-light reading (R-006). Every figure is FollowUp's own product state or a sourced
+benchmark; no claim about a customer anywhere.
 
 **Grade:** primary (the template itself, transcribed section by section by the founder's Claude in
 Chrome session). See `decisions/design-decisions.md` 2026-09-18 for the build.

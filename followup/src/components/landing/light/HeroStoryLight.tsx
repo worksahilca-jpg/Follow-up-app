@@ -27,7 +27,9 @@ export default function HeroStoryLight() {
 
   return (
     <div className={styles.story}>
-      <div className={styles.thread}>
+      {/* .light: the thread stays a white card even when the hero around it
+          is the dark scope. Ink on paper is how a real thread looks. */}
+      <div className={`${styles.thread} ${styles.light}`}>
         <div className={styles.threadBar}>
           <span className={styles.threadAvatar} aria-hidden="true">
             SJ

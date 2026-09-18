@@ -2150,3 +2150,42 @@ approval entry comes only when he says yes. `[[approved#^A-008|A-008]]` → supe
 16-unit gap, which is honest but a little mechanical at 128 px and up; a hair of taper on the
 lower bar's left edge would make the channel read as opening forward. Left for round two so
 the founder reacts to the plain construction first.
+
+## 2026-09-18 — Black, grey, white: the page as a gradient (corrects the all-light reading)
+
+**Trigger.** The founder saw the first full render of the light-direction page and asked where the
+black-to-grey gradient was. Offered hero-only, hero + close, or whole page dark, he answered "whole
+page with white and black and greyish gradient". The all-light page is R-006.
+
+**What changed.** Not a redesign: the same sections, copy, components and motion, on a ground that
+moves. The page now reads black → grey → white → grey → black:
+
+- **Hero** on a near-black ground (`#08090b` → `#1c1e24`) with one soft grey light behind the
+  headline. The white thread card floats on it, which is the strongest thing on the page: the story
+  the product exists for, in ink on paper, on black.
+- **A 180px fade** from charcoal through grey to paper, then the light middle exactly as built
+  (Product, The gap, Integrations, Right now, How it works, Pricing, FAQ).
+- **The close** mirrors the hero: a 200px fade from paper down to black, with the CTA and footer on
+  the black. The CTA is no longer a card; on a dark ground a card would be a box inside a box.
+- **The nav** takes the dark tokens while it sits over the hero and returns to ink on paper once
+  the hero has scrolled past (`LandingNavLight` measures `#hero`).
+
+**How.** One `.dark` token scope in `landing-light.module.css` re-maps the paper/ink/line/card/
+status/accent tokens; every component already reads its colours from those tokens, so nothing was
+duplicated. `.light` re-asserts the paper tokens inside a dark region (used on the thread card).
+The italic emphasis word takes `--em`, lavender on dark, the accent on light. Owner bubbles are
+`ink on paper` in whichever scope they sit.
+
+**What it is not.** Not a dark theme for the app, not a toggle, not a gradient for its own sake.
+The dark regions are where the page opens and closes; the product detail sits on white where it
+is easiest to read. The mid-tones of both fades are deliberately short (about a third of each
+band) so the grey reads as a passage, not a surface.
+
+**Weakest part, named.** The two fades are the same linear ramp reversed; a real designer might
+break the symmetry at the close (a shorter fade, or the footer on flat black without the ramp).
+Left symmetrical for now because it is the simpler thing and the founder has not reacted yet.
+
+**Verified.** `next build` + `next start`, captured at 1440 and 390 via CDP: hero, fade, middle,
+close, footer, and the nav in both states. Typecheck and lint clean.
+
+**Awaiting.** The founder's reaction to the render.

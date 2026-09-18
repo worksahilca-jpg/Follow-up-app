@@ -204,3 +204,24 @@ the product exists for, not the screen it lives in. Replaced by the thread: lead
 answers, five days of silence, one short FollowUp question with buttons, the lead comes back.
 
 **Evidence:** the 2026-09-18 "light direction" entry in `[[design-decisions]]`; `HeroStoryLight.tsx`.
+
+## R-006 — An all-light marketing page (white and grey only, no dark ground anywhere) ^R-006
+
+**Rejected:** 2026-09-18, founder, on seeing the first full render: "bro where is that black greyish
+gradient" → asked where it should go → "whole page with white and black and greyish gradient".
+
+**What was rejected:** the reading of "make ours look like this but in white gradient or greyish"
+as *invert the whole template to light*. The founder meant *keep the template's dark ground and add
+the white and grey to it*: the page should move through black, grey and white, not sit on one of
+them.
+
+**Stated reason:** the black-to-grey gradient was the thing he liked about the reference and it was
+missing.
+
+**Do not propose again:** a marketing page with no dark region. The shape that replaced it is in
+`[[design-decisions]]` 2026-09-18 ("black, grey, white: the page as a gradient"): dark hero, fade
+to a light middle, fade back to a dark close.
+
+**Lesson for the brain (inferred, marked inferred):** when the founder names a reference *and* a
+colour change in one breath, the colour change is additive, not a replacement. Ask "where does the
+dark go" before building an all-light page from a dark reference.

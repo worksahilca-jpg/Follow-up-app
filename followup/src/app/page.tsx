@@ -39,7 +39,7 @@ export default function LandingPage() {
       <LandingNavLight />
 
       {/* ---------- Hero ---------- */}
-      <header className={styles.hero}>
+      <header id="hero" className={`${styles.hero} ${styles.dark}`}>
         <div className={styles.heroInner}>
           <RevealLight mode="mount" y={10}>
             <span className={styles.badge}>
@@ -84,8 +84,9 @@ export default function LandingPage() {
           </RevealLight>
         </div>
         <HeroStoryLight />
-        <div style={{ height: 64 }} />
+        <div style={{ height: 72 }} />
       </header>
+      <div className={styles.heroFade} aria-hidden="true" />
 
       {/* ---------- Product ---------- */}
       <section id="product" className={styles.section}>
@@ -544,7 +545,8 @@ export default function LandingPage() {
         </RevealLight>
       </section>
 
-      {/* ---------- CTA band ---------- */}
+      {/* ---------- The close: back down to black ---------- */}
+      <div className={`${styles.ctaBand} ${styles.dark}`}>
       <div className={styles.cta}>
         <RevealLight>
           <div className={styles.ctaInner}>
@@ -582,6 +584,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }

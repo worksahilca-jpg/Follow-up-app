@@ -14,7 +14,8 @@
   until its own restyle lands as a separate PR.
 */
 
-.root {
+.root,
+.light {
   --paper: #fbfbfd;
   --paper-2: #f4f4f7;
   --ink: #111318;
@@ -38,14 +39,55 @@
   --card-2: #f8f8fa;
   --shadow: 0 1px 2px rgba(17, 19, 24, 0.04), 0 12px 28px -18px rgba(17, 19, 24, 0.22);
   --shadow-lift: 0 2px 4px rgba(17, 19, 24, 0.05), 0 30px 60px -28px rgba(17, 19, 24, 0.3);
+  --em: var(--accent);
   --radius: 18px;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-
+}
+.root {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-public-sans), system-ui, sans-serif;
   position: relative;
   overflow-x: clip;
+}
+.light {
+  color: var(--ink);
+}
+
+/*
+  The dark scope. Founder, 2026-09-18, on the all-light first render: "where
+  is that black greyish gradient" → "whole page with white and black and
+  greyish gradient". The page now travels black → grey → white → grey →
+  black: a dark hero, a light middle, a dark close. Every component reads
+  its colours from the tokens, so wrapping a region in .dark re-themes it
+  without a second set of components. .light re-asserts the paper tokens
+  inside a dark region (the thread card floats white on the black hero).
+*/
+.dark {
+  --paper: #0b0c0f;
+  --paper-2: #15171b;
+  --ink: #f5f6f8;
+  --ink-soft: rgba(245, 246, 248, 0.68);
+  --ink-faint: rgba(245, 246, 248, 0.48);
+  --accent: #5b5ff0;
+  --accent-deep: #7478f4;
+  --accent-soft: rgba(129, 140, 248, 0.2);
+  --em: #a5b4fc;
+  --sage: #6ee7a0;
+  --sage-soft: rgba(13, 110, 60, 0.3);
+  --gold: #fbbf24;
+  --gold-soft: rgba(163, 89, 4, 0.3);
+  --coral: #fb7185;
+  --coral-soft: rgba(179, 42, 68, 0.3);
+  --slate: #b6c2d3;
+  --slate-soft: rgba(86, 103, 126, 0.32);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --card: #17191e;
+  --card-2: #1e2127;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 28px -18px rgba(0, 0, 0, 0.8);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.5), 0 30px 60px -28px rgba(0, 0, 0, 0.9);
+  color: var(--ink);
 }
 
 .root :global(h1),
@@ -62,7 +104,7 @@
   font-style: italic;
   font-weight: 400;
   letter-spacing: 0;
-  color: var(--accent);
+  color: var(--em);
 }
 
 /* ---------- layout rhythm: every section is the same shape ---------- */
@@ -176,6 +218,24 @@
   -webkit-backdrop-filter: blur(14px);
   border-bottom-color: var(--line);
 }
+/* While the nav sits over the dark hero it takes the dark tokens; once the
+   hero has scrolled past, LandingNavLight drops this class and it turns
+   back to ink on paper. Same transition either way. */
+.navDark {
+  --paper: #08090b;
+  background: #08090b;
+  --ink: #f5f6f8;
+  --ink-soft: rgba(245, 246, 248, 0.72);
+  --line: rgba(255, 255, 255, 0.1);
+  --accent-soft: rgba(129, 140, 248, 0.2);
+  --accent-deep: #a5b4fc;
+}
+.navDark.navScrolled {
+  background: rgba(8, 9, 11, 0.82);
+}
+.navDark .navLinks a:hover {
+  color: #fff;
+}
 .navInner {
   max-width: 1120px;
   margin: 0 auto;
@@ -229,7 +289,18 @@
 
 .hero {
   position: relative;
-  background: radial-gradient(120% 80% at 50% 0%, #ffffff 0%, var(--paper-2) 100%);
+  /* Black at the top, lifting to charcoal, with one soft grey light behind
+     the headline. The fade below carries it the rest of the way to paper. */
+  background:
+    radial-gradient(70% 55% at 50% 0%, rgba(120, 124, 134, 0.34) 0%, rgba(120, 124, 134, 0) 70%),
+    linear-gradient(180deg, #08090b 0%, #111318 45%, #1c1e24 100%);
+}
+.heroFade {
+  height: 180px;
+  background: linear-gradient(180deg, #1c1e24 0%, #4a4d55 38%, #b9bcc4 72%, var(--paper) 100%);
+}
+.dark .thread {
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 .heroInner {
   max-width: 1120px;
@@ -709,6 +780,12 @@
 
 /* ---------- CTA band ---------- */
 
+/* The close: paper fades down through grey to black, and the CTA and footer
+   sit on the black. The mirror of the hero. */
+.ctaBand {
+  background: linear-gradient(180deg, #fbfbfd 0%, #b9bcc4 22%, #4a4d55 48%, #1c1e24 70%, #0b0c0f 100%);
+  padding-top: 200px;
+}
 .cta {
   max-width: 1120px;
   margin: 0 auto;
@@ -716,21 +793,8 @@
 }
 .ctaInner {
   position: relative;
-  overflow: hidden;
-  border-radius: 28px;
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, #ffffff 0%, var(--paper-2) 100%);
-  box-shadow: var(--shadow-lift);
-  padding: 64px 24px;
+  padding: 24px 0 0;
   text-align: center;
-}
-.ctaInner::before {
-  content: "";
-  position: absolute;
-  inset: auto -20% -60% -20%;
-  height: 70%;
-  background: radial-gradient(50% 60% at 50% 100%, var(--accent-soft), transparent 70%);
-  pointer-events: none;
 }
 .ctaBrand {
   display: inline-flex;
@@ -743,6 +807,7 @@
 
 .footer {
   border-top: 1px solid var(--line);
+  background: #0b0c0f;
 }
 .footerInner {
   max-width: 1120px;
@@ -867,11 +932,12 @@
 .bubbleOwner {
   align-self: flex-end;
   background: var(--ink);
-  color: #fff;
+  color: var(--paper);
   border-bottom-right-radius: 6px;
 }
 .bubbleAuto {
   background: var(--accent);
+  color: #fff;
 }
 .bubbleTag {
   display: block;

@@ -227,3 +227,23 @@ this entry and no other; a future concept still needs a reference the founder ch
 components); the founder's answers `B A A - A B`; his "YES USE MY ANSWERS" on 2026-09-15;
 `[[design-decisions#^D-023|D-023]]` — the app-wide layout plan built on this calibration,
 `design-brain/decisions/2026-09-15-app-layout-plan.md`.
+
+## A-007 — "Not now" from a lead on Instagram or Messenger is respected: no day-2–7 draft ^A-007
+
+**Approved:** 2026-09-18, founder, choosing "No draft, respect it" over "Still draft it".
+
+**What was approved:** when a lead taps the exit reply button ("Not now" / "Leave it") on
+an automatic DM, FollowUp writes nothing further — not the day-2–7 hand-off draft, not a
+badge that says the lead is unanswered. Only the lead typing something later restarts the
+sequence. This is the point where the reaction strategy (chips give the lead an honest way
+out) and the rescue strategy (one more human-sent message might recover them) disagree,
+and the founder ruled for the way out.
+
+**Why it matters for design:** the exit button is only honest if tapping it ends things.
+An owner-facing draft that appears anyway would make the button a trick, which is the
+"spam tool" failure `CLAUDE.md` forbids. Copy on the approval card and in Settings may say
+so plainly: "If they tap Not now, that's the end of it unless they write again."
+
+**Evidence:** PR #258 (exit tap stops the unanswered rule and the badge), PR #259 (no
+hand-off draft after an exit tap; mutation-tested), and the 2026-09-18 entry in
+`[[design-decisions]]`.

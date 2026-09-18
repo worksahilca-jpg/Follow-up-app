@@ -1,560 +1,589 @@
 import Link from "next/link";
 import {
-  Mail,
-  Clock,
-  TrendingUp,
-  Users,
-  Check,
-  X,
   ArrowRight,
-  Briefcase,
-  Building2,
+  Check,
+  Inbox,
   Eye,
-  PenLine,
-  BellOff,
+  Languages,
+  ShieldCheck,
+  MessageCircle,
+  Users,
   Send,
+  PauseCircle,
+  FileText,
 } from "lucide-react";
-import styles from "./landing-award.module.css";
-import LandingNavAward from "@/components/landing/award/LandingNavAward";
-import HeroMockupAward from "@/components/landing/award/HeroMockupAward";
-import OrbitDiagramAward from "@/components/landing/award/OrbitDiagramAward";
-import RevealAward from "@/components/landing/award/RevealAward";
-import LandingFaqAward from "@/components/landing/award/LandingFaqAward";
+import styles from "./landing-light.module.css";
+import LandingNavLight from "@/components/landing/light/LandingNavLight";
+import HeroMockupLight from "@/components/landing/light/HeroMockupLight";
+import RevealLight from "@/components/landing/light/RevealLight";
+import FaqLight from "@/components/landing/light/FaqLight";
+import LogoMark from "@/components/landing/light/LogoMark";
 import CountUp from "@/components/motion/CountUp";
-import { bricolageGrotesque, publicSans, ibmPlexMono } from "@/lib/fonts";
+import { bricolageGrotesque, publicSans, ibmPlexMono, instrumentSerif } from "@/lib/fonts";
+import { TIER_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 
-// "Award Direction" — a CEO-approved, page-scoped visual system for the
-// public landing page only (deep navy / professional blue / cloud white,
-// Bricolage Grotesque + Public Sans + IBM Plex Mono). /signin and the
-// authenticated app are untouched and keep the shared amber/Plus Jakarta
-// Sans system. See design-brain/decisions/design-decisions.md, 2026-09-13.
-//
-// Copy is carried over from the CEO-approved copy-accuracy pass on
-// `copy-fixes-conversion-thesis-audit` (real channel list including
-// WhatsApp, the ASSISTED-by-default automation guarantee, sourced stats —
-// 62%/63%/29-47hrs) rather than the design exploration's own draft copy.
-// The exploration's placeholder testimonial is omitted entirely — FollowUp
-// has no real customers yet and it was never real content to begin with.
+// "Light direction" — the marketing page rebuilt on 2026-09-18 in the
+// structure, rhythm and motion of the founder's chosen reference template,
+// inverted onto white and grey, with FollowUp's own content in every
+// section. Copy is carried over from the CEO-approved copy-accuracy pass
+// (real channel list, the ASSISTED-by-default guarantee, the sourced
+// 62% / 63% / 29–47 hrs benchmarks) and extended only where the new
+// section shape needed a line. Nothing here is a claim about a customer:
+// no testimonials, no customer logos, no results — FollowUp has no
+// customers to quote yet, and an invented one is the one thing this page
+// must never carry. See design-brain/decisions/design-decisions.md,
+// 2026-09-18.
 export default function LandingPage() {
   return (
-    <div
-      className={`${styles.root} ${bricolageGrotesque.variable} ${publicSans.variable} ${ibmPlexMono.variable}`}
-    >
-      <LandingNavAward />
+    <div className={`${styles.root} ${bricolageGrotesque.variable} ${publicSans.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable}`}>
+      <LandingNavLight />
 
       {/* ---------- Hero ---------- */}
-      <section className="relative max-w-6xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-16 items-center">
-        <div>
-          <RevealAward>
-            <span className={styles.badge}>Built for small businesses that can&apos;t afford to lose a lead</span>
-          </RevealAward>
-          <RevealAward delayMs={80}>
-            <h1
-              className="mt-5"
-              style={{
-                fontWeight: 800,
-                fontSize: "clamp(34px, 4.2vw, 52px)",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                color: "var(--ink)",
-              }}
-            >
-              {["Every", "tool", "answers", "the", "lead.", "FollowUp", "catches", "the", "one", "that"].map(
-                (word, i) => (
-                  <span key={word + i} className={styles.word}>
-                    <span style={{ animationDelay: `${i * 0.035}s` }}>{word}&nbsp;</span>
-                  </span>
-                ),
-              )}
-              <span className={styles.word}>
-                <span style={{ animationDelay: "0.4s" }} className={styles.accentText}>
-                  went&nbsp;quiet.
-                </span>
-              </span>
+      <header className={styles.hero}>
+        <div className={styles.heroInner}>
+          <RevealLight mode="mount" y={10}>
+            <span className={styles.badge}>
+              <span className={styles.badgeDot} aria-hidden="true" />
+              New: reply buttons on Instagram and Messenger follow-ups
+            </span>
+          </RevealLight>
+          <RevealLight mode="mount" delay={0.05}>
+            <h1 className={styles.heroTitle}>
+              Every tool answers the lead. FollowUp catches the one that <span className={styles.em}>went quiet.</span>
             </h1>
-          </RevealAward>
-          <RevealAward delayMs={140}>
-            <p className="mt-6 text-[16px] leading-relaxed max-w-md" style={{ color: "var(--ink-soft)" }}>
-              You already paid to get them. Losing them after costs more. FollowUp reads every
-              conversation, not just the new ones — and catches the lead who already heard from
-              you once, then went silent, before &ldquo;let me think about it&rdquo; turns into a
-              lost sale.
+          </RevealLight>
+          <RevealLight mode="mount" delay={0.1}>
+            <p className={styles.heroLede}>
+              You already paid to get them. Losing them after costs more. FollowUp reads every conversation, not just the
+              new ones, and catches the lead who heard from you once and then went silent, before &ldquo;let me think
+              about it&rdquo; turns into a lost sale.
             </p>
-          </RevealAward>
-          <RevealAward delayMs={200}>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                href="/signin"
-                className="inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-[15px] font-bold transition-transform hover:scale-[1.03]"
-                style={{ background: "var(--accent)", color: "var(--on-accent)", boxShadow: "0 16px 32px -14px rgba(23,52,138,0.5)" }}
-              >
+          </RevealLight>
+          <RevealLight mode="mount" delay={0.15}>
+            <div className={styles.heroActions}>
+              <Link href="/signin" className={styles.btnPrimary}>
                 Get started <ArrowRight className="h-4 w-4" />
               </Link>
-              <a
-                href="#how-it-works"
-                className="rounded-full px-5 py-3 text-[14px] font-semibold transition-opacity hover:opacity-70"
-                style={{ border: "1px solid var(--line-strong)", color: "var(--ink)" }}
-              >
+              <a href="#how-it-works" className={styles.btnGhost}>
                 See how it works
               </a>
             </div>
-            {/* The "no credit card required" reassurance used to be stapled onto the 21× stat
-                sentence below, joined by an em dash — one idea about the product, one about
-                trial friction, read as if they were the same claim. Moved next to the button it
-                actually answers ("what happens when I click Get started"). */}
-            <p className="mt-2.5 text-xs" style={{ color: "var(--ink-faint)" }}>
-              No credit card required.
-            </p>
-          </RevealAward>
-          <RevealAward delayMs={260}>
-            <div className="mt-9 flex items-center gap-4">
-              <p
-                className="shrink-0"
-                style={{
-                  fontFamily: "var(--font-bricolage), sans-serif",
-                  fontWeight: 800,
-                  fontSize: 34,
-                  letterSpacing: "-0.02em",
-                  color: "var(--ink)",
-                }}
-              >
-                <CountUp to={21} suffix="×" />
-              </p>
-              <p className="text-xs leading-relaxed max-w-[15rem]" style={{ color: "var(--ink-soft)" }}>
-                higher qualification rate when a lead is contacted within 5 minutes instead of
-                after 30.
-              </p>
-            </div>
-          </RevealAward>
-          <RevealAward delayMs={320}>
-            <div className="mt-9">
-              <p className={styles.eyebrow}>Reads what you already use</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {/* Carrier channels are dropped for now (CARRIER_CHANNELS_AVAILABLE in
-                    @/lib/pricing), so "Twilio" came out — it was vendor jargon
-                    standing in for SMS, which is what actually stopped. WhatsApp
-                    stayed: A2P 10DLC is an SMS rule and does not touch it, and
-                    what it needs is Meta's approval, the same approval Instagram
-                    and Messenger need. "Messenger" was added because it is live
-                    and was missing. A logo row is a promise about what works
-                    today; naming something a visitor then cannot connect is the
-                    cheapest possible way to lose their trust. */}
-                {["Gmail", "Outlook", "Instagram", "Messenger", "WhatsApp"].map((name) => (
-                  <span
-                    key={name}
-                    className="text-[12.5px] font-bold rounded-lg px-3 py-1.5"
-                    style={{ background: "var(--card)", border: "1px solid var(--line)", color: "var(--ink)" }}
-                  >
+            <p className={styles.heroFine}>No credit card required.</p>
+          </RevealLight>
+          <RevealLight mode="mount" delay={0.2}>
+            <div className={styles.strip}>
+              <p className={styles.stripLabel}>Reads what you already use</p>
+              <div className={styles.stripRow}>
+                {["Gmail", "Outlook", "Instagram", "Messenger", "WhatsApp", "HubSpot", "Follow Up Boss"].map((name) => (
+                  <span key={name} className={styles.chip}>
                     {name}
                   </span>
                 ))}
               </div>
             </div>
-          </RevealAward>
+          </RevealLight>
         </div>
+        <RevealLight mode="mount" delay={0.25} y={30}>
+          <HeroMockupLight />
+        </RevealLight>
+        <div style={{ height: 72 }} />
+      </header>
 
-        <div className="relative flex justify-center lg:justify-end pt-8 lg:pt-0">
-          <OrbitDiagramAward />
-          <div className="relative" style={{ zIndex: 1 }}>
-            <HeroMockupAward />
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- The gap (problem) ---------- */}
-      <section style={{ background: "var(--paper-2)" }}>
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <RevealAward className="max-w-2xl">
-            <span className={styles.eyebrow}>The gap</span>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
-              The gap between having leads and knowing who needs you
-            </h2>
-            <p className="mt-5 text-[15px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
-              CRMs store leads, deals, and notes. Email tools help you write messages. Automation
-              tools send sequences. But none of them answer the one question that actually loses
-              you money:
-            </p>
-            <p
-              className="mt-6 pl-5 text-2xl sm:text-3xl font-extrabold leading-snug"
-              style={{ borderLeft: "3px solid var(--accent)", color: "var(--ink)", fontFamily: "var(--font-bricolage), sans-serif" }}
-            >
-              &ldquo;Which lead am I about to lose because I haven&apos;t followed up?&rdquo;
-            </p>
-            <p className="mt-6 text-[15px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
-              FollowUp sits on top of your existing inbox and turns messy conversations into a
-              short, prioritized list of who to contact today — without asking you to maintain
-              another system.
-            </p>
-          </RevealAward>
-
-          <div className="mt-14 grid gap-5 sm:grid-cols-3">
-            {[
-              { stat: "62%", copy: "of calls to small businesses go unanswered entirely" },
-              { stat: "63%", copy: "of companies never respond to an inbound lead at all" },
-              { stat: "29–47 hrs", copy: "average time to first response, while the first 5 minutes are what actually moves conversion" },
-            ].map(({ stat, copy }, i) => (
-              <RevealAward key={stat} delayMs={i * 90}>
-                <div className={styles.card}>
-                  <p style={{ fontFamily: "var(--font-bricolage), sans-serif", fontWeight: 800, fontSize: 32, letterSpacing: "-0.01em", color: "var(--accent-deep)" }}>
-                    {stat}
-                  </p>
-                  <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
-                    {copy}
-                  </p>
-                </div>
-              </RevealAward>
-            ))}
-          </div>
-          <p className="mt-4 text-xs" style={{ color: "var(--ink-faint)" }}>
-            Industry-wide lead-response benchmarks, not FollowUp&apos;s own results.
-          </p>
-        </div>
-      </section>
-
-      {/* ---------- Positioning ---------- */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <RevealAward className="max-w-2xl">
-          <span className={styles.eyebrow}>Why FollowUp exists</span>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
-            You don&apos;t have a lead-generation problem. You have a lead-conversion problem.
+      {/* ---------- Product ---------- */}
+      <section id="product" className={styles.section}>
+        <RevealLight className={styles.sectionHeadCenter}>
+          <span className={styles.badge}>Product</span>
+          <h2 className={styles.title}>
+            The follow-up, <span className={styles.em}>handled.</span>
           </h2>
-          <p className="mt-4 text-[15px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
-            Most tools stop the moment a name and an email land in your inbox. The deal is
-            actually lost or won in the weeks after that — the follow-up nobody sent, the
-            question that sat unanswered for four days, the lead that quietly went cold while you
-            were busy closing someone else.
+          <p className={styles.lede}>
+            From the first reply to the last nudge, FollowUp does the part an owner never has time for, and shows its
+            work.
           </p>
-        </RevealAward>
+        </RevealLight>
 
-        <RevealAward delayMs={80} className={`mt-10 grid sm:grid-cols-2 ${styles.compareGrid}`}>
-          <div className="p-6 sm:p-7">
-            <p className={styles.eyebrow}>Lead generation tools</p>
-            <ul className="mt-4 space-y-3 text-sm" style={{ color: "var(--ink-soft)" }}>
-              <li className="flex items-start gap-2.5">
-                <X className="h-4 w-4 mt-0.5 shrink-0" /> Hands you a name and an email address
-              </li>
-              <li className="flex items-start gap-2.5">
-                <X className="h-4 w-4 mt-0.5 shrink-0" /> Calls the job done the moment the lead exists
-              </li>
-              <li className="flex items-start gap-2.5">
-                <X className="h-4 w-4 mt-0.5 shrink-0" /> Says nothing when that lead goes quiet for a week
-              </li>
-            </ul>
-          </div>
-          <div
-            className="p-6 sm:p-7"
-            style={{ borderTop: "1px solid var(--line)", borderLeft: "3px solid var(--accent)" }}
-          >
-            <p className="text-xs font-bold uppercase" style={{ letterSpacing: "0.1em", color: "var(--accent-deep)" }}>
-              FollowUp
-            </p>
-            <ul className="mt-4 space-y-3 text-sm" style={{ color: "var(--ink)" }}>
-              <li className="flex items-start gap-2.5">
-                <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "var(--accent)" }} /> Reads what
-                happens after the lead exists
-              </li>
-              <li className="flex items-start gap-2.5">
-                <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "var(--accent)" }} /> Flags exactly
-                who&apos;s about to go cold, and why
-              </li>
-              <li className="flex items-start gap-2.5">
-                <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "var(--accent)" }} /> Drafts the
-                message that keeps the conversation alive
-              </li>
-            </ul>
-          </div>
-        </RevealAward>
-      </section>
-
-      {/* ---------- How it works ---------- */}
-      <section id="how-it-works" className="max-w-6xl mx-auto px-6 py-20">
-        <RevealAward>
-          <h2 className="text-3xl sm:text-4xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
-            How it works
-          </h2>
-        </RevealAward>
-        <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {[
-            { icon: <Mail className="h-4 w-4" />, title: "Connect your inbox", body: "FollowUp reads your sales conversations — Gmail, Outlook, Instagram and Messenger DMs, WhatsApp, your website form — in one place." },
-            { icon: <TrendingUp className="h-4 w-4" />, title: "It scores every lead", body: "Buying intent, response gaps, and deal value become a single follow-up score." },
-            { icon: <Clock className="h-4 w-4" />, title: "You get a daily list", body: "A short, ranked list of who needs you today, and why — not a full CRM to dig through." },
-            { icon: <Send className="h-4 w-4" />, title: "It drafts the message", body: "Edit, regenerate, or let low-risk replies send themselves automatically — you decide how much to hand off, per lead, any time. Ask to schedule a call, and it creates the calendar event." },
-          ].map((item, i) => (
-            <RevealAward key={item.title} delayMs={i * 80}>
-              <IconCard icon={item.icon} title={item.title} body={item.body} />
-            </RevealAward>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------- Who it's for ---------- */}
-      <section id="who-its-for" className="max-w-6xl mx-auto px-6 py-20">
-        <RevealAward className="max-w-2xl">
-          <h2 className="text-3xl sm:text-4xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
-            Who it&apos;s for
-          </h2>
-          <p className="mt-3 text-[15px]" style={{ color: "var(--ink-soft)" }}>
-            If leads reach you before they reach a CRM, this is built for you.
-          </p>
-        </RevealAward>
-        <div className="mt-10 grid sm:grid-cols-2 gap-5">
-          {[
-            { icon: <Briefcase className="h-4 w-4" />, title: "The freelance consultant", body: "One inbox, a dozen open conversations, and no time to triage them by hand. FollowUp turns “I’ll get to it” into a short list you actually get to." },
-            { icon: <Building2 className="h-4 w-4" />, title: "The 4-person agency", body: "You're doing client work and new business at the same time. FollowUp watches the pipeline in the background so nothing slips between calls." },
-          ].map((item, i) => (
-            <RevealAward key={item.title} delayMs={i * 80}>
-              <IconCard icon={item.icon} title={item.title} body={item.body} />
-            </RevealAward>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------- Why not just a CRM reminder ---------- */}
-      <section style={{ background: "var(--paper-2)" }}>
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <RevealAward className="max-w-2xl">
-            <h2 className="text-3xl sm:text-4xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
-              Why not just set a CRM reminder?
-            </h2>
-            <p className="mt-3 text-[15px]" style={{ color: "var(--ink-soft)" }}>
-              A reminder tells you it&apos;s time. It doesn&apos;t tell you why, or what to say.
-            </p>
-          </RevealAward>
-          <div className="mt-10 grid sm:grid-cols-3 gap-5">
-            {[
-              { icon: <Eye className="h-4 w-4" />, title: "Scores you can see through", body: "Every urgency score comes with the reason behind it — the exact conversation detail that raised or lowered it. Never a black-box number." },
-              { icon: <PenLine className="h-4 w-4" />, title: "Drafts that sound like you", body: "Follow-ups are drafted from how you actually write to that lead, not generic AI boilerplate you have to rewrite before sending." },
-              { icon: <BellOff className="h-4 w-4" />, title: "No nagging about handled leads", body: "Closed the deal on a call? Mark it handled and FollowUp stops reminding you — it never assumes the inbox is the whole story." },
-            ].map((item, i) => (
-              <RevealAward key={item.title} delayMs={i * 80}>
-                <IconCard icon={item.icon} title={item.title} body={item.body} alt />
-              </RevealAward>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- Team + pipeline ---------- */}
-      <section>
-        <div className="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-10">
-            <RevealAward>
-              <Users className="h-5 w-5" style={{ color: "var(--accent-deep)" }} />
-              <h3 className="text-2xl font-extrabold mt-3" style={{ letterSpacing: "-0.02em" }}>
-                Works for a team, not just you
-              </h3>
-              <p className="mt-2 text-[14.5px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
-                See who on your team has overdue follow-ups, how much revenue each person is
-                sitting on, and which deals are at risk — without a single status meeting.
-              </p>
-            </RevealAward>
-            <RevealAward delayMs={90}>
-              <TrendingUp className="h-5 w-5" style={{ color: "var(--accent-deep)" }} />
-              <h3 className="text-2xl font-extrabold mt-3" style={{ letterSpacing: "-0.02em" }}>
-                A pipeline you can actually see
-              </h3>
-              <p className="mt-2 text-[14.5px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
-                Total pipeline value, weighted by how likely each deal is to close, plus a weekly
-                report on what&apos;s working and what&apos;s slipping.
-              </p>
-            </RevealAward>
-          </div>
-
-          <RevealAward delayMs={140}>
+        <div className={styles.grid2}>
+          <RevealLight>
             <div className={styles.card}>
-              <p className="text-xs font-semibold mb-3" style={{ color: "var(--ink-soft)" }}>
-                Team pipeline
+              <h3 className={styles.cardTitle}>Who needs you today</h3>
+              <p className={styles.cardBody}>
+                Every open lead ranked by how likely you are to lose them, with the reason in plain words, not a score
+                you have to decode.
               </p>
-              <div className="space-y-2">
+              <div className={styles.cardFigure}>
                 {[
-                  { name: "Sarah Johnson", owner: "You", status: "On track", color: "var(--success)" },
-                  { name: "Mike Patel", owner: "You", status: "At risk", color: "var(--ink-faint)" },
-                  { name: "Devon Ruiz", owner: "Alex", status: "Stuck", color: "var(--coral)" },
-                  { name: "Priya Shah", owner: "Alex", status: "On track", color: "var(--success)" },
-                ].map((row) => (
-                  <div
-                    key={row.name}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5"
-                    style={{ border: "1px solid var(--line)" }}
-                  >
-                    <span className="h-2 w-2 rounded-full shrink-0" style={{ background: row.color }} />
-                    <span className="text-sm font-semibold flex-1 min-w-0 truncate">{row.name}</span>
-                    <span className="text-xs hidden sm:inline" style={{ color: "var(--ink-soft)" }}>
-                      {row.owner}
-                    </span>
-                    <span
-                      className="rounded-full px-2.5 py-1 text-[10px] font-bold shrink-0"
-                      style={{ background: row.color, color: "#fff" }}
-                    >
-                      {row.status}
-                    </span>
+                  { s: "92", n: "Sarah Johnson", w: "Asked about pricing, no reply in 5 days", pill: "Needs you", cls: styles.pillCoral },
+                  { s: "74", n: "Mike Patel", w: "Requested a proposal 3 days ago", pill: "Going cold", cls: styles.pillGold },
+                  { s: "45", n: "Devon Ruiz", w: "Waiting on their answer since Tuesday", pill: "Waiting", cls: styles.pillSlate },
+                ].map((r) => (
+                  <div key={r.n} className={styles.leadRow}>
+                    <span className={styles.score}>{r.s}</span>
+                    <div className="min-w-0">
+                      <div className={styles.leadName}>{r.n}</div>
+                      <div className={styles.leadWhy}>{r.w}</div>
+                    </div>
+                    <span className={`${styles.pill} ${r.cls}`}>{r.pill}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </RevealAward>
+          </RevealLight>
+
+          <RevealLight delay={0.08}>
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}>Every message, on the record</h3>
+              <p className={styles.cardBody}>
+                What went out, why, and what was held for you. Nothing FollowUp does is a surprise you find out about
+                from a customer.
+              </p>
+              <div className={styles.cardFigure}>
+                {[
+                  { t: "Sent a check-in to Sarah", w: "5 days quiet after a pricing question", when: "9:14", cls: styles.pillSage, pill: "Sent" },
+                  { t: "Held a draft for Mike", w: "It mentions a price. That is yours to say.", when: "8:50", cls: styles.pillGold, pill: "Needs you" },
+                  { t: "Stopped the sequence for Priya", w: "She replied. Nothing more goes out.", when: "8:02", cls: styles.pillSlate, pill: "Stopped" },
+                ].map((r) => (
+                  <div key={r.t} className={styles.liveRow}>
+                    <div className="min-w-0">
+                      <div className={styles.leadName}>{r.t}</div>
+                      <div className={styles.leadWhy}>{r.w}</div>
+                    </div>
+                    <span className={`${styles.pill} ${r.cls}`}>{r.pill}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </RevealLight>
+
+          <RevealLight>
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}>Drafts that sound like you</h3>
+              <p className={styles.cardBody}>
+                Written from how you actually talk to that lead, in their language, and never stating a fact that is
+                not in the thread. On Instagram it is one short question with buttons.
+              </p>
+              <div className={styles.cardFigure}>
+                <div className="text-[11px] font-bold" style={{ color: "var(--accent-deep)", letterSpacing: "0.08em" }}>
+                  DRAFT READY FOR SARAH
+                </div>
+                <p className="mt-1.5 text-[13.5px] font-bold">Re: Your proposal</p>
+                <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+                  Wanted to check in, I know you&apos;ve had a look at the numbers a couple of times. Happy to walk through
+                  anything that&apos;s unclear.
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <span className={`${styles.btnPrimary} ${styles.btnSmall}`} style={{ boxShadow: "none" }}>
+                    Send
+                  </span>
+                  <span className={`${styles.btnGhost} ${styles.btnSmall}`}>Edit</span>
+                </div>
+                <div className="mt-4 pt-3" style={{ borderTop: "1px solid var(--line)" }}>
+                  <div className="text-[11px] font-bold" style={{ color: "var(--ink-faint)", letterSpacing: "0.08em" }}>
+                    ON INSTAGRAM
+                  </div>
+                  <p className="mt-1.5 text-[13px]" style={{ color: "var(--ink)" }}>
+                    Happy to price the two-bed clean. Is this for this week or later in the month?
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {["This week", "Later", "Not now"].map((b) => (
+                      <span key={b} className={styles.chip} style={{ borderRadius: 999, fontSize: 12, padding: "5px 11px" }}>
+                        {b}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </RevealLight>
+
+          <RevealLight delay={0.08}>
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}>Works for a team, not just you</h3>
+              <p className={styles.cardBody}>
+                See who has an overdue follow-up and on which deal, route new leads to the right person, and skip the
+                status meeting.
+              </p>
+              <div className={styles.cardFigure}>
+                {[
+                  { n: "Alex", d: "3 overdue · $12,400 open", pill: "Needs a nudge", cls: styles.pillGold },
+                  { n: "You", d: "1 overdue · $3,500 open", pill: "On track", cls: styles.pillSage },
+                  { n: "Sam", d: "0 overdue · $6,100 open", pill: "On track", cls: styles.pillSage },
+                ].map((r) => (
+                  <div key={r.n} className={styles.liveRow}>
+                    <div className="min-w-0">
+                      <div className={styles.leadName}>{r.n}</div>
+                      <div className={styles.leadWhy}>{r.d}</div>
+                    </div>
+                    <span className={`${styles.pill} ${r.cls}`}>{r.pill}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </RevealLight>
+        </div>
+      </section>
+
+      {/* ---------- The gap ---------- */}
+      <section id="why" style={{ background: "var(--paper-2)" }}>
+        <div className={styles.section}>
+          <RevealLight className={styles.sectionHeadCenter}>
+            <span className={styles.badge}>The gap</span>
+            <h2 className={styles.title}>
+              Leads don&apos;t say no. They go <span className={styles.em}>quiet.</span>
+            </h2>
+            <p className={styles.lede}>
+              CRMs store leads. Email tools help you write. Automation tools send sequences. None of them answer the one
+              question that loses you money: which lead am I about to lose because I haven&apos;t followed up?
+            </p>
+          </RevealLight>
+
+          <div className={styles.grid3}>
+            {[
+              { n: 62, suffix: "%", copy: "of calls to small businesses go unanswered entirely" },
+              { n: 63, suffix: "%", copy: "of companies never respond to an inbound lead at all" },
+              { text: "29–47 hrs", copy: "average time to first response, while the first 5 minutes are what moves conversion" },
+            ].map((s, i) => (
+              <RevealLight key={s.copy} delay={i * 0.07}>
+                <div className={styles.card}>
+                  <p className={styles.statBig}>{s.text ?? <CountUp to={s.n as number} suffix={s.suffix} />}</p>
+                  <p className={styles.cardBody}>{s.copy}</p>
+                </div>
+              </RevealLight>
+            ))}
+          </div>
+          <p className="mt-3 text-xs" style={{ color: "var(--ink-faint)" }}>
+            Industry-wide lead-response benchmarks, not FollowUp&apos;s own results.
+          </p>
+
+          <div className={styles.grid3}>
+            {[
+              { icon: <PauseCircle className="h-5 w-5" />, t: "Stops the instant a lead replies", b: "The moment they write back, every scheduled follow-up for them is cancelled. No exceptions, and there is a test that proves it." },
+              { icon: <ShieldCheck className="h-5 w-5" />, t: "Never talks price or terms without you", b: "Anything about money, contracts or a tense thread is held for your approval. Only low-risk, on-topic replies go out on their own." },
+              { icon: <FileText className="h-5 w-5" />, t: "Nothing goes out unexplained", b: "Every automated message is on the record with the reason it was sent. You can always answer: what happened, why, and what next." },
+            ].map((g, i) => (
+              <RevealLight key={g.t} delay={i * 0.07}>
+                <div className={styles.card}>
+                  <span className={styles.iconChip}>{g.icon}</span>
+                  <h3 className={styles.cardTitle} style={{ fontSize: 16.5 }}>
+                    {g.t}
+                  </h3>
+                  <p className={styles.cardBody}>{g.b}</p>
+                </div>
+              </RevealLight>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- Integrations ---------- */}
+      <section id="integrations" className={styles.section}>
+        <div className={styles.split}>
+          <RevealLight>
+            <span className={styles.badge}>Integrations</span>
+            <h2 className={styles.title}>
+              Works with what you <span className={styles.em}>already use.</span>
+            </h2>
+            <p className={styles.lede}>
+              Nothing to migrate and nothing to log by hand. Connect the inbox and the channels your leads actually
+              write to, and keep the CRM you have.
+            </p>
+            <div className="mt-7">
+              <Link href="/signin" className={styles.btnPrimary}>
+                Get started <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </RevealLight>
+          <RevealLight delay={0.1}>
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle} style={{ fontSize: 15 }}>
+                Connected
+              </h3>
+              <div className="mt-4">
+                {[
+                  ["G", "Gmail", "Push, within seconds", "100%"],
+                  ["O", "Outlook", "Microsoft 365", "100%"],
+                  ["I", "Instagram DMs", "Reply buttons inside Meta's window", "100%"],
+                  ["M", "Messenger", "Same rules as Instagram", "100%"],
+                  ["W", "WhatsApp", "Business account", "100%"],
+                  ["H", "HubSpot", "Contacts imported, notes pushed back", "86%"],
+                  ["F", "Follow Up Boss", "Contacts imported, notes pushed back", "86%"],
+                  ["Z", "Zapier and webhooks", "Any form, any tool", "72%"],
+                ].map(([k, name, sub, w], i) => (
+                  <div key={name} className={styles.intRow}>
+                    <span className={styles.intLogo} aria-hidden="true">
+                      {k}
+                    </span>
+                    <div className="min-w-0">
+                      <div className={styles.intName}>{name}</div>
+                      <div className={styles.leadWhy}>{sub}</div>
+                      <div className={styles.progress}>
+                        <div className={styles.progressFill} style={{ ["--w" as string]: w, ["--d" as string]: `${i * 0.08}s` }} />
+                      </div>
+                    </div>
+                    <span className={styles.toggle} aria-hidden="true" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </RevealLight>
+        </div>
+      </section>
+
+      {/* ---------- Right now ---------- */}
+      <section style={{ background: "var(--paper-2)" }}>
+        <div className={`${styles.section} ${styles.split} ${styles.splitReverse}`}>
+          <RevealLight delay={0.1}>
+            <div className={styles.card}>
+              <div className="flex items-center gap-2">
+                <span className={styles.liveDot} aria-hidden="true" />
+                <h3 className={styles.cardTitle} style={{ fontSize: 15 }}>
+                  Right now
+                </h3>
+              </div>
+              <div className="mt-4">
+                {[
+                  ["Sarah Johnson replied", "Your check-in worked. She wants Thursday.", "1 min ago"],
+                  ["Draft ready for Mike Patel", "Short, on topic, waiting for your tap.", "3 min ago"],
+                  ["Priya tapped “This week”", "Instagram. Window reopened, no chase needed.", "12 min ago"],
+                  ["New lead from your website", "Acknowledged in Spanish, scored, in the queue.", "26 min ago"],
+                ].map(([t, w, when]) => (
+                  <div key={t} className={styles.liveRow}>
+                    <div className="min-w-0">
+                      <div className={styles.leadName}>{t}</div>
+                      <div className={styles.leadWhy}>{w}</div>
+                    </div>
+                    <span className={styles.liveWhen}>{when}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </RevealLight>
+          <RevealLight>
+            <span className={styles.badge}>
+              <span className={styles.badgeDot} aria-hidden="true" />
+              Live
+            </span>
+            <h2 className={styles.title}>
+              Your leads, <span className={styles.em}>as they move.</span>
+            </h2>
+            <p className={styles.lede}>
+              A new message lands, FollowUp acknowledges it in the lead&apos;s language, scores it, and tells you the
+              moment one comes back to life. You see what changed, not a list to dig through.
+            </p>
+          </RevealLight>
+        </div>
+      </section>
+
+      {/* ---------- How it works ---------- */}
+      <section id="how-it-works" className={styles.section}>
+        <RevealLight className={styles.sectionHeadCenter}>
+          <span className={styles.badge}>How it works</span>
+          <h2 className={styles.title}>
+            Built to make a difference, not a <span className={styles.em}>dashboard.</span>
+          </h2>
+          <p className={styles.lede}>Six things FollowUp does that a reminder never will.</p>
+        </RevealLight>
+        <div className={styles.grid3}>
+          {[
+            { icon: <Inbox className="h-5 w-5" />, t: "One inbox for every lead", b: "Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form, read in one place. Nothing to log." },
+            { icon: <Eye className="h-5 w-5" />, t: "Scores you can see through", b: "Every urgency score comes with the exact detail that raised or lowered it. Never a black-box number." },
+            { icon: <Languages className="h-5 w-5" />, t: "In their language", b: "A lead who writes in Spanish is acknowledged, scored and answered in Spanish. Same for any language." },
+            { icon: <Send className="h-5 w-5" />, t: "Follow-up on by default, safely", b: "Low-risk replies send themselves. Anything else waits for you. You choose how much to hand off, per lead." },
+            { icon: <MessageCircle className="h-5 w-5" />, t: "Meta's rules built in", b: "Instagram and Messenger get short questions with reply buttons inside the window, and one tap from you after it." },
+            { icon: <Users className="h-5 w-5" />, t: "Routes leads to the right person", b: "New leads go to whoever should own them. Everyone sees what is overdue, without a spreadsheet." },
+          ].map((f, i) => (
+            <RevealLight key={f.t} delay={(i % 3) * 0.07}>
+              <div className={styles.card}>
+                <span className={styles.iconChip}>{f.icon}</span>
+                <h3 className={styles.cardTitle} style={{ fontSize: 16.5 }}>
+                  {f.t}
+                </h3>
+                <p className={styles.cardBody}>{f.b}</p>
+              </div>
+            </RevealLight>
+          ))}
         </div>
       </section>
 
       {/* ---------- Pricing ---------- */}
-      <section id="pricing" className="max-w-6xl mx-auto px-6 py-24">
-        <RevealAward>
-          <h2 className="text-3xl sm:text-4xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
-            Pricing
-          </h2>
-          <p className="mt-2 text-[15px]" style={{ color: "var(--ink-soft)" }}>
-            One plan. Everything included. 14-day free trial, no credit card required. Cancel any time.
-          </p>
-          <div className="mt-10 max-w-sm">
-            <div className={styles.pricingCard}>
-              <p className="text-sm font-bold">FollowUp</p>
-              <p className={styles.priceGiant}>
-                {/* $39, matching TIER_INFO.plus in src/lib/pricing.ts and the
-                    Stripe price it maps to. This read $29 while Settings and
-                    checkout charged $39 — a page stating a price the product
-                    does not honour, which is the one kind of copy error that
-                    costs trust at exactly the moment someone decides to pay.
-                    Founder's call, 2026-09-15: "price is 39 for now." */}
-                $39<span style={{ fontSize: "0.4em", color: "var(--ink-soft)", fontWeight: 600 }}>/mo</span>
-              </p>
-              <p className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>
-                For freelancers, consultants, and small teams
-              </p>
-              <ul className="mt-5 space-y-2.5 text-sm">
-                {[
-                  "Unlimited leads and conversations",
-                  "AI scoring & drafted follow-ups",
-                  "Manual entry + CSV import",
-                  "Analytics & weekly reports",
-                  "Automated follow-up on by default, safely — full autonomy is opt-in per lead",
-                ].map((f) => (
-                  <li key={f} className="flex items-center gap-2">
-                    <Check className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--accent)" }} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/signin"
-                className="mt-6 flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold transition-transform hover:scale-[1.02]"
-                style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-              >
-                Get started <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-              <p className="mt-3 text-center text-[11px]" style={{ color: "var(--ink-soft)" }}>
-                Free for 14 days. No credit card required to start.
-              </p>
-            </div>
-            <p className="mt-4 text-xs leading-relaxed" style={{ color: "var(--ink-faint)" }}>
-              No seats, no per-message credits, no &ldquo;AI add-on&rdquo; — what costs $150–$500/mo
-              elsewhere is included here.
+      <section id="pricing" style={{ background: "var(--paper-2)" }}>
+        <div className={styles.section}>
+          <RevealLight className={styles.sectionHeadCenter}>
+            <span className={styles.badge}>Pricing</span>
+            <h2 className={styles.title}>
+              Pricing that <span className={styles.em}>makes sense.</span>
+            </h2>
+            <p className={styles.lede}>
+              No seats, no per-message credits, no &ldquo;AI add-on&rdquo;. Start free, pay when it is doing the job.
             </p>
+          </RevealLight>
+
+          <div className={styles.priceGrid}>
+            <RevealLight>
+              <div className={styles.priceCard}>
+                <p className={styles.priceName}>{TIER_INFO.free.label}</p>
+                <p className={styles.priceAmount}>
+                  $0<small>/mo</small>
+                </p>
+                <p className={styles.priceDesc}>For seeing it work on your real inbox. No card.</p>
+                <ul className={styles.priceList}>
+                  {["Gmail or Outlook, plus your website form", `Up to ${FREE_TIER_LEAD_CAP} leads a month`, "Scoring with the reason shown", "Drafts you approve before they send"].map((f) => (
+                    <li key={f}>
+                      <span className={styles.check}>
+                        <Check className="h-3 w-3" />
+                      </span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-auto pt-6">
+                  <Link href="/signin" className={`${styles.btnGhost} w-full justify-center`}>
+                    Get started
+                  </Link>
+                </div>
+              </div>
+            </RevealLight>
+
+            <RevealLight delay={0.07}>
+              <div className={`${styles.priceCard} ${styles.priceCardHot}`}>
+                <span className={styles.priceTag}>Most owners</span>
+                <p className={styles.priceName}>{TIER_INFO.plus.label}</p>
+                <p className={styles.priceAmount}>
+                  $39<small>/mo</small>
+                </p>
+                <p className={styles.priceDesc}>Every channel, follow-up on by default, and the safety that makes that okay.</p>
+                <ul className={styles.priceList}>
+                  {[
+                    "Instagram, Messenger and WhatsApp too",
+                    "Automated follow-up, with full autonomy per lead when you want it",
+                    "Drafts in the lead's language",
+                    "HubSpot and Follow Up Boss import",
+                    "Weekly report of what FollowUp saved you",
+                  ].map((f) => (
+                    <li key={f}>
+                      <span className={styles.check}>
+                        <Check className="h-3 w-3" />
+                      </span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-auto pt-6">
+                  <Link href="/signin" className={`${styles.btnPrimary} w-full justify-center`}>
+                    Start 14 days free <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <p className={styles.priceNote}>No credit card required to start.</p>
+                </div>
+              </div>
+            </RevealLight>
+
+            <RevealLight delay={0.14}>
+              <div className={styles.priceCard}>
+                <p className={styles.priceName}>{TIER_INFO.pro.label}</p>
+                <p className={styles.priceAmount}>
+                  $79<small>/mo</small>
+                </p>
+                <p className={styles.priceDesc}>For a team that shares the leads and needs to see who is dropping what.</p>
+                <ul className={styles.priceList}>
+                  {["Everything in Plus", "Team view: who is overdue, on which deal", "Leads routed to the right person", "No lead cap", "Priority support"].map((f) => (
+                    <li key={f}>
+                      <span className={styles.check}>
+                        <Check className="h-3 w-3" />
+                      </span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-auto pt-6">
+                  <Link href="/signin" className={`${styles.btnGhost} w-full justify-center`}>
+                    Start 14 days free
+                  </Link>
+                  <p className={styles.priceNote}>No credit card required to start.</p>
+                </div>
+              </div>
+            </RevealLight>
           </div>
-        </RevealAward>
+        </div>
       </section>
 
       {/* ---------- FAQ ---------- */}
-      <section id="faq" style={{ background: "var(--paper-2)" }}>
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <RevealAward>
-            <h2 className="text-3xl sm:text-4xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
-              Questions
-            </h2>
-          </RevealAward>
-          <RevealAward delayMs={80} className="mt-8 max-w-2xl">
-            <LandingFaqAward
-              items={[
-                {
-                  q: "Will FollowUp send emails without my permission?",
-                  a: "By default, FollowUp only sends a low-risk, on-topic follow-up on its own — never anything about price, terms, or a sensitive reply, and never once the lead has already answered you. Anything riskier is held for your approval. You can set any lead to fully autonomous or fully manual at any time.",
-                },
-                {
-                  q: "Is this another CRM I have to fill out?",
-                  a: "No — FollowUp reads the conversations you're already having (Gmail, Outlook, Instagram, Messenger, WhatsApp, your website form). There's nothing to manually log.",
-                },
-                {
-                  q: "What if I don't connect Gmail right away?",
-                  a: "You can sign in and look around right away — the dashboard just stays empty until you connect Gmail and sync.",
-                },
-                {
-                  q: "I already use another CRM — do I have to leave it?",
-                  a: "No. FollowUp imports your existing contacts from Follow Up Boss or HubSpot and runs alongside whatever you already use. It's the layer that watches your actual conversations, not a system you have to migrate into.",
-                },
-                {
-                  q: "What happens to my inbox data?",
-                  a: "You can export or fully delete everything FollowUp has stored at any time, including every conversation it's read — see our Privacy Policy for specifics. Nothing is sold, and nothing trains a model without being stripped of identifying details first.",
-                },
-                {
-                  q: "Does this work for a team, or just one person?",
-                  a: "Both. Invite your team, see who has an overdue follow-up and on which deal, and route new leads to the right person — without anyone maintaining a shared spreadsheet.",
-                },
-              ]}
-            />
-          </RevealAward>
-        </div>
+      <section id="faq" className={styles.section}>
+        <RevealLight className={styles.sectionHeadCenter}>
+          <span className={styles.badge}>FAQ</span>
+          <h2 className={styles.title}>
+            You asked, <span className={styles.em}>we answered.</span>
+          </h2>
+          <p className={styles.lede}>Straight answers. No sales call required.</p>
+        </RevealLight>
+        <RevealLight delay={0.08}>
+          <FaqLight
+            items={[
+              {
+                q: "Will FollowUp send messages without my permission?",
+                a: "By default, FollowUp only sends a low-risk, on-topic follow-up on its own, never anything about price, terms, or a sensitive reply, and never once the lead has already answered you. Anything riskier is held for your approval. You can set any lead to fully autonomous or fully manual at any time.",
+              },
+              {
+                q: "Is this another CRM I have to fill out?",
+                a: "No. FollowUp reads the conversations you're already having (Gmail, Outlook, Instagram, Messenger, WhatsApp, your website form). There's nothing to manually log.",
+              },
+              {
+                q: "What happens on Instagram after 24 hours?",
+                a: "Meta only allows automatic replies within 24 hours of the lead's last message. Inside that window FollowUp sends up to three short follow-ups, each with reply buttons. After it, FollowUp writes one message for you to send with a tap, and after seven days it stops until the lead writes again. Nothing ever switches to email behind their back.",
+              },
+              {
+                q: "I already use another CRM. Do I have to leave it?",
+                a: "No. FollowUp imports your existing contacts from Follow Up Boss or HubSpot and runs alongside whatever you already use. It's the layer that watches your actual conversations, not a system you have to migrate into.",
+              },
+              {
+                q: "What happens to my inbox data?",
+                a: "You can export or fully delete everything FollowUp has stored at any time, including every conversation it's read. Nothing is sold, and nothing trains a model without being stripped of identifying details first.",
+              },
+              {
+                q: "Does this work for a team, or just one person?",
+                a: "Both. Invite your team, see who has an overdue follow-up and on which deal, and route new leads to the right person, without anyone maintaining a shared spreadsheet.",
+              },
+            ]}
+          />
+        </RevealLight>
       </section>
 
-      {/* ---------- Closing CTA ---------- */}
-      <div className={styles.closing}>
-        <div className="max-w-6xl mx-auto px-6 py-28 text-center">
-          <RevealAward>
-            <span className={styles.eyebrow} style={{ color: "rgba(255,255,255,0.55)" }}>
-              Last call
-            </span>
-            <h2
-              className="mt-4 max-w-xl mx-auto text-3xl sm:text-5xl font-extrabold"
-              style={{ letterSpacing: "-0.02em", color: "#fff" }}
-            >
-              Your next lost sale is sitting in your inbox right now.
+      {/* ---------- CTA band ---------- */}
+      <div className={styles.cta}>
+        <RevealLight>
+          <div className={styles.ctaInner}>
+            <div className={styles.ctaBrand}>
+              <LogoMark size={30} />
+              <span className={styles.wordmark} style={{ fontSize: 19 }}>
+                FollowUp
+              </span>
+            </div>
+            <h2 className={styles.title} style={{ maxWidth: 640, margin: "18px auto 0" }}>
+              Your next lost sale is sitting in your inbox <span className={styles.em}>right now.</span>
             </h2>
-            <Link
-              href="/signin"
-              className="inline-flex items-center gap-2 mt-8 rounded-full px-6 py-3.5 text-[15px] font-bold transition-transform hover:scale-[1.05]"
-              style={{ background: "#fff", color: "var(--accent-deep)" }}
-            >
-              Get started <ArrowRight className="h-4 w-4" />
-            </Link>
-          </RevealAward>
-        </div>
+            <p className={styles.lede} style={{ maxWidth: 520, margin: "14px auto 0" }}>
+              FollowUp reads it, ranks it, and drafts the reply. You tap send. Free to start, on your real inbox, today.
+            </p>
+            <div className="mt-8">
+              <Link href="/signin" className={styles.btnPrimary}>
+                Get started <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </RevealLight>
       </div>
 
-      <footer className="py-8 text-center text-xs" style={{ color: "var(--ink-faint)" }}>
-        <p>FollowUp — built to make sure no lead gets forgotten.</p>
-        <p className="mt-2">
-          <Link href="/privacy" className="underline">
-            Privacy Policy
-          </Link>{" "}
-          ·{" "}
-          <Link href="/terms" className="underline">
-            Terms of Service
-          </Link>
-        </p>
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <div className="flex items-center gap-2.5">
+            <LogoMark size={22} />
+            <span>Built to make sure no lead gets forgotten.</span>
+          </div>
+          <div className={styles.footerLinks}>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/signin">Sign in</Link>
+          </div>
+        </div>
       </footer>
-    </div>
-  );
-}
-
-// Bordered card, accent-tinted icon chip. `alt` swaps the card fill for
-// the alternating section background it sits on so it stays legible
-// against either page background.
-function IconCard({
-  icon,
-  title,
-  body,
-  alt,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-  alt?: boolean;
-}) {
-  return (
-    <div className={`${styles.card} ${alt ? styles.cardAlt : ""}`}>
-      <div className={styles.iconChip}>{icon}</div>
-      <h4 className="font-bold mt-3 text-[15px]">{title}</h4>
-      <p className="text-sm mt-1 leading-relaxed" style={{ color: "var(--ink-soft)" }}>
-        {body}
-      </p>
     </div>
   );
 }

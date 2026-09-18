@@ -171,3 +171,21 @@ different thing and is not covered here.
 named before the decision and accepted: on these channels nothing automatic goes out after
 24 hours, and nothing at all after 7 days unless the lead writes first. What replaces the
 fallback is in `design-decisions.md`, same date.
+
+## R-004 — Four light palette specimens (cool/graphite, warm/graphite, cool/our blue, cool/steel) and a ten-swatch accent picker ^R-004
+
+**Rejected:** 2026-09-18, founder. On the four specimens: "I didn't like any" → "Wrong kind of colour".
+On the ten accent swatches (Apple blue, indigo, violet, teal, green, amber, orange, rose, graphite,
+silver) and four hero grounds: no pick; the founder asked for the build instead.
+
+**What was rejected:** black, our blue (`#2a5cdb`) and a desaturated steel blue as the marketing
+site's accent on a white/grey ground. Reason given: colour only. The grounds were not objected to.
+
+**Inferred principle (marked inferred):** the founder has a colour in mind that none of the swatches
+hit, and is more likely to recognise it on a finished page than in a chip. The method that worked
+for the app (A-006, paired forced choices on real surfaces) did not produce a pick here; two rounds
+of options cost more than they returned. Next time: build with a placeholder accent, ship the
+screenshot, and change the one token on reaction.
+
+**Evidence:** `followup-light-directions` and `followup-colour-picker` artifacts (2026-09-18); the
+2026-09-18 "light direction" entry in `[[design-decisions]]`.

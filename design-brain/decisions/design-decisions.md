@@ -2060,3 +2060,59 @@ that survives at 16 px without the counter-form collapsing.
 
 **Next round (not started):** wordmark pairing, stroke weight, light/dark treatment, app
 icon crop. Reuse the existing tokens (`--ink`, `--rust`, navy/blue) before inventing any.
+
+## 2026-09-18 — The marketing site rebuilt in the founder's reference template's shape, on white and grey (the "light direction")
+
+**Founder's instruction, verbatim in spirit:** "we should have our own information, the same template
+and design, animation, graphics and all" and, when asked to narrow it, "do not follow his pages and
+stuff, just get an idea to make our best." The reference is a dark Framer SaaS template ("Scalable").
+Its structure, section rhythm and motion are the model; its content, pages and assets are not.
+
+**What shipped (`src/app/page.tsx`, `landing-light.module.css`, `components/landing/light/`):**
+
+- **Ground:** white/near-white paper (`#fbfbfd`), grey panels (`#f4f4f7`), near-black ink
+  (`#111318`), a soft radial wash behind the hero. Cards are white with a hairline, 18px radius and
+  a real shadow. The founder rejected four palette specimens and ten accent swatches without a pick
+  ("wrong kind of colour", "I didn't like any") and then asked for the build; the accent shipped as
+  **indigo `#4f46e5` as a placeholder token**, one line in `.root` to change. → `[[rejected#^R-004|R-004]]`.
+- **Type:** Bricolage Grotesque headlines, Public Sans body, IBM Plex Mono labels, plus **Instrument
+  Serif italic for exactly one emphasised word per headline** — founder's "Yes, add it". The new font
+  is loaded in `src/lib/fonts.ts` and used nowhere else.
+- **Section shape, every section:** small pill label → headline with the italic word → one line of
+  lede → the content. Sections: hero with one wide dashboard card; Product (four cards with live-looking
+  figures); The gap (the three sourced benchmarks + three guarantees); Integrations (split, card with
+  toggles and progress bars); Right now (split, live rows); How it works (3×2 feature grid); Pricing
+  (Free / Plus / Pro, Plus highlighted, from `TIER_INFO`); FAQ (first answer open); CTA band; footer.
+  A 404 in the same system.
+- **Motion:** rise-and-fade reveals (`RevealLight`, framer `whileInView`; the hero plays on mount so
+  the first screen never waits on an observer), the hero card's idle float and light mouse tilt, bar
+  chart grow, progress-bar fill, count-up on the two percentages, FAQ accordion, card hover lift. All
+  of it is off under `prefers-reduced-motion`.
+- **Retired:** the page-scoped navy/blue Award Direction for the landing page (D-008, D-009's orbit
+  diagram, `landing-award.module.css`, `components/landing/award/`). A-002's navy/blue system still
+  governs the authenticated app until its own restyle lands.
+
+**What was deliberately NOT taken from the template**, and why:
+
+1. **Testimonials and a customer-logo strip.** FollowUp has no customers to quote. An invented quote
+   or a made-up logo row is exactly the spam signal the product exists to be the opposite of (S-01,
+   brand principle 1). The space is used for the sourced benchmarks and the three guarantees instead.
+2. **About, Blog, Contact, Coming Soon, Legal pages.** Content we do not have; the founder confirmed
+   "do not follow his pages". Privacy and Terms already exist.
+3. **"Book Your Demo" as the primary action.** Sign-up is invite-only (PRODUCT_DIRECTION, 2026-09-18);
+   the button stays "Get started" → `/signin`. A "Request an invite" flow is a product question, flagged.
+4. **The floating "Use template" pill, the annual/monthly toggle.** No annual price exists; nothing
+   is shown that the product does not honour.
+
+**Standing-rejection note (S-15, S-16).** Building on a template's structure is what S-15/S-16 warn
+against. This is the founder's explicit, repeated instruction for the marketing site, and it is
+recorded as such: the *layout and motion vocabulary* is borrowed, every word, figure and asset is
+ours, and nothing in the authenticated app is affected. S-15/S-16 stay in force everywhere else.
+
+**Weakest parts, named:** the accent is a placeholder; the integration "progress bars" are
+decorative (they carry no information beyond "connected") and would fail S-12 in the app, tolerated
+here as the template's idiom; the pricing card copy for Free vs Plus channels should be re-read
+against `billing.ts` when the tier gates change.
+
+**Next:** founder picks the accent (or keeps indigo); the logo brief replaces the placeholder chevron
+mark; then the authenticated app follows the same ground in its own PR.

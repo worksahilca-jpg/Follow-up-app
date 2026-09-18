@@ -21,6 +21,9 @@
   --card-2: #16171a;
   --line: rgba(255, 255, 255, 0.1);
   --line-strong: rgba(255, 255, 255, 0.18);
+  --text: #ffffff;
+  --muted: #9ca3af;
+  --faint: #6b7280;
   --accent: #ffffff;
   --accent-hover: #e4e4e7;
   --accent-soft: rgba(255, 255, 255, 0.12);
@@ -31,9 +34,43 @@
   --amber-soft: rgba(255, 255, 255, 0.07);
   --rose: #ffffff;
   --rose-soft: rgba(255, 255, 255, 0.16);
-  --text: #ffffff;
-  --muted: #9ca3af;
-  --faint: #6b7280;
+  --ink-soft: rgba(255, 255, 255, 0.08);
+  --ink-mid: rgba(255, 255, 255, 0.14);
+  --ink-strong: rgba(255, 255, 255, 0.25);
+  --ink-hover: rgba(255, 255, 255, 0.34);
+  --glow: rgba(255, 255, 255, 0.07);
+  --glow-soft: rgba(255, 255, 255, 0.08);
+  --hero-glow: rgba(255, 255, 255, 0.11);
+  --cta-glow: rgba(255, 255, 255, 0.12);
+  --shadow-card: none;
+  --hover-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.9);
+  --hot-border: rgba(255, 255, 255, 0.5);
+  --hot-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 30px 80px -30px rgba(255, 255, 255, 0.25);
+  --hot-bg: rgba(255, 255, 255, 0.06);
+  --btn-inset: rgba(255, 255, 255, 0.06);
+  --btn-glow: 0 12px 30px -12px rgba(255, 255, 255, 0.28);
+  --nav-bg: rgba(10, 10, 10, 0.72);
+  --strip-ink: rgba(255, 255, 255, 0.42);
+  --wire: rgba(255, 255, 255, 0.12);
+  --token-in: #9ca3af;
+  --token-out: #ffffff;
+  --token-glow: rgba(255, 255, 255, 0.55);
+  --token-out-glow: rgba(255, 255, 255, 0.95);
+  --hub-a: #ffffff;
+  --hub-b: #d4d4d8;
+  --ring-1: rgba(255, 255, 255, 0.08);
+  --ring-2: rgba(255, 255, 255, 0.035);
+  --hub-glow: rgba(255, 255, 255, 0.35);
+  --warm-from: #3f3f46;
+  --warm-to: #ffffff;
+  --bar-to: rgba(255, 255, 255, 0.5);
+  --zone-from: #0a0a0a;
+  --zone-to: #050505;
+  --ramp-0: #0a0a0a;
+  --ramp-1: #1c1c1f;
+  --ramp-2: #6b6b70;
+  --ramp-3: #d9d9dc;
+  --ramp-4: #f4f4f5;
   --radius: 16px;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -117,7 +154,7 @@
   padding: 13px 22px;
   font-size: 15px;
   font-weight: 500;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset, 0 12px 30px -12px rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 1px var(--btn-inset) inset, var(--btn-glow);
   transition: background-color 0.2s, transform 0.25s var(--ease);
 }
 .btn:hover {
@@ -138,7 +175,7 @@
   transition: border-color 0.2s, transform 0.25s var(--ease);
 }
 .btnGhost:hover {
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: var(--ink-hover);
   transform: translateY(-1px);
 }
 .btnSmall {
@@ -156,7 +193,7 @@
   border-bottom: 1px solid transparent;
 }
 .navScrolled {
-  background: rgba(10, 10, 10, 0.72);
+  background: var(--nav-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom-color: var(--line);
@@ -213,7 +250,7 @@
   position: absolute;
   inset: -30% -20% auto -20%;
   height: 90%;
-  background: radial-gradient(50% 55% at 50% 35%, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 70%);
+  background: radial-gradient(50% 55% at 50% 35%, var(--hero-glow) 0%, transparent 70%);
   pointer-events: none;
 }
 .heroInner {
@@ -262,7 +299,7 @@
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: rgba(255, 255, 255, 0.42);
+  color: var(--strip-ink);
 }
 
 /* ---------- hero illustration: sources → FollowUp → warm leads ---------- */
@@ -279,7 +316,7 @@
   position: absolute;
   inset: -10% 20% auto 20%;
   height: 80%;
-  background: radial-gradient(50% 60% at 50% 45%, rgba(255, 255, 255, 0.08), transparent 70%);
+  background: radial-gradient(50% 60% at 50% 45%, var(--glow-soft), transparent 70%);
   pointer-events: none;
 }
 .flowGrid {
@@ -325,7 +362,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ink-soft);
   color: var(--text);
   flex-shrink: 0;
 }
@@ -356,22 +393,22 @@
 }
 .wireLine {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.12);
+  stroke: var(--wire);
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 .token,
 .tokenWarm {
   fill: none;
-  stroke: #9ca3af;
+  stroke: var(--token-in);
   stroke-width: 8;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.55));
+  filter: drop-shadow(0 0 6px var(--token-glow));
 }
 .tokenWarm {
-  stroke: #ffffff;
-  filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.95));
+  stroke: var(--token-out);
+  filter: drop-shadow(0 0 7px var(--token-out-glow));
 }
 .flowHub {
   display: flex;
@@ -395,9 +432,9 @@
   align-items: center;
   justify-content: center;
   color: var(--on-accent);
-  background: radial-gradient(60% 60% at 50% 40%, #ffffff, #d4d4d8);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.08), 0 0 0 22px rgba(255, 255, 255, 0.035), 0 30px 60px -20px rgba(255, 255, 255, 0.35);
+  background: radial-gradient(60% 60% at 50% 40%, var(--hub-a), var(--hub-b));
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 0 0 10px var(--ring-1), 0 0 0 22px var(--ring-2), 0 30px 60px -20px var(--hub-glow);
 }
 .hubPulse {
   animation: hubPulse 3.2s ease-in-out infinite;
@@ -405,10 +442,10 @@
 @keyframes hubPulse {
   0%,
   100% {
-    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.08), 0 0 0 22px rgba(255, 255, 255, 0.035), 0 30px 60px -20px rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 0 10px var(--ring-1), 0 0 0 22px var(--ring-2), 0 30px 60px -20px var(--hub-glow);
   }
   50% {
-    box-shadow: 0 0 0 14px rgba(255, 255, 255, 0.11), 0 0 0 30px rgba(255, 255, 255, 0.05), 0 30px 70px -20px rgba(255, 255, 255, 0.45);
+    box-shadow: 0 0 0 14px var(--ring-1), 0 0 0 30px var(--ring-2), 0 30px 70px -20px var(--hub-glow);
   }
 }
 .hubName {
@@ -448,7 +485,7 @@
   width: 44px;
   height: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ink-soft);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -457,7 +494,7 @@
   height: 100%;
   width: var(--w, 100%);
   border-radius: 999px;
-  background: linear-gradient(90deg, #3f3f46, #ffffff);
+  background: linear-gradient(90deg, var(--warm-from), var(--warm-to));
   transform-origin: left;
   animation: warmIn 1.4s var(--ease) both;
   animation-delay: var(--d, 0s);
@@ -663,14 +700,14 @@
 .bar {
   flex: 1;
   border-radius: 6px 6px 3px 3px;
-  background: linear-gradient(180deg, var(--accent) 0%, rgba(255, 255, 255, 0.5) 100%);
+  background: linear-gradient(180deg, var(--accent) 0%, var(--bar-to) 100%);
   transform-origin: bottom;
   animation: grow 1.2s var(--ease) both;
   animation-delay: var(--d, 0s);
   height: var(--h, 40%);
 }
 .barMuted {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--ink-soft);
 }
 @keyframes grow {
   from {
@@ -712,7 +749,7 @@
   background: var(--amber);
 }
 .dotMuted {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--ink-strong);
 }
 .legendVal {
   color: var(--text);
@@ -758,15 +795,15 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(60% 40% at 50% 0%, rgba(255, 255, 255, 0.07), transparent 70%);
+  background: radial-gradient(60% 40% at 50% 0%, var(--glow), transparent 70%);
   opacity: 0;
   transition: opacity 0.35s var(--ease);
   pointer-events: none;
 }
 .card:hover {
-  border-color: rgba(255, 255, 255, 0.32);
+  border-color: var(--ink-hover);
   transform: translateY(-3px);
-  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.9);
+  box-shadow: var(--hover-shadow);
 }
 .card:hover::after {
   opacity: 1;
@@ -860,7 +897,7 @@
   width: 720px;
   height: 320px;
   transform: translateX(-50%);
-  background: radial-gradient(50% 50% at 50% 30%, rgba(255, 255, 255, 0.07), transparent 70%);
+  background: radial-gradient(50% 50% at 50% 30%, var(--glow), transparent 70%);
   pointer-events: none;
 }
 .stripMark {
@@ -966,13 +1003,13 @@
   color: var(--rose);
 }
 .pillMuted {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ink-soft);
   color: var(--muted);
 }
 .progress {
   height: 4px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ink-soft);
   overflow: hidden;
 }
 .progressFill {
@@ -1012,7 +1049,7 @@
   background: var(--on-accent);
 }
 .toggleOff {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--ink-mid);
 }
 .toggleOff::after {
   right: auto;
@@ -1140,9 +1177,9 @@
   flex-direction: column;
 }
 .priceHot {
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 30px 80px -30px rgba(255, 255, 255, 0.25);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, var(--card) 40%);
+  border-color: var(--hot-border);
+  box-shadow: var(--hot-shadow);
+  background: linear-gradient(180deg, var(--hot-bg) 0%, var(--card) 40%);
 }
 .priceName {
   font-size: 15px;
@@ -1225,7 +1262,7 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ink-soft);
   color: var(--text);
   display: inline-flex;
   align-items: center;
@@ -1235,6 +1272,7 @@
 .faqIconOpen {
   transform: rotate(45deg);
   background: var(--accent);
+  color: var(--on-accent);
 }
 .faqAnswer {
   padding: 0 0 20px;
@@ -1264,7 +1302,7 @@
   position: absolute;
   inset: auto -20% -70% -20%;
   height: 90%;
-  background: radial-gradient(50% 60% at 50% 100%, rgba(255, 255, 255, 0.12), transparent 70%);
+  background: radial-gradient(50% 60% at 50% 100%, var(--cta-glow), transparent 70%);
   pointer-events: none;
 }
 .ctaBrand {
@@ -1303,7 +1341,7 @@
    the ramp are opaque, so nothing readable sits on the mid-grey band. */
 
 .ramp {
-  background: linear-gradient(180deg, var(--bg) 0%, #1c1c1f 22%, #6b6b70 55%, #d9d9dc 82%, #f4f4f5 100%);
+  background: linear-gradient(180deg, var(--ramp-0) 0%, var(--ramp-1) 22%, var(--ramp-2) 55%, var(--ramp-3) 82%, var(--ramp-4) 100%);
 }
 .lightZone {
   --bg: #f4f4f5;
@@ -1324,26 +1362,172 @@
   --amber-soft: rgba(0, 0, 0, 0.05);
   --rose: #0a0a0a;
   --rose-soft: rgba(0, 0, 0, 0.1);
-  background: linear-gradient(180deg, #f4f4f5 0%, #ffffff 100%);
+  --ink-soft: rgba(0, 0, 0, 0.06);
+  --ink-mid: rgba(0, 0, 0, 0.12);
+  --ink-strong: rgba(0, 0, 0, 0.2);
+  --ink-hover: rgba(0, 0, 0, 0.3);
+  --glow: rgba(0, 0, 0, 0.045);
+  --glow-soft: rgba(0, 0, 0, 0.05);
+  --hero-glow: rgba(0, 0, 0, 0.06);
+  --cta-glow: rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -20px rgba(0, 0, 0, 0.18);
+  --hover-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.35);
+  --hot-border: rgba(0, 0, 0, 0.55);
+  --hot-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 30px 80px -30px rgba(0, 0, 0, 0.35);
+  --hot-bg: rgba(0, 0, 0, 0.04);
+  --btn-inset: rgba(0, 0, 0, 0.06);
+  --btn-glow: 0 12px 30px -12px rgba(0, 0, 0, 0.45);
+  --nav-bg: rgba(244, 244, 245, 0.72);
+  --strip-ink: rgba(0, 0, 0, 0.42);
+  --wire: rgba(0, 0, 0, 0.14);
+  --token-in: #71717a;
+  --token-out: #0a0a0a;
+  --token-glow: rgba(0, 0, 0, 0.3);
+  --token-out-glow: rgba(0, 0, 0, 0.5);
+  --hub-a: #27272a;
+  --hub-b: #0a0a0a;
+  --ring-1: rgba(0, 0, 0, 0.06);
+  --ring-2: rgba(0, 0, 0, 0.03);
+  --hub-glow: rgba(0, 0, 0, 0.35);
+  --warm-from: #d4d4d8;
+  --warm-to: #0a0a0a;
+  --bar-to: rgba(0, 0, 0, 0.5);
+  --zone-from: #f4f4f5;
+  --zone-to: #ffffff;
+  --ramp-0: #f4f4f5;
+  --ramp-1: #d9d9dc;
+  --ramp-2: #6b6b70;
+  --ramp-3: #1c1c1f;
+  --ramp-4: #0a0a0a;
+  background: linear-gradient(180deg, var(--zone-from) 0%, var(--zone-to) 100%);
   color: var(--text);
 }
-.lightZone .card,
-.lightZone .priceCard,
-.lightZone .faqItem,
-.lightZone .ctaInner {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -20px rgba(0, 0, 0, 0.18);
+.card,
+.priceCard:not(.priceHot),
+.faqItem,
+.ctaInner {
+  box-shadow: var(--shadow-card);
 }
-.lightZone .priceHot {
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 30px 80px -30px rgba(0, 0, 0, 0.35);
-}
-.lightZone .faqIcon {
-  background: rgba(0, 0, 0, 0.06);
-}
-.lightZone .sectionGlow::before {
-  background: radial-gradient(50% 50% at 50% 30%, rgba(0, 0, 0, 0.05), transparent 70%);
-}
-.lightZone .btn {
-  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.45);
+
+/* ---------- device theme: the two sets swap ends ----------
+   Dark scheme (default): black top, white bottom. Light scheme: white top,
+   black bottom. Same page, same ramp, mirrored. */
+
+@media (prefers-color-scheme: light) {
+  .root {
+  --bg: #f4f4f5;
+  --card: #ffffff;
+  --card-2: #f4f4f5;
+  --line: rgba(0, 0, 0, 0.09);
+  --line-strong: rgba(0, 0, 0, 0.16);
+  --text: #0a0a0a;
+  --muted: #52525b;
+  --faint: #71717a;
+  --accent: #0a0a0a;
+  --accent-hover: #27272a;
+  --accent-soft: rgba(0, 0, 0, 0.07);
+  --on-accent: #ffffff;
+  --green: #0a0a0a;
+  --green-soft: rgba(0, 0, 0, 0.07);
+  --amber: #52525b;
+  --amber-soft: rgba(0, 0, 0, 0.05);
+  --rose: #0a0a0a;
+  --rose-soft: rgba(0, 0, 0, 0.1);
+  --ink-soft: rgba(0, 0, 0, 0.06);
+  --ink-mid: rgba(0, 0, 0, 0.12);
+  --ink-strong: rgba(0, 0, 0, 0.2);
+  --ink-hover: rgba(0, 0, 0, 0.3);
+  --glow: rgba(0, 0, 0, 0.045);
+  --glow-soft: rgba(0, 0, 0, 0.05);
+  --hero-glow: rgba(0, 0, 0, 0.06);
+  --cta-glow: rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -20px rgba(0, 0, 0, 0.18);
+  --hover-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.35);
+  --hot-border: rgba(0, 0, 0, 0.55);
+  --hot-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 30px 80px -30px rgba(0, 0, 0, 0.35);
+  --hot-bg: rgba(0, 0, 0, 0.04);
+  --btn-inset: rgba(0, 0, 0, 0.06);
+  --btn-glow: 0 12px 30px -12px rgba(0, 0, 0, 0.45);
+  --nav-bg: rgba(244, 244, 245, 0.72);
+  --strip-ink: rgba(0, 0, 0, 0.42);
+  --wire: rgba(0, 0, 0, 0.14);
+  --token-in: #71717a;
+  --token-out: #0a0a0a;
+  --token-glow: rgba(0, 0, 0, 0.3);
+  --token-out-glow: rgba(0, 0, 0, 0.5);
+  --hub-a: #27272a;
+  --hub-b: #0a0a0a;
+  --ring-1: rgba(0, 0, 0, 0.06);
+  --ring-2: rgba(0, 0, 0, 0.03);
+  --hub-glow: rgba(0, 0, 0, 0.35);
+  --warm-from: #d4d4d8;
+  --warm-to: #0a0a0a;
+  --bar-to: rgba(0, 0, 0, 0.5);
+  --zone-from: #f4f4f5;
+  --zone-to: #ffffff;
+  --ramp-0: #f4f4f5;
+  --ramp-1: #d9d9dc;
+  --ramp-2: #6b6b70;
+  --ramp-3: #1c1c1f;
+  --ramp-4: #0a0a0a;
+  }
+  .lightZone {
+  --bg: #0a0a0a;
+  --card: #111214;
+  --card-2: #16171a;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --text: #ffffff;
+  --muted: #9ca3af;
+  --faint: #6b7280;
+  --accent: #ffffff;
+  --accent-hover: #e4e4e7;
+  --accent-soft: rgba(255, 255, 255, 0.12);
+  --on-accent: #0a0a0a;
+  --green: #e4e4e7;
+  --green-soft: rgba(255, 255, 255, 0.12);
+  --amber: #a1a1aa;
+  --amber-soft: rgba(255, 255, 255, 0.07);
+  --rose: #ffffff;
+  --rose-soft: rgba(255, 255, 255, 0.16);
+  --ink-soft: rgba(255, 255, 255, 0.08);
+  --ink-mid: rgba(255, 255, 255, 0.14);
+  --ink-strong: rgba(255, 255, 255, 0.25);
+  --ink-hover: rgba(255, 255, 255, 0.34);
+  --glow: rgba(255, 255, 255, 0.07);
+  --glow-soft: rgba(255, 255, 255, 0.08);
+  --hero-glow: rgba(255, 255, 255, 0.11);
+  --cta-glow: rgba(255, 255, 255, 0.12);
+  --shadow-card: none;
+  --hover-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.9);
+  --hot-border: rgba(255, 255, 255, 0.5);
+  --hot-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 30px 80px -30px rgba(255, 255, 255, 0.25);
+  --hot-bg: rgba(255, 255, 255, 0.06);
+  --btn-inset: rgba(255, 255, 255, 0.06);
+  --btn-glow: 0 12px 30px -12px rgba(255, 255, 255, 0.28);
+  --nav-bg: rgba(10, 10, 10, 0.72);
+  --strip-ink: rgba(255, 255, 255, 0.42);
+  --wire: rgba(255, 255, 255, 0.12);
+  --token-in: #9ca3af;
+  --token-out: #ffffff;
+  --token-glow: rgba(255, 255, 255, 0.55);
+  --token-out-glow: rgba(255, 255, 255, 0.95);
+  --hub-a: #ffffff;
+  --hub-b: #d4d4d8;
+  --ring-1: rgba(255, 255, 255, 0.08);
+  --ring-2: rgba(255, 255, 255, 0.035);
+  --hub-glow: rgba(255, 255, 255, 0.35);
+  --warm-from: #3f3f46;
+  --warm-to: #ffffff;
+  --bar-to: rgba(255, 255, 255, 0.5);
+  --zone-from: #0a0a0a;
+  --zone-to: #050505;
+  --ramp-0: #0a0a0a;
+  --ramp-1: #1c1c1f;
+  --ramp-2: #6b6b70;
+  --ramp-3: #d9d9dc;
+  --ramp-4: #f4f4f5;
+  }
 }
 
 /* ---------- motion safety ---------- */
@@ -1351,35 +1535,13 @@
 @media (prefers-reduced-motion: reduce) {
   .bar,
   .progressFill,
-  .linePath,
-  .lineArea,
-  .dashCard {
+  .warmFill,
+  .hubPulse {
     animation: none;
-  }
-  .linePath {
-    stroke-dashoffset: 0;
-  }
-  .lineArea {
-    opacity: 1;
   }
   .card,
   .btn,
   .btnGhost {
     transition: none;
   }
-}
-
-.lightZone .priceHot {
-  border-color: rgba(0, 0, 0, 0.55);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, var(--card) 40%);
-}
-.lightZone .card:hover {
-  border-color: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.35);
-}
-.lightZone .card::after {
-  background: radial-gradient(60% 40% at 50% 0%, rgba(0, 0, 0, 0.04), transparent 70%);
-}
-.lightZone .ctaInner::before {
-  background: radial-gradient(50% 60% at 50% 100%, rgba(0, 0, 0, 0.08), transparent 70%);
 }

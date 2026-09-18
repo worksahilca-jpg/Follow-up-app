@@ -2369,3 +2369,27 @@ semantic hue can come back without touching the rest.
 **Verified** at 1280 and 390 from a production build; typecheck, lint clean; every colour
 literal from the indigo system grepped out. Live artifact republished; `landing-v7.mp4`.
 **Awaiting** his reaction to the illustration and the monochrome.
+
+## 2026-09-18 — Device theme: the two ends of the gradient swap with the OS setting
+
+**Trigger.** A-011, and the founder's rule given with it: "for dark mode of device we will do
+black background with a whitish gradient, and vice versa."
+
+**How it is built.** The landing system now has exactly two token sets in
+`landing-dark.module.css`: INK (black ground, white ink) and PAPER (white ground, black ink),
+each ~55 custom properties, from `--bg` and `--text` through the soft fills, glows, shadows, the
+hub gradient, the wire and dot colours, the warmth bar and the five ramp stops. Every colour on
+the page reads a token; no rule keys on "is this the light zone" any more. `.root` takes INK and
+`.lightZone` takes PAPER by default (dark scheme: black → white). Under
+`@media (prefers-color-scheme: light)` the two blocks swap sets, and the ramp's five stops are
+listed in reverse inside PAPER, so the same `.ramp` rule runs white → black. The nav bar's
+scrolled background is a token too, so it matches the top of whichever page it sits on.
+
+**Verified** with the colour scheme emulated at 1280: hero, illustration, ramp, pricing, FAQ, CTA
+and footer in both schemes; typecheck and build clean. One fix from the check: the open FAQ's
+close icon now takes `--on-accent`, so the cross stays visible on the accent disc in both
+schemes. Dead CSS from the removed dashboard card (`.dash*`, `.chrome*`, `.tiles`) is still in
+the file; it is inert and can go in a cleanup pass.
+
+**Not done, by choice:** no in-page theme toggle. The founder's rule is about the device
+setting, and a toggle would be a product-behaviour decision (his call).

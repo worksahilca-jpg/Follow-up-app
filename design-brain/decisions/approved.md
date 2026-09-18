@@ -303,3 +303,18 @@ designer's reading of X. Build the literal thing first; earn the divergence with
 this build ("can we go with white black gradient"). Applied as a slow ramp across the Features
 section with a light Pricing/FAQ/CTA/footer zone, never a hard edge (R-007). Details in
 `[[design-decisions]]` 2026-09-18, "Enhancement pass". Not yet reacted to.
+
+## A-011 — Black-and-white page with the lead-flow hero illustration ^A-011
+
+**Approved:** 2026-09-18, founder, on the live preview: "this is good."
+
+**What specifically was approved:** the monochrome system (no accent hue; white on black at the
+top, black on white at the bottom, one slow ramp between them), the hero line "Never lose a
+*lead.*", and the hero illustration of leads flowing from five channels through the FollowUp hub
+into five warmed leads, with the dots on the wires and the warmth bars. This is the third
+approval of the day and the first on the moving page rather than a still. Supersedes A-010's
+indigo (the layout and section order from A-010 stand).
+
+**Rule added in the same breath:** the page follows the device theme. Dark device: black top
+fading to white. Light device: white top fading to black. "Vice versa", his words. Recorded in
+`[[design-decisions]]` 2026-09-18, "Device theme".

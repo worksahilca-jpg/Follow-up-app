@@ -225,3 +225,31 @@ to a light middle, fade back to a dark close.
 **Lesson for the brain (inferred, marked inferred):** when the founder names a reference *and* a
 colour change in one breath, the colour change is additive, not a replacement. Ask "where does the
 dark go" before building an all-light page from a dark reference.
+
+## R-007 — Three things on the first animated preview of the gradient page (2026-09-18) ^R-007
+
+**Rejected:** 2026-09-18, founder, after watching the 16-second recording of the page: "logo is not
+accurate", "I don't like it directly shifted to white from black", "the Sarah Johnson example is
+looking awkward", "after that it's too much congested, my eye was not ready to read all those heavy
+information". He then asked for the design to be opened somewhere he can comment directly; a
+review artifact was published for that.
+
+**What was rejected, item by item:**
+1. **The two-leaf logo as built** does not match #69/#71 closely enough. Reason not yet given;
+   awaiting his comments on the artifact before rebuilding.
+2. **The hard hand-off from the black hero to the white middle.** The 180 px fade reads as a cut at
+   scroll speed. Inferred (marked inferred): the transition should be long and gradual, or the
+   dark should carry further down the page, not flip.
+3. **The hero thread with Sarah Johnson** reads as awkward. Reason not yet given. Inferred (marked
+   inferred): a fake chat with a named person, playing out message by message under the headline,
+   is a lot of theatre for the first screen; the earlier objection to the dashboard (R-005) was to
+   the *device*, and this device may have the same problem.
+4. **Density below the hero.** Four product cards with live-looking figures, then three stats, then
+   three guarantees: too much to read too soon. Inferred: fewer sections before the first breath,
+   and less inside each; the page should let the reader arrive.
+
+**Do not propose again** until his artifact comments are in: no rebuilding any of the four on a
+guess. The comments are the brief.
+
+**Evidence:** the recording `landing-preview.mp4` (session scratchpad); this entry's date in
+`[[design-decisions]]`.

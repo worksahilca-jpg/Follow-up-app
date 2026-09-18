@@ -282,3 +282,19 @@ render of the page with the dark hero, the light middle and the dark close.
   ratios in `followup/public/brand/README.md`; decision entry in `[[design-decisions]]`.
 
 **Not covered:** the accent colour (still the placeholder indigo, unchosen); the app's restyle.
+
+## A-010 — The faithful Scalable adaptation is the landing page direction ^A-010
+
+**Approved:** 2026-09-18, founder, on the live preview of the fourth build: "this is close, let's
+enhance this more." Supersedes A-009 (which R-008 had already closed).
+
+**What specifically was approved:** the reference template reproduced as it is — near-black ground,
+dark bordered cards, indigo accent, green badges, italic-serif emphasis word, its section order and
+its hero dashboard card — with FollowUp's words, numbers and logo. The founder's word was "close",
+not "done": enhancement inside this direction is wanted; a new direction is not.
+
+**Standing exclusions still apply:** no invented testimonials, no fake logo strip, no "book a demo"
+only, no annual pricing. The masonry of enforced rules and the channel strip are the honest stand-ins.
+
+**Lesson (inferred, marked inferred):** for this founder, "make it look like X" means X, not a
+designer's reading of X. Build the literal thing first; earn the divergence with his reaction.

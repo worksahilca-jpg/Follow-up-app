@@ -11,22 +11,22 @@ const siteUrl = process.env.NEXTAUTH_URL ?? "https://follow-up-app-two.vercel.ap
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "FollowUp — catches the lead that went quiet",
+  title: "FollowUp — Never lose a lead because you forgot to follow up.",
   description:
-    "FollowUp is the AI teammate that watches your sales conversations and tells you who to follow up with today, why, and what to say.",
+    "FollowUp watches your inbox, tells you who is going quiet and why, and writes the reply. Only for owners who have leads and don't have time to reply.",
   openGraph: {
-    title: "FollowUp — catches the lead that went quiet",
+    title: "FollowUp — Never lose a lead because you forgot to follow up.",
     description:
-      "FollowUp is the AI teammate that watches your sales conversations and tells you who to follow up with today, why, and what to say.",
+      "FollowUp watches your inbox, tells you who is going quiet and why, and writes the reply. Only for owners who have leads and don't have time to reply.",
     url: siteUrl,
     siteName: "FollowUp",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "FollowUp — catches the lead that went quiet",
+    title: "FollowUp — Never lose a lead because you forgot to follow up.",
     description:
-      "FollowUp is the AI teammate that watches your sales conversations and tells you who to follow up with today, why, and what to say.",
+      "FollowUp watches your inbox, tells you who is going quiet and why, and writes the reply. Only for owners who have leads and don't have time to reply.",
   },
 };
 

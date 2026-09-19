@@ -113,6 +113,14 @@ function toMessagingEvent(message: GraphMessage, igUserId: string): Record<strin
   const attachmentData = Array.isArray(message.attachments?.data) ? message.attachments.data : [];
   const attachments = attachmentData.map(() => ({ type: "attachment" }));
 
+  // The REST shape carries the sender's handle; the webhook payload does
+  // not. Passed along so a polled lead is "@sahildoes" rather than the
+  // placeholder "Instagram DM" — which the first real lead was greeted by
+  // ("Hi! Instagram, ...", 2026-09-19). processMetaEnvelope reads it if
+  // present and is unaffected when it is absent, so the webhook path is
+  // unchanged.
+  const username = typeof message.from?.username === "string" ? message.from.username : undefined;
+
   const isEcho = fromId === igUserId;
   if (isEcho) {
     const to = Array.isArray(message.to?.data) ? (message.to.data as { id?: unknown }[]) : [];
@@ -127,7 +135,7 @@ function toMessagingEvent(message: GraphMessage, igUserId: string): Record<strin
   }
 
   return {
-    sender: { id: fromId },
+    sender: username ? { id: fromId, username } : { id: fromId },
     recipient: { id: igUserId },
     timestamp: sentAt.getTime(),
     message: { mid, text, attachments },

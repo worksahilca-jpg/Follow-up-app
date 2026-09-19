@@ -114,7 +114,10 @@ describe("Instagram DM with an attachment and no text", () => {
     const res = await POST(webhookRequest(instagramEvent({ mid: "mid_img", attachments: [{ type: "image" }] })));
 
     expect(res.status).toBe(200);
-    expect(findOrCreateLeadByInstagram).toHaveBeenCalledWith("biz1", "sender-1");
+    // No handle: Meta's webhook payload carries no username, unlike the
+    // REST shape the conversation poller reads (src/lib/instagramPoll.ts).
+    // The lead is created from the sender id alone, as it always was.
+    expect(findOrCreateLeadByInstagram).toHaveBeenCalledWith("biz1", "sender-1", undefined);
     expect(createInboundMessageIfNew).toHaveBeenCalledTimes(1);
     const [, body, , externalId] = createInboundMessageIfNew.mock.calls[0] ?? [];
     expect(body).toMatch(/image/i);

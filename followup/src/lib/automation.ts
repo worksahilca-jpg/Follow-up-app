@@ -43,6 +43,7 @@ import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { isTransientError } from "@/lib/transientError";
+import { greetingFirstName } from "@/lib/leadName";
 import type { Message } from "@/lib/types";
 
 export const UNANSWERED_ACTION = "unanswered_reply";
@@ -337,9 +338,16 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // Fetched once for the whole run, not per lead — every lead in this
   // batch belongs to the same business, so the send-window check below
   // always resolves against the same timezone.
-  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true, tier: true } });
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { timezone: true, tier: true, holdAllForApproval: true },
+  });
   const timezone = business?.timezone ?? "America/New_York";
   const tier = (business?.tier ?? "plus") as "free" | "plus" | "pro";
+  // Nothing automated leaves this account unreviewed — see the column's
+  // comment in schema.prisma. It overrides both the per-lead tier and the
+  // risk verdict below: every draft goes to the approval queue instead.
+  const holdAll = business?.holdAllForApproval ?? false;
 
   const deadLeadRule = await prisma.automation.findFirst({ where: { businessId, action: DEAD_LEAD_ACTION } });
   const deadLeadEnabled = deadLeadRule?.enabled ?? true; // on by default, like everything else here
@@ -643,9 +651,15 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         return { kind: "held", note: `${lead.name}: ${reason}` };
       }
 
-      if (lead.automationTier !== "AUTONOMOUS" || tier === "free") {
+      if (holdAll || lead.automationTier !== "AUTONOMOUS" || tier === "free") {
         let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
-        if (process.env.OPENAI_API_KEY) {
+        if (holdAll) {
+          // The classifier decides whether something is safe to send
+          // WITHOUT review. On an account where nothing sends without
+          // review, it has nothing to decide, so its cost is not worth
+          // paying — the hold below happens either way.
+          risk = { riskLevel: "low", reason: "" };
+        } else if (process.env.OPENAI_API_KEY) {
           try {
             risk = await assessSendRisk({ conversation }, message);
           } catch (err) {
@@ -689,7 +703,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         // (which framing won the merge) — see isCold's definition above for
         // the hole that distinction was hiding. `isDeadLead` implies
         // `isCold`, so this only ever holds MORE than before, never less.
-        if (risk.riskLevel !== "low" || isCold) {
+        if (holdAll || risk.riskLevel !== "low" || isCold) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
           // it with the message it was written against, which is what lets
@@ -726,13 +740,20 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           const daysQuiet = Math.floor(
             (Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000
           );
-          const firstName = lead.name.split(" ")[0];
+          // "They", not the raw lead.name, when FollowUp doesn't actually
+          // know who this is: an Instagram DM lead is filed as "Instagram
+          // DM" until a handle is learned, and "Instagram went quiet 5
+          // days ago" is the same placeholder-as-a-person bug that sent a
+          // real lead "Hi! Instagram," on 2026-09-19.
+          const firstName = greetingFirstName(lead.name) || "They";
           const holdReason =
             risk.riskLevel !== "low"
               ? risk.reason
-              : isUnanswered
-                ? `${firstName} wrote ${daysQuiet} days ago and never got an answer — this reply is yours to send`
-                : `${firstName} went quiet ${daysQuiet} days ago — reaching back out is your call`;
+              : holdAll
+                ? "Ready to send — this account holds every automated message for you to approve"
+                : isUnanswered
+                  ? `${firstName} wrote ${daysQuiet} days ago and never got an answer — this reply is yours to send`
+                  : `${firstName} went quiet ${daysQuiet} days ago — reaching back out is your call`;
 
           if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
           // Held-not-sent is as much a real AI decision as a send — the

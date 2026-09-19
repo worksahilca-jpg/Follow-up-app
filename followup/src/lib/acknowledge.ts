@@ -5,6 +5,7 @@ import { sendFollowUpToLead } from "@/lib/sending";
 import { checkAiEligibility } from "@/lib/billing";
 import { isOptOutMessage } from "@/lib/optOutKeywords";
 import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
+import { greetingFirstName } from "@/lib/leadName";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -463,7 +464,7 @@ export async function acknowledgeNewLead(
     const business = await prisma.business.findUnique({ where: { id: lead.businessId }, select: { name: true } });
     const businessName = business?.name ?? "us";
     const owner = await getSenderFirstName(lead.businessId);
-    const leadFirstName = lead.name.split(" ")[0];
+    const leadFirstName = greetingFirstName(lead.name);
 
     const decision = await buildAckLine({
       leadFirstName,
@@ -579,6 +580,18 @@ export async function acknowledgeNewLead(
  * deliberately does NOT push the due time back — otherwise a lead typing
  * three short messages in a row would keep resetting the clock and the
  * acknowledgement would drift indefinitely.
+ *
+ * The grace period runs from when the LEAD WROTE, not from when this was
+ * called. Those were the same instant while a webhook was the only way a
+ * DM arrived. Since src/lib/instagramPoll.ts also asks Meta every few
+ * minutes — Meta's push proved unreliable on 2026-09-19 — they are not,
+ * and computing the due time from `now` made the two waits stack: a DM
+ * sent at 19:07:42 and found at 19:09:06 was scheduled for 19:11:06,
+ * three and a half minutes after a lead who expects a business to be
+ * awake. Measured from the inbound it is due at 19:09:42, and a message
+ * found after its grace has already elapsed goes out on the next tick.
+ * STALE_AFTER_MS still refuses anything genuinely old at send time, so a
+ * due time in the past can never mean "answer a message from last week".
  */
 async function scheduleDeferredAck(
   leadId: string,
@@ -586,7 +599,7 @@ async function scheduleDeferredAck(
   existingDueAt: Date | null,
   graceMs: number
 ): Promise<AckResult> {
-  const dueAt = existingDueAt ?? new Date(Date.now() + graceMs);
+  const dueAt = existingDueAt ?? new Date((input.inboundAt?.getTime() ?? Date.now()) + graceMs);
   const claim = await prisma.lead.updateMany({
     // Still conditional on acknowledgedAt: a lead that has already had its
     // one acknowledgement never queues another.

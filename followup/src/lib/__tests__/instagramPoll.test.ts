@@ -71,7 +71,7 @@ describe("fetchNewInstagramEvents", () => {
     expect(ok).toBe(true);
     expect(events).toEqual([
       expect.objectContaining({
-        sender: { id: LEAD },
+        sender: { id: LEAD, username: "sahildoes" },
         recipient: { id: IG },
         message: expect.objectContaining({ mid: "m1", text: "is this available?" }),
       }),
@@ -233,5 +233,32 @@ describe("pollInstagramForAllBusinesses", () => {
     });
     expect(await pollInstagramForAllBusinesses()).toEqual({ businesses: 2, events: 0 });
     expect(businessUpdate).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "good" } }));
+  });
+});
+
+/**
+ * The sender's handle. Meta's webhook payload has no username, so a lead
+ * created from one is "Instagram DM" — and the first real lead was
+ * greeted "Hi! Instagram, ..." on 2026-09-19 because that placeholder
+ * reached the greeting as though it were a person. The REST shape the
+ * poller reads does carry the handle.
+ */
+describe("the sender's handle", () => {
+  it("is carried on the event so the lead is named after them, not after the channel", async () => {
+    mockGraph(
+      [{ id: "c1", updated_time: metaTime(10_000) }],
+      { c1: [{ id: "m1", created_time: metaTime(10_000), from: { id: LEAD, username: "sahildoes" }, message: "hi" }] }
+    );
+    const { events } = await fetchNewInstagramEvents(IG, TOKEN, new Date(Date.now() - 300_000));
+    expect(events[0].sender).toEqual({ id: LEAD, username: "sahildoes" });
+  });
+
+  it("is simply absent when Meta didn't give one, leaving the webhook shape unchanged", async () => {
+    mockGraph(
+      [{ id: "c1", updated_time: metaTime(10_000) }],
+      { c1: [{ id: "m1", created_time: metaTime(10_000), from: { id: LEAD }, message: "hi" }] }
+    );
+    const { events } = await fetchNewInstagramEvents(IG, TOKEN, new Date(Date.now() - 300_000));
+    expect(events[0].sender).toEqual({ id: LEAD });
   });
 });

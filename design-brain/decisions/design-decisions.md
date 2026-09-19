@@ -2702,8 +2702,10 @@ live as 8471a0c). This is the rest.
   take the box shape (shadow, no border).
 - **Leftovers:** the unsubscribe page (raw HTML outside the app shell) carries its own copy
   of the tokens in both themes; the manifest's colours are the real ground and ink; the
-  booking page's confirm button and the 404's button lose their last hard-coded white and
-  indigo shadow. The aurora keyframes and three dead navy-era landing components
+  booking page's confirm button loses its hard-coded white; the 404 moves off the
+  light-direction module (white-only, indigo placeholder accent) onto the landing page's own
+  module, so it follows the device theme like everything else, and that module goes with
+  the three light-direction components nothing imported. The aurora keyframes and three dead navy-era landing components
   (`LandingNav`, `HeroMockup`, `FadeHeadline`) are removed with the module that styled them.
 
 **Still open for the founder:** whether the four status colours stay (A-006 axis 3) or the

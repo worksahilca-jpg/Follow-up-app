@@ -337,3 +337,31 @@ Three related defaults were confirmed the same day, recorded in
 `design-brain/decisions/design-decisions.md` (2026-09-18): "Not now" from a lead ends the
 DM sequence (A-007); up to three automatic touches inside Meta's 24-hour window; the Monday
 digest goes to every business including Free.
+
+## FollowUp asks Meta for DMs; it does not only wait to be told (CEO decision, 2026-09-19)
+
+> **Do not remove the Instagram poller as redundant.** It is not a backup for a webhook
+> that works. It is there because the webhook demonstrably did not.
+
+The first real Instagram account, on the day it was connected: a Business account, listed
+under its own `subscribed_apps` with the `messages` field, on a published app, both test
+accounts holding app roles, the owner's "Allow access to messages" toggle on — and not one
+webhook for a real DM, in either direction, across an afternoon. Meta's own test payload
+for that same field arrived and processed fine, and `/api/instagram/diagnose` showed the
+message sitting in the account's conversations, readable with the token already held.
+
+So Instagram capture has two paths, as Gmail always has. The webhook stays and is still the
+fast one. Alongside it, `/api/cron/instagram-poll` reads each connected account's
+conversations **every three minutes** (the CEO's interval: "3 mins is good for now" — the
+dial is cost versus how instant it feels, and nothing else depends on the number) and feeds
+anything new through the same `processMetaEnvelope` the webhook uses. Whichever arrives
+second is dropped on message-id uniqueness.
+
+The bounds matter as much as the mechanism, and each one exists because of a case already
+seen: a never-polled account reads fifteen minutes back and never its history, so connecting
+an account cannot acknowledge conversations that ended weeks ago; no tick reaches back more
+than a day; a thread untouched since the cursor costs no request; and a read Meta refused
+leaves the cursor alone rather than skipping a window nobody read. `src/lib/instagramPoll.ts`.
+
+The general rule this sets, for every channel after it: **a push FollowUp cannot make arrive
+is not a capture mechanism.** Where a platform will let us ask, we ask.

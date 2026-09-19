@@ -30,6 +30,8 @@ function lead(overrides: Partial<Lead>): Lead {
     score: 0,
     priority: "none",
     reviewed: false,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason: "",
     scoreFactors: [],
     lastContacted: new Date().toISOString(),

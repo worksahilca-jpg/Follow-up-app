@@ -1,5 +1,6 @@
-import { ShieldCheck, ShieldAlert, History } from "lucide-react";
+import { ShieldCheck, ShieldAlert, History, Languages } from "lucide-react";
 import { deriveConsentBasis } from "@/lib/consent";
+import { describeLeadLanguage, type LeadLanguage } from "@/lib/leadLanguage";
 import { formatDate } from "@/lib/demo-data";
 import type { LeadAuditTrail } from "@/lib/leads-data";
 
@@ -81,12 +82,16 @@ export default function LeadTrustPanel({
   source,
   optedOutAt,
   auditTrail,
+  languageRead,
 }: {
   source: string;
   optedOutAt?: string | null;
   auditTrail: LeadAuditTrail;
+  /** What FollowUp read the lead's latest message as; null = not read yet. */
+  languageRead?: LeadLanguage | null;
 }) {
   const consent = deriveConsentBasis(source);
+  const language = describeLeadLanguage(languageRead ?? null);
   const { events, totalCount } = auditTrail;
   const truncated = totalCount > events.length;
 
@@ -130,6 +135,44 @@ export default function LeadTrustPanel({
             <span style={{ color: "var(--sage)" }}>No opt-out on file — SMS and WhatsApp sends are allowed.</span>
           </div>
         )}
+      </div>
+
+      {/* What FollowUp read their latest message as.
+          
+          This panel already answers "on what basis is FollowUp acting
+          here" for consent; language is the same kind of fact and had
+          nowhere to live. Until now FollowUp decided a lead's language
+          and formality and said nothing about it anywhere — the owner
+          could see a reply come out in Spanish and had no way to know
+          whether that was a judgement or an accident (brand principle 6,
+          show the reasoning).
+          
+          No colour of its own: this is information, not a status, and
+          the panel already spends two hues on consent (A-006 caps a
+          screen at three). Silent-by-absence is deliberate too — a lead
+          nobody has written to yet says "not read yet", never "English",
+          because a guess presented as a reading is the thing this is
+          here to prevent. */}
+      <div className="mt-4 pt-3 border-t border-line">
+        <h4
+          className="text-xs uppercase tracking-wide text-ink-soft flex items-center gap-1.5"
+          title="FollowUp matches whatever language and tone the lead's most recent message is in — every reply, every time."
+        >
+          <Languages className="h-3.5 w-3.5" />
+          How they write
+        </h4>
+        <p className="text-sm mt-2 leading-relaxed">
+          {language ? (
+            <>
+              Their last message read as <span className="font-medium">{language}</span>{" "}
+              <span className="text-ink-soft">FollowUp replies to match it.</span>
+            </>
+          ) : (
+            <span className="text-ink-soft">
+              FollowUp hasn&apos;t read a message from this lead yet. Replies will match whatever they write.
+            </span>
+          )}
+        </p>
       </div>
 
       <div className="mt-4 pt-3 border-t border-line">

@@ -16,7 +16,7 @@ function msg(direction: Message["direction"], hoursAgo: number): Message {
 function lead(over: Partial<Lead> = {}): Lead {
   return {
     id: "l1", name: "Young Son", company: "", email: "y@x.com", source: "Gmail", stage: "new", dealValue: 0,
-    score: 50, reviewed: true, scoreReason: "asked about the roof", scoreFactors: [], priority: "medium",
+    score: 50, reviewed: true, languageRead: null, languageReadAt: null, scoreReason: "asked about the roof", scoreFactors: [], priority: "medium",
     lastContacted: h(30), nextFollowUp: null, assignedTo: "", notes: "", conversation: [], suggestedMessage: "",
     automationTier: "assisted", ...over,
   };

@@ -3017,3 +3017,48 @@ decide the product. §3 correctly described *why register drift hurts*. Turning 
 founder's ask — and the ask, "same language", had been in his own words from the start. When
 a research finding suggests a constraint the founder never asked for, that is a question for
 him, not a decision to take quietly.
+
+## 2026-09-19 — "How they write", on the lead's own page
+
+**The gap this closes**, named in the same session that created it: FollowUp had started
+deciding a lead's language and formality and said nothing about it anywhere. An owner could
+watch a reply go out in Spanish with no way to know whether that was a judgement or an
+accident — the same blank-screen failure as the paused lead fixed earlier today, one layer
+down. Brand principle 6: show the reasoning, not just the verdict.
+
+**Where it lives:** a new section in `LeadTrustPanel`, the panel whose existing job is "on
+what basis is FollowUp acting here". Consent was already answered there; language is the
+same kind of fact and had nowhere else to go. No new card — the page already has enough
+boxes (S-09).
+
+**What it says**, in the owner's words rather than the code's:
+
+> Their last message read as **Hindi, typed in English letters.** FollowUp replies to match it.
+
+Three rules behind that sentence, each a refusal to invent:
+
+1. **The language is named the way people name it.** `pa` renders "Punjabi", not "Panjabi"
+   — the standard's own name for it and nobody else's. A hand-written list, not
+   `Intl.DisplayNames`, for exactly this reason.
+2. **The script is mentioned only when it is news.** Nobody needs telling Spanish was in
+   Latin letters. "Hindi, typed in English letters" is the single most useful thing this
+   line can say, and the detail a reply most visibly gets wrong.
+3. **An unread lead says so.** "FollowUp hasn't read a message from this lead yet" — never
+   "English". A guess presented as a reading is precisely what this section exists to
+   prevent.
+
+**No colour of its own.** This is information, not a status, and the panel already spends
+two hues on consent — A-006 caps a screen at three.
+
+**What was deliberately NOT built, and why it is a question for the founder rather than a
+gap:** an owner override. It sounds obvious — see what FollowUp read, correct it if it's
+wrong — but it contradicts the rule he set hours earlier, that the newest message decides.
+An override would either be wiped by the lead's next message (useless) or outrank what the
+lead actually wrote (which is the behaviour he just rejected). Making it stick is a
+product-behaviour decision — `CLAUDE.md` puts those with him — so it is raised, not taken.
+
+**Self-critique:** the line sits inside a collapsed section, so an owner has to open
+"Consent & AI activity" to see it. That is right for a fact you check when something looks
+wrong and wrong for one you want noticed — and if a tester reports a reply in the wrong
+language, the first thing they will not think to do is expand a panel. Worth revisiting once
+there is evidence anyone looks.

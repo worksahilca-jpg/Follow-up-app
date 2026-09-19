@@ -187,6 +187,62 @@ export async function detectLeadLanguage(inboundText: string): Promise<LeadLangu
 }
 
 /**
+ * The languages FollowUp can name in plain words.
+ *
+ * Deliberately a list rather than Intl.DisplayNames: this text is read by
+ * a business owner on their phone, and "Panjabi" (the standard's own
+ * name for pa) is not what anyone calls it. A code with no entry here
+ * renders as the code, which is worse to read but never wrong — inventing
+ * a name for a language we did not plan for is the failure to avoid.
+ */
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: "English", es: "Spanish", fr: "French", de: "German", pt: "Portuguese",
+  it: "Italian", nl: "Dutch", pl: "Polish", ru: "Russian", uk: "Ukrainian",
+  tr: "Turkish", ar: "Arabic", fa: "Persian", he: "Hebrew", ur: "Urdu",
+  hi: "Hindi", pa: "Punjabi", gu: "Gujarati", bn: "Bengali", ta: "Tamil",
+  te: "Telugu", mr: "Marathi", ml: "Malayalam", kn: "Kannada",
+  zh: "Chinese", ja: "Japanese", ko: "Korean", vi: "Vietnamese",
+  th: "Thai", tl: "Tagalog", id: "Indonesian", ms: "Malay",
+};
+
+/**
+ * The script each language is normally written in. Used ONLY to decide
+ * whether the script is worth mentioning: nobody needs telling that
+ * Spanish was in Latin letters, but "Hindi typed in English letters" is
+ * the single most useful thing this panel can say to an owner whose lead
+ * writes Hinglish — and it is the detail a reply most visibly gets wrong.
+ */
+const USUAL_SCRIPT: Record<string, string> = {
+  hi: "Deva", mr: "Deva", pa: "Guru", gu: "Gujr", bn: "Beng", ta: "Taml",
+  te: "Telu", ml: "Mlym", kn: "Knda", ur: "Arab", ar: "Arab", fa: "Arab",
+  he: "Hebr", ru: "Cyrl", uk: "Cyrl", zh: "Hans", ja: "Jpan", ko: "Hang",
+  th: "Thai",
+};
+
+/**
+ * One sentence for the owner: what FollowUp read the lead's latest
+ * message as. Null when nothing has been read, which callers render as
+ * "not read yet" rather than guessing.
+ *
+ * Says nothing about *which* message, deliberately — the panel around it
+ * carries the timestamp, and repeating it here would be two clocks to
+ * keep in sync.
+ */
+export function describeLeadLanguage(lang: LeadLanguage | null): string | null {
+  if (!lang) return null;
+  const name = LANGUAGE_NAMES[lang.language] ?? lang.language;
+
+  // Romanized: a language normally written in its own script, typed in
+  // Latin letters instead. The one case worth naming.
+  const romanized = lang.script === "Latn" && USUAL_SCRIPT[lang.language] && USUAL_SCRIPT[lang.language] !== "Latn";
+  const written = romanized ? `${name}, typed in English letters` : name;
+
+  if (lang.register === "formal") return `${written} — and they wrote formally.`;
+  if (lang.register === "informal") return `${written} — and they wrote casually.`;
+  return `${written}.`;
+}
+
+/**
  * Pick the three stored columns off any already-loaded lead row.
  *
  * Exists so threading this through a drafting call site is one argument

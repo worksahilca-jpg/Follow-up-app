@@ -1,16 +1,19 @@
 /**
- * How a lead writes, decided once and held steady.
+ * How a lead writes, read fresh from their newest message.
  *
- * The founder's instruction, 2026-09-19: replies must be "in the same
- * language and same tone". Language was already handled by showing the
- * model the lead's own message; TONE was not, and could not be, because
- * nothing was stored — every message re-decided formality from whatever
- * text was in front of it. These pin the two halves of the fix: a parser
- * that refuses to invent an answer, and a prompt line that only claims
- * what was actually decided.
+ * The founder's instruction, 2026-09-19: replies "in the same language
+ * and same tone" — and, when an early build locked the language to the
+ * first message, his correction: "whatever language the lead will
+ * approach, we will reply in the same language." So the newest message
+ * always decides; what is stored is a reading, not a verdict.
+ *
+ * These pin three things that each refuse to invent an answer: a parser
+ * that will not pass an improvised register to a prompt, a prompt line
+ * that claims nothing when nothing was read, and an owner-facing
+ * sentence that shows a language code rather than a name we made up.
  */
 import { describe, it, expect } from "vitest";
-import { parseRegister, leadLanguageOf, registerInstruction } from "@/lib/leadLanguage";
+import { parseRegister, leadLanguageOf, registerInstruction, describeLeadLanguage } from "@/lib/leadLanguage";
 
 describe("parseRegister", () => {
   it("keeps the two real answers, case- and space-insensitively", () => {
@@ -90,5 +93,60 @@ describe("registerInstruction", () => {
 
   it("names a non-Latin script plainly", () => {
     expect(registerInstruction({ language: "hi", script: "Deva", register: "neutral" })).toContain("Deva script");
+  });
+});
+
+/**
+ * The same three facts, said to a business owner on their phone rather
+ * than to a model. Brand principle 9: every word understood by someone
+ * who has never used software like this — so no "register", no "script",
+ * no language codes where a name exists.
+ */
+describe("describeLeadLanguage", () => {
+  it("says nothing at all when nothing has been read", () => {
+    expect(describeLeadLanguage(null)).toBeNull();
+  });
+
+  it("names the language in the word people actually use", () => {
+    expect(describeLeadLanguage({ language: "pa", script: "Guru", register: "neutral" })).toBe("Punjabi.");
+    // ...not "Panjabi", which is the standard's name and nobody else's.
+    expect(describeLeadLanguage({ language: "es", script: "Latn", register: "neutral" })).toBe("Spanish.");
+  });
+
+  // The single most useful thing this line can say: Hinglish is a lead
+  // writing Hindi in English letters, and a reply in Devanagari is the
+  // most visible way to get it wrong.
+  it("calls out a language typed in English letters, which is the case that matters", () => {
+    expect(describeLeadLanguage({ language: "hi", script: "Latn", register: "neutral" })).toBe(
+      "Hindi, typed in English letters."
+    );
+  });
+
+  it("stays quiet about letters when they are the language's usual ones", () => {
+    expect(describeLeadLanguage({ language: "hi", script: "Deva", register: "neutral" })).toBe("Hindi.");
+    expect(describeLeadLanguage({ language: "fr", script: "Latn", register: "neutral" })).not.toMatch(/letters/);
+  });
+
+  it("says how formally they wrote, in plain words", () => {
+    expect(describeLeadLanguage({ language: "es", script: "Latn", register: "formal" })).toBe(
+      "Spanish — and they wrote formally."
+    );
+    expect(describeLeadLanguage({ language: "de", script: "Latn", register: "informal" })).toBe(
+      "German — and they wrote casually."
+    );
+  });
+
+  // Truthful beats pretty: a language we did not plan for shows its code
+  // rather than a name we invented for it.
+  it("falls back to the raw code rather than inventing a name", () => {
+    expect(describeLeadLanguage({ language: "xx", script: "Latn", register: "neutral" })).toBe("xx.");
+  });
+
+  it("never uses the words the code uses", () => {
+    const all = [
+      describeLeadLanguage({ language: "es", script: "Latn", register: "formal" }),
+      describeLeadLanguage({ language: "hi", script: "Latn", register: "informal" }),
+    ].join(" ");
+    expect(all).not.toMatch(/register|script|BCP|Latn|Deva/i);
   });
 });

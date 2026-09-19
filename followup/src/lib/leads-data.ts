@@ -22,6 +22,7 @@ import { Lead, Message, ScoreFactor } from "@/lib/types";
 import type { Prisma } from "@prisma/client";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { computeAutomationStatus, getBusinessAutomationRules, type BusinessAutomationRules } from "@/lib/automationStatus";
+import { leadLanguageOf } from "@/lib/leadLanguage";
 
 type DbLead = Prisma.LeadGetPayload<{
   include: {
@@ -96,6 +97,8 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     // The real answer, taken from the column rather than from whether a
     // string happens to be non-empty. See Lead.reviewed in types.ts.
     reviewed: dbLead.scoreReason != null,
+    languageRead: leadLanguageOf(dbLead),
+    languageReadAt: dbLead.languageSetAt ? dbLead.languageSetAt.toISOString() : null,
     scoreFactors: (dbLead.scoreFactors as unknown as ScoreFactor[] | null) ?? [],
     priority: dbLead.priority.toLowerCase() as Lead["priority"],
     lastContacted,

@@ -2,15 +2,18 @@
  * The beta plan (founder, 2026-09-19: "Beta testers get Pro, free").
  * Pins the three guarantees that make it safe to hand out:
  *  1. a "beta" status counts as full access everywhere hasActiveAccess is asked;
- *  2. it is granted only to a business that has never subscribed, and
+ *  2. it is granted to any business with no real Stripe subscription, and
  *     revoked only from a business that is on it — a paying customer's
  *     Stripe state is never touched in either direction;
  *  3. by email, a tester with no business yet is a no-op (sign-in grants later).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// Explicitly typed so `mock.calls` stays inspectable — an untyped vi.fn()
+// infers it as an empty tuple, which tsc rejects on indexing.
+type BusinessUpdateMany = (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<{ count: number }>;
 const { updateMany, userFindUnique } = vi.hoisted(() => ({
-  updateMany: vi.fn(async () => ({ count: 1 })),
+  updateMany: vi.fn<BusinessUpdateMany>(async () => ({ count: 1 })),
   userFindUnique: vi.fn(),
 }));
 vi.mock("@/lib/db", () => ({ prisma: { business: { updateMany }, user: { findUnique: userFindUnique } } }));
@@ -26,12 +29,27 @@ describe("the beta plan", () => {
     expect(hasActiveAccess(null, "pro")).toBe(false);
   });
 
-  it("is granted only to a business that has never subscribed", async () => {
+  // The condition is "nobody is paying", not "the status column is empty".
+  // Keying it on subscriptionStatus left three real businesses on Free —
+  // the founder's own among them — carrying a stale "active" with no
+  // Stripe subscription behind it, and Free does not cover Instagram. The
+  // first real Instagram DM was captured and then silently left unscored,
+  // undrafted and unanswered (2026-09-19).
+  it("is granted to any business with no real Stripe subscription, whatever the status column says", async () => {
     await grantBetaPlan("biz1");
     expect(updateMany).toHaveBeenCalledWith({
-      where: { id: "biz1", subscriptionStatus: null },
+      where: { id: "biz1", stripeSubscriptionId: null },
       data: { subscriptionStatus: "beta", tier: "pro" },
     });
+  });
+
+  it("never touches a business that is actually paying", async () => {
+    // updateMany matches nothing when a stripeSubscriptionId is present,
+    // which is the whole guarantee — expressed here as the count Prisma
+    // would return for a non-matching where clause.
+    updateMany.mockResolvedValueOnce({ count: 0 });
+    expect(await grantBetaPlan("paying-biz")).toBe(false);
+    expect(updateMany.mock.calls[0][0].where).toHaveProperty("stripeSubscriptionId", null);
   });
 
   it("is revoked only from a business that is on it", async () => {
@@ -46,7 +64,7 @@ describe("the beta plan", () => {
     userFindUnique.mockResolvedValueOnce({ businessId: "biz9" });
     await setBetaPlanForEmail("Owner@Example.com", true);
     expect(userFindUnique).toHaveBeenCalledWith({ where: { email: "owner@example.com" }, select: { businessId: true } });
-    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "biz9", subscriptionStatus: null } }));
+    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "biz9", stripeSubscriptionId: null } }));
 
     updateMany.mockClear();
     userFindUnique.mockResolvedValueOnce(null);

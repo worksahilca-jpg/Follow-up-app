@@ -12,12 +12,23 @@ import { TIER_AI_LEAD_CAP } from "@/lib/pricing";
  * Free's 20-lead cap. It is a status string rather than a separate flag
  * so the ~45 hasActiveAccess call sites need no change.
  *
- * Only a business that has NEVER subscribed gets it (subscriptionStatus
- * null) and only a "beta" business is ever reverted, so a real Stripe
- * subscription is never touched in either direction. Stripe's webhook
- * overwrites both columns the moment a beta business subscribes for
- * real, which is the intended exit. Revoked when the founder removes the
- * tester on /admin; the beta ending as a whole is a later, explicit step.
+ * What disqualifies a business is a REAL Stripe subscription
+ * (stripeSubscriptionId), not merely a non-null subscriptionStatus — and
+ * only a "beta" business is ever reverted, so a paying customer is never
+ * touched in either direction. Stripe's webhook overwrites both columns
+ * the moment a beta business subscribes for real, which is the intended
+ * exit. Revoked when the founder removes the tester on /admin; the beta
+ * ending as a whole is a later, explicit step.
+ *
+ * The condition used to be `subscriptionStatus: null`, on the reasoning
+ * that a tester has never subscribed. Three businesses in production did
+ * not match it — the founder's own, a teammate's, and a real user's —
+ * because they carried a stale `"active"` from earlier billing work with
+ * no Stripe subscription behind it. They stayed on Free, and Free does
+ * not cover Instagram (isChannelAvailableOnFreeTier below), so on
+ * 2026-09-19 the first real Instagram DM was captured and then silently
+ * left unscored, undrafted and unanswered. The status column was never
+ * the right question; "is someone actually paying" is.
  */
 export const BETA_SUBSCRIPTION_STATUS = "beta";
 
@@ -25,7 +36,7 @@ const ACTIVE_STATUSES = new Set(["active", "trialing", BETA_SUBSCRIPTION_STATUS]
 
 export async function grantBetaPlan(businessId: string): Promise<boolean> {
   const { count } = await prisma.business.updateMany({
-    where: { id: businessId, subscriptionStatus: null },
+    where: { id: businessId, stripeSubscriptionId: null },
     data: { subscriptionStatus: BETA_SUBSCRIPTION_STATUS, tier: "pro" },
   });
   return count > 0;

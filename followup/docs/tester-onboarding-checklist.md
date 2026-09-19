@@ -17,10 +17,13 @@ Then send them the welcome text at the bottom of this page, or say it in your ow
 ## Founder, once (not per tester)
 
 - Vercel Production has `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`,
-  `WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID` (done 2026-09-19) and **`INSTAGRAM_APP_ID`,
-  `INSTAGRAM_APP_SECRET`** (still missing on 2026-09-19 — without them "Connect with
-  Instagram" does not appear and Instagram DMs fail the signature check). Both come from
-  Meta → FollowUp → Instagram → API setup with Instagram Login.
+  `WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID`, `INSTAGRAM_APP_ID` and `INSTAGRAM_APP_SECRET` (all
+  set 2026-09-19). The Instagram pair comes from Meta → FollowUp → Instagram → API setup
+  with Instagram Login; without it "Connect with Instagram" does not appear and Instagram
+  DMs fail the signature check.
+- Redirect URIs registered in the Meta console (2026-09-19): the Instagram Login product
+  and Facebook Login for Business each list `https://followupbase.io/api/<instagram|facebook>/oauth/callback`
+  and the `www.` twin. "Invalid redirect_uri" means one is missing.
 - Meta Business Verification for the FollowUp portfolio: needed before anyone but the
   founder can connect WhatsApp (`docs/meta-oauth-setup.md` §3, point 6).
 

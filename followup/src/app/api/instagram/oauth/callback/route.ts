@@ -8,6 +8,11 @@ import { recordAudit } from "@/lib/audit";
 export async function GET(request: NextRequest) {
   const ctx = await getSessionContext();
   const settingsUrl = new URL("/settings", appUrl());
+  // The Instagram panel lives on the Channels tab, and Settings opens the
+  // tab the hash names (SECTION_TAB in settings/page.tsx). Without the
+  // hash the outcome — "connected" or the reason it failed — was rendered
+  // on a tab the owner wasn't looking at.
+  settingsUrl.hash = "social";
   if (!ctx) return NextResponse.redirect(new URL("/signin", appUrl()));
 
   const { searchParams } = new URL(request.url);

@@ -37,6 +37,7 @@ import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
+import { leadLanguageOf } from "@/lib/leadLanguage";
 import { hasAnySendChannel } from "@/lib/sendChannels";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
@@ -455,6 +456,13 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // had no upper bound on AI processing at all.
       const aiEligible = await checkAiEligibility(businessId, lead, tier);
       if (!aiEligible.ok) {
+        // Same reasoning as scoring.ts's copy of this gate: the run's
+        // `skipped` list is a developer's summary, seen by nobody who
+        // owns the lead. Without this write, a lead first captured while
+        // eligible and only later refused (the account lapsed, the
+        // monthly cap was crossed) keeps a stale "Following up soon"
+        // badge forever, because scoring.ts never runs on it again.
+        await prisma.lead.updateMany({ where: { id: lead.id }, data: { aiPausedReason: aiEligible.ownerMessage } });
         return { kind: "skipped", note: `${lead.name}: ${aiEligible.reason}` };
       }
 
@@ -605,16 +613,20 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           ? deadLeadMessageHint(Math.floor((Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000))
           : undefined;
         if (isDm) {
-          const dm = await draftDm(lead.name, conversation, voiceSamples, messageHint);
+          // The lead's decided language/register, off the row already
+          // loaded — so the day-3 follow-up uses the same usted/tú the
+          // first reply did (src/lib/leadLanguage.ts).
+          const dm = await draftDm(lead.name, conversation, voiceSamples, messageHint, undefined, leadLanguageOf(lead));
           message = dm.body;
           subject = undefined;
           quickReplies = dm.quickReplies;
           dmShapeFailed = dm.shapeFailed;
         } else {
-          const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples, messageHint);
+          const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples, messageHint, undefined, leadLanguageOf(lead));
           subject = draft.subject;
           message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
             languageSample: latestInboundText(conversation),
+            leadLanguage: leadLanguageOf(lead),
           });
         }
       }

@@ -31,6 +31,7 @@ import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/open
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
+import { leadLanguageOf } from "@/lib/leadLanguage";
 import { hasAnySendChannel } from "@/lib/sendChannels";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
@@ -559,6 +560,13 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // defer above, just re-checked hourly instead of on a timer.
         const stepEligible = await checkAiEligibility(businessId, lead, tier);
         if (!stepEligible.ok) {
+          // Stored on the lead as well as noted in the run summary, for
+          // the same reason as the two gates in automation.ts and
+          // scoring.ts: a lead sitting on a plan whose steps will never
+          // fire has to be able to say so on its own page. This is the
+          // worst of the three to leave silent — the badge says "On a
+          // follow-up plan, next step in 2d", which is a dated promise.
+          await prisma.lead.updateMany({ where: { id: lead.id }, data: { aiPausedReason: stepEligible.ownerMessage } });
           return { kind: "skipped" as const, note: `${lead.name}: ${stepEligible.reason}` };
         }
         // research/product/2026-09-09-followup-cadence-best-practices.md
@@ -625,11 +633,14 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         const draft = await generateFollowUpMessage(
           { name: lead.name, conversation },
           voiceSamples,
-          channel === "email" ? step.messageHint ?? undefined : nonEmailStepHint(step.messageHint)
+          channel === "email" ? step.messageHint ?? undefined : nonEmailStepHint(step.messageHint),
+          undefined,
+          // Step 4 of a plan must sound like step 1 — see leadLanguage.ts.
+          leadLanguageOf(lead)
         );
         const message =
           channel === "email"
-            ? await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft.body, { languageSample: latestInboundText(conversation) })
+            ? await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft.body, { languageSample: latestInboundText(conversation), leadLanguage: leadLanguageOf(lead) })
             : draft.body;
 
         // Every other automated-send path in this codebase (automation.ts's

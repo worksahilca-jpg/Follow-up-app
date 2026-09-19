@@ -18,7 +18,13 @@ export async function GET(request: NextRequest) {
   if (mode === "subscribe" && token === WEBHOOK_VERIFY_TOKEN && challenge) {
     return new NextResponse(challenge, { status: 200 });
   }
-  recordAuthFailure("meta_webhook_verify");
+  // Only a request that actually TRIED the handshake is an auth failure
+  // worth reporting. These two URLs are public and named in Meta's own
+  // console, so they take ordinary internet background traffic — a
+  // scanner, a crawler, a link preview — and a bare GET with no
+  // hub.mode at all is that, not someone failing a verify token. It was
+  // the bulk of the 2026-09-19 alert flood.
+  if (params.get("hub.mode")) recordAuthFailure("meta_webhook_verify");
   return NextResponse.json({ success: false }, { status: 403 });
 }
 

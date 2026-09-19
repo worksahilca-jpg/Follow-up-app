@@ -706,6 +706,20 @@ export async function sendFollowUpToLead(
         trigger,
         draftEdited,
         draftText: keepDraft ? lead.suggestedMessage : null,
+        // The lead's language as it stood at THIS send, copied rather
+        // than joined. Without it the draft-versus-sent pairs above have
+        // no grouping key, and "our Spanish drafts get rewritten twice as
+        // often as our English ones" — the single most useful thing ten
+        // testers can teach — stays unanswerable
+        // (research/product/2026-09-19-multilingual-accuracy-data.md §7,
+        // step 2). Copied so a lead whose language is later corrected
+        // does not silently re-file every message already sent to them.
+        //
+        // Written unconditionally, not only when keepDraft: it is not
+        // the customer's words, just which language was in play, and the
+        // per-language send counts are the denominator the edit rate is
+        // measured against.
+        language: lead.language ?? null,
         sentAt: new Date(),
       },
     });

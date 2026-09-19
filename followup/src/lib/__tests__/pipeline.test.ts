@@ -29,6 +29,7 @@ function lead(overrides: Partial<Lead>): Lead {
     dealValue: 0,
     score: 0,
     priority: "none",
+    reviewed: false,
     scoreReason: "",
     scoreFactors: [],
     lastContacted: new Date().toISOString(),

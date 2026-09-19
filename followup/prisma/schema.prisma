@@ -433,6 +433,58 @@ model Lead {
   // email-framed draft must be rebuilt before it goes out as a DM. An
   // empty `buttons` list is a DM draft that passed without chips.
   suggestedQuickReplies Json?
+  // Why FollowUp did NOT read this lead or write anything for it — set
+  // whenever checkAiEligibility (@/lib/billing) refuses, cleared the
+  // moment a score/draft actually lands (src/lib/scoring.ts).
+  //
+  // The whole sentence, written for the owner, not the fragment the run
+  // summaries use. It is a cache of a decision that is recomputed every
+  // pass, never a source of truth: nothing reads it to decide anything,
+  // only to say something.
+  //
+  // 2026-09-19, the case that forced it. A real Instagram DM arrived,
+  // the business was on Free (which does not cover Instagram), and
+  // checkAiEligibility correctly refused. Its reason was thrown away by
+  // every one of the three callers. The owner saw a lead with no score,
+  // no reason and no draft, sitting next to a badge that said
+  // "Following up soon" — a promise nothing was going to keep. The
+  // product knew the answer and showed a blank, which reads as broken
+  // and is worse than the refusal itself
+  // (design-brain/brand/brand-principles.md 6: show the reasoning, not
+  // just the verdict).
+  aiPausedReason   String?
+  // How this lead writes, decided ONCE from their first inbound message
+  // and then held steady — see src/lib/leadLanguage.ts.
+  //
+  // Nothing in FollowUp modelled a lead's language before this. Every
+  // call re-inferred it from the message in front of it, which means the
+  // acknowledgement and the follow-up three days later were two
+  // independent guesses. That is fine for "which language" (the same
+  // message usually yields the same answer) and not fine for register:
+  // tú/usted, tu/vous, du/Sie is a choice, and switching it mid-thread
+  // is the single thing a native speaker notices instantly and a
+  // non-speaker cannot see at all
+  // (research/product/2026-09-19-multilingual-accuracy-data.md §3).
+  //
+  // It also makes the question answerable at all. Nobody currently knows
+  // which languages FollowUp's leads actually write in, because nothing
+  // wrote it down — so "how often are we wrong in Spanish" has no query
+  // behind it, and there is no basis for choosing which languages get a
+  // native-speaker review.
+  //
+  // language: BCP-47 primary subtag, lowercase ("es", "hi", "pa", "en").
+  // script:   ISO 15924 ("Latn", "Deva", "Arab") — Hindi typed in Latin
+  //           letters is a different thing from Hindi in Devanagari, and
+  //           answering in the wrong one reads as a machine.
+  // register: "formal" | "informal" | "neutral". Never invented for a
+  //           language that has no such distinction — see the parser.
+  language         String?
+  languageScript   String?
+  languageRegister String?
+  // When the three above were decided. Their own "have we looked at
+  // this" flag: all three can legitimately be null for a language with
+  // no register distinction, so a null `language` cannot be the test.
+  languageSetAt    DateTime?
   priority         Priority       @default(NONE)
   lastContacted    DateTime?
   nextFollowUp     DateTime?
@@ -789,6 +841,18 @@ model FollowUp {
   // no metric can. Read through the de-identification boundary
   // (src/lib/deidentify.ts) before it is shown anywhere.
   draftText   String?
+  // The lead's language at the moment this went out (Lead.language,
+  // copied, not joined). Without it the draft-versus-sent pairs above —
+  // the most valuable per-language accuracy signal FollowUp will ever
+  // have — arrive with no way to group them, and "our Spanish drafts get
+  // rewritten twice as often as our English ones" stays unanswerable
+  // (research 2026-09-19 §7, step 2).
+  //
+  // Copied rather than read through the relation on purpose: this is a
+  // historical record of what was true when the message was sent. A lead
+  // whose language is later corrected must not silently re-file every
+  // message they were already sent under the new answer.
+  language    String?
   createdAt   DateTime  @default(now())
 
   @@index([leadId])

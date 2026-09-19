@@ -64,6 +64,15 @@ export interface Lead {
   dealValue: number;
   score: number; // 0-100
   scoreReason: string;
+  // Has FollowUp actually scored this lead? `scoreReason` cannot answer
+  // that: it always holds a sentence, because an unscored lead is given a
+  // placeholder one to render. Both call sites of PriorityPill were
+  // passing `Boolean(lead.scoreReason)`, which is therefore always true,
+  // so its "Not reviewed yet" state had never once rendered and every
+  // unlooked-at lead showed "No action needed" — a verdict, on a lead
+  // nothing had judged. That pill's own comment names this as "the exact
+  // failure this product exists to prevent" (2026-09-19).
+  reviewed: boolean;
   scoreFactors: ScoreFactor[];
   priority: Priority;
   lastContacted: string; // ISO date

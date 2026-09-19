@@ -294,6 +294,30 @@ export const AI_PAUSED_BILLING_REASON =
   "paused while the subscription is inactive — the lead is still captured, and processing resumes as soon as billing is sorted out";
 
 /**
+ * The same refusals, written as whole sentences for the one person who
+ * has to act on them.
+ *
+ * `reason` above is a fragment, shaped to sit after a lead's name in a
+ * run summary ("Priya Shah: on a channel the Free plan doesn't cover").
+ * That is the right shape for a log line and the wrong shape for the
+ * lead's own screen, where it has to stand alone and be understood by
+ * someone who has never used software like this
+ * (design-brain/brand/brand-principles.md 9). Rather than make one string
+ * serve both and read badly in both places, the gate returns both and
+ * each caller takes the one it needs.
+ *
+ * Three rules these sentences follow, and future ones must:
+ *   - say what happened to the lead first (it was saved — the owner's
+ *     first fear is that it was lost);
+ *   - then what FollowUp did not do, in plain words ("didn't read it or
+ *     write a reply", never "AI processing was not performed");
+ *   - then the one thing that changes it, and where.
+ * No product-internal words: no "eligibility", no "tier", no "cap" on
+ * its own, no "AI" as a noun standing in for an explanation (S-13).
+ */
+type AiRefusal = { ok: false; reason: string; ownerMessage: string };
+
+/**
  * The one place that decides whether a lead may consume AI processing,
  * so the channel rule and the rank rule can never drift apart between
  * the five call sites that need them (scoring, automation, sequences,
@@ -333,7 +357,7 @@ export async function checkAiEligibility(
   businessId: string,
   lead: { id: string; createdAt: Date; source: string | null },
   tier: "free" | "plus" | "pro"
-): Promise<{ ok: true } | { ok: false; reason: string }> {
+): Promise<{ ok: true } | AiRefusal> {
   // Only the one plain column — Business carries AES-GCM encrypted
   // third-party secrets (ENCRYPTED_FIELDS in src/lib/db.ts) that a
   // whole-row read would decrypt for nothing. `tier` is already the
@@ -343,21 +367,39 @@ export async function checkAiEligibility(
     select: { subscriptionStatus: true },
   });
   if (!hasActiveAccess(billing?.subscriptionStatus, tier)) {
-    return { ok: false, reason: AI_PAUSED_BILLING_REASON };
+    return {
+      ok: false,
+      reason: AI_PAUSED_BILLING_REASON,
+      ownerMessage:
+        "This lead was saved, but FollowUp didn't read it or write a reply — it stops doing that while the subscription is inactive. Sort out billing in Settings and it picks up again on its own.",
+    };
   }
 
   if (tier === "free" && !isChannelAvailableOnFreeTier(lead.source)) {
-    return { ok: false, reason: "on a channel the Free plan doesn't cover" };
+    // The channel is named, not just "a channel" — the owner's next
+    // question is always "which one", and the answer is already here.
+    // Lowercased so it reads as part of the sentence; `source` is a
+    // display label ("Instagram", "Website form"), not an identifier.
+    const channel = lead.source ? lead.source.toLowerCase() : "this channel";
+    return {
+      ok: false,
+      reason: "on a channel the Free plan doesn't cover",
+      ownerMessage: `This lead came in on ${channel}, which the Free plan doesn't cover, so FollowUp didn't read it or write a reply. It's saved either way. Upgrading in Settings switches this channel on.`,
+    };
   }
   if (await isWithinTierLeadCap(businessId, lead, tier)) return { ok: true };
 
-  return {
-    ok: false,
-    reason:
-      tier === "free"
-        ? `past this month's ${TIER_AI_LEAD_CAP.free}-lead AI cap on the Free plan`
-        : `FollowUp paused AI processing after ${TIER_AI_LEAD_CAP[tier].toLocaleString()} leads this month as a safety measure — that is far more than a normal month, so something may be wrong`,
-  };
+  return tier === "free"
+    ? {
+        ok: false,
+        reason: `past this month's ${TIER_AI_LEAD_CAP.free}-lead AI cap on the Free plan`,
+        ownerMessage: `This lead was saved, but FollowUp didn't read it or write a reply — the Free plan covers ${TIER_AI_LEAD_CAP.free} leads a month and this one is past that. It starts again next month, or upgrade in Settings.`,
+      }
+    : {
+        ok: false,
+        reason: `FollowUp paused AI processing after ${TIER_AI_LEAD_CAP[tier].toLocaleString()} leads this month as a safety measure — that is far more than a normal month, so something may be wrong`,
+        ownerMessage: `FollowUp stopped after ${TIER_AI_LEAD_CAP[tier].toLocaleString()} leads this month as a safety check — far more than a normal month, so something may be wrong. Leads are still being saved, but nothing is being read or written until someone looks. Email contact@followupbase.io.`,
+      };
 }
 
 export interface FreeTierStatus {

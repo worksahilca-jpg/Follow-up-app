@@ -58,7 +58,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <PriorityPill priority={lead.priority} reviewed={Boolean(lead.scoreReason)} />
+        <PriorityPill priority={lead.priority} reviewed={lead.reviewed} />
         <StageSelector leadId={lead.id} stage={lead.stage} />
         <span className="text-sm font-medium">
           {formatCurrency(lead.dealValue)} potential

@@ -30,6 +30,7 @@ function lead(overrides: Partial<AutomationStatusLead> = {}): AutomationStatusLe
     lastContacted: NOW.toISOString(),
     conversation: [],
     sequence: null,
+    aiPausedReason: null,
     ...overrides,
   };
 }
@@ -41,6 +42,40 @@ function msg(direction: "inbound" | "outbound", hoursAgo: number): Message {
 describe("computeAutomationStatus", () => {
   it("shows closed for a won or lost lead regardless of anything else that would otherwise apply", () => {
     const l = lead({ stage: "won", conversation: [msg("inbound", 1000)], lastContacted: new Date(NOW.getTime() - 1000 * 3_600_000).toISOString() });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "closed" });
+  });
+
+  // The 2026-09-19 case, in three parts. A real Instagram DM arrived on a
+  // business whose plan didn't cover Instagram; checkAiEligibility refused
+  // correctly and every caller dropped its reason. The lead then sat with
+  // no score, no draft and a badge counting down to a follow-up that was
+  // never coming. Each of these would have caught a different half of it.
+  it("shows ai_paused, with the reason, when FollowUp refused to read or write for this lead", () => {
+    const reason = "This lead came in on instagram, which the Free plan doesn't cover, so FollowUp didn't read it or write a reply.";
+    const l = lead({ aiPausedReason: reason });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "ai_paused", reason });
+  });
+
+  it("never promises a follow-up on a paused lead — ai_paused wins over due_soon, waiting and an active workflow", () => {
+    const reason = "Paused.";
+    // Due now on the unanswered rule: without the pause this is due_soon.
+    const due = lead({ aiPausedReason: reason, conversation: [msg("outbound", 48), msg("inbound", 25)] });
+    expect(computeAutomationStatus(due, RULES, NOW)).toEqual({ kind: "ai_paused", reason });
+
+    // On a plan with a dated next step: the badge would otherwise read
+    // "next step in 2d", which is the most specific promise in the product.
+    const onPlan = lead({
+      aiPausedReason: reason,
+      automationTier: "off",
+      sequence: { name: "Recommended cadence", active: true, dueAt: new Date(NOW.getTime() + 2 * 86_400_000).toISOString() },
+    });
+    expect(computeAutomationStatus(onPlan, RULES, NOW)).toEqual({ kind: "ai_paused", reason });
+  });
+
+  it("still shows closed for a won or lost lead that happens to carry a pause reason", () => {
+    // A finished deal is not waiting on FollowUp for anything, so the
+    // pause is not news — "closed" stays the one thing worth saying.
+    const l = lead({ stage: "won", aiPausedReason: "Paused." });
     expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "closed" });
   });
 

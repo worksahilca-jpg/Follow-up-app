@@ -16,7 +16,7 @@ const REASON_LABEL: Record<"unanswered" | "dead_lead" | "silence", string> = {
 // over what it actually receives, instead of needing a dead branch.
 function describe(
   status: Exclude<AutomationStatus, { kind: "closed" }>
-): { icon: typeof Zap; label: string; detail?: string; bg: string; fg: string; pulse?: boolean } {
+): { icon: typeof Zap; label: string; detail?: string; bg: string; fg: string; pulse?: boolean; emphasis?: boolean } {
   switch (status.kind) {
     case "workflow":
       return {
@@ -30,6 +30,32 @@ function describe(
       return { icon: PauseCircle, label: "Follow-up plan paused", detail: status.sequenceName, bg: "var(--line)", fg: "var(--ink-soft)" };
     case "off":
       return { icon: Ban, label: "Automation off", detail: "This lead is opted out of automated follow-up", bg: "var(--line)", fg: "var(--ink-soft)" };
+    // Same colour and icon as account_paused below, deliberately: to the
+    // owner these are one family — nothing is happening on this lead and
+    // only they can change that. The difference is in the sentence, which
+    // is the whole point of the state. `detail` is the reason verbatim
+    // (src/lib/billing.ts writes it as a complete sentence for exactly
+    // this spot) rather than a template wrapped around a fragment, so
+    // there is only ever one place where this wording lives.
+    case "ai_paused":
+      return {
+        icon: PauseCircle,
+        // Short enough to survive the compact pill in a list row, and it
+        // makes no claim about where the explanation sits — an earlier
+        // draft said "see why below", which is only true on the detail
+        // page and false in FollowUpCard.
+        label: "Paused on this lead",
+        detail: status.reason,
+        bg: "var(--coral-soft)",
+        fg: "var(--coral)",
+        // Every other status here has a self-explanatory label with the
+        // detail as a footnote, so 12px is right for them. This one
+        // inverts that: the label only says that something stopped, and
+        // the sentence IS the answer the owner opened the lead to find.
+        // Setting the product's most important sentence in its smallest
+        // type would undo the point of showing it at all.
+        emphasis: true,
+      };
     case "account_paused":
       return {
         icon: PauseCircle,
@@ -70,7 +96,7 @@ function describe(
  */
 export default function AutomationStatusBadge({ status, compact = false }: { status: AutomationStatus | undefined; compact?: boolean }) {
   if (!status || status.kind === "closed") return null;
-  const { icon: Icon, label, detail, bg, fg, pulse } = describe(status);
+  const { icon: Icon, label, detail, bg, fg, pulse, emphasis } = describe(status);
 
   if (compact) {
     return (
@@ -92,7 +118,7 @@ export default function AutomationStatusBadge({ status, compact = false }: { sta
         {label}
       </div>
       {detail && (
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: fg }}>
+        <p className={`mt-1 leading-relaxed ${emphasis ? "text-sm" : "text-xs"}`} style={{ color: fg }}>
           {detail}
         </p>
       )}

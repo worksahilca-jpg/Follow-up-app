@@ -337,3 +337,45 @@ Three related defaults were confirmed the same day, recorded in
 `design-brain/decisions/design-decisions.md` (2026-09-18): "Not now" from a lead ends the
 DM sequence (A-007); up to three automatic touches inside Meta's 24-hour window; the Monday
 digest goes to every business including Free.
+
+## FollowUp asks Meta for DMs; it does not only wait to be told (CEO decision, 2026-09-19)
+
+> **Do not remove the Instagram poller as redundant.** It is not a backup for a webhook
+> that works. It is there because the webhook demonstrably did not.
+
+The first real Instagram account, on the day it was connected: a Business account, listed
+under its own `subscribed_apps` with the `messages` field, on a published app, both test
+accounts holding app roles, the owner's "Allow access to messages" toggle on — and not one
+webhook for a real DM, in either direction, across an afternoon. Meta's own test payload
+for that same field arrived and processed fine, and `/api/instagram/diagnose` showed the
+message sitting in the account's conversations, readable with the token already held.
+
+So Instagram capture has two paths, as Gmail always has. The webhook stays and is still the
+fast one. Alongside it, `/api/cron/instagram-poll` reads each connected account's
+conversations **every three minutes** (the CEO's interval: "3 mins is good for now" — the
+dial is cost versus how instant it feels, and nothing else depends on the number) and feeds
+anything new through the same `processMetaEnvelope` the webhook uses. Whichever arrives
+second is dropped on message-id uniqueness.
+
+The bounds matter as much as the mechanism, and each one exists because of a case already
+seen: a never-polled account reads fifteen minutes back and never its history, so connecting
+an account cannot acknowledge conversations that ended weeks ago; no tick reaches back more
+than a day; a thread untouched since the cursor costs no request; and a read Meta refused
+leaves the cursor alone rather than skipping a window nobody read. `src/lib/instagramPoll.ts`.
+
+The general rule this sets, for every channel after it: **a push FollowUp cannot make arrive
+is not a capture mechanism.** Where a platform will let us ask, we ask.
+
+> **A minute or two before the first reply is the target, not a cost (CEO, 2026-09-19).**
+> "We will reply after 1 or 2 mins so that it feels real." A reply that lands the instant a
+> DM is sent reads as a machine, which is the one thing FollowUp must never read as. The
+> two-minute head start the owner already gets (`DM_ACK_GRACE_PERIOD_MS`) is therefore a
+> feature twice over, and shortening it is not an optimisation.
+
+What this ruled out is the delays **stacking**. The acknowledgement's head start used to be
+timed from the moment FollowUp noticed a message, which was the same instant it was sent
+only while a webhook was the only way one arrived. Polled three minutes late, a lead waited
+another two on top — five minutes, which is not a business that looks awake. A DM is now
+timed from when the lead wrote it (`eventSentAt` in `src/lib/inbound/meta.ts`), so the head
+start is spent by the time a late message is found, and the conversation timeline reads in
+the order things were actually said.

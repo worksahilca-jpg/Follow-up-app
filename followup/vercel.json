@@ -35,6 +35,10 @@
     {
       "path": "/api/cron/instant-ack",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/instagram-poll",
+      "schedule": "*/3 * * * *"
     }
   ]
 }

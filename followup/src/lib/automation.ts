@@ -37,6 +37,7 @@ import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
+import { hasAnySendChannel } from "@/lib/sendChannels";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
@@ -311,6 +312,14 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // every business, with no route-level gate of its own) honor the same
   // rule.
   if (!(await requireActiveBilling(businessId))) {
+    return EMPTY_RESULT;
+  }
+
+  // Nothing connected, nothing to send with: no drafting either. A
+  // disconnected account used to keep being drafted for every day (see
+  // hasAnySendChannel for the real case behind this). Read fresh on every
+  // run, so reconnecting resumes it without anyone doing anything.
+  if (!(await hasAnySendChannel(businessId))) {
     return EMPTY_RESULT;
   }
 

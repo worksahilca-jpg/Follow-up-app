@@ -31,6 +31,7 @@ import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/open
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
+import { hasAnySendChannel } from "@/lib/sendChannels";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
@@ -408,6 +409,10 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
   // Same paid-feature gate as the silence-based automation — a workflow
   // enrollment left over from a lapsed subscription shouldn't keep sending.
   if (!(await requireActiveBilling(businessId))) return EMPTY_RUN;
+  // And the same "nothing connected, no drafting" rule as automation.ts —
+  // a workflow step drafted for an account that cannot send is spend
+  // with no message at the end of it. See hasAnySendChannel.
+  if (!(await hasAnySendChannel(businessId))) return EMPTY_RUN;
 
   const due = await prisma.lead.findMany({
     where: {

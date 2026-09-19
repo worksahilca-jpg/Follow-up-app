@@ -110,6 +110,35 @@ export async function resolveInstagramUserId(accessToken: string): Promise<{ id:
 }
 
 /**
+ * Subscribes the app to the connected account's message webhooks.
+ *
+ * For "Instagram API with Instagram Login" the dashboard webhook
+ * (callback URL + `messages` field) is only half of it: each professional
+ * account must also have the app subscribed to it, through
+ * POST /{ig-user-id}/subscribed_apps with that account's token. Seen
+ * live on 2026-09-19: the first account connected through OAuth got no
+ * webhook at all for a real DM — nothing in InboundWebhookEvent — until
+ * this call existed. Same shape as subscribeAppToWaba in whatsappCloud.ts.
+ *
+ * Best effort at the call sites: the connection is saved either way, the
+ * outcome is logged and audited, and reconnecting retries it.
+ */
+export async function subscribeInstagramWebhooks(
+  igUserId: string,
+  accessToken: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const res = await fetch(`${GRAPH_API}/${encodeURIComponent(igUserId)}/subscribed_apps`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ subscribed_fields: "messages", access_token: accessToken }),
+  });
+  if (res.ok) return { ok: true };
+  const reason = await instagramOAuthErrorMessage(res);
+  console.error(`Instagram subscribed_apps rejected: HTTP ${res.status}${reason ? ` — ${reason}` : ""}`);
+  return { ok: false, message: reason || `HTTP ${res.status}` };
+}
+
+/**
  * Sends a real Instagram DM via the Graph API's /{IG_USER_ID}/messages
  * endpoint (the documented path; /me/messages is the fallback for a
  * business connected before instagramUserId was stored).
@@ -344,7 +373,14 @@ export function buildInstagramAuthUrl(redirectUri: string, state: string): strin
 async function instagramOAuthErrorMessage(res: Response): Promise<string> {
   const data = await res.json().catch(() => null);
   const message = data?.error_message ?? data?.error?.message;
-  return typeof message === "string" ? message.slice(0, 200) : "";
+  if (typeof message !== "string") return "";
+  // Meta's numeric code/subcode tell "redirect mismatch" (36008) from
+  // "code already used" (36009) and "expired" (36007) even when the
+  // sentence is the generic one. Appended so the settings line carries it.
+  const code = data?.code ?? data?.error?.code;
+  const subcode = data?.error_subcode ?? data?.error?.error_subcode;
+  const tag = [code, subcode].filter((n) => typeof n === "number").join("/");
+  return `${message.slice(0, 200)}${tag ? ` [${tag}]` : ""}`;
 }
 
 /**
@@ -381,8 +417,21 @@ export async function exchangeInstagramAuthCode(
     // which of the four possible causes it was. Message only — never the
     // secret, never the code.
     const reason = await instagramOAuthErrorMessage(shortLivedRes);
-    console.error(`Instagram code exchange rejected: HTTP ${shortLivedRes.status}${reason ? ` — ${reason}` : ""}`);
-    return { error: `Instagram rejected that sign-in${reason ? ` (Instagram said: ${reason})` : ""} — try connecting again.` };
+    console.error(
+      `Instagram code exchange rejected: HTTP ${shortLivedRes.status}${reason ? ` — ${reason}` : ""} (redirect_uri sent: ${redirectUri})`
+    );
+    // The first live attempt (2026-09-19) came back "make sure your
+    // redirect_uri is identical to the one you used in the OAuth dialog".
+    // This code sends the same string at both ends, so the only thing left
+    // to compare is that string against what Meta has on file — and the
+    // owner can't do that unless the line names it. The address is
+    // public (it is in every OAuth dialog URL); nothing else is.
+    const redirectHint = /redirect_uri/i.test(reason)
+      ? ` The address we sent is ${redirectUri} — it must appear exactly like that under Business login settings → OAuth redirect URIs in Meta's dashboard.`
+      : "";
+    return {
+      error: `Instagram rejected that sign-in${reason ? ` (Instagram said: ${reason})` : ""} — try connecting again.${redirectHint}`,
+    };
   }
   const shortLived = await shortLivedRes.json().catch(() => ({}));
   const shortLivedToken = shortLived?.access_token;

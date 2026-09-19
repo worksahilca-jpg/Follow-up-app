@@ -11,7 +11,7 @@ vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn() }));
 vi.mock("@/lib/sourceRouting", () => ({ applySourceRouting: vi.fn() }));
 vi.mock("@/lib/outboundWebhook", () => ({ notifyLeadEvent: vi.fn() }));
 
-import { instagramOAuthAvailable, buildInstagramAuthUrl, exchangeInstagramAuthCode } from "@/lib/instagram";
+import { instagramOAuthAvailable, buildInstagramAuthUrl, exchangeInstagramAuthCode, subscribeInstagramWebhooks } from "@/lib/instagram";
 import { facebookOAuthAvailable, buildFacebookAuthUrl, exchangeFacebookAuthCode } from "@/lib/facebook";
 
 beforeEach(() => {
@@ -42,6 +42,59 @@ describe("Instagram one-click connect", () => {
     const result = await exchangeInstagramAuthCode("code", "https://followupbase.io/callback");
     expect(result).toEqual({ error: "Instagram sign-in isn't configured yet." });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  // The first live connect (2026-09-19) failed with Meta's redirect_uri
+  // sentence. The code sends one string at both ends, so the only useful
+  // thing the settings line can add is that string and Meta's numeric
+  // code — the owner compares it against the console; nothing secret.
+  it("names the redirect address and Meta's code when the exchange is refused for a redirect mismatch", async () => {
+    vi.stubEnv("INSTAGRAM_APP_ID", "123");
+    vi.stubEnv("INSTAGRAM_APP_SECRET", "shh");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const body = {
+      error_type: "OAuthException",
+      code: 400,
+      error_message:
+        "Error validating verification code. Please make sure your redirect_uri is identical to the one you used in the OAuth dialog request",
+    };
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(new Response(JSON.stringify(body), { status: 400 }));
+    const result = await exchangeInstagramAuthCode("code", "https://followupbase.io/api/instagram/oauth/callback");
+    expect("error" in result).toBe(true);
+    const message = (result as { error: string }).error;
+    expect(message).toContain("Instagram said: Error validating verification code");
+    expect(message).toContain("[400]");
+    expect(message).toContain("The address we sent is https://followupbase.io/api/instagram/oauth/callback");
+    expect(message).not.toContain("shh");
+  });
+
+  it("subscribes the account to the messages field with its own token, and reports Meta's refusal", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    expect(await subscribeInstagramWebhooks("1784", "IGQV-tok")).toEqual({ ok: true });
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://graph.instagram.com/v21.0/1784/subscribed_apps");
+    expect(init.method).toBe("POST");
+    const body = new URLSearchParams(String(init.body));
+    expect(body.get("subscribed_fields")).toBe("messages");
+    expect(body.get("access_token")).toBe("IGQV-tok");
+
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: { message: "(#10) Permission denied", code: 10 } }), { status: 403 })
+    );
+    expect(await subscribeInstagramWebhooks("1784", "IGQV-tok")).toEqual({ ok: false, message: "(#10) Permission denied [10]" });
+  });
+
+  it("does not add the address hint for an unrelated refusal", async () => {
+    vi.stubEnv("INSTAGRAM_APP_ID", "123");
+    vi.stubEnv("INSTAGRAM_APP_SECRET", "shh");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const body = { error: { message: "Invalid platform app", type: "OAuthException", code: 190, error_subcode: 460 } };
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(new Response(JSON.stringify(body), { status: 400 }));
+    const result = await exchangeInstagramAuthCode("code", "https://followupbase.io/api/instagram/oauth/callback");
+    const message = (result as { error: string }).error;
+    expect(message).toContain("Instagram said: Invalid platform app [190/460]");
+    expect(message).not.toContain("The address we sent");
   });
 });
 

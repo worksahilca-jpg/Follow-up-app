@@ -39,7 +39,9 @@ describe("the beta plan", () => {
     await grantBetaPlan("biz1");
     expect(updateMany).toHaveBeenCalledWith({
       where: { id: "biz1", stripeSubscriptionId: null },
-      data: { subscriptionStatus: "beta", tier: "pro" },
+      // holdAllForApproval: a tester gets Pro's reach and none of its
+      // unreviewed sending (founder, 2026-09-19).
+      data: { subscriptionStatus: "beta", tier: "pro", holdAllForApproval: true },
     });
   });
 
@@ -56,7 +58,7 @@ describe("the beta plan", () => {
     await revokeBetaPlan("biz1");
     expect(updateMany).toHaveBeenCalledWith({
       where: { id: "biz1", subscriptionStatus: "beta" },
-      data: { subscriptionStatus: null, tier: "free" },
+      data: { subscriptionStatus: null, tier: "free", holdAllForApproval: false },
     });
   });
 

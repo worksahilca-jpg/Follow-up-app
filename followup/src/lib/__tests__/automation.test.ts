@@ -1378,3 +1378,60 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
     expect(p.lead.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ suggestedQuickReplies: { question: "day2_7_owner", buttons: [] } }) }));
   });
 });
+
+/**
+ * "Hold everything for approval" — Business.holdAllForApproval.
+ *
+ * Founder's decision, 2026-09-19, on handing FollowUp to its first beta
+ * testers: "I can't hand them the full automated thing, I want them to
+ * keep an eye." ASSISTED already ran a risk check, but it SENT what it
+ * judged safe, so a tester would still have had messages going out in
+ * their name unreviewed. On an account with this on, nothing automated
+ * leaves without a tap — whatever the risk verdict, whatever the lead's
+ * tier.
+ */
+describe("an account that holds every automated message", () => {
+  beforeEach(() => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "pro", holdAllForApproval: true });
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValue([]);
+    draftMessage.mockResolvedValue("Just following up on the roof question.");
+  });
+
+  it("holds a draft the risk check would have called safe", async () => {
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(send).not.toHaveBeenCalled();
+    expect(result.held).toBe(1);
+    expect(result.heldReasons[0]).toContain("holds every automated message");
+  });
+
+  it("holds an AUTONOMOUS lead too — the account setting outranks the per-lead opt-in", async () => {
+    p.lead.findMany.mockReset();
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(send).not.toHaveBeenCalled();
+    expect(result.held).toBe(1);
+  });
+
+  // The classifier exists to decide what may send WITHOUT review. Where
+  // nothing sends without review it has nothing to decide, and it is a
+  // paid call per lead per hour.
+  it("does not pay the risk classifier to answer a question that cannot matter", async () => {
+    await runAutomationForBusiness("biz1");
+    expect(risk).not.toHaveBeenCalled();
+  });
+
+  // Holding is only useful if there is something to hold: the draft is
+  // written and stamped with the message it answers, so the approval card
+  // shows real words rather than an empty row.
+  it("still writes the draft, so there is something to approve", async () => {
+    await runAutomationForBusiness("biz1");
+    const call = p.lead.update.mock.calls.find((c: [{ where: { id: string }; data: Record<string, unknown> }]) => c[0].where.id === "lead1");
+    expect(call).toBeTruthy();
+    expect(typeof call[0].data.suggestedMessage).toBe("string");
+    expect((call[0].data.suggestedMessage as string).length).toBeGreaterThan(0);
+    expect(call[0].data.suggestedDraftedFor).toBeInstanceOf(Date);
+  });
+});

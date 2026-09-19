@@ -37,7 +37,11 @@ const ACTIVE_STATUSES = new Set(["active", "trialing", BETA_SUBSCRIPTION_STATUS]
 export async function grantBetaPlan(businessId: string): Promise<boolean> {
   const { count } = await prisma.business.updateMany({
     where: { id: businessId, stripeSubscriptionId: null },
-    data: { subscriptionStatus: BETA_SUBSCRIPTION_STATUS, tier: "pro" },
+    // holdAllForApproval: a tester gets Pro's reach and none of its
+    // unreviewed sending. Founder, 2026-09-19: "I can't hand them the
+    // full automated thing, I want them to keep an eye." See the column's
+    // own comment in schema.prisma for what it does and does not cover.
+    data: { subscriptionStatus: BETA_SUBSCRIPTION_STATUS, tier: "pro", holdAllForApproval: true },
   });
   return count > 0;
 }
@@ -45,7 +49,7 @@ export async function grantBetaPlan(businessId: string): Promise<boolean> {
 export async function revokeBetaPlan(businessId: string): Promise<boolean> {
   const { count } = await prisma.business.updateMany({
     where: { id: businessId, subscriptionStatus: BETA_SUBSCRIPTION_STATUS },
-    data: { subscriptionStatus: null, tier: "free" },
+    data: { subscriptionStatus: null, tier: "free", holdAllForApproval: false },
   });
   return count > 0;
 }

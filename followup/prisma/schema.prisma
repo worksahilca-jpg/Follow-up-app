@@ -182,6 +182,22 @@ model Business {
   // src/app/api/instagram/webhook/route.ts and get routed to the right
   // business by matching instagramUserId against the event's recipient
   // ID. See src/lib/instagram.ts.
+  // Nothing automated leaves this account without someone tapping send.
+  // Founder's decision, 2026-09-19, on handing FollowUp to its first beta
+  // testers: "I can't hand them the full automated thing, I want them to
+  // keep an eye." ASSISTED — the per-lead default — already runs a risk
+  // check, but it SENDS what it judges safe, so a tester still had
+  // messages going out in their name unreviewed. This holds every one of
+  // them in the approval queue instead, whatever the risk verdict and
+  // whatever the lead's tier.
+  //
+  // The instant acknowledgement to a brand-new lead is deliberately NOT
+  // covered: it is the one message whose whole value is that nobody had
+  // to be awake for it, and holding it would leave a lead waiting for the
+  // exact reason this product exists. Granted with the beta plan
+  // (grantBetaPlan in src/lib/billing.ts); off for everyone else.
+  holdAllForApproval   Boolean @default(false)
+
   instagramUserId      String? @unique
   instagramAccessToken String?
   // How far the conversation poller has read (src/lib/instagramPoll.ts).

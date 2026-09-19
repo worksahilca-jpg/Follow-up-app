@@ -5,6 +5,7 @@ import { sendFollowUpToLead } from "@/lib/sending";
 import { checkAiEligibility } from "@/lib/billing";
 import { isOptOutMessage } from "@/lib/optOutKeywords";
 import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
+import { greetingFirstName } from "@/lib/leadName";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -74,44 +75,6 @@ import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
  */
 export const INSTANT_ACK_ACTION = "instant_ack";
 export const INSTANT_ACK_NAME = "Instant reply to new leads";
-
-/**
- * The names a lead is given when FollowUp does not know who they are —
- * findOrCreateLeadByInstagram's "Instagram DM" and its siblings on the
- * other DM channels. They are labels for a row, never a person's name.
- *
- * The first real Instagram lead (2026-09-19) was answered with
- * "Hi! Instagram, I'll check on the availability for you shortly." The
- * greeting took the first word of lead.name, and lead.name was the
- * placeholder. A prospect reading that sees a business whose software is
- * broken, which is the precise opposite of what this first touch exists
- * to do.
- */
-const PLACEHOLDER_LEAD_NAMES = new Set([
-  "instagram dm",
-  "instagram",
-  "messenger dm",
-  "messenger",
-  "facebook",
-  "whatsapp",
-  "whatsapp lead",
-  "sms lead",
-  "unknown",
-  "lead",
-]);
-
-/**
- * The name to greet this lead by, or "" when there isn't one — callers
- * must treat "" as "do not use a name" rather than substituting anything.
- * An Instagram/Messenger handle ("@sahildoes") is a real way to address
- * someone on those channels, so the "@" is dropped and the handle kept.
- */
-export function greetingFirstName(name: string | null | undefined): string {
-  const trimmed = (name ?? "").trim();
-  if (!trimmed || PLACEHOLDER_LEAD_NAMES.has(trimmed.toLowerCase())) return "";
-  const first = trimmed.split(/\s+/)[0];
-  return first.startsWith("@") ? first.slice(1) : first;
-}
 
 const STALE_AFTER_MS = 60 * 60_000;
 

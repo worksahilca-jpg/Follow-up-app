@@ -55,30 +55,46 @@ that is already in the WhatsApp Business app on the owner's phone (Meta's
 "Coexistence"). Twilio is not involved. Scope and what is still unverified:
 `research/integrations/2026-09-19-whatsapp-coexistence.md`.
 
-In the app dashboard:
+In the app dashboard (the console as it looked on 2026-09-19 — Meta moves
+menus; if a label differs, take the closest match):
 
-1. **Add the WhatsApp product** to the "FollowUp" app (App Dashboard → Add
-   product → WhatsApp). Use the same App ID/App Secret as §2 — WhatsApp is a
-   product of the main app, so `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` already
-   cover it, including webhook signatures.
-2. **Webhook**: WhatsApp → Configuration → Callback URL
+1. **Add WhatsApp as a use case**: Use cases → Add use cases → "Connect with
+   customers through WhatsApp". It attaches to the FollowUp business
+   portfolio on its own. Same App ID/App Secret as §2 — WhatsApp is a product
+   of the main app, so `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` cover it,
+   including webhook signatures. **Both must be set in Vercel** — they were
+   not, until 2026-09-19.
+2. **Production setup gate**: Use cases → Connect on WhatsApp → "Production
+   setup" asks you to accept the WhatsApp Business Platform terms and gives
+   the app a free test number. Accept; nothing else is reachable before it.
+3. **Webhook**: under the same use case, Configuration → Callback URL
    `https://followupbase.io/api/whatsapp/webhook`, verify token the one shown
    in Settings → WhatsApp → "Meta console reference" (same token as Instagram).
-   Subscribe to the fields `messages`, `smb_message_echoes`, `history`,
-   `smb_app_state_sync`.
-3. **Embedded Signup configuration**: Facebook Login for Business →
-   Configurations → Create → choose the WhatsApp Business Account login
-   variation, and turn on the **"Onboard WhatsApp Business app users"**
-   (Coexistence) option. Copy the configuration ID into Vercel (Production):
-   - `WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID`
-4. **Permissions** the flow requests: `whatsapp_business_management`,
-   `whatsapp_business_messaging`. In development mode only people with a role
-   on the app can connect. For any other business these need App Review, which
-   needs Business Verification — both already on the founder's list in
-   `docs/meta-and-twilio-verification-pack.md`.
-5. **JavaScript SDK domain**: Facebook Login for Business → Settings → Allowed
-   Domains for the JavaScript SDK: `https://followupbase.io`. The connect button
-   loads Meta's SDK in the browser, and the SDK refuses domains not listed.
+   Subscribe to exactly `messages`, `smb_message_echoes`, `history`,
+   `smb_app_state_sync` (not `message_echoes`, which is Messenger's).
+4. **Embedded Signup configuration**: Facebook Login for Business →
+   Configurations → **Create from template** → "WhatsApp Embedded Signup
+   Configuration With 60 Expiration Token". The template is what makes the
+   WhatsApp login variation appear; "Create configuration" by hand offers
+   only "General" and no WhatsApp asset. In the template: System-user access
+   token, expiration **Never**, asset "WhatsApp accounts" only, permissions
+   `whatsapp_business_management` + `whatsapp_business_messaging`, product
+   "WhatsApp Cloud API". There is no Coexistence toggle in the configuration;
+   the code sets `featureType: whatsapp_business_app_onboarding` itself.
+   Copy the configuration ID into Vercel (Production):
+   - `WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID` (today: `1091922519903790`)
+5. **JavaScript SDK**: Facebook Login for Business → Settings → "Login with
+   the JavaScript SDK" = **Yes**, and "Allowed Domains for the JavaScript SDK"
+   = `https://followupbase.io` and `https://www.followupbase.io`. Without
+   the toggle Meta's window says "JSSDK Option is Not Toggled".
+6. **Who can connect, and the message "FollowUp can't onboard customers right
+   now"**: Meta only lets an app onboard other businesses' WhatsApp numbers
+   once the app's own business has passed **Business Verification** (and, in
+   Live mode, App Review for the two permissions). Until then that message
+   appears at the end of the flow, for everyone. In Development mode people
+   with a role on the app may get through; the founder's own account is the
+   test. Business Verification is the Ontario registration plus documents in
+   `docs/meta-and-twilio-verification-pack.md`. Nothing in code goes around it.
 
 What the owner sees: Settings → WhatsApp → "Connect WhatsApp" opens Meta's
 window; they scan a QR code with the phone that has the WhatsApp Business app;

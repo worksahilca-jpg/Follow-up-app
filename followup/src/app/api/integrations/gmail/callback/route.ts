@@ -36,6 +36,15 @@ export async function GET(request: NextRequest) {
   // the start route would have refused (audit 2026-09-16, auth M-1).
   if (!(await requireAdmin(ctx))) return fail("Only an admin can connect an inbox.");
 
+  // While the Google app is in Testing mode, anyone not on its test-user
+  // list is bounced with a bare "access_denied" — a beta tester the founder
+  // forgot to add on the Google side would otherwise read that as FollowUp
+  // being broken. Say what it is and who fixes it (docs/tester-onboarding-checklist.md).
+  if (oauthError === "access_denied") {
+    return fail(
+      "Google didn't allow the connection. While FollowUp is in beta, Google only lets accounts Sahil added as test users connect — email contact@followupbase.io with this address and try again once it's added."
+    );
+  }
   if (oauthError) return fail(oauthError);
   if (!code) return fail("No authorization code returned by Google.");
   if (!state || !expectedState || state !== expectedState) return fail("That sign-in link expired — try connecting again.");

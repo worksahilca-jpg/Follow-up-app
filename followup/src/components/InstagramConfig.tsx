@@ -157,13 +157,22 @@ export default function InstagramConfig() {
           ) : (
             <div className="mt-3 space-y-3">
               {oauthAvailable ? (
-                <a
-                  href="/api/instagram/oauth/start"
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-paper"
-                  style={{ backgroundColor: "var(--ink)" }}
-                >
-                  Connect with Instagram
-                </a>
+                <div>
+                  <a
+                    href="/api/instagram/oauth/start"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-paper"
+                    style={{ backgroundColor: "var(--ink)" }}
+                  >
+                    Connect with Instagram
+                  </a>
+                  {/* Meta's rule while the app is unreviewed, said before
+                      the click rather than discovered as a refusal after it
+                      (docs/tester-onboarding-checklist.md). */}
+                  <p className="mt-2 text-xs text-ink-soft">
+                    While FollowUp is in beta, Meta only lets accounts Sahil added as testers connect. If Meta refuses,
+                    ask him to add you.
+                  </p>
+                </div>
               ) : null}
 
               <div>

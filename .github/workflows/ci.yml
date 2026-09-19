@@ -37,8 +37,26 @@ jobs:
       - run: npx eslint .
       - run: npm test
       - run: npm run build
+      # npm audit exits 1 both for "a critical vulnerability was found" and
+      # for "the registry's audit service is down" — seen 2026-09-19: the
+      # bulk advisory endpoint answered 503 and npm's fallback endpoint is
+      # retired (400), on a lockfile that was green an hour earlier. Only
+      # the first is this repo's problem. A real report carries
+      # metadata.vulnerabilities; an endpoint failure carries only the HTTP
+      # error, and that is a warning on the run, not a red build.
       - name: Dependency audit (fails on critical)
-        run: npm audit --omit=dev --audit-level=critical
+        run: |
+          npm audit --omit=dev --json > audit.json || true
+          node -e '
+            const r = require("./audit.json");
+            const v = r.metadata && r.metadata.vulnerabilities;
+            if (!v) {
+              console.log("::warning::npm audit skipped — registry audit service unavailable: " + (r.message || "no report"));
+              process.exit(0);
+            }
+            console.log("vulnerabilities: " + JSON.stringify(v));
+            if (v.critical > 0) { console.error("critical vulnerabilities found — see npm audit"); process.exit(1); }
+          '
 
   voice-agent:
     name: Voice bridge — install + syntax

@@ -757,6 +757,14 @@ model FollowUp {
   // comparable AI-drafting product watches (accuracy research 2026-09-13,
   // finding 9); surfaced on /analytics as "Drafts sent as written".
   draftEdited Boolean?
+  // The AI draft exactly as it stood when this went out, kept ONLY for a
+  // business that opted in to improving FollowUp (Business.allowModelTraining)
+  // — null otherwise, whatever draftEdited says. Beside `message` (what was
+  // actually sent) it is the diff the founder reads each week to fix the
+  // drafting instructions: the one thing ten beta testers can teach that
+  // no metric can. Read through the de-identification boundary
+  // (src/lib/deidentify.ts) before it is shown anywhere.
+  draftText   String?
   createdAt   DateTime  @default(now())
 
   @@index([leadId])

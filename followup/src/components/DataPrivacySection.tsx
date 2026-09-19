@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { Download, TriangleAlert } from "lucide-react";
 import { handleReauthRequired } from "@/lib/reauthClient";
+import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
 
 export default function DataPrivacySection() {
   const [businessName, setBusinessName] = useState<string | null>(null);
@@ -64,7 +65,11 @@ export default function DataPrivacySection() {
 
   return (
     <div>
-      <div className="box p-5">
+      {/* The consent switch first: it is the one thing here an owner
+          decides rather than does. Export and delete follow. */}
+      <ImproveFollowUpToggle />
+
+      <div className="mt-4 box p-5">
         <div className="flex items-center gap-4">
           <div
             className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"

@@ -80,6 +80,8 @@ vi.mock("@/lib/db", () => ({
     user: { findMany: userFindMany },
     // The beta list (2026-09-19): empty here; its own shape is trivial.
     accessRequest: { findMany: async () => [] },
+    // "What testers changed this week": nothing edited here.
+    followUp: { findMany: async () => [] },
   },
 }));
 

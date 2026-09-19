@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Compass, Mail, Check, ArrowRight, Loader2 } from "lucide-react";
+import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
 
 const INDUSTRIES = [
   "Real estate",
@@ -283,10 +284,18 @@ function OnboardingFormInner({
                   </p>
                 )}
 
+                {/* Asked once, here, where the owner has just seen what
+                    FollowUp does with their inbox — not buried in Settings
+                    they may never open. Off by default; the switch is the
+                    consent (docs/security-roadmap.md). */}
+                <div className="mt-5 rounded-[var(--radius-box)] bg-card px-4 py-3" style={{ boxShadow: "var(--shadow-box)" }}>
+                  <ImproveFollowUpToggle compact />
+                </div>
+
                 <button
                   onClick={finishOnboarding}
                   disabled={finishing}
-                  className="w-full mt-6 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+                  className="w-full mt-4 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
                   style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                 >
                   {finishing ? "Taking you there…" : "Continue to dashboard"}

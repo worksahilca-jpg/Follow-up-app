@@ -68,8 +68,74 @@ export default async function AdminPage() {
           The only way in. Add a Google email and that person can sign in on their next try — no settings change, no
           redeploy. Nobody can ask from the site.
         </p>
+        {/* The goal as a funnel, not a count: ten added means nothing until
+            ten have an inbox connected and a lead on the board. Four numbers
+            in one box, the step that is lagging obvious by eye. */}
+        <div className="mt-4 box p-5">
+          <div className="flex items-baseline justify-between gap-4">
+            <p className="text-sm font-medium">
+              {data.testerFunnel.firstLead} of {data.testerFunnel.goal} testers are testing
+            </p>
+            <p className="text-xs text-ink-soft">a tester counts once they have a lead on the board</p>
+          </div>
+          <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--line)" }}>
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${Math.min(100, (data.testerFunnel.firstLead / data.testerFunnel.goal) * 100)}%`, backgroundColor: "var(--rust)" }}
+            />
+          </div>
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {(
+              [
+                ["Added", data.testerFunnel.added],
+                ["Signed in", data.testerFunnel.signedIn],
+                ["Inbox connected", data.testerFunnel.inboxConnected],
+                ["First lead", data.testerFunnel.firstLead],
+              ] as const
+            ).map(([label, value]) => (
+              <div key={label}>
+                <p className="font-display text-2xl tabular-nums">{value}</p>
+                <p className="text-xs text-ink-soft">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
         <div className="mt-4">
           <AccessRequestList requests={data.accessRequests} />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl">What testers changed this week</h2>
+        <p className="text-sm text-ink-soft mt-1">
+          Every draft a tester edited before sending, from businesses that turned on &quot;Help improve
+          FollowUp&quot;. Names and contact details are removed before this page sees them. Read the
+          difference, then fix the instructions.
+        </p>
+        <div className="mt-4 flex flex-col gap-3">
+          {data.draftChanges.length === 0 ? (
+            <div className="box p-5 text-sm text-ink-soft">
+              Nothing yet. This fills as testers with the switch on edit a draft and send it.
+            </div>
+          ) : (
+            data.draftChanges.map((c) => (
+              <div key={c.id} className="box p-5">
+                <p className="text-xs text-ink-soft">
+                  {c.businessName} · {channelLabel(c.channel)} · {formatFullDate(c.sentAt)}
+                </p>
+                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-medium text-ink-soft mb-1">FollowUp wrote</p>
+                    <p className="text-sm whitespace-pre-wrap">{c.draft}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium mb-1">They sent</p>
+                    <p className="text-sm whitespace-pre-wrap">{c.sent}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </section>
 

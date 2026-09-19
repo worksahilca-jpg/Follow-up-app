@@ -21,6 +21,7 @@
 import { prisma } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import { TIER_MONTHLY_PRICE_USD, TIER_INFO } from "@/lib/pricing";
+import { agentIdentifiers, deidentifyText, leadIdentifiers } from "@/lib/deidentify";
 
 export interface WeekBucket {
   week: string;
@@ -56,7 +57,46 @@ export interface AccessRequestRow {
   note: string | null;
   status: string; // new | approved | declined
   createdAt: Date;
+  // Where this tester actually is, so the founder sees who is stuck
+  // rather than who was invited: signed in at all, inbox connected
+  // (Gmail or Outlook), leads on the board.
+  signedIn: boolean;
+  inboxConnected: boolean;
+  leadCount: number;
 }
+
+/**
+ * The beta goal as a funnel: ten testers, each of whom has to get through
+ * three doors before they are testing anything. Counts are of approved
+ * testers only; a removed one drops out of every step.
+ */
+export interface TesterFunnel {
+  goal: number;
+  added: number;
+  signedIn: number;
+  inboxConnected: number;
+  firstLead: number;
+}
+
+/**
+ * One edited draft from the last week: what FollowUp wrote against what
+ * the owner really sent, de-identified through src/lib/deidentify.ts
+ * before it leaves the data layer. Only from businesses that turned on
+ * "Help improve FollowUp" — the draft is never even stored otherwise
+ * (FollowUp.draftText, src/lib/sending.ts).
+ */
+export interface DraftChange {
+  id: string;
+  businessName: string;
+  channel: string;
+  sentAt: Date;
+  draft: string;
+  sent: string;
+}
+
+export const TESTER_GOAL = 10;
+const DRAFT_CHANGES_DAYS = 7;
+const DRAFT_CHANGES_LIMIT = 30;
 
 export interface PlatformAdminData {
   totalBusinesses: number;
@@ -78,6 +118,8 @@ export interface PlatformAdminData {
   recentSignups: RecentSignup[];
   // The beta list: every email the founder added, active first, newest first.
   accessRequests: AccessRequestRow[];
+  testerFunnel: TesterFunnel;
+  draftChanges: DraftChange[];
 }
 
 const SIGNUP_WEEKS = 12;
@@ -214,19 +256,101 @@ export async function getPlatformAdminData(): Promise<PlatformAdminData> {
     orderBy: [{ createdAt: "desc" }],
     take: 100,
   });
+
+  // --- Where each tester is: signed in → inbox → first lead ---
+  // Keyed by the tester's email → their user's business. Bounded by the
+  // tester list (≤100), never by leads.
+  const testerEmails = accessRequestRows.map((r) => r.email);
+  const testerUsers = testerEmails.length
+    ? await prisma.user.findMany({ where: { email: { in: testerEmails } }, select: { email: true, businessId: true } })
+    : [];
+  const businessByEmail = new Map<string, string>();
+  for (const u of testerUsers) if (u.email && u.businessId) businessByEmail.set(u.email, u.businessId);
+  const testerBusinessIds = [...new Set(businessByEmail.values())];
+  const [testerInboxUsers, testerLeadCounts] = testerBusinessIds.length
+    ? await Promise.all([
+        prisma.user.findMany({
+          where: {
+            businessId: { in: testerBusinessIds },
+            integrations: { some: { status: "connected", provider: { in: ["gmail", "outlook"] } } },
+          },
+          select: { businessId: true },
+        }),
+        prisma.lead.groupBy({ by: ["businessId"], where: { businessId: { in: testerBusinessIds } }, _count: { _all: true } }),
+      ])
+    : [[], []];
+  const inboxBusinessIds = new Set(testerInboxUsers.map((u) => u.businessId).filter((id): id is string => !!id));
+  const testerLeadCountByBusiness = new Map(testerLeadCounts.map((g) => [g.businessId, g._count._all]));
+
   const order = { new: 0, approved: 1, declined: 2 } as Record<string, number>;
   const accessRequests: AccessRequestRow[] = accessRequestRows
-    .map((r) => ({
-      id: r.id,
-      name: r.name,
-      email: r.email,
-      business: r.business,
-      channels: r.channels ? r.channels.split(",").filter(Boolean) : [],
-      note: r.note,
-      status: r.status,
-      createdAt: r.createdAt,
-    }))
+    .map((r) => {
+      const businessId = businessByEmail.get(r.email);
+      return {
+        id: r.id,
+        name: r.name,
+        email: r.email,
+        business: r.business,
+        channels: r.channels ? r.channels.split(",").filter(Boolean) : [],
+        note: r.note,
+        status: r.status,
+        createdAt: r.createdAt,
+        signedIn: !!businessId,
+        inboxConnected: !!businessId && inboxBusinessIds.has(businessId),
+        leadCount: businessId ? (testerLeadCountByBusiness.get(businessId) ?? 0) : 0,
+      };
+    })
     .sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9) || b.createdAt.getTime() - a.createdAt.getTime());
+
+  const approvedTesters = accessRequests.filter((r) => r.status === "approved");
+  const testerFunnel: TesterFunnel = {
+    goal: TESTER_GOAL,
+    added: approvedTesters.length,
+    signedIn: approvedTesters.filter((r) => r.signedIn).length,
+    inboxConnected: approvedTesters.filter((r) => r.inboxConnected).length,
+    firstLead: approvedTesters.filter((r) => r.leadCount > 0).length,
+  };
+
+  // --- What testers changed this week ---
+  // Only rows with a stored draft exist for opted-in businesses, so the
+  // consent check is the column itself; the de-identification boundary is
+  // applied here, before any of this leaves the data layer.
+  const since = new Date(Date.now() - DRAFT_CHANGES_DAYS * 24 * 60 * 60_000);
+  const editedRows = await prisma.followUp.findMany({
+    where: { draftEdited: true, draftText: { not: null }, sentAt: { gte: since } },
+    orderBy: { sentAt: "desc" },
+    take: DRAFT_CHANGES_LIMIT,
+    select: {
+      id: true,
+      channel: true,
+      sentAt: true,
+      message: true,
+      draftText: true,
+      lead: {
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+          company: true,
+          assignedTo: { select: { name: true, email: true } },
+          business: { select: { name: true } },
+        },
+      },
+    },
+  });
+  const draftChanges: DraftChange[] = editedRows
+    .filter((r) => r.draftText && r.message && r.sentAt)
+    .map((r) => {
+      const identifiers = [...leadIdentifiers(r.lead), ...agentIdentifiers(r.lead.assignedTo)];
+      return {
+        id: r.id,
+        businessName: r.lead.business.name,
+        channel: r.channel,
+        sentAt: r.sentAt!,
+        draft: deidentifyText(r.draftText!, identifiers),
+        sent: deidentifyText(r.message!, identifiers),
+      };
+    });
 
   const recentSignups: RecentSignup[] = recentBusinesses.map((b) => ({
     id: b.id,
@@ -251,5 +375,7 @@ export async function getPlatformAdminData(): Promise<PlatformAdminData> {
     dormantBusinessCount,
     recentSignups,
     accessRequests,
+    testerFunnel,
+    draftChanges,
   };
 }

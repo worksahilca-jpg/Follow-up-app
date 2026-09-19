@@ -2809,3 +2809,23 @@ no Stripe customer to manage). The plan picker is not shown to a beta business; 
 to pay for real, the beta ending is the moment for that, not a button now. Plain words,
 principle 9. Not rendered live (database unreachable from the sandbox); the branch is one
 string and one condition.
+
+## 2026-09-19 — The learning loop: an honest consent switch, and "what testers changed" on /admin
+
+**Founder:** "we need their data to train our model, right?" The honest answer: no model is
+trained yet; what ten testers can teach is where the drafts' wording is wrong. So:
+
+- **Settings → Your data** gains "Help improve FollowUp", a switch, off by default. The copy
+  says exactly what it does today (keeps the draft beside what you sent; names and contact
+  details removed; nothing shared; no model trained yet). The icon is a pen — the replies
+  the owner edits are the subject — never a sparkle (S-13). The same switch is asked once at
+  the end of onboarding, one sentence, easy no; nothing pre-ticks it.
+- **/admin** gains the tester funnel — "N of 10 testers are testing", a thin bar, four counts
+  (added, signed in, inbox connected, first lead) — and each tester row says which door they
+  are stuck at. Below it, "What testers changed this week": every edited draft from an
+  opted-in business, de-identified, side by side, "FollowUp wrote" / "They sent". No chart;
+  the diff is the information.
+
+Plain words (principle 9), no surprises (principle 1): the switch names its effect, and the
+founder-only page shows only what the switch allows. Rendered as a static harness at 1280
+(database unreachable from the sandbox).

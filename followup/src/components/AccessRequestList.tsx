@@ -117,6 +117,19 @@ export default function AccessRequestList({ requests }: { requests: AccessReques
                       {r.business ? ` · ${r.business}` : ""}
                       {` · added ${r.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
                     </p>
+                    {/* Where they actually are, in the order the doors come.
+                        The first unmet one is the thing to chase. */}
+                    {on && (
+                      <p className="mt-1 text-xs text-ink-soft">
+                        {!r.signedIn
+                          ? "Not signed in yet"
+                          : !r.inboxConnected
+                            ? "Signed in · no inbox connected yet"
+                            : r.leadCount === 0
+                              ? "Signed in · inbox connected · no leads yet"
+                              : `Signed in · inbox connected · ${r.leadCount} lead${r.leadCount === 1 ? "" : "s"}`}
+                      </p>
+                    )}
                   </div>
                   <button
                     onClick={() => setStatus(r.id, on ? "declined" : "approved")}

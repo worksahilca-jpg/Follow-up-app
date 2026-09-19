@@ -673,6 +673,19 @@ export async function sendFollowUpToLead(
     const squash = (s: string) => s.replace(/\s+/g, " ").trim();
     const draftEdited = lead.suggestedMessage ? squash(body) !== squash(lead.suggestedMessage) : null;
 
+    // The draft itself is kept only where the business said yes to
+    // improving FollowUp (Settings → Your data). A failed lookup means no,
+    // never yes — and never fails the bookkeeping around it.
+    let keepDraft = false;
+    if (lead.suggestedMessage) {
+      try {
+        const consent = await prisma.business.findUnique({ where: { id: lead.businessId }, select: { allowModelTraining: true } });
+        keepDraft = !!consent?.allowModelTraining;
+      } catch {
+        keepDraft = false;
+      }
+    }
+
     await prisma.message.create({
       data: {
         conversationId: conversation.id,
@@ -692,6 +705,7 @@ export async function sendFollowUpToLead(
         automated: options.automated ?? false,
         trigger,
         draftEdited,
+        draftText: keepDraft ? lead.suggestedMessage : null,
         sentAt: new Date(),
       },
     });

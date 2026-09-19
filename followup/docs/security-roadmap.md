@@ -113,7 +113,13 @@ allowed only under these rules, enforced in code as they are built:
    `false`. No data from a business with it off ever enters a training set —
    enforced at the read: `buildDeidentifiedTrainingSet()`
    (`src/lib/deidentify.ts`, task #74) checks the flag before it queries a
-   single lead, not after.
+   single lead, not after. Since 2026-09-19 the flag has a switch an owner can
+   actually reach — Settings → Your data, and asked once at the end of
+   onboarding (`ImproveFollowUpToggle`, `POST /api/business/privacy`, audited).
+   What it turns on today: the AI draft is kept beside what the owner really
+   sent (`FollowUp.draftText`, written only when the flag is on) and shown to
+   the founder on `/admin`, de-identified through `deidentifyText()`, so the
+   drafting instructions can be fixed from real edits. Still no training job.
 2. **[x] De-identify first.** `deidentifyText()` (`src/lib/deidentify.ts`)
    is the boundary: every message body is run through it before this
    function's return value exists anywhere. Two layers — targeted

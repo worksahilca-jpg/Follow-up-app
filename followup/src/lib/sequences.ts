@@ -559,6 +559,13 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // defer above, just re-checked hourly instead of on a timer.
         const stepEligible = await checkAiEligibility(businessId, lead, tier);
         if (!stepEligible.ok) {
+          // Stored on the lead as well as noted in the run summary, for
+          // the same reason as the two gates in automation.ts and
+          // scoring.ts: a lead sitting on a plan whose steps will never
+          // fire has to be able to say so on its own page. This is the
+          // worst of the three to leave silent — the badge says "On a
+          // follow-up plan, next step in 2d", which is a dated promise.
+          await prisma.lead.updateMany({ where: { id: lead.id }, data: { aiPausedReason: stepEligible.ownerMessage } });
           return { kind: "skipped" as const, note: `${lead.name}: ${stepEligible.reason}` };
         }
         // research/product/2026-09-09-followup-cadence-best-practices.md

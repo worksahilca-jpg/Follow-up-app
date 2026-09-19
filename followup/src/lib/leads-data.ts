@@ -31,7 +31,14 @@ type DbLead = Prisma.LeadGetPayload<{
   };
 }>;
 
-function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules): Lead {
+/**
+ * Exported for its own test only — the two callers below are session-
+ * scoped server functions, and the guarantees worth pinning here (an
+ * unscored lead reports itself as unreviewed; a paused lead carries its
+ * reason into the status) are properties of this mapping, not of the
+ * queries around it.
+ */
+export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules): Lead {
   const conversation: Message[] = dbLead.conversations
     .flatMap((c) =>
       c.messages.map((m) => ({
@@ -63,7 +70,32 @@ function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules): Lead
     stage,
     dealValue: dbLead.dealValue,
     score: dbLead.score,
-    scoreReason: dbLead.scoreReason ?? "Not scored yet — click \"Sync now\" in Settings once OpenAI is connected.",
+    // The unscored fallback used to tell everyone to "click Sync now in
+    // Settings once OpenAI is connected" — true for a business that has
+    // never been set up, and actively wrong for the far more common case
+    // this column now names, where FollowUp deliberately did not score
+    // this lead. Syncing does nothing about a lapsed subscription or a
+    // channel the plan doesn't cover, and sending someone to press a
+    // button that cannot help is worse than saying nothing.
+    //
+    // The reason itself is NOT repeated here: it is one sentence, and it
+    // belongs in the one place on this page whose job is "what is
+    // FollowUp doing with this lead" (AutomationStatusBadge). Saying it
+    // twice on one screen is clutter (S-06), and the two copies would
+    // drift.
+    scoreReason:
+      dbLead.scoreReason ??
+      (dbLead.aiPausedReason
+        // Just the fact. The pill beside it already says "Not reviewed
+        // yet" and the status box already says "Paused on this lead" and
+        // why — an earlier draft of this line said "paused" a third time
+        // in the same stack, which is clutter (rejected.md S-06), not
+        // emphasis.
+        ? "FollowUp hasn't scored this one."
+        : "Not scored yet — click \"Sync now\" in Settings once OpenAI is connected."),
+    // The real answer, taken from the column rather than from whether a
+    // string happens to be non-empty. See Lead.reviewed in types.ts.
+    reviewed: dbLead.scoreReason != null,
     scoreFactors: (dbLead.scoreFactors as unknown as ScoreFactor[] | null) ?? [],
     priority: dbLead.priority.toLowerCase() as Lead["priority"],
     lastContacted,
@@ -83,6 +115,7 @@ function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules): Lead
         lastContacted,
         conversation,
         sequence: dbLead.sequence ? { name: dbLead.sequence.name, active: dbLead.sequence.active, dueAt: dbLead.sequenceStepDueAt?.toISOString() ?? null } : null,
+        aiPausedReason: dbLead.aiPausedReason,
       },
       rules
     ),

@@ -2829,3 +2829,71 @@ trained yet; what ten testers can teach is where the drafts' wording is wrong. S
 Plain words (principle 9), no surprises (principle 1): the switch names its effect, and the
 founder-only page shows only what the switch allows. Rendered as a static harness at 1280
 (database unreachable from the sandbox).
+
+## 2026-09-19 — A lead FollowUp skipped now says why, and an unjudged lead stops claiming a verdict
+
+**The case.** The first real Instagram DM arrived on a business whose plan did not cover
+Instagram. `checkAiEligibility` refused, correctly, and returned a reason. All three callers
+threw the reason away. What the owner saw was a lead with no score, no draft, a pill reading
+**"No action needed"**, and a status badge counting down to a follow-up that was never coming.
+Every one of those is a claim the product had no basis for, and the whole thing reads as
+broken software rather than working software exercising a limit. It took a database query to
+find out what had actually happened.
+
+**Principle 6, literally** — show the reasoning, not just the verdict. A refusal is a verdict.
+This is the case where the product had the reasoning in hand and dropped it on the floor.
+
+**What shipped.**
+
+- `Lead.aiPausedReason` — the whole sentence, written for the owner, set at all three gates
+  (scoring, automation, workflow steps), cleared the moment a score lands. A cache of a
+  decision that is recomputed every pass; nothing reads it to decide anything.
+- `checkAiEligibility` returns two strings now: `reason` (the fragment that sits after a name
+  in a run summary) and `ownerMessage` (a whole sentence for a screen). One string could not
+  be good at both jobs, and trying to make it serve both is why the reason was never shown.
+  The sentences say what happened to the lead first — **it was saved** — then what FollowUp
+  did not do, in plain words, then the one thing that changes it and where. The Free-channel
+  one names the actual channel, because "which one" is always the next question.
+- `AutomationStatus` gains `ai_paused`, ranked **above every timing state and above the
+  workflow branch**. While it is set nothing drafts and nothing sends on any path, so
+  "Following up soon" and "next step in 2d" are both promises the engine will not keep. Only
+  won/lost outranks it: a closed deal is not waiting on FollowUp for anything.
+- `AutomationStatusBadge` renders it in coral with a pause icon — the same family as
+  "your auto follow-up is switched off", because to the owner these are one thing: nothing is
+  happening and only they can change it. Label **"Paused on this lead"**: short enough for the
+  compact pill in a list row, and it makes no claim about where the explanation sits. An
+  earlier draft said "see why below", which is true on the detail page and false in
+  `FollowUpCard`.
+- **One deliberate break from the component's own rule:** this is the only status whose
+  `detail` renders at 14px instead of 12px. Every other status has a self-explanatory label
+  with the detail as a footnote; this one inverts that — the label only says something
+  stopped, and the sentence *is* the answer. Setting the most important sentence on the screen
+  in the smallest type the app allows would undo the point of showing it. Expressed as an
+  `emphasis` flag, so it is a rule rather than a magic string check.
+
+**The second bug, found while reviewing the first.** `PriorityPill`'s "Not reviewed yet" state
+had **never rendered, once, in production**. Both call sites passed `Boolean(lead.scoreReason)`
+— and `scoreReason` is never empty, because an unscored lead is handed a placeholder sentence
+to render. So `reviewed` was always true and every unlooked-at lead was labelled **"No action
+needed"**, which that component's own comment calls "the exact failure this product exists to
+prevent". Fixed with a real `Lead.reviewed`, read from the column. A derived boolean that can
+only ever be `true` is not a check.
+
+**Self-critique, honestly.** Three weak points.
+
+1. The reason is a **snapshot**, not live. Fix the billing and the sentence stays until the
+   next pass touches that lead — up to 20 hours on the automation recheck. Clearing it
+   anywhere else (a billing webhook, an upgrade handler) means a second place that has to stay
+   right; clearing it where the work actually lands cannot go stale, only be late. Late and
+   correct beats early and wrong, but "late" is real and a tester may see it.
+2. The **dashboard approval queue was already fine** — "Held because …" has shipped for a
+   while. The gap was only ever the refusal path. My first framing to the founder ("a held
+   lead shows you nothing") was wrong and was corrected to him in the same session before any
+   code was written.
+3. Verified as a **static harness** at 1200, both themes, real token values copied from
+   `globals.css` — not the running app, because the database is unreachable from the sandbox.
+   The wiring is covered by tests and the typechecker; the *look* was checked on a stand-in.
+
+**Not done, deliberately:** no upgrade button inside the badge. Whether a paused lead should
+carry a one-tap upgrade is a product-behaviour call and `CLAUDE.md` puts those with the
+founder, not here.

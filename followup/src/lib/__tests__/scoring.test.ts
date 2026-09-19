@@ -8,11 +8,13 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { findUnique, update } = vi.hoisted(() => ({
+const { findUnique, update, updateMany } = vi.hoisted(() => ({
   findUnique: vi.fn(),
   update: vi.fn(async () => ({})),
+  // The refusal path's one write — see "records WHY it skipped" below.
+  updateMany: vi.fn(async () => ({ count: 1 })),
 }));
-vi.mock("@/lib/db", () => ({ prisma: { lead: { findUnique, update } } }));
+vi.mock("@/lib/db", () => ({ prisma: { lead: { findUnique, update, updateMany } } }));
 
 vi.mock("@/lib/integrations/openai", () => ({
   scoreLead: vi.fn(async () => ({ score: 80, reason: "Asked about pricing", factors: [] })),
@@ -28,7 +30,9 @@ vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
 // Plus's 1,500/mo and Pro's 10,000/mo were published policy with nothing
 // enforcing them, so a paid account had no AI ceiling at all.
 const { aiEligible } = vi.hoisted(() => ({
-  aiEligible: vi.fn(async (): Promise<{ ok: true } | { ok: false; reason: string }> => ({ ok: true })),
+  aiEligible: vi.fn(
+    async (): Promise<{ ok: true } | { ok: false; reason: string; ownerMessage: string }> => ({ ok: true })
+  ),
 }));
 vi.mock("@/lib/billing", () => ({ checkAiEligibility: aiEligible }));
 
@@ -78,10 +82,38 @@ describe("scoreAndDraftForLead — the tier's AI allowance", () => {
 
   it("skips scoring once the gate refuses", async () => {
     findUnique.mockResolvedValue(leadRow({ business: { tier: "free" } }));
-    aiEligible.mockResolvedValue({ ok: false, reason: "past this month's 20-lead AI cap on the Free plan" });
+    aiEligible.mockResolvedValue({ ok: false, reason: "past this month's 20-lead AI cap on the Free plan", ownerMessage: "Paused." });
     const ok = await scoreAndDraftForLead("lead1");
     expect(ok).toBe(false);
     expect(update).not.toHaveBeenCalled();
+  });
+
+  // 2026-09-19: the refusal used to end at `return false`, verdict kept
+  // and reasoning dropped. The owner was left with a lead that had no
+  // score, no draft and nothing saying why — which reads as a broken
+  // product rather than a working one exercising a limit.
+  it("records WHY it skipped, on the lead, in the owner's words", async () => {
+    findUnique.mockResolvedValue(leadRow({ business: { tier: "free" }, source: "Instagram" }));
+    aiEligible.mockResolvedValue({
+      ok: false,
+      reason: "on a channel the Free plan doesn't cover",
+      ownerMessage: "This lead came in on instagram, which the Free plan doesn't cover, so FollowUp didn't read it or write a reply.",
+    });
+
+    await scoreAndDraftForLead("lead1");
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: "lead1" },
+      // The whole sentence, not the run-summary fragment.
+      data: { aiPausedReason: "This lead came in on instagram, which the Free plan doesn't cover, so FollowUp didn't read it or write a reply." },
+    });
+  });
+
+  it("clears the pause the moment a score actually lands, so a fixed account stops explaining itself", async () => {
+    await scoreAndDraftForLead("lead1");
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ aiPausedReason: null }) })
+    );
   });
 
   it("passes the lead itself, so the gate can rank it and read its channel", async () => {

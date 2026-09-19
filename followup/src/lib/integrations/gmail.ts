@@ -782,6 +782,10 @@ async function processThreadRefs(
       dealValue: lead.dealValue,
       score: lead.score,
       scoreReason: lead.scoreReason ?? "",
+      // Same source of truth as leads-data.ts: the column, not
+      // whether a string is non-empty. A just-captured lead has not
+      // been scored yet, and must not be reported as if it had.
+      reviewed: lead.scoreReason != null,
       scoreFactors: [],
       priority: "none",
       lastContacted: lead.lastContacted?.toISOString() ?? new Date().toISOString(),

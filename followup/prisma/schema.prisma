@@ -433,6 +433,26 @@ model Lead {
   // email-framed draft must be rebuilt before it goes out as a DM. An
   // empty `buttons` list is a DM draft that passed without chips.
   suggestedQuickReplies Json?
+  // Why FollowUp did NOT read this lead or write anything for it — set
+  // whenever checkAiEligibility (@/lib/billing) refuses, cleared the
+  // moment a score/draft actually lands (src/lib/scoring.ts).
+  //
+  // The whole sentence, written for the owner, not the fragment the run
+  // summaries use. It is a cache of a decision that is recomputed every
+  // pass, never a source of truth: nothing reads it to decide anything,
+  // only to say something.
+  //
+  // 2026-09-19, the case that forced it. A real Instagram DM arrived,
+  // the business was on Free (which does not cover Instagram), and
+  // checkAiEligibility correctly refused. Its reason was thrown away by
+  // every one of the three callers. The owner saw a lead with no score,
+  // no reason and no draft, sitting next to a badge that said
+  // "Following up soon" — a promise nothing was going to keep. The
+  // product knew the answer and showed a blank, which reads as broken
+  // and is worse than the refusal itself
+  // (design-brain/brand/brand-principles.md 6: show the reasoning, not
+  // just the verdict).
+  aiPausedReason   String?
   priority         Priority       @default(NONE)
   lastContacted    DateTime?
   nextFollowUp     DateTime?

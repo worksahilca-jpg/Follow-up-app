@@ -66,6 +66,13 @@ export async function getBusinessAutomationRules(businessId: string): Promise<Bu
 
 export type AutomationStatus =
   | { kind: "closed" } // WON/LOST — automation never touches these regardless of anything else
+  // FollowUp refused to read this lead or write anything for it, and said
+  // why (Lead.aiPausedReason, written by checkAiEligibility's three call
+  // sites). Ranked above every timing state below on purpose: while this
+  // is set, nothing drafts and nothing sends on ANY path — automation,
+  // workflow step or the owner's own suggested reply — so every one of
+  // those states would be describing a follow-up that is not coming.
+  | { kind: "ai_paused"; reason: string }
   | { kind: "workflow"; sequenceName: string; dueInDays: number } // enrolled in an active Sequence
   | { kind: "workflow_paused"; sequenceName: string } // enrolled, but the Sequence itself is paused
   | { kind: "off" } // Lead.automationTier === "off" — nobody but a human will ever message this lead
@@ -88,6 +95,10 @@ export interface AutomationStatusLead {
   // Gmail (no FollowUp row) from nothing having gone out at all.
   conversation: Message[];
   sequence: { name: string; active: boolean; dueAt: string | null } | null;
+  // Lead.aiPausedReason — the whole owner-facing sentence, or null when
+  // nothing is paused. Passed in rather than looked up because this
+  // function stays pure and does no queries of its own.
+  aiPausedReason: string | null;
 }
 
 export function computeAutomationStatus(
@@ -96,6 +107,13 @@ export function computeAutomationStatus(
   now: Date = new Date()
 ): AutomationStatus {
   if (lead.stage === "won" || lead.stage === "lost") return { kind: "closed" };
+
+  // Before every timing rule below, and before the workflow branch: a
+  // paused lead is not waiting, not due, and not on a plan that will
+  // run. It is stopped, and the one useful thing to say about it is why.
+  // Won/lost still wins, because a closed lead is not waiting on
+  // FollowUp for anything.
+  if (lead.aiPausedReason) return { kind: "ai_paused", reason: lead.aiPausedReason };
 
   // Checked before automationTier: enrollLead() (sequences.ts) always sets
   // a lead's automationTier to "off" the moment it enrolls, specifically so

@@ -55,7 +55,22 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // TIER_AI_LEAD_CAP for why those two are circuit breakers rather than
   // caps a customer is expected to reach.
   const tier = (lead.business.tier ?? "free") as "free" | "plus" | "pro";
-  if (!(await checkAiEligibility(lead.businessId, lead, tier)).ok) return false;
+  const eligible = await checkAiEligibility(lead.businessId, lead, tier);
+  if (!eligible.ok) {
+    // The refusal used to end here, verdict kept and reasoning dropped.
+    // What the owner then saw was a lead with no score, no reason, no
+    // draft and a badge promising a follow-up that was never coming —
+    // the exact shape of a broken product, produced by one that had
+    // worked correctly and simply said nothing about it (2026-09-19,
+    // the first real Instagram DM). Storing it costs one write on a
+    // path that is already refusing to do the expensive thing.
+    //
+    // `updateMany` rather than `update` so a lead deleted between the
+    // read above and here is a no-op instead of a thrown P2025 on what
+    // is otherwise a clean, quiet refusal.
+    await prisma.lead.updateMany({ where: { id: lead.id }, data: { aiPausedReason: eligible.ownerMessage } });
+    return false;
+  }
 
   const conversation: Message[] = lead.conversations.flatMap((c) =>
     c.messages.map((m) => ({
@@ -137,6 +152,11 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       // can tell a still-current draft from a stale one instead of
       // rebuilding it every 20 hours (see schema.prisma).
       suggestedDraftedFor: new Date(conversation[conversation.length - 1].date),
+      // Whatever was paused here isn't any more — this write IS the proof.
+      // Clearing it anywhere else (a billing webhook, an upgrade handler)
+      // would be a second place that has to stay right; clearing it at the
+      // moment the work actually lands cannot go stale.
+      aiPausedReason: null,
     },
   });
 

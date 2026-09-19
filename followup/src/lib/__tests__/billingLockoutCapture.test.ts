@@ -314,6 +314,58 @@ describe("what still pauses while billing is lapsed", () => {
     expect((verdict as { ok: false; reason: string }).reason).toMatch(/still captured/);
   });
 
+  // Every refusal carries a second string: the whole sentence that lands
+  // on the lead's own page (Lead.aiPausedReason). `reason` is a fragment
+  // built to sit after a name in a run summary and reads as a broken
+  // sentence on a screen, which is how the reason came to be dropped
+  // rather than shown in the first place.
+  it("carries a whole, self-contained sentence for the lead's own screen, on every refusal", async () => {
+    const refusals = [
+      // Billing lapsed.
+      await checkAiEligibility("biz1", lead, "plus"),
+      // Free, on a channel Free doesn't cover.
+      await (async () => {
+        businessFindUnique.mockResolvedValue({ subscriptionStatus: null });
+        return checkAiEligibility("biz1", { ...lead, source: "Instagram" }, "free");
+      })(),
+      // Free, past the monthly cap.
+      await (async () => {
+        businessFindUnique.mockResolvedValue({ subscriptionStatus: null });
+        leadCount.mockResolvedValue(999);
+        return checkAiEligibility("biz1", { ...lead, source: "Website form" }, "free");
+      })(),
+      // Paid, past the safety ceiling.
+      await (async () => {
+        businessFindUnique.mockResolvedValue({ subscriptionStatus: "active" });
+        leadCount.mockResolvedValue(99_999);
+        return checkAiEligibility("biz1", lead, "pro");
+      })(),
+    ];
+
+    for (const verdict of refusals) {
+      expect(verdict.ok).toBe(false);
+      const sentence = (verdict as { ok: false; ownerMessage: string }).ownerMessage;
+      // Starts like a sentence and ends like one — the fragment form
+      // ("on a channel the Free plan doesn't cover") fails both.
+      expect(sentence[0]).toBe(sentence[0].toUpperCase());
+      expect(sentence.trimEnd().endsWith(".")).toBe(true);
+      // Never leans on "AI" as the explanation (design brain S-13), and
+      // never uses the internal word for the plan machinery.
+      expect(sentence).not.toMatch(/\bAI\b|\btier\b|eligib/i);
+    }
+  });
+
+  it("names the actual channel a Free lead came in on, not just 'a channel'", async () => {
+    businessFindUnique.mockResolvedValue({ subscriptionStatus: null });
+    leadCount.mockResolvedValue(1);
+    const verdict = await checkAiEligibility("biz1", { ...lead, source: "Instagram" }, "free");
+
+    // The owner's next question is always "which one" — answering it in
+    // the same sentence is the difference between an explanation and a
+    // brush-off.
+    expect((verdict as { ok: false; ownerMessage: string }).ownerMessage).toMatch(/instagram/i);
+  });
+
   it("still allows AI for a genuine Free business, which has no subscription at all", async () => {
     businessFindUnique.mockResolvedValue({ subscriptionStatus: null });
     const verdict = await checkAiEligibility("biz1", { ...lead, source: "Website form" }, "free");

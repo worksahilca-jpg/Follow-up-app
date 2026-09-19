@@ -455,6 +455,13 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // had no upper bound on AI processing at all.
       const aiEligible = await checkAiEligibility(businessId, lead, tier);
       if (!aiEligible.ok) {
+        // Same reasoning as scoring.ts's copy of this gate: the run's
+        // `skipped` list is a developer's summary, seen by nobody who
+        // owns the lead. Without this write, a lead first captured while
+        // eligible and only later refused (the account lapsed, the
+        // monthly cap was crossed) keeps a stale "Following up soon"
+        // badge forever, because scoring.ts never runs on it again.
+        await prisma.lead.updateMany({ where: { id: lead.id }, data: { aiPausedReason: aiEligible.ownerMessage } });
         return { kind: "skipped", note: `${lead.name}: ${aiEligible.reason}` };
       }
 

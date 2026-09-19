@@ -2593,3 +2593,24 @@ no-metering line in Prices; Questions reordered so "Will it send things I didn't
 first, with the Instagram 24-hour answer second (the per-channel fact lives here, per
 question 2). Nothing visual changed beyond the fourth card. Verified at 1280 and 390 from a
 production build; typecheck, lint, build clean. **Awaiting** the founder's read.
+
+## 2026-09-19 — The fuller page comes back, with the settled hero
+
+**Founder**, on the structure-v1 build: "no, make like this but with the old version. I mean
+the information the older pages had." Read: the three-steps page was too bare; he wants the
+plain-words page from earlier (product cards with in-card examples, the connected-apps card,
+the as-it-happens feed, six feature tiles, full price lists) with the decisions from the
+structure on top.
+
+**What was built:** the plain-words page (commit 26e7d0c) restored, then: headline A-013,
+buyer line A-014, one button with the reassurance under it, no "New:" badge; the promise grid
+cut from six to the four decided (the language and setup lines went; both still appear in the
+product cards and feature tiles); the no-metering prices line; Questions cut to four with the
+permission one first; every button says "Start free"; the close says "Connect your inbox.
+That's it."
+
+**Structure v1 amendment:** section 2 ("three steps") is replaced by the four product cards,
+and two sections return between the promises and prices: works-with (card with descriptions),
+as-it-happens (feed) and the six feature tiles. Recorded here rather than rewriting v1; the
+founder's word "information" is the reason: he wants the reader to see the product, not only
+be told three verbs.

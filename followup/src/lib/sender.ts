@@ -19,6 +19,7 @@
 
 import { prisma } from "@/lib/db";
 import { localizeFixedText } from "@/lib/integrations/openai";
+import type { LeadLanguage } from "@/lib/leadLanguage";
 import type { Message } from "@/lib/types";
 
 export async function getSenderFirstName(businessId: string): Promise<string> {
@@ -65,13 +66,18 @@ export function latestInboundText(conversation: Message[]): string | undefined {
 async function localizedFrame(
   leadFirstName: string,
   senderName: string,
-  languageSample: string | undefined
+  languageSample: string | undefined,
+  // The lead's decided language/register (src/lib/leadLanguage.ts). The
+  // greeting is where register is most visible of all — "Estimado" vs
+  // "Hola", "Sehr geehrte" vs "Hallo" — so this is the frame that must
+  // not drift between the first message and the fifth.
+  leadLanguage?: Partial<LeadLanguage> | null
 ): Promise<{ greeting: string; signOff: string }> {
   const greeting = `Hi ${leadFirstName},`;
   const signOff = `Best,\n${senderName}`;
   if (!languageSample?.trim()) return { greeting, signOff };
 
-  const localized = await localizeFixedText(`${greeting}\n\n${signOff}`, languageSample);
+  const localized = await localizeFixedText(`${greeting}\n\n${signOff}`, languageSample, leadLanguage);
   const parts = localized.split("\n\n");
   if (parts.length !== 2) return { greeting, signOff };
   const [g, s] = parts.map((p) => p.trim());
@@ -83,9 +89,9 @@ export async function composeFollowUpEmail(
   leadFirstName: string,
   businessId: string,
   body: string,
-  options: { languageSample?: string } = {}
+  options: { languageSample?: string; leadLanguage?: Partial<LeadLanguage> | null } = {}
 ): Promise<string> {
   const senderName = await getSenderFirstName(businessId);
-  const frame = await localizedFrame(leadFirstName, senderName, options.languageSample);
+  const frame = await localizedFrame(leadFirstName, senderName, options.languageSample, options.leadLanguage);
   return `${frame.greeting}\n\n${body}\n\n${frame.signOff}`;
 }

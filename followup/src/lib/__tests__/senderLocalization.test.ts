@@ -38,7 +38,11 @@ describe("composeFollowUpEmail", () => {
     const out = await composeFollowUpEmail("Lucía", "biz1", body, { languageSample: "Hola, ¿cuánto cuesta?" });
 
     expect(localize).toHaveBeenCalledTimes(1);
-    expect(localize).toHaveBeenCalledWith("Hi Lucía,\n\nBest,\nSahil", "Hola, ¿cuánto cuesta?");
+    // Arity-strict: localizeFixedText gained a third argument on
+    // 2026-09-19, the lead's decided language/register. Undefined here
+    // because this caller passed no options.leadLanguage — which is the
+    // unchanged-behaviour path this test is about.
+    expect(localize).toHaveBeenCalledWith("Hi Lucía,\n\nBest,\nSahil", "Hola, ¿cuánto cuesta?", undefined);
     expect(out).toBe(`Hola Lucía,\n\n${body}\n\nSaludos,\nSahil`);
   });
 

@@ -26,6 +26,13 @@ vi.mock("@/lib/sender", () => ({
 }));
 vi.mock("@/lib/voice", () => ({ getVoiceSamples: vi.fn(async () => []) }));
 
+// How a lead writes, decided once from their first message.
+const { detect } = vi.hoisted(() => ({ detect: vi.fn(async () => null as unknown) }));
+vi.mock("@/lib/leadLanguage", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/leadLanguage")>()),
+  detectLeadLanguage: detect,
+}));
+
 // One gate for every tier since 2026-09-15, not two Free-only helpers:
 // Plus's 1,500/mo and Pro's 10,000/mo were published policy with nothing
 // enforcing them, so a paid account had no AI ceiling at all.
@@ -35,6 +42,11 @@ const { aiEligible } = vi.hoisted(() => ({
   ),
 }));
 vi.mock("@/lib/billing", () => ({ checkAiEligibility: aiEligible }));
+
+/** update()'s recorded arguments, typed — see the note at its one use. */
+function updateCalls(): Array<{ data: Record<string, unknown> }> {
+  return update.mock.calls.map((c) => (c as unknown as [{ data: Record<string, unknown> }])[0]);
+}
 
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { generateFollowUpMessage as generateFollowUpMessageMock } from "@/lib/integrations/openai";
@@ -54,6 +66,10 @@ function leadRow(overrides: Record<string, unknown> = {}) {
     dealValue: 0,
     lastContacted: null,
     business: { tier: "plus" },
+    language: null,
+    languageScript: null,
+    languageRegister: null,
+    languageSetAt: null,
     conversations: [
       { channel: "email", messages: [{ id: "m1", direction: "inbound", body: "What's the price?", sentAt: new Date(), opened: false }] },
     ],
@@ -67,6 +83,7 @@ beforeEach(() => {
   generateFollowUpMessage.mockResolvedValue({ subject: "Re: your question", body: "Happy to help." });
   findUnique.mockResolvedValue(leadRow());
   aiEligible.mockResolvedValue({ ok: true });
+  detect.mockResolvedValue(null);
 });
 
 describe("scoreAndDraftForLead — the tier's AI allowance", () => {
@@ -189,5 +206,73 @@ describe("scoreAndDraftForLead — DM-shaped drafts for Instagram and Messenger 
     expect(data.suggestedMessage).toBe("Hi,\n\nHappy to help.");
     expect(data.suggestedSubject).toBe("Re: your question");
     expect(data.suggestedQuickReplies).toEqual(Prisma.JsonNull);
+  });
+});
+
+/**
+ * The founder's instruction, 2026-09-19: replies in "the same language
+ * and same tone". Language was already matched per message; tone was
+ * not, because nothing was stored and every message decided again. The
+ * value is entirely in deciding ONCE — a thread that opens with usted
+ * and follows up with tú reads to a native speaker the way "Dear Mr.
+ * Smith… hey dude" reads in English.
+ */
+describe("scoreAndDraftForLead — deciding how a lead writes, once", () => {
+  it("detects and stores language, script and register on a lead nobody has judged yet", async () => {
+    detect.mockResolvedValue({ language: "es", script: "Latn", register: "formal" });
+
+    await scoreAndDraftForLead("lead1");
+
+    expect(detect).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          language: "es",
+          languageScript: "Latn",
+          languageRegister: "formal",
+          languageSetAt: expect.any(Date),
+        }),
+      })
+    );
+  });
+
+  it("never re-decides a lead already judged — that consistency IS the feature", async () => {
+    findUnique.mockResolvedValue(
+      leadRow({ language: "es", languageScript: "Latn", languageRegister: "usted" as unknown, languageSetAt: new Date("2026-09-01") })
+    );
+
+    await scoreAndDraftForLead("lead1");
+
+    expect(detect).not.toHaveBeenCalled();
+  });
+
+  // A failed detection must leave the flag null so the NEXT message gets
+  // a try. Stamping it anyway would freeze a lead whose first message
+  // was "ok thanks" into "unknown" forever.
+  it("leaves the lead undecided when the message told it nothing, so it can ask again", async () => {
+    detect.mockResolvedValue(null);
+
+    await scoreAndDraftForLead("lead1");
+
+    // Typed on the way in rather than cast on the way out: an untyped
+    // vi.fn() infers mock.calls as an empty tuple, which tsc rejects on
+    // indexing (the same trap betaPlan.test.ts documents).
+    const data = updateCalls()[0].data;
+    expect(data).not.toHaveProperty("languageSetAt");
+    expect(data).not.toHaveProperty("language");
+  });
+
+  it("passes the decision into the draft, so the reply is written to it", async () => {
+    detect.mockResolvedValue({ language: "es", script: "Latn", register: "formal" });
+
+    await scoreAndDraftForLead("lead1");
+
+    expect(generateFollowUpMessage).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      undefined,
+      undefined,
+      { language: "es", script: "Latn", register: "formal" }
+    );
   });
 });

@@ -13,6 +13,7 @@ import { dmChannelOf } from "@/lib/dmDrafts";
 import { draftDm } from "@/lib/dmDrafting";
 import { getVoiceSamples } from "@/lib/voice";
 import { checkAiEligibility } from "@/lib/billing";
+import { detectLeadLanguage, leadLanguageOf } from "@/lib/leadLanguage";
 import { SCORE_HIGH, SCORE_MEDIUM } from "@/lib/scoreThresholds";
 import { notifySlack } from "@/lib/slack";
 import type { Message } from "@/lib/types";
@@ -88,14 +89,34 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   );
   if (conversation.length === 0) return false;
 
-  const [scoreResult, voiceSamples] = await Promise.all([
+  // How this lead writes, decided ONCE and then held steady — see
+  // src/lib/leadLanguage.ts for why register consistency is the point.
+  //
+  // `languageSetAt` is the "have we looked" flag rather than `language`,
+  // because a lead can legitimately end up with no answer (too short a
+  // message, a model that wasn't confident) and that must mean "ask
+  // again next time", not "decided: nothing". Re-detecting an already
+  // decided lead is exactly what this exists to stop: the whole value is
+  // that message #1 and message #7 agree.
+  //
+  // Runs in the same Promise.all as the score, so it costs latency only
+  // when it is the slowest of the three, and it sits AFTER the
+  // eligibility gate above, so a paused lead never pays for it.
+  const [scoreResult, voiceSamples, detected] = await Promise.all([
     scoreLead({
       conversation,
       dealValue: lead.dealValue,
       lastContacted: (lead.lastContacted ?? lead.createdAt).toISOString(),
     }),
     getVoiceSamples(lead.businessId),
+    lead.languageSetAt ? Promise.resolve(null) : detectLeadLanguage(latestInboundText(conversation) ?? ""),
   ]);
+
+  // Prefer what was just detected; otherwise whatever was already
+  // stored. Both may be absent, and every consumer treats that as "say
+  // nothing about language" — which is the behaviour every draft had
+  // before this existed.
+  const leadLanguage = detected ?? leadLanguageOf(lead);
   // The draft takes the shape of the channel the lead last wrote on. An
   // Instagram or Messenger lead gets a DM — short, no subject, one
   // question, reply buttons (src/lib/dmDrafts.ts) — stored bare, with the
@@ -108,7 +129,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   let suggestedSubject: string | null;
   let suggestedQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
   if (dmChannel) {
-    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined);
+    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage);
     suggestedMessage = dm.body;
     suggestedSubject = null;
     // Buttons only when the draft passed the shape check — an owner may
@@ -116,9 +137,10 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     // chips under a message that had two questions.
     suggestedQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
   } else {
-    const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples);
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples, undefined, undefined, leadLanguage);
     suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
       languageSample: latestInboundText(conversation),
+      leadLanguage,
     });
     suggestedSubject = draft.subject;
     suggestedQuickReplies = Prisma.JsonNull;
@@ -152,6 +174,23 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       // can tell a still-current draft from a stale one instead of
       // rebuilding it every 20 hours (see schema.prisma).
       suggestedDraftedFor: new Date(conversation[conversation.length - 1].date),
+      // The decision, written once and only when there IS one.
+      //
+      // A failed detection deliberately leaves `languageSetAt` null so
+      // the next pass tries again. The alternative — stamp it anyway to
+      // avoid re-paying — would freeze a lead whose first message was
+      // "ok thanks" into "unknown" forever, even after they write three
+      // paragraphs. The re-try is close to free: detectLeadLanguage
+      // refuses to call the model at all below MIN_CHARS_TO_JUDGE, and
+      // scoring only runs again when there is genuinely new text.
+      ...(detected
+        ? {
+            language: detected.language,
+            languageScript: detected.script,
+            languageRegister: detected.register,
+            languageSetAt: new Date(),
+          }
+        : {}),
       // Whatever was paused here isn't any more — this write IS the proof.
       // Clearing it anywhere else (a billing webhook, an upgrade handler)
       // would be a second place that has to stay right; clearing it at the

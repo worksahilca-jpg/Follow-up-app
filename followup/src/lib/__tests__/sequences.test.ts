@@ -314,7 +314,16 @@ describe("channel-switching within a workflow (research rec #4)", () => {
     nonEmailChannel.mockResolvedValue("text");
     p.lead.findMany.mockResolvedValue([enrolledOnStep(1, { phone: "+15551234567" })]);
     await runSequencesForBusiness("biz1");
-    expect(draftMessage).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.stringContaining("text message"));
+    // Arity-strict: the call also carries the DM situation (undefined for
+    // a workflow step) and the lead's decided language, added 2026-09-19.
+    // Asserted loosely because this test is about the hint, not them.
+    expect(draftMessage).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.stringContaining("text message"),
+      undefined,
+      null
+    );
   });
 });
 

@@ -31,6 +31,7 @@ import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/open
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
+import { leadLanguageOf } from "@/lib/leadLanguage";
 import { hasAnySendChannel } from "@/lib/sendChannels";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { getVoiceSamples } from "@/lib/voice";
@@ -632,11 +633,14 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         const draft = await generateFollowUpMessage(
           { name: lead.name, conversation },
           voiceSamples,
-          channel === "email" ? step.messageHint ?? undefined : nonEmailStepHint(step.messageHint)
+          channel === "email" ? step.messageHint ?? undefined : nonEmailStepHint(step.messageHint),
+          undefined,
+          // Step 4 of a plan must sound like step 1 — see leadLanguage.ts.
+          leadLanguageOf(lead)
         );
         const message =
           channel === "email"
-            ? await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft.body, { languageSample: latestInboundText(conversation) })
+            ? await composeFollowUpEmail(lead.name.split(" ")[0], businessId, draft.body, { languageSample: latestInboundText(conversation), leadLanguage: leadLanguageOf(lead) })
             : draft.body;
 
         // Every other automated-send path in this codebase (automation.ts's

@@ -2897,3 +2897,81 @@ only ever be `true` is not a check.
 **Not done, deliberately:** no upgrade button inside the badge. Whether a paused lead should
 carry a one-tap upgrade is a product-behaviour call and `CLAUDE.md` puts those with the
 founder, not here.
+
+## 2026-09-19 — Same language AND same tone: deciding once, and an alert channel worth reading
+
+Two changes with one thing in common: the product was producing an answer and then
+throwing it away.
+
+### How a lead writes, decided once
+
+**The founder, 2026-09-19:** replies should be "in the same language and same tone".
+Language was already handled — every prompt is shown the lead's own message and told to
+match it. **Tone was not, and could not be**, because nothing was stored. Every message
+re-decided formality from whatever text sat in front of it, so the acknowledgement sent
+within a minute and the follow-up sent three days later were two independent guesses.
+
+For "which language" that is usually harmless. For **register** it is not. tú/usted,
+tu/vous, du/Sie is a *decision*, not a fact about the text, and a thread that switches
+reads to a native speaker the way "Dear Mr. Smith… hey dude" reads in English — the one
+mistake a native speaker notices instantly and a non-speaker cannot see at all.
+
+`Lead.language` / `languageScript` / `languageRegister` / `languageSetAt`, decided once
+from the first inbound message and then held. Threaded into the follow-up draft, the DM
+draft, the localized greeting/sign-off frame, the automation pass and workflow steps.
+`FollowUp.language` copies it onto each send so the draft-versus-sent pairs the learning
+loop already collects finally have a grouping key.
+
+**Four rules the implementation follows, each of them a way of refusing to invent:**
+
+1. **"neutral" is a real answer, not a fallback.** English has no two-way formal/informal
+   split; instructing a model to be "neutral" in a language with no such mode invites a
+   stiffness the customer never used. A neutral register names the language and stops.
+2. **Anything not exactly "formal" or "informal" collapses to neutral.** An improvised
+   register ("semi-formal") must never reach a prompt, because the prompt turns it into
+   an instruction.
+3. **A failed detection stores nothing**, so the next message tries again. Stamping the
+   flag anyway to avoid re-paying would freeze a lead whose first message was "ok thanks"
+   into "unknown" forever. The retry is near-free — the detector refuses to call the model
+   at all below 12 characters.
+4. **No stored language changes nothing.** The instruction is an empty string, the
+   existing "match their most recent message" paragraph stands alone, and an undetected
+   lead behaves exactly as before. This is the property the tests pin hardest.
+
+**Deliberately NOT touched:** `generateInstantReply` and `assessAckRisk`. The ack is the
+one message that sends with no human review, and `assessAckRisk` is an English prompt
+judging replies in any language — the research names it the weakest link. Changing the
+safety gate's wording in the same pass as a feature is how a safety gate quietly stops
+working. It stays a founder-level decision, as the research recommended.
+
+### The alert channel
+
+**The founder, same evening:** "there is a server error message popping up every minute in
+the Slack follow-up alert." The two Meta webhook URLs are public and named in Meta's own
+console, so they take ordinary internet background traffic, and **every single request
+posted its own red siren**. An alert channel that cries wolf is worse than no alert
+channel: the real one arrives and nobody looks. This is brand principle 2 (calm over
+urgent) applied to the founder's own tooling rather than to a customer screen.
+
+Two fixes, smallest first: a bare GET with no `hub.mode` never attempted the handshake at
+all, so it is not an auth failure and no longer reports. Everything else is throttled to
+one report per kind per ten minutes, carrying the count of what was suppressed so a spike
+is never hidden — only stopped from arriving one message at a time.
+
+**Honest limit:** the throttle's memory is per warm serverless instance, so a burst spread
+across instances still reports more than once. That is the correct failure direction for a
+security signal (over-report sometimes, under-report never), and Sentry's own grouping
+still does the real counting.
+
+### Self-critique
+
+- **The register is only as good as one message.** A lead who opens formally and relaxes
+  three messages later stays on `usted` — deliberately, since consistency is the point,
+  but it is a real trade and the wrong call for some threads. No mechanism yet lets the
+  owner override it; that is the obvious next ask.
+- **Nothing renders any of this.** A tester cannot see, or correct, what FollowUp decided
+  about their lead. The data exists and the drafts use it; the screen is silent. That is
+  the same class of failure as the paused-lead blank fixed earlier today, and it should
+  not sit unfixed for long.
+- **Not verified against a real non-English lead.** The prompt changes are argued from the
+  research, not observed. The first Spanish or Hindi tester is the real test.

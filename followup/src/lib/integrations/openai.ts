@@ -6,21 +6,14 @@
  * { score, reason, factors } instead of parsing free text.
  */
 
-import OpenAI, { toFile } from "openai";
+import { toFile } from "openai";
 import { Lead, Message, ScoreFactor } from "@/lib/types";
 import { DM_SHAPE_RULES, type DmSituation } from "@/lib/dmDrafts";
 import { DM_MAX_BUTTONS, type DmButton } from "@/lib/quickReplies";
-
-const MODEL = "gpt-4o-mini";
-const TRANSCRIBE_MODEL = "gpt-4o-mini-transcribe";
-
-function getClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not set — add it to .env to enable AI scoring.");
-  }
-  return new OpenAI({ apiKey });
-}
+import { registerInstruction, type LeadLanguage } from "@/lib/leadLanguage";
+// The client and model name live in their own leaf module so this file
+// and leadLanguage.ts don't import each other — see openaiClient.ts.
+import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
 
 /**
  * Multilingual voicemail transcription — replaces Twilio's own built-in
@@ -914,9 +907,41 @@ export async function generateFollowUpMessage(
   // situation (which of the research's sets applies) is decided by the
   // caller from database facts — see pickDmSituation in src/lib/dmDrafts.ts
   // — never by the model.
-  dm?: DmSituation
+  dm?: DmSituation,
+  // How this lead writes, decided once from their first message and held
+  // steady (Lead.language / languageScript / languageRegister, see
+  // src/lib/leadLanguage.ts). Optional, and its absence changes nothing:
+  // the language paragraph below still tells the model to match the
+  // lead's most recent message, exactly as every draft did before this.
+  leadLanguage?: Partial<LeadLanguage> | null
 ): Promise<FollowUpDraft> {
   const client = getClient();
+
+  // The stored decision, written as an override of the "match their most
+  // recent message" paragraph further down.
+  //
+  // That paragraph is thorough about WHICH language and blind to
+  // consistency: it asks the model to read formality off whichever
+  // message is in front of it, so the acknowledgement and the follow-up
+  // three days later each decide again. In Spanish, French, German,
+  // Portuguese and Italian that is a fresh coin flip between usted and
+  // tú on every message in a thread, and a thread that switches reads to
+  // a native speaker the way "Dear Mr. Smith… hey dude" reads in English
+  // (research/product/2026-09-19-multilingual-accuracy-data.md §3).
+  //
+  // Appended AFTER that paragraph and says so in words, because a model
+  // resolves a conflict by the later, more specific instruction — the
+  // same mechanism the voice block already relies on ("where this
+  // conflicts with general style advice above, the samples win").
+  const decidedLanguage = registerInstruction(leadLanguage);
+  const languageDecisionBlock = decidedLanguage
+    ? "\n\nTHIS LEAD'S LANGUAGE, ALREADY DECIDED. " +
+      decidedLanguage +
+      " This was settled from their first message, and every message this business sends them uses it, so it " +
+      "overrides your own reading of their most recent message. Hold it steady: switching register partway " +
+      "through a conversation is the most visible mistake available in these languages, and a customer notices " +
+      "it instantly even when every other word is correct."
+    : "";
 
   // Voice matching, stated as something the model can actually act on.
   //
@@ -1025,6 +1050,7 @@ export async function generateFollowUpMessage(
           HUMAN_VOICE_NOTICE +
           UNTRUSTED_CONVERSATION_NOTICE +
           VOICE_AGENT_TRUST_NOTICE +
+          languageDecisionBlock +
           voiceBlock +
           hintBlock,
       },
@@ -1069,10 +1095,19 @@ export async function generateFollowUpMessage(
  * back untouched; without an API key, same thing — an untranslated
  * acknowledgement beats no acknowledgement.
  */
-export async function localizeFixedText(text: string, sampleOfLeadMessage: string): Promise<string> {
+export async function localizeFixedText(
+  text: string,
+  sampleOfLeadMessage: string,
+  // The stored decision, when there is one. Same role as in
+  // generateFollowUpMessage: it settles register, which the sample alone
+  // cannot do consistently across a thread. Omitted → unchanged
+  // behaviour.
+  leadLanguage?: Partial<LeadLanguage> | null
+): Promise<string> {
   if (!process.env.OPENAI_API_KEY || !sampleOfLeadMessage.trim()) return text;
   try {
     const client = getClient();
+    const decided = registerInstruction(leadLanguage);
     const completion = await client.chat.completions.create({
       model: MODEL,
       messages: [
@@ -1085,7 +1120,20 @@ export async function localizeFixedText(text: string, sampleOfLeadMessage: strin
             "they wrote it, not just which language it is — if they wrote in a romanized/Latin-script version " +
             "of a language (e.g. Hindi or Punjabi typed in English letters), translate into that same romanized " +
             "style, not the language's native script, unless the customer used the native script themselves. " +
-            "Keep names unchanged. Output the message text only.",
+            "Keep names unchanged. Output the message text only." +
+            // Appended last so it outranks "if you cannot tell, return it
+            // unchanged": when FollowUp has already decided this lead's
+            // language, "cannot tell" is not one of the available answers.
+            // Without this, a fixed line could go out in English to a
+            // Spanish lead purely because that particular sample was too
+            // short to judge — the exact task-#63 failure, arriving by a
+            // different route.
+            (decided
+              ? " FollowUp has already decided how this customer writes, and that decision wins over your own " +
+                "reading of the sample: " +
+                decided +
+                " Translate into that, and keep that register even if the sample below is too short to show it."
+              : ""),
         },
         {
           role: "user",

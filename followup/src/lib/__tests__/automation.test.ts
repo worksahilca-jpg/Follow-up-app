@@ -594,7 +594,13 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
     expect(draftMessage).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Marcus" }),
       [],
-      expect.stringContaining("gone genuinely cold")
+      expect.stringContaining("gone genuinely cold"),
+      // Arity-strict: the call gained the DM situation (undefined on an
+      // email path) and the lead's decided language on 2026-09-19. Null
+      // here because this fixture has none stored, which is the
+      // unchanged-behaviour path.
+      undefined,
+      null
     );
   });
 

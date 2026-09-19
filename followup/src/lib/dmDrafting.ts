@@ -7,6 +7,7 @@
  */
 
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
+import type { LeadLanguage } from "@/lib/leadLanguage";
 import { checkDmDraftShape, conversationText, pickDmSituation, type DmTouch } from "@/lib/dmDrafts";
 import type { StoredQuickReplies } from "@/lib/quickReplies";
 import type { Message } from "@/lib/types";
@@ -35,13 +36,16 @@ export async function draftDm(
   conversation: Message[],
   voiceSamples: string[],
   messageHint: string | undefined,
-  touch: DmTouch = "reply"
+  touch: DmTouch = "reply",
+  // How this lead writes, decided once (src/lib/leadLanguage.ts).
+  // Passed straight through; absent changes nothing.
+  leadLanguage?: Partial<LeadLanguage> | null
 ): Promise<{ body: string; quickReplies: StoredQuickReplies; shapeFailed: string | null }> {
   const situation = pickDmSituation(conversation, touch);
   const text = conversationText(conversation);
   let lastRule: string | null = null;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const draft = await generateFollowUpMessage({ name: leadName, conversation }, voiceSamples, messageHint, situation);
+    const draft = await generateFollowUpMessage({ name: leadName, conversation }, voiceSamples, messageHint, situation, leadLanguage);
     const buttons = draft.buttons ?? [];
     const shape = checkDmDraftShape({ body: draft.body, buttons }, text);
     if (shape.ok) return { body: draft.body, quickReplies: { question: situation.id, buttons }, shapeFailed: null };

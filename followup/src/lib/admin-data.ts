@@ -76,7 +76,7 @@ export interface PlatformAdminData {
   activeBusinessCount: number;
   dormantBusinessCount: number;
   recentSignups: RecentSignup[];
-  // The beta list: everyone who asked at /beta, waiting first, newest first.
+  // The beta list: every email the founder added, active first, newest first.
   accessRequests: AccessRequestRow[];
 }
 

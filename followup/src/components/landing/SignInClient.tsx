@@ -110,7 +110,7 @@ function SignInPageInner() {
         <h1 className="text-xl font-bold" style={{ letterSpacing: "-0.02em" }}>
           Sign in to FollowUp
         </h1>
-        <p className="mt-2 text-sm text-ink-soft">Sign in to see your real leads and follow-ups.</p>
+        <p className="mt-2 text-sm text-ink-soft">FollowUp is in a private beta. Sign in with the Google account Sahil added.</p>
 
         <button
           onClick={() => {
@@ -130,10 +130,10 @@ function SignInPageInner() {
             in flight; only show it if the retry fails too. */}
         {!autoRetrying && error === "AccessDenied" && (
           <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
-            That Google account isn&apos;t on the beta list yet.{" "}
-            <Link href="/beta" className="underline">
-              Ask for access
-            </Link>
+            That Google account isn&apos;t on the list. FollowUp is invite-only for now — email{" "}
+            <a href="mailto:contact@followupbase.io" className="underline">
+              contact@followupbase.io
+            </a>
             .
           </p>
         )}

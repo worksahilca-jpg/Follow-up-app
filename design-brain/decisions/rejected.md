@@ -339,3 +339,23 @@ lesson as A-010 from the other side: the literal thing he pointed at, and only t
 
 **Replaced by:** the approved page (A-011) unchanged, with the dark ground moved to charcoal;
 see `[[design-decisions]]` 2026-09-18, "Charcoal, not black".
+
+## R-012 — A public "request access" form on the landing page ^R-012
+**Date:** 2026-09-19
+**Scope:** Landing page and sign-up flow
+**Rejected:** The `/beta` page: every landing button reading "Join the beta" and opening a
+form (name, email, what you sell, where customers write) that anyone could submit, with the
+founder approving from `/admin`. Built and shown the same day.
+**The founder's words:** "I don't want any unknown users to try my beta app and request access
+to the app. I don't want that, so I will personally be adding all the emails, and then they can
+test it."
+**The reason:** stated, not inferred — strangers must not be able to knock. The beta is a
+closed list of people he knows and adds himself.
+**The generalizable principle:** for now, every door into FollowUp is opened by the founder by
+hand. Do not add self-serve sign-up, waitlists, request forms or "get early access" captures
+anywhere — on the site, in emails, in the app — until he says the beta is open. The site sells;
+it does not enrol. "Start free" leads to sign-in, and sign-in says plainly that it is a private
+beta and gives contact@followupbase.io.
+**What survived:** the admin tester list (add an email, they can sign in, no redeploy), the Beta
+mark and the "Something broke?" feedback dialog in the app.
+

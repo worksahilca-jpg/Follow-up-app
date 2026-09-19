@@ -1,4 +1,4 @@
--- The beta's front door: one row per person who asked for access. Additive.
+-- The beta tester list: one row per email the founder added. Additive.
 CREATE TABLE "AccessRequest" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -6,7 +6,7 @@ CREATE TABLE "AccessRequest" (
     "business" TEXT,
     "channels" TEXT NOT NULL DEFAULT '',
     "note" TEXT,
-    "status" TEXT NOT NULL DEFAULT 'new',
+    "status" TEXT NOT NULL DEFAULT 'approved',
     "decidedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

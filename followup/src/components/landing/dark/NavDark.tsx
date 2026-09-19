@@ -25,8 +25,8 @@ export default function NavDark() {
           <Link href="/#pricing">Prices</Link>
           <Link href="/#faq">Questions</Link>
         </div>
-        <Link href="/beta" className={`${styles.btn} ${styles.btnSmall}`}>
-          Join the beta
+        <Link href="/signin" className={`${styles.btn} ${styles.btnSmall}`}>
+          Start free
         </Link>
       </div>
     </nav>

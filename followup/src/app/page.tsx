@@ -41,8 +41,8 @@ export default function LandingPage() {
           </RevealLight>
           <RevealLight mode="mount" delay={0.15}>
             <div className={styles.heroActions}>
-              <Link href="/beta" className={styles.btn}>
-                Join the beta <ArrowRight className="h-4 w-4" />
+              <Link href="/signin" className={styles.btn}>
+                Start free <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
             <p className={styles.heroNote}>Free while in beta. No card. It stops the moment they reply.</p>
@@ -133,8 +133,8 @@ export default function LandingPage() {
           ))}
         </div>
         <RevealLight className={styles.midCta} delay={0.1}>
-          <Link href="/beta" className={styles.btn}>
-            Join the beta <ArrowRight className="h-4 w-4" />
+          <Link href="/signin" className={styles.btn}>
+            Start free <ArrowRight className="h-4 w-4" />
           </Link>
           <p className={styles.heroNote} style={{ marginTop: 12 }}>Free while in beta. Two minutes to connect.</p>
         </RevealLight>
@@ -325,8 +325,8 @@ export default function LandingPage() {
               Connect your inbox and the apps your customers message you on. Keep the tools you have. FollowUp works alongside them.
             </p>
             <div className="mt-7">
-              <Link href="/beta" className={styles.btn}>
-                Join the beta <ArrowRight className="h-4 w-4" />
+              <Link href="/signin" className={styles.btn}>
+                Start free <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </RevealLight>
@@ -447,8 +447,8 @@ export default function LandingPage() {
                 $0<small>/month</small>
               </p>
               <p className={styles.priceDesc}>Try it on your real inbox. No card needed.</p>
-              <Link href="/beta" className={`${styles.btnGhost} w-full justify-center`} style={{ marginTop: 18 }}>
-                Join the beta
+              <Link href="/signin" className={`${styles.btnGhost} w-full justify-center`} style={{ marginTop: 18 }}>
+                Start free
               </Link>
               <p className={styles.priceNote}>No credit card required.</p>
               <p className={styles.priceListLabel}>Including:</p>
@@ -471,8 +471,8 @@ export default function LandingPage() {
                 $39<small>/month</small>
               </p>
               <p className={styles.priceDesc}>Every channel, with FollowUp replying for you.</p>
-              <Link href="/beta" className={`${styles.btn} w-full justify-center`} style={{ marginTop: 18 }}>
-                Join the beta
+              <Link href="/signin" className={`${styles.btn} w-full justify-center`} style={{ marginTop: 18 }}>
+                Start free
               </Link>
               <p className={styles.priceNote}>No credit card required to start.</p>
               <p className={styles.priceListLabel}>Free plus:</p>
@@ -495,8 +495,8 @@ export default function LandingPage() {
                 $79<small>/month</small>
               </p>
               <p className={styles.priceDesc}>For a team that shares customers.</p>
-              <Link href="/beta" className={`${styles.btnGhost} w-full justify-center`} style={{ marginTop: 18 }}>
-                Join the beta
+              <Link href="/signin" className={`${styles.btnGhost} w-full justify-center`} style={{ marginTop: 18 }}>
+                Start free
               </Link>
               <p className={styles.priceNote}>No credit card required to start.</p>
               <p className={styles.priceListLabel}>Plus plus:</p>
@@ -553,8 +553,8 @@ export default function LandingPage() {
               Connect your inbox. That&apos;s it.
             </p>
             <div className="mt-8">
-              <Link href="/beta" className={styles.btn}>
-                Join the beta <ArrowRight className="h-4 w-4" />
+              <Link href="/signin" className={styles.btn}>
+                Start free <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>

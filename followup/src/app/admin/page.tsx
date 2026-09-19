@@ -63,10 +63,10 @@ export default async function AdminPage() {
       </div>
 
       <section className="mt-10">
-        <h2 className="font-display text-xl">Beta requests</h2>
+        <h2 className="font-display text-xl">Beta testers</h2>
         <p className="text-sm text-ink-soft mt-1">
-          People who asked at followupbase.io/beta. Approve, and that Google email can sign in on its next try — no
-          settings change, no redeploy.
+          The only way in. Add a Google email and that person can sign in on their next try — no settings change, no
+          redeploy. Nobody can ask from the site.
         </p>
         <div className="mt-4">
           <AccessRequestList requests={data.accessRequests} />

@@ -2754,3 +2754,9 @@ Beta badge lives on /beta and in the app, where it explains something.
 **Verified:** /beta at 1280 dark and 390 light from a production build; endpoint refuses a bad
 email and a filled honeypot. The admin list and the sign-in gate could not be exercised live
 (database unreachable from the sandbox); both are small and typed.
+
+**Superseded the same day (R-012).** The founder does not want a public request form: "I will
+personally be adding all the emails." `/beta` and the form are removed; every button says
+"Start free" and goes to sign-in again; sign-in says it is a private beta and gives
+contact@followupbase.io; `/admin` has an "Add tester" box instead of a request queue. The
+tester list, the Beta mark and the feedback dialog stay.

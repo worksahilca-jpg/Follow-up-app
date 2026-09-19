@@ -4,10 +4,10 @@ import { prisma } from "@/lib/db";
 import { parseJsonBody } from "@/lib/validation";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 
-// PATCH /api/access-request/[id] — the founder's one click on /admin.
-// "approved" lets that email sign in (src/lib/auth.ts); "declined" keeps
-// the row for the record and changes nothing else. Platform admin only.
-const schema = z.object({ status: z.enum(["approved", "declined", "new"]) });
+// PATCH /api/access-request/[id] — remove a tester or add them back, from
+// /admin. "approved" lets that email sign in (src/lib/auth.ts); "declined"
+// keeps the row and closes the door. Platform admin only.
+const schema = z.object({ status: z.enum(["approved", "declined"]) });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await requirePlatformAdmin();
@@ -20,7 +20,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   await prisma.accessRequest.update({
     where: { id },
-    data: { status: parsed.data.status, decidedAt: parsed.data.status === "new" ? null : new Date() },
+    data: { status: parsed.data.status, decidedAt: new Date() },
   });
   return NextResponse.json({ success: true });
 }

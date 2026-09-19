@@ -65,7 +65,7 @@ export const authOptions: NextAuthOptions = {
 
       if (allowedEmails.length > 0 && !allowedEmails.includes(email)) {
         // Not in the env allowlist — but an email the founder approved on
-        // /admin (an AccessRequest, from the /beta form) is the same
+        // /admin (an AccessRequest row he added himself) is the same
         // invite, granted without a redeploy. Anyone else is refused.
         const approved = await prisma.accessRequest.findUnique({ where: { email }, select: { status: true } });
         if (approved?.status !== "approved") return false;

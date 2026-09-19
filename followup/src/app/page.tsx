@@ -167,15 +167,15 @@ export default function LandingPage() {
           </h2>
           <p className={styles.lede}>Four promises. Each one is built into the product, not just written here.</p>
         </RevealLight>
-        <div className={styles.masonry}>
+        <div className={styles.grid4}>
           {[
             ["When a customer replies, it stops. No more messages to them.", "Stops"],
             ["It never talks about money without you. Anything about price waits for you to send.", "Safe"],
             ["Every message it sends is written down, with the reason it was sent.", "Honest"],
             ["You can delete everything it has, whenever you want.", "Yours"],
           ].map(([q, tag], i) => (
-            <RevealLight key={q} delay={(i % 3) * 0.06}>
-              <div className={styles.story}>
+            <RevealLight key={q} delay={i * 0.06}>
+              <div className={styles.story} style={{ marginBottom: 0 }}>
                 <div className={styles.storyKicker} aria-hidden="true">
                   {Array.from({ length: 5 }).map((_, j) => (
                     <LogoMark key={j} height={12} />

@@ -15,7 +15,9 @@ import type { Lead } from "@prisma/client";
 // v21.0 is usable until 2027-01-21 (research/integrations/2026-09-16-meta-
 // human-agent-and-quick-replies-api-facts.md §C); bump both files together.
 const GRAPH_VERSION = "v21.0";
-const GRAPH_API = `https://graph.instagram.com/${GRAPH_VERSION}`;
+// Exported so the conversation poller (src/lib/instagramPoll.ts) reads the
+// same pinned version rather than keeping a second copy that can drift.
+export const GRAPH_API = `https://graph.instagram.com/${GRAPH_VERSION}`;
 // The long-lived token exchange is documented unversioned
 // (graph.instagram.com/access_token) and was working that way; left alone.
 const GRAPH_OAUTH = "https://graph.instagram.com";

@@ -184,6 +184,14 @@ model Business {
   // ID. See src/lib/instagram.ts.
   instagramUserId      String? @unique
   instagramAccessToken String?
+  // How far the conversation poller has read (src/lib/instagramPoll.ts).
+  // Meta's push delivery cannot be relied on — on 2026-09-19 a correctly
+  // connected, correctly subscribed account received no webhook for a real
+  // DM while the same message was readable through the API — so FollowUp
+  // also ASKS, every few minutes, exactly as it does for Gmail. Null means
+  // never polled: the first tick reads a short window back, never the whole
+  // history, so connecting an account can't acknowledge old conversations.
+  instagramSyncedAt    DateTime?
 
   // Facebook Page — Messenger DMs and Lead Ads (src/lib/facebook.ts). Same
   // Meta app and same webhook URL as Instagram; events for object "page"

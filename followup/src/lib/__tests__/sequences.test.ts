@@ -29,6 +29,10 @@ vi.mock("@/lib/sending", () => ({
   // block below overrides this to exercise the escalation itself.
   detectNonEmailChannel: vi.fn(async () => null),
 }));
+// Every business in these tests has something connected — the
+// "nothing connected, no drafting" gate (src/lib/sendChannels.ts) is
+// pinned in its own file.
+vi.mock("@/lib/sendChannels", () => ({ hasAnySendChannel: vi.fn(async () => true) }));
 vi.mock("@/lib/billing", () => ({
   requireActiveBilling: vi.fn(async () => true),
   // Defaults to "always eligible" so every existing test (all of which run

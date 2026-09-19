@@ -917,30 +917,36 @@ export async function generateFollowUpMessage(
 ): Promise<FollowUpDraft> {
   const client = getClient();
 
-  // The stored decision, written as an override of the "match their most
-  // recent message" paragraph further down.
+  // A reading of the lead's newest message, offered to the paragraph
+  // below rather than overriding it.
   //
-  // That paragraph is thorough about WHICH language and blind to
-  // consistency: it asks the model to read formality off whichever
-  // message is in front of it, so the acknowledgement and the follow-up
-  // three days later each decide again. In Spanish, French, German,
-  // Portuguese and Italian that is a fresh coin flip between usted and
-  // tú on every message in a thread, and a thread that switches reads to
-  // a native speaker the way "Dear Mr. Smith… hey dude" reads in English
-  // (research/product/2026-09-19-multilingual-accuracy-data.md §3).
+  // Built the other way first — decided once from the first message and
+  // stated as an override — and the founder corrected it the same day:
+  // "suppose I am using Hinglish first and then switched to English, so
+  // the reply should be according to the message. Whatever language the
+  // lead will approach, we will reply in the same language." A lead who
+  // switches is telling you something, and answering in the language
+  // they just moved away from is the exact rudeness this was meant to
+  // prevent.
   //
-  // Appended AFTER that paragraph and says so in words, because a model
-  // resolves a conflict by the later, more specific instruction — the
-  // same mechanism the voice block already relies on ("where this
-  // conflicts with general style advice above, the samples win").
+  // What it is still worth saying is REGISTER. A short message often
+  // shows the language plainly and the formal/familiar form not at all,
+  // and in Spanish, French, German, Portuguese and Italian the model
+  // then picks one at random — so a detected "usted" is useful to state
+  // even though the language itself is the model's own to read.
+  //
+  // Hence: appended after the language paragraph so it is the later,
+  // more specific instruction, but worded so the newest message still
+  // wins on language. The two only ever disagree when this reading is
+  // stale, and staleness must lose.
   const decidedLanguage = registerInstruction(leadLanguage);
   const languageDecisionBlock = decidedLanguage
-    ? "\n\nTHIS LEAD'S LANGUAGE, ALREADY DECIDED. " +
+    ? "\n\nWHAT THEIR LATEST MESSAGE WAS WRITTEN IN. " +
       decidedLanguage +
-      " This was settled from their first message, and every message this business sends them uses it, so it " +
-      "overrides your own reading of their most recent message. Hold it steady: switching register partway " +
-      "through a conversation is the most visible mistake available in these languages, and a customer notices " +
-      "it instantly even when every other word is correct."
+      " This is a reading of their most recent message, not a rule about the lead: if the conversation below " +
+      "shows they have since written in a different language, follow THAT — the newest message always decides. " +
+      "Where it agrees with your own reading, use it to settle the formal/familiar form, which a short message " +
+      "often does not show on its own."
     : "";
 
   // Voice matching, stated as something the model can actually act on.

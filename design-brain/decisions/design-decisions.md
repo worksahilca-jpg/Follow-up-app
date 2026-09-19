@@ -2900,6 +2900,10 @@ founder, not here.
 
 ## 2026-09-19 — Same language AND same tone: deciding once, and an alert channel worth reading
 
+> **PARTLY SUPERSEDED (2026-09-19)** — the "decided once and held" half is reversed by the
+> entry at the end of this file, "The newest message decides the language". The founder's
+> correction landed the same evening. The alert-channel half stands unchanged.
+
 Two changes with one thing in common: the product was producing an answer and then
 throwing it away.
 
@@ -2975,3 +2979,41 @@ still does the real counting.
   not sit unfixed for long.
 - **Not verified against a real non-English lead.** The prompt changes are argued from the
   research, not observed. The first Spanish or Hindi tester is the real test.
+
+
+## 2026-09-19 — The newest message decides the language
+
+**Supersedes** the "decided once and held steady" half of the earlier entry today. The
+storage, the detector, the parser and the alert-channel work all stand; only the rule about
+WHICH message decides is reversed.
+
+**The founder, within the hour of it merging:** *"suppose I am using Hinglish first and then
+switched in English, so reply should be according to the message. Whatever language the lead
+will approach, we will reply in the same language."*
+
+**He is right and the first design was wrong.** I had inferred "hold it steady" from the
+research's point about register drift (§3) and quietly extended it to language too. Those are
+not the same thing. Register drifting *within* a language is a mistake. Language changing is
+a **signal**: a lead who switches to English is telling you something, and replying in the
+language they have just moved away from is the exact rudeness the feature existed to prevent.
+The lock would have produced it on every switching lead.
+
+**What changed:** detection runs on the newest inbound message every pass rather than once;
+the stored columns are refreshed each time, so they are a record of what was true at this
+message rather than a verdict binding the next; and the prompt block now says outright that
+it is a reading of the latest message and that the conversation wins if it disagrees. A
+failed read keeps the last good one rather than blanking it — a one-word "ok" is not evidence
+a lead stopped speaking Spanish.
+
+**What the stored value is still for**, now that it is not a lock:
+1. **Register on a short message.** A three-word reply usually shows its language plainly and
+   the formal/familiar form not at all; without a prior reading the model picks one at random.
+2. **Answering the question at all.** "How often are we wrong in Spanish" still needs the
+   language on the row, and the learning loop still needs it as a grouping key.
+
+**The lesson, and it is the one worth carrying:** research explains a mechanism; it does not
+decide the product. §3 correctly described *why register drift hurts*. Turning that into
+"therefore lock the language" was my inference, not the research's finding and not the
+founder's ask — and the ask, "same language", had been in his own words from the start. When
+a research finding suggests a constraint the founder never asked for, that is a question for
+him, not a decision to take quietly.

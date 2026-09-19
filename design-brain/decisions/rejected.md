@@ -171,3 +171,171 @@ different thing and is not covered here.
 named before the decision and accepted: on these channels nothing automatic goes out after
 24 hours, and nothing at all after 7 days unless the lead writes first. What replaces the
 fallback is in `design-decisions.md`, same date.
+
+## R-004 — Four light palette specimens (cool/graphite, warm/graphite, cool/our blue, cool/steel) and a ten-swatch accent picker ^R-004
+
+**Rejected:** 2026-09-18, founder. On the four specimens: "I didn't like any" → "Wrong kind of colour".
+On the ten accent swatches (Apple blue, indigo, violet, teal, green, amber, orange, rose, graphite,
+silver) and four hero grounds: no pick; the founder asked for the build instead.
+
+**What was rejected:** black, our blue (`#2a5cdb`) and a desaturated steel blue as the marketing
+site's accent on a white/grey ground. Reason given: colour only. The grounds were not objected to.
+
+**Inferred principle (marked inferred):** the founder has a colour in mind that none of the swatches
+hit, and is more likely to recognise it on a finished page than in a chip. The method that worked
+for the app (A-006, paired forced choices on real surfaces) did not produce a pick here; two rounds
+of options cost more than they returned. Next time: build with a placeholder accent, ship the
+screenshot, and change the one token on reaction.
+
+**Evidence:** `followup-light-directions` and `followup-colour-picker` artifacts (2026-09-18); the
+2026-09-18 "light direction" entry in `[[design-decisions]]`.
+
+## R-005 — A dashboard-style product card as the hero visual ^R-005
+
+**Rejected:** 2026-09-18, founder, on seeing the first render of the light-direction landing page:
+"let's remove this dashboard kind of thing from the start, let's cook something else."
+
+**What was rejected:** the reference template's hero device — one wide app-window card with stat
+tiles, a bar chart and a ranked list — even when filled with FollowUp's own numbers.
+
+**Inferred principle (marked inferred):** a dashboard says "software you will have to look at";
+the promise is the opposite, that the owner does *not* have to. The hero should show the moment
+the product exists for, not the screen it lives in. Replaced by the thread: lead writes, owner
+answers, five days of silence, one short FollowUp question with buttons, the lead comes back.
+
+**Evidence:** the 2026-09-18 "light direction" entry in `[[design-decisions]]`; `HeroStoryLight.tsx`.
+
+## R-006 — An all-light marketing page (white and grey only, no dark ground anywhere) ^R-006
+
+**Rejected:** 2026-09-18, founder, on seeing the first full render: "bro where is that black greyish
+gradient" → asked where it should go → "whole page with white and black and greyish gradient".
+
+**What was rejected:** the reading of "make ours look like this but in white gradient or greyish"
+as *invert the whole template to light*. The founder meant *keep the template's dark ground and add
+the white and grey to it*: the page should move through black, grey and white, not sit on one of
+them.
+
+**Stated reason:** the black-to-grey gradient was the thing he liked about the reference and it was
+missing.
+
+**Do not propose again:** a marketing page with no dark region. The shape that replaced it is in
+`[[design-decisions]]` 2026-09-18 ("black, grey, white: the page as a gradient"): dark hero, fade
+to a light middle, fade back to a dark close.
+
+**Lesson for the brain (inferred, marked inferred):** when the founder names a reference *and* a
+colour change in one breath, the colour change is additive, not a replacement. Ask "where does the
+dark go" before building an all-light page from a dark reference.
+
+## R-007 — Three things on the first animated preview of the gradient page (2026-09-18) ^R-007
+
+**Rejected:** 2026-09-18, founder, after watching the 16-second recording of the page: "logo is not
+accurate", "I don't like it directly shifted to white from black", "the Sarah Johnson example is
+looking awkward", "after that it's too much congested, my eye was not ready to read all those heavy
+information". He then asked for the design to be opened somewhere he can comment directly; a
+review artifact was published for that.
+
+**What was rejected, item by item:**
+1. **The two-leaf logo as built** does not match #69/#71 closely enough. Reason not yet given;
+   awaiting his comments on the artifact before rebuilding.
+2. **The hard hand-off from the black hero to the white middle.** The 180 px fade reads as a cut at
+   scroll speed. Inferred (marked inferred): the transition should be long and gradual, or the
+   dark should carry further down the page, not flip.
+3. **The hero thread with Sarah Johnson** reads as awkward. Reason not yet given. Inferred (marked
+   inferred): a fake chat with a named person, playing out message by message under the headline,
+   is a lot of theatre for the first screen; the earlier objection to the dashboard (R-005) was to
+   the *device*, and this device may have the same problem.
+4. **Density below the hero.** Four product cards with live-looking figures, then three stats, then
+   three guarantees: too much to read too soon. Inferred: fewer sections before the first breath,
+   and less inside each; the page should let the reader arrive.
+
+**Do not propose again** until his artifact comments are in: no rebuilding any of the four on a
+guess. The comments are the brief.
+
+**Evidence:** the recording `landing-preview.mp4` (session scratchpad); this entry's date in
+`[[design-decisions]]`.
+
+## R-008 — The 2026-09-18 landing page, whole: look, layout, words and feel ^R-008
+
+**Rejected:** 2026-09-18, founder, after the third animated preview (dark hero, timeline card,
+long fades, half the cards removed, floating card, drifting light): "no bro" → "the page still
+isn't it" → what's off: **the look, the layout, the words, the feel** → where: **all of it**.
+
+**What this closes.** Not one element: the whole page as built this day, in all three states
+(all-light R-006, dark-grey-white A-009, and the R-007 rework). A-009 is superseded by this
+entry. The "this is sick" reaction was to a still image; the moving page did not hold up.
+
+**Stated reason:** none beyond the four boxes. REASON UNKNOWN in the sense that matters — which
+*quality* is missing. Asked next: a reference he actually wants, per the standing note under
+R-002 (do not open another concept from a hypothesis; get a reference the founder names).
+
+**Do not propose again:** another variation of this page generated from the session's own
+reading of the Scalable template. Three variations from that reading have now failed. The next
+build starts from something the founder points at, or from a faithful adaptation of the
+template he chose in the first place (his words then: "same template and design, animation,
+graphics and all, with our own information"), which this session never actually delivered — it
+inverted it, then re-darkened it, then subtracted from it.
+
+**Inferred principle (marked inferred):** when the founder names a template and says "same
+results", the safe first build is the template's home page as literally as our content allows,
+not a designer's take on it. Show that first; diverge only on his reaction.
+
+**Evidence:** `landing-preview-v3.mp4`, the Figma frame, PR #265 (unmerged); entries above.
+
+## R-009 — An app-dashboard mockup as the hero device (second time) ^R-009
+
+**Rejected:** 2026-09-18, founder, on the live preview of the enhanced faithful build: "I don't
+want app dashboard. What I want is an illustration where it shows that leads are being caught
+from the sources and FollowUp is warming every lead."
+
+**What was rejected:** the hero's dashboard card (stat tiles, bar chart, line chart, window
+chrome) — the template's own hero device, kept in the faithful copy because he had asked for the
+template "as it is". R-005 had already rejected a dashboard-card hero on the light page. Two
+rejections, two very different pages: the objection is to the *object*, not its styling.
+
+**Stated reason:** he wants the hero to show what FollowUp *does* (catch leads from every
+channel, warm each one up), not what the app *looks like*.
+
+**Do not propose again:** a screenshot-style or mockup-style app dashboard as the hero device, on
+any page direction. A product mockup can still live further down (the Product cards are fine).
+
+**Replaced by:** the lead-flow illustration (sources → FollowUp → warmed leads), see
+`[[design-decisions]]` 2026-09-18, "Hero illustration".
+
+## R-010 — The black → white gradient across the page ^R-010
+
+**Rejected:** 2026-09-18, founder, on the live preview, minutes after the device-theme rule:
+"we will do full black with dark mode and white with light, so no transition."
+
+**What was rejected:** the page changing tone from top to bottom at all: the slow ramp across
+the Features section and the flipped lower zone (built today after "can we go with white
+black gradient", then mirrored per device theme).
+
+**Stated reason:** none beyond "no transition". Inferred (marked inferred): with the device theme
+in play, a page that is half one tone and half the other is the wrong half for someone on either
+setting; one tone per setting is simpler and calmer, which is the brand.
+
+**Do not propose again:** any top-to-bottom tone change on the landing page, ramp or hard edge.
+Section-level surfaces (cards, the CTA band) still lift with borders and shadow; the ground stays
+one tone. The A-011 amendment about the gradient is superseded by this entry.
+
+## R-011 — A photograph of a person as the hero image, and the Aer layout with it ^R-011
+
+**Rejected:** 2026-09-18, founder, on a first cut sent as a screenshot: "no, it doesn't make
+sense with FollowUp." Asked what exactly: "the photo of a person." Then, before the second cut
+shipped: "I just wanted to use the colour, that's it" and "no person, I want same as previous."
+
+**What was rejected:** (1) a generated black-and-white photograph of a business owner from
+behind, phone in hand, as the hero image (two variations on his ElevenLabs account, about 4
+cents; the file is deleted); (2) the Aer layout itself (framed panel, left rail, index block,
+headline right, bottom strip), which he never asked for. He pasted the Aer shot for its
+charcoal colour only.
+
+**Stated reason:** a person says nothing about the product; and the layout was my reading, not
+his ask. **Inferred (marked inferred):** when this founder pastes a reference and says "use
+this", ask *what* about it before building — colour, layout, type, or all of it. The same
+lesson as A-010 from the other side: the literal thing he pointed at, and only that.
+
+**Do not propose again:** photography of people as the hero image; the Aer hero layout.
+
+**Replaced by:** the approved page (A-011) unchanged, with the dark ground moved to charcoal;
+see `[[design-decisions]]` 2026-09-18, "Charcoal, not black".

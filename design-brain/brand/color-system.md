@@ -27,6 +27,15 @@ answer is hierarchy — size, weight, position, space — not another color.
 
 ## Current values — decided, navy/blue ("Award Direction"), 2026-09-13
 
+> **SUPERSEDED 2026-09-19.** The app now runs the landing page's charcoal monochrome
+> tokens: dark theme `#1e1e20` page / `#27272a` boxes / white text and accent; light theme
+> white page and boxes / black text and accent; chosen by the device's colour scheme, no
+> toggle. The four status tones are kept and re-tuned per theme. The authoritative values
+> and every measured contrast pair are in the comments of `followup/src/app/globals.css`;
+> the reasoning is in `decisions/design-decisions.md`, 2026-09-19. The table below is the
+> navy era and is kept as history.
+
+
 From `followup/src/app/globals.css`. **This is the founder-approved baseline** (A-002,
 superseding the cream/amber values this file described until 2026-09-13 — see D-010 for
 the full reasoning). The accent has changed value multiple times before this one (blue →

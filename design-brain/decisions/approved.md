@@ -65,6 +65,7 @@ Never introduce a soft/saturated pair without measuring it.
 
 ## A-002 — Unify the whole app on the "Award Direction" navy/blue system ^A-002
 **Date:** 2026-09-13
+**SUPERSEDED (2026-09-19)** on colour and type by the charcoal monochrome system the founder approved for the landing page (A-011, A-012, A-015) and then asked to carry into the app ("let's change the whole app"). Its *principle* — the whole product converges on one system, and the landing page is the standard the app is judged against — is what drove the 2026-09-19 move too. See `design-decisions.md`, 2026-09-19, "stage one".
 **Scope:** System-wide — every authenticated-app page, `/signin`, and the landing page all
 converge on one visual system (navy `#0b1f33` / blue `#2a5cdb`, Bricolage Grotesque + Public
 Sans + IBM Plex Mono — currently `landing-award.module.css`, to be promoted into
@@ -250,6 +251,10 @@ hand-off draft after an exit tap; mutation-tested), and the 2026-09-18 entry in
 
 ## A-008 — Logo direction: the forward chevron ^A-008
 
+**SUPERSEDED (2026-09-18)** by the founder's logo brief (concepts #69/#71: an abstract F in two
+forward-moving forms, no literal arrows, monochrome). See the 2026-09-18 logo entry in
+`[[design-decisions]]`. Kept for the record; the "forward, nothing dropped" idea carries over.
+
 **Approved:** 2026-09-18, founder, choosing the first of three arrow-based concepts ("1st is
 better") over the reply turn and the return loop.
 
@@ -263,3 +268,111 @@ dark grounds, and the app icon crop. Those are the next round, built on this dir
 
 **Evidence:** the "FollowUp Logo Concepts" artifact (three directions), shown 2026-09-14 and
 again 2026-09-18; the founder's pick; the 2026-09-18 entry in `[[design-decisions]]`.
+
+## A-009 — The landing page as a black → grey → white → grey → black gradient, and the logo as concepts #69 / #71 ^A-009
+
+**Approved:** 2026-09-18, founder: "this is sick, just I want the logo to be 69 and 71", on the
+render of the page with the dark hero, the light middle and the dark close.
+
+**What specifically was approved:**
+- The page's ground moving through black, grey and white: dark hero with the white thread card
+  floating on it, a fade to the light middle, a fade back to black for the CTA and footer.
+- The thread-story hero (already the direction after R-005) on the dark ground.
+- The logo: two leaves as drawn in #69 (favicon) and #71 (horizontal lockup) of the exploration
+  sheet. Supersedes the F-with-a-stem build from the brief's text the same day. Geometry and
+  ratios in `followup/public/brand/README.md`; decision entry in `[[design-decisions]]`.
+
+**Not covered:** the accent colour (still the placeholder indigo, unchosen); the app's restyle.
+
+## A-010 — The faithful Scalable adaptation is the landing page direction ^A-010
+
+**Approved:** 2026-09-18, founder, on the live preview of the fourth build: "this is close, let's
+enhance this more." Supersedes A-009 (which R-008 had already closed).
+
+**What specifically was approved:** the reference template reproduced as it is — near-black ground,
+dark bordered cards, indigo accent, green badges, italic-serif emphasis word, its section order and
+its hero dashboard card — with FollowUp's words, numbers and logo. The founder's word was "close",
+not "done": enhancement inside this direction is wanted; a new direction is not.
+
+**Standing exclusions still apply:** no invented testimonials, no fake logo strip, no "book a demo"
+only, no annual pricing. The masonry of enforced rules and the channel strip are the honest stand-ins.
+
+**Lesson (inferred, marked inferred):** for this founder, "make it look like X" means X, not a
+designer's reading of X. Build the literal thing first; earn the divergence with his reaction.
+
+**Amendment, later the same day:** the founder asked for the black → white gradient ground on
+this build ("can we go with white black gradient"). Applied as a slow ramp across the Features
+section with a light Pricing/FAQ/CTA/footer zone, never a hard edge (R-007). Details in
+`[[design-decisions]]` 2026-09-18, "Enhancement pass". Not yet reacted to.
+
+## A-011 — Black-and-white page with the lead-flow hero illustration ^A-011
+
+**Approved:** 2026-09-18, founder, on the live preview: "this is good."
+
+**What specifically was approved:** the monochrome system (no accent hue; white on black at the
+top, black on white at the bottom, one slow ramp between them), the hero line "Never lose a
+*lead.*", and the hero illustration of leads flowing from five channels through the FollowUp hub
+into five warmed leads, with the dots on the wires and the warmth bars. This is the third
+approval of the day and the first on the moving page rather than a still. Supersedes A-010's
+indigo (the layout and section order from A-010 stand).
+
+**Rule added in the same breath:** the page follows the device theme. Dark device: black top
+fading to white. Light device: white top fading to black. "Vice versa", his words. Recorded in
+`[[design-decisions]]` 2026-09-18, "Device theme".
+
+## A-012 — The moving diagram as the hero, on charcoal ^A-012
+
+**Approved:** 2026-09-18, founder, on the live preview: "this is sick."
+
+**What specifically was approved:** the hero as title-and-punchline on top ("Never lose a lead /
+*because nobody followed up.*") with the lead-flow diagram full width beneath it: five ways a
+lead shows up on the left (icon tile, title, "via" line), FollowUp as an app tile in the middle,
+five replies on the right as message cards with a time stamp, dots running the wires, on the
+charcoal ground (`#1e1e20`). Supersedes A-011's black ground and its smaller, framed
+diagram; the monochrome rule and the fixed first line stand.
+
+**Asked for in the same breath:** "make this come in from everywhere", the entrance animation
+recorded in `[[design-decisions]]` 2026-09-18, "From everywhere".
+
+## A-013 — The headline: "Never lose a lead because you forgot to follow up." ^A-013
+
+**Approved:** 2026-09-18, founder, choosing between three wordings. His own dictated line
+from earlier in the day, over the README's "because nobody followed up" (which I had used
+without asking) and a middle option ("because a message went unanswered").
+
+**Why his wins, in his words and mine:** "forgot" is the word a real person uses for what
+actually happens; "nobody" is safe but points at no one. It is said kindly and it is true.
+Brand principle 9 in one sentence.
+
+**Standing:** this is the fixed first line of the landing page. Sub-lines, buyer line and
+lede are separate decisions (structure v1, questions 1 to 4).
+
+## A-014 — The buyer line: "Only for owners who have leads and don't have time to reply." ^A-014
+
+**Approved:** 2026-09-18, founder, from twelve options across three rounds. His brief, in his
+words: "write something crazy like 'this is only for those who have leads', I want to poke the
+owners." Chosen over a channel line ("for businesses whose customers write first on Instagram,
+WhatsApp or email"), an industry list, and the sharper poke ("great at the work and terrible at
+replying").
+
+**What this settles:** the hero's second line is a wry, exclusive "only for…", not a category
+description. The channels are shown by the diagram, not named in the line. Tone rule for
+future copy in this spot: a poke is allowed when it is true, kind, and the reader would say it
+about themselves.
+
+## A-015 — The full page: hero, gap, why it exists, how it works, why not a reminder, product cards, four promises, works with, as it happens, features, prices, questions ^A-015
+
+**Approved:** 2026-09-19, founder: "cool, that's it." After "make it like this but with the
+old version's information" and "more older ones": the settled hero (A-013, A-014, A-012's
+diagram) on the plain-words page, with the information sections from the page on `main`
+brought back in plain words: the gap (the owner's question), why FollowUp exists (tools that
+get you leads vs FollowUp), how it works in four steps, why not just a reminder. Not brought
+back: the three stats (dead per the 09-16 pass), the two B2B personas (contradict A-014), the
+team-pipeline mock.
+
+**Lesson (inferred, marked inferred):** "simple" to this founder means simple *words*, not
+fewer sections. The three-steps page (v15/v16) was too bare; he wants a reader to see and
+understand the whole product, in plain language. Structure v1's "six sections" finding is
+superseded by this.
+
+**Next, in his words:** "let's make it more effective, and let's change the whole app."

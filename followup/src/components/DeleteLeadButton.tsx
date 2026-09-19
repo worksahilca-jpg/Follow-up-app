@@ -36,8 +36,8 @@ export default function DeleteLeadButton({ leadId, leadName }: { leadId: string;
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60"
-            style={{ backgroundColor: "var(--coral)" }}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-on-coral disabled:opacity-60"
+            style={{ backgroundColor: "var(--coral-fill)" }}
           >
             {deleting ? "Deleting…" : "Yes, delete"}
           </button>

@@ -123,8 +123,8 @@ export default function CleanupLeadsButton({
                 <button
                   onClick={run}
                   disabled={running}
-                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60"
-                  style={{ backgroundColor: "var(--coral)" }}
+                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-on-coral disabled:opacity-60"
+                  style={{ backgroundColor: "var(--coral-fill)" }}
                 >
                   {running ? "Checking…" : "Yes, clean up"}
                 </button>

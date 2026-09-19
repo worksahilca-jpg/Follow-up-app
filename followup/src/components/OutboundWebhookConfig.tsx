@@ -156,7 +156,7 @@ export default function OutboundWebhookConfig() {
                 <button
                   onClick={save}
                   disabled={saving || !draft.trim()}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
                   style={{ backgroundColor: "var(--ink)" }}
                 >
                   {saving ? "Saving…" : "Save"}

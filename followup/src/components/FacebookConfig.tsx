@@ -196,7 +196,7 @@ export default function FacebookConfig() {
               {oauthAvailable ? (
                 <a
                   href="/api/facebook/oauth/start"
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-paper"
                   style={{ backgroundColor: "var(--ink)" }}
                 >
                   Connect with Facebook
@@ -229,7 +229,7 @@ export default function FacebookConfig() {
                       <button
                         onClick={saveToken}
                         disabled={saving || !tokenDraft.trim()}
-                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
                         style={{ backgroundColor: "var(--ink)" }}
                       >
                         {saving ? "Connecting…" : "Connect"}

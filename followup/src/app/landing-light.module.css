@@ -1,0 +1,1131 @@
+/*
+  "Light direction" — src/app/page.tsx and src/app/not-found.tsx.
+
+  The marketing site rebuilt in the structure, rhythm and motion of the
+  founder's chosen reference (a dark SaaS template), inverted onto a white
+  and grey ground, with FollowUp's own content everywhere. Founder's call,
+  2026-09-18: "same template and design, animation, graphics and all, with
+  our own information." See design-brain/decisions/design-decisions.md,
+  2026-09-18, for what that supersedes (the page-scoped navy/blue Award
+  Direction, D-008/D-009) and what it does not (no fake testimonials, no
+  fake customer logos, no content we do not have).
+
+  Scoped to this module. The authenticated app keeps globals.css's tokens
+  until its own restyle lands as a separate PR.
+*/
+
+.root,
+.light {
+  --paper: #fbfbfd;
+  --paper-2: #f4f4f7;
+  --ink: #111318;
+  --ink-soft: #5b6270;
+  --ink-faint: #7a808c;
+  --accent: #4f46e5;
+  --accent-deep: #3730a3;
+  --accent-soft: rgba(79, 70, 229, 0.1);
+  --on-accent: #ffffff;
+  --sage: #0d6e3c;
+  --sage-soft: #dcf5e5;
+  --gold: #a35904;
+  --gold-soft: #fef3c7;
+  --coral: #b32a44;
+  --coral-soft: #fbe1e6;
+  --slate: #56677e;
+  --slate-soft: #eef1f6;
+  --line: rgba(17, 19, 24, 0.09);
+  --line-strong: rgba(17, 19, 24, 0.15);
+  --card: #ffffff;
+  --card-2: #f8f8fa;
+  --shadow: 0 1px 2px rgba(17, 19, 24, 0.04), 0 12px 28px -18px rgba(17, 19, 24, 0.22);
+  --shadow-lift: 0 2px 4px rgba(17, 19, 24, 0.05), 0 30px 60px -28px rgba(17, 19, 24, 0.3);
+  --em: var(--accent);
+  --radius: 18px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+.root {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-public-sans), system-ui, sans-serif;
+  position: relative;
+  overflow-x: clip;
+}
+.light {
+  color: var(--ink);
+}
+
+/*
+  The dark scope. Founder, 2026-09-18, on the all-light first render: "where
+  is that black greyish gradient" → "whole page with white and black and
+  greyish gradient". The page now travels black → grey → white → grey →
+  black: a dark hero, a light middle, a dark close. Every component reads
+  its colours from the tokens, so wrapping a region in .dark re-themes it
+  without a second set of components. .light re-asserts the paper tokens
+  inside a dark region (the thread card floats white on the black hero).
+*/
+.dark {
+  --paper: #0b0c0f;
+  --paper-2: #15171b;
+  --ink: #f5f6f8;
+  --ink-soft: rgba(245, 246, 248, 0.68);
+  --ink-faint: rgba(245, 246, 248, 0.48);
+  --accent: #5b5ff0;
+  --accent-deep: #7478f4;
+  --accent-soft: rgba(129, 140, 248, 0.2);
+  --em: #a5b4fc;
+  --sage: #6ee7a0;
+  --sage-soft: rgba(13, 110, 60, 0.3);
+  --gold: #fbbf24;
+  --gold-soft: rgba(163, 89, 4, 0.3);
+  --coral: #fb7185;
+  --coral-soft: rgba(179, 42, 68, 0.3);
+  --slate: #b6c2d3;
+  --slate-soft: rgba(86, 103, 126, 0.32);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --card: #17191e;
+  --card-2: #1e2127;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 28px -18px rgba(0, 0, 0, 0.8);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.5), 0 30px 60px -28px rgba(0, 0, 0, 0.9);
+  color: var(--ink);
+}
+
+.root :global(h1),
+.root :global(h2),
+.root :global(h3),
+.root :global(h4) {
+  font-family: var(--font-bricolage), system-ui, sans-serif;
+  margin: 0;
+}
+
+/* The one italic word in a headline. */
+.em {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--em);
+}
+
+/* ---------- layout rhythm: every section is the same shape ---------- */
+
+.section {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 112px 24px;
+}
+.sectionTight {
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+.sectionHead {
+  max-width: 640px;
+}
+.sectionHeadCenter {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--card);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  box-shadow: 0 1px 2px rgba(17, 19, 24, 0.04);
+}
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.title {
+  margin-top: 18px;
+  font-weight: 700;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.lede {
+  margin-top: 14px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* ---------- buttons ---------- */
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: 999px;
+  padding: 13px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 14px 30px -14px rgba(79, 70, 229, 0.6);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), background-color 0.2s;
+}
+.btnPrimary:hover {
+  transform: translateY(-1px);
+  background: var(--accent-deep);
+  box-shadow: 0 18px 34px -14px rgba(79, 70, 229, 0.65);
+}
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-size: 14.5px;
+  font-weight: 600;
+  transition: border-color 0.2s, transform 0.25s var(--ease);
+}
+.btnGhost:hover {
+  border-color: var(--ink);
+  transform: translateY(-1px);
+}
+.btnSmall {
+  padding: 9px 16px;
+  font-size: 13.5px;
+}
+
+/* ---------- nav ---------- */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s var(--ease), background-color 0.3s var(--ease);
+}
+.navScrolled {
+  background: color-mix(in srgb, var(--paper) 84%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom-color: var(--line);
+}
+/* While the nav sits over the dark hero it takes the dark tokens; once the
+   hero has scrolled past, LandingNavLight drops this class and it turns
+   back to ink on paper. Same transition either way. */
+.navDark {
+  --paper: #08090b;
+  background: #08090b;
+  --ink: #f5f6f8;
+  --ink-soft: rgba(245, 246, 248, 0.72);
+  --line: rgba(255, 255, 255, 0.1);
+  --accent-soft: rgba(129, 140, 248, 0.2);
+  --accent-deep: #a5b4fc;
+}
+.navDark.navScrolled {
+  background: rgba(8, 9, 11, 0.82);
+}
+.navDark .navLinks a:hover {
+  color: #fff;
+}
+.navInner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.navLinks {
+  display: none;
+  align-items: center;
+  gap: 28px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+@media (min-width: 768px) {
+  .navLinks {
+    display: flex;
+  }
+}
+.navLinks a {
+  transition: color 0.15s;
+}
+.navLinks a:hover {
+  color: var(--ink);
+}
+.navNew {
+  margin-left: 6px;
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+/* ---------- logo: the symbol inherits currentColor; wordmark beside it ---------- */
+
+.wordmark {
+  font-family: var(--font-bricolage), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+/* ---------- hero ---------- */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  /* Black at the top, lifting to charcoal. The Product section below carries
+     it the rest of the way to paper. */
+  background: linear-gradient(180deg, #08090b 0%, #111318 45%, #1c1e24 100%);
+}
+/* One soft grey light behind the headline that drifts very slowly, so the
+   black is a space and not a flat fill. No colour, no blur trick: a radial
+   gradient moving 3% over 16 seconds. */
+.heroGlow {
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 70%;
+  background: radial-gradient(45% 55% at 50% 30%, rgba(140, 144, 156, 0.34) 0%, rgba(140, 144, 156, 0) 70%);
+  animation: drift 16s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes drift {
+  from {
+    transform: translate3d(-3%, 0, 0);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0);
+  }
+}
+.heroInner,
+.story {
+  position: relative;
+}
+/* The first section after the hero carries the transition: it starts on the
+   hero's charcoal and lightens slowly to paper behind its own cards, so the
+   eye never meets an edge. Founder, 2026-09-18: "I don't like it directly
+   shifted to white from black." */
+.productFade {
+  background: linear-gradient(180deg, #1c1e24 0%, #2b2e35 16%, #6b6f78 36%, #b9bcc4 54%, #e4e5e9 70%, var(--paper) 88%);
+}
+.dark .thread {
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.heroInner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 72px 24px 40px;
+  text-align: center;
+}
+.heroTitle {
+  margin: 22px auto 0;
+  max-width: 900px;
+  font-weight: 800;
+  font-size: clamp(38px, 6.2vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.heroLede {
+  margin: 20px auto 0;
+  max-width: 600px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.heroActions {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+.heroFine {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+.strip {
+  margin-top: 40px;
+}
+.stripLabel {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.stripRow {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.chip {
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ---------- lead rows and status pills (product cards) ---------- */
+
+.leadRow {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.leadRow:first-of-type {
+  border-top: 0;
+  padding-top: 4px;
+}
+.score {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.leadName {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.leadWhy {
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+.pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.pillCoral {
+  background: var(--coral-soft);
+  color: var(--coral);
+}
+.pillGold {
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+.pillSage {
+  background: var(--sage-soft);
+  color: var(--sage);
+}
+.pillSlate {
+  background: var(--slate-soft);
+  color: var(--slate);
+}
+/* ---------- cards ---------- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.2s;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+  border-color: var(--line-strong);
+}
+.cardTitle {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.cardBody {
+  margin-top: 6px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cardFigure {
+  margin-top: 18px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+}
+.grid2 {
+  display: grid;
+  gap: 18px;
+  margin-top: 40px;
+}
+.grid3 {
+  display: grid;
+  gap: 18px;
+  margin-top: 40px;
+}
+@media (min-width: 720px) {
+  .grid2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.iconChip {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.statBig {
+  font-family: var(--font-bricolage), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 40px;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1;
+}
+.split {
+  display: grid;
+  gap: 32px;
+  align-items: center;
+}
+@media (min-width: 900px) {
+  .split {
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+  }
+  .splitReverse > :first-child {
+    order: 2;
+  }
+}
+
+/* ---------- integrations card ---------- */
+
+.intRow {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.intRow:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.intLogo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-bricolage), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--ink);
+}
+.intName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.progress {
+  margin-top: 6px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  overflow: hidden;
+  max-width: 220px;
+}
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  width: var(--w, 100%);
+  transform-origin: left;
+  animation: fill 1.2s var(--ease) both;
+  animation-delay: var(--d, 0s);
+}
+@keyframes fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.toggle {
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--accent);
+  position: relative;
+  display: inline-block;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.toggleOff {
+  background: var(--line-strong);
+}
+.toggleOff::after {
+  right: auto;
+  left: 2px;
+}
+
+/* ---------- live rows ---------- */
+
+.liveRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.liveRow:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.liveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sage);
+  box-shadow: 0 0 0 3px var(--sage-soft);
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.liveWhen {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+/* ---------- pricing ---------- */
+
+.priceGrid {
+  display: grid;
+  gap: 18px;
+  margin-top: 40px;
+  align-items: stretch;
+}
+@media (min-width: 900px) {
+  .priceGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.priceCard {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+.priceCardHot {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow-lift);
+}
+.priceTag {
+  position: absolute;
+  top: -12px;
+  left: 28px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.priceName {
+  font-size: 15px;
+  font-weight: 700;
+}
+.priceAmount {
+  margin-top: 10px;
+  font-family: var(--font-bricolage), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 44px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.priceAmount small {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  letter-spacing: 0;
+}
+.priceDesc {
+  margin-top: 10px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  min-height: 40px;
+}
+.priceList {
+  margin-top: 18px;
+  display: grid;
+  gap: 9px;
+  font-size: 14px;
+}
+.priceList li {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+}
+.check {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.priceNote {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+/* ---------- FAQ ---------- */
+
+.faq {
+  margin-top: 32px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.faqItem {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0 20px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+.faqBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  padding: 18px 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.faqIcon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--paper-2);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s var(--ease), background-color 0.2s;
+}
+.faqIconOpen {
+  transform: rotate(45deg);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.faqAnswer {
+  padding: 0 0 18px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* ---------- CTA band ---------- */
+
+/* The close: paper fades down through grey to black, and the CTA and footer
+   sit on the black. The mirror of the hero. */
+.ctaBand {
+  background: linear-gradient(180deg, #fbfbfd 0%, #e4e5e9 12%, #b9bcc4 28%, #6b6f78 46%, #2b2e35 64%, #0b0c0f 84%);
+  padding-top: 340px;
+}
+.cta {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px 88px;
+}
+.ctaInner {
+  position: relative;
+  padding: 24px 0 0;
+  text-align: center;
+}
+.ctaBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* ---------- footer ---------- */
+
+.footer {
+  border-top: 1px solid var(--line);
+  background: #0b0c0f;
+}
+.footerInner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.footerLinks {
+  display: flex;
+  gap: 18px;
+}
+.footerLinks a:hover {
+  color: var(--ink);
+}
+
+/* ---------- 404 ---------- */
+
+.center {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+}
+
+/* ---------- motion safety ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .progressFill,
+  .linePath,
+  .liveDot,
+  .heroGlow,
+  .tl {
+    animation: none;
+  }
+  .linePath {
+    stroke-dashoffset: 0;
+  }
+  .card,
+  .btnPrimary,
+  .btnGhost {
+    transition: none;
+  }
+}
+
+/* ---------- hero story: the thread, not a dashboard ---------- */
+
+.story {
+  max-width: 560px;
+  margin: 40px auto 0;
+  padding: 0 24px;
+}
+.thread {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow-lift);
+  overflow: hidden;
+}
+.threadBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--card-2);
+}
+.threadAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-family: var(--font-bricolage), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.threadName {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.threadMeta {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.threadState {
+  margin-left: auto;
+}
+.threadBody {
+  padding: 18px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bubble {
+  position: relative;
+  max-width: 82%;
+  padding: 10px 14px 20px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: left;
+}
+.bubbleLead {
+  align-self: flex-start;
+  background: var(--paper-2);
+  color: var(--ink);
+  border-bottom-left-radius: 6px;
+}
+.bubbleOwner {
+  align-self: flex-end;
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom-right-radius: 6px;
+}
+.bubbleAuto {
+  background: var(--accent);
+  color: #fff;
+}
+.bubbleTag {
+  display: block;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+.bubbleWhen {
+  position: absolute;
+  right: 12px;
+  bottom: 5px;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 10px;
+  opacity: 0.6;
+}
+.bubbleLead .bubbleWhen {
+  color: var(--ink-soft);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.chipBtn {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+.quiet {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+}
+.quietLine {
+  flex: 1;
+  height: 0;
+  border-top: 1px dashed var(--line-strong);
+}
+.storyCaption {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+/* ---------- hero timeline: three quiet lines, not a chat ---------- */
+
+.tl {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lift);
+  padding: 10px 22px;
+  text-align: left;
+  /* The card breathes: 6px over 7 seconds, the one motion carried over from
+     the founder's reference (its hero card floats). */
+  animation: floaty 7s ease-in-out infinite;
+}
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.dark .tl {
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.tlRow {
+  display: grid;
+  grid-template-columns: 52px 14px 1fr;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.tlRow:first-child {
+  border-top: 0;
+}
+.tlWhen {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.tlDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transform: translateY(-1px);
+}
+.tlQuiet {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+.tlQuiet .tlDot {
+  background: transparent;
+  border: 1px dashed var(--ink-faint);
+}
+.tlAuto .tlDot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.tlTag {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transform: translateY(-1px);
+}
+
+/* ---------- plain list: three facts without three cards ---------- */
+
+.facts {
+  margin-top: 40px;
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line-strong);
+}
+.fact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+@media (min-width: 720px) {
+  .fact {
+    grid-template-columns: 300px 1fr;
+    gap: 32px;
+  }
+}
+.factTitle {
+  font-family: var(--font-bricolage), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+.factBody {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 620px;
+}

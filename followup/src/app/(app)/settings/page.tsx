@@ -864,8 +864,11 @@ function SettingsPageInner() {
               style={{ backgroundColor: anyAutomationOn ? "var(--rust)" : "var(--line)" }}
             >
               <span
-                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
-                style={{ transform: anyAutomationOn ? "translateX(22px)" : "translateX(2px)" }}
+                className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
+                style={{
+                  transform: anyAutomationOn ? "translateX(22px)" : "translateX(2px)",
+                  backgroundColor: anyAutomationOn ? "var(--on-accent)" : "var(--ink)",
+                }}
               />
             </button>
           </div>
@@ -907,8 +910,11 @@ function SettingsPageInner() {
               style={{ backgroundColor: automationOn ? "var(--rust)" : "var(--line)" }}
             >
               <span
-                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
-                style={{ transform: automationOn ? "translateX(22px)" : "translateX(2px)" }}
+                className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
+                style={{
+                  transform: automationOn ? "translateX(22px)" : "translateX(2px)",
+                  backgroundColor: automationOn ? "var(--on-accent)" : "var(--ink)",
+                }}
               />
             </button>
           </div>
@@ -985,8 +991,11 @@ function SettingsPageInner() {
               style={{ backgroundColor: instantAckOn ? "var(--rust)" : "var(--line)" }}
             >
               <span
-                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
-                style={{ transform: instantAckOn ? "translateX(22px)" : "translateX(2px)" }}
+                className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
+                style={{
+                  transform: instantAckOn ? "translateX(22px)" : "translateX(2px)",
+                  backgroundColor: instantAckOn ? "var(--on-accent)" : "var(--ink)",
+                }}
               />
             </button>
           </div>
@@ -1019,8 +1028,11 @@ function SettingsPageInner() {
               style={{ backgroundColor: unansweredOn ? "var(--rust)" : "var(--line)" }}
             >
               <span
-                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
-                style={{ transform: unansweredOn ? "translateX(22px)" : "translateX(2px)" }}
+                className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
+                style={{
+                  transform: unansweredOn ? "translateX(22px)" : "translateX(2px)",
+                  backgroundColor: unansweredOn ? "var(--on-accent)" : "var(--ink)",
+                }}
               />
             </button>
           </div>
@@ -1081,8 +1093,11 @@ function SettingsPageInner() {
               style={{ backgroundColor: deadLeadOn ? "var(--rust)" : "var(--line)" }}
             >
               <span
-                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
-                style={{ transform: deadLeadOn ? "translateX(22px)" : "translateX(2px)" }}
+                className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
+                style={{
+                  transform: deadLeadOn ? "translateX(22px)" : "translateX(2px)",
+                  backgroundColor: deadLeadOn ? "var(--on-accent)" : "var(--ink)",
+                }}
               />
             </button>
           </div>

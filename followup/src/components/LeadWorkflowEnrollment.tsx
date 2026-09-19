@@ -126,7 +126,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
           <button
             onClick={enroll}
             disabled={saving || !selected}
-            className="text-xs font-medium rounded-lg px-2.5 py-1.5 text-white disabled:opacity-60"
+            className="text-xs font-medium rounded-lg px-2.5 py-1.5 text-paper disabled:opacity-60"
             style={{ backgroundColor: "var(--ink)" }}
           >
             Put on plan

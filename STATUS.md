@@ -19,7 +19,7 @@ move, don't let it go stale — a status file nobody trusts is worse than none.
   lead to myself" button (`TestLeadButton.tsx` → `POST /api/leads/test-lead`) instead — it
   already exercises the real instant-ack/scoring/draft path end to end. The fuller multi-day
   silence/rescue scenario stays a later, deliberate exercise, not a blocker right now.
-- [x] **Logo direction** — forward chevron chosen 2026-09-18 (A-008). Wordmark and icon crop are the next round.
+- [x] **Logo** — concepts #69 (favicon) and #71 (lockup) from the founder's exploration sheet, 2026-09-18 (A-009). Assets in `followup/public/brand/`.
 ## Running now (background agents)
 
 *(none right now — check the [Agent Board](https://claude.ai/code/artifact/310ede6b-c78d-436b-a262-d6bbd40040c1) for live status)*
@@ -44,6 +44,25 @@ with connectors attached, give it one narrow job, and check its first three runs
 
 All five deleted 2026-09-18. Nothing is scheduled now except one-shot PR check-ins that
 the interactive session creates and removes itself.
+
+## Vercel cost — fixed 2026-09-18
+
+The 2026-09-18 invoice was ~$182: Build CPU Minutes ($127) from an Elastic build machine
+building two projects on every push to every branch, plus the Pro plan and the yearly
+domain. The founder's ceiling is $50/month. Changes made that day on team North Frame:
+
+- `follow-up-app` Build Machine: Elastic → **Basic** (2 vCPU, 8 GB).
+- `follow-up-app` Ignored Build Step (Custom):
+  `if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then exit 1; else exit 0; fi`
+  → **only `main` builds. There are no preview deployments for PR branches any more.**
+  Reviewers read the diff on GitHub; the founder's session verifies locally before a merge.
+- `followup-voice-agent` stays paused (spend management paused it; nobody uses it yet).
+- Members dipesh, pransh, vansh → **Viewer**. Founder stays Owner.
+- Spend Management: on-demand budget $140 for the current period (Sep 8 – Oct 8, already
+  $118 spent), Pause Projects on. **Drop the budget to $30 on 2026-10-08.**
+
+Standing rule for every session: push less. Batch commits into one PR; every push to
+`main` is a paid build, and a branch push no longer builds at all.
 
 ## Open, waiting on review
 

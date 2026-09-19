@@ -1,27 +1,29 @@
 import Link from "next/link";
-import { Compass, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import styles from "./landing-light.module.css";
+import LogoMark from "@/components/landing/light/LogoMark";
+import { publicSans, ibmPlexMono, instrumentSerif } from "@/lib/fonts";
 
 // Root app/not-found.tsx handles any unmatched URL app-wide (not just a
 // notFound() call within a route) — without this, a typo'd link or an old
 // bookmark hits Next's generic unstyled 404 instead of the real product.
+// Styled with the marketing page's light direction so a dead link lands
+// somewhere that looks like FollowUp.
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
-      <Compass className="h-9 w-9" style={{ color: "var(--rust)" }} />
-      <h1 className="font-display text-3xl mt-5">Can&apos;t find that page</h1>
-      <p className="mt-2 text-ink-soft max-w-sm">
+    <div className={`${styles.root} ${styles.center} ${publicSans.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable}`}>
+      <span style={{ color: "var(--ink)" }}><LogoMark height={40} /></span>
+      <span className={styles.badge} style={{ marginTop: 22 }}>
+        Page not found
+      </span>
+      <h1 className={styles.title} style={{ maxWidth: 560 }}>
+        That page isn&apos;t <span className={styles.em}>here.</span>
+      </h1>
+      <p className={styles.lede} style={{ maxWidth: 420 }}>
         The link might be old, or the address was typo&apos;d. Nothing&apos;s wrong on our end.
       </p>
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 mt-7 rounded-full px-5 py-3 text-sm font-medium transition-transform hover:scale-[1.03]"
-        style={{
-          backgroundColor: "var(--rust)",
-          color: "var(--on-accent)",
-          boxShadow: "0 12px 28px -10px color-mix(in srgb, var(--rust) 55%, transparent)",
-        }}
-      >
-        Back to FollowUp <ArrowRight className="h-3.5 w-3.5" />
+      <Link href="/" className={styles.btnPrimary} style={{ marginTop: 28 }}>
+        Back to FollowUp <ArrowRight className="h-4 w-4" />
       </Link>
     </div>
   );

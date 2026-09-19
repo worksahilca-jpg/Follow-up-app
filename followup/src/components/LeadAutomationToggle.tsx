@@ -132,8 +132,8 @@ export default function LeadAutomationToggle({
             <button
               onClick={() => save("autonomous")}
               disabled={saving}
-              className="rounded-lg px-2.5 py-1 text-xs font-medium text-white disabled:opacity-60"
-              style={{ backgroundColor: "var(--coral)" }}
+              className="rounded-lg px-2.5 py-1 text-xs font-medium text-on-coral disabled:opacity-60"
+              style={{ backgroundColor: "var(--coral-fill)" }}
             >
               Yes, go autonomous
             </button>

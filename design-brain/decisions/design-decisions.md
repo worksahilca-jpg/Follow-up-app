@@ -2060,3 +2060,627 @@ that survives at 16 px without the counter-form collapsing.
 
 **Next round (not started):** wordmark pairing, stroke weight, light/dark treatment, app
 icon crop. Reuse the existing tokens (`--ink`, `--rust`, navy/blue) before inventing any.
+
+## 2026-09-18 — The marketing site rebuilt in the founder's reference template's shape, on white and grey (the "light direction")
+
+**Founder's instruction, verbatim in spirit:** "we should have our own information, the same template
+and design, animation, graphics and all" and, when asked to narrow it, "do not follow his pages and
+stuff, just get an idea to make our best." The reference is a dark Framer SaaS template ("Scalable").
+Its structure, section rhythm and motion are the model; its content, pages and assets are not.
+
+**What shipped (`src/app/page.tsx`, `landing-light.module.css`, `components/landing/light/`):**
+
+- **Ground:** white/near-white paper (`#fbfbfd`), grey panels (`#f4f4f7`), near-black ink
+  (`#111318`), a soft radial wash behind the hero. Cards are white with a hairline, 18px radius and
+  a real shadow. The founder rejected four palette specimens and ten accent swatches without a pick
+  ("wrong kind of colour", "I didn't like any") and then asked for the build; the accent shipped as
+  **indigo `#4f46e5` as a placeholder token**, one line in `.root` to change. → `[[rejected#^R-004|R-004]]`.
+- **Type:** Bricolage Grotesque headlines, Public Sans body, IBM Plex Mono labels, plus **Instrument
+  Serif italic for exactly one emphasised word per headline** — founder's "Yes, add it". The new font
+  is loaded in `src/lib/fonts.ts` and used nowhere else.
+- **Section shape, every section:** small pill label → headline with the italic word → one line of
+  lede → the content. Sections: hero with one wide dashboard card; Product (four cards with live-looking
+  figures); The gap (the three sourced benchmarks + three guarantees); Integrations (split, card with
+  toggles and progress bars); Right now (split, live rows); How it works (3×2 feature grid); Pricing
+  (Free / Plus / Pro, Plus highlighted, from `TIER_INFO`); FAQ (first answer open); CTA band; footer.
+  A 404 in the same system.
+- **Motion:** rise-and-fade reveals (`RevealLight`, framer `whileInView`; the hero plays on mount so
+  the first screen never waits on an observer), the hero card's idle float and light mouse tilt, bar
+  chart grow, progress-bar fill, count-up on the two percentages, FAQ accordion, card hover lift. All
+  of it is off under `prefers-reduced-motion`.
+- **Retired:** the page-scoped navy/blue Award Direction for the landing page (D-008, D-009's orbit
+  diagram, `landing-award.module.css`, `components/landing/award/`). A-002's navy/blue system still
+  governs the authenticated app until its own restyle lands.
+
+**What was deliberately NOT taken from the template**, and why:
+
+1. **Testimonials and a customer-logo strip.** FollowUp has no customers to quote. An invented quote
+   or a made-up logo row is exactly the spam signal the product exists to be the opposite of (S-01,
+   brand principle 1). The space is used for the sourced benchmarks and the three guarantees instead.
+2. **About, Blog, Contact, Coming Soon, Legal pages.** Content we do not have; the founder confirmed
+   "do not follow his pages". Privacy and Terms already exist.
+3. **"Book Your Demo" as the primary action.** Sign-up is invite-only (PRODUCT_DIRECTION, 2026-09-18);
+   the button stays "Get started" → `/signin`. A "Request an invite" flow is a product question, flagged.
+4. **The floating "Use template" pill, the annual/monthly toggle.** No annual price exists; nothing
+   is shown that the product does not honour.
+
+**Standing-rejection note (S-15, S-16).** Building on a template's structure is what S-15/S-16 warn
+against. This is the founder's explicit, repeated instruction for the marketing site, and it is
+recorded as such: the *layout and motion vocabulary* is borrowed, every word, figure and asset is
+ours, and nothing in the authenticated app is affected. S-15/S-16 stay in force everywhere else.
+
+**Weakest parts, named:** the accent is a placeholder; the integration "progress bars" are
+decorative (they carry no information beyond "connected") and would fail S-12 in the app, tolerated
+here as the template's idiom; the pricing card copy for Free vs Plus channels should be re-read
+against `billing.ts` when the tier gates change.
+
+**Next:** founder picks the accent (or keeps indigo); the logo brief replaces the placeholder chevron
+mark; then the authenticated app follows the same ground in its own PR.
+
+## 2026-09-18 — The logo, built from the founder's brief: an abstract F in two forward-moving forms (supersedes A-008's chevron)
+
+**Trigger:** the founder supplied a full logo brief ("Responsive Brand Logo System", concepts #69
+and #71, from another session) hours after picking the forward chevron (A-008). The brief rules
+out literal arrows, so the chevron is superseded; the *idea* it carried — forward movement, no
+lead dropped — is exactly what the brief asks for, expressed differently.
+
+**What was built (`followup/public/brand/`, `LogoMark.tsx`, `icon.tsx`):** one master geometry
+in a 100.8 × 120 box: an upper form (top arm + full stem) carrying ≈65% of the mass and a lower
+bar carrying ≈35%, separated by a 16-unit channel (13% of height) on both axes, the whole thing
+leaned forward by 0.14, terminals cut on a 1:3 chisel. Reads as a distinctive shape first, an
+italic F second, two stages of one movement third — the order the brief asked for. Symbol,
+white symbol, favicon variant (wider channels, less lean), dark and light app icons at 56%
+occupancy with a 1.2% optical shift left, and a horizontal lockup with the wordmark outlined
+from **Inter 600** (tested against Manrope 700 and Geist 600 on one sheet; Inter gave the most
+neutral, even relationship with the symbol's chisels — Manrope read rounder than the mark,
+Geist near-identical to Inter with slightly looser fit). Symbol height = 1.2 × cap height,
+gap = 0.46 × symbol width. Monochrome only: `#111312` / `#FFFFFF`. PNG previews 16 → 1024.
+
+**QA against the brief's six checks:** reads at 16 px (the channel survives as a visible
+notch); negative space visible at every size; recognisable without the wordmark; does not read
+as a generic arrow (no arrowhead, two forms not one); no obvious resemblance to a common tech
+mark found on the sheet (an italic F is a family, not a specific logo — a proper trademark
+search is still required before registration); every variant is the one geometry.
+
+**Not yet decided — this is a first drawing awaiting the founder's reaction, not an
+approval:** the founder has not seen it. A-008 is marked superseded by the brief; a new
+approval entry comes only when he says yes. `[[approved#^A-008|A-008]]` → superseded.
+
+**Weakest part, named:** the lower form's left edge and the stem run parallel with a constant
+16-unit gap, which is honest but a little mechanical at 128 px and up; a hair of taper on the
+lower bar's left edge would make the channel read as opening forward. Left for round two so
+the founder reacts to the plain construction first.
+
+## 2026-09-18 — Black, grey, white: the page as a gradient (corrects the all-light reading)
+
+**Trigger.** The founder saw the first full render of the light-direction page and asked where the
+black-to-grey gradient was. Offered hero-only, hero + close, or whole page dark, he answered "whole
+page with white and black and greyish gradient". The all-light page is R-006.
+
+**What changed.** Not a redesign: the same sections, copy, components and motion, on a ground that
+moves. The page now reads black → grey → white → grey → black:
+
+- **Hero** on a near-black ground (`#08090b` → `#1c1e24`) with one soft grey light behind the
+  headline. The white thread card floats on it, which is the strongest thing on the page: the story
+  the product exists for, in ink on paper, on black.
+- **A 180px fade** from charcoal through grey to paper, then the light middle exactly as built
+  (Product, The gap, Integrations, Right now, How it works, Pricing, FAQ).
+- **The close** mirrors the hero: a 200px fade from paper down to black, with the CTA and footer on
+  the black. The CTA is no longer a card; on a dark ground a card would be a box inside a box.
+- **The nav** takes the dark tokens while it sits over the hero and returns to ink on paper once
+  the hero has scrolled past (`LandingNavLight` measures `#hero`).
+
+**How.** One `.dark` token scope in `landing-light.module.css` re-maps the paper/ink/line/card/
+status/accent tokens; every component already reads its colours from those tokens, so nothing was
+duplicated. `.light` re-asserts the paper tokens inside a dark region (used on the thread card).
+The italic emphasis word takes `--em`, lavender on dark, the accent on light. Owner bubbles are
+`ink on paper` in whichever scope they sit.
+
+**What it is not.** Not a dark theme for the app, not a toggle, not a gradient for its own sake.
+The dark regions are where the page opens and closes; the product detail sits on white where it
+is easiest to read. The mid-tones of both fades are deliberately short (about a third of each
+band) so the grey reads as a passage, not a surface.
+
+**Weakest part, named.** The two fades are the same linear ramp reversed; a real designer might
+break the symmetry at the close (a shorter fade, or the footer on flat black without the ramp).
+Left symmetrical for now because it is the simpler thing and the founder has not reacted yet.
+
+**Verified.** `next build` + `next start`, captured at 1440 and 390 via CDP: hero, fade, middle,
+close, footer, and the nav in both states. Typecheck and lint clean.
+
+**Awaiting.** The founder's reaction to the render.
+
+## 2026-09-18 — The logo is #69 and #71: two leaves (supersedes the F-with-a-stem build of the same day)
+
+**Trigger.** The founder sent the full exploration sheet (72 concepts, twelve families) with
+"this is sick, just I want the logo to be 69 and 71". #69 is the favicon on that sheet, #71 the
+horizontal lockup. The earlier build of the same day drew an abstract F with a full stem from the
+brief's *words*; the sheet shows what the words meant, and it is not that.
+
+**What #69/#71 are.** Two leaves. Each is a parallelogram leaning forward (top and bottom edges
+rise to the right at ≈23°, sides lean ≈10°) with the two acute corners left sharp and the two
+obtuse corners generously rounded. The upper leaf is larger; the lower leaf is ≈70% the size,
+tucked under and to the left with the same lean, its sharp tip sitting just below the upper
+leaf's bottom edge with a thin parallel channel between them. No stem, no arm, no arrow. It reads
+as a shape first, as two stages of one movement second, as an F only if you look for it.
+
+**What was built (`followup/public/brand/`, `LogoMark.tsx`, `icon.tsx`).** Master geometry in an
+81.79 × 120 box, generated from the parameters above (not traced from the sheet's raster).
+Channel 6 units in the master, 9.5 in the favicon variant with rounder corners for 16 px. App
+icon is #67's rounded square, symbol at 58% of the canvas. The lockup follows #71's proportions,
+which are unusual: the symbol is tall beside the word, cap height = symbol ÷ 3.2, gap 12% of the
+symbol's height, cap block centred. Wordmark outlined from **Manrope 600** with −0.35 tracking;
+on the sheet the word is a rounded geometric grotesque and Manrope is the closest of the three
+faces the brief allowed (Inter is too neutral beside the leaves, Geist too narrow).
+
+**Cost named.** At #71's ratio the wordmark is small: at 22 px tall the word is 7 px and
+unreadable. Minimum lockup height is therefore 28 px, and the nav keeps using the symbol plus the
+live wordmark text, not the outlined lockup.
+
+**Also approved in the same message:** the black → grey → white → grey → black landing page
+("this is sick"). Logged as A-009.
+
+**Verified.** Preview sheet at 160/64/32/16 on paper and ink, app icon at 128/64, lockup at
+120/40/22, favicon at 32/16. PNG set regenerated. Typecheck and lint clean.
+
+## 2026-09-18 — The landing page now lives in Figma for the founder's review
+
+**Trigger.** After R-007 the founder asked to comment "directly" in whatever tool made the design,
+then named Framer/Figma. A claude.ai review artifact was tried first (free) but its comment wake
+could not register; he chose to buy Figma Professional (1 Full seat, monthly) so the page could be
+rebuilt there and commented on.
+
+**What exists.** Figma file "FollowUp Landing Page", team "Sahil's team":
+https://www.figma.com/design/aGklS1sUNbgfYdu3s1BTF9 — one 1440-wide auto-layout frame,
+"FollowUp Landing — v1 (2026-09-18)", built section by section from the code with the product's
+fonts (Bricolage Grotesque, Public Sans, IBM Plex Mono, Instrument Serif), the leaf logo as SVG,
+and every section named. It mirrors the branch at commit 92d8c3f, not a new design.
+
+**Rule for the loop.** Figma is the review surface, code is the source of truth. Founder comments
+or edits in Figma → the session reads the file, records the decision here, changes the code, and
+re-syncs the Figma frame. The Figma MCP cannot read comments; the founder tells the session when
+to look, and edits made directly to the frame are readable.
+
+**Gotcha recorded.** `figma.createAutoLayout()` gives every frame a white fill by default; 133
+layout-only containers had to be cleared afterwards. Set `fills = []` on containers at creation.
+
+**Cost.** Figma Pro ≈ $16/month, added to the expenses sheet as "confirm from receipt".
+
+## 2026-09-18 — R-007 acted on: leaf logo re-measured, the fade becomes a section, the chat becomes a timeline, half the cards go
+
+**Trigger.** After R-007 the founder was asked to mark the design; he answered "I don't know,
+help me now, change whatever I gave you." His four objections are the brief; no guessing beyond
+them.
+
+**1. Logo ("not accurate").** The leaves were re-measured from #69 on the sheet rather than eyeballed:
+side edge 0.8 × top edge (was 1.0), corners rounded over most of each side so each leaf reads as
+one curve and one point (handle 0.8, tangent 30 of a 45-unit side), lower leaf 57% as wide and 81%
+as tall (was a uniform 70%), tip at 55% of the upper's width. Side-by-side with the sketch in the
+session scratchpad. Bounding box now 77.7 × 120.
+
+**2. The black-to-white flip.** The 180 px fade band is gone. The Product section itself carries
+the gradient: it starts on the hero's charcoal, its head is white on dark, and the ground lightens
+to paper over ~900 px behind its own cards, so the eye crosses no edge. The close mirrors it: a
+340 px run from paper to black before the CTA.
+
+**3. The Sarah Johnson thread.** Replaced by `HeroTimelineLight`: five quiet rows in one card
+(Tue: a lead asks · Tue: you reply · 5 days: nothing · Sun: FollowUp asks one question · Sun:
+"Saturday works."). No avatar, no bubbles, no named person, no pretend screenshot. The rows
+appear one after another so the silence is felt. `HeroStoryLight` deleted.
+
+**4. Density.** Product: four cards → two (Who needs you today, Drafts that sound like you). The
+gap: three guarantee cards → three plain rows under the stats. How it works: six cards → three
+(One inbox, Scores you can see through, Follow-up on by default). Section padding 88 → 112. Hero
+lede cut to one sentence. Nothing removed is lost: teams, language and Meta's rules stay in
+Pricing and the FAQ.
+
+**Figma** synced to match (same file, same frame). **Verified** locally at 1440: hero, fade,
+Product, The gap; typecheck and lint clean. **Awaiting** the founder's reaction.
+
+## 2026-09-18 — Fourth build: the founder's reference copied faithfully (the "Scalable" home page with FollowUp's content)
+
+**Trigger.** R-008: the whole page as built this day, in all three states, rejected on look, layout,
+words and feel. Asked what next, the founder chose "copy the Scalable template faithfully: its home
+page as it is; only the words, numbers and logo are ours. You react to that, then we diverge."
+
+**What was built** (`landing-dark.module.css`, `components/landing/dark/*`, `page.tsx`): the
+template's system from his own transcription — `#0A0A0A` ground, `#111214` cards with a 1px
+white/10% border and 16px corners, indigo `#5B2CE0` buttons/checks/toggles, green `#22C55E`
+badges, white headings and gray-400 copy, 48–72px tight-tracked headlines with one italic serif
+word, pill buttons, sticky transparent nav with a "New" badge on one link — and its section order:
+hero (badge, H1, subtext, button, wordmark strip, dashboard card with three stat tiles, bar chart
+with tabs, line chart with legend), Product 2×2 with in-card mockups (ranked list, activity rows,
+pending invitations, a draft), the masonry stories grid, Integrations split (card with logos,
+toggles, progress bars), Real-time split (rows with "1 min ago"), features 3×2 with icon chips,
+pricing with the middle card glowing, FAQ with the first open, CTA band, footer.
+
+**What was not copied, and why.** Standing rules, not taste: no invented testimonials (the
+masonry holds nine of FollowUp's enforced rules, each attributed "FollowUp rule · Safety", with
+five small logo marks where the template puts five stars); no fake customer-logo strip (the strip
+names the channels we read instead); no "Book a demo" as the only action (we have a free plan);
+no monthly/annual toggle (we sell monthly only). Three price cards, not two, because Free is real.
+No new font: the template's grotesk is played by Public Sans at 600, which is what we load.
+
+**Cost named.** R-005 rejected a dashboard-card hero on the light page; the founder now asked for
+the template "as it is", which includes that card, so it is back, with FollowUp's own dashboard
+numbers labelled as an example week. If he rejects it again the reason will finally be clear.
+
+**Awaiting** his reaction to the live preview. Figma not rebuilt for this version: rebuilding a
+whole frame costs ~15 tool calls, and he reacts to the moving page, not the still.
+
+## 2026-09-18 — Enhancement pass on the faithful build, then the black → grey → white ground
+
+**Trigger.** A-010: "this is close, let's enhance this more." Mid-pass the founder added: "can we
+go with white black gradient." Both applied to the same build; nothing about the section order,
+copy or card system changed.
+
+**Enhancements, all from the template's own playbook.** The hero dashboard card got a window
+chrome bar (three dots, `app.followup · Dashboard`), a third row of three small stats (waiting on
+you / going cold today / booked this week), a slow 8s float and a stronger indigo glow behind it.
+The Product grid got the template's signature full-width composite card ("Your week, at a
+glance": a total with two buttons and three key-value rows, a replies-by-day bar panel with tabs
+and an inline day legend, and a five-row status list with pills). The channel strip got icons
+(generic lucide glyphs: mail, inbox, camera, two chat bubbles, since lucide ships no brand marks).
+Every section head has a faint indigo radial behind it; cards glow and lift on hover.
+
+**The gradient.** The page now starts black and ends white. The shift is not an edge: it is one
+`linear-gradient` ramp across the whole Features section (`.ramp`, ~800px, five stops from
+`#0a0a0a` through `#6b6b70` to `#f4f4f5`). The six feature cards are opaque and sit on the
+mid-grey band, so no running text ever lands on grey; the section's only text outside a card is
+its heading, which sits in the top fifth where the ground is still near-black. Everything below
+(Pricing, FAQ, CTA band, footer) is wrapped in `.lightZone`, which re-declares the tokens (white
+cards, black text, `rgba(0,0,0,.09)` lines, a softer accent glow) and fades `#f4f4f5` → `#fff`.
+The nav stays a dark bar over the light sections. This is the R-007 lesson applied: the founder
+rejected a *hard* black→white shift, not the idea of a light bottom.
+
+**Verified** at 1280 and 390 from a production build: the ramp reads as one continuous grade,
+cards hold on both grounds, no horizontal overflow, typecheck and lint clean. Preview video
+`landing-v5.mp4`; live artifact republished. **Awaiting** the founder's reaction to the gradient.
+
+## 2026-09-18 — Hero line fixed, hero illustration replaces the dashboard, and the page goes black and white
+
+Three founder instructions in one live-editing session on the artifact preview, applied in order.
+
+**1. Hero line.** "Hero line should be 'never lose a lead', one, fixed." H1 is now
+`Never lose a *lead.*` (the product's canonical line from `followup/README.md`; the italic
+serif falls on the last word, as the template does). The lede is unchanged.
+
+**2. Hero illustration** (`components/landing/dark/HeroFlow.tsx`). R-009 removed the dashboard
+card. In its place, an original diagram of the job: five channel rows on the left (Gmail,
+Outlook, Instagram, Messenger, WhatsApp, each with a small "3 new"-style count), curved wires
+converging on a round FollowUp hub in the middle ("catches · scores · follows up"), wires fanning
+out to five lead rows on the right, each with the plain-words state it reached ("Replied · wants
+Thursday", "Follow-up sent, on topic", "Booked a call", "Acknowledged in Spanish") and a small
+warmth bar that fills from dark grey to white. Dots travel the wires on a loop (SMIL
+`animateMotion` on zero-length round-capped strokes with `non-scaling-stroke`, so they stay round
+while the wire boxes stretch); the hub pulses; the bars fill once. Reduced motion: no dots, no
+pulse, bars full. On phones the wires hide and the three groups stack. Names are an example week,
+not customers (standing rule). Nothing is a screenshot of the app.
+
+**3. Black and white.** "I want black and white theme." The indigo accent and the green/amber/rose
+status hues are gone from the whole system. Dark zone: white buttons with black text, white
+"New" badge, white hub with the black logo, grey→white warmth, white bars, neutral pills at
+three weights of white, glows are faint white. Light zone: black buttons with white text, black
+checks, a dark-bordered "Plus" card, glows are faint black. New token `--on-accent` carries the
+ink on the accent in both zones. Trade-off named: the status pills ("Needs you", "Going cold",
+"Sent") no longer differ by hue, only by tone and weight; if he misses the colour signal, one
+semantic hue can come back without touching the rest.
+
+**Verified** at 1280 and 390 from a production build; typecheck, lint clean; every colour
+literal from the indigo system grepped out. Live artifact republished; `landing-v7.mp4`.
+**Awaiting** his reaction to the illustration and the monochrome.
+
+## 2026-09-18 — Device theme: the two ends of the gradient swap with the OS setting
+
+**Trigger.** A-011, and the founder's rule given with it: "for dark mode of device we will do
+black background with a whitish gradient, and vice versa."
+
+**How it is built.** The landing system now has exactly two token sets in
+`landing-dark.module.css`: INK (black ground, white ink) and PAPER (white ground, black ink),
+each ~55 custom properties, from `--bg` and `--text` through the soft fills, glows, shadows, the
+hub gradient, the wire and dot colours, the warmth bar and the five ramp stops. Every colour on
+the page reads a token; no rule keys on "is this the light zone" any more. `.root` takes INK and
+`.lightZone` takes PAPER by default (dark scheme: black → white). Under
+`@media (prefers-color-scheme: light)` the two blocks swap sets, and the ramp's five stops are
+listed in reverse inside PAPER, so the same `.ramp` rule runs white → black. The nav bar's
+scrolled background is a token too, so it matches the top of whichever page it sits on.
+
+**Verified** with the colour scheme emulated at 1280: hero, illustration, ramp, pricing, FAQ, CTA
+and footer in both schemes; typecheck and build clean. One fix from the check: the open FAQ's
+close icon now takes `--on-accent`, so the cross stays visible on the accent disc in both
+schemes. Dead CSS from the removed dashboard card (`.dash*`, `.chrome*`, `.tiles`) is still in
+the file; it is inert and can go in a cleanup pass.
+
+**Not done, by choice:** no in-page theme toggle. The founder's rule is about the device
+setting, and a toggle would be a product-behaviour decision (his call).
+
+## 2026-09-18 — No transition: one tone per device theme
+
+**Trigger.** R-010. The ramp and the flipped lower zone are gone from `page.tsx` and the
+stylesheet. Two token sets remain: ink-on-black is the default on `.root`; under
+`@media (prefers-color-scheme: light)` the root takes paper-on-white (`--bg: #ffffff`, white
+cards lifted by a 9% border and a soft shadow, black buttons, black hub with the white logo).
+The ramp stops and zone tokens were deleted rather than left dormant.
+
+**What this settles for future sessions.** The landing page's ground is one tone, chosen by
+the device. Any future "make the bottom lighter/darker" ask should be read against R-010 first.
+
+**Verified** in both schemes at 1280 from a production build; typecheck and build clean.
+
+## 2026-09-18 — Charcoal, not black: the Aer reference was about its colour
+
+**Trigger.** The founder pasted an Aer "Work Anywhere" hero: "let's use this." I asked three
+questions (image slot, scope, ground) and built a full Aer-style hero with a generated photo.
+Wrong: "I just wanted to use the colour, that's it. No person, I want same as previous."
+Everything from that cut is reverted (component deleted, photo deleted, page and nav restored
+to the last commit). Only the colour survives.
+
+**What changed:** the dark-mode ground goes from pure black (`#0a0a0a` / cards `#111214` /
+`#16171a`) to the shot's charcoal (`--bg: #1e1e20`, `--card: #27272a`, `--card-2: #2e2e31`,
+scrolled nav `rgba(30,30,32,.72)`). No other token moved; light mode is untouched. This
+amends R-010's "full black with dark mode" to "charcoal with dark mode"; "no transition"
+still holds.
+
+**Reference notes** in `references/landing-pages/2026-09-18-aer-editorial-hero.md` record the
+layout so nobody rebuilds it.
+
+**Verified** in dark mode at 1280 from a production build; typecheck and build clean.
+
+## 2026-09-18 — The diagram is the hero: full width, moving, under the title
+
+**Trigger.** The founder pasted a rendered concept (FollowUp mark in the middle, lead cards
+on the left, wires converging, reply cards on the right, a tagline under the mark) and said:
+"don't copy-paste, get the idea of what it is and why I like it: they have the whole diagram.
+We have to animate this at the back of the hero page. The title and punchline on top."
+
+**What changed** (`components/landing/dark/HeroFlow.tsx`, `page.tsx`):
+- The hero is now title on top, diagram full width beneath (1400px, not the 1120px column),
+  with the channel strip removed because the diagram names the channels itself.
+- The headline keeps the fixed first line and gains the punchline as the second, in the
+  italic serif: "Never lose a lead / *because nobody followed up.*" (the product statement's
+  own words; his dictation was "never lose a lead because you forgot to follow up, something
+  like that").
+- Left column: the ways a lead shows up, each with an icon tile, a title and a "via"
+  line (New inquiry via Gmail, Direct message via Instagram, Form submission via your
+  website, Missed call via your phone line, New message via WhatsApp). Every one is a real
+  capture channel we have built; none is decorative.
+- Middle: FollowUp as an app-tile (112px, 28px corners, white-to-grey) with the leaf mark,
+  pulsing; "reads · scores · follows up" under it.
+- Right column: the lead answering, as message cards (initials, name, the reply, a time
+  stamp, a live dot): "Thursday works, see you then." "Yes, send the proposal over." a tapped
+  reply button, a reply in Spanish, a booked call. Example week, labelled so in the aria text.
+- Motion: source cards slide in from the left one after another, the tile scales in, dots run
+  the wires on a loop (grey in, white out), reply cards slide in from the right one after
+  another as the follow-ups land. Reduced motion: final state, nothing moves.
+
+**Not copied from the picture:** the plant, books and mug (a rendered room, not a page), the
+"more conversations / higher conversions / real growth" claims, the LinkedIn source (we do not
+capture LinkedIn), the tagline in caps. Charcoal ground per the earlier decision.
+
+**Verified** at 1440 and 390 from a production build; typecheck, lint, build clean. Video
+`landing-v12.mp4`; live artifact republished. **Awaiting** his reaction.
+
+## 2026-09-18 — From everywhere: the diagram's entrance
+
+**Trigger.** A-012, and the founder's note with it: "just try to make this overlay come in
+from everywhere."
+
+**What it does now** (`HeroFlow.tsx`): on first paint the FollowUp tile lands first (springs
+up from below); each source card then starts far off in its own direction, one from high
+above-left, one from far left, one from below, one from low-right of the column, each slightly
+turned, and springs into its slot, 160ms apart; each reply then appears at the tile and travels
+out to its place on the right, 400ms apart, scaling up as it arrives. After the entrance the
+dots keep running the wires. Springs (stiffness 120, damping 18) rather than eased tweens, so
+the cards overshoot a touch and settle, which is what makes "arriving" read. Reduced motion:
+everything already in place.
+
+**Kept quiet on purpose:** no loop of the entrance (it would compete with reading the title),
+no rotation past 7°, no blur. The page's own rule is motion only where it explains something;
+here it explains the product's one sentence.
+
+**Verified** at 1440 and 390 from a production build; video `landing-v13.mp4`.
+
+## 2026-09-18 — Plain words: the landing page rewritten for someone who has never used software like this
+
+**Trigger.** Founder, on the approved page (A-012): "the information is very complex. I want to
+make it very simple so that every single user can understand. Even someone who wants to use it
+without any tough things should understand." Recorded as a brand principle (principle 9 in
+`brand/brand-principles.md`); this entry is the first application.
+
+**What changed, copy only** (`page.tsx`; nothing about what the product does moved):
+- Every sentence shortened; one idea each. "Lead" became "customer" everywhere a customer would
+  read it (the diagram's labels keep "leads come in from everywhere", his own phrase).
+- Jargon out: "scores", "sequence", "draft", "autonomy", "CRM", "Meta's window", "routed",
+  "urgency score", "on the record", "integrations", "real-time". In: "notices who is going
+  quiet", "stops", "reply", "the tools you use now", "Instagram's 24-hour rule", "goes to the
+  right person", "written down with the reason", "works with", "as it happens".
+- Fewer things: the "Your week, at a glance" card (the densest object on the page) is gone; the
+  nine rules are six promises (the two Instagram-window rules and "acknowledges within seconds"
+  were the hardest to read cold); the percentage bars under the connected apps are gone (they
+  meant nothing to a reader).
+- Section heads now say the job in the reader's words: "See who needs you, and why." "What it
+  will and won't do." "Works with what you already use." "See what changed, the moment it
+  does." "Everything you need, nothing you don't."
+- FAQ answers cut to two or three short sentences each; questions asked the way a customer
+  would ask them ("Will it send things I did not approve?").
+
+**Kept honest:** no claim was added; every line still describes a built behaviour (the 24-hour
+rule, the money hold, stop-on-reply, download-or-delete, HubSpot and Follow Up Boss import).
+
+**Verified** at 1280 from a production build; typecheck, lint, build clean. **Awaiting** his
+read.
+
+## 2026-09-18 — As simple as it goes: six things on the page
+
+**Trigger.** Founder, after the plain-words pass: "simplify it as much as you can."
+
+**What the page is now** (`page.tsx`), top to bottom:
+1. The promise and the moving diagram. Headline unchanged; the lede is one sentence
+   ("FollowUp writes back to your customers, so nobody is forgotten."); the "New:" badge is
+   gone; buttons say "Start free" and "How it works".
+2. **Three steps**: connect your inbox · FollowUp spots who is going quiet · it writes back
+   for you. One line under each.
+3. **Three promises**: when a customer replies, it stops · it never talks about money without
+   you · you can delete everything, any time.
+4. **Works with what you use**: one row of names. No card, no toggles, no descriptions.
+5. **Simple prices**: three cards, three lines each, "Start free. No card needed."
+6. **Questions**: four, one or two sentences each.
+Then "Start free. Connect your inbox. That's it." and the footer. Nav: How it works ·
+Prices · Questions · Start free.
+
+**Gone from the page** (not from the product): the four product cards with in-card mockups,
+the six-promise grid (three kept), the connected-apps card, the "as it happens" feed, the
+six feature tiles, the fourteen-line price lists, two of the six questions, the "New:" badge,
+the Integrations and Features nav links. Nothing on the page is untrue; the diagram in the
+hero now carries what the removed sections used to explain.
+
+**Cost named.** The page no longer mentions Meta's 24-hour rule, HubSpot / Follow Up Boss
+import, the team routing detail, or the language promise in words (the diagram still shows a
+reply in Spanish). If any of those turns out to matter for a buyer, it comes back as one
+line, not a section.
+
+**Verified** at 1280 and 390 from a production build; typecheck, lint, build clean.
+
+## 2026-09-18 — Process reset: no more building first
+
+**Trigger.** Founder, at the end of a day with five page directions: "I am cooked. Let's not
+design directly. Let's do some research, then make a structure, then focus on designing."
+
+**What changes.** Design on the landing page is paused. The v15 page stays on PR #265,
+unmerged, as the current state. The next step is his yes / no on the four questions in
+`design-brain/research/landing-page/2026-09-18-structure-v1.md`; design starts against that
+structure and nothing else. For future sessions: this is the research workflow the design brain
+already prescribes (`workflows/research-workflow.md`, step 1: "if you can't write this, you
+don't have enough to design"); today it was skipped under pressure, five times.
+
+## 2026-09-18 — Structure v1, question 2: the per-channel line stays off the page
+
+**Founder's call:** no. The line "On email it sends for you; on Instagram and WhatsApp it
+writes the message and you tap send" does not go on the landing page. I recommended it as a
+trust line; he chose to keep the page to the promise. The fact is still told in two places a
+person will look for it: the Questions answer on Instagram's 24-hour rule, and the app itself
+at the moment the tap is needed. If trial users report feeling misled about Instagram, this
+is the first thing to revisit.
+
+## 2026-09-18 — Structure v1, question 3: four promises
+
+**Founder's call:** yes to the fourth. The promises section, which stands in for proof while
+there are no customers to quote, is now: *When a customer replies, it stops. It never talks
+about money without you. Every message it sends is written down, with the reason. You can
+delete everything, any time.* All four are built and tested (stop-on-reply, the money hold,
+the audit trail, export-and-erase). His check before saying yes, worth keeping: "but we send
+on Instagram and WhatsApp too, no?" Yes: within Meta's 24-hour window it sends by itself;
+after it, it writes and the owner taps. The fourth promise covers every channel.
+
+## 2026-09-18 — Structure v1, question 4: no "who it's for" section; the structure is settled
+
+**Founder's call:** skip it. The hero's second line ("Only for owners who have leads and don't
+have time to reply", A-014) already tells the right person it is for them.
+
+**The settled structure**, in order: top bar (How it works · Prices · Questions · Start free);
+hero (A-013 headline, A-014 buyer line, the moving diagram A-012, "Start free", one reassurance
+under the button); three steps; four promises; works with (names only); prices (three cards,
+three lines each, the no-metering line); four questions, the permission one first; start free;
+footer. Eight blocks. Design now builds against this and nothing else.
+
+## 2026-09-18 — Built against structure v1
+
+**Founder:** "build." The page now matches the settled structure and nothing else. Changes
+from v15, all copy and one grid: headline A-013; buyer line A-014 in place of the lede; one
+button ("Start free") with the reassurance under it ("No card. It stops the moment they
+reply."); four promises in a four-column grid (two on tablets, one on phones); the
+no-metering line in Prices; Questions reordered so "Will it send things I didn't approve?" is
+first, with the Instagram 24-hour answer second (the per-channel fact lives here, per
+question 2). Nothing visual changed beyond the fourth card. Verified at 1280 and 390 from a
+production build; typecheck, lint, build clean. **Awaiting** the founder's read.
+
+## 2026-09-19 — The fuller page comes back, with the settled hero
+
+**Founder**, on the structure-v1 build: "no, make like this but with the old version. I mean
+the information the older pages had." Read: the three-steps page was too bare; he wants the
+plain-words page from earlier (product cards with in-card examples, the connected-apps card,
+the as-it-happens feed, six feature tiles, full price lists) with the decisions from the
+structure on top.
+
+**What was built:** the plain-words page (commit 26e7d0c) restored, then: headline A-013,
+buyer line A-014, one button with the reassurance under it, no "New:" badge; the promise grid
+cut from six to the four decided (the language and setup lines went; both still appear in the
+product cards and feature tiles); the no-metering prices line; Questions cut to four with the
+permission one first; every button says "Start free"; the close says "Connect your inbox.
+That's it."
+
+**Structure v1 amendment:** section 2 ("three steps") is replaced by the four product cards,
+and two sections return between the promises and prices: works-with (card with descriptions),
+as-it-happens (feed) and the six feature tiles. Recorded here rather than rewriting v1; the
+founder's word "information" is the reason: he wants the reader to see the product, not only
+be told three verbs.
+
+## 2026-09-19 — The older information comes back, in plain words (A-015)
+
+**Founder:** "more older ones." The page on `main` had four information sections the new page
+lacked: the gap (the owner's question, "which lead am I about to lose because I haven't
+followed up?"), why FollowUp exists (lead-generation tools vs FollowUp), how it works (four
+steps), why not just a CRM reminder (three cards). All four are back between the hero and the
+product cards, rewritten to principle 9 ("customer" not "lead", "reply problem" not
+"lead-conversion problem", no scores or CRM). Left out on purpose: the three industry stats
+(phone-derived or single-sourced), the freelance-consultant and agency personas (the hero's
+buyer line replaces them), the team-pipeline mock (the Bring-your-team card covers it).
+The four promises moved to a four-column grid (the masonry left the fourth alone).
+Verified at 1280 from a production build; typecheck, lint, build clean. Approved on sight.
+
+## 2026-09-19 — Two more chances to press the button (landing, "make it more effective")
+
+**Founder:** "cool that's it, let's just make it more effective." The page was approved
+(A-015); the ask is conversion, not redesign. Two additions, nothing new said in either:
+
+- **A centred "Start free" after "How it works."** On a phone the page is eight screens
+  tall and the next button after the hero was at the prices, six screens down; a reader
+  convinced at the steps had nothing to press. Under it the same reassurance as the hero,
+  shortened: "No card. Two minutes to connect."
+- **A phone-only bottom bar** (`StickyCta.tsx`) that slides up once the hero has scrolled
+  off, so the button is never on screen twice at once; hidden at 900px and up, where the
+  sticky nav already carries it. Blurred `--nav-bg` ground, hairline top, safe-area padding.
+
+Not done, on purpose: a second hero button (structure v1 lists it as "out"), urgency or
+countdowns, a testimonial or logo strip (none exist), an exit popup. Verified at 390 and
+1280, both device themes.
+
+## 2026-09-19 — The app moves onto the charcoal monochrome system, stage one
+
+**Founder:** "let's change the whole app." The landing page's black-and-white system
+(A-011, A-012, A-015) becomes the app's system. This supersedes A-002's navy/blue baseline
+(#0b1f33 / #2a5cdb, Bricolage Grotesque headings). What A-006 decided about *shape* — tight,
+each item in its own box, soft corners with a real shadow, status colour doing the work,
+accent held back — is unchanged and, if anything, easier: with a white (dark theme) or
+black (light theme) accent there is no brand hue left to overspend.
+
+**Stage one (this entry):** the token layer in `globals.css`, both device themes, the shell,
+the dashboard. Token *names* kept (`--paper`, `--ink`, `--ink-soft`, `--line`, `--card`,
+`--rust`/`--accent`, the four status tones, `--radius-box`, the three shadows) so the several
+hundred call sites keep working; only values moved. Dark: `#1e1e20` page, `#27272a` boxes,
+white text and accent. Light: white page and boxes, black text and accent. Two tones by
+device, no toggle, exactly as the landing page. New tokens: `--ink-faint`, `--card-2`,
+`--line-strong`, `--accent-soft`, and `--coral-fill`/`--on-coral` for a destructive button,
+because the coral that reads as text on charcoal (`#f4899a`) cannot hold white text; A-001's
+"a fill and a text colour have different requirements" applied to the dark theme.
+Status tones re-tuned per theme and measured at 12px on `--card`: dark slate 5.9, sage 7.4,
+gold 7.0, coral 6.1; light unchanged from A-001 except slate, which drops its navy tint.
+Public Sans carries headings and body (Bricolage retired, one font fewer to load). The
+dashboard's aurora banner — the last coloured ornament in the app — is replaced by the app's
+one page-header shape (`PageHeader`); `AuroraBackground.tsx` deleted. Every `text-white` on a
+filled button now takes its colour from the fill's own token pair (`text-paper` on `--ink`,
+`text-on-accent` on the accent, `text-on-coral` on `--coral-fill`), and the five settings
+toggles' knobs follow the landing page's rule (on → `--on-accent`, off → `--ink`). The loading
+skeleton drops the retired border-and-divider shape for the box shape.
+
+**Verified:** the dashboard's real markup re-rendered with the new built CSS in dark, light
+and at 390px (the database was unreachable from the sandbox, so a saved render was used
+rather than a live one — an honest limit, noted here); typecheck and production build clean.
+
+**Not yet done — stage two:** the sign-in screen (it still scopes the navy `landing.module.css`
+tokens), `chart-colors.ts` (hard-coded navy hex; charts need per-theme values), and a
+screen-by-screen pass over leads, lead detail, pipeline, workflows, analytics, activity,
+settings, onboarding and admin for anything hard-coded that the token swap did not reach.
+Gautam owns app UI per TEAM.md; this stage went in as one PR so the founder can react to the
+tokens before the rest is touched. **Needs the founder's yes** before stage two: the status
+colours stay (A-006 axis 3) — say if the app should be grey-only like the page.

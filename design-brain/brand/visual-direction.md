@@ -81,6 +81,11 @@ These are real trade-offs where the right answer is per-screen, not global:
 
 ## Current shipping reality (verified 2026-09-13 — read this before designing)
 
+> **Update 2026-09-19.** Landing page and app both ship the charcoal monochrome system
+> (see `color-system.md`'s note and `decisions/design-decisions.md`, 2026-09-19). What
+> follows describes the navy era and is kept as history.
+
+
 The app in `followup/` currently ships:
 - **Cloud-white/navy page** (`#f6f8fb` paper, `#0b1f33` ink) with pure-white cards and a
   translucent navy border (`rgba(11, 31, 51, 0.12)`) — promoted app-wide from the landing

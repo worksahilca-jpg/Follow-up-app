@@ -2710,3 +2710,11 @@ live as 8471a0c). This is the rest.
 
 **Still open for the founder:** whether the four status colours stay (A-006 axis 3) or the
 app goes grey-only like the page. Nothing else in the app is blue any more.
+
+**Addendum, same day — the box everywhere.** Twenty-three files still carried the navy-era
+`rounded-xl border border-line bg-card` that A-006 retired (settings sections, the workflow
+cards, the trust panel, the setup strip, four modals, two popovers). globals.css now has
+`.box` (page surface) and `.box-lift` (dialog, dropdown) so the shape lives in one place, and
+every one of those call sites uses it. Inputs keep their border on purpose: a field is an
+outline you type into, not a box. Rendered: none of these screens could be opened live from
+the sandbox (database unreachable); the class compiles and the build is clean.

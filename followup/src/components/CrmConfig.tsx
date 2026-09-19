@@ -102,7 +102,7 @@ export default function CrmConfig() {
   if (loading) return null;
 
   return (
-    <div className="rounded-xl border border-line bg-card p-5">
+    <div className="box p-5">
       <div className="flex items-start gap-3">
         <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
           <Database className="h-4 w-4" />

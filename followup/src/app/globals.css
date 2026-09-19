@@ -245,6 +245,24 @@ input::placeholder, textarea::placeholder {
   color: var(--ink-faint);
 }
 
+/* ---- The box ----
+   The app's one container shape (A-006: soft corners, a real shadow, no
+   border), as a class so a section card, a modal and a popover all share
+   it. `.box` sits on the page; `.box-lift` is the same surface floating
+   above it (a dialog, a dropdown). This retires the navy-era
+   `rounded-xl border border-line bg-card`. Inputs keep their border: a
+   field is an outline you type into, not a box. */
+.box {
+  border-radius: var(--radius-box);
+  background: var(--card);
+  box-shadow: var(--shadow-box);
+}
+.box-lift {
+  border-radius: var(--radius-box);
+  background: var(--card);
+  box-shadow: var(--shadow-box-lift);
+}
+
 /* ---- Decorative primitives ---- */
 
 /* A diagonal light sweep on hover — the one flourish a primary CTA gets. */

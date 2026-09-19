@@ -108,7 +108,7 @@ export default function NotificationBell({ align = "left" }: { align?: "left" | 
       {open && (
         <div
           className={
-            "absolute top-10 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-line bg-card shadow-lg overflow-hidden " +
+            "absolute top-10 z-50 w-80 max-w-[calc(100vw-2rem)] box-lift overflow-hidden " +
             (align === "right" ? "right-0" : "left-0")
           }
         >

@@ -64,7 +64,7 @@ export default function DataPrivacySection() {
 
   return (
     <div>
-      <div className="rounded-xl border border-line bg-card p-5">
+      <div className="box p-5">
         <div className="flex items-center gap-4">
           <div
             className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"

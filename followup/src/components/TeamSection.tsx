@@ -137,7 +137,7 @@ export default function TeamSection() {
 
   return (
     <div>
-      <div className="rounded-xl border border-line bg-card divide-y divide-line">
+      <div className="box divide-y divide-line">
         {members.map((m) => (
           <div key={m.id} className="flex items-center justify-between px-5 py-3 text-sm gap-4">
             <div className="min-w-0">
@@ -179,7 +179,7 @@ export default function TeamSection() {
       {isAdmin && invites.length > 0 && (
         <div className="mt-4">
           <p className="text-xs font-medium text-ink-soft">Pending invites</p>
-          <div className="mt-2 rounded-xl border border-line bg-card divide-y divide-line">
+          <div className="mt-2 box divide-y divide-line">
             {invites.map((inv) => (
               <div key={inv.id} className="flex items-center justify-between px-5 py-2.5 text-sm">
                 <span className="text-ink-soft">

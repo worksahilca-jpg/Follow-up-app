@@ -91,7 +91,7 @@ export default function LeadTrustPanel({
   const truncated = totalCount > events.length;
 
   return (
-    <div className="rounded-xl border border-line bg-card p-4">
+    <div className="box p-4">
       <h3 className="text-sm font-semibold flex items-center gap-1.5">
         <ShieldCheck className="h-4 w-4" style={{ color: "var(--sage)" }} />
         Consent &amp; AI activity

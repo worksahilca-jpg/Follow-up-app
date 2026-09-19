@@ -20,7 +20,7 @@ export default function SetupStrip({ steps }: { steps: SetupStep[] }) {
        description to three, and the strip turned into a six-line block of
        ragged text next to a button. Full width, button underneath, in thumb
        reach — same shape the page header already uses at this width. */
-    <div className="mt-6 flex flex-col gap-3 rounded-xl border border-line bg-card px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+    <div className="mt-6 flex flex-col gap-3 box px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div className="min-w-0">
         <p className="text-sm font-medium">
           {next.title}

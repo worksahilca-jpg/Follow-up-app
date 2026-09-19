@@ -219,7 +219,7 @@ export default function WorkflowsPage() {
 
       <div className="mt-6 space-y-4">
         {loaded && sequences.length === 0 && !creating && (
-          <div className="rounded-xl border border-line bg-card p-8 text-center">
+          <div className="box p-8 text-center">
             <WorkflowIcon className="h-6 w-6 mx-auto text-ink-soft" />
             <p className="text-sm text-ink-soft mt-3">
               No follow-up plans yet — try &quot;Use our recommended plan&quot; above, or build your own from scratch.
@@ -302,7 +302,7 @@ function WorkflowCard({
   }
 
   return (
-    <div className="rounded-xl border border-line bg-card p-5">
+    <div className="box p-5">
       {/* Stacks below sm, and the title column gets min-w-0.
           Side by side at 390px, three shrink-0 buttons left the title about
           110px: "Cold reactivation — winter maintenance contracts" wrapped to
@@ -475,7 +475,7 @@ function WorkflowEditor({
   }
 
   return (
-    <div className="rounded-xl border border-line bg-card p-5">
+    <div className="box p-5">
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}

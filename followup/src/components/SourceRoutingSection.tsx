@@ -90,7 +90,7 @@ export default function SourceRoutingSection() {
   const activeSequences = sequences.filter((s) => s.active);
 
   return (
-    <div className="rounded-xl border border-line bg-card p-5">
+    <div className="box p-5">
       <p className="text-xs text-ink-soft mb-4">
         What happens automatically the moment a new lead comes in from each source — before anyone looks at it.
       </p>

@@ -257,7 +257,9 @@ function OnboardingFormInner({
                 >
                   <Check className="h-6 w-6" />
                 </div>
-                <h2 className="font-display text-xl text-center mt-4">Gmail connected</h2>
+                <h2 className="font-display text-xl text-center mt-4">
+                  {inboxProvider === "outlook" ? "Outlook" : "Gmail"} connected
+                </h2>
                 <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
                   Connected as <span className="font-medium text-ink">{inboxEmail}</span>.
                 </p>

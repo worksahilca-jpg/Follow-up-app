@@ -174,7 +174,14 @@ export default function WhatsAppConfig() {
         const code = response.authResponse?.code;
         if (!code) {
           setConnecting(false);
-          setConnectError("Meta didn't finish the sign-in. Nothing was connected — try again.");
+          // The popup closed without a code: the owner cancelled, or Meta
+          // refused at the end ("FollowUp can't onboard customers right
+          // now") — which is Meta's Business Verification gate, not
+          // something the owner did wrong. Nothing to detect it by from
+          // here, so the sentence covers both without blaming anyone.
+          setConnectError(
+            "Meta didn't finish the sign-in, so nothing was connected. If Meta's window said FollowUp can't onboard customers yet, that's Meta still verifying FollowUp's business — we'll tell you when it clears."
+          );
           return;
         }
         signupRef.current = { ...signupRef.current, code };
@@ -418,7 +425,8 @@ export default function WhatsAppConfig() {
                   </button>
                   <p className="mt-2 text-xs text-ink-soft">
                     Meta opens a window. Have the phone with your WhatsApp Business app ready — you&apos;ll scan a
-                    code with it, and the number stays on that phone.
+                    code with it, and the number stays on that phone. While FollowUp is in beta, Meta only lets
+                    accounts Sahil added as testers connect.
                   </p>
                 </div>
               ) : (

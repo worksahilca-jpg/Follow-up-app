@@ -2782,3 +2782,15 @@ A paste-a-token fallback is folded away behind a disclosure, for the founder's o
 **Verified:** typed, built, tests green. The panel could not be exercised against a live Meta
 app from the sandbox (no Meta app configuration yet); the first live connect pins the payload
 shapes, as the scope doc says.
+
+## 2026-09-19 — Beta gates are said before the click, not discovered as a refusal
+
+Three lists outside FollowUp decide what a tester can connect: the founder's tester list,
+Google's test-user list (Testing mode), Meta's app roles (unreviewed app). A tester who hits
+one of them reads the refusal as the product being broken. So each connect button now says,
+in one plain sentence under it, who Meta lets connect during beta and who to ask; Google's
+bare "access_denied" on Gmail becomes a sentence naming the test-user list and the contact
+address; Meta's "can't onboard customers" on WhatsApp is explained as Meta still verifying
+FollowUp's business. Principle 9 (plain words) and principle 1 (no surprises). The founder's
+side of it is one page, `followup/docs/tester-onboarding-checklist.md`. Also: the onboarding
+heading now names Outlook when Outlook is what connected.

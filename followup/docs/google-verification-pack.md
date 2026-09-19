@@ -47,16 +47,15 @@ Plan on **6 to 12 weeks** to fully verified if inbox reading stays in. Start now
 
 ## Before you submit — 30 minutes, all free
 
-1. **Pick the support email.** Google shows it on the consent screen and it must match the
-   homepage. Tell me the address and I'll put it in the site footer today. `sahil@followupbase.io`
-   works; a `hello@` alias is nicer. Google also wants a contact element visible on the homepage.
+1. **Support email: `contact@followupbase.io`.** Created 2026-09-19; it is in the site footer.
+   Use this exact address everywhere Google asks for a support or contact email.
 2. **Google Search Console**, signed in as the Google account that owns the Cloud project:
    add `followupbase.io` as a **Domain** property (the DNS option, not "URL prefix"). Add the TXT
    record it gives you at your registrar. Wait for the green tick.
 3. **Google Cloud Console → APIs & Services → OAuth consent screen.** Check every field says the
    same thing as the site:
    - App name: `FollowUp`
-   - Support email: the address from step 1
+   - Support email: `contact@followupbase.io`
    - Logo: `followup/public/brand/followup-symbol.svg` exported as a 120×120 PNG on white
    - Homepage: `https://followupbase.io`
    - Privacy policy: `https://followupbase.io/privacy`
@@ -110,9 +109,8 @@ Workspace test user. Turn Google's interface language to English before recordin
 
 ## What I still need from you
 
-1. The support email address (step 1 above). I add it to the footer the same day.
-2. Your call on inbox reading: keep (recommended, US$540+ a year) or drop for now (free).
-3. The unlisted YouTube link once the video is recorded, so I can check it against the script.
+1. Your call on inbox reading: keep (recommended, US$540+ a year) or drop for now (free).
+2. The unlisted YouTube link once the video is recorded, so I can check it against the script.
 
 ## Not part of this pack
 

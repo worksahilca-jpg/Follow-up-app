@@ -570,6 +570,7 @@ export default function LandingPage() {
           <div className={styles.footerLinks}>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
+            <a href="mailto:contact@followupbase.io">Contact</a>
             <Link href="/signin">Sign in</Link>
           </div>
         </div>

@@ -65,6 +65,7 @@ Never introduce a soft/saturated pair without measuring it.
 
 ## A-002 — Unify the whole app on the "Award Direction" navy/blue system ^A-002
 **Date:** 2026-09-13
+**SUPERSEDED (2026-09-19)** on colour and type by the charcoal monochrome system the founder approved for the landing page (A-011, A-012, A-015) and then asked to carry into the app ("let's change the whole app"). Its *principle* — the whole product converges on one system, and the landing page is the standard the app is judged against — is what drove the 2026-09-19 move too. See `design-decisions.md`, 2026-09-19, "stage one".
 **Scope:** System-wide — every authenticated-app page, `/signin`, and the landing page all
 converge on one visual system (navy `#0b1f33` / blue `#2a5cdb`, Bricolage Grotesque + Public
 Sans + IBM Plex Mono — currently `landing-award.module.css`, to be promoted into

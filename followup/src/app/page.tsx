@@ -4,6 +4,7 @@ import styles from "./landing-dark.module.css";
 import NavDark from "@/components/landing/dark/NavDark";
 import HeroFlow from "@/components/landing/dark/HeroFlow";
 import FaqDark from "@/components/landing/dark/FaqDark";
+import StickyCta from "@/components/landing/dark/StickyCta";
 import RevealLight from "@/components/landing/light/RevealLight";
 import LogoMark from "@/components/landing/light/LogoMark";
 import { publicSans, ibmPlexMono, instrumentSerif } from "@/lib/fonts";
@@ -131,6 +132,12 @@ export default function LandingPage() {
             </RevealLight>
           ))}
         </div>
+        <RevealLight className={styles.midCta} delay={0.1}>
+          <Link href="/signin" className={styles.btn}>
+            Start free <ArrowRight className="h-4 w-4" />
+          </Link>
+          <p className={styles.heroNote} style={{ marginTop: 12 }}>No card. Two minutes to connect.</p>
+        </RevealLight>
       </section>
 
       {/* ---------- Why not just a reminder ---------- */}
@@ -567,6 +574,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      <StickyCta />
     </div>
   );
 }

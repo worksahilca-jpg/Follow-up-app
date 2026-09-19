@@ -168,7 +168,7 @@ export default function CrmConfig() {
                 <button
                   onClick={connect}
                   disabled={saving || !keyDraft.trim()}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60 shrink-0"
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60 shrink-0"
                   style={{ backgroundColor: "var(--ink)" }}
                 >
                   {saving ? "Connecting…" : "Connect"}

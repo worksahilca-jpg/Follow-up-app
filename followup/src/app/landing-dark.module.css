@@ -971,6 +971,52 @@
   font-size: 13.5px;
   color: var(--faint);
 }
+
+/* ---------- the two extra chances to press the button ----------
+   Added 2026-09-19 ("make it more effective"): a centred button after
+   "How it works", and on phones a bar that stays at the bottom once the
+   hero's own button has scrolled off. Nothing new is said in either; they
+   are the same button, closer to hand. */
+.midCta {
+  margin-top: 40px;
+  text-align: center;
+}
+.stickyCta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: var(--nav-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+  transform: translateY(110%);
+  transition: transform 0.35s var(--ease);
+}
+.stickyCtaShow {
+  transform: translateY(0);
+}
+.stickyCtaNote {
+  font-size: 13px;
+  color: var(--muted);
+  min-width: 0;
+}
+@media (min-width: 900px) {
+  .stickyCta {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stickyCta {
+    transition: none;
+  }
+}
 @media (min-width: 720px) {
   .grid2 {
     grid-template-columns: repeat(2, 1fr);

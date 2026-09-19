@@ -2627,3 +2627,60 @@ product cards, rewritten to principle 9 ("customer" not "lead", "reply problem" 
 buyer line replaces them), the team-pipeline mock (the Bring-your-team card covers it).
 The four promises moved to a four-column grid (the masonry left the fourth alone).
 Verified at 1280 from a production build; typecheck, lint, build clean. Approved on sight.
+
+## 2026-09-19 — Two more chances to press the button (landing, "make it more effective")
+
+**Founder:** "cool that's it, let's just make it more effective." The page was approved
+(A-015); the ask is conversion, not redesign. Two additions, nothing new said in either:
+
+- **A centred "Start free" after "How it works."** On a phone the page is eight screens
+  tall and the next button after the hero was at the prices, six screens down; a reader
+  convinced at the steps had nothing to press. Under it the same reassurance as the hero,
+  shortened: "No card. Two minutes to connect."
+- **A phone-only bottom bar** (`StickyCta.tsx`) that slides up once the hero has scrolled
+  off, so the button is never on screen twice at once; hidden at 900px and up, where the
+  sticky nav already carries it. Blurred `--nav-bg` ground, hairline top, safe-area padding.
+
+Not done, on purpose: a second hero button (structure v1 lists it as "out"), urgency or
+countdowns, a testimonial or logo strip (none exist), an exit popup. Verified at 390 and
+1280, both device themes.
+
+## 2026-09-19 — The app moves onto the charcoal monochrome system, stage one
+
+**Founder:** "let's change the whole app." The landing page's black-and-white system
+(A-011, A-012, A-015) becomes the app's system. This supersedes A-002's navy/blue baseline
+(#0b1f33 / #2a5cdb, Bricolage Grotesque headings). What A-006 decided about *shape* — tight,
+each item in its own box, soft corners with a real shadow, status colour doing the work,
+accent held back — is unchanged and, if anything, easier: with a white (dark theme) or
+black (light theme) accent there is no brand hue left to overspend.
+
+**Stage one (this entry):** the token layer in `globals.css`, both device themes, the shell,
+the dashboard. Token *names* kept (`--paper`, `--ink`, `--ink-soft`, `--line`, `--card`,
+`--rust`/`--accent`, the four status tones, `--radius-box`, the three shadows) so the several
+hundred call sites keep working; only values moved. Dark: `#1e1e20` page, `#27272a` boxes,
+white text and accent. Light: white page and boxes, black text and accent. Two tones by
+device, no toggle, exactly as the landing page. New tokens: `--ink-faint`, `--card-2`,
+`--line-strong`, `--accent-soft`, and `--coral-fill`/`--on-coral` for a destructive button,
+because the coral that reads as text on charcoal (`#f4899a`) cannot hold white text; A-001's
+"a fill and a text colour have different requirements" applied to the dark theme.
+Status tones re-tuned per theme and measured at 12px on `--card`: dark slate 5.9, sage 7.4,
+gold 7.0, coral 6.1; light unchanged from A-001 except slate, which drops its navy tint.
+Public Sans carries headings and body (Bricolage retired, one font fewer to load). The
+dashboard's aurora banner — the last coloured ornament in the app — is replaced by the app's
+one page-header shape (`PageHeader`); `AuroraBackground.tsx` deleted. Every `text-white` on a
+filled button now takes its colour from the fill's own token pair (`text-paper` on `--ink`,
+`text-on-accent` on the accent, `text-on-coral` on `--coral-fill`), and the five settings
+toggles' knobs follow the landing page's rule (on → `--on-accent`, off → `--ink`). The loading
+skeleton drops the retired border-and-divider shape for the box shape.
+
+**Verified:** the dashboard's real markup re-rendered with the new built CSS in dark, light
+and at 390px (the database was unreachable from the sandbox, so a saved render was used
+rather than a live one — an honest limit, noted here); typecheck and production build clean.
+
+**Not yet done — stage two:** the sign-in screen (it still scopes the navy `landing.module.css`
+tokens), `chart-colors.ts` (hard-coded navy hex; charts need per-theme values), and a
+screen-by-screen pass over leads, lead detail, pipeline, workflows, analytics, activity,
+settings, onboarding and admin for anything hard-coded that the token swap did not reach.
+Gautam owns app UI per TEAM.md; this stage went in as one PR so the founder can react to the
+tokens before the rest is touched. **Needs the founder's yes** before stage two: the status
+colours stay (A-006 axis 3) — say if the app should be grey-only like the page.

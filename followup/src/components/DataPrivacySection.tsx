@@ -108,7 +108,7 @@ export default function DataPrivacySection() {
             <button
               onClick={() => setConfirmOpen(true)}
               className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2"
-              style={{ backgroundColor: "var(--coral)", color: "white" }}
+              style={{ backgroundColor: "var(--coral-fill)", color: "var(--on-coral)" }}
             >
               Delete…
             </button>
@@ -133,7 +133,7 @@ export default function DataPrivacySection() {
                 onClick={handleDelete}
                 disabled={deleting || confirmText.trim().toLowerCase() !== (businessName ?? "").trim().toLowerCase()}
                 className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-40"
-                style={{ backgroundColor: "var(--coral)", color: "white" }}
+                style={{ backgroundColor: "var(--coral-fill)", color: "var(--on-coral)" }}
               >
                 {deleting ? "Deleting…" : "Permanently delete"}
               </button>

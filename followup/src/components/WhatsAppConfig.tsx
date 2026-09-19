@@ -364,7 +364,7 @@ export default function WhatsAppConfig() {
                             !phoneDraft.trim() ||
                             (!hasAuthToken && !authTokenDraft.trim())
                           }
-                          className="rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                          className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
                           style={{ backgroundColor: "var(--ink)" }}
                         >
                           {savingAccount ? "Saving…" : "Save"}
@@ -451,7 +451,7 @@ export default function WhatsAppConfig() {
                   <button
                     onClick={saveTemplate}
                     disabled={savingTemplate}
-                    className="rounded-lg px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
                     style={{ backgroundColor: "var(--ink)" }}
                   >
                     {savingTemplate ? "Saving…" : templateSid ? "Update" : "Save"}

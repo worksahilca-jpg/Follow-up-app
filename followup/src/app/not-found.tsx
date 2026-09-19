@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import styles from "./landing-light.module.css";
 import LogoMark from "@/components/landing/light/LogoMark";
-import { bricolageGrotesque, publicSans, ibmPlexMono, instrumentSerif } from "@/lib/fonts";
+import { publicSans, ibmPlexMono, instrumentSerif } from "@/lib/fonts";
 
 // Root app/not-found.tsx handles any unmatched URL app-wide (not just a
 // notFound() call within a route) — without this, a typo'd link or an old
@@ -11,7 +11,7 @@ import { bricolageGrotesque, publicSans, ibmPlexMono, instrumentSerif } from "@/
 // somewhere that looks like FollowUp.
 export default function NotFound() {
   return (
-    <div className={`${styles.root} ${styles.center} ${bricolageGrotesque.variable} ${publicSans.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable}`}>
+    <div className={`${styles.root} ${styles.center} ${publicSans.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable}`}>
       <span style={{ color: "var(--ink)" }}><LogoMark height={40} /></span>
       <span className={styles.badge} style={{ marginTop: 22 }}>
         Page not found

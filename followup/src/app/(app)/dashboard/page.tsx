@@ -1,5 +1,6 @@
 import Link from "next/link";
 import StatCard from "@/components/StatCard";
+import { PageHeader } from "@/components/PageHeader";
 import ApprovalQueue, { type ApprovalItem } from "@/components/ApprovalQueue";
 import SetupStrip from "@/components/SetupStrip";
 import TestLeadButton from "@/components/TestLeadButton";
@@ -16,7 +17,6 @@ import { ArrowRight } from "lucide-react";
 import { ItemBox, ItemBoxList, type ItemTone } from "@/components/ItemBox";
 import FadeIn from "@/components/motion/FadeIn";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
-import AuroraBackground from "@/components/motion/AuroraBackground";
 import CountUp from "@/components/motion/CountUp";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
@@ -134,24 +134,13 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      {/* A contained aurora wash behind just the greeting — the same
-          living background the landing page uses, scaled down to a
-          "welcome banner" rather than a full-bleed hero. This is a
-          working tool people sit in all day, so the drama stays here at
-          the top instead of following the cursor through dense list
-          content below. */}
-      <div className="relative overflow-hidden rounded-2xl border border-line px-6 py-8">
-        <AuroraBackground className="opacity-30" />
-        <FadeIn>
-          {/* The pill that used to sit here ("N need your OK") repeated,
-              word for word, the ApprovalQueue heading immediately below
-              it — the first two things on the page said the same thing
-              twice. The queue itself is now the one place that count
-              lives; it doesn't need co-signing from the banner above it. */}
-          <h1 className="font-display text-3xl">{getGreeting()}</h1>
-          <p className="text-ink-soft mt-1">{headline()}</p>
-        </FadeIn>
-      </div>
+      {/* The greeting and the one computed sentence under it, in the app's
+          one page-header shape. This used to sit inside a bordered box with
+          an animated colour wash behind it — the last coloured ornament in
+          the app, retired with the move to the monochrome system
+          (2026-09-19). A working tool people open twenty times a day does
+          not need a hero. */}
+      <PageHeader title={getGreeting()} subtitle={headline()} />
 
       <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} />
 

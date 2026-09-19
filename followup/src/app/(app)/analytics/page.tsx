@@ -100,6 +100,7 @@ export default async function AnalyticsPage() {
                 { label: "Reply rate", value: data.followUpsSentTotal > 0 ? `${data.replyRate}%` : "—" },
                 { label: "Reply rate — automated", value: data.automatedReplyRate !== null ? `${data.automatedReplyRate}%` : "—" },
                 { label: "Reply rate — manual", value: data.manualReplyRate !== null ? `${data.manualReplyRate}%` : "—" },
+                { label: "Drafts sent as written", value: data.draftsSentAsWritten !== null ? `${data.draftsSentAsWritten}%` : "—" },
                 { label: "On a follow-up plan", value: String(data.sequenceHealth.enrolledCount) },
                 { label: "Plans finished (30 days)", value: String(data.sequenceHealth.completedLast30Days) },
               ]}

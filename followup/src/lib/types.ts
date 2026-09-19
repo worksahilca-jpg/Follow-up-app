@@ -40,6 +40,12 @@ export interface Message {
   // FollowUp's reply buttons — see Message.quickReplyPayload in
   // schema.prisma and src/lib/quickReplies.ts. Undefined for anything typed.
   quickReplyPayload?: string;
+  // Twilio's verdict on an outbound text/WhatsApp send (queued | sent |
+  // delivered | undelivered | failed) — see Message.deliveryStatus in
+  // schema.prisma. Undefined when the channel doesn't report one. The
+  // rescue score reads it so a number that bounces is not mistaken for a
+  // customer who went quiet (accuracy research 2026-09-13, finding 1).
+  deliveryStatus?: string;
 }
 
 export interface ScoreFactor {

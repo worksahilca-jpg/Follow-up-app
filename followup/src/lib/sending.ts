@@ -651,6 +651,13 @@ export async function sendFollowUpToLead(
     // Message.trigger in schema.prisma for the bug that was.
     const trigger = options.trigger ?? (options.automated ? "silence" : "manual");
 
+    // Did the draft go out as FollowUp wrote it? Whitespace-insensitive,
+    // because the composer re-wraps text; anything else is an edit. No
+    // draft on the lead (a message typed from scratch, an instant ack)
+    // means nothing to compare, so null rather than a false "unedited".
+    const squash = (s: string) => s.replace(/\s+/g, " ").trim();
+    const draftEdited = lead.suggestedMessage ? squash(body) !== squash(lead.suggestedMessage) : null;
+
     await prisma.message.create({
       data: {
         conversationId: conversation.id,
@@ -669,6 +676,7 @@ export async function sendFollowUpToLead(
         status: "sent",
         automated: options.automated ?? false,
         trigger,
+        draftEdited,
         sentAt: new Date(),
       },
     });

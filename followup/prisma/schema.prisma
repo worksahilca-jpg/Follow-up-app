@@ -721,6 +721,13 @@ model FollowUp {
   // (src/lib/rescued.ts): a reply to an automated trigger is a rescued
   // conversation; a reply to a manual send is the owner's own work.
   trigger     String?
+  // Did a person change the AI draft before this went out? Compared at
+  // send time against Lead.suggestedMessage (whitespace-insensitive).
+  // Null when there was no draft to compare against (a send typed from
+  // scratch, an instant acknowledgement). The one quality number every
+  // comparable AI-drafting product watches (accuracy research 2026-09-13,
+  // finding 9); surfaced on /analytics as "Drafts sent as written".
+  draftEdited Boolean?
   createdAt   DateTime  @default(now())
 
   @@index([leadId])

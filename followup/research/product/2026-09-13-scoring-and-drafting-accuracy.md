@@ -363,6 +363,18 @@ evidence and nothing here required inventing a new external claim to support it.
 
 ## Summary: the most actionable findings, restated plainly
 
+**Implementation status, 2026-09-19** (founder: "let's make our workflow more strong and
+accurate"): findings 1, 4, 5, 6, 9 and 10 below are built — a failed/undelivered Twilio send
+makes the lead "Can't reach" in the rescue score and on Today instead of "gone quiet"
+(`src/lib/rescue.ts`); `scoreLead`'s schema now generates reason → factors → score and its
+prompt carries the concrete signal checklist plus a worked example of the warm-silence case
+(`src/lib/integrations/openai.ts`); the email draft must answer the lead's question first and
+ask at most one (same file); every send records `FollowUp.draftEdited` and `/analytics` shows
+"Drafts sent as written". Finding 3 (opened-email signal) had already been removed from the
+prompt before this pass. Still open: finding 2 (Gmail hard bounces are filtered as noise rather
+than read as a bad address), finding 7 (WhatsApp/Messenger read receipts), finding 8's
+threshold, finding 11's generic-draft signal.
+
 1. **Delivery failures (bad phone number, hard-bounced email) are already captured in the
    database via `deliveryStatus` but are never checked before a lead is treated as "going
    cold"** — a technical failure to reach the lead and a lead's genuine silence currently

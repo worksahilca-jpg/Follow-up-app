@@ -97,7 +97,7 @@ export default function SmartViewForm({
       style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
       onClick={onClose}
     >
-      <div className="w-full max-w-md rounded-xl border border-line bg-card p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md box-lift p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-xl">Custom filter</h2>
           <button onClick={onClose} className="text-ink-soft hover:text-ink" aria-label="Close">

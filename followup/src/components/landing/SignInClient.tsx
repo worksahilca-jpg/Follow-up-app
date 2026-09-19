@@ -5,37 +5,41 @@ import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import styles from "@/app/landing.module.css";
 import Reveal from "@/components/landing/Reveal";
-import SignInScene from "@/components/landing/SignInScene";
+import LogoMark from "@/components/landing/light/LogoMark";
 
-// Same navy/blue, 3D-mockup editorial system as the landing page (see
-// landing.module.css's header comment) — unified onto the app-wide tokens
-// and fonts in D-010/A-002, 2026-09-13. This used to run its own warm-cream
-// palette; now it shares globals.css's --ink/--rust/--coral/etc. directly,
-// same as every other authenticated-app surface. Everything below this
-// point is presentation only: the actual sign-in logic (auto-retry, error
-// states, the Google button itself) is untouched from before this redesign.
+// The sign-in screen on the app's own tokens (globals.css): the same
+// charcoal-or-white ground as the landing page and the app, the brand
+// symbol, one card, one button. It used to scope the navy-era
+// landing.module.css and carry a floating-chip 3D scene behind the card;
+// both went on 2026-09-19 with the move to the black-and-white system —
+// the one thing a visitor has to do here is click precisely, and nothing
+// should compete with that.
 //
+// Everything below the markup is unchanged: the actual sign-in logic
+// (auto-retry, error states, the Google button itself) is as before.
 // The already-signed-in redirect lives one level up, in page.tsx (a server
-// component) — it runs before this client UI ever mounts, so a returning
-// user with a live session never sees this screen at all.
+// component) — it runs before this client UI ever mounts.
 export default function SignInClient() {
   return (
-    <div className={`${styles.root} min-h-screen`}>
-      <div className={styles.gridTexture} />
-      <SignInScene />
+    <div className="relative min-h-screen overflow-hidden bg-paper text-ink">
+      {/* The same soft light the landing page puts behind its hero. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[70vh]"
+        style={{ background: "radial-gradient(60% 55% at 50% 0%, var(--accent-soft) 0%, transparent 70%)" }}
+      />
       <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-16">
-        <Link href="/" className="mb-10 flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${styles.pulseDot}`} style={{ background: "var(--rust)" }} />
-          <span className="text-[17px] font-extrabold" style={{ letterSpacing: "-0.03em" }}>
+        <Link href="/" className="mb-10 flex items-center gap-2.5" aria-label="FollowUp home">
+          <LogoMark height={22} />
+          <span className="text-[17px] font-bold" style={{ letterSpacing: "-0.02em" }}>
             FollowUp
           </span>
         </Link>
         <Suspense fallback={null}>
           <SignInPageInner />
         </Suspense>
-        <Link href="/" className="mt-8 text-xs font-medium transition-opacity hover:opacity-70" style={{ color: "var(--ink-soft)" }}>
+        <Link href="/" className="mt-8 text-xs font-medium text-ink-soft transition-opacity hover:opacity-70">
           ← Back to home
         </Link>
       </div>
@@ -97,19 +101,16 @@ function SignInPageInner() {
   return (
     <Reveal className="w-full max-w-sm">
       <div
-        className="relative w-full rounded-2xl p-8 text-center"
-        style={{ background: "var(--card)", boxShadow: "0 30px 60px -28px rgba(11,31,51,0.28), 0 0 0 1px rgba(11,31,51,0.06)" }}
+        className="relative w-full rounded-2xl bg-card p-8 text-center"
+        style={{ boxShadow: "var(--shadow-box-lift)" }}
       >
-        {/* Not "Welcome back": the landing page's "Get started" button lands
-            first-time visitors on this exact screen, so roughly half the
-            traffic here has never signed in before and was being greeted as a
-            returning user on their first ever visit. */}
-        <h1 className="text-xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
+        {/* Not "Welcome back": the landing page's button lands first-time
+            visitors on this exact screen, so roughly half the traffic here
+            has never signed in before. */}
+        <h1 className="text-xl font-bold" style={{ letterSpacing: "-0.02em" }}>
           Sign in to FollowUp
         </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--ink-soft)" }}>
-          Sign in to see your real leads and follow-ups.
-        </p>
+        <p className="mt-2 text-sm text-ink-soft">Sign in to see your real leads and follow-ups.</p>
 
         <button
           onClick={() => {
@@ -118,7 +119,7 @@ function SignInPageInner() {
           }}
           disabled={redirecting || autoRetrying}
           className="mt-7 w-full inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-transform hover:scale-[1.015] disabled:opacity-60 disabled:hover:scale-100"
-          style={{ background: "#fff", color: "var(--ink)", border: "1px solid rgba(11,31,51,0.15)" }}
+          style={{ background: "var(--accent)", color: "var(--on-accent)" }}
         >
           <GoogleIcon className="h-4 w-4" />
           {redirecting || autoRetrying ? "Redirecting…" : "Continue with Google"}
@@ -134,8 +135,7 @@ function SignInPageInner() {
         )}
         {!autoRetrying && error && error !== "AccessDenied" && (
           <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
-            Sign-in failed — please try again.{" "}
-            <span style={{ color: "var(--ink-soft)" }}>({error})</span>
+            Sign-in failed — please try again. <span className="text-ink-soft">({error})</span>
           </p>
         )}
       </div>
@@ -143,6 +143,8 @@ function SignInPageInner() {
   );
 }
 
+// Google's own four-colour mark, as their sign-in guidelines ask. The one
+// place on a monochrome screen that keeps its colour, because it is not ours.
 function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

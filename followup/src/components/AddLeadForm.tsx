@@ -65,7 +65,7 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-xl border border-line bg-card p-6 max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-md box-lift p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">

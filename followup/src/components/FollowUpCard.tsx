@@ -35,7 +35,7 @@ export default function FollowUpCard({ lead }: { lead: Lead }) {
 
   if (status === "done") {
     return (
-      <div className="rounded-xl border border-line bg-card px-5 py-4 flex items-center gap-3 opacity-60">
+      <div className="box px-5 py-4 flex items-center gap-3 opacity-60">
         <Check className="h-4 w-4" style={{ color: "var(--sage)" }} />
         <p className="text-sm text-ink-soft">
           Marked {lead.name} as followed up.
@@ -46,7 +46,7 @@ export default function FollowUpCard({ lead }: { lead: Lead }) {
 
   if (status === "snoozed") {
     return (
-      <div className="rounded-xl border border-line bg-card px-5 py-4 flex items-center gap-3 opacity-60">
+      <div className="box px-5 py-4 flex items-center gap-3 opacity-60">
         <Clock className="h-4 w-4" style={{ color: "var(--slate)" }} />
         <p className="text-sm text-ink-soft">Snoozed {lead.name} until tomorrow.</p>
       </div>
@@ -54,7 +54,7 @@ export default function FollowUpCard({ lead }: { lead: Lead }) {
   }
 
   return (
-    <div className="rounded-xl border border-line bg-card p-5">
+    <div className="box p-5">
       <div className="flex items-start gap-4">
         <ScoreBadge score={lead.score} />
         <div className="min-w-0 flex-1">

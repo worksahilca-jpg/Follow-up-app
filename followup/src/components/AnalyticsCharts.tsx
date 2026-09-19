@@ -14,17 +14,10 @@ import {
 } from "recharts";
 import { BarChart3 } from "lucide-react";
 import type { AnalyticsData } from "@/lib/analytics-data";
-import {
-  CHART_AXIS_COLOR as AXIS_COLOR,
-  CHART_GRID_COLOR as GRID_COLOR,
-  CHART_TOOLTIP_STYLE as tooltipStyle,
-  CHART_PRIMARY,
-  CHART_SECONDARY,
-  CHART_MONEY,
-  CHART_INK,
-} from "@/lib/chart-colors";
+import { useChartColors } from "@/lib/chart-colors";
 
 export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
+  const chart = useChartColors();
   const hasLeads = data.totalLeads > 0;
 
   return (
@@ -37,13 +30,13 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
       >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={mergeWeeks(data.leadsPerWeek, data.followUpsPerWeek)} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-            <XAxis dataKey="week" tick={{ fontSize: 12, fill: AXIS_COLOR }} />
-            <YAxis tick={{ fontSize: 12, fill: AXIS_COLOR }} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+            <XAxis dataKey="week" tick={{ fontSize: 12, fill: chart.axis }} />
+            <YAxis tick={{ fontSize: 12, fill: chart.axis }} allowDecimals={false} />
+            <Tooltip contentStyle={chart.tooltip} />
             <Legend wrapperStyle={{ fontSize: 13 }} />
-            <Line type="monotone" dataKey="leads" name="New leads" stroke={CHART_SECONDARY} strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="followUps" name="Follow-ups sent" stroke={CHART_MONEY} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="leads" name="New leads" stroke={chart.secondary} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="followUps" name="Follow-ups sent" stroke={chart.money} strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -60,11 +53,11 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
         <ChartCard title="Pipeline funnel" description="Where your leads are sitting right now." hasData={hasLeads}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.stageCounts} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 12, fill: AXIS_COLOR }} interval={0} angle={-20} textAnchor="end" height={50} />
-              <YAxis tick={{ fontSize: 12, fill: AXIS_COLOR }} allowDecimals={false} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="count" name="Leads" fill={CHART_PRIMARY} radius={[4, 4, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 12, fill: chart.axis }} interval={0} angle={-20} textAnchor="end" height={50} />
+              <YAxis tick={{ fontSize: 12, fill: chart.axis }} allowDecimals={false} />
+              <Tooltip contentStyle={chart.tooltip} />
+              <Bar dataKey="count" name="Leads" fill={chart.primary} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -72,11 +65,11 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
         <ChartCard title="Lead sources" description="Where your leads are coming from." hasData={hasLeads}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.sourceCounts} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 12, fill: AXIS_COLOR }} allowDecimals={false} />
-              <YAxis dataKey="source" type="category" tick={{ fontSize: 12, fill: AXIS_COLOR }} width={100} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="count" name="Leads" fill={CHART_INK} radius={[0, 4, 4, 0]} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 12, fill: chart.axis }} allowDecimals={false} />
+              <YAxis dataKey="source" type="category" tick={{ fontSize: 12, fill: chart.axis }} width={100} />
+              <Tooltip contentStyle={chart.tooltip} />
+              <Bar dataKey="count" name="Leads" fill={chart.ink} radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -110,7 +103,7 @@ function ChartCard({
     <section>
       <h2 className="font-display text-xl">{title}</h2>
       <p className="text-sm text-ink-soft mt-1">{description}</p>
-      <div className="mt-4 rounded-xl border border-line bg-card p-4" style={{ height }}>
+      <div className="mt-4 rounded-[var(--radius-box)] bg-card p-4" style={{ height, boxShadow: "var(--shadow-box)" }}>
         {hasData ? children : <EmptyChart />}
       </div>
     </section>

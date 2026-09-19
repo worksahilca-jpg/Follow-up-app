@@ -122,7 +122,7 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-xl border border-line bg-card p-6"
+        className="w-full max-w-md box-lift p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">

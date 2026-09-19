@@ -15,7 +15,7 @@ export default function TeamPerformanceSection({ members }: { members: TeamBreak
     // the name column below — a bare 1fr track sizes to its content's
     // natural (min-content) width, so `truncate` never actually gets a
     // chance to fire on a long name in a narrow grid column without it.
-    <div className="rounded-xl border border-line bg-card overflow-hidden overflow-x-auto">
+    <div className="box overflow-hidden overflow-x-auto">
       {/* Tailwind arbitrary grid-template-columns needs `_` (space), not a
           comma, between tracks — `minmax(0,1fr),auto,auto,auto` compiles to
           literally invalid CSS (grid-template-columns doesn't accept

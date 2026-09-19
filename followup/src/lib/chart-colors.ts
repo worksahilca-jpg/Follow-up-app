@@ -1,26 +1,91 @@
-/**
- * Chart color constants matching the current theme (src/app/globals.css).
- * Recharts' fill/stroke/tick props don't read CSS custom properties, so
- * these have to be kept in sync by hand whenever the theme changes —
- * shared here so every chart does that in one place instead of each
- * component carrying its own copy. Updated 2026-09-13 for the navy/blue
- * "Award Direction" reskin (D-010/A-002) — the previous values here were
- * already stale (a leftover blue from an even earlier accent period, never
- * updated when the accent moved to amber), so these now match the real,
- * current tokens rather than perpetuating that drift.
- */
-export const CHART_AXIS_COLOR = "#46566b"; // --ink-soft
-export const CHART_GRID_COLOR = "#e2e4e7"; // --line, as a solid approximation (Recharts can't use the rgba() token directly)
+"use client";
 
-export const CHART_TOOLTIP_STYLE = {
-  backgroundColor: "#ffffff", // --card
-  border: "1px solid #e2e4e7", // --line
-  borderRadius: 8,
-  fontSize: 13,
+import { useMemo, useSyncExternalStore } from "react";
+
+/**
+ * Chart colours that follow the app's tokens in both device themes.
+ *
+ * Recharts writes `fill`/`stroke` straight onto SVG presentation attributes,
+ * which do not resolve `var(--x)`, so the values have to be real colour
+ * strings. Rather than keep a hand-maintained copy of globals.css here (the
+ * previous approach, which went stale twice), this reads the live tokens off
+ * the document and re-reads them whenever the device's colour scheme flips,
+ * so a chart on the charcoal ground is drawn with the charcoal theme's ink
+ * and lines, and the same chart on white with the light theme's.
+ *
+ * On the server, and during the client's hydration pass, the light set is
+ * used so markup matches; the client then re-renders with the real scheme.
+ */
+export type ChartColors = {
+  /** Axis tick text. --ink-soft */
+  axis: string;
+  /** Grid lines. --line, as an opaque approximation */
+  grid: string;
+  /** The main series. --ink */
+  primary: string;
+  /** A second series beside the first. --ink-soft */
+  secondary: string;
+  /** Money, kept as the one meaning-carrying hue. --gold */
+  money: string;
+  /** Alias of primary, kept for older call sites. */
+  ink: string;
+  tooltip: { backgroundColor: string; border: string; borderRadius: number; fontSize: number; color: string };
 };
 
-export const CHART_PRIMARY = "#2a5cdb"; // --rust
-export const CHART_INK = "#0b1f33"; // --ink
-export const CHART_SECONDARY = "#56677e"; // --slate
-export const CHART_SUCCESS = "#0d6e3c"; // --sage
-export const CHART_MONEY = "#a35904"; // --gold
+const LIGHT: ChartColors = {
+  axis: "#52525b",
+  grid: "#e4e4e7",
+  primary: "#0a0a0a",
+  secondary: "#71717a",
+  money: "#a35904",
+  ink: "#0a0a0a",
+  tooltip: { backgroundColor: "#ffffff", border: "1px solid #e4e4e7", borderRadius: 8, fontSize: 13, color: "#0a0a0a" },
+};
+
+const DARK: ChartColors = {
+  axis: "#9ca3af",
+  grid: "#3a3a3d",
+  primary: "#ffffff",
+  secondary: "#9ca3af",
+  money: "#e0a53a",
+  ink: "#ffffff",
+  tooltip: { backgroundColor: "#27272a", border: "1px solid #3a3a3d", borderRadius: 8, fontSize: 13, color: "#ffffff" },
+};
+
+type Scheme = "light" | "dark";
+
+const QUERY = "(prefers-color-scheme: dark)";
+
+function subscribe(onChange: () => void) {
+  const mq = window.matchMedia(QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+const getSnapshot = (): Scheme => (window.matchMedia(QUERY).matches ? "dark" : "light");
+const getServerSnapshot = (): Scheme => "light";
+
+function read(scheme: Scheme): ChartColors {
+  const base = scheme === "dark" ? DARK : LIGHT;
+  if (typeof window === "undefined") return base;
+  // Prefer the live token values so a future token change reaches charts
+  // without touching this file; fall back to the set above per role.
+  const css = getComputedStyle(document.documentElement);
+  const v = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+  const ink = v("--ink", base.ink);
+  const soft = v("--ink-soft", base.axis);
+  const card = v("--card", base.tooltip.backgroundColor);
+  return {
+    axis: soft,
+    grid: base.grid,
+    primary: ink,
+    secondary: soft,
+    money: v("--gold", base.money),
+    ink,
+    tooltip: { ...base.tooltip, backgroundColor: card, color: ink },
+  };
+}
+
+export function useChartColors(): ChartColors {
+  const scheme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useMemo(() => read(scheme), [scheme]);
+}

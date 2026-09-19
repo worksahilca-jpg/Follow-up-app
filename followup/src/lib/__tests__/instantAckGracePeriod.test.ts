@@ -429,3 +429,38 @@ describe("when a tick dies or fails", () => {
     expect(lead.acknowledgedAt).toBeNull();
   });
 });
+
+/**
+ * The head start runs from when the LEAD WROTE, not from when FollowUp
+ * noticed. Those were the same instant while a webhook was the only way a
+ * DM arrived. Since the conversation poller also asks Meta every few
+ * minutes (src/lib/instagramPoll.ts, added because Meta's push proved
+ * unreliable), they are not — and measuring from "now" made the two waits
+ * stack. Seen live on 2026-09-19: a DM sent at 19:07:42 and found at
+ * 19:09:06 was queued for 19:11:06, three and a half minutes after a lead
+ * who expects a business to be awake.
+ */
+describe("a DM found late does not wait twice", () => {
+  it("measures the grace period from the inbound, not from when it was queued", async () => {
+    const wroteAt = new Date(NOW.getTime() - 84_000);
+    const result = await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: "Is the roof original?", inboundAt: wroteAt });
+    expect(result.queuedFor).toEqual(new Date(wroteAt.getTime() + DM_ACK_GRACE_PERIOD_MS));
+    expect(lead.ackDueAt).toEqual(new Date(wroteAt.getTime() + DM_ACK_GRACE_PERIOD_MS));
+  });
+
+  it("is due immediately when the head start already elapsed before the poll found it", async () => {
+    const wroteAt = new Date(NOW.getTime() - 3 * 60_000);
+    await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: "Is the roof original?", inboundAt: wroteAt });
+    expect(lead.ackDueAt!.getTime()).toBeLessThan(NOW.getTime());
+
+    // So the very next tick sends it, rather than starting another wait.
+    const result = await tick(NOW);
+    expect(result).toMatchObject({ claimed: 1, sent: 1 });
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("still measures from now when no inbound time is given", async () => {
+    const result = await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: "Is the roof original?" });
+    expect(result.queuedFor).toEqual(new Date(NOW.getTime() + DM_ACK_GRACE_PERIOD_MS));
+  });
+});

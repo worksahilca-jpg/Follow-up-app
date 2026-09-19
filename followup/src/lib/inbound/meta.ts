@@ -277,7 +277,12 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
         continue;
       }
 
-      const lead = await findOrCreateLeadByInstagram(business.id, senderId);
+      // The handle, when we have it. Only the polled path carries one
+      // (src/lib/instagramPoll.ts) — Meta's webhook payload has no
+      // username — and it is what stops a lead being filed, listed and
+      // greeted as "Instagram DM".
+      const senderUsername = typeof event.sender?.username === "string" ? event.sender.username : undefined;
+      const lead = await findOrCreateLeadByInstagram(business.id, senderId, senderUsername);
       const sentAt = eventSentAt(event);
 
       const conversation = await findOrCreateConversation(lead.id, "instagram");

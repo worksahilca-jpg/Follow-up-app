@@ -252,7 +252,17 @@ export async function findOrCreateLeadByInstagram(
   const phone = instagramLeadId(senderId);
   const existing = await prisma.lead.findFirst({ where: { businessId, phone } });
   if (existing) {
-    return prisma.lead.update({ where: { id: existing.id }, data: { lastContacted: new Date() } });
+    // Learning the handle late still counts. A lead created from a
+    // webhook (no username in the payload) is stuck as "Instagram DM"
+    // forever otherwise, even once the poller sees who they are — and
+    // that placeholder is what the first real lead got greeted by. Only
+    // ever fills a blank: a name the owner typed, or one already taken
+    // from a handle, is never overwritten.
+    const shouldName = senderUsername && (!existing.name || existing.name === "Instagram DM");
+    return prisma.lead.update({
+      where: { id: existing.id },
+      data: { lastContacted: new Date(), ...(shouldName ? { name: `@${senderUsername}` } : {}) },
+    });
   }
   try {
     const lead = await prisma.lead.create({

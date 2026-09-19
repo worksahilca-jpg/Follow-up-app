@@ -1215,7 +1215,14 @@ export async function generateInstantReply(input: {
       {
         role: "user",
         content:
-          `Lead's first name: ${input.leadFirstName}\n\n` +
+          // Empty means FollowUp genuinely does not know who this is (a
+          // DM from an account with no name on it). Said explicitly, so
+          // the model writes an unaddressed greeting instead of filling
+          // the gap with whatever the field happens to contain — the
+          // 2026-09-19 "Hi! Instagram," was a placeholder reaching this
+          // line as though it were a person. See greetingFirstName in
+          // src/lib/acknowledge.ts.
+          `Lead's first name: ${input.leadFirstName || "(not known — greet them without using a name)"}\n\n` +
           `<lead_conversation>\n[inbound] ${input.inboundText.slice(0, MAX_TRANSCRIPT_CHARS)}\n</lead_conversation>`,
       },
     ],

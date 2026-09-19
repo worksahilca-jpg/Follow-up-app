@@ -2718,3 +2718,12 @@ cards, the trust panel, the setup strip, four modals, two popovers). globals.css
 every one of those call sites uses it. Inputs keep their border on purpose: a field is an
 outline you type into, not a box. Rendered: none of these screens could be opened live from
 the sandbox (database unreachable); the class compiles and the build is clean.
+
+## 2026-09-19 — One FAQ answer names Gmail and Google Calendar (for Google's reviewers)
+
+Google's OAuth verification requires the public homepage to describe, in plain copy, what the
+app does with each Google product it asks for (playbook §2.2, §4.2). The v20 page dropped the
+old "reads your sales conversations in Gmail" line, and never mentioned Calendar. Rather than a
+new section (nothing else on the page needs it), the "Is my data safe?" answer now says it: reads
+incoming Gmail to spot customer enquiries, sends replies from your own address, adds a Google
+Calendar event when a customer books a call. Plain words, principle 9. No visual change.

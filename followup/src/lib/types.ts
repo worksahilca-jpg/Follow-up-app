@@ -73,6 +73,15 @@ export interface Lead {
   // nothing had judged. That pill's own comment names this as "the exact
   // failure this product exists to prevent" (2026-09-19).
   reviewed: boolean;
+  /**
+   * What FollowUp read this lead's latest message as — language, script
+   * and how formally they wrote (src/lib/leadLanguage.ts). Null when no
+   * message has been read yet, which the UI says plainly rather than
+   * guessing "English".
+   */
+  languageRead: { language: string; script: string; register: string } | null;
+  /** When that reading was taken. Null whenever languageRead is. */
+  languageReadAt: string | null;
   scoreFactors: ScoreFactor[];
   priority: Priority;
   lastContacted: string; // ISO date

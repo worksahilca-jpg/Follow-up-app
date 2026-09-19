@@ -25,6 +25,8 @@ export const leads: Lead[] = [
     score: 92,
     priority: "high",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason:
       "Sarah asked about pricing and timeline, opened your proposal email twice, and hasn't replied in 5 days — that combination usually means she's still deciding, not gone cold.",
     scoreFactors: [
@@ -61,6 +63,8 @@ export const leads: Lead[] = [
     score: 68,
     priority: "medium",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason:
       "Mike requested a proposal 3 days ago and has replied quickly in the past, but hasn't shown pricing urgency yet.",
     scoreFactors: [
@@ -94,6 +98,8 @@ export const leads: Lead[] = [
     score: 81,
     priority: "high",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason:
       "John asked to discuss the proposal by phone — a request for a call is one of the strongest buying signals in your pipeline.",
     scoreFactors: [
@@ -126,6 +132,8 @@ export const leads: Lead[] = [
     score: 54,
     priority: "medium",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason:
       "Priya engaged with your first message and asked a clarifying question, but hasn't confirmed budget or timeline yet.",
     scoreFactors: [
@@ -158,6 +166,8 @@ export const leads: Lead[] = [
     score: 71,
     priority: "high",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason:
       "Derek reached out directly asking for availability this month — a specific timing question usually signals real intent.",
     scoreFactors: [
@@ -188,6 +198,8 @@ export const leads: Lead[] = [
     score: 22,
     priority: "low",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason:
       "Amanda hasn't opened your last two emails and there's no buying-intent language in the thread yet.",
     scoreFactors: [
@@ -219,6 +231,8 @@ export const leads: Lead[] = [
     score: 100,
     priority: "none",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason: "Deal closed — no follow-up needed. Great candidate for a testimonial.",
     scoreFactors: [{ label: "Deal won", weight: 100 }],
     lastContacted: daysAgo(2),
@@ -243,6 +257,8 @@ export const leads: Lead[] = [
     score: 5,
     priority: "none",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason: "Victor went with another provider — safe to archive.",
     scoreFactors: [{ label: "Chose a competitor", weight: -100 }],
     lastContacted: daysAgo(20),
@@ -267,6 +283,8 @@ export const leads: Lead[] = [
     score: 76,
     priority: "high",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason:
       "Natalie asked for your availability calendar and mentioned a launch date — strong scheduling intent.",
     scoreFactors: [
@@ -300,6 +318,8 @@ export const leads: Lead[] = [
     score: 88,
     priority: "high",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason:
       "Ray opened your proposal three times in two days and asked about payment terms — usually a sign he's ready to sign.",
     scoreFactors: [
@@ -332,6 +352,8 @@ export const leads: Lead[] = [
     score: 40,
     priority: "medium",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason: "Elena filled out the contact form but hasn't been reached yet — first outreach is overdue.",
     scoreFactors: [
       { label: "Form submitted, no reply sent", weight: 20 },
@@ -359,6 +381,8 @@ export const leads: Lead[] = [
     score: 31,
     priority: "low",
     reviewed: true,
+    languageRead: null,
+    languageReadAt: null,
     scoreReason: "Tom replied once but conversation has gone quiet for over a week with no clear next step.",
     scoreFactors: [
       { label: "Replied once", weight: 10 },

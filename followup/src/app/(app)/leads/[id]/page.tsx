@@ -17,6 +17,7 @@ import ConversationThread from "@/components/ConversationThread";
 import { PageHeader } from "@/components/PageHeader";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 import { isInstagramLeadId, isSocialLeadId } from "@/lib/instagramId";
+import type { LeadLanguage } from "@/lib/leadLanguage";
 
 export const dynamic = "force-dynamic";
 
@@ -191,7 +192,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
           <div>
             <CollapsibleSection title="Consent & AI activity">
-              <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} />
+              <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
             </CollapsibleSection>
           </div>
 

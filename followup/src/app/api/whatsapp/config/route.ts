@@ -1,0 +1,159 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { getSessionContext, requireAdmin } from "@/lib/session";
+import { prisma } from "@/lib/db";
+import { appUrl } from "@/lib/stripe";
+import { recordAudit } from "@/lib/audit";
+import { parseJsonBody } from "@/lib/validation";
+import { WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
+import {
+  lookupWhatsAppNumber,
+  subscribeAppToWaba,
+  unsubscribeAppFromWaba,
+  whatsappSignupAvailable,
+} from "@/lib/whatsappCloud";
+
+/**
+ * GET/POST/DELETE /api/whatsapp/config — this business's WhatsApp
+ * connection through Meta (src/lib/whatsappCloud.ts). The one-click path
+ * is /api/whatsapp/connect (Embedded Signup); this route reports state,
+ * saves the post-24-hour template, takes a pasted token as the fallback,
+ * and disconnects. The token itself is never echoed back.
+ */
+export async function GET() {
+  const ctx = await getSessionContext();
+  if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+
+  const b = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: {
+      whatsappWabaId: true,
+      whatsappPhoneNumberId: true,
+      whatsappAccessToken: true,
+      whatsappDisplayNumber: true,
+      whatsappConnectMode: true,
+      whatsappCloudTemplateName: true,
+      whatsappCloudTemplateLanguage: true,
+      whatsappCloudTemplateBody: true,
+      // The earlier Twilio sender — shown as "still connected the old way"
+      // so a business on it is not told WhatsApp is off.
+      whatsappPhoneNumber: true,
+      twilioAccountSid: true,
+      twilioAuthToken: true,
+    },
+  });
+
+  return NextResponse.json({
+    success: true,
+    connected: !!b?.whatsappPhoneNumberId && !!b?.whatsappAccessToken,
+    displayNumber: b?.whatsappDisplayNumber ?? null,
+    connectMode: b?.whatsappConnectMode ?? null,
+    wabaId: b?.whatsappWabaId ?? null,
+    phoneNumberId: b?.whatsappPhoneNumberId ?? null,
+    templateName: b?.whatsappCloudTemplateName ?? null,
+    templateLanguage: b?.whatsappCloudTemplateLanguage ?? null,
+    templateBody: b?.whatsappCloudTemplateBody ?? null,
+    twilioLegacy: !!b?.whatsappPhoneNumber && !!b?.twilioAccountSid && !!b?.twilioAuthToken,
+    signupAvailable: whatsappSignupAvailable(),
+    // Public by nature (it is in every Facebook Login URL); the secret and
+    // the token never leave the server.
+    appId: process.env.FACEBOOK_APP_ID ?? null,
+    configId: process.env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID ?? null,
+    webhookUrl: `${appUrl()}/api/whatsapp/webhook`,
+    verifyToken: WEBHOOK_VERIFY_TOKEN,
+  });
+}
+
+const schema = z.object({
+  // The follow-up past 24 hours — the template's name and language code
+  // exactly as WhatsApp Manager shows them, and the approved wording for
+  // reference. Blank clears.
+  templateName: z.string().trim().max(512).optional(),
+  templateLanguage: z.string().trim().max(16).optional(),
+  templateBody: z.string().trim().max(2000).optional(),
+  // The paste-a-token fallback: all three together, or none.
+  accessToken: z.string().trim().min(1).optional(),
+  phoneNumberId: z.string().trim().regex(/^\d+$/, "The phone number ID is digits only.").optional(),
+  wabaId: z.string().trim().regex(/^\d+$/, "The WhatsApp Business Account ID is digits only.").optional(),
+});
+
+export async function POST(request: NextRequest) {
+  const ctx = await getSessionContext();
+  if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+
+  const parsed = await parseJsonBody(request, schema);
+  if (!parsed.ok) return parsed.response;
+  const { templateName, templateLanguage, templateBody, accessToken, phoneNumberId, wabaId } = parsed.data;
+
+  const data: Record<string, string | null> = {};
+  if (templateName !== undefined) data.whatsappCloudTemplateName = templateName || null;
+  if (templateLanguage !== undefined) data.whatsappCloudTemplateLanguage = templateLanguage || null;
+  if (templateBody !== undefined) data.whatsappCloudTemplateBody = templateBody || null;
+
+  if (accessToken || phoneNumberId || wabaId) {
+    if (!accessToken || !phoneNumberId || !wabaId) {
+      return NextResponse.json(
+        { success: false, message: "To connect by hand, all three are needed: the token, the phone number ID and the WhatsApp Business Account ID." },
+        { status: 400 }
+      );
+    }
+    // Same posture as the Instagram paste path: prove the token works
+    // before saving it, so a bad paste fails now and not on the first lead.
+    const number = await lookupWhatsAppNumber(phoneNumberId, accessToken);
+    if (!number) {
+      return NextResponse.json(
+        { success: false, message: "That token and phone number ID don't work together — double-check both in WhatsApp Manager." },
+        { status: 400 }
+      );
+    }
+    const sub = await subscribeAppToWaba(wabaId, accessToken);
+    if (!sub.ok) {
+      return NextResponse.json({ success: false, message: `Meta wouldn't let FollowUp subscribe to that account: ${sub.message}` }, { status: 400 });
+    }
+    data.whatsappAccessToken = accessToken;
+    data.whatsappPhoneNumberId = phoneNumberId;
+    data.whatsappWabaId = wabaId;
+    data.whatsappDisplayNumber = number.displayNumber;
+    data.whatsappConnectMode = null;
+    void recordAudit(ctx, "integration.whatsapp.connect", { meta: { via: "token", phoneNumberId } });
+  } else {
+    void recordAudit(ctx, "integration.whatsapp.update");
+  }
+
+  try {
+    await prisma.business.update({ where: { id: ctx.businessId }, data });
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+      return NextResponse.json({ success: false, message: "That WhatsApp number is already connected to another FollowUp account." }, { status: 409 });
+    }
+    throw err;
+  }
+  return NextResponse.json({ success: true, displayNumber: data.whatsappDisplayNumber ?? undefined });
+}
+
+/** DELETE — disconnect: drops the token and the number; the Twilio fields are not touched. */
+export async function DELETE() {
+  const ctx = await getSessionContext();
+  if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  void recordAudit(ctx, "integration.whatsapp.disconnect");
+
+  const b = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: { whatsappWabaId: true, whatsappAccessToken: true },
+  });
+  if (b?.whatsappWabaId && b.whatsappAccessToken) await unsubscribeAppFromWaba(b.whatsappWabaId, b.whatsappAccessToken);
+
+  await prisma.business.update({
+    where: { id: ctx.businessId },
+    data: {
+      whatsappWabaId: null,
+      whatsappPhoneNumberId: null,
+      whatsappAccessToken: null,
+      whatsappDisplayNumber: null,
+      whatsappConnectMode: null,
+    },
+  });
+  return NextResponse.json({ success: true });
+}

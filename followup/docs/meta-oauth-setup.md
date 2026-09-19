@@ -1,4 +1,4 @@
-# Meta OAuth setup — one-click Instagram + Facebook connect
+# Meta OAuth setup — one-click Instagram, Facebook and WhatsApp connect
 
 Without this, Settings still works: a business pastes an access token by hand
 (`InstagramConfig.tsx` / `FacebookConfig.tsx` fall back automatically when
@@ -47,6 +47,54 @@ already present) → Settings.
    app — they must accept the invite) can connect their own Page without
    App Review; beyond that, submit for review with a screencast showing a
    Page owner connecting and a lead's message becoming a FollowUp lead.
+
+## 3. WhatsApp — the owner's own number (Embedded Signup with Coexistence)
+
+Since 2026-09-19 WhatsApp goes through Meta's Cloud API directly, on the number
+that is already in the WhatsApp Business app on the owner's phone (Meta's
+"Coexistence"). Twilio is not involved. Scope and what is still unverified:
+`research/integrations/2026-09-19-whatsapp-coexistence.md`.
+
+In the app dashboard:
+
+1. **Add the WhatsApp product** to the "FollowUp" app (App Dashboard → Add
+   product → WhatsApp). Use the same App ID/App Secret as §2 — WhatsApp is a
+   product of the main app, so `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` already
+   cover it, including webhook signatures.
+2. **Webhook**: WhatsApp → Configuration → Callback URL
+   `https://followupbase.io/api/whatsapp/webhook`, verify token the one shown
+   in Settings → WhatsApp → "Meta console reference" (same token as Instagram).
+   Subscribe to the fields `messages`, `smb_message_echoes`, `history`,
+   `smb_app_state_sync`.
+3. **Embedded Signup configuration**: Facebook Login for Business →
+   Configurations → Create → choose the WhatsApp Business Account login
+   variation, and turn on the **"Onboard WhatsApp Business app users"**
+   (Coexistence) option. Copy the configuration ID into Vercel (Production):
+   - `WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID`
+4. **Permissions** the flow requests: `whatsapp_business_management`,
+   `whatsapp_business_messaging`. In development mode only people with a role
+   on the app can connect. For any other business these need App Review, which
+   needs Business Verification — both already on the founder's list in
+   `docs/meta-and-twilio-verification-pack.md`.
+5. **JavaScript SDK domain**: Facebook Login for Business → Settings → Allowed
+   Domains for the JavaScript SDK: `https://followupbase.io`. The connect button
+   loads Meta's SDK in the browser, and the SDK refuses domains not listed.
+
+What the owner sees: Settings → WhatsApp → "Connect WhatsApp" opens Meta's
+window; they scan a QR code with the phone that has the WhatsApp Business app;
+the number stays on that phone. FollowUp receives the phone number id and the
+WhatsApp Business Account id, exchanges the one-time code for a business
+token, subscribes the app to the account, and saves (`POST /api/whatsapp/connect`).
+
+**The post-24-hour template** is created by each business in WhatsApp Manager
+(category Utility, one placeholder for the first name) and its name and
+language are entered in Settings → WhatsApp. FollowUp cannot create it on the
+business's behalf.
+
+**Founder's own testing before App Review**: WhatsApp Manager → System Users →
+generate a token with the two WhatsApp permissions, then use "Have an access
+token instead?" in Settings → WhatsApp with the phone number ID and the WABA ID
+from WhatsApp Manager → Phone numbers.
 
 ## After setting the env vars
 

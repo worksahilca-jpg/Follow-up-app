@@ -173,17 +173,27 @@ export async function fetchTwilioRecording(recordingUrl: string, accountSid: str
 export async function findOrCreateLeadByPhone(
   businessId: string,
   phone: string,
-  source: string
+  source: string,
+  // A display name the channel already knows (WhatsApp sends the person's
+  // profile name with every message). Used on creation, and to replace a
+  // name that is still just the phone number — never to overwrite a name
+  // the owner typed. Twilio's SMS/WhatsApp paths pass nothing and get the
+  // number as before.
+  name?: string | null
 ): Promise<Lead> {
+  const displayName = name?.trim() || null;
   const existing = await prisma.lead.findFirst({ where: { businessId, phone } });
   if (existing) {
-    return prisma.lead.update({ where: { id: existing.id }, data: { lastContacted: new Date() } });
+    return prisma.lead.update({
+      where: { id: existing.id },
+      data: { lastContacted: new Date(), ...(displayName && existing.name === phone ? { name: displayName } : {}) },
+    });
   }
   try {
     const lead = await prisma.lead.create({
       data: {
         businessId,
-        name: phone,
+        name: displayName ?? phone,
         phone,
         source,
         stage: "NEW",

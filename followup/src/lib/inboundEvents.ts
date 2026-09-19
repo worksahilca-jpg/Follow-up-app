@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { processTwilioInbound } from "@/lib/inbound/twilioMessage";
 import { processMetaEnvelope } from "@/lib/inbound/meta";
+import { processWhatsAppCloudEnvelope } from "@/lib/inbound/whatsappCloud";
 import { processLeadFormSubmission, type LeadFormSubmission } from "@/lib/inbound/leadForm";
 
 /**
@@ -29,7 +30,11 @@ import { processLeadFormSubmission, type LeadFormSubmission } from "@/lib/inboun
 
 export type InboundChannel =
   | "sms"
+  // Twilio's WhatsApp sender (the earlier path — see src/lib/twilio.ts).
   | "whatsapp"
+  // WhatsApp on the owner's own number through Meta's Cloud API
+  // (src/app/api/whatsapp/webhook, src/lib/inbound/whatsappCloud.ts).
+  | "whatsapp_cloud"
   | "instagram_or_messenger"
   | "webhook_lead"
   | "embed_form";
@@ -160,6 +165,13 @@ async function dispatch(event: {
         throw new Error("Meta sent a correctly-signed body that wasn't valid JSON; stored verbatim, nothing to process.");
       }
       await processMetaEnvelope(payload as { object?: string; entry?: unknown });
+      return;
+    }
+    case "whatsapp_cloud": {
+      if (typeof payload.__unparsedBody === "string") {
+        throw new Error("Meta sent a correctly-signed body that wasn't valid JSON; stored verbatim, nothing to process.");
+      }
+      await processWhatsAppCloudEnvelope(payload as { object?: string; entry?: unknown });
       return;
     }
     case "webhook_lead":

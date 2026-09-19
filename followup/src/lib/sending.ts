@@ -5,8 +5,9 @@
  * weekly report can be a real count instead of a placeholder).
  *
  * Real channels now: email (Gmail or Outlook — see detectEmailProvider
- * below), SMS (Twilio) or WhatsApp (Twilio's WhatsApp API) when the lead
- * only has a phone, Instagram DM or Facebook Messenger when the lead's
+ * below), SMS (Twilio) or WhatsApp (the owner's own number through Meta's
+ * Cloud API, or Twilio's WhatsApp sender for a business still on that)
+ * when the lead only has a phone, Instagram DM or Facebook Messenger when the lead's
  * "phone" is actually a platform-scoped sender ID (see
  * src/lib/instagramId.ts) — same approval-first flow either way, just a
  * different wire underneath.
@@ -18,6 +19,7 @@ import { checkSendCap } from "@/lib/sendCaps";
 import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
+import { getWhatsAppCloudConnection, sendWhatsAppCloud } from "@/lib/whatsappCloud";
 import { recordAudit } from "@/lib/audit";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { sendInstagramMessage } from "@/lib/instagram";
@@ -234,7 +236,7 @@ export type SendResult = {
  */
 export async function metaWindowFor(
   leadId: string,
-  channel: "instagram" | "messenger"
+  channel: "instagram" | "messenger" | "whatsapp"
 ): Promise<{ hoursSinceLead: number | null }> {
   const lastInbound = await prisma.message.findFirst({
     where: { conversation: { leadId, channel }, direction: "inbound" },
@@ -534,7 +536,20 @@ export async function sendFollowUpToLead(
       const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body, { quickReplies: options.quickReplies, humanAgent });
       if (!result.success) return providerFailure(result, "Facebook didn't confirm this message sent.");
     } else if (channel === "whatsapp") {
-      const result = await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: lead.name.split(" ")[0] });
+      // The owner's own number through Meta (src/lib/whatsappCloud.ts) when
+      // it is connected; otherwise the earlier Twilio sender, for a business
+      // that only ever configured that. Both return the provider's message
+      // id as `sid`, which the Cloud webhook's statuses / Twilio's status
+      // callback later match on Message.externalId.
+      const cloud = await getWhatsAppCloudConnection(lead.businessId);
+      const result = cloud
+        ? await sendWhatsAppCloud(cloud, lead.phone!, body, {
+            // The same 24-hour clock Instagram and Messenger use above —
+            // WhatsApp just has a sanctioned way through it (the template).
+            hoursSinceLead: (await metaWindowFor(lead.id, "whatsapp")).hoursSinceLead,
+            leadFirstName: lead.name.split(" ")[0],
+          })
+        : await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: lead.name.split(" ")[0] });
       if (!result.success) return providerFailure(result, "WhatsApp didn't confirm this message sent.");
       externalId = result.sid;
     } else {

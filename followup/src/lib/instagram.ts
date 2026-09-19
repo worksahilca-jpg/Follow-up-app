@@ -246,9 +246,11 @@ export async function findOrCreateLeadByInstagram(
  */
 export async function captureDirectReply(
   leadId: string,
-  channel: "instagram" | "messenger",
+  // "whatsapp": the owner replied from the WhatsApp Business app on their
+  // phone and Meta echoed it (smb_message_echoes) — src/lib/inbound/whatsappCloud.ts.
+  channel: "instagram" | "messenger" | "whatsapp",
   body: string,
-  source: "instagram_direct" | "messenger_direct",
+  source: "instagram_direct" | "messenger_direct" | "whatsapp_direct",
   externalId: string | undefined,
   sentAt: Date
 ): Promise<void> {

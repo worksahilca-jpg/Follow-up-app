@@ -1,142 +1,231 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, MessageSquare } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, ChevronDown, MessageSquare } from "lucide-react";
 
 /**
- * "WhatsApp" section of Settings.
+ * "WhatsApp" section of Settings — the owner's OWN number, through Meta.
  *
- * Split out of TwilioConfig on 2026-09-16. WhatsApp is delivered through
- * the same Twilio account as the carrier channels, so for a while it lived
- * inside the "Phone (SMS + calls)" panel — which meant that when the
- * carrier channels were dropped (CARRIER_CHANNELS_AVAILABLE, @/lib/pricing)
- * and that panel was hidden, WhatsApp had no setup UI at all. A channel the
- * product offers has to be connectable on its own.
+ * Rewritten 2026-09-19. Until then this panel asked for a Twilio account
+ * and a Twilio-hosted WhatsApp sender, which meant a second number nobody
+ * had ever seen. The founder's call: "Nobody wants to bring or use a new
+ * number that is nowhere exposed for a business." Meta's Coexistence lets
+ * the number already in the WhatsApp Business app on the owner's phone be
+ * used here too, so this panel is now the same shape as Instagram's: one
+ * sentence, one button, a connected line, a disconnect link.
  *
- * It is a separate panel rather than a flag inside the old one because the
- * two setups genuinely differ, not just cosmetically:
- *  - the Auth Token is REQUIRED here (src/lib/twilio.ts's sendWhatsApp bails
- *    without it), where in the carrier panel it was optional and only used
- *    to verify inbound signatures;
- *  - the number is the WhatsApp Sender's number, which is not always the
- *    Twilio voice/SMS number;
- *  - what a business has to wait for is Meta's review of its business, not
- *    anything a carrier controls.
+ * The button opens Meta's Embedded Signup in a popup (Meta's JavaScript
+ * SDK, loaded only here). Two things come back: a one-time code from the
+ * login callback, and the phone number id + account id from a message the
+ * popup posts to this window. Whichever arrives second sends both to
+ * /api/whatsapp/connect. The paste-a-token fallback is for the founder's
+ * own testing before Meta reviews the app.
  *
- * The three credential fields all POST to the same /api/twilio/config
- * endpoint the carrier panel uses — they are one Twilio account, and saving
- * them here is the same save. Nothing about SMS or calls is offered here,
- * in either affordance or copy.
+ * Copy rules (src/lib/__tests__/channelAvailability.test.ts): nothing here
+ * offers or mentions the carrier channels.
  */
+
+type Config = {
+  connected: boolean;
+  displayNumber: string | null;
+  connectMode: string | null;
+  templateName: string | null;
+  templateLanguage: string | null;
+  templateBody: string | null;
+  twilioLegacy: boolean;
+  signupAvailable: boolean;
+  appId: string | null;
+  configId: string | null;
+  webhookUrl: string;
+  verifyToken: string;
+};
+
+type FbSdk = {
+  init: (opts: { appId: string; autoLogAppEvents?: boolean; xfbml?: boolean; version: string }) => void;
+  login: (
+    cb: (response: { authResponse?: { code?: string } | null; status?: string }) => void,
+    opts: Record<string, unknown>
+  ) => void;
+};
+
+declare global {
+  interface Window {
+    FB?: FbSdk;
+    fbAsyncInit?: () => void;
+  }
+}
+
+const SDK_SRC = "https://connect.facebook.net/en_US/sdk.js";
+const GRAPH_VERSION = "v21.0";
+
 export default function WhatsAppConfig() {
-  const [loading, setLoading] = useState(true);
-  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
-  const [accountSid, setAccountSid] = useState<string | null>(null);
-  const [hasAuthToken, setHasAuthToken] = useState(false);
-  const [whatsappPhoneNumber, setWhatsappPhoneNumber] = useState<string | null>(null);
-  const [accountSidDraft, setAccountSidDraft] = useState("");
-  const [authTokenDraft, setAuthTokenDraft] = useState("");
-  const [phoneDraft, setPhoneDraft] = useState("");
-  const [editingAccount, setEditingAccount] = useState(false);
-  const [savingAccount, setSavingAccount] = useState(false);
-  const [accountError, setAccountError] = useState<string | null>(null);
-  const [accountSaved, setAccountSaved] = useState(false);
-  const [templateSid, setTemplateSid] = useState<string | null>(null);
-  const [templateBody, setTemplateBody] = useState<string | null>(null);
-  const [templateSidDraft, setTemplateSidDraft] = useState("");
+  const [config, setConfig] = useState<Config | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const [justConnected, setJustConnected] = useState(false);
+
+  const [showManual, setShowManual] = useState(false);
+  const [tokenDraft, setTokenDraft] = useState("");
+  const [numberIdDraft, setNumberIdDraft] = useState("");
+  const [wabaIdDraft, setWabaIdDraft] = useState("");
+
+  const [templateNameDraft, setTemplateNameDraft] = useState("");
+  const [templateLanguageDraft, setTemplateLanguageDraft] = useState("");
   const [templateBodyDraft, setTemplateBodyDraft] = useState("");
   const [savingTemplate, setSavingTemplate] = useState(false);
-  const [templateError, setTemplateError] = useState<string | null>(null);
   const [templateSaved, setTemplateSaved] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [generateError, setGenerateError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [showExamples, setShowExamples] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/twilio/config")
+  const [showReference, setShowReference] = useState(false);
+  const [copied, setCopied] = useState<"url" | "token" | null>(null);
+
+  // The two halves of a finished signup, held until both are in hand.
+  const signupRef = useRef<{ code?: string; phoneNumberId?: string; wabaId?: string; event?: string }>({});
+
+  const load = useCallback(() => {
+    return fetch("/api/whatsapp/config")
       .then((r) => r.json())
-      .then(
-        (data: {
-          success: boolean;
-          whatsappUrl?: string | null;
-          accountSid?: string | null;
-          hasAuthToken?: boolean;
-          whatsappPhoneNumber?: string | null;
-          whatsappTemplateSid?: string | null;
-          whatsappTemplateBody?: string | null;
-        }) => {
-          if (!data.success) return;
-          setWhatsappUrl(data.whatsappUrl ?? null);
-          setAccountSid(data.accountSid ?? null);
-          setHasAuthToken(!!data.hasAuthToken);
-          setWhatsappPhoneNumber(data.whatsappPhoneNumber ?? null);
-          setAccountSidDraft(data.accountSid ?? "");
-          setPhoneDraft(data.whatsappPhoneNumber ?? "");
-          setTemplateSid(data.whatsappTemplateSid ?? null);
-          setTemplateBody(data.whatsappTemplateBody ?? null);
-          setTemplateSidDraft(data.whatsappTemplateSid ?? "");
-          setTemplateBodyDraft(data.whatsappTemplateBody ?? "");
-        }
-      )
-      .finally(() => setLoading(false));
+      .then((data: Config & { success: boolean }) => {
+        if (!data.success) return;
+        setConfig(data);
+        setTemplateNameDraft(data.templateName ?? "");
+        setTemplateLanguageDraft(data.templateLanguage ?? "");
+        setTemplateBodyDraft(data.templateBody ?? "");
+      });
   }, []);
 
-  // All three are needed before a reply can actually go out
-  // (src/lib/twilio.ts sendWhatsApp), so "connected" means all three.
-  const connected = !!accountSid && hasAuthToken && !!whatsappPhoneNumber;
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  async function generate() {
-    setGenerating(true);
-    setGenerateError(null);
+  // Meta's SDK, only once the panel knows it can use it. Readiness is not
+  // state: startSignup checks window.FB when the button is pressed.
+  useEffect(() => {
+    if (!config?.signupAvailable || !config.appId || window.FB) return;
+    const appId = config.appId;
+    window.fbAsyncInit = () => {
+      window.FB?.init({ appId, autoLogAppEvents: false, xfbml: false, version: GRAPH_VERSION });
+    };
+    if (!document.querySelector(`script[src="${SDK_SRC}"]`)) {
+      const script = document.createElement("script");
+      script.src = SDK_SRC;
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+  }, [config?.signupAvailable, config?.appId]);
+
+  const finishConnect = useCallback(async () => {
+    const { code, phoneNumberId, wabaId, event } = signupRef.current;
+    if (!code || !phoneNumberId || !wabaId) return;
+    signupRef.current = {};
     try {
-      const res = await fetch("/api/twilio/config", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      const data: { success: boolean; whatsappUrl?: string; message?: string } = await res.json();
-      if (data.success) setWhatsappUrl(data.whatsappUrl ?? null);
-      else setGenerateError(data.message ?? "Couldn't generate the URL — try again.");
-    } catch {
-      setGenerateError("Couldn't generate the URL — try again.");
+      const res = await fetch("/api/whatsapp/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, phoneNumberId, wabaId, event }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: string };
+      if (!res.ok || !data.success) throw new Error(data.message || "Couldn't finish connecting — try again.");
+      setJustConnected(true);
+      await load();
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : "Couldn't finish connecting — try again.");
     } finally {
-      setGenerating(false);
+      setConnecting(false);
+    }
+  }, [load]);
+
+  // The popup posts the ids to the page that opened it.
+  useEffect(() => {
+    function onMessage(event: MessageEvent) {
+      if (event.origin !== "https://www.facebook.com" && event.origin !== "https://web.facebook.com") return;
+      let data: { type?: string; event?: string; data?: { phone_number_id?: string; waba_id?: string } };
+      try {
+        data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      } catch {
+        return;
+      }
+      if (data?.type !== "WA_EMBEDDED_SIGNUP") return;
+      if (data.event === "FINISH" || data.event === "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING") {
+        signupRef.current = { ...signupRef.current, phoneNumberId: data.data?.phone_number_id, wabaId: data.data?.waba_id, event: data.event };
+        void finishConnect();
+      } else if (data.event === "CANCEL") {
+        signupRef.current = {};
+        setConnecting(false);
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [finishConnect]);
+
+  function startSignup() {
+    if (!config?.configId) return;
+    if (!window.FB) {
+      setConnectError("Meta's sign-in script hasn't loaded yet — give it a second and press again.");
+      return;
+    }
+    setConnectError(null);
+    setJustConnected(false);
+    setConnecting(true);
+    signupRef.current = {};
+    window.FB.login(
+      (response) => {
+        const code = response.authResponse?.code;
+        if (!code) {
+          setConnecting(false);
+          setConnectError("Meta didn't finish the sign-in. Nothing was connected — try again.");
+          return;
+        }
+        signupRef.current = { ...signupRef.current, code };
+        void finishConnect();
+      },
+      {
+        config_id: config.configId,
+        response_type: "code",
+        override_default_response_type: true,
+        // The Coexistence flow: onboard the number that is already in the
+        // WhatsApp Business app on the owner's phone.
+        extras: { setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" },
+      }
+    );
+  }
+
+  async function connectByToken() {
+    if (!tokenDraft.trim() || !numberIdDraft.trim() || !wabaIdDraft.trim()) return;
+    setConnecting(true);
+    setConnectError(null);
+    try {
+      const res = await fetch("/api/whatsapp/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken: tokenDraft.trim(), phoneNumberId: numberIdDraft.trim(), wabaId: wabaIdDraft.trim() }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: string };
+      if (!res.ok || !data.success) throw new Error(data.message || "Couldn't connect — check the three values.");
+      setTokenDraft("");
+      setNumberIdDraft("");
+      setWabaIdDraft("");
+      setJustConnected(true);
+      await load();
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : "Couldn't connect — check the three values.");
+    } finally {
+      setConnecting(false);
     }
   }
 
-  // One save for all three values rather than the three separate saves the
-  // old panel had: they are useless individually — a reply needs every one
-  // of them — so three "Saved" moments only made a half-connected state
-  // look finished.
-  async function saveAccount() {
-    if (!accountSidDraft.trim() || !phoneDraft.trim() || (!hasAuthToken && !authTokenDraft.trim())) return;
-    setSavingAccount(true);
-    setAccountError(null);
+  async function disconnect() {
+    setConnecting(true);
     try {
-      const res = await fetch("/api/twilio/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountSid: accountSidDraft.trim(),
-          whatsappPhoneNumber: phoneDraft.trim(),
-          // Left out entirely when blank, so an existing saved token isn't
-          // wiped by someone editing only the number.
-          ...(authTokenDraft.trim() ? { authToken: authTokenDraft.trim() } : {}),
-        }),
-      });
-      const data: { success: boolean; message?: string } = await res.json();
+      const res = await fetch("/api/whatsapp/config", { method: "DELETE" });
+      const data = (await res.json().catch(() => ({}))) as { success?: boolean };
       if (data.success) {
-        setAccountSid(accountSidDraft.trim());
-        setWhatsappPhoneNumber(phoneDraft.trim());
-        if (authTokenDraft.trim()) setHasAuthToken(true);
-        setAuthTokenDraft("");
-        setEditingAccount(false);
-        setAccountSaved(true);
-        setTimeout(() => setAccountSaved(false), 2500);
-      } else {
-        setAccountError(data.message ?? "Couldn't save — try again.");
+        setJustConnected(false);
+        await load();
       }
-    } catch {
-      setAccountError("Couldn't save — try again.");
     } finally {
-      setSavingAccount(false);
+      setConnecting(false);
     }
   }
 
@@ -144,41 +233,41 @@ export default function WhatsAppConfig() {
     setSavingTemplate(true);
     setTemplateError(null);
     try {
-      const res = await fetch("/api/twilio/config", {
+      const res = await fetch("/api/whatsapp/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          whatsappTemplateSid: templateSidDraft.trim(),
-          whatsappTemplateBody: templateBodyDraft.trim(),
+          templateName: templateNameDraft.trim(),
+          templateLanguage: templateLanguageDraft.trim(),
+          templateBody: templateBodyDraft.trim(),
         }),
       });
-      const data: { success: boolean; message?: string } = await res.json();
-      if (data.success) {
-        setTemplateSid(templateSidDraft.trim() || null);
-        setTemplateBody(templateBodyDraft.trim() || null);
-        setTemplateSaved(true);
-        setTimeout(() => setTemplateSaved(false), 2500);
-      } else {
-        setTemplateError(data.message ?? "Couldn't save — try again.");
-      }
-    } catch {
-      setTemplateError("Couldn't save — try again.");
+      const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: string };
+      if (!res.ok || !data.success) throw new Error(data.message || "Couldn't save — try again.");
+      setTemplateSaved(true);
+      setTimeout(() => setTemplateSaved(false), 2500);
+      await load();
+    } catch (err) {
+      setTemplateError(err instanceof Error ? err.message : "Couldn't save — try again.");
     } finally {
       setSavingTemplate(false);
     }
   }
 
-  async function copyUrl(value: string) {
+  async function copy(which: "url" | "token", value: string) {
     try {
       await navigator.clipboard.writeText(value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopied(which);
+      setTimeout(() => setCopied(null), 2000);
     } catch {
-      window.prompt("Copy this URL:", value);
+      window.prompt("Copy this:", value);
     }
   }
 
-  if (loading) return null;
+  if (!config) return null;
+
+  const inputClass = "w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs";
+  const primaryButton = "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium disabled:opacity-60";
 
   return (
     <div className="box p-5">
@@ -189,285 +278,239 @@ export default function WhatsAppConfig() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Catch WhatsApp messages</p>
           <p className="text-xs text-ink-soft mt-1">
-            Anyone who messages your business on WhatsApp becomes a lead here, and your replies go back to them
-            on WhatsApp. Two things are needed first: a{" "}
-            <a href="https://console.twilio.com" target="_blank" rel="noopener" className="underline">
-              Twilio
-            </a>{" "}
-            account (paid, from about $1/month), and Meta&apos;s approval of your business — the same review
-            Instagram and Messenger need.
+            Your own WhatsApp number — the one already in the WhatsApp Business app on your phone. Anyone who
+            messages it becomes a lead here, and replies go back from the same number. You keep using the app
+            on your phone as before; what you send from there shows up here too.
           </p>
 
-          <button
-            onClick={() => setShowExamples((v) => !v)}
-            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
-          >
-            <ChevronDown className={`h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
-            How does this work?
-          </button>
-          {showExamples && (
-            <div className="mt-2 rounded-lg bg-paper border border-line p-3 text-xs text-ink-soft space-y-1.5">
-              <p>
-                In the Twilio Console, add a{" "}
-                <a
-                  href="https://console.twilio.com/us1/develop/sms/senders/whatsapp-senders"
-                  target="_blank"
-                  rel="noopener"
-                  className="underline"
-                >
-                  WhatsApp Sender
-                </a>{" "}
-                for your business number, open it, and paste the URL below into &quot;When a message comes
-                in.&quot;
-              </p>
-              <p>
-                From then on, a WhatsApp message arrives here as a lead with the whole conversation attached, and
-                anything you send back from FollowUp lands in their WhatsApp.
-              </p>
-            </div>
+          {justConnected && (
+            <p className="mt-2 text-xs" style={{ color: "var(--sage)" }} aria-live="polite">
+              WhatsApp connected — new messages will become leads automatically.
+            </p>
+          )}
+          {connectError && (
+            <p className="mt-2 text-xs" style={{ color: "var(--coral)" }} aria-live="polite">
+              {connectError}
+            </p>
           )}
 
-          {/* Its own block, not a sibling of the inline disclosure button
-              above — two inline-flex buttons in a row put "Generate URL"
-              beside "How does this work?" and made the primary action look
-              like part of the sentence. */}
-          {!whatsappUrl && (
-            <div className="mt-3">
-              <button
-                onClick={generate}
-                disabled={generating}
-                className="inline-flex items-center gap-1.5 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
-                style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-              >
-                {generating ? "Generating…" : "Generate URL"}
-              </button>
-              {generateError && (
-                <p className="mt-2 text-xs" style={{ color: "var(--coral)" }} aria-live="polite">
-                  {generateError}
-                </p>
-              )}
-            </div>
-          )}
-
-          {whatsappUrl && (
+          {config.connected ? (
             <div className="mt-3 space-y-3">
               <div>
-                <p className="text-xs font-medium text-ink-soft mb-1">
-                  WhatsApp URL — &quot;When a message comes in&quot;
+                <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--sage)" }}>
+                  <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <span>
+                    Connected — {config.displayNumber ?? "your WhatsApp number"}.
+                    {config.connectMode === "coexistence"
+                      ? " Replies you send from the app on your phone show up here as well."
+                      : config.connectMode === "cloud"
+                        ? " This number lives only here, not in the app on a phone."
+                        : ""}
+                  </span>
                 </p>
-                <pre className="rounded-lg bg-paper border border-line p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all">
-                  {whatsappUrl}
-                </pre>
-                <button
-                  onClick={() => copyUrl(whatsappUrl)}
-                  className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line"
-                >
-                  {copied ? <Check className="h-3 w-3" /> : null}
-                  {copied ? "Copied!" : "Copy"}
+                {config.connectMode === "coexistence" && (
+                  <p className="mt-1.5 text-xs text-ink-soft">
+                    Keep opening the WhatsApp Business app on that phone at least once every 13 days, or Meta
+                    pauses the connection.
+                  </p>
+                )}
+                <button onClick={disconnect} disabled={connecting} className="mt-2 text-xs font-medium" style={{ color: "var(--coral)" }}>
+                  Disconnect
                 </button>
               </div>
 
-              <div className="rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
-                <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
-                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
-                  <span>
-                    <strong className="font-medium">Verify your business with Meta.</strong> Until Meta Business
-                    Verification clears on your own Meta Business Manager, a new sender can start at most 250
-                    conversations a day. It&apos;s a one-time review each business does for itself, usually 2-10
-                    business days. Replying to someone who messaged you first isn&apos;t affected by that limit.{" "}
-                    <a
-                      href="https://www.twilio.com/docs/whatsapp/self-sign-up"
-                      target="_blank"
-                      rel="noopener"
-                      className="underline"
-                    >
-                      WhatsApp sender setup &amp; verification
-                    </a>
-                    .
-                  </span>
+              <div className="pt-3 border-t border-line space-y-2">
+                <p className="text-xs font-medium">Following up after 24 hours</p>
+                <p className="text-xs text-ink-soft">
+                  WhatsApp lets a business reply freely for 24 hours after the customer&apos;s last message. After
+                  that, only a message Meta approved in advance can go out — which is exactly FollowUp&apos;s
+                  &quot;still interested?&quot; follow-up. Create one in{" "}
+                  <a href="https://business.facebook.com/wa/manage/message-templates/" target="_blank" rel="noopener" className="underline">
+                    WhatsApp Manager
+                  </a>{" "}
+                  (category Utility, one placeholder for the first name, e.g. &quot;Hi {"{{1}}"}, just following
+                  up on your inquiry — still interested? Reply here anytime and I&apos;ll get right back to
+                  you.&quot;), then enter its name and language below. Without one, a follow-up past 24 hours
+                  isn&apos;t sent, and FollowUp tells you so.
                 </p>
-              </div>
-
-              <div className="pt-3 border-t border-line">
-                <p className="text-xs font-medium">Let FollowUp reply for you</p>
-                {connected && !editingAccount ? (
-                  <>
-                    <p className="text-xs mt-1 flex items-start gap-1.5" style={{ color: "var(--sage)" }}>
-                      <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                      Connected — a reply to a WhatsApp lead is sent from {whatsappPhoneNumber}.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setEditingAccount(true);
-                        setAccountError(null);
-                      }}
-                      className="mt-1.5 text-xs font-medium underline underline-offset-2 text-ink-soft"
-                    >
-                      Change these details
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-xs text-ink-soft mt-1">
-                      Three values from your{" "}
-                      <a href="https://console.twilio.com" target="_blank" rel="noopener" className="underline">
-                        Twilio Console
-                      </a>
-                      : the Account SID and Auth Token from its home page, and the WhatsApp number Twilio gave
-                      your sender — shown on that sender&apos;s own page.
-                    </p>
-                    <div className="mt-2 space-y-2">
-                      <div>
-                        <label htmlFor="wa-account-sid" className="block text-xs font-medium text-ink-soft mb-1">
-                          Account SID
-                        </label>
-                        <input
-                          id="wa-account-sid"
-                          value={accountSidDraft}
-                          onChange={(e) => setAccountSidDraft(e.target.value)}
-                          placeholder="Starts with AC…"
-                          className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="wa-auth-token" className="block text-xs font-medium text-ink-soft mb-1">
-                          Auth Token
-                        </label>
-                        <input
-                          id="wa-auth-token"
-                          type="password"
-                          value={authTokenDraft}
-                          onChange={(e) => setAuthTokenDraft(e.target.value)}
-                          placeholder={hasAuthToken ? "Saved — leave blank to keep it" : "Kept secret, never shown again"}
-                          className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="wa-number" className="block text-xs font-medium text-ink-soft mb-1">
-                          Your WhatsApp number
-                        </label>
-                        <input
-                          id="wa-number"
-                          inputMode="tel"
-                          value={phoneDraft}
-                          onChange={(e) => setPhoneDraft(e.target.value)}
-                          placeholder="e.g. +18609358202"
-                          className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={saveAccount}
-                          disabled={
-                            savingAccount ||
-                            !accountSidDraft.trim() ||
-                            !phoneDraft.trim() ||
-                            (!hasAuthToken && !authTokenDraft.trim())
-                          }
-                          className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
-                          style={{ backgroundColor: "var(--ink)" }}
-                        >
-                          {savingAccount ? "Saving…" : "Save"}
-                        </button>
-                        {editingAccount && connected && (
-                          <button
-                            onClick={() => {
-                              setEditingAccount(false);
-                              setAccountSidDraft(accountSid ?? "");
-                              setPhoneDraft(whatsappPhoneNumber ?? "");
-                              setAuthTokenDraft("");
-                              setAccountError(null);
-                            }}
-                            className="text-xs font-medium text-ink-soft"
-                          >
-                            Cancel
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </>
+                {config.templateName && (
+                  <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--sage)" }}>
+                    <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" /> Set up — a follow-up past 24 hours sends
+                    &quot;{config.templateBody || config.templateName}&quot;.
+                  </p>
                 )}
-                {accountSaved && (
-                  <p className="mt-2 text-xs flex items-center gap-1" style={{ color: "var(--sage)" }} aria-live="polite">
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2">
+                  <div>
+                    <label htmlFor="wa-template-name" className="block text-xs font-medium text-ink-soft mb-1">
+                      Template name
+                    </label>
+                    <input
+                      id="wa-template-name"
+                      value={templateNameDraft}
+                      onChange={(e) => setTemplateNameDraft(e.target.value)}
+                      placeholder="e.g. followup_still_interested"
+                      className={`${inputClass} font-mono`}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="wa-template-language" className="block text-xs font-medium text-ink-soft mb-1">
+                      Language
+                    </label>
+                    <input
+                      id="wa-template-language"
+                      value={templateLanguageDraft}
+                      onChange={(e) => setTemplateLanguageDraft(e.target.value)}
+                      placeholder="en"
+                      className={`${inputClass} font-mono`}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="wa-template-body" className="block text-xs font-medium text-ink-soft mb-1">
+                    The approved wording, for your reference
+                  </label>
+                  <input
+                    id="wa-template-body"
+                    value={templateBodyDraft}
+                    onChange={(e) => setTemplateBodyDraft(e.target.value)}
+                    placeholder="e.g. Hi {{1}}, just following up…"
+                    className={inputClass}
+                  />
+                </div>
+                <button
+                  onClick={saveTemplate}
+                  disabled={savingTemplate}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                  style={{ backgroundColor: "var(--ink)" }}
+                >
+                  {savingTemplate ? "Saving…" : config.templateName ? "Update" : "Save"}
+                </button>
+                {templateSaved && (
+                  <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }} aria-live="polite">
                     <Check className="h-3.5 w-3.5" /> Saved
                   </p>
                 )}
-                {accountError && (
-                  <p className="mt-2 text-xs" style={{ color: "var(--coral)" }} aria-live="polite">
-                    {accountError}
+                {templateError && (
+                  <p className="text-xs" style={{ color: "var(--coral)" }} aria-live="polite">
+                    {templateError}
                   </p>
                 )}
               </div>
-
-              {connected && (
-                <div className="pt-3 border-t border-line space-y-2">
-                  <p className="text-xs font-medium">Re-opening a conversation after 24 hours</p>
-                  <p className="text-xs text-ink-soft">
-                    WhatsApp only lets you write to someone more than 24 hours after their last message using a
-                    message they approved in advance. Create one for this exact case in your{" "}
-                    <a
-                      href="https://console.twilio.com/us1/develop/sms/content-template-builder"
-                      target="_blank"
-                      rel="noopener"
-                      className="underline"
-                    >
-                      Twilio Content Template Builder
-                    </a>{" "}
-                    — a single variable for the lead&apos;s first name is enough (e.g. &quot;Hi {"{{1}}"}, just
-                    checking in — still interested? Reply anytime and we&apos;ll pick right back up.&quot;). Once
-                    it&apos;s approved, paste its Content SID below. Until then, a follow-up past 24 hours goes by
-                    email instead.
-                  </p>
-                  {templateSid && (
-                    <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--sage)" }}>
-                      <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" /> Set up — a reply past 24 hours sends
-                      &quot;{templateBody || templateSid}&quot; instead of falling back.
-                    </p>
-                  )}
-                  <div>
-                    <label htmlFor="wa-template-sid" className="block text-xs font-medium text-ink-soft mb-1">
-                      Content SID
-                    </label>
-                    <input
-                      id="wa-template-sid"
-                      value={templateSidDraft}
-                      onChange={(e) => setTemplateSidDraft(e.target.value)}
-                      placeholder="e.g. HXa1b2c3d4e5f6…"
-                      className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="wa-template-body" className="block text-xs font-medium text-ink-soft mb-1">
-                      The approved wording, for your reference
-                    </label>
-                    <input
-                      id="wa-template-body"
-                      value={templateBodyDraft}
-                      onChange={(e) => setTemplateBodyDraft(e.target.value)}
-                      placeholder="e.g. Hi {{1}}, just checking in…"
-                      className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
-                    />
-                  </div>
-                  <button
-                    onClick={saveTemplate}
-                    disabled={savingTemplate}
-                    className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
-                    style={{ backgroundColor: "var(--ink)" }}
-                  >
-                    {savingTemplate ? "Saving…" : templateSid ? "Update" : "Save"}
-                  </button>
-                  {templateSaved && (
-                    <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }} aria-live="polite">
-                      <Check className="h-3.5 w-3.5" /> Saved
-                    </p>
-                  )}
-                  {templateError && (
-                    <p className="text-xs" style={{ color: "var(--coral)" }} aria-live="polite">
-                      {templateError}
-                    </p>
-                  )}
-                </div>
+            </div>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {config.twilioLegacy && (
+                <p className="text-xs text-ink-soft">
+                  WhatsApp is still connected the earlier way, through your Twilio sender, and keeps working.
+                  Connect your own number below to move over.
+                </p>
               )}
+
+              {config.signupAvailable ? (
+                <div>
+                  <button
+                    onClick={startSignup}
+                    disabled={connecting}
+                    className={primaryButton}
+                    style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                  >
+                    {connecting ? "Finishing in Meta's window…" : "Connect WhatsApp"}
+                  </button>
+                  <p className="mt-2 text-xs text-ink-soft">
+                    Meta opens a window. Have the phone with your WhatsApp Business app ready — you&apos;ll scan a
+                    code with it, and the number stays on that phone.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-ink-soft">
+                  One-click connect isn&apos;t switched on yet. It needs Meta&apos;s app configuration
+                  (docs/meta-oauth-setup.md, section 3).
+                </p>
+              )}
+
+              <div>
+                <button
+                  onClick={() => setShowManual((v) => !v)}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+                >
+                  <ChevronDown className={`h-3 w-3 transition-transform ${showManual ? "rotate-180" : ""}`} />
+                  {config.signupAvailable ? "Have an access token instead?" : "Connect with an access token"}
+                </button>
+                {(showManual || !config.signupAvailable) && (
+                  <div className="mt-2 space-y-2">
+                    <p className="text-xs text-ink-soft">
+                      From WhatsApp Manager: a System User access token with the WhatsApp permissions, the phone
+                      number ID, and the WhatsApp Business Account ID.
+                    </p>
+                    <input
+                      id="wa-access-token"
+                      type="password"
+                      value={tokenDraft}
+                      onChange={(e) => setTokenDraft(e.target.value)}
+                      placeholder="Access token (kept secret, never shown again)"
+                      className={inputClass}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        id="wa-phone-number-id"
+                        inputMode="numeric"
+                        value={numberIdDraft}
+                        onChange={(e) => setNumberIdDraft(e.target.value)}
+                        placeholder="Phone number ID"
+                        className={`${inputClass} font-mono`}
+                      />
+                      <input
+                        id="wa-waba-id"
+                        inputMode="numeric"
+                        value={wabaIdDraft}
+                        onChange={(e) => setWabaIdDraft(e.target.value)}
+                        placeholder="WhatsApp Business Account ID"
+                        className={`${inputClass} font-mono`}
+                      />
+                    </div>
+                    <button
+                      onClick={connectByToken}
+                      disabled={connecting || !tokenDraft.trim() || !numberIdDraft.trim() || !wabaIdDraft.trim()}
+                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                      style={{ backgroundColor: "var(--ink)" }}
+                    >
+                      {connecting ? "Connecting…" : "Connect"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => setShowReference((v) => !v)}
+            className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+          >
+            <ChevronDown className={`h-3 w-3 transition-transform ${showReference ? "rotate-180" : ""}`} />
+            Meta console reference
+          </button>
+          {showReference && (
+            <div className="mt-2 rounded-lg bg-paper border border-line p-3 text-xs text-ink-soft space-y-2">
+              <p>
+                Webhook (set up once, not per business) — subscribed to messages, smb_message_echoes, history and
+                smb_app_state_sync for WhatsApp.
+              </p>
+              <div>
+                <p className="font-medium text-ink">Callback URL</p>
+                <pre className="mt-1 rounded-lg bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{config.webhookUrl}</pre>
+                <button onClick={() => copy("url", config.webhookUrl)} className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line">
+                  {copied === "url" ? <Check className="h-3 w-3" /> : null}
+                  {copied === "url" ? "Copied!" : "Copy"}
+                </button>
+              </div>
+              <div>
+                <p className="font-medium text-ink">Verify token</p>
+                <pre className="mt-1 rounded-lg bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{config.verifyToken}</pre>
+                <button onClick={() => copy("token", config.verifyToken)} className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line">
+                  {copied === "token" ? <Check className="h-3 w-3" /> : null}
+                  {copied === "token" ? "Copied!" : "Copy"}
+                </button>
+              </div>
             </div>
           )}
         </div>

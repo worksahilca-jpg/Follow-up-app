@@ -71,6 +71,7 @@ vi.mock("@/lib/db", () => ({
 }));
 vi.mock("@/lib/inbound/twilioMessage", () => ({ processTwilioInbound }));
 vi.mock("@/lib/inbound/meta", () => ({ processMetaEnvelope }));
+vi.mock("@/lib/inbound/whatsappCloud", () => ({ processWhatsAppCloudEnvelope: vi.fn(async () => {}) }));
 vi.mock("@/lib/inbound/leadForm", () => ({ processLeadFormSubmission }));
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentLeads }));
 vi.mock("@/lib/monitoring", () => ({ recordAuthFailure }));

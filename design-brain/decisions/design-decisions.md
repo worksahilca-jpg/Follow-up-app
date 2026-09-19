@@ -2614,3 +2614,16 @@ and two sections return between the promises and prices: works-with (card with d
 as-it-happens (feed) and the six feature tiles. Recorded here rather than rewriting v1; the
 founder's word "information" is the reason: he wants the reader to see the product, not only
 be told three verbs.
+
+## 2026-09-19 — The older information comes back, in plain words (A-015)
+
+**Founder:** "more older ones." The page on `main` had four information sections the new page
+lacked: the gap (the owner's question, "which lead am I about to lose because I haven't
+followed up?"), why FollowUp exists (lead-generation tools vs FollowUp), how it works (four
+steps), why not just a CRM reminder (three cards). All four are back between the hero and the
+product cards, rewritten to principle 9 ("customer" not "lead", "reply problem" not
+"lead-conversion problem", no scores or CRM). Left out on purpose: the three industry stats
+(phone-derived or single-sourced), the freelance-consultant and agency personas (the hero's
+buyer line replaces them), the team-pipeline mock (the Bring-your-team card covers it).
+The four promises moved to a four-column grid (the masonry left the fourth alone).
+Verified at 1280 from a production build; typecheck, lint, build clean. Approved on sight.

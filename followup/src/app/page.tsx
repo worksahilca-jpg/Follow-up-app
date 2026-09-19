@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check, Inbox, Eye, Languages, Send, MessageCircle, Users } from "lucide-react";
+import { ArrowRight, Check, X, Inbox, Eye, Languages, Send, MessageCircle, Users, Mail, ListChecks, PenLine, BellOff } from "lucide-react";
 import styles from "./landing-dark.module.css";
 import NavDark from "@/components/landing/dark/NavDark";
 import HeroFlow from "@/components/landing/dark/HeroFlow";
@@ -50,8 +50,118 @@ export default function LandingPage() {
         <HeroFlow />
       </header>
 
+      {/* ---------- The gap ---------- */}
+      <section className={styles.section}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
+          <span className={styles.badge}>The gap</span>
+          <h2 className={styles.h2}>
+            &ldquo;Which customer am I about to lose <span className={styles.em}>because I haven&apos;t replied?&rdquo;</span>
+          </h2>
+          <p className={styles.lede}>
+            A CRM stores names. An email tool helps you write. A reminder tells you it is time. None of them answer that question. FollowUp does, every day, in a short list.
+          </p>
+        </RevealLight>
+      </section>
+
+      {/* ---------- Why FollowUp exists ---------- */}
+      <section className={styles.section} style={{ paddingTop: 0 }}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
+          <span className={styles.badge}>Why FollowUp exists</span>
+          <h2 className={styles.h2}>
+            You don&apos;t have a lead problem. <span className={styles.em}>You have a reply problem.</span>
+          </h2>
+          <p className={styles.lede}>Most tools stop the moment a name lands in your inbox. The sale is won or lost in the weeks after that.</p>
+        </RevealLight>
+        <div className={styles.grid2}>
+          <RevealLight>
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}>Tools that get you leads</h3>
+              <ul className={styles.priceList} style={{ marginTop: 16 }}>
+                {["Hand you a name and an email address", "Call the job done the moment the lead exists", "Say nothing when that customer goes quiet"].map((f) => (
+                  <li key={f}>
+                    <span className={styles.check} style={{ background: "var(--ink-soft)", color: "var(--muted)" }}>
+                      <X className="h-3 w-3" />
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </RevealLight>
+          <RevealLight delay={0.08}>
+            <div className={`${styles.card} ${styles.priceHot}`}>
+              <h3 className={styles.cardTitle}>FollowUp</h3>
+              <ul className={styles.priceList} style={{ marginTop: 16 }}>
+                {["Watches what happens after the lead exists", "Tells you who is going quiet, and why", "Writes the message that keeps it going"].map((f) => (
+                  <li key={f}>
+                    <span className={styles.check}>
+                      <Check className="h-3 w-3" />
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </RevealLight>
+        </div>
+      </section>
+
+      {/* ---------- How it works ---------- */}
+      <section id="how" className={styles.section} style={{ paddingTop: 0 }}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
+          <h2 className={styles.h2}>
+            How it <span className={styles.em}>works.</span>
+          </h2>
+        </RevealLight>
+        <div className={styles.grid4}>
+          {[
+            [<Mail key="a" className="h-5 w-5" />, "Connect your inbox", "Gmail, Outlook, Instagram, Messenger, WhatsApp, your website. Two minutes."],
+            [<Eye key="b" className="h-5 w-5" />, "It spots who is going quiet", "It reads every conversation and notices who has not heard back."],
+            [<ListChecks key="c" className="h-5 w-5" />, "You get a short list each day", "Who needs you today, and why. Not a whole system to dig through."],
+            [<Send key="d" className="h-5 w-5" />, "It writes the reply", "Send it, change it, or let simple ones go out on their own. Your choice, for each customer."],
+          ].map(([icon, t, b], i) => (
+            <RevealLight key={t as string} delay={i * 0.07}>
+              <div className={styles.card}>
+                <span className={styles.iconChip}>{icon}</span>
+                <h3 className={styles.cardTitle} style={{ fontSize: 17 }}>
+                  {t as string}
+                </h3>
+                <p className={styles.cardBody}>{b as string}</p>
+              </div>
+            </RevealLight>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------- Why not just a reminder ---------- */}
+      <section className={styles.section} style={{ paddingTop: 0 }}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
+          <h2 className={styles.h2}>
+            Why not just <span className={styles.em}>set a reminder?</span>
+          </h2>
+          <p className={styles.lede}>A reminder tells you it is time. It does not tell you why, or what to say.</p>
+        </RevealLight>
+        <div className={styles.grid3}>
+          {[
+            [<Eye key="e" className="h-5 w-5" />, "You see the reason", "Every customer on the list comes with the reason they are there. Never a mystery number."],
+            [<PenLine key="p" className="h-5 w-5" />, "It sounds like you", "Replies are written the way you write to that customer. Not generic text you have to redo."],
+            [<BellOff key="n" className="h-5 w-5" />, "No nagging", "Closed it on a call? Mark it done and FollowUp stops. It never assumes the inbox is the whole story."],
+          ].map(([icon, t, b], i) => (
+            <RevealLight key={t as string} delay={i * 0.07}>
+              <div className={styles.card}>
+                <span className={styles.iconChip}>{icon}</span>
+                <h3 className={styles.cardTitle} style={{ fontSize: 17 }}>
+                  {t as string}
+                </h3>
+                <p className={styles.cardBody}>{b as string}</p>
+              </div>
+            </RevealLight>
+          ))}
+        </div>
+      </section>
+
       {/* ---------- Product ---------- */}
-      <section id="how" className={styles.section}>
+      <section id="product" className={styles.section}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <span className={styles.badge}>Product</span>
           <h2 className={styles.h2}>

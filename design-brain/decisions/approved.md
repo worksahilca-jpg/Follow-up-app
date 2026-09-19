@@ -358,3 +358,20 @@ replying").
 description. The channels are shown by the diagram, not named in the line. Tone rule for
 future copy in this spot: a poke is allowed when it is true, kind, and the reader would say it
 about themselves.
+
+## A-015 — The full page: hero, gap, why it exists, how it works, why not a reminder, product cards, four promises, works with, as it happens, features, prices, questions ^A-015
+
+**Approved:** 2026-09-19, founder: "cool, that's it." After "make it like this but with the
+old version's information" and "more older ones": the settled hero (A-013, A-014, A-012's
+diagram) on the plain-words page, with the information sections from the page on `main`
+brought back in plain words: the gap (the owner's question), why FollowUp exists (tools that
+get you leads vs FollowUp), how it works in four steps, why not just a reminder. Not brought
+back: the three stats (dead per the 09-16 pass), the two B2B personas (contradict A-014), the
+team-pipeline mock.
+
+**Lesson (inferred, marked inferred):** "simple" to this founder means simple *words*, not
+fewer sections. The three-steps page (v15/v16) was too bare; he wants a reader to see and
+understand the whole product, in plain language. Structure v1's "six sections" finding is
+superseded by this.
+
+**Next, in his words:** "let's make it more effective, and let's change the whole app."

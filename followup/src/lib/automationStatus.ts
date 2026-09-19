@@ -25,9 +25,16 @@
 import { UNANSWERED_ACTION, UNANSWERED_DEFAULT_HOURS, DEAD_LEAD_ACTION, DEAD_LEAD_DEFAULT_DAYS, effectiveUnansweredHours } from "@/lib/automation";
 import { isExitPayload } from "@/lib/quickReplies";
 import { prisma } from "@/lib/db";
+import { hasAnySendChannel } from "@/lib/sendChannels";
 import type { Message, PipelineStage, AutomationTier } from "@/lib/types";
 
 export interface BusinessAutomationRules {
+  /**
+   * Is anything connected that a message could go out through?
+   * hasAnySendChannel (src/lib/sendChannels.ts), asked once per page
+   * render like the rest of this object — not once per lead.
+   */
+  canSend: boolean;
   masterEnabled: boolean;
   silenceTriggerDays: number;
   unansweredEnabled: boolean;
@@ -48,13 +55,17 @@ export interface BusinessAutomationRules {
  * over by claiming they're about to.
  */
 export async function getBusinessAutomationRules(businessId: string): Promise<BusinessAutomationRules> {
-  const rows = await prisma.automation.findMany({
-    where: { businessId, action: { in: ["auto_send", UNANSWERED_ACTION, DEAD_LEAD_ACTION] } },
-  });
+  const [rows, canSend] = await Promise.all([
+    prisma.automation.findMany({
+      where: { businessId, action: { in: ["auto_send", UNANSWERED_ACTION, DEAD_LEAD_ACTION] } },
+    }),
+    hasAnySendChannel(businessId),
+  ]);
   const master = rows.find((r) => r.action === "auto_send");
   const unanswered = rows.find((r) => r.action === UNANSWERED_ACTION);
   const deadLead = rows.find((r) => r.action === DEAD_LEAD_ACTION);
   return {
+    canSend,
     masterEnabled: master?.enabled ?? false,
     silenceTriggerDays: master?.triggerDays ?? 5,
     unansweredEnabled: unanswered?.enabled ?? true,
@@ -73,6 +84,13 @@ export type AutomationStatus =
   // workflow step or the owner's own suggested reply — so every one of
   // those states would be describing a follow-up that is not coming.
   | { kind: "ai_paused"; reason: string }
+  // Nothing is connected that FollowUp could send with — no inbox, no
+  // Instagram, no WhatsApp, no number (src/lib/sendChannels.ts). An
+  // account-wide fact, shown per lead because that is where the false
+  // promise was: runAutomationForBusiness and runSequencesForBusiness
+  // both return empty immediately in this state, so every timing state
+  // below is describing a follow-up that cannot happen.
+  | { kind: "no_send_channel" }
   | { kind: "workflow"; sequenceName: string; dueInDays: number } // enrolled in an active Sequence
   | { kind: "workflow_paused"; sequenceName: string } // enrolled, but the Sequence itself is paused
   | { kind: "off" } // Lead.automationTier === "off" — nobody but a human will ever message this lead
@@ -114,6 +132,14 @@ export function computeAutomationStatus(
   // Won/lost still wins, because a closed lead is not waiting on
   // FollowUp for anything.
   if (lead.aiPausedReason) return { kind: "ai_paused", reason: lead.aiPausedReason };
+
+  // Above the workflow branch and every timing state below, for the same
+  // reason ai_paused is: with nothing connected, automation.ts and
+  // sequences.ts both return empty before they look at a single lead, so
+  // "Following up soon" and "next step in 2d" are promises the engine
+  // cannot keep. Ranked BELOW ai_paused only because that one is specific
+  // to this lead while this is true of every lead in the account.
+  if (!rules.canSend) return { kind: "no_send_channel" };
 
   // Checked before automationTier: enrollLead() (sequences.ts) always sets
   // a lead's automationTier to "off" the moment it enrolls, specifically so

@@ -3062,3 +3062,47 @@ product-behaviour decision — `CLAUDE.md` puts those with him — so it is rais
 wrong and wrong for one you want noticed — and if a tester reports a reply in the wrong
 language, the first thing they will not think to do is expand a panel. Worth revisiting once
 there is evidence anyone looks.
+
+## 2026-09-19 — A lead in an account that cannot send stops promising a follow-up
+
+**Third time today, same shape:** FollowUp knows something and the screen says otherwise.
+
+**The case.** The first tester's only inbox had been disconnected since Sept 7. With nothing
+connected, `runAutomationForBusiness` and `runSequencesForBusiness` both return empty
+*before they look at a single lead* — so nothing was ever going to send. Every lead still
+read **"Following up soon"** or **"Next check in ~3h"**.
+
+**A correction worth recording, because I pitched this wrong to the founder first.** I said
+FollowUp told the owner nothing. That was false, and checking took two minutes:
+`getIncompleteSetupSteps` does surface *"Connect your inbox"* on the dashboard for exactly
+this account. The owner was not in the dark. **The leads were the lie** — and that is the
+narrower, real bug. Pitching a build on an unchecked premise is how you end up solving a
+problem that isn't there; the check came before the code here only because the founder's
+"one by one" gave room for it.
+
+**What shipped:** `BusinessAutomationRules` gains `canSend`, from the existing
+`hasAnySendChannel` — one query per page render, not per lead, in the same `Promise.all` the
+rules already used. `AutomationStatus` gains `no_send_channel`, ranked above the workflow
+branch and every timing state, below `ai_paused` and `closed`.
+
+**The ranking, stated because it is the only real judgement here:** `ai_paused` is specific
+to *this lead*; `no_send_channel` is true of *every* lead in the account. The more specific
+explanation wins. `closed` still beats both — a won deal is not waiting on FollowUp.
+
+**The copy names the fix, not the diagnosis.** "No send channel" is our words. The line is:
+
+> **Nothing is connected to send with**
+> FollowUp can capture leads but has no way to reply to them — no inbox, no Instagram, no
+> WhatsApp, no number. Connect one in Settings and follow-ups start on their own.
+
+**Three coral states now sit in one switch** (`no_send_channel`, `ai_paused`,
+`account_paused`) and that is deliberate, not drift. To the owner they are one family:
+nothing is happening, and only they can change it. What separates them is the sentence.
+
+**Self-critique.** This is the third per-lead explanation added today, and the dashboard now
+has two places telling an owner the same thing in different words — the setup strip
+("Connect your inbox") and every lead ("Nothing is connected to send with"). Defensible,
+because they answer different questions in different places, but it is the beginning of a
+pattern worth watching: every time something goes quiet, the fix has been another sentence
+somewhere. At some point the right answer is one place that says what is wrong with the
+account, not N surfaces each explaining their own corner of it.

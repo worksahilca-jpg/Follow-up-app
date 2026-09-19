@@ -1,4 +1,4 @@
-import { Zap, Clock, PauseCircle, Ban, CheckCircle2, Workflow } from "lucide-react";
+import { Zap, Clock, PauseCircle, Ban, CheckCircle2, Workflow, PlugZap } from "lucide-react";
 import type { AutomationStatus } from "@/lib/automationStatus";
 
 // One line of "why," shown as the badge's title tooltip (compact mode) or
@@ -30,13 +30,31 @@ function describe(
       return { icon: PauseCircle, label: "Follow-up plan paused", detail: status.sequenceName, bg: "var(--line)", fg: "var(--ink-soft)" };
     case "off":
       return { icon: Ban, label: "Automation off", detail: "This lead is opted out of automated follow-up", bg: "var(--line)", fg: "var(--ink-soft)" };
-    // Same colour and icon as account_paused below, deliberately: to the
-    // owner these are one family — nothing is happening on this lead and
-    // only they can change that. The difference is in the sentence, which
-    // is the whole point of the state. `detail` is the reason verbatim
-    // (src/lib/billing.ts writes it as a complete sentence for exactly
-    // this spot) rather than a template wrapped around a fragment, so
-    // there is only ever one place where this wording lives.
+    // Three coral states in a row — no_send_channel, ai_paused,
+    // account_paused — and that is deliberate, not an oversight. To the
+    // owner they are one family: nothing is happening, and only they can
+    // change it. What separates them is the sentence, which is the whole
+    // point of each.
+    //
+    // Account-wide, shown per lead, because the lead is where the false
+    // promise was. The detail names the FIX rather than the diagnosis:
+    // "no send channel" is our words for it, "connect an inbox" is the
+    // thing to do.
+    case "no_send_channel":
+      return {
+        icon: PlugZap,
+        label: "Nothing is connected to send with",
+        detail:
+          "FollowUp can capture leads but has no way to reply to them — no inbox, no Instagram, no WhatsApp, no number. Connect one in Settings and follow-ups start on their own.",
+        bg: "var(--coral-soft)",
+        fg: "var(--coral)",
+        // Same reasoning as ai_paused: the label states that something
+        // stopped, and the sentence is the answer.
+        emphasis: true,
+      };
+    // `detail` is the reason verbatim (src/lib/billing.ts writes it as a
+    // complete sentence for exactly this spot) rather than a template
+    // wrapped around a fragment, so this wording lives in one place.
     case "ai_paused":
       return {
         icon: PauseCircle,

@@ -13,6 +13,7 @@ import { computeAutomationStatus, type AutomationStatusLead, type BusinessAutoma
 import type { Message } from "@/lib/types";
 
 const RULES: BusinessAutomationRules = {
+  canSend: true,
   masterEnabled: true,
   silenceTriggerDays: 5,
   unansweredEnabled: true,
@@ -77,6 +78,36 @@ describe("computeAutomationStatus", () => {
     // pause is not news — "closed" stays the one thing worth saying.
     const l = lead({ stage: "won", aiPausedReason: "Paused." });
     expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "closed" });
+  });
+
+  // 2026-09-19. An account whose only inbox had been disconnected since
+  // Sept 7: runAutomationForBusiness and runSequencesForBusiness both
+  // return empty before they look at a single lead, so nothing was ever
+  // going to send — and every lead still read "Following up soon". The
+  // dashboard's setup strip did say "Connect your inbox", so the owner
+  // was not entirely in the dark; the LEADS were the lie.
+  it("says nothing is connected, rather than promising a follow-up, when the account cannot send", () => {
+    const rules = { ...RULES, canSend: false };
+    const due = lead({ conversation: [msg("outbound", 48), msg("inbound", 25)] });
+    expect(computeAutomationStatus(due, rules, NOW)).toEqual({ kind: "no_send_channel" });
+
+    // And over a workflow's dated next step, which sequences.ts will not
+    // run either.
+    const onPlan = lead({
+      automationTier: "off",
+      sequence: { name: "Recommended cadence", active: true, dueAt: new Date(NOW.getTime() + 2 * 86_400_000).toISOString() },
+    });
+    expect(computeAutomationStatus(onPlan, rules, NOW)).toEqual({ kind: "no_send_channel" });
+  });
+
+  it("still explains the lead's own pause first — that one is specific, this one is true of every lead", () => {
+    const l = lead({ aiPausedReason: "Paused." });
+    expect(computeAutomationStatus(l, { ...RULES, canSend: false }, NOW)).toEqual({ kind: "ai_paused", reason: "Paused." });
+  });
+
+  it("still shows closed for a won deal in an account that cannot send", () => {
+    const l = lead({ stage: "won" });
+    expect(computeAutomationStatus(l, { ...RULES, canSend: false }, NOW)).toEqual({ kind: "closed" });
   });
 
   it("shows workflow (not off) for a lead enrolled in an active sequence, even though enrolling sets automationTier to off", () => {

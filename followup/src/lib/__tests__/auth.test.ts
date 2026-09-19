@@ -17,9 +17,16 @@ const { txInviteFindFirst, txInviteDeleteMany, txBusinessCreate, txUserUpdate, t
   txUserCreate: vi.fn(),
 }));
 
+// The beta plan grant (src/lib/billing.ts) is its own concern, pinned in
+// betaPlan.test.ts; here it must simply not throw and not touch the flow.
+vi.mock("@/lib/billing", () => ({ grantBetaPlan: vi.fn(async () => true) }));
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: { findUnique: vi.fn() },
+    // The tester list is consulted on every sign-in now (see auth.ts's
+    // isTester); nobody in these tests is on it.
+    accessRequest: { findUnique: vi.fn(async () => null) },
     // signIn's invite-consumption logic runs inside one $transaction (see
     // its own comment — task from research/audit/2026-09-09-fifth-pass-
     // audit.md finding #2) — the mock transaction below just invokes the

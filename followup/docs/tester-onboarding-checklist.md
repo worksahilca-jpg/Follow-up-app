@@ -8,7 +8,7 @@ telling the tester to sign in, or they hit a refusal somewhere and blame the pro
 
 | # | Where | What | Why |
 |---|---|---|---|
-| 1 | followupbase.io/admin → Beta testers | Add their Google email | Sign-in refuses anyone not on this list (`src/lib/auth.ts`). |
+| 1 | followupbase.io/admin → Beta testers | Add their Google email | Sign-in refuses anyone not on this list (`src/lib/auth.ts`). Their business is put on the beta plan — every Pro feature, free — the moment they sign in. Removing them takes it away. |
 | 2 | Google Cloud Console → APIs & Services → OAuth consent screen → Test users | Add the same email | The Google app is in Testing mode. Anyone not on this list gets "access_denied" when connecting Gmail. Limit 100. Their Gmail connection expires every 7 days until Google verification clears (`docs/google-verification-pack.md`). |
 | 3 | developers.facebook.com → FollowUp → App roles → Roles → Add people → Tester | Add them by Facebook name | The Meta app is not reviewed. Only people with a role on the app can connect Instagram, Messenger or WhatsApp. They must accept the invite in their Facebook notifications. |
 

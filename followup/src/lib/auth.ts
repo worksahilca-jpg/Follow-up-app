@@ -28,6 +28,7 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
+import { grantBetaPlan } from "@/lib/billing";
 
 const allowedEmails = (process.env.ALLOWED_EMAILS ?? "")
   .split(",")
@@ -63,13 +64,16 @@ export const authOptions: NextAuthOptions = {
       if (!user.email) return false;
       const email = user.email.toLowerCase();
 
-      if (allowedEmails.length > 0 && !allowedEmails.includes(email)) {
-        // Not in the env allowlist — but an email the founder approved on
-        // /admin (an AccessRequest row he added himself) is the same
-        // invite, granted without a redeploy. Anyone else is refused.
-        const approved = await prisma.accessRequest.findUnique({ where: { email }, select: { status: true } });
-        if (approved?.status !== "approved") return false;
-      }
+      // Who is a beta tester: the env allowlist, or an email the founder
+      // approved on /admin (an AccessRequest row he added himself) — the
+      // same invite, granted without a redeploy. While the allowlist gate
+      // is on, anyone else is refused. Either way a tester's business is
+      // put on the beta plan below (grantBetaPlan: Pro, free — founder's
+      // decision 2026-09-19), which is a no-op for a business that already
+      // pays.
+      const approved = await prisma.accessRequest.findUnique({ where: { email }, select: { status: true } });
+      const isTester = allowedEmails.includes(email) || approved?.status === "approved";
+      if (allowedEmails.length > 0 && !isTester) return false;
 
       const existing = await prisma.user.findUnique({ where: { email } });
       if (existing) {
@@ -79,6 +83,7 @@ export const authOptions: NextAuthOptions = {
           if (user.name && user.name !== existing.name) {
             await prisma.user.update({ where: { id: existing.id }, data: { name: user.name } });
           }
+          if (isTester) await grantBetaPlan(existing.businessId);
           return true;
         }
 
@@ -106,7 +111,7 @@ export const authOptions: NextAuthOptions = {
       // already gone), so a losing concurrent request now completes sign-
       // in successfully instead (research/audit/2026-09-09-fifth-pass-
       // audit.md finding #2).
-      await prisma.$transaction(async (tx) => {
+      const joinedBusinessId = await prisma.$transaction(async (tx) => {
         const pendingInvite = await tx.invite.findFirst({ where: { email } });
 
         const businessId = pendingInvite
@@ -143,8 +148,10 @@ export const authOptions: NextAuthOptions = {
         if (pendingInvite) {
           await tx.invite.deleteMany({ where: { id: pendingInvite.id } });
         }
+        return businessId;
       });
 
+      if (isTester) await grantBetaPlan(joinedBusinessId);
       return true;
     },
     async jwt({ token, user }) {

@@ -326,6 +326,13 @@ technically is Dipesh's lane (`src/lib/auth.ts`, the `ALLOWED_EMAILS` gate, and 
 own OAuth testing-mode user list, which already limits sign-in today); what it means for
 the product is that the Free tier exists for invited businesses, not as a public funnel.
 
+> **Beta testers get Pro, free (CEO decision, 2026-09-19).** Free's 20-lead cap and its
+> email/website-only channel rule would have left a tester's Instagram and WhatsApp leads
+> unworked. So a business whose owner is on the tester list is put on the beta plan
+> (`subscriptionStatus "beta"`, tier `pro`, no Stripe, nothing billed) at sign-in or when
+> added on `/admin`, and taken back to Free when removed. A real subscription is never
+> touched. `grantBetaPlan` / `revokeBetaPlan` in `src/lib/billing.ts`.
+
 Three related defaults were confirmed the same day, recorded in
 `design-brain/decisions/design-decisions.md` (2026-09-18): "Not now" from a lead ends the
 DM sequence (A-007); up to three automatic touches inside Meta's 24-hour window; the Monday

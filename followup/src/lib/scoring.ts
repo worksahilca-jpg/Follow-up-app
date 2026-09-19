@@ -89,15 +89,23 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   );
   if (conversation.length === 0) return false;
 
-  // How this lead writes, decided ONCE and then held steady — see
-  // src/lib/leadLanguage.ts for why register consistency is the point.
+  // How this lead writes, read from their NEWEST message, every time.
   //
-  // `languageSetAt` is the "have we looked" flag rather than `language`,
-  // because a lead can legitimately end up with no answer (too short a
-  // message, a model that wasn't confident) and that must mean "ask
-  // again next time", not "decided: nothing". Re-detecting an already
-  // decided lead is exactly what this exists to stop: the whole value is
-  // that message #1 and message #7 agree.
+  // This was briefly built the other way — decided once from the first
+  // message and held — and the founder corrected it the same day
+  // (2026-09-19): "suppose I am using Hinglish first and then switched
+  // to English, so the reply should be according to the message.
+  // Whatever language the lead will approach, we will reply in the same
+  // language." He is right, and locking it was the wrong inference: a
+  // person who switches to English is telling you something, and
+  // answering them in the language they have just moved away from is
+  // the rudeness the feature was supposed to prevent, not avoid.
+  //
+  // What survives from the first attempt is the STORAGE, not the lock.
+  // Recording what was detected still makes the question answerable
+  // ("how often are we wrong in Spanish") and still gives the learning
+  // loop its grouping key — it is now a record of what was true at this
+  // message rather than a verdict binding the next one.
   //
   // Runs in the same Promise.all as the score, so it costs latency only
   // when it is the slowest of the three, and it sits AFTER the
@@ -109,13 +117,15 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       lastContacted: (lead.lastContacted ?? lead.createdAt).toISOString(),
     }),
     getVoiceSamples(lead.businessId),
-    lead.languageSetAt ? Promise.resolve(null) : detectLeadLanguage(latestInboundText(conversation) ?? ""),
+    detectLeadLanguage(latestInboundText(conversation) ?? ""),
   ]);
 
-  // Prefer what was just detected; otherwise whatever was already
-  // stored. Both may be absent, and every consumer treats that as "say
-  // nothing about language" — which is the behaviour every draft had
-  // before this existed.
+  // The newest reading wins. Falling back to the stored one only covers
+  // the case where THIS message was too short to judge ("ok", "thanks")
+  // — there, the last thing they actually wrote at length is a better
+  // guess than nothing, and it is the same language the thread has been
+  // in. Both absent means say nothing about language at all, which is
+  // how every draft behaved before any of this existed.
   const leadLanguage = detected ?? leadLanguageOf(lead);
   // The draft takes the shape of the channel the lead last wrote on. An
   // Instagram or Messenger lead gets a DM — short, no subject, one
@@ -174,15 +184,15 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       // can tell a still-current draft from a stale one instead of
       // rebuilding it every 20 hours (see schema.prisma).
       suggestedDraftedFor: new Date(conversation[conversation.length - 1].date),
-      // The decision, written once and only when there IS one.
+      // What their newest message was written in, refreshed every pass.
+      // `languageSetAt` is therefore "when we last read it", not "when we
+      // decided" — a lead who switches from Hinglish to English is a lead
+      // whose stored row switches with them.
       //
-      // A failed detection deliberately leaves `languageSetAt` null so
-      // the next pass tries again. The alternative — stamp it anyway to
-      // avoid re-paying — would freeze a lead whose first message was
-      // "ok thanks" into "unknown" forever, even after they write three
-      // paragraphs. The re-try is close to free: detectLeadLanguage
-      // refuses to call the model at all below MIN_CHARS_TO_JUDGE, and
-      // scoring only runs again when there is genuinely new text.
+      // A failed detection writes nothing at all rather than clearing the
+      // columns: a one-word "ok" is not evidence the lead stopped
+      // speaking Spanish, and blanking the row on it would throw away a
+      // good reading for a useless one.
       ...(detected
         ? {
             language: detected.language,

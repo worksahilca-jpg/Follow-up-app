@@ -217,8 +217,8 @@ describe("scoreAndDraftForLead — DM-shaped drafts for Instagram and Messenger 
  * and follows up with tú reads to a native speaker the way "Dear Mr.
  * Smith… hey dude" reads in English.
  */
-describe("scoreAndDraftForLead — deciding how a lead writes, once", () => {
-  it("detects and stores language, script and register on a lead nobody has judged yet", async () => {
+describe("scoreAndDraftForLead — reading how a lead writes, every message", () => {
+  it("reads the newest message and records it", async () => {
     detect.mockResolvedValue({ language: "es", script: "Latn", register: "formal" });
 
     await scoreAndDraftForLead("lead1");
@@ -236,43 +236,66 @@ describe("scoreAndDraftForLead — deciding how a lead writes, once", () => {
     );
   });
 
-  it("never re-decides a lead already judged — that consistency IS the feature", async () => {
+  // The founder's correction, 2026-09-19: "suppose I am using Hinglish
+  // first and then switched to English, so the reply should be according
+  // to the message." An earlier build decided once from the first
+  // message and skipped detection forever after — which would have kept
+  // answering that lead in Hinglish.
+  it("re-reads a lead who already has a stored language, so a switch is followed", async () => {
     findUnique.mockResolvedValue(
-      leadRow({ language: "es", languageScript: "Latn", languageRegister: "usted" as unknown, languageSetAt: new Date("2026-09-01") })
+      leadRow({ language: "hi", languageScript: "Latn", languageRegister: "neutral", languageSetAt: new Date("2026-09-01") })
     );
+    detect.mockResolvedValue({ language: "en", script: "Latn", register: "neutral" });
 
     await scoreAndDraftForLead("lead1");
 
-    expect(detect).not.toHaveBeenCalled();
+    expect(detect).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ language: "en" }) })
+    );
+    expect(generateFollowUpMessage).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      undefined,
+      undefined,
+      { language: "en", script: "Latn", register: "neutral" }
+    );
   });
 
-  // A failed detection must leave the flag null so the NEXT message gets
-  // a try. Stamping it anyway would freeze a lead whose first message
-  // was "ok thanks" into "unknown" forever.
-  it("leaves the lead undecided when the message told it nothing, so it can ask again", async () => {
+  // A one-word "ok" is not evidence they stopped speaking Spanish, so a
+  // failed read keeps the last good one rather than blanking it.
+  it("keeps the last good reading when this message was too short to judge", async () => {
+    findUnique.mockResolvedValue(
+      leadRow({ language: "es", languageScript: "Latn", languageRegister: "formal", languageSetAt: new Date("2026-09-01") })
+    );
     detect.mockResolvedValue(null);
 
     await scoreAndDraftForLead("lead1");
 
-    // Typed on the way in rather than cast on the way out: an untyped
-    // vi.fn() infers mock.calls as an empty tuple, which tsc rejects on
-    // indexing (the same trap betaPlan.test.ts documents).
     const data = updateCalls()[0].data;
-    expect(data).not.toHaveProperty("languageSetAt");
     expect(data).not.toHaveProperty("language");
-  });
-
-  it("passes the decision into the draft, so the reply is written to it", async () => {
-    detect.mockResolvedValue({ language: "es", script: "Latn", register: "formal" });
-
-    await scoreAndDraftForLead("lead1");
-
     expect(generateFollowUpMessage).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
       undefined,
       undefined,
       { language: "es", script: "Latn", register: "formal" }
+    );
+  });
+
+  it("says nothing about language at all for a lead nothing is known about", async () => {
+    detect.mockResolvedValue(null);
+
+    await scoreAndDraftForLead("lead1");
+
+    const data = updateCalls()[0].data;
+    expect(data).not.toHaveProperty("languageSetAt");
+    expect(generateFollowUpMessage).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      undefined,
+      undefined,
+      null
     );
   });
 });

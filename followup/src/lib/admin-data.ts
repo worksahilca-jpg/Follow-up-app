@@ -47,6 +47,17 @@ export interface RecentSignup {
   connectedChannels: string[];
 }
 
+export interface AccessRequestRow {
+  id: string;
+  name: string;
+  email: string;
+  business: string | null;
+  channels: string[];
+  note: string | null;
+  status: string; // new | approved | declined
+  createdAt: Date;
+}
+
 export interface PlatformAdminData {
   totalBusinesses: number;
   signupsPerWeek: WeekBucket[];
@@ -65,6 +76,8 @@ export interface PlatformAdminData {
   activeBusinessCount: number;
   dormantBusinessCount: number;
   recentSignups: RecentSignup[];
+  // The beta list: everyone who asked at /beta, waiting first, newest first.
+  accessRequests: AccessRequestRow[];
 }
 
 const SIGNUP_WEEKS = 12;
@@ -197,6 +210,24 @@ export async function getPlatformAdminData(): Promise<PlatformAdminData> {
     channelsByBusiness.set(b.id, set);
   }
 
+  const accessRequestRows = await prisma.accessRequest.findMany({
+    orderBy: [{ createdAt: "desc" }],
+    take: 100,
+  });
+  const order = { new: 0, approved: 1, declined: 2 } as Record<string, number>;
+  const accessRequests: AccessRequestRow[] = accessRequestRows
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      email: r.email,
+      business: r.business,
+      channels: r.channels ? r.channels.split(",").filter(Boolean) : [],
+      note: r.note,
+      status: r.status,
+      createdAt: r.createdAt,
+    }))
+    .sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9) || b.createdAt.getTime() - a.createdAt.getTime());
+
   const recentSignups: RecentSignup[] = recentBusinesses.map((b) => ({
     id: b.id,
     name: b.name,
@@ -219,5 +250,6 @@ export async function getPlatformAdminData(): Promise<PlatformAdminData> {
     activeBusinessCount,
     dormantBusinessCount,
     recentSignups,
+    accessRequests,
   };
 }

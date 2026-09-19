@@ -1293,6 +1293,26 @@ model AIInsight {
 // it regardless. See src/app/api/feedback/route.ts and the quiet form in
 // Settings — never a popup, never forced; nothing anywhere prompts for
 // this unprompted.
+// Someone asking to join the beta (POST /api/access-request, from
+// followupbase.io/beta). One row per email. `status` is the founder's
+// decision from /admin: new | approved | declined. An approved email may
+// sign in (src/lib/auth.ts) — the invite, without editing ALLOWED_EMAILS
+// and paying for a redeploy each time. Sign-up stays invite-only
+// (PRODUCT_DIRECTION, 2026-09-18); this is how the invite is asked for.
+model AccessRequest {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  business  String?
+  channels  String    @default("") // comma-joined: email,instagram,whatsapp,text,website,other
+  note      String?
+  status    String    @default("new")
+  decidedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([status, createdAt])
+}
+
 model ProductFeedback {
   id         String   @id @default(cuid())
   business   Business @relation(fields: [businessId], references: [id])

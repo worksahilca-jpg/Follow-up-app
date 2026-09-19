@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import NotificationBell from "./NotificationBell";
+import FeedbackDialog from "./FeedbackDialog";
 
 const nav = [
   { href: "/dashboard", label: "Today", icon: LayoutDashboard },
@@ -82,6 +83,11 @@ export default function Sidebar() {
             <span className="font-display text-lg" style={{ color: "var(--ink)" }}>
               FollowUp
             </span>
+            {/* Testers should never wonder whether a rough edge is on them.
+                It is on us, and this says so. */}
+            <span className="font-mono text-[10px] uppercase tracking-wider rounded-full px-1.5 py-0.5 text-ink-soft" style={{ background: "var(--accent-soft)" }}>
+              Beta
+            </span>
           </Link>
           <div className="flex items-center gap-1">
             <div className="hidden lg:block">
@@ -137,6 +143,7 @@ export default function Sidebar() {
           same signal now shows once, on Today, as SetupStrip — one
           unfinished step at a time instead of a growing stack of
           banners everywhere. */}
+      <FeedbackDialog />
       <button
         onClick={() => signOut({ callbackUrl: "/" })}
         className="flex items-center gap-2.5 rounded-lg px-3 py-2 mx-3 mb-4 text-sm text-ink-soft hover:bg-paper transition-colors"

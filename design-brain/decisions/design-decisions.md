@@ -2727,3 +2727,30 @@ old "reads your sales conversations in Gmail" line, and never mentioned Calendar
 new section (nothing else on the page needs it), the "Is my data safe?" answer now says it: reads
 incoming Gmail to spot customer enquiries, sends replies from your own address, adds a Google
 Calendar event when a customer books a call. Plain words, principle 9. No visual change.
+
+## 2026-09-19 — The beta front door: every button says "Join the beta" and goes to /beta
+
+**Founder:** "let's verify everything then and let's make this a beta version where users can
+test and we will improve accordingly." Sign-up stays invite-only (CEO, 2026-09-18), so a
+stranger pressing "Start free" hit Google sign-in and a refusal. That was a dead end on the
+one button the page exists for.
+
+**What changed.** Every landing button (nav, hero, after How it works, three prices, the close,
+the phone bar) now says **Join the beta** and goes to **/beta**: one screen in the landing
+module — a Beta badge, "We're letting a few owners in first.", a five-field form (name, the
+Google email they'll sign in with, what they sell, where customers write, anything else), the
+button "Ask for access", and the note "Free while in beta. No card. Sahil reads every request
+himself." The hero note reads "Free while in beta. No card. It stops the moment they reply."
+The prices lede says "Free while in beta" instead of "Start free". Sign-in's refusal now points
+at /beta. In the app: a small "Beta" mark beside the wordmark and a "Something broke?" item in
+the sidebar that opens a one-box feedback dialog (posts to the existing /api/feedback).
+/admin lists requests with Approve / Decline; an approved email signs in on its next try, so
+adding a tester no longer means editing an env var and paying for a build.
+
+**Amends A-015**: button labels and the two reassurance lines only; structure, sections and
+the hero are as approved. **Rule kept:** no hero badge (structure v1 lists badges as out); the
+Beta badge lives on /beta and in the app, where it explains something.
+
+**Verified:** /beta at 1280 dark and 390 light from a production build; endpoint refuses a bad
+email and a filled honeypot. The admin list and the sign-in gate could not be exercised live
+(database unreachable from the sandbox); both are small and typed.

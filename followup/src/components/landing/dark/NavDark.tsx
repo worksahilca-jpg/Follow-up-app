@@ -21,12 +21,12 @@ export default function NavDark() {
           <span className={styles.wordmark}>FollowUp</span>
         </Link>
         <div className={styles.navLinks}>
-          <a href="#how">How it works</a>
-          <a href="#pricing">Prices</a>
-          <a href="#faq">Questions</a>
+          <Link href="/#how">How it works</Link>
+          <Link href="/#pricing">Prices</Link>
+          <Link href="/#faq">Questions</Link>
         </div>
-        <Link href="/signin" className={`${styles.btn} ${styles.btnSmall}`}>
-          Start free
+        <Link href="/beta" className={`${styles.btn} ${styles.btnSmall}`}>
+          Join the beta
         </Link>
       </div>
     </nav>

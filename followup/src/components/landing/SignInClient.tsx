@@ -130,7 +130,11 @@ function SignInPageInner() {
             in flight; only show it if the retry fails too. */}
         {!autoRetrying && error === "AccessDenied" && (
           <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
-            That Google account isn&apos;t authorized for this workspace.
+            That Google account isn&apos;t on the beta list yet.{" "}
+            <Link href="/beta" className="underline">
+              Ask for access
+            </Link>
+            .
           </p>
         )}
         {!autoRetrying && error && error !== "AccessDenied" && (

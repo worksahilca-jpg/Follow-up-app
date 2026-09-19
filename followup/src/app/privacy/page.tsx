@@ -37,7 +37,7 @@ export default function PrivacyPage() {
               FollowUp (&quot;FollowUp&quot;, &quot;we&quot;, &quot;us&quot;) provides an AI-assisted sales
               follow-up tool. This policy explains what data we collect, why, and how you can control it.
               Contact us at{" "}
-              <a href="mailto:work.sahilca@gmail.com" className="underline">
+              <a href="mailto:contact@followupbase.io" className="underline">
                 work.sahilca@gmail.com
               </a>{" "}
               with any questions.
@@ -153,7 +153,7 @@ export default function PrivacyPage() {
               We keep your data for as long as your account is active. You can delete an individual lead (and
               its full conversation history) at any time from that lead&apos;s page. To delete your entire
               account and all associated data, email{" "}
-              <a href="mailto:work.sahilca@gmail.com" className="underline">
+              <a href="mailto:contact@followupbase.io" className="underline">
                 work.sahilca@gmail.com
               </a>{" "}
               — we&apos;ll confirm deletion within 2 business days. Revoking FollowUp&apos;s Gmail access at{" "}
@@ -188,7 +188,7 @@ export default function PrivacyPage() {
             <p className="mt-2">
               Depending on where you live, you may have rights to access, correct, export, or delete your
               personal data, and to object to certain processing. To exercise any of these, contact{" "}
-              <a href="mailto:work.sahilca@gmail.com" className="underline">
+              <a href="mailto:contact@followupbase.io" className="underline">
                 work.sahilca@gmail.com
               </a>
               .

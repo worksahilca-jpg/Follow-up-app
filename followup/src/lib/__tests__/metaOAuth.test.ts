@@ -43,6 +43,42 @@ describe("Instagram one-click connect", () => {
     expect(result).toEqual({ error: "Instagram sign-in isn't configured yet." });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  // The first live connect (2026-09-19) failed with Meta's redirect_uri
+  // sentence. The code sends one string at both ends, so the only useful
+  // thing the settings line can add is that string and Meta's numeric
+  // code — the owner compares it against the console; nothing secret.
+  it("names the redirect address and Meta's code when the exchange is refused for a redirect mismatch", async () => {
+    vi.stubEnv("INSTAGRAM_APP_ID", "123");
+    vi.stubEnv("INSTAGRAM_APP_SECRET", "shh");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const body = {
+      error_type: "OAuthException",
+      code: 400,
+      error_message:
+        "Error validating verification code. Please make sure your redirect_uri is identical to the one you used in the OAuth dialog request",
+    };
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(new Response(JSON.stringify(body), { status: 400 }));
+    const result = await exchangeInstagramAuthCode("code", "https://followupbase.io/api/instagram/oauth/callback");
+    expect("error" in result).toBe(true);
+    const message = (result as { error: string }).error;
+    expect(message).toContain("Instagram said: Error validating verification code");
+    expect(message).toContain("[400]");
+    expect(message).toContain("The address we sent is https://followupbase.io/api/instagram/oauth/callback");
+    expect(message).not.toContain("shh");
+  });
+
+  it("does not add the address hint for an unrelated refusal", async () => {
+    vi.stubEnv("INSTAGRAM_APP_ID", "123");
+    vi.stubEnv("INSTAGRAM_APP_SECRET", "shh");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const body = { error: { message: "Invalid platform app", type: "OAuthException", code: 190, error_subcode: 460 } };
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(new Response(JSON.stringify(body), { status: 400 }));
+    const result = await exchangeInstagramAuthCode("code", "https://followupbase.io/api/instagram/oauth/callback");
+    const message = (result as { error: string }).error;
+    expect(message).toContain("Instagram said: Invalid platform app [190/460]");
+    expect(message).not.toContain("The address we sent");
+  });
 });
 
 describe("Facebook one-click connect", () => {

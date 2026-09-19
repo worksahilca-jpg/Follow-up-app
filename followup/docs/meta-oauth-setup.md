@@ -30,6 +30,20 @@ In the app dashboard: **Instagram → API setup with Instagram Login**.
    (added as a tester — up to 25 without App Review) this works immediately;
    for the general public it needs Meta App Review.
 
+**If Settings shows "Instagram said: Error validating verification code…
+redirect_uri…"** (first seen live 2026-09-19): the code sends one redirect
+address at both ends of the flow, so this is a mismatch between that address
+and what Meta has on file, or a wrong Instagram app secret. The settings line
+prints the exact address sent. Check, in order:
+1. Instagram → API setup with Instagram Login → Business login settings →
+   *OAuth redirect URIs* holds that address character for character — same
+   host (`followupbase.io`, no `www`), `https`, no trailing slash.
+2. `INSTAGRAM_APP_SECRET` in Vercel is the **Instagram** app secret from that
+   same page (next to the Instagram app ID), not the Facebook app secret from
+   Settings → Basic. Re-paste and redeploy if unsure.
+3. `NEXTAUTH_URL` in Vercel is `https://followupbase.io` — it is the base of
+   the address the app sends.
+
 ## 2. Facebook Login for Business
 
 In the app dashboard: **Facebook Login for Business** (add the product if not

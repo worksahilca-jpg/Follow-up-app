@@ -70,6 +70,34 @@ export function messageContent(
 }
 
 /**
+ * When the lead actually wrote, not when FollowUp noticed.
+ *
+ * These two used to be the same thing, because the only way a DM arrived
+ * was a webhook delivered within a second of being sent. Now that
+ * src/lib/instagramPoll.ts also ASKS every few minutes (Meta's push
+ * proved unreliable — see that file), "noticed" can be minutes after
+ * "written", and the difference matters twice:
+ *
+ *  - The acknowledgement holds for DM_ACK_GRACE_PERIOD_MS so the owner
+ *    gets first go at answering. Started from the moment of noticing, a
+ *    message found three minutes late waits another two on top — the two
+ *    delays stack, and the reply lands five minutes after a lead who
+ *    expects a business to be awake. Started from when they wrote, the
+ *    head start is the head start, and nothing is double-counted.
+ *  - A conversation's timeline should read in the order things were said.
+ *
+ * Clamped to now: a clock ahead of ours must never park an
+ * acknowledgement in the future, where the grace period would not expire
+ * until real time caught up. A missing or nonsensical timestamp falls
+ * back to now, which is exactly the old behavior.
+ */
+function eventSentAt(event: { timestamp?: unknown }): Date {
+  const ms = typeof event.timestamp === "number" ? event.timestamp : NaN;
+  if (!Number.isFinite(ms) || ms <= 0) return new Date();
+  return new Date(Math.min(ms, Date.now()));
+}
+
+/**
  * STOP / START in a DM, handled before anything else touches this lead.
  *
  * Instagram and Messenger had no opt-out at all: `isOptOutMessage` was
@@ -245,15 +273,15 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
         const echoRecipientId: string | undefined = event.recipient?.id;
         if (!echoRecipientId) continue;
         const lead = await findOrCreateLeadByInstagram(business.id, echoRecipientId);
-        const sentAt = typeof event.timestamp === "number" ? new Date(event.timestamp) : new Date();
-        await captureDirectReply(lead.id, "instagram", content.body, "instagram_direct", event.message?.mid, sentAt);
+        await captureDirectReply(lead.id, "instagram", content.body, "instagram_direct", event.message?.mid, eventSentAt(event));
         continue;
       }
 
       const lead = await findOrCreateLeadByInstagram(business.id, senderId);
+      const sentAt = eventSentAt(event);
 
       const conversation = await findOrCreateConversation(lead.id, "instagram");
-      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid, content.quickReplyPayload);
+      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, sentAt, event.message?.mid, content.quickReplyPayload);
       if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
 
       // A tap on one of FollowUp's own reply buttons is an answer, not a
@@ -285,7 +313,7 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
         //
         // `ownWords`, not `body`: an attachment-only DM must not get a
         // generated reply to a placeholder FollowUp wrote itself (see messageContent).
-        await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: content.ownWords, inboundAt: new Date() });
+        await acknowledgeNewLead(lead.id, { channel: "instagram", inboundText: content.ownWords, inboundAt: sentAt });
       }
       await scoreAndDraftForLead(lead.id);
       await checkRapidEngagement(lead.id);
@@ -323,14 +351,14 @@ async function handlePageEvents(entries: any[]): Promise<void> {
         const recipientId: string | undefined = event.recipient?.id;
         if (!recipientId || recipientId === pageId) continue;
         const lead = await findOrCreateLeadByMessenger(business.id, recipientId);
-        const sentAt = typeof event.timestamp === "number" ? new Date(event.timestamp) : new Date();
-        await captureDirectReply(lead.id, "messenger", content.body, "messenger_direct", event.message?.mid, sentAt);
+        await captureDirectReply(lead.id, "messenger", content.body, "messenger_direct", event.message?.mid, eventSentAt(event));
         continue;
       }
 
       const lead = await findOrCreateLeadByMessenger(business.id, senderId);
+      const sentAt = eventSentAt(event);
       const conversation = await findOrCreateConversation(lead.id, "messenger");
-      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, new Date(), event.message?.mid, content.quickReplyPayload);
+      const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, sentAt, event.message?.mid, content.quickReplyPayload);
       if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
 
       // A reply-button tap — same handling as the Instagram path above.
@@ -346,7 +374,7 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       if (!optedOut) {
         // Same two-minute grace period as Instagram, and `ownWords` not
         // `body` — see the matching comment on the Instagram path above.
-        await acknowledgeNewLead(lead.id, { channel: "messenger", inboundText: content.ownWords, inboundAt: new Date() });
+        await acknowledgeNewLead(lead.id, { channel: "messenger", inboundText: content.ownWords, inboundAt: sentAt });
       }
       await scoreAndDraftForLead(lead.id);
       await checkRapidEngagement(lead.id);

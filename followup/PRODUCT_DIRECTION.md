@@ -365,3 +365,17 @@ leaves the cursor alone rather than skipping a window nobody read. `src/lib/inst
 
 The general rule this sets, for every channel after it: **a push FollowUp cannot make arrive
 is not a capture mechanism.** Where a platform will let us ask, we ask.
+
+> **A minute or two before the first reply is the target, not a cost (CEO, 2026-09-19).**
+> "We will reply after 1 or 2 mins so that it feels real." A reply that lands the instant a
+> DM is sent reads as a machine, which is the one thing FollowUp must never read as. The
+> two-minute head start the owner already gets (`DM_ACK_GRACE_PERIOD_MS`) is therefore a
+> feature twice over, and shortening it is not an optimisation.
+
+What this ruled out is the delays **stacking**. The acknowledgement's head start used to be
+timed from the moment FollowUp noticed a message, which was the same instant it was sent
+only while a webhook was the only way one arrived. Polled three minutes late, a lead waited
+another two on top — five minutes, which is not a business that looks awake. A DM is now
+timed from when the lead wrote it (`eventSentAt` in `src/lib/inbound/meta.ts`), so the head
+start is spent by the time a late message is found, and the conversation timeline reads in
+the order things were actually said.

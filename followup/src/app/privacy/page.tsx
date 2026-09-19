@@ -38,7 +38,7 @@ export default function PrivacyPage() {
               follow-up tool. This policy explains what data we collect, why, and how you can control it.
               Contact us at{" "}
               <a href="mailto:contact@followupbase.io" className="underline">
-                work.sahilca@gmail.com
+                contact@followupbase.io
               </a>{" "}
               with any questions.
             </p>
@@ -154,7 +154,7 @@ export default function PrivacyPage() {
               its full conversation history) at any time from that lead&apos;s page. To delete your entire
               account and all associated data, email{" "}
               <a href="mailto:contact@followupbase.io" className="underline">
-                work.sahilca@gmail.com
+                contact@followupbase.io
               </a>{" "}
               — we&apos;ll confirm deletion within 2 business days. Revoking FollowUp&apos;s Gmail access at{" "}
               <a
@@ -189,7 +189,7 @@ export default function PrivacyPage() {
               Depending on where you live, you may have rights to access, correct, export, or delete your
               personal data, and to object to certain processing. To exercise any of these, contact{" "}
               <a href="mailto:contact@followupbase.io" className="underline">
-                work.sahilca@gmail.com
+                contact@followupbase.io
               </a>
               .
             </p>

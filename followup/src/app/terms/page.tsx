@@ -115,7 +115,7 @@ export default function TermsPage() {
             <p className="mt-2">
               Questions about these terms:{" "}
               <a href="mailto:contact@followupbase.io" className="underline">
-                work.sahilca@gmail.com
+                contact@followupbase.io
               </a>
               .
             </p>

@@ -20,6 +20,7 @@ import { mapDbLeadToUiLead } from "@/lib/leads-data";
 import type { BusinessAutomationRules } from "@/lib/automationStatus";
 
 const RULES: BusinessAutomationRules = {
+  canSend: true,
   masterEnabled: true,
   silenceTriggerDays: 5,
   unansweredEnabled: true,

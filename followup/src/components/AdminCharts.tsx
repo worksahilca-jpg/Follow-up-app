@@ -18,13 +18,7 @@ import {
 } from "recharts";
 import { BarChart3 } from "lucide-react";
 import type { WeekBucket, ChannelCount, TierCount } from "@/lib/admin-data";
-import {
-  CHART_AXIS_COLOR as AXIS_COLOR,
-  CHART_GRID_COLOR as GRID_COLOR,
-  CHART_TOOLTIP_STYLE as tooltipStyle,
-  CHART_PRIMARY,
-  CHART_INK,
-} from "@/lib/chart-colors";
+import { useChartColors } from "@/lib/chart-colors";
 
 export default function AdminCharts({
   signupsPerWeek,
@@ -35,6 +29,7 @@ export default function AdminCharts({
   channelBreakdown: ChannelCount[];
   tierBreakdown: TierCount[];
 }) {
+  const chart = useChartColors();
   const hasSignups = signupsPerWeek.some((w) => w.count > 0);
   const hasChannels = channelBreakdown.length > 0;
   const hasTiers = tierBreakdown.some((t) => t.count > 0);
@@ -44,11 +39,11 @@ export default function AdminCharts({
       <ChartCard title="Businesses signed up" description="New businesses created, last 12 weeks." hasData={hasSignups}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={signupsPerWeek} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-            <XAxis dataKey="week" tick={{ fontSize: 12, fill: AXIS_COLOR }} />
-            <YAxis tick={{ fontSize: 12, fill: AXIS_COLOR }} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Bar dataKey="count" name="Businesses" fill={CHART_PRIMARY} radius={[4, 4, 0, 0]} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+            <XAxis dataKey="week" tick={{ fontSize: 12, fill: chart.axis }} />
+            <YAxis tick={{ fontSize: 12, fill: chart.axis }} allowDecimals={false} />
+            <Tooltip contentStyle={chart.tooltip} />
+            <Bar dataKey="count" name="Businesses" fill={chart.primary} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -57,11 +52,11 @@ export default function AdminCharts({
         <ChartCard title="Leads by channel" description="Which capture channel brings in the most volume, across every business." hasData={hasChannels}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={channelBreakdown} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 12, fill: AXIS_COLOR }} allowDecimals={false} />
-              <YAxis dataKey="source" type="category" tick={{ fontSize: 12, fill: AXIS_COLOR }} width={110} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="count" name="Leads" fill={CHART_INK} radius={[0, 4, 4, 0]} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 12, fill: chart.axis }} allowDecimals={false} />
+              <YAxis dataKey="source" type="category" tick={{ fontSize: 12, fill: chart.axis }} width={110} />
+              <Tooltip contentStyle={chart.tooltip} />
+              <Bar dataKey="count" name="Leads" fill={chart.ink} radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -69,11 +64,11 @@ export default function AdminCharts({
         <ChartCard title="Businesses by tier" description="Free / Plus / Pro, across every signed-up business." hasData={hasTiers}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={tierBreakdown} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 12, fill: AXIS_COLOR }} />
-              <YAxis tick={{ fontSize: 12, fill: AXIS_COLOR }} allowDecimals={false} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="count" name="Businesses" fill={CHART_PRIMARY} radius={[4, 4, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 12, fill: chart.axis }} />
+              <YAxis tick={{ fontSize: 12, fill: chart.axis }} allowDecimals={false} />
+              <Tooltip contentStyle={chart.tooltip} />
+              <Bar dataKey="count" name="Businesses" fill={chart.primary} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -99,7 +94,7 @@ function ChartCard({
     <section>
       <h2 className="font-display text-xl">{title}</h2>
       <p className="text-sm text-ink-soft mt-1">{description}</p>
-      <div className="mt-4 rounded-xl border border-line bg-card p-4" style={{ height }}>
+      <div className="mt-4 rounded-[var(--radius-box)] bg-card p-4" style={{ height, boxShadow: "var(--shadow-box)" }}>
         {hasData ? children : <EmptyChart />}
       </div>
     </section>

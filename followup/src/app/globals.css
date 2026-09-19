@@ -245,38 +245,7 @@ input::placeholder, textarea::placeholder {
   color: var(--ink-faint);
 }
 
-/* ---- Decorative primitives ----
-   Everything below is pure CSS (no JS cost) and gated under
-   prefers-reduced-motion so a visitor who has asked for less motion still
-   gets the shape, just not the drift. */
-
-/* Aurora wash (still used behind the sign-in card, SignInScene.tsx):
-   blurred fields drifting past each other slowly. On a monochrome ground
-   the fields are tints of the ground's own opposite, so it reads as light
-   through frosted glass, not a coloured blob. */
-@keyframes aurora-drift-a {
-  0%, 100% { transform: translate(-8%, -6%) scale(1); }
-  50% { transform: translate(6%, 8%) scale(1.2); }
-}
-@keyframes aurora-drift-b {
-  0%, 100% { transform: translate(6%, 10%) scale(1.1); }
-  50% { transform: translate(-10%, -4%) scale(0.9); }
-}
-@keyframes aurora-drift-c {
-  0%, 100% { transform: translate(0%, -8%) scale(1.05); }
-  50% { transform: translate(-6%, 6%) scale(1.25); }
-}
-.aurora-blob {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(70px);
-  opacity: 0.5;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .aurora-blob-a { animation: aurora-drift-a 22s ease-in-out infinite; }
-  .aurora-blob-b { animation: aurora-drift-b 26s ease-in-out infinite; }
-  .aurora-blob-c { animation: aurora-drift-c 19s ease-in-out infinite; }
-}
+/* ---- Decorative primitives ---- */
 
 /* A diagonal light sweep on hover — the one flourish a primary CTA gets. */
 .btn-shine {

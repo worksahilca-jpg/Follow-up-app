@@ -46,18 +46,21 @@ function page(title: string, message: string, form?: { token: string; business: 
      <meta name="viewport" content="width=device-width,initial-scale=1">
      <title>${esc(title)}</title>
      <style>
-       :root{color-scheme:light}
+       :root{color-scheme:dark;--paper:#1e1e20;--card:#27272a;--ink:#fff;--ink-soft:#9ca3af;
+             --line:rgba(255,255,255,.1);--accent:#fff;--on-accent:#0a0a0a}
+       @media (prefers-color-scheme:light){:root{color-scheme:light;--paper:#fff;--card:#fff;--ink:#0a0a0a;
+             --ink-soft:#52525b;--line:rgba(0,0,0,.09);--accent:#0a0a0a;--on-accent:#fff}}
        body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;
-            background:#f6f8fb;color:#0b1f33;
+            background:var(--paper);color:var(--ink);
             font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-       main{max-width:32rem;background:#fff;border:1px solid rgba(11,31,51,.12);
+       main{max-width:32rem;background:var(--card);border:1px solid var(--line);
             border-radius:12px;padding:28px}
        h1{font-size:21px;margin:0 0 10px}
-       p{margin:0 0 14px;color:#46566b}
+       p{margin:0 0 14px;color:var(--ink-soft)}
        .fine{font-size:14px;margin-top:14px;margin-bottom:0}
-       button{font:inherit;font-weight:600;cursor:pointer;color:#fff;background:#0b1f33;
+       button{font:inherit;font-weight:600;cursor:pointer;color:var(--on-accent);background:var(--accent);
               border:0;border-radius:9px;padding:11px 18px}
-       button:focus-visible{outline:2px solid #2a5cdb;outline-offset:2px}
+       button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
      </style></head>
      <body><main><h1>${esc(title)}</h1><p>${esc(message)}</p>${body}</main></body></html>`,
     { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }

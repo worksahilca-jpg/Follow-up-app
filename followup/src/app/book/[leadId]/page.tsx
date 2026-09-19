@@ -131,7 +131,7 @@ export default function BookingPage() {
                 <button
                   onClick={confirm}
                   disabled={confirming}
-                  className="rounded-lg px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+                  className="rounded-lg px-5 py-2.5 text-sm font-medium text-on-accent disabled:opacity-60"
                   style={{ backgroundColor: "var(--rust)" }}
                 >
                   {confirming

@@ -2684,3 +2684,27 @@ settings, onboarding and admin for anything hard-coded that the token swap did n
 Gautam owns app UI per TEAM.md; this stage went in as one PR so the founder can react to the
 tokens before the rest is touched. **Needs the founder's yes** before stage two: the status
 colours stay (A-006 axis 3) — say if the app should be grey-only like the page.
+
+## 2026-09-19 — The app on the charcoal system, stage two: sign-in, charts, leftovers
+
+**Founder:** "let's do it" on the stage-two list, then "merge" on PR #265 (stage one went
+live as 8471a0c). This is the rest.
+
+- **Sign-in** drops the navy-era `landing.module.css` scope and the floating-chip 3D scene
+  behind the card (`SignInScene.tsx`, deleted). It is now the app's own ground, the brand
+  symbol and wordmark, one lifted card, one filled accent button. The Google mark keeps its
+  four colours: it is Google's, not ours, and their sign-in guidelines ask for it. The soft
+  radial light behind the card is the landing hero's, in `--accent-soft`.
+- **Charts** stop carrying a hand-copied palette. `chart-colors.ts` is now a hook that reads
+  the live tokens off the document at mount and again when the device's colour scheme
+  flips, because Recharts writes colours onto SVG attributes where `var()` does not resolve.
+  Series are ink and ink-soft; money keeps gold as the one meaning-carrying hue. Chart boxes
+  take the box shape (shadow, no border).
+- **Leftovers:** the unsubscribe page (raw HTML outside the app shell) carries its own copy
+  of the tokens in both themes; the manifest's colours are the real ground and ink; the
+  booking page's confirm button and the 404's button lose their last hard-coded white and
+  indigo shadow. The aurora keyframes and three dead navy-era landing components
+  (`LandingNav`, `HeroMockup`, `FadeHeadline`) are removed with the module that styled them.
+
+**Still open for the founder:** whether the four status colours stay (A-006 axis 3) or the
+app goes grey-only like the page. Nothing else in the app is blue any more.

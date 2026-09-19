@@ -336,6 +336,18 @@ export function buildInstagramAuthUrl(redirectUri: string, state: string): strin
 }
 
 /**
+ * Instagram's OAuth endpoints answer errors in two shapes:
+ * `{ error_type, code, error_message }` (api.instagram.com) and
+ * `{ error: { message, type, code } }` (graph.instagram.com). Returns the
+ * human sentence from either, clipped, or "" when there is none.
+ */
+async function instagramOAuthErrorMessage(res: Response): Promise<string> {
+  const data = await res.json().catch(() => null);
+  const message = data?.error_message ?? data?.error?.message;
+  return typeof message === "string" ? message.slice(0, 200) : "";
+}
+
+/**
  * Trades the authorization code for a long-lived (60-day) Instagram
  * access token: short-lived token first (api.instagram.com, 1 hour),
  * then the ig_exchange_token long-lived exchange (graph.instagram.com) —
@@ -361,7 +373,17 @@ export async function exchangeInstagramAuthCode(
       code,
     }),
   });
-  if (!shortLivedRes.ok) return { error: "Instagram rejected that sign-in — try connecting again." };
+  if (!shortLivedRes.ok) {
+    // Instagram's own reason ("Invalid platform app", "Invalid Client
+    // Secret", a redirect mismatch…) is the one thing that tells a wrong
+    // env var from a wrong console setting. It used to be thrown away, so
+    // the first live connect on 2026-09-19 failed with no way to tell
+    // which of the four possible causes it was. Message only — never the
+    // secret, never the code.
+    const reason = await instagramOAuthErrorMessage(shortLivedRes);
+    console.error(`Instagram code exchange rejected: HTTP ${shortLivedRes.status}${reason ? ` — ${reason}` : ""}`);
+    return { error: `Instagram rejected that sign-in${reason ? ` (Instagram said: ${reason})` : ""} — try connecting again.` };
+  }
   const shortLived = await shortLivedRes.json().catch(() => ({}));
   const shortLivedToken = shortLived?.access_token;
   if (typeof shortLivedToken !== "string") return { error: "Instagram didn't return an access token." };
@@ -369,7 +391,11 @@ export async function exchangeInstagramAuthCode(
   const longLivedRes = await fetch(
     `${GRAPH_OAUTH}/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(appSecret)}&access_token=${encodeURIComponent(shortLivedToken)}`
   );
-  if (!longLivedRes.ok) return { error: "Couldn't extend that Instagram sign-in — try again." };
+  if (!longLivedRes.ok) {
+    const reason = await instagramOAuthErrorMessage(longLivedRes);
+    console.error(`Instagram long-lived exchange rejected: HTTP ${longLivedRes.status}${reason ? ` — ${reason}` : ""}`);
+    return { error: `Couldn't extend that Instagram sign-in${reason ? ` (Instagram said: ${reason})` : ""} — try again.` };
+  }
   const longLived = await longLivedRes.json().catch(() => ({}));
   const longLivedToken = longLived?.access_token;
   if (typeof longLivedToken !== "string") return { error: "Instagram didn't return a long-lived token." };

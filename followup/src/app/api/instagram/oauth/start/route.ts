@@ -15,10 +15,10 @@ export async function GET() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.redirect(new URL("/signin", appUrl()));
   if (!(await requireAdmin(ctx))) {
-    return NextResponse.redirect(`${appUrl()}/settings?instagram=error&message=Only+an+admin+can+connect+Instagram`);
+    return NextResponse.redirect(`${appUrl()}/settings?instagram=error&message=Only+an+admin+can+connect+Instagram#social`);
   }
   if (!instagramOAuthAvailable()) {
-    return NextResponse.redirect(`${appUrl()}/settings?instagram=error&message=Instagram+sign-in+isn't+set+up+yet`);
+    return NextResponse.redirect(`${appUrl()}/settings?instagram=error&message=Instagram+sign-in+isn't+set+up+yet#social`);
   }
 
   const state = randomBytes(24).toString("base64url");

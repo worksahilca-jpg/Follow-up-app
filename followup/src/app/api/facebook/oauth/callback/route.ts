@@ -17,6 +17,9 @@ import { recordAudit } from "@/lib/audit";
 export async function GET(request: NextRequest) {
   const ctx = await getSessionContext();
   const settingsUrl = new URL("/settings", appUrl());
+  // Same as the Instagram callback: land on the Channels tab, where the
+  // Facebook panel and its outcome message actually are.
+  settingsUrl.hash = "social";
   if (!ctx) return NextResponse.redirect(new URL("/signin", appUrl()));
   if (!(await requireAdmin(ctx))) {
     settingsUrl.searchParams.set("facebook", "error");

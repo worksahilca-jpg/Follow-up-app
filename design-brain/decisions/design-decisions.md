@@ -2727,3 +2727,58 @@ old "reads your sales conversations in Gmail" line, and never mentioned Calendar
 new section (nothing else on the page needs it), the "Is my data safe?" answer now says it: reads
 incoming Gmail to spot customer enquiries, sends replies from your own address, adds a Google
 Calendar event when a customer books a call. Plain words, principle 9. No visual change.
+
+## 2026-09-19 — The beta front door: every button says "Join the beta" and goes to /beta
+
+**Founder:** "let's verify everything then and let's make this a beta version where users can
+test and we will improve accordingly." Sign-up stays invite-only (CEO, 2026-09-18), so a
+stranger pressing "Start free" hit Google sign-in and a refusal. That was a dead end on the
+one button the page exists for.
+
+**What changed.** Every landing button (nav, hero, after How it works, three prices, the close,
+the phone bar) now says **Join the beta** and goes to **/beta**: one screen in the landing
+module — a Beta badge, "We're letting a few owners in first.", a five-field form (name, the
+Google email they'll sign in with, what they sell, where customers write, anything else), the
+button "Ask for access", and the note "Free while in beta. No card. Sahil reads every request
+himself." The hero note reads "Free while in beta. No card. It stops the moment they reply."
+The prices lede says "Free while in beta" instead of "Start free". Sign-in's refusal now points
+at /beta. In the app: a small "Beta" mark beside the wordmark and a "Something broke?" item in
+the sidebar that opens a one-box feedback dialog (posts to the existing /api/feedback).
+/admin lists requests with Approve / Decline; an approved email signs in on its next try, so
+adding a tester no longer means editing an env var and paying for a build.
+
+**Amends A-015**: button labels and the two reassurance lines only; structure, sections and
+the hero are as approved. **Rule kept:** no hero badge (structure v1 lists badges as out); the
+Beta badge lives on /beta and in the app, where it explains something.
+
+**Verified:** /beta at 1280 dark and 390 light from a production build; endpoint refuses a bad
+email and a filled honeypot. The admin list and the sign-in gate could not be exercised live
+(database unreachable from the sandbox); both are small and typed.
+
+**Superseded the same day (R-012).** The founder does not want a public request form: "I will
+personally be adding all the emails." `/beta` and the form are removed; every button says
+"Start free" and goes to sign-in again; sign-in says it is a private beta and gives
+contact@followupbase.io; `/admin` has an "Add tester" box instead of a request queue. The
+tester list, the Beta mark and the feedback dialog stay.
+
+## 2026-09-19 — Settings → WhatsApp becomes "Connect WhatsApp" on the owner's own number
+
+**Founder:** "Nobody wants to bring or use a new number that is nowhere exposed for a business
+… Let's build WhatsApp … We'll leave Twilio for phone and SMS." Product decision recorded in
+`followup/PRODUCT_DIRECTION.md`; scope in
+`followup/research/integrations/2026-09-19-whatsapp-coexistence.md`.
+
+**What changed in the UI.** The WhatsApp panel no longer asks for a Twilio Account SID, Auth
+Token, sender number and Content SID. It is now the same shape as the Instagram and Facebook
+panels: one sentence on what happens, one button ("Connect WhatsApp") that opens Meta's own
+signup where the owner scans a QR code with the phone that already has their number, a
+connected line naming the number, and a disconnect link. Below it, one small section for the
+follow-up past 24 hours: the template's name and language from WhatsApp Manager and the
+approved wording for reference. The two things the owner has to know are said in plain words
+(principle 9): the phone must keep the WhatsApp Business app open at least every 13 days, and
+a reply past 24 hours needs an approved template or nothing is sent — never email (R-003).
+A paste-a-token fallback is folded away behind a disclosure, for the founder's own testing.
+
+**Verified:** typed, built, tests green. The panel could not be exercised against a live Meta
+app from the sandbox (no Meta app configuration yet); the first live connect pins the payload
+shapes, as the scope doc says.

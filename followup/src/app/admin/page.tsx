@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Building2, Inbox, Radio, MoonStar, DollarSign, ArrowRight } from "lucide-react";
 import StatCard from "@/components/StatCard";
+import AccessRequestList from "@/components/AccessRequestList";
 import AdminCharts from "@/components/AdminCharts";
 import { getPlatformAdminData } from "@/lib/admin-data";
 import { formatCurrency } from "@/lib/demo-data";
@@ -60,6 +61,17 @@ export default async function AdminPage() {
           tierBreakdown={data.tierBreakdown}
         />
       </div>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl">Beta testers</h2>
+        <p className="text-sm text-ink-soft mt-1">
+          The only way in. Add a Google email and that person can sign in on their next try — no settings change, no
+          redeploy. Nobody can ask from the site.
+        </p>
+        <div className="mt-4">
+          <AccessRequestList requests={data.accessRequests} />
+        </div>
+      </section>
 
       <section className="mt-10">
         <h2 className="font-display text-xl">Recent signups</h2>

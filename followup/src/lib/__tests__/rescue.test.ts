@@ -23,6 +23,19 @@ function lead(over: Partial<Lead> = {}): Lead {
 }
 
 describe("rescue score", () => {
+  it("a text that failed to deliver is 'can't reach', not silence, and surfaces on its own", () => {
+    const failed: Message = { ...msg("outbound", 72), channel: "text", deliveryStatus: "failed" };
+    const r = assessRescue(lead({ score: 10, conversation: [msg("inbound", 80), failed] }), NOW);
+    expect(r.unreachable).toBe(true);
+    expect(r.atRisk).toBe(true);
+    expect(r.reason).toMatch(/failed to deliver/);
+
+    const delivered: Message = { ...msg("outbound", 72), channel: "text", deliveryStatus: "delivered" };
+    const ok = assessRescue(lead({ score: 10, conversation: [msg("inbound", 80), delivered] }), NOW);
+    expect(ok.unreachable).toBe(false);
+    expect(ok.reason).toMatch(/No reply for 3 days/);
+  });
+
   it("a lead waiting 30h for an answer is at risk; the same lead we answered is not", () => {
     const waiting = assessRescue(lead({ conversation: [msg("outbound", 40), msg("inbound", 30)] }), NOW);
     expect(waiting.atRisk).toBe(true);

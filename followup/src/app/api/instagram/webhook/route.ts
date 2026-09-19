@@ -83,9 +83,15 @@ export async function POST(request: NextRequest) {
   // businessId is null: one envelope can legitimately carry entries for
   // several connected accounts, so there is no single business to attribute
   // it to at this point.
+  //
+  // A WhatsApp envelope (object "whatsapp_business_account") has its own
+  // callback at /api/whatsapp/webhook, but the Meta console lets every
+  // product point at one URL — if it lands here it is stored and processed
+  // as what it is rather than dropped by the Instagram/Messenger processor.
+  const channel = payload.object === "whatsapp_business_account" ? "whatsapp_cloud" : "instagram_or_messenger";
   const event = await recordInboundWebhookEvent({
     provider: "meta",
-    channel: "instagram_or_messenger",
+    channel,
     businessId: null,
     payload,
   });
@@ -93,7 +99,7 @@ export async function POST(request: NextRequest) {
   // Never throws — a processing failure is recorded on the row, and Meta
   // still gets its 200. Returning a 500 instead would start Meta's retry
   // storm against an envelope that is already safely on disk.
-  await processInboundEvent({ ...event, channel: "instagram_or_messenger", businessId: null, payload });
+  await processInboundEvent({ ...event, channel, businessId: null, payload });
 
   return NextResponse.json({ success: true });
 }

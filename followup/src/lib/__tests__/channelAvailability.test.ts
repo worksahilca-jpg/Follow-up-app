@@ -145,9 +145,11 @@ describe("WhatsApp is set up without the carrier channels", () => {
 
   it("reaches every value a WhatsApp reply needs", () => {
     const whatsapp = readWhatsappPanel();
-    // sendWhatsApp (src/lib/twilio.ts) needs all three, and the panel is
-    // useless without the inbound URL and the 24-hour template.
-    for (const field of ["accountSid", "authToken", "whatsappPhoneNumber", "whatsappUrl", "whatsappTemplateSid", "whatsappTemplateBody"]) {
+    // Since 2026-09-19 WhatsApp is the owner's own number through Meta
+    // (src/lib/whatsappCloud.ts): the panel must offer the connect flow,
+    // the paste-a-token fallback's three values, and the 24-hour template
+    // that a follow-up past the window depends on.
+    for (const field of ["/api/whatsapp/connect", "accessToken", "phoneNumberId", "wabaId", "templateName", "templateLanguage", "templateBody"]) {
       expect(whatsapp, `WhatsApp setup can no longer reach ${field}`).toContain(field);
     }
   });

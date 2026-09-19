@@ -192,6 +192,35 @@ model Business {
   facebookPageId          String? @unique
   facebookPageName        String?
   facebookPageAccessToken String?
+
+  // WhatsApp through Meta's Cloud API, on the owner's OWN number
+  // (Coexistence — the number stays in the WhatsApp Business app on their
+  // phone; founder's decision 2026-09-19, see PRODUCT_DIRECTION and
+  // research/integrations/2026-09-19-whatsapp-coexistence.md). Same Meta
+  // app as Instagram/Messenger; inbound events arrive at
+  // src/app/api/whatsapp/webhook and route to the business whose
+  // whatsappPhoneNumberId matches value.metadata.phone_number_id. The
+  // access token is the business-integration token Embedded Signup hands
+  // back, encrypted at rest (src/lib/db.ts ENCRYPTED_FIELDS). Distinct from
+  // the Twilio WhatsApp fields above, which stay for a business already on
+  // that path; src/lib/sending.ts prefers this connection when both exist.
+  whatsappWabaId        String?
+  whatsappPhoneNumberId String? @unique
+  whatsappAccessToken   String?
+  // "+1 416-555-0100" as Meta displays it — for Settings copy only.
+  whatsappDisplayNumber String?
+  // "coexistence" (connected from the WhatsApp Business app, the normal
+  // path) or "cloud" (a number that lives only in the API). Copy differs:
+  // only a coexistence number shows the owner's own phone replies here.
+  whatsappConnectMode   String?
+  // The approved utility template (WhatsApp Manager, this business's own
+  // WABA) FollowUp may send past the 24-hour window — name + language code
+  // as the API wants them, and the approved wording kept for reference,
+  // same reason as whatsappTemplateBody above. No template: a follow-up
+  // past 24 hours is refused in plain words, never sent by email (R-003).
+  whatsappCloudTemplateName     String?
+  whatsappCloudTemplateLanguage String?
+  whatsappCloudTemplateBody     String?
 }
 
 enum PipelineStage {
@@ -721,6 +750,13 @@ model FollowUp {
   // (src/lib/rescued.ts): a reply to an automated trigger is a rescued
   // conversation; a reply to a manual send is the owner's own work.
   trigger     String?
+  // Did a person change the AI draft before this went out? Compared at
+  // send time against Lead.suggestedMessage (whitespace-insensitive).
+  // Null when there was no draft to compare against (a send typed from
+  // scratch, an instant acknowledgement). The one quality number every
+  // comparable AI-drafting product watches (accuracy research 2026-09-13,
+  // finding 9); surfaced on /analytics as "Drafts sent as written".
+  draftEdited Boolean?
   createdAt   DateTime  @default(now())
 
   @@index([leadId])
@@ -1286,6 +1322,26 @@ model AIInsight {
 // it regardless. See src/app/api/feedback/route.ts and the quiet form in
 // Settings — never a popup, never forced; nothing anywhere prompts for
 // this unprompted.
+// The beta tester list. One row per email, added by the founder from
+// /admin (POST /api/access-request, platform admin only) — there is no
+// public way to ask (his decision, 2026-09-19). `status`: approved |
+// declined. An approved email may sign in (src/lib/auth.ts) — the invite,
+// without editing ALLOWED_EMAILS and paying for a redeploy each time.
+// Sign-up stays invite-only (PRODUCT_DIRECTION, 2026-09-18).
+model AccessRequest {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  business  String?
+  channels  String    @default("") // comma-joined: email,instagram,whatsapp,text,website,other
+  note      String?
+  status    String    @default("approved")
+  decidedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([status, createdAt])
+}
+
 model ProductFeedback {
   id         String   @id @default(cuid())
   business   Business @relation(fields: [businessId], references: [id])

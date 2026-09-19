@@ -28,6 +28,11 @@ export interface RescueAssessment {
   reason: string; // one plain sentence the owner can act on
   waitingHours: number | null; // hours the lead has been waiting for an answer, if they wrote last
   silentDays: number | null; // days since our last message with no reply, if we wrote last
+  // The last thing we sent them failed to deliver (Twilio said failed or
+  // undelivered). Their silence means nothing arrived, not that they are
+  // ignoring us; the fix is a different number or channel, not another
+  // message down the same dead pipe.
+  unreachable: boolean;
 }
 
 const AT_RISK_THRESHOLD = 50;
@@ -40,7 +45,7 @@ function clamp(n: number, lo: number, hi: number): number {
 
 export function assessRescue(lead: Lead, now: Date = new Date()): RescueAssessment {
   if (lead.stage === "won" || lead.stage === "lost") {
-    return { score: 0, atRisk: false, reason: "Closed.", waitingHours: null, silentDays: null };
+    return { score: 0, atRisk: false, reason: "Closed.", waitingHours: null, silentDays: null, unreachable: false };
   }
 
   const messages = [...lead.conversation].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -51,6 +56,7 @@ export function assessRescue(lead: Lead, now: Date = new Date()): RescueAssessme
   let waitingHours: number | null = null;
   let silentDays: number | null = null;
   let reason: string;
+  let unreachable = false;
 
   if (last?.direction === "inbound") {
     waitingHours = Math.max(0, (now.getTime() - new Date(last.date).getTime()) / HOUR);
@@ -69,6 +75,17 @@ export function assessRescue(lead: Lead, now: Date = new Date()): RescueAssessme
       silentDays < 2
         ? "Conversation is live."
         : `No reply for ${Math.floor(silentDays)} day${Math.floor(silentDays) === 1 ? "" : "s"} since your last message.`;
+
+    // Delivery failure outranks silence. A bounced text sits in the
+    // thread exactly like an unanswered one, so without this the owner is
+    // told the customer went quiet and the automation keeps writing to a
+    // number nothing reaches. Fixed weight, high enough to surface on its
+    // own: the owner has to do something a message cannot.
+    if (last?.direction === "outbound" && (last.deliveryStatus === "failed" || last.deliveryStatus === "undelivered")) {
+      unreachable = true;
+      neglect = 40;
+      reason = `${lead.name.split(" ")[0]} isn't receiving your messages — the last one failed to deliver. Check the number, or try another channel.`;
+    }
   }
 
   const intent = clamp(lead.score, 0, 100) * 0.3;
@@ -85,7 +102,9 @@ export function assessRescue(lead: Lead, now: Date = new Date()): RescueAssessme
 
   const score = Math.round(clamp(neglect + intent + recover, 0, 100));
   if (score >= AT_RISK_THRESHOLD && lead.priority === "high") reason += " High intent.";
-  return { score, atRisk: score >= AT_RISK_THRESHOLD, reason, waitingHours, silentDays };
+  // Unreachable is at risk whatever the score: a low-intent lead whose
+  // number bounces still needs the owner, not another automated message.
+  return { score, atRisk: score >= AT_RISK_THRESHOLD || unreachable, reason, waitingHours, silentDays, unreachable };
 }
 
 function formatHours(h: number): string {

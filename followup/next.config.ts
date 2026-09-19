@@ -23,12 +23,16 @@ import { withSentryConfig } from "@sentry/nextjs/config";
  */
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://vercel.live",
+  // connect.facebook.net / www.facebook.com: Meta's JavaScript SDK, loaded
+  // only on Settings → WhatsApp for the Embedded Signup popup
+  // (src/components/WhatsAppConfig.tsx). The SDK is a script plus a hidden
+  // status frame; the signup itself runs in a popup window, outside CSP.
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://vercel.live https://connect.facebook.net",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://vercel.live",
   "font-src 'self' https://fonts.gstatic.com https://assets.vercel.com data:",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://api.stripe.com https://*.supabase.co https://vercel.live wss://ws-us3.pusher.com",
-  "frame-src https://js.stripe.com https://checkout.stripe.com https://billing.stripe.com https://vercel.live",
+  "connect-src 'self' https://api.stripe.com https://*.supabase.co https://vercel.live wss://ws-us3.pusher.com https://www.facebook.com https://graph.facebook.com",
+  "frame-src https://js.stripe.com https://checkout.stripe.com https://billing.stripe.com https://vercel.live https://www.facebook.com https://web.facebook.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self' https://checkout.stripe.com https://billing.stripe.com https://accounts.google.com",

@@ -68,6 +68,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       source: m.source ?? undefined,
       trigger: m.trigger ?? undefined,
       quickReplyPayload: m.quickReplyPayload ?? undefined,
+      deliveryStatus: m.deliveryStatus ?? undefined,
     }))
   );
   if (conversation.length === 0) return false;

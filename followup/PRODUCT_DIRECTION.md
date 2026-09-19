@@ -297,7 +297,28 @@ stakes; timing a follow-up *into* the window on purpose is the moat-leaning part
 research §6.2). Build order and the rejected alternative: `design-brain/decisions/`,
 entries dated 2026-09-16 (R-003).
 
+## WhatsApp is the owner's own number, through Meta (CEO decision, 2026-09-19)
+
+> "Nobody wants to bring or use a new number that is nowhere exposed for a business …
+> Let's build WhatsApp, and then we'll go with all the features that we have right now.
+> We'll leave Twilio for phone and SMS."
+
+WhatsApp connects through Meta's Cloud API with **Coexistence**: the owner keeps the number
+that is in the WhatsApp Business app on their phone, keeps replying from it, and FollowUp
+sees every message and replies from the same number. Twilio's WhatsApp path stays live for
+anyone already on it but is no longer offered in Settings. Twilio itself is kept for phone
+and SMS, which are postponed (`CARRIER_CHANNELS_AVAILABLE`), because those need either a
+new number or a port. Scope and what is still unverified:
+`research/integrations/2026-09-19-whatsapp-coexistence.md`.
+
 ## Sign-up is invite-only for now (CEO decision, 2026-09-18)
+
+> **How the invite is given (2026-09-19, beta):** the founder adds a Google email on `/admin`
+> ("Beta testers"); that email may sign in (`src/lib/auth.ts` checks `AccessRequest.status`),
+> alongside the `ALLOWED_EMAILS` env list. There is no public request form — the founder's
+> explicit call: "I don't want any unknown users to try my beta app and request access. I
+> will personally be adding all the emails." Anyone not on the list is told it is invite-only
+> and given contact@followupbase.io.
 
 No public sign-up and no free trial until the CEO says otherwise. A person gets in because
 Sahil added them or an existing business invited them to its team. What "in" means

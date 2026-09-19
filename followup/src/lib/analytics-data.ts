@@ -68,6 +68,12 @@ export interface AnalyticsData {
   automatedReplyRate: number | null;
   manualReplyRate: number | null;
 
+  // 0-100: of the sent follow-ups that had an AI draft to compare against,
+  // how many went out exactly as drafted (FollowUp.draftEdited false). The
+  // draft-quality number: when it falls, people are rewriting what the AI
+  // gives them. null until a send has had a draft to compare.
+  draftsSentAsWritten: number | null;
+
   // Per-teammate load and outcomes, for businesses with more than one
   // User — empty array for a solo business (the caller decides whether to
   // render a team section at all based on length).
@@ -130,7 +136,7 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
     }),
     prisma.followUp.findMany({
       where: { status: "sent", sentAt: { not: null }, lead: { businessId: ctx.businessId } },
-      select: { sentAt: true, repliedAt: true, automated: true },
+      select: { sentAt: true, repliedAt: true, automated: true, draftEdited: true },
     }),
     // Fetched unconditionally (cheap — one row per teammate) so the
     // "more than one user" check below doesn't need a separate count query.
@@ -223,7 +229,12 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
     });
   }
 
+  const withDraft = followUps.filter((f) => f.draftEdited !== null);
+  const draftsSentAsWritten =
+    withDraft.length > 0 ? Math.round((withDraft.filter((f) => f.draftEdited === false).length / withDraft.length) * 100) : null;
+
   return {
+    draftsSentAsWritten,
     totalLeads,
     activeCount: totalLeads - closedCount,
     wonCount,

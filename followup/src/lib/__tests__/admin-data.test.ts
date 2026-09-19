@@ -78,6 +78,8 @@ vi.mock("@/lib/db", () => ({
     business: { count: businessCount, findMany: businessFindMany, groupBy: businessGroupBy },
     lead: { count: leadCount, groupBy: leadGroupBy },
     user: { findMany: userFindMany },
+    // The beta list (2026-09-19): empty here; its own shape is trivial.
+    accessRequest: { findMany: async () => [] },
   },
 }));
 

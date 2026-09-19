@@ -168,14 +168,15 @@ const SCORE_JSON_SCHEMA = {
   strict: true,
   schema: {
     type: "object",
+    // Field order is generation order under strict structured output: the
+    // model writes these in sequence. Reason and factors come BEFORE the
+    // score so the number is the sum of stated evidence, not a verdict the
+    // model then rationalises (accuracy research 2026-09-13, finding 4; the
+    // sibling classifier already had this fix and this one was missed).
     properties: {
-      score: {
-        type: "integer",
-        description: "0 (cold, no urgency) to 100 (extremely hot, follow up now)",
-      },
       reason: {
         type: "string",
-        description: "One or two sentences a busy salesperson can read in 3 seconds.",
+        description: "One or two sentences a busy salesperson can read in 3 seconds. Written first, from the evidence.",
       },
       factors: {
         type: "array",
@@ -190,8 +191,12 @@ const SCORE_JSON_SCHEMA = {
           additionalProperties: false,
         },
       },
+      score: {
+        type: "integer",
+        description: "0 (cold, no urgency) to 100 (extremely hot, follow up now). The factors' weights should add up to about this.",
+      },
     },
-    required: ["score", "reason", "factors"],
+    required: ["reason", "factors", "score"],
     additionalProperties: false,
   },
 } as const;
@@ -231,9 +236,18 @@ export async function scoreLead(
           // ever sets Message.opened to true outside demo data — there is no
           // open-tracking pixel. Naming a signal the model is never shown
           // invites it to infer one from the text.
-          "Weigh buying signals (pricing/timeline questions, requests for a call or a quote, a stated budget " +
-          "or deadline), deal value, " +
-          "and days since last contact — a long silence after a strong signal is often still warm, not cold. " +
+          "Buying signals, strongest first: the lead named something specific they want (an address, a model, " +
+          "a service, a date); they gave a timeline or deadline; they mentioned budget, financing, a deposit or " +
+          "a price they can pay; they asked for a price, a quote or an estimate; they offered or accepted a " +
+          "time to talk; they asked a practical next-step question (availability, what happens next). Cooling " +
+          "signals: 'just looking', 'not right now', 'will get back to you', a question left unanswered by the " +
+          "business for days, or the lead's last message being a polite close. Weigh those, deal value, " +
+          "and days since last contact. A long silence after a strong signal is often still warm, not cold. " +
+          "Worked example: a lead who asked for a quote on a named job and gave a move-in date, then heard " +
+          "nothing from the business for nine days, is still hot (about 75) — the silence is the business's, " +
+          "not the lead's. A lead who wrote 'thanks, I'll think about it' nine days ago with no specifics is " +
+          "lukewarm (about 35). Write the reason first, from the evidence; then the factors; then the score " +
+          "they add up to. " +
           // Deal value is frequently unknown rather than zero — see
           // dealValueLine. An unknown must not be weighed as a small deal.
           "When the deal value is given as not known, judge urgency on the conversation alone and neither " +
@@ -966,7 +980,10 @@ export async function generateFollowUpMessage(
       "nor the body reads as generic. The body: two or three sentences, and two is usually the right answer — " +
       "one is fine if the whole point fits in one. Never write a fourth, and never pad to a third: if you have " +
       "said the thing and asked the question, stop. Open on the substance, so the first sentence is the actual " +
-      "reason you are writing rather than a preamble to it. Complete sentences, proper capitalization, no " +
+      "reason you are writing rather than a preamble to it. If the lead's most recent message asked a question, " +
+      "the first sentence answers it, or says plainly that you'll confirm the specific thing they asked, before " +
+      "anything else; a follow-up that ignores the question they asked reads as a form letter. Ask at most one " +
+      "question in the whole message, and make it one a person answers in a few words. Complete sentences, proper capitalization, no " +
       "sentence fragments, no trailing off mid-thought, no run-on clauses joined by a dash. ";
   const languageSubject = dm ? "Write the message and every button title" : "Write both the subject and the body";
 

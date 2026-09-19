@@ -27,7 +27,7 @@ export default function StickyCta() {
 
   return (
     <div className={`${styles.stickyCta} ${show ? styles.stickyCtaShow : ""}`} aria-hidden={!show}>
-      <p className={styles.stickyCtaNote}>No card. Two minutes to connect.</p>
+      <p className={styles.stickyCtaNote}>Free while in beta. No card.</p>
       <Link href="/signin" className={`${styles.btn} ${styles.btnSmall}`} tabIndex={show ? 0 : -1}>
         Start free <ArrowRight className="h-4 w-4" />
       </Link>

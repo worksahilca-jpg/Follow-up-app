@@ -40,10 +40,13 @@ function timeAgo(iso: string): string {
  * blend the owner can't take apart. Waiting on a human beats going quiet:
  * somebody wrote in and nobody answered is the worse failure.
  */
-function atRiskStatus(rescue: { waitingHours: number | null; silentDays: number | null }): {
+function atRiskStatus(rescue: { waitingHours: number | null; silentDays: number | null; unreachable?: boolean }): {
   tone: ItemTone;
   label: string;
 } {
+  // Nothing is arriving. The word says what to do (fix the number), the
+  // rail says it is as urgent as a customer left waiting.
+  if (rescue.unreachable) return { tone: "coral", label: "Can't reach" };
   if (rescue.waitingHours !== null) {
     const h = Math.round(rescue.waitingHours);
     return { tone: h >= 4 ? "coral" : "gold", label: h < 1 ? "Waiting <1h" : `Waiting ${h}h` };

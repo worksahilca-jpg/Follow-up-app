@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { parseJsonBody } from "@/lib/validation";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
+import { setBetaPlanForEmail } from "@/lib/billing";
 
 // POST /api/access-request — the founder adds a tester by email, from
 // /admin. Platform admin only. There is no public way to ask for access:
@@ -28,5 +29,8 @@ export async function POST(request: NextRequest) {
     create: { email, name: name || email.split("@")[0], business: business || null, status: "approved", decidedAt: new Date() },
     update: { status: "approved", decidedAt: new Date(), ...(name ? { name } : {}), ...(business ? { business } : {}) },
   });
+  // A tester's business is on the beta plan (Pro, free) from the moment
+  // they are added — here if they have signed in before, at sign-in if not.
+  await setBetaPlanForEmail(email, true);
   return NextResponse.json({ success: true, id: row.id });
 }

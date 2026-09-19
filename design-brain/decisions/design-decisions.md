@@ -2794,3 +2794,18 @@ address; Meta's "can't onboard customers" on WhatsApp is explained as Meta still
 FollowUp's business. Principle 9 (plain words) and principle 1 (no surprises). The founder's
 side of it is one page, `followup/docs/tester-onboarding-checklist.md`. Also: the onboarding
 heading now names Outlook when Outlook is what connected.
+
+## 2026-09-19 — Beta testers are on Pro, free, and Settings → Billing says so in one line
+
+**Founder's call** (asked, answered "Beta testers get Pro, free"): Free's 20-lead cap and its
+email-and-website-only rule would have left a tester's Instagram, Messenger and WhatsApp
+leads captured but never scored, drafted or answered — the product looking broken on the
+channels they came to test. A tester's business is stamped with the beta plan at sign-in or
+when added on /admin, and reverted on removal (`PRODUCT_DIRECTION.md`).
+
+**UI:** the Billing tab's plan panel reads "FollowUp Pro — … Beta — every Pro feature, free
+while you test. Nothing to pay and nothing to manage." and hides "Manage billing" (there is
+no Stripe customer to manage). The plan picker is not shown to a beta business; if one wants
+to pay for real, the beta ending is the moment for that, not a button now. Plain words,
+principle 9. Not rendered live (database unreachable from the sandbox); the branch is one
+string and one condition.

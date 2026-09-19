@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { parseJsonBody } from "@/lib/validation";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
+import { setBetaPlanForEmail } from "@/lib/billing";
 
 // PATCH /api/access-request/[id] — remove a tester or add them back, from
 // /admin. "approved" lets that email sign in (src/lib/auth.ts); "declined"
@@ -22,5 +23,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     where: { id },
     data: { status: parsed.data.status, decidedAt: new Date() },
   });
+  // Removing a tester takes their business off the beta plan (back to
+  // Free); adding them back restores it. A real subscription is untouched.
+  await setBetaPlanForEmail(row.email, parsed.data.status === "approved");
   return NextResponse.json({ success: true });
 }

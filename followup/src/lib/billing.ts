@@ -2,7 +2,54 @@ import { prisma } from "@/lib/db";
 import { getSessionContext } from "@/lib/session";
 import { TIER_AI_LEAD_CAP } from "@/lib/pricing";
 
-const ACTIVE_STATUSES = new Set(["active", "trialing"]);
+/**
+ * The beta plan. Founder's decision, 2026-09-19: "Beta testers get Pro,
+ * free." A business whose owner is on the founder's tester list (an
+ * approved AccessRequest, or ALLOWED_EMAILS) is stamped
+ * subscriptionStatus "beta" + tier "pro" — no Stripe customer, nothing
+ * billed — so every gate in this file reads it as a Pro account in good
+ * standing: every channel, the 10,000-lead circuit breaker instead of
+ * Free's 20-lead cap. It is a status string rather than a separate flag
+ * so the ~45 hasActiveAccess call sites need no change.
+ *
+ * Only a business that has NEVER subscribed gets it (subscriptionStatus
+ * null) and only a "beta" business is ever reverted, so a real Stripe
+ * subscription is never touched in either direction. Stripe's webhook
+ * overwrites both columns the moment a beta business subscribes for
+ * real, which is the intended exit. Revoked when the founder removes the
+ * tester on /admin; the beta ending as a whole is a later, explicit step.
+ */
+export const BETA_SUBSCRIPTION_STATUS = "beta";
+
+const ACTIVE_STATUSES = new Set(["active", "trialing", BETA_SUBSCRIPTION_STATUS]);
+
+export async function grantBetaPlan(businessId: string): Promise<boolean> {
+  const { count } = await prisma.business.updateMany({
+    where: { id: businessId, subscriptionStatus: null },
+    data: { subscriptionStatus: BETA_SUBSCRIPTION_STATUS, tier: "pro" },
+  });
+  return count > 0;
+}
+
+export async function revokeBetaPlan(businessId: string): Promise<boolean> {
+  const { count } = await prisma.business.updateMany({
+    where: { id: businessId, subscriptionStatus: BETA_SUBSCRIPTION_STATUS },
+    data: { subscriptionStatus: null, tier: "free" },
+  });
+  return count > 0;
+}
+
+/**
+ * The same two, keyed by the tester's email — for /admin, where the
+ * founder adds or removes a person, not a business. A tester who has not
+ * signed in yet has no business; sign-in (src/lib/auth.ts) grants it then.
+ */
+export async function setBetaPlanForEmail(email: string, granted: boolean): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() }, select: { businessId: true } });
+  if (!user?.businessId) return;
+  if (granted) await grantBetaPlan(user.businessId);
+  else await revokeBetaPlan(user.businessId);
+}
 
 // Re-exported for server-side code that wants both the gate functions
 // below AND the display constants in one import — a "use client" component

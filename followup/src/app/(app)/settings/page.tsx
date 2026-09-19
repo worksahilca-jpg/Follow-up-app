@@ -1181,7 +1181,9 @@ function SettingsPageInner() {
                   {voiceAddonEnabled && ` + Voice (${VOICE_ADDON_INFO.priceLabel})`}
                 </p>
                 <p className="text-xs text-ink-soft mt-0.5">
-                  {billingStatus === "trialing"
+                  {billingStatus === "beta"
+                    ? "Beta — every Pro feature, free while you test. Nothing to pay and nothing to manage."
+                    : billingStatus === "trialing"
                     ? billingPeriodEnd
                       ? `Free trial — first charge on ${new Date(billingPeriodEnd).toLocaleDateString()}.`
                       : "Free trial."
@@ -1194,14 +1196,18 @@ function SettingsPageInner() {
                     : "Subscription canceled — resubscribe to unlock leads, sync, and sending again."}
                 </p>
               </div>
-              <button
-                onClick={handleManageBilling}
-                disabled={billingBusy}
-                className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
-                style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-              >
-                {billingBusy ? "One sec…" : "Manage billing"}
-              </button>
+              {/* No Stripe customer exists behind the beta plan, so the
+                  portal would 400 — there is nothing to manage. */}
+              {billingStatus !== "beta" && (
+                <button
+                  onClick={handleManageBilling}
+                  disabled={billingBusy}
+                  className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
+                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                >
+                  {billingBusy ? "One sec…" : "Manage billing"}
+                </button>
+              )}
             </div>
             {billingError && (
               <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>

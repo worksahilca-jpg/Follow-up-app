@@ -11,7 +11,13 @@ vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn() }));
 vi.mock("@/lib/sourceRouting", () => ({ applySourceRouting: vi.fn() }));
 vi.mock("@/lib/outboundWebhook", () => ({ notifyLeadEvent: vi.fn() }));
 
-import { instagramOAuthAvailable, buildInstagramAuthUrl, exchangeInstagramAuthCode, subscribeInstagramWebhooks } from "@/lib/instagram";
+import {
+  instagramOAuthAvailable,
+  buildInstagramAuthUrl,
+  exchangeInstagramAuthCode,
+  subscribeInstagramWebhooks,
+  instagramDiagnostics,
+} from "@/lib/instagram";
 import { facebookOAuthAvailable, buildFacebookAuthUrl, exchangeFacebookAuthCode } from "@/lib/facebook";
 
 beforeEach(() => {
@@ -83,6 +89,21 @@ describe("Instagram one-click connect", () => {
       new Response(JSON.stringify({ error: { message: "(#10) Permission denied", code: 10 } }), { status: 403 })
     );
     expect(await subscribeInstagramWebhooks("1784", "IGQV-tok")).toEqual({ ok: false, message: "(#10) Permission denied [10]" });
+  });
+
+  it("diagnostics ask Meta who is connected, what is subscribed and whether DMs are readable, without leaking the token", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes("/me?")) return new Response(JSON.stringify({ id: "1784", username: "followupbase", account_type: "BUSINESS" }));
+      if (url.includes("/subscribed_apps")) return new Response(JSON.stringify({ data: [{ id: "app1", subscribed_fields: ["messages"] }] }));
+      return new Response(JSON.stringify({ error: { message: "(#10) Permission denied", code: 10 } }), { status: 403 });
+    });
+    const report = await instagramDiagnostics("1784", "IGQV-secret");
+    expect(report.account).toEqual({ ok: true, data: { id: "1784", username: "followupbase", account_type: "BUSINESS" } });
+    expect(report.subscription).toEqual({ ok: true, data: { data: [{ id: "app1", subscribed_fields: ["messages"] }] } });
+    expect(report.conversations).toEqual({ ok: false, error: "HTTP 403 — (#10) Permission denied [10]" });
+    expect(JSON.stringify(report)).not.toContain("IGQV-secret");
+    for (const [url] of fetchSpy.mock.calls) expect(String(url)).toContain("access_token=IGQV-secret");
   });
 
   it("does not add the address hint for an unrelated refusal", async () => {

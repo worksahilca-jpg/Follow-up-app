@@ -110,6 +110,39 @@ export async function resolveInstagramUserId(accessToken: string): Promise<{ id:
 }
 
 /**
+ * One Graph call, reduced to what a diagnostic can show: the JSON body on
+ * success, or Meta's error sentence on failure. Never the token.
+ */
+async function graphGet(path: string, accessToken: string): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
+  const sep = path.includes("?") ? "&" : "?";
+  const res = await fetch(`${GRAPH_API}/${path}${sep}access_token=${encodeURIComponent(accessToken)}`);
+  if (res.ok) return { ok: true, data: await res.json().catch(() => null) };
+  const reason = await instagramOAuthErrorMessage(res);
+  return { ok: false, error: `HTTP ${res.status}${reason ? ` — ${reason}` : ""}` };
+}
+
+/**
+ * Three questions for Meta about a connected account, for
+ * GET /api/instagram/diagnose:
+ *  - account: who is actually connected (username, account_type) — the
+ *    connect flow stores only the numeric id, so a connect made while the
+ *    wrong Instagram account was logged in is invisible otherwise;
+ *  - subscription: does Meta list this app under the account's
+ *    subscribed_apps, and with which fields;
+ *  - conversations: can the token read the account's DM threads at all
+ *    (needs instagram_business_manage_messages) — if this lists threads
+ *    while no webhook ever arrives, the problem is delivery, not access.
+ */
+export async function instagramDiagnostics(igUserId: string, accessToken: string) {
+  const [account, subscription, conversations] = await Promise.all([
+    graphGet("me?fields=id,username,name,account_type", accessToken),
+    graphGet(`${encodeURIComponent(igUserId)}/subscribed_apps`, accessToken),
+    graphGet(`${encodeURIComponent(igUserId)}/conversations?platform=instagram&fields=id,updated_time&limit=3`, accessToken),
+  ]);
+  return { igUserId, account, subscription, conversations };
+}
+
+/**
  * Subscribes the app to the connected account's message webhooks.
  *
  * For "Instagram API with Instagram Login" the dashboard webhook

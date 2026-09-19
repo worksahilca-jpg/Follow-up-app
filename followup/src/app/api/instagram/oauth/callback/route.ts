@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { appUrl } from "@/lib/stripe";
-import { exchangeInstagramAuthCode, resolveInstagramUserId } from "@/lib/instagram";
+import { exchangeInstagramAuthCode, resolveInstagramUserId, subscribeInstagramWebhooks } from "@/lib/instagram";
 import { recordAudit } from "@/lib/audit";
 
 export async function GET(request: NextRequest) {
@@ -58,7 +58,13 @@ export async function GET(request: NextRequest) {
     }
     throw err;
   }
-  void recordAudit(ctx, "integration.instagram.connect", { meta: { via: "oauth" } });
+  // Without this Meta delivers no DM webhooks for the account (see
+  // subscribeInstagramWebhooks). The connection is saved regardless; the
+  // outcome lands in the audit row so a silent account can be explained.
+  const subscribed = await subscribeInstagramWebhooks(resolved.id, exchanged.accessToken);
+  void recordAudit(ctx, "integration.instagram.connect", {
+    meta: { via: "oauth", webhookSubscribed: subscribed.ok, ...(subscribed.ok ? {} : { webhookError: subscribed.message }) },
+  });
 
   settingsUrl.searchParams.set("instagram", "connected");
   const res = NextResponse.redirect(settingsUrl);

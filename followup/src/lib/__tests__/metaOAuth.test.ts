@@ -11,7 +11,7 @@ vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn() }));
 vi.mock("@/lib/sourceRouting", () => ({ applySourceRouting: vi.fn() }));
 vi.mock("@/lib/outboundWebhook", () => ({ notifyLeadEvent: vi.fn() }));
 
-import { instagramOAuthAvailable, buildInstagramAuthUrl, exchangeInstagramAuthCode } from "@/lib/instagram";
+import { instagramOAuthAvailable, buildInstagramAuthUrl, exchangeInstagramAuthCode, subscribeInstagramWebhooks } from "@/lib/instagram";
 import { facebookOAuthAvailable, buildFacebookAuthUrl, exchangeFacebookAuthCode } from "@/lib/facebook";
 
 beforeEach(() => {
@@ -66,6 +66,23 @@ describe("Instagram one-click connect", () => {
     expect(message).toContain("[400]");
     expect(message).toContain("The address we sent is https://followupbase.io/api/instagram/oauth/callback");
     expect(message).not.toContain("shh");
+  });
+
+  it("subscribes the account to the messages field with its own token, and reports Meta's refusal", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    expect(await subscribeInstagramWebhooks("1784", "IGQV-tok")).toEqual({ ok: true });
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://graph.instagram.com/v21.0/1784/subscribed_apps");
+    expect(init.method).toBe("POST");
+    const body = new URLSearchParams(String(init.body));
+    expect(body.get("subscribed_fields")).toBe("messages");
+    expect(body.get("access_token")).toBe("IGQV-tok");
+
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: { message: "(#10) Permission denied", code: 10 } }), { status: 403 })
+    );
+    expect(await subscribeInstagramWebhooks("1784", "IGQV-tok")).toEqual({ ok: false, message: "(#10) Permission denied [10]" });
   });
 
   it("does not add the address hint for an unrelated refusal", async () => {

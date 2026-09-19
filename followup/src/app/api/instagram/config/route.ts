@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { instagramOAuthAvailable, resolveInstagramUserId, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
+import { instagramOAuthAvailable, resolveInstagramUserId, subscribeInstagramWebhooks, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
 import { appUrl } from "@/lib/stripe";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
@@ -66,8 +66,16 @@ export async function POST(request: NextRequest) {
     where: { id: ctx.businessId },
     data: { instagramAccessToken: accessToken, instagramUserId: resolved.id },
   });
+  // Same per-account webhook subscription as the OAuth callback; a
+  // pasted token has the same permissions so the same call applies.
+  const subscribed = await subscribeInstagramWebhooks(resolved.id, accessToken);
 
-  return NextResponse.json({ success: true, instagramUserId: resolved.id, username: resolved.username ?? null });
+  return NextResponse.json({
+    success: true,
+    instagramUserId: resolved.id,
+    username: resolved.username ?? null,
+    webhookSubscribed: subscribed.ok,
+  });
 }
 
 /** DELETE — disconnect: clears the token and account ID. */

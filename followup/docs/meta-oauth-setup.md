@@ -44,6 +44,27 @@ prints the exact address sent. Check, in order:
 3. `NEXTAUTH_URL` in Vercel is `https://followupbase.io` — it is the base of
    the address the app sends.
 
+On 2026-09-19 the cause was #2: the Facebook app secret had been pasted as
+`INSTAGRAM_APP_SECRET`. Re-pasting the Instagram one fixed the connect.
+
+**Getting DMs to actually arrive** (the connect succeeding is not enough —
+first live connect on 2026-09-19 produced no webhook for a real DM):
+1. Dashboard webhook for the Instagram product: Instagram → API setup with
+   Instagram Login → "Configure webhooks" → callback URL
+   `https://followupbase.io/api/instagram/webhook`, verify token
+   `followup_ig_a8f3c1e0d92b47`, then subscribe the **`messages`** field.
+   This is separate from the WhatsApp product's webhook.
+2. Per-account subscription: the app now calls
+   `POST /{ig-user-id}/subscribed_apps?subscribed_fields=messages` at connect
+   time (OAuth and paste-a-token). An account connected before this existed
+   needs one Disconnect → Connect.
+3. In the Instagram app on the phone, on the connected professional
+   account: Settings → Messages and story replies → Message controls →
+   "Connected tools" → **Allow access to messages** must be on. Off by
+   default on many accounts; Meta delivers nothing while it is off.
+4. While the app is in Development mode, Meta only delivers events for
+   accounts that hold a role on the app (Instagram Testers under App roles).
+
 ## 2. Facebook Login for Business
 
 In the app dashboard: **Facebook Login for Business** (add the product if not

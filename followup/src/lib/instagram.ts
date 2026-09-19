@@ -110,6 +110,35 @@ export async function resolveInstagramUserId(accessToken: string): Promise<{ id:
 }
 
 /**
+ * Subscribes the app to the connected account's message webhooks.
+ *
+ * For "Instagram API with Instagram Login" the dashboard webhook
+ * (callback URL + `messages` field) is only half of it: each professional
+ * account must also have the app subscribed to it, through
+ * POST /{ig-user-id}/subscribed_apps with that account's token. Seen
+ * live on 2026-09-19: the first account connected through OAuth got no
+ * webhook at all for a real DM — nothing in InboundWebhookEvent — until
+ * this call existed. Same shape as subscribeAppToWaba in whatsappCloud.ts.
+ *
+ * Best effort at the call sites: the connection is saved either way, the
+ * outcome is logged and audited, and reconnecting retries it.
+ */
+export async function subscribeInstagramWebhooks(
+  igUserId: string,
+  accessToken: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const res = await fetch(`${GRAPH_API}/${encodeURIComponent(igUserId)}/subscribed_apps`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ subscribed_fields: "messages", access_token: accessToken }),
+  });
+  if (res.ok) return { ok: true };
+  const reason = await instagramOAuthErrorMessage(res);
+  console.error(`Instagram subscribed_apps rejected: HTTP ${res.status}${reason ? ` — ${reason}` : ""}`);
+  return { ok: false, message: reason || `HTTP ${res.status}` };
+}
+
+/**
  * Sends a real Instagram DM via the Graph API's /{IG_USER_ID}/messages
  * endpoint (the documented path; /me/messages is the fallback for a
  * business connected before instagramUserId was stored).

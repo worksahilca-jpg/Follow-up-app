@@ -13,14 +13,15 @@ const { getSessionContext, requireAdmin } = vi.hoisted(() => ({
   getSessionContext: vi.fn(async () => ctx),
   requireAdmin: vi.fn(async () => true),
 }));
-const { exchangeInstagramAuthCode, resolveInstagramUserId } = vi.hoisted(() => ({
+const { exchangeInstagramAuthCode, resolveInstagramUserId, subscribeInstagramWebhooks } = vi.hoisted(() => ({
   exchangeInstagramAuthCode: vi.fn(async () => ({ accessToken: "IGQV-long-lived" })),
   resolveInstagramUserId: vi.fn(async () => ({ id: "1784", username: "acme" })),
+  subscribeInstagramWebhooks: vi.fn(async () => ({ ok: true as const })),
 }));
 const { businessUpdate } = vi.hoisted(() => ({ businessUpdate: vi.fn(async () => ({})) }));
 
 vi.mock("@/lib/session", () => ({ getSessionContext, requireAdmin }));
-vi.mock("@/lib/instagram", () => ({ exchangeInstagramAuthCode, resolveInstagramUserId }));
+vi.mock("@/lib/instagram", () => ({ exchangeInstagramAuthCode, resolveInstagramUserId, subscribeInstagramWebhooks }));
 vi.mock("@/lib/db", () => ({ prisma: { business: { update: businessUpdate } } }));
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
@@ -50,5 +51,18 @@ describe("Instagram OAuth callback admin gate", () => {
     expect(exchangeInstagramAuthCode).toHaveBeenCalled();
     expect(businessUpdate).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "b1" } }));
     expect(res.headers.get("location")).not.toContain("instagram=error");
+  });
+
+  // 2026-09-19: an account connected without this got no webhook for a
+  // real DM. The subscription runs on the connected account with its own
+  // token, and a refusal never undoes the connection.
+  it("subscribes the connected account to message webhooks, and keeps the connection if Meta refuses", async () => {
+    await GET(req(`${base}?code=AQ1&state=tok`, "ig_oauth_state=tok"));
+    expect(subscribeInstagramWebhooks).toHaveBeenCalledWith("1784", "IGQV-long-lived");
+
+    subscribeInstagramWebhooks.mockResolvedValueOnce({ ok: false, message: "(#10) Permission denied" } as never);
+    const res = await GET(req(`${base}?code=AQ1&state=tok`, "ig_oauth_state=tok"));
+    expect(businessUpdate).toHaveBeenCalledTimes(2);
+    expect(res.headers.get("location")).toContain("instagram=connected");
   });
 });

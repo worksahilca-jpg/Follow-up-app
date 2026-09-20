@@ -3177,3 +3177,122 @@ not make Meta say yes. If `pages_manage_metadata` or `pages_messaging` are still
 Review, the retry will keep showing Meta's refusal — which is now at least *visible*
 instead of being a Page that looks connected and does nothing. That is task #65's territory,
 not this one's.
+
+---
+
+## 2026-09-20 — The same sentence, twice in two days, so it becomes one component
+
+**The bug, one day after its twin.** Instagram's two connect paths both called
+`subscribed_apps` — unlike Facebook, which never called it at all — but neither stored the
+answer. A refusal went into an audit row's `meta` field and nowhere else, so Settings kept
+showing *"Connected — real DMs will become leads automatically"* on an account Meta had
+declined to deliver for. Connected and broken looked identical.
+
+**WhatsApp was checked and is not affected.** Both of its connect paths return 400 and save
+nothing when the subscription fails, so it cannot reach this state and needs no column. I had
+told the founder "Instagram and WhatsApp have the identical hole" before checking; that was
+wrong, and reading the two routes took two minutes. Third time in three days that a confident
+pitch was wrong in the specifics while right in spirit. The pattern is now well enough
+established to state as a rule: **a claim about a sibling channel is a hypothesis until the
+sibling's code has been read.**
+
+**The design decision: extract, don't duplicate.** Yesterday's entry ended with a self-critique
+— that Settings was accumulating per-channel prose faster than clarity, and that the right
+shape was one status grammar for all six channels rather than six bespoke paragraphs. Needing
+the identical block a second time the next day is the cheapest possible evidence for that, so
+this PR takes it: `ChannelNotReceiving.tsx` holds the whole state — heading, explanation,
+Meta's verbatim refusal, and the retry — and both Facebook and Instagram pass in four strings.
+
+> **{Platform} isn't sending messages through yet**
+> {Subject} is linked, but {Platform} hasn't switched the connection on — so {missed}. This
+> usually clears once Meta approves the app; it can also mean {otherCause}.
+> [Try again]
+
+The variable parts are deliberately the *specifics* (a Page vs an account; "no longer manage
+the Page" vs "no longer a Business account") and never the structure, so the two panels
+cannot drift into saying the same thing two ways.
+
+**Self-critique.** The component takes four content strings as props, which is a design smell —
+it is a sentence with holes, and a fifth channel with a slightly different shape will strain
+it. I judged that acceptable because the alternative (a channel enum inside the component)
+puts channel knowledge in a presentational file, and because two call sites is too few to
+know the right abstraction. If a third channel needs this, the props should become a per-channel
+config object owned next to the channel, not more strings at the call site.
+
+**Not fixed here, and worth knowing:** nothing ever re-checks the subscription after the first
+success. If Meta drops it later — the person loses their Page role, a permission lapses — the
+column still reads subscribed and the green tick stays. The state is now *showable*; detecting
+entry into it is a separate piece of work.
+
+---
+
+## 2026-09-20 — "Make sure no leads slip over": the two-stage import filter
+
+**The founder rejected three answers before this one, and he was right to.** WhatsApp
+Coexistence connects the owner's *own* number, so the history import was turning their
+accountant, their supplier and their family into scored, drafted-for leads. I offered:
+import nothing, show a picker, or shorten the window. His reply: *"i am not satisfied with
+any of these solutions."*
+
+Every one of them traded a real customer for tidiness, and this product exists to not lose
+customers. The rejection was correct and the better answer was already in the codebase.
+
+**What we already had.** An email inbox is at least as mixed as a WhatsApp chat list, and
+`gmail.ts` / `outlook.ts` have gated lead creation on `classifyAsProspect` since the
+beginning — "is this thread customer business for this company?". WhatsApp simply never
+asked. So the fix was not a new idea, it was **consistency**: same classifier, same
+definition of a customer, one more channel.
+
+**What the founder added, and it is the better half of the design.** Asked whether one
+check was enough, he said no: *"if it confirms its a lead good if not we need more data to
+confirm and then filter it out to make sure again."* That is a second stage, and it changes
+the failure mode completely.
+
+- **Stage 1** reads the opening, exactly as the mailbox does. Customer → lead, done.
+- **Stage 2** runs *only on a rejection*, and sees what stage 1 structurally could not: the
+  **most recent** messages rather than the opening (a chat that starts "hey" and becomes a
+  job on message twelve is the exact case), plus whether the **owner ever sent a price, a
+  time or an invoice** into that chat.
+- Two facts settle it before any AI call: an **empty thread** imports, and a person who is
+  **already a lead on another channel** imports. Neither is a judgement.
+
+**Deliberately lopsided, and the code says so.** Missing a real customer is the failure the
+whole product exists to prevent; a private chat in the pipeline is untidy and sends nothing
+unreviewed. So every uncertain path imports — classifier throws, no business description,
+nothing to read. `gmail.ts` already failed open this way; this matches it.
+
+**Nothing is ever deleted.** A chat that fails both stages goes to the same "filtered" list
+the mailboxes use, with the classifier's own sentence verbatim, and a one-tap Restore.
+
+**Two things this forced that are worth recording.**
+
+1. `classifyAsProspect` hard-capped at 3 messages. That cap is documented and correct — it
+   is about long, heavily-requoted *email* threads where the opening carries the signal. A
+   WhatsApp chat is the opposite shape. Rather than fork the classifier, it now takes an
+   optional `maxMessages` and the caller says why it is raising it. One judge, different
+   evidence.
+2. Restore had to keep the thread. Meta delivers a number's history **once**, in one
+   webhook, and never again — so a Restore button that re-fetched would return an empty
+   conversation and the offer would be a lie. The thread is stored on the filtered row and
+   read back defensively.
+
+**Self-critique, and it was acted on the same hour.** The first cut computed "did the owner
+send a price or a time?" with a regex list — `$120`, `Tuesday at 3`, `invoice`. English
+only, in a product whose whole language story is that customers write in Hindi, Punjabi and
+Spanish. I flagged it as the weakest part; the founder's reply was to fix it rather than
+note it.
+
+**The fix deleted code rather than translating it.** Stage 2 already reads the owner's own
+messages in the transcript, so the model could always see a quoted price — the regex was
+only deciding whether to *mention* it. So the list is gone and stage 2 is simply told, every
+time: read the business's own messages too, and if they quoted a price, offered a time,
+arranged to come out or sent an invoice — *in any language or script, including a language
+written in English letters* — then work was discussed.
+
+The general lesson, and it is one this codebase keeps relearning: **when a signal is already
+in front of the model, computing it in code is both weaker and more work.** A keyword list
+can only ever be as multilingual as the person who wrote it remembered to be.
+
+Also unresolved, and inherited: stage 2 costs a second AI call per rejected chat. On a
+30-day import of a busy personal number that is real money for chats that are mostly going
+to be rejected anyway. Acceptable at ten testers; worth measuring before it is a hundred.

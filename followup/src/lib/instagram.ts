@@ -174,6 +174,51 @@ export async function subscribeInstagramWebhooks(
 }
 
 /**
+ * Tells Meta to stop delivering this account's DMs to FollowUp.
+ *
+ * The counterpart to subscribeInstagramWebhooks, added 2026-09-20 for
+ * the same reason as the Facebook one: disconnect cleared the token and
+ * stopped, so Meta kept posting DMs for a disconnected account and the
+ * webhook route kept storing them (businessId null) for up to 90 days.
+ * Called BEFORE the token is cleared — afterwards there is nothing left
+ * to unsubscribe with. Best-effort; the disconnect succeeds either way.
+ */
+export async function unsubscribeInstagramWebhooks(igUserId: string, accessToken: string): Promise<void> {
+  await fetch(`${GRAPH_API}/${encodeURIComponent(igUserId)}/subscribed_apps?access_token=${encodeURIComponent(accessToken)}`, {
+    method: "DELETE",
+  }).catch(() => {});
+}
+
+/**
+ * The above, plus the record of it.
+ *
+ * Until 2026-09-20 the call sites made the subscription and then threw
+ * the answer away into an audit row. A refusal left the account saved,
+ * named and showing a green "Connected — real DMs will become leads
+ * automatically" tick, on an account that would never receive a DM;
+ * the only trace was a meta field on an audit event nobody reads. The
+ * same shape as activateFacebookPageWebhooks in src/lib/facebook.ts.
+ *
+ * Only a success is written. A failure deliberately leaves the column
+ * null — "Meta has never confirmed this" is the honest reading, and it
+ * is what Settings shows a warning and a retry for.
+ */
+export async function activateInstagramWebhooks(
+  businessId: string,
+  igUserId: string,
+  accessToken: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const result = await subscribeInstagramWebhooks(igUserId, accessToken);
+  if (result.ok) {
+    await prisma.business.update({
+      where: { id: businessId },
+      data: { instagramWebhookSubscribedAt: new Date() },
+    });
+  }
+  return result;
+}
+
+/**
  * Sends a real Instagram DM via the Graph API's /{IG_USER_ID}/messages
  * endpoint (the documented path; /me/messages is the fallback for a
  * business connected before instagramUserId was stored).

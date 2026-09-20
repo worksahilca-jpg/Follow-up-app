@@ -46,7 +46,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     void recordAudit(ctx, "lead.send", {
       targetType: "lead",
       targetId: id,
-      meta: { length: message.length, ...(result.messagingTag ? { messagingTag: result.messagingTag } : {}) },
+      meta: {
+        length: message.length,
+        ...(result.messagingTag ? { messagingTag: result.messagingTag } : {}),
+        // Recorded because the trail otherwise reads "this person sent
+        // this message" about words the lead never received.
+        ...(result.sentTemplate ? { sentTemplate: result.sentTemplate } : {}),
+      },
     });
   }
   return NextResponse.json(result, { status: result.success ? 200 : 500 });

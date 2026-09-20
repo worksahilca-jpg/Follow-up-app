@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, ChevronDown, MessageCircle } from "lucide-react";
+import ChannelNotReceiving from "@/components/ChannelNotReceiving";
 
 /**
  * "Instagram" section of Settings. Two ways to connect:
@@ -21,6 +22,11 @@ export default function InstagramConfig() {
 
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
+  // Connected and receiving are two different questions. Meta only
+  // delivers DMs to an app subscribed to THIS account, and that
+  // subscription can fail while the connection itself succeeds — see
+  // activateInstagramWebhooks in src/lib/instagram.ts.
+  const [receiving, setReceiving] = useState(false);
   const [instagramUserId, setInstagramUserId] = useState<string | null>(null);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [verifyToken, setVerifyToken] = useState("");
@@ -38,7 +44,10 @@ export default function InstagramConfig() {
   // effect (refetching connection status), never sets this.
   const oauthResult = searchParams.get("instagram");
   const statusMessage =
-    oauthResult === "connected"
+    // Suppressed while the account isn't receiving: this sentence makes
+    // the same promise the block below has to walk back, and the two
+    // sitting together is worse than either alone.
+    oauthResult === "connected" && receiving
       ? { kind: "success" as const, text: "Instagram connected — real DMs will become leads automatically." }
       : oauthResult === "error"
         ? { kind: "error" as const, text: searchParams.get("message") ?? "Couldn't connect Instagram." }
@@ -51,6 +60,7 @@ export default function InstagramConfig() {
         (data: {
           success: boolean;
           connected?: boolean;
+          receiving?: boolean;
           instagramUserId?: string | null;
           webhookUrl?: string;
           verifyToken?: string;
@@ -58,6 +68,7 @@ export default function InstagramConfig() {
         }) => {
           if (data.success) {
             setConnected(!!data.connected);
+            setReceiving(!!data.receiving);
             setInstagramUserId(data.instagramUserId ?? null);
             setWebhookUrl(data.webhookUrl ?? "");
             setVerifyToken(data.verifyToken ?? "");
@@ -86,9 +97,10 @@ export default function InstagramConfig() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessToken: tokenDraft.trim() }),
       });
-      const data: { success: boolean; instagramUserId?: string; message?: string } = await res.json();
+      const data: { success: boolean; instagramUserId?: string; receiving?: boolean; message?: string } = await res.json();
       if (data.success) {
         setConnected(true);
+        setReceiving(!!data.receiving);
         setInstagramUserId(data.instagramUserId ?? null);
         setTokenDraft("");
       } else {
@@ -106,6 +118,7 @@ export default function InstagramConfig() {
       const data: { success: boolean } = await res.json();
       if (data.success) {
         setConnected(false);
+        setReceiving(false);
         setInstagramUserId(null);
       }
     } finally {
@@ -146,10 +159,25 @@ export default function InstagramConfig() {
 
           {connected ? (
             <div className="mt-3">
-              <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }}>
-                <Check className="h-3.5 w-3.5" /> Connected — Instagram account ID {instagramUserId}. Real DMs
-                will become leads automatically.
-              </p>
+              {receiving ? (
+                <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }}>
+                  <Check className="h-3.5 w-3.5" /> Connected — Instagram account ID {instagramUserId}. Real DMs
+                  will become leads automatically.
+                </p>
+              ) : (
+                /* This tick used to show regardless. The subscription was
+                   attempted on connect and its result thrown into an audit
+                   row, so an account Meta had refused looked identical to
+                   one that worked — and stayed silent forever. */
+                <ChannelNotReceiving
+                  platform="Instagram"
+                  subject="Your account"
+                  missed="nothing people DM you reaches FollowUp"
+                  otherCause="the account is no longer set up as a Business or Creator account"
+                  retryPath="/api/instagram/subscribe"
+                  onReceiving={() => setReceiving(true)}
+                />
+              )}
               <button onClick={disconnect} disabled={saving} className="mt-2 text-xs font-medium" style={{ color: "var(--coral)" }}>
                 Disconnect
               </button>

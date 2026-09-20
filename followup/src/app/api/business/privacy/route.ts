@@ -34,6 +34,25 @@ export async function POST(request: NextRequest) {
   if (!parsed.ok) return parsed.response;
 
   await prisma.business.update({ where: { id: ctx.businessId }, data: { allowModelTraining: parsed.data.allowModelTraining } });
+
+  // Turning it off has to reach what was already kept. The switch used to
+  // change only what happens NEXT: drafts stored while it was on stayed
+  // stored, and /admin's "what testers changed" kept surfacing them for
+  // the rest of its window — on an account that had just said stop. The
+  // onboarding copy says "change it any time in Settings"; this is what
+  // makes that true. Best-effort, and never fails the opt-out itself: the
+  // switch moving is the thing the person asked for.
+  if (!parsed.data.allowModelTraining) {
+    try {
+      await prisma.followUp.updateMany({
+        where: { lead: { businessId: ctx.businessId }, draftText: { not: null } },
+        data: { draftText: null },
+      });
+    } catch (err) {
+      console.error(`Clearing retained drafts on training opt-out failed for business ${ctx.businessId}:`, err);
+    }
+  }
+
   void recordAudit(ctx, parsed.data.allowModelTraining ? "business.training.opt_in" : "business.training.opt_out");
   return NextResponse.json({ success: true, allowModelTraining: parsed.data.allowModelTraining });
 }

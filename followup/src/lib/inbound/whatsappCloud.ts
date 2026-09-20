@@ -8,6 +8,11 @@ import { captureDirectReply, createInboundMessageIfNew } from "@/lib/instagram";
 import { findOrCreateLeadByPhone } from "@/lib/twilio";
 import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import { pickAssignee } from "@/lib/assignment";
+import { judgeHistoryThread, knownOnAnotherChannel } from "@/lib/inbound/whatsappHistoryFilter";
+// Named UiMessage locally: this file already has its own WaMessage (Meta's
+// wire shape), and two things called Message in one file is how the wrong
+// one gets used.
+import type { Message as UiMessage } from "@/lib/types";
 
 /**
  * Everything the WhatsApp Cloud API webhook does AFTER the signed envelope
@@ -258,6 +263,13 @@ async function handleEchoes(businessId: string, value: { message_echoes?: unknow
 async function handleHistory(businessId: string, value: { history?: unknown; contacts?: unknown }): Promise<void> {
   const names = contactNames(value);
   const cutoff = Date.now() - HISTORY_IMPORT_MAX_AGE_DAYS * 24 * 60 * 60_000;
+  // Who this number belongs to and what they do — the classifier's most
+  // important input, fetched once for the whole import rather than per
+  // thread (same as gmail.ts does for a sync run).
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { name: true, industry: true },
+  });
 
   for (const chunk of Array.isArray(value.history) ? value.history : []) {
     const threads = Array.isArray((chunk as { threads?: unknown })?.threads) ? ((chunk as { threads: unknown[] }).threads) : [];
@@ -270,7 +282,70 @@ async function handleHistory(businessId: string, value: { history?: unknown; con
       const newestAt = messages.reduce((max, m) => Math.max(max, whenSent(m.timestamp).getTime()), 0);
       if (newestAt < cutoff) continue;
 
-      const lead = await findOrCreateHistoryLead(businessId, `+${waId}`, names.get(waId), new Date(newestAt));
+      const phone = `+${waId}`;
+      const contactName = names.get(waId);
+
+      // Render the thread the way the classifier reads every other
+      // channel's, so one definition of "customer" covers all of them.
+      const transcript: UiMessage[] = messages
+        .flatMap<UiMessage>((m) => {
+          const content = whatsappMessageContent(m);
+          if (!content) return [];
+          return [
+            {
+              id: typeof m.id === "string" ? m.id : "",
+              direction: m.from === waId ? "inbound" : "outbound",
+              channel: "whatsapp",
+              body: content.body,
+              date: whenSent(m.timestamp).toISOString(),
+              opened: false,
+            },
+          ];
+        })
+        // Oldest first: stage 1 reads the opening, stage 2 the newest.
+        // Meta's ordering within a thread is not promised, and both stages
+        // depend on which end they are reading.
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      // The owner's own number carries their private life too — their
+      // accountant, their supplier, their family. Importing every chat as
+      // a lead put all of that in the pipeline, scored and drafted for.
+      // Two looks before anything is set aside, and a refusal is recorded
+      // where the owner can see it and undo it, never deleted.
+      const verdict = await judgeHistoryThread(
+        transcript,
+        { name: contactName ?? "WhatsApp contact", phone },
+        business ?? undefined,
+        { knownOnAnotherChannel: await knownOnAnotherChannel(businessId, phone) }
+      );
+
+      if (!verdict.import) {
+        // Not a lead — but never silently, and never destroyed. The same
+        // record and the same one-tap restore the mailbox syncs use.
+        await prisma.filteredEmail.upsert({
+          where: { businessId_threadId: { businessId, threadId: `whatsapp:${waId}` } },
+          update: {
+            reason: verdict.reason,
+            threadPayload: { phone, name: contactName ?? null, messages: transcript },
+            lastMessageAt: new Date(newestAt),
+          },
+          create: {
+            businessId,
+            threadId: `whatsapp:${waId}`,
+            provider: "whatsapp",
+            senderName: contactName ?? phone,
+            senderPhone: phone,
+            reason: verdict.reason,
+            // Kept so Restore can rebuild the conversation — Meta will not
+            // hand this history over a second time.
+            threadPayload: { phone, name: contactName ?? null, messages: transcript },
+            lastMessageAt: new Date(newestAt),
+          },
+        });
+        continue;
+      }
+
+      const lead = await findOrCreateHistoryLead(businessId, phone, contactName, new Date(newestAt));
       const conversation = await findOrCreateConversation(lead.id, "whatsapp");
 
       for (const m of messages) {
@@ -293,6 +368,51 @@ async function handleHistory(businessId: string, value: { history?: unknown; con
       }
     }
   }
+}
+
+/**
+ * "This WhatsApp chat WAS a customer after all" — the owner overruling
+ * both stages of the import filter.
+ *
+ * Rebuilds the lead and its conversation from what the filtered row kept,
+ * because Meta will not deliver that history again. Same posture as the
+ * import it reverses: capture only. No acknowledgement (these people
+ * wrote weeks ago), no source routing (a per-source rule must not fire a
+ * sequence at an old chat). The caller scores it afterwards, exactly as
+ * the mailbox restore does.
+ */
+export async function restoreWhatsAppHistoryThread(
+  businessId: string,
+  thread: { phone: string; name: string | null; messages: { direction: "inbound" | "outbound"; body: string; date: string; id: string }[] }
+) {
+  const newestAt = thread.messages.reduce(
+    (max, m) => Math.max(max, new Date(m.date).getTime()),
+    0
+  );
+  const lead = await findOrCreateHistoryLead(
+    businessId,
+    thread.phone,
+    thread.name ?? undefined,
+    new Date(newestAt || Date.now())
+  );
+  const conversation = await findOrCreateConversation(lead.id, "whatsapp");
+
+  for (const m of thread.messages) {
+    if (!m.id) continue;
+    await prisma.message.upsert({
+      where: { externalId: m.id },
+      update: {},
+      create: {
+        conversationId: conversation.id,
+        direction: m.direction,
+        body: m.body,
+        externalId: m.id,
+        sentAt: new Date(m.date),
+        ...(m.direction === "inbound" ? {} : { source: "whatsapp_direct" }),
+      },
+    });
+  }
+  return lead;
 }
 
 async function findOrCreateHistoryLead(businessId: string, phone: string, name: string | undefined, newestAt: Date) {

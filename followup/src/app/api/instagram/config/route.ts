@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { instagramOAuthAvailable, resolveInstagramUserId, subscribeInstagramWebhooks, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
+import { activateInstagramWebhooks, instagramOAuthAvailable, resolveInstagramUserId, unsubscribeInstagramWebhooks, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
 import { appUrl } from "@/lib/stripe";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
@@ -24,12 +24,16 @@ export async function GET() {
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { instagramUserId: true, instagramAccessToken: true },
+    select: { instagramUserId: true, instagramAccessToken: true, instagramWebhookSubscribedAt: true },
   });
 
   return NextResponse.json({
     success: true,
     connected: !!business?.instagramAccessToken,
+    // Connected is not the same question as receiving. An account whose
+    // subscription call never succeeded is saved, readable and completely
+    // silent, so Settings asks both and says so.
+    receiving: !!business?.instagramWebhookSubscribedAt,
     instagramUserId: business?.instagramUserId ?? null,
     webhookUrl: `${appUrl()}/api/instagram/webhook`,
     verifyToken: WEBHOOK_VERIFY_TOKEN,
@@ -64,17 +68,24 @@ export async function POST(request: NextRequest) {
 
   await prisma.business.update({
     where: { id: ctx.businessId },
-    data: { instagramAccessToken: accessToken, instagramUserId: resolved.id },
+    data: {
+      instagramAccessToken: accessToken,
+      instagramUserId: resolved.id,
+      // Cleared, then set below only if Meta confirms — a new token is a
+      // new subscription question, and the old answer does not carry over.
+      instagramWebhookSubscribedAt: null,
+    },
   });
   // Same per-account webhook subscription as the OAuth callback; a
   // pasted token has the same permissions so the same call applies.
-  const subscribed = await subscribeInstagramWebhooks(resolved.id, accessToken);
+  const subscribed = await activateInstagramWebhooks(ctx.businessId, resolved.id, accessToken);
 
   return NextResponse.json({
     success: true,
     instagramUserId: resolved.id,
     username: resolved.username ?? null,
     webhookSubscribed: subscribed.ok,
+    receiving: subscribed.ok,
   });
 }
 
@@ -85,9 +96,27 @@ export async function DELETE() {
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
   void recordAudit(ctx, "integration.instagram.disconnect");
 
+  // Tell Meta to stop FIRST — see the same comment in the Facebook
+  // disconnect. After the update there is no token left to unsubscribe
+  // with, and Meta would keep delivering this account's DMs.
+  const b = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: { instagramUserId: true, instagramAccessToken: true },
+  });
+  if (b?.instagramUserId && b.instagramAccessToken) {
+    // Never lets Meta being unreachable strand someone in a connection
+    // they asked to leave: the disconnect is the thing they requested,
+    // and it must happen whatever Instagram does.
+    try {
+      await unsubscribeInstagramWebhooks(b.instagramUserId, b.instagramAccessToken);
+    } catch (err) {
+      console.error(`Instagram unsubscribe failed on disconnect for business ${ctx.businessId}:`, err);
+    }
+  }
+
   await prisma.business.update({
     where: { id: ctx.businessId },
-    data: { instagramAccessToken: null, instagramUserId: null },
+    data: { instagramAccessToken: null, instagramUserId: null, instagramWebhookSubscribedAt: null },
   });
   return NextResponse.json({ success: true });
 }

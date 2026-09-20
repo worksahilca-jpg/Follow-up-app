@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertTriangle, Check, ChevronDown, MessageSquare } from "lucide-react";
+import { Check, ChevronDown, MessageSquare } from "lucide-react";
+import ChannelNotReceiving from "@/components/ChannelNotReceiving";
 
 interface PendingPage {
   id: string;
@@ -29,8 +30,6 @@ export default function FacebookConfig() {
   // all, because the per-Page subscription never went through — see
   // subscribeFacebookPageWebhooks in src/lib/facebook.ts.
   const [receiving, setReceiving] = useState(false);
-  const [retrying, setRetrying] = useState(false);
-  const [retryError, setRetryError] = useState<string | null>(null);
   const [pageName, setPageName] = useState<string | null>(null);
   const [pageId, setPageId] = useState<string | null>(null);
   const [webhookUrl, setWebhookUrl] = useState("");
@@ -134,21 +133,6 @@ export default function FacebookConfig() {
     }
   }
 
-  async function retrySubscription() {
-    setRetrying(true);
-    setRetryError(null);
-    try {
-      const res = await fetch("/api/facebook/subscribe", { method: "POST" });
-      const data: { success: boolean; receiving?: boolean; message?: string } = await res.json();
-      setReceiving(!!data.receiving);
-      // Facebook's own sentence, shown as it came: it names the missing
-      // permission or the lost Page role, which is what to act on.
-      if (!data.success) setRetryError(data.message ?? "Facebook turned it down again.");
-    } finally {
-      setRetrying(false);
-    }
-  }
-
   async function disconnect() {
     setSaving(true);
     try {
@@ -157,7 +141,6 @@ export default function FacebookConfig() {
       if (data.success) {
         setConnected(false);
         setReceiving(false);
-        setRetryError(null);
         setPageId(null);
         setPageName(null);
       }
@@ -222,30 +205,14 @@ export default function FacebookConfig() {
                    that would never receive a thing. Connected is the
                    smaller half of the promise; this states the other half
                    plainly, and gives the one action that can change it. */
-                <div className="rounded-lg p-3" style={{ backgroundColor: "var(--coral-soft)" }}>
-                  <p className="text-sm font-semibold flex items-center gap-1.5" style={{ color: "var(--coral)" }}>
-                    <AlertTriangle className="h-4 w-4 shrink-0" />
-                    Facebook isn&apos;t sending messages through yet
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--coral)" }}>
-                    {pageName ?? "Your Page"} is linked, but Facebook hasn&apos;t switched the connection on — so nothing
-                    people send the Page reaches FollowUp. This usually clears once Meta approves the app; it can also
-                    mean you no longer manage the Page.
-                  </p>
-                  {retryError && (
-                    <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--coral)" }}>
-                      Facebook said: {retryError}
-                    </p>
-                  )}
-                  <button
-                    onClick={retrySubscription}
-                    disabled={retrying}
-                    className="mt-2 rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
-                    style={{ backgroundColor: "var(--ink)" }}
-                  >
-                    {retrying ? "Checking…" : "Try again"}
-                  </button>
-                </div>
+                <ChannelNotReceiving
+                  platform="Facebook"
+                  subject={pageName ?? "Your Page"}
+                  missed="nothing people send the Page reaches FollowUp"
+                  otherCause="you no longer manage the Page"
+                  retryPath="/api/facebook/subscribe"
+                  onReceiving={() => setReceiving(true)}
+                />
               )}
               <button onClick={disconnect} disabled={saving} className="mt-2 text-xs font-medium" style={{ color: "var(--coral)" }}>
                 Disconnect

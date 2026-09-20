@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { importGmailThread } from "@/lib/integrations/gmail";
 import { importOutlookConversation } from "@/lib/integrations/outlook";
+import { restoreWhatsAppHistoryThread } from "@/lib/inbound/whatsappCloud";
+import { parseStoredThread } from "@/lib/inbound/whatsappHistoryFilter";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { recordAudit } from "@/lib/audit";
 
@@ -27,10 +29,30 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   if (!row) return NextResponse.json({ success: false, message: "Not found." }, { status: 404 });
 
   try {
-    const lead =
-      row.provider === "outlook"
-        ? await importOutlookConversation(ctx.businessId, row.threadId)
-        : await importGmailThread(ctx.businessId, row.threadId);
+    // WhatsApp rebuilds from what the import kept rather than re-fetching:
+    // Meta delivers a number's history exactly once, in one webhook, and
+    // will not hand it over again. The mailboxes go back to the provider.
+    let lead;
+    if (row.provider === "whatsapp") {
+      const thread = parseStoredThread(row.threadPayload);
+      if (!thread) {
+        return NextResponse.json({
+          success: false,
+          message: "That chat's messages weren't kept, so it can't be brought back automatically — message them on WhatsApp and it'll come in as a new lead.",
+        });
+      }
+      lead = await restoreWhatsAppHistoryThread(ctx.businessId, thread);
+      // The mailbox importers drop the row themselves on their way
+      // through (gmail.ts, outlook.ts); the WhatsApp rebuild does not go
+      // near it, so it is cleared here. Scoped by businessId as well as
+      // id: this route is the tenant boundary for the row.
+      await prisma.filteredEmail.deleteMany({ where: { id: row.id, businessId: ctx.businessId } });
+    } else {
+      lead =
+        row.provider === "outlook"
+          ? await importOutlookConversation(ctx.businessId, row.threadId)
+          : await importGmailThread(ctx.businessId, row.threadId);
+    }
     if (!lead) {
       const mailbox = row.provider === "outlook" ? "Outlook" : "Gmail";
       return NextResponse.json({ success: false, message: `That email couldn't be found in ${mailbox} anymore.` });

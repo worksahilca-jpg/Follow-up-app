@@ -198,6 +198,14 @@ model Business {
   // (grantBetaPlan in src/lib/billing.ts); off for everyone else.
   holdAllForApproval   Boolean @default(false)
 
+  // When Meta last confirmed this app is subscribed to the account's
+  // `messages` webhook. Null on a connected account means the
+  // subscription never succeeded — the account is saved and readable,
+  // and not one DM will arrive. Same field, same meaning, as
+  // facebookWebhookSubscribedAt below; WhatsApp needs no equivalent
+  // because both of its connect paths refuse to save at all when the
+  // subscription fails, so it can never reach this state.
+  instagramWebhookSubscribedAt DateTime?
   instagramUserId      String? @unique
   instagramAccessToken String?
   // How far the conversation poller has read (src/lib/instagramPoll.ts).
@@ -1128,11 +1136,29 @@ model FilteredEmail {
   // "restore" action (src/app/api/integrations/gmail/filtered/[id]/restore)
   // knows which provider's importer to call; defaults to "gmail" since
   // every row before Outlook existed was one.
+  // gmail | outlook | whatsapp. WhatsApp joined 2026-09-20 when the
+  // Coexistence history import started asking the same question the
+  // mailbox syncs ask ("is this thread customer business?"), for the same
+  // reason: the owner's own number carries their private chats too.
   provider      String   @default("gmail")
   senderName    String
-  senderEmail   String
+  // Nullable since WhatsApp: a chat has a number, not an address. Exactly
+  // one of these is set per row, by provider. Kept as two honest columns
+  // rather than one "senderEmail" holding a phone number.
+  senderEmail   String?
+  senderPhone   String?
   subject       String?
   reason        String // the classifier's one-line explanation, verbatim
+  // WhatsApp only: the thread itself, so Restore can actually restore it.
+  //
+  // A mailbox row needs nothing here — restore re-fetches the thread from
+  // Gmail or Graph by its id. WhatsApp's history arrives once, in a single
+  // webhook, and is never queryable again; without keeping it, "one tap to
+  // bring it back" would return an empty conversation and the offer would
+  // be a lie. Holds only what the import would have stored anyway, inside
+  // the same tenant, and is deleted the moment the row is restored or
+  // swept.
+  threadPayload Json?
   lastMessageAt DateTime // newest message seen when this verdict was made
   createdAt     DateTime @default(now())
 

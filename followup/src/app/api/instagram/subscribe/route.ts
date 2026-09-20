@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { activateFacebookPageWebhooks } from "@/lib/facebook";
+import { activateInstagramWebhooks } from "@/lib/instagram";
 import { recordAudit } from "@/lib/audit";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 
 /**
- * Retry the per-Page webhook subscription for an already-connected Page.
- *
- * The subscription can fail for reasons that pass on their own — the
- * permission is still in App Review, the person lost and regained their
- * role on the Page, Meta had a bad minute. Without this the only way out
- * is to disconnect and reconnect, which is a strange thing to ask of
- * someone whose Page is connected and whose token is fine. It takes no
- * body: the Page and its token are already stored.
+ * Retry the per-account webhook subscription for an already-connected
+ * Instagram account. Same shape and same reasoning as
+ * /api/facebook/subscribe: the subscription can fail for reasons that
+ * pass on their own — the permission is still in App Review, the account
+ * briefly lost its Business status, Meta had a bad minute — and without
+ * this the only way out is to disconnect and reconnect, which is a
+ * strange thing to ask of someone whose token is fine. It takes no body:
+ * the account and its token are already stored.
  */
 export async function POST() {
   const ctx = await getSessionContext();
@@ -25,33 +25,32 @@ export async function POST() {
   // Generous enough that a person retrying a genuinely failing
   // subscription never meets it, tight enough that the button is not a
   // free way to hammer Meta on the app's behalf.
-  if (await tooManyRecentActions(ctx.businessId, "facebook.subscribe", { windowMinutes: 10, max: 10 })) {
+  if (await tooManyRecentActions(ctx.businessId, "instagram.subscribe", { windowMinutes: 10, max: 10 })) {
     return NextResponse.json({ success: false, message: "Give it a minute before trying again." }, { status: 429 });
   }
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { facebookPageId: true, facebookPageAccessToken: true },
+    select: { instagramUserId: true, instagramAccessToken: true },
   });
-  if (!business?.facebookPageId || !business.facebookPageAccessToken) {
-    return NextResponse.json({ success: false, message: "Connect a Facebook Page first." }, { status: 400 });
+  if (!business?.instagramUserId || !business.instagramAccessToken) {
+    return NextResponse.json({ success: false, message: "Connect an Instagram account first." }, { status: 400 });
   }
 
-  const subscribed = await activateFacebookPageWebhooks(
+  const subscribed = await activateInstagramWebhooks(
     ctx.businessId,
-    business.facebookPageId,
-    business.facebookPageAccessToken
+    business.instagramUserId,
+    business.instagramAccessToken
   );
-  void recordAudit(ctx, "integration.facebook.subscribe", {
+  void recordAudit(ctx, "integration.instagram.subscribe", {
     meta: {
-      pageId: business.facebookPageId,
       webhookSubscribed: subscribed.ok,
       ...(subscribed.ok ? {} : { webhookError: subscribed.message }),
     },
   });
 
   // Meta's own sentence, not a rewrite of it: it names the missing
-  // permission or the lost Page role, which is the thing to act on.
+  // permission or the account's status, which is the thing to act on.
   return NextResponse.json(
     subscribed.ok ? { success: true, receiving: true } : { success: false, receiving: false, message: subscribed.message }
   );

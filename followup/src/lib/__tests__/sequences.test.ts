@@ -390,6 +390,88 @@ describe("send-window gate (src/lib/sendWindow.ts)", () => {
 // sending unreviewed; this workflow path didn't — a real gap found
 // auditing this file, since a workflow step drafts fresh, real AI content
 // per lead just like those other paths do.
+/**
+ * Business.holdAllForApproval — "hold every follow-up for my approval".
+ *
+ * Found 2026-09-20 by the security pass. schema.prisma names exactly one
+ * exception to this flag (the instant acknowledgement) and automation.ts
+ * honoured it; this file never read the column at all. So a tester who
+ * enrolled a lead in a workflow got AI-drafted mail sent in their own
+ * name on the next cron tick — precisely what the flag exists to prevent,
+ * and every beta tester has it on (grantBetaPlan, src/lib/billing.ts).
+ *
+ * Asserted the way automation.test.ts pins the same flag: by what did NOT
+ * reach the customer, not by a code path.
+ */
+describe("holdAllForApproval (an account that reviews everything)", () => {
+  function enrolledOnEmailStep() {
+    const l = enrolled("outbound");
+    l.sequence = { ...l.sequence, steps: [{ ...step, action: "EMAIL" }] };
+    return l;
+  }
+
+  beforeEach(() => {
+    p.business.findUnique.mockResolvedValue({
+      timezone: "America/New_York",
+      tier: "plus",
+      holdAllForApproval: true,
+    });
+  });
+
+  // The exact state that used to send: the classifier says this one is
+  // perfectly safe. On a hold-everything account that is not the question
+  // being asked, and the step must still not go out.
+  it("does not send a step the risk check called low", async () => {
+    sendRisk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(r.held).toBe(1);
+    expect(r.advanced).toBe(0);
+  });
+
+  // The classifier decides whether something is safe to send WITHOUT
+  // review. Where nothing sends without review it has nothing to decide,
+  // so its cost is not paid — same skip as runAutomationForBusiness.
+  it("does not pay for a risk check it cannot act on", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    await runSequencesForBusiness("biz1");
+    expect(sendRisk).not.toHaveBeenCalled();
+  });
+
+  // The draft is the point: it is parked where the approval queue reads
+  // it, so the owner sends it themselves.
+  it("parks the draft for the owner and stops the workflow", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    await runSequencesForBusiness("biz1");
+    expect(p.lead.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "lead1" },
+        data: expect.objectContaining({ sequenceId: null, suggestedMessage: expect.any(String) }),
+      })
+    );
+  });
+
+  // "Needs your OK" would read as "this one looked risky", which is
+  // untrue and teaches an owner to distrust a setting they chose.
+  it("says it is the account setting, not that the message looked risky", async () => {
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    await runSequencesForBusiness("biz1");
+    const note = p.notification.create.mock.calls.at(-1)?.[0]?.data?.message ?? "";
+    expect(note).toMatch(/holds every follow-up for approval/i);
+    expect(note).not.toMatch(/needs your OK/i);
+  });
+
+  // With the flag off, nothing about the existing behaviour changes.
+  it("still sends normally when the account has not asked to review everything", async () => {
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "plus", holdAllForApproval: false });
+    sendRisk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    await runSequencesForBusiness("biz1");
+    expect(send).toHaveBeenCalled();
+  });
+});
+
 describe("risk-gated hold (a workflow step's draft isn't automatically safe)", () => {
   function enrolledOnEmailStep(overrides: Record<string, unknown> = {}) {
     const l = enrolled("outbound");

@@ -69,7 +69,10 @@ describe("sendWhatsAppCloud", () => {
   it("falls back to the template when Meta says the window is shut even though our clock disagreed", async () => {
     fetchMock.mockResolvedValueOnce(metaError(131047, "Re-engagement message")).mockResolvedValueOnce(ok({ messages: [{ id: "wamid.tpl2" }] }));
     const result = await sendWhatsAppCloud(conn, "+14165550100", "hello", { hoursSinceLead: 23.9, leadFirstName: "Priya" });
-    expect(result).toEqual({ success: true, sid: "wamid.tpl2" });
+    // sentTemplate rides along here too: Meta accepted the send, but what
+    // the lead received was the template, not the words. The re-engagement
+    // fallback is the same substitution as the out-of-window path.
+    expect(result).toEqual({ success: true, sid: "wamid.tpl2", sentTemplate: "followup_still_interested" });
     expect(sentBody(1).type).toBe("template");
   });
 
@@ -84,5 +87,54 @@ describe("sendWhatsAppCloud", () => {
 describe("toWaId", () => {
   it("keeps digits only", () => {
     expect(toWaId("+1 (416) 555-0100")).toBe("14165550100");
+  });
+});
+
+/**
+ * What the caller is told about what actually reached the lead.
+ *
+ * Found 2026-09-20 by the security pass. A template send returned a
+ * plain { success: true, sid } — indistinguishable from a written reply
+ * — so src/lib/sending.ts recorded the undelivered draft as the outbound
+ * message. The owner's thread showed a personal reply the lead had never
+ * seen, and on a manual send, the exact words the owner had typed.
+ *
+ * Every automated WhatsApp follow-up takes this path by construction:
+ * the silence rule fires days after the lead's last message, which is
+ * always outside the 24-hour window. This was the normal case for the
+ * channel, not an edge.
+ */
+describe("saying when the template went instead of the message", () => {
+  it("names the template on an out-of-window send, so the caller can record the truth", async () => {
+    fetchMock.mockResolvedValueOnce(ok({ messages: [{ id: "wamid.tpl" }] }));
+    const result = await sendWhatsAppCloud(conn, "+14165550100", "A careful, specific reply.", {
+      hoursSinceLead: 72,
+      leadFirstName: "Priya",
+    });
+    expect(result.success).toBe(true);
+    expect(result.sentTemplate).toBe("followup_still_interested");
+    expect(sentBody(0).type).toBe("template");
+  });
+
+  it("says nothing of the sort when the words themselves went out", async () => {
+    fetchMock.mockResolvedValueOnce(ok({ messages: [{ id: "wamid.txt" }] }));
+    const result = await sendWhatsAppCloud(conn, "+14165550100", "A careful, specific reply.", {
+      hoursSinceLead: 2,
+      leadFirstName: "Priya",
+    });
+    expect(result.sentTemplate).toBeUndefined();
+    expect(sentBody(0).type).toBe("text");
+  });
+
+  // A refused template delivered nothing at all, so there is nothing to
+  // claim was sent — the failure path must not carry the flag.
+  it("does not claim a template was sent when Meta refused it", async () => {
+    fetchMock.mockResolvedValueOnce(metaError(132000, "Template param count mismatch."));
+    const result = await sendWhatsAppCloud(conn, "+14165550100", "A reply.", {
+      hoursSinceLead: 72,
+      leadFirstName: "Priya",
+    });
+    expect(result.success).toBe(false);
+    expect(result.sentTemplate).toBeUndefined();
   });
 });

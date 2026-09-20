@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Check, Send, Compass } from "lucide-react";
+import { Check, Send } from "lucide-react";
+import LogoMark from "@/components/LogoMark";
 
 // Public, unauthenticated, and deliberately meant to be iframed into a
 // stranger's own website (see the Website widget section in Settings) —
@@ -68,18 +69,20 @@ export default function EmbedLeadPage() {
 
   return (
     <div className="min-h-full flex flex-col" style={{ backgroundColor: "var(--paper)" }}>
-      {/* Brand header — small and quiet, but present, so this reads as an
-          intentional widget rather than a bare default form. */}
+      {/* The header is the BUSINESS's, not FollowUp's.
+
+          It used to set a FollowUp mark, in a filled accent tile, directly
+          beside the business's own name — on a widget embedded in that
+          business's website, in front of their customer. Two marks side by
+          side is a co-brand nobody agreed to, and the one wearing the tile
+          was ours. Founder's call, 2026-09-20: drop the mark, keep the name.
+
+          FollowUp is still credited once, at the foot of the widget, which
+          is where a "powered by" belongs. */}
       <div
         className="flex items-center gap-2 px-5 py-3.5 border-b"
         style={{ borderColor: "var(--line)", backgroundColor: "var(--rust-soft)" }}
       >
-        <div
-          className="h-6 w-6 rounded-md flex items-center justify-center shrink-0"
-          style={{ backgroundColor: "var(--rust)" }}
-        >
-          <Compass className="h-3.5 w-3.5" style={{ color: "var(--paper)" }} />
-        </div>
         <span className="text-xs font-semibold tracking-wide" style={{ color: "var(--rust)" }}>
           {businessName ?? " "}
         </span>
@@ -181,7 +184,13 @@ export default function EmbedLeadPage() {
           rel="noopener"
           className="inline-flex items-center gap-1 hover:text-ink transition-colors"
         >
-          <Compass className="h-3 w-3" style={{ color: "var(--rust)" }} /> Powered by FollowUp
+          {/* 16, not 12: public/brand/README.md sets 16px as the symbol's
+              minimum, and below that the channel between the two leaves —
+              the one part of the mark that must never close — stops
+              reading. This is the only FollowUp mark on a page that lives
+              on someone else's website, so it is the last place to let it
+              go mushy. */}
+          <LogoMark height={16} /> Powered by FollowUp
         </a>
       </p>
     </div>

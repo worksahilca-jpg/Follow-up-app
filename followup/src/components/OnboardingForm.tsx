@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { INDUSTRIES } from "@/lib/industries";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Compass, Mail, Check, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Check, ArrowRight, Loader2 } from "lucide-react";
+import LogoMark from "@/components/LogoMark";
 import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
 
 
@@ -156,7 +157,7 @@ function OnboardingFormInner({
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <Compass className="h-6 w-6" style={{ color: "var(--ink)" }} />
+          <LogoMark height={24} />
           <span className="font-display text-2xl">FollowUp</span>
         </div>
 

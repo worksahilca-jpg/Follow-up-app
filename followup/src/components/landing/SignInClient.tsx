@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Reveal from "@/components/landing/Reveal";
-import LogoMark from "@/components/landing/light/LogoMark";
+import LogoMark from "@/components/LogoMark";
 
 // The sign-in screen on the app's own tokens (globals.css): the same
 // charcoal-or-white ground as the landing page and the app, the brand

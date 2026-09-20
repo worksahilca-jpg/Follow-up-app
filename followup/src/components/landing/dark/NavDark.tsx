@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "@/app/landing-dark.module.css";
-import LogoMark from "@/components/landing/light/LogoMark";
+import LogoMark from "@/components/LogoMark";
 
 export default function NavDark() {
   const [scrolled, setScrolled] = useState(false);

@@ -32,6 +32,18 @@ export const HOLD_ALL_AUTOMATION_REASON =
 export const HOLD_ALL_SEQUENCE_REASON = "your account holds every follow-up for your approval before it sends";
 
 /**
+ * Business.holdAllForApproval, reached via the instant acknowledgement —
+ * someone wrote in for the first time and got nothing back.
+ *
+ * Worth its own string because it is the most urgent kind of hold in the
+ * product and the only one where the lead is still sitting there waiting.
+ * The others are FollowUp deciding whether to reach back out; this one is
+ * a stranger's first message, unanswered.
+ */
+export const HOLD_ALL_FIRST_REPLY_REASON =
+  "your account holds every message for your approval, and this is the first reply to someone who has just written in";
+
+/**
  * assessSendRisk threw. Held rather than sent, in both schedulers: an
  * unchecked message going out is worse than a review nobody needed.
  */

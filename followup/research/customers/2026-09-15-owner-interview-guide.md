@@ -54,8 +54,22 @@ Keep it conversational — this is a script to keep on track, not a form to read
 10. What do you currently pay for anything related to this (CRM, answering service, VA)?
     What would "worth it" look like as a monthly price?
 
+**If they use an answering service, virtual receptionist, or a VA** *(added 2026-09-20 after
+`research/market/2026-09-20-outsourced-lead-handling.md`)*
+11. After your answering service takes a message — what actually happens to it? Who calls
+    back, and when?
+
+    This is the most load-bearing unanswered question in the corpus. That research found
+    these services cover *first contact* well and *persistence after silence* almost not at
+    all, and that the gap is structural rather than an oversight: they bill by the minute or
+    by the call, so chasing is the most expensive thing you can ask them for. But the
+    strongest evidence for "they take a message and then nothing happens" is a handful of
+    poorly-sourced reviews. **One owner's own account of what happens to that message
+    replaces the weakest claim in the whole positioning argument with a real quote.** Ask it
+    of anyone who mentions a service in Q10, and write down their words, not the gist.
+
 **Close**
-11. If this worked exactly as described, what would change for you day to day?
+12. If this worked exactly as described, what would change for you day to day?
 
 ## What to do with the answers
 

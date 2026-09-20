@@ -25,7 +25,7 @@ Before a real integration goes live, someone has to answer "what does Google/Twi
 - **Twilio** — A2P 10DLC registration for SMS (required before real-volume sending), TCPA consent requirements for automated texts, voice compliance.
 - **Instagram/Meta/WhatsApp** — Meta Business Verification + App Review timeline and typical rejection reasons, WhatsApp template approval (currently FollowUp's biggest go-live blocker — see `research/integrations/`).
 - **OpenAI** — rate limits relevant to per-lead scoring + drafting volume, data-retention/training-opt-out settings a customer-facing product should set.
-- **Stripe** — webhook setup and basic tax/compliance for a $29/mo SaaS, beyond the billing gate already coded.
+- **Stripe** — webhook setup and basic tax/compliance for a tiered SaaS (Free/$39/$79 — see `src/lib/pricing.ts`), beyond the billing gate already coded.
 - **Supabase/Postgres** — production-tier considerations: connection pooling for serverless, backup policy.
 - **Privacy law** — GDPR/PIPEDA data export and erasure obligations, and what de-identification a training pipeline needs before real customer data touches it.
 

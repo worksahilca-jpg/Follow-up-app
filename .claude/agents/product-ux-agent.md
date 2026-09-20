@@ -20,7 +20,18 @@ Seven pillars behind that thesis, if you need the fuller framing: leads shouldn'
 - AI scores every lead with a visible reason ("never a black-box number") and drafts replies — approval-first by default; autonomous send for low-risk replies is now the default with a full consent record and audit trail per lead, never silent.
 - Automation — both the simple silence-triggered rule and multi-step Workflows — genuinely stops the moment a lead replies. This is real and safe to state as a guarantee.
 - Per-source routing exists (Settings → Lead routing): a new lead from a given source can auto-enroll into a workflow or start on a given automation tier.
-- Pricing is flat: **$29/mo, one plan, everything included** — no tiers, no seats. This is a real structural advantage over every competitor researched so far (HubSpot's seat-based ladder, Follow Up Boss's calling-as-paid-addon, Podium's $300-500/mo suite) — lean on it.
+- Pricing, as the CODE has it — `src/lib/pricing.ts` is the source of truth, not this file:
+  **Free $0 / Plus $39 / Pro $79 per month**, flat per business, no seats. The legacy
+  flat **$29/mo** survives only as an existing subscription mapped to Plus; it is not on
+  sale and must not be quoted as current price. A **$39/mo voice add-on** exists in the
+  code but `VOICE_ADDON_AVAILABLE` is false, and `CARRIER_CHANNELS_AVAILABLE` is false
+  too — **a new customer cannot buy a phone channel today.** Say so plainly rather than
+  pitching around it.
+  No-seats is still a real structural advantage against HubSpot's seat ladder, Follow Up
+  Boss's calling-as-paid-addon and Podium's $300-500/mo suite — but the advantage is
+  "no per-seat tax", not "one plan".
+  *(Corrected 2026-09-20: this file said "$29/mo, one plan, everything included" long
+  after tiers shipped, and a research pass reasoned from it. Check the code.)*
 - Not yet real: full skill-based salesperson routing (Ponds is the shipped approximation), Instagram/WhatsApp/Meta channels fully unblocked at scale (still gated on Meta Business Verification, Twilio A2P 10DLC, WhatsApp template approval — see `research/integrations/`). The `followupbase.io` domain IS the live app URL — the cutover is done and verified, don't claim otherwise.
 
 ## Research you own

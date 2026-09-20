@@ -74,6 +74,65 @@ export async function sendMessengerMessage(
   return { success: true };
 }
 
+/**
+ * Subscribes this app to the connected Page's webhooks. Without it, a
+ * Page can be connected — token saved, name and ID resolved, Settings
+ * green — and Meta will never deliver a single Messenger DM or Lead Ad
+ * to it. The dashboard webhook (callback URL + fields) is only half of
+ * the setup; the other half is per-Page and is this call.
+ *
+ * The same gap was found live on the Instagram side on 2026-09-19 (see
+ * subscribeInstagramWebhooks in src/lib/instagram.ts, and subscribeAppToWaba
+ * in whatsappCloud.ts). Facebook was the one of the three that never got
+ * it: both of its connect paths saved the token and stopped there.
+ *
+ * `messages` carries Messenger DMs, `leadgen` carries Lead Ad
+ * submissions — the two things handlePageEvents() in the Meta webhook
+ * route reads, and both of what this channel promises.
+ *
+ * Best effort at the call sites: the connection is saved either way and
+ * the outcome is persisted, so a Page that could not be subscribed says
+ * so in Settings instead of sitting silently.
+ */
+export async function subscribeFacebookPageWebhooks(
+  pageId: string,
+  pageAccessToken: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const res = await fetch(`${GRAPH}/${encodeURIComponent(pageId)}/subscribed_apps`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ subscribed_fields: "messages,leadgen", access_token: pageAccessToken }),
+  });
+  if (res.ok) return { ok: true };
+  const failure = await readMetaError(res, "Facebook refused the webhook subscription.", "Facebook subscribed_apps");
+  return { ok: false, message: failure.message ?? `HTTP ${res.status}` };
+}
+
+/**
+ * The above, plus the record of it, for the three places a Page gets
+ * connected: the OAuth callback when the person manages exactly one
+ * Page, the picker when they manage several, and a pasted Page token.
+ * All three used to save a token and stop, which is the bug.
+ *
+ * Only a success is written. A failure deliberately leaves the column
+ * null — "Meta has never confirmed this" is the honest reading, and it
+ * is what Settings shows a warning and a retry for.
+ */
+export async function activateFacebookPageWebhooks(
+  businessId: string,
+  pageId: string,
+  pageAccessToken: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const result = await subscribeFacebookPageWebhooks(pageId, pageAccessToken);
+  if (result.ok) {
+    await prisma.business.update({
+      where: { id: businessId },
+      data: { facebookWebhookSubscribedAt: new Date() },
+    });
+  }
+  return result;
+}
+
 /** Best-effort display name for a PSID; Meta only allows this after the person has messaged the Page. */
 async function lookupSenderName(businessId: string, psid: string): Promise<string | null> {
   const pt = await pageToken(businessId);

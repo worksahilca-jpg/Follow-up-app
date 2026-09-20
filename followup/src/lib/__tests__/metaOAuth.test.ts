@@ -18,7 +18,12 @@ import {
   subscribeInstagramWebhooks,
   instagramDiagnostics,
 } from "@/lib/instagram";
-import { facebookOAuthAvailable, buildFacebookAuthUrl, exchangeFacebookAuthCode } from "@/lib/facebook";
+import {
+  facebookOAuthAvailable,
+  buildFacebookAuthUrl,
+  exchangeFacebookAuthCode,
+  subscribeFacebookPageWebhooks,
+} from "@/lib/facebook";
 
 beforeEach(() => {
   vi.unstubAllEnvs();
@@ -141,5 +146,43 @@ describe("Facebook one-click connect", () => {
     const result = await exchangeFacebookAuthCode("code", "https://followupbase.io/callback");
     expect(result).toEqual({ error: "Facebook sign-in isn't configured yet." });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The call that was missing entirely until 2026-09-20. Instagram and
+   * WhatsApp both subscribed the account they connected; Facebook saved
+   * the Page's token and stopped, so every connected Page was silent —
+   * no Messenger DM, no Lead Ad, and a green tick in Settings saying
+   * otherwise.
+   */
+  it("subscribes the Page to BOTH messages and leadgen with the Page's own token", async () => {
+    const fetchSpy = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    expect(await subscribeFacebookPageWebhooks("90210", "EAAG-page-tok")).toEqual({ ok: true });
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://graph.facebook.com/v21.0/90210/subscribed_apps");
+    expect(init.method).toBe("POST");
+    const body = new URLSearchParams(String(init.body));
+    // Messenger DMs and Lead Ads are both of what this channel promises;
+    // subscribing to one and not the other half-connects it silently.
+    expect(body.get("subscribed_fields")).toBe("messages,leadgen");
+    expect(body.get("access_token")).toBe("EAAG-page-tok");
+  });
+
+  it("reports Meta's own refusal rather than a generic failure", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: { message: "(#200) Requires pages_manage_metadata permission", code: 200 } }), {
+        status: 403,
+      })
+    );
+    // The sentence names the missing permission, which is the thing the
+    // owner (or Sahil) can act on; "couldn't subscribe" names nothing.
+    expect(await subscribeFacebookPageWebhooks("90210", "EAAG-page-tok")).toEqual({
+      ok: false,
+      message: "(#200) Requires pages_manage_metadata permission",
+    });
   });
 });

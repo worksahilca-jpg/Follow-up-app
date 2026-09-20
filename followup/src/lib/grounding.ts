@@ -56,6 +56,70 @@
  * a net with known holes still catches what falls into it.
  */
 
+/**
+ * A number token: a run of digits, optionally continuing through internal
+ * thousands-separator commas or a decimal point. Unicode-aware, so a
+ * Devanagari or Arabic-Indic numeral counts as a digit too.
+ *
+ * Whole tokens, never substrings — "$2,000" is one token, not "2" and
+ * "000". A plain `source.includes(run)` lets a fabricated "2 days" ground
+ * itself against a lead-quoted "$2,000", since "2,000" contains "2".
+ */
+const NUMBER_RE = /\p{Nd}(?:[\p{Nd},.]*\p{Nd})?/gu;
+
+/**
+ * A currency marker with no digits attached — "a price in USD", "our
+ * rates in CAD". Worth its own rule precisely because the digits rule
+ * above cannot see it.
+ *
+ * There is deliberately no separate clock-time rule here. Every clock
+ * time contains digits ("3:30", "7pm"), so the digits rule catches it
+ * first and a `time` branch would be unreachable code pretending to be a
+ * safeguard. checkAckShape (src/lib/acknowledge.ts) carries one for the
+ * same historical reason; it is equally unreachable there.
+ */
+const CURRENCY_RE = /[$€£₹¥]|%|\b(USD|EUR|GBP|INR|CAD|MXN|AUD|Rs\.?)\b/gi;
+
+/**
+ * Every specific in `draft` that `source` never contained — the whole
+ * invariant in one call, for any channel.
+ *
+ * This existed twice before today, inline and slightly differently, in
+ * checkAckShape (src/lib/acknowledge.ts) and checkDmDraftShape
+ * (src/lib/dmDrafts.ts). The email follow-up drafter — the longest, least
+ * constrained message FollowUp writes, and the only one that goes to a
+ * stranger's inbox rather than a DM thread — had no version of it at all.
+ *
+ * What that cost, on 2026-09-20, in the founder's own approval queue:
+ *
+ *     lead:      "quisiera saber si tienen disponibilidad para una
+ *                 consulta la semana que viene y cuál sería el costo"
+ *     FollowUp:  "Podemos confirmar que tenemos disponibilidad...
+ *                 **El costo será de $100**, ¿te parece bien?"
+ *
+ * He asked what it costs. FollowUp made up a price and quoted it in the
+ * owner's name. Three other drafts in the same queue invented a sent
+ * email, a prior discussion, and a confirmation — those are assertions,
+ * which belong to the risk gate and the prompt. This one is arithmetic,
+ * and arithmetic is checkable.
+ *
+ * Returns the failing rule name, or null when every specific in the draft
+ * can be traced to something someone actually wrote.
+ */
+export function ungroundedSpecifics(draft: string, source: string, locale?: string | null): string | null {
+  const known = new Set(source.match(NUMBER_RE) ?? []);
+  if ((draft.match(NUMBER_RE) ?? []).some((n) => !known.has(n))) return "digits";
+
+  const lowerSource = source.toLowerCase();
+
+  const currency = draft.match(CURRENCY_RE) ?? [];
+  if (currency.some((token) => !lowerSource.includes(token.toLowerCase()))) return "currency";
+
+  if (ungroundedCalendarWords(draft, source, locale).length > 0) return "calendar";
+
+  return null;
+}
+
 /** Weekday and month names for a locale, lowercased. */
 function calendarWords(locale: string): string[] {
   const out: string[] = [];

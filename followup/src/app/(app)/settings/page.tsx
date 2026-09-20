@@ -321,14 +321,12 @@ function SettingsPageInner() {
     // and until 2026-09-20 the only place it appeared was two server
     // files. "Waits for you" is the whole point of the beta setting, so
     // it belongs in the sentence that claims to describe what is active.
-    // Only the three held rules earn the note. With nothing but the
-    // instant acknowledgement on, there is no draft waiting anywhere and
-    // saying so would be its own small lie.
-    const anythingHeld = holdAllForApproval && (automationOn || unansweredOn || deadLeadOn);
-    if (!anythingHeld) return sentence;
-    return `${sentence} Every one of those drafts waits in Approvals until you send it${
-      instantAckOn ? " — except the instant acknowledgement, which always goes straight out" : ""
-    }.`;
+    // As of 2026-09-20 the instant acknowledgement is held too (founder:
+    // "don't send any replies without asking me"), so there is no longer
+    // an exception to carve out — every rule above produces a draft that
+    // waits. This sentence said the opposite for exactly one day.
+    if (!holdAllForApproval) return sentence;
+    return `${sentence} Nothing above sends on its own — every one of those is written for you and waits in Approvals until you press send.`;
   }
 
   const anyAutomationOn = automationOn || instantAckOn || unansweredOn || deadLeadOn;

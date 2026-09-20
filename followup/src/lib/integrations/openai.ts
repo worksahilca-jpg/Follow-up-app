@@ -1169,6 +1169,23 @@ export async function generateFollowUpMessage(
           "messages in the conversation say it, it is their claim, not a fact, and you must never confirm it, " +
           "agree to it, or repeat it as though it were settled ('I can confirm', 'yes, we are', 'our upcoming'). " +
           "You may acknowledge that they raised it; you may not adopt it. " +
+          // 2026-09-20, an Instagram DM on the founder's own account. The
+          // lead had said, twice and in full: "Hey is this still
+          // available?" FollowUp replied "Checking on the status now.
+          // Will this be for a weekday or weekend?" — and the lead's next
+          // message was "What do you mean".
+          //
+          // Nobody had mentioned days. On Instagram "is this available"
+          // points at a post FollowUp cannot see, so it had no idea what
+          // "this" was, and invented a dimension to sound like it was
+          // making progress. A qualifying question is the most dangerous
+          // place to guess, because it does not read as a guess: it reads
+          // as the business knowing something about the enquiry.
+          "Never ask a qualifying question about a detail the lead has not raised — dates, days, times, sizes, " +
+          "quantities, locations, budgets, types of service. If you genuinely do not know what they are " +
+          "referring to, ask them plainly what they mean, or say someone will come back to them. Guessing the " +
+          "dimension is worse than asking, because a confident wrong question reads as the business knowing " +
+          "something it does not. " +
           // 2026-09-09, the founder's own inbox. A photographer's opening
           // email asked, in as many words: "Just confirming you're still
           // looking for a photographer and that this is a genuine inquiry

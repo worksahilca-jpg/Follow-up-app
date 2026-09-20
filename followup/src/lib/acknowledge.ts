@@ -44,6 +44,16 @@ import { greetingFirstName } from "@/lib/leadName";
  * the point of "instant," and the fallback line states no fact about
  * the business.
  *
+ * That reasoning still holds for an account that sends on its own. It no
+ * longer decides the question, because a whole class of account does not
+ * send on its own: `Business.holdAllForApproval` now stops this message
+ * too (see the gate below). Founder's call, 2026-09-20 — "don't send any
+ * replies without asking me, they'll put us on spam, or they might
+ * report us." Every other automated message already waited; this was the
+ * last one that could reach a stranger unread, which made it the only one
+ * that could get the domain reported. "Instant" is worth a great deal and
+ * is not worth that.
+ *
  * Language (task #63 live-test finding): the outgoing message is
  * localized as a whole, greeting/sign-off included — not just the
  * middle line. The first real Spanish test lead got "Hi Lucía, <English
@@ -444,8 +454,39 @@ export async function acknowledgeNewLead(
     // upgrade, rather than being silently marked as handled.
     const ackBusiness = await prisma.business.findUnique({
       where: { id: lead.businessId },
-      select: { tier: true },
+      select: { tier: true, holdAllForApproval: true },
     });
+
+    /**
+     * "Don't send any replies without asking me."
+     *
+     * Founder, 2026-09-20, in those words, with the reason: "They'll put
+     * us on spam, or they might report us."
+     *
+     * `holdAllForApproval` already stopped the silence nudge, the
+     * unanswered step-in, the reactivation and every workflow step. This
+     * one message was deliberately exempt — the file header above argues
+     * that holding the first touch "defeats the point of instant" — and
+     * that exemption is now withdrawn. It was the only thing on a beta
+     * account that could reach a stranger with nobody having read it,
+     * which makes it the only thing that can get the sending domain
+     * reported, and a domain cannot be un-reported.
+     *
+     * Checked BEFORE the acknowledgedAt claim, like the tier gate below
+     * and for the same reason: a lead held here is not "handled", it is
+     * waiting. If holding is ever lifted, a later inbound acknowledges it
+     * normally rather than finding it silently marked as done.
+     *
+     * The lead is not dropped or hidden. It is captured, scored and
+     * drafted exactly as before (scoring.ts), and the draft is waiting in
+     * Approvals — the only change is that a human presses send.
+     *
+     * Terminal for the deferred-DM queue: runDueInstantAcks clears the
+     * row for every reason except "error", so this does not re-enter the
+     * queue on the next tick.
+     */
+    if (ackBusiness?.holdAllForApproval) return { sent: false, reason: "held for approval" };
+
     const ackEligible = await checkAiEligibility(
       lead.businessId,
       lead,

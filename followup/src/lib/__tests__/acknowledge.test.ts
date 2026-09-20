@@ -615,3 +615,74 @@ describe("the tier's AI allowance", () => {
     expect(r.reason).not.toMatch(/upgrade|plan/i);
   });
 });
+
+/**
+ * "Don't send any replies without asking me, bro. They'll put us on
+ * spam, or they might report us." — the founder, 2026-09-20.
+ *
+ * Business.holdAllForApproval already stopped the silence nudge, the
+ * unanswered step-in, the reactivation and every workflow step. The
+ * instant acknowledgement was deliberately exempt: this file's own
+ * header argued that holding the first touch defeats the point of
+ * "instant". That exemption is withdrawn.
+ *
+ * It was the last thing on a beta account that could reach a stranger
+ * with nobody having read it — which made it the only thing that could
+ * get the sending domain reported, and a domain cannot be un-reported.
+ *
+ * The lead is not dropped. It is still captured, scored and drafted; the
+ * draft waits in Approvals. The only change is that a human presses send.
+ */
+describe("holdAllForApproval stops the instant acknowledgement too", () => {
+  beforeEach(() => {
+    p.business.findUnique.mockResolvedValue({
+      name: "MJ Homes",
+      tier: "plus",
+      subscriptionStatus: "active",
+      holdAllForApproval: true,
+    });
+  });
+
+  it("sends nothing", async () => {
+    const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "What do you charge?" });
+    expect(result.sent).toBe(false);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("says why, so the reason is visible rather than looking like a failure", async () => {
+    const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "What do you charge?" });
+    expect(result.reason).toBe("held for approval");
+  });
+
+  it("spends no model calls on a message that is not going out", async () => {
+    await acknowledgeNewLead("lead1", { channel: "email", inboundText: "What do you charge?" });
+    expect(generateReply).not.toHaveBeenCalled();
+    expect(assessRisk).not.toHaveBeenCalled();
+  });
+
+  it("leaves the lead unacknowledged, so it is waiting rather than handled", async () => {
+    // The claim is what marks a lead done. Taking it here would mean that
+    // if holding is ever lifted, this lead is silently skipped forever.
+    await acknowledgeNewLead("lead1", { channel: "email", inboundText: "What do you charge?" });
+    expect(p.lead.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("is terminal for the deferred-DM queue, not a retry loop", async () => {
+    // runDueInstantAcks clears the row for every reason except "error",
+    // so this must not report itself as an error.
+    const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "What do you charge?" });
+    expect(result.reason).not.toBe("error");
+  });
+
+  it("still sends normally for an account that is not holding", async () => {
+    p.business.findUnique.mockResolvedValue({
+      name: "MJ Homes",
+      tier: "plus",
+      subscriptionStatus: "active",
+      holdAllForApproval: false,
+    });
+    const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "What do you charge?" });
+    expect(result.sent).toBe(true);
+    expect(send).toHaveBeenCalled();
+  });
+});

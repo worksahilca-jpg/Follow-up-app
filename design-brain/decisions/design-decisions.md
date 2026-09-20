@@ -3552,3 +3552,68 @@ needs its own investigation, and one occurrence is not enough to characterise it
    human is added) and because the alternative is leaving a known payment-commitment bug
    live. He should still be told, and is.
 5. **Two known defects left open**, above, rather than guessed at.
+
+---
+
+## 2026-09-20 — "Don't send any replies without asking me, bro"
+
+The founder's words, with his reason: *"They'll put us on spam, or they might report us."*
+
+`Business.holdAllForApproval` already stopped the silence nudge, the unanswered step-in, the
+reactivation and every workflow step. **One message was deliberately exempt** — the instant
+acknowledgement — and `acknowledge.ts`'s own header argued the exemption at length: holding
+the very first touch "defeats the point of instant."
+
+That reasoning is sound and it no longer decides the question. The ack was the last thing on
+a beta account that could reach a stranger with **nobody having read it**, which made it the
+only thing that could get the sending domain reported. A domain cannot be un-reported.
+"Instant" is worth a great deal and is not worth that.
+
+The lead is not dropped: still captured, still scored, still drafted. A human presses send.
+Checked before the `acknowledgedAt` claim, so a held lead is *waiting*, not *handled* — if
+holding is ever lifted, it acknowledges normally rather than being silently skipped forever.
+
+**Settings' summary sentence was wrong for exactly one day.** Yesterday it gained "— except
+the instant acknowledgement, which always goes straight out." Today that exception is gone.
+
+### The Instagram DM, and a correction I had to make mid-answer
+
+The founder reported: the lead said only *"Hey is this still available?"*, and FollowUp
+replied *"Checking on the status now. Will this be for a weekday or weekend?"* The lead's
+next message was *"What do you mean"*.
+
+**I first told him this was an echo bug — FollowUp reading its own sent DMs back as inbound —
+and it was not.** I had run one query across two lead IDs and read the second lead's rows
+(his own test account seeing the same thread from the other side) as duplicates on the
+first. I corrected it in the same reply, before acting on it. Worth recording because the
+wrong diagnosis was the more *interesting* one, which is exactly when a diagnosis needs
+checking hardest.
+
+What actually happened: nobody had mentioned days. On Instagram *"is this available"* points
+at a **post FollowUp cannot see**, so it had no idea what "this" was and invented a
+dimension to sound like it was making progress.
+
+**A qualifying question is the worst possible place to guess**, because it does not read as
+a guess. "Will this be for a weekday or weekend?" reads as the business knowing something
+about the enquiry. An invented fact can be caught by a shape check; an invented *question*
+passes every one of them, because nothing in it is false — it is just not about anything.
+
+The drafter is now forbidden to qualify on any dimension the lead has not raised (dates,
+days, times, sizes, quantities, locations, budgets, service types) and told to ask plainly
+what they mean instead. DMs share this drafter, so the rule lands on both.
+
+**Self-critique.**
+
+1. **I got the diagnosis wrong and said it out loud first.** A query written across two
+   leads, read as though it were one. The check that would have caught it — look at the
+   `externalId` and `source` columns before concluding — took one more query, after the claim.
+2. **This is the fourth "the drafter invented something" entry today** (a confirmed event, an
+   adopted premise, a denial of being automated, now an invented question). They kept
+   arriving as separate prompt rules. The pattern underneath all four is one thing: *the
+   drafter fills silence with specifics.* That deserves a single structural answer — most
+   likely a check on the draft asking "does every concrete noun in this appear in the
+   conversation?" — rather than a fifth rule next week. **Not built. Named.**
+3. **The ack hold is a product-behaviour change**, which `CLAUDE.md` puts with the founder. He
+   asked for it in plain words, so it ships; but it makes "replies within a minute" false for
+   every beta account, and the dashboard sentence fixed this morning now needs revisiting
+   again. Flagged to him rather than quietly patched.

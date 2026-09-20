@@ -273,3 +273,41 @@ describe("FollowUp never tells someone it isn't automated", () => {
     expect(system).toMatch(/never claim to be a person/);
   });
 });
+
+/**
+ * "Will this be for a weekday or weekend?"
+ *
+ * An Instagram DM on the founder's own account, 2026-09-20. The lead had
+ * said, twice and in full: "Hey is this still available?" FollowUp
+ * replied "Checking on the status now. Will this be for a weekday or
+ * weekend?" The lead's next message was "What do you mean".
+ *
+ * Nobody had mentioned days. On Instagram "is this available" points at
+ * a post FollowUp cannot see, so it had no idea what "this" was and
+ * invented a dimension to sound like it was making progress.
+ *
+ * A qualifying question is the worst place to guess, because it does not
+ * read as a guess — it reads as the business knowing something about the
+ * enquiry. DMs go through this same drafter (src/lib/dmDrafting.ts calls
+ * generateFollowUpMessage), so the rule lives with the other
+ * no-invention rules.
+ */
+describe("it never invents the question", () => {
+  it("forbids qualifying on a detail the lead never raised", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "", body: "What are you asking about?" }) } }],
+    });
+    const { generateFollowUpMessage } = await import("@/lib/integrations/openai");
+    await generateFollowUpMessage({
+      name: "@sahildoes",
+      conversation: [{ ...photographerPitch[0], channel: "instagram" as const, body: "Hey is this still available?" }],
+    });
+
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/Never ask a qualifying question about a detail the lead has not raised/);
+    // The dimensions it actually reached for, named so the rule is concrete.
+    expect(system).toMatch(/dates, days, times/);
+    // And the alternative, or the model invents one.
+    expect(system).toMatch(/ask them plainly what they mean/);
+  });
+});

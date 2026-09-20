@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { activateInstagramWebhooks, instagramOAuthAvailable, resolveInstagramUserId, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
+import { activateInstagramWebhooks, instagramOAuthAvailable, resolveInstagramUserId, unsubscribeInstagramWebhooks, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
 import { appUrl } from "@/lib/stripe";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
@@ -95,6 +95,24 @@ export async function DELETE() {
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
   void recordAudit(ctx, "integration.instagram.disconnect");
+
+  // Tell Meta to stop FIRST — see the same comment in the Facebook
+  // disconnect. After the update there is no token left to unsubscribe
+  // with, and Meta would keep delivering this account's DMs.
+  const b = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: { instagramUserId: true, instagramAccessToken: true },
+  });
+  if (b?.instagramUserId && b.instagramAccessToken) {
+    // Never lets Meta being unreachable strand someone in a connection
+    // they asked to leave: the disconnect is the thing they requested,
+    // and it must happen whatever Instagram does.
+    try {
+      await unsubscribeInstagramWebhooks(b.instagramUserId, b.instagramAccessToken);
+    } catch (err) {
+      console.error(`Instagram unsubscribe failed on disconnect for business ${ctx.businessId}:`, err);
+    }
+  }
 
   await prisma.business.update({
     where: { id: ctx.businessId },

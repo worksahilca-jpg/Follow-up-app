@@ -133,6 +133,29 @@ export async function activateFacebookPageWebhooks(
   return result;
 }
 
+/**
+ * Tells Meta to stop delivering this Page's events to FollowUp.
+ *
+ * The counterpart to subscribeFacebookPageWebhooks, and it did not exist
+ * until 2026-09-20. Disconnect nulled the token and the Page id and
+ * stopped there, so Meta kept POSTing every Messenger DM and Lead Ad for
+ * a Page the customer had disconnected. The webhook route persists the
+ * signed envelope BEFORE it looks up a business, so those messages — real
+ * customers' words and their PSIDs — kept landing in InboundWebhookEvent
+ * with businessId null and sat there for 14 to 90 days, out of reach of
+ * deleteBusinessData's businessId filter.
+ *
+ * Called BEFORE the token is cleared, for the obvious reason: afterwards
+ * there is no credential left to unsubscribe with, ever. Best-effort —
+ * the disconnect must succeed regardless, the same posture as
+ * unsubscribeAppFromWaba in whatsappCloud.ts.
+ */
+export async function unsubscribeFacebookPageWebhooks(pageId: string, pageAccessToken: string): Promise<void> {
+  await fetch(`${GRAPH}/${encodeURIComponent(pageId)}/subscribed_apps?access_token=${encodeURIComponent(pageAccessToken)}`, {
+    method: "DELETE",
+  }).catch(() => {});
+}
+
 /** Best-effort display name for a PSID; Meta only allows this after the person has messaged the Page. */
 async function lookupSenderName(businessId: string, psid: string): Promise<string | null> {
   const pt = await pageToken(businessId);

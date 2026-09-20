@@ -31,20 +31,39 @@ export async function encryptPlaintextSecrets(): Promise<{ integrations: number;
     });
   }
 
+  // All FOUR of the Business token fields src/lib/db.ts encrypts. This
+  // swept only the first two until 2026-09-20, so a Page token or a
+  // WhatsApp business token written while TOKEN_ENCRYPTION_KEY was unset
+  // stayed plaintext in the database forever — the sweep that exists to
+  // catch exactly that walked straight past them. Keep this list and
+  // ENCRYPTED_FIELDS in db.ts in step; a fifth field needs a line here.
   const businesses = await prisma.business.findMany({
     where: {
       OR: [
         { twilioAuthToken: { not: { startsWith: PREFIX } } },
         { instagramAccessToken: { not: { startsWith: PREFIX } } },
+        { facebookPageAccessToken: { not: { startsWith: PREFIX } } },
+        { whatsappAccessToken: { not: { startsWith: PREFIX } } },
       ],
     },
-    select: { id: true, twilioAuthToken: true, instagramAccessToken: true },
+    select: {
+      id: true,
+      twilioAuthToken: true,
+      instagramAccessToken: true,
+      facebookPageAccessToken: true,
+      whatsappAccessToken: true,
+    },
     take: BATCH,
   });
   for (const b of businesses) {
     await prisma.business.update({
       where: { id: b.id },
-      data: { twilioAuthToken: b.twilioAuthToken, instagramAccessToken: b.instagramAccessToken },
+      data: {
+        twilioAuthToken: b.twilioAuthToken,
+        instagramAccessToken: b.instagramAccessToken,
+        facebookPageAccessToken: b.facebookPageAccessToken,
+        whatsappAccessToken: b.whatsappAccessToken,
+      },
     });
   }
 

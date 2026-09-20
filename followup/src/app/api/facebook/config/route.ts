@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { activateFacebookPageWebhooks, facebookOAuthAvailable, resolveFacebookPage } from "@/lib/facebook";
+import { activateFacebookPageWebhooks, facebookOAuthAvailable, resolveFacebookPage, unsubscribeFacebookPageWebhooks } from "@/lib/facebook";
 import { WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
 import { appUrl } from "@/lib/stripe";
 import { recordAudit } from "@/lib/audit";
@@ -91,6 +91,25 @@ export async function DELETE() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireAdmin(ctx))) return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  // Tell Meta to stop FIRST — after the update there is no token left to
+  // unsubscribe with, and Meta would go on delivering this Page's DMs and
+  // Lead Ads to a webhook that can no longer route them (they land in
+  // InboundWebhookEvent with businessId null and sit for up to 90 days).
+  const b = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: { facebookPageId: true, facebookPageAccessToken: true },
+  });
+  if (b?.facebookPageId && b.facebookPageAccessToken) {
+    // Never lets Meta being unreachable strand someone in a connection
+    // they asked to leave: the disconnect is the thing they requested,
+    // and it must happen whatever Facebook does.
+    try {
+      await unsubscribeFacebookPageWebhooks(b.facebookPageId, b.facebookPageAccessToken);
+    } catch (err) {
+      console.error(`Facebook unsubscribe failed on disconnect for business ${ctx.businessId}:`, err);
+    }
+  }
+
   await prisma.business.update({
     where: { id: ctx.businessId },
     data: {

@@ -174,6 +174,22 @@ export async function subscribeInstagramWebhooks(
 }
 
 /**
+ * Tells Meta to stop delivering this account's DMs to FollowUp.
+ *
+ * The counterpart to subscribeInstagramWebhooks, added 2026-09-20 for
+ * the same reason as the Facebook one: disconnect cleared the token and
+ * stopped, so Meta kept posting DMs for a disconnected account and the
+ * webhook route kept storing them (businessId null) for up to 90 days.
+ * Called BEFORE the token is cleared — afterwards there is nothing left
+ * to unsubscribe with. Best-effort; the disconnect succeeds either way.
+ */
+export async function unsubscribeInstagramWebhooks(igUserId: string, accessToken: string): Promise<void> {
+  await fetch(`${GRAPH_API}/${encodeURIComponent(igUserId)}/subscribed_apps?access_token=${encodeURIComponent(accessToken)}`, {
+    method: "DELETE",
+  }).catch(() => {});
+}
+
+/**
  * The above, plus the record of it.
  *
  * Until 2026-09-20 the call sites made the subscription and then threw

@@ -3,6 +3,7 @@ import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { activateInstagramWebhooks } from "@/lib/instagram";
 import { recordAudit } from "@/lib/audit";
+import { tooManyRecentActions } from "@/lib/rateLimit";
 
 /**
  * Retry the per-account webhook subscription for an already-connected
@@ -19,6 +20,13 @@ export async function POST() {
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireAdmin(ctx))) {
     return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
+  }
+  // One Graph write per request, behind a button anyone can hold down.
+  // Generous enough that a person retrying a genuinely failing
+  // subscription never meets it, tight enough that the button is not a
+  // free way to hammer Meta on the app's behalf.
+  if (await tooManyRecentActions(ctx.businessId, "instagram.subscribe", { windowMinutes: 10, max: 10 })) {
+    return NextResponse.json({ success: false, message: "Give it a minute before trying again." }, { status: 429 });
   }
 
   const business = await prisma.business.findUnique({

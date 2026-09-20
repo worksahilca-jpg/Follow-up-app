@@ -44,6 +44,20 @@ export const HOLD_ALL_FIRST_REPLY_REASON =
   "your account holds every message for your approval, and this is the first reply to someone who has just written in";
 
 /**
+ * A lead FollowUp has never seen a message on — typed into the manual
+ * form, imported from a CSV, logged after a phone call.
+ *
+ * Until 2026-09-20 these leads reached no automation at all: every
+ * eligibility query asked `lastContacted <= cutoff`, and their
+ * lastContacted is null. Now they reach it and are always held, whatever
+ * the tier — there is no conversation to write against, so the draft
+ * comes from the name, the company and the notes, and the person on the
+ * other end never asked to hear from anyone.
+ */
+export const UNTOUCHED_LEAD_REASON =
+  "FollowUp has never seen a message on this lead, so this draft is written from what you typed in and nothing else";
+
+/**
  * assessSendRisk threw. Held rather than sent, in both schedulers: an
  * unchecked message going out is worse than a review nobody needed.
  */

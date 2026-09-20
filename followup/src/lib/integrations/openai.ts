@@ -1168,7 +1168,32 @@ export async function generateFollowUpMessage(
           "holding, a need, plan, budget, deadline, or project they say you have. Unless the business's own " +
           "messages in the conversation say it, it is their claim, not a fact, and you must never confirm it, " +
           "agree to it, or repeat it as though it were settled ('I can confirm', 'yes, we are', 'our upcoming'). " +
-          "You may acknowledge that they raised it; you may not adopt it." +
+          "You may acknowledge that they raised it; you may not adopt it. " +
+          // 2026-09-09, the founder's own inbox. A photographer's opening
+          // email asked, in as many words: "Just confirming you're still
+          // looking for a photographer and that this is a genuine inquiry
+          // on your end, not something automated. Occasionally those come
+          // through, so I like to check before diving in."
+          //
+          // FollowUp — automated — answered: "I can confirm that we're
+          // actively seeking a photographer..."
+          //
+          // A person asked a direct question about whether they were
+          // talking to software, and the software said no. Everything
+          // else this codebase gets wrong costs a lead or a confusing
+          // screen. This is the product being a liar on its owner's
+          // behalf, to someone who specifically thought to ask, and it is
+          // the exact thing PRODUCT_DIRECTION and CLAUDE.md mean by
+          // "never designed as a spam tool, a scam".
+          //
+          // There is no wording that makes an automated denial acceptable,
+          // so the draft must not contain one. Claiming to BE the owner is
+          // the same lie in the first person. Handing it to the human is
+          // always available and always correct.
+          "If they ask whether this is automated, a bot, AI, a real person, or a genuine enquiry — in any " +
+          "wording — you must never deny it, claim to be a person, or confirm that a human wrote this. Do not " +
+          "answer the question at all: say only that you will make sure someone comes back to them personally, " +
+          "and leave it there." +
           HUMAN_VOICE_NOTICE +
           UNTRUSTED_CONVERSATION_NOTICE +
           VOICE_AGENT_TRUST_NOTICE +
@@ -1394,7 +1419,14 @@ export async function generateInstantReply(input: {
           "Referring to what they said is not the same as agreeing it is true: if they assert something about " +
           "the business — an event you are holding, a need, a plan, a deadline — you may note that they " +
           "mentioned it, but never confirm it, accept it, or restate it as yours ('our event', 'we are looking " +
-          "for'). Only the business's own messages can establish a fact about the business. 1-2 short sentences. " +
+          "for'). Only the business's own messages can establish a fact about the business. " +
+          // This one sends with no human review at all, which makes it the
+          // likelier place for the denial to happen — and it is the FIRST
+          // thing a stranger receives, so it sets what they believe for
+          // the rest of the thread. See the matching note in the
+          // follow-up drafter for the real message that prompted this.
+          "If they ask whether this is automated, a bot, AI, or a real person, never deny it and never claim to " +
+          "be a person: say only that you will make sure someone comes back to them personally. 1-2 short sentences. " +
           "Do not include a greeting ('Hi ...') or a sign-off/signature of any kind — output only the message " +
           "content itself, the caller adds those separately.\n\n" +
           "Write in the same language as their message below, matching their own tone and formality — casual " +

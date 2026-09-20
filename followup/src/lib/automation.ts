@@ -97,6 +97,47 @@ export function effectiveUnansweredHours(
   return base;
 }
 
+/**
+ * This conversation happened BEFORE FollowUp ever saw it.
+ *
+ * Connecting Gmail imports three months of threads at once. Every
+ * one of them arrives already silent, so the very next hourly tick
+ * reads them as leads who went quiet and writes to all of them —
+ * and none of those threads ever had a live moment under FollowUp's
+ * watch. Whatever the owner already did about them (answered by
+ * phone, met in person, lost the deal, decided not to bother) is
+ * invisible here, so there is nothing to base a message on.
+ *
+ * What that actually produced, in the founder's own inbox on
+ * 2026-09-09, on real people:
+ *
+ *   - An 84-day-old thread with a glass supplier: "We appreciate
+ *     the clarity on the e-transfer process and will proceed
+ *     accordingly." A payment commitment, in his voice, on a
+ *     conversation from three months earlier.
+ *   - A 50-day-old rental application, thanked as though it had
+ *     just arrived.
+ *   - A 38-day-old closed deal, congratulated again.
+ *   - A 27-day-old cold pitch, answered "Thank you for your email".
+ *
+ * `isCold` (45 days) was meant to catch this and catches only some
+ * of it — the 27-day one sailed straight through, and the threshold
+ * was never the right question anyway. Age is a proxy. The real
+ * property is whether FollowUp watched the silence happen or merely
+ * inherited it, and `lastContacted < createdAt` says exactly that:
+ * the newest message in the thread predates the lead row itself.
+ *
+ * Held, not dropped. Finding the follow-up nobody sent is the whole
+ * product, so the draft is still written and still offered — the
+ * owner just gets to see it first, which is the same call the
+ * founder made for cold leads on 2026-09-15. Once anything happens
+ * on the thread under FollowUp's watch, `lastContacted` moves past
+ * `createdAt` and this stops applying forever after.
+ */
+export function isBackfilledThread(lead: { lastContacted: Date | null; createdAt: Date }): boolean {
+  return !!lead.lastContacted && lead.lastContacted < lead.createdAt;
+}
+
 export const DEAD_LEAD_ACTION = "dead_lead_reactivation";
 export const DEAD_LEAD_NAME = "Reactivate cold leads";
 // research/product/2026-09-09-followup-cadence-best-practices.md, §3: a
@@ -523,6 +564,8 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       const coldReference = lead.lastContacted ?? lead.createdAt;
       const isCold = coldReference <= deadCutoff;
 
+      const isBackfilled = isBackfilledThread(lead);
+
       // task #63 (live-test finding): a cached suggestedMessage can predate
       // the lead's actual most recent inbound message — scoring.ts drafts
       // once per inbound webhook, but a lead that fires off several
@@ -718,7 +761,9 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         // (which framing won the merge) — see isCold's definition above for
         // the hole that distinction was hiding. `isDeadLead` implies
         // `isCold`, so this only ever holds MORE than before, never less.
-        if (holdAll || risk.riskLevel !== "low" || isCold) {
+        // `isBackfilled` joins `isCold` for the same reason and with the
+        // same shape: it only ever holds MORE than before, never less.
+        if (holdAll || risk.riskLevel !== "low" || isCold || isBackfilled) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
           // it with the message it was written against, which is what lets
@@ -772,6 +817,12 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           const holdReason =
             risk.riskLevel !== "low"
               ? risk.reason
+              : // Ahead of holdAll, because it is the more specific fact
+                // and the one the owner needs in order to judge the draft:
+                // this conversation predates FollowUp, so FollowUp does not
+                // know what already happened on it.
+                isBackfilled
+                ? `this conversation was already in your inbox before FollowUp started watching it, so it hasn't seen what you may have already done about it`
               : holdAll
                 ? HOLD_ALL_AUTOMATION_REASON
                 : isUnanswered

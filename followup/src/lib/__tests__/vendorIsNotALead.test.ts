@@ -218,3 +218,58 @@ describe("a sender's claim about the business is never confirmed back to them", 
     expect(system).toMatch(/never confirm it/);
   });
 });
+
+/**
+ * The worst line in the whole thread, and the founder did not flag it.
+ *
+ * Henji's FIRST email, pulled from production on 2026-09-20, asked in as
+ * many words: "Just confirming you're still looking for a photographer
+ * and that this is a genuine inquiry on your end, not something
+ * automated. Occasionally those come through, so I like to check before
+ * diving in."
+ *
+ * FollowUp — automated — answered: "I can confirm that we're actively
+ * seeking a photographer for our outdoor corporate party in Etobicoke."
+ *
+ * A person asked, directly and politely, whether they were talking to
+ * software. The software said no. Everything else in this file costs a
+ * lead or a confusing screen; this is the product lying on its owner's
+ * behalf to the one person who thought to ask — and it is exactly what
+ * CLAUDE.md means by "never designed as a spam tool, a scam".
+ *
+ * No wording makes an automated denial acceptable, so there is no
+ * approved phrasing to test for. The rule is that the draft must never
+ * contain one, and must hand the question to the human instead.
+ */
+describe("FollowUp never tells someone it isn't automated", () => {
+  const areYouABot =
+    "Just confirming this is a genuine inquiry on your end, not something automated. " +
+    "Occasionally those come through, so I like to check before diving in.";
+
+  it("forbids the denial in the follow-up drafter", async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ subject: "Re:", body: "Someone will come back to you." }) } }],
+    });
+    const { generateFollowUpMessage } = await import("@/lib/integrations/openai");
+    await generateFollowUpMessage({
+      name: "Henji",
+      conversation: [{ ...photographerPitch[0], body: areYouABot }],
+    });
+
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/never deny it/);
+    expect(system).toMatch(/claim to be a person/);
+    // The instruction has to name the alternative, or the model invents one.
+    expect(system).toMatch(/comes back to them personally/);
+  });
+
+  it("forbids it in the instant reply, which sends with no review at all", async () => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "I'll have someone come back to you." }) } }] });
+    const { generateInstantReply } = await import("@/lib/integrations/openai");
+    await generateInstantReply({ leadFirstName: "Henji", ownerFirstName: "Sahil", inboundText: areYouABot });
+
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/never deny it/);
+    expect(system).toMatch(/never claim to be a person/);
+  });
+});

@@ -222,6 +222,14 @@ export type SendResult = {
    * it in the audit trail beside the acting user.
    */
   messagingTag?: "HUMAN_AGENT";
+  /**
+   * Set on a WhatsApp send that went out as the business's approved
+   * template because the 24-hour reply window had closed — so the written
+   * message was NOT delivered. The manual send route tells the person who
+   * pressed Send; without it they watch the composer clear and reasonably
+   * conclude their words arrived.
+   */
+  sentTemplate?: string;
 };
 
 /**
@@ -488,10 +496,15 @@ export async function sendFollowUpToLead(
   // next hour, which would race this queue and send twice.
   // ---------------------------------------------------------------
   const dispatch = async (): Promise<
-    { ok: true; externalId?: string; emailProvider?: "gmail" | "outlook" } | { ok: false; message: string; failure: SendFailureKind }
+    // `sentTemplate` is set only when WhatsApp's 24-hour window had closed
+    // and the business's approved template went out INSTEAD of `body`.
+    // The caller records what the lead actually received, never the draft.
+    | { ok: true; externalId?: string; emailProvider?: "gmail" | "outlook"; sentTemplate?: string }
+    | { ok: false; message: string; failure: SendFailureKind }
   > => {
     let externalId: string | undefined;
     let emailProvider: "gmail" | "outlook" | undefined;
+    let sentTemplate: string | undefined;
     if (channel === "email") {
       if (!lead.email) return { ok: false, message: "This lead has no email address on file.", failure: "refused" };
 
@@ -542,22 +555,33 @@ export async function sendFollowUpToLead(
       // id as `sid`, which the Cloud webhook's statuses / Twilio's status
       // callback later match on Message.externalId.
       const cloud = await getWhatsAppCloudConnection(lead.businessId);
-      const result = cloud
-        ? await sendWhatsAppCloud(cloud, lead.phone!, body, {
-            // The same 24-hour clock Instagram and Messenger use above —
-            // WhatsApp just has a sanctioned way through it (the template).
-            hoursSinceLead: (await metaWindowFor(lead.id, "whatsapp")).hoursSinceLead,
-            leadFirstName: lead.name.split(" ")[0],
-          })
-        : await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: lead.name.split(" ")[0] });
-      if (!result.success) return providerFailure(result, "WhatsApp didn't confirm this message sent.");
-      externalId = result.sid;
+      if (cloud) {
+        const result = await sendWhatsAppCloud(cloud, lead.phone!, body, {
+          // The same 24-hour clock Instagram and Messenger use above —
+          // WhatsApp just has a sanctioned way through it (the template).
+          hoursSinceLead: (await metaWindowFor(lead.id, "whatsapp")).hoursSinceLead,
+          leadFirstName: lead.name.split(" ")[0],
+        });
+        if (!result.success) return providerFailure(result, "WhatsApp didn't confirm this message sent.");
+        externalId = result.sid;
+        // Set only when the template went INSTEAD of these words, so the
+        // recording below can say so. Split out of the ternary this used to
+        // share with the Twilio sender purely because only this branch
+        // reports it — the legacy sender substitutes a template the same
+        // way (src/lib/twilio.ts) and does not yet say when it has, so that
+        // path still records the draft. Worth fixing next.
+        sentTemplate = result.sentTemplate;
+      } else {
+        const result = await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: lead.name.split(" ")[0] });
+        if (!result.success) return providerFailure(result, "WhatsApp didn't confirm this message sent.");
+        externalId = result.sid;
+      }
     } else {
       const result = await sendSms(lead.businessId, lead.phone!, body);
       if (!result.success) return providerFailure(result, "Twilio didn't confirm this message sent.");
       externalId = result.sid;
     }
-    return { ok: true, externalId, emailProvider };
+    return { ok: true, externalId, emailProvider, sentTemplate };
   };
 
   let sent: Awaited<ReturnType<typeof dispatch>>;
@@ -614,7 +638,27 @@ export async function sendFollowUpToLead(
     }
     return { success: false, message: sent.message, failure: sent.failure };
   }
-  const { externalId, emailProvider } = sent;
+  const { externalId, emailProvider, sentTemplate } = sent;
+
+  // What the lead ACTUALLY received. WhatsApp only allows a written reply
+  // within 24 hours of the customer's last message; past that, the only
+  // sanctioned way through is the business's pre-approved template, and
+  // sendWhatsAppCloud sends it INSTEAD of `body`. Until 2026-09-20 the
+  // undelivered draft was recorded anyway, so the owner's thread showed a
+  // specific, personal reply the lead had never seen — and, on a manual
+  // send, the exact words the owner had typed. Every automated WhatsApp
+  // follow-up takes this path by construction (the silence rule fires days
+  // after the lead's last message), so this was the normal case for the
+  // channel, not an edge.
+  //
+  // The template's rendered text is not something FollowUp holds — Meta
+  // stores the body, we store only its name — so the record names the
+  // template rather than inventing its words, and says plainly that the
+  // written message did not go. Truthful beats pretty: a thread that
+  // admits what happened is worth more than one that reads well and lies.
+  const recordedBody = sentTemplate
+    ? `WhatsApp's 24-hour reply window had closed, so your approved template "${sentTemplate}" was sent instead of a written reply. They have not seen the message below.\n\n${body}`
+    : body;
   const quickRepliesSent = (channel === "instagram" || channel === "messenger") ? options.quickReplies?.length ?? 0 : 0;
 
   // ---------------------------------------------------------------
@@ -690,7 +734,7 @@ export async function sendFollowUpToLead(
       data: {
         conversationId: conversation.id,
         direction: "outbound",
-        body,
+        body: recordedBody,
         externalId,
         trigger,
       },
@@ -700,7 +744,7 @@ export async function sendFollowUpToLead(
       data: {
         leadId: lead.id,
         channel,
-        message: body,
+        message: recordedBody,
         status: "sent",
         automated: options.automated ?? false,
         trigger,
@@ -762,6 +806,7 @@ export async function sendFollowUpToLead(
     });
   }
 
+  if (sentTemplate) return { success: true, sentTemplate };
   return humanAgent ? { success: true, messagingTag: "HUMAN_AGENT" } : { success: true };
 }
 

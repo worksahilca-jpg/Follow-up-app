@@ -84,6 +84,23 @@ export type WhatsAppCloudSendResult = {
   sid?: string;
   status?: number;
   code?: number;
+  /**
+   * The approved template's name, set ONLY when the template was sent in
+   * place of the written message — i.e. the 24-hour window had closed and
+   * `body` was never delivered to anyone.
+   *
+   * This exists because the caller used to have no way to tell the two
+   * apart. A template send returned a plain `{ success: true, sid }`, and
+   * src/lib/sending.ts then recorded the undelivered draft as the outbound
+   * message — so the owner's thread showed a personal reply the lead had
+   * never seen, and the send counters, the rescued-leads report and the
+   * draft-vs-sent learning data all counted it as a real follow-up.
+   *
+   * Every automated WhatsApp follow-up takes this path by construction:
+   * the silence rule fires days after the lead's last message, which is
+   * always outside the window.
+   */
+  sentTemplate?: string;
 };
 
 async function postMessage(conn: WhatsAppCloudConnection, envelope: Record<string, unknown>): Promise<WhatsAppCloudSendResult> {
@@ -123,8 +140,10 @@ export async function sendWhatsAppCloud(
   const waId = toWaId(to);
   if (!waId) return { success: false, message: "This lead's WhatsApp number isn't usable." };
 
-  const sendTemplate = (): Promise<WhatsAppCloudSendResult> =>
-    postMessage(conn, {
+  // Flags itself on the way out: what the lead receives here is the
+  // template, never `body`, and the caller has to be able to record that.
+  const sendTemplate = async (): Promise<WhatsAppCloudSendResult> => {
+    const result = await postMessage(conn, {
       to: waId,
       type: "template",
       template: {
@@ -133,6 +152,8 @@ export async function sendWhatsAppCloud(
         components: [{ type: "body", parameters: [{ type: "text", text: options.leadFirstName || "there" }] }],
       },
     });
+    return result.success ? { ...result, sentTemplate: conn.templateName ?? undefined } : result;
+  };
 
   const noTemplate = {
     success: false,

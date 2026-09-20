@@ -31,6 +31,7 @@ export default function MessageComposer({
   const [message, setMessage] = useState(initialMessage);
   const [subject, setSubject] = useState(initialSubject ?? "");
   const [sent, setSent] = useState(false);
+  const [sentTemplate, setSentTemplate] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +63,12 @@ export default function MessageComposer({
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Send failed.");
+      // WhatsApp only allows a written reply within 24 hours of the
+      // customer's last message. Past that, what actually goes out is the
+      // business's approved template — not these words. Saying "Sent" and
+      // clearing the box, as this did, lets someone walk away believing
+      // they had a conversation they did not have.
+      setSentTemplate(typeof data.sentTemplate === "string" ? data.sentTemplate : null);
       setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Send failed.");
@@ -76,9 +83,23 @@ export default function MessageComposer({
     return (
       <section>
         <h2 className="font-display text-xl">AI-suggested follow-up</h2>
-        <div className="mt-3 rounded-lg border border-line p-4 text-sm" style={{ backgroundColor: "var(--sage-soft)", color: "var(--sage)" }}>
-          Sent to {leadName}{isEmail ? ` <${leadEmail}>` : ""}, for real.
-        </div>
+        {sentTemplate ? (
+          /* Not a success message. What went out was the template; these
+             words did not reach anyone, and the one useful thing to say is
+             exactly that, plus what would let them through. */
+          <div className="mt-3 rounded-lg border border-line p-4 text-sm" style={{ backgroundColor: "var(--coral-soft)", color: "var(--coral)" }}>
+            <p className="font-semibold">Your message didn&apos;t go — WhatsApp wouldn&apos;t allow it</p>
+            <p className="mt-1 leading-relaxed">
+              WhatsApp only lets you write freely within 24 hours of {leadName}&apos;s last message, and that window has
+              closed. Your approved template went instead, so they know you&apos;ve been in touch. Once they reply, you
+              can write to them properly again.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3 rounded-lg border border-line p-4 text-sm" style={{ backgroundColor: "var(--sage-soft)", color: "var(--sage)" }}>
+            Sent to {leadName}{isEmail ? ` <${leadEmail}>` : ""}, for real.
+          </div>
+        )}
       </section>
     );
   }

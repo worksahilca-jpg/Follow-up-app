@@ -435,9 +435,22 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
   // Fetched once for the whole run — every lead here belongs to the same
   // business, so the send-window check below (EMAIL steps only) always
   // resolves against the same timezone.
-  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true, tier: true } });
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { timezone: true, tier: true, holdAllForApproval: true },
+  });
   const timezone = business?.timezone ?? "America/New_York";
   const tier = (business?.tier ?? "plus") as "free" | "plus" | "pro";
+  // Business.holdAllForApproval. Read here for the same reason
+  // runAutomationForBusiness reads it: it is an account-wide promise that
+  // nothing reaches a customer unreviewed, and a workflow step is a thing
+  // that reaches a customer. This file did not read the column at all
+  // until 2026-09-20 — automation.ts honoured it, sequences.ts did not, so
+  // a tester who enrolled a lead in a workflow got AI-drafted mail sent in
+  // their name on the next cron tick, which is precisely what the flag is
+  // switched on to prevent (schema.prisma names the instant ack as its
+  // ONLY exception).
+  const holdAll = business?.holdAllForApproval ?? false;
 
   const outcomes = await mapWithConcurrency(active, 3, async (lead) => {
     // Atomic check-and-claim before anything else — same reasoning as
@@ -654,14 +667,23 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // failed check: sending something that shouldn't have gone out is
         // worse than an unnecessary manual review.
         let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
-        try {
-          risk = await assessSendRisk({ conversation }, message);
-        } catch (err) {
-          console.error(`Risk assessment failed for lead ${lead.id} (workflow step):`, err);
-          risk = { riskLevel: "medium", reason: "Couldn't assess risk automatically — held to be safe." };
+        if (holdAll) {
+          // The classifier decides whether something is safe to send
+          // WITHOUT review. On an account where nothing sends without
+          // review, it has nothing to decide, so its cost is not worth
+          // paying — the hold below happens either way. Same skip, same
+          // reasoning, as runAutomationForBusiness.
+          risk = { riskLevel: "medium", reason: "Your account holds every follow-up for your approval before it sends." };
+        } else {
+          try {
+            risk = await assessSendRisk({ conversation }, message);
+          } catch (err) {
+            console.error(`Risk assessment failed for lead ${lead.id} (workflow step):`, err);
+            risk = { riskLevel: "medium", reason: "Couldn't assess risk automatically — held to be safe." };
+          }
         }
 
-        if (risk.riskLevel !== "low") {
+        if (holdAll || risk.riskLevel !== "low") {
           // Unenrolled rather than left "stuck" on this step: the normal
           // approval-queue send (POST /api/leads/[id]/send) knows nothing
           // about sequence bookkeeping, so a hold that stayed enrolled
@@ -686,9 +708,15 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
             targetId: lead.id,
             meta: { riskLevel: risk.riskLevel, reason: risk.reason, trigger: "sequence", sequenceName: sequence.name },
           });
+          // Two different facts, so two different sentences. "Needs your
+          // OK" on a hold-everything account would read as "this one
+          // looked risky", which is untrue and teaches the owner to
+          // distrust a setting they chose.
           await notifySequenceIssue(
             lead,
-            `"${sequence.name}" drafted a reply for ${lead.name} that needs your OK before it goes out — the workflow stopped here so you can review it.`
+            holdAll
+              ? `"${sequence.name}" drafted a reply for ${lead.name}. Your account holds every follow-up for approval, so it's waiting for you — the workflow stopped here.`
+              : `"${sequence.name}" drafted a reply for ${lead.name} that needs your OK before it goes out — the workflow stopped here so you can review it.`
           );
           return { kind: "held" as const, note: `${lead.name}: ${risk.reason}` };
         }

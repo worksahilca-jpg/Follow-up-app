@@ -71,7 +71,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, RISK_CHECK_FAILED_REASON } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -136,6 +136,40 @@ export function effectiveUnansweredHours(
  */
 export function isBackfilledThread(lead: { lastContacted: Date | null; createdAt: Date }): boolean {
   return !!lead.lastContacted && lead.lastContacted < lead.createdAt;
+}
+
+/**
+ * "Nothing has happened on this lead since <cutoff>" — for a lead that
+ * may never have had anything happen on it at all.
+ *
+ * `lastContacted` is null on every lead that arrived without a message:
+ * typed into the manual form, imported from a CSV, logged after a phone
+ * call. The eligibility queries below used to ask `lastContacted <=
+ * cutoff` alone, and in SQL a comparison against NULL is NULL, not true
+ * — so those leads matched nothing, ever. Not the silence check, not the
+ * dead-lead sweep. They were filed and then left.
+ *
+ * Found in production on 2026-09-20: five leads on the founder's own
+ * account, one of them sitting in NEGOTIATION since the first of the
+ * month, none ever scored, drafted or followed up. "Never lose a lead
+ * because nobody followed up" is the product, and the one kind of lead
+ * an owner adds deliberately — because they care about it — was the kind
+ * it ignored.
+ *
+ * `createdAt` is the honest fallback: for a lead nobody has contacted,
+ * the clock starts when it was written down. Same substitution `isCold`
+ * already makes a few hundred lines below.
+ *
+ * `notBefore` gives the half-open range (notBefore, cutoff], which is how
+ * the silence query excludes leads that belong to the dead-lead sweep. It
+ * replaced a separate `NOT: { lastContacted: { lte: deadCutoff } }`,
+ * which would have been wrong the moment nulls were let in: `NOT (NULL <=
+ * x OR …)` is NULL, and a row that evaluates to NULL is a row that does
+ * not match.
+ */
+function quietSince(cutoff: Date, notBefore?: Date): Prisma.LeadWhereInput {
+  const range = notBefore ? { lte: cutoff, gt: notBefore } : { lte: cutoff };
+  return { OR: [{ lastContacted: range }, { lastContacted: null, createdAt: range }] };
 }
 
 export const DEAD_LEAD_ACTION = "dead_lead_reactivation";
@@ -403,13 +437,17 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         businessId,
         automationTier: { not: "OFF" },
         stage: { notIn: ["WON", "LOST"] },
-        lastContacted: { lte: cutoff },
         // A lead past the dead-lead threshold exits the normal silence
         // cadence entirely — it belongs to the `deadLeads` query below
-        // instead, with its own messaging. Only excluded when that rule
-        // is actually enabled; disabled just means "no dead-lead rule,"
+        // instead, with its own messaging. Passed as the lower bound of a
+        // range rather than the separate `NOT` it used to be, and only
+        // while that rule is enabled: disabled means "no dead-lead rule,"
         // not "these leads vanish from the normal cadence too."
-        ...(deadLeadEnabled ? { NOT: { lastContacted: { lte: deadCutoff } } } : {}),
+        //
+        // Inside AND because the OR below is already spoken for. Two `OR`
+        // keys in one object is not a conjunction, it is the second one
+        // silently winning.
+        AND: [quietSince(cutoff, deadLeadEnabled ? deadCutoff : undefined)],
         OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
       },
       include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
@@ -420,7 +458,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
             businessId,
             automationTier: { not: "OFF" },
             stage: { notIn: ["WON", "LOST"] },
-            lastContacted: { lte: deadCutoff },
+            AND: [quietSince(deadCutoff)],
             OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
           },
           include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
@@ -566,6 +604,23 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
 
       const isBackfilled = isBackfilledThread(lead);
 
+      // A lead FollowUp has never seen a single message on — typed into
+      // the manual form, imported from a CSV, logged after a phone call.
+      // quietSince() is what lets these reach this loop at all; this is
+      // what stops the first thing they reach being an unreviewed send.
+      //
+      // Same reasoning as isBackfilled, one step further along: there,
+      // FollowUp inherited a conversation it didn't watch. Here there is
+      // no conversation. Every other draft in this file is written
+      // against something the lead actually said; this one is written
+      // against a name, a company and whatever the owner typed in the
+      // notes. That is exactly the input a model fills in for, and the
+      // person on the other end never asked to hear from us at all —
+      // which on a phone number is not just awkward, it is the consent
+      // question. So it is always the owner's send, whatever the tier
+      // and whatever the risk check thinks.
+      const isUntouched = conversation.length === 0;
+
       // task #63 (live-test finding): a cached suggestedMessage can predate
       // the lead's actual most recent inbound message — scoring.ts drafts
       // once per inbound webhook, but a lead that fires off several
@@ -707,9 +762,14 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         return { kind: "held", note: `${lead.name}: ${reason}` };
       }
 
-      if (holdAll || lead.automationTier !== "AUTONOMOUS" || tier === "free") {
+      // `isUntouched` is here as well as in the hold below because an
+      // AUTONOMOUS lead on a paid tier skips this whole block and sends.
+      // The hold condition inside it is only reached by leads that enter
+      // here, so listing it there alone would have been a guarantee that
+      // never ran for the tier that needed it.
+      if (holdAll || isUntouched || lead.automationTier !== "AUTONOMOUS" || tier === "free") {
         let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
-        if (holdAll) {
+        if (holdAll || isUntouched) {
           // The classifier decides whether something is safe to send
           // WITHOUT review. On an account where nothing sends without
           // review, it has nothing to decide, so its cost is not worth
@@ -763,7 +823,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         // `isCold`, so this only ever holds MORE than before, never less.
         // `isBackfilled` joins `isCold` for the same reason and with the
         // same shape: it only ever holds MORE than before, never less.
-        if (holdAll || risk.riskLevel !== "low" || isCold || isBackfilled) {
+        if (holdAll || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
           // it with the message it was written against, which is what lets
@@ -823,6 +883,13 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
                 // know what already happened on it.
                 isBackfilled
                 ? `this conversation was already in your inbox before FollowUp started watching it, so it hasn't seen what you may have already done about it`
+              : // One step further along than isBackfilled, and ahead of
+                // it in specificity: there is no conversation at all.
+                // The owner needs to know the draft was written from what
+                // they typed in and nothing else, because that is the
+                // only way to read it properly.
+                isUntouched
+                ? UNTOUCHED_LEAD_REASON
               : holdAll
                 ? HOLD_ALL_AUTOMATION_REASON
                 : isUnanswered

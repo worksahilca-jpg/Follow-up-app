@@ -53,6 +53,7 @@ import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { checkAiEligibility } from "@/lib/billing";
 import { runAutomationForBusiness, DEAD_LEAD_ACTION } from "@/lib/automation";
+import { UNTOUCHED_LEAD_REASON } from "@/lib/holdReasons";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -405,7 +406,15 @@ describe("silence automation risk gate", () => {
     const where = p.lead.findMany.mock.calls[0][0].where;
     expect(where.automationTier).toEqual({ not: "OFF" });
     expect(where.stage).toEqual({ notIn: ["WON", "LOST"] });
-    expect(where.lastContacted.lte).toBeInstanceOf(Date);
+    // "Past the silence window" is two clauses, not one, since 2026-09-20:
+    // `lastContacted <= cutoff` for a lead with a conversation, and
+    // `lastContacted IS NULL AND createdAt <= cutoff` for one that never
+    // had a message (manual entry, CSV, phone call). It sits under AND
+    // because the top-level OR is already spoken for by the recheck
+    // window — two `OR` keys in one object is not a conjunction.
+    expect(where.AND[0].OR[0].lastContacted.lte).toBeInstanceOf(Date);
+    expect(where.AND[0].OR[1].lastContacted).toBeNull();
+    expect(where.AND[0].OR[1].createdAt.lte).toBeInstanceOf(Date);
     expect(where.OR).toEqual([{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: expect.any(Date) } }]);
   });
 
@@ -874,7 +883,7 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
     p.lead.findMany.mockResolvedValue([]);
     await runAutomationForBusiness("biz1");
     const deadLeadsCall = p.lead.findMany.mock.calls[1][0];
-    const cutoff = deadLeadsCall.where.lastContacted.lte as Date;
+    const cutoff = deadLeadsCall.where.AND[0].OR[0].lastContacted.lte as Date;
     const daysAgo = Math.round((Date.now() - cutoff.getTime()) / 86_400_000);
     expect(daysAgo).toBe(90);
   });
@@ -1439,5 +1448,108 @@ describe("an account that holds every automated message", () => {
     expect(typeof call[0].data.suggestedMessage).toBe("string");
     expect((call[0].data.suggestedMessage as string).length).toBeGreaterThan(0);
     expect(call[0].data.suggestedDraftedFor).toBeInstanceOf(Date);
+  });
+});
+
+/**
+ * The lead you typed in yourself.
+ *
+ * Found in the founder's production database on 2026-09-20: five leads
+ * added by hand, imported from a CSV, or logged after a phone call. Not
+ * one had ever been scored, drafted, or followed up. One had been sitting
+ * in NEGOTIATION since the first of the month.
+ *
+ * The cause was one line of SQL semantics. Those leads arrive with no
+ * message, so `lastContacted` is null, and every eligibility query asked
+ * `lastContacted <= cutoff`. In SQL a comparison against NULL is NULL,
+ * not true — so they matched nothing. Not the silence check, not the
+ * dead-lead sweep, not ever. They were filed and then left.
+ *
+ * "Never lose a lead because nobody followed up" is the entire product,
+ * and the one kind of lead an owner enters deliberately — because they
+ * care about it enough to type it — was the kind it ignored.
+ *
+ * They are eligible now, and they are ALWAYS held. There is no
+ * conversation to write against: the draft comes from a name, a company
+ * and whatever was in the notes, which is exactly the input a model
+ * invents to fill, and the person on the other end never asked to hear
+ * from anyone. So a human presses send, whatever the tier.
+ */
+describe("a lead with no conversation at all", () => {
+  /** What the manual form, the CSV importer and the call log all produce. */
+  function typedInByHand(overrides: Record<string, unknown> = {}) {
+    return lead({
+      id: "manual1",
+      name: "Mukul",
+      conversations: [],
+      lastContacted: null,
+      createdAt: new Date(Date.now() - 19 * 86_400_000),
+      ...overrides,
+    });
+  }
+
+  it("is asked for at all — the null lastContacted that excluded it", async () => {
+    p.lead.findMany.mockResolvedValue([]);
+    await runAutomationForBusiness("biz1");
+    const silence = p.lead.findMany.mock.calls[0][0].where;
+    // The second disjunct is the whole fix: a lead with no contact on
+    // record, old enough by when it was written down. The range is
+    // closed at both ends here because anything older than the
+    // dead-lead threshold belongs to the reactivation query instead.
+    expect(silence.AND[0].OR).toContainEqual({
+      lastContacted: null,
+      createdAt: { lte: expect.any(Date), gt: expect.any(Date) },
+    });
+  });
+
+  it("gets a draft written for it instead of being skipped", async () => {
+    p.lead.findMany.mockResolvedValueOnce([typedInByHand()]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    await runAutomationForBusiness("biz1");
+    expect(draftMessage).toHaveBeenCalled();
+  });
+
+  it("is held rather than sent", async () => {
+    p.lead.findMany.mockResolvedValueOnce([typedInByHand()]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.held).toBe(1);
+    expect(r.sent).toBe(0);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("is held even on AUTONOMOUS, which skips every other gate in this file", async () => {
+    // The gate that matters. An AUTONOMOUS lead on a paid tier never
+    // enters the review block at all, so a rule written only inside it
+    // would be a guarantee that never ran for the tier that needed it.
+    p.lead.findMany.mockResolvedValueOnce([typedInByHand({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(r.held).toBe(1);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("spends nothing on a risk check whose answer cannot change the outcome", async () => {
+    p.lead.findMany.mockResolvedValueOnce([typedInByHand()]).mockResolvedValueOnce([]);
+    await runAutomationForBusiness("biz1");
+    expect(risk).not.toHaveBeenCalled();
+  });
+
+  it("tells the owner the draft was written from what they typed and nothing else", async () => {
+    p.lead.findMany.mockResolvedValueOnce([typedInByHand()]).mockResolvedValueOnce([]);
+    const r = await runAutomationForBusiness("biz1");
+    // Rendered by ApprovalQueue as "Held because <reason>." — so the
+    // reason has to finish that sentence, which holdReasons.ts exists
+    // to keep true.
+    expect(r.heldReasons[0]).toContain(UNTOUCHED_LEAD_REASON);
+  });
+
+  it("still holds a lead with a conversation the ordinary way", async () => {
+    // The guard must not swallow the normal case: a lead who actually
+    // wrote, whose risk verdict is what decides.
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(1);
+    expect(r.held).toBe(0);
   });
 });

@@ -430,9 +430,13 @@ export default function WhatsAppConfig() {
                   </p>
                 </div>
               ) : (
+                /* A file path inside our own repository was being shown to
+                   the customer as if it were something they could open.
+                   Nothing they can act on belongs here — this is ours to
+                   finish, so the sentence says who it is waiting on. */
                 <p className="text-xs text-ink-soft">
-                  One-click connect isn&apos;t switched on yet. It needs Meta&apos;s app configuration
-                  (docs/meta-oauth-setup.md, section 3).
+                  One-click connect isn&apos;t switched on yet — it&apos;s waiting on FollowUp&apos;s setup with Meta,
+                  not on anything at your end. Use an access token below in the meantime.
                 </p>
               )}
 

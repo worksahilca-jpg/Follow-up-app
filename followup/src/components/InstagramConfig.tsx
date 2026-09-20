@@ -176,6 +176,14 @@ export default function InstagramConfig() {
                   otherCause="the account is no longer set up as a Business or Creator account"
                   retryPath="/api/instagram/subscribe"
                   onReceiving={() => setReceiving(true)}
+                  /* Instagram alone has a fallback: src/lib/instagramPoll.ts
+                     reads this account's conversations on a cron and feeds
+                     them through the same pipeline, subscription or no
+                     subscription. So DMs do arrive — just not the second
+                     they are sent. Saying "nothing reaches FollowUp" here
+                     was false, and telling a tester their working channel is
+                     dead is how a tester is lost. */
+                  stillWorks="FollowUp checks it for new DMs every few minutes and picks them up."
                 />
               )}
               <button onClick={disconnect} disabled={saving} className="mt-2 text-xs font-medium" style={{ color: "var(--coral)" }}>
@@ -201,7 +209,17 @@ export default function InstagramConfig() {
                     ask him to add you.
                   </p>
                 </div>
-              ) : null}
+              ) : (
+                /* Rendering null here meant the one-click button simply
+                   was not there, with nothing saying why — the owner is
+                   left to guess whether Instagram is unsupported, broken,
+                   or something they did. Same sentence the WhatsApp panel
+                   gives for the same state: it is ours to finish. */
+                <p className="text-xs text-ink-soft">
+                  One-click connect isn&apos;t switched on yet — it&apos;s waiting on FollowUp&apos;s setup with
+                  Meta, not on anything at your end. Use an access token below in the meantime.
+                </p>
+              )}
 
               <div>
                 <button

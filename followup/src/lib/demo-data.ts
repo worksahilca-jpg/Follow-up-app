@@ -1,4 +1,5 @@
 import { Lead, TeamMember, WeeklyReport } from "./types";
+import { localHour } from "./sendWindow";
 
 // Dates are generated relative to "today" so the demo always looks current.
 const daysAgo = (n: number) => {
@@ -478,10 +479,21 @@ export function formatDate(dateIso: string): string {
   return new Date(dateIso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-/** Time-of-day greeting for the dashboard header — was hardcoded to
- *  "Good morning" regardless of when the page loaded. */
-export function getGreeting(): string {
-  const hour = new Date().getHours();
+/**
+ * Time-of-day greeting for the dashboard header — was hardcoded to
+ * "Good morning" regardless of when the page loaded.
+ *
+ * `timeZone` is Business.timezone, and it is not optional decoration.
+ * The dashboard is a server component, so `new Date().getHours()` read
+ * the SERVER's clock — UTC on Vercel. A Toronto owner opening FollowUp
+ * after dinner was greeted with "Good morning"; a Vancouver owner got it
+ * for most of their working day. The first two words on the screen
+ * telling you it is a different time of day than it is undercuts, in
+ * one glance, a product whose whole claim is that it knows when things
+ * happened.
+ */
+export function getGreeting(timeZone: string): string {
+  const hour = localHour(new Date(), timeZone);
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";

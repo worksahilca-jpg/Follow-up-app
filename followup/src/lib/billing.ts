@@ -411,6 +411,20 @@ export interface FreeTierStatus {
   // month" display, not a gating decision. Always 0 on Plus/Pro — nobody
   // needs this number once there's no cap to measure it against.
   leadsUsedThisMonth: number;
+  /**
+   * Business.holdAllForApproval — every draft waits for a human, whatever
+   * the per-lead automation tier says.
+   *
+   * It rides along here because it is set in the same write as `tier`
+   * (grantBetaPlan above) and answers the same question a caller is
+   * already asking: what will this account actually DO with a draft. It
+   * was readable by nothing but the two schedulers until 2026-09-20, so
+   * every beta tester was offered "every reply sends automatically with
+   * no review" by the lead page and given a red are-you-sure confirm for
+   * a behaviour their account could not perform. A product that says it
+   * did something it didn't is the one thing a follow-up tool cannot be.
+   */
+  holdAllForApproval: boolean;
 }
 
 /**
@@ -431,7 +445,7 @@ export async function getFreeTierStatus(): Promise<FreeTierStatus | null> {
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { tier: true, voiceAddonEnabled: true },
+    select: { tier: true, voiceAddonEnabled: true, holdAllForApproval: true },
   });
   const tier = (business?.tier as FreeTierStatus["tier"] | undefined) ?? "free";
 
@@ -440,5 +454,10 @@ export async function getFreeTierStatus(): Promise<FreeTierStatus | null> {
   const leadsUsedThisMonth =
     tier === "free" ? await prisma.lead.count({ where: { businessId: ctx.businessId, createdAt: { gte: monthStart } } }) : 0;
 
-  return { tier, voiceAddonEnabled: business?.voiceAddonEnabled ?? false, leadsUsedThisMonth };
+  return {
+    tier,
+    voiceAddonEnabled: business?.voiceAddonEnabled ?? false,
+    leadsUsedThisMonth,
+    holdAllForApproval: business?.holdAllForApproval ?? false,
+  };
 }

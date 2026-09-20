@@ -34,15 +34,25 @@ describe("getFreeTierStatus", () => {
     businessFindUnique.mockResolvedValue({ tier: "free", voiceAddonEnabled: false });
     leadCount.mockResolvedValue(14);
     const status = await getFreeTierStatus();
-    expect(status).toEqual({ tier: "free", voiceAddonEnabled: false, leadsUsedThisMonth: 14 });
+    expect(status).toEqual({ tier: "free", voiceAddonEnabled: false, leadsUsedThisMonth: 14, holdAllForApproval: false });
     expect(leadCount).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ businessId: "biz1" }) }));
   });
 
   it("never queries the lead count for Plus/Pro — there's no cap to show progress against", async () => {
     businessFindUnique.mockResolvedValue({ tier: "pro", voiceAddonEnabled: true });
     const status = await getFreeTierStatus();
-    expect(status).toEqual({ tier: "pro", voiceAddonEnabled: true, leadsUsedThisMonth: 0 });
+    expect(status).toEqual({ tier: "pro", voiceAddonEnabled: true, leadsUsedThisMonth: 0, holdAllForApproval: false });
     expect(leadCount).not.toHaveBeenCalled();
+  });
+
+  // A beta tester is exactly this shape — grantBetaPlan sets tier "pro"
+  // and holdAllForApproval together. The lead page reads it from here to
+  // stop offering "every reply sends automatically with no review" to an
+  // account that reviews everything.
+  it("carries holdAllForApproval through, so the UI can stop promising unreviewed sends", async () => {
+    businessFindUnique.mockResolvedValue({ tier: "pro", voiceAddonEnabled: false, holdAllForApproval: true });
+    const status = await getFreeTierStatus();
+    expect(status?.holdAllForApproval).toBe(true);
   });
 
   it("defaults to free when the business row is somehow missing", async () => {

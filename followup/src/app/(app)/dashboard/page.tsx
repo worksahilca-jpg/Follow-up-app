@@ -9,6 +9,7 @@ import { formatCurrency, getGreeting } from "@/lib/demo-data";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { describeTrigger, getRescueReport } from "@/lib/rescued";
 import { getSessionContext } from "@/lib/session";
+import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { getGmailStatus } from "@/lib/integrations/gmail";
@@ -93,6 +94,17 @@ export default async function DashboardPage() {
     leadLastMessageChannel: a.leadLastMessageChannel,
   }));
   const setupSteps = ctx ? await getIncompleteSetupSteps(ctx.businessId) : [];
+  // The owner's own wall clock, for the greeting. This is a server
+  // component, so without it "Good morning" came from the server's
+  // clock — UTC on Vercel — and greeted a Toronto owner at 8pm with it.
+  const business = ctx
+    ? await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true } })
+    : null;
+  const timezone = business?.timezone ?? "America/New_York";
+  // Business.holdAllForApproval — as of 2026-09-20 this stops every
+  // automated message including the instant reply, so it changes what
+  // this screen can honestly promise.
+  const holdAll = business?.holdAllForApproval ?? false;
   const gmail = ctx ? await getGmailStatus(ctx.businessId) : { connected: false };
   const outlook = ctx ? await getOutlookStatus(ctx.businessId) : { connected: false };
   // An inbox is connected if EITHER provider is. Checking only Gmail is what
@@ -101,10 +113,22 @@ export default async function DashboardPage() {
   // business that had connected nothing at all. Normalised to one shape here
   // so the view doesn't have to know which provider it got — only Gmail
   // reports a last-sync time, so that field is optional.
-  const inbox: { email?: string; lastSyncedAt?: string | null } | null = gmail.connected
-    ? { email: gmail.email, lastSyncedAt: gmail.lastSyncedAt }
+  //
+  // `instant` is how fast a new lead is actually SEEN, and it is the one
+  // field the old shape dropped. The reply itself is quick either way —
+  // /api/cron/instant-ack runs every minute — but it can only answer a
+  // lead FollowUp already has. Gmail hands those over in seconds when
+  // Google's push watch is live (gmail.pushActive) and otherwise waits
+  // for the ten-minute poll; Outlook has no push at all. So on a poll-only
+  // inbox "replies within a minute" is off by ten, and it was being
+  // printed to every Outlook owner and to every Gmail owner on a
+  // deployment without GMAIL_PUSH_TOPIC — which is the state this one is
+  // in. Promising a minute and taking eleven is the exact failure this
+  // product exists to prevent, said about itself.
+  const inbox: { email?: string; lastSyncedAt?: string | null; instant: boolean } | null = gmail.connected
+    ? { email: gmail.email, lastSyncedAt: gmail.lastSyncedAt, instant: !!gmail.pushActive }
     : outlook.connected
-      ? { email: outlook.email }
+      ? { email: outlook.email, instant: false }
       : null;
 
   /**
@@ -143,7 +167,7 @@ export default async function DashboardPage() {
           the app, retired with the move to the monochrome system
           (2026-09-19). A working tool people open twenty times a day does
           not need a hero. */}
-      <PageHeader title={getGreeting()} subtitle={headline()} />
+      <PageHeader title={getGreeting(timezone)} subtitle={headline()} />
 
       <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} />
 
@@ -170,9 +194,21 @@ export default async function DashboardPage() {
           >
             {inbox ? (
               <>
+                {/* Three states, because there are three. Holding is
+                    checked FIRST: on a holding account nothing is sent at
+                    all, so how fast capture runs decides when the DRAFT
+                    is ready, not when the lead hears back. Saying "it
+                    replies" to an owner whose account never replies on
+                    its own is the same class of lie as the ten-minute
+                    one fixed this morning — and it became true of every
+                    beta account a few hours later, when the instant
+                    reply started waiting for approval too. */}
                 <p className="text-lg leading-relaxed">
-                  FollowUp is watching your inbox. The moment a lead writes, it replies within a minute and shows you
-                  here.
+                  {holdAll
+                    ? "FollowUp is watching your inbox. When a lead writes, it writes the reply and puts it in Approvals for you — nothing goes out until you send it."
+                    : inbox.instant
+                      ? "FollowUp is watching your inbox. The moment a lead writes, it replies within a minute and shows you here."
+                      : "FollowUp is watching your inbox. It checks for new leads every ten minutes, then replies and shows you here."}
                 </p>
                 <p className="text-sm text-ink-soft mt-3 flex items-center justify-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--sage)" }} />
@@ -188,9 +224,20 @@ export default async function DashboardPage() {
                  leads were being captured and have silently stopped, and only
                  the owner can fix it. It gets its own sentence. */
               <>
+                {/* The comment above has always known the likeliest cause
+                    and the sentence never said it: while the OAuth app is
+                    unverified, Google expires the token after seven days,
+                    for everyone, on its own. Naming only "access removed
+                    or password changed" sent a tester hunting through
+                    their Google account for something they never did —
+                    and left them thinking FollowUp had broken, rather
+                    than that this is a known seven-day beta limit with a
+                    one-click fix. */}
                 <p className="text-lg leading-relaxed">
                   FollowUp has lost access to {gmail.email ?? "your inbox"}, so it isn&apos;t catching new leads
-                  right now. This happens when access is removed in Google or a password changes.
+                  right now. While FollowUp is in beta, Google expires this access every seven days — that is
+                  almost always what happened, and reconnecting takes a few seconds. It can also mean access was
+                  removed in Google, or a password changed.
                 </p>
                 <div className="mt-4">
                   <Link
@@ -206,8 +253,11 @@ export default async function DashboardPage() {
             ) : (
               <>
                 <p className="text-lg leading-relaxed">
+                  {/* No inbox means no pushActive to read, so this cannot
+                      promise the one-minute path — it says what every
+                      connected inbox gets at minimum instead. */}
                   No inbox is connected yet, so FollowUp isn&apos;t watching for leads. Connect one and it starts
-                  replying within a minute of someone writing in.
+                  answering the people who write in, within minutes.
                 </p>
                 <div className="mt-4">
                   <Link
@@ -225,6 +275,13 @@ export default async function DashboardPage() {
               <TestLeadButton />
             </div>
           </div>
+          {/* getIncompleteSetupSteps() was being run for every dashboard
+              load and then rendered only in the branch below — so the one
+              account guaranteed to have unfinished setup, the brand-new
+              one with no leads, was the only account never shown its next
+              step. SetupStrip returns null when there is nothing left, so
+              it is safe in both branches. */}
+          <SetupStrip steps={setupSteps} />
         </FadeIn>
       ) : (
         <>
@@ -302,6 +359,20 @@ export default async function DashboardPage() {
               an incomplete-setup nag cutting the page's two actual jobs in
               half. */}
           <SetupStrip steps={setupSteps} />
+
+          {/* The test-lead button used to live ONLY in the zero-lead
+              branch above — so pressing it created a lead, which emptied
+              that branch, which removed the button. One use, then gone,
+              exactly when someone who had just watched it work wanted to
+              try it again on a channel they had only now connected. It
+              belongs with the setup strip, and it retires with it: an
+              account that has finished setting up does not need a demo of
+              its own product on its home screen. */}
+          {setupSteps.length > 0 && (
+            <div className="mt-6">
+              <TestLeadButton />
+            </div>
+          )}
 
           {rescue && rescue.leads.length > 0 && (
             <FadeIn className="mt-10">

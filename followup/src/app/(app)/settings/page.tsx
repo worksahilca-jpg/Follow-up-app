@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import TeamSection from "@/components/TeamSection";
+import BusinessProfileSection from "@/components/BusinessProfileSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
 import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 import CopyWebhookUrl from "@/components/CopyWebhookUrl";
@@ -48,7 +49,14 @@ const SECTION_TAB: Record<string, SettingsTab> = {
   "lead-webhook": "channels",
   "outbound-webhook": "channels",
   phone: "channels",
+  // Every other <section id> in this file has a row here; WhatsApp's was
+  // missed when it moved out of the Twilio panel into its own section.
+  // Without it /settings#whatsapp opens on whatever tab was last used and
+  // the browser's anchor scroll finds nothing, because the section is
+  // inside a hidden tab.
+  whatsapp: "channels",
   social: "channels",
+  business: "team",
   "lead-routing": "team",
   team: "team",
   billing: "billing",
@@ -112,6 +120,10 @@ function SettingsPageInner() {
   const [deadLeadDays, setDeadLeadDays] = useState(45);
   const [deadLeadSaving, setDeadLeadSaving] = useState(false);
   const [deadLeadError, setDeadLeadError] = useState<string | null>(null);
+  // Business.holdAllForApproval — true for every beta tester. Three of
+  // the four rules below still run but send nothing; describeAutomation-
+  // State() is the sentence that claims otherwise, so it reads this.
+  const [holdAllForApproval, setHoldAllForApproval] = useState(false);
 
   const [billingActive, setBillingActive] = useState(false);
   const [billingStatus, setBillingStatus] = useState<string | null>(null);
@@ -182,6 +194,7 @@ function SettingsPageInner() {
           instantAck?: boolean;
           unansweredReply?: { enabled: boolean; hours: number };
           deadLeadReactivation?: { enabled: boolean; days: number };
+          holdAllForApproval?: boolean;
         }) => {
           setAutomationOn(data.enabled);
           setAutoAfterDays(data.triggerDays);
@@ -190,6 +203,7 @@ function SettingsPageInner() {
           setUnansweredHours(data.unansweredReply?.hours ?? 24);
           setDeadLeadOn(data.deadLeadReactivation?.enabled ?? true);
           setDeadLeadDays(data.deadLeadReactivation?.days ?? 45);
+          setHoldAllForApproval(data.holdAllForApproval ?? false);
         }
       )
       .finally(() => setAutomationLoaded(true));
@@ -277,7 +291,13 @@ function SettingsPageInner() {
   function describeAutomationState(): string {
     const clauses: string[] = [];
     if (instantAckOn) clauses.push("sends an instant acknowledgement to every new lead");
-    if (automationOn) clauses.push(`nudges a quiet lead after ${autoAfterDays} day${autoAfterDays === 1 ? "" : "s"} of silence`);
+    // On a holding account (Business.holdAllForApproval) these three
+    // still run and still write the message — it just lands in the
+    // approval queue rather than going out. The instant acknowledgement
+    // above is deliberately exempt and really does send, so the verb has
+    // to change per clause, not once for the whole sentence.
+    const writes = holdAllForApproval ? "drafts a nudge for" : "nudges";
+    if (automationOn) clauses.push(`${writes} a quiet lead after ${autoAfterDays} day${autoAfterDays === 1 ? "" : "s"} of silence`);
     if (unansweredOn) {
       // On Instagram and Messenger the engine caps this at
       // UNANSWERED_META_DM_MAX_HOURS whatever is configured (see
@@ -286,14 +306,29 @@ function SettingsPageInner() {
       // to catch — a number the owner set, silently meaning something else.
       const dmCapped = unansweredHours > UNANSWERED_META_DM_MAX_HOURS;
       clauses.push(
-        `steps in if you haven't answered within ${unansweredHours} hour${unansweredHours === 1 ? "" : "s"}` +
+        `${holdAllForApproval ? "drafts a reply" : "steps in"} if you haven't answered within ${unansweredHours} hour${unansweredHours === 1 ? "" : "s"}` +
           (dmCapped ? ` (${UNANSWERED_META_DM_MAX_HOURS} on Instagram and Messenger)` : "")
       );
     }
-    if (deadLeadOn) clauses.push(`switches to a reactivation message after ${deadLeadDays} days of silence on both sides`);
+    if (deadLeadOn)
+      clauses.push(
+        `${holdAllForApproval ? "drafts a reactivation message" : "switches to a reactivation message"} after ${deadLeadDays} days of silence on both sides`
+      );
     if (clauses.length === 0) return "Off — nothing goes out on its own. Every reply is one you send yourself.";
-    if (clauses.length === 1) return `Right now FollowUp ${clauses[0]}.`;
-    return `Right now FollowUp ${clauses.slice(0, -1).join(", ")}, and ${clauses[clauses.length - 1]}.`;
+    const sentence =
+      clauses.length === 1
+        ? `Right now FollowUp ${clauses[0]}.`
+        : `Right now FollowUp ${clauses.slice(0, -1).join(", ")}, and ${clauses[clauses.length - 1]}.`;
+    // The one thing an owner most needs to know about their own account,
+    // and until 2026-09-20 the only place it appeared was two server
+    // files. "Waits for you" is the whole point of the beta setting, so
+    // it belongs in the sentence that claims to describe what is active.
+    // As of 2026-09-20 the instant acknowledgement is held too (founder:
+    // "don't send any replies without asking me"), so there is no longer
+    // an exception to carve out — every rule above produces a draft that
+    // waits. This sentence said the opposite for exactly one day.
+    if (!holdAllForApproval) return sentence;
+    return `${sentence} Nothing above sends on its own — every one of those is written for you and waits in Approvals until you press send.`;
   }
 
   const anyAutomationOn = automationOn || instantAckOn || unansweredOn || deadLeadOn;
@@ -1128,6 +1163,19 @@ function SettingsPageInner() {
       </div>
 
       <div hidden={activeTab !== "team"} className="space-y-10">
+      {/* Who this business IS, above who works in it. Until 2026-09-20
+          there was nowhere at all to change the business's own name or
+          trade — they were asked once in the onboarding wizard and then
+          unreachable, which is how four real people received "Thank you
+          for contacting My Business". This tab is the account-identity
+          tab, so it belongs here and it belongs first. */}
+      <section id="business" className="scroll-mt-16">
+        <h2 className="font-display text-xl">Your business</h2>
+        <div className="mt-4">
+          <BusinessProfileSection />
+        </div>
+      </section>
+
       <section id="team" className="scroll-mt-16">
         <h2 className="font-display text-xl">Team</h2>
         <p className="text-sm text-ink-soft mt-1">

@@ -199,7 +199,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           <div>
             <CollapsibleSection title="Automation & follow-up plan">
               <div className="space-y-3">
-                <LeadAutomationToggle leadId={lead.id} initialTier={lead.automationTier} autonomousAllowed={autonomousAllowed} />
+                <LeadAutomationToggle
+                  leadId={lead.id}
+                  initialTier={lead.automationTier}
+                  autonomousAllowed={autonomousAllowed}
+                  holdAllForApproval={freeTierStatus?.holdAllForApproval ?? false}
+                />
                 <LeadWorkflowEnrollment leadId={lead.id} />
               </div>
             </CollapsibleSection>

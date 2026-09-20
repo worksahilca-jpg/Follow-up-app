@@ -3,6 +3,7 @@ import { hasActiveAccess } from "@/lib/billing";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
 import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
+import { businessDisplayName } from "@/lib/leadName";
 
 /**
  * research/product/2026-09-10-ux-simplification.md §2 and §7.1: the
@@ -20,7 +21,7 @@ import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
  * just for this list.
  */
 export type SetupStep = {
-  id: "billing" | "gmail" | "phone" | "widget";
+  id: "billing" | "business" | "gmail" | "phone" | "widget";
   title: string;
   description: string;
   ctaLabel: string;
@@ -32,7 +33,7 @@ export async function getIncompleteSetupSteps(businessId: string): Promise<Setup
     prisma.business.findUnique({
       where: { id: businessId },
       // `tier` was missing, which is the whole of the billing bug below.
-      select: { subscriptionStatus: true, tier: true, twilioPhoneNumber: true },
+      select: { subscriptionStatus: true, tier: true, twilioPhoneNumber: true, name: true, industry: true },
     }),
     getGmailStatus(businessId),
     getOutlookStatus(businessId),
@@ -54,6 +55,33 @@ export async function getIncompleteSetupSteps(businessId: string): Promise<Setup
       description: "14 days, no card required — needed to sync, add leads, and send follow-ups.",
       ctaLabel: "Start trial",
       ctaHref: "/settings#billing",
+    });
+  }
+
+  /**
+   * The business has not said who it is.
+   *
+   * Second, right after billing, because it is cheap to fix and it
+   * changes what every later step produces. An unnamed business gets
+   * messages with no name in them (businessDisplayName, src/lib/
+   * leadName.ts); a business with no industry is judged by a classifier
+   * working blind, which is the single most expensive kind of blindness
+   * here — see classifyAsProspect's own comment about the seven real
+   * deals it threw away without it.
+   *
+   * It had no step at all until 2026-09-20, for the same reason it had
+   * no Settings screen: both fields were asked once at onboarding and
+   * then never mentioned again. The founder's own account still carried
+   * the placeholder name months later, and four real people were
+   * written to by "My Business".
+   */
+  if (businessDisplayName(business?.name) === "" || !business?.industry) {
+    steps.push({
+      id: "business",
+      title: "Tell FollowUp about your business",
+      description: "Your name goes in every message; your trade is how it tells a real customer from a sales pitch.",
+      ctaLabel: "Add details",
+      ctaHref: "/settings#business",
     });
   }
 

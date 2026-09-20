@@ -439,6 +439,63 @@ export async function sendFollowUpToLead(
     if (!cap.allowed) return { success: false, message: cap.reason, failure: "refused" };
   }
 
+  /**
+   * The same words, to the same person, twice.
+   *
+   * Found 2026-09-20 in production: a real lead received the identical
+   * 409-character follow-up twice. Two different Gmail message ids,
+   * identical body hash — two genuinely delivered emails, not one email
+   * recorded twice.
+   *
+   * Nothing anywhere stopped it. This funnel guards volume (checkSendCap),
+   * consent (isSuppressed), and channel, and the send route above it adds
+   * a rate limit of 60 actions per 10 minutes — none of which is duplicate
+   * protection. Two POSTs carrying the same body sent two emails, and the
+   * approval queue's disabled-button state is client-side only: a second
+   * tab, a slow network with an impatient second click, or a retry all
+   * defeat it.
+   *
+   * That gap mattered less when most messages were automated and stamped
+   * once per lead per tick. As of today every message on a beta account
+   * goes out through a human pressing Send in Approvals, so this path is
+   * now THE path, and a double-tap is the likeliest way a real customer
+   * gets messaged twice.
+   *
+   * Sixty seconds, compared on the exact body. Long enough to cover a
+   * double-click, a retry and a second tab; short enough that a genuine
+   * "sorry, resending that" minutes later still goes. Deliberately narrow:
+   * a guard that blocks a legitimate resend would be its own bug, and the
+   * honest reading of the evidence is that this catches the double-tap
+   * class only. The two production sends were 3h45m apart, which this
+   * would NOT have stopped, and I could not determine from the data what
+   * produced that gap.
+   *
+   * `count`, not `findFirst`, deliberately: this function already makes a
+   * `message.findFirst` call for Meta's 24-hour DM window, and two
+   * same-named queries answering completely different questions in one
+   * function are indistinguishable to a reader and to a test's mock —
+   * which is exactly how the first version of this guard silently
+   * inherited the window lookup's stubbed return and refused every send
+   * in the suite.
+   */
+  const DUPLICATE_WINDOW_MS = 60_000;
+  const justSent = await prisma.message.count({
+    where: {
+      conversation: { leadId: lead.id },
+      direction: "outbound",
+      body,
+      sentAt: { gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
+    },
+  });
+  if (justSent > 0) {
+    return {
+      success: false,
+      // "refused", not "transient": retrying is the thing being prevented.
+      failure: "refused",
+      message: "That exact message already went to this lead moments ago — it hasn't been sent again.",
+    };
+  }
+
   const isCampaignSend = options.automated && options.trigger === "dead_lead_reactivation";
 
   const emailSuppressed = channel === "email" && (await isSuppressed(lead.businessId, lead.email));

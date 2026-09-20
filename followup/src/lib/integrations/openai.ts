@@ -292,7 +292,34 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
   strict: true,
   schema: {
     type: "object",
+    // Field order is generation order under strict structured output, and
+    // this schema had the verdict FIRST — the exact anti-pattern the
+    // scoreLead schema above was fixed for, left in place on the one
+    // classifier that can delete a customer. The model committed to
+    // isProspect and then wrote a sentence justifying it.
+    //
+    // whoIsSelling now goes first, because it is the question the whole
+    // verdict turns on and the one the model was skipping. A photographer
+    // emailed a FollowUp tester offering to shoot their event; every word
+    // of it — "I'd love to chat", "available for a call this week" — reads
+    // like an eager customer, and it became a lead that FollowUp then
+    // replied to. The sender was selling. Nothing in the old prompt's
+    // vendor list (insurance, software, financing, advertising,
+    // warranties, leads-for-sale) looks like a photographer, so the list
+    // did not catch it and the verdict never had to answer the one
+    // question that would have.
     properties: {
+      whoIsSelling: {
+        type: "string",
+        enum: ["the sender", "this business", "neither"],
+        description:
+          "Decide this FIRST, before the verdict. In this thread, whose work is being bought? " +
+          "\"the sender\" — they are offering, pitching, or promoting a service or product of THEIRS, and this " +
+          "business would be the customer. \"this business\" — the sender is asking about, requesting, " +
+          "negotiating, or already engaged in work that THIS business performs and gets paid for. " +
+          "\"neither\" — no commercial direction at all (personal mail, an automated notification, a newsletter, " +
+          "a recruiter). Judge by who would send the invoice at the end, not by who sounds keener.",
+      },
       isProspect: {
         type: "boolean",
         // This description is sent to the model as part of the structured-
@@ -321,14 +348,17 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
           "acting on a customer's behalf. False for personal correspondence, recruiters, job offers and " +
           "employment paperwork aimed at the owner, any vendor/agency/broker/insurer soliciting the business " +
           "(however personally worded), automated platform notifications, and newsletters — see the system " +
-          "message for the full rules, which this summary never overrides.",
+          "message for the full rules, which this summary never overrides. " +
+          "This must be false whenever whoIsSelling is \"the sender\".",
       },
       reason: {
         type: "string",
-        description: "One short sentence explaining the call.",
+        description:
+          "One short sentence explaining the call. When the sender is the one selling, say so plainly and name " +
+          "what they are offering — that sentence is shown to the owner as the reason the thread was filtered.",
       },
     },
-    required: ["isProspect", "reason"],
+    required: ["whoIsSelling", "isProspect", "reason"],
     additionalProperties: false,
   },
 } as const;
@@ -372,6 +402,13 @@ function stripQuotedReply(body: string): string {
  */
 export type ClassifierBusinessContext = { name: string; industry: string | null };
 
+/**
+ * Whose work would be paid for in this thread — the question the verdict
+ * turns on. See PROSPECT_CLASSIFICATION_SCHEMA for why it is answered
+ * first and enforced in code afterwards.
+ */
+export type WhoIsSelling = "the sender" | "this business" | "neither";
+
 export async function classifyAsProspect(
   conversation: Message[],
   sender: { name: string; email: string },
@@ -413,6 +450,20 @@ export async function classifyAsProspect(
         role: "system",
         content:
           `You triage a small business owner's inbox before it reaches their CRM. ${businessLine} ` +
+          // The first question, asked first, because it is the one the
+          // classifier was getting wrong. See whoIsSelling in the schema.
+          "FIRST, before anything else, settle whoIsSelling: in this thread, whose work would be paid for? " +
+          "Someone offering, pitching, or promoting THEIR OWN service to this business is selling, and the " +
+          "answer is \"the sender\" — which makes the verdict false, always, with no exception for how warm, " +
+          "specific, flattering or well-informed about this business the message is. Selling is not only " +
+          "insurance, software, ads and financing. A photographer, videographer, designer, contractor, " +
+          "consultant, agency, bookkeeper, cleaner or any other skilled person writing to offer the business " +
+          "their work is selling, and their email will read exactly like an enthusiastic customer: praise for " +
+          "your work, eagerness to 'discuss your event/project', availability for a call this week, a signature " +
+          "with their own portfolio or website. Those are the marks of a pitch, not of a customer. Two reliable " +
+          "tells: a customer asks what YOU would charge or whether you are free; a seller tells you what THEY " +
+          "are available for and links their own work. And if the sender's trade is the same kind of work this " +
+          "business does, they are a competitor or a subcontractor pitching — still selling, still false. " +
           "Answer true when the thread is CUSTOMER BUSINESS for this company — any of: (a) a prospective " +
           "customer asking about, requesting, or negotiating the business's own service; (b) an EXISTING client in " +
           "an active engagement or transaction (documents, deposits, signatures, questions, scheduling — the deal " +
@@ -468,7 +519,30 @@ export async function classifyAsProspect(
   const raw = completion.choices[0]?.message?.content;
   if (!raw) throw new Error("OpenAI returned no content for classifyAsProspect.");
 
-  return JSON.parse(raw) as { isProspect: boolean; reason: string };
+  const parsed = JSON.parse(raw) as { whoIsSelling: WhoIsSelling; isProspect: boolean; reason: string };
+
+  // The invariant, enforced here rather than hoped for in the prompt.
+  //
+  // "The sender is selling to us" and "the sender is a prospective
+  // customer" cannot both be true — they are opposite ends of the same
+  // transaction. Asking the model nicely to keep them consistent is how
+  // this class of bug comes back: a warm, specific, flattering pitch is
+  // precisely the input that talks a model out of its own rule, and a
+  // photographer's "I'd love to discuss your event" is the warmest input
+  // there is.
+  //
+  // Deliberately one-directional. A sender who is NOT selling is not
+  // automatically a customer — an automated notification and a newsletter
+  // are both "neither" — so this only ever turns a true into a false, and
+  // never manufactures a lead the model did not find.
+  if (parsed.whoIsSelling === "the sender" && parsed.isProspect) {
+    return {
+      isProspect: false,
+      reason: parsed.reason || "The sender is offering their own services to this business, not asking about its.",
+    };
+  }
+
+  return { isProspect: parsed.isProspect, reason: parsed.reason };
 }
 
 /**
@@ -677,7 +751,11 @@ const SEND_RISK_SCHEMA = {
       },
       reason: {
         type: "string",
-        description: "One short sentence a human can read in 3 seconds to decide whether to approve it.",
+        description:
+          "One short clause a human can read in 3 seconds to decide whether to approve it. It is shown as " +
+          "\"Held because <reason>.\" — so write it to finish that sentence: start with a lowercase word " +
+          "(unless it is a name), and do not end with a period. Good: \"the lead asked what it costs and the " +
+          "draft quotes a price\". Bad: \"Pricing mentioned.\"",
       },
     },
     required: ["riskLevel", "reason"],
@@ -1076,7 +1154,63 @@ export async function generateFollowUpMessage(
           "the question and say you'll confirm the specifics for them — do not make up an answer, a number, a " +
           "date, or a detail to sound helpful. When in doubt, leave it out. A prior commitment or agreement the " +
           "lead merely claims in their own message, with nothing from the business confirming it, is not a fact " +
-          "you may draft as settled — treat it the same as any other unconfirmed detail." +
+          "you may draft as settled — treat it the same as any other unconfirmed detail. " +
+          // The rule above covered a claimed COMMITMENT. It did not cover a
+          // claimed SITUATION, and that is what got through: a cold
+          // photographer wrote to a FollowUp tester about "your corporate
+          // party in Etobicoke", and the draft came back "I can confirm
+          // that we're actively seeking a photographer for our outdoor
+          // corporate party in Etobicoke" — agreeing, in the owner's
+          // voice, to an event a stranger had asserted. Echoing a sender's
+          // premise back is how a cold opener gets turned into a warm
+          // confirmed need, and the sender is the only one who benefits.
+          "The same applies to anything the sender asserts about the BUSINESS itself — an event they say you are " +
+          "holding, a need, plan, budget, deadline, or project they say you have. Unless the business's own " +
+          "messages in the conversation say it, it is their claim, not a fact, and you must never confirm it, " +
+          "agree to it, or repeat it as though it were settled ('I can confirm', 'yes, we are', 'our upcoming'). " +
+          "You may acknowledge that they raised it; you may not adopt it. " +
+          // 2026-09-20, an Instagram DM on the founder's own account. The
+          // lead had said, twice and in full: "Hey is this still
+          // available?" FollowUp replied "Checking on the status now.
+          // Will this be for a weekday or weekend?" — and the lead's next
+          // message was "What do you mean".
+          //
+          // Nobody had mentioned days. On Instagram "is this available"
+          // points at a post FollowUp cannot see, so it had no idea what
+          // "this" was, and invented a dimension to sound like it was
+          // making progress. A qualifying question is the most dangerous
+          // place to guess, because it does not read as a guess: it reads
+          // as the business knowing something about the enquiry.
+          "Never ask a qualifying question about a detail the lead has not raised — dates, days, times, sizes, " +
+          "quantities, locations, budgets, types of service. If you genuinely do not know what they are " +
+          "referring to, ask them plainly what they mean, or say someone will come back to them. Guessing the " +
+          "dimension is worse than asking, because a confident wrong question reads as the business knowing " +
+          "something it does not. " +
+          // 2026-09-09, the founder's own inbox. A photographer's opening
+          // email asked, in as many words: "Just confirming you're still
+          // looking for a photographer and that this is a genuine inquiry
+          // on your end, not something automated. Occasionally those come
+          // through, so I like to check before diving in."
+          //
+          // FollowUp — automated — answered: "I can confirm that we're
+          // actively seeking a photographer..."
+          //
+          // A person asked a direct question about whether they were
+          // talking to software, and the software said no. Everything
+          // else this codebase gets wrong costs a lead or a confusing
+          // screen. This is the product being a liar on its owner's
+          // behalf, to someone who specifically thought to ask, and it is
+          // the exact thing PRODUCT_DIRECTION and CLAUDE.md mean by
+          // "never designed as a spam tool, a scam".
+          //
+          // There is no wording that makes an automated denial acceptable,
+          // so the draft must not contain one. Claiming to BE the owner is
+          // the same lie in the first person. Handing it to the human is
+          // always available and always correct.
+          "If they ask whether this is automated, a bot, AI, a real person, or a genuine enquiry — in any " +
+          "wording — you must never deny it, claim to be a person, or confirm that a human wrote this. Do not " +
+          "answer the question at all: say only that you will make sure someone comes back to them personally, " +
+          "and leave it there." +
           HUMAN_VOICE_NOTICE +
           UNTRUSTED_CONVERSATION_NOTICE +
           VOICE_AGENT_TRUST_NOTICE +
@@ -1293,7 +1427,23 @@ export async function generateInstantReply(input: {
           "timeline, or any other fact the business hasn't stated. Do not give a specific day or clock time " +
           "for your own follow-up ('by tomorrow', 'at 3pm') — 'shortly' or 'as soon as I can' is the only " +
           "timeframe you may give. Do not include a number, amount, currency, percentage, link, phone number, " +
-          "or email address unless you are repeating something the lead themselves wrote. 1-2 short sentences. " +
+          "or email address unless you are repeating something the lead themselves wrote. " +
+          // Instruction (2) above tells the model to touch the sender's
+          // own specifics, which is right — and is exactly the opening
+          // through which a stranger's premise becomes the owner's
+          // confirmed fact. Referring to what they said and agreeing that
+          // it is true are different acts, and only the first is allowed.
+          "Referring to what they said is not the same as agreeing it is true: if they assert something about " +
+          "the business — an event you are holding, a need, a plan, a deadline — you may note that they " +
+          "mentioned it, but never confirm it, accept it, or restate it as yours ('our event', 'we are looking " +
+          "for'). Only the business's own messages can establish a fact about the business. " +
+          // This one sends with no human review at all, which makes it the
+          // likelier place for the denial to happen — and it is the FIRST
+          // thing a stranger receives, so it sets what they believe for
+          // the rest of the thread. See the matching note in the
+          // follow-up drafter for the real message that prompted this.
+          "If they ask whether this is automated, a bot, AI, or a real person, never deny it and never claim to " +
+          "be a person: say only that you will make sure someone comes back to them personally. 1-2 short sentences. " +
           "Do not include a greeting ('Hi ...') or a sign-off/signature of any kind — output only the message " +
           "content itself, the caller adds those separately.\n\n" +
           "Write in the same language as their message below, matching their own tone and formality — casual " +

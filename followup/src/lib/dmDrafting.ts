@@ -47,7 +47,10 @@ export async function draftDm(
   for (let attempt = 0; attempt < 2; attempt++) {
     const draft = await generateFollowUpMessage({ name: leadName, conversation }, voiceSamples, messageHint, situation, leadLanguage);
     const buttons = draft.buttons ?? [];
-    const shape = checkDmDraftShape({ body: draft.body, buttons }, text);
+    // The draft is written in the lead's language, so the calendar rule
+    // has to read it in that language — an English-only day list would be
+    // the exact shortcut the founder rejected on the WhatsApp filter.
+    const shape = checkDmDraftShape({ body: draft.body, buttons }, text, leadLanguage?.language);
     if (shape.ok) return { body: draft.body, quickReplies: { question: situation.id, buttons }, shapeFailed: null };
     lastRule = shape.rule;
     if (attempt === 1) return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: lastRule };

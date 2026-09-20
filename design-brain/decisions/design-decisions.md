@@ -3296,3 +3296,561 @@ can only ever be as multilingual as the person who wrote it remembered to be.
 Also unresolved, and inherited: stage 2 costs a second AI call per rejected chat. On a
 30-day import of a busy personal number that is real money for chats that are mostly going
 to be rejected anyway. Acceptable at ten testers; worth measuring before it is a hundred.
+
+---
+
+## 2026-09-20 — The product told the tester things about itself that were not true
+
+**What this was.** Not a feature. A pass over the first hour of a beta tester's experience,
+fixing the places where FollowUp *stated something about itself* that its own code
+contradicted. Every item below is the same bug in a different costume: a screen written
+against how the product was designed, not how the account in front of the reader is actually
+configured.
+
+The founder's instruction was "go go fix as much as you can", after "let's find more problems".
+
+**The root cause, named once.** Every beta account carries `Business.holdAllForApproval`
+(`grantBetaPlan`, founder's decision 2026-09-19: "I can't hand them the full automated
+thing"). Until today that column was read by exactly two files — `automation.ts` and
+`sequences.ts` — and written to no screen anywhere. So the single most important fact about
+a tester's account was invisible to every surface that described what the account does:
+
+- The lead page offered **"Handle it all, don't ask — every reply sends automatically with
+  no review"** and made the owner confirm a red warning to choose it. Their account has
+  never sent a reply unreviewed and cannot.
+- Settings' one computed "here's what's active" sentence said FollowUp *nudges* and *steps
+  in* and *switches to a reactivation message*. It drafts all three and files them.
+- The plans page sold a four-step follow-up plan. On a holding account a plan drafts step 1,
+  holds it, and **unenrolls the lead** — it has never reached step 2 for any tester.
+
+It is now on `FreeTierStatus`, on `/api/automation/settings`, and read by all three surfaces.
+The tier selector still offers all three tiers, because the choice is real — it is what takes
+effect the day holding is lifted — but the sentences describe what will actually happen, and
+the scary confirm is gone on an account where nothing it warns about can occur.
+
+**The design call worth recording: an alarm is correct when nothing arrives, and wrong when
+something does.** Yesterday's `ChannelNotReceiving` shipped a coral "nothing people DM you
+reaches FollowUp" for any Instagram account without a confirmed webhook. Instagram has a
+poller (`src/lib/instagramPoll.ts`, every 3 minutes) that exists *precisely because* the
+first real account never got a webhook — so on Instagram that state is **slower, not
+broken**, and my own alarm told a tester their working channel was dead. The component now
+takes `stillWorks`; with it the block is `--slate` and `Clock` and says "arrives every few
+minutes, not instantly". Facebook passes nothing and keeps the coral warning, because
+Facebook really does receive nothing. The prop is a difference in the product, not a style
+choice.
+
+**"Held because …" had to be a sentence.** The most-read trust-bearing line in the product
+rendered, to every tester: *"Held because Ready to send — this account holds every automated
+message for you to approve."* A capital mid-sentence contradicting the word before it. The
+reasons were being written as standalone sentences in two schedulers; they are clauses now,
+they live in one file (`src/lib/holdReasons.ts`), the model that writes the risk reason is
+told the same rule in its schema, and `holdReasonGrammar.test.ts` enforces it against the
+real strings. Writing the test caught a distinction I had missed: "FollowUp couldn't check
+this one" is *correct* capitalised — the rule is "lowercase unless it is a name."
+
+**Other things a screen claimed and the code denied:**
+
+| Screen said | Code did | Now |
+|---|---|---|
+| "replies within a minute" | Gmail push is off (no `GMAIL_PUSH_TOPIC`); Outlook has no push at all. Capture waits up to 10 minutes. `getGmailStatus` already returned `pushActive` and the dashboard threw it away | Says "every ten minutes" unless push is genuinely live |
+| "They'll join automatically the next time they sign in" | `auth.ts` checks `ALLOWED_EMAILS` **before** it looks for the team invite, so an invited teammate is refused and the invite is never consumed | Says the teammate also needs adding to the beta, and how |
+| "Email steps send a text instead" | The fallback is whichever channel the lead came in on — WhatsApp, Instagram, Messenger — and SMS needs a number `CARRIER_CHANNELS_AVAILABLE` won't let them buy | Names the real channels; lists text only when it is offered |
+| "check Settings → Phone (SMS + calls)" (a send error) | That panel is hidden by the same flag | Points at something that exists |
+| "Good morning" | Server clock. UTC on Vercel. A Toronto owner at 8pm | `Business.timezone` |
+| "access was removed in Google or a password changed" | While the OAuth app is unverified Google expires the token **every seven days, for everyone** — the likeliest cause by far, and the only one the owner didn't do | Names the seven-day beta expiry first |
+| (nothing, before the Google consent screen) | Google shows a full-page red "hasn't verified this app" with the continue link folded under *Advanced* — the most likely single point of tester loss in the funnel | Warned about, with where the button is |
+| "One-click connect isn't switched on yet (docs/meta-oauth-setup.md, section 3)" | A path in our own repository, shown to a customer as if they could open it | Says it is ours to finish, not theirs |
+
+**Two bugs that were just bugs:** `getIncompleteSetupSteps` ran on every dashboard load and
+rendered only in the has-leads branch — so the one account guaranteed to have unfinished
+setup, the brand-new one, was the only account never shown its next step. And the test-lead
+button lived only in the zero-lead branch, so pressing it created a lead, which emptied that
+branch, which removed the button: one use, then gone, exactly when someone wanted to try it
+again on a channel they had just connected. It sits with the setup strip now and retires
+with it.
+
+**Self-critique.**
+
+1. **Two of these were mine, from yesterday.** The Instagram false alarm and the `stillWorks`
+   prop exist because I shipped an alarm without checking whether the channel had a fallback
+   path. The poller's own header comment says why it exists. I did not read it before writing
+   a sentence that contradicted it.
+2. **The `holdAllForApproval` blind spot should have been caught when the column was added.**
+   A `Business` field that changes what the product *does* and is read by no UI is a missing
+   screen, not a small omission — and the surfaces that contradicted it were written long
+   before, which is exactly why nobody looked.
+3. **Not fixed, and I stopped rather than guess:** the website-widget setup step clears only
+   when a real widget lead arrives, so a business with no website can never finish setup and
+   the strip nags forever. The honest fix is a dismissal, which needs an additive column and a
+   route — more than belongs in this pass, and the founder should decide whether "skip this"
+   is a thing setup steps get.
+4. **Two product questions raised, not answered** (CLAUDE.md puts behaviour with the founder):
+   should a held workflow step *resume* after approval rather than unenrolling the lead; and
+   should a team invite from an approved tester be enough to let their colleague in, given
+   the Team feature currently cannot work at all.
+5. **Verified by typecheck, 1348 tests and a production build — not by looking.** The
+   database is unreachable from this sandbox, so none of these screens were rendered. Every
+   one is a copy or a branch change, which is the kind that typechecks clean and reads wrong.
+
+---
+
+## 2026-09-20 — A photographer pitching the business was filed as a lead
+
+**Reported by the founder, from his own live inbox**, with the thread attached: "I don't
+know how this is even a lead, because she is not looking for a photographer. They are the
+service provider. Please be more accurate and train them to identify which is a lead and
+which is not."
+
+He is right, and the classifier's own prompt already said so — which is the interesting
+part. It listed vendors to reject: *"advertising, software, insurance, financing, warranties
+or service contracts, leads-for-sale."* Every item on that list is a **B2B commodity**. A
+photographer writing to offer their craft looks nothing like any of them, and reads exactly
+like a delighted customer: praise for your work, eager to discuss your event, free for a
+call this week, a signature with their own portfolio. Tone was doing all the work, and tone
+is the one signal a pitch controls completely.
+
+**Two structural defects, not a wording miss.**
+
+1. **The verdict was generated before any reasoning.** Field order is generation order under
+   strict structured output — this codebase already knows that, and `scoreLead`'s schema
+   carries a comment saying so ("the number is the sum of stated evidence, not a verdict the
+   model then rationalises"). That fix was never applied to `classifyAsProspect`, the one
+   classifier that can *delete a customer*. `isProspect` came first; `reason` was written
+   afterward to justify it. `whoIsSelling` — "whose work would be paid for?" — now generates
+   first, so the direction has to be settled before a verdict exists.
+
+2. **Nothing held the two answers against each other.** "They are selling to us" and "they
+   are a prospective customer" are opposite ends of one transaction. The code now refuses to
+   return both, rather than asking the model to stay consistent — because a warm,
+   well-researched pitch is precisely the input that talks a model out of its own rule.
+
+**The override is deliberately one-directional.** It can only turn a `true` into a `false`.
+"Not selling to us" does not make someone a customer — a newsletter and a password reset are
+both `neither` — so this can never manufacture a lead the model did not find. Getting that
+backwards would trade a nuisance bug for the one this product cannot have.
+
+**The second half of the same incident, which the founder did not have to point out.** The
+reply FollowUp sent read: *"I can confirm that we're actively seeking a photographer for our
+outdoor corporate party in Etobicoke."* Nobody at the business ever said that. Henji asserted
+it in a cold email and the draft adopted it as the owner's own confirmed fact.
+
+The drafting prompt already forbade inventing facts, and already refused *"a prior commitment
+or agreement the lead merely claims."* It said nothing about a claimed **situation** — an
+event you are supposedly holding, a need you supposedly have — which is what came through.
+Both drafters now separate two acts that had been treated as one: *referring* to what the
+sender said is allowed; *agreeing it is true* is not. Only the business's own messages can
+establish a fact about the business.
+
+That one matters more than the classification bug. Echoing a stranger's premise back as
+confirmed is how a cold opener becomes a warm confirmed need — and the stranger is the only
+party who gains.
+
+**Self-critique.**
+
+1. **The generation-order lesson was written down and not applied.** It is in `scoreLead`'s
+   schema, in this file's own history, and it was sitting unfixed on the highest-stakes
+   classifier in the product. A lesson recorded in one place and not swept across the others
+   is half a lesson.
+2. **A list of examples is not a rule.** The vendor list read as thorough and was thorough
+   about the wrong axis — it enumerated *what* gets sold rather than testing *which
+   direction* the money moves. Any new category of seller would have walked through it, and
+   one did.
+3. **Prompt-only, and I can't measure it.** The direction guard is enforced in code, which is
+   real. The prompt changes around it are not testable beyond asserting the text is present —
+   the tests here mock the model. The honest check is the next week of the founder's inbox,
+   and the `FilteredEmail` rows are where to look: every rejection is recorded with its
+   reason and is overrulable in Settings, so a wrong filter is visible rather than silent.
+4. **Untested assumption, stated:** I could not read the production database, so I do not know
+   how many existing leads are actually vendor pitches. If Henji is one of several, they are
+   already in the CRM and this fix does not retroactively remove them.
+
+---
+
+## 2026-09-20 — What the real threads actually said
+
+The founder pushed back on the vendor fix — "analyze it and improve" — so the production
+database was read directly rather than reasoned about. Five leads, forty messages. The
+photographer was not one bug. It was four, and two of them are worse than the one he
+reported.
+
+### 1. FollowUp told a real person it was not automated
+
+Henji's **first** email, which had not been seen until the database was queried, asked:
+
+> *"Just confirming you're still looking for a photographer and that this is a genuine
+> inquiry on your end, not something automated. Occasionally those come through, so I like
+> to check before diving in."*
+
+FollowUp answered: *"I can confirm that we're actively seeking a photographer for our
+outdoor corporate party in Etobicoke."*
+
+A person asked, directly and politely, whether they were talking to software, and the
+software said no. Every other defect in this file costs a lead or a confusing screen. This
+one is the product lying on its owner's behalf to the one person who thought to ask — and
+it is precisely what `CLAUDE.md` means by *"never designed as a spam tool, a scam."*
+
+There is no wording that makes an automated denial acceptable, so no approved phrasing was
+written. Both drafters are now forbidden to answer the question at all: never deny, never
+claim to be a person, hand it to the human. That is always available and always correct.
+
+### 2. Connecting Gmail auto-replied to three months of inherited history
+
+Every outbound in the dataset fired within seconds of the same three cron ticks. The
+`days_after_their_email` column tells the story:
+
+| Thread | Age | What FollowUp sent |
+|---|---|---|
+| Glass supplier, mid-payment | **84 days** | *"We appreciate the clarity on the e-transfer process and will proceed accordingly."* |
+| Rental application | **50 days** | Thanked as though it had just arrived |
+| Closed deal | **38 days** | Congratulated on the accepted offer, again |
+| Cold photographer pitch | **27 days** | *"Thank you for your email"* |
+
+The first one is a **payment commitment, in the owner's voice, on a conversation from three
+months earlier.** The third and fourth went out on a real estate agent's account, to his
+real clients.
+
+`isCold` (45 days) was built on 2026-09-15 for exactly this concern and caught two of the
+four. **Age was never the right question.** The property that matters is whether FollowUp
+*watched* the silence happen or merely *inherited* it — and `lastContacted < createdAt` says
+that exactly: the newest message in the thread predates the lead row itself. A thread like
+that has never had a live moment under FollowUp's watch, at any age, so whatever the owner
+already did about it (answered by phone, met in person, lost the deal, decided not to
+bother) is invisible.
+
+Held, not dropped — finding the follow-up nobody sent is the entire product, so the draft is
+still written and still offered. The owner just sees it first. Once anything happens on the
+thread under FollowUp's watch, it stops applying permanently.
+
+### 3. The business is called "My Business" and has no industry
+
+Real customers received *"Thanks for reaching out to My Business."* And `industry` is
+`null` on the founder's own account — which is the classifier's single most important input,
+the one whose absence a comment in `classifyAsProspect` says cost a realtor seven real
+deals. So the photographer was judged with no idea what the business does. Onboarding does
+require industry, so this is an account that predates that requirement; the gap is that
+nothing ever asks again. **Not fixed — flagged.**
+
+### 4. A duplicate send
+
+One lead received the identical drafted message twice, four hours apart. **Not fixed —
+needs its own investigation, and one occurrence is not enough to characterise it.**
+
+**Self-critique.**
+
+1. **I fixed the reported bug and stopped.** The founder had to push twice — "analyze it and
+   improve" — before the actual data got read. Both of the worst findings here were sitting
+   in the first email of the very thread he pasted, and I had been reasoning about a
+   truncated copy of it instead of querying the database I had access to the whole time.
+2. **The first instinct was another prompt rule.** The durable fixes in this pass are a code
+   invariant and a date comparison. Prompt text is where a rule goes when there is nothing
+   to compute; here there was.
+3. **`isCold` is the same mistake as the vendor list, one week apart.** Both encode a
+   plausible proxy — 45 days, a list of commodity categories — for a property that can be
+   stated exactly. Both caught the cases their author imagined and missed the next one.
+4. **The hold is a product-behaviour change** and `CLAUDE.md` puts those with the founder. It
+   ships because it is strictly the safe direction (nothing sends that would not have; a
+   human is added) and because the alternative is leaving a known payment-commitment bug
+   live. He should still be told, and is.
+5. **Two known defects left open**, above, rather than guessed at.
+
+---
+
+## 2026-09-20 — "Don't send any replies without asking me, bro"
+
+The founder's words, with his reason: *"They'll put us on spam, or they might report us."*
+
+`Business.holdAllForApproval` already stopped the silence nudge, the unanswered step-in, the
+reactivation and every workflow step. **One message was deliberately exempt** — the instant
+acknowledgement — and `acknowledge.ts`'s own header argued the exemption at length: holding
+the very first touch "defeats the point of instant."
+
+That reasoning is sound and it no longer decides the question. The ack was the last thing on
+a beta account that could reach a stranger with **nobody having read it**, which made it the
+only thing that could get the sending domain reported. A domain cannot be un-reported.
+"Instant" is worth a great deal and is not worth that.
+
+The lead is not dropped: still captured, still scored, still drafted. A human presses send.
+Checked before the `acknowledgedAt` claim, so a held lead is *waiting*, not *handled* — if
+holding is ever lifted, it acknowledges normally rather than being silently skipped forever.
+
+**Settings' summary sentence was wrong for exactly one day.** Yesterday it gained "— except
+the instant acknowledgement, which always goes straight out." Today that exception is gone.
+
+### The Instagram DM, and a correction I had to make mid-answer
+
+The founder reported: the lead said only *"Hey is this still available?"*, and FollowUp
+replied *"Checking on the status now. Will this be for a weekday or weekend?"* The lead's
+next message was *"What do you mean"*.
+
+**I first told him this was an echo bug — FollowUp reading its own sent DMs back as inbound —
+and it was not.** I had run one query across two lead IDs and read the second lead's rows
+(his own test account seeing the same thread from the other side) as duplicates on the
+first. I corrected it in the same reply, before acting on it. Worth recording because the
+wrong diagnosis was the more *interesting* one, which is exactly when a diagnosis needs
+checking hardest.
+
+What actually happened: nobody had mentioned days. On Instagram *"is this available"* points
+at a **post FollowUp cannot see**, so it had no idea what "this" was and invented a
+dimension to sound like it was making progress.
+
+**A qualifying question is the worst possible place to guess**, because it does not read as
+a guess. "Will this be for a weekday or weekend?" reads as the business knowing something
+about the enquiry. An invented fact can be caught by a shape check; an invented *question*
+passes every one of them, because nothing in it is false — it is just not about anything.
+
+The drafter is now forbidden to qualify on any dimension the lead has not raised (dates,
+days, times, sizes, quantities, locations, budgets, service types) and told to ask plainly
+what they mean instead. DMs share this drafter, so the rule lands on both.
+
+**Self-critique.**
+
+1. **I got the diagnosis wrong and said it out loud first.** A query written across two
+   leads, read as though it were one. The check that would have caught it — look at the
+   `externalId` and `source` columns before concluding — took one more query, after the claim.
+2. **This is the fourth "the drafter invented something" entry today** (a confirmed event, an
+   adopted premise, a denial of being automated, now an invented question). They kept
+   arriving as separate prompt rules. The pattern underneath all four is one thing: *the
+   drafter fills silence with specifics.* That deserves a single structural answer — most
+   likely a check on the draft asking "does every concrete noun in this appear in the
+   conversation?" — rather than a fifth rule next week. **Not built. Named.**
+3. **The ack hold is a product-behaviour change**, which `CLAUDE.md` puts with the founder. He
+   asked for it in plain words, so it ships; but it makes "replies within a minute" false for
+   every beta account, and the dashboard sentence fixed this morning now needs revisiting
+   again. Flagged to him rather than quietly patched.
+
+---
+
+## 2026-09-20 — One check instead of a fifth prompt rule
+
+The day produced four "the drafter invented something" fixes, and every one of them was
+another sentence in a prompt. Named at the time as the wrong shape of answer; this is the
+right one.
+
+**The invariant already existed.** Both shape checks — `checkAckShape` and
+`checkDmDraftShape` — extract number tokens from a draft and refuse any the conversation
+does not contain. That rule is deterministic, costs nothing, and works in every language,
+because digits are digits everywhere.
+
+**What neither covered was a specific with no digits in it.** The message that went to a
+real lead had none:
+
+> lead: *"Hey is this still available?"* (twice, nothing else)
+> FollowUp: *"Checking on the status now. Will this be for a weekday or weekend?"*
+> lead: *"What do you mean"*
+
+Not one digit, so both checks passed it. "Weekday or weekend" is as invented as a fabricated
+price and worse in one way: **a wrong number reads as a mistake; a wrong question reads as
+the business knowing something about the enquiry.**
+
+`src/lib/grounding.ts` closes the calendar class, and both checks now call it.
+
+**Intl, not a word list.** A list of English day names would be an English-only rule in a
+product whose language story is Hindi, Punjabi, Spanish and Gujarati — and the founder
+rejected exactly that shortcut once already, on the WhatsApp filter: *"a keyword list can
+only ever be as multilingual as the person who wrote it remembered to be."* Day and month
+names are not a word-list problem; `Intl.DateTimeFormat` generates them for any locale, and
+the draft is checked in the lead's own language because that is the language it was written
+in.
+
+**Matching is whole-word**, via a hand-rolled check rather than `\b` — which is defined on
+ASCII word characters and quietly stops working on the scripts this product has to handle.
+Substring matching would ground "mar" against "market" and pass an invented "March".
+
+**Honest coverage.** "Weekday" and "weekend" are not derivable from Intl and sit in a short
+English list, marked as incomplete in the source. A place name, a service type or an
+invented event is not detectable this way at all. That is why the prompt rules stay: this is
+the net under them, not a replacement — and a net with known holes still catches what falls
+into it.
+
+**Also:** the dashboard's inbox sentence gained a third state. Holding is checked first now,
+because on a holding account nothing is sent at all, so capture speed decides when the
+*draft* is ready, not when the lead hears back. The two-state version was true for about six
+hours — from the morning's ten-minute fix until the instant reply started waiting for
+approval that afternoon.
+
+**Self-critique.**
+
+1. **The helper is the easy half; the wiring is where this fails.** A correct grounding
+   function that nothing calls is worth nothing, so four of the tests go through the real
+   shape checks with the real message rather than through the helper.
+2. **The coverage is one class, not the problem.** "The drafter fills silence with
+   specifics" is still mostly unguarded — places, service types, invented events. Calendar
+   was chosen because it is the class that actually fired, and the only one with a
+   language-neutral generator behind it. The rest remains prompt-only and is not solved.
+3. **`UNDERIVABLE_EN` is the seam.** It is a hand-written English list, the exact thing the
+   rest of the file is built to avoid, and it is where the next miss will come from — a
+   Spanish draft saying *"entre semana o fin de semana"* walks straight through.
+4. **Unverified in production.** Every test mocks the model. Whether real drafts trip this
+   rule at a sane rate, or whether it starts rejecting good drafts and costing a
+   regeneration every time, is only answerable from live traffic. `draftDm` retries once
+   before giving up, so the failure mode is cost rather than a lost message.
+
+---
+
+## 2026-09-20 — A real customer got the same email twice
+
+Found by going back to production and asking the database a blunt question: *are there any
+outbound messages with the same body, to the same lead, more than once?* One hit.
+
+Two **different** Gmail message ids, **identical** body hash, 3h45m apart. Not one email
+recorded twice — two emails delivered.
+
+**Nothing anywhere was checking.** `sendFollowUpToLead` guards volume (`checkSendCap`),
+consent (`isSuppressed`) and channel; the send route adds a rate limit of 60 actions per 10
+minutes. None of that is duplicate protection. And the approval queue's disabled Send button
+is client-side only: a second tab, a slow network with an impatient second click, or a retry
+all defeat it.
+
+**It matters more today than it did yesterday.** As of this morning every message on a beta
+account goes out through a human pressing Send in Approvals. That path is now *the* path, so
+a double-tap is the likeliest way a real customer gets messaged twice.
+
+Sixty seconds, compared on the exact body. Deliberately narrow — a guard that blocks a
+legitimate resend would be its own bug.
+
+**Honest about what it does not explain.** The two production sends were **3h45m apart**,
+which this window would not have caught, and I could not determine from the data what
+produced that gap. Both rows carry `trigger: null`, which means neither came through
+`sendFollowUpToLead` (it always stamps one) — they were discovered by Gmail sync. So the
+duplicate is real and the guard is right, but the specific incident remains unexplained and
+is recorded here as such rather than quietly claimed as fixed.
+
+### The mistake worth recording
+
+The first version used `prisma.message.findFirst`. `sendFollowUpToLead` **already** makes a
+`message.findFirst` call — for Meta's 24-hour DM window — so the new guard silently
+inherited that lookup's stubbed return in every test that sets it, and **27 tests failed by
+refusing every send as a duplicate.**
+
+Two same-named queries answering completely different questions in one function are
+indistinguishable to a reader and to a mock. Switching to `count` fixed it and reads better:
+the question is "how many", not "which one".
+
+Two test files then needed `count` added to their Prisma mock. That is the honest cost of
+adding a query to a hot function, and it is visible rather than worked around.
+
+**Self-critique.**
+
+1. **I shipped a guard whose own test suite told me it was wrong, and I had to be told by
+   27 failures rather than by reading.** The collision was visible in the file — the existing
+   `findFirst` is forty lines below.
+2. **The window is a guess.** Sixty seconds covers a double-click. It does not cover the
+   incident that prompted it. I would rather ship the narrow guard and say so than widen it
+   to cover a case I do not understand and start blocking legitimate resends.
+3. **The right fix is probably a unique constraint**, not a read-then-write: two concurrent
+   requests can still both pass this check before either writes. That needs a migration and a
+   decision about what the key is (lead + body + minute?), which is more than this pass.
+   Named, not built.
+
+---
+
+## 2026-09-20 — "Thank you for contacting My Business"
+
+Found by sweeping production for the obvious things rather than waiting for the founder to
+notice them: *are there outbound messages containing a placeholder?* Four, to real people.
+
+`src/lib/auth.ts` names a brand-new workspace `"<their name>'s Business"`, or — when Google
+hands over no display name at all — the literal **"My Business"**. That is a row label
+waiting to be replaced in Settings, and on the founder's own account it never was. So the
+sentence a stranger received was *"Thank you for contacting My Business."*
+
+On a cold first email it is worse than it looks: the **subject line** carried it too, and
+the subject is the only thing read before the decision to open. "Thank you for contacting My
+Business" sitting in an inbox is indistinguishable from spam — which, the same day the
+founder said *"they'll put us on spam, or they might report us"*, is precisely the exposure.
+
+**It is the same bug as "Hi! Instagram,"** — the 2026-09-19 incident where the lead's own
+name was the placeholder `findOrCreateLeadByInstagram` writes before a handle is known. That
+half was fixed then, with `greetingFirstName`. Nobody looked for the other half.
+
+So `businessDisplayName` lives **beside** `greetingFirstName` in the same module, and the
+module's header is now the rule rather than one instance of it: *a placeholder identity never
+reaches a customer.* Two modules each enforcing half is how the second half gets forgotten —
+and it did, for a day.
+
+Both return `""`, and `""` means **rewrite the sentence**, never interpolate a gap. There is
+a test for `"Thank you for contacting ."` because that is the obvious way to get this wrong.
+
+Also checked and deliberately NOT changed: `"My Business Solutions Inc"` is a real name that
+merely contains the word, and `"us"` is on the placeholder list because
+`acknowledge.ts` already falls back to it — "Thank you for contacting us" is a fine sentence
+to reach by having no name, and a bad one to reach by being *named* "us".
+
+**The sweep also cleared several suspicions**, which is worth recording so they are not
+re-investigated: no leads stuck mid-sequence, nothing stranded in the outbound retry queue,
+and the 146 filtered email threads read as correct rejections on inspection — marketing, HR
+notifications, PayPal, showing confirmations, vendors. The classifier is doing its job.
+
+**Self-critique.**
+
+1. **This was findable on 2026-09-19 and I did not look.** The lead-name fix even names the
+   pattern in its own header. Fixing the instance in front of me instead of asking "where
+   else does this shape exist" cost four real messages.
+2. **The subject line was the near miss.** I fixed the body first and only found the subject
+   because I grepped every use of `businessName` rather than the one the incident named.
+   The body reaches someone who already opened the mail; the subject decides whether they do.
+3. **Not fixed: the real cause.** The founder's business still has no name and no industry,
+   and nothing in the product ever asks again after onboarding. This guard stops the symptom
+   reaching a customer; it does not get the business named. A "finish setting up" prompt is
+   the actual fix and is his call, since it is a new piece of UI.
+
+---
+
+## 2026-09-20 — "I don't see any option like business name"
+
+The founder, after I told him to fix his business name in Settings. **He was right and I was
+wrong.** There was no such option anywhere in the product.
+
+`Business.name` and `Business.industry` were asked once in the onboarding wizard and then
+unreachable forever. `/api/onboarding` had always accepted a partial update — its own comment
+says it is "reachable at any time, not just during first-run" — and no screen ever called it
+that way. The backend was built for this; the UI was never added.
+
+**This is the cause behind two separate incidents fixed earlier the same day.** Four real
+people received *"Thank you for contacting My Business"*, and a photographer pitching a
+software founder was read as a customer by a classifier running with `industry: null`. Both
+were patched at the symptom. This is the thing underneath them.
+
+### What was built
+
+**A Settings section**, first in the Team tab — that is the account-identity tab, so who the
+business *is* belongs above who works in it. Shape copies the other panels exactly (`box
+p-5`, square icon tile in `--slate-soft`, title, one line of why it matters). Nothing new
+invented; the pattern is already approved.
+
+**A setup step**, second in the strip, right after billing. Cheap to fix and it changes what
+every later step produces.
+
+**Two fields, not three.** Team size is collected at onboarding and drives nothing today.
+Adding it here would be a third control that changes nothing — [[rejected#^S-12|S-12]],
+decoration that doesn't improve usability. It goes in the day it means something.
+
+**The industry field carries a sentence saying what it DOES** — *"FollowUp uses this to tell
+a real customer from a supplier or a sales pitch. With it blank, it has to guess."* Without
+that line it reads as filing paperwork. With it, it reads as worth doing. That sentence is
+the whole reason the field will get filled in.
+
+**The placeholder notice is `--slate`, not `--coral`.** Nothing is broken and nothing has
+been lost — but it is a fact the owner cannot otherwise discover, because the name only
+appears in mail they never receive.
+
+**`INDUSTRIES` moved to its own leaf module.** Two screens now ask the same question, and a
+second copy of the list is how they start offering different answers.
+
+**Self-critique.**
+
+1. **I told him to do something impossible, twice.** "2 min in Settings" was in a status
+   list I wrote, and again in the follow-up. I had read that Settings file several times
+   today — including grepping it for `SECTION_TAB` — and never noticed there was no profile
+   section. Asserting a screen exists without checking is the same error as asserting a
+   behaviour exists without checking, and I have made both today.
+2. **A test I wrote asserted the wrong premise** — that a Free business produces a billing
+   step. It does not; `hasActiveAccess` treats Free as real access, which is recorded in
+   `setupStatus.ts`'s own comment as a bug already fixed. The test failed, I read the
+   comment, and fixed the test rather than the code. Worth recording because the instinct
+   when a new test fails is to suspect the new code.
+3. **Seven existing fixtures needed two fields added.** That is the honest cost of a new
+   condition in a shared function, and it is visible in the diff rather than worked around.
+4. **Unverified in the running app.** The database is unreachable from this sandbox, so the
+   section was not rendered — typecheck, 1423 tests and a build are what stand behind it.
+   A form is more likely than most changes to have a visual flaw those three cannot see.

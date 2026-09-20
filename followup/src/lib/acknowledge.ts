@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/db";
+import { ungroundedCalendarWords } from "@/lib/grounding";
 import { generateInstantReply, assessAckRisk, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
 import { checkAiEligibility } from "@/lib/billing";
 import { isOptOutMessage } from "@/lib/optOutKeywords";
 import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
-import { greetingFirstName } from "@/lib/leadName";
+import { greetingFirstName, businessDisplayName } from "@/lib/leadName";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -43,6 +44,16 @@ import { greetingFirstName } from "@/lib/leadName";
  * than holding the very first touch for approval — delaying it defeats
  * the point of "instant," and the fallback line states no fact about
  * the business.
+ *
+ * That reasoning still holds for an account that sends on its own. It no
+ * longer decides the question, because a whole class of account does not
+ * send on its own: `Business.holdAllForApproval` now stops this message
+ * too (see the gate below). Founder's call, 2026-09-20 — "don't send any
+ * replies without asking me, they'll put us on spam, or they might
+ * report us." Every other automated message already waited; this was the
+ * last one that could reach a stranger unread, which made it the only one
+ * that could get the domain reported. "Instant" is worth a great deal and
+ * is not worth that.
  *
  * Language (task #63 live-test finding): the outgoing message is
  * localized as a whole, greeting/sign-off included — not just the
@@ -141,7 +152,11 @@ export function ackGracePeriodMs(channel: AckChannel): number {
 export function checkAckShape(
   reply: string,
   inboundText: string,
-  ownerFirstName: string
+  ownerFirstName: string,
+  // The lead's own language tag, for the calendar rule below. Optional:
+  // absent falls back to English, which is what this check did before
+  // the rule existed, so no caller is forced to change.
+  locale?: string | null
 ): { ok: true } | { ok: false; rule: string } {
   const fail = (rule: string) => ({ ok: false as const, rule });
   const trimmed = reply.trim();
@@ -178,6 +193,13 @@ export function checkAckShape(
 
   const timeTokens = trimmed.match(/\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\s?(am|pm|hs?)\b/gi) ?? [];
   if (timeTokens.some((token) => !inboundText.toLowerCase().includes(token.toLowerCase()))) return fail("time");
+
+  // A day or month with no digits in it — "Thursday", "next weekend" —
+  // which every rule above misses because every rule above keys on
+  // digits. Same invariant, same direction: if the lead did not say it,
+  // FollowUp does not get to. See src/lib/grounding.ts for why this uses
+  // Intl rather than a list of English day names.
+  if (ungroundedCalendarWords(trimmed, inboundText, locale).length > 0) return fail("calendar");
 
   if (/^\s*(hi|hello|hey|dear|hola|buenos|buenas|namaste|namaskar|bonjour|olá|ola|ciao|hallo|salut)\b/i.test(trimmed)) {
     return fail("greeting");
@@ -229,7 +251,14 @@ function genericAckLine(businessName: string): string {
   // wording — "I'll take a look and <owner> will follow up shortly. Best,
   // <owner>" — mixed first and third person for the same signer and read
   // as filler; task #63's first two live leads both received it.
-  return `Thank you for contacting ${businessName}. I've received your message and will get back to you shortly.`;
+  // A business that has not named itself yet gets the sentence without a
+  // name, rather than its row label. Four real people received "Thank you
+  // for contacting My Business" before this existed; see
+  // businessDisplayName in src/lib/leadName.ts.
+  const named = businessDisplayName(businessName);
+  return named
+    ? `Thank you for contacting ${named}. I've received your message and will get back to you shortly.`
+    : "Thank you for your message. I've received it and will get back to you shortly.";
 }
 
 /**
@@ -444,8 +473,39 @@ export async function acknowledgeNewLead(
     // upgrade, rather than being silently marked as handled.
     const ackBusiness = await prisma.business.findUnique({
       where: { id: lead.businessId },
-      select: { tier: true },
+      select: { tier: true, holdAllForApproval: true },
     });
+
+    /**
+     * "Don't send any replies without asking me."
+     *
+     * Founder, 2026-09-20, in those words, with the reason: "They'll put
+     * us on spam, or they might report us."
+     *
+     * `holdAllForApproval` already stopped the silence nudge, the
+     * unanswered step-in, the reactivation and every workflow step. This
+     * one message was deliberately exempt — the file header above argues
+     * that holding the first touch "defeats the point of instant" — and
+     * that exemption is now withdrawn. It was the only thing on a beta
+     * account that could reach a stranger with nobody having read it,
+     * which makes it the only thing that can get the sending domain
+     * reported, and a domain cannot be un-reported.
+     *
+     * Checked BEFORE the acknowledgedAt claim, like the tier gate below
+     * and for the same reason: a lead held here is not "handled", it is
+     * waiting. If holding is ever lifted, a later inbound acknowledges it
+     * normally rather than finding it silently marked as done.
+     *
+     * The lead is not dropped or hidden. It is captured, scored and
+     * drafted exactly as before (scoring.ts), and the draft is waiting in
+     * Approvals — the only change is that a human presses send.
+     *
+     * Terminal for the deferred-DM queue: runDueInstantAcks clears the
+     * row for every reason except "error", so this does not re-enter the
+     * queue on the next tick.
+     */
+    if (ackBusiness?.holdAllForApproval) return { sent: false, reason: "held for approval" };
+
     const ackEligible = await checkAiEligibility(
       lead.businessId,
       lead,
@@ -490,7 +550,18 @@ export async function acknowledgeNewLead(
       const line = decision.source === "fallback" ? await localizeFixedText(decision.line, languageSample) : decision.line;
       body = await composeFollowUpEmail(leadFirstName, lead.businessId, line, { languageSample });
       const cleanSubject = input.emailSubject?.replace(/^(re|fwd?):\s*/i, "").trim();
-      subject = cleanSubject ? `Re: ${cleanSubject}` : await localizeFixedText(`Thank you for contacting ${businessName}`, languageSample);
+      // The subject line is the other place the business name reaches a
+      // stranger — and on a cold first email it is the ONLY thing they
+      // read before deciding whether to open it. "Thank you for
+      // contacting My Business" in an inbox is indistinguishable from
+      // spam.
+      const namedBusiness = businessDisplayName(businessName);
+      subject = cleanSubject
+        ? `Re: ${cleanSubject}`
+        : await localizeFixedText(
+            namedBusiness ? `Thank you for contacting ${namedBusiness}` : "Thank you for your message",
+            languageSample
+          );
     } else {
       body = await localizeFixedText(`Hi! ${decision.line}`, languageSample);
     }

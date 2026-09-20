@@ -3391,3 +3391,75 @@ with it.
 5. **Verified by typecheck, 1348 tests and a production build — not by looking.** The
    database is unreachable from this sandbox, so none of these screens were rendered. Every
    one is a copy or a branch change, which is the kind that typechecks clean and reads wrong.
+
+---
+
+## 2026-09-20 — A photographer pitching the business was filed as a lead
+
+**Reported by the founder, from his own live inbox**, with the thread attached: "I don't
+know how this is even a lead, because she is not looking for a photographer. They are the
+service provider. Please be more accurate and train them to identify which is a lead and
+which is not."
+
+He is right, and the classifier's own prompt already said so — which is the interesting
+part. It listed vendors to reject: *"advertising, software, insurance, financing, warranties
+or service contracts, leads-for-sale."* Every item on that list is a **B2B commodity**. A
+photographer writing to offer their craft looks nothing like any of them, and reads exactly
+like a delighted customer: praise for your work, eager to discuss your event, free for a
+call this week, a signature with their own portfolio. Tone was doing all the work, and tone
+is the one signal a pitch controls completely.
+
+**Two structural defects, not a wording miss.**
+
+1. **The verdict was generated before any reasoning.** Field order is generation order under
+   strict structured output — this codebase already knows that, and `scoreLead`'s schema
+   carries a comment saying so ("the number is the sum of stated evidence, not a verdict the
+   model then rationalises"). That fix was never applied to `classifyAsProspect`, the one
+   classifier that can *delete a customer*. `isProspect` came first; `reason` was written
+   afterward to justify it. `whoIsSelling` — "whose work would be paid for?" — now generates
+   first, so the direction has to be settled before a verdict exists.
+
+2. **Nothing held the two answers against each other.** "They are selling to us" and "they
+   are a prospective customer" are opposite ends of one transaction. The code now refuses to
+   return both, rather than asking the model to stay consistent — because a warm,
+   well-researched pitch is precisely the input that talks a model out of its own rule.
+
+**The override is deliberately one-directional.** It can only turn a `true` into a `false`.
+"Not selling to us" does not make someone a customer — a newsletter and a password reset are
+both `neither` — so this can never manufacture a lead the model did not find. Getting that
+backwards would trade a nuisance bug for the one this product cannot have.
+
+**The second half of the same incident, which the founder did not have to point out.** The
+reply FollowUp sent read: *"I can confirm that we're actively seeking a photographer for our
+outdoor corporate party in Etobicoke."* Nobody at the business ever said that. Henji asserted
+it in a cold email and the draft adopted it as the owner's own confirmed fact.
+
+The drafting prompt already forbade inventing facts, and already refused *"a prior commitment
+or agreement the lead merely claims."* It said nothing about a claimed **situation** — an
+event you are supposedly holding, a need you supposedly have — which is what came through.
+Both drafters now separate two acts that had been treated as one: *referring* to what the
+sender said is allowed; *agreeing it is true* is not. Only the business's own messages can
+establish a fact about the business.
+
+That one matters more than the classification bug. Echoing a stranger's premise back as
+confirmed is how a cold opener becomes a warm confirmed need — and the stranger is the only
+party who gains.
+
+**Self-critique.**
+
+1. **The generation-order lesson was written down and not applied.** It is in `scoreLead`'s
+   schema, in this file's own history, and it was sitting unfixed on the highest-stakes
+   classifier in the product. A lesson recorded in one place and not swept across the others
+   is half a lesson.
+2. **A list of examples is not a rule.** The vendor list read as thorough and was thorough
+   about the wrong axis — it enumerated *what* gets sold rather than testing *which
+   direction* the money moves. Any new category of seller would have walked through it, and
+   one did.
+3. **Prompt-only, and I can't measure it.** The direction guard is enforced in code, which is
+   real. The prompt changes around it are not testable beyond asserting the text is present —
+   the tests here mock the model. The honest check is the next week of the founder's inbox,
+   and the `FilteredEmail` rows are where to look: every rejection is recorded with its
+   reason and is overrulable in Settings, so a wrong filter is visible rather than silent.
+4. **Untested assumption, stated:** I could not read the production database, so I do not know
+   how many existing leads are actually vendor pitches. If Henji is one of several, they are
+   already in the CRM and this fix does not retroactively remove them.

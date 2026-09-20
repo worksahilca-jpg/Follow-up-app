@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { appUrl } from "@/lib/stripe";
-import { exchangeFacebookAuthCode } from "@/lib/facebook";
+import { activateFacebookPageWebhooks, exchangeFacebookAuthCode } from "@/lib/facebook";
 import { encryptSecret } from "@/lib/crypto";
 import { recordAudit } from "@/lib/audit";
 
@@ -54,7 +54,14 @@ export async function GET(request: NextRequest) {
     try {
       await prisma.business.update({
         where: { id: ctx.businessId },
-        data: { facebookPageAccessToken: page.accessToken, facebookPageId: page.id, facebookPageName: page.name },
+        // Cleared, then set below only if Meta confirms — see the same
+        // reasoning in /api/facebook/oauth/select-page.
+        data: {
+          facebookPageAccessToken: page.accessToken,
+          facebookPageId: page.id,
+          facebookPageName: page.name,
+          facebookWebhookSubscribedAt: null,
+        },
       });
     } catch (err) {
       if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
@@ -62,7 +69,19 @@ export async function GET(request: NextRequest) {
       }
       throw err;
     }
-    void recordAudit(ctx, "integration.facebook.connect", { meta: { via: "oauth", pageId: page.id } });
+    // Without this Meta delivers no Messenger DM and no Lead Ad for the
+    // Page (see subscribeFacebookPageWebhooks). Saved regardless; the
+    // outcome lands in the audit row and in the column Settings reads,
+    // so a silent Page can be explained rather than just being silent.
+    const subscribed = await activateFacebookPageWebhooks(ctx.businessId, page.id, page.accessToken);
+    void recordAudit(ctx, "integration.facebook.connect", {
+      meta: {
+        via: "oauth",
+        pageId: page.id,
+        webhookSubscribed: subscribed.ok,
+        ...(subscribed.ok ? {} : { webhookError: subscribed.message }),
+      },
+    });
     settingsUrl.searchParams.set("facebook", "connected");
     const res = NextResponse.redirect(settingsUrl);
     res.cookies.delete("fb_oauth_state");

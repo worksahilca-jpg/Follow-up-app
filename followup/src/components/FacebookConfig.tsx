@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Check, ChevronDown, MessageSquare } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, MessageSquare } from "lucide-react";
 
 interface PendingPage {
   id: string;
@@ -24,6 +24,13 @@ export default function FacebookConfig() {
 
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
+  // Connected and receiving are two different questions. A Page can be
+  // saved, named and readable while Facebook sends FollowUp nothing at
+  // all, because the per-Page subscription never went through — see
+  // subscribeFacebookPageWebhooks in src/lib/facebook.ts.
+  const [receiving, setReceiving] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
   const [pageName, setPageName] = useState<string | null>(null);
   const [pageId, setPageId] = useState<string | null>(null);
   const [webhookUrl, setWebhookUrl] = useState("");
@@ -41,7 +48,10 @@ export default function FacebookConfig() {
   // (refetching status, fetching the page list), never sets this.
   const oauthResult = searchParams.get("facebook");
   const statusMessage =
-    oauthResult === "connected"
+    // Suppressed while the Page isn't receiving: this sentence makes the
+    // same promise the block below has to walk back, and the two sitting
+    // together is worse than either alone.
+    oauthResult === "connected" && receiving
       ? { kind: "success" as const, text: "Facebook connected — Messenger DMs and lead-form submissions become leads automatically." }
       : oauthResult === "error"
         ? { kind: "error" as const, text: searchParams.get("message") ?? "Couldn't connect Facebook." }
@@ -50,9 +60,10 @@ export default function FacebookConfig() {
   function load() {
     return fetch("/api/facebook/config")
       .then((r) => r.json())
-      .then((data: { success: boolean; connected?: boolean; pageId?: string | null; pageName?: string | null; webhookUrl?: string; verifyToken?: string; oauthAvailable?: boolean }) => {
+      .then((data: { success: boolean; connected?: boolean; receiving?: boolean; pageId?: string | null; pageName?: string | null; webhookUrl?: string; verifyToken?: string; oauthAvailable?: boolean }) => {
         if (data.success) {
           setConnected(!!data.connected);
+          setReceiving(!!data.receiving);
           setPageId(data.pageId ?? null);
           setPageName(data.pageName ?? null);
           setWebhookUrl(data.webhookUrl ?? "");
@@ -108,9 +119,10 @@ export default function FacebookConfig() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessToken: tokenDraft.trim() }),
       });
-      const data: { success: boolean; pageId?: string; pageName?: string | null; message?: string } = await res.json();
+      const data: { success: boolean; pageId?: string; pageName?: string | null; receiving?: boolean; message?: string } = await res.json();
       if (data.success) {
         setConnected(true);
+        setReceiving(!!data.receiving);
         setPageId(data.pageId ?? null);
         setPageName(data.pageName ?? null);
         setTokenDraft("");
@@ -122,6 +134,21 @@ export default function FacebookConfig() {
     }
   }
 
+  async function retrySubscription() {
+    setRetrying(true);
+    setRetryError(null);
+    try {
+      const res = await fetch("/api/facebook/subscribe", { method: "POST" });
+      const data: { success: boolean; receiving?: boolean; message?: string } = await res.json();
+      setReceiving(!!data.receiving);
+      // Facebook's own sentence, shown as it came: it names the missing
+      // permission or the lost Page role, which is what to act on.
+      if (!data.success) setRetryError(data.message ?? "Facebook turned it down again.");
+    } finally {
+      setRetrying(false);
+    }
+  }
+
   async function disconnect() {
     setSaving(true);
     try {
@@ -129,6 +156,8 @@ export default function FacebookConfig() {
       const data: { success: boolean } = await res.json();
       if (data.success) {
         setConnected(false);
+        setReceiving(false);
+        setRetryError(null);
         setPageId(null);
         setPageName(null);
       }
@@ -183,10 +212,41 @@ export default function FacebookConfig() {
 
           {!pendingPages && (connected ? (
             <div className="mt-3">
-              <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }}>
-                <Check className="h-3.5 w-3.5" /> Connected — {pageName ?? "Page"} ({pageId}). Messenger DMs and lead-form
-                submissions become leads automatically.
-              </p>
+              {receiving ? (
+                <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }}>
+                  <Check className="h-3.5 w-3.5" /> Connected — {pageName ?? "Page"} ({pageId}). Messenger DMs and lead-form
+                  submissions become leads automatically.
+                </p>
+              ) : (
+                /* The green tick used to show here regardless, on a Page
+                   that would never receive a thing. Connected is the
+                   smaller half of the promise; this states the other half
+                   plainly, and gives the one action that can change it. */
+                <div className="rounded-lg p-3" style={{ backgroundColor: "var(--coral-soft)" }}>
+                  <p className="text-sm font-semibold flex items-center gap-1.5" style={{ color: "var(--coral)" }}>
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    Facebook isn&apos;t sending messages through yet
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--coral)" }}>
+                    {pageName ?? "Your Page"} is linked, but Facebook hasn&apos;t switched the connection on — so nothing
+                    people send the Page reaches FollowUp. This usually clears once Meta approves the app; it can also
+                    mean you no longer manage the Page.
+                  </p>
+                  {retryError && (
+                    <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--coral)" }}>
+                      Facebook said: {retryError}
+                    </p>
+                  )}
+                  <button
+                    onClick={retrySubscription}
+                    disabled={retrying}
+                    className="mt-2 rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                    style={{ backgroundColor: "var(--ink)" }}
+                  >
+                    {retrying ? "Checking…" : "Try again"}
+                  </button>
+                </div>
+              )}
               <button onClick={disconnect} disabled={saving} className="mt-2 text-xs font-medium" style={{ color: "var(--coral)" }}>
                 Disconnect
               </button>

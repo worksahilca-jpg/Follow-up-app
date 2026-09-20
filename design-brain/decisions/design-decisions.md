@@ -3106,3 +3106,74 @@ because they answer different questions in different places, but it is the begin
 pattern worth watching: every time something goes quiet, the fix has been another sentence
 somewhere. At some point the right answer is one place that says what is wrong with the
 account, not N surfaces each explaining their own corner of it.
+
+---
+
+## 2026-09-20 — "Connected" and "receiving" are two different promises, and Facebook was only keeping one
+
+**The build I pitched, and the correction.** I told Sahil the next job was *"wire up Facebook
+connect — Instagram works, Facebook doesn't."* That was wrong, and reading the code first
+showed it in five minutes: `FacebookConfig.tsx`, `/api/facebook/oauth/{start,callback,
+select-page}`, `/api/facebook/config` and `src/lib/facebook.ts` all exist and are wired into
+Settings, and `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` are both set in production. The
+"Connect with Facebook" button is live. Task #77 shipped it.
+
+**The real bug, which is narrower and worse.** None of the three connect paths ever called
+`POST /{page-id}/subscribed_apps`. Meta only delivers a Page's events to an app listed under
+that Page's own subscriptions, so every Page ever connected through FollowUp received nothing
+— not one Messenger DM, not one Lead Ad — while Settings showed a green tick reading
+*"Connected — Messenger DMs and lead-form submissions become leads automatically."*
+
+Instagram makes this call. WhatsApp makes this call. The comment above
+`subscribeInstagramWebhooks` even records finding it live on 2026-09-19. Facebook was the
+one of the three that never got it, and nothing caught that because the channel looked
+finished from every angle except the one that mattered.
+
+**This is the second time in two days that a check-first pass changed the job.** Yesterday I
+pitched "the owner is told nothing" and the dashboard was already telling them. Today I
+pitched "Facebook isn't built" and it was built. Both times the real defect was smaller,
+more specific, and more damaging than the one I had described. The lesson is not "check
+before building" — it is that **a confident pitch is exactly the thing that most needs
+checking**, because nobody else will check it.
+
+**What shipped:** `subscribeFacebookPageWebhooks` (network only, testable), wrapped by
+`activateFacebookPageWebhooks` which also records the outcome, called from all three connect
+paths. `Business.facebookWebhookSubscribedAt` (additive, nullable) stores only a confirmed
+success. `POST /api/facebook/subscribe` retries for an already-connected Page.
+
+**The design decision: stop conflating two states.** The panel used to ask one question —
+is a token saved? — and answer it in green. It now asks two, because the owner's real
+question is not "did I connect it" but "will a message reach me". A Page that is connected
+but not receiving gets a coral block (`--coral` on `--coral-soft`, the approved warning
+token per [[approved#^A-005|A-005]]) instead of the tick:
+
+> **Facebook isn't sending messages through yet**
+> {Page} is linked, but Facebook hasn't switched the connection on — so nothing people send
+> the Page reaches FollowUp. This usually clears once Meta approves the app; it can also
+> mean you no longer manage the Page.
+> [Try again]
+
+Brand principle 3's four questions, in order: *what happened* (it's linked but not switched
+on), *why* (Meta approval, or a lost Page role), *what can I do* (try again), *what needs
+me* (nothing else). Meta's own refusal sentence is shown verbatim underneath on a failed
+retry, because it names the missing permission — which is the actionable thing — and our
+paraphrase would not.
+
+**The `?facebook=connected` success banner is suppressed while a Page isn't receiving.** It
+makes the identical promise the block below it has to walk back, and the two sitting
+together is worse than either alone.
+
+**Self-critique, and it is the same one as yesterday.** The panel is now taller and
+two-state where it used to be one line, which is a real cost on a Settings page that already
+has six channels on it. I think it is worth paying here — a silent channel is the failure
+this whole product exists to prevent — but "add another explanatory block" is now three days
+running as my answer to "something is quietly broken," and the honest read is that Settings
+is accumulating per-channel prose faster than it is accumulating clarity. The better shape,
+eventually, is one status line per channel that states connected/receiving in the same
+grammar for all six, rather than six bespoke paragraphs. Not this PR; worth Sahil knowing.
+
+**Also worth saying plainly:** this fix makes FollowUp ask Meta the right question. It does
+not make Meta say yes. If `pages_manage_metadata` or `pages_messaging` are still in App
+Review, the retry will keep showing Meta's refusal — which is now at least *visible*
+instead of being a Page that looks connected and does nothing. That is task #65's territory,
+not this one's.

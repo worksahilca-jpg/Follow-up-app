@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { decryptSecret } from "@/lib/crypto";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
-import type { ManagedPage } from "@/lib/facebook";
+import { activateFacebookPageWebhooks, type ManagedPage } from "@/lib/facebook";
 
 const selectPageSchema = z.object({ pageId: z.string() });
 
@@ -37,7 +37,15 @@ export async function POST(request: NextRequest) {
   try {
     await prisma.business.update({
       where: { id: ctx.businessId },
-      data: { facebookPageAccessToken: page.accessToken, facebookPageId: page.id, facebookPageName: page.name },
+      // Cleared here, set below only if Meta actually confirms — otherwise
+      // a previously-connected Page's confirmation would carry over to
+      // this one and Settings would claim a subscription nobody made.
+      data: {
+        facebookPageAccessToken: page.accessToken,
+        facebookPageId: page.id,
+        facebookPageName: page.name,
+        facebookWebhookSubscribedAt: null,
+      },
     });
   } catch (err) {
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
@@ -45,9 +53,26 @@ export async function POST(request: NextRequest) {
     }
     throw err;
   }
-  void recordAudit(ctx, "integration.facebook.connect", { meta: { via: "oauth", pageId: page.id } });
+  // Without this Meta delivers nothing for the Page — no Messenger DM,
+  // no Lead Ad (see subscribeFacebookPageWebhooks). The connection is
+  // saved regardless; the outcome is persisted so Settings can say the
+  // Page is connected but not yet receiving, and offer to try again.
+  const subscribed = await activateFacebookPageWebhooks(ctx.businessId, page.id, page.accessToken);
+  void recordAudit(ctx, "integration.facebook.connect", {
+    meta: {
+      via: "oauth",
+      pageId: page.id,
+      webhookSubscribed: subscribed.ok,
+      ...(subscribed.ok ? {} : { webhookError: subscribed.message }),
+    },
+  });
 
-  const res = NextResponse.json({ success: true, pageId: page.id, pageName: page.name });
+  const res = NextResponse.json({
+    success: true,
+    pageId: page.id,
+    pageName: page.name,
+    webhookSubscribed: subscribed.ok,
+  });
   res.cookies.delete("fb_pending_pages");
   return res;
 }

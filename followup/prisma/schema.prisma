@@ -216,6 +216,13 @@ model Business {
   facebookPageId          String? @unique
   facebookPageName        String?
   facebookPageAccessToken String?
+  // When Meta last confirmed this app is subscribed to the Page's
+  // `messages` and `leadgen` webhooks. Null on a connected Page means the
+  // subscription call never succeeded — the Page is saved and readable,
+  // and not one DM or lead-form submission will ever arrive. Recorded
+  // rather than checked live so Settings can say so on every load without
+  // a Graph round-trip per render (see subscribeFacebookPageWebhooks).
+  facebookWebhookSubscribedAt DateTime?
 
   // WhatsApp through Meta's Cloud API, on the owner's OWN number
   // (Coexistence — the number stays in the WhatsApp Business app on their

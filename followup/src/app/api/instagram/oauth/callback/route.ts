@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { appUrl } from "@/lib/stripe";
-import { exchangeInstagramAuthCode, resolveInstagramUserId, subscribeInstagramWebhooks } from "@/lib/instagram";
+import { activateInstagramWebhooks, exchangeInstagramAuthCode, resolveInstagramUserId } from "@/lib/instagram";
 import { recordAudit } from "@/lib/audit";
 
 export async function GET(request: NextRequest) {
@@ -50,7 +50,14 @@ export async function GET(request: NextRequest) {
   try {
     await prisma.business.update({
       where: { id: ctx.businessId },
-      data: { instagramAccessToken: exchanged.accessToken, instagramUserId: resolved.id },
+      // Cleared here, set below only if Meta actually confirms —
+      // otherwise a previous account's confirmation would carry over to
+      // this one and Settings would claim a subscription nobody made.
+      data: {
+        instagramAccessToken: exchanged.accessToken,
+        instagramUserId: resolved.id,
+        instagramWebhookSubscribedAt: null,
+      },
     });
   } catch (err) {
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
@@ -60,8 +67,9 @@ export async function GET(request: NextRequest) {
   }
   // Without this Meta delivers no DM webhooks for the account (see
   // subscribeInstagramWebhooks). The connection is saved regardless; the
-  // outcome lands in the audit row so a silent account can be explained.
-  const subscribed = await subscribeInstagramWebhooks(resolved.id, exchanged.accessToken);
+  // outcome is persisted as well as audited, so Settings can say the
+  // account is connected but not receiving, and offer to try again.
+  const subscribed = await activateInstagramWebhooks(ctx.businessId, resolved.id, exchanged.accessToken);
   void recordAudit(ctx, "integration.instagram.connect", {
     meta: { via: "oauth", webhookSubscribed: subscribed.ok, ...(subscribed.ok ? {} : { webhookError: subscribed.message }) },
   });

@@ -1,0 +1,11 @@
+-- When Meta last confirmed this app is subscribed to a connected
+-- Instagram account's "messages" webhook.
+--
+-- Additive and nullable. Every existing row keeps NULL, which is the
+-- honest answer: the subscription call was made on connect but its
+-- result was never stored, so no connected account has a recorded
+-- confirmation. Reconnecting — or the retry this column makes possible
+-- — fills it in.
+--
+-- Mirrors "facebookWebhookSubscribedAt" (20260920060000).
+ALTER TABLE "Business" ADD COLUMN "instagramWebhookSubscribedAt" TIMESTAMP(3);

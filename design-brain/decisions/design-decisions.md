@@ -3177,3 +3177,49 @@ not make Meta say yes. If `pages_manage_metadata` or `pages_messaging` are still
 Review, the retry will keep showing Meta's refusal — which is now at least *visible*
 instead of being a Page that looks connected and does nothing. That is task #65's territory,
 not this one's.
+
+---
+
+## 2026-09-20 — The same sentence, twice in two days, so it becomes one component
+
+**The bug, one day after its twin.** Instagram's two connect paths both called
+`subscribed_apps` — unlike Facebook, which never called it at all — but neither stored the
+answer. A refusal went into an audit row's `meta` field and nowhere else, so Settings kept
+showing *"Connected — real DMs will become leads automatically"* on an account Meta had
+declined to deliver for. Connected and broken looked identical.
+
+**WhatsApp was checked and is not affected.** Both of its connect paths return 400 and save
+nothing when the subscription fails, so it cannot reach this state and needs no column. I had
+told the founder "Instagram and WhatsApp have the identical hole" before checking; that was
+wrong, and reading the two routes took two minutes. Third time in three days that a confident
+pitch was wrong in the specifics while right in spirit. The pattern is now well enough
+established to state as a rule: **a claim about a sibling channel is a hypothesis until the
+sibling's code has been read.**
+
+**The design decision: extract, don't duplicate.** Yesterday's entry ended with a self-critique
+— that Settings was accumulating per-channel prose faster than clarity, and that the right
+shape was one status grammar for all six channels rather than six bespoke paragraphs. Needing
+the identical block a second time the next day is the cheapest possible evidence for that, so
+this PR takes it: `ChannelNotReceiving.tsx` holds the whole state — heading, explanation,
+Meta's verbatim refusal, and the retry — and both Facebook and Instagram pass in four strings.
+
+> **{Platform} isn't sending messages through yet**
+> {Subject} is linked, but {Platform} hasn't switched the connection on — so {missed}. This
+> usually clears once Meta approves the app; it can also mean {otherCause}.
+> [Try again]
+
+The variable parts are deliberately the *specifics* (a Page vs an account; "no longer manage
+the Page" vs "no longer a Business account") and never the structure, so the two panels
+cannot drift into saying the same thing two ways.
+
+**Self-critique.** The component takes four content strings as props, which is a design smell —
+it is a sentence with holes, and a fifth channel with a slightly different shape will strain
+it. I judged that acceptable because the alternative (a channel enum inside the component)
+puts channel knowledge in a presentational file, and because two call sites is too few to
+know the right abstraction. If a third channel needs this, the props should become a per-channel
+config object owned next to the channel, not more strings at the call site.
+
+**Not fixed here, and worth knowing:** nothing ever re-checks the subscription after the first
+success. If Meta drops it later — the person loses their Page role, a permission lapses — the
+column still reads subscribed and the green tick stays. The state is now *showable*; detecting
+entry into it is a separate piece of work.

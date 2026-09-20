@@ -198,6 +198,14 @@ model Business {
   // (grantBetaPlan in src/lib/billing.ts); off for everyone else.
   holdAllForApproval   Boolean @default(false)
 
+  // When Meta last confirmed this app is subscribed to the account's
+  // `messages` webhook. Null on a connected account means the
+  // subscription never succeeded — the account is saved and readable,
+  // and not one DM will arrive. Same field, same meaning, as
+  // facebookWebhookSubscribedAt below; WhatsApp needs no equivalent
+  // because both of its connect paths refuse to save at all when the
+  // subscription fails, so it can never reach this state.
+  instagramWebhookSubscribedAt DateTime?
   instagramUserId      String? @unique
   instagramAccessToken String?
   // How far the conversation poller has read (src/lib/instagramPoll.ts).

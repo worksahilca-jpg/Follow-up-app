@@ -174,6 +174,35 @@ export async function subscribeInstagramWebhooks(
 }
 
 /**
+ * The above, plus the record of it.
+ *
+ * Until 2026-09-20 the call sites made the subscription and then threw
+ * the answer away into an audit row. A refusal left the account saved,
+ * named and showing a green "Connected — real DMs will become leads
+ * automatically" tick, on an account that would never receive a DM;
+ * the only trace was a meta field on an audit event nobody reads. The
+ * same shape as activateFacebookPageWebhooks in src/lib/facebook.ts.
+ *
+ * Only a success is written. A failure deliberately leaves the column
+ * null — "Meta has never confirmed this" is the honest reading, and it
+ * is what Settings shows a warning and a retry for.
+ */
+export async function activateInstagramWebhooks(
+  businessId: string,
+  igUserId: string,
+  accessToken: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const result = await subscribeInstagramWebhooks(igUserId, accessToken);
+  if (result.ok) {
+    await prisma.business.update({
+      where: { id: businessId },
+      data: { instagramWebhookSubscribedAt: new Date() },
+    });
+  }
+  return result;
+}
+
+/**
  * Sends a real Instagram DM via the Graph API's /{IG_USER_ID}/messages
  * endpoint (the documented path; /me/messages is the fallback for a
  * business connected before instagramUserId was stored).

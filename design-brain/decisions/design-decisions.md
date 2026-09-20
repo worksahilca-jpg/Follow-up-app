@@ -3276,12 +3276,22 @@ the mailboxes use, with the classifier's own sentence verbatim, and a one-tap Re
    conversation and the offer would be a lie. The thread is stored on the filtered row and
    read back defensively.
 
-**Self-critique.** The `ownerSentBusinessContent` regex list is the weakest part: it is
-English-only, in a product whose whole language story is that customers write in Hindi,
-Punjabi and Spanish. A Hinglish "₹2000 Tuesday ko" partly matches by luck, not design. It
-only *adds* a reason to import, so a miss costs nothing — but it is a signal that works
-best for the customers who need it least, and it should become a model call or a
-multilingual list before this channel is relied on outside English.
+**Self-critique, and it was acted on the same hour.** The first cut computed "did the owner
+send a price or a time?" with a regex list — `$120`, `Tuesday at 3`, `invoice`. English
+only, in a product whose whole language story is that customers write in Hindi, Punjabi and
+Spanish. I flagged it as the weakest part; the founder's reply was to fix it rather than
+note it.
+
+**The fix deleted code rather than translating it.** Stage 2 already reads the owner's own
+messages in the transcript, so the model could always see a quoted price — the regex was
+only deciding whether to *mention* it. So the list is gone and stage 2 is simply told, every
+time: read the business's own messages too, and if they quoted a price, offered a time,
+arranged to come out or sent an invoice — *in any language or script, including a language
+written in English letters* — then work was discussed.
+
+The general lesson, and it is one this codebase keeps relearning: **when a signal is already
+in front of the model, computing it in code is both weaker and more work.** A keyword list
+can only ever be as multilingual as the person who wrote it remembered to be.
 
 Also unresolved, and inherited: stage 2 costs a second AI call per rejected chat. On a
 30-day import of a busy personal number that is real money for chats that are mostly going

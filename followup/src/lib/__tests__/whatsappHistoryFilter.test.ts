@@ -27,11 +27,11 @@ const { leadFindFirst } = vi.hoisted(() => ({ leadFindFirst: vi.fn(async () => n
 vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect }));
 vi.mock("@/lib/db", () => ({ prisma: { lead: { findFirst: leadFindFirst } } }));
 
-import { judgeHistoryThread, ownerSentBusinessContent, parseStoredThread } from "@/lib/inbound/whatsappHistoryFilter";
+import { judgeHistoryThread, parseStoredThread } from "@/lib/inbound/whatsappHistoryFilter";
 
 const business = { name: "Acme Plumbing", industry: "plumbing" };
 const contact = { name: "Priya", phone: "+14165550100" };
-const noSignals = { ownerSentBusinessContent: false, knownOnAnotherChannel: false };
+const noSignals = { knownOnAnotherChannel: false };
 
 function msg(direction: "inbound" | "outbound", body: string, minutesAgo = 0): Message {
   return {
@@ -113,24 +113,31 @@ describe("the facts a classifier cannot read", () => {
     expect(classifyAsProspect).not.toHaveBeenCalled();
   });
 
-  it("tells the second look when the owner already sent a price or a time", async () => {
-    await judgeHistoryThread([msg("inbound", "hey"), msg("outbound", "Can do Tuesday at 3")], contact, business, {
-      ...noSignals,
-      ownerSentBusinessContent: true,
-    });
+  /**
+   * "Did the owner quote a price or offer a time?" was a regex list on
+   * the day it was written, and it matched "$120" and "Tuesday at 3" and
+   * nothing in Hindi, Punjabi or Spanish — weakest for exactly the
+   * customers this product's language work exists for. It is now an
+   * instruction to the model, which already has the owner's own messages
+   * in front of it and can read them in any script.
+   */
+  it("tells the second look to read the owner's own messages, in any language", async () => {
+    await judgeHistoryThread([msg("inbound", "hey"), msg("outbound", "Can do Tuesday at 3")], contact, business, noSignals);
     const deepContext = classifyAsProspect.mock.calls[1][2] as { industry: string };
-    expect(deepContext.industry).toMatch(/price, a time or an invoice/);
+    expect(deepContext.industry).toMatch(/quoted a price, offered a time/);
+    expect(deepContext.industry).toMatch(/ANY language or script/);
+    // Named explicitly, because a romanised language is the case a
+    // keyword list gets wrong most often and most invisibly.
+    expect(deepContext.industry).toMatch(/English letters/);
   });
-});
 
-describe("ownerSentBusinessContent", () => {
-  it("reads the owner's side, never the customer's", async () => {
-    // A customer asking "how much" is an enquiry the first look catches
-    // on its own; it must not count as the owner having quoted.
-    expect(ownerSentBusinessContent([msg("inbound", "how much for a boiler service?")])).toBe(false);
-    expect(ownerSentBusinessContent([msg("outbound", "That'd be $180 all in")])).toBe(true);
-    expect(ownerSentBusinessContent([msg("outbound", "I'll send the invoice over")])).toBe(true);
-    expect(ownerSentBusinessContent([msg("outbound", "haha see you sunday")])).toBe(false);
+  // The instruction is unconditional now: there is no precomputed flag
+  // left to gate it, and gating it would put us back to deciding in code
+  // what only the transcript can show.
+  it("gives the second look that instruction every time, not only when a keyword matched", async () => {
+    await judgeHistoryThread([msg("inbound", "kal aa sakte ho?"), msg("outbound", "haan, 2000 rupaye")], contact, business, noSignals);
+    const deepContext = classifyAsProspect.mock.calls[1][2] as { industry: string };
+    expect(deepContext.industry).toMatch(/quoted a price, offered a time/);
   });
 });
 

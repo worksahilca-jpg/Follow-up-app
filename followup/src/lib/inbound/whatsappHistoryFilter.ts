@@ -39,18 +39,26 @@ import type { Message } from "@/lib/types";
  * gmail.ts already does when classification errors.
  */
 
-/** The extra evidence stage 2 gets that stage 1 does not. */
+/**
+ * The one fact stage 2 needs that no amount of reading can supply.
+ *
+ * "Did the owner send this person a price or a time?" used to live here
+ * too, computed by a regex list. It was dropped on 2026-09-20, the day it
+ * was written: the list matched "$120" and "Tuesday at 3" and nothing in
+ * Hindi, Punjabi or Spanish — weakest for exactly the customers this
+ * product's language work exists for. And it was never needed. Stage 2
+ * already reads the owner's own messages in the transcript, so the model
+ * can see a quote in any language far better than a regex can. It is now
+ * simply TOLD to look, and the list is gone rather than translated.
+ */
 export interface DeepSignals {
-  /**
-   * The owner sent something only a business sends into this chat — a
-   * price, a quote, a time slot, an invoice. Whatever the chat opened
-   * like, that is a job.
-   */
-  ownerSentBusinessContent: boolean;
   /**
    * This person is already a lead on another channel (email, Instagram,
    * a web form). If they are a customer over there they are a customer
    * here, and nothing the classifier reads should overturn that.
+   *
+   * A database fact, not a judgement — which is why it stays a flag while
+   * the other signal became an instruction.
    */
   knownOnAnotherChannel: boolean;
 }
@@ -68,37 +76,6 @@ export type HistoryVerdict =
 // and turned into a job on message twelve is precisely the case this has
 // to catch.
 const STAGE_TWO_MESSAGES = 20;
-
-/**
- * Words the owner only types when there is a job on. Matched on the
- * OWNER's side of the chat, never the customer's — a customer saying
- * "how much" is an enquiry stage 1 already catches; an owner answering
- * with a figure is a transaction, and that is the signal stage 1 misses
- * when the chat opened with "hey".
- *
- * Deliberately narrow and boring. This does not decide anything on its
- * own: it is one input handed to the classifier, which still makes the
- * call. A false positive here costs an imported chat, which is the
- * direction this file errs in anyway.
- */
-const BUSINESS_CONTENT = [
-  /\b(?:quote|quoted|estimate|invoice|deposit|receipt)\b/i,
-  // A currency amount: "$120", "120 dollars", "£85", "₹2000".
-  /[$£€₹]\s?\d/,
-  /\b\d+\s?(?:dollars|pounds|euros|rupees)\b/i,
-  // An offered time: "Tuesday at 3", "tomorrow 9am", "between 2 and 4".
-  /\b(?:mon|tues|wednes|thurs|fri|satur|sun)day\b.{0,20}\b\d/i,
-  /\b\d{1,2}\s?(?:am|pm)\b/i,
-  /\b(?:book(?:ed|ing)?|schedul(?:e|ed)|appointment|come (?:by|over|round))\b/i,
-];
-
-/**
- * Does the owner's side of this chat contain something only a business
- * says? Outbound messages only.
- */
-export function ownerSentBusinessContent(messages: Message[]): boolean {
-  return messages.some((m) => m.direction === "outbound" && BUSINESS_CONTENT.some((re) => re.test(m.body)));
-}
 
 /**
  * Is this number already a lead on some other channel for this business?
@@ -152,17 +129,24 @@ export async function judgeHistoryThread(
     // rather than writing a second prompt is the point: one definition of
     // "customer" across every channel, and stage 2 differs only in what
     // it is shown.
-    // The signal goes on the business context because that is the field
-    // the prompt already treats as "what you need to know to judge this
-    // the way someone in this trade would".
+    // Stage 2 is told what to look for rather than handed a precomputed
+    // boolean. The transcript below already contains the owner's own
+    // messages, so the model can see a quoted price or an offered time in
+    // whatever language and script the two of them actually use — which a
+    // keyword list could only ever do for English.
+    //
+    // Goes on the business context because that is the field the prompt
+    // already treats as "what you need to know to judge this the way
+    // someone in this trade would".
     const deepContext: ClassifierBusinessContext | undefined = business
       ? {
           ...business,
-          industry: signals.ownerSentBusinessContent
-            ? `${business.industry ?? "small"} business. Note: this business has already sent this contact a ` +
-              `price, a time or an invoice in this same conversation — whatever the chat opened like, work was ` +
-              `discussed, so treat it as customer business unless the thread plainly shows otherwise`
-            : business.industry,
+          industry:
+            `${business.industry ?? "small"} business. Read the business's OWN messages in this thread as well ` +
+            `as the customer's: if the business quoted a price, offered a time, arranged to come out, or sent an ` +
+            `invoice — in ANY language or script, including a language written in English letters — then work was ` +
+            `discussed, whatever the conversation opened like, and this is customer business unless the thread ` +
+            `plainly shows otherwise`,
         }
       : business;
 

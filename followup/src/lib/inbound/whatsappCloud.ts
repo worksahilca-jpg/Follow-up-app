@@ -8,7 +8,7 @@ import { captureDirectReply, createInboundMessageIfNew } from "@/lib/instagram";
 import { findOrCreateLeadByPhone } from "@/lib/twilio";
 import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import { pickAssignee } from "@/lib/assignment";
-import { judgeHistoryThread, knownOnAnotherChannel, ownerSentBusinessContent } from "@/lib/inbound/whatsappHistoryFilter";
+import { judgeHistoryThread, knownOnAnotherChannel } from "@/lib/inbound/whatsappHistoryFilter";
 // Named UiMessage locally: this file already has its own WaMessage (Meta's
 // wire shape), and two things called Message in one file is how the wrong
 // one gets used.
@@ -316,10 +316,7 @@ async function handleHistory(businessId: string, value: { history?: unknown; con
         transcript,
         { name: contactName ?? "WhatsApp contact", phone },
         business ?? undefined,
-        {
-          ownerSentBusinessContent: ownerSentBusinessContent(transcript),
-          knownOnAnotherChannel: await knownOnAnotherChannel(businessId, phone),
-        }
+        { knownOnAnotherChannel: await knownOnAnotherChannel(businessId, phone) }
       );
 
       if (!verdict.import) {

@@ -18,7 +18,11 @@ vi.mock("@/lib/db", () => ({
     // findFirst is the Meta window pre-flight (metaWindowFor): the lead's
     // last inbound on the DM channel. Defaulted to "just now" in beforeEach
     // so every existing DM test stays inside the 24-hour window.
-    message: { create: vi.fn(), findFirst: vi.fn() },
+    // `count` is the duplicate-send guard's query (src/lib/sending.ts):
+    // the same body, to the same lead, inside a 60-second window. Zero
+    // here means "nothing just went out", which is the normal state for
+    // every test in this file — they are about other guards entirely.
+    message: { create: vi.fn(), findFirst: vi.fn(), count: vi.fn(async () => 0) },
     followUp: { create: vi.fn() },
     // The retry queue (src/lib/sendQueue.ts). sendFollowUpToLead asks it
     // whether a message to this lead is already waiting to go out before it

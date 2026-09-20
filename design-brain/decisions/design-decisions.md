@@ -3684,3 +3684,60 @@ approval that afternoon.
    rule at a sane rate, or whether it starts rejecting good drafts and costing a
    regeneration every time, is only answerable from live traffic. `draftDm` retries once
    before giving up, so the failure mode is cost rather than a lost message.
+
+---
+
+## 2026-09-20 — A real customer got the same email twice
+
+Found by going back to production and asking the database a blunt question: *are there any
+outbound messages with the same body, to the same lead, more than once?* One hit.
+
+Two **different** Gmail message ids, **identical** body hash, 3h45m apart. Not one email
+recorded twice — two emails delivered.
+
+**Nothing anywhere was checking.** `sendFollowUpToLead` guards volume (`checkSendCap`),
+consent (`isSuppressed`) and channel; the send route adds a rate limit of 60 actions per 10
+minutes. None of that is duplicate protection. And the approval queue's disabled Send button
+is client-side only: a second tab, a slow network with an impatient second click, or a retry
+all defeat it.
+
+**It matters more today than it did yesterday.** As of this morning every message on a beta
+account goes out through a human pressing Send in Approvals. That path is now *the* path, so
+a double-tap is the likeliest way a real customer gets messaged twice.
+
+Sixty seconds, compared on the exact body. Deliberately narrow — a guard that blocks a
+legitimate resend would be its own bug.
+
+**Honest about what it does not explain.** The two production sends were **3h45m apart**,
+which this window would not have caught, and I could not determine from the data what
+produced that gap. Both rows carry `trigger: null`, which means neither came through
+`sendFollowUpToLead` (it always stamps one) — they were discovered by Gmail sync. So the
+duplicate is real and the guard is right, but the specific incident remains unexplained and
+is recorded here as such rather than quietly claimed as fixed.
+
+### The mistake worth recording
+
+The first version used `prisma.message.findFirst`. `sendFollowUpToLead` **already** makes a
+`message.findFirst` call — for Meta's 24-hour DM window — so the new guard silently
+inherited that lookup's stubbed return in every test that sets it, and **27 tests failed by
+refusing every send as a duplicate.**
+
+Two same-named queries answering completely different questions in one function are
+indistinguishable to a reader and to a mock. Switching to `count` fixed it and reads better:
+the question is "how many", not "which one".
+
+Two test files then needed `count` added to their Prisma mock. That is the honest cost of
+adding a query to a hot function, and it is visible rather than worked around.
+
+**Self-critique.**
+
+1. **I shipped a guard whose own test suite told me it was wrong, and I had to be told by
+   27 failures rather than by reading.** The collision was visible in the file — the existing
+   `findFirst` is forty lines below.
+2. **The window is a guess.** Sixty seconds covers a double-click. It does not cover the
+   incident that prompted it. I would rather ship the narrow guard and say so than widen it
+   to cover a case I do not understand and start blocking legitimate resends.
+3. **The right fix is probably a unique constraint**, not a read-then-write: two concurrent
+   requests can still both pass this check before either writes. That needs a migration and a
+   decision about what the key is (lead + body + minute?), which is more than this pass.
+   Named, not built.

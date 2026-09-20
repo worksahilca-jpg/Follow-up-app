@@ -35,10 +35,15 @@ vi.mock("@/lib/sender", () => ({
   composeFollowUpEmail: vi.fn(async (first: string, _b: string, body: string) => `Hi ${first},\n\n${body}\n\nBest,\nManoj`),
 }));
 vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(async () => ({ success: true })) }));
+// The approval queue is derived from AuditEvent rows, so what this
+// function records is a user-visible behaviour, not bookkeeping.
+vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 
 import { prisma } from "@/lib/db";
 import { sendFollowUpToLead } from "@/lib/sending";
+import { recordAudit } from "@/lib/audit";
 import { acknowledgeNewLead, checkAckShape } from "@/lib/acknowledge";
+import { HOLD_ALL_FIRST_REPLY_REASON, renderHeldBecause } from "@/lib/holdReasons";
 import { localizeFixedText, generateInstantReply, assessAckRisk } from "@/lib/integrations/openai";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,6 +52,7 @@ const send = sendFollowUpToLead as unknown as ReturnType<typeof vi.fn>;
 const localize = localizeFixedText as unknown as ReturnType<typeof vi.fn>;
 const generateReply = generateInstantReply as unknown as ReturnType<typeof vi.fn>;
 const assessRisk = assessAckRisk as unknown as ReturnType<typeof vi.fn>;
+const audit = recordAudit as unknown as ReturnType<typeof vi.fn>;
 
 const baseLead = {
   id: "lead1",
@@ -73,6 +79,7 @@ beforeEach(() => {
   // A paying business in good standing unless a case says otherwise.
   p.business.findUnique.mockResolvedValue({ name: "MJ Homes", tier: "plus", subscriptionStatus: "active" });
   send.mockResolvedValue({ success: true });
+  audit.mockClear();
   localize.mockImplementation(async (t: string) => t);
   generateReply.mockResolvedValue("Got it — I'll get you the exact price and follow up shortly.");
   assessRisk.mockResolvedValue({ verdict: "ok", reason: "ok" });
@@ -672,6 +679,52 @@ describe("holdAllForApproval stops the instant acknowledgement too", () => {
     // so this must not report itself as an error.
     const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "What do you charge?" });
     expect(result.reason).not.toBe("error");
+  });
+
+  /**
+   * The part that was only ever a claim in a comment.
+   *
+   * "The draft waits in Approvals" was written above the gate before
+   * anything put it there. getPendingApprovals (src/lib/pendingApprovals.ts)
+   * derives that queue from leads whose most recent AuditEvent is
+   * "ai.hold", and neither this function nor scoring.ts recorded one — so
+   * a held first reply was invisible until the hourly silence check
+   * reached the lead, which happens only after the follow-up rule's
+   * trigger days (five by default). Five days of a stranger waiting,
+   * caused by the safeguard meant to prevent something worse.
+   */
+  it("puts the lead in the approval queue, which is the whole promise of holding it", async () => {
+    await acknowledgeNewLead("lead1", { channel: "email", inboundText: "What do you charge?" });
+
+    expect(audit).toHaveBeenCalledWith(
+      { businessId: "biz1", userId: null },
+      "ai.hold",
+      expect.objectContaining({ targetType: "lead", targetId: "lead1" })
+    );
+  });
+
+  it("names a reason that finishes the sentence the owner actually reads", async () => {
+    await acknowledgeNewLead("lead1", { channel: "email", inboundText: "What do you charge?" });
+
+    const meta = (audit.mock.calls[0][2] as { meta: { reason: string } }).meta;
+    // ApprovalQueue renders exactly "Held because <reason>." — the
+    // grammar rule holdReasons.ts exists to keep, after "Held because
+    // Ready to send" shipped to every beta tester on 2026-09-20.
+    expect(meta.reason).toBe(HOLD_ALL_FIRST_REPLY_REASON);
+    expect(renderHeldBecause(meta.reason)).toBe(`Held because ${HOLD_ALL_FIRST_REPLY_REASON}.`);
+  });
+
+  it("records nothing when the account is not holding — a sent reply is not a held one", async () => {
+    p.business.findUnique.mockResolvedValue({
+      name: "MJ Homes",
+      tier: "plus",
+      subscriptionStatus: "active",
+      holdAllForApproval: false,
+    });
+
+    await acknowledgeNewLead("lead1", { channel: "email", inboundText: "What do you charge?" });
+
+    expect(audit.mock.calls.filter((c) => c[1] === "ai.hold")).toHaveLength(0);
   });
 
   it("still sends normally for an account that is not holding", async () => {

@@ -7,6 +7,8 @@ import { checkAiEligibility } from "@/lib/billing";
 import { isOptOutMessage } from "@/lib/optOutKeywords";
 import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
 import { greetingFirstName, businessDisplayName } from "@/lib/leadName";
+import { recordAudit } from "@/lib/audit";
+import { HOLD_ALL_FIRST_REPLY_REASON } from "@/lib/holdReasons";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -497,14 +499,38 @@ export async function acknowledgeNewLead(
      * normally rather than finding it silently marked as done.
      *
      * The lead is not dropped or hidden. It is captured, scored and
-     * drafted exactly as before (scoring.ts), and the draft is waiting in
-     * Approvals — the only change is that a human presses send.
+     * drafted exactly as before (scoring.ts), and the "ai.hold" below is
+     * what puts that draft in Approvals — the only change is that a human
+     * presses send.
+     *
+     * That audit event is not decoration. getPendingApprovals
+     * (src/lib/pendingApprovals.ts) derives the queue from leads whose
+     * most recent AuditEvent is "ai.hold", and scoring.ts records none.
+     * Without it a held first reply appeared nowhere: the lead had a
+     * draft, the owner was never told, and nothing named it until the
+     * hourly silence check reached the lead — which it does only after
+     * the follow-up rule's trigger days, five by default. Five days of a
+     * stranger waiting is the exact failure this product exists to stop,
+     * arrived at by way of the safeguard meant to prevent a worse one.
+     *
+     * Recorded before the draft exists on two of the four capture paths
+     * (meta.ts and twilioMessage.ts acknowledge, then score). That is
+     * fine and deliberate: the queue reads `suggestedMessage` live when
+     * the dashboard renders, not when the event is written, and both
+     * calls complete in the same request.
      *
      * Terminal for the deferred-DM queue: runDueInstantAcks clears the
      * row for every reason except "error", so this does not re-enter the
      * queue on the next tick.
      */
-    if (ackBusiness?.holdAllForApproval) return { sent: false, reason: "held for approval" };
+    if (ackBusiness?.holdAllForApproval) {
+      void recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
+        targetType: "lead",
+        targetId: lead.id,
+        meta: { riskLevel: "low", reason: HOLD_ALL_FIRST_REPLY_REASON, trigger: "instant_ack" },
+      });
+      return { sent: false, reason: "held for approval" };
+    }
 
     const ackEligible = await checkAiEligibility(
       lead.businessId,

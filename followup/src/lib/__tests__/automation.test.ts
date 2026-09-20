@@ -53,7 +53,7 @@ import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { checkAiEligibility } from "@/lib/billing";
 import { runAutomationForBusiness, DEAD_LEAD_ACTION } from "@/lib/automation";
-import { UNTOUCHED_LEAD_REASON } from "@/lib/holdReasons";
+import { UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -1549,6 +1549,113 @@ describe("a lead with no conversation at all", () => {
     // wrote, whose risk verdict is what decides.
     p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
     const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(1);
+    expect(r.held).toBe(0);
+  });
+});
+
+/**
+ * The email drafter had no grounding check at all.
+ *
+ * The instant acknowledgement refuses a number the lead never wrote. DM
+ * drafts refuse one too. The email follow-up — the longest message
+ * FollowUp writes and the only one that lands in a stranger's inbox —
+ * had nothing. On 2026-09-20 a lead asked what a consultation costs and
+ * the draft in the founder's own approval queue answered "El costo será
+ * de $100". Nobody had said $100.
+ *
+ * Held for every tier, AUTONOMOUS included: an invented price is exactly
+ * what no tier may send unread.
+ */
+describe("an email draft that names a figure nobody wrote", () => {
+  const ASKED = "Do you have availability next week, and what would it cost?";
+
+  function leadWhoAsked(over: Record<string, unknown> = {}) {
+    return lead({
+      conversations: [
+        {
+          channel: "email",
+          messages: [{ id: "m1", direction: "inbound", body: ASKED, sentAt: new Date(), opened: false }],
+        },
+      ],
+      ...over,
+    });
+  }
+
+  it("is held rather than sent", async () => {
+    p.lead.findMany.mockResolvedValueOnce([leadWhoAsked()]).mockResolvedValueOnce([]);
+    draftMessage.mockResolvedValue({ subject: "Your consultation", body: "We have availability. The cost will be $100." });
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const r = await runAutomationForBusiness("biz1");
+
+    expect(r.held).toBe(1);
+    expect(r.sent).toBe(0);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("is held on AUTONOMOUS too, which skips the risk gate entirely", async () => {
+    p.lead.findMany.mockResolvedValueOnce([leadWhoAsked({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    draftMessage.mockResolvedValue({ subject: "Your consultation", body: "We have availability. The cost will be $100." });
+
+    const r = await runAutomationForBusiness("biz1");
+
+    expect(r.sent).toBe(0);
+    expect(r.held).toBe(1);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("tells the owner which part of the draft to distrust", async () => {
+    p.lead.findMany.mockResolvedValueOnce([leadWhoAsked()]).mockResolvedValueOnce([]);
+    draftMessage.mockResolvedValue({ subject: "Your consultation", body: "We have availability. The cost will be $100." });
+
+    const r = await runAutomationForBusiness("biz1");
+
+    expect(r.heldReasons[0]).toContain(UNGROUNDED_DRAFT_REASONS.digits);
+  });
+
+  it("still keeps the draft, so the owner has something to fix", async () => {
+    // Discarding it would lose a message that got the intent right and
+    // one detail wrong — a human corrects that in seconds.
+    p.lead.findMany.mockResolvedValueOnce([leadWhoAsked()]).mockResolvedValueOnce([]);
+    draftMessage.mockResolvedValue({ subject: "Your consultation", body: "We have availability. The cost will be $100." });
+
+    await runAutomationForBusiness("biz1");
+
+    const stored = p.lead.update.mock.calls.find((c: [{ data: { suggestedMessage?: string } }]) => c[0].data.suggestedMessage);
+    expect(stored).toBeTruthy();
+  });
+
+  it("sends the same draft when the lead named the figure first", async () => {
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        leadWhoAsked({
+          automationTier: "AUTONOMOUS",
+          conversations: [
+            {
+              channel: "email",
+              messages: [
+                { id: "m1", direction: "inbound", body: `${ASKED} My budget is $100.`, sentAt: new Date(), opened: false },
+              ],
+            },
+          ],
+        }),
+      ])
+      .mockResolvedValueOnce([]);
+    draftMessage.mockResolvedValue({ subject: "Your consultation", body: "We have availability. The cost will be $100." });
+
+    const r = await runAutomationForBusiness("biz1");
+
+    expect(r.sent).toBe(1);
+    expect(r.held).toBe(0);
+  });
+
+  it("leaves an ordinary draft with no figures in it alone", async () => {
+    p.lead.findMany.mockResolvedValueOnce([leadWhoAsked({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    draftMessage.mockResolvedValue({ subject: "Your consultation", body: "We do have availability — shall I send the details over?" });
+
+    const r = await runAutomationForBusiness("biz1");
+
     expect(r.sent).toBe(1);
     expect(r.held).toBe(0);
   });

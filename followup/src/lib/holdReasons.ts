@@ -63,6 +63,25 @@ export const UNTOUCHED_LEAD_REASON =
  */
 export const RISK_CHECK_FAILED_REASON = "FollowUp couldn't check this one automatically, so it is holding it to be safe";
 
+/**
+ * An email follow-up that names a specific the conversation never
+ * contained — keyed by the rule `ungroundedSpecifics` (src/lib/grounding.ts)
+ * failed on.
+ *
+ * Each says what to look for rather than "the draft failed a check",
+ * because the owner is about to read the draft and the only useful thing
+ * to tell them is which part of it to distrust. From the founder's own
+ * approval queue, 2026-09-20: a lead asked what a consultation costs and
+ * the draft answered "El costo será de $100" — a price nobody had
+ * mentioned, about to go out in his name.
+ */
+export const UNGROUNDED_DRAFT_REASONS: Record<string, string> = {
+  digits: "the draft uses a number nobody in this conversation wrote — check it before it goes",
+  currency: "the draft quotes a price nobody in this conversation mentioned — check it before it goes",
+  time: "the draft names a time nobody in this conversation gave — check it before it goes",
+  calendar: "the draft names a day nobody in this conversation mentioned — check it before it goes",
+};
+
 /** Exactly what ApprovalQueue.tsx builds, so tests can check the seam. */
 export function renderHeldBecause(reason: string): string {
   return `Held because ${reason.replace(/\.\s*$/, "")}.`;

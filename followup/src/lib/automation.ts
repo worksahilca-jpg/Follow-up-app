@@ -32,6 +32,8 @@
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
+import { conversationText } from "@/lib/dmDrafts";
+import { ungroundedSpecifics } from "@/lib/grounding";
 import { isExitPayload, toQuickReplies, type StoredQuickReplies } from "@/lib/quickReplies";
 import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
@@ -71,7 +73,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -706,6 +708,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       let quickReplies: StoredQuickReplies | null = isDm ? readStoredQuickReplies(lead.suggestedQuickReplies) : null;
       let regenerated = false;
       let dmShapeFailed: string | null = null;
+      let emailShapeFailed: string | null = null;
       if (!message || !cachedShapeFits || ((isDeadLead || isUnanswered) && !draftIsCurrent)) {
         regenerated = true;
         const messageHint = isDeadLead
@@ -723,6 +726,21 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         } else {
           const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples, messageHint, undefined, leadLanguageOf(lead));
           subject = draft.subject;
+          // The same invariant the ack and the DM have always had, on the
+          // one path that never had it: no price, date or figure the
+          // conversation does not already contain. Checked on the MODEL's
+          // body and the subject, before composeFollowUpEmail wraps them —
+          // the frame it adds (greeting, sign-off, the owner's name) is
+          // FollowUp's own text and has nothing to ground against.
+          //
+          // On 2026-09-20 a lead asked what a consultation costs and this
+          // path answered "El costo será de $100" in the owner's name.
+          // Nobody had said $100.
+          emailShapeFailed = ungroundedSpecifics(
+            `${draft.subject ?? ""}\n${draft.body}`,
+            conversationText(conversation),
+            leadLanguageOf(lead)?.language
+          );
           message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
             languageSample: latestInboundText(conversation),
             leadLanguage: leadLanguageOf(lead),
@@ -758,6 +776,37 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           targetType: "lead",
           targetId: lead.id,
           meta: { riskLevel: "shape", reason: dmShapeFailed, trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence" },
+        });
+        return { kind: "held", note: `${lead.name}: ${reason}` };
+      }
+
+      // The email equivalent of the DM check above, and for a stronger
+      // reason: a DM that fails its shape check is usually just badly
+      // shaped, while an email that fails this one contains a figure
+      // nobody wrote. Held for every tier, AUTONOMOUS included — an
+      // invented price is precisely the thing no tier may send unread.
+      //
+      // The draft is still written down and still offered. The owner sees
+      // it in Approvals with a reason naming what to look for, which is
+      // more useful than discarding it: FollowUp usually got the intent
+      // right and one detail wrong, and a human fixes that in seconds.
+      if (emailShapeFailed) {
+        if (regenerated) {
+          await prisma.lead.update({
+            where: { id: lead.id },
+            data: { suggestedMessage: message, suggestedSubject: subject ?? null, suggestedDraftedFor: newestMessageAt },
+          });
+        }
+        const reason = UNGROUNDED_DRAFT_REASONS[emailShapeFailed] ?? UNGROUNDED_DRAFT_REASONS.digits;
+        if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
+        void recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
+          targetType: "lead",
+          targetId: lead.id,
+          meta: {
+            riskLevel: "shape",
+            reason,
+            trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence",
+          },
         });
         return { kind: "held", note: `${lead.name}: ${reason}` };
       }

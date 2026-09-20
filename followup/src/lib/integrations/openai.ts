@@ -375,12 +375,24 @@ export type ClassifierBusinessContext = { name: string; industry: string | null 
 export async function classifyAsProspect(
   conversation: Message[],
   sender: { name: string; email: string },
-  business?: ClassifierBusinessContext
+  business?: ClassifierBusinessContext,
+  // How many messages the model actually reads. The default of 3 is the
+  // mailbox rule described above and stays the default everywhere.
+  //
+  // WhatsApp's history import raises it for its SECOND look only (see
+  // src/lib/inbound/whatsappHistoryFilter.ts). The reasoning behind 3 is
+  // specifically about long, heavily-requoted EMAIL threads, where the
+  // opening messages carry the signal and the rest is noise. A WhatsApp
+  // chat is the opposite shape: short lines, no quoting, and a real job
+  // routinely starts ten messages after "hey". Capping that at 3 would
+  // guarantee the exact miss the second look exists to prevent — so the
+  // caller chooses, and the caller says why.
+  options?: { maxMessages?: number }
 ): Promise<{ isProspect: boolean; reason: string }> {
   const client = getClient();
 
   const forClassification = conversation
-    .slice(0, 3)
+    .slice(0, options?.maxMessages ?? 3)
     .map((m) => ({ ...m, body: stripQuotedReply(m.body).slice(0, 1200) }));
 
   // The single most important input, learned the hard way on a real

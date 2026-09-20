@@ -3223,3 +3223,66 @@ config object owned next to the channel, not more strings at the call site.
 success. If Meta drops it later — the person loses their Page role, a permission lapses — the
 column still reads subscribed and the green tick stays. The state is now *showable*; detecting
 entry into it is a separate piece of work.
+
+---
+
+## 2026-09-20 — "Make sure no leads slip over": the two-stage import filter
+
+**The founder rejected three answers before this one, and he was right to.** WhatsApp
+Coexistence connects the owner's *own* number, so the history import was turning their
+accountant, their supplier and their family into scored, drafted-for leads. I offered:
+import nothing, show a picker, or shorten the window. His reply: *"i am not satisfied with
+any of these solutions."*
+
+Every one of them traded a real customer for tidiness, and this product exists to not lose
+customers. The rejection was correct and the better answer was already in the codebase.
+
+**What we already had.** An email inbox is at least as mixed as a WhatsApp chat list, and
+`gmail.ts` / `outlook.ts` have gated lead creation on `classifyAsProspect` since the
+beginning — "is this thread customer business for this company?". WhatsApp simply never
+asked. So the fix was not a new idea, it was **consistency**: same classifier, same
+definition of a customer, one more channel.
+
+**What the founder added, and it is the better half of the design.** Asked whether one
+check was enough, he said no: *"if it confirms its a lead good if not we need more data to
+confirm and then filter it out to make sure again."* That is a second stage, and it changes
+the failure mode completely.
+
+- **Stage 1** reads the opening, exactly as the mailbox does. Customer → lead, done.
+- **Stage 2** runs *only on a rejection*, and sees what stage 1 structurally could not: the
+  **most recent** messages rather than the opening (a chat that starts "hey" and becomes a
+  job on message twelve is the exact case), plus whether the **owner ever sent a price, a
+  time or an invoice** into that chat.
+- Two facts settle it before any AI call: an **empty thread** imports, and a person who is
+  **already a lead on another channel** imports. Neither is a judgement.
+
+**Deliberately lopsided, and the code says so.** Missing a real customer is the failure the
+whole product exists to prevent; a private chat in the pipeline is untidy and sends nothing
+unreviewed. So every uncertain path imports — classifier throws, no business description,
+nothing to read. `gmail.ts` already failed open this way; this matches it.
+
+**Nothing is ever deleted.** A chat that fails both stages goes to the same "filtered" list
+the mailboxes use, with the classifier's own sentence verbatim, and a one-tap Restore.
+
+**Two things this forced that are worth recording.**
+
+1. `classifyAsProspect` hard-capped at 3 messages. That cap is documented and correct — it
+   is about long, heavily-requoted *email* threads where the opening carries the signal. A
+   WhatsApp chat is the opposite shape. Rather than fork the classifier, it now takes an
+   optional `maxMessages` and the caller says why it is raising it. One judge, different
+   evidence.
+2. Restore had to keep the thread. Meta delivers a number's history **once**, in one
+   webhook, and never again — so a Restore button that re-fetched would return an empty
+   conversation and the offer would be a lie. The thread is stored on the filtered row and
+   read back defensively.
+
+**Self-critique.** The `ownerSentBusinessContent` regex list is the weakest part: it is
+English-only, in a product whose whole language story is that customers write in Hindi,
+Punjabi and Spanish. A Hinglish "₹2000 Tuesday ko" partly matches by luck, not design. It
+only *adds* a reason to import, so a miss costs nothing — but it is a signal that works
+best for the customers who need it least, and it should become a model call or a
+multilingual list before this channel is relied on outside English.
+
+Also unresolved, and inherited: stage 2 costs a second AI call per rejected chat. On a
+30-day import of a busy personal number that is real money for chats that are mostly going
+to be rejected anyway. Acceptable at ten testers; worth measuring before it is a hundred.

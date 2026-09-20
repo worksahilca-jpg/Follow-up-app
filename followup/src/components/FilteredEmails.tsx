@@ -7,7 +7,8 @@ type FilteredEmail = {
   id: string;
   provider: string;
   senderName: string;
-  senderEmail: string;
+  senderEmail: string | null;
+  senderPhone: string | null;
   subject: string | null;
   reason: string;
   lastMessageAt: string;
@@ -70,9 +71,14 @@ export default function FilteredEmails() {
             <li key={item.id} className="text-xs rounded-lg border border-line bg-paper px-2.5 py-2">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <span className="font-medium">{item.senderName || item.senderEmail}</span>
-                  <span className="text-ink-soft"> · {item.senderEmail}</span>
+                  {/* A WhatsApp row has a number where a mailbox row has
+                      an address; one of the two is always set, decided by
+                      provider. Named rather than left blank so a person
+                      reading this list knows which app to go and look in. */}
+                  <span className="font-medium">{item.senderName || item.senderEmail || item.senderPhone}</span>
+                  <span className="text-ink-soft"> · {item.senderEmail ?? item.senderPhone}</span>
                   {item.provider === "outlook" && <span className="text-ink-soft"> · Outlook</span>}
+                  {item.provider === "whatsapp" && <span className="text-ink-soft"> · WhatsApp</span>}
                   {item.subject && <div className="truncate">{item.subject}</div>}
                   <div className="text-ink-soft mt-0.5">{item.reason}</div>
                   <div className="text-ink-soft mt-0.5">{new Date(item.lastMessageAt).toLocaleString()}</div>

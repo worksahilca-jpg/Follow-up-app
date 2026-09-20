@@ -50,17 +50,32 @@ export default function TeamSection() {
   const [inviteRole, setInviteRole] = useState<TeamRole>("SALES");
   const [inviting, setInviting] = useState(false);
   const [inviteEmailSent, setInviteEmailSent] = useState<boolean | null>(null);
+  // Whether an invite alone lets the teammate in — see inviteAloneIsEnough
+  // in src/lib/auth.ts. While the beta allowlist is set, it does not.
+  const [inviteAloneIsEnough, setInviteAloneIsEnough] = useState(false);
 
   function load() {
     fetch("/api/team")
       .then((r) => r.json())
-      .then((data: { success: boolean; members?: Member[]; invites?: Invite[]; currentUserRole?: TeamRole }) => {
-        if (data.success) {
-          setMembers(data.members ?? []);
-          setInvites(data.invites ?? []);
-          setCurrentUserRole(data.currentUserRole ?? null);
+      .then(
+        (data: {
+          success: boolean;
+          members?: Member[];
+          invites?: Invite[];
+          currentUserRole?: TeamRole;
+          inviteAloneIsEnough?: boolean;
+        }) => {
+          if (data.success) {
+            setMembers(data.members ?? []);
+            setInvites(data.invites ?? []);
+            setCurrentUserRole(data.currentUserRole ?? null);
+            // Defaults to false, the cautious side: an older deployment
+            // that doesn't send this field shows the extra step rather
+            // than the promise that may not hold.
+            setInviteAloneIsEnough(Boolean(data.inviteAloneIsEnough));
+          }
         }
-      })
+      )
       .finally(() => setLoaded(true));
   }
 
@@ -223,15 +238,37 @@ export default function TeamSection() {
       )}
       {isAdmin && (
         <p className="text-xs text-ink-soft mt-2">
-          They&apos;ll join automatically the next time they sign in with this email. If you have Gmail connected,
-          we&apos;ll also send them a heads-up.
+          {inviteAloneIsEnough ? (
+            <>
+              They&apos;ll join automatically the next time they sign in with this email. If you have Gmail
+              connected, we&apos;ll also send them a heads-up.
+            </>
+          ) : (
+            /* The truth while the beta allowlist is on: sign-in checks
+               that list BEFORE it looks for the invite, so an invited
+               teammate is turned away and the invite is never consumed.
+               The old sentence promised the opposite, and the owner found
+               out by watching a colleague fail to get in. */
+            <>
+              While FollowUp is in beta, your teammate also has to be let into the beta itself — email{" "}
+              <a href="mailto:contact@followupbase.io" className="underline">
+                contact@followupbase.io
+              </a>{" "}
+              with their address and we&apos;ll add them, usually the same day. The invite waits for them until
+              then. If you have Gmail connected, we&apos;ll also send them a heads-up.
+            </>
+          )}
         </p>
       )}
       {isAdmin && inviteEmailSent !== null && (
         <p className="text-xs mt-1" style={{ color: inviteEmailSent ? "var(--sage)" : "var(--coral)" }}>
           {inviteEmailSent
-            ? "Invite sent — they'll also join automatically the moment they sign in with this email."
-            : "Invite created — no email could be sent (connect Gmail under Settings to enable that), so let them know to sign in with this email to join."}
+            ? inviteAloneIsEnough
+              ? "Invite sent — they'll join automatically the moment they sign in with this email."
+              : "Invite sent — it's saved and waiting for them, once they've been let into the beta."
+            : inviteAloneIsEnough
+              ? "Invite created — no email could be sent (connect Gmail under Settings to enable that), so let them know to sign in with this email to join."
+              : "Invite created — no email could be sent (connect Gmail under Settings to enable that), so let them know yourself."}
         </p>
       )}
 

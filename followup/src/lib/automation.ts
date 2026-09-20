@@ -71,6 +71,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
+import { HOLD_ALL_AUTOMATION_REASON, RISK_CHECK_FAILED_REASON } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -679,7 +680,9 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
             // Sending something autonomously that shouldn't have gone out
             // is a worse failure mode than an unnecessary manual review.
             console.error(`Risk assessment failed for lead ${lead.id}:`, err);
-            risk = { riskLevel: "medium", reason: "Couldn't assess risk automatically — held to be safe." };
+            // Finishes "Held because <reason>." like every other reason
+            // that reaches ApprovalQueue.
+            risk = { riskLevel: "medium", reason: RISK_CHECK_FAILED_REASON };
           }
         } else {
           // No classifier available — fall back to the older, unguarded
@@ -757,12 +760,20 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           // DM" until a handle is learned, and "Instagram went quiet 5
           // days ago" is the same placeholder-as-a-person bug that sent a
           // real lead "Hi! Instagram," on 2026-09-19.
-          const firstName = greetingFirstName(lead.name) || "They";
+          // Every string here is rendered by ApprovalQueue as "Held
+          // because <reason>." — so each one is written as a clause that
+          // finishes that sentence, lowercase unless it starts with the
+          // lead's actual name. The holdAll branch used to read "Ready to
+          // send — this account holds…", which came out as "Held because
+          // Ready to send", a capital mid-sentence contradicting itself
+          // in six words; the fallback was "They", which came out as
+          // "Held because They went quiet".
+          const firstName = greetingFirstName(lead.name) || "they";
           const holdReason =
             risk.riskLevel !== "low"
               ? risk.reason
               : holdAll
-                ? "Ready to send — this account holds every automated message for you to approve"
+                ? HOLD_ALL_AUTOMATION_REASON
                 : isUnanswered
                   ? `${firstName} wrote ${daysQuiet} days ago and never got an answer — this reply is yours to send`
                   : `${firstName} went quiet ${daysQuiet} days ago — reaching back out is your call`;

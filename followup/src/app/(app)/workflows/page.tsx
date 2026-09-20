@@ -14,8 +14,27 @@
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft, Workflow as WorkflowIcon } from "lucide-react";
+import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
 
 type SequenceAction = "EMAIL" | "CHANGE_STAGE";
+
+/**
+ * What an email step actually falls back to — detectNonEmailChannel in
+ * src/lib/sending.ts, named in the owner's words.
+ *
+ * Both sentences below used to say "sends a text instead", which was
+ * wrong twice over. The fallback has never been SMS-only: an Instagram
+ * lead gets an Instagram DM, a Messenger lead a Messenger message, a
+ * WhatsApp lead a WhatsApp message — those are the channels most beta
+ * leads actually arrive on. And SMS itself needs a phone number the
+ * business cannot even set up right now: CARRIER_CHANNELS_AVAILABLE is
+ * false, so Settings hides the panel, while twilio.ts still answers a
+ * failed send with "check Settings → Phone" — a page that isn't there.
+ * So "text" is listed only while that flag says it is offered.
+ */
+const FALLBACK_CHANNELS = CARRIER_CHANNELS_AVAILABLE
+  ? "whichever channel they came in on — WhatsApp, Instagram, Messenger or text"
+  : "whichever channel they came in on — WhatsApp, Instagram or Messenger";
 
 interface StepDraft {
   /** Hours after the previous step (or after enrollment, for the first). */
@@ -114,6 +133,9 @@ export default function WorkflowsPage() {
   const [template, setTemplate] = useState<{ name: string; steps: StepDraft[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Business.holdAllForApproval — true for every beta account.
+  const [holdAllForApproval, setHoldAllForApproval] = useState(false);
+
   function load() {
     fetch("/api/sequences")
       .then((r) => r.json())
@@ -124,6 +146,22 @@ export default function WorkflowsPage() {
   }
 
   useEffect(load, []);
+
+  // A second, tiny read, because this page sells a multi-step plan and on
+  // a holding account the plan cannot run past its first message step:
+  // runSequencesForBusiness drafts step 1, holds it, and UNENROLLS the
+  // lead (src/lib/sequences.ts — "the workflow stopped here"). The
+  // notification says so after the fact; nothing said so before, so a
+  // tester built a four-touch plan that was never going to reach touch
+  // two. Whether a workflow should resume after approval is a product
+  // decision, not this page's to make — but not saying anything is not
+  // neutral, it is a promise.
+  useEffect(() => {
+    fetch("/api/automation/settings")
+      .then((r) => r.json())
+      .then((data: { holdAllForApproval?: boolean }) => setHoldAllForApproval(Boolean(data.holdAllForApproval)))
+      .catch(() => {});
+  }, []);
 
   return (
     <div>
@@ -187,6 +225,22 @@ export default function WorkflowsPage() {
           that&apos;s actually happening.
         </p>
       </div>
+
+      {/* --slate, not --coral: nothing is broken and nothing is lost. It
+          is a fact about how far a plan runs on this account, said before
+          the owner builds one rather than in a notification afterwards. */}
+      {holdAllForApproval && (
+        <div className="mt-3 rounded-lg p-3" style={{ backgroundColor: "var(--slate-soft)" }}>
+          <p className="text-sm font-medium" style={{ color: "var(--slate)" }}>
+            On the beta plan, a plan runs one step at a time.
+          </p>
+          <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--slate)" }}>
+            Your account holds every follow-up for your approval, so FollowUp writes the first message of the plan,
+            puts it in Approvals, and stops there — it won&apos;t run the later steps on its own. The plan you build
+            here is what runs once holding is lifted.
+          </p>
+        </div>
+      )}
 
       {error && (
         <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
@@ -400,8 +454,8 @@ function WorkflowCard({
 
       {sequence.steps.some((s) => s.action === "EMAIL") && (
         <p className="mt-3 text-xs text-ink-soft">
-          Email steps send a text instead if the lead has no email address, or hasn&apos;t replied to an earlier
-          email step and has a phone number on file.
+          Email steps switch to {FALLBACK_CHANNELS} instead if the lead has no email address, or hasn&apos;t replied
+          to an earlier email step.
         </p>
       )}
     </div>
@@ -573,8 +627,8 @@ function WorkflowEditor({
                   className="mt-2.5 w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
                 />
                 <p className="mt-1.5 text-[11px] text-ink-soft">
-                  Falls back to a text message if this lead has no email on file, or hasn&apos;t replied by this step
-                  and has a phone number to try instead.
+                  Switches to {FALLBACK_CHANNELS} if this lead has no email on file, or hasn&apos;t replied by this
+                  step.
                 </p>
               </>
             ) : (

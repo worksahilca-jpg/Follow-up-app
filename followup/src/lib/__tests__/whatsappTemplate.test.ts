@@ -108,7 +108,11 @@ describe("sendWhatsApp", () => {
 
     const result = await sendWhatsApp("biz1", "+15550001111", "Hi");
 
-    expect(result).toEqual({ success: false, message: "WhatsApp isn't fully connected yet — check Settings → Phone (SMS + calls)." });
+    // Points at Settings → WhatsApp, the section that exists. It used to
+    // name "Settings → Phone (SMS + calls)", a panel CARRIER_CHANNELS_-
+    // AVAILABLE hides — an error telling the owner to visit a page that
+    // is not on their screen.
+    expect(result).toEqual({ success: false, message: "WhatsApp isn't fully connected yet — connect it in Settings → WhatsApp." });
     expect(fetch).not.toHaveBeenCalled();
   });
 });

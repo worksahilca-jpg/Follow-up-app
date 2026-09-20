@@ -24,6 +24,22 @@ const DESCRIPTIONS: Record<AutomationTier, string> = {
     "conversations. Only for leads you're comfortable letting go.",
 };
 
+// What each tier means on an account that holds everything (see the
+// holdAllForApproval prop below). The difference is real, not cosmetic:
+// "off" still means FollowUp writes nothing at all, while the other two
+// still decide WHETHER a draft gets written and how far it will go once
+// holding is lifted. So the tier is worth choosing — it just never sends
+// by itself today, and saying otherwise was a lie in three places.
+const HELD_DESCRIPTIONS: Record<AutomationTier, string> = {
+  off: "I'll handle this one myself — FollowUp won't write or send anything for this person.",
+  assisted:
+    "FollowUp writes the follow-up and puts it in your approval queue. Nothing reaches this person until you " +
+    "read it and press send.",
+  autonomous:
+    "FollowUp writes every follow-up, including price and tense conversations, and puts each one in your " +
+    "approval queue. Nothing reaches this person until you press send.",
+};
+
 /**
  * Three-way trust tier instead of a plain on/off switch (see
  * src/lib/automation.ts for what each tier actually does server-side).
@@ -41,10 +57,22 @@ export default function LeadAutomationToggle({
   // the option is disabled here too rather than letting someone pick it
   // and get a 403 with no explanation.
   autonomousAllowed = true,
+  // Business.holdAllForApproval — true on every beta account. When it is
+  // set, NOTHING this control offers actually sends on its own: both
+  // schedulers (automation.ts, sequences.ts) route every draft to the
+  // approval queue regardless of the tier chosen here. Until 2026-09-20
+  // this control still described autonomous as "every reply sends
+  // automatically with no review" and made the owner confirm a red
+  // warning to pick it — a scary promise about something their account
+  // would never do. The tier still matters (it is what takes effect the
+  // day holding is lifted), so it stays choosable; only the sentences
+  // change, to describe what will really happen.
+  holdAllForApproval = false,
 }: {
   leadId: string;
   initialTier: AutomationTier;
   autonomousAllowed?: boolean;
+  holdAllForApproval?: boolean;
 }) {
   const [tier, setTier] = useState<AutomationTier>(initialTier);
   const [confirmingAutonomous, setConfirmingAutonomous] = useState(false);
@@ -77,6 +105,14 @@ export default function LeadAutomationToggle({
     if (next === tier) return;
     if (next === "autonomous") {
       if (!autonomousAllowed) return;
+      // The confirm exists to guard one thing: a reply going out unread.
+      // On a holding account that cannot happen, so asking "sure?" about
+      // it is a warning with nothing behind it — and a warning people
+      // learn to click through is worse than none.
+      if (holdAllForApproval) {
+        save(next);
+        return;
+      }
       setConfirmingAutonomous(true);
       return;
     }
@@ -114,11 +150,24 @@ export default function LeadAutomationToggle({
           &quot;Handle it all&quot; needs Plus or Pro — see Billing in Settings.
         </p>
       )}
-      <p className="text-xs mt-2 text-ink-soft leading-relaxed">{DESCRIPTIONS[tier]}</p>
+      <p className="text-xs mt-2 text-ink-soft leading-relaxed">
+        {holdAllForApproval ? HELD_DESCRIPTIONS[tier] : DESCRIPTIONS[tier]}
+      </p>
+      {/* Said once, under the control it changes the meaning of, rather
+          than folded into each tier's sentence — it is a fact about the
+          account, not about this lead, and repeating it three times would
+          read as the product arguing with itself. */}
+      {holdAllForApproval && (
+        <p className="text-xs mt-2 leading-relaxed" style={{ color: "var(--slate)" }}>
+          While you&apos;re on the beta plan, your account holds every follow-up for your approval — so whichever
+          you pick here, you see it before your lead does.
+        </p>
+      )}
       {tier !== "off" && (
         <p className="text-xs mt-2 text-ink-soft leading-relaxed">
-          The moment this lead replies, the silence clock resets — it won&apos;t auto-send again until they&apos;ve
-          gone quiet for the full window once more.
+          The moment this lead replies, the silence clock resets — FollowUp won&apos;t{" "}
+          {holdAllForApproval ? "write another follow-up" : "auto-send again"} until they&apos;ve gone quiet for the
+          full window once more.
         </p>
       )}
 

@@ -39,6 +39,7 @@ import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import type { Prisma, SequenceAction, PipelineStage } from "@prisma/client";
 import type { Message } from "@/lib/types";
+import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON } from "@/lib/holdReasons";
 
 export interface SequenceStepInput {
   /** Hours after the previous step (or enrollment). Preferred. */
@@ -673,13 +674,17 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           // review, it has nothing to decide, so its cost is not worth
           // paying — the hold below happens either way. Same skip, same
           // reasoning, as runAutomationForBusiness.
-          risk = { riskLevel: "medium", reason: "Your account holds every follow-up for your approval before it sends." };
+          // Both reasons finish ApprovalQueue's "Held because <reason>."
+          // — hence lowercase and no full stop. They used to be written
+          // as standalone sentences and rendered as "Held because Your
+          // account holds…".
+          risk = { riskLevel: "medium", reason: HOLD_ALL_SEQUENCE_REASON };
         } else {
           try {
             risk = await assessSendRisk({ conversation }, message);
           } catch (err) {
             console.error(`Risk assessment failed for lead ${lead.id} (workflow step):`, err);
-            risk = { riskLevel: "medium", reason: "Couldn't assess risk automatically — held to be safe." };
+            risk = { riskLevel: "medium", reason: RISK_CHECK_FAILED_REASON };
           }
         }
 

@@ -373,6 +373,24 @@ function OnboardingFormInner({
                   <Mail className="h-4 w-4" /> Connect Gmail
                 </a>
 
+                {/* Google's own interstitial, warned about before it
+                    appears rather than left to land as a shock. Until the
+                    OAuth app finishes verification, the consent screen
+                    shows a full-page red "Google hasn't verified this
+                    app" with the continue link folded away under
+                    "Advanced" — to someone one click into a product about
+                    trusting software with their inbox, that page reads as
+                    "this is a scam", and it is the most likely place in
+                    the whole funnel to lose a tester. The one thing that
+                    turns it from a warning into a step is knowing it is
+                    coming and where the button is. */}
+                <p className="text-xs text-ink-soft text-center mt-3 leading-relaxed">
+                  Google will show a red &ldquo;hasn&apos;t verified this app&rdquo; screen first — FollowUp&apos;s
+                  review with Google is still in progress. Choose <strong className="font-medium">Advanced</strong>,
+                  then <strong className="font-medium">Go to FollowUp</strong>. Nothing is shared until you press
+                  Allow on the screen after it.
+                </p>
+
                 {/* Outlook was missing from this screen entirely. A business on
                     Microsoft 365 had no way to finish onboarding — and once
                     inside the app, setupStatus checked Gmail alone, so it got

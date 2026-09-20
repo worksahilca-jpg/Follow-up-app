@@ -35,6 +35,22 @@ const allowedEmails = (process.env.ALLOWED_EMAILS ?? "")
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
 
+/**
+ * Can a team invite, on its own, get someone in?
+ *
+ * Only when this allowlist is empty. The signIn callback below checks
+ * ALLOWED_EMAILS (or an approved AccessRequest) BEFORE it looks for a
+ * TeamInvite, so while the allowlist is set an invited teammate is
+ * refused at sign-in and their invite is never consumed. Settings told
+ * the owner the opposite — "they'll join automatically the next time
+ * they sign in" — so this is exported for that panel to tell the truth
+ * instead. Whether an invite SHOULD be enough is a product decision; this
+ * only reports what the gate currently does.
+ */
+export function inviteAloneIsEnough(): boolean {
+  return allowedEmails.length === 0;
+}
+
 // A session cookie is good for a week at most — after that, sign in again.
 // Down from NextAuth's 30-day default: this app holds other people's
 // conversations, so a stolen or forgotten-open cookie shouldn't stay a

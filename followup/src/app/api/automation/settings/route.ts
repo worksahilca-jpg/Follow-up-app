@@ -57,12 +57,28 @@ export async function GET() {
   const automation = await prisma.automation.findFirst({
     where: { businessId: ctx.businessId, action: AUTOMATION_ACTION },
   });
+  // Business.holdAllForApproval — set on every beta account. It changes
+  // what three of the four rules below actually DO: the silence nudge,
+  // the unanswered-reply step-in and the dead-lead reactivation all still
+  // run, but their drafts go to the approval queue instead of out. The
+  // instant acknowledgement is the exception — it deliberately never
+  // waits for a human (see the header of src/lib/acknowledge.ts: delaying
+  // the first touch defeats the point of "instant"), so it really does
+  // send on a holding account.
+  //
+  // Settings' summary sentence is the one place that states all four as
+  // fact, so it is the one place that has to know.
+  const business = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: { holdAllForApproval: true },
+  });
   return NextResponse.json({
     enabled: automation?.enabled ?? true,
     triggerDays: automation?.triggerDays ?? 5,
     instantAck: await isInstantAckEnabled(ctx.businessId),
     unansweredReply: await getUnansweredReplySetting(ctx.businessId),
     deadLeadReactivation: await getDeadLeadReactivationSetting(ctx.businessId),
+    holdAllForApproval: business?.holdAllForApproval ?? false,
   });
 }
 

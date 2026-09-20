@@ -5,6 +5,7 @@ import { appUrl } from "@/lib/stripe";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { recordAuthFailure } from "@/lib/monitoring";
 import type { Lead } from "@prisma/client";
+import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
 
 /**
  * Twilio SMS/voice request validation and shared helpers for
@@ -499,7 +500,16 @@ export async function sendSms(
     select: { twilioAccountSid: true, twilioAuthToken: true, twilioPhoneNumber: true, twilioSecret: true },
   });
   if (!business?.twilioAccountSid || !business.twilioAuthToken || !business.twilioPhoneNumber) {
-    return { success: false, message: "Twilio isn't fully connected yet — check Settings → Phone (SMS + calls)." };
+    // Points at wherever the owner can actually go. CARRIER_CHANNELS_-
+    // AVAILABLE hides the Phone panel, so telling them to check a page
+    // that is not in their Settings sends them looking for something
+    // that does not exist — the one thing an error message must never do.
+    return {
+      success: false,
+      message: CARRIER_CHANNELS_AVAILABLE
+        ? "Twilio isn't fully connected yet — check Settings → Phone (SMS + calls)."
+        : "Text messages aren't switched on for this account yet, so this one couldn't go out. Email and the DM channels still work.",
+    };
   }
 
   const params = new URLSearchParams({ To: to, From: business.twilioPhoneNumber, Body: body });
@@ -575,7 +585,13 @@ export async function sendWhatsApp(
     },
   });
   if (!business?.twilioAccountSid || !business.twilioAuthToken || !business.whatsappPhoneNumber) {
-    return { success: false, message: "WhatsApp isn't fully connected yet — check Settings → Phone (SMS + calls)." };
+    // This is the LEGACY Twilio WhatsApp path; its fields are edited in
+    // the Phone panel, which CARRIER_CHANNELS_AVAILABLE now hides. The
+    // live way to connect WhatsApp is Settings → WhatsApp (Meta's Cloud
+    // API, src/lib/whatsappCloud.ts), so that is where this points —
+    // "Settings → Phone (SMS + calls)" named a panel that is not on the
+    // page and a path nobody should be set up on any more.
+    return { success: false, message: "WhatsApp isn't fully connected yet — connect it in Settings → WhatsApp." };
   }
 
   const auth = Buffer.from(`${business.twilioAccountSid}:${business.twilioAuthToken}`).toString("base64");
@@ -610,7 +626,11 @@ export async function sendWhatsApp(
       return {
         success: false,
         message:
-          "This WhatsApp conversation is more than 24 hours old — WhatsApp requires a pre-approved message template to reach them now (none is set up in Settings → Phone). They'll need to message you again to reopen the window, or try replying by text or email instead.",
+          // Same correction as above: the panel this named is hidden, and
+          // "try replying by text" offered a channel the same flag turns
+          // off. What is left that actually works is email, and the one
+          // thing that genuinely reopens WhatsApp is the lead writing in.
+          "This WhatsApp conversation is more than 24 hours old, and WhatsApp only allows a pre-approved template after that — none is set up on this account. They'll need to message you again to reopen the window; until then, email is the way to reach them.",
       };
     }
 

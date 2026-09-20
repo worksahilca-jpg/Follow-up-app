@@ -677,7 +677,11 @@ const SEND_RISK_SCHEMA = {
       },
       reason: {
         type: "string",
-        description: "One short sentence a human can read in 3 seconds to decide whether to approve it.",
+        description:
+          "One short clause a human can read in 3 seconds to decide whether to approve it. It is shown as " +
+          "\"Held because <reason>.\" — so write it to finish that sentence: start with a lowercase word " +
+          "(unless it is a name), and do not end with a period. Good: \"the lead asked what it costs and the " +
+          "draft quotes a price\". Bad: \"Pricing mentioned.\"",
       },
     },
     required: ["riskLevel", "reason"],

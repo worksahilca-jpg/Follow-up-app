@@ -3296,3 +3296,98 @@ can only ever be as multilingual as the person who wrote it remembered to be.
 Also unresolved, and inherited: stage 2 costs a second AI call per rejected chat. On a
 30-day import of a busy personal number that is real money for chats that are mostly going
 to be rejected anyway. Acceptable at ten testers; worth measuring before it is a hundred.
+
+---
+
+## 2026-09-20 — The product told the tester things about itself that were not true
+
+**What this was.** Not a feature. A pass over the first hour of a beta tester's experience,
+fixing the places where FollowUp *stated something about itself* that its own code
+contradicted. Every item below is the same bug in a different costume: a screen written
+against how the product was designed, not how the account in front of the reader is actually
+configured.
+
+The founder's instruction was "go go fix as much as you can", after "let's find more problems".
+
+**The root cause, named once.** Every beta account carries `Business.holdAllForApproval`
+(`grantBetaPlan`, founder's decision 2026-09-19: "I can't hand them the full automated
+thing"). Until today that column was read by exactly two files — `automation.ts` and
+`sequences.ts` — and written to no screen anywhere. So the single most important fact about
+a tester's account was invisible to every surface that described what the account does:
+
+- The lead page offered **"Handle it all, don't ask — every reply sends automatically with
+  no review"** and made the owner confirm a red warning to choose it. Their account has
+  never sent a reply unreviewed and cannot.
+- Settings' one computed "here's what's active" sentence said FollowUp *nudges* and *steps
+  in* and *switches to a reactivation message*. It drafts all three and files them.
+- The plans page sold a four-step follow-up plan. On a holding account a plan drafts step 1,
+  holds it, and **unenrolls the lead** — it has never reached step 2 for any tester.
+
+It is now on `FreeTierStatus`, on `/api/automation/settings`, and read by all three surfaces.
+The tier selector still offers all three tiers, because the choice is real — it is what takes
+effect the day holding is lifted — but the sentences describe what will actually happen, and
+the scary confirm is gone on an account where nothing it warns about can occur.
+
+**The design call worth recording: an alarm is correct when nothing arrives, and wrong when
+something does.** Yesterday's `ChannelNotReceiving` shipped a coral "nothing people DM you
+reaches FollowUp" for any Instagram account without a confirmed webhook. Instagram has a
+poller (`src/lib/instagramPoll.ts`, every 3 minutes) that exists *precisely because* the
+first real account never got a webhook — so on Instagram that state is **slower, not
+broken**, and my own alarm told a tester their working channel was dead. The component now
+takes `stillWorks`; with it the block is `--slate` and `Clock` and says "arrives every few
+minutes, not instantly". Facebook passes nothing and keeps the coral warning, because
+Facebook really does receive nothing. The prop is a difference in the product, not a style
+choice.
+
+**"Held because …" had to be a sentence.** The most-read trust-bearing line in the product
+rendered, to every tester: *"Held because Ready to send — this account holds every automated
+message for you to approve."* A capital mid-sentence contradicting the word before it. The
+reasons were being written as standalone sentences in two schedulers; they are clauses now,
+they live in one file (`src/lib/holdReasons.ts`), the model that writes the risk reason is
+told the same rule in its schema, and `holdReasonGrammar.test.ts` enforces it against the
+real strings. Writing the test caught a distinction I had missed: "FollowUp couldn't check
+this one" is *correct* capitalised — the rule is "lowercase unless it is a name."
+
+**Other things a screen claimed and the code denied:**
+
+| Screen said | Code did | Now |
+|---|---|---|
+| "replies within a minute" | Gmail push is off (no `GMAIL_PUSH_TOPIC`); Outlook has no push at all. Capture waits up to 10 minutes. `getGmailStatus` already returned `pushActive` and the dashboard threw it away | Says "every ten minutes" unless push is genuinely live |
+| "They'll join automatically the next time they sign in" | `auth.ts` checks `ALLOWED_EMAILS` **before** it looks for the team invite, so an invited teammate is refused and the invite is never consumed | Says the teammate also needs adding to the beta, and how |
+| "Email steps send a text instead" | The fallback is whichever channel the lead came in on — WhatsApp, Instagram, Messenger — and SMS needs a number `CARRIER_CHANNELS_AVAILABLE` won't let them buy | Names the real channels; lists text only when it is offered |
+| "check Settings → Phone (SMS + calls)" (a send error) | That panel is hidden by the same flag | Points at something that exists |
+| "Good morning" | Server clock. UTC on Vercel. A Toronto owner at 8pm | `Business.timezone` |
+| "access was removed in Google or a password changed" | While the OAuth app is unverified Google expires the token **every seven days, for everyone** — the likeliest cause by far, and the only one the owner didn't do | Names the seven-day beta expiry first |
+| (nothing, before the Google consent screen) | Google shows a full-page red "hasn't verified this app" with the continue link folded under *Advanced* — the most likely single point of tester loss in the funnel | Warned about, with where the button is |
+| "One-click connect isn't switched on yet (docs/meta-oauth-setup.md, section 3)" | A path in our own repository, shown to a customer as if they could open it | Says it is ours to finish, not theirs |
+
+**Two bugs that were just bugs:** `getIncompleteSetupSteps` ran on every dashboard load and
+rendered only in the has-leads branch — so the one account guaranteed to have unfinished
+setup, the brand-new one, was the only account never shown its next step. And the test-lead
+button lived only in the zero-lead branch, so pressing it created a lead, which emptied that
+branch, which removed the button: one use, then gone, exactly when someone wanted to try it
+again on a channel they had just connected. It sits with the setup strip now and retires
+with it.
+
+**Self-critique.**
+
+1. **Two of these were mine, from yesterday.** The Instagram false alarm and the `stillWorks`
+   prop exist because I shipped an alarm without checking whether the channel had a fallback
+   path. The poller's own header comment says why it exists. I did not read it before writing
+   a sentence that contradicted it.
+2. **The `holdAllForApproval` blind spot should have been caught when the column was added.**
+   A `Business` field that changes what the product *does* and is read by no UI is a missing
+   screen, not a small omission — and the surfaces that contradicted it were written long
+   before, which is exactly why nobody looked.
+3. **Not fixed, and I stopped rather than guess:** the website-widget setup step clears only
+   when a real widget lead arrives, so a business with no website can never finish setup and
+   the strip nags forever. The honest fix is a dismissal, which needs an additive column and a
+   route — more than belongs in this pass, and the founder should decide whether "skip this"
+   is a thing setup steps get.
+4. **Two product questions raised, not answered** (CLAUDE.md puts behaviour with the founder):
+   should a held workflow step *resume* after approval rather than unenrolling the lead; and
+   should a team invite from an approved tester be enough to let their colleague in, given
+   the Team feature currently cannot work at all.
+5. **Verified by typecheck, 1348 tests and a production build — not by looking.** The
+   database is unreachable from this sandbox, so none of these screens were rendered. Every
+   one is a copy or a branch change, which is the kind that typechecks clean and reads wrong.

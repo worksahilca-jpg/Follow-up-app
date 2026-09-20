@@ -165,7 +165,7 @@ newsletter/recruiter/vendor pitch?) before becoming a Lead row — rejected thre
 
 ### 6.6 Billing
 
-Single flat plan via Stripe (checkout/portal/webhook), currently $29/mo — see §9 for the pricing
+Tiered plans via Stripe (checkout/portal/webhook): Free $0 / Plus $39 / Pro $79 per month, flat per business with no seats — see `src/lib/pricing.ts` for the live figures and §9 for the pricing
 question in progress.
 
 ## 7. Explicitly out of scope (checked and declined, not just unconsidered)
@@ -194,7 +194,7 @@ operates multilingual across Europe/US, Structurely ships bilingual EN/ES nurtur
 
 ## 9. Open product decisions
 
-- **Pricing experiment** ($49–79/mo cohort test against the current $29/mo, using the
+- **Pricing experiment** (the $29 flat plan this line was written against shipped as Free/$39/$79; a cohort test above Pro would be the next question, using the
   recovered-revenue report as the willingness-to-pay proof mechanism) — recommended by research,
   **explicitly deferred by the CEO** ("hold off on pricing"). Not started.
 - **Fast-track Phase D trust marketing** — done this session (§6.4).

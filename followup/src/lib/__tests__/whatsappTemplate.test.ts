@@ -64,7 +64,12 @@ describe("sendWhatsApp", () => {
 
     const result = await sendWhatsApp("biz1", "+15550001111", "Still interested?", { leadFirstName: "Priya" });
 
-    expect(result).toEqual({ success: true, sid: "SM2" });
+    // sentTemplate rides along from 2026-09-20: the template went INSTEAD
+    // of the written message, and the caller records what the lead
+    // actually received rather than the undelivered draft. Twilio names a
+    // template by its Content SID, which is why sending.ts does not put
+    // this one in the owner-facing sentence.
+    expect(result).toEqual({ success: true, sid: "SM2", sentTemplate: "HXabc123" });
     expect(fetch).toHaveBeenCalledTimes(2);
     const [, retryInit] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[1];
     const retryBody = String(retryInit.body);

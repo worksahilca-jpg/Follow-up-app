@@ -575,6 +575,9 @@ export async function sendFollowUpToLead(
         const result = await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: lead.name.split(" ")[0] });
         if (!result.success) return providerFailure(result, "WhatsApp didn't confirm this message sent.");
         externalId = result.sid;
+        // The legacy sender substitutes a template the same way the Cloud
+        // API one does, and now says so too.
+        sentTemplate = result.sentTemplate;
       }
     } else {
       const result = await sendSms(lead.businessId, lead.phone!, body);
@@ -656,8 +659,14 @@ export async function sendFollowUpToLead(
   // template rather than inventing its words, and says plainly that the
   // written message did not go. Truthful beats pretty: a thread that
   // admits what happened is worth more than one that reads well and lies.
+  //
+  // The template is named only when the name is a name. Meta stores a
+  // readable one ("followup_still_interested"); Twilio identifies the
+  // same thing by a Content SID ("HX3f9a…"), which in a customer's own
+  // thread is noise pretending to be information.
+  const namedTemplate = sentTemplate && !/^HX[0-9a-f]{32}$/i.test(sentTemplate) ? ` "${sentTemplate}"` : "";
   const recordedBody = sentTemplate
-    ? `WhatsApp's 24-hour reply window had closed, so your approved template "${sentTemplate}" was sent instead of a written reply. They have not seen the message below.\n\n${body}`
+    ? `WhatsApp's 24-hour reply window had closed, so your approved template${namedTemplate} was sent instead of a written reply. They have not seen the message below.\n\n${body}`
     : body;
   const quickRepliesSent = (channel === "instagram" || channel === "messenger") ? options.quickReplies?.length ?? 0 : 0;
 

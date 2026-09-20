@@ -18,6 +18,11 @@ import type { Lead } from "@prisma/client";
  * Lead.phone as "fb:<psid>" (src/lib/instagramId.ts). Lead Ads leads are
  * real people with a name/email/phone from the form, keyed by email.
  */
+// Every id interpolated into a Graph path below is encodeURIComponent'd,
+// including the ones that "can only be numeric". A PSID and a leadgen id
+// arrive from a webhook payload, and a path segment is the one place a
+// stray "/" or "?" turns an id into a different request entirely. Three
+// of them were bare until 2026-09-20.
 const GRAPH = "https://graph.facebook.com/v21.0";
 
 export async function resolveFacebookPage(pageAccessToken: string): Promise<{ id: string; name?: string } | null> {
@@ -65,7 +70,7 @@ export async function sendMessengerMessage(
     ? { recipient: { id: psid }, messaging_type: "MESSAGE_TAG", tag: "HUMAN_AGENT", message }
     : { recipient: { id: psid }, messaging_type: "RESPONSE", message };
 
-  const res = await fetch(`${GRAPH}/${pt.pageId}/messages?access_token=${encodeURIComponent(pt.token)}`, {
+  const res = await fetch(`${GRAPH}/${encodeURIComponent(pt.pageId)}/messages?access_token=${encodeURIComponent(pt.token)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(envelope),
@@ -160,7 +165,7 @@ export async function unsubscribeFacebookPageWebhooks(pageId: string, pageAccess
 async function lookupSenderName(businessId: string, psid: string): Promise<string | null> {
   const pt = await pageToken(businessId);
   if (!pt) return null;
-  const res = await fetch(`${GRAPH}/${psid}?fields=first_name,last_name&access_token=${encodeURIComponent(pt.token)}`).catch(() => null);
+  const res = await fetch(`${GRAPH}/${encodeURIComponent(psid)}?fields=first_name,last_name&access_token=${encodeURIComponent(pt.token)}`).catch(() => null);
   if (!res?.ok) return null;
   const data = await res.json().catch(() => null);
   const name = [data?.first_name, data?.last_name].filter(Boolean).join(" ").trim();
@@ -235,7 +240,7 @@ export function parseLeadgenFields(fieldData: Array<{ name?: string; values?: st
 export async function fetchLeadgenLead(businessId: string, leadgenId: string): Promise<(LeadgenFields & { createdTime: Date; formName: string | null }) | null> {
   const pt = await pageToken(businessId);
   if (!pt) return null;
-  const res = await fetch(`${GRAPH}/${leadgenId}?fields=field_data,created_time,form_id&access_token=${encodeURIComponent(pt.token)}`);
+  const res = await fetch(`${GRAPH}/${encodeURIComponent(leadgenId)}?fields=field_data,created_time,form_id&access_token=${encodeURIComponent(pt.token)}`);
   if (!res.ok) {
     console.error(`Leadgen fetch failed for ${leadgenId}: ${res.status}`);
     return null;

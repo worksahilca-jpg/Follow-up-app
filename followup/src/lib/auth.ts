@@ -112,7 +112,24 @@ export const authOptions: NextAuthOptions = {
       // in successfully instead (research/audit/2026-09-09-fifth-pass-
       // audit.md finding #2).
       const joinedBusinessId = await prisma.$transaction(async (tx) => {
-        const pendingInvite = await tx.invite.findFirst({ where: { email } });
+        // An invite is proof that an admin named THIS email, so joining on
+        // it is the intended flow — but it had no expiry, and an invite
+        // that never expires is a standing key. An admin who typos an
+        // address, or invites someone who then leaves, has no way to take
+        // it back except to notice and delete the row: whoever controls
+        // that mailbox can walk into the business months later and read
+        // every lead in it.
+        //
+        // Thirty days from the existing createdAt — no migration, and long
+        // enough that nobody meets it in normal use. A stale invite is not
+        // deleted here (that is the sweep's job, and deleting on a failed
+        // sign-in would tell an attacker their guess was close); it simply
+        // stops working, and the person gets a fresh business of their own
+        // exactly as any other new sign-up does.
+        const INVITE_VALID_DAYS = 30;
+        const pendingInvite = await tx.invite.findFirst({
+          where: { email, createdAt: { gte: new Date(Date.now() - INVITE_VALID_DAYS * 24 * 60 * 60_000) } },
+        });
 
         const businessId = pendingInvite
           ? pendingInvite.businessId

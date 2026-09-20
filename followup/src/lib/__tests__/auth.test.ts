@@ -139,6 +139,28 @@ describe("signIn callback — invite consumption", () => {
     expect(txInviteDeleteMany).not.toHaveBeenCalled();
   });
 
+  /**
+   * An invite is proof that an admin named this exact email, so joining
+   * on one is the intended flow — but it had no expiry until 2026-09-20,
+   * and an invite that never expires is a standing key to every lead in
+   * the business. A typo'd address, or someone who has since left, could
+   * walk in months later.
+   *
+   * The expiry is expressed in the QUERY, so a stale invite is not found
+   * at all rather than found and then rejected — nothing downstream can
+   * accidentally consume one.
+   */
+  it("only looks for invites issued recently, so a forgotten one stops working", async () => {
+    await signIn({ user: { email: "new@example.com", name: "New" } });
+    const where = txInviteFindFirst.mock.calls.at(-1)?.[0]?.where;
+    expect(where.email).toBe("new@example.com");
+    expect(where.createdAt?.gte).toBeInstanceOf(Date);
+    // Thirty days: long enough that nobody meets it in normal use.
+    const days = (Date.now() - (where.createdAt.gte as Date).getTime()) / 86_400_000;
+    expect(days).toBeGreaterThan(29);
+    expect(days).toBeLessThan(31);
+  });
+
   it("joins the inviting business at the invited role instead of creating a new one", async () => {
     txInviteFindFirst.mockResolvedValue({ id: "invite1", businessId: "existingBiz", role: "SALES" });
     const ok = await signIn({ user: { email: "invited@example.com", name: "Invited Person" } });

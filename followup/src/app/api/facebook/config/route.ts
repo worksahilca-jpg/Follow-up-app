@@ -18,16 +18,21 @@ export async function GET() {
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
+    // Deliberately NOT selecting the token. src/lib/db.ts decrypts it on
+    // read, so asking for it here meant a real Page credential was
+    // decrypted on every Settings page load to answer a yes/no question.
+    // facebookPageId is set and cleared in the same writes as the token
+    // (see POST and DELETE below), so it answers the same question without
+    // touching the secret.
     select: {
       facebookPageId: true,
       facebookPageName: true,
-      facebookPageAccessToken: true,
       facebookWebhookSubscribedAt: true,
     },
   });
   return NextResponse.json({
     success: true,
-    connected: !!business?.facebookPageAccessToken,
+    connected: !!business?.facebookPageId,
     // Connected is not the same question as receiving. A Page whose
     // subscription call never succeeded is saved, readable and completely
     // silent, so Settings asks both and says so.

@@ -24,12 +24,16 @@ export async function GET() {
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { instagramUserId: true, instagramAccessToken: true, instagramWebhookSubscribedAt: true },
+    // The token is deliberately not selected — see the matching comment in
+    // the Facebook config route. instagramUserId is written and cleared
+    // alongside it and answers the same question without decrypting a
+    // credential on every Settings load.
+    select: { instagramUserId: true, instagramWebhookSubscribedAt: true },
   });
 
   return NextResponse.json({
     success: true,
-    connected: !!business?.instagramAccessToken,
+    connected: !!business?.instagramUserId,
     // Connected is not the same question as receiving. An account whose
     // subscription call never succeeded is saved, readable and completely
     // silent, so Settings asks both and says so.

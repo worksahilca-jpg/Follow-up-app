@@ -555,7 +555,15 @@ export async function sendWhatsApp(
   body: string,
   options: { leadFirstName?: string } = {}
   // See sendSms above for why `status` is passed through on a failure.
-): Promise<{ success: boolean; message?: string; sid?: string; status?: number }> {
+  //
+  // `sentTemplate` mirrors the Cloud API sender (src/lib/whatsappCloud.ts):
+  // set ONLY when the approved template went out INSTEAD of `body`,
+  // because the 24-hour window had closed. Without it the caller cannot
+  // tell a real send from a substitution and records the undelivered
+  // draft as the outbound message — the owner then reads a personal reply
+  // in their thread that the lead never saw. Fixed on the Cloud path
+  // 2026-09-20; this is the same bug on the older Twilio path.
+): Promise<{ success: boolean; message?: string; sid?: string; status?: number; sentTemplate?: string }> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: {
@@ -625,7 +633,14 @@ export async function sendWhatsApp(
         status: templateRes.status,
       };
     }
-    return { success: true, sid: typeof templateData.sid === "string" ? templateData.sid : undefined };
+    return {
+      success: true,
+      sid: typeof templateData.sid === "string" ? templateData.sid : undefined,
+      // Twilio identifies a template by its Content SID; that is the only
+      // name we hold for it, so that is what the record names. Meta's
+      // side has a human template name — neither invents the body text.
+      sentTemplate: business.whatsappTemplateSid,
+    };
   }
 
   return {

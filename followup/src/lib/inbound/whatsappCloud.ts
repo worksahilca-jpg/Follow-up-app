@@ -170,7 +170,6 @@ async function handleMessages(businessId: string, value: { messages?: unknown; s
     const lead = await findOrCreateLeadByPhone(businessId, `+${from}`, "WhatsApp", names.get(from));
     const conversation = await findOrCreateConversation(lead.id, "whatsapp");
     const isNew = await createInboundMessageIfNew(conversation.id, content.body, sentAt, wamid);
-    if (!isNew) continue; // Meta redelivered it — already recorded, don't re-ack/re-score
 
     // STOP/START before anything else touches this lead — the same rule,
     // and the same record (Lead.optedOutAt, shared with SMS), as the Twilio
@@ -186,6 +185,16 @@ async function handleMessages(businessId: string, value: { messages?: unknown; s
         meta: { channel: "whatsapp", via: "keyword" },
       });
     }
+
+    // Meta redelivered it — recorded already, and consent above is settled
+    // either way, so nothing below re-runs.
+    //
+    // This guard used to sit ABOVE the consent block, which meant a STOP
+    // whose first processing failed after the message row was written was
+    // skipped forever on every redelivery: "already recorded", opt-out
+    // never applied, and someone who asked to be left alone kept getting
+    // messages. Safe to repeat — the update is idempotent.
+    if (!isNew) continue;
 
     if (!optingOut) {
       // Parked for the DM grace period (src/lib/acknowledge.ts) — the owner

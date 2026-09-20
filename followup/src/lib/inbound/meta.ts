@@ -287,7 +287,6 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
 
       const conversation = await findOrCreateConversation(lead.id, "instagram");
       const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, sentAt, event.message?.mid, content.quickReplyPayload);
-      if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
 
       // A tap on one of FollowUp's own reply buttons is an answer, not a
       // new enquiry: no acknowledgement (the lead did not write anything
@@ -295,14 +294,31 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
       // handleQuickReplyTap.
       const tap = content.quickReplyPayload ? decodeQuickReplyPayload(content.quickReplyPayload) : null;
       if (tap) {
-        await handleQuickReplyTap(business.id, lead, "instagram", content.body, tap);
+        if (isNewMessage) await handleQuickReplyTap(business.id, lead, "instagram", content.body, tap);
         continue;
       }
 
       // STOP/START first — nothing else may touch this lead before consent
       // is recorded. `ownWords`, so an attachment whose placeholder body
       // happened to read "stop" could never opt someone out.
+      //
+      // Runs BEFORE the redelivery guard below, deliberately. The guard
+      // used to sit above this line, so a STOP whose first processing
+      // failed after the message row was written — a database blip, a
+      // timeout, anything between the two — was skipped forever on every
+      // redelivery: the message was "already recorded", and the opt-out
+      // it carried was never applied. Someone who asked to be left alone
+      // kept receiving messages, which is the one failure in this file
+      // that is not recoverable by an owner noticing.
+      //
+      // Safe to repeat: applying an opt-out twice writes the same
+      // suppression, and applyDmConsentKeyword is keyed on the lead.
       const optedOut = await applyDmConsentKeyword(business.id, lead.id, "instagram", senderId, content.ownWords);
+
+      // Meta redelivered this event — recorded already, and consent is now
+      // settled either way, so nothing below (acknowledge, score, engage)
+      // should run a second time.
+      if (!isNewMessage) continue;
 
       if (!optedOut) {
         // Parks the acknowledgement for ~2 minutes rather than sending it
@@ -364,17 +380,19 @@ async function handlePageEvents(entries: any[]): Promise<void> {
       const sentAt = eventSentAt(event);
       const conversation = await findOrCreateConversation(lead.id, "messenger");
       const isNewMessage = await createInboundMessageIfNew(conversation.id, content.body, sentAt, event.message?.mid, content.quickReplyPayload);
-      if (!isNewMessage) continue; // Meta redelivered this event — already recorded, don't re-ack/re-score
 
       // A reply-button tap — same handling as the Instagram path above.
       const tap = content.quickReplyPayload ? decodeQuickReplyPayload(content.quickReplyPayload) : null;
       if (tap) {
-        await handleQuickReplyTap(business.id, lead, "messenger", content.body, tap);
+        if (isNewMessage) await handleQuickReplyTap(business.id, lead, "messenger", content.body, tap);
         continue;
       }
 
-      // STOP/START before anything else — see the Instagram path above.
+      // STOP/START before anything else, and before the redelivery guard
+      // — see the Instagram path above for why the order matters.
       const optedOut = await applyDmConsentKeyword(business.id, lead.id, "messenger", senderId, content.ownWords);
+
+      if (!isNewMessage) continue; // redelivered; consent settled, nothing else re-runs
 
       if (!optedOut) {
         // Same two-minute grace period as Instagram, and `ownWords` not

@@ -29,7 +29,6 @@ export async function GET() {
     select: {
       whatsappWabaId: true,
       whatsappPhoneNumberId: true,
-      whatsappAccessToken: true,
       whatsappDisplayNumber: true,
       whatsappConnectMode: true,
       whatsappCloudTemplateName: true,
@@ -39,13 +38,17 @@ export async function GET() {
       // so a business on it is not told WhatsApp is off.
       whatsappPhoneNumber: true,
       twilioAccountSid: true,
-      twilioAuthToken: true,
     },
+    // Neither token is selected. src/lib/db.ts decrypts on read, so this
+    // route was decrypting TWO real credentials on every Settings page
+    // load to compute two booleans. Both tokens are written and cleared in
+    // the same statements as the ids beside them (see POST and DELETE), so
+    // the ids answer the same questions without touching a secret.
   });
 
   return NextResponse.json({
     success: true,
-    connected: !!b?.whatsappPhoneNumberId && !!b?.whatsappAccessToken,
+    connected: !!b?.whatsappPhoneNumberId,
     displayNumber: b?.whatsappDisplayNumber ?? null,
     connectMode: b?.whatsappConnectMode ?? null,
     wabaId: b?.whatsappWabaId ?? null,
@@ -53,7 +56,7 @@ export async function GET() {
     templateName: b?.whatsappCloudTemplateName ?? null,
     templateLanguage: b?.whatsappCloudTemplateLanguage ?? null,
     templateBody: b?.whatsappCloudTemplateBody ?? null,
-    twilioLegacy: !!b?.whatsappPhoneNumber && !!b?.twilioAccountSid && !!b?.twilioAuthToken,
+    twilioLegacy: !!b?.whatsappPhoneNumber && !!b?.twilioAccountSid,
     signupAvailable: whatsappSignupAvailable(),
     // Public by nature (it is in every Facebook Login URL); the secret and
     // the token never leave the server.

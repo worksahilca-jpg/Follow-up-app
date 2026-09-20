@@ -3741,3 +3741,55 @@ adding a query to a hot function, and it is visible rather than worked around.
    requests can still both pass this check before either writes. That needs a migration and a
    decision about what the key is (lead + body + minute?), which is more than this pass.
    Named, not built.
+
+---
+
+## 2026-09-20 — "Thank you for contacting My Business"
+
+Found by sweeping production for the obvious things rather than waiting for the founder to
+notice them: *are there outbound messages containing a placeholder?* Four, to real people.
+
+`src/lib/auth.ts` names a brand-new workspace `"<their name>'s Business"`, or — when Google
+hands over no display name at all — the literal **"My Business"**. That is a row label
+waiting to be replaced in Settings, and on the founder's own account it never was. So the
+sentence a stranger received was *"Thank you for contacting My Business."*
+
+On a cold first email it is worse than it looks: the **subject line** carried it too, and
+the subject is the only thing read before the decision to open. "Thank you for contacting My
+Business" sitting in an inbox is indistinguishable from spam — which, the same day the
+founder said *"they'll put us on spam, or they might report us"*, is precisely the exposure.
+
+**It is the same bug as "Hi! Instagram,"** — the 2026-09-19 incident where the lead's own
+name was the placeholder `findOrCreateLeadByInstagram` writes before a handle is known. That
+half was fixed then, with `greetingFirstName`. Nobody looked for the other half.
+
+So `businessDisplayName` lives **beside** `greetingFirstName` in the same module, and the
+module's header is now the rule rather than one instance of it: *a placeholder identity never
+reaches a customer.* Two modules each enforcing half is how the second half gets forgotten —
+and it did, for a day.
+
+Both return `""`, and `""` means **rewrite the sentence**, never interpolate a gap. There is
+a test for `"Thank you for contacting ."` because that is the obvious way to get this wrong.
+
+Also checked and deliberately NOT changed: `"My Business Solutions Inc"` is a real name that
+merely contains the word, and `"us"` is on the placeholder list because
+`acknowledge.ts` already falls back to it — "Thank you for contacting us" is a fine sentence
+to reach by having no name, and a bad one to reach by being *named* "us".
+
+**The sweep also cleared several suspicions**, which is worth recording so they are not
+re-investigated: no leads stuck mid-sequence, nothing stranded in the outbound retry queue,
+and the 146 filtered email threads read as correct rejections on inspection — marketing, HR
+notifications, PayPal, showing confirmations, vendors. The classifier is doing its job.
+
+**Self-critique.**
+
+1. **This was findable on 2026-09-19 and I did not look.** The lead-name fix even names the
+   pattern in its own header. Fixing the instance in front of me instead of asking "where
+   else does this shape exist" cost four real messages.
+2. **The subject line was the near miss.** I fixed the body first and only found the subject
+   because I grepped every use of `businessName` rather than the one the incident named.
+   The body reaches someone who already opened the mail; the subject decides whether they do.
+3. **Not fixed: the real cause.** The founder's business still has no name and no industry,
+   and nothing in the product ever asks again after onboarding. This guard stops the symptom
+   reaching a customer; it does not get the business named. A "finish setting up" prompt is
+   the actual fix and is his call, since it is a new piece of UI.

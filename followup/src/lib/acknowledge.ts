@@ -6,7 +6,7 @@ import { sendFollowUpToLead } from "@/lib/sending";
 import { checkAiEligibility } from "@/lib/billing";
 import { isOptOutMessage } from "@/lib/optOutKeywords";
 import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
-import { greetingFirstName } from "@/lib/leadName";
+import { greetingFirstName, businessDisplayName } from "@/lib/leadName";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -251,7 +251,14 @@ function genericAckLine(businessName: string): string {
   // wording — "I'll take a look and <owner> will follow up shortly. Best,
   // <owner>" — mixed first and third person for the same signer and read
   // as filler; task #63's first two live leads both received it.
-  return `Thank you for contacting ${businessName}. I've received your message and will get back to you shortly.`;
+  // A business that has not named itself yet gets the sentence without a
+  // name, rather than its row label. Four real people received "Thank you
+  // for contacting My Business" before this existed; see
+  // businessDisplayName in src/lib/leadName.ts.
+  const named = businessDisplayName(businessName);
+  return named
+    ? `Thank you for contacting ${named}. I've received your message and will get back to you shortly.`
+    : "Thank you for your message. I've received it and will get back to you shortly.";
 }
 
 /**
@@ -543,7 +550,18 @@ export async function acknowledgeNewLead(
       const line = decision.source === "fallback" ? await localizeFixedText(decision.line, languageSample) : decision.line;
       body = await composeFollowUpEmail(leadFirstName, lead.businessId, line, { languageSample });
       const cleanSubject = input.emailSubject?.replace(/^(re|fwd?):\s*/i, "").trim();
-      subject = cleanSubject ? `Re: ${cleanSubject}` : await localizeFixedText(`Thank you for contacting ${businessName}`, languageSample);
+      // The subject line is the other place the business name reaches a
+      // stranger — and on a cold first email it is the ONLY thing they
+      // read before deciding whether to open it. "Thank you for
+      // contacting My Business" in an inbox is indistinguishable from
+      // spam.
+      const namedBusiness = businessDisplayName(businessName);
+      subject = cleanSubject
+        ? `Re: ${cleanSubject}`
+        : await localizeFixedText(
+            namedBusiness ? `Thank you for contacting ${namedBusiness}` : "Thank you for your message",
+            languageSample
+          );
     } else {
       body = await localizeFixedText(`Hi! ${decision.line}`, languageSample);
     }

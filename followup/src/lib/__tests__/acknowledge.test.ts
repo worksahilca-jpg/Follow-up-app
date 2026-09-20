@@ -686,3 +686,60 @@ describe("holdAllForApproval stops the instant acknowledgement too", () => {
     expect(send).toHaveBeenCalled();
   });
 });
+
+/**
+ * The placeholder business name, caught in production on 2026-09-20.
+ *
+ * Four real people received "Thank you for contacting My Business." That
+ * name is written by src/lib/auth.ts when Google hands over no display
+ * name, and it is a row label waiting to be replaced in Settings — on
+ * the founder's own account it never was.
+ *
+ * Tested through acknowledgeNewLead rather than the helper, because a
+ * name guard that the send path does not call is worth nothing. The
+ * fallback line is reached by sending no inbound text, which is the one
+ * branch that does not need the model.
+ */
+describe("a business with no real name is never named to the lead", () => {
+  it("sends the no-name sentence instead of the row label", async () => {
+    p.business.findUnique.mockResolvedValue({
+      name: "My Business",
+      tier: "plus",
+      subscriptionStatus: "active",
+      holdAllForApproval: false,
+    });
+
+    await acknowledgeNewLead("lead1", { channel: "email", inboundText: "" });
+
+    const body = send.mock.calls[0][1] as string;
+    expect(body).not.toMatch(/My Business/);
+    expect(body).toMatch(/Thank you for your message/);
+  });
+
+  it("keeps the subject free of it too — the only line a stranger reads before opening", async () => {
+    p.business.findUnique.mockResolvedValue({
+      name: "My Business",
+      tier: "plus",
+      subscriptionStatus: "active",
+      holdAllForApproval: false,
+    });
+
+    await acknowledgeNewLead("lead1", { channel: "email", inboundText: "" });
+
+    const subject = (send.mock.calls[0][2] as { subject?: string }).subject ?? "";
+    expect(subject).not.toMatch(/My Business/);
+  });
+
+  it("still names a business that has a real one", async () => {
+    p.business.findUnique.mockResolvedValue({
+      name: "MJ Homes",
+      tier: "plus",
+      subscriptionStatus: "active",
+      holdAllForApproval: false,
+    });
+
+    await acknowledgeNewLead("lead1", { channel: "email", inboundText: "" });
+
+    expect(send.mock.calls[0][1] as string).toMatch(/MJ Homes/);
+  });
+});

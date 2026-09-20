@@ -98,9 +98,13 @@ export default async function DashboardPage() {
   // component, so without it "Good morning" came from the server's
   // clock — UTC on Vercel — and greeted a Toronto owner at 8pm with it.
   const business = ctx
-    ? await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } })
+    ? await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true } })
     : null;
   const timezone = business?.timezone ?? "America/New_York";
+  // Business.holdAllForApproval — as of 2026-09-20 this stops every
+  // automated message including the instant reply, so it changes what
+  // this screen can honestly promise.
+  const holdAll = business?.holdAllForApproval ?? false;
   const gmail = ctx ? await getGmailStatus(ctx.businessId) : { connected: false };
   const outlook = ctx ? await getOutlookStatus(ctx.businessId) : { connected: false };
   // An inbox is connected if EITHER provider is. Checking only Gmail is what
@@ -190,10 +194,21 @@ export default async function DashboardPage() {
           >
             {inbox ? (
               <>
+                {/* Three states, because there are three. Holding is
+                    checked FIRST: on a holding account nothing is sent at
+                    all, so how fast capture runs decides when the DRAFT
+                    is ready, not when the lead hears back. Saying "it
+                    replies" to an owner whose account never replies on
+                    its own is the same class of lie as the ten-minute
+                    one fixed this morning — and it became true of every
+                    beta account a few hours later, when the instant
+                    reply started waiting for approval too. */}
                 <p className="text-lg leading-relaxed">
-                  {inbox.instant
-                    ? "FollowUp is watching your inbox. The moment a lead writes, it replies within a minute and shows you here."
-                    : "FollowUp is watching your inbox. It checks for new leads every ten minutes, then replies and shows you here."}
+                  {holdAll
+                    ? "FollowUp is watching your inbox. When a lead writes, it writes the reply and puts it in Approvals for you — nothing goes out until you send it."
+                    : inbox.instant
+                      ? "FollowUp is watching your inbox. The moment a lead writes, it replies within a minute and shows you here."
+                      : "FollowUp is watching your inbox. It checks for new leads every ten minutes, then replies and shows you here."}
                 </p>
                 <p className="text-sm text-ink-soft mt-3 flex items-center justify-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--sage)" }} />

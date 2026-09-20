@@ -3617,3 +3617,70 @@ what they mean instead. DMs share this drafter, so the rule lands on both.
    asked for it in plain words, so it ships; but it makes "replies within a minute" false for
    every beta account, and the dashboard sentence fixed this morning now needs revisiting
    again. Flagged to him rather than quietly patched.
+
+---
+
+## 2026-09-20 — One check instead of a fifth prompt rule
+
+The day produced four "the drafter invented something" fixes, and every one of them was
+another sentence in a prompt. Named at the time as the wrong shape of answer; this is the
+right one.
+
+**The invariant already existed.** Both shape checks — `checkAckShape` and
+`checkDmDraftShape` — extract number tokens from a draft and refuse any the conversation
+does not contain. That rule is deterministic, costs nothing, and works in every language,
+because digits are digits everywhere.
+
+**What neither covered was a specific with no digits in it.** The message that went to a
+real lead had none:
+
+> lead: *"Hey is this still available?"* (twice, nothing else)
+> FollowUp: *"Checking on the status now. Will this be for a weekday or weekend?"*
+> lead: *"What do you mean"*
+
+Not one digit, so both checks passed it. "Weekday or weekend" is as invented as a fabricated
+price and worse in one way: **a wrong number reads as a mistake; a wrong question reads as
+the business knowing something about the enquiry.**
+
+`src/lib/grounding.ts` closes the calendar class, and both checks now call it.
+
+**Intl, not a word list.** A list of English day names would be an English-only rule in a
+product whose language story is Hindi, Punjabi, Spanish and Gujarati — and the founder
+rejected exactly that shortcut once already, on the WhatsApp filter: *"a keyword list can
+only ever be as multilingual as the person who wrote it remembered to be."* Day and month
+names are not a word-list problem; `Intl.DateTimeFormat` generates them for any locale, and
+the draft is checked in the lead's own language because that is the language it was written
+in.
+
+**Matching is whole-word**, via a hand-rolled check rather than `\b` — which is defined on
+ASCII word characters and quietly stops working on the scripts this product has to handle.
+Substring matching would ground "mar" against "market" and pass an invented "March".
+
+**Honest coverage.** "Weekday" and "weekend" are not derivable from Intl and sit in a short
+English list, marked as incomplete in the source. A place name, a service type or an
+invented event is not detectable this way at all. That is why the prompt rules stay: this is
+the net under them, not a replacement — and a net with known holes still catches what falls
+into it.
+
+**Also:** the dashboard's inbox sentence gained a third state. Holding is checked first now,
+because on a holding account nothing is sent at all, so capture speed decides when the
+*draft* is ready, not when the lead hears back. The two-state version was true for about six
+hours — from the morning's ten-minute fix until the instant reply started waiting for
+approval that afternoon.
+
+**Self-critique.**
+
+1. **The helper is the easy half; the wiring is where this fails.** A correct grounding
+   function that nothing calls is worth nothing, so four of the tests go through the real
+   shape checks with the real message rather than through the helper.
+2. **The coverage is one class, not the problem.** "The drafter fills silence with
+   specifics" is still mostly unguarded — places, service types, invented events. Calendar
+   was chosen because it is the class that actually fired, and the only one with a
+   language-neutral generator behind it. The rest remains prompt-only and is not solved.
+3. **`UNDERIVABLE_EN` is the seam.** It is a hand-written English list, the exact thing the
+   rest of the file is built to avoid, and it is where the next miss will come from — a
+   Spanish draft saying *"entre semana o fin de semana"* walks straight through.
+4. **Unverified in production.** Every test mocks the model. Whether real drafts trip this
+   rule at a sane rate, or whether it starts rejecting good drafts and costing a
+   regeneration every time, is only answerable from live traffic. `draftDm` retries once
+   before giving up, so the failure mode is cost rather than a lost message.

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { ungroundedCalendarWords } from "@/lib/grounding";
 import { generateInstantReply, assessAckRisk, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
@@ -151,7 +152,11 @@ export function ackGracePeriodMs(channel: AckChannel): number {
 export function checkAckShape(
   reply: string,
   inboundText: string,
-  ownerFirstName: string
+  ownerFirstName: string,
+  // The lead's own language tag, for the calendar rule below. Optional:
+  // absent falls back to English, which is what this check did before
+  // the rule existed, so no caller is forced to change.
+  locale?: string | null
 ): { ok: true } | { ok: false; rule: string } {
   const fail = (rule: string) => ({ ok: false as const, rule });
   const trimmed = reply.trim();
@@ -188,6 +193,13 @@ export function checkAckShape(
 
   const timeTokens = trimmed.match(/\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\s?(am|pm|hs?)\b/gi) ?? [];
   if (timeTokens.some((token) => !inboundText.toLowerCase().includes(token.toLowerCase()))) return fail("time");
+
+  // A day or month with no digits in it — "Thursday", "next weekend" —
+  // which every rule above misses because every rule above keys on
+  // digits. Same invariant, same direction: if the lead did not say it,
+  // FollowUp does not get to. See src/lib/grounding.ts for why this uses
+  // Intl rather than a list of English day names.
+  if (ungroundedCalendarWords(trimmed, inboundText, locale).length > 0) return fail("calendar");
 
   if (/^\s*(hi|hello|hey|dear|hola|buenos|buenas|namaste|namaskar|bonjour|olá|ola|ciao|hallo|salut)\b/i.test(trimmed)) {
     return fail("greeting");

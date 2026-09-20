@@ -18,6 +18,7 @@
  */
 
 import type { Message } from "@/lib/types";
+import { ungroundedCalendarWords } from "@/lib/grounding";
 import { DM_MAX_BUTTONS, QUICK_REPLY_TITLE_MAX_CHARS, type DmButton } from "@/lib/quickReplies";
 
 export const DM_CHANNELS: ReadonlySet<string> = new Set(["instagram", "messenger"]);
@@ -242,7 +243,11 @@ const NUMBER_RE = /\p{Nd}(?:[\p{Nd},.]*\p{Nd})?/gu;
  */
 export function checkDmDraftShape(
   draft: DmDraft,
-  conversationText: string
+  conversationText: string,
+  // The lead's own language tag, so the calendar rule below checks the
+  // draft in the language it was actually written in. Optional: absent
+  // falls back to English, which is what the rule did before it existed.
+  locale?: string | null
 ): { ok: true } | { ok: false; rule: string } {
   const fail = (rule: string) => ({ ok: false as const, rule });
   const body = draft.body.trim();
@@ -273,6 +278,16 @@ export function checkDmDraftShape(
 
   const known = new Set(conversationText.match(NUMBER_RE) ?? []);
   if ((body.match(NUMBER_RE) ?? []).some((n) => !known.has(n))) return fail("digits");
+
+  // The same invariant as the digits rule above, for a specific with no
+  // digits in it. "Will this be for a weekday or weekend?" went out to a
+  // real lead who had only ever said "Hey is this still available?" — no
+  // numbers, so the rule above passed it, and the lead's reply was "What
+  // do you mean". See src/lib/grounding.ts.
+  //
+  // draftDm regenerates once on any shape failure before giving up, so
+  // this usually costs one extra call rather than a lost draft.
+  if (ungroundedCalendarWords(body, conversationText, locale).length > 0) return fail("calendar");
 
   if (draft.buttons.length > DM_MAX_BUTTONS) return fail("too_many_buttons");
   const seen = new Set<string>();

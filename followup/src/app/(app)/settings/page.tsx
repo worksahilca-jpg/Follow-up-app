@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import TeamSection from "@/components/TeamSection";
+import BusinessProfileSection from "@/components/BusinessProfileSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
 import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 import CopyWebhookUrl from "@/components/CopyWebhookUrl";
@@ -55,6 +56,7 @@ const SECTION_TAB: Record<string, SettingsTab> = {
   // inside a hidden tab.
   whatsapp: "channels",
   social: "channels",
+  business: "team",
   "lead-routing": "team",
   team: "team",
   billing: "billing",
@@ -1161,6 +1163,19 @@ function SettingsPageInner() {
       </div>
 
       <div hidden={activeTab !== "team"} className="space-y-10">
+      {/* Who this business IS, above who works in it. Until 2026-09-20
+          there was nowhere at all to change the business's own name or
+          trade — they were asked once in the onboarding wizard and then
+          unreachable, which is how four real people received "Thank you
+          for contacting My Business". This tab is the account-identity
+          tab, so it belongs here and it belongs first. */}
+      <section id="business" className="scroll-mt-16">
+        <h2 className="font-display text-xl">Your business</h2>
+        <div className="mt-4">
+          <BusinessProfileSection />
+        </div>
+      </section>
+
       <section id="team" className="scroll-mt-16">
         <h2 className="font-display text-xl">Team</h2>
         <p className="text-sm text-ink-soft mt-1">

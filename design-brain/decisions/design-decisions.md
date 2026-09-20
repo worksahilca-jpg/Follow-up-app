@@ -3793,3 +3793,64 @@ notifications, PayPal, showing confirmations, vendors. The classifier is doing i
    and nothing in the product ever asks again after onboarding. This guard stops the symptom
    reaching a customer; it does not get the business named. A "finish setting up" prompt is
    the actual fix and is his call, since it is a new piece of UI.
+
+---
+
+## 2026-09-20 — "I don't see any option like business name"
+
+The founder, after I told him to fix his business name in Settings. **He was right and I was
+wrong.** There was no such option anywhere in the product.
+
+`Business.name` and `Business.industry` were asked once in the onboarding wizard and then
+unreachable forever. `/api/onboarding` had always accepted a partial update — its own comment
+says it is "reachable at any time, not just during first-run" — and no screen ever called it
+that way. The backend was built for this; the UI was never added.
+
+**This is the cause behind two separate incidents fixed earlier the same day.** Four real
+people received *"Thank you for contacting My Business"*, and a photographer pitching a
+software founder was read as a customer by a classifier running with `industry: null`. Both
+were patched at the symptom. This is the thing underneath them.
+
+### What was built
+
+**A Settings section**, first in the Team tab — that is the account-identity tab, so who the
+business *is* belongs above who works in it. Shape copies the other panels exactly (`box
+p-5`, square icon tile in `--slate-soft`, title, one line of why it matters). Nothing new
+invented; the pattern is already approved.
+
+**A setup step**, second in the strip, right after billing. Cheap to fix and it changes what
+every later step produces.
+
+**Two fields, not three.** Team size is collected at onboarding and drives nothing today.
+Adding it here would be a third control that changes nothing — [[rejected#^S-12|S-12]],
+decoration that doesn't improve usability. It goes in the day it means something.
+
+**The industry field carries a sentence saying what it DOES** — *"FollowUp uses this to tell
+a real customer from a supplier or a sales pitch. With it blank, it has to guess."* Without
+that line it reads as filing paperwork. With it, it reads as worth doing. That sentence is
+the whole reason the field will get filled in.
+
+**The placeholder notice is `--slate`, not `--coral`.** Nothing is broken and nothing has
+been lost — but it is a fact the owner cannot otherwise discover, because the name only
+appears in mail they never receive.
+
+**`INDUSTRIES` moved to its own leaf module.** Two screens now ask the same question, and a
+second copy of the list is how they start offering different answers.
+
+**Self-critique.**
+
+1. **I told him to do something impossible, twice.** "2 min in Settings" was in a status
+   list I wrote, and again in the follow-up. I had read that Settings file several times
+   today — including grepping it for `SECTION_TAB` — and never noticed there was no profile
+   section. Asserting a screen exists without checking is the same error as asserting a
+   behaviour exists without checking, and I have made both today.
+2. **A test I wrote asserted the wrong premise** — that a Free business produces a billing
+   step. It does not; `hasActiveAccess` treats Free as real access, which is recorded in
+   `setupStatus.ts`'s own comment as a bug already fixed. The test failed, I read the
+   comment, and fixed the test rather than the code. Worth recording because the instinct
+   when a new test fails is to suspect the new code.
+3. **Seven existing fixtures needed two fields added.** That is the honest cost of a new
+   condition in a shared function, and it is visible in the diff rather than worked around.
+4. **Unverified in the running app.** The database is unreachable from this sandbox, so the
+   section was not rendered — typecheck, 1423 tests and a build are what stand behind it.
+   A form is more likely than most changes to have a visual flaw those three cannot see.

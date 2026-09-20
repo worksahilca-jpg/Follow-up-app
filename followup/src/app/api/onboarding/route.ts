@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { parseJsonBody } from "@/lib/validation";
+import { businessDisplayName } from "@/lib/leadName";
 
 const MAX_NAME_LENGTH = 120;
 
@@ -22,6 +23,48 @@ const onboardingSchema = z.object({
 //      Gmail, or skip) is done. This is the only place onboarded flips to
 //      true, which is what actually unlocks the rest of the app (see
 //      src/app/(app)/layout.tsx).
+/**
+ * GET /api/onboarding — the business's own profile, for Settings.
+ *
+ * The POST below has always accepted a partial update "at any time, not
+ * just during first-run" (see its comment), but nothing ever offered the
+ * owner a way to make one: name and industry were asked once in the
+ * onboarding wizard and then unreachable forever.
+ *
+ * That is why four real people received "Thank you for contacting My
+ * Business" on 2026-09-20 — the founder's own workspace still carried
+ * auth.ts's placeholder name, and there was no screen on which to change
+ * it. `industry` was null for the same reason, and it is the single most
+ * important input to classifyAsProspect.
+ *
+ * Not admin-gated, unlike POST: reading your own business's name is not
+ * a privileged act, and the Settings section that calls this renders for
+ * everyone while only admins get the save button.
+ */
+export async function GET() {
+  const ctx = await getSessionContext();
+  if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+
+  const business = await prisma.business.findUnique({
+    where: { id: ctx.businessId },
+    select: { name: true, industry: true, teamSize: true },
+  });
+  if (!business) return NextResponse.json({ success: false, message: "Not found." }, { status: 404 });
+
+  return NextResponse.json({
+    success: true,
+    name: business.name,
+    industry: business.industry,
+    teamSize: business.teamSize,
+    // Whether the name is still a stand-in. The Settings section says so
+    // plainly rather than leaving the owner to notice — see
+    // businessDisplayName in src/lib/leadName.ts for why it matters and
+    // where it leaks.
+    namePlaceholder: businessDisplayName(business.name) === "",
+    isAdmin: await requireAdmin(ctx),
+  });
+}
+
 export async function POST(request: NextRequest) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });

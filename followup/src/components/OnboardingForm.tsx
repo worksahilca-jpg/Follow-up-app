@@ -1,19 +1,11 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
+import { INDUSTRIES } from "@/lib/industries";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Compass, Mail, Check, ArrowRight, Loader2 } from "lucide-react";
 import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
 
-const INDUSTRIES = [
-  "Real estate",
-  "Mortgage brokerage",
-  "Home services (contractor, cleaning, etc.)",
-  "Dental / medical clinic",
-  "Legal",
-  "Marketing agency",
-  "Other",
-];
 
 interface OnboardingFormProps {
   initialName: string;

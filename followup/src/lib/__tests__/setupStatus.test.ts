@@ -31,7 +31,7 @@ const outlookStatus = getOutlookStatus as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   // Fully set up by default — each test knocks out just the one thing it cares about.
-  p.business.findUnique.mockResolvedValue({ subscriptionStatus: "active", tier: "plus", twilioPhoneNumber: "+15551234567" });
+  p.business.findUnique.mockResolvedValue({ subscriptionStatus: "active", tier: "plus", twilioPhoneNumber: "+15551234567", name: "MJ Homes", industry: "Real estate" });
   gmailStatus.mockResolvedValue({ connected: true, email: "owner@example.com" });
   outlookStatus.mockResolvedValue({ connected: false });
   p.lead.findFirst.mockResolvedValue({ id: "lead1" }); // a "Website form" lead exists
@@ -44,7 +44,7 @@ describe("getIncompleteSetupSteps", () => {
   });
 
   it("flags billing first when the subscription isn't active", async () => {
-    p.business.findUnique.mockResolvedValue({ subscriptionStatus: null, tier: null, twilioPhoneNumber: "+15551234567" });
+    p.business.findUnique.mockResolvedValue({ subscriptionStatus: null, tier: null, twilioPhoneNumber: "+15551234567", name: "MJ Homes", industry: "Real estate" });
     const steps = await getIncompleteSetupSteps("biz1");
     expect(steps[0].id).toBe("billing");
   });
@@ -56,7 +56,7 @@ describe("getIncompleteSetupSteps", () => {
   });
 
   it("flags phone when no Twilio number is on file — only while carrier channels are offered", async () => {
-    p.business.findUnique.mockResolvedValue({ subscriptionStatus: "active", tier: "plus", twilioPhoneNumber: null });
+    p.business.findUnique.mockResolvedValue({ subscriptionStatus: "active", tier: "plus", twilioPhoneNumber: null, name: "MJ Homes", industry: "Real estate" });
     const steps = await getIncompleteSetupSteps("biz1");
     // Kept rather than deleted so re-enabling the flag restores this coverage
     // instead of silently losing it — same shape as channelAvailability.test.ts.
@@ -70,7 +70,7 @@ describe("getIncompleteSetupSteps", () => {
   });
 
   it("orders billing, then Gmail, then phone, then widget, regardless of what's incomplete", async () => {
-    p.business.findUnique.mockResolvedValue({ subscriptionStatus: null, twilioPhoneNumber: null });
+    p.business.findUnique.mockResolvedValue({ subscriptionStatus: null, twilioPhoneNumber: null, name: "MJ Homes", industry: "Real estate" });
     gmailStatus.mockResolvedValue({ connected: false });
     p.lead.findFirst.mockResolvedValue(null);
     const steps = await getIncompleteSetupSteps("biz1");
@@ -81,7 +81,7 @@ describe("getIncompleteSetupSteps", () => {
   });
 
   it("every step names a real place to fix it", async () => {
-    p.business.findUnique.mockResolvedValue({ subscriptionStatus: null, twilioPhoneNumber: null });
+    p.business.findUnique.mockResolvedValue({ subscriptionStatus: null, twilioPhoneNumber: null, name: "MJ Homes", industry: "Real estate" });
     gmailStatus.mockResolvedValue({ connected: false });
     p.lead.findFirst.mockResolvedValue(null);
     const steps = await getIncompleteSetupSteps("biz1");
@@ -114,7 +114,7 @@ describe("getIncompleteSetupSteps", () => {
     // dropped at this call site. So the dashboard demanded a trial while
     // Settings → Billing said "Free… this is where you are now" — two screens
     // making opposite claims, which reads as a dark pattern, not a bug.
-    p.business.findUnique.mockResolvedValue({ subscriptionStatus: null, tier: "free", twilioPhoneNumber: "+15551234567" });
+    p.business.findUnique.mockResolvedValue({ subscriptionStatus: null, tier: "free", twilioPhoneNumber: "+15551234567", name: "MJ Homes", industry: "Real estate" });
     const steps = await getIncompleteSetupSteps("biz1");
     expect(steps.map((s) => s.id)).not.toContain("billing");
   });
@@ -158,7 +158,7 @@ describe("the setup strip never offers a step nobody can complete", () => {
   beforeEach(() => {
     // The state every brand-new business is in: nothing connected, no
     // Twilio number, no widget lead yet.
-    p.business.findUnique.mockResolvedValue({ subscriptionStatus: "active", tier: "plus", twilioPhoneNumber: null });
+    p.business.findUnique.mockResolvedValue({ subscriptionStatus: "active", tier: "plus", twilioPhoneNumber: null, name: "MJ Homes", industry: "Real estate" });
     gmailStatus.mockResolvedValue({ connected: true, email: "owner@example.com" });
     outlookStatus.mockResolvedValue({ connected: false });
     p.lead.findFirst.mockResolvedValue(null);

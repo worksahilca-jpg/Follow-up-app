@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = process.env.NEXTAUTH_URL ?? "https://follow-up-app-two.vercel.app";
+import { SITE_URL as siteUrl } from "@/lib/siteUrl";
 
 // Only the genuinely public, static pages — not auth-gated app routes
 // (a crawler can't get past sign-in anyway) or private per-lead/per-business

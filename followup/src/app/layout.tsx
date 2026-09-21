@@ -7,18 +7,32 @@ import { publicSans, ibmPlexMono } from "@/lib/fonts";
 // metadataBase makes every relative URL below (the OG image, icons) resolve
 // to an absolute one — required for social platforms that fetch the image
 // directly rather than rendering it in a browser with a known origin.
-const siteUrl = process.env.NEXTAUTH_URL ?? "https://follow-up-app-two.vercel.app";
+//
+// It reads SITE_URL, not NEXTAUTH_URL: the public address of the site and the
+// OAuth callback host are different questions that happened to share a
+// variable, and the shared fallback pointed at a vercel.app deployment. See
+// src/lib/siteUrl.ts.
+import { SITE_URL } from "@/lib/siteUrl";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: "FollowUp — Never lose a lead because you forgot to follow up.",
+  metadataBase: new URL(SITE_URL),
+  // A template, so a page that sets its own title keeps the product name in
+  // the result without every page repeating the homepage's whole pitch.
+  // `default` is the homepage's own title.
+  title: {
+    default: "FollowUp — Never lose a lead because you forgot to follow up.",
+    template: "%s — FollowUp",
+  },
+  // Without this, every public page told Google its canonical was whatever
+  // host it happened to be served from.
+  alternates: { canonical: "/" },
   description:
     "FollowUp watches your inbox, tells you who is going quiet and why, and writes the reply. Only for owners who have leads and don't have time to reply.",
   openGraph: {
     title: "FollowUp — Never lose a lead because you forgot to follow up.",
     description:
       "FollowUp watches your inbox, tells you who is going quiet and why, and writes the reply. Only for owners who have leads and don't have time to reply.",
-    url: siteUrl,
+    url: SITE_URL,
     siteName: "FollowUp",
     type: "website",
   },

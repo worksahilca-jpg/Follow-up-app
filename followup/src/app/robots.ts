@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = process.env.NEXTAUTH_URL ?? "https://follow-up-app-two.vercel.app";
+import { SITE_URL as siteUrl } from "@/lib/siteUrl";
 
 // Only the actually-public, actually-indexable pages get crawled. Everything
 // under (app) requires sign-in anyway (a crawler would just hit a redirect),

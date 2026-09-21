@@ -2,7 +2,15 @@ import Link from "next/link";
 import LogoMark from "@/components/LogoMark";
 
 export const metadata = {
-  title: "Privacy Policy — FollowUp",
+  // The title template in layout.tsx appends " — FollowUp", so this is just
+  // the page's own name. The description is the point: without one, this page
+  // inherited the homepage's sales pitch, and Google showed the privacy
+  // policy to someone searching for the product, described as "Never lose a
+  // lead because you forgot to follow up." (Founder, 2026-09-21.)
+  title: "Privacy Policy",
+  description:
+    "How FollowUp handles your data: what it collects from your connected inbox and social accounts, what it never does with it, how Google and Meta user data is used under their Limited Use rules, and how to export or delete everything.",
+  alternates: { canonical: "/privacy" },
 };
 
 // Static legal page — no auth, no DB, no client JS. Required for both

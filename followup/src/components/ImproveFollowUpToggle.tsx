@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PenLine } from "lucide-react";
+import Switch from "@/components/Switch";
 
 /**
  * The consent switch for using this business's conversations to improve
@@ -57,21 +58,7 @@ export default function ImproveFollowUpToggle({ compact = false }: { compact?: b
   }
 
   const control = (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={!!on}
-      aria-label="Help improve FollowUp"
-      onClick={toggle}
-      disabled={on === null || busy}
-      className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
-      style={{ backgroundColor: on ? "var(--rust)" : "var(--line)" }}
-    >
-      <span
-        className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
-        style={{ transform: on ? "translateX(22px)" : "translateX(2px)", backgroundColor: on ? "var(--on-accent)" : "var(--ink)" }}
-      />
-    </button>
+    <Switch checked={!!on} onChange={toggle} disabled={on === null || busy} label="Help improve FollowUp" />
   );
 
   if (compact) {

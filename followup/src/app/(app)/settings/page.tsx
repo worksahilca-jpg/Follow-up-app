@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
+import Switch from "@/components/Switch";
 import TeamSection from "@/components/TeamSection";
 import BusinessProfileSection from "@/components/BusinessProfileSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
@@ -895,20 +896,12 @@ function SettingsPageInner() {
               <p className="font-medium text-sm">Automatic follow-ups</p>
               <p className="text-xs text-ink-soft mt-1">{describeAutomationState()}</p>
             </div>
-            <button
-              onClick={handleMasterToggle}
+            <Switch
+              checked={anyAutomationOn}
+              onChange={handleMasterToggle}
               disabled={!automationLoaded || automationBusy}
-              className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
-              style={{ backgroundColor: anyAutomationOn ? "var(--rust)" : "var(--line)" }}
-            >
-              <span
-                className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
-                style={{
-                  transform: anyAutomationOn ? "translateX(22px)" : "translateX(2px)",
-                  backgroundColor: anyAutomationOn ? "var(--on-accent)" : "var(--ink)",
-                }}
-              />
-            </button>
+              label="Automatic follow-ups"
+            />
           </div>
           {(automationError || instantAckError || unansweredError || deadLeadError) && (
             <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
@@ -937,24 +930,16 @@ function SettingsPageInner() {
                 at all — opt-in per lead only.
               </p>
             </div>
-            <button
-              onClick={() => {
+            <Switch
+              checked={automationOn}
+              onChange={() => {
                 const next = !automationOn;
                 setAutomationOn(next);
                 saveAutomationSettings(next, autoAfterDays);
               }}
               disabled={!automationLoaded || automationSaving}
-              className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
-              style={{ backgroundColor: automationOn ? "var(--rust)" : "var(--line)" }}
-            >
-              <span
-                className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
-                style={{
-                  transform: automationOn ? "translateX(22px)" : "translateX(2px)",
-                  backgroundColor: automationOn ? "var(--on-accent)" : "var(--ink)",
-                }}
-              />
-            </button>
+              label="Auto follow-up on silence"
+            />
           </div>
           {automationOn && (
             <div className="mt-4 flex items-center gap-2 text-sm">
@@ -1018,24 +1003,16 @@ function SettingsPageInner() {
                 and never to someone who asked us to stop. Your real answer still comes from you.
               </p>
             </div>
-            <button
-              onClick={() => {
+            <Switch
+              checked={instantAckOn}
+              onChange={() => {
                 const next = !instantAckOn;
                 setInstantAckOn(next);
                 saveInstantAck(next);
               }}
               disabled={!automationLoaded || instantAckSaving}
-              className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
-              style={{ backgroundColor: instantAckOn ? "var(--rust)" : "var(--line)" }}
-            >
-              <span
-                className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
-                style={{
-                  transform: instantAckOn ? "translateX(22px)" : "translateX(2px)",
-                  backgroundColor: instantAckOn ? "var(--on-accent)" : "var(--ink)",
-                }}
-              />
-            </button>
+              label="Instant reply to new leads"
+            />
           </div>
           {instantAckError && (
             <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
@@ -1055,24 +1032,16 @@ function SettingsPageInner() {
                 the moment anyone replies, the lead is no longer &ldquo;unanswered.&rdquo;
               </p>
             </div>
-            <button
-              onClick={() => {
+            <Switch
+              checked={unansweredOn}
+              onChange={() => {
                 const next = !unansweredOn;
                 setUnansweredOn(next);
                 saveUnanswered(next, unansweredHours);
               }}
               disabled={!automationLoaded || unansweredSaving}
-              className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
-              style={{ backgroundColor: unansweredOn ? "var(--rust)" : "var(--line)" }}
-            >
-              <span
-                className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
-                style={{
-                  transform: unansweredOn ? "translateX(22px)" : "translateX(2px)",
-                  backgroundColor: unansweredOn ? "var(--on-accent)" : "var(--ink)",
-                }}
-              />
-            </button>
+              label="Reply for me when I haven't"
+            />
           </div>
           {unansweredError && (
             <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
@@ -1120,24 +1089,16 @@ function SettingsPageInner() {
                 &ldquo;just checking in&rdquo; — instead of repeating the same follow-up.
               </p>
             </div>
-            <button
-              onClick={() => {
+            <Switch
+              checked={deadLeadOn}
+              onChange={() => {
                 const next = !deadLeadOn;
                 setDeadLeadOn(next);
                 saveDeadLead(next, deadLeadDays);
               }}
               disabled={!automationLoaded || deadLeadSaving}
-              className="relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60"
-              style={{ backgroundColor: deadLeadOn ? "var(--rust)" : "var(--line)" }}
-            >
-              <span
-                className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
-                style={{
-                  transform: deadLeadOn ? "translateX(22px)" : "translateX(2px)",
-                  backgroundColor: deadLeadOn ? "var(--on-accent)" : "var(--ink)",
-                }}
-              />
-            </button>
+              label="Reactivate cold leads"
+            />
           </div>
           {deadLeadError && (
             <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>

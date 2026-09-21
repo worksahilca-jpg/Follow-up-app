@@ -101,7 +101,7 @@ function SignInPageInner() {
   return (
     <Reveal className="w-full max-w-sm">
       <div
-        className="relative w-full rounded-2xl bg-card p-8 text-center"
+        className="relative w-full rounded-[var(--radius-box)] bg-card p-8 text-center"
         style={{ boxShadow: "var(--shadow-box-lift)" }}
       >
         {/* Not "Welcome back": the landing page's button lands first-time

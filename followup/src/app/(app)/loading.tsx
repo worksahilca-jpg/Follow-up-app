@@ -9,7 +9,7 @@
 export default function Loading() {
   return (
     <div className="animate-pulse">
-      <div className="h-8 w-48 rounded-md bg-card" />
+      <div className="h-8 w-48 rounded-lg bg-card" />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="box h-24" />

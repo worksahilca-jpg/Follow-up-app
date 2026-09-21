@@ -80,7 +80,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
   if (!loaded) return null;
 
   return (
-    <div className="rounded-xl p-4" style={{ backgroundColor: "var(--slate-soft)" }}>
+    <div className="rounded-[var(--radius-box)] p-4" style={{ backgroundColor: "var(--slate-soft)" }}>
       <h3 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: "var(--slate)" }}>
         <Workflow className="h-3.5 w-3.5" /> Follow-up plan
       </h3>

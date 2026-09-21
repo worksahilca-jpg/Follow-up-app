@@ -246,7 +246,7 @@ function OnboardingFormInner({
             {inboxConnected ? (
               <>
                 <div
-                  className="h-14 w-14 rounded-2xl flex items-center justify-center mx-auto"
+                  className="h-14 w-14 rounded-lg flex items-center justify-center mx-auto"
                   style={{ backgroundColor: "var(--sage-soft)", color: "var(--sage)" }}
                 >
                   <Check className="h-6 w-6" />
@@ -298,7 +298,7 @@ function OnboardingFormInner({
             ) : (
               <>
                 <div
-                  className="h-14 w-14 rounded-2xl flex items-center justify-center mx-auto border border-line"
+                  className="h-14 w-14 rounded-lg flex items-center justify-center mx-auto border border-line"
                   style={{ backgroundColor: "var(--card)", color: "var(--ink-soft)" }}
                 >
                   <Mail className="h-6 w-6" />

@@ -58,7 +58,30 @@ as one visual-identity change, not two. It should now hold.
 
 ---
 
-## The scale `[TO DECIDE]`
+## The heading ladder — DECIDED 2026-09-20
+
+Founder: *"approved, apply both ladders."* Three heading levels, and a screen uses each
+one for exactly one job:
+
+| Level | Class | Used for | How many per screen |
+|---|---|---|---|
+| **Page title** | `font-display text-3xl` | The name of the screen | Exactly one, and it comes from `PageHeader` — never hand-rolled |
+| **Section title** | `font-display text-xl` | A top-level section of that screen | As many as the screen has sections |
+| **Card title** | `font-display text-lg` | The heading of a single box inside a section | As many as there are boxes |
+
+The problem this settles: `text-xl` (38 uses) and `text-lg` (30 uses) were both being used
+for *section* titles, chosen by whoever wrote the screen that day. The two sizes now mean
+different things — a section versus a box inside it — so nesting reads correctly and two
+adjacent screens agree.
+
+`text-5xl` survives in exactly one place: the single headline metric on /analytics. It is
+a number, not a heading, and the "Metric" row below covers it.
+
+**Scope of this decision.** It settles the *heading* levels only. Body, caption and metric
+sizes below remain open — nobody has looked at those on a real screen yet, and deciding
+them from a table is the mistake this file already warns against.
+
+## The rest of the scale `[TO DECIDE]`
 
 The app currently uses Tailwind defaults ad hoc (`text-sm`, `text-3xl`, `text-lg`) rather
 than a named, intentional scale. That's the real gap — not the values themselves.
@@ -101,7 +124,9 @@ Type quality is half type and half words. The words are part of this system.
 
 ## Open decisions
 
-- `[TO DECIDE]` Final type scale and whether it's expressed as named tokens
+- ~~`[TO DECIDE]` The heading levels~~ — **decided 2026-09-20**, see "The heading ladder"
+  above. 3xl page / xl section / lg card.
+- `[TO DECIDE]` The remaining scale (body, caption, metric) and whether it's expressed as named tokens
   (`--text-body`, `--text-title`) rather than raw Tailwind classes.
 - `[TO DECIDE]` **Ratify Plus Jakarta Sans** so the typeface stops changing. The family
   matters far less than the scale — but the *churn* costs real consistency, and each

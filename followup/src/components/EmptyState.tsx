@@ -20,7 +20,7 @@ export default function EmptyState({
   return (
     <div className="flex flex-col items-center justify-center text-center py-12 px-6">
       <div
-        className="h-16 w-16 rounded-2xl flex items-center justify-center border border-line"
+        className="h-16 w-16 rounded-lg flex items-center justify-center border border-line"
         style={{ backgroundColor: "var(--card)", color: "var(--ink-soft)" }}
       >
         <Icon className="h-7 w-7" />

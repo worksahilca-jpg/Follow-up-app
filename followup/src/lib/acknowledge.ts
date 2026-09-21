@@ -408,6 +408,9 @@ export async function acknowledgeNewLead(
         // own month, source decides whether Free covers the channel.
         createdAt: true,
         source: true,
+        // Who to tell when the reply is held rather than sent: the
+        // assignee, or every admin when nobody is assigned (notifyAckHeld).
+        assignedToId: true,
       },
     });
     if (!lead) return { sent: false, reason: "no lead" };
@@ -529,6 +532,10 @@ export async function acknowledgeNewLead(
         targetId: lead.id,
         meta: { riskLevel: "low", reason: HOLD_ALL_FIRST_REPLY_REASON, trigger: "instant_ack" },
       });
+      // The audit event puts the lead in Approvals; this is what tells a
+      // human it is there. Without it the queue only exists for someone
+      // who happens to open the dashboard — see notifyAckHeld.
+      await notifyAckHeld(lead, input.channel);
       return { sent: false, reason: "held for approval" };
     }
 
@@ -748,6 +755,55 @@ const NOTIFICATION_QUOTE_LIMIT = 180;
  * Best-effort: a notification that fails to write must not undo a message
  * that has already been delivered.
  */
+/**
+ * Tells someone a first reply is written and waiting for them.
+ *
+ * Found by auditing production on 2026-09-21: twenty-three leads sat in
+ * the approval queue and nothing had told anyone. The oldest had waited
+ * **175 hours** — seven days. The hold was working exactly as designed;
+ * the queue was simply invisible unless you opened the dashboard, and the
+ * weekly digest reports what FollowUp DID ("2 came back, 3 answered for
+ * you"), never what is waiting.
+ *
+ * That is the failure this file's own comment warned about, arrived at
+ * from the other side: *"Five days of a stranger waiting is the exact
+ * failure this product exists to stop, arrived at by way of the safeguard
+ * meant to prevent a worse one."* Holding the message was right. Holding
+ * it silently was not.
+ *
+ * It matters more from today, because holding is now the default for
+ * every account (Business.holdAllForApproval). Ten testers about to
+ * arrive would each have had every message held and nobody told — they
+ * would open FollowUp, see nothing happening, and conclude it does not
+ * work.
+ *
+ * Says the lead wrote, and that a reply needs them. Deliberately does not
+ * quote the draft: the owner is about to read it in full in Approvals,
+ * and a notification that contains the whole message invites approving
+ * without opening it.
+ *
+ * Best-effort, like notifyAckSent: a notification that fails to write
+ * must not turn a correctly-held lead into an error.
+ */
+async function notifyAckHeld(
+  lead: { id: string; name: string; businessId: string; assignedToId: string | null },
+  channel: AckChannel
+): Promise<void> {
+  const message = `${lead.name} messaged on ${CHANNEL_LABEL[channel]} — a reply is written and waiting for your approval.`;
+  try {
+    const userIds = lead.assignedToId
+      ? [lead.assignedToId]
+      : (
+          await prisma.user.findMany({ where: { businessId: lead.businessId, role: "ADMIN" }, select: { id: true } })
+        ).map((u) => u.id);
+    for (const userId of userIds) {
+      await prisma.notification.create({ data: { userId, leadId: lead.id, message } });
+    }
+  } catch (err) {
+    console.error(`Held-ack notification failed for lead ${lead.id}:`, err);
+  }
+}
+
 async function notifyAckSent(
   lead: { id: string; name: string; businessId: string; assignedToId: string | null },
   channel: AckChannel,

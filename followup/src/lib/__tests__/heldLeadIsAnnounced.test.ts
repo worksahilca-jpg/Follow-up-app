@@ -85,9 +85,23 @@ describe("a later follow-up, when it is held instead of sent", () => {
   it("tells someone even when the lead was not neglected", () => {
     // The regression this fixes: `if (unansweredIds.has(lead.id))` with no
     // else, so only a neglected lead was ever announced.
+    //
+    // The call moved on 2026-09-21 from an immediate notifyLeadOwners() to
+    // a push onto the run's collector, flushed once the run knows how many
+    // leads were held (src/lib/holdNotices.ts) — a fresh Gmail connect
+    // holds up to a hundred at once, and a hundred rows in the bell is its
+    // own failure. The GUARANTEE is unchanged: this branch still tells
+    // somebody. Only the mechanism moved, so the assertion follows it.
     expect(holdBranch(), "a held draft on a non-neglected lead notifies nobody again").toMatch(
-      /await notifyLeadOwners\(/
+      /heldNotices\.push\(/
     );
+  });
+
+  it("actually flushes what it collected", () => {
+    // Collecting without flushing would satisfy the assertion above and
+    // notify nobody at all — a worse silence than the one this file was
+    // written for, because it would look handled.
+    expect(source, "held notices are gathered but never written").toMatch(/await flushHoldNotices\(heldNotices\)/);
   });
 
   it("keeps the neglect wording for the neglect case", () => {

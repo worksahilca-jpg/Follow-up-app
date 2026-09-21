@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { flushHoldNotices, type HoldNotice } from "@/lib/holdNotices";
 
 /**
  * One nudge for a lead that has been waiting too long.
@@ -89,39 +90,89 @@ export async function remindStaleApprovals(
     select: { id: true },
   });
 
+  // Gathered, not written, for the same reason the hold-time notification
+  // is (src/lib/holdNotices.ts): a fresh Gmail connect can leave ninety
+  // leads held at once, and reminding about them one row at a time a day
+  // later would repeat the burst this product just learned not to make.
+  const due: HoldNotice[] = [];
+
   await mapWithConcurrency(stale, 4, async (approval) => {
     try {
-      // Already reminded? The marker, written after this hold began. A
-      // lead held again after being resolved gets a fresh hold time, so
-      // it becomes eligible again — which is right: that is a new wait.
-      const already = await prisma.notification.count({
-        where: {
-          leadId: approval.leadId,
-          message: { contains: STALE_APPROVAL_MARKER },
-          createdAt: { gte: approval.heldAt },
-        },
-      });
-      if (already > 0) return;
-
+      // Recipients first, because the "already reminded?" question below
+      // cannot be asked without them once reminders can be collapsed.
       const lead = await prisma.lead.findUnique({
         where: { id: approval.leadId },
         select: { assignedToId: true },
       });
+      // Resolved here rather than in the flush so the "nobody to tell"
+      // case still counts as not-reminded, as it did before batching.
       const userIds = lead?.assignedToId ? [lead.assignedToId] : admins.map((a) => a.id);
       if (userIds.length === 0) return;
+
+      /*
+       * Already reminded? The marker, written after this hold began. A
+       * lead held again after being resolved gets a fresh hold time, so
+       * it becomes eligible again — which is right: that is a new wait.
+       *
+       * Two shapes count as "already", because a reminder now takes two
+       * shapes. The per-lead row carries this lead's id. The collapsed
+       * summary carries NO id — it is about the queue — so it can only be
+       * recognised by its text and its recipient. Matching only the first
+       * shape is the bug this OR exists to prevent: on a queue large
+       * enough to collapse, every lead would look un-reminded forever and
+       * the summary would be rewritten every hour, which is precisely the
+       * nagging this module's header argues against.
+       *
+       * Both shapes contain STALE_APPROVAL_MARKER ("still waiting"),
+       * which the hold-time summary ("waiting for your approval")
+       * deliberately does not — otherwise the notification sent AT hold
+       * time would suppress the reminder that exists because it was
+       * missed.
+       */
+      const already = await prisma.notification.count({
+        where: {
+          message: { contains: STALE_APPROVAL_MARKER },
+          createdAt: { gte: approval.heldAt },
+          OR: [{ leadId: approval.leadId }, { leadId: null, userId: { in: userIds } }],
+        },
+      });
+      if (already > 0) return;
 
       const days = Math.max(1, Math.floor((now.getTime() - approval.heldAt.getTime()) / STALE_APPROVAL_AFTER_MS));
       const waited = days === 1 ? "a day" : `${days} days`;
       const message = `${approval.leadName} has been ${STALE_APPROVAL_MARKER} for ${waited}.`;
 
-      for (const userId of userIds) {
-        await prisma.notification.create({ data: { userId, leadId: approval.leadId, message } });
-      }
-      reminded += 1;
+      due.push({
+        leadId: approval.leadId,
+        businessId,
+        // Already resolved above; passing the assignee through keeps the
+        // flush from looking it up again, and an unassigned lead falls
+        // back to the same admins.
+        assignedToId: lead?.assignedToId ?? null,
+        message,
+      });
     } catch (err) {
       console.error(`Stale-approval reminder failed for lead ${approval.leadId}:`, err);
     }
   });
+
+  // One line per person when the queue is large, individual names when it
+  // is small — the same rule the hold-time notification uses, so the two
+  // voices in this product stay consistent with each other.
+  //
+  // `reminded` counts leads the flush actually told somebody about, not
+  // leads it meant to: counting the intent would report a full queue as
+  // reminded on the run where every write failed, and the dedup marker
+  // would then never be written, so the next run would try again — the
+  // count would be the only thing that had lied.
+  const flushed = await flushHoldNotices(due, {
+    // Carries STALE_APPROVAL_MARKER so the dedup above can recognise it.
+    summary: (count) => `${count} leads are ${STALE_APPROVAL_MARKER}. Open Approvals to read them.`,
+  }).catch((err) => {
+    console.error(`Stale-approval reminders failed for business ${businessId}:`, err);
+    return { rows: 0, leads: 0 };
+  });
+  reminded = flushed.leads;
 
   return { checked: pending.length, reminded };
 }

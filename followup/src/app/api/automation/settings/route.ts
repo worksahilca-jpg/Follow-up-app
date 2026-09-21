@@ -57,14 +57,20 @@ export async function GET() {
   const automation = await prisma.automation.findFirst({
     where: { businessId: ctx.businessId, action: AUTOMATION_ACTION },
   });
-  // Business.holdAllForApproval — set on every beta account. It changes
-  // what three of the four rules below actually DO: the silence nudge,
-  // the unanswered-reply step-in and the dead-lead reactivation all still
-  // run, but their drafts go to the approval queue instead of out. The
-  // instant acknowledgement is the exception — it deliberately never
-  // waits for a human (see the header of src/lib/acknowledge.ts: delaying
-  // the first touch defeats the point of "instant"), so it really does
-  // send on a holding account.
+  // Business.holdAllForApproval — true by default since 2026-09-21. It
+  // changes what ALL FOUR of the rules below actually DO: the silence
+  // nudge, the unanswered-reply step-in, the dead-lead reactivation and
+  // the instant acknowledgement all still run, but their drafts go to the
+  // approval queue instead of out.
+  //
+  // This comment named the instant acknowledgement as an exception that
+  // "really does send on a holding account". That stopped being true on
+  // 2026-09-20 (founder: "don't send any replies without asking me"); see
+  // the hold-all branch in acknowledge.ts. The claim outlived the code by
+  // a day here and in Settings' own sentence, which told a holding owner
+  // their leads were being answered automatically when nothing was going
+  // out at all — the quiet kind of wrong, since a product that overstates
+  // what it sends is the one an owner stops checking.
   //
   // Settings' summary sentence is the one place that states all four as
   // fact, so it is the one place that has to know.

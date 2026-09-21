@@ -123,9 +123,12 @@ function SettingsPageInner() {
   const [deadLeadDays, setDeadLeadDays] = useState(45);
   const [deadLeadSaving, setDeadLeadSaving] = useState(false);
   const [deadLeadError, setDeadLeadError] = useState<string | null>(null);
-  // Business.holdAllForApproval — true for every beta tester. Three of
-  // the four rules below still run but send nothing; describeAutomation-
-  // State() is the sentence that claims otherwise, so it reads this.
+  // Business.holdAllForApproval — true by default for every account since
+  // 2026-09-21. All FOUR rules below still run but send nothing; this said
+  // "three of the four" while the instant acknowledgement was exempt, and
+  // kept saying it for a day after the exemption was withdrawn.
+  // describeAutomationState() is the sentence that would otherwise claim
+  // a message went out, so it reads this.
   const [holdAllForApproval, setHoldAllForApproval] = useState(false);
 
   const [billingActive, setBillingActive] = useState(false);
@@ -293,12 +296,24 @@ function SettingsPageInner() {
   // sync with reality the way 4 separately-worded "Our promise" blocks could.
   function describeAutomationState(): string {
     const clauses: string[] = [];
-    if (instantAckOn) clauses.push("sends an instant acknowledgement to every new lead");
-    // On a holding account (Business.holdAllForApproval) these three
-    // still run and still write the message — it just lands in the
-    // approval queue rather than going out. The instant acknowledgement
-    // above is deliberately exempt and really does send, so the verb has
-    // to change per clause, not once for the whole sentence.
+    // On a holding account (Business.holdAllForApproval) every rule below
+    // still runs and still writes the message — it just lands in the
+    // approval queue rather than going out, so each clause's verb switches.
+    //
+    // This clause kept the unconditional "sends" until 2026-09-21, left
+    // behind when the instant acknowledgement stopped being exempt the day
+    // before. Every other clause had been switched; this one had not, so a
+    // holding account read "FollowUp sends an instant acknowledgement to
+    // every new lead ... Nothing above sends on its own" — a sentence
+    // contradicting itself about the one fact an owner most needs straight.
+    // The trailing sentence at the end of this function was doing the work
+    // of correcting a clause that should not have been wrong.
+    if (instantAckOn)
+      clauses.push(
+        holdAllForApproval
+          ? "drafts an instant acknowledgement for every new lead"
+          : "sends an instant acknowledgement to every new lead"
+      );
     const writes = holdAllForApproval ? "drafts a nudge for" : "nudges";
     if (automationOn) clauses.push(`${writes} a quiet lead after ${autoAfterDays} day${autoAfterDays === 1 ? "" : "s"} of silence`);
     if (unansweredOn) {

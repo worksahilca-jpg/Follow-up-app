@@ -43,12 +43,18 @@ import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
  *
  * ## What is deliberately not here
  *
- * WhatsApp, Zapier and the CRM importers. WhatsApp connects through Meta's
- * Embedded Signup — a JavaScript popup living inside WhatsAppConfig, not a
- * link — and the other two need a key or a URL pasted in. All three are one
- * honest line pointing at Settings rather than a button that cannot work
- * here. Named rather than hidden: a source nobody mentions is a source
- * nobody knows about.
+ * Zapier and the CRM importers: both need a key or a URL pasted in, so
+ * they are one honest line pointing at Settings rather than a button that
+ * cannot work here. Named rather than hidden — a source nobody mentions is
+ * a source nobody knows about.
+ *
+ * WhatsApp WAS in that sentence, for one day. It connects through Meta's
+ * Embedded Signup, a JavaScript popup rather than a link, and that
+ * mechanism lived inside the Settings panel. Pointing a WhatsApp-only
+ * business at a screen it had not reached yet was the worst line on this
+ * step, since that is exactly the business this step was rebuilt for. The
+ * mechanism now lives in `useWhatsAppSignup` and the row is real: the
+ * popup opens here, which is the one connect that never leaves the page.
  */
 
 export type OnboardingSource = {
@@ -60,8 +66,13 @@ export type OnboardingSource = {
   connected: boolean;
   /** Shown under the name once connected — the account, so it is checkable. */
   connectedNote?: string;
-  /** Where Connect goes. Absent when the row expands instead. */
+  /** Where Connect goes. Absent when the row expands or acts in place. */
   href?: string;
+  /** Connect without leaving the page — WhatsApp's Meta popup is the only
+   *  source that works this way, so it gets a button rather than a link. */
+  onConnect?: () => void;
+  /** Disables the button and says so while a popup-driven connect runs. */
+  connecting?: boolean;
   /** A second, quieter way in (Outlook beside Gmail). */
   altHref?: string;
   altLabel?: string;
@@ -107,6 +118,15 @@ function SourceRow({ source }: { source: OnboardingSource }) {
           <span className="text-xs shrink-0" style={{ color: "var(--sage)" }}>
             Connected
           </span>
+        ) : source.onConnect ? (
+          <button
+            type="button"
+            onClick={source.onConnect}
+            disabled={source.connecting}
+            className="shrink-0 inline-flex min-h-11 items-center rounded-lg border border-line px-3 text-sm font-medium disabled:opacity-60"
+          >
+            {source.connecting ? "Waiting…" : "Connect"}
+          </button>
         ) : source.expand ? (
           <button
             type="button"
@@ -176,7 +196,7 @@ export default function OnboardingSources({
       </ul>
 
       <p className="text-xs text-ink-soft mt-3 leading-relaxed">
-        WhatsApp, Zapier and your CRM connect from Settings — each needs a couple of extra steps.
+        Zapier and your CRM connect from Settings — each needs a key or a URL pasted in.
       </p>
 
       {/* Always "Continue", never "Skip for now".

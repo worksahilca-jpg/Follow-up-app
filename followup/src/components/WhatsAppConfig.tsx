@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Check, ChevronDown, MessageSquare } from "lucide-react";
+import { useWhatsAppSignup } from "@/lib/useWhatsAppSignup";
 
 /**
  * "WhatsApp" section of Settings — the owner's OWN number, through Meta.
@@ -14,12 +15,14 @@ import { Check, ChevronDown, MessageSquare } from "lucide-react";
  * used here too, so this panel is now the same shape as Instagram's: one
  * sentence, one button, a connected line, a disconnect link.
  *
- * The button opens Meta's Embedded Signup in a popup (Meta's JavaScript
- * SDK, loaded only here). Two things come back: a one-time code from the
- * login callback, and the phone number id + account id from a message the
- * popup posts to this window. Whichever arrives second sends both to
- * /api/whatsapp/connect. The paste-a-token fallback is for the founder's
- * own testing before Meta reviews the app.
+ * The Embedded Signup mechanism itself lives in `useWhatsAppSignup`
+ * (src/lib/useWhatsAppSignup.ts), shared with the onboarding step that
+ * asks where a business's leads come from — WhatsApp is the one source
+ * that connects in a popup rather than a redirect, and it used to be
+ * connectable only from this panel. What stays here is everything that
+ * panel alone offers: the message template, the webhook reference, the
+ * paste-a-token fallback for testing before Meta reviews the app, and
+ * disconnecting.
  *
  * Copy rules (src/lib/__tests__/channelAvailability.test.ts): nothing here
  * offers or mentions the carrier channels.
@@ -40,26 +43,11 @@ type Config = {
   verifyToken: string;
 };
 
-type FbSdk = {
-  init: (opts: { appId: string; autoLogAppEvents?: boolean; xfbml?: boolean; version: string }) => void;
-  login: (
-    cb: (response: { authResponse?: { code?: string } | null; status?: string }) => void,
-    opts: Record<string, unknown>
-  ) => void;
-};
-
-declare global {
-  interface Window {
-    FB?: FbSdk;
-    fbAsyncInit?: () => void;
-  }
-}
-
-const SDK_SRC = "https://connect.facebook.net/en_US/sdk.js";
-const GRAPH_VERSION = "v21.0";
-
 export default function WhatsAppConfig() {
+  const signup = useWhatsAppSignup();
   const [config, setConfig] = useState<Config | null>(null);
+  // Local only to the paste-a-token and disconnect paths below; the popup
+  // signup carries its own state on the hook.
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
   const [justConnected, setJustConnected] = useState(false);
@@ -79,9 +67,13 @@ export default function WhatsAppConfig() {
   const [showReference, setShowReference] = useState(false);
   const [copied, setCopied] = useState<"url" | "token" | null>(null);
 
-  // The two halves of a finished signup, held until both are in hand.
-  const signupRef = useRef<{ code?: string; phoneNumberId?: string; wabaId?: string; event?: string }>({});
-
+  /**
+   * This panel's own view of the config — the template, the webhook
+   * reference, the Twilio-legacy flag. `useWhatsAppSignup` reads the same
+   * endpoint for the parts it needs; two small reads of one cheap route
+   * beat threading this panel's whole shape through a hook that two very
+   * different surfaces share.
+   */
   const load = useCallback(() => {
     return fetch("/api/whatsapp/config")
       .then((r) => r.json())
@@ -95,108 +87,8 @@ export default function WhatsAppConfig() {
   }, []);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
-
-  // Meta's SDK, only once the panel knows it can use it. Readiness is not
-  // state: startSignup checks window.FB when the button is pressed.
-  useEffect(() => {
-    if (!config?.signupAvailable || !config.appId || window.FB) return;
-    const appId = config.appId;
-    window.fbAsyncInit = () => {
-      window.FB?.init({ appId, autoLogAppEvents: false, xfbml: false, version: GRAPH_VERSION });
-    };
-    if (!document.querySelector(`script[src="${SDK_SRC}"]`)) {
-      const script = document.createElement("script");
-      script.src = SDK_SRC;
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-    }
-  }, [config?.signupAvailable, config?.appId]);
-
-  const finishConnect = useCallback(async () => {
-    const { code, phoneNumberId, wabaId, event } = signupRef.current;
-    if (!code || !phoneNumberId || !wabaId) return;
-    signupRef.current = {};
-    try {
-      const res = await fetch("/api/whatsapp/connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, phoneNumberId, wabaId, event }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: string };
-      if (!res.ok || !data.success) throw new Error(data.message || "Couldn't finish connecting — try again.");
-      setJustConnected(true);
-      await load();
-    } catch (err) {
-      setConnectError(err instanceof Error ? err.message : "Couldn't finish connecting — try again.");
-    } finally {
-      setConnecting(false);
-    }
-  }, [load]);
-
-  // The popup posts the ids to the page that opened it.
-  useEffect(() => {
-    function onMessage(event: MessageEvent) {
-      if (event.origin !== "https://www.facebook.com" && event.origin !== "https://web.facebook.com") return;
-      let data: { type?: string; event?: string; data?: { phone_number_id?: string; waba_id?: string } };
-      try {
-        data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-      } catch {
-        return;
-      }
-      if (data?.type !== "WA_EMBEDDED_SIGNUP") return;
-      if (data.event === "FINISH" || data.event === "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING") {
-        signupRef.current = { ...signupRef.current, phoneNumberId: data.data?.phone_number_id, wabaId: data.data?.waba_id, event: data.event };
-        void finishConnect();
-      } else if (data.event === "CANCEL") {
-        signupRef.current = {};
-        setConnecting(false);
-      }
-    }
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, [finishConnect]);
-
-  function startSignup() {
-    if (!config?.configId) return;
-    if (!window.FB) {
-      setConnectError("Meta's sign-in script hasn't loaded yet — give it a second and press again.");
-      return;
-    }
-    setConnectError(null);
-    setJustConnected(false);
-    setConnecting(true);
-    signupRef.current = {};
-    window.FB.login(
-      (response) => {
-        const code = response.authResponse?.code;
-        if (!code) {
-          setConnecting(false);
-          // The popup closed without a code: the owner cancelled, or Meta
-          // refused at the end ("FollowUp can't onboard customers right
-          // now") — which is Meta's Business Verification gate, not
-          // something the owner did wrong. Nothing to detect it by from
-          // here, so the sentence covers both without blaming anyone.
-          setConnectError(
-            "Meta didn't finish the sign-in, so nothing was connected. If Meta's window said FollowUp can't onboard customers yet, that's Meta still verifying FollowUp's business — we'll tell you when it clears."
-          );
-          return;
-        }
-        signupRef.current = { ...signupRef.current, code };
-        void finishConnect();
-      },
-      {
-        config_id: config.configId,
-        response_type: "code",
-        override_default_response_type: true,
-        // The Coexistence flow: onboard the number that is already in the
-        // WhatsApp Business app on the owner's phone.
-        extras: { setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" },
-      }
-    );
-  }
 
   async function connectByToken() {
     if (!tokenDraft.trim() || !numberIdDraft.trim() || !wabaIdDraft.trim()) return;
@@ -214,7 +106,7 @@ export default function WhatsAppConfig() {
       setNumberIdDraft("");
       setWabaIdDraft("");
       setJustConnected(true);
-      await load();
+      await Promise.all([load(), signup.reload()]);
     } catch (err) {
       setConnectError(err instanceof Error ? err.message : "Couldn't connect — check the three values.");
     } finally {
@@ -229,7 +121,8 @@ export default function WhatsAppConfig() {
       const data = (await res.json().catch(() => ({}))) as { success?: boolean };
       if (data.success) {
         setJustConnected(false);
-        await load();
+        signup.setError(null);
+        await Promise.all([load(), signup.reload()]);
       }
     } finally {
       setConnecting(false);
@@ -290,14 +183,14 @@ export default function WhatsAppConfig() {
             on your phone as before; what you send from there shows up here too.
           </p>
 
-          {justConnected && (
+          {(justConnected || signup.justConnected) && (
             <p className="mt-2 text-xs" style={{ color: "var(--sage)" }} aria-live="polite">
               WhatsApp connected — new messages will become leads automatically.
             </p>
           )}
-          {connectError && (
+          {(connectError ?? signup.error) && (
             <p className="mt-2 text-xs" style={{ color: "var(--coral)" }} aria-live="polite">
-              {connectError}
+              {connectError ?? signup.error}
             </p>
           )}
 
@@ -416,12 +309,12 @@ export default function WhatsAppConfig() {
               {config.signupAvailable ? (
                 <div>
                   <button
-                    onClick={startSignup}
-                    disabled={connecting}
+                    onClick={signup.start}
+                    disabled={signup.connecting || connecting}
                     className={primaryButton}
                     style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                   >
-                    {connecting ? "Finishing in Meta's window…" : "Connect WhatsApp"}
+                    {signup.connecting ? "Finishing in Meta's window…" : "Connect WhatsApp"}
                   </button>
                   <p className="mt-2 text-xs text-ink-soft">
                     Meta opens a window. Have the phone with your WhatsApp Business app ready — you&apos;ll scan a

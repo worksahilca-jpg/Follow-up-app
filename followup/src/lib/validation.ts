@@ -70,7 +70,26 @@ export const trimmedString = (max: number) => z.string().trim().max(max);
  * pair it with a `.min(1)` check on the parsed value afterward for a
  * field that's actually required.
  */
-export const cleanedText = (max: number) => z.unknown().transform((v) => (typeof v === "string" ? v.trim().slice(0, max) : ""));
+/*
+ * `.optional()` before the transform is load-bearing, and only since zod 4.
+ *
+ * In zod 3 a bare `z.unknown()` treated a MISSING key as present-and-
+ * undefined, so `{}` parsed fine and the transform turned it into "". In
+ * zod 4 the same schema rejects it — "expected nonoptional, received
+ * undefined" — which on these routes means a stranger's contact form that
+ * omits `phone` gets a 400 instead of becoming a lead.
+ *
+ * That is the exact failure this whole product exists to prevent, and no
+ * typecheck or build can see it: the schema still compiles, and only the
+ * behaviour changed. Found on 2026-09-21 while testing the zod 4 upgrade,
+ * by five tests — lead capture during a billing lockout, embed-form
+ * durability, and this one.
+ */
+export const cleanedText = (max: number) =>
+  z
+    .unknown()
+    .optional()
+    .transform((v) => (typeof v === "string" ? v.trim().slice(0, max) : ""));
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

@@ -2,7 +2,10 @@ import Link from "next/link";
 import LogoMark from "@/components/LogoMark";
 
 export const metadata = {
-  title: "Terms of Service — FollowUp",
+  title: "Terms of Service",
+  description:
+    "The agreement between FollowUp and the businesses that use it: what the service does, what you are responsible for, how AI-generated messages are handled, billing, and termination.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {

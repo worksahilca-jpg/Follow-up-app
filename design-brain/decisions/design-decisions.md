@@ -3902,3 +3902,78 @@ and 12px was visibly weaker than the rest, which is why the embed went to 16.
    onboarding for real; the mark was rendered standalone at the exact sizes and inspected,
    and typecheck, lint, 1452 tests and a build stand behind the rest. A lockup's spacing
    against real neighbours is the kind of thing that check cannot see.
+
+---
+
+## 2026-09-21 — The favicon, the search result, and the switch
+
+Three things the founder saw from outside the product, which is where the
+interesting bugs live.
+
+### "I can still see the compass sign when I'm searching for it on Google"
+
+`src/app/favicon.ico` was dated **2026-09-01** — seventeen days before the logo
+existed. In the Next.js App Router a `favicon.ico` in `src/app/` is served at
+`/favicon.ico` and wins over the generated `icon.tsx`, and `/favicon.ico` is
+precisely the URL a crawler asks for. So yesterday's "one logo, everywhere" pass
+replaced the mark on every screen and left the one image a search engine
+actually reads.
+
+Rebuilt from `public/brand/png/followup-app-icon-*.png` at 16/32/64/128/256,
+PNG-in-ICO so the channel stays crisp at 16px. Google re-crawls favicons on its
+own schedule, so this will not change in search results today.
+
+### "I'm seeing the privacy policy, and then 'Never lose a lead to silence'"
+
+Two causes, both real.
+
+1. **Neither legal page had a description.** Both set a `title` and nothing
+   else, so both inherited the homepage's marketing description. Google
+   therefore had a page titled "Privacy Policy" described as the product pitch —
+   a plausible thing to show someone searching the product name. Both now
+   describe themselves, and `layout.tsx` gained a title template so a page can
+   name itself without repeating the whole homepage title.
+
+2. **The public site URL was `NEXTAUTH_URL`,** in the root metadata, robots.txt
+   and sitemap.xml, each falling back to `follow-up-app-two.vercel.app`. Those
+   are two different questions sharing one variable: where OAuth comes back to,
+   and what address the site publishes as canonical. A sitemap that lists
+   vercel.app URLs invites Google to index the deployment host as a second copy
+   of the site, and a search engine with two copies picks pages from either.
+   Now `src/lib/siteUrl.ts`, with explicit `alternates.canonical` per page.
+
+### "Can we fix all those switches to good 3D switches with proper, smooth animation?"
+
+The same 44×24 switch was copy-pasted six times — five in Settings, one in
+ImproveFollowUpToggle — each with its own inline `translateX(22px)`. Now one
+`Switch` component.
+
+On the "3D": `motion.md` already names "a toggle moving" as what motion is for,
+so this is squarely inside the rules rather than an exception to them. What it
+does **not** do is bevels, gloss or gradients — S-07 rules out 3D as ornament
+and `CLAUDE.md` bans "gratuitous 3D". The depth is one drop shadow on the knob
+over one inset shadow on the track, which says "press me". The movement does
+the rest: ~6% overshoot on `cubic-bezier(.34,1.56,.64,1)` over 200ms, plus a
+squash along the direction of travel while pressed. `prefers-reduced-motion`
+removes all of it.
+
+**A bug found on the way:** the five Settings switches were plain `<button>`s
+with no `role="switch"`, no `aria-checked` and no label. A screen reader
+announced five unnamed buttons on the screen that controls whether the product
+sends anything. The component requires a label, so that cannot recur.
+
+**Self-critique.**
+
+1. **I mangled the file on the first attempt.** A regex with `(.*?)` for the
+   `onClick` prop stopped at the first `}`, which is the wrong answer for a
+   multi-line arrow function, and it half-rewrote five call sites. Typecheck
+   caught it; `git checkout` undid it; a brace-matching pass did it correctly.
+   The lesson is the boring one — do not parse nested braces with a regex —
+   and the reason it was recoverable is that the change was uncommitted and the
+   file's other edits were already merged.
+2. **An import landed above `"use client"`,** which silently makes the
+   directive inert. Lint caught it. Inserting an import by "first line starting
+   with `import`" is not safe in a file whose first line is a directive.
+3. **The favicon is not verified end to end.** The .ico was inspected and the
+   source PNG looked at, but nothing here proves what a browser tab shows, and
+   nothing can prove when Google re-crawls.

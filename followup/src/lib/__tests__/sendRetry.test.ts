@@ -27,10 +27,11 @@ vi.mock("@/lib/db", () => ({
     user: { findMany: vi.fn() },
     notification: { create: vi.fn() },
     conversation: { findFirst: vi.fn(), create: vi.fn() },
-    // `count` is the duplicate-send guard's query (src/lib/sending.ts):
-    // the same body, to the same lead, inside a 60-second window. Zero
-    // here means "nothing just went out", which is the normal state for
-    // every test in this file — they are about other guards entirely.
+    // The duplicate-send claim (src/lib/sendClaim.ts): a successful
+    // `create` means "nothing identical is already going out", which is
+    // the normal state for every test in this file — they are about other
+    // guards entirely. `deleteMany` is the release on a failed send.
+    sendClaim: { create: vi.fn(), updateMany: vi.fn(async () => ({ count: 0 })), deleteMany: vi.fn() },
     message: { create: vi.fn(), findFirst: vi.fn(), count: vi.fn(async () => 0) },
     followUp: { create: vi.fn() },
     outboundSend: {

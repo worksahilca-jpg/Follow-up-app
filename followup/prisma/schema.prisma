@@ -61,6 +61,24 @@ model Business {
   // meaningful when Gmail is connected; getAvailableSlots() falls back to
   // "followup" behavior if it isn't, rather than erroring.
   bookingCalendarSource String            @default("followup")
+
+  // Setup steps the owner has said do not apply to them (SetupStep.id in
+  // src/lib/setupStatus.ts — "widget", "phone").
+  //
+  // Every other step clears by being done. "Add your website widget"
+  // cleared only when a lead actually arrived through the widget, which a
+  // business with no website can never make happen — so the strip on Today
+  // asked them, forever, to do something they cannot do. Noted as a known
+  // bug on 2026-09-20 and left open because "can a setup step be skipped?"
+  // is a product question rather than a code one; the founder said fix it
+  // on 2026-09-21.
+  //
+  // Only the optional-channel steps are skippable. Billing, business
+  // details and the inbox stay unskippable on purpose: those are not
+  // preferences, they are the product not working, and a "dismiss" on them
+  // would hide a real problem behind a tidy screen.
+  dismissedSetupSteps String[] @default([])
+
   users                 User[]
   leads                 Lead[]
   automations           Automation[]
@@ -686,6 +704,7 @@ model Lead {
   insights      AIInsight[]
   bookings      Booking[]
   outboundSends OutboundSend[]
+  sendClaims    SendClaim[]
 
   // Which outside CRM this lead came from, and its id there — set by
   // src/lib/crmSync.ts, used both to avoid re-importing the same contact
@@ -1101,6 +1120,39 @@ model SourceRule {
 // a real bill with nothing to stop it beyond the billing gate itself.
 // Deliberately not cleaned up automatically yet — rows are small and this
 // is new; worth revisiting if the table's growth ever actually matters.
+// "This exact message, to this exact lead, is going out right now."
+//
+// The duplicate guard in src/lib/sending.ts used to be a count of recent
+// outbound Messages with the same body — read the count, decide, then send.
+// Two requests that arrive together both read zero and both send, which is
+// precisely the shape of the failure it was written for: a double-tap on
+// Send in Approvals, a retry, a second tab. A check-then-act guard cannot
+// stop a race with itself.
+//
+// The unique index below is what makes it atomic: the first caller inserts
+// the row and owns the send, the second gets a constraint violation and is
+// refused by the database rather than by a decision made a moment earlier.
+// Same reasoning as the advisory lock in src/lib/rateLimit.ts — but a send
+// makes a network call to a provider, so the claim cannot be a transaction
+// held open across it. It is a row instead, taken before the wire and
+// released after a failure (see src/lib/sendClaim.ts).
+//
+// `bodyHash`, not the body: the index stays small and the table never holds
+// a second copy of what someone wrote.
+//
+// Rows are bookkeeping, not history — pruned by their own age, and excluded
+// from the per-business export for the same reason RateLimitHit is.
+model SendClaim {
+  id        String   @id @default(cuid())
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  leadId    String
+  bodyHash  String
+  claimedAt DateTime @default(now())
+
+  @@unique([leadId, bodyHash])
+  @@index([claimedAt])
+}
+
 model RateLimitHit {
   id         String   @id @default(cuid())
   business   Business @relation(fields: [businessId], references: [id])

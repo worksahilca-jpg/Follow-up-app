@@ -3977,3 +3977,88 @@ sends anything. The component requires a label, so that cannot recur.
 3. **The favicon is not verified end to end.** The .ico was inspected and the
    source PNG looked at, but nothing here proves what a browser tab shows, and
    nothing can prove when Google re-crawls.
+
+---
+
+## 2026-09-21 — A setup step you cannot finish, and the first thing in the product you are allowed to skip
+
+**Founder:** *"can we fix all"* — of five known bugs, one of which was this.
+
+### The bug
+
+`getIncompleteSetupSteps` cleared "Add your website widget" only when a lead actually
+arrived through the widget. A business with no website can never cause that, so the strip
+on Today asked them, forever, to do something they had no way to do. Because `SetupStrip`
+renders `steps[0]` only and the widget is last, this was also the permanent final state of
+setup for every such business: the checklist could never reach zero.
+
+I found this on 2026-09-20 and deliberately did not fix it then. The note in that entry
+says why: *"the honest fix is a dismissal, which needs an additive column and a route —
+more than belongs in this pass, and the founder should decide whether 'skip this' is a
+thing setup steps get."* That is a product question, and `CLAUDE.md` puts product questions
+with the founder. He answered it today.
+
+### What shipped
+
+A `Business.dismissedSetupSteps` column, a `POST /api/business/setup-step` route, and a
+quiet text control beside the strip's button.
+
+**Only two steps can be skipped — `phone` and `widget`** (`DISMISSIBLE_SETUP_STEPS`). Both
+are optional capture channels: no website, no widget; no calls, no number. Billing,
+business details and the inbox are deliberately not skippable, and the filter is enforced
+in `setupStatus.ts` *and* in the route's schema, so posting an id cannot widen it. The
+reasoning is [[brand-principles#1|principle 1]]: those three are not preferences, they are
+the product not working, and a dismiss on them would help the owner stop being told about
+a real failure. Tidying the screen by hiding the problem is the dark pattern, not the fix.
+
+**The label says what skipping means.** Not "Skip" — *"I don't have a website"*, *"I don't
+take calls"*, written per step. [[brand-principles#4|Principle 4]] is explicit that the
+reader will not work out what a generic "Skip" refers to or what it costs them. A sentence
+someone recognises as true about themselves needs no working out.
+
+**Quiet, beside the real action, not competing with it.** `text-xs`, `text-ink-soft`, no
+border, no fill. It is the answer for a minority; a second filled button next to the first
+would read as two equal options, which they are not.
+
+**No confirmation dialog**, because it is reversible — and reversible for real, not just in
+a comment. `SetupStepRestore` appears in Settings → Website widget only when the step has
+been skipped, says so in a sentence, and offers "Remind me again". Without it the press
+would have been a one-way door with no explanation anywhere for why the reminder stopped.
+
+### What looking at it changed
+
+Rendered at a 358px content width (a 390px phone less the page gutter) against the real
+built CSS: no horizontal overflow, the description wraps to two lines, CTA 190px and skip
+116px share one 318px row. But the skip control measured **116×16px** — legible, and a
+genuinely hard thing to hit with a thumb. The underline moved to an inner span so the
+button could carry `min-h-11` (the 44px touch-target floor) without a rule appearing under
+empty padding. Measured again: 44px tall, visually identical.
+
+Two things I could not check honestly and am not claiming: headless Chrome clamps its
+viewport to 500px, so 390px was tested by constraining the container rather than the
+window — valid here only because `sm:` is already inactive at 500px and the layout question
+was the flex row's, not the breakpoint's. And the database is unreachable from this
+sandbox, so neither the route nor the Settings panel was exercised against a real business.
+
+### Self-critique
+
+1. **The phone step is skippable and cannot be seen.** `CARRIER_CHANNELS_AVAILABLE` is
+   false, so it never renders. I put it in the list because it is the same *kind* of step
+   and leaving it out would have meant a second decision later, but nothing exercises that
+   half in the product today. A test pins the list; the product does not.
+2. **The inbox step has the same problem and I did not fix it.** A business that only ever
+   gets leads by Instagram DM is asked to connect an inbox forever, exactly as the
+   no-website business was asked for a widget. It is not in the skippable list because
+   "you have no email at all" is a much rarer claim than "I have no website" and the step
+   is load-bearing for most accounts — but that is a judgement, not a fact, and it is the
+   next thing to ask the founder about rather than to decide alone.
+3. **`SetupStepRestore` does its own fetch on mount.** Settings is a client component with
+   no data loader, so the alternative was threading a prop through a page that threads no
+   other props. It costs one request on a panel most people open rarely. Acceptable, not
+   elegant.
+4. **The skip is business-wide and admin-only, and the UI does not say so.** One admin
+   pressing "I don't have a website" changes what every teammate sees on Today. That is the
+   right scope — it is a fact about the business, not a preference of one person — but a
+   non-admin currently sees no control at all rather than an explanation of why.
+5. **Verified by typecheck, lint, 1465 tests, a production build and two renders.** Not by
+   using it.

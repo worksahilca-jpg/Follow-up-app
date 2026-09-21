@@ -1186,6 +1186,33 @@ export async function generateFollowUpMessage(
           "referring to, ask them plainly what they mean, or say someone will come back to them. Guessing the " +
           "dimension is worse than asking, because a confident wrong question reads as the business knowing " +
           "something it does not. " +
+          // 2026-09-20, read out of the founder's own approval queue. Three
+          // of the four drafts waiting for him invented a past:
+          //
+          //   "Envié la información que solicitaste" — I sent the
+          //   information you asked for. Nothing had been sent.
+          //
+          //   "los servicios que discutimos" — the services we discussed.
+          //   The lead had asked one opening question; there was no
+          //   discussion to refer back to.
+          //
+          //   "Te confirmo que Sahil se pondrá en contacto" — confirming,
+          //   on the owner's behalf, a commitment the owner never made.
+          //
+          // The rules above all govern what the SENDER claims. This one
+          // governs what FollowUp claims on the business's behalf, which
+          // is the more damaging direction: a lead who is told something
+          // was sent goes and looks for it, does not find it, and
+          // concludes the business is disorganised or lying. It costs
+          // more trust than saying nothing ever would have.
+          "Never state that the business has already done something unless a message in this conversation " +
+          "shows it happening — sent, emailed, called, quoted, checked, booked, arranged, attached, or spoken " +
+          "before. Never refer to a shared history the conversation does not contain ('as we discussed', 'the " +
+          "services we discussed', 'following our call', 'as promised', 'I sent you'). And never commit the " +
+          "owner to a future action in a way that reads as settled fact ('I confirm that X will contact you') " +
+          "— you may say someone will come back to them, which is true because this message exists. If the " +
+          "only honest version of a sentence is that nothing has happened yet, write that instead; a plain " +
+          "'I don't have that yet' costs nothing, and an invented past costs the relationship. " +
           // 2026-09-09, the founder's own inbox. A photographer's opening
           // email asked, in as many words: "Just confirming you're still
           // looking for a photographer and that this is a genuine inquiry
@@ -1437,6 +1464,17 @@ export async function generateInstantReply(input: {
           "the business — an event you are holding, a need, a plan, a deadline — you may note that they " +
           "mentioned it, but never confirm it, accept it, or restate it as yours ('our event', 'we are looking " +
           "for'). Only the business's own messages can establish a fact about the business. " +
+          // The mirror of the rule above, and the more damaging one. This
+          // message is the FIRST thing a stranger receives, so a past it
+          // invents is a past they have no way to check against. Three
+          // drafts in the founder's queue on 2026-09-20 did exactly this
+          // — "I sent the information you requested" to someone who had
+          // been sent nothing, "the services we discussed" to someone who
+          // had asked one opening question. See the fuller note in the
+          // follow-up drafter.
+          "Never claim the business has already done something — sent, emailed, called, quoted, checked, " +
+          "booked, attached — and never refer to a previous conversation, meeting or call. This is the first " +
+          "message they are receiving, so there is no history to refer to and nothing has been sent yet. " +
           // This one sends with no human review at all, which makes it the
           // likelier place for the denial to happen — and it is the FIRST
           // thing a stranger receives, so it sets what they believe for

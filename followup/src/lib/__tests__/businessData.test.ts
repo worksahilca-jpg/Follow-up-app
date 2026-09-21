@@ -51,6 +51,7 @@ vi.mock("@/lib/db", () => ({
     integration: { deleteMany: trackedDeleteMany("integration") },
     aIInsight: { deleteMany: trackedDeleteMany("aIInsight") },
     outboundSend: { deleteMany: trackedDeleteMany("outboundSend") },
+    sendClaim: { deleteMany: trackedDeleteMany("sendClaim") },
     inboundWebhookEvent: { deleteMany: trackedDeleteMany("inboundWebhookEvent") },
     suppression: { deleteMany: trackedDeleteMany("suppression") },
     reactivationRun: { deleteMany: trackedDeleteMany("reactivationRun") },

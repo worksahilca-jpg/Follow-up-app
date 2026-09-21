@@ -21,7 +21,7 @@ vi.mock("@/lib/integrations/outlook", () => ({ getOutlookStatus: vi.fn() }));
 import { prisma } from "@/lib/db";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
-import { getIncompleteSetupSteps } from "@/lib/setupStatus";
+import { DISMISSIBLE_SETUP_STEPS, getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,7 +31,7 @@ const outlookStatus = getOutlookStatus as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   // Fully set up by default — each test knocks out just the one thing it cares about.
-  p.business.findUnique.mockResolvedValue({ subscriptionStatus: "active", tier: "plus", twilioPhoneNumber: "+15551234567", name: "MJ Homes", industry: "Real estate" });
+  p.business.findUnique.mockResolvedValue({ subscriptionStatus: "active", tier: "plus", twilioPhoneNumber: "+15551234567", name: "MJ Homes", industry: "Real estate", dismissedSetupSteps: [] });
   gmailStatus.mockResolvedValue({ connected: true, email: "owner@example.com" });
   outlookStatus.mockResolvedValue({ connected: false });
   p.lead.findFirst.mockResolvedValue({ id: "lead1" }); // a "Website form" lead exists
@@ -197,5 +197,83 @@ describe("the setup strip never offers a step nobody can complete", () => {
         expect(idAt, `step "${step.id}" points at an anchor hidden behind CARRIER_CHANNELS_AVAILABLE`).toBeLessThan(gatedStart);
       }
     }
+  });
+});
+
+/**
+ * The one step that could never be finished.
+ *
+ * Every other step clears by being done. "Add your website widget"
+ * cleared only when a lead actually arrived through the widget, which a
+ * business with no website can never cause — so the strip on Today asked
+ * them, forever, to do something they had no way to do. It was recorded
+ * as a known bug on 2026-09-20 and left open because "can a setup step be
+ * skipped at all?" is a product question; the founder answered it on
+ * 2026-09-21.
+ */
+describe("a step a business can honestly not do", () => {
+  beforeEach(() => {
+    // No widget lead — the state that produced the permanent nag.
+    p.lead.findFirst.mockResolvedValue(null);
+  });
+
+  it("still asks for the widget when nothing has been skipped", async () => {
+    const steps = await getIncompleteSetupSteps("biz1");
+    expect(steps.map((s) => s.id)).toContain("widget");
+  });
+
+  it("stops asking once the owner says they have no website", async () => {
+    p.business.findUnique.mockResolvedValue({
+      subscriptionStatus: "active",
+      tier: "plus",
+      twilioPhoneNumber: "+15551234567",
+      name: "MJ Homes",
+      industry: "Real estate",
+      dismissedSetupSteps: ["widget"],
+    });
+
+    const steps = await getIncompleteSetupSteps("biz1");
+    expect(steps.map((s) => s.id)).not.toContain("widget");
+    // And setup is genuinely finishable now, which is the whole point.
+    expect(steps).toEqual([]);
+  });
+
+  it("carries a label that says what skipping means, not just 'skip'", async () => {
+    const [widget] = (await getIncompleteSetupSteps("biz1")).filter((s) => s.id === "widget");
+    expect(widget.dismissible).toBe(true);
+    // brand-principles.md #4: the reader will not work out what "Skip"
+    // refers to or what it costs them.
+    expect(widget.dismissLabel).toMatch(/website/i);
+  });
+
+  /**
+   * The rule that matters more than the fix. A dismiss on billing or the
+   * inbox would hide a real failure behind a tidy screen — the owner
+   * would stop being told the product is not working, which is exactly
+   * the dark pattern brand-principles.md #1 rules out.
+   */
+  it("never lets billing, business details or the inbox be skipped", async () => {
+    p.business.findUnique.mockResolvedValue({
+      subscriptionStatus: "canceled",
+      tier: "plus",
+      twilioPhoneNumber: null,
+      name: "",
+      industry: null,
+      // Someone posting every id at the route, or a future bug widening
+      // the allow-list — either way these must survive.
+      dismissedSetupSteps: ["billing", "business", "gmail", "phone", "widget"],
+    });
+    gmailStatus.mockResolvedValue({ connected: false });
+
+    const ids = (await getIncompleteSetupSteps("biz1")).map((s) => s.id);
+    expect(ids).toContain("billing");
+    expect(ids).toContain("business");
+    expect(ids).toContain("gmail");
+  });
+
+  it("marks exactly the optional capture channels as skippable", async () => {
+    // Guards the list itself: a step added later is not skippable by
+    // accident, and neither of these two silently stops being skippable.
+    expect([...DISMISSIBLE_SETUP_STEPS].sort()).toEqual(["phone", "widget"]);
   });
 });

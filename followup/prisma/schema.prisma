@@ -209,12 +209,30 @@ model Business {
   // them in the approval queue instead, whatever the risk verdict and
   // whatever the lead's tier.
   //
-  // The instant acknowledgement to a brand-new lead is deliberately NOT
-  // covered: it is the one message whose whole value is that nobody had
-  // to be awake for it, and holding it would leave a lead waiting for the
-  // exact reason this product exists. Granted with the beta plan
-  // (grantBetaPlan in src/lib/billing.ts); off for everyone else.
-  holdAllForApproval   Boolean @default(false)
+  // The instant acknowledgement to a brand-new lead USED to be exempt —
+  // the one message whose value is that nobody had to be awake for it.
+  // That exemption was withdrawn on 2026-09-21 (see the long comment in
+  // acknowledgeNewLead, src/lib/acknowledge.ts): it was the only thing on
+  // a held account that could reach a stranger unread, which makes it the
+  // only thing that can get the sending domain reported, and a domain
+  // cannot be un-reported. It is now held like everything else. This
+  // comment said otherwise for a day; a comment that contradicts the code
+  // is the kind of quiet lie this codebase keeps having to undo.
+  //
+  // DEFAULT true since 2026-09-21, and the direction matters. It was
+  // false, with grantBetaPlan (src/lib/billing.ts) switching it on for
+  // every tester. That works for an account created the one expected way
+  // and fails silently for every other: a teammate signing in, or an
+  // account carrying a stale "active" subscriptionStatus, got access with
+  // the hold OFF and could send an instant reply to a stranger unread.
+  // Six accounts were in exactly that state when this was found — none
+  // had sent anything, and none had real leads, which is luck rather than
+  // design.
+  //
+  // An account should have to be told it may send unreviewed, not told to
+  // be safe. Turning it off is a deliberate act in Settings, by an owner
+  // who has decided to trust it.
+  holdAllForApproval   Boolean @default(true)
 
   // When Meta last confirmed this app is subscribed to the account's
   // `messages` webhook. Null on a connected account means the

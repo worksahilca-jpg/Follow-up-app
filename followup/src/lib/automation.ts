@@ -945,7 +945,34 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
                   ? `${firstName} wrote ${daysQuiet} days ago and never got an answer — this reply is yours to send`
                   : `${firstName} went quiet ${daysQuiet} days ago — reaching back out is your call`;
 
-          if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
+          /*
+           * Tell somebody, whichever rule held it.
+           *
+           * This used to fire only for a NEGLECTED lead — one the owner
+           * had left unanswered. Every other held draft (the silence
+           * nudge, the dead-lead reactivation, and above all a business
+           * holding everything for approval) went into the queue with
+           * nobody told.
+           *
+           * Production, 2026-09-21: twenty-three leads waiting, the
+           * oldest at 175 hours. The queue was only ever visible to
+           * someone who opened the dashboard, and the weekly digest
+           * reports what FollowUp did, never what is waiting. Holding is
+           * now the default for every account, so that silence would have
+           * been every tester's whole first impression.
+           *
+           * notifyNeglect keeps its own wording for the neglect case,
+           * which says something this one cannot — that the lead wrote and
+           * was left. Everything else gets the plainer sentence.
+           */
+          if (unansweredIds.has(lead.id)) {
+            await notifyNeglect(lead, conversation, "held");
+          } else {
+            await notifyLeadOwners(
+              lead,
+              `${firstName} — a follow-up is written and waiting for your approval.`
+            );
+          }
           // Held-not-sent is as much a real AI decision as a send — the
           // risk gate is exactly the guarantee Rule 3 (trust ships like a
           // feature) is about, so it belongs in the same audit trail an

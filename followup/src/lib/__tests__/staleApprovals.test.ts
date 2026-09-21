@@ -96,7 +96,9 @@ describe("a lead the owner has left waiting", () => {
     pendingApprovals.mockResolvedValue([held(48)]);
     await remindStaleApprovals("biz1", NOW);
     const where = notificationCount.mock.calls[0][0].where;
-    expect(where.leadId).toBe("lead1");
+    // leadId moved into the OR when summaries became possible; the lead is
+    // still one of the two shapes the lookup accepts.
+    expect(where.OR).toContainEqual({ leadId: "lead1" });
     expect(where.createdAt.gte).toEqual(held(48).heldAt);
   });
 
@@ -150,10 +152,14 @@ describe("it never breaks the send paths it runs beside", () => {
   });
 
   it("keeps going when one lead's reminder fails", async () => {
+    // Two leads for one admin, so they stay under the collapse threshold
+    // and are written individually. The first write fails; the second must
+    // still land, and `reminded` must count only the one that did.
     pendingApprovals.mockResolvedValue([held(25, "lead1"), held(25, "lead2", "Robin Patel")]);
     notificationCreate.mockRejectedValueOnce(new Error("write failed"));
     const result = await remindStaleApprovals("biz1", NOW);
     expect(result.reminded).toBe(1);
+    expect(notificationCreate).toHaveBeenCalledTimes(2);
   });
 
   it("does nothing at all when the queue is empty", async () => {
@@ -171,5 +177,63 @@ describe("the threshold", () => {
     // twice. Pinned because changing it silently changes how loud the
     // product is.
     expect(STALE_APPROVAL_AFTER_MS).toBe(24 * 60 * 60 * 1000);
+  });
+});
+
+
+/**
+ * The reminder has to stay a reminder once it can be collapsed.
+ *
+ * A queue past HOLD_BURST_THRESHOLD becomes ONE notification carrying a
+ * count and no leadId. The "have we already reminded about this lead?"
+ * lookup was written when every reminder carried the lead's id, so on its
+ * own it cannot see a summary at all — and a reminder nothing can see is a
+ * reminder that gets written again every hour, forever, which is the exact
+ * nagging this module's header argues against.
+ *
+ * Found by reasoning about the batching before shipping it, not by a
+ * failing test — which is why these exist now.
+ */
+describe("a queue big enough to collapse", () => {
+  const manyHeld = (n: number) =>
+    Array.from({ length: n }, (_, i) => held(30, `lead${i + 1}`, `Lead ${i + 1}`));
+
+  it("sends one summary rather than one row per lead", async () => {
+    pendingApprovals.mockResolvedValue(manyHeld(20));
+    const result = await remindStaleApprovals("biz1", NOW);
+    expect(notificationCreate).toHaveBeenCalledTimes(1);
+    expect(notificationCreate.mock.calls[0][0].data.message).toContain("20 leads are");
+    // Every lead was covered by that one row — the count is about leads
+    // told about, not rows written.
+    expect(result.reminded).toBe(20);
+  });
+
+  it("puts the marker in the summary, so it can be recognised later", async () => {
+    // Without this the dedup below has nothing to match on.
+    pendingApprovals.mockResolvedValue(manyHeld(20));
+    await remindStaleApprovals("biz1", NOW);
+    expect(notificationCreate.mock.calls[0][0].data.message).toContain(STALE_APPROVAL_MARKER);
+    expect(notificationCreate.mock.calls[0][0].data.leadId).toBeNull();
+  });
+
+  it("looks for a summary sent to this lead's owners, not just one tagged with its id", async () => {
+    // The dedup query must admit the summary's shape: no leadId, matched
+    // by recipient instead. Asserted on the query because the count mock
+    // is what decides the outcome.
+    pendingApprovals.mockResolvedValue(manyHeld(20));
+    await remindStaleApprovals("biz1", NOW);
+    const where = notificationCount.mock.calls[0][0].where;
+    expect(where.OR, "the dedup lookup cannot see a collapsed summary").toBeTruthy();
+    expect(where.OR).toContainEqual({ leadId: null, userId: { in: ["admin1"] } });
+  });
+
+  it("says nothing on the next run, having already sent the summary", async () => {
+    // The whole point. notificationCount answering 1 stands for the
+    // summary written an hour ago.
+    pendingApprovals.mockResolvedValue(manyHeld(20));
+    notificationCount.mockResolvedValue(1);
+    const result = await remindStaleApprovals("biz1", NOW);
+    expect(result.reminded).toBe(0);
+    expect(notificationCreate).not.toHaveBeenCalled();
   });
 });

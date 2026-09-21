@@ -42,6 +42,7 @@ import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
 import { leadLanguageOf } from "@/lib/leadLanguage";
 import { hasAnySendChannel } from "@/lib/sendChannels";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { flushHoldNotices, type HoldNotice } from "@/lib/holdNotices";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
@@ -484,6 +485,11 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     ...deadLeads.filter((l) => deadIds.has(l.id)),
     ...silent.filter((l) => !unansweredIds.has(l.id) && !deadIds.has(l.id)),
   ];
+
+  // Every held draft's "this is waiting for you" notification, gathered
+  // rather than written as it happens, so the flush below can see how many
+  // there were. The loop is concurrent but single-threaded — push is safe.
+  const heldNotices: HoldNotice[] = [];
 
   // Kept modest (vs. the 5 used for sync/cleanup) — this loop calls Gmail's
   // send API per lead, which has its own tighter per-account send quota,
@@ -966,12 +972,22 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
            * was left. Everything else gets the plainer sentence.
            */
           if (unansweredIds.has(lead.id)) {
+            // Kept immediate and kept individual. This one says the lead
+            // WROTE and was left waiting, and for how long — a fact about
+            // a specific person that a count cannot carry. It is also the
+            // rare case: a burst comes from imported history, where nobody
+            // wrote to us at all.
             await notifyNeglect(lead, conversation, "held");
           } else {
-            await notifyLeadOwners(
-              lead,
-              `${firstName} — a follow-up is written and waiting for your approval.`
-            );
+            // Collected rather than written, and flushed once the run
+            // knows how many there were. A fresh Gmail connect holds up to
+            // a hundred of these in one tick; see src/lib/holdNotices.ts.
+            heldNotices.push({
+              leadId: lead.id,
+              businessId: lead.businessId,
+              assignedToId: lead.assignedToId,
+              message: `${firstName} — a follow-up is written and waiting for your approval.`,
+            });
           }
           // Held-not-sent is as much a real AI decision as a send — the
           // risk gate is exactly the guarantee Rule 3 (trust ships like a
@@ -1031,6 +1047,14 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       return { kind: "skipped", note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
     }
   });
+
+  // After the loop, before the summary: every held lead is known, so the
+  // burst can be collapsed into one line per person rather than a hundred.
+  // Never allowed to fail the run — a notification is how the owner hears
+  // about work that is already safely done, not part of doing it.
+  await flushHoldNotices(heldNotices).catch((err) =>
+    console.error(`Hold notifications failed for business ${businessId}:`, err)
+  );
 
   const handedOff = await draftDmHandoffs(businessId, voiceSamples, tier);
 

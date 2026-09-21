@@ -5,6 +5,7 @@ import { appUrl } from "@/lib/stripe";
 import { activateFacebookPageWebhooks, exchangeFacebookAuthCode } from "@/lib/facebook";
 import { encryptSecret } from "@/lib/crypto";
 import { recordAudit } from "@/lib/audit";
+import { oauthNextCookie, oauthReturnUrl } from "@/lib/oauthReturn";
 
 /**
  * A person can be an admin on several Facebook Pages, but a business here
@@ -16,10 +17,11 @@ import { recordAudit } from "@/lib/audit";
  */
 export async function GET(request: NextRequest) {
   const ctx = await getSessionContext();
-  const settingsUrl = new URL("/settings", appUrl());
-  // Same as the Instagram callback: land on the Channels tab, where the
-  // Facebook panel and its outcome message actually are.
-  settingsUrl.hash = "social";
+  // Settings by default — same as the Instagram callback, landing on the
+  // Channels tab where the Facebook panel and its outcome message are — or
+  // back into onboarding when Connect was pressed there.
+  const next = request.cookies.get(oauthNextCookie("fb"))?.value;
+  const settingsUrl = oauthReturnUrl(next, "social", appUrl());
   if (!ctx) return NextResponse.redirect(new URL("/signin", appUrl()));
   if (!(await requireAdmin(ctx))) {
     settingsUrl.searchParams.set("facebook", "error");
@@ -38,6 +40,7 @@ export async function GET(request: NextRequest) {
     settingsUrl.searchParams.set("message", message);
     const res = NextResponse.redirect(settingsUrl);
     res.cookies.delete("fb_oauth_state");
+    res.cookies.delete(oauthNextCookie("fb"));
     return res;
   };
 
@@ -85,15 +88,25 @@ export async function GET(request: NextRequest) {
     settingsUrl.searchParams.set("facebook", "connected");
     const res = NextResponse.redirect(settingsUrl);
     res.cookies.delete("fb_oauth_state");
+    res.cookies.delete(oauthNextCookie("fb"));
     return res;
   }
 
   // Several Pages — encrypt the list (real access tokens inside) before
   // it ever touches a cookie, even an httpOnly one.
+  //
+  // The picker for this lives inside FacebookConfig on the Settings page and
+  // is not extracted, so onboarding cannot show it. Rather than pretend, the
+  // onboarding step is told `choose_page` and says plainly that the Page has
+  // to be chosen in Settings once setup is done. The alternative — sending
+  // them to Settings now — does not work at all: the (app) layout bounces
+  // anyone who has not finished onboarding straight back here, so they would
+  // arrive at the picker and be redirected away from it.
   const encrypted = encryptSecret(JSON.stringify(exchanged.pages));
   settingsUrl.searchParams.set("facebook", "choose_page");
   const res = NextResponse.redirect(settingsUrl);
   res.cookies.delete("fb_oauth_state");
+  res.cookies.delete(oauthNextCookie("fb"));
   res.cookies.set("fb_pending_pages", encrypted, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 600, path: "/" });
   return res;
 }

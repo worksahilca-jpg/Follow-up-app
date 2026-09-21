@@ -359,3 +359,30 @@ beta and gives contact@followupbase.io.
 **What survived:** the admin tester list (add an email, they can sign in, no redeploy), the Beta
 mark and the "Something broke?" feedback dialog in the app.
 
+
+## R-013 — The F/U interlocked-monogram logo drafts (all three) ^R-013
+**Date:** 2026-09-14 · **Recorded:** 2026-09-21
+**Scope:** Logo mark — the F/U monogram direction specifically
+**Rejected:** All three rough drafts ("Shared spine, arrow crossbar", "Flag planted in the
+tray", "Negative-space arrow") — the founder's own follow-up idea ("F within a U"), drafted
+and shown back, then rejected on sight: *"no bro"*.
+**Stated reason:** none given. A clarifying question was asked in the same turn and, before
+it was answered, the founder said he would handle the logo himself: *"I will handle the logo
+part by myself"*.
+**Inferred principle:** [INFERRED, unconfirmed] It is genuinely unknown whether the monogram
+*concept* was the problem or only these three executions. Recorded as unresolved rather than
+settled either way.
+
+**PARTLY SUPERSEDED (2026-09-18) by [[approved#^A-008|A-008]] and
+[[approved#^A-009|A-009]].** The "don't propose any logo work at all" half of this entry is
+dead: the founder re-opened logo design four days later, picked a direction, and the mark
+now ships (`src/components/LogoMark.tsx`). What survives is the narrow rejection — **the F/U
+monogram is not the direction**, and it should not come back in new clothing.
+
+**Why this is being written a week late.** It was recovered in PR #232 on 2026-09-14 after a
+force-push lost it, and that PR then sat open long enough for its own instruction to go
+stale. Merging it verbatim in 2026-09-21 would have put "do not propose any further logo
+direction" into the brain on the same day the approved logo is in production — a rule that
+contradicts what shipped is worse than no rule. Ported here instead, with the contradiction
+resolved rather than hidden, per this brain's own supersede-don't-delete rule. PR #232 is
+closed as superseded by this entry.

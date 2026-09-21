@@ -3,6 +3,7 @@ import { requireCronSecret } from "@/lib/cronAuth";
 import { runAutomationForAllBusinesses } from "@/lib/automation";
 import { runSequencesForAllBusinesses } from "@/lib/sequences";
 import { pruneInboundWebhookEvents } from "@/lib/inboundEvents";
+import { remindStaleApprovalsForAllBusinesses } from "@/lib/staleApprovals";
 
 // One invocation covers every business with automation enabled — at real
 // tenant counts that's comfortably past a default serverless timeout even
@@ -35,6 +36,25 @@ export async function GET(request: NextRequest) {
       runAutomationForAllBusinesses(),
       runSequencesForAllBusinesses(),
     ]);
+
+    /*
+     * The third thing an hourly tick owes an owner: a nudge about what is
+     * waiting on THEM.
+     *
+     * Both paths above are about FollowUp acting. Neither says anything
+     * when it has correctly decided not to act and handed the decision
+     * back. Production on 2026-09-21 had twenty-three leads in the
+     * approval queue, the oldest at 175 hours, with nobody told.
+     *
+     * After the sends, and outside their Promise.all on purpose: a
+     * reminder is the least important thing this invocation does, and it
+     * must never be able to fail a real send. It swallows its own errors
+     * (see staleApprovals.ts) for the same reason pruning below does.
+     */
+    const staleApprovals = await remindStaleApprovalsForAllBusinesses().catch((err) => {
+      console.error("Stale-approval reminders failed:", err);
+      return { checked: 0, reminded: 0 };
+    });
     // Retention for the raw inbound-capture log (InboundWebhookEvent):
     // processed rows after 14 days, unreplayed failures after 90. It is
     // written once per inbound message forever, so it needs a policy from
@@ -47,7 +67,7 @@ export async function GET(request: NextRequest) {
       console.error("[cron] inbound webhook event pruning failed:", err);
       return { deleted: 0 };
     });
-    return NextResponse.json({ success: true, automation, sequences, pruned });
+    return NextResponse.json({ success: true, automation, sequences, staleApprovals, pruned });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Automation run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });

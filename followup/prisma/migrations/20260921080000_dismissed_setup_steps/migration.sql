@@ -1,0 +1,11 @@
+-- A setup step a business has said does not apply to it.
+--
+-- "Add your website widget" cleared only when a lead actually arrived
+-- through the widget (getIncompleteSetupSteps, src/lib/setupStatus.ts), so
+-- a business with no website could never finish setup: the strip on Today
+-- asked them forever to do something they had no way to do. Every other
+-- step clears by being done; this one had no other exit.
+--
+-- Additive and defaulted: every existing business gets an empty array,
+-- which means "nothing skipped" — the behaviour they have today.
+ALTER TABLE "Business" ADD COLUMN "dismissedSetupSteps" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

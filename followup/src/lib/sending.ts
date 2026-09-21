@@ -16,6 +16,7 @@
 import { prisma } from "@/lib/db";
 import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
 import { checkSendCap } from "@/lib/sendCaps";
+import { claimSend, releaseSendClaim, SEND_CLAIM_WINDOW_MS } from "@/lib/sendClaim";
 import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
@@ -470,24 +471,27 @@ export async function sendFollowUpToLead(
    * would NOT have stopped, and I could not determine from the data what
    * produced that gap.
    *
-   * `count`, not `findFirst`, deliberately: this function already makes a
-   * `message.findFirst` call for Meta's 24-hour DM window, and two
-   * same-named queries answering completely different questions in one
-   * function are indistinguishable to a reader and to a test's mock —
-   * which is exactly how the first version of this guard silently
-   * inherited the window lookup's stubbed return and refused every send
-   * in the suite.
+   * ## 2026-09-21: it could not stop the thing it was written for
+   *
+   * The first version of this guard counted recent outbound Message rows
+   * with the same body and then decided. Two requests arriving together
+   * both counted zero and both sent — which is a race, and every cause
+   * listed above (double-tap, second tab, retry) IS a race. A check
+   * followed by an act cannot defend against a copy of itself.
+   *
+   * It is now a claim row with a unique index on (leadId, bodyHash), taken
+   * here and released below if the send fails. Postgres decides at the
+   * moment of writing instead of a read deciding a moment earlier. Same
+   * window, same narrowness, same honest limit about the 3h45m pair — the
+   * reasoning is unchanged and lives in src/lib/sendClaim.ts.
+   *
+   * Taken here rather than immediately before the wire, and released on
+   * every failure path below, because every guard between here and the
+   * dispatch is cheap and read-only: claiming first means two racing
+   * callers diverge at the first thing either of them does.
    */
-  const DUPLICATE_WINDOW_MS = 60_000;
-  const justSent = await prisma.message.count({
-    where: {
-      conversation: { leadId: lead.id },
-      direction: "outbound",
-      body,
-      sentAt: { gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
-    },
-  });
-  if (justSent > 0) {
+  const claim = await claimSend(lead.id, body, SEND_CLAIM_WINDOW_MS);
+  if (!claim.won) {
     return {
       success: false,
       // "refused", not "transient": retrying is the thing being prevented.
@@ -495,11 +499,15 @@ export async function sendFollowUpToLead(
       message: "That exact message already went to this lead moments ago — it hasn't been sent again.",
     };
   }
+  /** Give the claim back — the send did not happen, so a retry must not be
+   *  blocked by the bookkeeping of the attempt that failed. */
+  const releaseClaim = () => releaseSendClaim(lead.id, claim.bodyHash);
 
   const isCampaignSend = options.automated && options.trigger === "dead_lead_reactivation";
 
   const emailSuppressed = channel === "email" && (await isSuppressed(lead.businessId, lead.email));
   if (emailSuppressed && isCampaignSend) {
+    await releaseClaim();
     return {
       success: false,
       message: "This person unsubscribed from automated follow-ups. You can still reply to them yourself.",
@@ -522,6 +530,7 @@ export async function sendFollowUpToLead(
   // caller would deliver a fresh one — the same follow-up twice, in the
   // owner's name, which is the exact failure the retry was added to avoid.
   if (options.automated && !options.queuedSendId && (await hasSendInFlight(lead.id))) {
+    await releaseClaim();
     return {
       success: false,
       message:
@@ -660,6 +669,11 @@ export async function sendFollowUpToLead(
   }
 
   if (!sent.ok) {
+    // Nothing reached the lead, so the claim has done its job and must not
+    // stand in the way of the retry — whether that retry is the queue
+    // below or a person pressing Send again after being told it failed.
+    await releaseClaim();
+
     // The whole point of the exercise: a provider outage delays this
     // message, it does not lose it.
     //

@@ -1,14 +1,21 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { SetupStep } from "@/lib/setupStatus";
+import SetupStepSkip from "@/components/SetupStepSkip";
 
 /**
  * research/product/2026-09-10-ux-simplification.md §2/§7.1: replaces the
  * Sidebar's two persistent nag cards ("Not subscribed", "Gmail not
  * connected") — proportionally enormous in a slim sidebar, and only ever
  * covered two of the several things a business might still need to
- * finish. One dismissible-feeling strip on Today, showing only the next
- * unfinished step, never all of them at once — see getIncompleteSetupSteps.
+ * finish. One strip on Today, showing only the next unfinished step, never
+ * all of them at once — see getIncompleteSetupSteps.
+ *
+ * The header here used to say "dismissible-feeling", which was the polite
+ * version of "looks like you can get rid of it, and you can't". A step
+ * that genuinely may not apply — a website widget for a business with no
+ * website — now carries a real way out beside its button, and the two
+ * steps that can take one are listed in DISMISSIBLE_SETUP_STEPS.
  */
 export default function SetupStrip({ steps }: { steps: SetupStep[] }) {
   if (steps.length === 0) return null;
@@ -33,14 +40,20 @@ export default function SetupStrip({ steps }: { steps: SetupStep[] }) {
         </p>
         <p className="text-xs text-ink-soft mt-0.5">{next.description}</p>
       </div>
-      <Link
-        href={next.ctaHref}
-        className="inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium sm:shrink-0 sm:py-1.5"
-        style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-      >
-        {next.ctaLabel}
-        <ArrowRight className="h-3.5 w-3.5" />
-      </Link>
+      {/* The real action, and — for a step that can genuinely not apply —
+          the way out. Grouped so the pair stacks and stays in thumb reach
+          on a phone, exactly as the button alone did. */}
+      <div className="flex items-center gap-3 sm:shrink-0">
+        <Link
+          href={next.ctaHref}
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium sm:flex-none sm:py-1.5"
+          style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+        >
+          {next.ctaLabel}
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+        {next.dismissible && next.dismissLabel && <SetupStepSkip id={next.id} label={next.dismissLabel} />}
+      </div>
     </div>
   );
 }

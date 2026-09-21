@@ -28,6 +28,8 @@ const { prismaMock } = vi.hoisted(() => ({
     task: { deleteMany: vi.fn() },
     booking: { deleteMany: vi.fn() },
     aIInsight: { deleteMany: vi.fn() },
+    outboundSend: { deleteMany: vi.fn() },
+    sendClaim: { deleteMany: vi.fn() },
     $transaction: vi.fn(async () => []),
   },
 }));

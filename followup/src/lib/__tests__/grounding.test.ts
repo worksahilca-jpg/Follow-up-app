@@ -19,7 +19,33 @@
  *
  * These tests are written against that exact exchange.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+/**
+ * `checkAckShape` and `checkDmDraftShape` are pure functions of two
+ * strings. Reaching them means importing acknowledge.ts and dmDrafts.ts,
+ * which at module scope construct a Prisma client and an OpenAI client and
+ * pull in `next/headers` — none of which this file uses, and all of which
+ * is real work done in a worker shared with 126 other test files.
+ *
+ * That module initialisation was the only nondeterministic thing in this
+ * file, and on 2026-09-20 the `checkAckShape rejects an invented day` case
+ * failed twice in full runs while passing alone and on every rerun. The
+ * failure was never reproduced, so this is the removal of the most likely
+ * cause rather than a proven fix — but a pure-function test has no
+ * business booting a database client either way.
+ */
+vi.mock("@/lib/db", () => ({ prisma: {} }));
+vi.mock("@/lib/integrations/openai", () => ({
+  generateInstantReply: vi.fn(),
+  assessAckRisk: vi.fn(),
+  localizeFixedText: vi.fn(),
+  draftDmBody: vi.fn(),
+}));
+vi.mock("@/lib/sender", () => ({ composeFollowUpEmail: vi.fn(), getSenderFirstName: vi.fn(), latestInboundText: vi.fn() }));
+vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: vi.fn(), detectAutomatedReplyChannel: vi.fn() }));
+vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
+
 import { ungroundedCalendarWords } from "@/lib/grounding";
 
 const whatTheLeadSaid = "Hey is this still available?\nHey is this Still Available?";
@@ -81,6 +107,45 @@ describe("days and months, in any language Intl knows", () => {
     expect(ungroundedCalendarWords("Est-ce que mardi vous convient ?", "Bonjour, c'est disponible ?", "fr")).toContain(
       "mardi"
     );
+  });
+
+  // "Weekend" is the one calendar word Intl cannot generate, so it lives in a
+  // hand-written list — which means it is only as multilingual as whoever
+  // wrote it. It started English-only, which was the wrong shape for a rule
+  // whose founding example was a Spanish-speaking lead: the exact draft that
+  // caused this file ("weekday or weekend") walked straight through in
+  // Spanish. These four cover the languages now in the list.
+  it("catches an invented 'fin de semana' in a Spanish thread", () => {
+    expect(ungroundedCalendarWords("¿Sería para entre semana o fin de semana?", "Hola, ¿sigue disponible?", "es")).toEqual(
+      expect.arrayContaining(["fin de semana", "entre semana"])
+    );
+  });
+
+  it("grounds 'fin de semana' when the lead said it first", () => {
+    const source = "Hola, busco algo para el fin de semana.";
+    expect(ungroundedCalendarWords("Perfecto, el fin de semana funciona.", source, "es")).toEqual([]);
+  });
+
+  it("catches an invented 'week-end' in a French thread", () => {
+    expect(ungroundedCalendarWords("Plutôt en semaine ou le week-end ?", "Bonjour, c'est disponible ?", "fr")).toContain(
+      "week-end"
+    );
+  });
+
+  it("catches an invented 'fim de semana' in a Portuguese thread", () => {
+    expect(ungroundedCalendarWords("Seria para o fim de semana?", "Olá, ainda está disponível?", "pt")).toContain(
+      "fim de semana"
+    );
+  });
+
+  // Honest record of a known hole rather than a passing test that implies
+  // coverage: Hindi, Punjabi and Gujarati are not in the list. Speakers of
+  // all three routinely write "weekend" in English mid-sentence, which the
+  // English entries do catch — that common case is what this asserts. The
+  // native forms are still missing and should be added by someone who
+  // speaks them rather than guessed at.
+  it("catches an English 'weekend' inside a Hindi thread (the native forms are a known gap)", () => {
+    expect(ungroundedCalendarWords("क्या weekend ठीक रहेगा?", "नमस्ते, क्या यह उपलब्ध है?", "hi")).toContain("weekend");
   });
 });
 

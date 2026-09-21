@@ -189,6 +189,11 @@ export async function deleteBusinessData(
     // so an erasure that skipped them would leave drafts of this business's
     // messages behind.
     prisma.outboundSend.deleteMany({ where: { businessId } }),
+    // Duplicate-send claims (see SendClaim in schema.prisma) — also before
+    // Lead, which they reference. Bookkeeping rather than content: they
+    // hold a hash, never the message, which is why they are in the erasure
+    // but not in the export, same as RateLimitHit.
+    prisma.sendClaim.deleteMany({ where: { lead: { businessId } } }),
     prisma.task.deleteMany({ where: { lead: { businessId } } }),
     prisma.booking.deleteMany({ where: { businessId } }),
     prisma.lead.deleteMany({ where: { businessId } }),

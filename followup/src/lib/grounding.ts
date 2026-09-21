@@ -146,11 +146,47 @@ function calendarWords(locale: string): string[] {
 }
 
 /**
- * The part Intl cannot generate. English only, and knowingly so — see the
- * header. Listed separately from the Intl words so the honest coverage
- * gap is visible in the code rather than buried in a regex.
+ * The part Intl cannot generate.
+ *
+ * `Intl` knows every weekday and month name in every locale, which is what
+ * makes the rest of this file genuinely multilingual. It does not know the
+ * WORD "weekend" — `Intl.Locale.getWeekInfo()` returns which day numbers
+ * are the weekend, not what a speaker calls them — so this part is a list,
+ * and a list is only as multilingual as whoever wrote it.
+ *
+ * It started English-only on 2026-09-20 and was recorded as a known seam
+ * that same day: the draft that caused all of this said "weekday or
+ * weekend", and the Spanish equivalent walked straight through. Since
+ * FollowUp's whole language story is that customers write in Spanish,
+ * Hindi, Punjabi and Gujarati, an English-only guard on the one rule
+ * written for a real Spanish-speaking lead was the wrong shape.
+ *
+ * Grouped by language so the gaps are visible rather than buried. Every
+ * entry is one this list's author is confident about — an invented
+ * translation in a file whose entire subject is invented specifics would
+ * be its own joke, and a wrong entry is worse than a missing one because
+ * it holds drafts that were fine.
+ *
+ * **Still missing, knowingly:** Hindi, Punjabi and Gujarati. Speakers of
+ * all three routinely write "weekend" in English even mid-sentence, so the
+ * English entries below do cover the common case — but the native and
+ * romanized forms are not here, and should be added by someone who speaks
+ * them rather than guessed at.
+ *
+ * Multi-word entries work: the matcher below is whole-token containment on
+ * the phrase, not a word split, so "fin de semana" matches as one unit.
  */
-const UNDERIVABLE_EN = ["weekday", "weekdays", "weekend", "weekends", "fortnight"];
+const UNDERIVABLE = [
+  // English
+  "weekday", "weekdays", "weekend", "weekends", "fortnight",
+  // Spanish — the language of the leads this rule was first written for
+  "fin de semana", "fines de semana", "finde", "entre semana",
+  "día laborable", "dias laborables", "días laborables", "quincena",
+  // French
+  "week-end", "week-ends", "jour ouvrable", "jours ouvrables", "quinzaine",
+  // Portuguese
+  "fim de semana", "fins de semana", "dia útil", "dias úteis", "quinzena",
+];
 
 /**
  * Calendar words the draft uses that the conversation never did.
@@ -166,7 +202,7 @@ export function ungroundedCalendarWords(draft: string, source: string, locale?: 
   const vocabulary = new Set<string>([
     ...calendarWords("en"),
     ...(locale ? calendarWords(locale) : []),
-    ...UNDERIVABLE_EN,
+    ...UNDERIVABLE,
   ]);
 
   const lowerSource = source.toLowerCase();

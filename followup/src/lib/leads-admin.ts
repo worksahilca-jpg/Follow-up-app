@@ -34,6 +34,13 @@ export async function deleteLeadCascade(leadId: string, businessId?: string): Pr
     prisma.task.deleteMany({ where: { leadId } }),
     prisma.booking.deleteMany({ where: { leadId } }),
     prisma.aIInsight.deleteMany({ where: { leadId } }),
+    // Both of these reference Lead with ON DELETE RESTRICT, so the delete
+    // below fails outright if either is left behind — which is not a
+    // hypothetical for OutboundSend: any lead with a send parked after a
+    // provider failure could not be deleted at all until this line existed
+    // (found 2026-09-21 while adding SendClaim, which has the same shape).
+    prisma.outboundSend.deleteMany({ where: { leadId } }),
+    prisma.sendClaim.deleteMany({ where: { leadId } }),
     prisma.lead.delete({ where: { id: leadId } }),
   ]);
 }

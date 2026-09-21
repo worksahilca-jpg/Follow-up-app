@@ -8,6 +8,7 @@ import TeamSection from "@/components/TeamSection";
 import BusinessProfileSection from "@/components/BusinessProfileSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
 import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
+import SetupStepRestore from "@/components/SetupStepRestore";
 import CopyWebhookUrl from "@/components/CopyWebhookUrl";
 import OutboundWebhookConfig from "@/components/OutboundWebhookConfig";
 import TwilioConfig from "@/components/TwilioConfig";
@@ -831,6 +832,11 @@ function SettingsPageInner() {
         <h2 className="font-display text-xl">Website widget</h2>
         <div className="mt-4">
           <CopyEmbedSnippet />
+          {/* Only appears if the owner told Today they have no website. */}
+          <SetupStepRestore
+            id="widget"
+            note="You told FollowUp you don’t have a website, so it stopped asking."
+          />
         </div>
       </section>
 

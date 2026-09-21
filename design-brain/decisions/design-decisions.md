@@ -4062,3 +4062,102 @@ sandbox, so neither the route nor the Settings panel was exercised against a rea
    non-admin currently sees no control at all rather than an explanation of why.
 5. **Verified by typecheck, lint, 1465 tests, a production build and two renders.** Not by
    using it.
+
+---
+
+## 2026-09-21 — Onboarding asks where the leads come from, instead of assuming
+
+**Founder, rejecting the question I asked him.** I had just fixed the website-widget setup
+step (which could never be finished by a business with no website) and asked whether the
+inbox step should get the same escape hatch. His answer was that I was patching the wrong
+thing:
+
+> *"why to skip i mean they should have a proper onboarding process where first we will let
+> them know how this works and thats totaly skipable then we will help them to connect the
+> sources easyly and skipable too if they dont want that source to be added"*
+
+And, on whether a passed-over source should be raised again later:
+
+> *"why would we ask agin he will be having the option to connect later too in settings"*
+
+He is right, and the diagnosis is better than mine. The nag was a symptom. The cause was
+that onboarding had exactly one thing to offer — Connect Gmail — so it decided on the
+owner's behalf which channel mattered. A business running on Instagram DMs had nothing to
+say yes to, pressed "I'll do this later", and was then told on Today, forever, to connect
+an inbox it does not have.
+
+### What shipped
+
+Three steps: **details → how it works → where do your leads come from.**
+
+**"How FollowUp works" is three beats and fully skippable.** The third beat is the one that
+has to be exactly true, and it is where the old flow was worst: the Connect Gmail screen
+described a read-only product at the moment it asked for send access. This says plainly
+that FollowUp writes and sends, and what stops it. No AI language anywhere on the screen
+([[rejected#^S-13|S-13]]) — remove every AI-referencing word and nothing changes, because
+there were none.
+
+**The sources step lists Email (Gmail/Outlook), Instagram, Facebook Page and the website
+form**, each connecting in place. There are no Skip buttons: a row of Skip controls beside
+a row of Connect controls is twice the screen for one decision
+([[rejected#^S-06|S-06]]). Skipping is simply not connecting — whatever is untouched when
+the owner presses Continue is recorded as "I don't use this", and the setup strip on Today
+never mentions it again. That reuses the `dismissedSetupSteps` column added earlier the
+same day rather than inventing a second mechanism.
+
+**WhatsApp, Zapier and the CRM importers are one honest line pointing at Settings.**
+WhatsApp connects through Meta's Embedded Signup — a JavaScript popup living inside
+`WhatsAppConfig`, not a link — and the other two need a key or a URL pasted. A button that
+cannot work here would be worse than a sentence that says where it does. Named rather than
+hidden: a source nobody mentions is a source nobody knows about.
+
+**The Meta callbacks learned where they came from.** Instagram and Facebook hardcoded a
+return to `/settings`. During onboarding that does not merely lose the flow — it cannot
+work at all, because the `(app)` layout bounces anyone who has not finished onboarding
+straight back to `/onboarding`. The owner would authorise Meta and arrive back at the same
+step with no message. Both now carry a `next` cookie, the same mechanism Gmail and Outlook
+already used, through one shared `oauthReturnUrl` so five callbacks agree instead of
+drifting. It is an allow-list of two known pages, not a redirect to whatever the cookie
+says — that is the difference between resuming a flow and an open redirect.
+
+**Resume is derived, not stored.** A `Business.onboardingStep` column would be a second
+copy of something the server can work out, and a second copy can disagree with the first.
+The rule is in `shouldResumeAtSources`, including the clause that matters most: arriving
+back from a *failed* connect counts as evidence. Without it a refused Instagram connection
+drops the owner two steps back onto the explainer and hands the error to a step that does
+not render errors — the button appears to have done nothing.
+
+### What looking at it changed
+
+Rendered all three steps against the real built CSS. One thing was plainly wrong: when
+nothing was connected the primary button read **"Skip for now"** in full-width filled
+`--ink` — the loudest element on a screen whose whole purpose is to ask a question, telling
+the reader to skip it. It is now always "Continue". Nothing blocks the button either way,
+so the skipping does not need announcing ([[brand-principles]] #5).
+
+Accent discipline held: four Connect buttons cannot all be the accent
+([[rejected#^S-05|S-05]], A-006), so every row's button is the same quiet outline and the
+screen's one primary is at the foot in `--ink` (A-003). Icon tiles are 36px at
+`rounded-lg`, per A-018. Headings are `text-xl` per A-019.
+
+### Self-critique
+
+1. **Facebook's multi-Page case is a dead end inside the flow.** If Meta returns more than
+   one Page, the picker is 296 lines woven into `FacebookConfig` on the Settings page, and
+   I did not extract it. The row says so in a sentence and the owner finishes the Page
+   choice after setup. That is honest, but it is the one path where onboarding hands off a
+   half-finished job.
+2. **"Did they set up the website form?" is guessed from whether they opened the panel.**
+   There is no connected state to read — a snippet pasted into someone's own site is
+   invisible to us until a lead arrives. Opening the panel is the closest honest signal,
+   and it is still a guess: someone who opens it out of curiosity and never pastes it will
+   keep being asked, and someone who copies it from Settings later was already dismissed.
+3. **WhatsApp is named but not connectable here**, which is the weakest part of the step
+   for a business that runs on WhatsApp — precisely one of the businesses this rebuild was
+   meant to serve. Extracting the Embedded Signup popup is the fix and it is not done.
+4. **Nothing was exercised against a real database.** The sandbox cannot reach one, so the
+   three steps were rendered as static HTML against the built CSS, not driven. No OAuth
+   round trip was actually taken; the `next` plumbing is verified by unit tests and reading,
+   not by connecting an account.
+5. **The step-2 copy is my writing, not tested on anyone.** It claims to be what a busy
+   owner reads in ninety seconds. That is a design intention, not a finding.

@@ -4,15 +4,18 @@ import { prisma } from "@/lib/db";
 import { appUrl } from "@/lib/stripe";
 import { activateInstagramWebhooks, exchangeInstagramAuthCode, resolveInstagramUserId } from "@/lib/instagram";
 import { recordAudit } from "@/lib/audit";
+import { oauthNextCookie, oauthReturnUrl } from "@/lib/oauthReturn";
 
 export async function GET(request: NextRequest) {
   const ctx = await getSessionContext();
-  const settingsUrl = new URL("/settings", appUrl());
-  // The Instagram panel lives on the Channels tab, and Settings opens the
-  // tab the hash names (SECTION_TAB in settings/page.tsx). Without the
-  // hash the outcome — "connected" or the reason it failed — was rendered
-  // on a tab the owner wasn't looking at.
-  settingsUrl.hash = "social";
+  // Back where the owner started. Settings by default — the Instagram
+  // panel lives on the Channels tab, and Settings opens the tab the hash
+  // names (SECTION_TAB in settings/page.tsx), so without the hash the
+  // outcome was rendered on a tab the owner wasn't looking at. Or back to
+  // onboarding, when Connect was pressed from the "where do your leads
+  // come from?" step: landing in Settings mid-setup loses the flow.
+  const next = request.cookies.get(oauthNextCookie("ig"))?.value;
+  const settingsUrl = oauthReturnUrl(next, "social", appUrl());
   if (!ctx) return NextResponse.redirect(new URL("/signin", appUrl()));
 
   const { searchParams } = new URL(request.url);
@@ -26,6 +29,7 @@ export async function GET(request: NextRequest) {
     settingsUrl.searchParams.set("message", message);
     const res = NextResponse.redirect(settingsUrl);
     res.cookies.delete("ig_oauth_state");
+    res.cookies.delete(oauthNextCookie("ig"));
     return res;
   };
 
@@ -77,5 +81,6 @@ export async function GET(request: NextRequest) {
   settingsUrl.searchParams.set("instagram", "connected");
   const res = NextResponse.redirect(settingsUrl);
   res.cookies.delete("ig_oauth_state");
+  res.cookies.delete(oauthNextCookie("ig"));
   return res;
 }

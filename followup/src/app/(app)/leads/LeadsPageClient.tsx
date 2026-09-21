@@ -131,7 +131,7 @@ function LeadsMoreMenu({ onLogCall, onImport }: { onLogCall: () => void; onImpor
            is what the clipping was doing for them. */
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-1 w-52 rounded-[var(--radius-box)] bg-card p-1"
+          className="absolute right-0 z-20 mt-1 w-52 box p-1"
           style={{ boxShadow: "var(--shadow-box-hover)" }}
         >
           <button role="menuitem" className={item} onClick={() => { setOpen(false); onLogCall(); }}>

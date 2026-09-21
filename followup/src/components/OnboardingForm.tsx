@@ -246,7 +246,7 @@ function OnboardingFormInner({
             {inboxConnected ? (
               <>
                 <div
-                  className="h-14 w-14 rounded-2xl flex items-center justify-center mx-auto"
+                  className="h-14 w-14 rounded-lg flex items-center justify-center mx-auto"
                   style={{ backgroundColor: "var(--sage-soft)", color: "var(--sage)" }}
                 >
                   <Check className="h-6 w-6" />
@@ -281,7 +281,7 @@ function OnboardingFormInner({
                     FollowUp does with their inbox — not buried in Settings
                     they may never open. Off by default; the switch is the
                     consent (docs/security-roadmap.md). */}
-                <div className="mt-5 rounded-[var(--radius-box)] bg-card px-4 py-3" style={{ boxShadow: "var(--shadow-box)" }}>
+                <div className="mt-5 box px-4 py-3">
                   <ImproveFollowUpToggle compact />
                 </div>
 
@@ -298,7 +298,7 @@ function OnboardingFormInner({
             ) : (
               <>
                 <div
-                  className="h-14 w-14 rounded-2xl flex items-center justify-center mx-auto border border-line"
+                  className="h-14 w-14 rounded-lg flex items-center justify-center mx-auto border border-line"
                   style={{ backgroundColor: "var(--card)", color: "var(--ink-soft)" }}
                 >
                   <Mail className="h-6 w-6" />
@@ -325,8 +325,7 @@ function OnboardingFormInner({
                 </p>
 
                 <div
-                  className="relative mt-4 rounded-[var(--radius-box)] bg-card py-3 pl-4 pr-3 text-left"
-                  style={{ boxShadow: "var(--shadow-box)" }}
+                  className="relative mt-4 box py-3 pl-4 pr-3 text-left"
                 >
                   <span
                     aria-hidden="true"

@@ -26,7 +26,7 @@ export default function TermsPage() {
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
-            <h2 className="font-display text-lg text-ink">1. Agreement</h2>
+            <h2 className="font-display text-xl text-ink">1. Agreement</h2>
             <p className="mt-2">
               By creating an account or using FollowUp (&quot;the Service&quot;), you agree to these terms. If
               you&apos;re using FollowUp on behalf of a company, you&apos;re confirming you have the authority
@@ -35,7 +35,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">2. What FollowUp does</h2>
+            <h2 className="font-display text-xl text-ink">2. What FollowUp does</h2>
             <p className="mt-2">
               FollowUp connects to your Gmail account (with your permission) to identify sales conversations,
               score them using AI, and draft follow-up messages. Messages are only sent with your approval,
@@ -48,7 +48,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">3. Your account</h2>
+            <h2 className="font-display text-xl text-ink">3. Your account</h2>
             <p className="mt-2">
               You&apos;re responsible for keeping your account credentials secure and for all activity under
               your account. You must provide accurate information and keep it up to date.
@@ -56,7 +56,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">4. Acceptable use</h2>
+            <h2 className="font-display text-xl text-ink">4. Acceptable use</h2>
             <p className="mt-2">You agree not to use FollowUp to:</p>
             <ul className="mt-2 space-y-1 list-disc pl-5">
               <li>Send spam, unsolicited bulk email, or content that violates anti-spam law (e.g. CAN-SPAM).</li>
@@ -67,7 +67,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">5. AI-generated content</h2>
+            <h2 className="font-display text-xl text-ink">5. AI-generated content</h2>
             <p className="mt-2">
               FollowUp uses AI to score leads and draft messages. AI output can be wrong or inappropriate —
               you&apos;re responsible for reviewing and approving anything sent under your name (or for the
@@ -76,7 +76,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">6. Billing</h2>
+            <h2 className="font-display text-xl text-ink">6. Billing</h2>
             <p className="mt-2">
               Paid plans are billed on a recurring basis through Stripe. You can cancel at any time from
               Settings; your subscription remains active until the end of the current billing period. Fees
@@ -85,7 +85,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">7. Termination</h2>
+            <h2 className="font-display text-xl text-ink">7. Termination</h2>
             <p className="mt-2">
               You can stop using FollowUp and delete your account at any time. We may suspend or terminate
               your access if you violate these terms, and will make reasonable efforts to notify you first
@@ -94,7 +94,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">8. Disclaimer &amp; limitation of liability</h2>
+            <h2 className="font-display text-xl text-ink">8. Disclaimer &amp; limitation of liability</h2>
             <p className="mt-2">
               FollowUp is provided &quot;as is&quot; without warranties of any kind. We&apos;re not liable for
               indirect, incidental, or consequential damages, including lost revenue or lost deals, arising
@@ -103,7 +103,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">9. Changes</h2>
+            <h2 className="font-display text-xl text-ink">9. Changes</h2>
             <p className="mt-2">
               We may update these terms from time to time. Material changes will be communicated by email or
               an in-app notice before they take effect.
@@ -111,7 +111,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">10. Contact</h2>
+            <h2 className="font-display text-xl text-ink">10. Contact</h2>
             <p className="mt-2">
               Questions about these terms:{" "}
               <a href="mailto:contact@followupbase.io" className="underline">

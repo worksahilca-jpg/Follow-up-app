@@ -8,6 +8,7 @@ import { formatCurrency, daysSince } from "@/lib/demo-data";
 import { getPipelineData } from "@/lib/pipeline";
 import { PIPELINE_STAGES } from "@/lib/demo-data";
 import { urgencyColor } from "@/lib/urgency";
+import { PageHeader } from "@/components/PageHeader";
 import ScoreBadge from "@/components/ScoreBadge";
 import StatCard from "@/components/StatCard";
 import EmptyState from "@/components/EmptyState";
@@ -78,25 +79,23 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display text-3xl">Pipeline</h1>
-          <p className="text-ink-soft mt-1">
-            Where every deal stands, and what it&apos;s worth. Drag a card to move its stage.
-          </p>
-        </div>
-        <button
-          onClick={() => setMineOnly((v) => !v)}
-          className="rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors shrink-0"
-          style={{
-            backgroundColor: mineOnly ? "var(--ink)" : "var(--card)",
-            color: mineOnly ? "var(--paper)" : "var(--ink-soft)",
-            border: mineOnly ? "none" : "1px solid var(--line)",
-          }}
-        >
-          My leads only
-        </button>
-      </div>
+      <PageHeader
+        title="Pipeline"
+        subtitle="Where every deal stands, and what it's worth. Drag a card to move its stage."
+        actions={
+          <button
+            onClick={() => setMineOnly((v) => !v)}
+            className="rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors shrink-0"
+            style={{
+              backgroundColor: mineOnly ? "var(--ink)" : "var(--card)",
+              color: mineOnly ? "var(--paper)" : "var(--ink-soft)",
+              border: mineOnly ? "none" : "1px solid var(--line)",
+            }}
+          >
+            My leads only
+          </button>
+        }
+      />
 
       <RevealGroup on="mount" className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
         <RevealItem>
@@ -190,7 +189,7 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
               const leadId = e.dataTransfer.getData("text/lead-id");
               if (leadId) moveLead(leadId, stage.id);
             }}
-            className="rounded-xl border p-4 min-h-[120px] transition-colors"
+            className="rounded-[var(--radius-box)] border p-4 min-h-[120px] transition-colors"
             style={{
               backgroundColor: "var(--card)",
               borderColor: dragOverStage === stage.id ? "var(--rust)" : "var(--line)",

@@ -101,7 +101,7 @@ export default function LeadAssignmentSelect({
         value={current}
         onChange={(e) => change(e.target.value)}
         disabled={saving}
-        className="rounded-md border border-line bg-paper px-1.5 py-0.5 text-sm text-right disabled:opacity-60"
+        className="rounded-lg border border-line bg-paper px-1.5 py-0.5 text-sm text-right disabled:opacity-60"
       >
         <option value="">Unassigned</option>
         {members.map((m) => (

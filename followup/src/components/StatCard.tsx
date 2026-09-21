@@ -42,8 +42,7 @@ export default function StatCard({
 }) {
   return (
     <div
-      className="relative overflow-hidden rounded-[var(--radius-box)] bg-card p-4 transition-shadow hover:[box-shadow:var(--shadow-box-hover)]"
-      style={{ boxShadow: "var(--shadow-box)" }}
+      className="relative overflow-hidden box p-4 transition-shadow hover:[box-shadow:var(--shadow-box-hover)]"
     >
       {accent && (
         <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px]" style={{ backgroundColor: accent }} />

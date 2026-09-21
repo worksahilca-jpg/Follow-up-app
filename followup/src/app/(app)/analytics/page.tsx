@@ -56,8 +56,7 @@ export default async function AnalyticsPage() {
               else; then the money; then everything else as a reference table
               they glance at rather than read. */}
           <div
-            className="relative mt-6 overflow-hidden rounded-[var(--radius-box)] bg-card p-5"
-            style={{ boxShadow: "var(--shadow-box)" }}
+            className="relative mt-6 overflow-hidden box p-5"
           >
             {data.medianReplyHours !== null && (
               <span

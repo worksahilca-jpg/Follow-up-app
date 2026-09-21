@@ -142,7 +142,7 @@ export default async function AdminPage() {
       <section className="mt-10">
         <h2 className="font-display text-xl">Recent signups</h2>
         <p className="text-sm text-ink-soft mt-1">The most recently created businesses, newest first.</p>
-        <div className="mt-4 rounded-[var(--radius-box)] bg-card overflow-hidden overflow-x-auto [box-shadow:var(--shadow-box)]">
+        <div className="mt-4 box overflow-hidden overflow-x-auto">
           {/* `_` (space), not a comma, between grid tracks — see the note
               on this same pattern in TeamPerformanceSection.tsx. */}
           <div className={`grid ${SIGNUP_GRID} gap-4 px-5 py-3 border-b border-line text-xs font-medium text-ink-soft`}>

@@ -211,8 +211,7 @@ export default function WorkflowsPage() {
       {/* The guarantee, stated once, where it's relevant, as its own object
           rather than as the tail of a paragraph. */}
       <div
-        className="relative mt-6 rounded-[var(--radius-box)] bg-card py-3 pl-4 pr-3"
-        style={{ boxShadow: "var(--shadow-box)" }}
+        className="relative mt-6 box py-3 pl-4 pr-3"
       >
         <span
           aria-hidden="true"

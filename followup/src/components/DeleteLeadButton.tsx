@@ -28,7 +28,7 @@ export default function DeleteLeadButton({ leadId, leadName }: { leadId: string;
 
   if (confirming) {
     return (
-      <div className="rounded-xl border p-4" style={{ borderColor: "var(--coral)", backgroundColor: "var(--coral-soft)" }}>
+      <div className="rounded-[var(--radius-box)] border p-4" style={{ borderColor: "var(--coral)", backgroundColor: "var(--coral-soft)" }}>
         <p className="text-sm" style={{ color: "var(--coral)" }}>
           Delete {leadName}? This removes the lead and its whole conversation history. Can&apos;t be undone.
         </p>

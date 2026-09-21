@@ -94,7 +94,7 @@ export default function DataPrivacySection() {
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl border p-5" style={{ borderColor: "var(--coral)" }}>
+      <div className="mt-4 rounded-[var(--radius-box)] border p-5" style={{ borderColor: "var(--coral)" }}>
         <div className="flex items-center gap-4">
           <div
             className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"

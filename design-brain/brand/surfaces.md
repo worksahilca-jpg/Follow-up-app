@@ -14,13 +14,24 @@ radius, shadows, and elevation documented somewhere, and they are one connected 
 - Pills/badges: `rounded-full`
 - Focus ring: 4px
 
+**DECIDED 2026-09-20** (founder: "approved, apply both ladders"). Three values, and
+nothing else exists:
+
+| Value | Where |
+|---|---|
+| **12px** (`--radius-box`, the `.box` class) | Boxes, cards, panels, menus, modals — any surface that sits *on* the page |
+| **8px** (`rounded-lg`) | Anything *inside* a box: buttons, inputs, list items, icon tiles |
+| **`full`** | Pills, badges, avatars, toggles |
+
+There is no fourth value. `rounded-xl`, `rounded-2xl` and `rounded-md` were in use across
+thirteen files with nothing distinguishing them; they are gone and must not come back. A
+surface that seems to want a different radius is a surface that wants a different
+*treatment* — solve it with elevation, ground or spacing.
+
+This supersedes the earlier proposed `sm`/`md`/`lg` set, which never shipped and which
+would have introduced a 6px and a 16px the app had no use for.
+
 **Rules:**
-1. **Three radii maximum**, plus `full` for pills. Proposed set:
-   - `sm` — 6px: inputs, small buttons, tight controls
-   - `md` — 10–12px: cards, panels, menus, modals `[TO DECIDE — reconcile with the
-     shipped 12px]`
-   - `lg` — 16px: large feature surfaces, rare
-   - `full` — pills, avatars, toggles only
 2. **Nested radius is smaller than its parent**, by roughly the padding between them.
    Equal radii on nested boxes look broken.
 3. **Radius is not personality.** Heavy rounding reads friendly-consumer; sharp reads
@@ -64,7 +75,8 @@ at a real dropdown on a real screen, not picked from a scale in the abstract.
 
 ## Open decisions
 
-- `[TO DECIDE]` The three-value radius set, reconciled with what ships (12px cards).
+- ~~`[TO DECIDE]` The three-value radius set~~ — **decided 2026-09-20**, see "Border
+  radius" above. 12 / 8 / full.
 - `[TO DECIDE]` Shadow values for levels 2–4.
 - `[TO DECIDE]` Whether cards ever get hover elevation. Current `HoverLift` component
   exists — audit whether it's used inside the app or only on marketing surfaces, and

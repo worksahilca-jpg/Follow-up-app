@@ -114,23 +114,26 @@ export function ItemBox({ title, figure, fact, status, href, className = "" }: I
   // Hover deepens the shadow. Nothing translates — movement on a list of
   // twenty boxes is the "random animation" S-08 rules out.
   const shell =
-    "relative flex gap-3 bg-card rounded-[var(--radius-box)] py-3 pr-3 transition-shadow " +
+    "box relative flex gap-3 py-3 pr-3 transition-shadow " +
     (status ? "pl-4" : "pl-3") +
     " " +
     className;
 
-  const style = { boxShadow: "var(--shadow-box)" } as const;
+  // The shadow comes from `.box`, not from an inline style. It used to be
+  // inline, and an inline style beats every class selector — so the
+  // `hover:[box-shadow:…]` below, on the most-used row in the app, never
+  // rendered once. Found 2026-09-20 while collapsing 27 hand-rolled copies
+  // of this surface into the one class that already existed.
 
   return href ? (
     <Link
       href={href}
       className={shell + " hover:[box-shadow:var(--shadow-box-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"}
-      style={style}
     >
       {inner}
     </Link>
   ) : (
-    <div className={shell} style={style}>
+    <div className={shell}>
       {inner}
     </div>
   );

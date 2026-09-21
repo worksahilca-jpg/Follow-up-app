@@ -120,7 +120,7 @@ export default function LeadAutomationToggle({
   }
 
   return (
-    <div className="rounded-xl p-4" style={{ backgroundColor: "var(--slate-soft)" }}>
+    <div className="rounded-[var(--radius-box)] p-4" style={{ backgroundColor: "var(--slate-soft)" }}>
       <h3 className="text-sm font-semibold" style={{ color: "var(--slate)" }}>
         Automation
       </h3>

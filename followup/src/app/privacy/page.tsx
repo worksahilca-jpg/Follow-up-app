@@ -32,7 +32,7 @@ export default function PrivacyPage() {
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
-            <h2 className="font-display text-lg text-ink">Who we are</h2>
+            <h2 className="font-display text-xl text-ink">Who we are</h2>
             <p className="mt-2">
               FollowUp (&quot;FollowUp&quot;, &quot;we&quot;, &quot;us&quot;) provides an AI-assisted sales
               follow-up tool. This policy explains what data we collect, why, and how you can control it.
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">What we collect</h2>
+            <h2 className="font-display text-xl text-ink">What we collect</h2>
             <ul className="mt-2 space-y-2 list-disc pl-5">
               <li>
                 <strong className="text-ink">Account info</strong> — your name and email address from Google
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">Google user data — Limited Use disclosure</h2>
+            <h2 className="font-display text-xl text-ink">Google user data — Limited Use disclosure</h2>
             <p className="mt-2">
               FollowUp&apos;s use and transfer of information received from Google APIs adheres to the{" "}
               <a
@@ -103,7 +103,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">Instagram and Facebook data — Meta Platform Terms</h2>
+            <h2 className="font-display text-xl text-ink">Instagram and Facebook data — Meta Platform Terms</h2>
             <p className="mt-2">
               FollowUp&apos;s use of data received from Meta&apos;s Instagram and Facebook APIs adheres to the{" "}
               <a
@@ -138,7 +138,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">How we use AI</h2>
+            <h2 className="font-display text-xl text-ink">How we use AI</h2>
             <p className="mt-2">
               To score leads and draft follow-up messages, relevant conversation text is sent to our AI
               provider (currently OpenAI) for processing. That provider does not use your data to train its
@@ -148,7 +148,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">Data retention &amp; deletion</h2>
+            <h2 className="font-display text-xl text-ink">Data retention &amp; deletion</h2>
             <p className="mt-2">
               We keep your data for as long as your account is active. You can delete an individual lead (and
               its full conversation history) at any time from that lead&apos;s page. To delete your entire
@@ -171,7 +171,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">Third parties we use</h2>
+            <h2 className="font-display text-xl text-ink">Third parties we use</h2>
             <ul className="mt-2 space-y-2 list-disc pl-5">
               <li><strong className="text-ink">Google</strong> — sign-in and Gmail access.</li>
               <li><strong className="text-ink">Meta</strong> — Instagram DM, Messenger, and Facebook Lead Ads access.</li>
@@ -184,7 +184,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">Your rights</h2>
+            <h2 className="font-display text-xl text-ink">Your rights</h2>
             <p className="mt-2">
               Depending on where you live, you may have rights to access, correct, export, or delete your
               personal data, and to object to certain processing. To exercise any of these, contact{" "}
@@ -196,7 +196,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg text-ink">Changes to this policy</h2>
+            <h2 className="font-display text-xl text-ink">Changes to this policy</h2>
             <p className="mt-2">
               If we make material changes, we&apos;ll notify you by email or an in-app notice before they take
               effect.

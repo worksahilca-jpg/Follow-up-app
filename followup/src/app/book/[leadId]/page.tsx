@@ -158,7 +158,7 @@ export default function BookingPage() {
         {confirmedAt && (
           <div className="text-center py-16">
             <div
-              className="mx-auto h-14 w-14 rounded-2xl flex items-center justify-center"
+              className="mx-auto h-14 w-14 rounded-lg flex items-center justify-center"
               style={{ backgroundColor: "var(--sage-soft)", color: "var(--sage)" }}
             >
               <Check className="h-7 w-7" />

@@ -410,3 +410,44 @@ wearing the tile was ours.
 **What this settles.** On any surface a customer sees, the business is the brand and FollowUp
 is the footnote. FollowUp is credited once, at the foot, as "Powered by FollowUp". This
 applies to the booking page and any future customer-facing surface, not only the widget.
+
+## A-018 — The radius ladder: 12 / 8 / full ^A-018
+
+**Approved:** 2026-09-20, founder: *"approved, apply both ladders."*
+
+Three values, nothing else. **12px** (`.box`) for any surface sitting on the page; **8px**
+(`rounded-lg`) for anything inside one — buttons, inputs, list items, icon tiles;
+**`full`** for pills, badges, avatars, toggles. Full detail in
+[[surfaces#Border radius]], which this supersedes the `[TO DECIDE]` on.
+
+`rounded-xl`, `rounded-2xl` and `rounded-md` were in use across thirteen files with
+nothing distinguishing them. They are gone.
+
+**One judgement recorded against this, honestly.** The only visible consequence is that
+four large decorative icon tiles (empty state 64px, onboarding 56px, booking 56px) drop
+from 16px to 8px. Rendered and inspected side by side: at that size 8px reads noticeably
+squarer than 16px. It is defensible — it matches every other icon tile in the app, which
+are already `rounded-lg` — but it is the one place where the ladder costs something rather
+than only buying consistency. Shown to the founder with the render at the time of the
+change. If he wants them back, the honest form is an explicit exception in
+[[surfaces#Border radius]] for decorative tiles above ~48px, not a quiet fourth value.
+
+## A-019 — The heading ladder: 3xl page / xl section / lg card ^A-019
+
+**Approved:** 2026-09-20, founder: *"approved, apply both ladders."*
+
+`font-display text-3xl` for the page title (one per screen, from `PageHeader`),
+`text-xl` for a section of that screen, `text-lg` for a single box's own heading. Full
+detail in [[typography#The heading ladder]].
+
+**Correction to the claim that prompted this.** It was reported to the founder that
+`text-xl` and `text-lg` were "both used for section titles". On a proper audit that was
+too strong: the authenticated app was already using them correctly — sections at `xl`,
+card titles at `lg`. The real violations were two, and narrower: `/pipeline` hand-rolled
+its own page header instead of using `PageHeader` (the seventh screen to do so), and
+Terms and Privacy set their top-level sections at `lg`, which made a legal page's
+structure read one level flatter than every other screen. Both fixed.
+
+**Scope.** Headings only. Body, caption and metric sizes stay `[TO DECIDE]` — nobody has
+looked at those on a real screen, and deciding them from a table is the mistake
+`typography.md` already warns against.

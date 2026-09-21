@@ -376,3 +376,37 @@ understand the whole product, in plain language. Structure v1's "six sections" f
 superseded by this.
 
 **Next, in his words:** "let's make it more effective, and let's change the whole app."
+
+## A-016 — "Minimal structure, richer surface" — how the app is to be redesigned ^A-016
+
+**Approved:** 2026-09-20, founder, choosing between three readings of his own brief.
+
+His words that opened it: *"we have to work on our ui ux too we have to keep our app simple
+understandable and it should be minimal too and organised accordingly"* — which reads as a
+direct contradiction of [[rejected#^R-001|R-001]], where he rejected a dashboard redesign for
+being exactly that (*"make it more creative and enhanced i mean its very basic"*). Asked which
+held, he chose neither extreme:
+
+> **Fewer things on screen and clearer organisation, but each screen still feels designed —
+> depth, real typography, a considered layout — like the landing page. Not a plain admin list.**
+
+**What this settles.** "Minimal" is about *how much is on the screen and how it is ordered* —
+not about how much craft is in what remains. Remove the element that does not earn its place;
+do not answer a redesign brief by removing chrome and stopping. R-001 is **not** superseded: it
+still forbids subtraction as the whole answer, and this entry says what to put in its place.
+
+**The test for a screen under this rule:** count of distinct things went down, *and* a reader
+would call the result designed rather than plain. Failing either half fails the rule.
+
+## A-017 — The embed widget's header belongs to the business, not to FollowUp ^A-017
+
+**Approved:** 2026-09-20, founder, choosing "drop the mark, keep the business name."
+
+The widget's header put FollowUp's mark — in a filled accent tile — directly beside the
+business's own name, on a page embedded in that business's website and shown to that
+business's customer. Two marks side by side is a co-brand nobody agreed to, and the one
+wearing the tile was ours.
+
+**What this settles.** On any surface a customer sees, the business is the brand and FollowUp
+is the footnote. FollowUp is credited once, at the foot, as "Powered by FollowUp". This
+applies to the booking page and any future customer-facing surface, not only the widget.

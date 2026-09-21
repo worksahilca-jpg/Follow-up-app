@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Compass, Calendar, Check } from "lucide-react";
+import { Calendar, Check } from "lucide-react";
+import LogoMark from "@/components/LogoMark";
 
 interface BookingData {
   leadName: string;
@@ -73,7 +74,7 @@ export default function BookingPage() {
     <div className="min-h-full flex flex-col">
       <header className="border-b border-line">
         <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-2">
-          <Compass className="h-5 w-5" style={{ color: "var(--rust)" }} />
+          <LogoMark height={20} />
           <span className="font-display text-lg">FollowUp</span>
         </div>
       </header>

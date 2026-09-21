@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import styles from "./landing-dark.module.css";
-import LogoMark from "@/components/landing/light/LogoMark";
+import LogoMark from "@/components/LogoMark";
 import { publicSans, ibmPlexMono, instrumentSerif } from "@/lib/fonts";
 
 // Root app/not-found.tsx handles any unmatched URL app-wide (not just a

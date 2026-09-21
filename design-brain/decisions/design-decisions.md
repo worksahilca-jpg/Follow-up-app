@@ -3854,3 +3854,51 @@ second copy of the list is how they start offering different answers.
 4. **Unverified in the running app.** The database is unreachable from this sandbox, so the
    section was not rendered — typecheck, 1423 tests and a build are what stand behind it.
    A form is more likely than most changes to have a visual flaw those three cannot see.
+
+---
+
+## 2026-09-20 — One logo, everywhere
+
+**Founder:** *"and logos are diffrent every where"*
+
+He was right, and it was worse than inconsistent. The logo was approved on 2026-09-18, built
+from his own concepts #69 and #71. Seven places never got it and were still drawing lucide's
+`Compass` — a stock icon from a general-purpose icon set — in the accent blue, which
+`public/brand/README.md` explicitly forbids for the mark ("No blue, purple or gradient"):
+
+| Where | Who sees it |
+|---|---|
+| Sidebar, desktop and mobile | the owner, every day |
+| Onboarding | every new account, at first impression |
+| Booking page | **the lead** |
+| Embed widget footer | **a stranger on the business's website** |
+| Terms, Privacy | anyone checking whether this is a real company |
+
+Only the landing page, sign-in and the 404 used the real mark. So every screen the owner
+lives in, and two that their customers see, were branded with a stock compass.
+
+**Cause, and the part worth remembering.** The component lived at
+`src/components/landing/light/LogoMark.tsx`. That path says "landing page, light theme" —
+so the app never reached for it. A shared asset filed under one consumer's folder is a
+shared asset that stops being shared. It now lives at `src/components/LogoMark.tsx`.
+
+**A second bug found while fixing the first.** The embed's "Powered by FollowUp" mark was
+12px. The brand doc sets 16px as the symbol's minimum, and below ~24px the channel between
+the two leaves — the one feature the doc says must never close — stops reading. `LogoMark`
+now switches to the wider-channel drawing (the same geometry `src/app/icon.tsx` uses for the
+favicon) below 24px automatically, rather than leaving each caller to remember. Verified by
+rendering the mark at 12, 20 and 24px and looking at it: the channel survives at every size,
+and 12px was visibly weaker than the rest, which is why the embed went to 16.
+
+**Self-critique.**
+
+1. **The rendering check caught something the code review did not.** I had already decided
+   12px was acceptable and moved on; the screenshot is what showed it was thin. The design
+   brain's "verify it renders" rule earned its place here.
+2. **One thing deliberately left.** The embed header's FollowUp tile was not a size or colour
+   bug — it was FollowUp's mark sitting on the business's identity block. That needed a
+   product decision, not a fix, so it was asked rather than assumed. See A-017.
+3. **Not verified in the running app.** Auth and a database are needed to see the sidebar and
+   onboarding for real; the mark was rendered standalone at the exact sizes and inspected,
+   and typecheck, lint, 1452 tests and a build stand behind the rest. A lockup's spacing
+   against real neighbours is the kind of thing that check cannot see.

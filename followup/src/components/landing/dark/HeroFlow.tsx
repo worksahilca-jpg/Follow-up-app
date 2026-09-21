@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Mail, Camera, FileText, Phone, MessageCircle } from "lucide-react";
 import styles from "@/app/landing-dark.module.css";
-import LogoMark from "@/components/landing/light/LogoMark";
+import LogoMark from "@/components/LogoMark";
 
 /**
  * The hero's moving diagram, full width behind the title (founder,

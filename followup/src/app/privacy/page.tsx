@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Compass } from "lucide-react";
+import LogoMark from "@/components/LogoMark";
 
 export const metadata = {
   title: "Privacy Policy — FollowUp",
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       <header className="border-b border-line">
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Compass className="h-5 w-5" style={{ color: "var(--rust)" }} />
+            <LogoMark height={20} />
             <span className="font-display text-lg">FollowUp</span>
           </Link>
           <Link href="/" className="text-sm text-ink-soft">

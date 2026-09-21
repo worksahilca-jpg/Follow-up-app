@@ -6,7 +6,7 @@ import HeroFlow from "@/components/landing/dark/HeroFlow";
 import FaqDark from "@/components/landing/dark/FaqDark";
 import StickyCta from "@/components/landing/dark/StickyCta";
 import RevealLight from "@/components/landing/light/RevealLight";
-import LogoMark from "@/components/landing/light/LogoMark";
+import LogoMark from "@/components/LogoMark";
 import { publicSans, ibmPlexMono, instrumentSerif } from "@/lib/fonts";
 import { TIER_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 

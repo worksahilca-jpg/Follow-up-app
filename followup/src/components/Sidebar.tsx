@@ -12,7 +12,6 @@ import {
   BarChart3,
   Activity,
   Settings,
-  Compass,
   LogOut,
   Menu,
   X,
@@ -30,6 +29,8 @@ const nav = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
+import LogoMark from "@/components/LogoMark";
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -46,7 +47,7 @@ export default function Sidebar() {
           so this is what actually gets you to it and to notifications. */}
       <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-card px-4 py-3">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <Compass className="h-5 w-5" style={{ color: "var(--rust)" }} />
+          <LogoMark height={20} />
           <span className="font-display text-lg">FollowUp</span>
         </Link>
         <div className="flex items-center gap-1">
@@ -79,7 +80,7 @@ export default function Sidebar() {
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Compass className="h-5 w-5" style={{ color: "var(--rust)" }} />
+            <LogoMark height={20} />
             <span className="font-display text-lg" style={{ color: "var(--ink)" }}>
               FollowUp
             </span>

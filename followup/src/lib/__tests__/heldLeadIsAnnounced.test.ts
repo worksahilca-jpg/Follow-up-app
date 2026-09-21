@@ -110,3 +110,66 @@ describe("a later follow-up, when it is held instead of sent", () => {
     expect(holdBranch()).toMatch(/await notifyNeglect\(/);
   });
 });
+
+/**
+ * The same burst, in the two places it was left.
+ *
+ * `holdAllForApproval` became the default for every account on
+ * 2026-09-21 (#299). That changed the volume of two loops nobody
+ * revisited:
+ *
+ *   1. runSequencesForBusiness — EVERY workflow step is now held, so a
+ *      business with forty enrolled leads got forty notifications on one
+ *      tick. The hold itself is fine: the lead is unenrolled and handed
+ *      to the owner, so it does not re-nag hourly. The announcing was the
+ *      problem.
+ *   2. draftDmHandoffs — an unbounded query over every Instagram and
+ *      Messenger lead whose 24-hour window shut unanswered. Each of those
+ *      notifications carries a deadline, which is exactly the kind that
+ *      stops being read when it arrives twelve times.
+ *
+ * Neither query has a `take`. Both were fixed the same way as
+ * automation.ts's held-draft branch, and this pins all three to the one
+ * batching path so the next person to add a notify loop finds a pattern
+ * rather than a fourth copy.
+ */
+describe("a workflow step held for approval", () => {
+  const source = read("sequences.ts");
+
+  it("is collected for the batch, not written one row at a time", () => {
+    const branch = source.slice(source.indexOf('if (holdAll || risk.riskLevel !== "low")'));
+    expect(branch.slice(0, 1800), "workflow holds notify one row per lead again").toMatch(/heldNotices\.push\(/);
+  });
+
+  it("flushes what it collected", () => {
+    expect(source, "workflow hold notices are gathered but never written").toMatch(
+      /await flushHoldNotices\(heldNotices\)/
+    );
+  });
+
+  it("keeps the genuine faults individual", () => {
+    // "No reachable channel" and "the send failed" are faults, not a
+    // queue: rare, and a count would strip the only thing that makes them
+    // actionable — which lead, and what went wrong.
+    expect(source).toMatch(/await notifySequenceIssue\(/);
+  });
+});
+
+describe("a day-2-7 DM handoff", () => {
+  const source = read("automation.ts");
+
+  it("is collected for the batch too", () => {
+    const fn = source.slice(source.indexOf("export async function draftDmHandoffs"));
+    expect(fn, "DM handoffs notify one row per lead again").toMatch(/handoffNotices\.push\(/);
+    expect(fn).toMatch(/await flushHoldNotices\(handoffNotices\)/);
+  });
+
+  it("has no un-batched notify helper left to reach for", () => {
+    // notifyLeadOwners was deleted rather than left unused: a second,
+    // un-batched way to write the same notification is how this burst got
+    // into two places to begin with.
+    expect(source, "an un-batched per-lead notify helper is back").not.toMatch(
+      /^async function notifyLeadOwners\(/m
+    );
+  });
+});

@@ -94,7 +94,7 @@ function ChartCard({
     <section>
       <h2 className="font-display text-xl">{title}</h2>
       <p className="text-sm text-ink-soft mt-1">{description}</p>
-      <div className="mt-4 rounded-[var(--radius-box)] bg-card p-4" style={{ height, boxShadow: "var(--shadow-box)" }}>
+      <div className="mt-4 box p-4" style={{ height }}>
         {hasData ? children : <EmptyChart />}
       </div>
     </section>

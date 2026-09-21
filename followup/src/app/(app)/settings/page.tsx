@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { PageHeader } from "@/components/PageHeader";
 import TeamSection from "@/components/TeamSection";
 import BusinessProfileSection from "@/components/BusinessProfileSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
@@ -637,10 +638,12 @@ function SettingsPageInner() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="font-display text-3xl">Settings</h1>
-        <p className="text-ink-soft mt-1">Connect your inbox, set follow-up rules, and manage your team.</p>
-      </div>
+      {/* PageHeader, like every other screen. This was the sixth header
+          shape in an app whose PageHeader component exists specifically to
+          end the other five — see its own doc comment. Hand-rolling it here
+          meant Settings drifted on title size, subtitle colour and spacing
+          the moment any of those changed anywhere else. */}
+      <PageHeader title="Settings" subtitle="Connect your inbox, set follow-up rules, and manage your team." />
 
       {/* Below lg a fixed top bar (Sidebar.tsx) covers the top of the viewport,
           so `top-0` parked this tab row underneath it and the tabs vanished as
@@ -886,7 +889,7 @@ function SettingsPageInner() {
       <div hidden={activeTab !== "advanced"} className="space-y-10">
       <section id="automation" className="scroll-mt-16">
         <h2 className="font-display text-xl">Automation</h2>
-        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
+        <div className="mt-4 box p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-medium text-sm">Automatic follow-ups</p>
@@ -922,7 +925,7 @@ function SettingsPageInner() {
 
         {automationDetailsOpen && (
         <>
-        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
+        <div className="mt-4 box p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Auto follow-up on silence</p>
@@ -998,7 +1001,7 @@ function SettingsPageInner() {
             </p>
           )}
         </div>
-        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
+        <div className="mt-4 box p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Instant reply to new leads</p>
@@ -1040,7 +1043,7 @@ function SettingsPageInner() {
             </p>
           )}
         </div>
-        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
+        <div className="mt-4 box p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Reply for me when I haven&apos;t</p>
@@ -1105,7 +1108,7 @@ function SettingsPageInner() {
             </p>
           )}
         </div>
-        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
+        <div className="mt-4 box p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Reactivate cold leads</p>
@@ -1215,7 +1218,7 @@ function SettingsPageInner() {
           // dropping Voice, updating a card). A dedicated in-app
           // tier-switch flow is real follow-up work, not built here — see
           // the PR description for why.
-          <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
+          <div className="mt-4 box p-5">
             <div className="flex items-center gap-4">
               <div
                 className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
@@ -1267,7 +1270,7 @@ function SettingsPageInner() {
           <div className="mt-4">
             <div className="grid gap-3 sm:grid-cols-3">
               {(["free", "plus", "pro"] as const).map((tier) => (
-                <div key={tier} className="rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
+                <div key={tier} className="box p-5">
                   <p className="text-sm font-medium">{TIER_INFO[tier].label}</p>
                   <p className="font-display text-2xl mt-1">{TIER_INFO[tier].priceLabel}</p>
                   <p className="text-xs text-ink-soft mt-2">
@@ -1352,7 +1355,7 @@ function SettingsPageInner() {
           Not a support ticket — just a place to tell us what&apos;s working or what isn&apos;t. Entirely optional,
           only here if you want it.
         </p>
-        <div className="mt-4 rounded-[var(--radius-box)] bg-card [box-shadow:var(--shadow-box)] p-5">
+        <div className="mt-4 box p-5">
           {feedbackSent ? (
             <p className="text-sm flex items-center gap-1.5" style={{ color: "var(--sage)" }}>
               <Check className="h-4 w-4" /> Sent — thank you.

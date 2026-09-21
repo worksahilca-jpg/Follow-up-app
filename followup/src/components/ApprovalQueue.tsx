@@ -91,7 +91,7 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
   }
 
   return (
-    <div className="rounded-[var(--radius-box)] bg-card px-4 py-4" style={{ boxShadow: "var(--shadow-box)" }}>
+    <div className="box px-4 py-4">
       <Link href={`/leads/${item.leadId}`} className="font-medium hover:underline">
         {item.leadName}
       </Link>
@@ -186,8 +186,7 @@ export default function ApprovalQueue({
     return (
       <div className="mt-6">
         <div
-          className="relative rounded-[var(--radius-box)] bg-card py-3 pl-4 pr-3"
-          style={{ boxShadow: "var(--shadow-box)" }}
+          className="relative box py-3 pl-4 pr-3"
         >
           <span
             aria-hidden="true"

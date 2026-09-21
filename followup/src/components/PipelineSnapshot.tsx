@@ -24,7 +24,7 @@ export default function PipelineSnapshot({
   const isValue = metric === "value";
 
   return (
-    <div className="rounded-[var(--radius-box)] bg-card p-4" style={{ height, boxShadow: "var(--shadow-box)" }}>
+    <div className="box p-4" style={{ height }}>
       {hasData ? (
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={stages} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>

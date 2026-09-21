@@ -74,13 +74,13 @@ export default function ConversationThread({
           <div
             key={m.id}
             className={
-              "rounded-[var(--radius-box)] p-3 text-sm " +
+              "box p-3 text-sm " +
               (m.direction === "outbound" ? "sm:ml-6" : "")
             }
-            style={{
-              backgroundColor: m.direction === "outbound" ? "var(--slate-soft)" : "var(--card)",
-              boxShadow: "var(--shadow-box)",
-            }}
+            // The one box whose ground is not --card: an outbound message
+            // sits on --slate-soft so the two sides of a thread read apart.
+            // Radius and shadow still come from `.box`.
+            style={{ backgroundColor: m.direction === "outbound" ? "var(--slate-soft)" : undefined }}
           >
             <div className="flex items-center justify-between gap-3 text-xs text-ink-soft mb-1">
               <span className="uppercase tracking-wide truncate">

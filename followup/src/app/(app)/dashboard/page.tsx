@@ -189,8 +189,7 @@ export default async function DashboardPage() {
               impression for a product whose entire pitch is being trusted to
               act on its own. */}
           <div
-            className="rounded-[var(--radius-box)] bg-card p-8 text-center"
-            style={{ boxShadow: "var(--shadow-box)" }}
+            className="box p-8 text-center"
           >
             {inbox ? (
               <>

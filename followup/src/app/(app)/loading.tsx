@@ -9,15 +9,15 @@
 export default function Loading() {
   return (
     <div className="animate-pulse">
-      <div className="h-8 w-48 rounded-md bg-card" style={{ boxShadow: "var(--shadow-box)" }} />
+      <div className="h-8 w-48 rounded-md bg-card" />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-[var(--radius-box)] bg-card h-24" style={{ boxShadow: "var(--shadow-box)" }} />
+          <div key={i} className="box h-24" />
         ))}
       </div>
       <div className="mt-10 flex flex-col gap-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-14 rounded-[var(--radius-box)] bg-card" style={{ boxShadow: "var(--shadow-box)" }} />
+          <div key={i} className="h-14 box" />
         ))}
       </div>
     </div>

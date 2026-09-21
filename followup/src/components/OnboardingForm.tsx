@@ -7,10 +7,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 // icons InstagramConfig and FacebookConfig already use — this lucide
 // version carries no brand marks, and a channel wearing a different
 // icon on each screen is the drift the design brain exists to stop.
-import { ArrowRight, Globe, Loader2, Mail, MessageCircle, MessageSquare } from "lucide-react";
+import { ArrowRight, Globe, Loader2, Mail, MessageCircle, MessageSquare, Smartphone } from "lucide-react";
 import LogoMark from "@/components/LogoMark";
 import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
 import OnboardingSources, { WebsiteFormPanel, type OnboardingSource } from "@/components/OnboardingSources";
+import { useWhatsAppSignup } from "@/lib/useWhatsAppSignup";
 
 /**
  * Three steps: who you are, how this works, where your leads come from.
@@ -97,6 +98,11 @@ function OnboardingFormInner({
   const [finishing, setFinishing] = useState(false);
 
   const inboxConnected = sources.gmailConnected || sources.outlookConnected;
+
+  // WhatsApp is the one source that connects without leaving the page —
+  // Meta drives it from a popup rather than a redirect — so its state is
+  // read live here rather than passed down from the server render.
+  const whatsapp = useWhatsAppSignup();
 
   // Fires once, right when a connected inbox first renders — pulls the
   // first batch of leads in immediately rather than leaving the dashboard
@@ -261,6 +267,29 @@ function OnboardingFormInner({
               searchParams.get("facebook") === "choose_page"
                 ? "You have more than one Page — choose which one in Settings once you're through here."
                 : null,
+          } satisfies OnboardingSource,
+        ]
+      : []),
+    ...(whatsapp.available || whatsapp.connected
+      ? [
+          {
+            id: "whatsapp",
+            name: "WhatsApp",
+            line: "The number already in the WhatsApp Business app on your phone.",
+            // Smartphone, not the MessageSquare that WhatsAppConfig uses in
+            // Settings. Deliberate: FacebookConfig uses MessageSquare too,
+            // and in Settings they sit in separate panels where that never
+            // shows. Here they are adjacent rows in one list, and two
+            // identical icons next to each other say "these are the same
+            // kind of thing" — which is worse than the inconsistency.
+            // A phone is also the truer picture: this is the number already
+            // on the owner's handset, not a page or an inbox.
+            icon: Smartphone,
+            connected: whatsapp.connected,
+            connectedNote: whatsapp.displayNumber ? `Connected as ${whatsapp.displayNumber}` : undefined,
+            onConnect: whatsapp.start,
+            connecting: whatsapp.connecting,
+            error: whatsapp.error,
           } satisfies OnboardingSource,
         ]
       : []),

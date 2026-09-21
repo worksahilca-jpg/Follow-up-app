@@ -4161,3 +4161,79 @@ screen's one primary is at the foot in `--ink` (A-003). Icon tiles are 36px at
    not by connecting an account.
 5. **The step-2 copy is my writing, not tested on anyone.** It claims to be what a busy
    owner reads in ninety seconds. That is a design intention, not a finding.
+
+---
+
+## 2026-09-21 — WhatsApp connects during onboarding, like everything else
+
+**Founder:** *"Yes"*, to fixing the gap I had flagged in my own self-critique on the onboarding
+rebuild earlier the same day.
+
+### The gap
+
+The new "where do your leads come from?" step let a business connect email, Instagram and
+Facebook in place — and pointed WhatsApp at Settings, a screen it had not reached yet. I
+shipped it that way and said so at the time: *"WhatsApp is named but not connectable here,
+which is the weakest part of the step for a business that runs on WhatsApp — precisely one of
+the businesses this rebuild was meant to serve."*
+
+Which is the whole problem. The step exists because onboarding used to decide, on the owner's
+behalf, that email was the channel that mattered. Offering four sources and sending the fifth
+away is a smaller version of the same mistake, aimed at the people it hurts most.
+
+### Why it was harder than the others
+
+Every other source connects by leaving the app and coming back: a link, a callback, a
+redirect. WhatsApp does not. Meta's Embedded Signup runs in a popup driven by their
+JavaScript SDK, and a finished connection arrives in two halves — a one-time `code` from the
+login callback, and the phone number id from a `postMessage` the popup sends back. Whichever
+lands second completes it.
+
+All of that lived inside `WhatsAppConfig`, the Settings panel. The mechanism being welded to
+one screen is the reason WhatsApp was the odd one out — not a product decision anybody made.
+
+### What shipped
+
+`useWhatsAppSignup` (`src/lib/useWhatsAppSignup.ts`) holds the mechanism; Settings and
+onboarding both use it. Settings keeps everything only it offers: the message template, the
+webhook reference, the paste-a-token fallback, disconnecting. **119 lines came out of
+`WhatsAppConfig`**, so this is a move, not a copy — two copies of a popup handshake would
+drift, and the drift would be silent.
+
+The source row grew a third action shape. It had a link (Gmail, Instagram, Facebook) and an
+expander (the website snippet); it now also has a button that acts in place, which is what a
+popup needs. Reads "Waiting…" while Meta's window is open.
+
+**A judgement against the design brain's own reuse rule, recorded because it is a
+deviation.** `WhatsAppConfig` and `FacebookConfig` both use `MessageSquare`. In Settings they
+are separate panels and that never shows. In this list they would be adjacent rows wearing
+the same icon, which says "these are the same kind of thing". WhatsApp uses `Smartphone`
+here. A phone is also the truer picture — this is the number already on the owner's handset,
+not a page or an inbox — but the reason is the collision, and the inconsistency with Settings
+is real.
+
+### Verification
+
+Typecheck, lint, 1481 tests and a production build, all clean. The sources step was rendered
+against the real built CSS with the new row in place.
+
+Two tests carry the change. `channelAvailability.test.ts`'s existing "reaches every value a
+WhatsApp reply needs" guard now reads the panel *and* the hook, since half of what it pins
+moved — the guarantee is unchanged, only the file holding it. A new case asserts onboarding
+can actually start a WhatsApp connect and no longer tells anyone to go to Settings for it;
+**verified by removal** — renaming the row's label fails it.
+
+### Self-critique
+
+1. **Not once exercised against Meta.** No popup was opened, no number connected. The sandbox
+   has no database and no Meta app, so this is verified by typecheck, tests, a build and a
+   render — nothing more. The handshake is line-for-line the code that was already working in
+   Settings, which is the only real assurance here, and it is not the same as having run it.
+2. **Two reads of `/api/whatsapp/config` on the Settings page now** — the panel's and the
+   hook's. One cheap route, twice. The alternative was threading the panel's whole config
+   shape through a hook shared by two very different surfaces, which is worse. Still waste.
+3. **The icon inconsistency is a real cost**, not a free win. Someone who connects WhatsApp in
+   onboarding and later opens Settings sees a different mark for the same thing.
+4. **Facebook's multi-Page picker is still stranded**, from the same rebuild and for the same
+   underlying reason — mechanism welded to the Settings component. This pass fixed the worse
+   of the two and left the other exactly where it was.

@@ -132,6 +132,27 @@ describe("WhatsApp is set up without the carrier channels", () => {
     return stripComments(source);
   };
 
+  /**
+   * The panel plus the hook it delegates the Meta popup to.
+   *
+   * The Embedded Signup mechanism moved to src/lib/useWhatsAppSignup.ts on
+   * 2026-09-21 so onboarding could offer WhatsApp as well — until then it
+   * was the one lead source with no button on the "where do your leads
+   * come from?" step. The guarantee below is unchanged ("setup can still
+   * reach the values a WhatsApp reply needs"); only the file holding half
+   * of it moved, so the assertion reads both rather than pinning the
+   * mechanism to one component forever.
+   */
+  const readWhatsappSetup = () => {
+    let hook: string;
+    try {
+      hook = read("../src/lib/useWhatsAppSignup.ts");
+    } catch {
+      throw new Error("WhatsApp signup has no mechanism — src/lib/useWhatsAppSignup.ts is missing.");
+    }
+    return `${readWhatsappPanel()}\n${stripComments(hook)}`;
+  };
+
   it("keeps the WhatsApp panel outside the carrier flag", () => {
     const settings = readSettings();
     const gated = carrierGatedRegion(settings);
@@ -144,14 +165,38 @@ describe("WhatsApp is set up without the carrier channels", () => {
   });
 
   it("reaches every value a WhatsApp reply needs", () => {
-    const whatsapp = readWhatsappPanel();
+    const whatsapp = readWhatsappSetup();
     // Since 2026-09-19 WhatsApp is the owner's own number through Meta
-    // (src/lib/whatsappCloud.ts): the panel must offer the connect flow,
-    // the paste-a-token fallback's three values, and the 24-hour template
-    // that a follow-up past the window depends on.
+    // (src/lib/whatsappCloud.ts): setup must offer the connect flow, the
+    // paste-a-token fallback's three values, and the 24-hour template that
+    // a follow-up past the window depends on. The connect flow itself now
+    // lives in the shared hook; the rest is still panel-only.
     for (const field of ["/api/whatsapp/connect", "accessToken", "phoneNumberId", "wabaId", "templateName", "templateLanguage", "templateBody"]) {
       expect(whatsapp, `WhatsApp setup can no longer reach ${field}`).toContain(field);
     }
+  });
+
+  /**
+   * The gap this closes.
+   *
+   * Onboarding's "where do your leads come from?" step (2026-09-21) let a
+   * business connect email, Instagram and Facebook in place — and pointed
+   * WhatsApp at Settings, a screen it had not reached yet. A business that
+   * runs entirely on WhatsApp is squarely who that step was rebuilt for,
+   * so it was the one answer with no button and the worst line on the
+   * screen. Meta's Embedded Signup is a popup rather than a redirect,
+   * which is why it needed a shared hook rather than a link.
+   */
+  it("offers WhatsApp during onboarding, not just in Settings", () => {
+    const onboarding = stripComments(read("../src/components/OnboardingForm.tsx"));
+    expect(onboarding, "onboarding cannot start a WhatsApp connect").toContain("useWhatsAppSignup");
+    expect(onboarding, "onboarding has no WhatsApp row").toMatch(/name:\s*"WhatsApp"/);
+
+    // …and the step no longer tells anyone to go elsewhere for it.
+    const sources = stripComments(read("../src/components/OnboardingSources.tsx"));
+    expect(sources, "the sources step still sends WhatsApp to Settings").not.toMatch(
+      /WhatsApp[^\n]*from Settings/
+    );
   });
 
   it("offers no SMS or voice affordance from the WhatsApp panel", () => {

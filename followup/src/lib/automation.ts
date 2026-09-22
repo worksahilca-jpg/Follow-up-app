@@ -1110,6 +1110,9 @@ export const DM_HANDOFF_QUESTION = "day2_7_owner";
 export async function draftDmHandoffs(businessId: string, voiceSamples: string[], tier: "free" | "plus" | "pro"): Promise<number> {
   const H = 3_600_000;
   const now = Date.now();
+  // Gathered, then flushed once — see the collector in
+  // runAutomationForBusiness and src/lib/holdNotices.ts for why.
+  const handoffNotices: HoldNotice[] = [];
   const candidates = await prisma.lead.findMany({
     where: {
       businessId,
@@ -1176,28 +1179,36 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
         targetId: lead.id,
         meta: { riskLevel: "window", reason, trigger: "dm_handoff", channel, daysLeft },
       });
-      await notifyLeadOwners(lead, reason);
+      handoffNotices.push({
+        leadId: lead.id,
+        businessId: lead.businessId,
+        assignedToId: lead.assignedToId,
+        message: reason,
+      });
       drafted++;
     } catch (err) {
       console.error(`Day-2–7 handoff draft failed for lead ${lead.id}:`, err);
     }
   }
+
+  // Same collapse as the held-draft notifications above. This query has no
+  // `take` either, so an account that connected Instagram and let a week's
+  // DMs go unanswered could hand off a dozen at once — and each of these
+  // carries a deadline, which is exactly the kind of message that stops
+  // being read when it arrives twelve times.
+  await flushHoldNotices(handoffNotices).catch((err) =>
+    console.error(`DM handoff notifications failed for business ${businessId}:`, err)
+  );
+
   return drafted;
 }
 
-/** The assignee, or every admin when nobody is assigned — same fallback as notifyNeglect(). */
-async function notifyLeadOwners(lead: { id: string; businessId: string; assignedToId: string | null }, message: string): Promise<void> {
-  try {
-    const userIds = lead.assignedToId
-      ? [lead.assignedToId]
-      : (await prisma.user.findMany({ where: { businessId: lead.businessId, role: "ADMIN" }, select: { id: true } })).map((u) => u.id);
-    for (const userId of userIds) {
-      await prisma.notification.create({ data: { userId, leadId: lead.id, message } });
-    }
-  } catch (err) {
-    console.error(`Handoff notification failed for lead ${lead.id}:`, err);
-  }
-}
+// notifyLeadOwners lived here: the assignee, or every admin when nobody
+// is assigned, one notification written immediately. Both of its callers
+// now collect into a HoldNotice list instead, and flushHoldNotices does
+// the same recipient resolution once for the whole run — so keeping it
+// would leave a second, un-batched way to write the same notification,
+// which is how the burst got into two places to begin with.
 
 /** What a real scheduler calls: every business with automation on, in one pass. */
 /**

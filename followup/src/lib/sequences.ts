@@ -34,6 +34,7 @@ import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
 import { leadLanguageOf } from "@/lib/leadLanguage";
 import { hasAnySendChannel } from "@/lib/sendChannels";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { flushHoldNotices, type HoldNotice } from "@/lib/holdNotices";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
@@ -453,6 +454,19 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
   // ONLY exception).
   const holdAll = business?.holdAllForApproval ?? false;
 
+  // Held-step notifications, gathered rather than written as they happen.
+  // Since holdAllForApproval became the default for every account
+  // (2026-09-21), EVERY workflow step is held — so a business with forty
+  // enrolled leads got forty notifications on one tick. Same burst, and
+  // the same fix, as the hold-time notification in automation.ts; see
+  // src/lib/holdNotices.ts.
+  //
+  // Only the hold case is batched. "No reachable channel" and "the send
+  // failed" stay individual: those are faults rather than a queue, they
+  // are rare, and a count would strip the one thing that makes them
+  // actionable — which lead, and what went wrong.
+  const heldNotices: HoldNotice[] = [];
+
   const outcomes = await mapWithConcurrency(active, 3, async (lead) => {
     // Atomic check-and-claim before anything else — same reasoning as
     // runAutomationForBusiness()'s claim, and the same missing-guard shape
@@ -717,12 +731,14 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           // OK" on a hold-everything account would read as "this one
           // looked risky", which is untrue and teaches the owner to
           // distrust a setting they chose.
-          await notifySequenceIssue(
-            lead,
-            holdAll
+          heldNotices.push({
+            leadId: lead.id,
+            businessId,
+            assignedToId: lead.assignedToId,
+            message: holdAll
               ? `"${sequence.name}" drafted a reply for ${lead.name}. Your account holds every follow-up for approval, so it's waiting for you — the workflow stopped here.`
-              : `"${sequence.name}" drafted a reply for ${lead.name} that needs your OK before it goes out — the workflow stopped here so you can review it.`
-          );
+              : `"${sequence.name}" drafted a reply for ${lead.name} that needs your OK before it goes out — the workflow stopped here so you can review it.`,
+          });
           return { kind: "held" as const, note: `${lead.name}: ${risk.reason}` };
         }
 
@@ -785,6 +801,12 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
     }
   });
+
+  // One line per person when several steps were held at once, each lead
+  // named when only a few were. Never allowed to fail the run.
+  await flushHoldNotices(heldNotices).catch((err) =>
+    console.error(`Workflow hold notifications failed for business ${businessId}:`, err)
+  );
 
   const heldOutcomes = outcomes.filter((o): o is { kind: "held"; note: string } => o.kind === "held");
 

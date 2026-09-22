@@ -4378,3 +4378,83 @@ clean, `npx next build` clean.
 4. **The FAQ answer is five sentences.** Long for this page's register. Each one is doing
    work — what it does, why not yet, what is not captured, what does work — but it is the
    longest answer in the list and it earns that place only if a visitor actually opens it.
+
+---
+
+## 2026-09-22 — "The right person" was never true
+
+**Founder:** *"fix them"* — the rest of the 2026-09-13 landing-page gap list. Checking each
+against the current page first turned out to matter: the rebuild had already closed several,
+and the one nobody had looked at was the worst.
+
+### Three gaps were already closed by the 18–19 Sep rebuild
+
+- **Gap 3, "Twilio" as a channel label** — gone from the page and every landing component.
+- **Gap 4, the conflated hero stat** — the *"21× … no credit card required to see it for
+  yourself"* sentence is gone; what remains is a standalone `No credit card required.` note.
+- **Gap 2, the thesis arrives late** — the research was written against a metaphor headline
+  (*"the one that went quiet"*). [[approved#^A-013|A-013]] replaced it with **"Never lose a
+  lead because you forgot to follow up,"** [[approved#^A-014|A-014]] added **"Only for owners
+  who *have leads* and don't have time to reply,"** and the second content section's headline
+  is now literally **"You don't have a lead problem. You have a reply problem."** The thesis
+  reaches a visitor in the hero. Gap closed.
+- **Gap 9, trust content positioned late** — the data-handling answer was FAQ 5 of 6; it is
+  now 3 of 5.
+
+**The lesson, and it cost real time to relearn:** a gap list is a snapshot. Four of nine items
+were stale, and "fixing" them would have meant changing things that were already right. Check
+the live code before acting on a report older than the last rebuild.
+
+### Gap 7 was live, and it was being sold
+
+Four places promised that new customers **"go to the right person"**: the team product card,
+the features grid, the FAQ, and the **$79 Pro tier's feature list**.
+
+FollowUp does not do skill-based routing, and its own source says so in as many words.
+`pickAssignee` in `@/lib/assignment` is *least-loaded* — "whichever team member currently has
+the fewest leads assigned to them gets the next one." `@/lib/sourceRouting`'s header calls the
+alternative "the more complex 'smart routing to the right salesperson' idea, **parked until
+there's a real team to route between**." And a source set to `routeToPool` assigns the lead to
+**nobody**, deliberately, until a human claims it.
+
+So the page was selling condo-leads-go-to-the-condo-person. What happens is that the next lead
+goes to whoever is least busy. Even distribution is a genuinely good feature — it is simply not
+the one on the price card.
+
+**Now:** *"New customers are shared out evenly, so nobody is buried"* on the card, the same in
+the features grid, *"New customers shared out evenly across your team"* on Pro, and the FAQ
+carries both mechanisms — even sharing **and** the shared list anyone can pick up, because a
+visitor told only about the first would be surprised by an unassigned lead.
+
+### Also corrected: the brain was lying about its own type
+
+`brand-principles.md` principle 8 said "one typeface." Three ship — Public Sans for structure,
+IBM Plex Mono for labels, Instrument Serif for the hero's emphasis italic (A-013's own
+headline). False since the rebuild; gap 8 of the same report. Rewritten, and marked as a
+correction rather than quietly edited — *"a small and deliberate set of typefaces"*, with the
+real test stated: three faces doing three jobs is restraint, two sans-serifs competing for one
+job is not.
+
+### Tests
+
+Five assertions in `trustCopy.test.ts`. **Verified by removal** — restoring "the right person"
+fails. Three guard the other direction: that the claim is *replaced* rather than deleted (a
+visitor with a team is owed an answer), that the pool case is named, and that the Pro list is
+checked separately, since a page-wide match would pass on the other three being fixed while
+the paid one lingered. 1576 pass, eslint clean, `npx next build` clean.
+
+### Self-critique
+
+1. **"Shared out evenly" is weaker copy than "the right person."** It is a real downgrade in
+   how the feature sells, and the honest version of a claim usually is. No way around it —
+   the alternative was continuing to charge for something that does not exist.
+2. **Least-loaded is not actually "evenly" either**, strictly. It is even *going forward* from
+   whatever imbalance already exists; someone who cleared their queue collects the next several.
+   True in practice, loose in the edge case, and I chose the plain phrasing over the accurate
+   mouthful. Worth revisiting if a tester ever asks.
+3. **Four copies of one claim, again.** Same structural weakness recorded in the empty-state
+   entry three days ago: the page repeats a sentence in four places with no shared constant, so
+   the fifth copy will drift too. A test pinning the phrase is a weaker substitute for structure,
+   and I have now written that substitute twice instead of fixing the cause.
+4. **Gap 6 (the hero device) is still unanswered.** Asked twice; R-005 and R-009 both reject a
+   mockup hero, so it stays untouched rather than guessed at.

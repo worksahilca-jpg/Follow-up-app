@@ -168,3 +168,67 @@ describe("the summary sentence on a holding account", () => {
     expect(settings()).toMatch(/Nothing above sends on its own/);
   });
 });
+
+/**
+ * The same rule pointed at the landing page: a promise about who does the
+ * work, checked against the code that decides.
+ *
+ * Four places said new customers "go to the right person" — the team
+ * product card, the features grid, the FAQ, and, worst, the $79 Pro tier's
+ * feature list, where someone is being charged for it. All four read as
+ * skill-based routing: this lead is about a condo, Alex does condos, Alex
+ * gets it.
+ *
+ * FollowUp does not do that, and its own source says so out loud.
+ * `pickAssignee` in @/lib/assignment is least-loaded — "whichever team
+ * member currently has the fewest leads assigned to them gets the next
+ * one" — and @/lib/sourceRouting's header calls skill-based routing "the
+ * more complex 'smart routing to the right salesperson' idea, parked until
+ * there's a real team to route between". A source set to routeToPool goes
+ * to nobody at all until a human claims it.
+ *
+ * Even distribution is a good feature. It is not the one that was being
+ * sold. Flagged as gap 7 of the 2026-09-13 landing-page research, verified
+ * against the live code and fixed 2026-09-22.
+ */
+describe("what the landing page promises about team routing", () => {
+  const landing = () =>
+    readFileSync(join(__dirname, "..", "..", "app", "page.tsx"), "utf8")
+      .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "")
+      .replace(/\s+/g, " ");
+
+  it("does not claim a lead reaches the right person", () => {
+    expect(
+      landing(),
+      "the landing page promises skill-based routing again — assignment is least-loaded"
+    ).not.toMatch(/right person/i);
+  });
+
+  it("still says what actually happens, rather than dropping the claim", () => {
+    // Deleting the sentence would pass the assertion above and tell a
+    // visitor with a team nothing. The honest version is the fix.
+    expect(landing(), "the landing page no longer explains team assignment at all").toMatch(
+      /shared out evenly/i
+    );
+  });
+
+  it("names the pool, the one case where a lead reaches nobody", () => {
+    // routeToPool leaves assignedToId null on purpose. A visitor told
+    // only about even sharing would be surprised by a lead sitting
+    // unassigned, so the FAQ carries the second half.
+    expect(landing(), "the FAQ does not mention the shared list anyone can claim").toMatch(
+      /shared list anyone can pick up/i
+    );
+  });
+
+  it("keeps the claim out of the paid tier's feature list too", () => {
+    // The Pro list is the copy a customer would quote back. Asserted
+    // separately because a page-wide match could pass on the other three
+    // being fixed while this one lingers.
+    const pro = landing().slice(landing().indexOf("Plus plus:"));
+    expect(pro, "the Pro tier still sells routing to the right person").not.toMatch(/right person/i);
+    expect(pro, "the Pro tier no longer says what team assignment does").toMatch(/shared out evenly/i);
+  });
+});

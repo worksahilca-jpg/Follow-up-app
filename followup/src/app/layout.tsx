@@ -13,6 +13,7 @@ import { publicSans, ibmPlexMono } from "@/lib/fonts";
 // variable, and the shared fallback pointed at a vercel.app deployment. See
 // src/lib/siteUrl.ts.
 import { SITE_URL } from "@/lib/siteUrl";
+import { buildStructuredData } from "@/lib/structuredData";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -55,6 +56,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             reveal/parallax/hover motion, the FAQ accordion — reads the
             visitor's OS-level "reduce motion" setting through this one
             provider rather than each component re-checking it. */}
+        {/* What this product IS, in the one format an answer engine reads
+            as fact rather than prose. Meta tags describe a page; this
+            describes the thing. Added after Google's AI Overview called
+            FollowUp a door-to-door solar sales tool — see the header of
+            src/lib/structuredData.ts for what it actually said and why a
+            vacuum was the cause. */}
+        <script
+          type="application/ld+json"
+          // The object is built in our own code from our own constants —
+          // no user input reaches it, which is the condition under which
+          // this is the documented way to emit JSON-LD in the App Router.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildStructuredData()) }}
+        />
         <MotionConfig reducedMotion="user">
           <AuthProvider>{children}</AuthProvider>
         </MotionConfig>

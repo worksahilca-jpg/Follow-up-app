@@ -4237,3 +4237,70 @@ can actually start a WhatsApp connect and no longer tells anyone to go to Settin
 4. **Facebook's multi-Page picker is still stranded**, from the same rebuild and for the same
    underlying reason — mechanism welded to the Settings component. This pass fixed the worse
    of the two and left the other exactly where it was.
+
+---
+
+## 2026-09-22 — The empty screens a tester meets on day one
+
+Every one of the first ten testers lands on these screens with no leads and, quite
+possibly, nothing connected. Two things were wrong there, and both are the defect this
+codebase keeps finding: a sentence that is true in isolation and misleading in place.
+
+### The dashboard told an empty account it was caught up
+
+`headline()` had the leads list in scope and never looked at it. An account two minutes
+old, with nothing connected and nothing ever captured, was greeted with **"Nothing needs
+your OK right now."** — what a product says to someone who has been working and is done,
+printed directly above a box explaining that FollowUp is not watching anything yet. The
+page contradicted itself in one glance, the same way Settings did the day before (#301).
+
+Now, before that line is reached: **"No leads yet."**
+
+It deliberately says nothing about what is or isn't connected. This screen can see an
+inbox and cannot see a website snippet someone pasted into their own site, so "nothing is
+connected" would be a guess — and guessing is what produced the sentence being fixed. The
+box below owns that explanation and already has three properly-reasoned branches for it.
+The headline only has to stop claiming calm.
+
+### Three screens sent the wrong business to the wrong place
+
+Leads, Pipeline and Analytics each said **"Connect Gmail in Settings"**. One source out of
+eight. A business running on Instagram DMs, WhatsApp or a website form was told to connect
+an inbox it does not have.
+
+This is the dead end the founder had already named in onboarding — *"they should have a
+proper onboarding process [...] we will help them to connect the sources easyly"* — on
+three screens nobody went back and checked after that rebuild. A principle fixed in one
+place and left standing in three others is not fixed.
+
+All three now name the sources generally: *"your inbox, website form, DMs or CRM"*.
+
+### What deliberately did not change
+
+`Connect Gmail` stays where it is genuinely Gmail: Google Calendar booking, invite emails,
+the Gmail disconnect confirmation, the reconnect prompt. Generalising those would be the
+same error pointed the other way.
+
+### Tests
+
+`emptyStates.test.ts`, 12 assertions. **Verified by removal** — dropping the leads check
+from `headline()` fails one, restoring the Gmail-only sentence fails another. Three of the
+twelve guard the other direction: that a working account still gets the calm line, that a
+filtered-empty list is still told it is only the filter, and that Pipeline keeps its
+separate "none assigned to you" wording.
+
+### Self-critique
+
+1. **"No leads yet." is flat.** It is honest and it is not warm. A first screen could do
+   more than decline to mislead — it could say what happens next — but the box directly
+   below already does that, and two sentences competing to explain the same emptiness is
+   how the contradiction started.
+2. **Source-naming is now a string in four places** (three empty states plus onboarding).
+   A shared constant would stop the fifth copy drifting; a test guarding the phrase is a
+   weaker substitute for the structure.
+3. **Not rendered.** No database in the sandbox, so these were read, not seen. The wording
+   is verified; the way it sits on the screen is not.
+4. **The Settings setup strip still says "Connect Gmail or Outlook [...] until then the
+   dashboard stays empty"**, which is false for a business capturing through the website
+   widget. Same family, left alone because it belongs to the setup-steps logic rather than
+   to an empty state, and that deserves its own look.

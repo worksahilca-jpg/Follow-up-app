@@ -126,7 +126,11 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
           description={
             mineOnly
               ? "Nothing's assigned to you right now — check back once new leads come in."
-              : "Connect Gmail in Settings and sync your inbox to see your pipeline take shape."
+              : /* Named Gmail alone until 2026-09-22 — see the note on the
+                   same sentence in leads/LeadsPageClient.tsx. Eight sources
+                   feed this pipeline; telling a WhatsApp business to connect
+                   an inbox is how a screen sends someone to the wrong place. */
+                "Connect a lead source in Settings — your inbox, website form, DMs or CRM — and your pipeline fills in as leads arrive."
           }
           action={
             mineOnly ? undefined : (

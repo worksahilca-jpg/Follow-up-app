@@ -156,6 +156,28 @@ export default async function DashboardPage() {
     if (answered > 0) {
       return `Nothing needs your OK. FollowUp answered ${answered} for you this week.`;
     }
+
+    /*
+     * Nothing has ever arrived. Checked BEFORE the calm sentence, because
+     * on a brand-new account that sentence is true and still misleading.
+     *
+     * "Nothing needs your OK right now" is what a product says to someone
+     * who has been working and is caught up. A tester who signed up two
+     * minutes ago and connected nothing read it as their very first line
+     * — a reassurance the account has not earned, sitting directly above
+     * a box explaining that FollowUp is not watching anything yet. The
+     * page contradicted itself the same way Settings did (#301): one
+     * true-sounding sentence, one accurate one, in the same glance.
+     *
+     * Deliberately says nothing about what IS or ISN'T connected. This
+     * screen can see an inbox, and cannot see a website snippet someone
+     * pasted into their own site — so "nothing is connected" would be a
+     * guess, and guessing is what caused the sentence above. The box
+     * below owns that explanation and has three properly-reasoned
+     * branches for it; this line only has to stop claiming calm.
+     */
+    if (leads.length === 0) return "No leads yet.";
+
     return "Nothing needs your OK right now.";
   }
 

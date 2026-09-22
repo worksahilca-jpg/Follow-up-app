@@ -428,7 +428,13 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           <EmptyState
             icon={Inbox}
             title="No leads yet"
-            description="Connect Gmail in Settings to sync your inbox, or add one manually to get started."
+            /* Named one source out of eight until 2026-09-22. A business
+               running on Instagram DMs, WhatsApp or a website form opened
+               this screen and was told to connect an inbox it does not use
+               — the same dead end the founder had already called out in
+               onboarding ("we will help them to connect the sources"), on
+               a screen nobody went back and checked. */
+            description="Connect a lead source in Settings — your inbox, website form, DMs or CRM — or add one by hand."
             action={
               <div className="flex items-center justify-center gap-2">
                 <button

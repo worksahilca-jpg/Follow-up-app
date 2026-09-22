@@ -35,32 +35,12 @@
  * decide, because nothing knows that yet.
  */
 import { getPendingApprovals, type PendingApproval } from "@/lib/pendingApprovals";
-import {
-  HOLD_ALL_AUTOMATION_REASON,
-  HOLD_ALL_SEQUENCE_REASON,
-  HOLD_ALL_FIRST_REPLY_REASON,
-} from "@/lib/holdReasons";
+// The predicate lives in @/lib/holdReasons, beside the constants it
+// matches — @/lib/pendingApprovals needs it too, to order the queue, and
+// importing it from here would be a cycle.
+import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
 
-/**
- * The three reasons that mean "nothing was wrong with this one — your
- * approval setting is what stopped it".
- *
- * Matched exactly rather than by a substring or a keyword. These strings
- * are customer-facing prose that gets reworded (all three were rewritten
- * on 2026-09-20 over a grammar bug), and a fuzzy match would quietly
- * start counting the wrong leads after an edit nobody connected to this
- * file. An exact match fails loudly instead — see the test that pins
- * every constant.
- */
-const HELD_ONLY_BY_SETTING: ReadonlySet<string> = new Set([
-  HOLD_ALL_AUTOMATION_REASON,
-  HOLD_ALL_SEQUENCE_REASON,
-  HOLD_ALL_FIRST_REPLY_REASON,
-]);
-
-export function isHeldOnlyByApprovalSetting(reason: string): boolean {
-  return HELD_ONLY_BY_SETTING.has(reason);
-}
+export { isHeldOnlyByApprovalSetting };
 
 export type SendPreview = {
   /** Everything currently waiting. */

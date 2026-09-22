@@ -34,7 +34,14 @@ import {
 } from "@/lib/holdReasons";
 
 const { pending } = vi.hoisted(() => ({ pending: vi.fn() }));
-vi.mock("@/lib/pendingApprovals", () => ({ getPendingApprovals: pending }));
+// getPendingApprovals is mocked for the counting tests; compareApprovals
+// is the real export, which is the whole point of the ordering ones.
+vi.mock("@/lib/pendingApprovals", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/pendingApprovals")>()),
+  getPendingApprovals: pending,
+}));
+
+import { compareApprovals } from "@/lib/pendingApprovals";
 
 import { getSendPreview, isHeldOnlyByApprovalSetting } from "@/lib/sendPreview";
 
@@ -152,5 +159,82 @@ describe("the summary an owner sees before deciding", () => {
     pending.mockResolvedValue([]);
     const p = await getSendPreview("biz_1");
     expect(p).toMatchObject({ total: 0, heldOnlyBySetting: 0, wouldWaitAnyway: 0, examples: [] });
+  });
+});
+
+/**
+ * The same predicate, doing a second job: ordering the queue.
+ *
+ * `getPendingApprovals` sorted by recency alone, and on a holding
+ * account that buries the only cards worth reading. Nine say the same
+ * generic sentence — "your account holds every automated message for you
+ * to approve" — and somewhere among them, in whatever order they
+ * happened to be held, is one saying "the draft quotes a price nobody in
+ * this conversation mentioned". That one is about to send a made-up
+ * number to a customer in the owner's name. The other nine need a
+ * glance.
+ *
+ * An owner scanning twelve near-identical cards cannot tell which is
+ * which — the product's own thesis, "which one am I about to lose?",
+ * failing on the product's own screen.
+ *
+ * Asserted on the comparator rather than by mounting the queue: the
+ * defect is entirely an ordering one, and the component renders whatever
+ * order it is handed.
+ */
+describe("what order the approval queue puts things in", () => {
+  // The SHIPPED comparator, not a copy of it. The first draft here
+  // reimplemented the sort inline, which tests the copy: it would keep
+  // passing while the real order drifted away from it.
+  const order = (rows: { reason: string; heldAt: Date }[]) => rows.slice().sort(compareApprovals);
+
+  const at = (iso: string) => new Date(iso);
+
+  it("puts a draft that needs judgement above newer routine ones", () => {
+    // The failure this exists to prevent: the made-up price is the
+    // OLDEST card, so recency alone buried it under three others.
+    const rows = [
+      { reason: HOLD_ALL_AUTOMATION_REASON, heldAt: at("2026-09-22T12:00:00Z") },
+      { reason: HOLD_ALL_AUTOMATION_REASON, heldAt: at("2026-09-22T11:00:00Z") },
+      { reason: HOLD_ALL_SEQUENCE_REASON, heldAt: at("2026-09-22T10:00:00Z") },
+      { reason: UNGROUNDED_DRAFT_REASONS.currency, heldAt: at("2026-09-20T08:00:00Z") },
+    ];
+    expect(order(rows)[0].reason).toBe(UNGROUNDED_DRAFT_REASONS.currency);
+  });
+
+  it("keeps newest-first inside each group", () => {
+    const rows = [
+      { reason: HOLD_ALL_AUTOMATION_REASON, heldAt: at("2026-09-20T10:00:00Z") },
+      { reason: UNGROUNDED_DRAFT_REASONS.digits, heldAt: at("2026-09-21T10:00:00Z") },
+      { reason: HOLD_ALL_AUTOMATION_REASON, heldAt: at("2026-09-22T10:00:00Z") },
+      { reason: UNTOUCHED_LEAD_REASON, heldAt: at("2026-09-22T09:00:00Z") },
+    ];
+    expect(order(rows).map((r) => r.heldAt.toISOString())).toEqual([
+      "2026-09-22T09:00:00.000Z", // needs you, newest of its group
+      "2026-09-21T10:00:00.000Z", // needs you, older
+      "2026-09-22T10:00:00.000Z", // routine, newest of its group
+      "2026-09-20T10:00:00.000Z", // routine, older
+    ]);
+  });
+
+  it("leaves an all-routine queue in plain recency order", () => {
+    // No boundary to draw, so nothing should move — the reorder must not
+    // shuffle a queue it has no opinion about.
+    const rows = [
+      { reason: HOLD_ALL_AUTOMATION_REASON, heldAt: at("2026-09-22T10:00:00Z") },
+      { reason: HOLD_ALL_SEQUENCE_REASON, heldAt: at("2026-09-21T10:00:00Z") },
+      { reason: HOLD_ALL_FIRST_REPLY_REASON, heldAt: at("2026-09-20T10:00:00Z") },
+    ];
+    expect(order(rows).map((r) => r.heldAt.getTime())).toEqual(rows.map((r) => r.heldAt.getTime()));
+  });
+
+  it("treats an empty reason as needing a human", () => {
+    // pendingApprovals falls back to "" when the audit meta has no
+    // reason. Unknown provenance belongs at the top, not buried.
+    const rows = [
+      { reason: HOLD_ALL_AUTOMATION_REASON, heldAt: at("2026-09-22T12:00:00Z") },
+      { reason: "", heldAt: at("2026-09-19T12:00:00Z") },
+    ];
+    expect(order(rows)[0].reason).toBe("");
   });
 });

@@ -27,12 +27,21 @@ const H = ROW * N + GAP * (N - 1);
 const centreY = (i: number) => ROW / 2 + i * (ROW + GAP);
 const MID = H / 2;
 
+/**
+ * `soon` marks a source FollowUp can read but cannot be connected to yet.
+ * The phone line is the only one: the voice agent is built and the inbound
+ * routes are live, but a North American number has to clear a carrier
+ * registration first (see @/lib/pricing CARRIER_CHANNELS_AVAILABLE), so no
+ * business can point one here today. Showing it unmarked was a promise —
+ * the founder's call on 2026-09-22 was to keep it and label it, not to
+ * hide it. The FAQ ("Can it answer my phone?") carries the real answer.
+ */
 const SOURCES = [
-  { title: "New inquiry", via: "via Gmail", Icon: Mail },
-  { title: "Direct message", via: "via Instagram", Icon: Camera },
-  { title: "Form submission", via: "via your website", Icon: FileText },
-  { title: "Missed call", via: "via your phone line", Icon: Phone },
-  { title: "New message", via: "via WhatsApp", Icon: MessageCircle },
+  { title: "New inquiry", via: "via Gmail", Icon: Mail, soon: false },
+  { title: "Direct message", via: "via Instagram", Icon: Camera, soon: false },
+  { title: "Form submission", via: "via your website", Icon: FileText, soon: false },
+  { title: "Missed call", via: "via your phone line", Icon: Phone, soon: true },
+  { title: "New message", via: "via WhatsApp", Icon: MessageCircle, soon: false },
 ];
 
 const REPLIES = [
@@ -108,13 +117,13 @@ export default function HeroFlow() {
       <div
         className={styles.flowGrid}
         role="img"
-        aria-label="Leads arrive from Gmail, Instagram, your website form, your phone line and WhatsApp, pass through FollowUp, and answer: Thursday works, send the proposal over, booked a call."
+        aria-label="Leads arrive from Gmail, Instagram, your website form, WhatsApp, and — coming soon — your phone line, pass through FollowUp, and answer: Thursday works, send the proposal over, booked a call."
         style={{ ["--flow-h" as string]: `${H}px`, ["--flow-row" as string]: `${ROW}px`, ["--flow-gap" as string]: `${GAP}px` }}
       >
         <div className={styles.flowCol}>
           <div className={styles.flowLabel}>Leads come in from everywhere</div>
           <div className={styles.flowList}>
-            {SOURCES.map(({ title, via, Icon }, i) => (
+            {SOURCES.map(({ title, via, Icon, soon }, i) => (
               <motion.div key={title} className={styles.src} {...fromEverywhere(i)}>
                 <span className={styles.srcIcon}>
                   <Icon className="h-4 w-4" aria-hidden="true" />
@@ -123,6 +132,7 @@ export default function HeroFlow() {
                   <span className={styles.srcName}>{title}</span>
                   <span className={styles.srcVia}>{via}</span>
                 </span>
+                {soon && <span className={`${styles.pill} ${styles.pillMuted} ${styles.srcSoon}`}>Soon</span>}
               </motion.div>
             ))}
           </div>

@@ -228,7 +228,13 @@ export default function LandingPage() {
           <RevealLight>
             <div className={styles.card}>
               <h3 className={styles.cardTitle}>Bring your team</h3>
-              <p className={styles.cardBody}>New customers go to the right person. Everyone can see what is waiting.</p>
+              {/* Was "go to the right person", which claimed skill-based
+                  routing FollowUp does not do. pickAssignee() in
+                  @/lib/assignment is least-loaded — whoever has the fewest
+                  leads gets the next one — and a source set to a pool goes
+                  to nobody until someone claims it. Fixed 2026-09-22 with
+                  the three other copies. */}
+              <p className={styles.cardBody}>New customers are shared out evenly, so nobody is buried. Everyone can see what is waiting.</p>
               <div className={styles.figure}>
                 <div className={styles.rowName} style={{ fontSize: 13, marginBottom: 6 }}>
                   Pending invitations
@@ -415,7 +421,7 @@ export default function LandingPage() {
             [<Languages key="l" className="h-5 w-5" />, "Speaks their language", "They write in Spanish, they get answered in Spanish. Any language."],
             [<Send key="s" className="h-5 w-5" />, "Follows up for you", "Simple replies go out on their own. Anything about money waits for you."],
             [<MessageCircle key="m" className="h-5 w-5" />, "Made for Instagram and WhatsApp", "Short messages with buttons, so a customer can answer with one tap."],
-            [<Users key="u" className="h-5 w-5" />, "Works for a team", "New customers go to the right person. Everyone sees what is waiting."],
+            [<Users key="u" className="h-5 w-5" />, "Works for a team", "New customers are shared out evenly. Everyone sees what is waiting."],
           ].map(([icon, t, b], i) => (
             <RevealLight key={t as string} delay={(i % 3) * 0.07}>
               <div className={styles.card}>
@@ -501,7 +507,9 @@ export default function LandingPage() {
               <p className={styles.priceNote}>No credit card required to start.</p>
               <p className={styles.priceListLabel}>Plus plus:</p>
               <ul className={styles.priceList}>
-                {["See who on your team is behind, and where", "New customers go to the right person", "No limit on customers", "Priority support"].map((f) => (
+                {/* The paid version of the same overclaim — worst of the
+                    four, because someone is being charged for it. */}
+                {["See who on your team is behind, and where", "New customers shared out evenly across your team", "No limit on customers", "Priority support"].map((f) => (
                   <li key={f}>
                     <span className={styles.check}>
                       <Check className="h-3 w-3" />
@@ -530,7 +538,19 @@ export default function LandingPage() {
               { q: "Will it send things I did not approve?", a: "Only simple, safe replies go out on their own. Anything about price, or anything sensitive, waits for you. Once a customer answers, it stops. You can turn it fully on or fully off for any customer." },
               { q: "What about Instagram's 24-hour rule?", a: "Instagram only lets apps reply within 24 hours of a customer's last message. Inside that time, FollowUp replies by itself. After that, it writes one message you can send with a tap. It never moves the conversation to email without them." },
               { q: "Is my data safe?", a: "It only reads the inboxes you connect. With Gmail, that means it reads your incoming mail to spot customer enquiries, sends replies from your own address, and adds an event to your Google Calendar when a customer books a call. Everything is stored for your business only, and you can download or delete all of it whenever you want. Nothing is sold." },
-              { q: "Is it for a team, or just me?", a: "Both. Add your team, see who is behind, and send new customers to the right person." },
+              {
+                q: "Is it for a team, or just me?",
+                a: "Both. Add your team and see who is behind. New customers are shared out evenly — whoever has the least on their plate gets the next one — or you can have them land in a shared list anyone can pick up.",
+              },
+              {
+                // The other half of the "Soon" pill on the hero's phone-line
+                // row. The pill flags it; this is the honest answer, and the
+                // only place on the page the phone line is explained. Says
+                // plainly that nothing on the phone is captured today, so
+                // nobody signs up expecting it (2026-09-22).
+                q: "Can it answer my phone?",
+                a: "Not yet. Answering a missed call and talking to the caller — in their language — is built, but phone companies make every business register before a number can be used this way, and we are not through that yet. Until it is, nothing on your phone line is picked up. FollowUp works today on Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form.",
+              },
             ]}
           />
         </RevealLight>

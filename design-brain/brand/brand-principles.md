@@ -119,9 +119,19 @@ because of alignment, consistent spacing, restrained type, deliberate color, and
 lining up. The discipline referenced in Apple/Linear/Stripe/Notion is *restraint*, not
 style — and restraint is what gets copied here, never their interfaces.
 
-**Design consequence:** a limited palette, one typeface, a strict spacing scale, real
-alignment, and the removal of anything that doesn't carry information. Polish is achieved
-by subtraction far more often than by addition.
+**Design consequence:** a limited palette, a small and deliberate set of typefaces, a strict
+spacing scale, real alignment, and the removal of anything that doesn't carry information.
+Polish is achieved by subtraction far more often than by addition.
+
+**CORRECTED (2026-09-22).** This read "one typeface" until today, and had been false since
+the landing-page rebuild. What actually ships is three faces, each with one job: **Public
+Sans** for everything structural (`--font-display`, `--font-body` in `globals.css` both
+resolve to it), **IBM Plex Mono** for small uppercase labels and figures, and **Instrument
+Serif** for the landing page's emphasis italic — the *"because you forgot to follow up"* in
+the approved hero ([[approved#^A-013|A-013]]). Flagged as gap 8 of the 2026-09-13
+landing-page research and left standing until now. The principle was never really about the
+count: three faces doing three jobs is restraint; two sans-serifs competing for the same job
+is not. **That** is the test, and it is what the wording above now says.
 
 **Test:** what can be removed from this screen without losing meaning? Remove it.
 

@@ -324,3 +324,65 @@ describe("what the landing page says about sending, while the hold is on", () =>
     );
   });
 });
+
+/**
+ * The same false claim, on the screen where it costs most.
+ *
+ * `HowItWorks` in OnboardingForm is the third thing a new tester sees,
+ * and it is shown WHILE asking for permission to send from their inbox.
+ * That file's own header singles out its third beat: "The third beat is
+ * the one that has to be exactly true. The old Connect Gmail screen
+ * described a read-only product at the moment it asked for send access,
+ * and the comment there recorded why that mattered: it is the gap
+ * between a surprise and a betrayal."
+ *
+ * The beat read: "Anything it isn't certain about waits for your OK […]
+ * and you can turn sending off for one person or for everyone." Both
+ * halves stopped being true when holdAllForApproval became
+ * @default(true) for every account on 2026-09-21:
+ *
+ *   - "anything it isn't certain about" tells a reader that some things
+ *     go out without asking. Nothing does.
+ *   - "turn sending off" is backwards — it is already off. And "for one
+ *     person" was false as well, since holdAll short-circuits ahead of a
+ *     lead's own automation tier.
+ *
+ * So the screen that exists to close the surprise/betrayal gap was
+ * opening it, in the sentence written to close it.
+ */
+describe("what onboarding promises while asking for send access", () => {
+  const onboarding = () =>
+    readFileSync(join(__dirname, "..", "..", "components", "OnboardingForm.tsx"), "utf8")
+      .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "")
+      .replace(/\s+/g, " ");
+
+  it("does not tell a new business that some messages send unasked", () => {
+    expect(
+      onboarding(),
+      "onboarding says only uncertain drafts wait — every draft waits, on every account"
+    ).not.toMatch(/isn't certain about waits for your OK/i);
+  });
+
+  it("says plainly that every message waits", () => {
+    expect(onboarding(), "onboarding no longer states the hold at all").toMatch(
+      /Every message it writes waits for your OK/i
+    );
+  });
+
+  it("does not offer to turn OFF something that is already off", () => {
+    // The decision a business actually makes is turning sending ON.
+    expect(onboarding(), "onboarding still describes the switch backwards").not.toMatch(
+      /turn sending off for one person or for everyone/i
+    );
+  });
+
+  it("keeps the guarantee that holds either way", () => {
+    // True with the hold on and true after permission is granted. Losing
+    // it while fixing the false half would be the overcorrection.
+    expect(onboarding(), "onboarding dropped the stop-on-reply guarantee").toMatch(
+      /stops the moment they reply/i
+    );
+  });
+});

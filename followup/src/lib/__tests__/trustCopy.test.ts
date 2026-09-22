@@ -271,12 +271,15 @@ describe("what the landing page says about sending, while the hold is on", () =>
 
   const schema = () => readFileSync(join(__dirname, "..", "..", "..", "prisma", "schema.prisma"), "utf8");
 
-  it("the hold is still on — if not, the copy below is now the wrong copy", () => {
-    // The trigger to remove this whole block, stated as an assertion
-    // rather than a comment nobody reads.
+  it("new accounts still hold by default — the whole page depends on it", () => {
+    // The hero's "nothing sends without your OK" is true because a fresh
+    // account holds until its owner grants permission in Settings
+    // (src/app/api/automation/settings/route.ts). Flip this default and
+    // the line becomes a lie for every new signup on day one, which is
+    // the exact failure this file exists to catch.
     expect(
       schema(),
-      "holdAllForApproval is no longer default-true — the beta sending caveat on the landing page is now understating the product, and this describe block should go"
+      "holdAllForApproval is no longer default-true — a new account now sends before anyone asked it to, and the landing page still promises the opposite"
     ).toMatch(/holdAllForApproval\s+Boolean\s+@default\(true\)/);
   });
 
@@ -294,7 +297,8 @@ describe("what the landing page says about sending, while the hold is on", () =>
 
   it("the FAQ agrees with the hero rather than contradicting it", () => {
     const faq = landingCopy().slice(landingCopy().indexOf("Will it send things I did not approve?"));
-    expect(faq, "the FAQ answer no longer states the beta hold").toMatch(/nothing goes out on its own/i);
+    expect(faq, "the FAQ answer no longer states the hold").toMatch(/nothing goes out on its own until you allow it/i);
+    expect(faq, "the FAQ does not say where permission is granted").toMatch(/turn that on in Settings/i);
     expect(faq, "the FAQ lost the on-your-behalf framing the hero leads with").toMatch(/on your behalf, under your eye/i);
   });
 
@@ -312,8 +316,11 @@ describe("what the landing page says about sending, while the hold is on", () =>
     // only said "nothing sends" would have thrown away the product's
     // actual design along with the false claim.
     const faq = landingCopy().slice(landingCopy().indexOf("Will it send things I did not approve?"));
+    // Matches the guarantee, not the adverb — this pinned "always" and
+    // failed on a reword to "still", which is the test being about
+    // phrasing when it is supposed to be about the promise.
     expect(faq, "the FAQ dropped the money/sensitive guarantee entirely").toMatch(
-      /anything about price[^.]*always waits for you/i
+      /anything about price[^.]*waits for you/i
     );
   });
 });

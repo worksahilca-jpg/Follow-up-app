@@ -29,10 +29,27 @@ import { recordAudit } from "@/lib/audit";
 const AUTOMATION_NAME = "Auto follow-up on silence";
 const AUTOMATION_ACTION = "auto_send";
 
+/**
+ * The permission to send without asking.
+ *
+ * Stored as `Business.holdAllForApproval`, which is the NEGATIVE of what
+ * the owner is actually deciding, and that inversion is the dangerous
+ * part: get it backwards and FollowUp starts messaging every customer a
+ * business has, unasked. So the wire never carries the negative. The API
+ * takes and returns `autoSendPermission` — true means "yes, send on my
+ * behalf" — and the single `!` that translates it lives in one place in
+ * each direction, below, with a test pinning both.
+ *
+ * Founder, 2026-09-22: "followup will be sending automatically followups
+ * if they have allowed and given the permission." Off unless granted:
+ * `holdAllForApproval` keeps its `@default(true)`, so silence on this
+ * field, an older client, or a failed write all land on "still holding".
+ */
 const settingsSchema = z.object({
   enabled: z.boolean().optional(),
   triggerDays: z.coerce.number().int().optional(),
   instantAck: z.boolean().optional(),
+  autoSendPermission: z.boolean().optional(),
   unansweredReply: z
     .object({
       enabled: z.boolean().optional(),
@@ -85,6 +102,9 @@ export async function GET() {
     unansweredReply: await getUnansweredReplySetting(ctx.businessId),
     deadLeadReactivation: await getDeadLeadReactivationSetting(ctx.businessId),
     holdAllForApproval: business?.holdAllForApproval ?? false,
+    // The same fact the positive way round, so no client ever writes the
+    // `!` itself. See settingsSchema's header for why that matters.
+    autoSendPermission: !(business?.holdAllForApproval ?? true),
   });
 }
 
@@ -100,6 +120,29 @@ export async function POST(request: NextRequest) {
   const parsed = await parseJsonBody(request, settingsSchema);
   if (!parsed.ok) return parsed.response;
   const body = parsed.data;
+
+  // Granting or withdrawing the permission to send is saved on its own,
+  // ahead of every other branch, and never rides along with another
+  // setting. Two reasons, and both are about the same risk: it is the one
+  // switch on this route that causes real messages to reach real
+  // customers, so it must not be flipped as a side effect of someone
+  // saving the silence delay; and a request that carries it alone is the
+  // only shape the Settings panel sends, so anything else arriving with
+  // it is a client that should not be trusted to have meant it.
+  if (typeof body.autoSendPermission === "boolean") {
+    const granted = body.autoSendPermission;
+    await prisma.business.update({
+      where: { id: ctx.businessId },
+      // The one inversion inbound. `granted` is the owner's decision;
+      // `holdAllForApproval` is its opposite.
+      data: { holdAllForApproval: !granted },
+    });
+    // Named for what happened rather than for the field, so the trail
+    // reads as a decision someone made. recordAudit already carries who
+    // and when, and the IP.
+    void recordAudit(ctx, granted ? "automation.autosend.granted" : "automation.autosend.revoked");
+    return NextResponse.json({ success: true, autoSendPermission: granted });
+  }
 
   // The unanswered-reply rule is saved on its own (see src/lib/automation.ts).
   if (

@@ -4458,3 +4458,183 @@ the paid one lingered. 1576 pass, eslint clean, `npx next build` clean.
    and I have now written that substitute twice instead of fixing the cause.
 4. **Gap 6 (the hero device) is still unanswered.** Asked twice; R-005 and R-009 both reject a
    mockup hero, so it stays untouched rather than guessed at.
+
+---
+
+## 2026-09-22 — The page sold sending; the product sends nothing
+
+**Founder's decision**, choosing between four options put to him: *keep the pitch, state the
+current truth in one line.*
+
+### The finding
+
+Six places on the landing page promised replies going out on their own:
+
+| Where | What it said |
+|---|---|
+| Plus card description | "Every channel, with FollowUp **replying for you**." |
+| Plus feature list | "**FollowUp replies for you**" |
+| Features grid | "**Simple replies go out on their own.**" |
+| How it works, step 4 | "…or **let simple ones go out on their own**." |
+| FAQ 1 | "Only simple, safe replies **go out on their own**." |
+| **Free** card | "You approve every reply before it goes out" — listed as a *Free tier* feature, which tells a reader that **paying removes the approval step**. |
+
+`Business.holdAllForApproval` is `@default(true)` in the schema. `/api/automation/settings`
+reads it and **never writes it**, so no business can turn it off. It short-circuits *ahead of*
+`Lead.automationTier` in all three send paths (`automation.ts` line 825, `acknowledge.ts` 529,
+`sequences.ts` 685) — so even a lead deliberately set to autonomous is held. Production
+agreed: **zero outbound messages in 24h across 8 businesses.**
+
+Nothing sends for anyone, on any plan, and there is no switch.
+
+### Why one line and not a rewrite
+
+Three of the four options were rejected *by the founder*, and the reasoning is worth keeping:
+turning the hold off would undo a decision he made two days ago (*"don't send any replies
+without asking me"*) before a single tester has watched it send anything unsupervised;
+rewriting the pitch around approval is a repositioning that touches
+[[approved#^A-013|A-013]] and the tier cards, hard to undo mid-beta; and leaving it flagged
+accepts the [[rejected#^R-012|#301]] failure mode — *they find out after signing up*.
+
+**Shipped:** the hero note, which every visitor sees, now reads *"Free while in beta. No card.
+It follows up for you — nothing sends without your OK."* It replaced *"It stops the moment they
+reply"* — a true line, but one already made as promise 1 of the four, where this fact was made
+nowhere.
+
+**The wording is the founder's, and it is a genuine correction to mine.** My draft read
+*"Nothing sends until you approve it"* — accurate, and it threw the entire pitch away in order
+to be accurate. His instruction: *"i want to say like this will follow up on behalf of you and
+to build trust mention under your eyes or something."* That keeps the promise (**it follows up
+for you**) and makes the supervision the *reason to trust it* rather than an apology for what
+it cannot do. **Principle, worth generalising: when a claim is too strong, the fix is to say
+what is true about the same promise — not to delete the promise.** I reached for subtraction
+and it cost the product its own sentence.
+
+**And the FAQ's first answer**, which is not scope creep: leaving *"only simple, safe replies
+go out on their own"* under a hero saying nothing sends would have rebuilt the exact
+self-contradiction of #301 on a single page. It now leads with the beta truth, keeps the
+money/sensitive guarantee as what automatic sending *will* be, and drops *"you can turn it
+fully on for any customer"* — false for the same short-circuit reason.
+
+**Not touched:** the four remaining claims. The founder said keep the pitch; a beta caveat
+in the hero governs the page, and rewording all six would have been the repositioning he
+declined.
+
+### Tests
+
+Five assertions in `trustCopy.test.ts`, verified by removal in both directions. The important
+one is a **tripwire, not a guard**:
+
+```
+it("the hold is still on — if not, the copy below is now the wrong copy")
+```
+
+It asserts the schema default is still `true`. The day that flips, this test fails and names
+the caveat as the thing to delete — because the real risk is these tests passing forever
+while the page understates a product that has started sending. Deliberately has no skip.
+
+1581 pass, eslint clean, `npx next build` clean, hero rendered and read at 1440.
+
+### Self-critique
+
+1. **One line is doing a lot of work.** It sits under the CTA in 13px grey, and it has to
+   correct four claims further down the page that still say the opposite. A reader who scrolls
+   to Pricing without reading the hero note gets the old story. I raised this; the founder's
+   call was the caveat, and I think it is right for a beta — but it is a compromise, not a
+   clean fix.
+2. **"Nothing sends until you approve it" reads as permanent.** It is a beta fact. The words
+   "while in beta" were cut because the same sentence already opens with "Free while in beta"
+   and saying it twice read badly. The tripwire test is what actually protects this, not the
+   copy.
+3. **The Free card still implies paying removes approval.** It says "You approve every reply
+   before it goes out" as a Free feature. True of Free; currently true of everything. The hero
+   line defuses it rather than fixing it, and a reader comparing cards side by side may still
+   draw the wrong conclusion. The honest fix is the repositioning that was declined.
+4. **Found by auditing claims against code, not by testing the product.** Nobody has run a
+   tester through signup and watched what they expect versus what happens. That would have
+   found this in ten minutes, and would find things this method cannot.
+
+---
+
+## 2026-09-22 — Permission to send, asked for rather than assumed
+
+**Founder:** *"followup will be sending automatically followups if they have allowed and given
+the permission."* Then, on building it: *"lets goo."*
+
+### What was wrong
+
+`Business.holdAllForApproval` was `@default(true)` and `/api/automation/settings` **read it but
+never wrote it**. So every account held every message forever with no way out — and the landing
+page was selling "FollowUp replies for you" as the $39 tier's headline benefit (see the entry
+above). The product's central promise had no switch behind it.
+
+### The shape
+
+**Off unless granted. Granted explicitly. Revoked instantly.**
+
+The default does not move: a fresh account still holds, which is what keeps the hero's *"nothing
+sends without your OK"* true on day one. What is new is that an admin can now grant permission,
+and the FAQ says where.
+
+**The inversion is the dangerous part, and it drove most of the design.** The stored field is the
+*negative* of the decision: `holdAllForApproval` true means "do not send". A misplaced `!`
+anywhere in this path does not throw, does not fail typecheck, and does not look wrong in review
+— it silently messages **every customer a business has**, signed as that business. So:
+
+- the wire never carries the negative. The API takes and returns `autoSendPermission`, positive,
+  and owns the single `!` in each direction;
+- the client never computes it, which is why GET returns both forms;
+- both directions are asserted at the route, and **verified by flipping each `!` and watching two
+  tests fail**.
+
+### Why it is not a Switch
+
+Everything else in that section is a `<Switch>` with an optimistic flip. This is not, twice over:
+
+1. **A switch is for a preference.** This is a decision whose consequence is that strangers
+   receive machine-written messages on the business's behalf. It gets a statement of what will
+   happen and a second, deliberate press.
+2. **No optimistic flip.** The rest of the page flips first and reverts on failure — right for a
+   timing preference, wrong here. An owner who sees "sending" must be looking at a server that
+   agrees, because the next cron tick acts on the server's answer, not the screen's.
+
+**Turning it off is one press with no confirmation.** Stopping must never be harder than starting.
+
+The confirmation is four facts, not an "are you sure?" — *are you sure* asks for nerve; this asks
+them to read what changes. It sits **above** the timing rules, because it decides what all of
+them do.
+
+### Also
+
+`recordAudit` writes `automation.autosend.granted` / `.revoked` — named for the decision, not the
+field, because the question someone asks after a surprising message is *who turned this on, and
+when*. Admin-only and billing-gated, like the rest of the route.
+
+### Tests
+
+Ten in `sendPermission.test.ts`, driven through the real handler — the bug class here lives in
+which branch runs and what it writes, which a source assertion cannot see. Four are about what
+must **not** grant it: a non-admin, a signed-out request, a locked account, and a non-boolean
+(`"true"`, `1`, `"yes"`, `{}` — none may coerce into a yes). One pins that saving an unrelated
+setting leaves the hold alone. One pins that a missing business row reads as *not permitted*,
+because the safe answer is the one that sends nothing.
+
+1591 pass, eslint clean, tsc clean, `npx next build` clean.
+
+### Self-critique
+
+1. **I have not looked at this panel.** No database in the sandbox, so Settings cannot be
+   rendered signed-in. The logic is tested and the markup reuses existing tokens, but the way it
+   sits on the screen — three states, one of them an expanding block — is **unverified**. That is
+   the same gap I flagged on the empty-state pass three days ago and have still not solved.
+2. **Nothing has ever actually sent.** This removes the blocker; it does not prove the thing
+   behind it works. The first grant will be the first time FollowUp autonomously messages a real
+   person, and it should be the founder watching his own account, not a tester.
+3. **No dry run.** An owner grants permission and the next cron tick sends for real. A "show me
+   what you would have sent this week" step before the first live send would cost little and
+   would let someone build confidence without risking a customer. Not built, and I think it is
+   the right next thing.
+4. **The four facts are my words, not tested for comprehension.** They read well to someone who
+   already knows the product. Whether a first-time owner understands "low-risk" the way the
+   risk classifier means it is unknown, and that mismatch is precisely where an unwanted send
+   would come from.

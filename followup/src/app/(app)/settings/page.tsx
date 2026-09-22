@@ -158,6 +158,13 @@ function SettingsPageInner() {
   // with the individual rules and their timings tucked behind an expander
   // for whoever actually wants to tune them.
   const [automationDetailsOpen, setAutomationDetailsOpen] = useState(false);
+  // Granting permission to send is the one control on this page that
+  // causes real messages to reach real customers, so it does not share
+  // the automation section's optimistic-flip pattern: nothing moves on
+  // screen until the server has said yes.
+  const [permissionSaving, setPermissionSaving] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [confirmingPermission, setConfirmingPermission] = useState(false);
   const previousAutomationStateRef = useRef<{
     automationOn: boolean;
     instantAckOn: boolean;
@@ -294,6 +301,42 @@ function SettingsPageInner() {
   // One sentence describing exactly what's active right now, built from the
   // same 4 flags the individual rules already use — never drifts out of
   // sync with reality the way 4 separately-worded "Our promise" blocks could.
+  /**
+   * Grant or withdraw the permission to send without asking.
+   *
+   * `autoSendPermission` is the positive form — the API owns the single
+   * inversion to Business.holdAllForApproval, so this file never writes a
+   * `!` against it (see the settings route's schema comment: getting that
+   * backwards means messaging every customer a business has).
+   *
+   * No optimistic flip. The rest of this page flips first and reverts on
+   * failure, which is right for a timing preference and wrong here: an
+   * owner who sees "on" must be looking at a server that agrees, because
+   * the next cron tick acts on the server's answer, not the screen's.
+   */
+  async function saveSendPermission(granted: boolean) {
+    setPermissionSaving(true);
+    setPermissionError(null);
+    try {
+      const res = await fetch("/api/automation/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoSendPermission: granted }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setPermissionError(data.message ?? "Couldn't save — try again.");
+        return;
+      }
+      setHoldAllForApproval(!granted);
+      setConfirmingPermission(false);
+    } catch {
+      setPermissionError("Couldn't reach the server — try again.");
+    } finally {
+      setPermissionSaving(false);
+    }
+  }
+
   function describeAutomationState(): string {
     const clauses: string[] = [];
     // On a holding account (Business.holdAllForApproval) every rule below
@@ -919,6 +962,111 @@ function SettingsPageInner() {
       <div hidden={activeTab !== "advanced"} className="space-y-10">
       <section id="automation" className="scroll-mt-16">
         <h2 className="font-display text-xl">Automation</h2>
+
+        {/* Permission to send, above the rules it governs — because it
+            decides what all of them DO, and reading the timings first
+            without knowing whether anything leaves the building is the
+            wrong order. Founder, 2026-09-22: "followup will be sending
+            automatically followups if they have allowed and given the
+            permission."
+
+            Deliberately not a Switch like everything else in this
+            section. A switch is for a preference; this is a decision
+            whose consequence is that strangers receive messages written
+            by a machine on this business's behalf. It states what will
+            happen, and granting takes a second, explicit press. Turning
+            it back off is one press, no confirmation — stopping should
+            never be harder than starting. */}
+        <div className="mt-4 box p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-medium text-sm">
+                {holdAllForApproval ? "FollowUp asks you before every message" : "FollowUp sends on your behalf"}
+              </p>
+              <p className="text-xs text-ink-soft mt-1">
+                {holdAllForApproval
+                  ? "Every follow-up it writes waits in Approvals until you send it. Nothing reaches a customer without you."
+                  : "Simple, low-risk follow-ups go out on their own. Anything about price, or anything sensitive, still waits for you — and it stops the moment a customer replies."}
+              </p>
+            </div>
+            {!holdAllForApproval && (
+              <button
+                onClick={() => saveSendPermission(false)}
+                disabled={permissionSaving}
+                className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium border"
+                style={{ borderColor: "var(--line)" }}
+              >
+                {permissionSaving ? "Saving…" : "Stop sending"}
+              </button>
+            )}
+          </div>
+
+          {holdAllForApproval && !confirmingPermission && (
+            <button
+              onClick={() => setConfirmingPermission(true)}
+              className="mt-4 text-xs font-medium underline underline-offset-2 text-ink-soft"
+            >
+              Let FollowUp send without asking
+            </button>
+          )}
+
+          {holdAllForApproval && confirmingPermission && (
+            <div className="mt-4 rounded-lg p-4" style={{ backgroundColor: "var(--card-2)" }}>
+              {/* --card-2, not --ink-soft. The first draft used
+                  --ink-soft for this surface, which is a TEXT token
+                  (#9ca3af / #52525b) — so the four facts below, set in
+                  text-ink-soft, rendered the same colour as the surface
+                  behind them and were invisible. --card-2 is the
+                  documented inset surface: "a second step for an inset
+                  surface (a code block, a quoted message)", which is
+                  exactly what this is. Caught by rendering the panel; no
+                  test would have seen it.
+
+                  What actually changes, in the order an owner would ask
+                  it. No "are you sure?" — that asks for nerve, not for a
+                  decision. This asks them to read four facts. */}
+              <p className="text-sm font-medium">If you allow this, from the next check onwards:</p>
+              <ul className="mt-2 space-y-1.5 text-xs text-ink-soft">
+                <li>• FollowUp will send follow-ups to your customers itself, signed as your business.</li>
+                <li>• Only the simple, low-risk ones. Anything about price or anything sensitive still waits for you.</li>
+                <li>• It still stops the moment a customer replies.</li>
+                <li>• Every message it sends is written down, with the reason, and you can turn this off at any time.</li>
+              </ul>
+              {permissionError && (
+                <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+                  {permissionError}
+                </p>
+              )}
+              <div className="mt-4 flex items-center gap-2">
+                <button
+                  onClick={() => saveSendPermission(true)}
+                  disabled={permissionSaving}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium"
+                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                >
+                  {permissionSaving ? "Saving…" : "Yes, send on my behalf"}
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmingPermission(false);
+                    setPermissionError(null);
+                  }}
+                  disabled={permissionSaving}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-ink-soft"
+                >
+                  Not yet
+                </button>
+              </div>
+            </div>
+          )}
+
+          {permissionError && !confirmingPermission && (
+            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+              {permissionError}
+            </p>
+          )}
+        </div>
+
         <div className="mt-4 box p-5">
           <div className="flex items-center justify-between gap-4">
             <div>

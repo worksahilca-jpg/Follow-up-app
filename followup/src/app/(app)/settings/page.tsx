@@ -165,6 +165,17 @@ function SettingsPageInner() {
   const [permissionSaving, setPermissionSaving] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [confirmingPermission, setConfirmingPermission] = useState(false);
+  // What is waiting right now, split by whether the approval setting is
+  // the only thing holding it. Fetched when the confirmation opens rather
+  // than on page load — it scans the audit trail, and only someone
+  // actually deciding needs the answer. null means "not asked yet or
+  // couldn't read it": the panel then describes the rules without
+  // numbers, which is honest, rather than showing a confident zero.
+  const [sendPreview, setSendPreview] = useState<{
+    total: number;
+    heldOnlyBySetting: number;
+    wouldWaitAnyway: number;
+  } | null>(null);
   const previousAutomationStateRef = useRef<{
     automationOn: boolean;
     instantAckOn: boolean;
@@ -1003,7 +1014,19 @@ function SettingsPageInner() {
 
           {holdAllForApproval && !confirmingPermission && (
             <button
-              onClick={() => setConfirmingPermission(true)}
+              onClick={() => {
+                setConfirmingPermission(true);
+                setSendPreview(null);
+                fetch("/api/automation/send-preview")
+                  .then((r) => r.json())
+                  .then((d) => {
+                    // Only on an explicit success. A failed read leaves
+                    // it null so the box shows the rules with no counts,
+                    // rather than "0 waiting" for a queue it couldn't read.
+                    if (d?.success) setSendPreview(d);
+                  })
+                  .catch(() => {});
+              }}
               className="mt-4 text-xs font-medium underline underline-offset-2 text-ink-soft"
             >
               Let FollowUp send without asking
@@ -1032,6 +1055,52 @@ function SettingsPageInner() {
                 <li>• It still stops the moment a customer replies.</li>
                 <li>• Every message it sends is written down, with the reason, and you can turn this off at any time.</li>
               </ul>
+
+              {/* The abstract rules above, made concrete with this
+                  business's own queue.
+
+                  Carefully worded. It does NOT say these would have been
+                  sent: while the hold is on, both schedulers skip the risk
+                  classifier entirely, so nothing has ever judged these
+                  drafts (see @/lib/sendPreview). What is knowable is which
+                  ones the setting is the ONLY thing stopping — that is what
+                  the number is, and the sentence says exactly that and no
+                  more. Absent when the count could not be read, rather than
+                  showing a zero the queue does not support. */}
+              {sendPreview && sendPreview.total > 0 && (
+                <p className="mt-3 text-xs" style={{ color: "var(--ink)" }}>
+                  Right now {sendPreview.total} {sendPreview.total === 1 ? "follow-up is" : "follow-ups are"} waiting.{" "}
+                  {sendPreview.heldOnlyBySetting > 0 ? (
+                    <>
+                      <strong>{sendPreview.heldOnlyBySetting}</strong>{" "}
+                      {sendPreview.heldOnlyBySetting === 1 ? "is" : "are"} waiting only because of this setting — FollowUp
+                      will check {sendPreview.heldOnlyBySetting === 1 ? "it" : "those"} and send what passes.
+                    </>
+                  ) : (
+                    <>None of them are waiting only because of this setting.</>
+                  )}
+                  {/* "The other N" only makes sense when some were
+                      counted. With none held by the setting it came out as
+                      "None of them are waiting only because of this
+                      setting. The other 4 need you either way." — there is
+                      no "other". Caught by rendering the empty-split case;
+                      the counts were right and the sentence was not. */}
+                  {sendPreview.heldOnlyBySetting > 0 && sendPreview.wouldWaitAnyway > 0 && (
+                    <>
+                      {" "}
+                      The other {sendPreview.wouldWaitAnyway} {sendPreview.wouldWaitAnyway === 1 ? "needs" : "need"} you
+                      either way.
+                    </>
+                  )}{" "}
+                  {/* The queue renders on the dashboard (ApprovalQueue in
+                      (app)/dashboard/page.tsx) — there is no /approvals
+                      route, which the first draft of this line linked to. */}
+                  <a href="/dashboard" className="underline underline-offset-2">
+                    Read them first
+                  </a>
+                  .
+                </p>
+              )}
               {permissionError && (
                 <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
                   {permissionError}

@@ -4638,3 +4638,94 @@ because the safe answer is the one that sends nothing.
    already knows the product. Whether a first-time owner understands "low-risk" the way the
    risk classifier means it is unknown, and that mismatch is precisely where an unwanted send
    would come from.
+
+---
+
+## 2026-09-22 — "What happens if I turn sending on?"
+
+The permission switch shipped earlier today with no way to see what it would do. An owner
+granted it and found out from their customers. This answers the question from the queue they
+already have, at the moment they are deciding.
+
+### The claim it must never make
+
+The obvious framing — *"here is what would have been sent"* — is a lie, and the reason is not
+visible from outside the code.
+
+**Both schedulers deliberately skip the risk classifier while the hold is on.** `automation.ts`
+and `sequences.ts` say so in as many words: *"on an account where nothing sends without review,
+it has nothing to decide, so its cost is not worth paying."* So for every lead currently
+waiting, **nothing has ever judged whether that draft was safe to send.** The answer does not
+exist to report, and a preview that implied otherwise would be the same class of defect as
+everything else fixed today: a sentence true-sounding in isolation and false in place.
+
+### What is knowable, and is therefore what it says
+
+The hold *reason* is precise. `automation.ts` builds it as an ordered cascade — a real risk
+finding first, then backfilled, then untouched, and only then the approval setting. So:
+
+- reason is one of the three `HOLD_ALL_*` constants → **every other check passed; the setting
+  alone stopped it**
+- any other reason → **the draft has a problem of its own and waits either way**
+
+That split is the feature. It tells an owner how much of their queue is their own choice and
+how much is FollowUp genuinely needing them — without promising what the risk gate will decide,
+because nothing knows that yet.
+
+**The sentence:** *"Right now 12 follow-ups are waiting. 9 are waiting only because of this
+setting — FollowUp will check those and send what passes. The other 3 need you either way.
+Read them first."*
+
+"Will check those and send what passes" is doing careful work: it says the gate runs, and
+declines to predict its verdict.
+
+### Decisions worth keeping
+
+- **Its own route, not folded into `/api/automation/settings`.** `getPendingApprovals` scans up
+  to 500 audit events; Settings is opened constantly and this answer is wanted once, at the
+  decision. Fetched when the confirmation opens, so an owner who never opens it never pays.
+- **Exact string matching on the three constants, never a substring.** These are customer-facing
+  prose that has been reworded before (all three, 2026-09-20, over a grammar bug). A fuzzy match
+  would keep passing while silently counting the wrong leads; an exact match fails loudly.
+- **An unrecognised reason counts as "needs you".** A new rule or a reworded constant falls on
+  the cautious side, never on "the setting is all that's stopping it".
+- **A failed read shows no numbers at all**, rather than a confident zero for a queue it could
+  not read.
+
+### Found by rendering, again
+
+Two bugs, neither visible to a test, both caught by putting the four states on screen:
+
+1. **The confirmation block was invisible** — `--ink-soft` used as a background, which is a TEXT
+   token. Fixed with `--card-2` and shipped as its own commit.
+2. **"None of them are waiting only because of this setting. The other 4 need you either way."**
+   There is no *other* when it is none. The counts were right and the sentence was not; the
+   clause is now conditional on the first count being non-zero.
+
+That is twice in one day that the render caught what 1605 passing tests could not.
+
+### Tests
+
+Eight in `sendPreview.test.ts`. Three guard the direction that matters — that a draft holding
+for its own reason is never counted as setting-only, that an unknown reason falls cautious, and
+that the examples never name a lead that waits anyway (they sit under a sentence about what the
+setting is holding, so naming one would contradict the line above it).
+
+1605 pass, eslint clean, tsc clean, `npx next build` clean.
+
+### Self-critique
+
+1. **It describes the queue, not the future.** An owner reasonably reads "9 are waiting only
+   because of this setting" as "9 will go out". Between now and their next cron tick the queue
+   moves, and the gate may hold some of those 9 anyway. The wording is careful; the inference
+   is still available to make.
+2. **The 500-event scan is inherited, not solved.** A business with a queue older than the scan
+   window gets a count quietly missing the stale end of it. `pendingApprovals` already carries
+   that limitation and its own comment calls a stale hold "a real bug worth surfacing some
+   other way" — still true, still unsurfaced.
+3. **The examples are computed and unused.** `getSendPreview` returns three names; the panel
+   shows only numbers. I built the data for a sentence I then judged too long for a
+   confirmation box. Either the names should earn their place or the field should go.
+4. **Still no actual dry run.** This says which holds the setting owns. It does not show the
+   owner the messages, side by side, as they would go out. That is the thing I would still
+   build next, and the queue link is a weaker substitute.

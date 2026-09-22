@@ -363,6 +363,30 @@ input::placeholder, textarea::placeholder {
 /* Someone who asked the OS for less movement gets the state change and
    none of the theatre. */
 @media (prefers-reduced-motion: reduce) {
+  /* Entrance motion, neutralised in CSS rather than in JavaScript.
+     `useReducedMotion()` cannot know the preference while the page is
+     rendered on the server, so a component that branches on it renders
+     one tree on the server and a different one in a reduced-motion
+     browser. React discards the mismatched tree and re-renders the whole
+     landing page on the client — and until that finishes, the server's
+     HTML is what the visitor is looking at: every block parked at
+     `opacity: 0`. A blank page, for exactly the people who asked for
+     less movement.
+
+     A media query has no such problem: the markup is identical
+     everywhere, and the browser resolves the preference itself. The
+     `!important` is load-bearing — it has to beat framer-motion's own
+     inline style. `[data-motion]` is the entrance wrapper;
+     `[data-motion-token]` is a purely decorative SMIL animation, which
+     has nothing to show at rest and is hidden outright. */
+  [data-motion] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  [data-motion-token] {
+    display: none !important;
+  }
+
   .switch,
   .switch-knob {
     transition-duration: 1ms;

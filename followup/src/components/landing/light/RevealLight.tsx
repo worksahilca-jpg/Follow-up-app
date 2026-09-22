@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
 /**
@@ -17,8 +17,21 @@ import type { ReactNode } from "react";
  * ever waits for a scroll event.
  *
  * A reduced-motion visitor gets the content rendered at rest with no
- * animation at all; the `initial` state is never applied, so nothing sits at
- * opacity 0 for them.
+ * animation at all. That is done in CSS — `[data-motion]` under
+ * `prefers-reduced-motion: reduce` in globals.css — and NOT by branching on
+ * `useReducedMotion()` here, which is what this component used to do.
+ *
+ * The branch was a hydration bug. `useReducedMotion()` returns false during
+ * server rendering, because the server cannot know the visitor's preference.
+ * So the server emitted the animated tree (every block at `opacity: 0`,
+ * waiting) while a reduced-motion browser rendered the plain one. React
+ * threw away the mismatched tree and re-rendered the entire landing page on
+ * the client; until that finished, the visitor was looking at the server's
+ * HTML, which is a blank page. The people who asked for less movement got
+ * the worst version of it.
+ *
+ * The media query has no server/client split, so the markup below is now
+ * identical in every environment.
  */
 export default function RevealLight({
   children,
@@ -33,18 +46,17 @@ export default function RevealLight({
   y?: number;
   mode?: "view" | "mount";
 }) {
-  const reduced = useReducedMotion();
-  if (reduced) return <div className={className}>{children}</div>;
   const transition = { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const, delay };
   if (mode === "mount") {
     return (
-      <motion.div className={className} initial={{ opacity: 0, y }} animate={{ opacity: 1, y: 0 }} transition={transition}>
+      <motion.div data-motion className={className} initial={{ opacity: 0, y }} animate={{ opacity: 1, y: 0 }} transition={transition}>
         {children}
       </motion.div>
     );
   }
   return (
     <motion.div
+      data-motion
       className={className}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}

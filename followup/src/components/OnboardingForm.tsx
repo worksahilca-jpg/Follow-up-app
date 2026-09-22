@@ -465,8 +465,29 @@ function HowItWorks({ onContinue, onSkip }: { onContinue: () => void; onSkip: ()
       body: "Using what was actually said in that conversation, in the language they wrote in.",
     },
     {
+      // The beat this file's own header calls "the one that has to be
+      // exactly true", and it was not.
+      //
+      // It read: "Anything it isn't certain about waits for your OK […]
+      // and you can turn sending off for one person or for everyone."
+      // Both halves were wrong the moment holdAllForApproval became
+      // @default(true) for every account (2026-09-21):
+      //
+      //   - "anything it isn't certain about" says some things DO go out
+      //     without asking. Nothing does. Every draft waits, on every
+      //     account, and this screen is shown while asking for send
+      //     access — the exact moment the header says the gap between a
+      //     surprise and a betrayal opens.
+      //   - "turn sending off" is backwards. It is already off; the
+      //     decision a business makes is turning it ON (Settings →
+      //     Automation). And "for one person" was false too: holdAll
+      //     short-circuits ahead of a lead's own automation tier, so
+      //     even a lead set to autonomous is held.
+      //
+      // Now states today's truth, names the choice, and keeps the
+      // guarantee that survives either way.
       title: "Nothing goes out behind your back",
-      body: "Anything it isn't certain about waits for your OK, everything stops the moment they reply, and you can turn sending off for one person or for everyone.",
+      body: "Every message it writes waits for your OK. When you're ready, you can let it send the simple ones itself — anything about price still waits for you. It stops the moment they reply.",
     },
   ];
 

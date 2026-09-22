@@ -4800,3 +4800,62 @@ queue rendered with a mixed list.
 4. **Rendered with invented data.** Five plausible cards I wrote. A real queue has lengths,
    names and reasons I have not seen, and the founder's own screenshot from 2026-09-20 is the
    only real sample this feature has ever been designed against.
+
+---
+
+## 2026-09-22 — The onboarding screen that exists to prevent a betrayal was committing one
+
+Third pass of the same audit: check what the product claims against what the code does. Today
+that found the landing page (twice) and the approval queue. This is onboarding.
+
+### The find
+
+`HowItWorks` is the third thing a new tester sees, and it is shown **while asking for permission
+to send from their inbox.** Its own file header singles out the third beat:
+
+> *"The third beat is the one that has to be exactly true. The old Connect Gmail screen
+> described a read-only product at the moment it asked for send access, and the comment there
+> recorded why that mattered: it is the gap between a surprise and a betrayal."*
+
+That beat read:
+
+> "Anything it **isn't certain about** waits for your OK, everything stops the moment they reply,
+> and you can **turn sending off** for one person or for everyone."
+
+Both halves stopped being true when `holdAllForApproval` became `@default(true)` on 2026-09-21:
+
+- **"anything it isn't certain about"** tells a reader that some things go out without asking.
+  Nothing does. Every draft waits, on every account.
+- **"turn sending off"** is backwards — it is already off; the decision a business makes is
+  turning it **on**. And **"for one person"** was false too: `holdAll` short-circuits ahead of a
+  lead's own `automationTier`, so even a lead set to autonomous is held.
+
+**So the screen written to close the surprise/betrayal gap was opening it, in the exact sentence
+written to close it.** A comment declaring a line must be exactly true is not a mechanism keeping
+it true — the same lesson as the test that tested its own copy, four hours earlier.
+
+**Now:** *"Every message it writes waits for your OK. When you're ready, you can let it send the
+simple ones itself — anything about price still waits for you. It stops the moment they reply."*
+True today, true after permission is granted, and it names the choice instead of describing a
+switch backwards.
+
+### Tests
+
+Four in `trustCopy.test.ts`, verified by restoring the old string and watching three fail. One
+guards the other direction: the stop-on-reply guarantee survives, because losing it while fixing
+the false half would be the overcorrection — the same mistake made this morning on the hero,
+where the honest version threw the pitch away.
+
+1613 pass, eslint clean, tsc clean, `npx next build` clean, screen rendered at phone width.
+
+### Self-critique
+
+1. **Beat three is now four lines** against two for the others. It is the trust beat and it
+   earns the room, but the screen is no longer three even steps and that imbalance is real.
+2. **Found by grep, not by walking onboarding.** Nobody has signed up as a new business and read
+   these screens in order. The other two beats were checked for false claims and are clean; that
+   is not the same as knowing the flow works.
+3. **"Anything about price still waits"** is one example standing in for the whole risk gate,
+   which also holds sensitive topics, ungrounded specifics and failed checks. The plainest
+   example beats an accurate list at this length — but it is an example, and a tester could
+   reasonably think price is the only thing held.

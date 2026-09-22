@@ -53,8 +53,17 @@ export default function LandingPage() {
                 today. Rather than rewrite the pitch for a temporary
                 posture, one line states the current truth where every
                 visitor sees it, and the FAQ's first answer agrees with
-                it. Both come out when the hold does. */}
-            <p className={styles.heroNote}>Free while in beta. No card. Nothing sends until you approve it.</p>
+                it.
+
+                The wording is the founder's, and it is the better one:
+                say that FollowUp DOES follow up on your behalf, and make
+                the supervision the trust line rather than the apology —
+                his words, "to build trust mention under your eyes". The
+                first draft here read "Nothing sends until you approve
+                it", which was honest and threw the entire pitch away in
+                order to say so. The half that goes when the hold lifts is
+                the second clause, not the first. */}
+            <p className={styles.heroNote}>Free while in beta. No card. It follows up for you — nothing sends without your OK.</p>
           </RevealLight>
         </div>
         <HeroFlow />
@@ -553,7 +562,7 @@ export default function LandingPage() {
                 // automation tier (automation.ts, the `holdAll || …`
                 // branch), so even a lead set to autonomous is held.
                 q: "Will it send things I did not approve?",
-                a: "No. While FollowUp is in beta, nothing goes out on its own — every reply it writes waits in your approvals list until you send it. That is true on every plan right now. Once we turn automatic sending on, it will still only ever be the simple, safe replies: anything about price, or anything sensitive, always waits for you. And once a customer answers, it stops either way.",
+                a: "No. FollowUp follows up on your behalf, under your eye: it writes every message, and while it is in beta nothing goes out on its own — each one waits in your approvals list until you send it. That is true on every plan right now. Automatic sending is coming, and it will only ever turn on for a business that asks for it: anything about price, or anything sensitive, always waits for you regardless. And once a customer answers, it stops either way.",
               },
               { q: "What about Instagram's 24-hour rule?", a: "Instagram only lets apps reply within 24 hours of a customer's last message. Inside that time, FollowUp replies by itself. After that, it writes one message you can send with a tap. It never moves the conversation to email without them." },
               { q: "Is my data safe?", a: "It only reads the inboxes you connect. With Gmail, that means it reads your incoming mail to spot customer enquiries, sends replies from your own address, and adds an event to your Google Calendar when a customer books a call. Everything is stored for your business only, and you can download or delete all of it whenever you want. Nothing is sold." },

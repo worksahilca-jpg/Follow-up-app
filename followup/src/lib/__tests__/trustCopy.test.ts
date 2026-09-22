@@ -281,15 +281,21 @@ describe("what the landing page says about sending, while the hold is on", () =>
   });
 
   it("says plainly in the hero that nothing sends without approval", () => {
+    // Founder's framing: the pitch stays ("it follows up for you"), the
+    // supervision is the trust line beside it. Both halves are asserted,
+    // because dropping the first is how the honest version of this line
+    // threw the whole product away in its first draft.
+    expect(landingCopy(), "the hero lost the pitch while stating the hold").toMatch(/It follows up for you/i);
     expect(
       landingCopy(),
       "the hero lost the beta sending caveat while the hold is still on"
-    ).toMatch(/Nothing sends until you approve it/i);
+    ).toMatch(/nothing sends without your OK/i);
   });
 
   it("the FAQ agrees with the hero rather than contradicting it", () => {
     const faq = landingCopy().slice(landingCopy().indexOf("Will it send things I did not approve?"));
     expect(faq, "the FAQ answer no longer states the beta hold").toMatch(/nothing goes out on its own/i);
+    expect(faq, "the FAQ lost the on-your-behalf framing the hero leads with").toMatch(/on your behalf, under your eye/i);
   });
 
   it("the FAQ no longer claims a lead can be switched to fully automatic", () => {

@@ -4497,8 +4497,18 @@ rewriting the pitch around approval is a repositioning that touches
 accepts the [[rejected#^R-012|#301]] failure mode — *they find out after signing up*.
 
 **Shipped:** the hero note, which every visitor sees, now reads *"Free while in beta. No card.
-Nothing sends until you approve it."* It replaced *"It stops the moment they reply"* — a true
-line, but one already made as promise 1 of the four, where this fact was made nowhere.
+It follows up for you — nothing sends without your OK."* It replaced *"It stops the moment they
+reply"* — a true line, but one already made as promise 1 of the four, where this fact was made
+nowhere.
+
+**The wording is the founder's, and it is a genuine correction to mine.** My draft read
+*"Nothing sends until you approve it"* — accurate, and it threw the entire pitch away in order
+to be accurate. His instruction: *"i want to say like this will follow up on behalf of you and
+to build trust mention under your eyes or something."* That keeps the promise (**it follows up
+for you**) and makes the supervision the *reason to trust it* rather than an apology for what
+it cannot do. **Principle, worth generalising: when a claim is too strong, the fix is to say
+what is true about the same promise — not to delete the promise.** I reached for subtraction
+and it cost the product its own sentence.
 
 **And the FAQ's first answer**, which is not scope creep: leaving *"only simple, safe replies
 go out on their own"* under a hero saying nothing sends would have rebuilt the exact

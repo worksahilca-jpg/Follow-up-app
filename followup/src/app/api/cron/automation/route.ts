@@ -27,14 +27,42 @@ export async function GET(request: NextRequest) {
   const unauthorized = requireCronSecret(request, "automation");
   if (unauthorized) return unauthorized;
 
+  const errors: string[] = [];
+  const failed = (label: string) => (err: unknown) => {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error(`[cron] ${label} failed:`, err);
+    errors.push(`${label}: ${message}`);
+    return null;
+  };
+
   try {
-    // Two independent automated-sending paths, both business-paced daily:
-    // the silence-triggered rule, and workflow (Sequence) steps. Run both
-    // from the one cron invocation rather than doubling up on Vercel Cron
-    // schedules for what's conceptually "today's automated sends."
+    /*
+     * Two independent automated-sending paths, both business-paced daily:
+     * the silence-triggered rule, and workflow (Sequence) steps. Run both
+     * from the one cron invocation rather than doubling up on Vercel Cron
+     * schedules for what's conceptually "today's automated sends."
+     *
+     * INDEPENDENT means independent. This was a bare Promise.all, which
+     * rejects the moment either one does — and each of these starts with
+     * an unguarded findMany, so one transient database error took down
+     * far more than itself:
+     *
+     *   - the OTHER path's results were discarded, including sends it had
+     *     already made, so the run's own record of what went out was lost
+     *   - the stale-approval reminders below never ran
+     *   - the inbound-event pruning below never ran
+     *   - the route returned 500 having actually done some of the work
+     *
+     * All of that from a blip in a query that lists which businesses have
+     * automation switched on. The per-business isolation inside each
+     * function was already careful; the join between them was not.
+     *
+     * Each path now fails alone. A path that throws is recorded and the
+     * rest of the tick continues.
+     */
     const [automation, sequences] = await Promise.all([
-      runAutomationForAllBusinesses(),
-      runSequencesForAllBusinesses(),
+      runAutomationForAllBusinesses().catch(failed("automation")),
+      runSequencesForAllBusinesses().catch(failed("sequences")),
     ]);
 
     /*
@@ -52,7 +80,7 @@ export async function GET(request: NextRequest) {
      * (see staleApprovals.ts) for the same reason pruning below does.
      */
     const staleApprovals = await remindStaleApprovalsForAllBusinesses().catch((err) => {
-      console.error("Stale-approval reminders failed:", err);
+      failed("stale-approval reminders")(err);
       return { checked: 0, reminded: 0 };
     });
     // Retention for the raw inbound-capture log (InboundWebhookEvent):
@@ -64,12 +92,25 @@ export async function GET(request: NextRequest) {
     // Deliberately outside the Promise.all and after it: a pruning failure
     // must never be able to fail the actual automation run.
     const pruned = await pruneInboundWebhookEvents().catch((err) => {
-      console.error("[cron] inbound webhook event pruning failed:", err);
+      failed("inbound webhook event pruning")(err);
       return { deleted: 0 };
     });
-    return NextResponse.json({ success: true, automation, sequences, staleApprovals, pruned });
+
+    /*
+     * 500 only when BOTH send paths died, which is the one case where the
+     * tick genuinely did nothing and an uptime check should shout.
+     *
+     * A partial failure returns 200 with `errors` populated and whatever
+     * ran reported honestly. That is deliberate: reporting a 500 for a run
+     * that sent real messages would make the response a worse record than
+     * no response at all, and the console.error above is what carries the
+     * failure to Sentry either way.
+     */
+    const body = { success: errors.length === 0, automation, sequences, staleApprovals, pruned, errors };
+    const nothingRan = automation === null && sequences === null;
+    return NextResponse.json(body, { status: nothingRan ? 500 : 200 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Automation run failed.";
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    return NextResponse.json({ success: false, message, errors }, { status: 500 });
   }
 }

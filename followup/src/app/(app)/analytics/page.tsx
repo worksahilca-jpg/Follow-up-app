@@ -31,7 +31,9 @@ export default async function AnalyticsPage() {
           <EmptyState
             icon={Inbox}
             title="No data yet"
-            description="Connect Gmail in Settings to sync your inbox, or add a lead to get started — your stats will show up here once there's activity to measure."
+            /* Third copy of the Gmail-only sentence, fixed with the other
+               two on 2026-09-22 — see leads/LeadsPageClient.tsx. */
+            description="Connect a lead source in Settings — your inbox, website form, DMs or CRM — or add a lead by hand. Your stats show up here once there's activity to measure."
             action={
               <Link
                 href="/settings"

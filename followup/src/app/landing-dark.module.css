@@ -335,6 +335,12 @@
   font-size: 12px;
   color: var(--muted);
 }
+/* Pushes the "Soon" pill to the right edge of a source row. Layout only —
+   the pill itself is .pill .pillMuted, the same one the product cards use,
+   rather than a second near-identical chip. */
+.srcSoon {
+  margin-left: auto;
+}
 .flowWires {
   display: none;
 }

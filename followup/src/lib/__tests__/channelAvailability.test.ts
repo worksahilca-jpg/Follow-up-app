@@ -82,6 +82,90 @@ describe("dropped channels", () => {
 });
 
 /**
+ * The same rule, one directory over.
+ *
+ * "does not promise a channel it cannot connect" reads `app/page.tsx` and
+ * nothing else. That was the whole landing page when it was written; since
+ * the 2026-09-18 rebuild the hero is a component, and the component was
+ * listing "Missed call · via your phone line" beside Gmail and WhatsApp
+ * with no mark on it — the exact promise this file exists to stop, made in
+ * the first thing a visitor sees, in a file the guard did not read.
+ *
+ * Fixed 2026-09-22 on the founder's call ("we are not giving voice agent
+ * services right now, but we can do 'coming soon'"): the row stays and
+ * carries a "Soon" pill, and the FAQ answers what that means. These tests
+ * cover the whole landing directory so the next component cannot slip
+ * through the same way.
+ */
+describe("the landing page's components make the same promises as the page", () => {
+  const LANDING = [
+    "../src/components/landing/dark/HeroFlow.tsx",
+    "../src/components/landing/dark/NavDark.tsx",
+    "../src/components/landing/dark/FaqDark.tsx",
+    "../src/components/landing/dark/StickyCta.tsx",
+  ];
+  const visible = (p: string) =>
+    read(p)
+      .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+
+  it("names no dropped channel in any landing component", () => {
+    if (CARRIER_CHANNELS_AVAILABLE) return; // re-enabled — the claims are true again
+    for (const path of LANDING) {
+      const copy = visible(path);
+      for (const claim of [/SMS/, /Twilio/, /voicemail/i]) {
+        expect(copy, `${path} promises ${claim}`).not.toMatch(claim);
+      }
+    }
+  });
+
+  /**
+   * The narrow guarantee, stated as the reader meets it: the hero's phone
+   * row is marked. Asserted on the row's own data rather than on the file
+   * containing the word "Soon" somewhere, which a second unmarked source
+   * would pass.
+   */
+  it("marks the hero's phone-line source as not yet available", () => {
+    if (CARRIER_CHANNELS_AVAILABLE) return;
+    const hero = read("../src/components/landing/dark/HeroFlow.tsx");
+    const row = hero.slice(hero.indexOf("const SOURCES"), hero.indexOf("const REPLIES"));
+    const phone = row.split("\n").find((l) => l.includes("phone line"));
+    expect(phone, "the hero no longer lists the phone line at all").toBeTruthy();
+    expect(phone, "the hero lists the phone line as a live source again").toMatch(/soon:\s*true/);
+
+    // …and the mark is rendered, not just declared. A `soon` field nothing
+    // reads would pass the assertion above and show the visitor nothing.
+    expect(hero, "the hero reads no `soon` flag when it draws a source").toMatch(/soon\s*&&/);
+  });
+
+  it("does not quietly mark a channel that does work", () => {
+    const hero = read("../src/components/landing/dark/HeroFlow.tsx");
+    const row = hero.slice(hero.indexOf("const SOURCES"), hero.indexOf("const REPLIES"));
+    for (const live of ["Gmail", "Instagram", "WhatsApp", "your website"]) {
+      const line = row.split("\n").find((l) => l.includes(live));
+      expect(line, `the hero no longer shows ${live}`).toBeTruthy();
+      expect(line, `the hero says ${live} is coming soon — it works today`).not.toMatch(/soon:\s*true/);
+    }
+  });
+
+  /**
+   * The pill says "Soon"; a visitor deciding whether to sign up needs to
+   * know what happens to their phone in the meantime. Without this the
+   * mark is decoration — they still find out after signing up, which is
+   * the failure described at the top of this file.
+   */
+  it("answers what 'Soon' means where a visitor will look", () => {
+    if (CARRIER_CHANNELS_AVAILABLE) return;
+    const faq = read("app/page.tsx").slice(read("app/page.tsx").indexOf("<FaqDark"));
+    expect(faq, "the FAQ does not mention the phone at all").toMatch(/phone/i);
+    expect(faq, "the FAQ does not say the phone line is not picked up yet").toMatch(
+      /nothing on your phone line is picked up/i
+    );
+  });
+});
+
+/**
  * The cost of the mistake this file exists to prevent, in its second form.
  * Hiding the carrier offer hid WhatsApp with it, because both were set up
  * from one Twilio panel — so a channel the product offers had no setup UI

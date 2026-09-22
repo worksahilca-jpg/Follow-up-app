@@ -531,6 +531,15 @@ export default function LandingPage() {
               { q: "What about Instagram's 24-hour rule?", a: "Instagram only lets apps reply within 24 hours of a customer's last message. Inside that time, FollowUp replies by itself. After that, it writes one message you can send with a tap. It never moves the conversation to email without them." },
               { q: "Is my data safe?", a: "It only reads the inboxes you connect. With Gmail, that means it reads your incoming mail to spot customer enquiries, sends replies from your own address, and adds an event to your Google Calendar when a customer books a call. Everything is stored for your business only, and you can download or delete all of it whenever you want. Nothing is sold." },
               { q: "Is it for a team, or just me?", a: "Both. Add your team, see who is behind, and send new customers to the right person." },
+              {
+                // The other half of the "Soon" pill on the hero's phone-line
+                // row. The pill flags it; this is the honest answer, and the
+                // only place on the page the phone line is explained. Says
+                // plainly that nothing on the phone is captured today, so
+                // nobody signs up expecting it (2026-09-22).
+                q: "Can it answer my phone?",
+                a: "Not yet. Answering a missed call and talking to the caller — in their language — is built, but phone companies make every business register before a number can be used this way, and we are not through that yet. Until it is, nothing on your phone line is picked up. FollowUp works today on Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form.",
+              },
             ]}
           />
         </RevealLight>

@@ -4304,3 +4304,77 @@ separate "none assigned to you" wording.
    dashboard stays empty"**, which is false for a business capturing through the website
    widget. Same family, left alone because it belongs to the setup-steps logic rather than
    to an empty state, and that deserves its own look.
+
+---
+
+## 2026-09-22 — The phone line says "Soon" instead of pretending
+
+**Founder's words:** *"we are not giving voice agent services right now, but we can do
+'coming soon' or something, right?"* — the first item on the landing-page gap list from the
+13 Sep research (*the voice agent is invisible on the page*), answered his way: not by hiding
+it and not by selling it.
+
+### What was actually wrong — worse than "invisible"
+
+The hero's lead-flow diagram lists five sources, and the fourth is **"Missed call · via your
+phone line"**, unmarked, beside Gmail and WhatsApp. `CARRIER_CHANNELS_AVAILABLE` is `false`:
+the voice agent is built and the inbound routes are live, but no business can point a number
+at FollowUp until the carrier registration clears. So the page was not failing to mention the
+voice agent. It was **promising a channel a visitor then cannot connect** — the exact failure
+`channelAvailability.test.ts` was written to prevent, in the first thing anyone sees.
+
+It got there because that guard reads `app/page.tsx` and nothing else. That was the whole
+landing page when it was written; the hero became a component in the 18 Sep rebuild and
+walked straight around it. **A guard scoped to a file is scoped to a file, not to a rule.**
+
+### What shipped
+
+1. **A `.pill .pillMuted` "Soon"** on that one row, right-aligned. Not a new chip — the same
+   pill the product cards use, so nothing near-duplicate entered the system. The diagram's
+   `aria-label` names the phone line as coming soon too.
+2. **A fifth FAQ item — "Can it answer my phone?"** — carrying the real answer: what it will
+   do, that phone companies make every business register first, and, plainly, that **nothing
+   on your phone line is picked up** today. The pill flags it; this explains it.
+
+### What deliberately did not ship
+
+- **No new section.** [[approved#^A-015|A-015]] settles the page's section list. A "what's
+  coming" band would be deviating from an approved decision, which is his call, not mine.
+- **No "notify me", no waitlist, no email capture** — [[rejected#^R-012|R-012]] is
+  unambiguous: the site sells, it does not enrol. An earlier draft ended the FAQ answer with
+  *"we will tell you when the phone line is ready"*; cut, because it implies a mechanism that
+  does not and must not exist.
+- **Not in the integrations card.** That card's off-toggle means *you have not turned this on*.
+  Putting an unavailable channel in the same shape would read as connectable — dishonest in
+  the opposite direction.
+
+### Tests
+
+Four new assertions in `channelAvailability.test.ts`, now reading the whole
+`components/landing/` directory rather than one file. **Verified by removal:** flipping the
+row's `soon` to `false` fails; deleting the rendered pill while keeping the flag also fails
+(a field nothing reads would otherwise pass). Two guard the other direction — that a working
+source is never marked "Soon", and that the FAQ actually says the phone is not picked up, so
+the pill cannot become decoration. Rendered and looked at, both states. 1572 pass, eslint
+clean, `npx next build` clean.
+
+### Self-critique
+
+1. **"Soon" is a word with no date behind it.** It is honest about availability and says
+   nothing about when, which is the weakest kind of honest. The FAQ carries the reason, but a
+   visitor who reads only the hero learns "not yet" and no more. Naming a month would be
+   better and would also be a promise nobody here can keep — the registration is not ours to
+   schedule.
+2. **The hero now has a caveat in it.** The thesis picture is the strongest thing on the page
+   and this puts a small "not yet" inside it. Worth it — an unmarked promise costs more — but
+   it is a real cost, and removing the row entirely was the alternative I did not take because
+   the founder asked for the opposite.
+3. **The fix is behind a flag with nothing to un-do it.** When the registration clears,
+   someone has to remember to flip `soon: true` and pull the FAQ item. `CARRIER_CHANNELS_
+   AVAILABLE` gates the tests but not the copy, so the copy will lie in the other direction
+   the day the channel works. A derived `soon: !CARRIER_CHANNELS_AVAILABLE` would be
+   structurally right; it is not done here because the page must not import pricing flags
+   into a client component, and that deserves its own look.
+4. **The FAQ answer is five sentences.** Long for this page's register. Each one is doing
+   work — what it does, why not yet, what is not captured, what does work — but it is the
+   longest answer in the list and it earns that place only if a visitor actually opens it.

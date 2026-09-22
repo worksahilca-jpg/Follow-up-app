@@ -4729,3 +4729,74 @@ setting is holding, so naming one would contradict the line above it).
 4. **Still no actual dry run.** This says which holds the setting owns. It does not show the
    owner the messages, side by side, as they would go out. That is the thing I would still
    build next, and the queue link is a weaker substitute.
+
+---
+
+## 2026-09-22 — The approval queue buried the drafts worth reading
+
+### The defect
+
+`getPendingApprovals` sorted by recency alone. On a holding account — which is every account —
+that puts the only cards worth reading in a random position.
+
+Nine cards say the same generic sentence: *"Held because your account holds every automated
+message for you to approve before it goes out."* Somewhere among them, wherever it happened to
+land, is one saying *"Held because the draft quotes a price nobody in this conversation
+mentioned — check it before it goes."*
+
+**That one is about to send a made-up number to a customer in the owner's name.** The other nine
+need a glance. An owner scanning twelve near-identical cards has no way to tell which is which.
+
+Which is the product's own thesis — *"which customer am I about to lose?"* — failing on the
+product's own screen. FollowUp exists to stop a business scanning an undifferentiated list and
+missing the one that matters, and its most trust-bearing screen was an undifferentiated list.
+
+The founder's own queue produced the example: 2026-09-20, a lead asked what a consultation cost
+and the draft answered *"El costo será de $100"* — a price nobody had mentioned.
+
+### The fix
+
+Drafts that need a judgement sort above drafts the approval setting alone is holding. Recency
+stays as the tiebreak inside each group — among drafts that are alike, newest first is still
+right.
+
+The predicate is the one built this morning for the permission preview
+(`isHeldOnlyByApprovalSetting`), moved to `holdReasons.ts` so both callers share it without a
+cycle. **An unrecognised reason counts as needing a human**, so a new rule or a reworded
+constant lands at the top rather than buried.
+
+**One quiet line marks the boundary:** *"The rest are waiting only because you asked FollowUp to
+check with you first."* Order alone is invisible — a reader cannot distinguish a deliberate sort
+from the order things happened to be held in — so the line says what changed underfoot. It
+renders only when there is a boundary, and there is no heading above the first group because
+"Needs your OK" already names it.
+
+### A test that tested itself
+
+The first draft of the ordering test **reimplemented the comparator inline**, with a comment
+claiming the two could not drift. They could: it was a test of the copy, and it would keep
+passing while the shipped order drifted away from it. `compareApprovals` is now exported and the
+test drives the real thing — **verified by deleting the group check and watching three tests
+fail.** Worth remembering as its own lesson: a comment asserting two things agree is not a
+mechanism making them agree.
+
+### Tests
+
+Four added (twelve in the file). 1609 pass, eslint clean, tsc clean, `npx next build` clean,
+queue rendered with a mixed list.
+
+### Self-critique
+
+1. **Two groups, and the important one is a mixed bag.** "Needs a judgement" holds the
+   made-up-price draft, the never-messaged lead, and the ordinary "went quiet 5 days ago —
+   your call". The first is a near-miss; the last is routine. A third tier would separate them
+   and I did not build one, because the boundary between "check this" and "decide this" is not
+   something the hold reason currently distinguishes.
+2. **The divider is very quiet** — 12px, grey, between cards. Right for the brand, and it may
+   simply not be seen. Unknown until a real owner looks at a real queue.
+3. **It reorders; it does not reduce.** Nine routine cards are still nine cards to clear. The
+   real fix for a holding account is fewer things needing a human, not a better order among
+   them — which is what the permission switch is for, and why these two shipped the same day.
+4. **Rendered with invented data.** Five plausible cards I wrote. A real queue has lengths,
+   names and reasons I have not seen, and the founder's own screenshot from 2026-09-20 is the
+   only real sample this feature has ever been designed against.

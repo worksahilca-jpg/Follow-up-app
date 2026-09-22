@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
 
 /**
  * "Needs your OK" — research/product/2026-09-10-ux-simplification.md
@@ -214,9 +215,35 @@ export default function ApprovalQueue({
         FollowUp drafted these already — approve to send exactly what&apos;s shown, or edit it first.
       </p>
       <div className="mt-4 flex flex-col gap-2">
-        {visible.map((item) => (
-          <ApprovalCard key={item.leadId} item={item} onResolved={(leadId) => setResolved((prev) => new Set(prev).add(leadId))} />
-        ))}
+        {visible.map((item, i) => {
+          /*
+           * The boundary between the two groups, labelled once.
+           *
+           * getPendingApprovals now orders drafts that need a judgement
+           * ahead of drafts the approval setting alone is holding. Order
+           * on its own is invisible — a reader cannot tell a deliberate
+           * sort from the order things happened to be held in — so the
+           * line below says what changed underfoot, and only when there
+           * is actually a boundary to mark.
+           *
+           * No heading above the first group: it starts under "Needs
+           * your OK", which already names it. A second heading there
+           * would be the same sentence twice.
+           */
+          const routine = isHeldOnlyByApprovalSetting(item.reason);
+          const firstRoutine = routine && (i === 0 || !isHeldOnlyByApprovalSetting(visible[i - 1].reason));
+          const anyBefore = i > 0;
+          return (
+            <Fragment key={item.leadId}>
+              {firstRoutine && anyBefore && (
+                <p className="mt-4 text-xs text-ink-soft">
+                  The rest are waiting only because you asked FollowUp to check with you first.
+                </p>
+              )}
+              <ApprovalCard item={item} onResolved={(leadId) => setResolved((prev) => new Set(prev).add(leadId))} />
+            </Fragment>
+          );
+        })}
       </div>
     </div>
   );

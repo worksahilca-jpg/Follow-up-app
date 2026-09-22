@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
+import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
 
 /**
  * The approval queue — research/product/2026-09-10-ux-simplification.md
@@ -49,6 +50,18 @@ export type PendingApproval = {
   leadLastMessage: string | null;
   leadLastMessageChannel: string | null;
 };
+
+/**
+ * Exported so its tests drive the real thing. A copy of this logic in a
+ * test file is a test of the copy: it keeps passing while the shipped
+ * order drifts away from it.
+ */
+export function compareApprovals(a: { reason: string; heldAt: Date }, b: { reason: string; heldAt: Date }): number {
+  const aNeedsYou = !isHeldOnlyByApprovalSetting(a.reason);
+  const bNeedsYou = !isHeldOnlyByApprovalSetting(b.reason);
+  if (aNeedsYou !== bNeedsYou) return aNeedsYou ? -1 : 1;
+  return b.heldAt.getTime() - a.heldAt.getTime();
+}
 
 export async function getPendingApprovals(businessId: string): Promise<PendingApproval[]> {
   // One row per lead — the most recent AuditEvent naming that lead —
@@ -118,7 +131,26 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
       leadLastMessageChannel: lastInbound?.channel ?? null,
     });
   }
-  return approvals.sort((a, b) => b.heldAt.getTime() - a.heldAt.getTime());
+  /*
+   * Drafts that need a judgement come first; everything else follows,
+   * newest first within each group.
+   *
+   * This used to be recency alone, and on a holding account that buries
+   * the only cards worth reading. Nine say the same generic sentence —
+   * "your account holds every automated message for you to approve" —
+   * and mixed in among them, in whatever order they happened to be held,
+   * is one saying "the draft quotes a price nobody in this conversation
+   * mentioned". That one is about to send a made-up number to a customer
+   * in the owner's name; the other nine only need a glance.
+   *
+   * An owner scanning twelve near-identical cards has no way to tell
+   * which is which, which is the product's own thesis — "which one am I
+   * about to lose?" — failing on the product's own screen.
+   *
+   * Recency stays as the tiebreak inside each group: among drafts that
+   * are alike, the newest is still the most useful first.
+   */
+  return approvals.sort(compareApprovals);
 }
 
 /**

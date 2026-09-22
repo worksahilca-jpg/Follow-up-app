@@ -86,3 +86,29 @@ export const UNGROUNDED_DRAFT_REASONS: Record<string, string> = {
 export function renderHeldBecause(reason: string): string {
   return `Held because ${reason.replace(/\.\s*$/, "")}.`;
 }
+
+/**
+ * The three reasons above that mean "nothing was wrong with this draft —
+ * the account's approval setting is what stopped it".
+ *
+ * Lives here, beside the constants, because it is a fact ABOUT the
+ * reasons: @/lib/pendingApprovals needs it to order the queue and
+ * @/lib/sendPreview needs it to count, and those two already depend on
+ * each other in one direction.
+ *
+ * Matched exactly, never by substring. These strings are customer-facing
+ * prose that gets reworded — all three were rewritten on 2026-09-20 over
+ * a grammar bug — and a fuzzy match would quietly start classifying the
+ * wrong drafts after an edit nobody connected to this function. An exact
+ * match fails loudly instead, and a reason this set has never seen counts
+ * as "needs a human", which is the safe side.
+ */
+const HELD_ONLY_BY_SETTING: ReadonlySet<string> = new Set([
+  HOLD_ALL_AUTOMATION_REASON,
+  HOLD_ALL_SEQUENCE_REASON,
+  HOLD_ALL_FIRST_REPLY_REASON,
+]);
+
+export function isHeldOnlyByApprovalSetting(reason: string): boolean {
+  return HELD_ONLY_BY_SETTING.has(reason);
+}

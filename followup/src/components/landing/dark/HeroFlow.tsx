@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Mail, Camera, FileText, Phone, MessageCircle } from "lucide-react";
 import styles from "@/app/landing-dark.module.css";
 import LogoMark from "@/components/LogoMark";
@@ -52,7 +52,7 @@ const REPLIES = [
   { initials: "AL", name: "Alex Lin", text: "Booked a call for Friday.", when: "2 hr ago" },
 ];
 
-function Wires({ side, animate }: { side: "in" | "out"; animate: boolean }) {
+function Wires({ side }: { side: "in" | "out" }) {
   const paths = Array.from({ length: N }, (_, i) => {
     const y = centreY(i);
     return side === "in" ? `M0 ${y} C 55 ${y}, 45 ${MID}, 100 ${MID}` : `M0 ${MID} C 55 ${MID}, 45 ${y}, 100 ${y}`;
@@ -62,9 +62,8 @@ function Wires({ side, animate }: { side: "in" | "out"; animate: boolean }) {
       {paths.map((d, i) => (
         <path key={`l${i}`} id={`wire-${side}-${i}`} d={d} className={styles.wireLine} />
       ))}
-      {animate &&
-        paths.map((d, i) => (
-          <path key={`t${i}`} d="M0 0 h0.01" className={side === "in" ? styles.token : styles.tokenWarm}>
+      {paths.map((d, i) => (
+          <path key={`t${i}`} data-motion-token d="M0 0 h0.01" className={side === "in" ? styles.token : styles.tokenWarm}>
             <animateMotion dur="3.4s" begin={`${i * 0.6 + (side === "out" ? 1.5 : 0)}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1" keyTimes="0;1">
               <mpath href={`#wire-${side}-${i}`} />
             </animateMotion>
@@ -91,26 +90,18 @@ const FROM: { x: number; y: number; r: number }[] = [
 const SPRING = { type: "spring", stiffness: 120, damping: 18, mass: 0.9 } as const;
 
 export default function HeroFlow() {
-  const reduced = useReducedMotion();
-  const animate = !reduced;
-  const fromEverywhere = (i: number) =>
-    reduced
-      ? {}
-      : {
-          initial: { opacity: 0, x: FROM[i].x, y: FROM[i].y, rotate: FROM[i].r, scale: 0.9 },
-          animate: { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 },
-          transition: { ...SPRING, delay: 0.35 + i * 0.16, opacity: { duration: 0.4, delay: 0.35 + i * 0.16 } },
-        };
+  const fromEverywhere = (i: number) => ({
+    initial: { opacity: 0, x: FROM[i].x, y: FROM[i].y, rotate: FROM[i].r, scale: 0.9 },
+    animate: { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 },
+    transition: { ...SPRING, delay: 0.35 + i * 0.16, opacity: { duration: 0.4, delay: 0.35 + i * 0.16 } },
+  });
   // replies start where the tile is (about 340px to the left of the reply
   // column on desktop, and above it on phones) and travel out
-  const outOfTile = (i: number) =>
-    reduced
-      ? {}
-      : {
-          initial: { opacity: 0, x: -340, y: MID - centreY(i), scale: 0.6 },
-          animate: { opacity: 1, x: 0, y: 0, scale: 1 },
-          transition: { ...SPRING, stiffness: 110, delay: 1.7 + i * 0.4, opacity: { duration: 0.35, delay: 1.7 + i * 0.4 } },
-        };
+  const outOfTile = (i: number) => ({
+    initial: { opacity: 0, x: -340, y: MID - centreY(i), scale: 0.6 },
+    animate: { opacity: 1, x: 0, y: 0, scale: 1 },
+    transition: { ...SPRING, stiffness: 110, delay: 1.7 + i * 0.4, opacity: { duration: 0.35, delay: 1.7 + i * 0.4 } },
+  });
 
   return (
     <div className={styles.flow}>
@@ -124,7 +115,7 @@ export default function HeroFlow() {
           <div className={styles.flowLabel}>Leads come in from everywhere</div>
           <div className={styles.flowList}>
             {SOURCES.map(({ title, via, Icon, soon }, i) => (
-              <motion.div key={title} className={styles.src} {...fromEverywhere(i)}>
+              <motion.div key={title} data-motion className={styles.src} {...fromEverywhere(i)}>
                 <span className={styles.srcIcon}>
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
@@ -139,11 +130,11 @@ export default function HeroFlow() {
         </div>
 
         <div className={styles.flowWires}>
-          <Wires side="in" animate={animate} />
+          <Wires side="in" />
         </div>
 
         <div className={styles.flowHub}>
-          <motion.div className={`${styles.hub} ${animate ? styles.hubPulse : ""}`} {...(reduced ? {} : { initial: { opacity: 0, scale: 0.7, y: 40 }, animate: { opacity: 1, scale: 1, y: 0 }, transition: { ...SPRING, delay: 0.15 } })}>
+          <motion.div data-motion className={`${styles.hub} ${styles.hubPulse}`} initial={{ opacity: 0, scale: 0.7, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ ...SPRING, delay: 0.15 }}>
             <LogoMark height={46} />
           </motion.div>
           <div className={styles.hubName}>FollowUp</div>
@@ -151,14 +142,14 @@ export default function HeroFlow() {
         </div>
 
         <div className={styles.flowWires}>
-          <Wires side="out" animate={animate} />
+          <Wires side="out" />
         </div>
 
         <div className={styles.flowCol}>
           <div className={styles.flowLabel}>and they answer</div>
           <div className={styles.flowList}>
             {REPLIES.map(({ initials, name, text, when }, i) => (
-              <motion.div key={name} className={styles.lead} {...outOfTile(i)}>
+              <motion.div key={name} data-motion className={styles.lead} {...outOfTile(i)}>
                 <span className={styles.avatar}>{initials}</span>
                 <span className={styles.leadText}>
                   <span className={styles.leadName}>

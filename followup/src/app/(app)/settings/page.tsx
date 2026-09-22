@@ -1011,8 +1011,18 @@ function SettingsPageInner() {
           )}
 
           {holdAllForApproval && confirmingPermission && (
-            <div className="mt-4 rounded-lg p-4" style={{ backgroundColor: "var(--ink-soft)" }}>
-              {/* What actually changes, in the order an owner would ask
+            <div className="mt-4 rounded-lg p-4" style={{ backgroundColor: "var(--card-2)" }}>
+              {/* --card-2, not --ink-soft. The first draft used
+                  --ink-soft for this surface, which is a TEXT token
+                  (#9ca3af / #52525b) — so the four facts below, set in
+                  text-ink-soft, rendered the same colour as the surface
+                  behind them and were invisible. --card-2 is the
+                  documented inset surface: "a second step for an inset
+                  surface (a code block, a quoted message)", which is
+                  exactly what this is. Caught by rendering the panel; no
+                  test would have seen it.
+
+                  What actually changes, in the order an owner would ask
                   it. No "are you sure?" — that asks for nerve, not for a
                   decision. This asks them to read four facts. */}
               <p className="text-sm font-medium">If you allow this, from the next check onwards:</p>

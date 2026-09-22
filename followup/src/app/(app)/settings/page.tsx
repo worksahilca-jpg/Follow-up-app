@@ -826,7 +826,15 @@ function SettingsPageInner() {
         </div>
         {!gmailConnected && !outlookConnected && (
           <p className="text-xs text-ink-soft mt-2">
-            Connect Gmail or Outlook to start pulling in your real leads — until then the dashboard stays empty.
+            {/* Until 2026-09-22 this promised that the dashboard would show
+                nothing at all without an inbox. It sits under the
+                Gmail/Outlook panel, so naming the inbox is right — but the
+                dashboard fills from any of eight sources, and a business
+                capturing through the website widget was told its working
+                setup produced nothing. The sentence now claims only what
+                this panel actually controls. */}
+            Connect Gmail or Outlook to pull leads in from your inbox. The other sources below work on
+            their own.
           </p>
         )}
       </section>

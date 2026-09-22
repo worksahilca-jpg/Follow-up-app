@@ -88,6 +88,18 @@ describe("an empty screen never names one source out of eight", () => {
   }
 });
 
+describe("the Settings inbox panel", () => {
+  it("does not claim the dashboard stays empty without an inbox", () => {
+    // Same family, found in the same pass. It sits under the Gmail/Outlook
+    // panel so naming the inbox is right — but the dashboard fills from any
+    // of eight sources, and a business capturing through the website widget
+    // was told its working setup produced nothing.
+    const source = app("(app)/settings/page.tsx");
+    const lines = source.split("\n").filter((l) => !l.trimStart().startsWith("*") && !l.trimStart().startsWith("//"));
+    expect(lines.join("\n")).not.toMatch(/until then the dashboard stays empty/);
+  });
+});
+
 describe("what an empty screen still has to do", () => {
   it("Leads keeps both ways forward — add one, or go connect something", () => {
     // An empty state with no action is a dead end, which is worse than a

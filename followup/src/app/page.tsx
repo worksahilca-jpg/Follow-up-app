@@ -45,7 +45,16 @@ export default function LandingPage() {
                 Start free <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-            <p className={styles.heroNote}>Free while in beta. No card. It stops the moment they reply.</p>
+            {/* The beta caveat, founder's call 2026-09-22. Six places on
+                this page sell replies going out on their own, and
+                Business.holdAllForApproval defaults to true for every
+                account with no way to turn it off — it overrides even a
+                lead set to fully autonomous, so nothing sends for anyone
+                today. Rather than rewrite the pitch for a temporary
+                posture, one line states the current truth where every
+                visitor sees it, and the FAQ's first answer agrees with
+                it. Both come out when the hold does. */}
+            <p className={styles.heroNote}>Free while in beta. No card. Nothing sends until you approve it.</p>
           </RevealLight>
         </div>
         <HeroFlow />
@@ -535,7 +544,17 @@ export default function LandingPage() {
         <RevealLight delay={0.08}>
           <FaqDark
             items={[
-              { q: "Will it send things I did not approve?", a: "Only simple, safe replies go out on their own. Anything about price, or anything sensitive, waits for you. Once a customer answers, it stops. You can turn it fully on or fully off for any customer." },
+              {
+                // Had to move with the hero note or the page would
+                // contradict itself in two places — the same defect as
+                // #301, which is what made the hold worth stating at all.
+                // "You can turn it fully on for any customer" was false
+                // too: holdAll short-circuits ahead of a lead's own
+                // automation tier (automation.ts, the `holdAll || …`
+                // branch), so even a lead set to autonomous is held.
+                q: "Will it send things I did not approve?",
+                a: "No. While FollowUp is in beta, nothing goes out on its own — every reply it writes waits in your approvals list until you send it. That is true on every plan right now. Once we turn automatic sending on, it will still only ever be the simple, safe replies: anything about price, or anything sensitive, always waits for you. And once a customer answers, it stops either way.",
+              },
               { q: "What about Instagram's 24-hour rule?", a: "Instagram only lets apps reply within 24 hours of a customer's last message. Inside that time, FollowUp replies by itself. After that, it writes one message you can send with a tap. It never moves the conversation to email without them." },
               { q: "Is my data safe?", a: "It only reads the inboxes you connect. With Gmail, that means it reads your incoming mail to spot customer enquiries, sends replies from your own address, and adds an event to your Google Calendar when a customer books a call. Everything is stored for your business only, and you can download or delete all of it whenever you want. Nothing is sold." },
               {

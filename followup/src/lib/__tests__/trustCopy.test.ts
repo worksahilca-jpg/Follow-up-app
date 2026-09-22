@@ -232,3 +232,82 @@ describe("what the landing page promises about team routing", () => {
     expect(pro, "the Pro tier no longer says what team assignment does").toMatch(/shared out evenly/i);
   });
 });
+
+/**
+ * The page sold sending; the product sends nothing.
+ *
+ * Six places promised replies going out on their own — "FollowUp replies
+ * for you" as the $39 tier's headline benefit, "Simple replies go out on
+ * their own" in the features grid, and, sharpest, "You approve every
+ * reply before it goes out" listed as a FREE tier feature, which tells a
+ * reader that paying removes the approval step.
+ *
+ * `Business.holdAllForApproval` is `@default(true)` in the schema, the
+ * settings route reads it but never writes it, and it short-circuits
+ * ahead of a lead's own tier in all three send paths (automation.ts,
+ * acknowledge.ts, sequences.ts). So no account can turn it off, a lead
+ * set to fully autonomous is still held, and nothing sends for anyone.
+ * Production agreed: zero outbound messages in 24h across 8 businesses.
+ *
+ * Founder's call 2026-09-22, choosing between four options: keep the
+ * pitch, state the current truth in one line. These pin that line and the
+ * FAQ answer that has to agree with it — the pairing matters, because a
+ * page that says "nothing sends" in the hero and "replies go out on their
+ * own" in the FAQ is the #301 self-contradiction rebuilt.
+ *
+ * WHEN THE HOLD IS LIFTED: flip the schema default, then delete this
+ * block and the two pieces of copy it guards. The failure will be these
+ * tests passing while the page understates what ships — the opposite
+ * error, and the reason the skip below is deliberately absent.
+ */
+describe("what the landing page says about sending, while the hold is on", () => {
+  const landingRaw = () => readFileSync(join(__dirname, "..", "..", "app", "page.tsx"), "utf8");
+  const landingCopy = () =>
+    landingRaw()
+      .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "")
+      .replace(/\s+/g, " ");
+
+  const schema = () => readFileSync(join(__dirname, "..", "..", "..", "prisma", "schema.prisma"), "utf8");
+
+  it("the hold is still on — if not, the copy below is now the wrong copy", () => {
+    // The trigger to remove this whole block, stated as an assertion
+    // rather than a comment nobody reads.
+    expect(
+      schema(),
+      "holdAllForApproval is no longer default-true — the beta sending caveat on the landing page is now understating the product, and this describe block should go"
+    ).toMatch(/holdAllForApproval\s+Boolean\s+@default\(true\)/);
+  });
+
+  it("says plainly in the hero that nothing sends without approval", () => {
+    expect(
+      landingCopy(),
+      "the hero lost the beta sending caveat while the hold is still on"
+    ).toMatch(/Nothing sends until you approve it/i);
+  });
+
+  it("the FAQ agrees with the hero rather than contradicting it", () => {
+    const faq = landingCopy().slice(landingCopy().indexOf("Will it send things I did not approve?"));
+    expect(faq, "the FAQ answer no longer states the beta hold").toMatch(/nothing goes out on its own/i);
+  });
+
+  it("the FAQ no longer claims a lead can be switched to fully automatic", () => {
+    // holdAll wins over Lead.automationTier, so "turn it fully on for any
+    // customer" was false in exactly the place a cautious buyer checks.
+    const faq = landingCopy().slice(landingCopy().indexOf("Will it send things I did not approve?"));
+    expect(faq, "the FAQ promises a per-customer fully-on switch the hold overrides").not.toMatch(
+      /turn it fully on/i
+    );
+  });
+
+  it("still describes what automatic sending will be, rather than deleting the idea", () => {
+    // The founder chose "keep the pitch, add the caveat". An answer that
+    // only said "nothing sends" would have thrown away the product's
+    // actual design along with the false claim.
+    const faq = landingCopy().slice(landingCopy().indexOf("Will it send things I did not approve?"));
+    expect(faq, "the FAQ dropped the money/sensitive guarantee entirely").toMatch(
+      /anything about price[^.]*always waits for you/i
+    );
+  });
+});

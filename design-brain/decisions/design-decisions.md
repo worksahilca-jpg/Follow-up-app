@@ -4458,3 +4458,88 @@ the paid one lingered. 1576 pass, eslint clean, `npx next build` clean.
    and I have now written that substitute twice instead of fixing the cause.
 4. **Gap 6 (the hero device) is still unanswered.** Asked twice; R-005 and R-009 both reject a
    mockup hero, so it stays untouched rather than guessed at.
+
+---
+
+## 2026-09-22 — The page sold sending; the product sends nothing
+
+**Founder's decision**, choosing between four options put to him: *keep the pitch, state the
+current truth in one line.*
+
+### The finding
+
+Six places on the landing page promised replies going out on their own:
+
+| Where | What it said |
+|---|---|
+| Plus card description | "Every channel, with FollowUp **replying for you**." |
+| Plus feature list | "**FollowUp replies for you**" |
+| Features grid | "**Simple replies go out on their own.**" |
+| How it works, step 4 | "…or **let simple ones go out on their own**." |
+| FAQ 1 | "Only simple, safe replies **go out on their own**." |
+| **Free** card | "You approve every reply before it goes out" — listed as a *Free tier* feature, which tells a reader that **paying removes the approval step**. |
+
+`Business.holdAllForApproval` is `@default(true)` in the schema. `/api/automation/settings`
+reads it and **never writes it**, so no business can turn it off. It short-circuits *ahead of*
+`Lead.automationTier` in all three send paths (`automation.ts` line 825, `acknowledge.ts` 529,
+`sequences.ts` 685) — so even a lead deliberately set to autonomous is held. Production
+agreed: **zero outbound messages in 24h across 8 businesses.**
+
+Nothing sends for anyone, on any plan, and there is no switch.
+
+### Why one line and not a rewrite
+
+Three of the four options were rejected *by the founder*, and the reasoning is worth keeping:
+turning the hold off would undo a decision he made two days ago (*"don't send any replies
+without asking me"*) before a single tester has watched it send anything unsupervised;
+rewriting the pitch around approval is a repositioning that touches
+[[approved#^A-013|A-013]] and the tier cards, hard to undo mid-beta; and leaving it flagged
+accepts the [[rejected#^R-012|#301]] failure mode — *they find out after signing up*.
+
+**Shipped:** the hero note, which every visitor sees, now reads *"Free while in beta. No card.
+Nothing sends until you approve it."* It replaced *"It stops the moment they reply"* — a true
+line, but one already made as promise 1 of the four, where this fact was made nowhere.
+
+**And the FAQ's first answer**, which is not scope creep: leaving *"only simple, safe replies
+go out on their own"* under a hero saying nothing sends would have rebuilt the exact
+self-contradiction of #301 on a single page. It now leads with the beta truth, keeps the
+money/sensitive guarantee as what automatic sending *will* be, and drops *"you can turn it
+fully on for any customer"* — false for the same short-circuit reason.
+
+**Not touched:** the four remaining claims. The founder said keep the pitch; a beta caveat
+in the hero governs the page, and rewording all six would have been the repositioning he
+declined.
+
+### Tests
+
+Five assertions in `trustCopy.test.ts`, verified by removal in both directions. The important
+one is a **tripwire, not a guard**:
+
+```
+it("the hold is still on — if not, the copy below is now the wrong copy")
+```
+
+It asserts the schema default is still `true`. The day that flips, this test fails and names
+the caveat as the thing to delete — because the real risk is these tests passing forever
+while the page understates a product that has started sending. Deliberately has no skip.
+
+1581 pass, eslint clean, `npx next build` clean, hero rendered and read at 1440.
+
+### Self-critique
+
+1. **One line is doing a lot of work.** It sits under the CTA in 13px grey, and it has to
+   correct four claims further down the page that still say the opposite. A reader who scrolls
+   to Pricing without reading the hero note gets the old story. I raised this; the founder's
+   call was the caveat, and I think it is right for a beta — but it is a compromise, not a
+   clean fix.
+2. **"Nothing sends until you approve it" reads as permanent.** It is a beta fact. The words
+   "while in beta" were cut because the same sentence already opens with "Free while in beta"
+   and saying it twice read badly. The tripwire test is what actually protects this, not the
+   copy.
+3. **The Free card still implies paying removes approval.** It says "You approve every reply
+   before it goes out" as a Free feature. True of Free; currently true of everything. The hero
+   line defuses it rather than fixing it, and a reader comparing cards side by side may still
+   draw the wrong conclusion. The honest fix is the repositioning that was declined.
+4. **Found by auditing claims against code, not by testing the product.** Nobody has run a
+   tester through signup and watched what they expect versus what happens. That would have
+   found this in ten minutes, and would find things this method cannot.

@@ -28,6 +28,29 @@
 export const HOLD_ALL_AUTOMATION_REASON =
   "your account holds every automated message for you to approve before it goes out";
 
+/**
+ * Held because the conversation predates the permission being granted.
+ *
+ * The queue's most confusing moment without it. An owner turns sending on
+ * expecting things to start moving, and instead the queue looks FULLER
+ * than before — because every draft that had piled up while the switch
+ * was off is still there, deliberately (see automation.ts's backlog
+ * guards: granting means "from now on", never "and everything since").
+ *
+ * With no sentence of its own that reads as the feature not working. One
+ * sentence covers both switches, because which of the two held it is not
+ * a distinction the owner has any use for — what they need to know is
+ * that this is old, that it is theirs to release, and that the queue is
+ * not broken.
+ *
+ * Counted as held-only-by-the-setting below, which is what keeps these
+ * releasable in one press. A backlog draft has no problem of its own; it
+ * is waiting on a decision, and the decision is exactly what the routine
+ * pile's button makes.
+ */
+export const BACKLOG_BEFORE_PERMISSION_REASON =
+  "this one was already waiting before you turned sending on, so FollowUp left it for you rather than sending it with everything else";
+
 /** Business.holdAllForApproval, reached via a workflow step. */
 export const HOLD_ALL_SEQUENCE_REASON = "your account holds every follow-up for your approval before it sends";
 
@@ -107,6 +130,12 @@ const HELD_ONLY_BY_SETTING: ReadonlySet<string> = new Set([
   HOLD_ALL_AUTOMATION_REASON,
   HOLD_ALL_SEQUENCE_REASON,
   HOLD_ALL_FIRST_REPLY_REASON,
+  // Backlog belongs here, and that is load-bearing rather than
+  // incidental: this set is what the one-click routine pile is built
+  // from, so leaving it out would hold the entire back catalogue in a
+  // queue with no way to release it except one lead at a time — which
+  // would make the backlog guard a trap instead of a courtesy.
+  BACKLOG_BEFORE_PERMISSION_REASON,
 ]);
 
 export function isHeldOnlyByApprovalSetting(reason: string): boolean {

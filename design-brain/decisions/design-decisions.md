@@ -5532,3 +5532,60 @@ and now pins the stamp and its clearing. 1715 pass; eslint, build and tsc clean.
    the other side writing reads as backlog indefinitely.
 4. **Proven against mocks only.** No database here; the stamp, the comparison and the hold have
    never been watched on a real account.
+
+---
+
+## 2026-09-23 — Telling the owner why the queue did not shrink
+
+Closes the open item from the two entries above. Founder: *"sure."*
+
+### The confusing moment
+
+An owner turns sending on expecting things to start moving, opens the queue, and finds it
+**fuller than before** — because everything that piled up while the switch was off is still
+there, deliberately. Every one of those drafts carried the generic line, *"your account holds
+every automated message for you to approve"*, which by then is no longer true.
+
+With no sentence of its own, the backlog guard reads as the feature not working. The guard is
+right and the silence around it was the bug.
+
+### The sentence
+
+> "this one was already waiting before you turned sending on, so FollowUp left it for you rather
+> than sending it with everything else"
+
+**One sentence for both switches.** Which of the two held it is not a distinction an owner has
+any use for; what they need is that this is old, it is theirs to release, and nothing is broken.
+
+**Below `holdAll` in the cascade.** While the hold is on, *that* is why the draft is waiting, and
+the backlog line would be a more specific answer to a question nobody asked. It becomes the true
+sentence only once a permission has actually been granted.
+
+**Below every real finding**, like the rest of the cascade. "This was already waiting" on a draft
+that quotes a made-up price would bury the thing that matters.
+
+### The part that is load-bearing
+
+The reason is added to `HELD_ONLY_BY_SETTING`, which is what the one-click routine pile is built
+from. Leave it out and the entire back catalogue sits in the queue with no way out but one lead
+at a time — **the backlog guard becomes a trap instead of a courtesy**, and the "release it
+deliberately" story the last two entries rest on quietly stops working.
+
+Both safety guards still apply: a backlog draft the classifier did not clear is not safe, and
+being old does not make it safe.
+
+### Tests
+
+5 new, verified by removal: dropping it from the safe set fails 1 (the trap), removing the
+sentence fails 1. 1720 pass; eslint, build and tsc clean.
+
+### Self-critique
+
+1. **Still nothing at the top of the queue.** Each card explains itself now, but an owner facing
+   48 backlog drafts reads 48 identical sentences rather than one line saying "48 of these are
+   from before you turned it on". The summary line is where this really belongs.
+2. **Not rendered.** The sentence is asserted through `runAutomationForBusiness`, never seen on
+   a card.
+3. **Three near-identical mechanisms now.** `autonomousBacklog`, `autoSendBacklog` and this
+   shared reason. The consolidation flagged last entry is overdue rather than less needed.
+4. **Wordy for a card.** Twenty-three words, where the cards around it run to eight or ten.

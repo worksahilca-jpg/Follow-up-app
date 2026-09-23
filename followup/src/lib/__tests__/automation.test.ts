@@ -2072,3 +2072,84 @@ describe("the moment sending on your behalf is switched on", () => {
     expect(result.heldReasons[0]).toContain("holds every automated message");
   });
 });
+
+/**
+ * What the owner is told about a queue that did not shrink.
+ *
+ * The most confusing moment the backlog guards create. Somebody turns
+ * sending on expecting things to start moving, opens the queue, and finds
+ * it FULLER than before — because everything that piled up while the
+ * switch was off is still sitting there, deliberately.
+ *
+ * With no sentence of its own, that reads as the feature not working.
+ */
+describe("the sentence on a backlog draft", () => {
+  it("says it was already waiting, rather than reusing the generic hold line", async () => {
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: new Date("2026-09-23T00:00:00Z"),
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Weeks ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(result.heldReasons[0]).toContain("already waiting before you turned sending on");
+  });
+
+  it("keeps the generic hold line while the hold is still on", async () => {
+    // Below holdAll in the cascade on purpose: while everything is held,
+    // THAT is why this is waiting, and the backlog sentence would be a
+    // more specific answer to a question nobody asked.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: null,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: true,
+    });
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValue([]);
+    const result = await runAutomationForBusiness("biz1");
+    expect(result.heldReasons[0]).toContain("holds every automated message");
+  });
+
+  it("does not claim backlog for a draft held by a real finding", async () => {
+    // A risk finding outranks it. "This was already waiting" on a draft
+    // that quotes a made-up price would bury the thing that matters.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: new Date("2026-09-23T00:00:00Z"),
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Weeks ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "high", reason: "the draft quotes a price nobody mentioned" });
+
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(result.heldReasons[0]).toContain("quotes a price nobody mentioned");
+  });
+});

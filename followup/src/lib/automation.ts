@@ -74,7 +74,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -1114,6 +1114,14 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
                 ? UNTOUCHED_LEAD_REASON
               : holdAll
                 ? HOLD_ALL_AUTOMATION_REASON
+              : // Below holdAll on purpose. While the hold is on, THAT is
+                // why this is waiting and saying anything else would be a
+                // more specific answer to a question nobody asked. The
+                // backlog sentence only becomes the true one once the
+                // owner has actually granted a permission and is looking
+                // at a queue that did not shrink.
+                autonomousBacklog || autoSendBacklog
+                ? BACKLOG_BEFORE_PERMISSION_REASON
                 : isUnanswered
                   ? `${firstName} wrote ${daysQuiet} days ago and never got an answer — this reply is yours to send`
                   : `${firstName} went quiet ${daysQuiet} days ago — reaching back out is your call`;

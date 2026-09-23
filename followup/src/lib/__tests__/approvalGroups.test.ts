@@ -33,7 +33,7 @@
 import { describe, it, expect } from "vitest";
 import { groupApprovalsBySource, isSafeToSendInBulk, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
 import type { PendingApproval } from "@/lib/pendingApprovals";
-import { HOLD_ALL_AUTOMATION_REASON, UNGROUNDED_DRAFT_REASONS, UNTOUCHED_LEAD_REASON } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, UNGROUNDED_DRAFT_REASONS, UNTOUCHED_LEAD_REASON } from "@/lib/holdReasons";
 
 let seq = 0;
 function approval(over: Partial<PendingApproval> = {}): PendingApproval {
@@ -83,6 +83,22 @@ describe("what may be sent without anyone reading it", () => {
     for (const reason of [UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS.currency, UNGROUNDED_DRAFT_REASONS.digits]) {
       expect(isSafeToSendInBulk({ reason, draftRiskLevel: "low" }), `"${reason.slice(0, 40)}…" was treated as safe`).toBe(false);
     }
+  });
+
+  it("keeps a backlog draft releasable in one press", () => {
+    // Load-bearing, not incidental. A backlog draft is held because the
+    // owner had not granted permission when that conversation happened —
+    // it has no problem of its own. If it did not count as safe, the
+    // entire back catalogue would sit in the queue with no way out but
+    // one lead at a time, and the backlog guard would be a trap rather
+    // than a courtesy.
+    expect(isSafeToSendInBulk({ reason: BACKLOG_BEFORE_PERMISSION_REASON, draftRiskLevel: "low" })).toBe(true);
+  });
+
+  it("still refuses a backlog draft the classifier did not clear", () => {
+    // Being old does not make it safe. Both guards still apply.
+    expect(isSafeToSendInBulk({ reason: BACKLOG_BEFORE_PERMISSION_REASON, draftRiskLevel: null })).toBe(false);
+    expect(isSafeToSendInBulk({ reason: BACKLOG_BEFORE_PERMISSION_REASON, draftRiskLevel: "high" })).toBe(false);
   });
 
   it("refuses a reason it has never seen", () => {

@@ -277,6 +277,24 @@ model Business {
   // on" rather than reaching back to the first time.
   autonomousAllowedAt  DateTime?
 
+  // WHEN the owner granted "send on my behalf" — i.e. when
+  // holdAllForApproval was turned OFF. Null while it is on.
+  //
+  // The same guard as autonomousAllowedAt above, for the switch with the
+  // WIDER blast radius. Every draft in the approval queue is sendable the
+  // instant the hold lifts, and the queue is where a holding account's
+  // entire history accumulates: turning this on without a line would
+  // release weeks of drafts on the next tick, about conversations that
+  // ended long ago.
+  //
+  // Null is deliberately NOT treated as "no permission" here, unlike the
+  // autonomous pair. An account whose hold was lifted before this column
+  // existed has no stamp, and reading that as "everything is backlog"
+  // would silently freeze a working account. So the guard applies only
+  // where a grant was actually recorded — every grant from 2026-09-23 on.
+  // (No account is in that older state today: all of them still hold.)
+  autoSendAllowedAt    DateTime?
+
   // When Meta last confirmed this app is subscribed to the account's
   // `messages` webhook. Null on a connected account means the
   // subscription never succeeded — the account is saved and readable,

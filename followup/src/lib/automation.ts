@@ -420,7 +420,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // always resolves against the same timezone.
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { timezone: true, tier: true, holdAllForApproval: true, autonomousAllowed: true, autonomousAllowedAt: true },
+    select: { timezone: true, tier: true, holdAllForApproval: true, autonomousAllowed: true, autonomousAllowedAt: true, autoSendAllowedAt: true },
   });
   const timezone = business?.timezone ?? "America/New_York";
   const tier = (business?.tier ?? "plus") as "free" | "plus" | "pro";
@@ -455,6 +455,21 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
    * refuse everything — the safe direction.
    */
   const autonomousAllowedAt = business?.autonomousAllowedAt ?? null;
+  /**
+   * When "send on my behalf" was granted — the same line as
+   * autonomousAllowedAt, for the switch with the wider blast radius.
+   *
+   * Every draft in the approval queue becomes sendable the instant the
+   * hold lifts, and the queue is exactly where a holding account's whole
+   * history piles up. Without this, turning it on releases weeks of
+   * drafts on the next tick, about conversations that ended long ago.
+   *
+   * Null does NOT mean "no permission" here, unlike the autonomous pair.
+   * An account whose hold was lifted before this column existed has no
+   * stamp, and reading that as "all backlog" would silently freeze a
+   * working account. The guard applies only where a grant was recorded.
+   */
+  const autoSendAllowedAt = business?.autoSendAllowedAt ?? null;
 
   const deadLeadRule = await prisma.automation.findFirst({ where: { businessId, action: DEAD_LEAD_ACTION } });
   const deadLeadEnabled = deadLeadRule?.enabled ?? true; // on by default, like everything else here
@@ -889,6 +904,22 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
        * exactly what the silence nudge is for.
        */
       const autonomousBacklog = lead.automationTier === "AUTONOMOUS" && !movedSincePermission;
+      /**
+       * The same backlog rule for the account-wide send permission.
+       *
+       * Only bites once the hold is actually off (while it is on, every
+       * draft is held anyway) and only where a grant time was recorded —
+       * see autoSendAllowedAt above for why a missing stamp is not
+       * treated as "everything is backlog".
+       *
+       * Held rather than downgraded, for the reason the autonomous
+       * version learned the hard way: a downgrade still sends the safe
+       * ones, which is exactly the flood this is meant to prevent.
+       */
+      const autoSendBacklog =
+        !holdAll &&
+        autoSendAllowedAt != null &&
+        (newestMessageAt == null || newestMessageAt <= autoSendAllowedAt);
       if (holdAll || isUntouched || effectiveTier !== "AUTONOMOUS" || tier === "free") {
         /**
          * Every draft that reaches here gets a verdict, including ones
@@ -999,7 +1030,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         // `isCold`, so this only ever holds MORE than before, never less.
         // `isBackfilled` joins `isCold` for the same reason and with the
         // same shape: it only ever holds MORE than before, never less.
-        if (holdAll || autonomousBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched) {
+        if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
           // it with the message it was written against, which is what lets

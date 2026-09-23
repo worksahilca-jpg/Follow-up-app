@@ -5478,3 +5478,57 @@ fails 3. 1711 pass; eslint, build, tsc clean.
    look fuller than expected.
 4. **Never observed end to end.** No database here, so the grant-stamp, the comparison and the
    hold are proven against mocks only.
+
+---
+
+## 2026-09-23 — The same guard for the wider switch
+
+Closes the open item flagged as most important in the entry above. Founder: *"sure."*
+
+### The bigger blast
+
+Turning off `holdAllForApproval` — "send on my behalf" — makes **every draft in the approval
+queue** sendable on the next tick. The queue is precisely where a holding account's entire
+history accumulates, so this releases weeks of drafts about conversations that ended long ago.
+
+Wider than the Auto version in two ways: it is not limited to leads on Auto, and it is the
+switch an owner is most likely to press first.
+
+`Business.autoSendAllowedAt` is the line, stamped on grant and **cleared on revoke** — so
+granting again starts a fresh window rather than reaching back and releasing everything held in
+between. Held outright, not downgraded, for the reason the Auto version learned the hard way.
+
+### One deliberate asymmetry
+
+Null here does **not** mean "no permission", unlike the autonomous pair.
+
+An account whose hold was lifted before this column existed has no stamp, and reading that as
+"everything is backlog" would silently freeze a working account — a worse failure than the one
+this guard prevents, and one nobody would notice until customers stopped hearing back. So the
+guard applies only where a grant was actually recorded.
+
+Checked against production before deciding: all 9 businesses still hold, so no account is in
+that older state today. The asymmetry is protection against a state that cannot currently
+occur, which is the right time to add it.
+
+### Tests
+
+4 new. Verified by removal — and the first attempt was an **ineffective mutation**: deleting the
+null check left a comparison against null, which is false in JS, so behaviour did not change and
+no test failed. Replaced with a mutation that genuinely inverts the rule, which fails 14.
+Removing the guard itself fails 1. An existing test also caught the change to the update payload
+and now pins the stamp and its clearing. 1715 pass; eslint, build and tsc clean.
+
+### Self-critique
+
+1. **Still nothing tells the owner.** Backlog is held with an ordinary hold reason. After
+   granting either permission the queue simply looks fuller than expected, with no sentence
+   anywhere saying "these are from before you turned it on". This is now true of both switches
+   and is the obvious next piece of work.
+2. **Two near-identical mechanisms.** `autonomousBacklog` and `autoSendBacklog` sit side by side
+   with subtly different null semantics for good reasons, which is exactly the shape that drifts.
+   They should probably be one helper with the difference as a parameter.
+3. **"Moved since" is still the newest message.** A lead that becomes newly due later without
+   the other side writing reads as backlog indefinitely.
+4. **Proven against mocks only.** No database here; the stamp, the comparison and the hold have
+   never been watched on a real account.

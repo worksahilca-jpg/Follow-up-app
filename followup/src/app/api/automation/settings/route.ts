@@ -138,7 +138,15 @@ export async function POST(request: NextRequest) {
       where: { id: ctx.businessId },
       // The one inversion inbound. `granted` is the owner's decision;
       // `holdAllForApproval` is its opposite.
-      data: { holdAllForApproval: !granted },
+      data: {
+        holdAllForApproval: !granted,
+        // Stamped on grant, cleared when the hold goes back on. This is
+        // what stops the switch releasing the whole queue at once: the
+        // send path refuses to act on any conversation older than this
+        // moment, so what was already waiting stays waiting until the
+        // owner releases it deliberately.
+        autoSendAllowedAt: granted ? new Date() : null,
+      },
     });
     // Named for what happened rather than for the field, so the trail
     // reads as a decision someone made. recordAudit already carries who

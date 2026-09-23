@@ -1962,3 +1962,113 @@ describe("the moment Auto is switched on", () => {
     expect(typeof call[0].data.suggestedMessage).toBe("string");
   });
 });
+
+/**
+ * The moment "send on my behalf" is switched on.
+ *
+ * The same guard as the Auto one above, for the switch with the WIDER
+ * blast radius — and the one an owner is most likely to press first.
+ *
+ * Every draft in the approval queue is sendable the instant the hold
+ * lifts, and the queue is exactly where a holding account's entire
+ * history accumulates. Without a line, turning this on releases weeks of
+ * drafts on the next tick, about conversations that ended long ago. It is
+ * not limited to leads on Auto: it is everything.
+ */
+describe("the moment sending on your behalf is switched on", () => {
+  const GRANTED_AT = new Date("2026-09-23T00:00:00Z");
+
+  function justGranted() {
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: GRANTED_AT,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+  }
+
+  it("does not release a draft about a conversation that ended before the switch", async () => {
+    justGranted();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Months ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(send, "the whole approval queue emptied itself on the first tick").not.toHaveBeenCalled();
+    expect(result.held).toBe(1);
+  });
+
+  it("sends on a conversation that moved after the switch", async () => {
+    justGranted();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Just now.", sentAt: new Date("2026-09-23T09:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(send).toHaveBeenCalled();
+  });
+
+  it("leaves an account that lifted the hold before this existed alone", async () => {
+    // No stamp means we do not know when it was granted. Reading that as
+    // "all backlog" would silently freeze a working account, which is a
+    // worse failure than the one this guard prevents — so the guard
+    // applies only where a grant was actually recorded.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: null,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Months ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(send, "an account working before this change was frozen by it").toHaveBeenCalled();
+  });
+
+  it("does not apply while the hold is still on", async () => {
+    // Belt and braces: with the hold on, everything is held anyway, so
+    // this term must not be what is doing the work.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: null,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: true,
+    });
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValue([]);
+    const result = await runAutomationForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(result.heldReasons[0]).toContain("holds every automated message");
+  });
+});

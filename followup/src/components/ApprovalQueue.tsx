@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { groupApprovalsBySource, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
+import { QUEUE_PAGE_SIZE, nextStep, visibleCount } from "@/lib/queuePaging";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import SafePileAction from "@/components/SafePileAction";
 import SafePilePeek from "@/components/SafePilePeek";
@@ -181,6 +182,19 @@ export default function ApprovalQueue({
 }) {
   const [resolved, setResolved] = useState<Set<string>>(new Set());
   const visible = items.filter((i) => !resolved.has(i.leadId));
+  /**
+   * How many needs-you cards each source has been asked to show.
+   *
+   * Keyed by source name, absent meaning QUEUE_PAGE_SIZE — so a source
+   * that appears later (the owner connects Instagram, a first DM lands)
+   * starts folded like every other, with no entry to seed.
+   *
+   * A COUNT and not a set of ids, which is what makes the pile behave
+   * like a queue: resolve the top card and the sixth rises into view by
+   * itself, because slice(0, 5) now lands one further down a shorter
+   * list. A set of "revealed ids" would leave a hole instead.
+   */
+  const [expanded, setExpanded] = useState<Record<string, number>>({});
 
   // An empty queue used to `return null`, so a good day rendered as a greeting,
   // three tiles and a link — and the screen read as broken rather than as calm.
@@ -297,7 +311,10 @@ export default function ApprovalQueue({
       )}
 
       <div className="mt-6 flex flex-col gap-6">
-        {groups.map((group) => (
+        {groups.map((group) => {
+          const shownHere = visibleCount(group.needsYou.length, expanded[group.source] ?? QUEUE_PAGE_SIZE);
+          const hiddenHere = group.needsYou.length - shownHere;
+          return (
           <section key={group.source}>
             {/* Dense heading, not a box — see the note above. */}
             <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -310,13 +327,44 @@ export default function ApprovalQueue({
             </div>
 
             <div className="mt-2 flex flex-col gap-2">
-              {group.needsYou.map((item) => (
+              {group.needsYou.slice(0, shownHere).map((item) => (
                 <ApprovalCard
                   key={item.leadId}
                   item={item}
                   onResolved={(leadId) => setResolved((prev) => new Set(prev).add(leadId))}
                 />
               ))}
+
+              {/* The folded tail. Same row shape as the routine pile
+                  below it — a sentence, the best name in it, and one
+                  control — because they are the same kind of thing: a
+                  count standing in for cards nobody needs on screen yet.
+
+                  The section heading above still reports the true total,
+                  so nothing here hides how much is waiting; it only
+                  declines to draw it. */}
+              {hiddenHere > 0 && (
+                <div className="box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-ink-soft">
+                    {hiddenHere} more {hiddenHere === 1 ? "needs" : "need"} your OK
+                    {group.needsYou[shownHere] && (
+                      <span className="text-ink"> — next is {group.needsYou[shownHere].leadName}</span>
+                    )}
+                  </p>
+                  <button
+                    onClick={() =>
+                      setExpanded((prev) => ({ ...prev, [group.source]: shownHere + QUEUE_PAGE_SIZE }))
+                    }
+                    className="rounded-lg px-3.5 py-1.5 text-sm font-medium border border-line hover:bg-paper"
+                  >
+                    {/* Counted, not assumed: QUEUE_TAIL_TOLERANCE means
+                        one press often reveals more than the page size,
+                        and a button that overstates what it will do is
+                        the kind of small lie this product cannot afford. */}
+                    Show {nextStep(group.needsYou.length, shownHere)} more
+                  </button>
+                </div>
+              )}
 
               {group.safeToSend.length > 0 && (
                 <div className="box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
@@ -335,7 +383,8 @@ export default function ApprovalQueue({
               )}
             </div>
           </section>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

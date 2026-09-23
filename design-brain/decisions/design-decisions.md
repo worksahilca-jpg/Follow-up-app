@@ -5925,3 +5925,106 @@ three had been live for some time and none had been noticed.
 
 A fresh account on a clean browser is not a nice-to-have before shipping to strangers. It is the
 only configuration that matches what a stranger sees.
+
+---
+
+## 2026-09-23 — The oldest gap: 600 cards stop rendering as 600 cards
+
+Named three times across three reviews and never moved — *"600 drafts means 600 cards in one
+page"*, then *"600 cards render as 600 cards"*, then *"unchanged, and now the oldest
+outstanding gap."* Closed today.
+
+It was never hypothetical. `pendingApprovals.ts` scans up to 500 leads, and on a holding
+account `Lead.suggestedRiskLevel` is null for every draft written before the classifier ran.
+`isSafeToSendInBulk` calls null unsafe — correctly, that is the whole point of A-023's narrow
+bar — so the entire backlog lands in `needsYou`, and every one of them renders a full card
+carrying the lead's message and the drafted reply. Server-rendered, then hydrated. The first
+tester with a real inbox meets a page that takes seconds to paint.
+
+### Why it is not pagination
+
+Page numbers were the obvious answer and they are wrong here. Nobody visits page 4 of their
+approvals. The queue is already ordered — highest score first, inside groups ordered by
+urgency — so an owner works from the top, and **the cards they act on leave**. Numbered pages
+impose a document's model on a pile that shrinks while you look at it: resolve the third card
+on page 2 and every boundary after it shifts.
+
+Instead each source has a visible head and a folded tail:
+
+> **40 more need your OK — next is Tom Vance**  ·  [ Show 3 more ]
+
+Three decisions inside that, each with a reason:
+
+1. **A count, not a set of revealed ids.** This is what makes the pile behave like a queue.
+   40 waiting, 3 on screen; approve one and `slice(0, 3)` lands one further down a shorter
+   list, so the fourth card rises into its place by itself. A set of revealed ids would leave
+   a hole.
+2. **Per source, not one budget for the screen.** Every channel keeps a head, so one loud
+   source cannot bury the others.
+3. **A tail of two or fewer is shown, not folded.** A row saying "2 more" costs about the
+   height of the two cards it hides and spends a decision to save nothing. The fold has to
+   earn its place.
+
+Explicitly **not** a "show all" button — the pattern `ConversationThread.tsx` uses for thirty
+messages. Pressing "show all" on 500 is the original bug with a click in front of it.
+
+The section heading still reports the true total (`43 need you · 312 routine`), so nothing
+here hides how much is waiting. It only declines to draw it.
+
+### The number came from a phone, not from taste
+
+Built at five first, and five measured badly. Rendered at 390px — the device
+`research/customers/2026-09-05-icp-pain-and-trust-objections.md` records the owner actually
+holding, up a ladder, with about ninety seconds:
+
+| | page size 5 | page size 3 |
+|---|---|---|
+| one card | 509px | 509px |
+| whole page | 8.7 screens | 5.9 screens |
+| fold row reached at | 3.5 screens down | 2.3 screens down |
+
+The arithmetic was right at five and the screen was unusable. **A cap tuned on a desktop is
+not a cap.** Three is also already this screen's number for "enough to judge by"
+(`SPOT_CHECK_SAMPLE`), kept as a separate constant so tuning one cannot silently move the
+other.
+
+### Tests
+
+12 new, `src/lib/__tests__/queuePaging.test.ts`. Verified by removal: dropping the tolerance
+branch fails 4, making the button always promise a full page fails 2. One test walks every
+pile size 0–60 and asserts the fold can always be pressed to the end — the real failure mode
+of a hand-rolled expander is a size where pressing reveals nothing and the last cards are
+unreachable, and that size is one nobody would think to spot-check.
+
+**Mutation testing deleted a line of shipped code.** `visibleCount` opened with an explicit
+`if (shown >= total) return total;` clamp. Removing it changed no output on any input, because
+`shown >= total` implies `total - shown <= 0 <= QUEUE_TAIL_TOLERANCE` and the branch below had
+already returned `total`. A guard no test can distinguish from its absence is not a safety
+net; it is a second rule free to drift out of step with the first. One rule, one line.
+
+The boundary tests are written from the constants rather than as literals, so they state the
+rule and survive a retune — plus one test asserting the constants' actual values, because
+otherwise all of them would keep passing if the page size silently became 40.
+
+1772 tests pass; `next build`, `tsc --noEmit` and eslint clean. Driven over CDP: pressed the
+folds three times, counts correct at every step, **zero console errors** (so no hydration
+mismatch — the defect that ate the Settings tabs this morning).
+
+### Self-critique
+
+1. **The payload is untouched, and it is the other half of the bug.** All ~500 approvals still
+   cross the wire on every dashboard load, each carrying up to 400 characters of the lead's
+   message plus the full draft — roughly half a megabyte of RSC stream before a phone paints
+   anything. The fold fixes what the browser *draws*, not what it *downloads*. Fixing that
+   means grouping on the server and trimming the text from cards that cannot be rendered yet,
+   which changes the component's prop shape and touches the safe-pile spot-check that shipped
+   hours ago. Named rather than half-done.
+2. **Three is measured, not validated.** It came from a real card height on a real viewport,
+   which beats the guess that `SPOT_CHECK_SAMPLE`'s three was. It is still not a number any
+   owner has reacted to.
+3. **Six sources still means eighteen cards.** The cap is per source by design, so the budget
+   grows with the channel count. Fine at today's five channels; worth revisiting if a source
+   list ever gets long.
+4. **The fold row cannot be reached by an owner who only scrolls a little.** On a phone it is
+   2.3 screens down. That is the cost of showing three whole cards rather than three
+   summaries, and showing whole cards is the point — the owner is there to judge the draft.

@@ -6028,3 +6028,92 @@ mismatch — the defect that ate the Settings tabs this morning).
 4. **The fold row cannot be reached by an owner who only scrolls a little.** On a phone it is
    2.3 screens down. That is the cost of showing three whole cards rather than three
    summaries, and showing whole cards is the point — the owner is there to judge the draft.
+
+---
+
+## 2026-09-23 — Undo on the single send, and the payload fix that wasn't needed
+
+### The one that wasn't real
+
+Tonight's queue-folding entry named the RSC payload as "the other half of the bug" and the
+next thing to do. Before building it, the production database was asked how big the problem
+actually is. Every account, every held draft:
+
+| Business | held | unjudged (→ needs you) | judged low | avg draft |
+|---|---|---|---|---|
+| Manoj Thakur's Business | 10 | 10 | 0 | 247 chars |
+| FollowUp | 9 | 6 | 2 | 143 chars |
+| Vansh Goura's Business | 1 | 1 | 0 | 170 chars |
+
+**Twenty held drafts in the entire database, and the largest single queue is ten.** The
+payload today is about fourteen kilobytes. Server-side grouping plus text trimming would have
+been real complexity — a changed prop shape, the safe-pile spot-check disturbed — bought for a
+load that does not exist and may never. `SCAN_LIMIT` caps it at 500 whatever happens, and the
+severe half (500 cards of DOM, server-rendered then hydrated) already shipped.
+
+Not built. The note stays in the brain as the thing to do **if** an account's queue gets large,
+not as outstanding work. **Checking the number cost one query and saved an evening.**
+
+### The one that was
+
+The same table says something more useful: 17 of the 20 held drafts are unjudged, so
+`isSafeToSendInBulk` correctly refuses them and they land in the needs-you pile. Which means
+the way an owner actually sends today is the single **Approve & send** on a card, one at a
+time — and that button had no undo. The ten-second grace period built this morning was on the
+batch, the path nobody is using yet.
+
+The button that writes to a real customer in the owner's name, on the path people actually
+take, had nothing between the tap and the send. It does now: the row is replaced by
+**"Sending to Priya in 10s"** and an Undo, same window and same rules as the pile.
+
+### Why a hook and not a copy
+
+The obvious move was to paste the sixty lines across from `SafePileAction`. They are sixty
+lines of gate, clock, `pagehide` and unmount handling in which every branch is load-bearing,
+and a difference between two copies would surface as messages sent or not sent — never as a
+failing test. So the timing and lifecycle moved into `useUndoableSend` and both callers use
+it; each brings only its own request and its own idea of "done".
+
+One shape was rejected during the build: letting the caller pass its own `send` function while
+the hook kept `url`/`body` for the beacon. That is two descriptions of the same request, free
+to drift into a `pagehide` beacon that sends something the button never would. The hook owns
+the request; the caller reads the response.
+
+The leaving-the-page-sends rule and its full reasoning moved across intact.
+
+### Verified in a browser, because none of this is unit-testable
+
+The lifecycle *is* the feature — timers, `pagehide`, unmount. Driven over CDP with `fetch` and
+`sendBeacon` patched to record rather than send:
+
+- press → `Sending to Priya in 10s`, **nothing requested**
+- Undo → `Stopped — nothing was sent.`, **nothing requested**
+- let it run out → **exactly one** request, `/api/leads/…/send`, correct body including subject
+- the bulk path, refactored underneath, still does all three
+
+Zero console errors. 1772 tests pass; build, tsc, eslint clean.
+
+**The fixture lied once and nearly got away with it.** The first run showed one send removing
+two cards and decrementing the routine counts. That looked like a real defect in the fold. It
+was my preview data: `make()` built ids as `${source}-${i}` and was called twice with
+"Gmail", so `Gmail-0` existed in both piles and resolving it removed both. Product was
+correct; the fixture was not. Re-run with unique ids, and the same press showed the thing the
+design is actually for — routine counts untouched, three cards still on screen, the fold
+going 7 → 6 with "next is" advancing from Tom Bell to Dan Osei. **The fourth card rose into
+the empty place by itself**, in a real browser, which no unit test had shown.
+
+Third time this session a check passed or failed for a reason other than the one being
+tested. The pattern is consistent enough to name: *when a result is surprising, suspect the
+harness before the product.*
+
+### Self-critique
+
+1. **The hook has no unit tests.** Its pure parts (`createSendGate`, `secondsLeft`) are
+   covered in `undoWindow.test.ts`; the wiring is covered only by tonight's browser run, which
+   is not repeatable in CI. A jsdom harness with fake timers would fix that and was not built.
+2. **Ten seconds is inherited, not re-examined.** It was chosen for a batch of forty. For a
+   single draft an owner is reading, it may be longer than anyone wants to wait.
+3. **The refactor touched shipped send code** to serve a new path. Justified — two copies of
+   this logic is worse — but the bulk path's only proof is the same browser run.
+4. **A card that resolves mid-countdown is untested.** The unmount flush should send it via
+   `keepalive`, and that branch was not exercised, only read.

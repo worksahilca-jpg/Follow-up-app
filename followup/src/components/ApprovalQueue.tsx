@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { groupApprovalsBySource, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
 import { QUEUE_PAGE_SIZE, nextStep, visibleCount } from "@/lib/queuePaging";
+import { useUndoableSend } from "@/components/useUndoableSend";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import SafePileAction from "@/components/SafePileAction";
 import SafePilePeek from "@/components/SafePilePeek";
@@ -65,23 +66,35 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
   const [busy, setBusy] = useState<"send" | "dismiss" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function approveAndSend() {
-    setBusy("send");
-    setError(null);
-    try {
-      const res = await fetch(`/api/leads/${item.leadId}/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(item.draftSubject ? { message: item.draftMessage, subject: item.draftSubject } : { message: item.draftMessage }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message ?? "Send failed.");
+  /**
+   * Ten seconds to change your mind, same as the routine pile.
+   *
+   * The pile got this first and the card did not, which had it exactly
+   * backwards: the pile is a considered press on drafts nobody read,
+   * while this is the press an owner makes forty times in a sitting on
+   * drafts they are skim-reading. Production tonight says the same — the
+   * biggest queue in the database is ten drafts and almost all of them
+   * are unjudged, so they arrive here, one at a time, and this is the
+   * button that gets used.
+   *
+   * A mis-tap here writes to a real customer in the owner's name, and
+   * before this there was nothing between the tap and the send.
+   */
+  const send = useUndoableSend({
+    url: `/api/leads/${item.leadId}/send`,
+    body: JSON.stringify(
+      item.draftSubject ? { message: item.draftMessage, subject: item.draftSubject } : { message: item.draftMessage }
+    ),
+    onResponse: async (res) => {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setError(typeof data.message === "string" ? data.message : "Send failed.");
+        return;
+      }
       onResolved(item.leadId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Send failed.");
-      setBusy(null);
-    }
-  }
+    },
+    onNetworkError: () => setError("Couldn't reach FollowUp. Check your connection and try again."),
+  });
 
   async function dontSend() {
     setBusy("dismiss");
@@ -145,29 +158,56 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
           {error}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-2 mt-3">
-        <button
-          onClick={approveAndSend}
-          disabled={busy !== null}
-          className="rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
-          style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-        >
-          {busy === "send" ? "Sending…" : "Approve & send"}
-        </button>
-        <Link
-          href={`/leads/${item.leadId}`}
-          className="rounded-lg px-3.5 py-1.5 text-sm font-medium border border-line hover:bg-paper"
-        >
-          Edit
-        </Link>
-        <button
-          onClick={dontSend}
-          disabled={busy !== null}
-          className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-ink-soft hover:bg-paper disabled:opacity-60"
-        >
-          {busy === "dismiss" ? "…" : "Don't send"}
-        </button>
-      </div>
+      {/* The grace period replaces the whole button row, rather than
+          sitting beside it. Same decision as the routine pile: one
+          control at a time, and while the clock is running the only
+          thing to press is the one that stops it. Leaving Edit and
+          Don't-send alive here would offer two more ways to act on a
+          draft that is already on its way out. */}
+      {send.pending ? (
+        <div className="flex flex-wrap items-center gap-3 mt-3">
+          <p className="text-sm">
+            {/* Present tense, and the lead's own first name — this row
+                can be one of three on screen, and "Sending in 7s" with
+                no name does not say which draft is leaving. */}
+            Sending to {item.leadName.split(" ")[0]} in {send.secs}s
+          </p>
+          <button
+            onClick={send.undo}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium border"
+            style={{ borderColor: "var(--line)", color: "var(--ink)" }}
+          >
+            Undo
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          <button
+            onClick={send.start}
+            disabled={busy !== null || send.busy}
+            className="rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
+            style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+          >
+            {send.busy ? "Sending…" : "Approve & send"}
+          </button>
+          <Link
+            href={`/leads/${item.leadId}`}
+            className="rounded-lg px-3.5 py-1.5 text-sm font-medium border border-line hover:bg-paper"
+          >
+            Edit
+          </Link>
+          <button
+            onClick={dontSend}
+            disabled={busy !== null || send.busy}
+            className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-ink-soft hover:bg-paper disabled:opacity-60"
+          >
+            {busy === "dismiss" ? "…" : "Don't send"}
+          </button>
+        </div>
+      )}
+      {/* Says what IS true (nothing left) rather than "Cancelled", which
+          describes the press instead of the outcome. */}
+      {send.cancelled && <p className="mt-1.5 text-xs text-ink-soft">Stopped — nothing was sent.</p>}
     </div>
   );
 }

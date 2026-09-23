@@ -5709,3 +5709,42 @@ the assertion that matters. 1733 pass; build, tsc, eslint clean.
 4. **Overlapping presses are untested.** Two groups counting down at once each have their own
    gate, which should be fine because the server re-reads what is still pending — but I did
    not verify it.
+
+---
+
+## 2026-09-23 — Reading a few before sending forty
+
+The routine pile shipped as a count and one name: *"40 routine drafts from WhatsApp — top is
+Tom Alvarez [Send it]"*. That asks an owner to put forty messages into customers' hands, in
+their business's name, having read none. The likely response is not trust — it is nobody ever
+pressing, and a one-click pile nobody presses is the feature not existing, with extra code.
+
+**"Read a few first"** — closed by default, one press, shows the top 3 as read-only rows.
+
+- **A sample, not a list.** Expanding forty rebuilds the wall the pile exists to knock down.
+  Three is enough to see a pattern and few enough to read standing up.
+- **Both halves of each row.** The inbound message *and* the draft. "Tuesday works" reads as
+  fine or as nonsense depending on what it answers; judging a reply without its question is not
+  a spot-check.
+- **Read-only.** No per-draft Approve/Edit here — that would turn the sample into a second
+  approval queue, and beg what the other 37 are. The decision it serves is the one below it.
+- **The caption is computed, not written.** `describeSample` branches on the sample-equals-pile
+  case, because "the 3 highest-scoring of 3" is true and reads as though something is withheld.
+
+### And a duplicate control rendering caught
+
+With every routine draft from one source, the whole-queue box and that source's row were the
+same button, one above the other, both reading **"Send all 12"**. Two identical controls is not
+a choice — it is a question about whether they differ. The whole-queue box now appears only
+when more than one source contributes routine drafts.
+
+### Tests
+
+7 new, verified by removal (dropping the equal-size branch fails 2; dropping "The rest go too"
+fails 1). 1740 pass; build, tsc, eslint clean. Rendered at 1000px: 3 rows, zero overflow.
+
+### Self-critique
+
+1. **Three is a guess.** Defensible, untested against a real owner.
+2. **No way to see more than three** short of opening leads one at a time.
+3. **Nothing paginates still.** Unchanged, and now the oldest outstanding gap.

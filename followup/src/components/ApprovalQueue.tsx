@@ -6,6 +6,7 @@ import { ShieldCheck } from "lucide-react";
 import { groupApprovalsBySource, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import SafePileAction from "@/components/SafePileAction";
+import SafePilePeek from "@/components/SafePilePeek";
 
 /**
  * "Needs your OK" — research/product/2026-09-10-ux-simplification.md
@@ -221,6 +222,11 @@ export default function ApprovalQueue({
    */
   const groups = groupApprovalsBySource(visible);
   const summary = summariseGroups(groups);
+  // How many sources actually contribute a routine draft — not how many
+  // groups exist. A group that is all needs-you has no routine row, so
+  // counting groups would keep the whole-queue box on screen beside a
+  // single routine row and reintroduce the twin buttons.
+  const groupsWithRoutine = groups.filter((g) => g.safeToSend.length > 0).length;
 
   return (
     <div className="mt-6">
@@ -267,8 +273,16 @@ export default function ApprovalQueue({
           spent once, on the single thing to act on). Whole-queue rather
           than per-source, because an owner facing hundreds wants the
           routine ones gone so they can see what is left — the per-source
-          buttons below are for when they do care which channel. */}
-      {summary.safeToSend > 0 && (
+          buttons below are for when they do care which channel.
+
+          Suppressed when every routine draft came from ONE source,
+          because then this box and that source's row are the same
+          button, one above the other, both reading "Send all 12". Two
+          identical controls is not a choice, it is a question about
+          whether they differ — and the answer is that they don't.
+          Caught by rendering a single-source queue; the counts were
+          right and the screen asked the owner to pick between twins. */}
+      {summary.safeToSend > 0 && groupsWithRoutine > 1 && (
         <div className="mt-4 box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm">
             <p className="font-medium">
@@ -312,6 +326,11 @@ export default function ApprovalQueue({
                     {group.safeToSend[0] && <span className="text-ink"> — top is {group.safeToSend[0].leadName}</span>}
                   </p>
                   <SafePileAction count={group.safeToSend.length} source={group.source} />
+                  {/* Full width, so opening it drops the sample below the
+                      row rather than squeezing it between the sentence
+                      and the button. Closed it is just a link at the end
+                      of the row and costs a line of nothing. */}
+                  <SafePilePeek items={group.safeToSend} />
                 </div>
               )}
             </div>

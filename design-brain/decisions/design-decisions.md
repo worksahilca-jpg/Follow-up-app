@@ -5255,3 +5255,75 @@ fails 1, reading a zero limit as "no limit" fails 1. 1693 pass; eslint, build an
 4. **Never run against a real provider.** Every test mocks the send path. The concurrency,
    the partial-failure path and the 300-second ceiling on a few hundred real sends are all
    unproven against anything slow.
+
+---
+
+## 2026-09-23 — The approval queue as a shape, not a list
+
+Step 3, the screen, and the last of the founder's 2026-09-23 ask. Rendered at 1200px and at
+390px before shipping.
+
+### What it does
+
+51 held drafts render as **"Needs your OK (3)"**, a line naming the one lead to open first, and
+one box saying 48 are routine with a single button. Below that, a section per source, each with
+its cards and its own quiet send-all.
+
+The founder's sentence, turned into a layout: sources, then scores, then "whom to focus on",
+then one click for the rest.
+
+### Design decisions
+
+**Structure follows A-006 and dodges S-09.** The source is a *heading*, not a box, so the cards
+inside stay the only box level. A box per source containing boxes is the card-in-card soup the
+brain names — this component has been fixed for exactly that before.
+
+**The accent could not be spent as A-006 describes, and I did not invent one.** Axis 6 ("accent
+held back — spent once") assumed the navy-era blue. In the current tokens `--rust` resolves
+through `--accent` to `#0a0a0a`, **the same value as `--ink`** — so naming the accent token on
+the primary button would claim a distinction the system no longer draws. It uses `--ink`
+explicitly, with a comment, and hierarchy is carried by place and weight: the button sits in its
+own box above every group under a sentence that explains it, while the per-source buttons are
+quiet `--card-2`.
+
+**This is a real inconsistency in the brain and it is flagged, not patched.** A-006's sixth axis
+is unexecutable as written. Finalising a colour is a `[TO DECIDE]`, which is the founder's, so
+it goes to him rather than into a commit.
+
+**The result matters more than the press.** `SafePileAction` reports what actually happened —
+sent, how many remain, and every refusal **by name** with the sentence the send path wrote. A
+button that says "Send 43" and quietly sends 31 is how a bulk action loses trust, and the
+commonest refusal (a closed Meta window) is the one the owner can personally act on.
+
+### A bug the render caught that the tests did not
+
+`ApprovalItem` was a hand-written subset of `PendingApproval`, re-mapped field by field on the
+dashboard. That mapping silently dropped `draftRiskLevel` the moment grouping needed it — and
+since the safe pile is built from that field, **every draft would have landed in "needs you"
+and the one-click pile would have been permanently empty**, with no error anywhere. 1693 tests
+passed while this was true. `ApprovalItem` is now an alias of `PendingApproval`; an alias cannot
+drop a field.
+
+The first render showed exactly that failure — "Needs your OK (51)", no pile, no button — though
+for a second reason: my preview data used a truncated hold reason. The exact-match predicate
+refused it, correctly. Two different faults, one screenshot.
+
+### Verified
+
+Rendered at 1200px and 390px. Phone width measured over CDP rather than eyeballed:
+`scrollWidth` 390 against a 390 viewport, **zero elements past the edge**. (An earlier
+"overflow" was my own screenshot flag — `--window-size` crops without setting a mobile
+viewport.) 1693 tests, eslint, build and tsc clean.
+
+### Self-critique
+
+1. **The safe pile shows a count and one name, not the drafts.** An owner who wants to
+   spot-check three of the 31 before pressing cannot, without opening leads one at a time. That
+   is a real gap in a feature whose whole premise is trust.
+2. **"1 routine draft from Added by hand" reads badly.** The fallback label works as a heading
+   and not as a phrase in a sentence.
+3. **Never pressed against a real send.** The button, its result line and the refusal list are
+   all rendered from stub state; no database and no provider here. The one path that actually
+   matters is the one I could not exercise.
+4. **Nothing paginates.** 600 drafts means 600 cards in one page at 3 needing attention. The
+   grouping makes that survivable rather than solved.

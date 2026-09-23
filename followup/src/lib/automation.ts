@@ -823,14 +823,62 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // here, so listing it there alone would have been a guarantee that
       // never ran for the tier that needed it.
       if (holdAll || isUntouched || lead.automationTier !== "AUTONOMOUS" || tier === "free") {
+        /**
+         * Every draft that reaches here gets a verdict, including ones
+         * that are going to be held no matter what it says.
+         *
+         * This block used to short-circuit to "low" whenever `holdAll` or
+         * `isUntouched` was set, on the reasoning that the classifier
+         * decides whether something may go out UNREVIEWED, so on an
+         * account where nothing goes out unreviewed it had nothing to
+         * decide and its cost was not worth paying.
+         *
+         * That was true of the only question being asked then. It stopped
+         * being true when the queue had to answer a second one: of the
+         * drafts waiting for you, which are routine? An owner with 600
+         * held drafts cannot read 600, and "held" was the only thing the
+         * product knew about any of them — so every one of them looked
+         * alike, and the ones quoting a price nobody mentioned sat among
+         * the ordinary nudges with nothing to tell them apart.
+         *
+         * The cost that reasoning was protecting is real, and it is
+         * handled by the branch below rather than by skipping the
+         * question: a verdict is paid for once per draft and stored with
+         * it (Lead.suggestedRiskLevel), not re-paid on every hourly pass
+         * for a conversation that has not changed.
+         */
         let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
-        if (holdAll || isUntouched) {
-          // The classifier decides whether something is safe to send
-          // WITHOUT review. On an account where nothing sends without
-          // review, it has nothing to decide, so its cost is not worth
-          // paying — the hold below happens either way.
+        // Whether this pass PAID for the verdict below, which is what
+        // decides if it has to be written down. Not the same as
+        // `regenerated`: a draft written before this column existed is
+        // current (so never regenerated) but unjudged, and keying the
+        // write on `regenerated` alone would re-buy its verdict every
+        // hour and throw it away every hour — the exact standing cost
+        // this whole mechanism exists to avoid, aimed at the back
+        // catalogue instead of at cold leads.
+        let riskAssessed = false;
+        if (isUntouched) {
+          // The one case where the old reasoning still holds completely.
+          // An untouched lead is held because FollowUp has not seen what
+          // the owner may already have done about it, and
+          // UNTOUCHED_LEAD_REASON outranks the approval setting in the
+          // reason cascade below — so this draft is in the "needs you"
+          // pile whatever a classifier would say. The verdict cannot
+          // change the send, cannot change the queue, and is left unbought
+          // and unstored: null here means unjudged, which is true.
           risk = { riskLevel: "low", reason: "" };
+        } else if (!regenerated && lead.suggestedRiskLevel) {
+          // Same draft as last pass, already judged. Re-running the
+          // classifier on a byte-identical conversation is the cost
+          // `suggestedDraftedFor` exists to prevent (see schema.prisma),
+          // and a held draft is re-examined on every pass — hourly,
+          // forever, for as long as it waits.
+          risk = {
+            riskLevel: lead.suggestedRiskLevel as "low" | "medium" | "high",
+            reason: lead.suggestedRiskReason ?? "",
+          };
         } else if (process.env.OPENAI_API_KEY) {
+          riskAssessed = true;
           try {
             risk = await assessSendRisk({ conversation }, message);
           } catch (err) {
@@ -838,6 +886,12 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
             // Sending something autonomously that shouldn't have gone out
             // is a worse failure mode than an unnecessary manual review.
             console.error(`Risk assessment failed for lead ${lead.id}:`, err);
+            // Deliberately NOT stored. A transient failure written down as
+            // a verdict is reused by every later pass, so one bad minute
+            // would strand this lead on "couldn't check this one" for as
+            // long as the draft lives, with nothing ever retrying it.
+            // Costing one more call next hour is the cheaper mistake.
+            riskAssessed = false;
             // Finishes "Held because <reason>." like every other reason
             // that reaches ApprovalQueue.
             risk = { riskLevel: "medium", reason: RISK_CHECK_FAILED_REASON };
@@ -889,14 +943,29 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           // they stop agreeing. A draft that was NOT regenerated is by
           // definition already current and already stored, so there is
           // nothing to write.
-          if (regenerated) {
+          if (regenerated || riskAssessed) {
             await prisma.lead.update({
               where: { id: lead.id },
               data: {
-                suggestedMessage: message,
-                suggestedSubject: subject ?? null,
-                suggestedQuickReplies: quickReplies ? (quickReplies as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
-                suggestedDraftedFor: newestMessageAt,
+                // Only the draft fields are conditional: a pass that
+                // merely bought a verdict for an unchanged draft must not
+                // rewrite the draft, or `suggestedDraftedFor` would move
+                // and claim the draft answers a newer message than it
+                // does.
+                ...(regenerated
+                  ? {
+                      suggestedMessage: message,
+                      suggestedSubject: subject ?? null,
+                      suggestedQuickReplies: quickReplies ? (quickReplies as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
+                      suggestedDraftedFor: newestMessageAt,
+                    }
+                  : {}),
+                // Written with the draft it judged, so the next pass
+                // reuses it instead of re-paying for the same answer
+                // about the same words. A verdict stored against a
+                // different draft would be worse than none.
+                suggestedRiskLevel: risk.riskLevel,
+                suggestedRiskReason: risk.reason || null,
               },
             });
           }

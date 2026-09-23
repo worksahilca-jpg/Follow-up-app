@@ -484,6 +484,27 @@ model Lead {
   // email-framed draft must be rebuilt before it goes out as a DM. An
   // empty `buttons` list is a DM draft that passed without chips.
   suggestedQuickReplies Json?
+  // What the risk classifier made of `suggestedMessage` — "low", "medium"
+  // or "high", plus the sentence explaining a non-low verdict. Null means
+  // no verdict: the draft predates this column, or no classifier was
+  // configured when it was written.
+  //
+  // Stored rather than recomputed for the reason `suggestedDraftedFor`
+  // above already exists: a held draft is re-examined on every pass, and
+  // paying for a fresh risk check on a byte-identical conversation was
+  // the one cost in the product that grew with time instead of with
+  // leads. The verdict is written when the draft is, and reused until the
+  // draft is.
+  //
+  // It exists at all because "is this safe to send" became a question
+  // FollowUp has to answer for a draft it is NOT about to send. The
+  // classifier used to be skipped entirely while holdAllForApproval was
+  // on — reasonably, since it decides whether something may go out
+  // unreviewed and nothing was going out at all. But that left every held
+  // draft unjudged, so the approval queue could not say which ones are
+  // routine, and an owner facing 600 of them had to read all 600.
+  suggestedRiskLevel  String?
+  suggestedRiskReason String?
   // Why FollowUp did NOT read this lead or write anything for it — set
   // whenever checkAiEligibility (@/lib/billing) refuses, cleared the
   // moment a score/draft actually lands (src/lib/scoring.ts).

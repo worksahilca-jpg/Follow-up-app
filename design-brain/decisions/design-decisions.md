@@ -5031,3 +5031,82 @@ would have passed throughout. 1643 pass, eslint/build/tsc clean.
    and prose left standing everywhere else, and it keeps being found one surface
    at a time. A single list of every place the product claims something sends
    would have caught all of them in one pass, and does not exist.
+
+---
+
+## 2026-09-23 — Making "safe to send" a thing FollowUp actually knows
+
+### The founder's ask
+
+> "it should sort according to the sources then scores and let them know what is the
+> priority and whom to focus on rather than reading all 600 drafts… for those who need less
+> attention he should let them know that we can follow up in one click only if they want and
+> they are safe to send… but we need to take care about the restriction of sending mails and
+> messages of each source."
+
+A prioritised approval queue: grouped by source, sorted by score, split into *needs you* and
+*safe*, with one button for the safe pile and per-channel limits respected.
+
+### The blocker nobody had noticed
+
+**"Safe" did not exist.** `automation.ts` skipped the risk classifier entirely whenever
+`holdAllForApproval` was on, with a comment that was correct at the time:
+
+> "The classifier decides whether something is safe to send WITHOUT review. On an account
+> where nothing sends without review, it has nothing to decide, so its cost is not worth
+> paying."
+
+True while "is this safe" was only ever asked about a message about to go out. It stopped
+being true the moment the queue had to answer a second question: *of the drafts waiting for
+you, which are routine?*
+
+The consequence was already shipping. Two things built earlier today — the approval queue's
+needs-you-first ordering, and the send preview's "held only by your setting" count — both
+lean on the hold reason, and a forced-low verdict means a draft that quotes a made-up price
+gets a `HOLD_ALL_*` reason like any other. **Both features were sorting and counting against
+a verdict that had never been formed.** That is worse than not having them, because it reads
+as an answer.
+
+### What shipped
+
+The verdict is now bought for every held draft, and **stored with the draft it judged**
+(`Lead.suggestedRiskLevel` / `suggestedRiskReason`, nullable, additive).
+
+Storing it is the whole trick. The cost the old skip was protecting is real — a held draft is
+re-examined every hour for as long as it waits, and re-buying a verdict on an unchanged
+conversation is the one cost in the product that grows with *time* rather than with leads
+(the same reasoning that produced `suggestedDraftedFor`). So: paid once per draft, reused
+until the draft changes.
+
+Three cases that a naive version gets wrong, each pinned by a test:
+
+1. **A draft written before this column** is current — so never "regenerated" — but unjudged.
+   Keying the write on `regenerated` alone would buy its verdict every hour and throw it away
+   every hour. The write is keyed on *did this pass pay for it*, not on *did the draft change*.
+2. **A failed check is not stored.** Written down, it would be reused forever, stranding the
+   lead on "couldn't check this one" with nothing ever retrying.
+3. **An untouched lead is still skipped.** `UNTOUCHED_LEAD_REASON` outranks the approval
+   setting in the reason cascade, so that draft is in the *needs you* pile whatever a
+   classifier says. Null stays null, and null means unjudged — never "safe".
+
+### Tests
+
+Five new in `automation.test.ts`, verified by removal: restoring the old skip fails 3,
+storing only on regeneration fails 1, ignoring the stored verdict fails 1. 1662 pass;
+eslint, build and tsc clean.
+
+### Self-critique
+
+1. **This raises the bill and I cannot say by how much.** One classifier call per new draft
+   on every holding account — which is every account. Previously zero. The reuse keeps it
+   from compounding hourly, but the first pass over a 600-lead back catalogue buys 600
+   verdicts at once, and nothing rate-limits that.
+2. **Null is load-bearing and easy to misread.** Every consumer must treat "no verdict" as
+   *not known to be safe*. Nothing enforces that yet — the first caller that reads
+   `suggestedRiskLevel !== "high"` as safe will put unjudged drafts in a one-click send pile.
+   The grouping work that follows must add that guard, and it does not exist today.
+3. **Only the foundation.** The founder asked for grouping, priority, one-click and per-source
+   limits. This is none of those — it is the fact they all depend on. The queue is unchanged
+   so far.
+4. **No real verdicts seen.** No database and no OpenAI key here, so the storage and reuse are
+   proven against mocks. I have not watched the classifier judge one real held draft.

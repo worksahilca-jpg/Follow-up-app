@@ -1430,12 +1430,85 @@ describe("an account that holds every automated message", () => {
     expect(result.held).toBe(1);
   });
 
-  // The classifier exists to decide what may send WITHOUT review. Where
-  // nothing sends without review it has nothing to decide, and it is a
-  // paid call per lead per hour.
-  it("does not pay the risk classifier to answer a question that cannot matter", async () => {
+  /**
+   * The classifier used to be skipped entirely here, on the reasoning
+   * that it decides what may send WITHOUT review and nothing on this
+   * account sends at all. That held while "is it safe" was only ever
+   * asked about a message about to go out.
+   *
+   * It stopped holding when the queue had to answer a second question:
+   * of the drafts waiting for you, which are routine? Without a verdict
+   * every held draft looks identical, so an owner with 600 of them has
+   * to read 600 — and the one quoting a price nobody mentioned sits
+   * among the ordinary nudges with nothing marking it out.
+   *
+   * So the verdict is bought here even though this draft is certainly
+   * being held. What is NOT bought is the same verdict twice (below).
+   */
+  it("judges a held draft, so the queue can tell routine from risky", async () => {
     await runAutomationForBusiness("biz1");
-    expect(risk).not.toHaveBeenCalled();
+    expect(risk).toHaveBeenCalled();
+  });
+
+  it("stores the verdict with the draft it judged", async () => {
+    risk.mockResolvedValue({ riskLevel: "medium", reason: "quotes a price nobody mentioned" });
+    await runAutomationForBusiness("biz1");
+    const call = p.lead.update.mock.calls.find((c: [{ where: { id: string }; data: Record<string, unknown> }]) => c[0].where.id === "lead1");
+    expect(call[0].data.suggestedRiskLevel).toBe("medium");
+    expect(call[0].data.suggestedRiskReason).toBe("quotes a price nobody mentioned");
+  });
+
+  /**
+   * The cost the old skip was protecting, handled without giving up the
+   * answer. A held draft is re-examined on every pass — hourly, for as
+   * long as it waits — and re-buying a verdict on a conversation that has
+   * not changed is the one cost that grows with time rather than with
+   * leads (the same reason `suggestedDraftedFor` exists, schema.prisma).
+   */
+  it("never re-buys a verdict for a draft that has not changed", async () => {
+    p.lead.findMany.mockReset();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          suggestedMessage: "Already drafted and already judged.",
+          suggestedDraftedFor: new Date("2999-01-01"),
+          suggestedRiskLevel: "low",
+          suggestedRiskReason: null,
+        }),
+      ])
+      .mockResolvedValue([]);
+    await runAutomationForBusiness("biz1");
+    expect(risk, "paid for the same answer about the same words").not.toHaveBeenCalled();
+  });
+
+  /**
+   * The other half, and the one a naive version of the rule above gets
+   * wrong. A draft written before verdicts existed is CURRENT — so it is
+   * never regenerated — but unjudged. Keying the write on "was the draft
+   * regenerated" alone would buy its verdict every hour and throw it away
+   * every hour: the exact standing cost, aimed at the back catalogue.
+   */
+  it("judges and stores an older draft that has no verdict yet", async () => {
+    p.lead.findMany.mockReset();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          suggestedMessage: "Drafted before verdicts were recorded.",
+          suggestedDraftedFor: new Date("2999-01-01"),
+          suggestedRiskLevel: null,
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    await runAutomationForBusiness("biz1");
+
+    expect(risk).toHaveBeenCalled();
+    const call = p.lead.update.mock.calls.find((c: [{ where: { id: string }; data: Record<string, unknown> }]) => c[0].where.id === "lead1");
+    expect(call, "bought a verdict and did not write it down").toBeTruthy();
+    expect(call[0].data.suggestedRiskLevel).toBe("low");
+    // …and did NOT restamp the draft, which would claim it answers a
+    // newer message than it actually does.
+    expect(call[0].data.suggestedDraftedFor).toBeUndefined();
   });
 
   // Holding is only useful if there is something to hold: the draft is

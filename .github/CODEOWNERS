@@ -1,65 +1,13 @@
-# FollowUp — code ownership
+# Code ownership.
 #
-# Drives GitHub's automatic review requests. Last matching pattern wins, so
-# more specific rules are listed after more general ones.
+# 2026-09-23: FollowUp is a solo build again. Gautam, Vansh, Pransh and
+# Dipesh are no longer on the team (founder's decision), so every path
+# they owned reverts here. Manoj is a beta tester, not a contributor, and
+# has never had repo access.
 #
-# PLACEHOLDER USERNAMES: @followvansh (Vansh), @pransh-io (Pransh) and
-# @gautam972 (Gautam) were confirmed 2026-09-14. @dipesh-followupbase is
-# Dipesh, confirmed by him directly on 2026-09-15.
-#
-# He first registered as plain "followupbase" — the company name on a
-# personal account, which read as the company's official account while
-# belonging to one person, and which held the handle this company would
-# most likely want for its own GitHub organisation. He renamed on request
-# the same day; the account id is unchanged (329314659), so this is the
-# same account, not a second one. Recorded because the old name still
-# redirects and may appear in older links.
-#
-# Sahil's own lines still use a placeholder in the form
-# @REPLACE-<name>-github-username — GitHub will not resolve these until
-# swapped for a real username.
-#
-# See TEAM.md for the human-readable version of who owns what, and
-# CONTRIBUTING.md for how the PR/review process around this actually works.
+# The old file also pointed every root-level path at
+# `@REPLACE-sahil-github-username` — a placeholder that was never filled
+# in. GitHub silently ignores an owner that does not exist, so those lines
+# were requiring review from nobody. Fixed to the real account here.
 
-# Default: product/founder review on anything not matched below
-*                                           @REPLACE-sahil-github-username
-
-# Frontend / UI-UX — Gautam implements, Sahil reviews (see TEAM.md's
-# frontend-coordination note)
-/followup/src/app/(app)/**                 @gautam972 @REPLACE-sahil-github-username
-/followup/src/app/page.tsx                 @gautam972 @REPLACE-sahil-github-username
-/followup/src/app/landing.module.css       @gautam972 @REPLACE-sahil-github-username
-/followup/src/app/landing-award.module.css @gautam972 @REPLACE-sahil-github-username
-/followup/src/components/landing/**        @gautam972 @REPLACE-sahil-github-username
-/followup/src/components/**                @gautam972
-/design-brain/**                           @gautam972 @REPLACE-sahil-github-username
-
-# Backend — Pransh
-/followup/prisma/**                        @pransh-io
-/followup/src/app/api/**                   @pransh-io
-/followup/src/lib/db.ts                    @pransh-io
-
-# AI / automation / integrations — Vansh (backend overlap with Pransh is
-# expected and fine per TEAM.md — both get requested on these paths)
-/followup/src/lib/integrations/**          @followvansh @pransh-io
-/followup/src/lib/automation.ts            @followvansh
-/followup/src/lib/scoring.ts               @followvansh
-/followup/src/lib/acknowledge.ts           @followvansh
-/followup/src/app/api/cron/**              @followvansh @pransh-io
-/voice-agent/**                            @followvansh
-
-# Security / operations / infra
-/followup/src/lib/auth.ts                  @dipesh-followupbase
-/followup/src/lib/platformAdmin.ts         @dipesh-followupbase
-/followup/vercel.json                      @dipesh-followupbase
-/.github/workflows/**                      @dipesh-followupbase
-/followup/src/middleware.ts                @dipesh-followupbase
-
-# Product / governance docs — Sahil has final say
-/CLAUDE.md                                 @REPLACE-sahil-github-username
-/TEAM.md                                   @REPLACE-sahil-github-username
-/CONTRIBUTING.md                           @REPLACE-sahil-github-username
-/.github/CODEOWNERS                        @REPLACE-sahil-github-username
-/STATUS.md                                 @REPLACE-sahil-github-username
-/followup/PRODUCT_DIRECTION.md             @REPLACE-sahil-github-username
+* @worksahilca-jpg

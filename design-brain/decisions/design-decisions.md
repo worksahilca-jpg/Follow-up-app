@@ -5327,3 +5327,26 @@ viewport.) 1693 tests, eslint, build and tsc clean.
    matters is the one I could not exercise.
 4. **Nothing paginates.** 600 drafts means 600 cards in one page at 3 needing attention. The
    grouping makes that survivable rather than solved.
+
+---
+
+## 2026-09-23 — Accent hue deferred, not decided
+
+Raised: A-006's sixth axis ("accent held back — spent once") cannot be executed, because
+`--rust` now resolves through `--accent` to `#0a0a0a`, the same value as `--ink`. The approval
+queue's primary button therefore reads identically to the secondary ones on the cards.
+
+**Founder:** *"leave for now we will make it stand out later lets just build the basic thing
+first."*
+
+**Status: DEFERRED, and still open.** Not approved as monochrome — explicitly parked. The
+`--ink` usage in `SafePileAction` carries a comment saying why it is not the accent token, so
+whoever resolves this finds the reason rather than a bare colour.
+
+**The principle this confirms** (consistent with R-001's inferred reading): function before
+finish. A control that works but does not yet stand out is shippable; polish is a later pass he
+will call. Do not spend a turn on visual differentiation he has not asked for.
+
+**To resolve later:** give `--accent` a hue again (which re-enables axis 6 everywhere, not just
+here), or record A-006 axis 6 as superseded by the monochrome system. That is a token decision
+and therefore his.

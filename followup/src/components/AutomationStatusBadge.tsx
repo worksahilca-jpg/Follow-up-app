@@ -1,4 +1,4 @@
-import { Zap, Clock, PauseCircle, Ban, CheckCircle2, Workflow, PlugZap } from "lucide-react";
+import { Zap, Clock, PauseCircle, Ban, CheckCircle2, Workflow, PlugZap, PenLine } from "lucide-react";
 import type { AutomationStatus } from "@/lib/automationStatus";
 
 // One line of "why," shown as the badge's title tooltip (compact mode) or
@@ -14,7 +14,12 @@ const REASON_LABEL: Record<"unanswered" | "dead_lead" | "silence", string> = {
 // The caller already filters out "closed" (and undefined) before this is
 // called — excluded here too so the switch below is provably exhaustive
 // over what it actually receives, instead of needing a dead branch.
-function describe(
+//
+// Exported for its tests, which assert on the SHIPPED sentences rather
+// than a copy of them: this file's job is one line of honest prose per
+// state, and a test that restated the prose would pass while the prose
+// drifted. Same reason describeAckOutcome is exported from LeadTrustPanel.
+export function describeAutomationStatus(
   status: Exclude<AutomationStatus, { kind: "closed" }>
 ): { icon: typeof Zap; label: string; detail?: string; bg: string; fg: string; pulse?: boolean; emphasis?: boolean } {
   switch (status.kind) {
@@ -78,11 +83,36 @@ function describe(
       return {
         icon: PauseCircle,
         label: "Paused — your auto follow-up is switched off",
-        detail: `This would be followed up now (${REASON_LABEL[status.reason]}), but auto follow-up is off for your whole account — turn on "Auto follow-up on silence" in Settings.`,
+        // Naming only the master switch was a half-instruction on a
+        // holding account: turning it on gets a draft written, not a
+        // message sent, and an owner who followed the sentence and saw
+        // nothing reach their customer would have been told the wrong
+        // thing by the badge built to stop exactly that.
+        detail: status.heldForApproval
+          ? `This would be drafted for your approval now (${REASON_LABEL[status.reason]}), but auto follow-up is off for your whole account — turn on "Auto follow-up on silence" in Settings.`
+          : `This would be followed up now (${REASON_LABEL[status.reason]}), but auto follow-up is off for your whole account — turn on "Auto follow-up on silence" in Settings.`,
         bg: "var(--coral-soft)",
         fg: "var(--coral)",
       };
+    // The one that mattered most. "Following up soon" is what this badge
+    // said on every account from 2026-09-21, when holdAllForApproval
+    // became `@default(true)` — on a lead whose reply was about to be
+    // written and then held. Not paused (a draft really is coming, and
+    // saying "paused" would push an owner to go fix something that isn't
+    // broken) and not following up (nothing reaches the customer). The
+    // true state is the one an owner can act on: a draft is coming, and
+    // it needs them.
     case "due_soon":
+      if (status.heldForApproval) {
+        return {
+          icon: PenLine,
+          label: "Writing a reply for you to approve",
+          detail: `Next automation check drafts this — ${REASON_LABEL[status.reason]}. It waits in your approvals until you send it.`,
+          bg: "var(--rust-soft)",
+          fg: "var(--rust)",
+          pulse: true,
+        };
+      }
       return {
         icon: Zap,
         label: "Following up soon",
@@ -92,9 +122,18 @@ function describe(
         pulse: true,
       };
     case "waiting":
+      // "Next check in ~3h" is literally true either way, but on a
+      // holding account an owner reads it as "sending in 3h". Naming the
+      // draft costs one word and removes the inference.
       return {
         icon: Clock,
-        label: status.etaHours ? `Next check in ~${status.etaHours}h` : "Not due yet",
+        label: status.heldForApproval
+          ? status.etaHours
+            ? `Draft ready in ~${status.etaHours}h`
+            : "Not due yet"
+          : status.etaHours
+            ? `Next check in ~${status.etaHours}h`
+            : "Not due yet",
         bg: "var(--slate-soft)",
         fg: "var(--slate)",
       };
@@ -114,7 +153,7 @@ function describe(
  */
 export default function AutomationStatusBadge({ status, compact = false }: { status: AutomationStatus | undefined; compact?: boolean }) {
   if (!status || status.kind === "closed") return null;
-  const { icon: Icon, label, detail, bg, fg, pulse, emphasis } = describe(status);
+  const { icon: Icon, label, detail, bg, fg, pulse, emphasis } = describeAutomationStatus(status);
 
   if (compact) {
     return (

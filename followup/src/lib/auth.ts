@@ -20,9 +20,15 @@
  * in the JWT here so every server-side request can scope its data without
  * an extra DB round-trip — see src/lib/session.ts.
  *
- * ALLOWED_EMAILS gates who can sign in AT ALL, across every business —
- * useful while this is still private/in testing. Leave it empty once
- * you're ready for real strangers to sign up as their own tenants.
+ * Who may create an account is decided by the gate in the signIn callback
+ * below. It is closed unless PUBLIC_SIGNUP is explicitly "true": a new
+ * email gets in only via ALLOWED_EMAILS, an approved AccessRequest, or a
+ * pending team invite. Emptying ALLOWED_EMAILS no longer opens the door —
+ * it used to, which is the bug that made this gate what it is.
+ *
+ * It governs sign-UP only. An email that already belongs to a business
+ * signs in regardless, so tightening the setting never locks out an
+ * existing account.
  */
 
 import type { NextAuthOptions } from "next-auth";
@@ -30,25 +36,78 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
 import { grantBetaPlan } from "@/lib/billing";
 
-const allowedEmails = (process.env.ALLOWED_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
+/**
+ * The founder's tester list, read per call rather than at module load.
+ *
+ * Read once at import, this was untestable — a test cannot stub an env
+ * var that was consumed before it ran — which meant one of the three ways
+ * into the product had no coverage at all. For a gate that decides who
+ * gets an account, "cannot be tested" is itself the defect.
+ */
+function allowedEmails(): string[] {
+  return (process.env.ALLOWED_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * Is this deployment open to strangers?
+ *
+ * Must be set, out loud, to the string "true". Anything else — unset,
+ * empty, "1", "yes", a typo — means closed.
+ *
+ * ## Why this exists (2026-09-23)
+ *
+ * The gate used to be `if (allowedEmails.length > 0 && !isTester)`, which
+ * fails OPEN: an empty or missing ALLOWED_EMAILS meant "let everyone in".
+ * That is exactly backwards for a product whose own rule (R-012) is that
+ * sign-up is invite-only, and it is not a theoretical concern — the
+ * founder found the live site through a Google search on a friend's phone
+ * and watched that friend's Google account create a real, onboarded
+ * business. ALLOWED_EMAILS was simply not set in production, and nothing
+ * anywhere said so.
+ *
+ * A gate whose disabled state is indistinguishable from a missing
+ * variable is not a gate. Deleting one env var must never silently open
+ * signup, so the safe state is now the DEFAULT state and opening up takes
+ * a deliberate act.
+ */
+function publicSignupEnabled(): boolean {
+  return process.env.PUBLIC_SIGNUP === "true";
+}
+
+/**
+ * How long a team invite stays usable.
+ *
+ * Module scope because TWO places need the same answer — the signup gate
+ * and the transaction that consumes the invite. Read separately they
+ * could drift, and a gate that admits someone the consumer then treats as
+ * a brand-new signup would silently put an invited teammate into their own
+ * empty business instead of the team that invited them.
+ */
+const INVITE_VALID_DAYS = 30;
+function inviteWindowStart(): Date {
+  return new Date(Date.now() - INVITE_VALID_DAYS * 24 * 60 * 60_000);
+}
 
 /**
  * Can a team invite, on its own, get someone in?
  *
- * Only when this allowlist is empty. The signIn callback below checks
- * ALLOWED_EMAILS (or an approved AccessRequest) BEFORE it looks for a
- * TeamInvite, so while the allowlist is set an invited teammate is
- * refused at sign-in and their invite is never consumed. Settings told
- * the owner the opposite — "they'll join automatically the next time
- * they sign in" — so this is exported for that panel to tell the truth
- * instead. Whether an invite SHOULD be enough is a product decision; this
- * only reports what the gate currently does.
+ * Now always yes, which is what "invite-only" has to mean: an admin
+ * naming an address IS the invitation. Exported for the Settings panel,
+ * which reports this to the owner.
+ *
+ * It was not always yes. The old gate checked ALLOWED_EMAILS before it
+ * ever looked for an invite, so while the allowlist was set an invited
+ * teammate was refused and their invite never consumed — while Settings
+ * cheerfully said "they'll join automatically the next time they sign
+ * in". Keeping that behaviour while closing the gate by default would
+ * have broken team invites outright on every deployment, since closed is
+ * now the default.
  */
 export function inviteAloneIsEnough(): boolean {
-  return allowedEmails.length === 0;
+  return true;
 }
 
 // A session cookie is good for a week at most — after that, sign in again.
@@ -88,10 +147,42 @@ export const authOptions: NextAuthOptions = {
       // decision 2026-09-19), which is a no-op for a business that already
       // pays.
       const approved = await prisma.accessRequest.findUnique({ where: { email }, select: { status: true } });
-      const isTester = allowedEmails.includes(email) || approved?.status === "approved";
-      if (allowedEmails.length > 0 && !isTester) return false;
+      const isTester = allowedEmails().includes(email) || approved?.status === "approved";
 
       const existing = await prisma.user.findUnique({ where: { email } });
+
+      /**
+       * The gate, and it governs sign-UP, not sign-in.
+       *
+       * Someone who already belongs to a business is not signing up; they
+       * are coming back. Gating them would mean that tightening this
+       * setting locks out every existing account — including the founder's
+       * own, whose address is not necessarily in ALLOWED_EMAILS. Access is
+       * taken away by removing someone from their team (removeMember() in
+       * team.ts, which nulls businessId and drops them back through this
+       * gate), never by an env var changing under them.
+       *
+       * Three ways to be let in as a new account, and all three are a
+       * human having named this address:
+       *
+       *   1. ALLOWED_EMAILS — the founder's own tester list.
+       *   2. An approved AccessRequest — the same thing granted from
+       *      /admin without a redeploy.
+       *   3. A pending, unexpired team invite — an admin of an existing
+       *      business asked for this person by email.
+       *
+       * Anything else is refused unless PUBLIC_SIGNUP is explicitly
+       * "true". Checked BEFORE the transaction below so a refusal creates
+       * nothing: no user row, no business, and the invite (if any) is left
+       * unconsumed for a legitimate attempt later.
+       */
+      if (!existing?.businessId && !isTester && !publicSignupEnabled()) {
+        const invited = await prisma.invite.findFirst({
+          where: { email, createdAt: { gte: inviteWindowStart() } },
+          select: { id: true },
+        });
+        if (!invited) return false;
+      }
       if (existing) {
         // Returning user with a business already — nothing to create. If
         // their name changed on Google's side, keep it fresh.
@@ -142,9 +233,13 @@ export const authOptions: NextAuthOptions = {
         // sign-in would tell an attacker their guess was close); it simply
         // stops working, and the person gets a fresh business of their own
         // exactly as any other new sign-up does.
-        const INVITE_VALID_DAYS = 30;
+        // Same window the gate above used (INVITE_VALID_DAYS, module
+        // scope) — if these two disagreed, an invite good enough to get
+        // someone past the gate but stale here would drop them into a
+        // brand-new business of their own instead of the team that
+        // invited them.
         const pendingInvite = await tx.invite.findFirst({
-          where: { email, createdAt: { gte: new Date(Date.now() - INVITE_VALID_DAYS * 24 * 60 * 60_000) } },
+          where: { email, createdAt: { gte: inviteWindowStart() } },
         });
 
         const businessId = pendingInvite

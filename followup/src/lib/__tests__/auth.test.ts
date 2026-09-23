@@ -9,8 +9,11 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { txInviteFindFirst, txInviteDeleteMany, txBusinessCreate, txUserUpdate, txUserCreate } = vi.hoisted(() => ({
+const { txInviteFindFirst, txInviteDeleteMany, txBusinessCreate, txUserUpdate, txUserCreate, gateInviteFindFirst } = vi.hoisted(() => ({
   txInviteFindFirst: vi.fn(),
+  // The signup gate's own invite lookup, OUTSIDE the transaction — it has
+  // to answer "is this person invited" before anything is created.
+  gateInviteFindFirst: vi.fn(),
   txInviteDeleteMany: vi.fn(),
   txBusinessCreate: vi.fn(),
   txUserUpdate: vi.fn(),
@@ -24,6 +27,7 @@ vi.mock("@/lib/billing", () => ({ grantBetaPlan: vi.fn(async () => true) }));
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: { findUnique: vi.fn() },
+    invite: { findFirst: gateInviteFindFirst },
     // The tester list is consulted on every sign-in now (see auth.ts's
     // isTester); nobody in these tests is on it.
     accessRequest: { findUnique: vi.fn(async () => null) },
@@ -56,6 +60,7 @@ const signIn = authOptions.callbacks!.signIn as any;
 beforeEach(() => {
   p.user.findUnique.mockReset();
   vi.clearAllMocks();
+  vi.unstubAllEnvs();
   txBusinessCreate.mockResolvedValue({ id: "newBiz1" });
 });
 
@@ -127,6 +132,12 @@ describe("signIn callback — invite consumption", () => {
   beforeEach(() => {
     p.user.findUnique.mockResolvedValue(null); // brand-new email, unless a test overrides it
     txInviteFindFirst.mockResolvedValue(null); // no pending invite, unless a test overrides it
+    // These are about what happens AFTER someone is let in — which
+    // business they land in, at what role, and that a concurrent
+    // completion does not throw. Signup is opened here so the gate (added
+    // 2026-09-23, and closed by default) does not stand in front of them;
+    // the gate itself is pinned in signupGate.test.ts.
+    vi.stubEnv("PUBLIC_SIGNUP", "true");
   });
 
   it("spins up a new business at ADMIN for a brand-new email with no invite", async () => {

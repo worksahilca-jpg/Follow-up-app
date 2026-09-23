@@ -14,6 +14,11 @@ import type { Message } from "@/lib/types";
 
 const RULES: BusinessAutomationRules = {
   canSend: true,
+  // The default fixture is an account that has ALLOWED sending, so the
+  // pre-existing expectations below keep describing what they were
+  // written to describe. The held case — which is every real account's
+  // default since 2026-09-21 — is exercised explicitly at the bottom.
+  holdAllForApproval: false,
   masterEnabled: true,
   silenceTriggerDays: 5,
   unansweredEnabled: true,
@@ -138,13 +143,13 @@ describe("computeAutomationStatus", () => {
 
   it("shows due_soon(unanswered) once the lead's own message is older than the unanswered threshold", () => {
     const l = lead({ conversation: [msg("outbound", 48), msg("inbound", 25)] });
-    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
   it("uses the shorter first-reply window when the only outbound so far is the instant-ack template", () => {
     const l = lead({ conversation: [msg("inbound", 4), { ...msg("outbound", 3.95), trigger: "instant_ack" }] });
     // 4h since the lead's message: past the 3h first-reply threshold, well inside the normal 24h one
-    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
   // findUnansweredLeads() in automation.ts counts TWO kinds of substantive
@@ -171,12 +176,12 @@ describe("computeAutomationStatus", () => {
     const l = lead({
       conversation: [{ ...msg("inbound", 4), channel: "instagram", source: "instagram_direct" }],
     });
-    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
   it("shows account_paused(unanswered) instead of due_soon when the master switch is off", () => {
     const l = lead({ conversation: [msg("outbound", 48), msg("inbound", 25)] });
-    expect(computeAutomationStatus(l, { ...RULES, masterEnabled: false }, NOW)).toEqual({ kind: "account_paused", reason: "unanswered" });
+    expect(computeAutomationStatus(l, { ...RULES, masterEnabled: false }, NOW)).toEqual({ kind: "account_paused", reason: "unanswered", heldForApproval: false });
   });
 
   it("shows waiting with a rough ETA before the unanswered threshold is reached", () => {
@@ -188,17 +193,17 @@ describe("computeAutomationStatus", () => {
 
   it("shows due_soon(dead_lead) once lastContacted crosses the dead-lead threshold", () => {
     const l = lead({ lastContacted: new Date(NOW.getTime() - 46 * 86_400_000).toISOString() });
-    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "dead_lead" });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "dead_lead", heldForApproval: false });
   });
 
   it("shows due_soon(silence) once lastContacted crosses the silence threshold but not the dead-lead one", () => {
     const l = lead({ lastContacted: new Date(NOW.getTime() - 6 * 86_400_000).toISOString() });
-    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "silence" });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "silence", heldForApproval: false });
   });
 
   it("prefers the dead-lead reactivation reason over silence once a lead crosses both thresholds", () => {
     const l = lead({ lastContacted: new Date(NOW.getTime() - 100 * 86_400_000).toISOString() });
-    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "dead_lead" });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "dead_lead", heldForApproval: false });
   });
 
   it("prefers unanswered over dead-lead reactivation when a lead qualifies for both", () => {
@@ -210,7 +215,7 @@ describe("computeAutomationStatus", () => {
       lastContacted: new Date(NOW.getTime() - 100 * 86_400_000).toISOString(),
       conversation: [msg("outbound", 200), msg("inbound", 30)],
     });
-    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
   it("falls back to the dead-lead/silence threshold when the lead wrote but the unanswered rule itself is disabled", () => {
@@ -218,7 +223,7 @@ describe("computeAutomationStatus", () => {
       lastContacted: new Date(NOW.getTime() - 6 * 86_400_000).toISOString(),
       conversation: [msg("inbound", 1)],
     });
-    expect(computeAutomationStatus(l, { ...RULES, unansweredEnabled: false }, NOW)).toEqual({ kind: "due_soon", reason: "silence" });
+    expect(computeAutomationStatus(l, { ...RULES, unansweredEnabled: false }, NOW)).toEqual({ kind: "due_soon", reason: "silence", heldForApproval: false });
   });
 
   it("shows sent when we already replied and nothing else is currently due", () => {
@@ -258,11 +263,11 @@ describe("the unanswered badge against Meta's window ceiling", () => {
   it("reads an Instagram lead at 21 hours as due, not as three hours away", () => {
     // The exact lie this guards against: at 24h the badge said "in 3h"
     // while the engine was about to send — and Meta was about to refuse.
-    expect(computeAutomationStatus(dmLead(21, "instagram"), RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+    expect(computeAutomationStatus(dmLead(21, "instagram"), RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
   it("reads a Messenger lead at 21 hours as due", () => {
-    expect(computeAutomationStatus(dmLead(21, "messenger"), RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+    expect(computeAutomationStatus(dmLead(21, "messenger"), RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
   it("leaves an email lead at 21 hours still counting down, as the owner configured", () => {
@@ -272,7 +277,7 @@ describe("the unanswered badge against Meta's window ceiling", () => {
 
   it("holds the ceiling against a business that configured 72 hours", () => {
     const slow: BusinessAutomationRules = { ...RULES, unansweredHours: 72 };
-    expect(computeAutomationStatus(dmLead(21, "instagram"), slow, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+    expect(computeAutomationStatus(dmLead(21, "instagram"), slow, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
     // …and the same lead on email genuinely does have days to go.
     expect(computeAutomationStatus(dmLead(21, "email"), slow, NOW).kind).not.toBe("due_soon");
   });
@@ -297,7 +302,7 @@ describe("the instant ack does not make a lead read as answered", () => {
 
   it("reads that lead as due once 3 hours have passed", () => {
     const l = lead({ conversation: [msg("inbound", 4), { ...msg("outbound", 3.95), trigger: "instant_ack" }] });
-    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
   it("reads an owner's synced Gmail reply (no trigger) as answered", () => {
@@ -335,6 +340,67 @@ describe("a 'Not now' tap on the lead's own page", () => {
         { ...msg("inbound", 21), channel: "instagram", body: "actually, can you do next week?" },
       ],
     });
-    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered" });
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
+  });
+});
+
+/**
+ * `holdAllForApproval` — the account-wide "nothing sends without my OK",
+ * `@default(true)` since 2026-09-21 and therefore on for every real
+ * account today.
+ *
+ * It is NOT a second masterEnabled, and the whole point of these tests is
+ * that it must never be treated as one. With the master off nothing
+ * happens; with hold on everything happens except the send. A lead is
+ * still claimed, still drafted for — it is just held. So the status must
+ * stay `due_soon` (something IS coming) and carry the flag that tells the
+ * badge to describe a draft rather than a send.
+ *
+ * The badge's own sentences are pinned in
+ * components/__tests__/AutomationStatusBadge.test.ts; this file pins that
+ * the flag reaches it at all.
+ */
+describe("an account that holds every message for approval", () => {
+  const HELD: BusinessAutomationRules = { ...RULES, holdAllForApproval: true };
+
+  it("still reports a due lead as due, not as paused or off", () => {
+    // The overcorrection this guards against: downgrading a held lead to
+    // a stopped one. A reply really is being written for it.
+    const l = lead({ lastContacted: new Date(NOW.getTime() - 10 * 86_400_000).toISOString() });
+    const status = computeAutomationStatus(l, HELD, NOW);
+    expect(status.kind).toBe("due_soon");
+  });
+
+  it("marks a due lead as held, so the badge can say a draft is coming", () => {
+    const l = lead({ lastContacted: new Date(NOW.getTime() - 10 * 86_400_000).toISOString() });
+    expect(computeAutomationStatus(l, HELD, NOW)).toEqual({ kind: "due_soon", reason: "silence", heldForApproval: true });
+  });
+
+  it("marks a waiting lead as held", () => {
+    const l = lead({ conversation: [msg("inbound", 2)] });
+    const status = computeAutomationStatus(l, HELD, NOW);
+    expect(status).toMatchObject({ kind: "waiting", heldForApproval: true });
+  });
+
+  it("marks an account-paused lead as held, since the master switch is not the only thing stopping it", () => {
+    const l = lead({ lastContacted: new Date(NOW.getTime() - 10 * 86_400_000).toISOString() });
+    const status = computeAutomationStatus(l, { ...HELD, masterEnabled: false }, NOW);
+    expect(status).toEqual({ kind: "account_paused", reason: "silence", heldForApproval: true });
+  });
+
+  it("does not resurrect a lead that is stopped for its own reasons", () => {
+    // Holding is about what happens at the END of the pipeline. It must
+    // not reorder anything above it: a paused lead, a lead with no send
+    // channel and a closed deal are all unaffected.
+    const reason = "This lead came in on instagram, which the Free plan doesn't cover.";
+    expect(computeAutomationStatus(lead({ aiPausedReason: reason }), HELD, NOW)).toEqual({ kind: "ai_paused", reason });
+    expect(computeAutomationStatus(lead(), { ...HELD, canSend: false }, NOW)).toEqual({ kind: "no_send_channel" });
+    expect(computeAutomationStatus(lead({ stage: "won" }), HELD, NOW)).toEqual({ kind: "closed" });
+    expect(computeAutomationStatus(lead({ automationTier: "off" }), HELD, NOW)).toEqual({ kind: "off" });
+  });
+
+  it("reports a lead awaiting their reply the same way — nothing is held, because nothing is due", () => {
+    const l = lead({ conversation: [msg("outbound", 2)] });
+    expect(computeAutomationStatus(l, HELD, NOW)).toEqual({ kind: "sent" });
   });
 });

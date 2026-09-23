@@ -25,6 +25,14 @@ const { getRescueReport, renderRescueDigest } = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/rescued", () => ({ getRescueReport, renderRescueDigest }));
 
+// How many replies are written and waiting. The digest asks for this so
+// it can lead with what needs the owner — on a holding account (the
+// default since 2026-09-21) the automated-send counts above are zero by
+// construction, and a digest built only from them reports a week of
+// nothing to a business sitting on a full approval queue.
+const { getPendingApprovals } = vi.hoisted(() => ({ getPendingApprovals: vi.fn(async () => [] as unknown[]) }));
+vi.mock("@/lib/pendingApprovals", () => ({ getPendingApprovals }));
+
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 
 import { GET } from "@/app/api/cron/weekly-digest/route";

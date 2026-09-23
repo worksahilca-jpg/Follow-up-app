@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { hasActiveAccess } from "@/lib/billing";
 import { sendEmail } from "@/lib/integrations/gmail";
 import { getRescueReport, renderRescueDigest } from "@/lib/rescued";
+import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { appUrl } from "@/lib/stripe";
 import { mapWithConcurrency } from "@/lib/concurrency";
 
@@ -47,9 +48,22 @@ export async function GET(request: NextRequest) {
     }
     try {
       const report = await getRescueReport(b.id, 7);
-      const body = renderRescueDigest(b.name, report, appUrl());
+      // What is written and waiting. On an account with
+      // holdAllForApproval on — the default since 2026-09-21 — automated
+      // sends are zero by construction, so without this the weekly email
+      // reports a week of nothing to a business whose queue may hold a
+      // dozen replies that have sat there since Monday.
+      const awaitingApproval = (await getPendingApprovals(b.id)).length;
+      const body = renderRescueDigest(b.name, report, appUrl(), awaitingApproval);
+      // The subject leads with whatever actually needs them. "0 came
+      // back, 0 answered for you" is a demoralising and useless subject
+      // on an account that is holding twelve drafts.
+      const subject =
+        awaitingApproval > 0
+          ? `FollowUp this week: ${awaitingApproval} ${awaitingApproval === 1 ? "reply is" : "replies are"} waiting for your OK`
+          : `FollowUp this week: ${report.rescued} came back, ${report.answeredForYou} answered for you`;
       for (const u of b.users) {
-        const r = await sendEmail(b.id, { to: u.email, subject: `FollowUp this week: ${report.rescued} came back, ${report.answeredForYou} answered for you`, body });
+        const r = await sendEmail(b.id, { to: u.email, subject, body });
         if (r.success) sent += 1;
       }
     } catch (err) {

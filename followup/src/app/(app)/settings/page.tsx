@@ -75,17 +75,55 @@ function SettingsPageInner() {
   // by opening straight into the tab that section lives in, so the browser's
   // own anchor scroll lands on it once it's actually in the DOM. Lazy
   // initializer so this only ever reads location.hash once, on mount.
-  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
-    if (typeof window === "undefined") return "connect";
-    return SECTION_TAB[window.location.hash.slice(1)] ?? "connect";
-  });
+  /**
+   * "connect" on both sides, always. The URL is read AFTER mount.
+   *
+   * Found 2026-09-23: on the deployed settings page the tabs could not
+   * be clicked at all. They took focus, so they looked alive, and
+   * nothing happened. The console said:
+   *
+   *   "A tree hydrated but some attributes of the server rendered HTML
+   *    didn't match the client properties. This won't be patched up."
+   *
+   * This initializer was the cause. It read `window.location` while
+   * rendering, so the server produced one tab and the client's first
+   * render produced another. React hit the mismatch, stopped patching,
+   * and the buttons kept their native focus behaviour while their
+   * onClick handlers were never bound. An owner sees a settings page
+   * permanently stuck on whichever tab the server picked.
+   *
+   * The lazy initializer looked like the careful choice — it reads the
+   * hash once instead of on every render — and that is exactly why it
+   * was wrong: during hydration "once" still happens on both sides, and
+   * only one of them has a `window`.
+   *
+   * So the first client render now matches the server byte for byte,
+   * and the effect below moves the tab once hydration is safely done.
+   */
+  const [activeTab, setActiveTab] = useState<SettingsTab>("connect");
   const scrolledRef = useRef(false);
 
+  // Reading the URL is the entire job of this effect, and the URL is a
+  // browser-only thing that must not be touched until hydration is over
+  // — which is exactly what the lint rule below is warning about in the
+  // general case and exactly why this is the right place here. One
+  // setState, once, on mount.
   useEffect(() => {
     if (scrolledRef.current) return;
     scrolledRef.current = true;
+
+    // An OAuth callback comes back with a query string and no hash, and
+    // the panel its failure belongs to is not "connect" — Instagram's
+    // lives under Channels. Landing the owner on the tab they just
+    // acted on is the difference between seeing the error and not.
+    const params = new URLSearchParams(window.location.search);
     const id = window.location.hash.slice(1);
-    if (id && SECTION_TAB[id]) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView());
+    const target = SECTION_TAB[id] ?? (params.get("instagram") ? "channels" : null);
+    if (!target) return;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActiveTab(target);
+    if (SECTION_TAB[id]) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView());
   }, []);
 
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -640,6 +678,21 @@ function SettingsPageInner() {
     searchParams.get("gmail") === "error" ? searchParams.get("message") ?? "Couldn't connect Gmail." : null;
   const outlookError =
     searchParams.get("outlook") === "error" ? searchParams.get("message") ?? "Couldn't connect Outlook." : null;
+  // Instagram was missing from this list entirely.
+  //
+  // Found 2026-09-23, connecting a brand-new demo account: the OAuth
+  // callback redirected to /settings?instagram=error&message=… exactly
+  // as Gmail's and Outlook's do, and nothing on the page read it. The
+  // connect had failed at Meta's long-lived token exchange, the page
+  // rendered as though nothing had happened, and the only trace was the
+  // query string in the address bar.
+  //
+  // A failed connect that says nothing is worse than one that says the
+  // wrong thing: the owner presses Connect, the screen looks unchanged,
+  // and they have no idea whether to wait, retry, or give up. The
+  // channel then silently receives nothing forever.
+  const instagramError =
+    searchParams.get("instagram") === "error" ? searchParams.get("message") ?? "Couldn't connect Instagram." : null;
   const billingRedirect = searchParams.get("billing"); // "success" | "canceled" | null
   // Just paid, but the webhook hasn't landed yet — the poll above is
   // already chasing it. Disable Subscribe during this window specifically
@@ -1019,6 +1072,11 @@ function SettingsPageInner() {
 
       <section id="social" className="scroll-mt-16">
         <h2 className="font-display text-xl">Instagram &amp; Facebook</h2>
+        {instagramError && (
+          <p className="text-xs" style={{ color: "var(--coral)" }}>
+            {instagramError}
+          </p>
+        )}
         <div className="mt-4">
           <InstagramConfig />
           <FacebookConfig />

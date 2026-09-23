@@ -171,6 +171,20 @@ function SettingsPageInner() {
   const [autonomousAllowed, setAutonomousAllowed] = useState(false);
   const [autonomousSaving, setAutonomousSaving] = useState(false);
   const [autonomousError, setAutonomousError] = useState<string | null>(null);
+  // Granting it asks first; revoking does not. The asymmetry is the
+  // point — a confirmation on the way out would be a speed bump in front
+  // of the safer answer.
+  const [confirmingAutonomous, setConfirmingAutonomous] = useState(false);
+  // Channels whose rule already says "Handle it all". This is the fact an
+  // owner cannot get anywhere else: a source rule applies at lead
+  // CREATION, so granting this does not just affect leads they chose one
+  // by one — every new lead from these channels lands on unreviewed
+  // sending from the next one onwards. While the permission is off those
+  // leads are quietly downgraded to Assisted (see sourceRouting.ts), so
+  // the rule looks harmless right up until the moment it isn't.
+  // null = not asked yet, or the read failed: the panel then states the
+  // rule in general terms rather than an invented "no channels".
+  const [autonomousRuleSources, setAutonomousRuleSources] = useState<string[] | null>(null);
   // What is waiting right now, split by whether the approval setting is
   // the only thing holding it. Fetched when the confirmation opens rather
   // than on page load — it scans the audit trail, and only someone
@@ -366,7 +380,7 @@ function SettingsPageInner() {
    * Withdrawing does not need a confirmation. Taking a permission away is
    * always allowed and always safe; only granting one deserves a pause.
    */
-  async function saveAutonomousPermission(granted: boolean) {
+  async function saveAutonomousPermission(granted: boolean): Promise<boolean> {
     setAutonomousSaving(true);
     setAutonomousError(null);
     try {
@@ -378,11 +392,13 @@ function SettingsPageInner() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
         setAutonomousError(data.message ?? "Couldn't save — try again.");
-        return;
+        return false;
       }
       setAutonomousAllowed(granted);
+      return true;
     } catch {
       setAutonomousError("Couldn't reach the server — try again.");
+      return false;
     } finally {
       setAutonomousSaving(false);
     }
@@ -1191,20 +1207,105 @@ function SettingsPageInner() {
                   : "Off. Every reply is checked before it goes, even on a lead set to \u201cHandle it all\u201d \u2014 anything about price, dates or a tense conversation waits for you."}
               </p>
             </div>
-            <button
-              onClick={() => saveAutonomousPermission(!autonomousAllowed)}
-              disabled={autonomousSaving}
-              className="shrink-0 rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
-              style={
-                autonomousAllowed
-                  ? { backgroundColor: "var(--card-2)", color: "var(--ink)" }
-                  : { backgroundColor: "var(--ink)", color: "var(--paper)" }
-              }
-            >
-              {autonomousSaving ? "Saving\u2026" : autonomousAllowed ? "Turn off" : "Allow it"}
-            </button>
+            {/* Turning it OFF is one press. Turning it ON opens the panel
+                below first — the same shape as the send permission above,
+                which asks an owner to read what changes rather than to
+                confirm they meant to click. */}
+            {(autonomousAllowed || !confirmingAutonomous) && (
+              <button
+                onClick={() => {
+                  if (autonomousAllowed) {
+                    saveAutonomousPermission(false);
+                    return;
+                  }
+                  setConfirmingAutonomous(true);
+                  setAutonomousError(null);
+                  setAutonomousRuleSources(null);
+                  fetch("/api/source-rules")
+                    .then((r) => r.json())
+                    .then((d) => {
+                      // Only on an explicit success, so a failed read
+                      // leaves it null and the panel says nothing about
+                      // channels rather than claiming there are none.
+                      if (d?.success && Array.isArray(d.rules)) {
+                        setAutonomousRuleSources(
+                          d.rules
+                            .filter((r: { automationTierDefault?: string | null }) => r.automationTierDefault === "AUTONOMOUS")
+                            .map((r: { source: string }) => r.source)
+                        );
+                      }
+                    })
+                    .catch(() => {});
+                }}
+                disabled={autonomousSaving}
+                className="shrink-0 rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
+                style={
+                  autonomousAllowed
+                    ? { backgroundColor: "var(--card-2)", color: "var(--ink)" }
+                    : { backgroundColor: "var(--ink)", color: "var(--paper)" }
+                }
+              >
+                {autonomousSaving ? "Saving\u2026" : autonomousAllowed ? "Turn off" : "Allow it"}
+              </button>
+            )}
           </div>
-          {autonomousError && (
+
+          {!autonomousAllowed && confirmingAutonomous && (
+            <div className="mt-4 rounded-lg p-4" style={{ backgroundColor: "var(--card-2)" }}>
+              <p className="text-sm font-medium">If you allow this, from the next check onwards:</p>
+              <ul className="mt-2 space-y-1.5 text-xs text-ink-soft">
+                <li>• Only leads you set to &ldquo;Handle it all&rdquo; are affected. Every new lead still starts in Assisted.</li>
+                <li>• On those leads, nobody reads the message first — including price, dates and tense conversations.</li>
+                <li>• The check that holds risky drafts back does not run on them.</li>
+                <li>• Every message is still written down, with the reason, and you can turn this off at any time.</li>
+              </ul>
+              {autonomousRuleSources && autonomousRuleSources.length > 0 && (
+                <p className="mt-3 text-xs" style={{ color: "var(--ink)" }}>
+                  <strong>
+                    {autonomousRuleSources.length === 1
+                      ? `Your ${autonomousRuleSources[0]} rule`
+                      : `${autonomousRuleSources.length} channel rules (${autonomousRuleSources.join(", ")})`}
+                  </strong>{" "}
+                  {autonomousRuleSources.length === 1 ? "is" : "are"} set to &ldquo;Handle it all&rdquo;, so every new lead from{" "}
+                  {autonomousRuleSources.length === 1 ? "that channel" : "those channels"} will go onto this the moment it
+                  arrives — you won&apos;t be choosing them one at a time.
+                </p>
+              )}
+              {autonomousError && (
+                <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+                  {autonomousError}
+                </p>
+              )}
+              <div className="mt-4 flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    // Closed only on a yes from the server. A failed
+                    // save leaves the panel open with the error inside
+                    // it, rather than collapsing back to a button that
+                    // still says "Allow it" for no visible reason.
+                    if (await saveAutonomousPermission(true)) setConfirmingAutonomous(false);
+                  }}
+                  disabled={autonomousSaving}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium"
+                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                >
+                  {autonomousSaving ? "Saving\u2026" : "Yes, let those leads skip the check"}
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmingAutonomous(false);
+                    setAutonomousError(null);
+                  }}
+                  disabled={autonomousSaving}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-ink-soft"
+                >
+                  Not yet
+                </button>
+              </div>
+            </div>
+          )}
+
+          {autonomousError && !confirmingAutonomous && (
             <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
               {autonomousError}
             </p>

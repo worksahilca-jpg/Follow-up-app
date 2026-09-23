@@ -5589,3 +5589,55 @@ sentence fails 1. 1720 pass; eslint, build and tsc clean.
 3. **Three near-identical mechanisms now.** `autonomousBacklog`, `autoSendBacklog` and this
    shared reason. The consolidation flagged last entry is overdue rather than less needed.
 4. **Wordy for a card.** Twenty-three words, where the cards around it run to eight or ten.
+
+---
+
+## 2026-09-23 — Four gaps closed, three of them found by rendering
+
+Founder: *"let skeep fixing all the gaps bro we dont have time i want testing users once the
+meta sends appoval."* So: the gaps that stand between a tester and a bad surprise, not the
+architectural tidy-ups.
+
+### 1. The summary line the last entry asked for
+
+`summariseGroups` now returns `fromBeforePermission`, said **once above the queue** instead of
+48 times down it. Self-critique #1 of the previous entry, closed.
+
+### 2. Granting Auto now asks first
+
+"Let some leads skip the check" was a one-press grant. The send permission beside it makes an
+owner read four facts; the *narrower and more dangerous* permission asked nothing. It now opens
+the same shape of panel — four facts, "Yes, let those leads skip the check" / "Not yet" — and
+names any **channel rule already set to "Handle it all"**, because a source rule applies at lead
+creation: granting this does not only affect leads the owner picked one at a time. Revoking
+stays one press; a confirmation on the way out is a speed bump in front of the safer answer.
+
+### 3–5. What rendering caught that 1725 passing tests did not
+
+Three real defects, none of which any assertion could see:
+
+- **`•` and `—` as literal text.** Escape sequences work in a JS string literal and
+  not in JSX text. The panel shipped its bullets as the characters `•`.
+- **The queue contradicting itself.** "2 of these were already waiting" sat under a heading
+  reading "Needs your OK (1)" — the count spans both piles. Now "2 of the drafts below".
+- **The queue sorted by the alphabet.** Two all-routine source groups of the same size fell
+  through to `source.localeCompare`, so "Added by hand" holding a lead scored 40 sat above
+  "Gmail" holding one scored 66. Groups now break ties on the best score in the group. The
+  founder asked for *"sources then scores"*; this was sources then spelling.
+
+### Tests
+
+4 new, each verified by removal (2 fail on the backlog count, 1 on the ordering). 1725 pass;
+eslint, build and tsc clean.
+
+### Self-critique
+
+1. **Rendering found more bugs than the test suite again.** Third time today. The lesson is not
+   "write more tests" — it is that a screen nobody has looked at is a guess, and the preview
+   harness should be part of the loop rather than something remembered at the end.
+2. **The safe pile still cannot be spot-checked.** It shows a count and one name. An owner who
+   wants to read three of the 40 before pressing cannot.
+3. **Still nothing paginates.** 600 cards render as 600 cards.
+4. **Still three near-identical backlog mechanisms.** Flagged twice now, deferred twice.
+5. **The source-rule downgrade is still silent.** A rule asking for Auto without permission
+   lands the lead on Assisted and says so nowhere in the UI.

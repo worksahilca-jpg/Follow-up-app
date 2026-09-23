@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
-import { groupApprovalsBySource, summariseGroups } from "@/lib/approvalGroups";
+import { groupApprovalsBySource, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import SafePileAction from "@/components/SafePileAction";
 
@@ -247,6 +247,22 @@ export default function ApprovalQueue({
         </p>
       )}
 
+      {/* Said once, above everything, rather than 48 times on 48 cards.
+          The cards still carry their own sentence — this is the line that
+          stops an owner concluding the product is repeating itself before
+          they have read the second one. */}
+      {summary.fromBeforePermission > 0 && (
+        <p className="mt-2 text-xs text-ink-soft leading-relaxed">
+          {/* "of the drafts below", not "of these". This line sits under
+              the "Needs your OK (N)" heading and counts BOTH piles, so
+              "2 of these" under a heading reading (1) read as the screen
+              contradicting itself. Caught by rendering it; the number was
+              right and the word it attached to was not. */}
+          {summary.fromBeforePermission} of the drafts below were already waiting before you turned sending on. FollowUp
+          left them for you rather than sending them all at once — send them whenever you&apos;re ready.
+        </p>
+      )}
+
       {/* The one accented control on the screen (A-006: the accent is
           spent once, on the single thing to act on). Whole-queue rather
           than per-source, because an owner facing hundreds wants the
@@ -291,7 +307,8 @@ export default function ApprovalQueue({
               {group.safeToSend.length > 0 && (
                 <div className="box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm text-ink-soft">
-                    {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"} from {group.source}
+                    {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"}
+                    {group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
                     {group.safeToSend[0] && <span className="text-ink"> — top is {group.safeToSend[0].leadName}</span>}
                   </p>
                   <SafePileAction count={group.safeToSend.length} source={group.source} />

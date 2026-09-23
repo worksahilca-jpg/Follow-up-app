@@ -37,7 +37,7 @@
  * it behind a button that says "these are fine" is how a made-up price
  * reaches a customer in the owner's name.
  */
-import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
+import { isHeldOnlyByApprovalSetting, BACKLOG_BEFORE_PERMISSION_REASON } from "@/lib/holdReasons";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 
 /**
@@ -61,6 +61,13 @@ export type ApprovalGroup = {
    * resolves to: the first card of the first group.
    */
   topNeedsYouScore: number | null;
+  /**
+   * The highest score anywhere in the group, urgent or routine. Used to
+   * break ties between groups that have nothing needing a decision, so
+   * they are ordered by who is worth the most rather than by the first
+   * letter of the channel's name.
+   */
+  topScore: number;
 };
 
 /**
@@ -91,9 +98,17 @@ export function isSafeToSendInBulk(approval: Pick<PendingApproval, "reason" | "d
  *   - Among those, the group holding the highest-scoring lead wins. That
  *     lead is the answer to "whom to focus on", so it belongs at the top
  *     of the top group rather than somewhere down a list.
- *   - Ties, and all-routine groups, fall back to the bigger queue first,
- *     then the source name, so the order is stable between renders
- *     rather than reshuffling on every load.
+ *   - Ties, and all-routine groups, fall back to the highest score in the
+ *     group whichever pile it is in, then to the bigger queue, then to
+ *     the source name, so the order is stable between renders rather
+ *     than reshuffling on every load.
+ *
+ *     That middle step is not decoration. Without it two all-routine
+ *     groups of the same size fell through to the source NAME, so
+ *     "Added by hand" holding one lead scored 40 sat above "Gmail"
+ *     holding one scored 66 — the queue sorted by the alphabet while
+ *     claiming to sort by who matters. Caught by rendering it, not by a
+ *     test: every assertion passed, and the screen was still wrong.
  */
 export function groupApprovalsBySource(approvals: PendingApproval[]): ApprovalGroup[] {
   const bySource = new Map<string, PendingApproval[]>();
@@ -124,6 +139,11 @@ export function groupApprovalsBySource(approvals: PendingApproval[]): ApprovalGr
       needsYou,
       safeToSend,
       topNeedsYouScore: needsYou.length > 0 ? needsYou[0].score : null,
+      // Both piles are already sorted by score, so the best in the group
+      // is whichever pile's first entry is higher. -1 for an empty group,
+      // which groupApprovalsBySource cannot produce but the comparison
+      // should not depend on that.
+      topScore: Math.max(needsYou[0]?.score ?? -1, safeToSend[0]?.score ?? -1),
     });
   }
 
@@ -134,6 +154,7 @@ export function groupApprovalsBySource(approvals: PendingApproval[]): ApprovalGr
     if (aHas && bHas && a.topNeedsYouScore !== b.topNeedsYouScore) {
       return (b.topNeedsYouScore as number) - (a.topNeedsYouScore as number);
     }
+    if (a.topScore !== b.topScore) return b.topScore - a.topScore;
     const aSize = a.needsYou.length + a.safeToSend.length;
     const bSize = b.needsYou.length + b.safeToSend.length;
     if (aSize !== bSize) return bSize - aSize;
@@ -160,12 +181,27 @@ export function summariseGroups(groups: ApprovalGroup[]): {
   safeToSend: number;
   /** The single lead to open first, or null when nothing needs a human. */
   focusOn: { leadId: string; leadName: string; source: string; score: number } | null;
+  /**
+   * How many are waiting only because they predate the permission being
+   * granted.
+   *
+   * Counted for one line above the queue rather than left to the cards.
+   * Each card already explains itself, but an owner who turns sending on
+   * and finds 48 more drafts than expected reads 48 identical sentences
+   * to learn one fact — and reads the first two, and concludes the
+   * product is repeating itself.
+   */
+  fromBeforePermission: number;
 } {
   let needsYou = 0;
   let safeToSend = 0;
+  let fromBeforePermission = 0;
   for (const g of groups) {
     needsYou += g.needsYou.length;
     safeToSend += g.safeToSend.length;
+    for (const a of [...g.needsYou, ...g.safeToSend]) {
+      if (a.reason === BACKLOG_BEFORE_PERMISSION_REASON) fromBeforePermission += 1;
+    }
   }
   // The groups are already ordered so this is the first card of the first
   // group — derived from the order rather than re-scanned, so the
@@ -175,6 +211,7 @@ export function summariseGroups(groups: ApprovalGroup[]): {
   return {
     needsYou,
     safeToSend,
+    fromBeforePermission,
     focusOn: lead ? { leadId: lead.leadId, leadName: lead.leadName, source: lead.source ?? UNKNOWN_SOURCE_LABEL, score: lead.score } : null,
   };
 }

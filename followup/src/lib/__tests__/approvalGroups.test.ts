@@ -225,7 +225,65 @@ describe("the line that sits above the queue", () => {
     expect(s.needsYou).toBe(0);
   });
 
+  it("puts the routine-only group holding the better lead first, not the earlier name", () => {
+    // Both groups are all-routine and the same size, so this used to fall
+    // through to source.localeCompare — "Added by hand" above "Gmail"
+    // regardless of who was in them. Alphabetical order is not an answer
+    // to "whom do I focus on".
+    const groups = groupApprovalsBySource([
+      approval({ leadId: "hand", leadName: "Sam", source: null, score: 40, reason: HOLD_ALL_AUTOMATION_REASON, draftRiskLevel: "low" }),
+      approval({ leadId: "mail", leadName: "Dana", source: "Gmail", score: 66, reason: HOLD_ALL_AUTOMATION_REASON, draftRiskLevel: "low" }),
+    ]);
+    expect(groups.map((g) => g.source)).toEqual(["Gmail", UNKNOWN_SOURCE_LABEL]);
+  });
+
+  it("still puts a group that needs you above a higher-scoring routine one", () => {
+    // Score only breaks ties. A group with something to decide outranks
+    // one with nothing to decide however valuable the routine lead is —
+    // otherwise the tie-break quietly becomes the sort.
+    const groups = groupApprovalsBySource([
+      approval({ leadId: "routine", source: "Gmail", score: 99, reason: HOLD_ALL_AUTOMATION_REASON, draftRiskLevel: "low" }),
+      approval({ leadId: "urgent", source: "WhatsApp", score: 12, reason: UNGROUNDED_DRAFT_REASONS.currency }),
+    ]);
+    expect(groups.map((g) => g.source)).toEqual(["WhatsApp", "Gmail"]);
+  });
+
+  it("counts how many predate the permission, for the line above the queue", () => {
+    // Said once, not 48 times. Each card carries its own sentence
+    // already; an owner who reads the first two identical ones concludes
+    // the product is repeating itself rather than that 48 are old.
+    const s = summariseGroups(
+      groupApprovalsBySource([
+        approval({ reason: BACKLOG_BEFORE_PERMISSION_REASON }),
+        approval({ reason: BACKLOG_BEFORE_PERMISSION_REASON }),
+        approval({ reason: HOLD_ALL_AUTOMATION_REASON }),
+        approval({ reason: UNGROUNDED_DRAFT_REASONS.currency }),
+      ])
+    );
+    expect(s.fromBeforePermission).toBe(2);
+  });
+
+  it("counts backlog in both piles, not just the routine one", () => {
+    // A backlog draft the classifier flagged sits in "needs you" and is
+    // still backlog. Counting only the safe pile would undercount the
+    // thing the line exists to explain.
+    const s = summariseGroups(
+      groupApprovalsBySource([
+        approval({ reason: BACKLOG_BEFORE_PERMISSION_REASON, draftRiskLevel: "low" }),
+        approval({ reason: BACKLOG_BEFORE_PERMISSION_REASON, draftRiskLevel: "high" }),
+      ])
+    );
+    expect(s.safeToSend).toBe(1);
+    expect(s.needsYou).toBe(1);
+    expect(s.fromBeforePermission).toBe(2);
+  });
+
+  it("reports no backlog when there is none, so the line stays hidden", () => {
+    const s = summariseGroups(groupApprovalsBySource([approval(), approval()]));
+    expect(s.fromBeforePermission).toBe(0);
+  });
+
   it("reports an empty queue as empty rather than throwing", () => {
-    expect(summariseGroups(groupApprovalsBySource([]))).toEqual({ needsYou: 0, safeToSend: 0, focusOn: null });
+    expect(summariseGroups(groupApprovalsBySource([]))).toEqual({ needsYou: 0, safeToSend: 0, fromBeforePermission: 0, focusOn: null });
   });
 });

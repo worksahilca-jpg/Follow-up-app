@@ -1,89 +1,46 @@
 # FollowUp — Team structure
 
-**Last updated:** 2026-09-14. This is the durable reference for who owns what. `STATUS.md`
+**Last updated:** 2026-09-23. This is the durable reference for who owns what. `STATUS.md`
 tracks what's open right now; this file tracks who's responsible for which area, and doesn't
 change often. If the two ever disagree on who owns something, this file wins.
 
 ---
 
-## Sahil — Founder & CEO
+## Sahil — Founder
 
-- Product vision and business strategy
-- Customer research and validation
-- Product roadmap
-- Investor relationships
-- Final product decisions
-- Reviews major UI/UX and frontend changes
+Everything. Product, engineering, design decisions, and the final say on all of it.
 
-## Gautam — UI/UX Designer & Frontend Developer
+FollowUp is a solo build. Where `CONTRIBUTING.md` or another doc describes a review step
+between two people, that step is Sahil reviewing his own work or an agent's — the branch and
+PR workflow still applies, because it is what keeps `main` deployable and gives every change
+a record, not because someone else is waiting to approve it.
 
-- User experience design
-- Figma designs
-- Design system
-- Frontend development
-- Responsive web app
-- UI animations and interactions
-- Frontend testing
+## Beta testers
 
-## Vansh — AI Automation & Integrations
+Not contributors. They use the product and report back; they have no repository, Vercel or
+infrastructure access, and never have had.
 
-- AI agents
-- Follow-up automation
-- External API integrations
-- Automation workflows
-- AI-related testing
+| Tester | Since |
+|---|---|
+| Manoj | 2026-09-19 |
+| Harsh | 2026-09-23 |
 
-## Pransh — Backend Engineer
-
-- Backend architecture
-- APIs
-- Database
-- Server-side business logic
-- Supports Vansh with backend integrations
-
-## Dipesh — Security & Operations
-
-- Authentication and authorization
-- Security
-- Infrastructure
-- Deployment
-- Environment configuration
-- Monitoring and reliability
-
-## Entire team
-
-- QA testing
-- Code review
-- Bug reporting
-- Integration testing
-- Product testing
+Testers are let in through `ALLOWED_EMAILS` or an approved `AccessRequest` on `/admin`
+(`followup/src/lib/auth.ts`). Sign-up is closed to everyone else.
 
 ---
 
 ## Git / code ownership
 
-| Owner | Owns |
-|---|---|
-| **Sahil** | Product direction and final approval |
-| **Gautam** | UI/UX and frontend implementation |
-| **Vansh** | AI and integrations |
-| **Pransh** | Backend and database |
-| **Dipesh** | Security and operations |
+`.github/CODEOWNERS` is the enforced version: every path is owned by `@worksahilca-jpg`.
 
-The file-path mapping this maps to in practice lives in `.github/CODEOWNERS` — that's what
-actually drives GitHub's review requests. This table is the human-readable summary; CODEOWNERS
-is the enforced version.
+## History
 
-**Frontend coordination:** Sahil and Gautam both touch frontend/UI territory — Gautam owns
-*implementation*, Sahil owns *product direction and final approval*. Coordinate before starting
-overlapping work rather than after; say so in the PR if you're touching a file the other has
-open work on.
+Between 2026-09-14 and 2026-09-23 the project was staffed as a five-person team — Gautam
+(UI/UX and frontend), Vansh (AI automation and integrations), Pransh (backend), and Dipesh
+(security and operations), alongside Sahil. That arrangement ended on 2026-09-23. Their
+ownership entries were removed from `CODEOWNERS` on the same day.
 
-**Backend/integrations overlap:** Pransh and Vansh both touch `src/lib/integrations/` at times
-(backend architecture vs. the integrations themselves). Same rule: flag it in the PR rather than
-find out in review.
-
-## How we work — see `CONTRIBUTING.md`
-
-Branching, PR process, required checks, and testing expectations are documented there, not
-duplicated here.
+Kept as a record rather than deleted: `CONTRIBUTING.md`, `design-brain/` and several commit
+messages still refer to that team, and a reader who meets those references deserves to know
+what they describe instead of finding a gap.

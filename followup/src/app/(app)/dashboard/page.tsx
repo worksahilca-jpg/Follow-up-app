@@ -84,15 +84,10 @@ export default async function DashboardPage() {
   const ctx = await getSessionContext();
   const rescue = ctx ? await getRescueReport(ctx.businessId, 7) : null;
   const approvals = ctx ? await getPendingApprovals(ctx.businessId) : [];
-  const approvalItems: ApprovalItem[] = approvals.map((a) => ({
-    leadId: a.leadId,
-    leadName: a.leadName,
-    reason: a.reason,
-    draftSubject: a.draftSubject,
-    draftMessage: a.draftMessage,
-    leadLastMessage: a.leadLastMessage,
-    leadLastMessageChannel: a.leadLastMessageChannel,
-  }));
+  // Passed straight through. This used to be re-mapped field by field,
+  // which dropped whatever the mapping had not been told about — see
+  // ApprovalItem's own note.
+  const approvalItems: ApprovalItem[] = approvals;
   const setupSteps = ctx ? await getIncompleteSetupSteps(ctx.businessId) : [];
   // The owner's own wall clock, for the greeting. This is a server
   // component, so without it "Good morning" came from the server's

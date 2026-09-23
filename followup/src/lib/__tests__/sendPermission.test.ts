@@ -92,9 +92,16 @@ describe("granting permission to send", () => {
 
     // The inversion, at the only place it happens inbound. `true` in
     // means "send on my behalf", which is `holdAllForApproval: false`.
+    //
+    // The grant is also STAMPED. That timestamp is what stops the switch
+    // emptying the approval queue on the next tick: automation.ts refuses
+    // to act on any conversation older than it, so what was already
+    // waiting stays waiting until the owner releases it deliberately.
+    // Without the stamp, turning this on releases weeks of drafts about
+    // conversations that ended long ago.
     expect(businessUpdate).toHaveBeenCalledWith({
       where: { id: "biz_1" },
-      data: { holdAllForApproval: false },
+      data: { holdAllForApproval: false, autoSendAllowedAt: expect.any(Date) },
     });
   });
 
@@ -102,9 +109,12 @@ describe("granting permission to send", () => {
     const res = await post({ autoSendPermission: false });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ success: true, autoSendPermission: false });
+    // The stamp is CLEARED on revoke, not left behind. Granting again
+    // must start a fresh "from now on" rather than reaching back to the
+    // first time and releasing everything held in between.
     expect(businessUpdate).toHaveBeenCalledWith({
       where: { id: "biz_1" },
-      data: { holdAllForApproval: true },
+      data: { holdAllForApproval: true, autoSendAllowedAt: null },
     });
   });
 

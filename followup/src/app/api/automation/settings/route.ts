@@ -50,6 +50,8 @@ const settingsSchema = z.object({
   triggerDays: z.coerce.number().int().optional(),
   instantAck: z.boolean().optional(),
   autoSendPermission: z.boolean().optional(),
+  // Business.autonomousAllowed — may any lead skip the risk check?
+  autonomousAllowed: z.boolean().optional(),
   unansweredReply: z
     .object({
       enabled: z.boolean().optional(),
@@ -93,7 +95,7 @@ export async function GET() {
   // fact, so it is the one place that has to know.
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { holdAllForApproval: true },
+    select: { holdAllForApproval: true, autonomousAllowed: true },
   });
   return NextResponse.json({
     enabled: automation?.enabled ?? true,
@@ -105,6 +107,7 @@ export async function GET() {
     // The same fact the positive way round, so no client ever writes the
     // `!` itself. See settingsSchema's header for why that matters.
     autoSendPermission: !(business?.holdAllForApproval ?? true),
+    autonomousAllowed: business?.autonomousAllowed ?? false,
   });
 }
 
@@ -135,13 +138,51 @@ export async function POST(request: NextRequest) {
       where: { id: ctx.businessId },
       // The one inversion inbound. `granted` is the owner's decision;
       // `holdAllForApproval` is its opposite.
-      data: { holdAllForApproval: !granted },
+      data: {
+        holdAllForApproval: !granted,
+        // Stamped on grant, cleared when the hold goes back on. This is
+        // what stops the switch releasing the whole queue at once: the
+        // send path refuses to act on any conversation older than this
+        // moment, so what was already waiting stays waiting until the
+        // owner releases it deliberately.
+        autoSendAllowedAt: granted ? new Date() : null,
+      },
     });
     // Named for what happened rather than for the field, so the trail
     // reads as a decision someone made. recordAudit already carries who
     // and when, and the IP.
     void recordAudit(ctx, granted ? "automation.autosend.granted" : "automation.autosend.revoked");
     return NextResponse.json({ success: true, autoSendPermission: granted });
+  }
+
+  /**
+   * May a lead skip the risk check entirely (the Auto mode)?
+   *
+   * Saved on its own for the same reason as the switch above, and it is
+   * a genuinely different question. That one asks "does anything send by
+   * itself"; this asks "may something send WITHOUT BEING CHECKED". An
+   * owner can answer yes to the first and no to the second forever.
+   *
+   * Founder, 2026-09-23: "Auto should be permitted by the user that is
+   * using followup."
+   */
+  if (typeof body.autonomousAllowed === "boolean") {
+    const granted = body.autonomousAllowed;
+    await prisma.business.update({
+      where: { id: ctx.businessId },
+      data: {
+        autonomousAllowed: granted,
+        // Stamped on grant, cleared on revoke. This is what makes the
+        // permission mean "from now on": the send path refuses to act
+        // unreviewed on any conversation older than this moment, so
+        // turning it on cannot flush a back catalogue. Clearing it on
+        // revoke means granting again starts a fresh window rather than
+        // reaching back to the first time.
+        autonomousAllowedAt: granted ? new Date() : null,
+      },
+    });
+    void recordAudit(ctx, granted ? "automation.autonomous.granted" : "automation.autonomous.revoked");
+    return NextResponse.json({ success: true, autonomousAllowed: granted });
   }
 
   // The unanswered-reply rule is saved on its own (see src/lib/automation.ts).

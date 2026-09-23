@@ -46,3 +46,9 @@ yarn-error.log*
 # live credential for whoever's account it was minted for — it must never be
 # committed, and neither should the scripts that mint it.
 .audit-scratch/
+
+# Screenshots taken to check a screen before shipping it (design-to-code:
+# "a design you haven't looked at is a guess"). Kept out of the repo —
+# they are output, not source, and they are regenerated whenever a screen
+# is next verified.
+.preview/

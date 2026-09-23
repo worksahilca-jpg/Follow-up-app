@@ -5031,3 +5031,681 @@ would have passed throughout. 1643 pass, eslint/build/tsc clean.
    and prose left standing everywhere else, and it keeps being found one surface
    at a time. A single list of every place the product claims something sends
    would have caught all of them in one pass, and does not exist.
+
+---
+
+## 2026-09-23 — Making "safe to send" a thing FollowUp actually knows
+
+### The founder's ask
+
+> "it should sort according to the sources then scores and let them know what is the
+> priority and whom to focus on rather than reading all 600 drafts… for those who need less
+> attention he should let them know that we can follow up in one click only if they want and
+> they are safe to send… but we need to take care about the restriction of sending mails and
+> messages of each source."
+
+A prioritised approval queue: grouped by source, sorted by score, split into *needs you* and
+*safe*, with one button for the safe pile and per-channel limits respected.
+
+### The blocker nobody had noticed
+
+**"Safe" did not exist.** `automation.ts` skipped the risk classifier entirely whenever
+`holdAllForApproval` was on, with a comment that was correct at the time:
+
+> "The classifier decides whether something is safe to send WITHOUT review. On an account
+> where nothing sends without review, it has nothing to decide, so its cost is not worth
+> paying."
+
+True while "is this safe" was only ever asked about a message about to go out. It stopped
+being true the moment the queue had to answer a second question: *of the drafts waiting for
+you, which are routine?*
+
+The consequence was already shipping. Two things built earlier today — the approval queue's
+needs-you-first ordering, and the send preview's "held only by your setting" count — both
+lean on the hold reason, and a forced-low verdict means a draft that quotes a made-up price
+gets a `HOLD_ALL_*` reason like any other. **Both features were sorting and counting against
+a verdict that had never been formed.** That is worse than not having them, because it reads
+as an answer.
+
+### What shipped
+
+The verdict is now bought for every held draft, and **stored with the draft it judged**
+(`Lead.suggestedRiskLevel` / `suggestedRiskReason`, nullable, additive).
+
+Storing it is the whole trick. The cost the old skip was protecting is real — a held draft is
+re-examined every hour for as long as it waits, and re-buying a verdict on an unchanged
+conversation is the one cost in the product that grows with *time* rather than with leads
+(the same reasoning that produced `suggestedDraftedFor`). So: paid once per draft, reused
+until the draft changes.
+
+Three cases that a naive version gets wrong, each pinned by a test:
+
+1. **A draft written before this column** is current — so never "regenerated" — but unjudged.
+   Keying the write on `regenerated` alone would buy its verdict every hour and throw it away
+   every hour. The write is keyed on *did this pass pay for it*, not on *did the draft change*.
+2. **A failed check is not stored.** Written down, it would be reused forever, stranding the
+   lead on "couldn't check this one" with nothing ever retrying.
+3. **An untouched lead is still skipped.** `UNTOUCHED_LEAD_REASON` outranks the approval
+   setting in the reason cascade, so that draft is in the *needs you* pile whatever a
+   classifier says. Null stays null, and null means unjudged — never "safe".
+
+### Tests
+
+Five new in `automation.test.ts`, verified by removal: restoring the old skip fails 3,
+storing only on regeneration fails 1, ignoring the stored verdict fails 1. 1662 pass;
+eslint, build and tsc clean.
+
+### Self-critique
+
+1. **This raises the bill and I cannot say by how much.** One classifier call per new draft
+   on every holding account — which is every account. Previously zero. The reuse keeps it
+   from compounding hourly, but the first pass over a 600-lead back catalogue buys 600
+   verdicts at once, and nothing rate-limits that.
+2. **Null is load-bearing and easy to misread.** Every consumer must treat "no verdict" as
+   *not known to be safe*. Nothing enforces that yet — the first caller that reads
+   `suggestedRiskLevel !== "high"` as safe will put unjudged drafts in a one-click send pile.
+   The grouping work that follows must add that guard, and it does not exist today.
+3. **Only the foundation.** The founder asked for grouping, priority, one-click and per-source
+   limits. This is none of those — it is the fact they all depend on. The queue is unchanged
+   so far.
+4. **No real verdicts seen.** No database and no OpenAI key here, so the storage and reuse are
+   proven against mocks. I have not watched the classifier judge one real held draft.
+
+---
+
+## 2026-09-23 — Grouping the approval queue so it answers "who first?"
+
+Step 2 of the founder's 2026-09-23 ask. Step 1 (a real risk verdict per draft) is the entry
+above; this is the shape built on it. No UI yet — this is the data layer and its guarantees.
+
+### The idea, in his words
+
+> "sort according to the sources then scores and let them know what is the priority and whom
+> to focus on rather than reading all 600 drafts… for those who need less attention he should
+> let them know that we can follow up in one click only if they want and they are safe to send"
+
+A flat list answers none of that. Ordered by urgency it still asks an owner to work down 600
+rows; ordered by recency, the same in a worse order. What a full queue needs is a *shape*:
+these few need you, this is the one to open first, the rest are routine and can go together.
+
+### The decision that carries all the risk
+
+`isSafeToSendInBulk` is the only place in the product that says a message may reach a customer,
+in the owner's name, **without a human reading it**. It has one way to fail badly — saying yes
+too often — so the bar is narrow, stated once, and guarded twice:
+
+1. The account's approval setting is the *only* thing holding it.
+2. The classifier looked at **this** draft and said low.
+
+**The second is not a restatement of the first**, and that is the whole point. Until this
+morning the classifier was skipped on every holding account, so each held draft carried a
+hardcoded "low" nothing had assessed. Built on the hold reason alone, the one-click pile's
+first act would have been to send every unjudged draft in the account — including the one
+quoting a price nobody mentioned — because its reason reads "your account holds every
+automated message", which is true of all of them.
+
+So **null is not safe**. An unjudged draft is not a safe draft; it is one nobody has looked at.
+The self-critique on the entry above flagged that nothing enforced this yet. It does now, in
+one function, re-checkable by the send endpoint rather than trusted from a browser.
+
+### Ordering
+
+- A source with anything needing a human outranks one that is purely routine, **however
+  large**. Forty safe drafts is not where to look first.
+- Among those, the group holding the highest-scoring lead wins — that lead *is* the answer to
+  "whom to focus on", so it sits at the top of the top group.
+- Ties fall back to size, then name, so the queue does not reshuffle under the cursor between
+  renders.
+- `summariseGroups` derives "focus on" from the ordered groups rather than re-scanning, so the
+  sentence above the queue can never name a lead the list does not show first.
+
+### Design direction for the UI that follows
+
+Per A-006 (the founder's own six-axis taste test): dense, boxed with a real shadow and no
+border, status colour doing the work, and `--rust` spent **once** — which here is obvious, it
+is the "send the safe ones" button. That is the single thing on the screen an owner should act
+on. R-001 also applies: this must not ship as a subtraction pass.
+
+### Tests
+
+18, verified by removal: treating an unjudged draft as safe fails 8, dropping the hold-reason
+guard fails 3, ranking groups by size fails 1. 1680 pass; eslint, build and tsc clean.
+
+### Self-critique
+
+1. **No UI, so nothing is proven to a human yet.** Everything above is a pure function with
+   good tests. Whether a grouped queue actually *reads* better than a flat one at 600 rows is
+   unproven, and is the kind of thing only rendering will show.
+2. **The cap and window rules are not here.** The founder was explicit that per-source sending
+   limits matter, and `safeToSend` currently describes what is safe, not what is *sendable
+   today*. A pile of 90 with a daily cap of 40 will need to say so, and nothing does yet.
+3. **Score is doing a lot of load-bearing work.** Groups rank on it and both piles sort on it,
+   but on a fresh account most leads are unscored (0), so the tie-break — recency — is in fact
+   the common path. The ordering will look much better in tests than on a new account's first
+   week.
+4. **`UNKNOWN_SOURCE_LABEL` is a guess at wording.** "Added by hand" is right for the
+   hand-typed case the founder's database actually had, but a CSV import with no channel
+   column lands there too and is not hand-added.
+
+---
+
+## 2026-09-23 — The one-click send, and the rule it deliberately does not go around
+
+Step 4 of the founder's 2026-09-23 ask. The button itself (step 3, the screen) is still to
+come; this is the action behind it.
+
+### The hard part was never the sending
+
+> "we can follow up in one click only if they want and they are safe to send… but we need to
+> take care about the restriction of sending mails and messages of each source."
+
+A button that sends 90 messages is easy. A button that sends 90 messages without getting the
+owner's mailbox suspended, without breaking the rules of the channels it sends through, and
+without lying about what it did, is the job.
+
+### The decision worth recording
+
+`sendFollowUpToLead` takes a `humanSend` option. It exists for the one screen where a signed-in
+person has a whole message in front of them and taps Send, and it is what lets an Instagram or
+Messenger reply go out between 24 hours and 7 days under **Meta's human-agent allowance**.
+
+Passing it here would have made this feature work on every channel. **It is not passed**, and
+that is the single most important line in the file.
+
+Nobody has read these messages individually — that is the entire point of the feature — so
+telling Meta a human is handling each conversation would be a false claim, made to the one
+party that can take the channel away. The refusal that follows is not a limitation to route
+around; it IS the per-source restriction the founder asked for. Those conversations stay in the
+queue for him to answer personally, which is what Meta's rule actually asks for.
+
+The wider principle: **no channel rule is re-implemented here.** Every window, cap and
+suppression already lives in the send path and is tested there. This layer's only job is to
+collect what that path refuses and say it out loud, in the path's own words — the closed-window
+sentence already tells an owner what they can do about it, and a second copy would drift.
+
+### The other two guards
+
+- **The list is never the caller's.** The screen posts a source at most; the set of drafts is
+  re-derived from the queue and each one re-checked with `isSafeToSendInBulk`. A list of lead
+  ids posted from a page is a list of leads somebody could edit.
+- **A press is bounded**, at the product's own daily automated ceiling — a number already
+  derived rather than picked (`sendCaps.ts`). One press should not be able to exceed what a
+  whole day of automation may. A truncated press spends itself on the highest-scoring leads and
+  reports what is left, rather than quietly doing less than it appeared to.
+
+Route is admin-only and rate-limited to 5 presses per 10 minutes: the per-press ceiling bounds
+one press, not a person leaning on the button.
+
+### Tests
+
+13, verified by removal: dropping the safe filter fails 1, claiming the human-agent allowance
+fails 1, reading a zero limit as "no limit" fails 1. 1693 pass; eslint, build and tsc clean.
+
+### Self-critique
+
+1. **No screen yet, so the button does not exist.** The endpoint is real and guarded; nothing
+   in the product calls it. Step 3 is the remaining work and is the part the founder will
+   actually see.
+2. **The ceiling is a single number, not a per-channel one.** The founder said "each source",
+   and cap-wise this treats all sources alike — it is Meta's window that is per-channel, via
+   the send path. A business whose Gmail limit is lower than the assumed one is not modelled.
+3. **`sent` counts what the send path accepted, not what a provider delivered.** A message
+   accepted and then bounced counts as sent here. That matches the rest of the product, and it
+   is still a gap between the number and the truth.
+4. **Never run against a real provider.** Every test mocks the send path. The concurrency,
+   the partial-failure path and the 300-second ceiling on a few hundred real sends are all
+   unproven against anything slow.
+
+---
+
+## 2026-09-23 — The approval queue as a shape, not a list
+
+Step 3, the screen, and the last of the founder's 2026-09-23 ask. Rendered at 1200px and at
+390px before shipping.
+
+### What it does
+
+51 held drafts render as **"Needs your OK (3)"**, a line naming the one lead to open first, and
+one box saying 48 are routine with a single button. Below that, a section per source, each with
+its cards and its own quiet send-all.
+
+The founder's sentence, turned into a layout: sources, then scores, then "whom to focus on",
+then one click for the rest.
+
+### Design decisions
+
+**Structure follows A-006 and dodges S-09.** The source is a *heading*, not a box, so the cards
+inside stay the only box level. A box per source containing boxes is the card-in-card soup the
+brain names — this component has been fixed for exactly that before.
+
+**The accent could not be spent as A-006 describes, and I did not invent one.** Axis 6 ("accent
+held back — spent once") assumed the navy-era blue. In the current tokens `--rust` resolves
+through `--accent` to `#0a0a0a`, **the same value as `--ink`** — so naming the accent token on
+the primary button would claim a distinction the system no longer draws. It uses `--ink`
+explicitly, with a comment, and hierarchy is carried by place and weight: the button sits in its
+own box above every group under a sentence that explains it, while the per-source buttons are
+quiet `--card-2`.
+
+**This is a real inconsistency in the brain and it is flagged, not patched.** A-006's sixth axis
+is unexecutable as written. Finalising a colour is a `[TO DECIDE]`, which is the founder's, so
+it goes to him rather than into a commit.
+
+**The result matters more than the press.** `SafePileAction` reports what actually happened —
+sent, how many remain, and every refusal **by name** with the sentence the send path wrote. A
+button that says "Send 43" and quietly sends 31 is how a bulk action loses trust, and the
+commonest refusal (a closed Meta window) is the one the owner can personally act on.
+
+### A bug the render caught that the tests did not
+
+`ApprovalItem` was a hand-written subset of `PendingApproval`, re-mapped field by field on the
+dashboard. That mapping silently dropped `draftRiskLevel` the moment grouping needed it — and
+since the safe pile is built from that field, **every draft would have landed in "needs you"
+and the one-click pile would have been permanently empty**, with no error anywhere. 1693 tests
+passed while this was true. `ApprovalItem` is now an alias of `PendingApproval`; an alias cannot
+drop a field.
+
+The first render showed exactly that failure — "Needs your OK (51)", no pile, no button — though
+for a second reason: my preview data used a truncated hold reason. The exact-match predicate
+refused it, correctly. Two different faults, one screenshot.
+
+### Verified
+
+Rendered at 1200px and 390px. Phone width measured over CDP rather than eyeballed:
+`scrollWidth` 390 against a 390 viewport, **zero elements past the edge**. (An earlier
+"overflow" was my own screenshot flag — `--window-size` crops without setting a mobile
+viewport.) 1693 tests, eslint, build and tsc clean.
+
+### Self-critique
+
+1. **The safe pile shows a count and one name, not the drafts.** An owner who wants to
+   spot-check three of the 31 before pressing cannot, without opening leads one at a time. That
+   is a real gap in a feature whose whole premise is trust.
+2. **"1 routine draft from Added by hand" reads badly.** The fallback label works as a heading
+   and not as a phrase in a sentence.
+3. **Never pressed against a real send.** The button, its result line and the refusal list are
+   all rendered from stub state; no database and no provider here. The one path that actually
+   matters is the one I could not exercise.
+4. **Nothing paginates.** 600 drafts means 600 cards in one page at 3 needing attention. The
+   grouping makes that survivable rather than solved.
+
+---
+
+## 2026-09-23 — Accent hue deferred, not decided
+
+Raised: A-006's sixth axis ("accent held back — spent once") cannot be executed, because
+`--rust` now resolves through `--accent` to `#0a0a0a`, the same value as `--ink`. The approval
+queue's primary button therefore reads identically to the secondary ones on the cards.
+
+**Founder:** *"leave for now we will make it stand out later lets just build the basic thing
+first."*
+
+**Status: DEFERRED, and still open.** Not approved as monochrome — explicitly parked. The
+`--ink` usage in `SafePileAction` carries a comment saying why it is not the accent token, so
+whoever resolves this finds the reason rather than a bare colour.
+
+**The principle this confirms** (consistent with R-001's inferred reading): function before
+finish. A control that works but does not yet stand out is shippable; polish is a later pass he
+will call. Do not spend a turn on visual differentiation he has not asked for.
+
+**To resolve later:** give `--accent` a hue again (which re-enables axis 6 everywhere, not just
+here), or record A-006 axis 6 as superseded by the monochrome system. That is a token decision
+and therefore his.
+
+---
+
+## 2026-09-23 — Auto becomes a permission, not a setting
+
+**Founder:** *"let's just put 'assisted' by default. Auto should be permitted by the user that
+is using followup."*
+
+Assisted was already the default (`Lead.automationTier @default(ASSISTED)`) — nothing to do.
+The second half was a real hole.
+
+### What stood in front of Auto before
+
+Auto is the one mode that skips the risk check: a lead on it sends price talk, delivery dates
+and tense conversations with nobody reading them. Three things looked like guards, and none was:
+
+1. **A confirmation dialog** on the lead page — client code. The API never hears about it.
+2. **A billing-tier check** — Free is Assisted-only. That is pricing, not consent. Paying for
+   Pro is not saying "send things nobody has read".
+3. **No admin check on the API at all**, so any signed-in teammate could set any lead to Auto
+   by calling it directly.
+
+And a fourth path had nothing whatsoever: a `SourceRule.automationTierDefault` is applied when a
+lead is **created**, so one rule could put every new lead from a channel onto unreviewed sending
+with no human in the loop at any point — the dialog never appears there.
+
+### The rule
+
+`Business.autonomousAllowed`, **false by default for existing accounts as well as new ones**.
+Nobody has ever been asked this question, so nobody has answered it, and an unanswered question
+is not a yes.
+
+**It gates both ends, which is what makes it a permission rather than a speed bump.** A lead
+cannot be put on Auto without it, *and* a lead already on Auto does not send unreviewed without
+it. Gating only the first would have left every account that already had Auto leads exactly as
+it was — the setting would be decoration for the people it most needs to protect.
+
+Without permission an Auto lead is treated as **Assisted, not Off**: still drafted, still
+risk-checked, still queued. Nothing is lost by withholding it, and a safe draft still sends —
+which is Assisted working, not a hole.
+
+### A test I got wrong
+
+The first version asserted that an Auto lead on an unpermitted account sends nothing at all.
+That was wrong about the **product**, not the code: it would have pinned
+Auto-without-permission as equivalent to Off. The real guarantee is that nothing goes out
+*unchecked*. Corrected to assert the classifier runs and a risky draft is held.
+
+### Tests
+
+10 new across three files, verified by removal: ignoring the permission in the send path fails
+4, treating a missing business row as consent fails 1. 1707 pass; eslint, build, tsc clean.
+
+### Self-critique
+
+1. **The Settings panel is unrendered.** Written to the same pattern as the send-permission
+   panel above it (no optimistic flip, quiet secondary style when on), but not screenshotted —
+   and I shipped an invisible panel earlier today by exactly this shortcut.
+2. **No confirmation before granting.** The send permission has a four-fact confirm block; this
+   one is a single button. Arguably the narrower permission deserves the same pause, and it does
+   not have one.
+3. **The source-rule downgrade is silent.** A rule asking for Auto quietly lands the lead on
+   Assisted, and the Settings screen that configures those rules says nothing about it.
+4. **Existing Auto leads change behaviour on deploy.** Correct and intended, but it is a real
+   behaviour change for anyone mid-flight — invisible today only because `holdAllForApproval` is
+   on everywhere.
+
+---
+
+## 2026-09-23 — Turning Auto on means "from now on", not "and everything since"
+
+**Founder:** *"lets get auto working but make sure it activates or sends messages after the user
+turns it on."* The word doing the work is **after**.
+
+### The blast
+
+A permission that only gates the future is fine. One that silently gates nothing is a disaster
+on the most optimistic day of an account's life.
+
+Every lead that went quiet while Auto was off is **already past its silence threshold**. So the
+first hourly tick after the switch finds the entire back catalogue eligible at once. The owner
+presses one button meaning "start doing this for me" and a few hundred messages leave in their
+name, unread, about conversations that ended weeks ago.
+
+`Business.autonomousAllowedAt` is the line: stamped on grant, cleared on revoke (so granting
+again starts a fresh window rather than reaching back). A conversation that moved after it may
+send unreviewed; anything older is backlog.
+
+### The mistake I made twice, and it mattered the second time
+
+My first fix downgraded a backlog lead from Auto to **Assisted**. That looks right and is
+useless: **Assisted sends the safe ones**, so a low-risk backlog draft goes out anyway and the
+guard is decoration.
+
+The first time I made this mistake it was only a wrong test expectation (recorded in the entry
+above). The second time it was in the *implementation*, and the tests caught it — the removal
+check now pins it explicitly, because it is clearly an easy thing to get wrong.
+
+Backlog is **held outright**, not downgraded. Still drafted, still risk-checked, but it waits —
+so the owner sees the size of the back catalogue and releases it deliberately, which is exactly
+what the queue's one-click routine pile is for.
+
+### Scope
+
+Only leads the owner actually put on Auto. A lead on Assisted is already behaving as asked, and
+a quiet lead is precisely what the silence nudge exists for.
+
+### Tests
+
+4 new, verified by removal: removing the hold term fails 3 (the trap), ignoring the grant time
+fails 3. 1711 pass; eslint, build, tsc clean.
+
+### Self-critique
+
+1. **The same blast exists for the OTHER permission and is not fixed.** Turning off
+   `holdAllForApproval` — "send on my behalf" — releases every held ASSISTED draft on the same
+   next tick, and nothing stamps when that was granted. It is the identical failure with a wider
+   blast radius, and this entry only closes the Auto half because that is what was asked for.
+   **This is the most important open item in this file.**
+2. **"Moved since" is the newest message, not the trigger.** A lead whose last message predates
+   the grant but which becomes newly due later still reads as backlog forever, until they write
+   again. Cautious in the right direction, but it means some leads never leave the queue on
+   their own.
+3. **Nothing tells the owner this is happening.** The backlog is held with an ordinary hold
+   reason; no copy anywhere says "these are from before you turned it on." The queue will simply
+   look fuller than expected.
+4. **Never observed end to end.** No database here, so the grant-stamp, the comparison and the
+   hold are proven against mocks only.
+
+---
+
+## 2026-09-23 — The same guard for the wider switch
+
+Closes the open item flagged as most important in the entry above. Founder: *"sure."*
+
+### The bigger blast
+
+Turning off `holdAllForApproval` — "send on my behalf" — makes **every draft in the approval
+queue** sendable on the next tick. The queue is precisely where a holding account's entire
+history accumulates, so this releases weeks of drafts about conversations that ended long ago.
+
+Wider than the Auto version in two ways: it is not limited to leads on Auto, and it is the
+switch an owner is most likely to press first.
+
+`Business.autoSendAllowedAt` is the line, stamped on grant and **cleared on revoke** — so
+granting again starts a fresh window rather than reaching back and releasing everything held in
+between. Held outright, not downgraded, for the reason the Auto version learned the hard way.
+
+### One deliberate asymmetry
+
+Null here does **not** mean "no permission", unlike the autonomous pair.
+
+An account whose hold was lifted before this column existed has no stamp, and reading that as
+"everything is backlog" would silently freeze a working account — a worse failure than the one
+this guard prevents, and one nobody would notice until customers stopped hearing back. So the
+guard applies only where a grant was actually recorded.
+
+Checked against production before deciding: all 9 businesses still hold, so no account is in
+that older state today. The asymmetry is protection against a state that cannot currently
+occur, which is the right time to add it.
+
+### Tests
+
+4 new. Verified by removal — and the first attempt was an **ineffective mutation**: deleting the
+null check left a comparison against null, which is false in JS, so behaviour did not change and
+no test failed. Replaced with a mutation that genuinely inverts the rule, which fails 14.
+Removing the guard itself fails 1. An existing test also caught the change to the update payload
+and now pins the stamp and its clearing. 1715 pass; eslint, build and tsc clean.
+
+### Self-critique
+
+1. **Still nothing tells the owner.** Backlog is held with an ordinary hold reason. After
+   granting either permission the queue simply looks fuller than expected, with no sentence
+   anywhere saying "these are from before you turned it on". This is now true of both switches
+   and is the obvious next piece of work.
+2. **Two near-identical mechanisms.** `autonomousBacklog` and `autoSendBacklog` sit side by side
+   with subtly different null semantics for good reasons, which is exactly the shape that drifts.
+   They should probably be one helper with the difference as a parameter.
+3. **"Moved since" is still the newest message.** A lead that becomes newly due later without
+   the other side writing reads as backlog indefinitely.
+4. **Proven against mocks only.** No database here; the stamp, the comparison and the hold have
+   never been watched on a real account.
+
+---
+
+## 2026-09-23 — Telling the owner why the queue did not shrink
+
+Closes the open item from the two entries above. Founder: *"sure."*
+
+### The confusing moment
+
+An owner turns sending on expecting things to start moving, opens the queue, and finds it
+**fuller than before** — because everything that piled up while the switch was off is still
+there, deliberately. Every one of those drafts carried the generic line, *"your account holds
+every automated message for you to approve"*, which by then is no longer true.
+
+With no sentence of its own, the backlog guard reads as the feature not working. The guard is
+right and the silence around it was the bug.
+
+### The sentence
+
+> "this one was already waiting before you turned sending on, so FollowUp left it for you rather
+> than sending it with everything else"
+
+**One sentence for both switches.** Which of the two held it is not a distinction an owner has
+any use for; what they need is that this is old, it is theirs to release, and nothing is broken.
+
+**Below `holdAll` in the cascade.** While the hold is on, *that* is why the draft is waiting, and
+the backlog line would be a more specific answer to a question nobody asked. It becomes the true
+sentence only once a permission has actually been granted.
+
+**Below every real finding**, like the rest of the cascade. "This was already waiting" on a draft
+that quotes a made-up price would bury the thing that matters.
+
+### The part that is load-bearing
+
+The reason is added to `HELD_ONLY_BY_SETTING`, which is what the one-click routine pile is built
+from. Leave it out and the entire back catalogue sits in the queue with no way out but one lead
+at a time — **the backlog guard becomes a trap instead of a courtesy**, and the "release it
+deliberately" story the last two entries rest on quietly stops working.
+
+Both safety guards still apply: a backlog draft the classifier did not clear is not safe, and
+being old does not make it safe.
+
+### Tests
+
+5 new, verified by removal: dropping it from the safe set fails 1 (the trap), removing the
+sentence fails 1. 1720 pass; eslint, build and tsc clean.
+
+### Self-critique
+
+1. **Still nothing at the top of the queue.** Each card explains itself now, but an owner facing
+   48 backlog drafts reads 48 identical sentences rather than one line saying "48 of these are
+   from before you turned it on". The summary line is where this really belongs.
+2. **Not rendered.** The sentence is asserted through `runAutomationForBusiness`, never seen on
+   a card.
+3. **Three near-identical mechanisms now.** `autonomousBacklog`, `autoSendBacklog` and this
+   shared reason. The consolidation flagged last entry is overdue rather than less needed.
+4. **Wordy for a card.** Twenty-three words, where the cards around it run to eight or ten.
+
+---
+
+## 2026-09-23 — Four gaps closed, three of them found by rendering
+
+Founder: *"let skeep fixing all the gaps bro we dont have time i want testing users once the
+meta sends appoval."* So: the gaps that stand between a tester and a bad surprise, not the
+architectural tidy-ups.
+
+### 1. The summary line the last entry asked for
+
+`summariseGroups` now returns `fromBeforePermission`, said **once above the queue** instead of
+48 times down it. Self-critique #1 of the previous entry, closed.
+
+### 2. Granting Auto now asks first
+
+"Let some leads skip the check" was a one-press grant. The send permission beside it makes an
+owner read four facts; the *narrower and more dangerous* permission asked nothing. It now opens
+the same shape of panel — four facts, "Yes, let those leads skip the check" / "Not yet" — and
+names any **channel rule already set to "Handle it all"**, because a source rule applies at lead
+creation: granting this does not only affect leads the owner picked one at a time. Revoking
+stays one press; a confirmation on the way out is a speed bump in front of the safer answer.
+
+### 3–5. What rendering caught that 1725 passing tests did not
+
+Three real defects, none of which any assertion could see:
+
+- **`•` and `—` as literal text.** Escape sequences work in a JS string literal and
+  not in JSX text. The panel shipped its bullets as the characters `•`.
+- **The queue contradicting itself.** "2 of these were already waiting" sat under a heading
+  reading "Needs your OK (1)" — the count spans both piles. Now "2 of the drafts below".
+- **The queue sorted by the alphabet.** Two all-routine source groups of the same size fell
+  through to `source.localeCompare`, so "Added by hand" holding a lead scored 40 sat above
+  "Gmail" holding one scored 66. Groups now break ties on the best score in the group. The
+  founder asked for *"sources then scores"*; this was sources then spelling.
+
+### Tests
+
+4 new, each verified by removal (2 fail on the backlog count, 1 on the ordering). 1725 pass;
+eslint, build and tsc clean.
+
+### Self-critique
+
+1. **Rendering found more bugs than the test suite again.** Third time today. The lesson is not
+   "write more tests" — it is that a screen nobody has looked at is a guess, and the preview
+   harness should be part of the loop rather than something remembered at the end.
+2. **The safe pile still cannot be spot-checked.** It shows a count and one name. An owner who
+   wants to read three of the 40 before pressing cannot.
+3. **Still nothing paginates.** 600 cards render as 600 cards.
+4. **Still three near-identical backlog mechanisms.** Flagged twice now, deferred twice.
+5. **The source-rule downgrade is still silent.** A rule asking for Auto without permission
+   lands the lead on Assisted and says so nowhere in the UI.
+
+---
+
+## 2026-09-23 — A grace period before a bulk send
+
+Prompted by the `apple-design` skill the founder was shown ("agency: keep people in control;
+offer forgiveness"). Most of that skill is gesture and spring-motion craft aimed at touch UI and
+does not apply to a desktop dashboard — but its forgiveness principle landed on a real hole:
+**Send all N** dispatched up to a day's cap of real messages with no way back.
+
+### It is a delay, not an undo, and the copy has to say so
+
+A sent message cannot be recalled from Gmail, WhatsApp, Instagram or SMS. The only honest
+version is a window *before* the send. So the label reads **"Sending all 3 in 10s"** —
+present tense, about to happen — with an **Undo** button beside it. Calling it "Undo" after a
+real send would be a lie the first time someone pressed it.
+
+### Ten seconds, not Gmail's five
+
+Pinned against `research/customers/2026-09-05-icp-pain-and-trust-objections.md`: the owner is
+up a ladder, interrupted, on a phone, giving the app ninety seconds. Five seconds assumes
+someone at a desk watching the screen. The asymmetry decides it — **a longer window costs
+almost nothing**, because nobody is waiting on the result, while a short one costs forty
+messages that should not have gone.
+
+### Leaving the page sends
+
+The contestable call, written down rather than left to whichever branch was easier. Cancelling
+on leave means an owner who presses Send and shuts the laptop believes forty follow-ups went
+out when none did — the exact failure `SafePileAction`'s own docstring forbids. There is a
+button on screen that says Undo; someone who wants to cancel presses it. `pagehide` +
+`sendBeacon`, because the ICP is on a phone and `beforeunload` routinely never fires there.
+
+### The race, and why it is a gate
+
+On the last millisecond the timer can fire while a finger lands on Undo. Both running means
+the messages go **and** the screen says cancelled — the worst outcome available, because the
+owner walks away believing nothing was sent. Sending and cancelling now claim the same
+one-shot token (`createSendGate`), so exactly one wins. Deliberately not a boolean in a ref
+that two call sites check then set: that is the check-then-act shape already fixed once in the
+rate limiters (#89).
+
+### Constraints honoured
+
+- **[[rejected#^R-002|R-002]]** — no keyboard shortcut. `Z`-to-undo was part of the rejected
+  keyboard model; this is a visible button only.
+- **[[rejected#^R-001|R-001]]** named "the undo grace" as a move that *may survive* a richer
+  design. This is that, built as addition rather than subtraction.
+
+### Tests
+
+8 new in `undoWindow.test.ts`, verified by removal (`ceil`→`floor` fails 1; removing the gate's
+guard fails 2). Rendering then confirmed the states end to end: countdown → Undo → "Stopped —
+nothing was sent" → button returns; and a full countdown fires **exactly one** POST, which is
+the assertion that matters. 1733 pass; build, tsc, eslint clean.
+
+### Self-critique
+
+1. **Single "Approve & send" has no grace.** Deliberate — the owner just read that one message,
+   and a countdown on every single send taxes the common path. But it is an inconsistency, and
+   the first person who misclicks a single send will not find it principled.
+2. **The countdown is text, not a progress bar.** A depleting bar reads at a glance; "10s"
+   has to be read. Chosen for restraint, but this is the weakest part of the design.
+3. **Nothing tells the owner leaving will send.** The behaviour is right and undocumented in
+   the UI. One line could say it, at the cost of clutter on the calm path.
+4. **Overlapping presses are untested.** Two groups counting down at once each have their own
+   gate, which should be fine because the server re-reads what is still pending — but I did
+   not verify it.

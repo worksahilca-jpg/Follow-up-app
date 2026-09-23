@@ -234,6 +234,67 @@ model Business {
   // who has decided to trust it.
   holdAllForApproval   Boolean @default(true)
 
+  // May any lead on this account be set to Auto — the one mode that skips
+  // the risk check and sends price and tense conversations without review?
+  //
+  // `false` until the owner says otherwise, and a separate question from
+  // holdAllForApproval above. That one asks "does anything send by
+  // itself"; this one asks "may something send WITHOUT BEING CHECKED".
+  // An owner can reasonably answer yes to the first and no to the second
+  // forever, and before this column there was no way to say so.
+  //
+  // Founder, 2026-09-23: "Auto should be permitted by the user that is
+  // using followup."
+  //
+  // What existed instead was a confirmation dialog in the browser and a
+  // billing-tier check. Neither is a permission: the dialog is client
+  // code, the API took AUTONOMOUS from any signed-in teammate with no
+  // admin check, and a source rule could set it on every new lead from a
+  // channel at creation time without a human seeing anything at all.
+  //
+  // Read through isAutonomousAllowed (@/lib/autonomousPermission), never
+  // directly, so every path that can reach Auto asks the same question.
+  autonomousAllowed    Boolean @default(false)
+
+  // WHEN the permission above was granted. Null whenever it is off.
+  //
+  // Founder, 2026-09-23: Auto must "send messages after the user turns it
+  // on" — and the word doing the work there is *after*.
+  //
+  // Without this, granting the permission is a blast. Every lead that
+  // went quiet while it was off is already past its silence threshold, so
+  // the next hourly tick finds a whole back catalogue eligible at once
+  // and sends all of it, unread, in the owner's name. The owner pressed
+  // one button meaning "from now on" and got "and also everything since".
+  //
+  // So a lead only sends unreviewed when its conversation moved AFTER
+  // this moment. Anything older is backlog: still drafted, still checked,
+  // but it goes to the approval queue where the owner can see the size of
+  // it and release it deliberately — which is what the queue's one-click
+  // routine pile is for.
+  //
+  // Reset to null on revoke, so granting again starts a fresh "from now
+  // on" rather than reaching back to the first time.
+  autonomousAllowedAt  DateTime?
+
+  // WHEN the owner granted "send on my behalf" — i.e. when
+  // holdAllForApproval was turned OFF. Null while it is on.
+  //
+  // The same guard as autonomousAllowedAt above, for the switch with the
+  // WIDER blast radius. Every draft in the approval queue is sendable the
+  // instant the hold lifts, and the queue is where a holding account's
+  // entire history accumulates: turning this on without a line would
+  // release weeks of drafts on the next tick, about conversations that
+  // ended long ago.
+  //
+  // Null is deliberately NOT treated as "no permission" here, unlike the
+  // autonomous pair. An account whose hold was lifted before this column
+  // existed has no stamp, and reading that as "everything is backlog"
+  // would silently freeze a working account. So the guard applies only
+  // where a grant was actually recorded — every grant from 2026-09-23 on.
+  // (No account is in that older state today: all of them still hold.)
+  autoSendAllowedAt    DateTime?
+
   // When Meta last confirmed this app is subscribed to the account's
   // `messages` webhook. Null on a connected account means the
   // subscription never succeeded — the account is saved and readable,
@@ -484,6 +545,27 @@ model Lead {
   // email-framed draft must be rebuilt before it goes out as a DM. An
   // empty `buttons` list is a DM draft that passed without chips.
   suggestedQuickReplies Json?
+  // What the risk classifier made of `suggestedMessage` — "low", "medium"
+  // or "high", plus the sentence explaining a non-low verdict. Null means
+  // no verdict: the draft predates this column, or no classifier was
+  // configured when it was written.
+  //
+  // Stored rather than recomputed for the reason `suggestedDraftedFor`
+  // above already exists: a held draft is re-examined on every pass, and
+  // paying for a fresh risk check on a byte-identical conversation was
+  // the one cost in the product that grew with time instead of with
+  // leads. The verdict is written when the draft is, and reused until the
+  // draft is.
+  //
+  // It exists at all because "is this safe to send" became a question
+  // FollowUp has to answer for a draft it is NOT about to send. The
+  // classifier used to be skipped entirely while holdAllForApproval was
+  // on — reasonably, since it decides whether something may go out
+  // unreviewed and nothing was going out at all. But that left every held
+  // draft unjudged, so the approval queue could not say which ones are
+  // routine, and an owner facing 600 of them had to read all 600.
+  suggestedRiskLevel  String?
+  suggestedRiskReason String?
   // Why FollowUp did NOT read this lead or write anything for it — set
   // whenever checkAiEligibility (@/lib/billing) refuses, cleared the
   // moment a score/draft actually lands (src/lib/scoring.ts).

@@ -93,7 +93,12 @@ beforeEach(() => {
   p.lead.update.mockResolvedValue({});
   p.lead.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds by default
   p.notification.create.mockResolvedValue({});
-  p.business.findUnique.mockResolvedValue({ timezone: "America/New_York" });
+  // `autonomousAllowed` + a long-ago `autonomousAllowedAt` on the default
+  // fixture so every test below
+  // is about the guarantee it is named for. The permission itself — off
+  // for every real account until an owner grants it — is exercised in its
+  // own describe at the bottom of this file.
+  p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, autonomousAllowedAt: new Date("2000-01-01"), timezone: "America/New_York" });
   p.user.findMany.mockResolvedValue([{ id: "admin1" }]);
   send.mockResolvedValue({ success: true });
   replyChannel.mockResolvedValue("email");
@@ -477,7 +482,7 @@ describe("silence automation risk gate", () => {
 // still get drafted (or worse, auto-sent) the moment it went silent.
 describe("Free tier AI-processing pause", () => {
   it("skips a Free-tier lead past the monthly lead cap, without drafting or risk-checking it", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, autonomousAllowedAt: new Date("2000-01-01"), timezone: "America/New_York", tier: "free" });
     aiEligible.mockResolvedValue({ ok: false, reason: "past this month's 20-lead AI cap on the Free plan" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     const r = await runAutomationForBusiness("biz1");
@@ -490,7 +495,7 @@ describe("Free tier AI-processing pause", () => {
   });
 
   it("skips a Free-tier lead whose channel isn't included in Free, even if it's within the lead cap", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, autonomousAllowedAt: new Date("2000-01-01"), timezone: "America/New_York", tier: "free" });
     aiEligible.mockResolvedValue({ ok: false, reason: "on a channel the Free plan doesn't cover" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     const r = await runAutomationForBusiness("biz1");
@@ -500,7 +505,7 @@ describe("Free tier AI-processing pause", () => {
   });
 
   it("still processes a Free-tier lead that's within cap and on an eligible channel, same as any other tier", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, autonomousAllowedAt: new Date("2000-01-01"), timezone: "America/New_York", tier: "free" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
@@ -508,7 +513,7 @@ describe("Free tier AI-processing pause", () => {
   });
 
   it("forces the risk check even for a lead stuck on AUTONOMOUS from before a downgrade to Free", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, autonomousAllowedAt: new Date("2000-01-01"), timezone: "America/New_York", tier: "free" });
     p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
@@ -521,14 +526,14 @@ describe("Free tier AI-processing pause", () => {
   // account is checked against Plus's own ceiling, not Free's, so this
   // costs a normal customer nothing.
   it("checks the paid tiers too, against their own ceiling", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "pro" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, autonomousAllowedAt: new Date("2000-01-01"), timezone: "America/New_York", tier: "pro" });
     p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
     await runAutomationForBusiness("biz1");
     expect(aiEligible).toHaveBeenCalledWith("biz1", expect.anything(), "pro");
   });
 
   it("skips a paid lead once its tier's ceiling trips, without drafting it", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "plus" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, autonomousAllowedAt: new Date("2000-01-01"), timezone: "America/New_York", tier: "plus" });
     aiEligible.mockResolvedValue({ ok: false, reason: "something may be wrong" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     const r = await runAutomationForBusiness("biz1");
@@ -1407,7 +1412,7 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
  */
 describe("an account that holds every automated message", () => {
   beforeEach(() => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "pro", holdAllForApproval: true });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, autonomousAllowedAt: new Date("2000-01-01"), timezone: "America/New_York", tier: "pro", holdAllForApproval: true });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValue([]);
     draftMessage.mockResolvedValue("Just following up on the roof question.");
   });
@@ -1430,12 +1435,85 @@ describe("an account that holds every automated message", () => {
     expect(result.held).toBe(1);
   });
 
-  // The classifier exists to decide what may send WITHOUT review. Where
-  // nothing sends without review it has nothing to decide, and it is a
-  // paid call per lead per hour.
-  it("does not pay the risk classifier to answer a question that cannot matter", async () => {
+  /**
+   * The classifier used to be skipped entirely here, on the reasoning
+   * that it decides what may send WITHOUT review and nothing on this
+   * account sends at all. That held while "is it safe" was only ever
+   * asked about a message about to go out.
+   *
+   * It stopped holding when the queue had to answer a second question:
+   * of the drafts waiting for you, which are routine? Without a verdict
+   * every held draft looks identical, so an owner with 600 of them has
+   * to read 600 — and the one quoting a price nobody mentioned sits
+   * among the ordinary nudges with nothing marking it out.
+   *
+   * So the verdict is bought here even though this draft is certainly
+   * being held. What is NOT bought is the same verdict twice (below).
+   */
+  it("judges a held draft, so the queue can tell routine from risky", async () => {
     await runAutomationForBusiness("biz1");
-    expect(risk).not.toHaveBeenCalled();
+    expect(risk).toHaveBeenCalled();
+  });
+
+  it("stores the verdict with the draft it judged", async () => {
+    risk.mockResolvedValue({ riskLevel: "medium", reason: "quotes a price nobody mentioned" });
+    await runAutomationForBusiness("biz1");
+    const call = p.lead.update.mock.calls.find((c: [{ where: { id: string }; data: Record<string, unknown> }]) => c[0].where.id === "lead1");
+    expect(call[0].data.suggestedRiskLevel).toBe("medium");
+    expect(call[0].data.suggestedRiskReason).toBe("quotes a price nobody mentioned");
+  });
+
+  /**
+   * The cost the old skip was protecting, handled without giving up the
+   * answer. A held draft is re-examined on every pass — hourly, for as
+   * long as it waits — and re-buying a verdict on a conversation that has
+   * not changed is the one cost that grows with time rather than with
+   * leads (the same reason `suggestedDraftedFor` exists, schema.prisma).
+   */
+  it("never re-buys a verdict for a draft that has not changed", async () => {
+    p.lead.findMany.mockReset();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          suggestedMessage: "Already drafted and already judged.",
+          suggestedDraftedFor: new Date("2999-01-01"),
+          suggestedRiskLevel: "low",
+          suggestedRiskReason: null,
+        }),
+      ])
+      .mockResolvedValue([]);
+    await runAutomationForBusiness("biz1");
+    expect(risk, "paid for the same answer about the same words").not.toHaveBeenCalled();
+  });
+
+  /**
+   * The other half, and the one a naive version of the rule above gets
+   * wrong. A draft written before verdicts existed is CURRENT — so it is
+   * never regenerated — but unjudged. Keying the write on "was the draft
+   * regenerated" alone would buy its verdict every hour and throw it away
+   * every hour: the exact standing cost, aimed at the back catalogue.
+   */
+  it("judges and stores an older draft that has no verdict yet", async () => {
+    p.lead.findMany.mockReset();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          suggestedMessage: "Drafted before verdicts were recorded.",
+          suggestedDraftedFor: new Date("2999-01-01"),
+          suggestedRiskLevel: null,
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    await runAutomationForBusiness("biz1");
+
+    expect(risk).toHaveBeenCalled();
+    const call = p.lead.update.mock.calls.find((c: [{ where: { id: string }; data: Record<string, unknown> }]) => c[0].where.id === "lead1");
+    expect(call, "bought a verdict and did not write it down").toBeTruthy();
+    expect(call[0].data.suggestedRiskLevel).toBe("low");
+    // …and did NOT restamp the draft, which would claim it answers a
+    // newer message than it actually does.
+    expect(call[0].data.suggestedDraftedFor).toBeUndefined();
   });
 
   // Holding is only useful if there is something to hold: the draft is
@@ -1658,5 +1736,420 @@ describe("an email draft that names a figure nobody wrote", () => {
 
     expect(r.sent).toBe(1);
     expect(r.held).toBe(0);
+  });
+});
+
+/**
+ * An account that has never permitted unreviewed sending.
+ *
+ * Founder, 2026-09-23: "Auto should be permitted by the user that is
+ * using followup."
+ *
+ * `Business.autonomousAllowed` is false for every account until an owner
+ * turns it on — including accounts that already have leads sitting on
+ * AUTONOMOUS, which is the point rather than an oversight. Nobody has
+ * ever been asked this question, so nobody has answered it.
+ *
+ * Gating only the act of SETTING a lead to Auto would have left exactly
+ * those accounts as they were, and the permission would be decoration for
+ * the people it most needs to protect. So the send path asks too, and
+ * these tests are that half.
+ */
+describe("a lead on Auto where the account never permitted it", () => {
+  beforeEach(() => {
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+  });
+
+  /**
+   * The guarantee is "nothing goes out UNCHECKED", not "nothing goes
+   * out". Without permission the lead is treated as ASSISTED — which is
+   * a real mode that sends the safe ones — so a low-risk draft still
+   * reaches the customer, having been read by the classifier first. That
+   * is the downgrade working, not a hole in it.
+   *
+   * An earlier version of this test asserted nothing sent at all. That
+   * was wrong about the product, not about the code: it would have
+   * pinned Auto-without-permission as equivalent to OFF, which is a
+   * different and much worse answer.
+   */
+  it("makes the draft face the risk check it would have skipped", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(risk, "an Auto lead skipped the classifier on an account that never allowed it").toHaveBeenCalled();
+  });
+
+  it("holds a risky draft that Auto would have sent regardless", async () => {
+    // The case the permission exists for: price talk, tense
+    // conversations, a promise nobody agreed to. On Auto this sends
+    // unread. Without permission it waits.
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "high", reason: "the draft quotes a price nobody mentioned" });
+
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(send, "a risky draft went out unread").not.toHaveBeenCalled();
+    expect(result.held).toBe(1);
+  });
+
+  it("still judges the draft, so it can land in the routine pile once allowed", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    await runAutomationForBusiness("biz1");
+    expect(risk).toHaveBeenCalled();
+  });
+
+  it("sends once the owner grants it", async () => {
+    // The other direction: the permission must actually unlock the
+    // behaviour, or it is just a way of turning Auto off.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: true,
+      // Granted a while ago, so the fixture lead's conversation (which is
+      // "now") counts as having moved since — see the from-now-on guard.
+      autonomousAllowedAt: new Date("2000-01-01"),
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(send).toHaveBeenCalled();
+  });
+
+  it("treats a business row it cannot read as not permitted", async () => {
+    // A missing row is not consent. It must land on the checked path,
+    // exactly like an account that has simply not answered yet.
+    p.business.findUnique.mockResolvedValue(null);
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "high", reason: "the draft quotes a price nobody mentioned" });
+    await runAutomationForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Turning Auto on means "from now on", not "and also everything since".
+ *
+ * Founder, 2026-09-23: Auto must "send messages after the user turns it
+ * on" — and the word doing the work there is *after*.
+ *
+ * The failure this exists to stop is a blast. Every lead that went quiet
+ * while the permission was off is ALREADY past its silence threshold, so
+ * the first hourly tick after the switch finds the whole back catalogue
+ * eligible at once. An owner presses one button meaning "start doing this
+ * for me" and a few hundred messages leave in their name, unread, about
+ * conversations that ended weeks ago. That is the single worst thing this
+ * product could do to somebody, and it would happen on the most
+ * optimistic day of their account's life.
+ *
+ * `Business.autonomousAllowedAt` is the line. A conversation that moved
+ * after it may send unreviewed; anything older is backlog — still
+ * drafted, still risk-checked, but held, so the owner sees how much there
+ * is and releases it deliberately.
+ */
+describe("the moment Auto is switched on", () => {
+  const GRANTED_AT = new Date("2026-09-23T00:00:00Z");
+
+  function grantedAccount() {
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: true,
+      autonomousAllowedAt: GRANTED_AT,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+  }
+
+  it("does not flush a conversation that went quiet before the switch", async () => {
+    grantedAccount();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          automationTier: "AUTONOMOUS",
+          conversations: [
+            { channel: "email", messages: [{ direction: "outbound", body: "Last thing anyone said.", sentAt: new Date("2026-09-01T10:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(send, "the back catalogue went out the moment Auto was allowed").not.toHaveBeenCalled();
+    expect(result.held).toBe(1);
+  });
+
+  it("sends on a conversation that moved after the switch", async () => {
+    // The other direction. A guard that stopped everything would just be
+    // a way of turning Auto off, and the founder asked for Auto working.
+    grantedAccount();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          automationTier: "AUTONOMOUS",
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Still interested?", sentAt: new Date("2026-09-23T09:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(send, "a conversation that moved after the grant was held anyway").toHaveBeenCalled();
+  });
+
+  it("holds everything when the permission is on but no grant time was recorded", async () => {
+    // Belt and braces for a row written before this column existed: no
+    // date means no proof the owner has said "from now on", and the safe
+    // reading of that is backlog.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: true,
+      autonomousAllowedAt: null,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          automationTier: "AUTONOMOUS",
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Recent.", sentAt: new Date("2026-09-23T09:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("still drafts and still checks the backlog, so nothing is lost", async () => {
+    // Held, not dropped. The queue's routine pile is how the owner
+    // releases it — deliberately, seeing the size of it first.
+    grantedAccount();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          automationTier: "AUTONOMOUS",
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Old one.", sentAt: new Date("2026-09-01T10:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(risk, "the backlog draft was never even judged").toHaveBeenCalled();
+    const call = p.lead.update.mock.calls.find((c: [{ where: { id: string }; data: Record<string, unknown> }]) => c[0].where.id === "lead1");
+    expect(typeof call[0].data.suggestedMessage).toBe("string");
+  });
+});
+
+/**
+ * The moment "send on my behalf" is switched on.
+ *
+ * The same guard as the Auto one above, for the switch with the WIDER
+ * blast radius — and the one an owner is most likely to press first.
+ *
+ * Every draft in the approval queue is sendable the instant the hold
+ * lifts, and the queue is exactly where a holding account's entire
+ * history accumulates. Without a line, turning this on releases weeks of
+ * drafts on the next tick, about conversations that ended long ago. It is
+ * not limited to leads on Auto: it is everything.
+ */
+describe("the moment sending on your behalf is switched on", () => {
+  const GRANTED_AT = new Date("2026-09-23T00:00:00Z");
+
+  function justGranted() {
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: GRANTED_AT,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+  }
+
+  it("does not release a draft about a conversation that ended before the switch", async () => {
+    justGranted();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Months ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(send, "the whole approval queue emptied itself on the first tick").not.toHaveBeenCalled();
+    expect(result.held).toBe(1);
+  });
+
+  it("sends on a conversation that moved after the switch", async () => {
+    justGranted();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Just now.", sentAt: new Date("2026-09-23T09:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(send).toHaveBeenCalled();
+  });
+
+  it("leaves an account that lifted the hold before this existed alone", async () => {
+    // No stamp means we do not know when it was granted. Reading that as
+    // "all backlog" would silently freeze a working account, which is a
+    // worse failure than the one this guard prevents — so the guard
+    // applies only where a grant was actually recorded.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: null,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Months ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(send, "an account working before this change was frozen by it").toHaveBeenCalled();
+  });
+
+  it("does not apply while the hold is still on", async () => {
+    // Belt and braces: with the hold on, everything is held anyway, so
+    // this term must not be what is doing the work.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: null,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: true,
+    });
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValue([]);
+    const result = await runAutomationForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(result.heldReasons[0]).toContain("holds every automated message");
+  });
+});
+
+/**
+ * What the owner is told about a queue that did not shrink.
+ *
+ * The most confusing moment the backlog guards create. Somebody turns
+ * sending on expecting things to start moving, opens the queue, and finds
+ * it FULLER than before — because everything that piled up while the
+ * switch was off is still sitting there, deliberately.
+ *
+ * With no sentence of its own, that reads as the feature not working.
+ */
+describe("the sentence on a backlog draft", () => {
+  it("says it was already waiting, rather than reusing the generic hold line", async () => {
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: new Date("2026-09-23T00:00:00Z"),
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Weeks ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(result.heldReasons[0]).toContain("already waiting before you turned sending on");
+  });
+
+  it("keeps the generic hold line while the hold is still on", async () => {
+    // Below holdAll in the cascade on purpose: while everything is held,
+    // THAT is why this is waiting, and the backlog sentence would be a
+    // more specific answer to a question nobody asked.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: null,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: true,
+    });
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValue([]);
+    const result = await runAutomationForBusiness("biz1");
+    expect(result.heldReasons[0]).toContain("holds every automated message");
+  });
+
+  it("does not claim backlog for a draft held by a real finding", async () => {
+    // A risk finding outranks it. "This was already waiting" on a draft
+    // that quotes a made-up price would bury the thing that matters.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      autonomousAllowedAt: null,
+      autoSendAllowedAt: new Date("2026-09-23T00:00:00Z"),
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          conversations: [
+            { channel: "email", messages: [{ direction: "inbound", body: "Weeks ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+          ],
+        }),
+      ])
+      .mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "high", reason: "the draft quotes a price nobody mentioned" });
+
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(result.heldReasons[0]).toContain("quotes a price nobody mentioned");
   });
 });

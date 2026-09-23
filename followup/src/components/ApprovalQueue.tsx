@@ -1,9 +1,11 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
-import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
+import { groupApprovalsBySource, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
+import type { PendingApproval } from "@/lib/pendingApprovals";
+import SafePileAction from "@/components/SafePileAction";
 
 /**
  * "Needs your OK" — research/product/2026-09-10-ux-simplification.md
@@ -37,15 +39,17 @@ import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
  * on the page and by what it says, not by looking like a warning.
  */
 
-export type ApprovalItem = {
-  leadId: string;
-  leadName: string;
-  reason: string;
-  draftSubject: string | null;
-  draftMessage: string;
-  leadLastMessage: string | null;
-  leadLastMessageChannel: string | null;
-};
+/**
+ * A row of the approval queue, unchanged.
+ *
+ * This was a hand-written subset of PendingApproval, re-mapped field by
+ * field on the dashboard. That mapping silently dropped `draftRiskLevel`
+ * the moment grouping needed it — and since the safe pile is built from
+ * that field, every draft would have landed in "needs you" and the
+ * one-click pile would have been permanently empty, with no error
+ * anywhere. An alias cannot drop a field.
+ */
+export type ApprovalItem = PendingApproval;
 
 const CHANNEL_LABEL: Record<string, string> = {
   email: "email",
@@ -205,45 +209,114 @@ export default function ApprovalQueue({
     );
   }
 
+  /*
+   * Grouped by source, ordered so the first thing on screen is the thing
+   * to deal with first — see @/lib/approvalGroups for the ordering and
+   * for what "safe" is allowed to mean.
+   *
+   * Structure follows A-006 and avoids S-09: the SOURCE is a heading, not
+   * a box, so the cards inside it stay the only box level. A box per
+   * source with boxes inside it is the card-in-card soup the design brain
+   * names, and it was already fixed here once.
+   */
+  const groups = groupApprovalsBySource(visible);
+  const summary = summariseGroups(groups);
+
   return (
     <div className="mt-6">
       <h2 className="font-display text-xl flex items-center gap-2">
         <ShieldCheck className="h-4 w-4" style={{ color: "var(--ink)" }} />
-        Needs your OK ({visible.length})
+        Needs your OK ({summary.needsYou})
       </h2>
-      <p className="text-sm text-ink-soft mt-1">
-        FollowUp drafted these already — approve to send exactly what&apos;s shown, or edit it first.
-      </p>
-      <div className="mt-4 flex flex-col gap-2">
-        {visible.map((item, i) => {
-          /*
-           * The boundary between the two groups, labelled once.
-           *
-           * getPendingApprovals now orders drafts that need a judgement
-           * ahead of drafts the approval setting alone is holding. Order
-           * on its own is invisible — a reader cannot tell a deliberate
-           * sort from the order things happened to be held in — so the
-           * line below says what changed underfoot, and only when there
-           * is actually a boundary to mark.
-           *
-           * No heading above the first group: it starts under "Needs
-           * your OK", which already names it. A second heading there
-           * would be the same sentence twice.
-           */
-          const routine = isHeldOnlyByApprovalSetting(item.reason);
-          const firstRoutine = routine && (i === 0 || !isHeldOnlyByApprovalSetting(visible[i - 1].reason));
-          const anyBefore = i > 0;
-          return (
-            <Fragment key={item.leadId}>
-              {firstRoutine && anyBefore && (
-                <p className="mt-4 text-xs text-ink-soft">
-                  The rest are waiting only because you asked FollowUp to check with you first.
-                </p>
+
+      {/* The answer to "whom do I focus on", said in words rather than
+          left for the reader to infer from the order. Derived from the
+          ordered groups, so it can never name a lead the list does not
+          show first. */}
+      {summary.focusOn ? (
+        <p className="text-sm text-ink-soft mt-1">
+          Start with{" "}
+          <Link href={`/leads/${summary.focusOn.leadId}`} className="font-medium text-ink hover:underline">
+            {summary.focusOn.leadName}
+          </Link>{" "}
+          — {summary.focusOn.source}, scored {summary.focusOn.score}.
+        </p>
+      ) : (
+        <p className="text-sm text-ink-soft mt-1">
+          Nothing here needs a decision — the rest are routine.
+        </p>
+      )}
+
+      {/* Said once, above everything, rather than 48 times on 48 cards.
+          The cards still carry their own sentence — this is the line that
+          stops an owner concluding the product is repeating itself before
+          they have read the second one. */}
+      {summary.fromBeforePermission > 0 && (
+        <p className="mt-2 text-xs text-ink-soft leading-relaxed">
+          {/* "of the drafts below", not "of these". This line sits under
+              the "Needs your OK (N)" heading and counts BOTH piles, so
+              "2 of these" under a heading reading (1) read as the screen
+              contradicting itself. Caught by rendering it; the number was
+              right and the word it attached to was not. */}
+          {summary.fromBeforePermission} of the drafts below were already waiting before you turned sending on. FollowUp
+          left them for you rather than sending them all at once — send them whenever you&apos;re ready.
+        </p>
+      )}
+
+      {/* The one accented control on the screen (A-006: the accent is
+          spent once, on the single thing to act on). Whole-queue rather
+          than per-source, because an owner facing hundreds wants the
+          routine ones gone so they can see what is left — the per-source
+          buttons below are for when they do care which channel. */}
+      {summary.safeToSend > 0 && (
+        <div className="mt-4 box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm">
+            <p className="font-medium">
+              {summary.safeToSend} {summary.safeToSend === 1 ? "draft is" : "drafts are"} routine.
+            </p>
+            <p className="mt-0.5 text-xs text-ink-soft">
+              FollowUp checked each one and found nothing that needs a decision. Nothing goes out until you press.
+            </p>
+          </div>
+          <SafePileAction count={summary.safeToSend} source={null} accent />
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-col gap-6">
+        {groups.map((group) => (
+          <section key={group.source}>
+            {/* Dense heading, not a box — see the note above. */}
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="text-sm font-medium">{group.source}</h3>
+              <p className="text-xs text-ink-soft tabular-nums">
+                {group.needsYou.length > 0 && `${group.needsYou.length} need${group.needsYou.length === 1 ? "s" : ""} you`}
+                {group.needsYou.length > 0 && group.safeToSend.length > 0 && " · "}
+                {group.safeToSend.length > 0 && `${group.safeToSend.length} routine`}
+              </p>
+            </div>
+
+            <div className="mt-2 flex flex-col gap-2">
+              {group.needsYou.map((item) => (
+                <ApprovalCard
+                  key={item.leadId}
+                  item={item}
+                  onResolved={(leadId) => setResolved((prev) => new Set(prev).add(leadId))}
+                />
+              ))}
+
+              {group.safeToSend.length > 0 && (
+                <div className="box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-ink-soft">
+                    {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"}
+                    {group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
+                    {group.safeToSend[0] && <span className="text-ink"> — top is {group.safeToSend[0].leadName}</span>}
+                  </p>
+                  <SafePileAction count={group.safeToSend.length} source={group.source} />
+                </div>
               )}
-              <ApprovalCard item={item} onResolved={(leadId) => setResolved((prev) => new Set(prev).add(leadId))} />
-            </Fragment>
-          );
-        })}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );

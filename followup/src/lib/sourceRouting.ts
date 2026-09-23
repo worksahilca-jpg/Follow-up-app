@@ -23,6 +23,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { isAutonomousAllowed } from "@/lib/autonomousPermission";
 import { enrollLead } from "@/lib/sequences";
 
 export async function applySourceRouting(businessId: string, leadId: string, source: string | null | undefined): Promise<void> {
@@ -50,7 +51,22 @@ export async function applySourceRouting(businessId: string, leadId: string, sou
     return;
   }
   if (rule.automationTierDefault) {
-    await prisma.lead.update({ where: { id: leadId }, data: { automationTier: rule.automationTierDefault } });
+    // The quietest path to Auto in the whole product, and until
+    // 2026-09-23 the only one with no gate at all: this runs when a lead
+    // is CREATED, so one rule could put every new lead from a channel
+    // onto unreviewed sending without a human seeing anything, ever. The
+    // lead page's confirmation dialog never appears here.
+    //
+    // A rule that asks for more than the account has permitted is
+    // honoured as far as it legitimately can be — the lead lands on
+    // ASSISTED rather than being left on whatever it had — so turning the
+    // permission on later does not require re-running anything, and
+    // turning it off does not quietly strand new leads on a mode the
+    // owner has revoked.
+    const requested = rule.automationTierDefault;
+    const tier =
+      requested === "AUTONOMOUS" && !(await isAutonomousAllowed(businessId)) ? "ASSISTED" : requested;
+    await prisma.lead.update({ where: { id: leadId }, data: { automationTier: tier } });
   }
 }
 

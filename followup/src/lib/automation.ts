@@ -74,7 +74,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -420,7 +420,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // always resolves against the same timezone.
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { timezone: true, tier: true, holdAllForApproval: true },
+    select: { timezone: true, tier: true, holdAllForApproval: true, autonomousAllowed: true, autonomousAllowedAt: true, autoSendAllowedAt: true },
   });
   const timezone = business?.timezone ?? "America/New_York";
   const tier = (business?.tier ?? "plus") as "free" | "plus" | "pro";
@@ -428,6 +428,48 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // comment in schema.prisma. It overrides both the per-lead tier and the
   // risk verdict below: every draft goes to the approval queue instead.
   const holdAll = business?.holdAllForApproval ?? false;
+  /**
+   * Has this account permitted unreviewed sending at all?
+   *
+   * Gating only the act of SETTING a lead to Auto would have left every
+   * account that already had Auto leads exactly as it was — the setting
+   * would be decoration for precisely the people it most needs to
+   * protect. So the send path asks too: without permission, an
+   * AUTONOMOUS lead is treated as ASSISTED, which means it still gets a
+   * draft and still goes to the approval queue. Nothing is lost, and
+   * nothing goes out unread on an account that never said it could.
+   */
+  const autonomousAllowed = business?.autonomousAllowed ?? false;
+  /**
+   * WHEN it was permitted — and the word doing the work is "after".
+   *
+   * Founder, 2026-09-23: Auto must "send messages after the user turns it
+   * on". Without this the grant is a blast: every lead that went quiet
+   * while the permission was off is already past its silence threshold,
+   * so the first tick after the switch finds the whole back catalogue
+   * eligible at once and sends all of it, unread, in the owner's name.
+   * They pressed one button meaning "from now on" and got "and also
+   * everything since".
+   *
+   * Null while the permission is off, which makes the comparison below
+   * refuse everything — the safe direction.
+   */
+  const autonomousAllowedAt = business?.autonomousAllowedAt ?? null;
+  /**
+   * When "send on my behalf" was granted — the same line as
+   * autonomousAllowedAt, for the switch with the wider blast radius.
+   *
+   * Every draft in the approval queue becomes sendable the instant the
+   * hold lifts, and the queue is exactly where a holding account's whole
+   * history piles up. Without this, turning it on releases weeks of
+   * drafts on the next tick, about conversations that ended long ago.
+   *
+   * Null does NOT mean "no permission" here, unlike the autonomous pair.
+   * An account whose hold was lifted before this column existed has no
+   * stamp, and reading that as "all backlog" would silently freeze a
+   * working account. The guard applies only where a grant was recorded.
+   */
+  const autoSendAllowedAt = business?.autoSendAllowedAt ?? null;
 
   const deadLeadRule = await prisma.automation.findFirst({ where: { businessId, action: DEAD_LEAD_ACTION } });
   const deadLeadEnabled = deadLeadRule?.enabled ?? true; // on by default, like everything else here
@@ -822,15 +864,119 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // The hold condition inside it is only reached by leads that enter
       // here, so listing it there alone would have been a guarantee that
       // never ran for the tier that needed it.
-      if (holdAll || isUntouched || lead.automationTier !== "AUTONOMOUS" || tier === "free") {
+      // `effectiveTier` rather than `lead.automationTier`: an account
+      // that has not permitted unreviewed sending has no AUTONOMOUS
+      // leads, whatever the column says.
+      /**
+       * A lead may send unreviewed only if the account permitted it AND
+       * this conversation has moved since that permission was given.
+       *
+       * The second half is what keeps "turn it on" from meaning "and
+       * flush everything that was waiting". A conversation whose newest
+       * message predates the grant is backlog: still drafted, still
+       * risk-checked, but held — so the owner sees how much there is and
+       * releases it deliberately, which is exactly what the approval
+       * queue's routine pile is for.
+       *
+       * A lead with no conversation at all has no date to compare, so it
+       * is treated as backlog too. That is the cautious direction and it
+       * costs nothing: such a lead is already held as `isUntouched`.
+       */
+      const movedSincePermission =
+        autonomousAllowedAt != null && newestMessageAt != null && newestMessageAt > autonomousAllowedAt;
+      const effectiveTier =
+        lead.automationTier === "AUTONOMOUS" && (!autonomousAllowed || !movedSincePermission)
+          ? "ASSISTED"
+          : lead.automationTier;
+      /**
+       * Backlog on a lead the owner HAS put on Auto: the permission is
+       * granted, but this conversation has not moved since.
+       *
+       * Held outright, not merely downgraded. Downgrading to ASSISTED is
+       * not enough on its own and that mistake is easy to make twice —
+       * ASSISTED sends the safe ones, so a low-risk backlog draft would
+       * go out anyway and the whole guard would be decoration. The point
+       * is that the owner sees the size of the back catalogue and
+       * releases it deliberately.
+       *
+       * Only applies where Auto was actually chosen. A lead the owner put
+       * on ASSISTED is already behaving as asked, and quiet leads are
+       * exactly what the silence nudge is for.
+       */
+      const autonomousBacklog = lead.automationTier === "AUTONOMOUS" && !movedSincePermission;
+      /**
+       * The same backlog rule for the account-wide send permission.
+       *
+       * Only bites once the hold is actually off (while it is on, every
+       * draft is held anyway) and only where a grant time was recorded —
+       * see autoSendAllowedAt above for why a missing stamp is not
+       * treated as "everything is backlog".
+       *
+       * Held rather than downgraded, for the reason the autonomous
+       * version learned the hard way: a downgrade still sends the safe
+       * ones, which is exactly the flood this is meant to prevent.
+       */
+      const autoSendBacklog =
+        !holdAll &&
+        autoSendAllowedAt != null &&
+        (newestMessageAt == null || newestMessageAt <= autoSendAllowedAt);
+      if (holdAll || isUntouched || effectiveTier !== "AUTONOMOUS" || tier === "free") {
+        /**
+         * Every draft that reaches here gets a verdict, including ones
+         * that are going to be held no matter what it says.
+         *
+         * This block used to short-circuit to "low" whenever `holdAll` or
+         * `isUntouched` was set, on the reasoning that the classifier
+         * decides whether something may go out UNREVIEWED, so on an
+         * account where nothing goes out unreviewed it had nothing to
+         * decide and its cost was not worth paying.
+         *
+         * That was true of the only question being asked then. It stopped
+         * being true when the queue had to answer a second one: of the
+         * drafts waiting for you, which are routine? An owner with 600
+         * held drafts cannot read 600, and "held" was the only thing the
+         * product knew about any of them — so every one of them looked
+         * alike, and the ones quoting a price nobody mentioned sat among
+         * the ordinary nudges with nothing to tell them apart.
+         *
+         * The cost that reasoning was protecting is real, and it is
+         * handled by the branch below rather than by skipping the
+         * question: a verdict is paid for once per draft and stored with
+         * it (Lead.suggestedRiskLevel), not re-paid on every hourly pass
+         * for a conversation that has not changed.
+         */
         let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
-        if (holdAll || isUntouched) {
-          // The classifier decides whether something is safe to send
-          // WITHOUT review. On an account where nothing sends without
-          // review, it has nothing to decide, so its cost is not worth
-          // paying — the hold below happens either way.
+        // Whether this pass PAID for the verdict below, which is what
+        // decides if it has to be written down. Not the same as
+        // `regenerated`: a draft written before this column existed is
+        // current (so never regenerated) but unjudged, and keying the
+        // write on `regenerated` alone would re-buy its verdict every
+        // hour and throw it away every hour — the exact standing cost
+        // this whole mechanism exists to avoid, aimed at the back
+        // catalogue instead of at cold leads.
+        let riskAssessed = false;
+        if (isUntouched) {
+          // The one case where the old reasoning still holds completely.
+          // An untouched lead is held because FollowUp has not seen what
+          // the owner may already have done about it, and
+          // UNTOUCHED_LEAD_REASON outranks the approval setting in the
+          // reason cascade below — so this draft is in the "needs you"
+          // pile whatever a classifier would say. The verdict cannot
+          // change the send, cannot change the queue, and is left unbought
+          // and unstored: null here means unjudged, which is true.
           risk = { riskLevel: "low", reason: "" };
+        } else if (!regenerated && lead.suggestedRiskLevel) {
+          // Same draft as last pass, already judged. Re-running the
+          // classifier on a byte-identical conversation is the cost
+          // `suggestedDraftedFor` exists to prevent (see schema.prisma),
+          // and a held draft is re-examined on every pass — hourly,
+          // forever, for as long as it waits.
+          risk = {
+            riskLevel: lead.suggestedRiskLevel as "low" | "medium" | "high",
+            reason: lead.suggestedRiskReason ?? "",
+          };
         } else if (process.env.OPENAI_API_KEY) {
+          riskAssessed = true;
           try {
             risk = await assessSendRisk({ conversation }, message);
           } catch (err) {
@@ -838,6 +984,12 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
             // Sending something autonomously that shouldn't have gone out
             // is a worse failure mode than an unnecessary manual review.
             console.error(`Risk assessment failed for lead ${lead.id}:`, err);
+            // Deliberately NOT stored. A transient failure written down as
+            // a verdict is reused by every later pass, so one bad minute
+            // would strand this lead on "couldn't check this one" for as
+            // long as the draft lives, with nothing ever retrying it.
+            // Costing one more call next hour is the cheaper mistake.
+            riskAssessed = false;
             // Finishes "Held because <reason>." like every other reason
             // that reaches ApprovalQueue.
             risk = { riskLevel: "medium", reason: RISK_CHECK_FAILED_REASON };
@@ -878,7 +1030,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         // `isCold`, so this only ever holds MORE than before, never less.
         // `isBackfilled` joins `isCold` for the same reason and with the
         // same shape: it only ever holds MORE than before, never less.
-        if (holdAll || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched) {
+        if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
           // it with the message it was written against, which is what lets
@@ -889,14 +1041,29 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           // they stop agreeing. A draft that was NOT regenerated is by
           // definition already current and already stored, so there is
           // nothing to write.
-          if (regenerated) {
+          if (regenerated || riskAssessed) {
             await prisma.lead.update({
               where: { id: lead.id },
               data: {
-                suggestedMessage: message,
-                suggestedSubject: subject ?? null,
-                suggestedQuickReplies: quickReplies ? (quickReplies as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
-                suggestedDraftedFor: newestMessageAt,
+                // Only the draft fields are conditional: a pass that
+                // merely bought a verdict for an unchanged draft must not
+                // rewrite the draft, or `suggestedDraftedFor` would move
+                // and claim the draft answers a newer message than it
+                // does.
+                ...(regenerated
+                  ? {
+                      suggestedMessage: message,
+                      suggestedSubject: subject ?? null,
+                      suggestedQuickReplies: quickReplies ? (quickReplies as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
+                      suggestedDraftedFor: newestMessageAt,
+                    }
+                  : {}),
+                // Written with the draft it judged, so the next pass
+                // reuses it instead of re-paying for the same answer
+                // about the same words. A verdict stored against a
+                // different draft would be worse than none.
+                suggestedRiskLevel: risk.riskLevel,
+                suggestedRiskReason: risk.reason || null,
               },
             });
           }
@@ -947,6 +1114,14 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
                 ? UNTOUCHED_LEAD_REASON
               : holdAll
                 ? HOLD_ALL_AUTOMATION_REASON
+              : // Below holdAll on purpose. While the hold is on, THAT is
+                // why this is waiting and saying anything else would be a
+                // more specific answer to a question nobody asked. The
+                // backlog sentence only becomes the true one once the
+                // owner has actually granted a permission and is looking
+                // at a queue that did not shrink.
+                autonomousBacklog || autoSendBacklog
+                ? BACKLOG_BEFORE_PERMISSION_REASON
                 : isUnanswered
                   ? `${firstName} wrote ${daysQuiet} days ago and never got an answer — this reply is yours to send`
                   : `${firstName} went quiet ${daysQuiet} days ago — reaching back out is your call`;

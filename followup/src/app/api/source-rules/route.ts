@@ -4,6 +4,7 @@ import { getSessionContext, requireAdmin } from "@/lib/session";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { KNOWN_LEAD_SOURCES } from "@/lib/sourceRouting";
+import { isAutonomousAllowed, AUTONOMOUS_NOT_ALLOWED_MESSAGE } from "@/lib/autonomousPermission";
 import { parseJsonBody } from "@/lib/validation";
 import type { AutomationTier } from "@prisma/client";
 
@@ -22,9 +23,14 @@ export async function GET() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
 
-  const [rules, sequences] = await Promise.all([
+  const [rules, sequences, autonomousAllowed] = await Promise.all([
     prisma.sourceRule.findMany({ where: { businessId: ctx.businessId } }),
     prisma.sequence.findMany({ where: { businessId: ctx.businessId }, select: { id: true, name: true, active: true } }),
+    // Returned so Settings can stop offering a choice the POST below now
+    // refuses, and can say plainly when a saved rule cannot act on what
+    // it says. Without it the table has no way to know, which is how the
+    // rule and the leads came to disagree in silence.
+    isAutonomousAllowed(ctx.businessId),
   ]);
   const bySource = new Map(rules.map((r) => [r.source, r]));
 
@@ -38,7 +44,7 @@ export async function GET() {
     };
   });
 
-  return NextResponse.json({ success: true, rules: table, sequences });
+  return NextResponse.json({ success: true, rules: table, sequences, autonomousAllowed });
 }
 
 // POST /api/source-rules — upsert the rule for one source. Passing both
@@ -87,6 +93,34 @@ export async function POST(request: NextRequest) {
     if (!sequence || sequence.businessId !== ctx.businessId) {
       return NextResponse.json({ success: false, message: "Workflow not found." }, { status: 404 });
     }
+  }
+
+  /**
+   * The third way to Auto, and until now the only one that did not ask.
+   *
+   * `POST /api/leads/[id]/automation` refuses with 403 when the account
+   * has not granted the permission. `POST /api/leads/bulk-automation`
+   * refuses with the same message. This route accepted — and then
+   * `applySourceRouting` quietly started every lead the rule touched on
+   * ASSISTED instead. The rule row went on reading "Autonomous" forever.
+   *
+   * So the owner picked a mode, was told nothing, and got another one.
+   * Two sibling paths refuse out loud; this one accepted and then
+   * disagreed with itself, which is worse than either refusing or
+   * obeying. Nothing in the product ever connected the rule to what the
+   * leads actually did.
+   *
+   * `requireAdmin` above is not this check and never was — it asks WHO
+   * is making the change, not whether the account has said yes to
+   * unreviewed sending. An admin without the permission is exactly the
+   * person who hit this.
+   *
+   * The downgrade in `applySourceRouting` deliberately stays: the
+   * permission can be revoked after a rule was legitimately saved, and
+   * new leads must not land on a mode the owner has taken back.
+   */
+  if (automationTierDefault === "AUTONOMOUS" && !(await isAutonomousAllowed(ctx.businessId))) {
+    return NextResponse.json({ success: false, message: AUTONOMOUS_NOT_ALLOWED_MESSAGE }, { status: 403 });
   }
 
   await prisma.sourceRule.upsert({

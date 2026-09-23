@@ -24,6 +24,7 @@
 
 import { prisma } from "@/lib/db";
 import { isAutonomousAllowed } from "@/lib/autonomousPermission";
+import { recordAudit } from "@/lib/audit";
 import { enrollLead } from "@/lib/sequences";
 
 export async function applySourceRouting(businessId: string, leadId: string, source: string | null | undefined): Promise<void> {
@@ -64,9 +65,51 @@ export async function applySourceRouting(businessId: string, leadId: string, sou
     // turning it off does not quietly strand new leads on a mode the
     // owner has revoked.
     const requested = rule.automationTierDefault;
-    const tier =
-      requested === "AUTONOMOUS" && !(await isAutonomousAllowed(businessId)) ? "ASSISTED" : requested;
+    const downgraded = requested === "AUTONOMOUS" && !(await isAutonomousAllowed(businessId));
+    const tier = downgraded ? "ASSISTED" : requested;
     await prisma.lead.update({ where: { id: leadId }, data: { automationTier: tier } });
+
+    /**
+     * A downgrade used to happen in complete silence.
+     *
+     * `POST /api/source-rules` now refuses to SAVE a rule asking for
+     * AUTONOMOUS without the permission, so the ordinary way into this
+     * branch is closed. One way in remains and always will: a rule saved
+     * legitimately while the permission was on, and the permission later
+     * revoked. That is the case this downgrade exists for, and it is the
+     * right behaviour — new leads must not land on a mode the owner has
+     * taken back.
+     *
+     * What was wrong was not the downgrade. It was that nothing
+     * anywhere recorded it: the rule row went on reading "Autonomous",
+     * the leads ran on Assisted, and there was no third thing that knew
+     * both. Settings now says so on the rule itself, for the standing
+     * state; this is the per-lead trail, which is what answers "when did
+     * this start" months later.
+     *
+     * ## Why this cannot knock a lead out of the approval queue
+     *
+     * `getPendingApprovals` treats a lead as pending when its MOST
+     * RECENT AuditEvent is `ai.hold`, so an event written at the wrong
+     * moment would silently empty the queue — the exact shape of bug
+     * this file's neighbours have been bitten by before. It is safe
+     * here because `applySourceRouting` runs once, immediately after the
+     * lead is created (see this file's header), which is strictly before
+     * anything can have drafted or held a reply for it. This event can
+     * never be the newest one on a held lead.
+     */
+    if (downgraded) {
+      await recordAudit({ businessId }, "automation.downgraded", {
+        targetType: "lead",
+        targetId: leadId,
+        meta: {
+          source,
+          requested,
+          applied: tier,
+          reason: "the account has not permitted sending without review",
+        },
+      });
+    }
   }
 }
 

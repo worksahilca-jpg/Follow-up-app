@@ -37,6 +37,22 @@ function encodeValue(rule: Rule): string {
 export default function SourceRoutingSection() {
   const [rules, setRules] = useState<Rule[]>([]);
   const [sequences, setSequences] = useState<SequenceOption[]>([]);
+  /**
+   * Whether this account has permitted sending without review.
+   *
+   * This component had no idea, and that was the whole bug. The dropdown
+   * offered "Autonomous", the API accepted it, and then
+   * `applySourceRouting` started every lead the rule touched on Assisted
+   * instead — while this row went on reading "Autonomous" indefinitely.
+   * The owner picked a mode, was told nothing, and got a different one.
+   *
+   * Defaults to `true` so that a failed or slow load does not flash a
+   * "not permitted" warning at an account that has in fact permitted it.
+   * Claiming a restriction that is not there would send someone to
+   * Settings to fix something already correct; the real refusal lives on
+   * the server either way, so an optimistic default here costs nothing.
+   */
+  const [autonomousAllowed, setAutonomousAllowed] = useState(true);
   const [loaded, setLoaded] = useState(false);
   const [savingSource, setSavingSource] = useState<string | null>(null);
   const [savedSource, setSavedSource] = useState<string | null>(null);
@@ -45,10 +61,13 @@ export default function SourceRoutingSection() {
   useEffect(() => {
     fetch("/api/source-rules")
       .then((r) => r.json())
-      .then((data: { success: boolean; rules?: Rule[]; sequences?: SequenceOption[] }) => {
+      .then((data: { success: boolean; rules?: Rule[]; sequences?: SequenceOption[]; autonomousAllowed?: boolean }) => {
         if (data.success) {
           setRules(data.rules ?? []);
           setSequences(data.sequences ?? []);
+          // `?? true` and not `?? false`: an older deploy that does not
+          // send the field is not an account that has refused.
+          setAutonomousAllowed(data.autonomousAllowed ?? true);
         }
       })
       .finally(() => setLoaded(true));
@@ -100,36 +119,75 @@ export default function SourceRoutingSection() {
         </p>
       )}
       <div className="space-y-2">
-        {rules.map((rule) => (
-          <div key={rule.source} className="flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2.5">
-            <span className="text-sm font-medium">{rule.source}</span>
-            <div className="flex items-center gap-2 shrink-0">
-              {savedSource === rule.source && <Check className="h-3.5 w-3.5" style={{ color: "var(--sage)" }} />}
-              <select
-                value={encodeValue(rule)}
-                onChange={(e) => handleChange(rule.source, e.target.value)}
-                disabled={savingSource === rule.source}
-                className="rounded-lg border border-line bg-paper px-2.5 py-1.5 text-sm disabled:opacity-60"
-              >
-                <option value="">No special handling</option>
-                <option value="pool">Leave unclaimed — first to grab it gets it</option>
-                {activeSequences.length > 0 && (
-                  <optgroup label="Enroll in a workflow">
-                    {activeSequences.map((seq) => (
-                      <option key={seq.id} value={`seq:${seq.id}`}>
-                        {seq.name}
+        {rules.map((rule) => {
+          // Saved while the permission was on, and the permission later
+          // revoked. The rule still says Autonomous; every lead it makes
+          // starts on Assisted. Until now the two never met on screen.
+          const stranded = rule.automationTierDefault === "AUTONOMOUS" && !autonomousAllowed;
+          return (
+            <div key={rule.source} className="rounded-lg border border-line px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3">
+                {/* The source name holds its width; the dropdown gives way.
+                    Reversed until now, and it put the control off the edge
+                    of the card on a phone: the row pinned the select with
+                    `shrink-0` while the select sizes itself to its longest
+                    option ("Leave unclaimed — first to grab it gets it"),
+                    so at 390px it simply overflowed. Found by rendering
+                    this row at phone width; it predates the permission
+                    work above and is fixed here because this is the row
+                    being changed. */}
+                <span className="text-sm font-medium shrink-0">{rule.source}</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  {savedSource === rule.source && <Check className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--sage)" }} />}
+                  <select
+                    value={encodeValue(rule)}
+                    onChange={(e) => handleChange(rule.source, e.target.value)}
+                    disabled={savingSource === rule.source}
+                    className="min-w-0 max-w-full truncate rounded-lg border border-line bg-paper px-2.5 py-1.5 text-sm disabled:opacity-60"
+                  >
+                    <option value="">No special handling</option>
+                    <option value="pool">Leave unclaimed — first to grab it gets it</option>
+                    {activeSequences.length > 0 && (
+                      <optgroup label="Enroll in a workflow">
+                        {activeSequences.map((seq) => (
+                          <option key={seq.id} value={`seq:${seq.id}`}>
+                            {seq.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    <optgroup label="Or just start on">
+                      <option value="tier:ASSISTED">Assisted</option>
+                      {/* Disabled rather than removed. An option that
+                          vanishes teaches nothing — the owner wonders
+                          where it went, or never knows it existed. One
+                          that is visible and unavailable, with the
+                          reason on the row below, says what to do about
+                          it. Kept selectable when this rule is already
+                          on it, so the dropdown can still show its own
+                          current value rather than rendering blank. */}
+                      <option value="tier:AUTONOMOUS" disabled={!autonomousAllowed && !stranded}>
+                        Autonomous
                       </option>
-                    ))}
-                  </optgroup>
-                )}
-                <optgroup label="Or just start on">
-                  <option value="tier:ASSISTED">Assisted</option>
-                  <option value="tier:AUTONOMOUS">Autonomous</option>
-                </optgroup>
-              </select>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+              {stranded && (
+                <p className="mt-1.5 text-xs text-ink-soft leading-relaxed">
+                  {/* What is true, in the order it is useful: what the
+                      rule is doing right now, then why, then where to
+                      change it. Not "invalid rule" — the rule is fine,
+                      the permission is off, and those are different
+                      problems with different fixes. */}
+                  Sending without review is switched off for this account, so new {rule.source} leads start on{" "}
+                  <span className="text-ink">Assisted</span> — they wait for your OK. Turn it on under Automation above,
+                  or set this to Assisted to match.
+                </p>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {activeSequences.length === 0 && (
         <p className="text-xs text-ink-soft mt-3">

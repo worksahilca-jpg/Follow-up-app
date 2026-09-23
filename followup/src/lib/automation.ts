@@ -420,7 +420,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // always resolves against the same timezone.
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { timezone: true, tier: true, holdAllForApproval: true, autonomousAllowed: true },
+    select: { timezone: true, tier: true, holdAllForApproval: true, autonomousAllowed: true, autonomousAllowedAt: true },
   });
   const timezone = business?.timezone ?? "America/New_York";
   const tier = (business?.tier ?? "plus") as "free" | "plus" | "pro";
@@ -440,6 +440,21 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
    * nothing goes out unread on an account that never said it could.
    */
   const autonomousAllowed = business?.autonomousAllowed ?? false;
+  /**
+   * WHEN it was permitted — and the word doing the work is "after".
+   *
+   * Founder, 2026-09-23: Auto must "send messages after the user turns it
+   * on". Without this the grant is a blast: every lead that went quiet
+   * while the permission was off is already past its silence threshold,
+   * so the first tick after the switch finds the whole back catalogue
+   * eligible at once and sends all of it, unread, in the owner's name.
+   * They pressed one button meaning "from now on" and got "and also
+   * everything since".
+   *
+   * Null while the permission is off, which makes the comparison below
+   * refuse everything — the safe direction.
+   */
+  const autonomousAllowedAt = business?.autonomousAllowedAt ?? null;
 
   const deadLeadRule = await prisma.automation.findFirst({ where: { businessId, action: DEAD_LEAD_ACTION } });
   const deadLeadEnabled = deadLeadRule?.enabled ?? true; // on by default, like everything else here
@@ -837,7 +852,43 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // `effectiveTier` rather than `lead.automationTier`: an account
       // that has not permitted unreviewed sending has no AUTONOMOUS
       // leads, whatever the column says.
-      const effectiveTier = lead.automationTier === "AUTONOMOUS" && !autonomousAllowed ? "ASSISTED" : lead.automationTier;
+      /**
+       * A lead may send unreviewed only if the account permitted it AND
+       * this conversation has moved since that permission was given.
+       *
+       * The second half is what keeps "turn it on" from meaning "and
+       * flush everything that was waiting". A conversation whose newest
+       * message predates the grant is backlog: still drafted, still
+       * risk-checked, but held — so the owner sees how much there is and
+       * releases it deliberately, which is exactly what the approval
+       * queue's routine pile is for.
+       *
+       * A lead with no conversation at all has no date to compare, so it
+       * is treated as backlog too. That is the cautious direction and it
+       * costs nothing: such a lead is already held as `isUntouched`.
+       */
+      const movedSincePermission =
+        autonomousAllowedAt != null && newestMessageAt != null && newestMessageAt > autonomousAllowedAt;
+      const effectiveTier =
+        lead.automationTier === "AUTONOMOUS" && (!autonomousAllowed || !movedSincePermission)
+          ? "ASSISTED"
+          : lead.automationTier;
+      /**
+       * Backlog on a lead the owner HAS put on Auto: the permission is
+       * granted, but this conversation has not moved since.
+       *
+       * Held outright, not merely downgraded. Downgrading to ASSISTED is
+       * not enough on its own and that mistake is easy to make twice —
+       * ASSISTED sends the safe ones, so a low-risk backlog draft would
+       * go out anyway and the whole guard would be decoration. The point
+       * is that the owner sees the size of the back catalogue and
+       * releases it deliberately.
+       *
+       * Only applies where Auto was actually chosen. A lead the owner put
+       * on ASSISTED is already behaving as asked, and quiet leads are
+       * exactly what the silence nudge is for.
+       */
+      const autonomousBacklog = lead.automationTier === "AUTONOMOUS" && !movedSincePermission;
       if (holdAll || isUntouched || effectiveTier !== "AUTONOMOUS" || tier === "free") {
         /**
          * Every draft that reaches here gets a verdict, including ones
@@ -948,7 +999,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         // `isCold`, so this only ever holds MORE than before, never less.
         // `isBackfilled` joins `isCold` for the same reason and with the
         // same shape: it only ever holds MORE than before, never less.
-        if (holdAll || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched) {
+        if (holdAll || autonomousBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
           // it with the message it was written against, which is what lets

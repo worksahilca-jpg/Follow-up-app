@@ -160,7 +160,19 @@ export async function POST(request: NextRequest) {
    */
   if (typeof body.autonomousAllowed === "boolean") {
     const granted = body.autonomousAllowed;
-    await prisma.business.update({ where: { id: ctx.businessId }, data: { autonomousAllowed: granted } });
+    await prisma.business.update({
+      where: { id: ctx.businessId },
+      data: {
+        autonomousAllowed: granted,
+        // Stamped on grant, cleared on revoke. This is what makes the
+        // permission mean "from now on": the send path refuses to act
+        // unreviewed on any conversation older than this moment, so
+        // turning it on cannot flush a back catalogue. Clearing it on
+        // revoke means granting again starts a fresh window rather than
+        // reaching back to the first time.
+        autonomousAllowedAt: granted ? new Date() : null,
+      },
+    });
     void recordAudit(ctx, granted ? "automation.autonomous.granted" : "automation.autonomous.revoked");
     return NextResponse.json({ success: true, autonomousAllowed: granted });
   }

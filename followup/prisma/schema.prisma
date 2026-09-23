@@ -256,6 +256,27 @@ model Business {
   // directly, so every path that can reach Auto asks the same question.
   autonomousAllowed    Boolean @default(false)
 
+  // WHEN the permission above was granted. Null whenever it is off.
+  //
+  // Founder, 2026-09-23: Auto must "send messages after the user turns it
+  // on" — and the word doing the work there is *after*.
+  //
+  // Without this, granting the permission is a blast. Every lead that
+  // went quiet while it was off is already past its silence threshold, so
+  // the next hourly tick finds a whole back catalogue eligible at once
+  // and sends all of it, unread, in the owner's name. The owner pressed
+  // one button meaning "from now on" and got "and also everything since".
+  //
+  // So a lead only sends unreviewed when its conversation moved AFTER
+  // this moment. Anything older is backlog: still drafted, still checked,
+  // but it goes to the approval queue where the owner can see the size of
+  // it and release it deliberately — which is what the queue's one-click
+  // routine pile is for.
+  //
+  // Reset to null on revoke, so granting again starts a fresh "from now
+  // on" rather than reaching back to the first time.
+  autonomousAllowedAt  DateTime?
+
   // When Meta last confirmed this app is subscribed to the account's
   // `messages` webhook. Null on a connected account means the
   // subscription never succeeded — the account is saved and readable,

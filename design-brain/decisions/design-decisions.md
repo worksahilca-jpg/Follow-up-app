@@ -5416,3 +5416,65 @@ Auto-without-permission as equivalent to Off. The real guarantee is that nothing
 4. **Existing Auto leads change behaviour on deploy.** Correct and intended, but it is a real
    behaviour change for anyone mid-flight — invisible today only because `holdAllForApproval` is
    on everywhere.
+
+---
+
+## 2026-09-23 — Turning Auto on means "from now on", not "and everything since"
+
+**Founder:** *"lets get auto working but make sure it activates or sends messages after the user
+turns it on."* The word doing the work is **after**.
+
+### The blast
+
+A permission that only gates the future is fine. One that silently gates nothing is a disaster
+on the most optimistic day of an account's life.
+
+Every lead that went quiet while Auto was off is **already past its silence threshold**. So the
+first hourly tick after the switch finds the entire back catalogue eligible at once. The owner
+presses one button meaning "start doing this for me" and a few hundred messages leave in their
+name, unread, about conversations that ended weeks ago.
+
+`Business.autonomousAllowedAt` is the line: stamped on grant, cleared on revoke (so granting
+again starts a fresh window rather than reaching back). A conversation that moved after it may
+send unreviewed; anything older is backlog.
+
+### The mistake I made twice, and it mattered the second time
+
+My first fix downgraded a backlog lead from Auto to **Assisted**. That looks right and is
+useless: **Assisted sends the safe ones**, so a low-risk backlog draft goes out anyway and the
+guard is decoration.
+
+The first time I made this mistake it was only a wrong test expectation (recorded in the entry
+above). The second time it was in the *implementation*, and the tests caught it — the removal
+check now pins it explicitly, because it is clearly an easy thing to get wrong.
+
+Backlog is **held outright**, not downgraded. Still drafted, still risk-checked, but it waits —
+so the owner sees the size of the back catalogue and releases it deliberately, which is exactly
+what the queue's one-click routine pile is for.
+
+### Scope
+
+Only leads the owner actually put on Auto. A lead on Assisted is already behaving as asked, and
+a quiet lead is precisely what the silence nudge exists for.
+
+### Tests
+
+4 new, verified by removal: removing the hold term fails 3 (the trap), ignoring the grant time
+fails 3. 1711 pass; eslint, build, tsc clean.
+
+### Self-critique
+
+1. **The same blast exists for the OTHER permission and is not fixed.** Turning off
+   `holdAllForApproval` — "send on my behalf" — releases every held ASSISTED draft on the same
+   next tick, and nothing stamps when that was granted. It is the identical failure with a wider
+   blast radius, and this entry only closes the Auto half because that is what was asked for.
+   **This is the most important open item in this file.**
+2. **"Moved since" is the newest message, not the trigger.** A lead whose last message predates
+   the grant but which becomes newly due later still reads as backlog forever, until they write
+   again. Cautious in the right direction, but it means some leads never leave the queue on
+   their own.
+3. **Nothing tells the owner this is happening.** The backlog is held with an ordinary hold
+   reason; no copy anywhere says "these are from before you turned it on." The queue will simply
+   look fuller than expected.
+4. **Never observed end to end.** No database here, so the grant-stamp, the comparison and the
+   hold are proven against mocks only.

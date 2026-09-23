@@ -5871,3 +5871,57 @@ warns about a conversation already answered. It fails now.
    marker is where this actually belongs.
 3. **A workflow-enrolled DM lead still gets no warning** — the workflow branch returns above it,
    same gap as the entry before.
+
+---
+
+## 2026-09-23 — What logging in as a stranger found
+
+The founder created a reviewer account for Meta's App Review and signed in as an outsider for
+the first time. Twenty minutes later it had surfaced **three live defects**, none of which were
+visible from his own account, and one of which was breaking the product for every user.
+
+### 1. The Settings tabs could not be clicked. For anyone.
+
+Channels, Team, Billing and Advanced were unreachable. Settings was frozen on whichever tab the
+server rendered.
+
+The cause was a **hydration mismatch**: `activeTab` was initialised by reading
+`window.location` *while rendering*. Server produced one tab, the client's first render produced
+another, React stopped patching — and the buttons kept their **native focus behaviour** while
+their `onClick` handlers were never bound.
+
+**That combination is the trap.** The page looked completely alive. Buttons highlighted on
+click, took focus, responded to hover. Nothing threw. The only visible symptom was that nothing
+*happened*, which reads as "the app is slow" or "I clicked wrong" rather than "this is broken".
+
+The lazy initializer looked like the careful choice — read the hash once, not every render —
+and that is exactly why it was wrong. **During hydration, "once" still happens on both sides,
+and only one of them has a `window`.**
+
+> **Rule: never read `window`, `document`, `localStorage` or `navigator` while rendering.**
+> Read them in an effect, after mount. A swept audit of the rest of the app found only one other
+> instance, inside a click handler, which is safe.
+
+### 2. A failed OAuth connect was invisible
+
+Instagram's failure renders inside `InstagramConfig` on the **Channels** tab. The OAuth callback
+arrives with a query string and **no hash**, so the tab defaulted to Connect. The message was on
+screen and unreachable — and with the tabs frozen, doubly so.
+
+Two separate correct-looking decisions composing into silence. A callback now lands on the tab
+it belongs to.
+
+### 3. The Instagram Connect button is broken
+
+Meta rejects the long-lived token exchange (HTTP 400, code 100). **Not fixed** — Meta's docs and
+API are both unreachable from the build sandbox, and patching an OAuth flow from memory is how
+you take the channel down for everyone. Left honest rather than guessed at.
+
+### The lesson worth keeping
+
+**Your own account is the worst place to test a product.** It has data, it has history, it has
+every setting already right, and its owner knows which buttons to avoid. Every one of these
+three had been live for some time and none had been noticed.
+
+A fresh account on a clean browser is not a nice-to-have before shipping to strangers. It is the
+only configuration that matches what a stranger sees.

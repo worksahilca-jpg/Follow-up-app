@@ -5641,3 +5641,71 @@ eslint, build and tsc clean.
 4. **Still three near-identical backlog mechanisms.** Flagged twice now, deferred twice.
 5. **The source-rule downgrade is still silent.** A rule asking for Auto without permission
    lands the lead on Assisted and says so nowhere in the UI.
+
+---
+
+## 2026-09-23 — A grace period before a bulk send
+
+Prompted by the `apple-design` skill the founder was shown ("agency: keep people in control;
+offer forgiveness"). Most of that skill is gesture and spring-motion craft aimed at touch UI and
+does not apply to a desktop dashboard — but its forgiveness principle landed on a real hole:
+**Send all N** dispatched up to a day's cap of real messages with no way back.
+
+### It is a delay, not an undo, and the copy has to say so
+
+A sent message cannot be recalled from Gmail, WhatsApp, Instagram or SMS. The only honest
+version is a window *before* the send. So the label reads **"Sending all 3 in 10s"** —
+present tense, about to happen — with an **Undo** button beside it. Calling it "Undo" after a
+real send would be a lie the first time someone pressed it.
+
+### Ten seconds, not Gmail's five
+
+Pinned against `research/customers/2026-09-05-icp-pain-and-trust-objections.md`: the owner is
+up a ladder, interrupted, on a phone, giving the app ninety seconds. Five seconds assumes
+someone at a desk watching the screen. The asymmetry decides it — **a longer window costs
+almost nothing**, because nobody is waiting on the result, while a short one costs forty
+messages that should not have gone.
+
+### Leaving the page sends
+
+The contestable call, written down rather than left to whichever branch was easier. Cancelling
+on leave means an owner who presses Send and shuts the laptop believes forty follow-ups went
+out when none did — the exact failure `SafePileAction`'s own docstring forbids. There is a
+button on screen that says Undo; someone who wants to cancel presses it. `pagehide` +
+`sendBeacon`, because the ICP is on a phone and `beforeunload` routinely never fires there.
+
+### The race, and why it is a gate
+
+On the last millisecond the timer can fire while a finger lands on Undo. Both running means
+the messages go **and** the screen says cancelled — the worst outcome available, because the
+owner walks away believing nothing was sent. Sending and cancelling now claim the same
+one-shot token (`createSendGate`), so exactly one wins. Deliberately not a boolean in a ref
+that two call sites check then set: that is the check-then-act shape already fixed once in the
+rate limiters (#89).
+
+### Constraints honoured
+
+- **[[rejected#^R-002|R-002]]** — no keyboard shortcut. `Z`-to-undo was part of the rejected
+  keyboard model; this is a visible button only.
+- **[[rejected#^R-001|R-001]]** named "the undo grace" as a move that *may survive* a richer
+  design. This is that, built as addition rather than subtraction.
+
+### Tests
+
+8 new in `undoWindow.test.ts`, verified by removal (`ceil`→`floor` fails 1; removing the gate's
+guard fails 2). Rendering then confirmed the states end to end: countdown → Undo → "Stopped —
+nothing was sent" → button returns; and a full countdown fires **exactly one** POST, which is
+the assertion that matters. 1733 pass; build, tsc, eslint clean.
+
+### Self-critique
+
+1. **Single "Approve & send" has no grace.** Deliberate — the owner just read that one message,
+   and a countdown on every single send taxes the common path. But it is an inconsistency, and
+   the first person who misclicks a single send will not find it principled.
+2. **The countdown is text, not a progress bar.** A depleting bar reads at a glance; "10s"
+   has to be read. Chosen for restraint, but this is the weakest part of the design.
+3. **Nothing tells the owner leaving will send.** The behaviour is right and undocumented in
+   the UI. One line could say it, at the cost of clutter on the calm path.
+4. **Overlapping presses are untested.** Two groups counting down at once each have their own
+   gate, which should be fine because the server re-reads what is still pending — but I did
+   not verify it.

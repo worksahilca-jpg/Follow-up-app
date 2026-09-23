@@ -5110,3 +5110,79 @@ eslint, build and tsc clean.
    so far.
 4. **No real verdicts seen.** No database and no OpenAI key here, so the storage and reuse are
    proven against mocks. I have not watched the classifier judge one real held draft.
+
+---
+
+## 2026-09-23 — Grouping the approval queue so it answers "who first?"
+
+Step 2 of the founder's 2026-09-23 ask. Step 1 (a real risk verdict per draft) is the entry
+above; this is the shape built on it. No UI yet — this is the data layer and its guarantees.
+
+### The idea, in his words
+
+> "sort according to the sources then scores and let them know what is the priority and whom
+> to focus on rather than reading all 600 drafts… for those who need less attention he should
+> let them know that we can follow up in one click only if they want and they are safe to send"
+
+A flat list answers none of that. Ordered by urgency it still asks an owner to work down 600
+rows; ordered by recency, the same in a worse order. What a full queue needs is a *shape*:
+these few need you, this is the one to open first, the rest are routine and can go together.
+
+### The decision that carries all the risk
+
+`isSafeToSendInBulk` is the only place in the product that says a message may reach a customer,
+in the owner's name, **without a human reading it**. It has one way to fail badly — saying yes
+too often — so the bar is narrow, stated once, and guarded twice:
+
+1. The account's approval setting is the *only* thing holding it.
+2. The classifier looked at **this** draft and said low.
+
+**The second is not a restatement of the first**, and that is the whole point. Until this
+morning the classifier was skipped on every holding account, so each held draft carried a
+hardcoded "low" nothing had assessed. Built on the hold reason alone, the one-click pile's
+first act would have been to send every unjudged draft in the account — including the one
+quoting a price nobody mentioned — because its reason reads "your account holds every
+automated message", which is true of all of them.
+
+So **null is not safe**. An unjudged draft is not a safe draft; it is one nobody has looked at.
+The self-critique on the entry above flagged that nothing enforced this yet. It does now, in
+one function, re-checkable by the send endpoint rather than trusted from a browser.
+
+### Ordering
+
+- A source with anything needing a human outranks one that is purely routine, **however
+  large**. Forty safe drafts is not where to look first.
+- Among those, the group holding the highest-scoring lead wins — that lead *is* the answer to
+  "whom to focus on", so it sits at the top of the top group.
+- Ties fall back to size, then name, so the queue does not reshuffle under the cursor between
+  renders.
+- `summariseGroups` derives "focus on" from the ordered groups rather than re-scanning, so the
+  sentence above the queue can never name a lead the list does not show first.
+
+### Design direction for the UI that follows
+
+Per A-006 (the founder's own six-axis taste test): dense, boxed with a real shadow and no
+border, status colour doing the work, and `--rust` spent **once** — which here is obvious, it
+is the "send the safe ones" button. That is the single thing on the screen an owner should act
+on. R-001 also applies: this must not ship as a subtraction pass.
+
+### Tests
+
+18, verified by removal: treating an unjudged draft as safe fails 8, dropping the hold-reason
+guard fails 3, ranking groups by size fails 1. 1680 pass; eslint, build and tsc clean.
+
+### Self-critique
+
+1. **No UI, so nothing is proven to a human yet.** Everything above is a pure function with
+   good tests. Whether a grouped queue actually *reads* better than a flat one at 600 rows is
+   unproven, and is the kind of thing only rendering will show.
+2. **The cap and window rules are not here.** The founder was explicit that per-source sending
+   limits matter, and `safeToSend` currently describes what is safe, not what is *sendable
+   today*. A pile of 90 with a daily cap of 40 will need to say so, and nothing does yet.
+3. **Score is doing a lot of load-bearing work.** Groups rank on it and both piles sort on it,
+   but on a fresh account most leads are unscored (0), so the tie-break — recency — is in fact
+   the common path. The ordering will look much better in tests than on a new account's first
+   week.
+4. **`UNKNOWN_SOURCE_LABEL` is a guess at wording.** "Added by hand" is right for the
+   hand-typed case the founder's database actually had, but a CSV import with no channel
+   column lands there too and is not hand-added.

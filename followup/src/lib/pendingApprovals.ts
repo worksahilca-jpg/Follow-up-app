@@ -36,6 +36,33 @@ function truncate(text: string, max: number): string {
 export type PendingApproval = {
   leadId: string;
   leadName: string;
+  /**
+   * Where this lead came from — "Gmail", "WhatsApp", "Instagram"…
+   * Nullable because Lead.source is: a lead typed in by hand or imported
+   * from an old CSV may genuinely have none. Left null here rather than
+   * given a placeholder, so the grouping decides what to call it and the
+   * data layer never invents a source that was not recorded.
+   */
+  source: string | null;
+  /** 0-100 intent score. What "who do I deal with first" is sorted on. */
+  score: number;
+  /**
+   * The risk classifier's verdict on the draft that is actually sitting
+   * here (Lead.suggestedRiskLevel), NOT the `riskLevel` below.
+   *
+   * They are different things and the difference matters. `riskLevel` is
+   * read out of the hold's audit meta — written at hold time, and on a
+   * holding account that was a hardcoded "low" for years, because the
+   * classifier was skipped whenever nothing could send. So it says
+   * nothing about whether this draft is safe.
+   *
+   * This one is the real verdict, stored with the draft it judged. Null
+   * means UNJUDGED — a draft written before verdicts were recorded, or
+   * one the classifier could not reach. Null is never "safe": see
+   * isSafeToSendInBulk in @/lib/approvalGroups, which is the only place
+   * allowed to turn this into a yes.
+   */
+  draftRiskLevel: string | null;
   riskLevel: string;
   reason: string;
   trigger: string;
@@ -87,8 +114,11 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
     select: {
       id: true,
       name: true,
+      source: true,
+      score: true,
       suggestedSubject: true,
       suggestedMessage: true,
+      suggestedRiskLevel: true,
       // One inbound message per conversation (the most recent), not the
       // whole thread — a lead can have several conversations across
       // channels (an old email thread plus a newer text, say), so the
@@ -121,6 +151,9 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
     approvals.push({
       leadId: lead.id,
       leadName: lead.name,
+      source: lead.source,
+      score: lead.score,
+      draftRiskLevel: lead.suggestedRiskLevel,
       riskLevel: typeof meta.riskLevel === "string" ? meta.riskLevel : "medium",
       reason: typeof meta.reason === "string" ? meta.reason : "",
       trigger: typeof meta.trigger === "string" ? meta.trigger : "silence",

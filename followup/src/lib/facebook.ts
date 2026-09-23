@@ -3,7 +3,7 @@ import { pickAssignee } from "@/lib/assignment";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { messengerLeadId } from "@/lib/instagramId";
-import { readMetaError, type MetaSendResult } from "@/lib/metaGraph";
+import { readMetaError, ownerFacingMetaError, type MetaSendResult } from "@/lib/metaGraph";
 import { quickRepliesForGraph, validateQuickReplies, type QuickReply } from "@/lib/quickReplies";
 import type { Lead } from "@prisma/client";
 
@@ -75,7 +75,14 @@ export async function sendMessengerMessage(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(envelope),
   });
-  if (!res.ok) return readMetaError(res, "Facebook rejected this message.", "Messenger");
+  if (!res.ok) {
+    const failure = await readMetaError(res, "Facebook rejected this message.", "Messenger");
+    // The one place Meta's prose is rewritten: the reader here is a
+    // business owner looking at a drafted message, not someone
+    // connecting a channel. Codes and the raw text stay on the
+    // result and in the log for anyone debugging.
+    return { ...failure, message: ownerFacingMetaError(failure.message ?? "", "Facebook rejected this message.") };
+  }
   return { success: true };
 }
 

@@ -90,7 +90,14 @@ describe("Instagram", () => {
   it("keeps Meta's code and subcode on a rejection — the closed-window pair is the first thing a live run has to see", async () => {
     fetchMock.mockResolvedValue(errorResponse(400, { message: "This message is sent outside of allowed window.", code: 10, error_subcode: 2018278 }));
     const result = await sendInstagramMessage("biz1", "igsid-1", "Still there?");
-    expect(result).toEqual({ success: false, message: "This message is sent outside of allowed window.", status: 400, code: 10, subcode: 2018278 });
+    // Code and subcode still carried — that pair is what identifies the
+    // rule that fired. The MESSAGE is now the owner's version: Meta's
+    // "This message is sent outside of allowed window." is written for
+    // whoever integrated the API, and it was reaching the business owner
+    // underneath their drafted reply (2026-09-23).
+    expect(result).toMatchObject({ success: false, status: 400, code: 10, subcode: 2018278 });
+    expect(result.message).toContain("24-hour");
+    expect(result.message).not.toContain("outside of allowed window");
   });
 
   it("still returns a usable failure when Meta's error body is not JSON", async () => {
@@ -131,7 +138,11 @@ describe("Messenger", () => {
   it("keeps Meta's code and subcode on a rejection", async () => {
     fetchMock.mockResolvedValue(errorResponse(400, { message: "(#100) Unsupported message tag", code: 100 }));
     const result = await sendMessengerMessage("biz1", "psid-1", "Still there?");
-    expect(result).toEqual({ success: false, message: "(#100) Unsupported message tag", status: 400, code: 100, subcode: undefined });
+    // An unrecognised refusal falls back rather than passing Meta's
+    // wording through. "(#100) Unsupported message tag" tells an owner
+    // nothing they can act on; the code is kept for whoever can.
+    expect(result).toMatchObject({ success: false, status: 400, code: 100, subcode: undefined });
+    expect(result.message).toBe("Facebook rejected this message.");
   });
 });
 

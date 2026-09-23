@@ -77,6 +77,14 @@ function SettingsPageInner() {
   // initializer so this only ever reads location.hash once, on mount.
   const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
     if (typeof window === "undefined") return "connect";
+    // An OAuth callback comes back with a query string and no hash, so
+    // the hash lookup below lands on "connect" — and the Instagram panel
+    // that the failure belongs to lives on "channels", hidden. That is
+    // the second half of why a failed connect showed nothing: even once
+    // the message existed, it rendered inside a tab the owner was not
+    // on. Land them where the thing they just tried actually is.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("instagram")) return "channels";
     return SECTION_TAB[window.location.hash.slice(1)] ?? "connect";
   });
   const scrolledRef = useRef(false);
@@ -640,6 +648,21 @@ function SettingsPageInner() {
     searchParams.get("gmail") === "error" ? searchParams.get("message") ?? "Couldn't connect Gmail." : null;
   const outlookError =
     searchParams.get("outlook") === "error" ? searchParams.get("message") ?? "Couldn't connect Outlook." : null;
+  // Instagram was missing from this list entirely.
+  //
+  // Found 2026-09-23, connecting a brand-new demo account: the OAuth
+  // callback redirected to /settings?instagram=error&message=… exactly
+  // as Gmail's and Outlook's do, and nothing on the page read it. The
+  // connect had failed at Meta's long-lived token exchange, the page
+  // rendered as though nothing had happened, and the only trace was the
+  // query string in the address bar.
+  //
+  // A failed connect that says nothing is worse than one that says the
+  // wrong thing: the owner presses Connect, the screen looks unchanged,
+  // and they have no idea whether to wait, retry, or give up. The
+  // channel then silently receives nothing forever.
+  const instagramError =
+    searchParams.get("instagram") === "error" ? searchParams.get("message") ?? "Couldn't connect Instagram." : null;
   const billingRedirect = searchParams.get("billing"); // "success" | "canceled" | null
   // Just paid, but the webhook hasn't landed yet — the poll above is
   // already chasing it. Disable Subscribe during this window specifically
@@ -1019,6 +1042,11 @@ function SettingsPageInner() {
 
       <section id="social" className="scroll-mt-16">
         <h2 className="font-display text-xl">Instagram &amp; Facebook</h2>
+        {instagramError && (
+          <p className="text-xs" style={{ color: "var(--coral)" }}>
+            {instagramError}
+          </p>
+        )}
         <div className="mt-4">
           <InstagramConfig />
           <FacebookConfig />

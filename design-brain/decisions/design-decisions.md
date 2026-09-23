@@ -5186,3 +5186,72 @@ guard fails 3, ranking groups by size fails 1. 1680 pass; eslint, build and tsc 
 4. **`UNKNOWN_SOURCE_LABEL` is a guess at wording.** "Added by hand" is right for the
    hand-typed case the founder's database actually had, but a CSV import with no channel
    column lands there too and is not hand-added.
+
+---
+
+## 2026-09-23 — The one-click send, and the rule it deliberately does not go around
+
+Step 4 of the founder's 2026-09-23 ask. The button itself (step 3, the screen) is still to
+come; this is the action behind it.
+
+### The hard part was never the sending
+
+> "we can follow up in one click only if they want and they are safe to send… but we need to
+> take care about the restriction of sending mails and messages of each source."
+
+A button that sends 90 messages is easy. A button that sends 90 messages without getting the
+owner's mailbox suspended, without breaking the rules of the channels it sends through, and
+without lying about what it did, is the job.
+
+### The decision worth recording
+
+`sendFollowUpToLead` takes a `humanSend` option. It exists for the one screen where a signed-in
+person has a whole message in front of them and taps Send, and it is what lets an Instagram or
+Messenger reply go out between 24 hours and 7 days under **Meta's human-agent allowance**.
+
+Passing it here would have made this feature work on every channel. **It is not passed**, and
+that is the single most important line in the file.
+
+Nobody has read these messages individually — that is the entire point of the feature — so
+telling Meta a human is handling each conversation would be a false claim, made to the one
+party that can take the channel away. The refusal that follows is not a limitation to route
+around; it IS the per-source restriction the founder asked for. Those conversations stay in the
+queue for him to answer personally, which is what Meta's rule actually asks for.
+
+The wider principle: **no channel rule is re-implemented here.** Every window, cap and
+suppression already lives in the send path and is tested there. This layer's only job is to
+collect what that path refuses and say it out loud, in the path's own words — the closed-window
+sentence already tells an owner what they can do about it, and a second copy would drift.
+
+### The other two guards
+
+- **The list is never the caller's.** The screen posts a source at most; the set of drafts is
+  re-derived from the queue and each one re-checked with `isSafeToSendInBulk`. A list of lead
+  ids posted from a page is a list of leads somebody could edit.
+- **A press is bounded**, at the product's own daily automated ceiling — a number already
+  derived rather than picked (`sendCaps.ts`). One press should not be able to exceed what a
+  whole day of automation may. A truncated press spends itself on the highest-scoring leads and
+  reports what is left, rather than quietly doing less than it appeared to.
+
+Route is admin-only and rate-limited to 5 presses per 10 minutes: the per-press ceiling bounds
+one press, not a person leaning on the button.
+
+### Tests
+
+13, verified by removal: dropping the safe filter fails 1, claiming the human-agent allowance
+fails 1, reading a zero limit as "no limit" fails 1. 1693 pass; eslint, build and tsc clean.
+
+### Self-critique
+
+1. **No screen yet, so the button does not exist.** The endpoint is real and guarded; nothing
+   in the product calls it. Step 3 is the remaining work and is the part the founder will
+   actually see.
+2. **The ceiling is a single number, not a per-channel one.** The founder said "each source",
+   and cap-wise this treats all sources alike — it is Meta's window that is per-channel, via
+   the send path. A business whose Gmail limit is lower than the assumed one is not modelled.
+3. **`sent` counts what the send path accepted, not what a provider delivered.** A message
+   accepted and then bounced counts as sent here. That matches the rest of the product, and it
+   is still a gap between the number and the truth.
+4. **Never run against a real provider.** Every test mocks the send path. The concurrency,
+   the partial-failure path and the 300-second ceiling on a few hundred real sends are all
+   unproven against anything slow.

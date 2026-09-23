@@ -5748,3 +5748,64 @@ fails 1). 1740 pass; build, tsc, eslint clean. Rendered at 1000px: 3 rows, zero 
 1. **Three is a guess.** Defensible, untested against a real owner.
 2. **No way to see more than three** short of opening leads one at a time.
 3. **Nothing paginates still.** Unchanged, and now the oldest outstanding gap.
+
+---
+
+## 2026-09-23 — The badge stops promising a follow-up Meta will refuse
+
+Found on the founder's own Instagram lead, in production. 64.5 hours since the lead last
+wrote, and the lead page said:
+
+> **Writing a reply for you to approve** — Next automation check drafts this. They wrote and
+> haven't heard back. It waits in your approvals until you send it.
+
+Every clause false. Past 24 hours Meta refuses an automated send outright; the manual one needs
+an app permission this app does not have yet. The draft was real and had nowhere to go. **He
+found out by pressing Send and reading a Facebook developer-docs link.**
+
+This is the third time today the same defect shape has surfaced: *a status asserting something
+the machine cannot do.* "Following up soon" on a held account this morning, the queue's
+self-contradicting count this afternoon, and now this.
+
+### The new state, and where it ranks
+
+`meta_window_closed` sits directly below `no_send_channel` and **above the workflow branch and
+the owner's own "off"**. It is the per-lead form of the same claim — there is no way to reach
+this person right now — and it is the only state here that also governs what the **owner** can
+do by hand. Everything below it describes what FollowUp does automatically.
+
+Ranked above "off" deliberately: an owner reading *"you turned this off"* learns something they
+already knew and can undo whenever they like. An owner reading *"3 more days to reply at all"*
+learns something that **expires**. Perishable information wins.
+
+### Read off the newest inbound, which also decides relevance
+
+A lead who wrote on Instagram and then emailed is reachable by email, and the newest inbound
+being an email is exactly how that shows up. The reverse — newest inbound on Instagram, email
+on file — really is blocked, because **R-003 forbids an email fallback for a shut DM window**.
+
+### Copy
+
+Leads with the clock, names the one route still open, and says nothing about app review, the
+Human Agent tag, or how FollowUp talks to Meta. That is our problem, not the owner's.
+
+### Tests
+
+9 new, three boundaries pinned (inside the window, past it, past 7 days). Verified by removal:
+never firing fails 5, dropping the channel check fails 1, `ceil` instead of `floor` fails 1.
+1754 pass.
+
+Rendering caught the copy — *"for 4 days more"* → *"for 4 more days"* — and `tsc` caught a real
+error in my own test that vitest could not see: `"ASSISTED"` where the type is `"assisted"`.
+esbuild strips types without checking them, so a test file can be wrong and still pass.
+
+### Self-critique
+
+1. **A workflow-enrolled DM lead still shows "next step in 2d".** The window check sits above
+   the workflow branch so the state is right, but the *sequence* will keep scheduling steps
+   that cannot send. The badge is honest now; the engine is not.
+2. **Nothing warns before the window shuts.** At hour 23 the owner sees an ordinary badge and
+   at hour 25 a red one. A nudge at hour 18 is the thing that would actually save the lead.
+3. **The 7-day figure assumes Human Agent will be approved.** Today it is not, so the middle
+   band is "only in person" — which is true either way, but for a different reason than the
+   copy implies.

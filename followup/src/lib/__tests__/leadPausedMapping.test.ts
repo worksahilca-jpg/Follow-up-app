@@ -21,6 +21,10 @@ import type { BusinessAutomationRules } from "@/lib/automationStatus";
 
 const RULES: BusinessAutomationRules = {
   canSend: true,
+  // This file is about the paused-lead mapping, which ranks above the
+  // timing states the approval setting touches — so an account that
+  // allows sending keeps these cases about what they are about.
+  holdAllForApproval: false,
   masterEnabled: true,
   silenceTriggerDays: 5,
   unansweredEnabled: true,

@@ -4933,3 +4933,101 @@ update fails the skip test; deleting `businessId` from the scope fails the busin
    is honest but loses whatever per-lead choices were there before. Recording the prior tiers to
    offer a real undo was out of scope for today and is the obvious next thing if this gets used
    in anger.
+
+---
+
+## 2026-09-23 — The two surfaces that still described a sending account
+
+Continuing the audit of claims the code stopped supporting when
+`holdAllForApproval` became `@default(true)` on 2026-09-21. Two found, both
+worse than the earlier ones because both are **unprompted**: the owner did not
+go looking, the product came to them.
+
+### 1. The lead's automation badge (`AutomationStatusBadge`)
+
+The badge existed for task #63, after a real lead sat eligible for hours with
+nothing visibly happening and the reason only findable in the database. Its
+entire purpose is that nobody has to ask "why hasn't this sent".
+
+Since 2026-09-21 it said, on every account, on a lead whose reply was about to
+be **written and held**:
+
+> **Following up soon** — Next automation check will pick this up
+
+The badge built to prevent an unexplained non-send was the thing asserting the
+send. It is also the app's most-seen claim: compact in every lead list row,
+full at the top of every lead detail page.
+
+**The design problem was that both easy answers are wrong.** `holdAllForApproval`
+is not a second `masterEnabled`. With the master off nothing happens; with hold
+on *everything happens except the send* — the lead is claimed, the reply is
+written, it waits. So:
+
+- "Following up soon" promises a send that is not coming.
+- "Paused" says nothing is coming, and sends the owner off to fix a setting
+  that isn't broken.
+
+The badge had to say the true third thing:
+
+> **Writing a reply for you to approve** — Next automation check drafts this —
+> they wrote and haven't heard back. It waits in your approvals until you send it.
+
+Shipped as a flag on the three timing states rather than a new state, so the
+ranking above them (a closed deal, a paused lead, no send channel) is untouched
+— those mean nothing is written either, and must still outrank this.
+
+Two smaller ones fell out of the same read: `waiting` counted down to a send
+("Next check in ~3h" → "Draft ready in ~3h"), and `account_paused` told the
+owner to turn on "Auto follow-up on silence" — a half-instruction, since on a
+holding account that produces a draft, not a message.
+
+### 2. The weekly digest email
+
+Worse, because it arrives unasked in the owner's inbox. The quiet-week line:
+
+> "Nobody came back this week yet — every lead that wrote in was still answered
+> within a minute."
+
+On a holding account **nothing was answered at all**. `holdAllForApproval` stops
+the instant acknowledgement too — acknowledge.ts withdrew that message's
+exemption deliberately ("the only thing that could reach a stranger with nobody
+having read it"). So FollowUp emailed an owner that their leads had been
+answered within a minute while those replies sat unsent in that owner's own
+queue. And a holding account is exactly where the automated counts are zero, so
+this is the line such an account *always* got.
+
+Second defect, true on every account: this report counts automated sends and the
+leads who replied to them. **It never counted how many leads wrote in.** That
+claim was not something the report knew — it was inferred from an empty list and
+happened to read well. Removed rather than reworded.
+
+The digest now leads with what needs the owner, in the subject line too:
+*"FollowUp this week: 12 replies are waiting for your OK"* beats *"0 came back,
+0 answered for you"* on an account holding twelve drafts.
+
+### Tests
+
+24 new, all verified by removal — restoring the old badge branch fails 2,
+dropping the status flag fails 3, restoring the digest's old line fails 4.
+`describeAutomationStatus` is exported and asserted directly, following
+`describeAckOutcome`: the defect was in the prose, so a test restating the prose
+would have passed throughout. 1643 pass, eslint/build/tsc clean.
+
+### Self-critique
+
+1. **Found by reading, not by using.** Nobody has received this digest on a
+   holding account. The copy is right; the send path on a real account is
+   unproven.
+2. **Not rendered.** No database here, so the badge's new states were not seen
+   in place. The longest new label — "Writing a reply for you to approve" — is
+   materially longer than "Following up soon" and sits in a compact list-row
+   pill. I believe it wraps acceptably; I have not watched it.
+3. **The digest adds a query per business.** `getPendingApprovals` is an audit
+   scan, now run once per business in the weekly cron at concurrency 3. Bounded
+   by SCAN_LIMIT and weekly, so acceptable — but it is a real cost added to a
+   cron that had none.
+4. **Third instance of the same root cause.** Onboarding, the approval queue,
+   now the badge and the digest. The pattern is a default flipped in one place
+   and prose left standing everywhere else, and it keeps being found one surface
+   at a time. A single list of every place the product claims something sends
+   would have caught all of them in one pass, and does not exist.

@@ -121,26 +121,62 @@ export function describeTrigger(trigger: string): string {
   }
 }
 
-/** Plain-text body for the weekly digest email. */
-export function renderRescueDigest(businessName: string, r: RescueReport, appUrl: string): string {
+/**
+ * Plain-text body for the weekly digest email.
+ *
+ * `awaitingApproval` is how many leads have a reply written and held —
+ * passed in rather than read here, so the dashboard's own call to
+ * getRescueReport doesn't pay for a scan it already does separately.
+ *
+ * It is the number this email most needs. On an account with
+ * `holdAllForApproval` on (the default for every account since
+ * 2026-09-21), automated sends are zero by construction, so a digest
+ * built only from `answeredForYou` and `rescued` reports a week of
+ * nothing — to a business whose queue may hold a dozen written replies
+ * that have been waiting since Monday. The week's actual headline is
+ * not "we did nothing", it is "this needs you".
+ */
+export function renderRescueDigest(businessName: string, r: RescueReport, appUrl: string, awaitingApproval = 0): string {
   const lines = [
     `Here's what FollowUp did for ${businessName} in the last ${r.days} days.`,
     "",
     `Answered for you: ${r.answeredForYou}`,
+  ];
+  if (awaitingApproval > 0) {
+    lines.push(`Written and waiting for your OK: ${awaitingApproval}`);
+  }
+  lines.push(
     `Conversations won back: ${r.rescued}`,
     `Appointments booked by them: ${r.booked}`,
     `Closed: ${r.won}${r.wonValue > 0 ? ` (${formatMoney(r.wonValue)})` : ""}`,
     `Still in play: ${formatMoney(r.valueInPlay)}`,
-    "",
-  ];
+    ""
+  );
   if (r.leads.length > 0) {
     lines.push("Who came back:");
     for (const l of r.leads.slice(0, 10)) {
       lines.push(`- ${l.name} — ${describeTrigger(l.trigger)}, replied ${l.repliedAfterHours}h later${l.dealValue > 0 ? `, ${formatMoney(l.dealValue)}` : ""}`);
     }
     lines.push("");
+  } else if (awaitingApproval > 0) {
+    // What the quiet week actually was. The line this replaces said
+    // "every lead that wrote in was still answered within a minute" —
+    // which on a holding account was the opposite of the truth, since
+    // holdAllForApproval stops the instant acknowledgement too
+    // (acknowledge.ts: "this was the last one that could reach a
+    // stranger unread"). An owner was being emailed that their leads had
+    // been answered while those replies sat unsent in their own queue.
+    lines.push(
+      `Nobody came back this week yet — ${awaitingApproval === 1 ? "there is 1 reply" : `there are ${awaitingApproval} replies`} written and waiting for your OK.`,
+      "Nothing goes out until you send it.",
+      ""
+    );
   } else {
-    lines.push("Nobody came back this week yet — every lead that wrote in was still answered within a minute.", "");
+    // Still no "answered within a minute" here. This report counts
+    // automated sends and the leads who replied to them; it never counted
+    // how many leads wrote in, so that claim was never something it knew
+    // — it was inferred from an empty list and happened to read well.
+    lines.push("Nobody came back this week yet, and nothing is waiting on you.", "");
   }
   lines.push(`Open FollowUp: ${appUrl}/dashboard`);
   return lines.join("\n");

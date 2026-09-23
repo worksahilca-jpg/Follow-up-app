@@ -35,6 +35,21 @@ export interface BusinessAutomationRules {
    * render like the rest of this object — not once per lead.
    */
   canSend: boolean;
+  /**
+   * Business.holdAllForApproval — the account-wide "nothing sends without
+   * my OK" setting, `@default(true)` since 2026-09-21.
+   *
+   * It does NOT stop a lead being picked up, and it does not stop a draft
+   * being written. It stops the send, short-circuiting ahead of the lead's
+   * own automationTier in all three send paths (automation.ts,
+   * acknowledge.ts, sequences.ts). So it is not another `masterEnabled`:
+   * with the master off nothing happens at all, while with this on
+   * everything happens except the last step.
+   *
+   * Which is why it is a flag on the timing states below rather than a
+   * state of its own — "paused" would be as wrong as "following up soon".
+   */
+  holdAllForApproval: boolean;
   masterEnabled: boolean;
   silenceTriggerDays: number;
   unansweredEnabled: boolean;
@@ -55,17 +70,21 @@ export interface BusinessAutomationRules {
  * over by claiming they're about to.
  */
 export async function getBusinessAutomationRules(businessId: string): Promise<BusinessAutomationRules> {
-  const [rows, canSend] = await Promise.all([
+  const [rows, canSend, business] = await Promise.all([
     prisma.automation.findMany({
       where: { businessId, action: { in: ["auto_send", UNANSWERED_ACTION, DEAD_LEAD_ACTION] } },
     }),
     hasAnySendChannel(businessId),
+    // Defaults to held, matching the column's own `@default(true)`: if the
+    // row cannot be read, the safe answer is the one that promises less.
+    prisma.business.findUnique({ where: { id: businessId }, select: { holdAllForApproval: true } }),
   ]);
   const master = rows.find((r) => r.action === "auto_send");
   const unanswered = rows.find((r) => r.action === UNANSWERED_ACTION);
   const deadLead = rows.find((r) => r.action === DEAD_LEAD_ACTION);
   return {
     canSend,
+    holdAllForApproval: business?.holdAllForApproval ?? true,
     masterEnabled: master?.enabled ?? false,
     silenceTriggerDays: master?.triggerDays ?? 5,
     unansweredEnabled: unanswered?.enabled ?? true,
@@ -96,11 +115,16 @@ export type AutomationStatus =
   | { kind: "off" } // Lead.automationTier === "off" — nobody but a human will ever message this lead
   // Would be eligible for an automated send right now, but the business's
   // master switch is off — the exact "why is nothing happening" case.
-  | { kind: "account_paused"; reason: "unanswered" | "dead_lead" | "silence" }
+  // `heldForApproval` on the three states below is the account's
+  // holdAllForApproval. It changes what the next tick DOES, not whether
+  // one comes: the lead is still picked up and a reply is still written,
+  // it just waits in the approval queue instead of going out. Each of
+  // these three sentences promised a send before this existed.
+  | { kind: "account_paused"; reason: "unanswered" | "dead_lead" | "silence"; heldForApproval: boolean }
   // Eligible now — the next hourly cron tick (or a manual "Run automation
   // check now") will pick this lead up.
-  | { kind: "due_soon"; reason: "unanswered" | "dead_lead" | "silence" }
-  | { kind: "waiting"; etaHours: number | null } // not yet due; etaHours is a rough estimate, not a promise
+  | { kind: "due_soon"; reason: "unanswered" | "dead_lead" | "silence"; heldForApproval: boolean }
+  | { kind: "waiting"; etaHours: number | null; heldForApproval: boolean } // not yet due; etaHours is a rough estimate, not a promise
   | { kind: "sent" }; // we already replied and nothing is currently due
 
 export interface AutomationStatusLead {
@@ -210,9 +234,14 @@ export function computeAutomationStatus(
     }
   }
 
-  if (due) return rules.masterEnabled ? { kind: "due_soon", reason: due } : { kind: "account_paused", reason: due };
+  const heldForApproval = rules.holdAllForApproval;
+  if (due) {
+    return rules.masterEnabled
+      ? { kind: "due_soon", reason: due, heldForApproval }
+      : { kind: "account_paused", reason: due, heldForApproval };
+  }
   if (!lastIsInbound) return { kind: "sent" };
-  return { kind: "waiting", etaHours: etaHours !== null ? Math.max(1, Math.ceil(etaHours)) : null };
+  return { kind: "waiting", etaHours: etaHours !== null ? Math.max(1, Math.ceil(etaHours)) : null, heldForApproval };
 }
 
 function mostRecentMessage(conversation: Message[]): Message | null {

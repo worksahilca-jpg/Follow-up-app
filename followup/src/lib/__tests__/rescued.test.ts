@@ -102,3 +102,90 @@ describe("rescue report", () => {
     expect(text).toContain("https://followupbase.io/dashboard");
   });
 });
+
+/**
+ * The weekly digest on an account that holds every message for approval
+ * — which is every account by default since `Business.holdAllForApproval`
+ * became `@default(true)` on 2026-09-21.
+ *
+ * ## The line this replaces
+ *
+ *   "Nobody came back this week yet — every lead that wrote in was still
+ *    answered within a minute."
+ *
+ * Two things wrong with it, one fatal.
+ *
+ * Fatal: on a holding account nothing was answered at all. holdAllForApproval
+ * stops the instant acknowledgement too — acknowledge.ts withdrew that
+ * message's exemption deliberately ("the only thing that could reach a
+ * stranger with nobody having read it"). So this was an email, sent to the
+ * owner's own inbox, telling them their leads had been answered within a
+ * minute while those replies sat unsent in their own approval queue.
+ *
+ * Structural, and true on every account: this report counts automated
+ * sends and the leads who replied to them. It never counted how many
+ * leads wrote in. "Every lead that wrote in was answered" was not
+ * something it knew — it was inferred from an empty list, and it happened
+ * to read well.
+ *
+ * The replacement says what the week actually was, and names the one
+ * thing that needs the owner.
+ */
+describe("the weekly digest's quiet week", () => {
+  const EMPTY = {
+    days: 7,
+    answeredForYou: 0,
+    rescued: 0,
+    booked: 0,
+    won: 0,
+    valueInPlay: 0,
+    wonValue: 0,
+    leads: [],
+  };
+
+  it("never claims leads were answered when replies are sitting in the queue", () => {
+    const body = renderRescueDigest("Acme Plumbing", EMPTY, "https://followupbase.io", 12);
+    expect(body, "the digest still claims an answer it did not send").not.toMatch(/answered within a minute/i);
+  });
+
+  it("tells the owner what is waiting, and that it will not go without them", () => {
+    const body = renderRescueDigest("Acme Plumbing", EMPTY, "https://followupbase.io", 12);
+    expect(body).toMatch(/12 replies written and waiting for your OK/);
+    expect(body, "the owner is not told the queue is theirs to release").toMatch(/Nothing goes out until you send it/);
+  });
+
+  it("counts one reply in the singular — an owner reads this in their inbox", () => {
+    const body = renderRescueDigest("Acme Plumbing", EMPTY, "https://followupbase.io", 1);
+    expect(body).toMatch(/there is 1 reply written/);
+    expect(body).not.toMatch(/1 replies/);
+  });
+
+  it("drops the fabricated claim even on an account with nothing waiting", () => {
+    // The structural half. With no queue and no rescues there is simply
+    // nothing to report, and the old line filled that silence with a fact
+    // the report never had.
+    const body = renderRescueDigest("Acme Plumbing", EMPTY, "https://followupbase.io", 0);
+    expect(body).not.toMatch(/answered within a minute/i);
+    expect(body).toMatch(/nothing is waiting on you/i);
+  });
+
+  it("does not invent a waiting line when nothing is waiting", () => {
+    const body = renderRescueDigest("Acme Plumbing", EMPTY, "https://followupbase.io", 0);
+    expect(body).not.toMatch(/waiting for your OK/);
+  });
+
+  it("still leads with the rescues when the week actually had some", () => {
+    // The held count must not bury a real result. A week with leads who
+    // came back is still a week about those leads.
+    const withLeads = {
+      ...EMPTY,
+      rescued: 1,
+      leads: [{ id: "l1", name: "Sarah", trigger: "unanswered", repliedAfterHours: 3, dealValue: 0, stage: "CONTACTED" }],
+    } as unknown as Parameters<typeof renderRescueDigest>[1];
+    const body = renderRescueDigest("Acme Plumbing", withLeads, "https://followupbase.io", 4);
+    expect(body).toMatch(/Who came back:/);
+    expect(body).toMatch(/Sarah/);
+    // …and the queue is still reported, in the summary block at the top.
+    expect(body).toMatch(/Written and waiting for your OK: 4/);
+  });
+});

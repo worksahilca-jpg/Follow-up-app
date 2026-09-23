@@ -4859,3 +4859,77 @@ where the honest version threw the pitch away.
    which also holds sensitive topics, ungrounded specifics and failed checks. The plainest
    example beats an accurate list at this length — but it is an example, and a tester could
    reasonably think price is the only thing held.
+
+---
+
+## 2026-09-23 — Applying an automation mode to leads a business already has
+
+### The gap
+
+Source rules answer "what should a **new** Gmail lead start on". They deliberately never touch
+an existing lead — `applySourceRouting` runs once, at creation, "never on a resync/update of an
+existing one".
+
+Founder, today: *"if they have 60 or 600 leads, they can't do auto for all the leads, right? We
+have to make something that, with just one click, will be auto for all of them."*
+
+He is right, and the gap is worse than inconvenient: a business that switches on source routing
+sees a screen full of rules and a lead list that behaves exactly as it did before. The rules
+look broken. Nobody opens 600 lead pages to find out they aren't.
+
+### What shipped
+
+`setAutomationTierInBulk` plus `POST /api/leads/bulk-automation`, surfaced as an
+**Apply to existing leads** block sitting *below* the rules in Settings → Source routing.
+
+Three design calls worth recording:
+
+1. **It opens by admitting the limitation.** The first line is *"These rules apply to new leads
+   only — leads already in FollowUp keep whatever they are on now."* A bulk action that appears
+   without explaining why it's needed reads as a second, redundant control. Naming the gap is
+   what makes the button obvious.
+2. **It reports what it did and did not do.** *"597 leads changed. 3 were left alone — they're
+   in a workflow."* An enrolled lead cannot be raised above OFF (the workflow and the silence
+   rule would both message the same person), and in bulk that must skip and count rather than
+   fail the batch — one enrolled lead among 600 blocking the other 599 makes the feature
+   useless, and a silent skip makes it dishonest.
+3. **Lowering to OFF skips nothing.** Stopping must never be harder than starting. The
+   double-send risk only exists when raising.
+
+`updated` excludes leads already on the target mode, so "600 leads changed" never means "600
+leads matched, none moved".
+
+Admin-only, unlike the single-lead route: changing one lead is ordinary work for anyone on the
+team; changing all of them is a business-wide decision about what reaches customers, so it sits
+with whoever can already grant sending permission. Free-tier accounts are refused AUTONOMOUS
+here as well as on the single-lead route, so bulk cannot be the way round the paywall. Audited
+with the counts, because "how many, and to what" is the question asked after a customer gets a
+message nobody remembers authorising.
+
+### Tests
+
+Six in `bulkAutomation.test.ts`, verified by removal: deleting `sequenceId: null` from the
+update fails the skip test; deleting `businessId` from the scope fails the business-scope test.
+
+1619 pass, eslint clean, `npx next build` clean, tsc clean. All four UI states rendered and read
+(closed; 597 changed + 3 skipped; nothing to change; singular grammar).
+
+### Self-critique
+
+1. **The API takes a source filter; the UI does not offer one.** `setAutomationTierInBulk`
+   accepts `source`, and the founder explicitly asked for source-wise ("like on WhatsApp or
+   Gmail"). The UI ships with "every lead" only. That is a real half-delivery — the plumbing is
+   there, the control is not, and a business with 600 leads across five channels may well want
+   Gmail on Auto and Instagram on Assisted.
+2. **The mode labels are still the old ones.** The founder has redefined them — Off = drafting
+   only, Assisted = sends the safe ones, Auto = everyone — and his Off is a *behaviour* change,
+   not a rename. This block uses today's labels and will need rewording once that lands.
+   Shipping the labels ahead of the rename would have been worse; shipping under labels that are
+   about to change is still a seam.
+3. **Not rendered against real data.** No database here, so the four states were rendered from
+   stubbed counts. The grammar and layout are verified; a 600-lead account's actual latency on
+   the `count` + `updateMany` pair is not.
+4. **No undo.** A misfired "every lead → Auto" is reversed by running "every lead → Off", which
+   is honest but loses whatever per-lead choices were there before. Recording the prior tiers to
+   offer a real undo was out of scope for today and is the obvious next thing if this gets used
+   in anger.

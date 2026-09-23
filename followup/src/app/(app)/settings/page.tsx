@@ -75,25 +75,55 @@ function SettingsPageInner() {
   // by opening straight into the tab that section lives in, so the browser's
   // own anchor scroll lands on it once it's actually in the DOM. Lazy
   // initializer so this only ever reads location.hash once, on mount.
-  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
-    if (typeof window === "undefined") return "connect";
-    // An OAuth callback comes back with a query string and no hash, so
-    // the hash lookup below lands on "connect" — and the Instagram panel
-    // that the failure belongs to lives on "channels", hidden. That is
-    // the second half of why a failed connect showed nothing: even once
-    // the message existed, it rendered inside a tab the owner was not
-    // on. Land them where the thing they just tried actually is.
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("instagram")) return "channels";
-    return SECTION_TAB[window.location.hash.slice(1)] ?? "connect";
-  });
+  /**
+   * "connect" on both sides, always. The URL is read AFTER mount.
+   *
+   * Found 2026-09-23: on the deployed settings page the tabs could not
+   * be clicked at all. They took focus, so they looked alive, and
+   * nothing happened. The console said:
+   *
+   *   "A tree hydrated but some attributes of the server rendered HTML
+   *    didn't match the client properties. This won't be patched up."
+   *
+   * This initializer was the cause. It read `window.location` while
+   * rendering, so the server produced one tab and the client's first
+   * render produced another. React hit the mismatch, stopped patching,
+   * and the buttons kept their native focus behaviour while their
+   * onClick handlers were never bound. An owner sees a settings page
+   * permanently stuck on whichever tab the server picked.
+   *
+   * The lazy initializer looked like the careful choice — it reads the
+   * hash once instead of on every render — and that is exactly why it
+   * was wrong: during hydration "once" still happens on both sides, and
+   * only one of them has a `window`.
+   *
+   * So the first client render now matches the server byte for byte,
+   * and the effect below moves the tab once hydration is safely done.
+   */
+  const [activeTab, setActiveTab] = useState<SettingsTab>("connect");
   const scrolledRef = useRef(false);
 
+  // Reading the URL is the entire job of this effect, and the URL is a
+  // browser-only thing that must not be touched until hydration is over
+  // — which is exactly what the lint rule below is warning about in the
+  // general case and exactly why this is the right place here. One
+  // setState, once, on mount.
   useEffect(() => {
     if (scrolledRef.current) return;
     scrolledRef.current = true;
+
+    // An OAuth callback comes back with a query string and no hash, and
+    // the panel its failure belongs to is not "connect" — Instagram's
+    // lives under Channels. Landing the owner on the tab they just
+    // acted on is the difference between seeing the error and not.
+    const params = new URLSearchParams(window.location.search);
     const id = window.location.hash.slice(1);
-    if (id && SECTION_TAB[id]) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView());
+    const target = SECTION_TAB[id] ?? (params.get("instagram") ? "channels" : null);
+    if (!target) return;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActiveTab(target);
+    if (SECTION_TAB[id]) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView());
   }, []);
 
   const [gmailConnected, setGmailConnected] = useState(false);

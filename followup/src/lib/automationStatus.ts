@@ -26,7 +26,7 @@ import { UNANSWERED_ACTION, UNANSWERED_DEFAULT_HOURS, DEAD_LEAD_ACTION, DEAD_LEA
 import { isExitPayload } from "@/lib/quickReplies";
 import { prisma } from "@/lib/db";
 import { hasAnySendChannel } from "@/lib/sendChannels";
-import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS } from "@/lib/metaWindow";
+import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 import type { Message, PipelineStage, AutomationTier } from "@/lib/types";
 
 export interface BusinessAutomationRules {
@@ -131,6 +131,24 @@ export type AutomationStatus =
   // Perishable, which is why it is a number and not a boolean: "4 days
   // left" is a reason to go and do something now.
   | { kind: "meta_window_closed"; channel: "Instagram" | "Messenger"; hoursLeftForPerson: number | null }
+  // The hours before that, when it can still be saved.
+  //
+  // The number is not a guess. automation.ts drafts a DM follow-up at
+  // UNANSWERED_META_DM_MAX_HOURS (20), and the window shuts at 24 — and
+  // holdAllForApproval defaults to true, so on a fresh account that
+  // draft lands in the approval queue with FOUR HOURS to live and
+  // nothing anywhere saying so. Miss them and the draft is not late, it
+  // is void: the lead cannot be messaged again until they write first.
+  //
+  // So this fires exactly when FollowUp has written something and the
+  // clock has become the owner's problem rather than the engine's.
+  // `heldForApproval` for the same reason the three timing states carry
+  // it: it changes who has to act. On a holding account the draft waits
+  // for the owner and dies at 24h if they do not come. On an account
+  // that sends for itself the engine handles it at hour 20 and the
+  // deadline is ours, not theirs — the badge must not order someone to
+  // go and do something already in hand.
+  | { kind: "meta_window_closing"; channel: "Instagram" | "Messenger"; hoursLeft: number; heldForApproval: boolean }
   | { kind: "workflow"; sequenceName: string; dueInDays: number } // enrolled in an active Sequence
   | { kind: "workflow_paused"; sequenceName: string } // enrolled, but the Sequence itself is paused
   | { kind: "off" } // Lead.automationTier === "off" — nobody but a human will ever message this lead
@@ -195,6 +213,33 @@ function describeMetaWindow(conversation: Message[], now: Date): AutomationStatu
   };
 }
 
+/**
+ * The last few hours of an open window, when a reply is still owed.
+ *
+ * Only when nobody has answered since they wrote — a conversation the
+ * owner has already replied to is not at risk, whatever the clock says.
+ * The instant acknowledgement does not count as an answer, the same
+ * exclusion findUnansweredLeads() and the states below both make: a lead
+ * who wrote once and got the boilerplate has still not been replied to.
+ */
+function describeMetaWindowClosing(conversation: Message[], now: Date, heldForApproval: boolean): AutomationStatus | null {
+  const judged = conversation.filter((m) => !(m.direction === "outbound" && m.trigger === "instant_ack"));
+  const newest = mostRecentMessage(judged);
+  if (!newest || newest.direction !== "inbound") return null;
+  if (newest.channel !== "instagram" && newest.channel !== "messenger") return null;
+
+  const hoursSince = (now.getTime() - new Date(newest.date).getTime()) / 3_600_000;
+  if (hoursSince < UNANSWERED_META_DM_MAX_HOURS || hoursSince > META_DM_WINDOW_HOURS) return null;
+
+  return {
+    kind: "meta_window_closing",
+    channel: newest.channel === "instagram" ? "Instagram" : "Messenger",
+    // Rounded DOWN, so the badge never offers an hour that has gone.
+    hoursLeft: Math.max(0, Math.floor(META_DM_WINDOW_HOURS - hoursSince)),
+    heldForApproval,
+  };
+}
+
 export function computeAutomationStatus(
   lead: AutomationStatusLead,
   rules: BusinessAutomationRules,
@@ -244,6 +289,16 @@ export function computeAutomationStatus(
   }
 
   if (lead.automationTier === "off") return { kind: "off" };
+
+  // Below "off" and below the workflow branch, unlike meta_window_closed
+  // above. The difference is what each one is FOR: closed states a fact
+  // about reachability that holds however the lead is configured, while
+  // this is a nudge to go and do something. An owner who switched a lead
+  // off has said they do not want nudges about it, and a coral "4 hours
+  // left" on a lead they deliberately parked is noise that teaches them
+  // to ignore the colour.
+  const closing = describeMetaWindowClosing(lead.conversation, now, rules.holdAllForApproval);
+  if (closing) return closing;
 
   // The instant ack is transparent here exactly as in findUnansweredLeads():
   // the judgment runs over everything except that boilerplate. Before this,

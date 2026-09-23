@@ -260,14 +260,32 @@ describe("the unanswered badge against Meta's window ceiling", () => {
     });
   }
 
-  it("reads an Instagram lead at 21 hours as due, not as three hours away", () => {
-    // The exact lie this guards against: at 24h the badge said "in 3h"
-    // while the engine was about to send — and Meta was about to refuse.
-    expect(computeAutomationStatus(dmLead(21, "instagram"), RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
+  // SUPERSEDED (2026-09-23) by meta_window_closing. These two asserted
+  // `due_soon` at 21 hours, to kill a badge that said "in 3h" while the
+  // engine was about to send into a window Meta was about to shut.
+  //
+  // That intent is intact and sharper: the state here says the window
+  // shuts in 3 hours and what happens when it does. `due_soon` conveyed
+  // urgency and stopped there — it never said the draft would become
+  // UNSENDABLE, which is the fact that decides whether the owner deals
+  // with it now or tomorrow. The assertions are updated rather than
+  // deleted so the 21-hour boundary stays pinned.
+  it("reads an Instagram lead at 21 hours as a shutting window, not as three hours away", () => {
+    expect(computeAutomationStatus(dmLead(21, "instagram"), RULES, NOW)).toEqual({
+      kind: "meta_window_closing",
+      channel: "Instagram",
+      hoursLeft: 3,
+      heldForApproval: false,
+    });
   });
 
-  it("reads a Messenger lead at 21 hours as due", () => {
-    expect(computeAutomationStatus(dmLead(21, "messenger"), RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
+  it("reads a Messenger lead at 21 hours the same way", () => {
+    expect(computeAutomationStatus(dmLead(21, "messenger"), RULES, NOW)).toEqual({
+      kind: "meta_window_closing",
+      channel: "Messenger",
+      hoursLeft: 3,
+      heldForApproval: false,
+    });
   });
 
   it("leaves an email lead at 21 hours still counting down, as the owner configured", () => {
@@ -277,13 +295,24 @@ describe("the unanswered badge against Meta's window ceiling", () => {
 
   it("holds the ceiling against a business that configured 72 hours", () => {
     const slow: BusinessAutomationRules = { ...RULES, unansweredHours: 72 };
-    expect(computeAutomationStatus(dmLead(21, "instagram"), slow, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
+    // Still not "days to go" on a DM channel, whatever the business
+    // configured — which is what this test has always been about.
+    expect(computeAutomationStatus(dmLead(21, "instagram"), slow, NOW)).toEqual({
+      kind: "meta_window_closing",
+      channel: "Instagram",
+      hoursLeft: 3,
+      heldForApproval: false,
+    });
     // …and the same lead on email genuinely does have days to go.
     expect(computeAutomationStatus(dmLead(21, "email"), slow, NOW).kind).not.toBe("due_soon");
   });
 
   it("still counts down on an Instagram lead at 19 hours", () => {
-    expect(computeAutomationStatus(dmLead(19, "instagram"), RULES, NOW).kind).not.toBe("due_soon");
+    const status = computeAutomationStatus(dmLead(19, "instagram"), RULES, NOW);
+    expect(status.kind).not.toBe("due_soon");
+    // And no warning yet either: hour 19 is an ordinary, healthy
+    // conversation and must not be painted gold.
+    expect(status.kind).not.toBe("meta_window_closing");
   });
 });
 
@@ -340,7 +369,18 @@ describe("a 'Not now' tap on the lead's own page", () => {
         { ...msg("inbound", 21), channel: "instagram", body: "actually, can you do next week?" },
       ],
     });
-    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
+    // SUPERSEDED (2026-09-23): was `due_soon`. The point of this test is
+    // that typing again REVIVES a lead who had tapped out — it must not
+    // read as exited or off. That holds: the lead is live, actionable and
+    // now carries its deadline too. They wrote 21 hours ago on Instagram
+    // and nobody has answered, which is precisely the case the warning
+    // exists for.
+    expect(computeAutomationStatus(l, RULES, NOW)).toEqual({
+      kind: "meta_window_closing",
+      channel: "Instagram",
+      hoursLeft: 3,
+      heldForApproval: false,
+    });
   });
 });
 

@@ -70,6 +70,26 @@ export function describeAutomationStatus(
     // or anything else about how FollowUp talks to Meta. The owner's
     // situation is that a clock is running and they can still answer
     // from their phone; the rest is our problem.
+    // Gold, not coral. A-005 reserves gold for "going cold", and that is
+    // exactly what this is — the one state on this badge that is about to
+    // become a loss and can still be prevented. Coral is for things that
+    // have already stopped; using it here would make the preventable case
+    // look identical to the four unpreventable ones beside it.
+    case "meta_window_closing":
+      return {
+        icon: Clock,
+        label:
+          status.hoursLeft <= 1
+            ? `${status.channel}'s window shuts within the hour`
+            : `${status.channel}'s window shuts in ${status.hoursLeft} hours`,
+        detail: status.heldForApproval
+          ? `After that nobody can message them here until they write to you again — a draft waiting for your OK stops being sendable, not just late. Send it, or reply from ${status.channel}.`
+          : `FollowUp is sending its own reply before then. After the window shuts nobody can message them here until they write to you again, so anything still waiting on you won't go.`,
+        bg: "var(--gold-soft)",
+        fg: "var(--gold)",
+        emphasis: true,
+        pulse: true,
+      };
     case "meta_window_closed":
       return {
         icon: Clock,

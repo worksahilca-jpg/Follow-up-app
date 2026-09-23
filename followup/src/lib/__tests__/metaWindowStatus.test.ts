@@ -36,6 +36,15 @@ const NOW = new Date("2026-09-23T05:43:48Z");
 
 const hoursAgo = (h: number) => new Date(NOW.getTime() - h * 3_600_000).toISOString();
 
+const outbound = (channel: Message["channel"], h: number, trigger?: string): Message => ({
+  id: `out-${channel}-${h}`,
+  direction: "outbound",
+  channel,
+  body: "Checking on the status now.",
+  date: hoursAgo(h),
+  trigger,
+});
+
 const inbound = (channel: Message["channel"], h: number): Message => ({
   id: `in-${channel}-${h}`,
   direction: "inbound",
@@ -133,5 +142,71 @@ describe("what the window must NOT swallow", () => {
   it("says nothing on a lead who has never written", () => {
     const status = computeAutomationStatus(lead([]), rules, NOW);
     expect(status.kind).not.toBe("meta_window_closed");
+  });
+});
+
+/**
+ * The four hours nobody was told about.
+ *
+ * automation.ts drafts a DM follow-up at hour 20; Meta shuts the window
+ * at 24; holdAllForApproval defaults to true. So on a fresh account the
+ * draft lands in the approval queue with four hours to live, and until
+ * now nothing anywhere said so. Miss them and the draft is not late —
+ * it is void, and the lead cannot be messaged again until they write.
+ */
+describe("the last hours before a window shuts", () => {
+  it("warns from the moment FollowUp writes the draft", () => {
+    // Hour 20 exactly: the engine's own drafting point.
+    const status = computeAutomationStatus(lead([inbound("instagram", 20)]), rules, NOW);
+    if (status.kind !== "meta_window_closing") throw new Error(`got ${status.kind}`);
+    expect(status.hoursLeft).toBe(4);
+  });
+
+  it("stays quiet while there is still plenty of time", () => {
+    // Hour 19: the engine has not drafted yet and there is nothing for
+    // the owner to do. A warning here would be on screen for most of a
+    // healthy conversation's life.
+    expect(computeAutomationStatus(lead([inbound("instagram", 19)]), rules, NOW).kind).not.toBe("meta_window_closing");
+  });
+
+  it("hands over to the closed state rather than overlapping it", () => {
+    // Hour 25: shut. The two must not both be reachable, or the badge
+    // would offer to save something already gone.
+    expect(computeAutomationStatus(lead([inbound("instagram", 25)]), rules, NOW).kind).toBe("meta_window_closed");
+  });
+
+  it("says nothing once the owner has actually replied", () => {
+    // Lead wrote at hour 23, owner replied at hour 21 — so the REPLY is
+    // itself inside the 20–24 band. That placement is the whole point:
+    // an earlier draft of this test replied an hour ago, which the time
+    // check rejected on its own, so the test passed with the direction
+    // check deleted. It proved nothing.
+    //
+    // Here, dropping the direction check measures the clock from the
+    // outbound instead and fires a warning at a conversation that has
+    // already been answered.
+    const status = computeAutomationStatus(lead([inbound("instagram", 23), outbound("instagram", 21)]), rules, NOW);
+    expect(status.kind).not.toBe("meta_window_closing");
+  });
+
+  it("does not count the instant acknowledgement as a reply", () => {
+    // The boilerplate every new lead gets. findUnansweredLeads() ignores
+    // it for exactly this reason — a lead who wrote once and got the ack
+    // has still not been answered — and this must make the same call or
+    // the warning never fires for the commonest case there is.
+    const status = computeAutomationStatus(
+      lead([inbound("instagram", 22), outbound("instagram", 21.5, "instant_ack")]),
+      rules,
+      NOW
+    );
+    if (status.kind !== "meta_window_closing") throw new Error(`got ${status.kind}`);
+    expect(status.hoursLeft).toBe(2);
+  });
+
+  it("leaves a lead the owner switched off alone", () => {
+    // Unlike the closed state, this one is a nudge. Someone who parked a
+    // lead has said they do not want nudges about it.
+    const off = { ...lead([inbound("instagram", 21)]), automationTier: "off" as const };
+    expect(computeAutomationStatus(off, rules, NOW).kind).toBe("off");
   });
 });

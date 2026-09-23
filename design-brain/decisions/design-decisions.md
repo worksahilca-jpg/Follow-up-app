@@ -5809,3 +5809,65 @@ esbuild strips types without checking them, so a test file can be wrong and stil
 3. **The 7-day figure assumes Human Agent will be approved.** Today it is not, so the middle
    band is "only in person" — which is true either way, but for a different reason than the
    copy implies.
+
+---
+
+## 2026-09-23 — The four hours nobody was told about
+
+Follows the entry above. Having made the badge honest once a Meta window has shut, the obvious
+next question is whether anything warns while it can still be saved. Nothing did.
+
+The arithmetic, none of it a guess:
+
+- `automation.ts` drafts a DM follow-up at **hour 20** (`UNANSWERED_META_DM_MAX_HOURS`)
+- Meta shuts the window at **hour 24**
+- `holdAllForApproval` defaults to **true**
+
+So on a fresh account the draft lands in the approval queue with **four hours to live**, and
+nothing anywhere said so. Miss them and the draft is not late — it is **void**, and the lead
+cannot be messaged again until they write first.
+
+`meta_window_closing` fires across exactly that band. Gold, not coral (**A-005** reserves gold
+for "going cold", which is precisely this: the one state on the badge that is about to become a
+loss and can still be prevented). Coral is for things that have already stopped; using it here
+would make the preventable case look identical to the four unpreventable ones beside it.
+
+### Ranked BELOW "off", unlike its sibling
+
+`meta_window_closed` states a fact about reachability that holds however the lead is
+configured. This one is a **nudge**. An owner who parked a lead has said they don't want
+nudges about it, and gold on a lead they deliberately switched off is how a colour gets
+trained into noise.
+
+### It carries `heldForApproval`
+
+Because it changes who must act. On a holding account the draft waits for the owner and dies at
+24h. On an account that sends for itself the engine handles it at hour 20 — and the badge must
+not order someone to go and do something already in hand.
+
+### Five older assertions superseded, not deleted
+
+Four tests asserted `due_soon` at hour 21, guarding against a badge that said "in 3h" while the
+engine was about to send into a shutting window. That intent is intact and sharper: `due_soon`
+conveyed urgency and stopped there — it never said the draft would become **unsendable**, which
+is the fact that decides whether an owner deals with it now or tomorrow. Marked SUPERSEDED with
+the reasoning, per the brain's own rule.
+
+### The removal check that caught my own weak test
+
+Deleting the `direction !== "inbound"` guard left all 15 tests passing. The mutation had
+applied — the test was simply weak: its owner-replied case put the reply an hour ago, so the
+*time* check rejected it and the direction check was never exercised. Rewritten with the reply
+at hour 21, inside the band, where dropping the guard measures the clock from the outbound and
+warns about a conversation already answered. It fails now.
+
+**A test that passes for the wrong reason is worse than no test** — second time today.
+
+### Self-critique
+
+1. **The 20-hour figure is inherited, not chosen.** If someone retunes the engine's ceiling the
+   warning silently moves with it. Correct, but nothing says so at the call site.
+2. **No warning anywhere but the badge.** The owner has to open the lead. A push or a queue
+   marker is where this actually belongs.
+3. **A workflow-enrolled DM lead still gets no warning** — the workflow branch returns above it,
+   same gap as the entry before.

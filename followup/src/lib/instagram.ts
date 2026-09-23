@@ -6,7 +6,7 @@ import { findOrCreateConversation } from "@/lib/conversations";
 import { instagramLeadId } from "@/lib/instagramId";
 import { recordAuthFailure } from "@/lib/monitoring";
 import { quickRepliesForGraph, validateQuickReplies, type QuickReply } from "@/lib/quickReplies";
-import { readMetaError, type MetaSendResult } from "@/lib/metaGraph";
+import { readMetaError, ownerFacingMetaError, type MetaSendResult } from "@/lib/metaGraph";
 import type { Lead } from "@prisma/client";
 
 // Pinned, like src/lib/facebook.ts. An unversioned Graph call is "converted
@@ -274,7 +274,14 @@ export async function sendInstagramMessage(
     body: JSON.stringify(envelope),
   });
 
-  if (!res.ok) return readMetaError(res, "Instagram rejected this message.", "Instagram");
+  if (!res.ok) {
+    const failure = await readMetaError(res, "Instagram rejected this message.", "Instagram");
+    // The one place Meta's prose is rewritten: the reader here is a
+    // business owner looking at a drafted message, not someone
+    // connecting a channel. Codes and the raw text stay on the
+    // result and in the log for anyone debugging.
+    return { ...failure, message: ownerFacingMetaError(failure.message ?? "", "Instagram rejected this message.") };
+  }
   return { success: true };
 }
 

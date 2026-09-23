@@ -19,6 +19,22 @@ const REASON_LABEL: Record<"unanswered" | "dead_lead" | "silence", string> = {
 // than a copy of them: this file's job is one line of honest prose per
 // state, and a test that restated the prose would pass while the prose
 // drifted. Same reason describeAckOutcome is exported from LeadTrustPanel.
+/**
+ * "3 days" / "19 hours" / "1 hour" — how long is left to reply in person.
+ *
+ * Days once there is more than a day, because an owner deciding whether
+ * to deal with this now does not need "71 hours" resolved to the hour.
+ * Under a day it switches to hours, where the precision starts to matter.
+ */
+function formatWindowLeft(hours: number): string {
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    return `${days} more day${days === 1 ? "" : "s"}`;
+  }
+  if (hours < 1) return "less than an hour";
+  return `${hours} more hour${hours === 1 ? "" : "s"}`;
+}
+
 export function describeAutomationStatus(
   status: Exclude<AutomationStatus, { kind: "closed" }>
 ): { icon: typeof Zap; label: string; detail?: string; bg: string; fg: string; pulse?: boolean; emphasis?: boolean } {
@@ -45,6 +61,47 @@ export function describeAutomationStatus(
     // promise was. The detail names the FIX rather than the diagnosis:
     // "no send channel" is our words for it, "connect an inbox" is the
     // thing to do.
+    // Coral, in the same family as the three below: nothing is
+    // happening and only the owner can change it. What makes this one
+    // different is that it EXPIRES — so the detail leads with the time
+    // left, and names the one route still open.
+    //
+    // It deliberately does not mention app review, the Human Agent tag
+    // or anything else about how FollowUp talks to Meta. The owner's
+    // situation is that a clock is running and they can still answer
+    // from their phone; the rest is our problem.
+    // Gold, not coral. A-005 reserves gold for "going cold", and that is
+    // exactly what this is — the one state on this badge that is about to
+    // become a loss and can still be prevented. Coral is for things that
+    // have already stopped; using it here would make the preventable case
+    // look identical to the four unpreventable ones beside it.
+    case "meta_window_closing":
+      return {
+        icon: Clock,
+        label:
+          status.hoursLeft <= 1
+            ? `${status.channel}'s window shuts within the hour`
+            : `${status.channel}'s window shuts in ${status.hoursLeft} hours`,
+        detail: status.heldForApproval
+          ? `After that nobody can message them here until they write to you again — a draft waiting for your OK stops being sendable, not just late. Send it, or reply from ${status.channel}.`
+          : `FollowUp is sending its own reply before then. After the window shuts nobody can message them here until they write to you again, so anything still waiting on you won't go.`,
+        bg: "var(--gold-soft)",
+        fg: "var(--gold)",
+        emphasis: true,
+        pulse: true,
+      };
+    case "meta_window_closed":
+      return {
+        icon: Clock,
+        label: `${status.channel}'s reply window has closed`,
+        detail:
+          status.hoursLeftForPerson === null
+            ? `More than 7 days have passed since they wrote, so ${status.channel} won't deliver a message from you at all now. If they write again, everything reopens.`
+            : `${status.channel} only lets you reply for ${formatWindowLeft(status.hoursLeftForPerson)}, and only in person — FollowUp can't send this one for you. Open ${status.channel} and reply there.`,
+        bg: "var(--coral-soft)",
+        fg: "var(--coral)",
+        emphasis: true,
+      };
     case "no_send_channel":
       return {
         icon: PlugZap,

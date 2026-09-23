@@ -5709,3 +5709,165 @@ the assertion that matters. 1733 pass; build, tsc, eslint clean.
 4. **Overlapping presses are untested.** Two groups counting down at once each have their own
    gate, which should be fine because the server re-reads what is still pending — but I did
    not verify it.
+
+---
+
+## 2026-09-23 — Reading a few before sending forty
+
+The routine pile shipped as a count and one name: *"40 routine drafts from WhatsApp — top is
+Tom Alvarez [Send it]"*. That asks an owner to put forty messages into customers' hands, in
+their business's name, having read none. The likely response is not trust — it is nobody ever
+pressing, and a one-click pile nobody presses is the feature not existing, with extra code.
+
+**"Read a few first"** — closed by default, one press, shows the top 3 as read-only rows.
+
+- **A sample, not a list.** Expanding forty rebuilds the wall the pile exists to knock down.
+  Three is enough to see a pattern and few enough to read standing up.
+- **Both halves of each row.** The inbound message *and* the draft. "Tuesday works" reads as
+  fine or as nonsense depending on what it answers; judging a reply without its question is not
+  a spot-check.
+- **Read-only.** No per-draft Approve/Edit here — that would turn the sample into a second
+  approval queue, and beg what the other 37 are. The decision it serves is the one below it.
+- **The caption is computed, not written.** `describeSample` branches on the sample-equals-pile
+  case, because "the 3 highest-scoring of 3" is true and reads as though something is withheld.
+
+### And a duplicate control rendering caught
+
+With every routine draft from one source, the whole-queue box and that source's row were the
+same button, one above the other, both reading **"Send all 12"**. Two identical controls is not
+a choice — it is a question about whether they differ. The whole-queue box now appears only
+when more than one source contributes routine drafts.
+
+### Tests
+
+7 new, verified by removal (dropping the equal-size branch fails 2; dropping "The rest go too"
+fails 1). 1740 pass; build, tsc, eslint clean. Rendered at 1000px: 3 rows, zero overflow.
+
+### Self-critique
+
+1. **Three is a guess.** Defensible, untested against a real owner.
+2. **No way to see more than three** short of opening leads one at a time.
+3. **Nothing paginates still.** Unchanged, and now the oldest outstanding gap.
+
+---
+
+## 2026-09-23 — The badge stops promising a follow-up Meta will refuse
+
+Found on the founder's own Instagram lead, in production. 64.5 hours since the lead last
+wrote, and the lead page said:
+
+> **Writing a reply for you to approve** — Next automation check drafts this. They wrote and
+> haven't heard back. It waits in your approvals until you send it.
+
+Every clause false. Past 24 hours Meta refuses an automated send outright; the manual one needs
+an app permission this app does not have yet. The draft was real and had nowhere to go. **He
+found out by pressing Send and reading a Facebook developer-docs link.**
+
+This is the third time today the same defect shape has surfaced: *a status asserting something
+the machine cannot do.* "Following up soon" on a held account this morning, the queue's
+self-contradicting count this afternoon, and now this.
+
+### The new state, and where it ranks
+
+`meta_window_closed` sits directly below `no_send_channel` and **above the workflow branch and
+the owner's own "off"**. It is the per-lead form of the same claim — there is no way to reach
+this person right now — and it is the only state here that also governs what the **owner** can
+do by hand. Everything below it describes what FollowUp does automatically.
+
+Ranked above "off" deliberately: an owner reading *"you turned this off"* learns something they
+already knew and can undo whenever they like. An owner reading *"3 more days to reply at all"*
+learns something that **expires**. Perishable information wins.
+
+### Read off the newest inbound, which also decides relevance
+
+A lead who wrote on Instagram and then emailed is reachable by email, and the newest inbound
+being an email is exactly how that shows up. The reverse — newest inbound on Instagram, email
+on file — really is blocked, because **R-003 forbids an email fallback for a shut DM window**.
+
+### Copy
+
+Leads with the clock, names the one route still open, and says nothing about app review, the
+Human Agent tag, or how FollowUp talks to Meta. That is our problem, not the owner's.
+
+### Tests
+
+9 new, three boundaries pinned (inside the window, past it, past 7 days). Verified by removal:
+never firing fails 5, dropping the channel check fails 1, `ceil` instead of `floor` fails 1.
+1754 pass.
+
+Rendering caught the copy — *"for 4 days more"* → *"for 4 more days"* — and `tsc` caught a real
+error in my own test that vitest could not see: `"ASSISTED"` where the type is `"assisted"`.
+esbuild strips types without checking them, so a test file can be wrong and still pass.
+
+### Self-critique
+
+1. **A workflow-enrolled DM lead still shows "next step in 2d".** The window check sits above
+   the workflow branch so the state is right, but the *sequence* will keep scheduling steps
+   that cannot send. The badge is honest now; the engine is not.
+2. **Nothing warns before the window shuts.** At hour 23 the owner sees an ordinary badge and
+   at hour 25 a red one. A nudge at hour 18 is the thing that would actually save the lead.
+3. **The 7-day figure assumes Human Agent will be approved.** Today it is not, so the middle
+   band is "only in person" — which is true either way, but for a different reason than the
+   copy implies.
+
+---
+
+## 2026-09-23 — The four hours nobody was told about
+
+Follows the entry above. Having made the badge honest once a Meta window has shut, the obvious
+next question is whether anything warns while it can still be saved. Nothing did.
+
+The arithmetic, none of it a guess:
+
+- `automation.ts` drafts a DM follow-up at **hour 20** (`UNANSWERED_META_DM_MAX_HOURS`)
+- Meta shuts the window at **hour 24**
+- `holdAllForApproval` defaults to **true**
+
+So on a fresh account the draft lands in the approval queue with **four hours to live**, and
+nothing anywhere said so. Miss them and the draft is not late — it is **void**, and the lead
+cannot be messaged again until they write first.
+
+`meta_window_closing` fires across exactly that band. Gold, not coral (**A-005** reserves gold
+for "going cold", which is precisely this: the one state on the badge that is about to become a
+loss and can still be prevented). Coral is for things that have already stopped; using it here
+would make the preventable case look identical to the four unpreventable ones beside it.
+
+### Ranked BELOW "off", unlike its sibling
+
+`meta_window_closed` states a fact about reachability that holds however the lead is
+configured. This one is a **nudge**. An owner who parked a lead has said they don't want
+nudges about it, and gold on a lead they deliberately switched off is how a colour gets
+trained into noise.
+
+### It carries `heldForApproval`
+
+Because it changes who must act. On a holding account the draft waits for the owner and dies at
+24h. On an account that sends for itself the engine handles it at hour 20 — and the badge must
+not order someone to go and do something already in hand.
+
+### Five older assertions superseded, not deleted
+
+Four tests asserted `due_soon` at hour 21, guarding against a badge that said "in 3h" while the
+engine was about to send into a shutting window. That intent is intact and sharper: `due_soon`
+conveyed urgency and stopped there — it never said the draft would become **unsendable**, which
+is the fact that decides whether an owner deals with it now or tomorrow. Marked SUPERSEDED with
+the reasoning, per the brain's own rule.
+
+### The removal check that caught my own weak test
+
+Deleting the `direction !== "inbound"` guard left all 15 tests passing. The mutation had
+applied — the test was simply weak: its owner-replied case put the reply an hour ago, so the
+*time* check rejected it and the direction check was never exercised. Rewritten with the reply
+at hour 21, inside the band, where dropping the guard measures the clock from the outbound and
+warns about a conversation already answered. It fails now.
+
+**A test that passes for the wrong reason is worse than no test** — second time today.
+
+### Self-critique
+
+1. **The 20-hour figure is inherited, not chosen.** If someone retunes the engine's ceiling the
+   warning silently moves with it. Correct, but nothing says so at the call site.
+2. **No warning anywhere but the badge.** The owner has to open the lead. A push or a queue
+   marker is where this actually belongs.
+3. **A workflow-enrolled DM lead still gets no warning** — the workflow branch returns above it,
+   same gap as the entry before.

@@ -5350,3 +5350,69 @@ will call. Do not spend a turn on visual differentiation he has not asked for.
 **To resolve later:** give `--accent` a hue again (which re-enables axis 6 everywhere, not just
 here), or record A-006 axis 6 as superseded by the monochrome system. That is a token decision
 and therefore his.
+
+---
+
+## 2026-09-23 — Auto becomes a permission, not a setting
+
+**Founder:** *"let's just put 'assisted' by default. Auto should be permitted by the user that
+is using followup."*
+
+Assisted was already the default (`Lead.automationTier @default(ASSISTED)`) — nothing to do.
+The second half was a real hole.
+
+### What stood in front of Auto before
+
+Auto is the one mode that skips the risk check: a lead on it sends price talk, delivery dates
+and tense conversations with nobody reading them. Three things looked like guards, and none was:
+
+1. **A confirmation dialog** on the lead page — client code. The API never hears about it.
+2. **A billing-tier check** — Free is Assisted-only. That is pricing, not consent. Paying for
+   Pro is not saying "send things nobody has read".
+3. **No admin check on the API at all**, so any signed-in teammate could set any lead to Auto
+   by calling it directly.
+
+And a fourth path had nothing whatsoever: a `SourceRule.automationTierDefault` is applied when a
+lead is **created**, so one rule could put every new lead from a channel onto unreviewed sending
+with no human in the loop at any point — the dialog never appears there.
+
+### The rule
+
+`Business.autonomousAllowed`, **false by default for existing accounts as well as new ones**.
+Nobody has ever been asked this question, so nobody has answered it, and an unanswered question
+is not a yes.
+
+**It gates both ends, which is what makes it a permission rather than a speed bump.** A lead
+cannot be put on Auto without it, *and* a lead already on Auto does not send unreviewed without
+it. Gating only the first would have left every account that already had Auto leads exactly as
+it was — the setting would be decoration for the people it most needs to protect.
+
+Without permission an Auto lead is treated as **Assisted, not Off**: still drafted, still
+risk-checked, still queued. Nothing is lost by withholding it, and a safe draft still sends —
+which is Assisted working, not a hole.
+
+### A test I got wrong
+
+The first version asserted that an Auto lead on an unpermitted account sends nothing at all.
+That was wrong about the **product**, not the code: it would have pinned
+Auto-without-permission as equivalent to Off. The real guarantee is that nothing goes out
+*unchecked*. Corrected to assert the classifier runs and a risky draft is held.
+
+### Tests
+
+10 new across three files, verified by removal: ignoring the permission in the send path fails
+4, treating a missing business row as consent fails 1. 1707 pass; eslint, build, tsc clean.
+
+### Self-critique
+
+1. **The Settings panel is unrendered.** Written to the same pattern as the send-permission
+   panel above it (no optimistic flip, quiet secondary style when on), but not screenshotted —
+   and I shipped an invisible panel earlier today by exactly this shortcut.
+2. **No confirmation before granting.** The send permission has a four-fact confirm block; this
+   one is a single button. Arguably the narrower permission deserves the same pause, and it does
+   not have one.
+3. **The source-rule downgrade is silent.** A rule asking for Auto quietly lands the lead on
+   Assisted, and the Settings screen that configures those rules says nothing about it.
+4. **Existing Auto leads change behaviour on deploy.** Correct and intended, but it is a real
+   behaviour change for anyone mid-flight — invisible today only because `holdAllForApproval` is
+   on everywhere.

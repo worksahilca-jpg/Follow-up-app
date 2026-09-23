@@ -22,6 +22,7 @@ import { recordAudit } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 import { setAutomationTierInBulk } from "@/lib/bulkAutomation";
 import { KNOWN_LEAD_SOURCES } from "@/lib/sourceRouting";
+import { isAutonomousAllowed, AUTONOMOUS_NOT_ALLOWED_MESSAGE } from "@/lib/autonomousPermission";
 
 const bulkSchema = z.object({
   tier: z.string().transform((v) => v.toUpperCase()).pipe(z.enum(["OFF", "ASSISTED", "AUTONOMOUS"])),
@@ -49,6 +50,11 @@ export async function POST(request: NextRequest) {
   // Assisted-only. Checked here rather than downstream so a business on
   // Free cannot reach autonomous send by going the bulk way round.
   if (tier === "AUTONOMOUS") {
+    // Same permission as the single-lead route. Doing this to 600 leads
+    // at once is the last place it should be easier than doing it to one.
+    if (!(await isAutonomousAllowed(ctx.businessId))) {
+      return NextResponse.json({ success: false, message: AUTONOMOUS_NOT_ALLOWED_MESSAGE }, { status: 403 });
+    }
     const business = await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { tier: true } });
     if (business?.tier === "free") {
       return NextResponse.json(

@@ -20,7 +20,17 @@ vi.mock("@/lib/db", () => ({
 const { getSessionContext } = vi.hoisted(() => ({
   getSessionContext: vi.fn(async () => ({ businessId: "biz1", userId: "user1", email: "owner@acme.com" })),
 }));
-vi.mock("@/lib/session", () => ({ getSessionContext }));
+const { requireAdmin } = vi.hoisted(() => ({ requireAdmin: vi.fn(async () => true) }));
+vi.mock("@/lib/session", () => ({ getSessionContext, requireAdmin }));
+
+// The account-level permission (2026-09-23). Granted in the default
+// fixture so the tier tests below stay about the TIER; the permission has
+// its own describe at the bottom.
+const { isAutonomousAllowed } = vi.hoisted(() => ({ isAutonomousAllowed: vi.fn(async () => true) }));
+vi.mock("@/lib/autonomousPermission", () => ({
+  isAutonomousAllowed,
+  AUTONOMOUS_NOT_ALLOWED_MESSAGE: "Sending without review is switched off for this account. An admin can turn it on in Settings.",
+}));
 vi.mock("@/lib/billing", () => ({
   requireActiveBilling: vi.fn(async () => true),
   BILLING_LOCKED_MESSAGE: "Start your free 14-day trial to unlock this — see Billing in Settings.",
@@ -42,6 +52,8 @@ beforeEach(() => {
   getSessionContext.mockResolvedValue({ businessId: "biz1", userId: "user1", email: "owner@acme.com" });
   leadFindFirst.mockResolvedValue({ id: "lead1", sequenceId: null });
   businessFindUnique.mockResolvedValue({ tier: "plus" });
+  requireAdmin.mockResolvedValue(true);
+  isAutonomousAllowed.mockResolvedValue(true);
 });
 
 describe("POST /api/leads/[id]/automation — tier gate", () => {
@@ -56,6 +68,8 @@ describe("POST /api/leads/[id]/automation — tier gate", () => {
 
   it("allows AUTONOMOUS for a Plus business", async () => {
     businessFindUnique.mockResolvedValue({ tier: "plus" });
+  requireAdmin.mockResolvedValue(true);
+  isAutonomousAllowed.mockResolvedValue(true);
     const res = await POST(postRequest("autonomous"), { params });
     expect(res.status).toBe(200);
     expect(leadUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: { automationTier: "AUTONOMOUS" } }));
@@ -113,5 +127,53 @@ describe("POST /api/leads/[id]/automation — workflow-enrollment conflict", () 
     leadFindFirst.mockResolvedValue({ id: "lead1", sequenceId: null });
     const res = await POST(postRequest("assisted"), { params });
     expect(res.status).toBe(200);
+  });
+});
+
+
+/**
+ * "Auto should be permitted by the user that is using followup."
+ * — founder, 2026-09-23
+ *
+ * Before this, the only things in front of Auto on this route were a
+ * billing-tier check and a confirmation dialog rendered in the browser.
+ * The dialog is client code that the API never hears about, and the route
+ * had no admin check at all — so any signed-in teammate could set any
+ * lead to unreviewed sending by calling this directly.
+ */
+describe("POST /api/leads/[id]/automation — the account permission", () => {
+  it("refuses AUTONOMOUS when the account has not permitted it", async () => {
+    isAutonomousAllowed.mockResolvedValue(false);
+    const res = await POST(postRequest("autonomous"), { params });
+    expect(res.status).toBe(403);
+    expect(leadUpdate, "the lead was changed despite the refusal").not.toHaveBeenCalled();
+  });
+
+  it("refuses AUTONOMOUS from someone who is not an admin", async () => {
+    // A confirmation dialog is not a permission: it lives in the page,
+    // and this route is reachable without one.
+    requireAdmin.mockResolvedValue(false);
+    const res = await POST(postRequest("autonomous"), { params });
+    expect(res.status).toBe(403);
+    expect(leadUpdate).not.toHaveBeenCalled();
+  });
+
+  it("still lets anyone set the safer modes", async () => {
+    // The gate is on Auto alone. Turning a lead DOWN must never need a
+    // permission — stopping is always allowed.
+    requireAdmin.mockResolvedValue(false);
+    isAutonomousAllowed.mockResolvedValue(false);
+    for (const tier of ["off", "assisted"]) {
+      leadUpdate.mockClear();
+      const res = await POST(postRequest(tier), { params });
+      expect(res.status, `${tier} was refused`).toBe(200);
+      expect(leadUpdate).toHaveBeenCalled();
+    }
+  });
+
+  it("allows AUTONOMOUS once the account permits it and an admin asks", async () => {
+    const res = await POST(postRequest("autonomous"), { params });
+    expect(res.status).toBe(200);
+    expect(leadUpdate).toHaveBeenCalled();
   });
 });

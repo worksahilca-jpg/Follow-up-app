@@ -165,6 +165,12 @@ function SettingsPageInner() {
   const [permissionSaving, setPermissionSaving] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [confirmingPermission, setConfirmingPermission] = useState(false);
+  // Business.autonomousAllowed — a separate question from the switch
+  // above. That one asks whether anything sends by itself; this asks
+  // whether anything may send WITHOUT BEING CHECKED.
+  const [autonomousAllowed, setAutonomousAllowed] = useState(false);
+  const [autonomousSaving, setAutonomousSaving] = useState(false);
+  const [autonomousError, setAutonomousError] = useState<string | null>(null);
   // What is waiting right now, split by whether the approval setting is
   // the only thing holding it. Fetched when the confirmation opens rather
   // than on page load — it scans the audit trail, and only someone
@@ -219,6 +225,7 @@ function SettingsPageInner() {
           unansweredReply?: { enabled: boolean; hours: number };
           deadLeadReactivation?: { enabled: boolean; days: number };
           holdAllForApproval?: boolean;
+          autonomousAllowed?: boolean;
         }) => {
           setAutomationOn(data.enabled);
           setAutoAfterDays(data.triggerDays);
@@ -228,6 +235,7 @@ function SettingsPageInner() {
           setDeadLeadOn(data.deadLeadReactivation?.enabled ?? true);
           setDeadLeadDays(data.deadLeadReactivation?.days ?? 45);
           setHoldAllForApproval(data.holdAllForApproval ?? false);
+          setAutonomousAllowed(data.autonomousAllowed ?? false);
         }
       )
       .finally(() => setAutomationLoaded(true));
@@ -345,6 +353,38 @@ function SettingsPageInner() {
       setPermissionError("Couldn't reach the server — try again.");
     } finally {
       setPermissionSaving(false);
+    }
+  }
+
+  /**
+   * Grant or withdraw permission for the Auto mode.
+   *
+   * No optimistic flip, for the same reason as the switch above: the next
+   * cron tick acts on the server's answer, not the screen's, and an owner
+   * who sees "allowed" must be looking at a server that agrees.
+   *
+   * Withdrawing does not need a confirmation. Taking a permission away is
+   * always allowed and always safe; only granting one deserves a pause.
+   */
+  async function saveAutonomousPermission(granted: boolean) {
+    setAutonomousSaving(true);
+    setAutonomousError(null);
+    try {
+      const res = await fetch("/api/automation/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autonomousAllowed: granted }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setAutonomousError(data.message ?? "Couldn't save — try again.");
+        return;
+      }
+      setAutonomousAllowed(granted);
+    } catch {
+      setAutonomousError("Couldn't reach the server — try again.");
+    } finally {
+      setAutonomousSaving(false);
     }
   }
 
@@ -1132,6 +1172,41 @@ function SettingsPageInner() {
           {permissionError && !confirmingPermission && (
             <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
               {permissionError}
+            </p>
+          )}
+        </div>
+
+        {/* The second, narrower permission. Deliberately its own box and
+            not a row inside the one above: an owner can say yes to "send
+            on my behalf" and no to "send things nobody checked" forever,
+            and burying the second inside the first would read as one
+            decision with a detail attached. */}
+        <div className="mt-4 box p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-medium text-sm">Let some leads skip the check</p>
+              <p className="mt-1 text-xs text-ink-soft leading-relaxed">
+                {autonomousAllowed
+                  ? "A lead set to \u201cHandle it all\u201d sends every reply straight away \u2014 including price, dates and tense conversations \u2014 with nobody reading it first."
+                  : "Off. Every reply is checked before it goes, even on a lead set to \u201cHandle it all\u201d \u2014 anything about price, dates or a tense conversation waits for you."}
+              </p>
+            </div>
+            <button
+              onClick={() => saveAutonomousPermission(!autonomousAllowed)}
+              disabled={autonomousSaving}
+              className="shrink-0 rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
+              style={
+                autonomousAllowed
+                  ? { backgroundColor: "var(--card-2)", color: "var(--ink)" }
+                  : { backgroundColor: "var(--ink)", color: "var(--paper)" }
+              }
+            >
+              {autonomousSaving ? "Saving\u2026" : autonomousAllowed ? "Turn off" : "Allow it"}
+            </button>
+          </div>
+          {autonomousError && (
+            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+              {autonomousError}
             </p>
           )}
         </div>

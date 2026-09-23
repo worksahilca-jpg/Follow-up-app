@@ -234,6 +234,28 @@ model Business {
   // who has decided to trust it.
   holdAllForApproval   Boolean @default(true)
 
+  // May any lead on this account be set to Auto — the one mode that skips
+  // the risk check and sends price and tense conversations without review?
+  //
+  // `false` until the owner says otherwise, and a separate question from
+  // holdAllForApproval above. That one asks "does anything send by
+  // itself"; this one asks "may something send WITHOUT BEING CHECKED".
+  // An owner can reasonably answer yes to the first and no to the second
+  // forever, and before this column there was no way to say so.
+  //
+  // Founder, 2026-09-23: "Auto should be permitted by the user that is
+  // using followup."
+  //
+  // What existed instead was a confirmation dialog in the browser and a
+  // billing-tier check. Neither is a permission: the dialog is client
+  // code, the API took AUTONOMOUS from any signed-in teammate with no
+  // admin check, and a source rule could set it on every new lead from a
+  // channel at creation time without a human seeing anything at all.
+  //
+  // Read through isAutonomousAllowed (@/lib/autonomousPermission), never
+  // directly, so every path that can reach Auto asks the same question.
+  autonomousAllowed    Boolean @default(false)
+
   // When Meta last confirmed this app is subscribed to the account's
   // `messages` webhook. Null on a connected account means the
   // subscription never succeeded — the account is saved and readable,

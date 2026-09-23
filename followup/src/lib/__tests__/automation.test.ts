@@ -93,7 +93,11 @@ beforeEach(() => {
   p.lead.update.mockResolvedValue({});
   p.lead.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds by default
   p.notification.create.mockResolvedValue({});
-  p.business.findUnique.mockResolvedValue({ timezone: "America/New_York" });
+  // `autonomousAllowed: true` on the default fixture so every test below
+  // is about the guarantee it is named for. The permission itself — off
+  // for every real account until an owner grants it — is exercised in its
+  // own describe at the bottom of this file.
+  p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, timezone: "America/New_York" });
   p.user.findMany.mockResolvedValue([{ id: "admin1" }]);
   send.mockResolvedValue({ success: true });
   replyChannel.mockResolvedValue("email");
@@ -477,7 +481,7 @@ describe("silence automation risk gate", () => {
 // still get drafted (or worse, auto-sent) the moment it went silent.
 describe("Free tier AI-processing pause", () => {
   it("skips a Free-tier lead past the monthly lead cap, without drafting or risk-checking it", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, timezone: "America/New_York", tier: "free" });
     aiEligible.mockResolvedValue({ ok: false, reason: "past this month's 20-lead AI cap on the Free plan" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     const r = await runAutomationForBusiness("biz1");
@@ -490,7 +494,7 @@ describe("Free tier AI-processing pause", () => {
   });
 
   it("skips a Free-tier lead whose channel isn't included in Free, even if it's within the lead cap", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, timezone: "America/New_York", tier: "free" });
     aiEligible.mockResolvedValue({ ok: false, reason: "on a channel the Free plan doesn't cover" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     const r = await runAutomationForBusiness("biz1");
@@ -500,7 +504,7 @@ describe("Free tier AI-processing pause", () => {
   });
 
   it("still processes a Free-tier lead that's within cap and on an eligible channel, same as any other tier", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, timezone: "America/New_York", tier: "free" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
@@ -508,7 +512,7 @@ describe("Free tier AI-processing pause", () => {
   });
 
   it("forces the risk check even for a lead stuck on AUTONOMOUS from before a downgrade to Free", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "free" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, timezone: "America/New_York", tier: "free" });
     p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
@@ -521,14 +525,14 @@ describe("Free tier AI-processing pause", () => {
   // account is checked against Plus's own ceiling, not Free's, so this
   // costs a normal customer nothing.
   it("checks the paid tiers too, against their own ceiling", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "pro" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, timezone: "America/New_York", tier: "pro" });
     p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
     await runAutomationForBusiness("biz1");
     expect(aiEligible).toHaveBeenCalledWith("biz1", expect.anything(), "pro");
   });
 
   it("skips a paid lead once its tier's ceiling trips, without drafting it", async () => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "plus" });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, timezone: "America/New_York", tier: "plus" });
     aiEligible.mockResolvedValue({ ok: false, reason: "something may be wrong" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     const r = await runAutomationForBusiness("biz1");
@@ -1407,7 +1411,7 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
  */
 describe("an account that holds every automated message", () => {
   beforeEach(() => {
-    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", tier: "pro", holdAllForApproval: true });
+    p.business.findUnique.mockResolvedValue({ autonomousAllowed: true, timezone: "America/New_York", tier: "pro", holdAllForApproval: true });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValue([]);
     draftMessage.mockResolvedValue("Just following up on the roof question.");
   });
@@ -1731,5 +1735,100 @@ describe("an email draft that names a figure nobody wrote", () => {
 
     expect(r.sent).toBe(1);
     expect(r.held).toBe(0);
+  });
+});
+
+/**
+ * An account that has never permitted unreviewed sending.
+ *
+ * Founder, 2026-09-23: "Auto should be permitted by the user that is
+ * using followup."
+ *
+ * `Business.autonomousAllowed` is false for every account until an owner
+ * turns it on — including accounts that already have leads sitting on
+ * AUTONOMOUS, which is the point rather than an oversight. Nobody has
+ * ever been asked this question, so nobody has answered it.
+ *
+ * Gating only the act of SETTING a lead to Auto would have left exactly
+ * those accounts as they were, and the permission would be decoration for
+ * the people it most needs to protect. So the send path asks too, and
+ * these tests are that half.
+ */
+describe("a lead on Auto where the account never permitted it", () => {
+  beforeEach(() => {
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: false,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+  });
+
+  /**
+   * The guarantee is "nothing goes out UNCHECKED", not "nothing goes
+   * out". Without permission the lead is treated as ASSISTED — which is
+   * a real mode that sends the safe ones — so a low-risk draft still
+   * reaches the customer, having been read by the classifier first. That
+   * is the downgrade working, not a hole in it.
+   *
+   * An earlier version of this test asserted nothing sent at all. That
+   * was wrong about the product, not about the code: it would have
+   * pinned Auto-without-permission as equivalent to OFF, which is a
+   * different and much worse answer.
+   */
+  it("makes the draft face the risk check it would have skipped", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(risk, "an Auto lead skipped the classifier on an account that never allowed it").toHaveBeenCalled();
+  });
+
+  it("holds a risky draft that Auto would have sent regardless", async () => {
+    // The case the permission exists for: price talk, tense
+    // conversations, a promise nobody agreed to. On Auto this sends
+    // unread. Without permission it waits.
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "high", reason: "the draft quotes a price nobody mentioned" });
+
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(send, "a risky draft went out unread").not.toHaveBeenCalled();
+    expect(result.held).toBe(1);
+  });
+
+  it("still judges the draft, so it can land in the routine pile once allowed", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    await runAutomationForBusiness("biz1");
+    expect(risk).toHaveBeenCalled();
+  });
+
+  it("sends once the owner grants it", async () => {
+    // The other direction: the permission must actually unlock the
+    // behaviour, or it is just a way of turning Auto off.
+    p.business.findUnique.mockResolvedValue({
+      autonomousAllowed: true,
+      timezone: "America/New_York",
+      tier: "pro",
+      holdAllForApproval: false,
+    });
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+
+    await runAutomationForBusiness("biz1");
+
+    expect(send).toHaveBeenCalled();
+  });
+
+  it("treats a business row it cannot read as not permitted", async () => {
+    // A missing row is not consent. It must land on the checked path,
+    // exactly like an account that has simply not answered yet.
+    p.business.findUnique.mockResolvedValue(null);
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValue([]);
+    risk.mockResolvedValue({ riskLevel: "high", reason: "the draft quotes a price nobody mentioned" });
+    await runAutomationForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
   });
 });

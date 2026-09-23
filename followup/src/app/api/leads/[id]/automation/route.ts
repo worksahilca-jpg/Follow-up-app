@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin } from "@/lib/session";
+import { isAutonomousAllowed, AUTONOMOUS_NOT_ALLOWED_MESSAGE } from "@/lib/autonomousPermission";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { parseJsonBody } from "@/lib/validation";
@@ -53,6 +54,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // AUTONOMOUS lead on a downgraded business only covers leads already
   // set that way, not new opt-ins.
   if (parsed.data.tier === "AUTONOMOUS") {
+    // The account has to have said yes to unreviewed sending at all, and
+    // the person asking has to be an admin. Neither was checked before:
+    // the only thing standing in front of this was a confirmation dialog
+    // in the browser, which the API never hears about — so any signed-in
+    // teammate could set any lead to Auto by calling this directly.
+    if (!(await requireAdmin(ctx))) {
+      return NextResponse.json({ success: false, message: "Only an admin can turn on sending without review." }, { status: 403 });
+    }
+    if (!(await isAutonomousAllowed(ctx.businessId))) {
+      return NextResponse.json({ success: false, message: AUTONOMOUS_NOT_ALLOWED_MESSAGE }, { status: 403 });
+    }
     const business = await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { tier: true } });
     if (business?.tier === "free") {
       return NextResponse.json(

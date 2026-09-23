@@ -420,7 +420,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // always resolves against the same timezone.
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { timezone: true, tier: true, holdAllForApproval: true },
+    select: { timezone: true, tier: true, holdAllForApproval: true, autonomousAllowed: true },
   });
   const timezone = business?.timezone ?? "America/New_York";
   const tier = (business?.tier ?? "plus") as "free" | "plus" | "pro";
@@ -428,6 +428,18 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   // comment in schema.prisma. It overrides both the per-lead tier and the
   // risk verdict below: every draft goes to the approval queue instead.
   const holdAll = business?.holdAllForApproval ?? false;
+  /**
+   * Has this account permitted unreviewed sending at all?
+   *
+   * Gating only the act of SETTING a lead to Auto would have left every
+   * account that already had Auto leads exactly as it was — the setting
+   * would be decoration for precisely the people it most needs to
+   * protect. So the send path asks too: without permission, an
+   * AUTONOMOUS lead is treated as ASSISTED, which means it still gets a
+   * draft and still goes to the approval queue. Nothing is lost, and
+   * nothing goes out unread on an account that never said it could.
+   */
+  const autonomousAllowed = business?.autonomousAllowed ?? false;
 
   const deadLeadRule = await prisma.automation.findFirst({ where: { businessId, action: DEAD_LEAD_ACTION } });
   const deadLeadEnabled = deadLeadRule?.enabled ?? true; // on by default, like everything else here
@@ -822,7 +834,11 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // The hold condition inside it is only reached by leads that enter
       // here, so listing it there alone would have been a guarantee that
       // never ran for the tier that needed it.
-      if (holdAll || isUntouched || lead.automationTier !== "AUTONOMOUS" || tier === "free") {
+      // `effectiveTier` rather than `lead.automationTier`: an account
+      // that has not permitted unreviewed sending has no AUTONOMOUS
+      // leads, whatever the column says.
+      const effectiveTier = lead.automationTier === "AUTONOMOUS" && !autonomousAllowed ? "ASSISTED" : lead.automationTier;
+      if (holdAll || isUntouched || effectiveTier !== "AUTONOMOUS" || tier === "free") {
         /**
          * Every draft that reaches here gets a verdict, including ones
          * that are going to be held no matter what it says.

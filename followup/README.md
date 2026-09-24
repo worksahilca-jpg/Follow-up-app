@@ -147,8 +147,14 @@ prisma/schema.prisma             production data model
 ## Where the rest of the knowledge lives
 
 - `PRODUCT_DIRECTION.md` — what to build and why. Wins over everything else.
+- `../README.md` — the repository map: what the four top-level directories are,
+  and what to read first if you're new here.
 - `../STATUS.md` — the wider operational checklist: what's open, what's
   waiting on the founder.
 - `../design-brain/` — the design system's own memory: principles, decisions,
   what was rejected and why. Read before any UI work.
-- `research/` — what's already been investigated. Check before re-researching.
+- `research/` — what's already been investigated. **Check `research/README.md`
+  before re-researching**; it indexes all of it.
+- `docs/` — how to *do* things: the PRD/TRD/schema reference, the one-time
+  setup guides for each capability, the verification packs, and security.
+  `docs/README.md` groups them by when you'd need them.

@@ -28,6 +28,7 @@ export default function InstagramConfig() {
   // activateInstagramWebhooks in src/lib/instagram.ts.
   const [receiving, setReceiving] = useState(false);
   const [instagramUserId, setInstagramUserId] = useState<string | null>(null);
+  const [instagramUsername, setInstagramUsername] = useState<string | null>(null);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [verifyToken, setVerifyToken] = useState("");
   const [oauthAvailable, setOauthAvailable] = useState(false);
@@ -62,6 +63,7 @@ export default function InstagramConfig() {
           connected?: boolean;
           receiving?: boolean;
           instagramUserId?: string | null;
+          instagramUsername?: string | null;
           webhookUrl?: string;
           verifyToken?: string;
           oauthAvailable?: boolean;
@@ -70,6 +72,7 @@ export default function InstagramConfig() {
             setConnected(!!data.connected);
             setReceiving(!!data.receiving);
             setInstagramUserId(data.instagramUserId ?? null);
+            setInstagramUsername(data.instagramUsername ?? null);
             setWebhookUrl(data.webhookUrl ?? "");
             setVerifyToken(data.verifyToken ?? "");
             setOauthAvailable(!!data.oauthAvailable);
@@ -97,11 +100,12 @@ export default function InstagramConfig() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessToken: tokenDraft.trim() }),
       });
-      const data: { success: boolean; instagramUserId?: string; receiving?: boolean; message?: string } = await res.json();
+      const data: { success: boolean; instagramUserId?: string; username?: string | null; receiving?: boolean; message?: string } = await res.json();
       if (data.success) {
         setConnected(true);
         setReceiving(!!data.receiving);
         setInstagramUserId(data.instagramUserId ?? null);
+        setInstagramUsername(data.username ?? null);
         setTokenDraft("");
       } else {
         setSaveError(data.message ?? "Couldn't save that token.");
@@ -120,6 +124,7 @@ export default function InstagramConfig() {
         setConnected(false);
         setReceiving(false);
         setInstagramUserId(null);
+        setInstagramUsername(null);
       }
     } finally {
       setSaving(false);
@@ -160,9 +165,30 @@ export default function InstagramConfig() {
           {connected ? (
             <div className="mt-3">
               {receiving ? (
-                <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }}>
-                  <Check className="h-3.5 w-3.5" /> Connected — Instagram account ID {instagramUserId}. Real DMs
-                  will become leads automatically.
+                /* items-start, not items-center: when the sentence wraps, a
+                   centred tick drifts to the middle line — on the id
+                   fallback it sat beside the number, not beside
+                   "Connected". Found by rendering it at 390px. */
+                <p className="text-xs flex items-start gap-1" style={{ color: "var(--sage)" }}>
+                  {/* The handle when Meta gave us one: "@followupbase" is
+                      something an owner can check against the account they
+                      meant; "17841427527466039" is not. The id stays as the
+                      fallback for accounts connected before the handle was
+                      stored — true, just less useful. */}
+                  <Check className="h-3.5 w-3.5 shrink-0 mt-px" />
+                  {/* One span, so the flex row holds exactly two items —
+                      icon and sentence — and the handle cannot be split
+                      from its full stop by the row's gap. */}
+                  <span>
+                    {instagramUsername ? (
+                      <>
+                        Connected as <span className="font-medium">@{instagramUsername}</span>.
+                      </>
+                    ) : (
+                      <>Connected — Instagram account ID {instagramUserId}.</>
+                    )}{" "}
+                    Real DMs will become leads automatically.
+                  </span>
                 </p>
               ) : (
                 /* This tick used to show regardless. The subscription was

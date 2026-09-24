@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
       data: {
         instagramAccessToken: exchanged.accessToken,
         instagramUserId: resolved.id,
+        instagramUsername: resolved.username ?? null,
         instagramWebhookSubscribedAt: null,
       },
     });

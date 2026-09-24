@@ -28,7 +28,7 @@ export async function GET() {
     // the Facebook config route. instagramUserId is written and cleared
     // alongside it and answers the same question without decrypting a
     // credential on every Settings load.
-    select: { instagramUserId: true, instagramWebhookSubscribedAt: true },
+    select: { instagramUserId: true, instagramUsername: true, instagramWebhookSubscribedAt: true },
   });
 
   return NextResponse.json({
@@ -39,6 +39,7 @@ export async function GET() {
     // silent, so Settings asks both and says so.
     receiving: !!business?.instagramWebhookSubscribedAt,
     instagramUserId: business?.instagramUserId ?? null,
+    instagramUsername: business?.instagramUsername ?? null,
     webhookUrl: `${appUrl()}/api/instagram/webhook`,
     verifyToken: WEBHOOK_VERIFY_TOKEN,
     oauthAvailable: instagramOAuthAvailable(),
@@ -82,6 +83,9 @@ export async function POST(request: NextRequest) {
     data: {
       instagramAccessToken: accessToken,
       instagramUserId: resolved.id,
+      // Written with the id, never on its own: a handle from one account
+      // next to the id of another would be worse than no handle at all.
+      instagramUsername: resolved.username ?? null,
       // Cleared, then set below only if Meta confirms — a new token is a
       // new subscription question, and the old answer does not carry over.
       instagramWebhookSubscribedAt: null,
@@ -127,7 +131,7 @@ export async function DELETE() {
 
   await prisma.business.update({
     where: { id: ctx.businessId },
-    data: { instagramAccessToken: null, instagramUserId: null, instagramWebhookSubscribedAt: null },
+    data: { instagramAccessToken: null, instagramUserId: null, instagramUsername: null, instagramWebhookSubscribedAt: null },
   });
   return NextResponse.json({ success: true });
 }

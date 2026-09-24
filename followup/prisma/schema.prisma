@@ -304,6 +304,13 @@ model Business {
   // subscription fails, so it can never reach this state.
   instagramWebhookSubscribedAt DateTime?
   instagramUserId      String? @unique
+  // The handle, as Meta reported it at connect time. Settings showed only
+  // the numeric id until 2026-09-24, and an owner cannot tell from
+  // "17841427527466039" whether the account they connected is the one they
+  // meant. Display only: routing still keys on instagramUserId, which does
+  // not change when a handle does. Null for anything connected before this
+  // column existed; the card falls back to the id for those.
+  instagramUsername    String?
   instagramAccessToken String?
   // How far the conversation poller has read (src/lib/instagramPoll.ts).
   // Meta's push delivery cannot be relied on — on 2026-09-19 a correctly

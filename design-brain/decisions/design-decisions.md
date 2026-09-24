@@ -6209,3 +6209,58 @@ the ROLE gate and the two stay independent, instead of being quietly made green.
 4. **The fourth path is closed; a fifth is not ruled out.** Three routes were audited because
    three were known. Nothing systematically proves no other writer sets `automationTier`
    directly.
+
+---
+
+## 2026-09-24 — The connected Instagram card names the account, not its number
+
+**Not an approval.** No one has reviewed this; it is recorded so the next session knows why
+the card changed and does not re-derive it.
+
+### What changed
+
+`Connected — Instagram account ID 17841427527466039.` became
+`Connected as @followupbase.` when Meta supplies a handle. The numeric id stays as the
+fallback for any account connected before the handle was stored.
+
+### Why
+
+Found by a browser agent reading the live Settings page, not by an owner complaint: *"Your app
+doesn't show a connected Instagram username, only the numeric account ID … So I can't confirm
+that the connected account is sahildoes."*
+
+That is the point. An owner cannot check a 17-digit number against the account they meant to
+connect, and on 2026-09-24 the wrong-account mix-up happened twice in one afternoon — once a
+connected card was read as the reviewer's when it was the founder's own. A handle is
+something a person recognises; an id is something only a database does.
+
+It also blocked a recording: the Meta App Review pack (`followup/research/integrations/
+2026-09-23-meta-app-review-submission.md` §4, Video A, shot 6) specifies *"the connected
+account's username now shown on screen."* The card could not show one.
+
+The handle was never missing — `resolveInstagramUserId` fetched it on every connect and
+returned it in one response. It was simply never saved, so it vanished on the next load.
+
+### Rules this follows
+
+- Standing rule: every automated action must let the user answer *"What happened?"* A
+  connection you cannot identify fails that on the first question.
+- Checked `rejected.md` and `approved.md` first. Nothing covers connected-account display.
+
+### Rendered, and one flaw fixed because of it
+
+Rendered at 390px, both states. **The tick was vertically centred** (`items-center`) on the
+sentence, so on the three-line id fallback it floated beside the number rather than beside
+"Connected". Pre-existing, but on the line being changed — now `items-start`, with the tick
+nudged onto the first line. The sentence is also one span, so the handle cannot be split from
+its full stop by the flex row's gap.
+
+### Self-critique
+
+1. **The id fallback is still ugly**, and every account connected before today shows it —
+   including the founder's own live connection. Reconnecting populates the handle; nothing
+   backfills it. A backfill is one Graph call per connected business and was not done.
+2. **A renamed handle goes stale.** It is captured at connect time only. Someone who renames
+   their Instagram will see the old name until they reconnect. Acceptable for a display
+   string; routing keys on the id, which never changes.
+3. **Only Instagram.** The Facebook Messenger card has the same shape and was not checked.

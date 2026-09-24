@@ -96,16 +96,31 @@ describe("pasting an Instagram access token", () => {
     expect(body.message).not.toContain(TOKEN);
   });
 
-  it("still connects when the token is good", async () => {
+  it("still connects when the token is good, and keeps the handle", async () => {
     resolveInstagramUserId.mockResolvedValue({ id: "17841427527466039", username: "followupbase" });
 
     const res = await POST(post(TOKEN));
     expect(res.status).toBe(200);
+    // The handle is stored WITH the id, in the same write. Until 2026-09-24
+    // it was returned once in this response and never saved, so the card
+    // fell back to a 17-digit number on the next page load — and App
+    // Review's Video A needs the handle on screen.
     expect(businessUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "b1" },
-        data: expect.objectContaining({ instagramUserId: "17841427527466039" }),
+        data: expect.objectContaining({
+          instagramUserId: "17841427527466039",
+          instagramUsername: "followupbase",
+        }),
       })
+    );
+  });
+
+  it("clears a stale handle when Meta returns none, rather than keeping the old account's", async () => {
+    resolveInstagramUserId.mockResolvedValue({ id: "999" });
+    await POST(post(TOKEN));
+    expect(businessUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ instagramUserId: "999", instagramUsername: null }) })
     );
   });
 

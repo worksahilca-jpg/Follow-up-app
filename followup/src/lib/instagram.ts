@@ -534,16 +534,86 @@ export async function exchangeInstagramAuthCode(
   const shortLivedToken = shortLived?.access_token;
   if (typeof shortLivedToken !== "string") return { error: "Instagram didn't return an access token." };
 
-  const longLivedRes = await fetch(
-    `${GRAPH_OAUTH}/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(appSecret)}&access_token=${encodeURIComponent(shortLivedToken)}`
-  );
-  if (!longLivedRes.ok) {
-    const reason = await instagramOAuthErrorMessage(longLivedRes);
-    console.error(`Instagram long-lived exchange rejected: HTTP ${longLivedRes.status}${reason ? ` — ${reason}` : ""}`);
-    return { error: `Couldn't extend that Instagram sign-in${reason ? ` (Instagram said: ${reason})` : ""} — try again.` };
+  /**
+   * The long-lived exchange, attempted both ways Meta offers.
+   *
+   * ## What went wrong on the first live connect
+   *
+   * 2026-09-23, connecting a brand-new demo account, the owner saw:
+   *
+   *   "Couldn't extend that Instagram sign-in (Instagram said: Unsupported
+   *    request - method type: get)"
+   *
+   * The short-lived exchange above had already succeeded, so the code, the
+   * secret and the redirect URI were all correct — only this last step
+   * failed. `method type: get` is Meta saying the PATH does not accept GET,
+   * which the Instagram-Login endpoint below does. The most likely reading
+   * is that this app is registered on the Facebook-Login family, where the
+   * long-lived exchange lives at a different address.
+   *
+   * That reading could not be confirmed: Meta's documentation is
+   * unreachable from the build sandbox, the Vercel log connector returns
+   * 403 for this project, and testing the URL by hand proved nothing
+   * because a fabricated token fails auth (code 190) before the path is
+   * ever evaluated. Rather than rewrite a working-looking line from
+   * memory — which is how a channel goes down for everyone who currently
+   * connects fine — both are tried in order.
+   *
+   * The Instagram flavour stays FIRST, so any account this already works
+   * for keeps the identical code path and the identical result. The
+   * Facebook flavour is only reached once the first has already failed,
+   * where the alternative today is failing outright.
+   *
+   * Whichever runs, the outcome names the host it came from. One real
+   * connect attempt now answers which family this app belongs to — which
+   * neither reasoning nor a hand-built request could.
+   */
+  const attempts: Array<{ label: string; url: string }> = [
+    {
+      label: "graph.instagram.com",
+      url: `${GRAPH_OAUTH}/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(appSecret)}&access_token=${encodeURIComponent(shortLivedToken)}`,
+    },
+    {
+      label: "graph.facebook.com",
+      url: `https://graph.facebook.com/${GRAPH_VERSION}/oauth/access_token?grant_type=fb_exchange_token&client_id=${encodeURIComponent(appId)}&client_secret=${encodeURIComponent(appSecret)}&fb_exchange_token=${encodeURIComponent(shortLivedToken)}`,
+    },
+  ];
+
+  const failures: string[] = [];
+  for (const attempt of attempts) {
+    const res = await fetch(attempt.url);
+    if (res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const token = body?.access_token;
+      if (typeof token === "string") {
+        console.log(`Instagram long-lived exchange succeeded via ${attempt.label}`);
+        return { accessToken: token };
+      }
+      failures.push(`${attempt.label}: 200 but no access_token`);
+      continue;
+    }
+    const reason = await instagramOAuthErrorMessage(res);
+    // Host, status and Meta's own words. Never the secret, never the token
+    // — neither appears in an error body, and neither is interpolated here.
+    console.error(`Instagram long-lived exchange rejected by ${attempt.label}: HTTP ${res.status}${reason ? ` — ${reason}` : ""}`);
+    failures.push(`${attempt.label}: ${res.status}${reason ? ` ${reason}` : ""}`);
   }
-  const longLived = await longLivedRes.json().catch(() => ({}));
-  const longLivedToken = longLived?.access_token;
-  if (typeof longLivedToken !== "string") return { error: "Instagram didn't return a long-lived token." };
-  return { accessToken: longLivedToken };
+
+  /**
+   * Both refused. The owner gets the detail, deliberately.
+   *
+   * This is the connect path, not the send path — the distinction
+   * `readMetaError` in metaGraph.ts already draws. A business owner
+   * reading a drafted reply must never see Meta's developer prose; a
+   * person wiring up a channel needs the exact thing to go and fix, and a
+   * sentence that names nothing leaves them with a button that does not
+   * work and no way to say why. They are also, today, the only route the
+   * server's reasons have back to anyone who can act on them: the log
+   * connector is refused for this project.
+   */
+  return {
+    error:
+      `Couldn't extend that Instagram sign-in. Both of Meta's paths refused it — ${failures.join("; ")}. ` +
+      `Sending this line to whoever set up the Meta app will identify which login type it is registered for.`,
+  };
 }

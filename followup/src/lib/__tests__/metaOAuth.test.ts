@@ -4,7 +4,7 @@
  * scopes/state — get either wrong and a business either never sees the
  * button or gets sent to Meta with the wrong permissions requested.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("@/lib/db", () => ({ prisma: {} }));
 vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn() }));
@@ -27,6 +27,17 @@ import {
 
 beforeEach(() => {
   vi.unstubAllEnvs();
+});
+
+// This file spies on global.fetch and on console in almost every test and
+// never put them back. That was survivable while it was small — each new
+// spy replaced the last — but it leaks a mocked fetch out of the file, and
+// adding the long-lived-exchange tests below was enough to make two
+// unrelated suites fail when the whole suite runs, while both still passed
+// on their own. A spy that outlives its file is a test that fails somewhere
+// it was never written about.
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("Instagram one-click connect", () => {
@@ -109,6 +120,112 @@ describe("Instagram one-click connect", () => {
     expect(report.conversations).toEqual({ ok: false, error: "HTTP 403 — (#10) Permission denied [10]" });
     expect(JSON.stringify(report)).not.toContain("IGQV-secret");
     for (const [url] of fetchSpy.mock.calls) expect(String(url)).toContain("access_token=IGQV-secret");
+  });
+
+  /**
+   * The long-lived exchange, and the refusal that stopped the first live
+   * connect.
+   *
+   * 2026-09-23, a brand-new demo account: the short-lived exchange
+   * succeeded — so code, secret and redirect URI were all correct — and
+   * then the LAST step returned "Unsupported request - method type: get".
+   * That is Meta saying the path does not accept GET, which the
+   * Instagram-Login endpoint does, so the likeliest reading is that this
+   * app is registered on the Facebook-Login family instead.
+   *
+   * It could not be confirmed: Meta's docs are unreachable from the
+   * sandbox, the Vercel log connector returns 403 for this project, and a
+   * hand-built request proves nothing because a fabricated token fails
+   * auth (190) before the path is evaluated. So both are tried, and these
+   * pin the order and the reporting — one real connect then answers it.
+   */
+  describe("extending a short-lived token to a long-lived one", () => {
+    const shortLivedOk = () => new Response(JSON.stringify({ access_token: "IGQV-short" }), { status: 200 });
+
+    beforeEach(() => {
+      vi.stubEnv("INSTAGRAM_APP_ID", "123");
+      vi.stubEnv("INSTAGRAM_APP_SECRET", "shh");
+    });
+
+    it("tries Instagram first and stops there when it works", async () => {
+      // The path that already works for the founder's own account must be
+      // byte-for-byte unchanged, and must not make a second call.
+      const fetchSpy = vi
+        .spyOn(global, "fetch")
+        .mockResolvedValueOnce(shortLivedOk())
+        .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: "IGQV-long" }), { status: 200 }));
+
+      expect(await exchangeInstagramAuthCode("code", "https://followupbase.io/cb")).toEqual({ accessToken: "IGQV-long" });
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      const second = String(fetchSpy.mock.calls[1][0]);
+      expect(second).toContain("graph.instagram.com/access_token");
+      expect(second).toContain("grant_type=ig_exchange_token");
+    });
+
+    it("falls back to Facebook when Instagram refuses the method", async () => {
+      // The observed failure, verbatim. Before this the connect died here.
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.spyOn(console, "log").mockImplementation(() => {});
+      const refusal = new Response(
+        JSON.stringify({ error: { message: "Unsupported request - method type: get", code: 100 } }),
+        { status: 400 }
+      );
+      const fetchSpy = vi
+        .spyOn(global, "fetch")
+        .mockResolvedValueOnce(shortLivedOk())
+        .mockResolvedValueOnce(refusal)
+        .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: "EAAG-long" }), { status: 200 }));
+
+      expect(await exchangeInstagramAuthCode("code", "https://followupbase.io/cb")).toEqual({ accessToken: "EAAG-long" });
+      const third = String(fetchSpy.mock.calls[2][0]);
+      expect(third).toContain("graph.facebook.com");
+      expect(third).toContain("grant_type=fb_exchange_token");
+      expect(third).toContain("fb_exchange_token=IGQV-short");
+    });
+
+    it("names both hosts and both reasons when neither works", async () => {
+      // The owner is the only route these reasons have to anyone who can
+      // act on them — the log connector is 403 for this project. Detail
+      // is correct HERE, on the connect path, and never on the send path
+      // (see ownerFacingMetaError in metaGraph.ts).
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.spyOn(global, "fetch")
+        .mockResolvedValueOnce(shortLivedOk())
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ error: { message: "Unsupported request - method type: get", code: 100 } }), { status: 400 })
+        )
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ error: { message: "Invalid OAuth access token", code: 190 } }), { status: 400 })
+        );
+
+      const message = (await exchangeInstagramAuthCode("code", "https://followupbase.io/cb")) as { error: string };
+      expect(message.error).toContain("graph.instagram.com: 400 Unsupported request - method type: get");
+      expect(message.error).toContain("graph.facebook.com: 400 Invalid OAuth access token");
+      // The secret is in both request URLs and must be in neither answer.
+      expect(message.error).not.toContain("shh");
+    });
+
+    it("keeps the app secret out of every failure it reports", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const deny = () => new Response(JSON.stringify({ error: { message: "nope", code: 1 } }), { status: 400 });
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(shortLivedOk()).mockResolvedValueOnce(deny()).mockResolvedValueOnce(deny());
+      const result = (await exchangeInstagramAuthCode("code", "https://followupbase.io/cb")) as { error: string };
+      expect(result.error).not.toContain("shh");
+      expect(result.error).not.toContain("IGQV-short");
+    });
+
+    it("treats a 200 with no token as a failure rather than connecting with undefined", async () => {
+      // Without this the caller stores `undefined` as the access token and
+      // Settings reports a connected account that can never send.
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.spyOn(global, "fetch")
+        .mockResolvedValueOnce(shortLivedOk())
+        .mockResolvedValueOnce(new Response(JSON.stringify({ expires_in: 5183944 }), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify({ expires_in: 5183944 }), { status: 200 }));
+      const result = await exchangeInstagramAuthCode("code", "https://followupbase.io/cb");
+      expect("error" in result).toBe(true);
+      expect((result as { error: string }).error).toContain("200 but no access_token");
+    });
   });
 
   it("does not add the address hint for an unrelated refusal", async () => {

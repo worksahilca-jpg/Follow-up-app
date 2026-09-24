@@ -103,12 +103,46 @@ export function validateMetaSignature(rawBody: string, signatureHeader: string |
   });
 }
 
-/** Resolves the Instagram-scoped user ID for an access token, via the Graph API's own /me. Called once, when a token is saved in Settings. */
-export async function resolveInstagramUserId(accessToken: string): Promise<{ id: string; username?: string } | null> {
-  const res = await fetch(`${GRAPH_API}/me?fields=id,username&access_token=${encodeURIComponent(accessToken)}`);
-  if (!res.ok) return null;
+/**
+ * Resolves the Instagram-scoped user ID for an access token, via the Graph
+ * API's own /me. Called once, when a token is saved in Settings.
+ *
+ * Returns Meta's own reason on failure rather than a bare null, because
+ * the caller's only other option is to guess. On 2026-09-24 a token
+ * generated from the Meta console's own "Generate access tokens" panel was
+ * refused here, and Settings could say nothing better than "double-check
+ * you copied the whole thing" — which was almost certainly wrong advice,
+ * and sent the owner looking at their clipboard instead of at the cause.
+ *
+ * The OAuth path in this same file learned this lesson twice (the
+ * short-lived exchange on 2026-09-19, the long-lived one on 2026-09-23) and
+ * both now name Meta's reason. The paste-a-token path never did, so it was
+ * the one surface still failing blind — the one that matters most, since it
+ * is the fallback people reach for precisely when OAuth has already failed.
+ *
+ * `error` carries Meta's sentence and code; it never carries the token,
+ * which is not echoed in a Graph error body and is not interpolated here.
+ */
+export async function resolveInstagramUserId(
+  accessToken: string
+): Promise<{ id: string; username?: string } | { error: string }> {
+  const url = `${GRAPH_API}/me?fields=id,username&access_token=${encodeURIComponent(accessToken)}`;
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch {
+    // A DNS or TLS failure reaching Meta is not a bad token, and saying so
+    // stops the owner re-copying a token that was fine all along.
+    return { error: `Couldn't reach ${GRAPH_API} at all.` };
+  }
+  if (!res.ok) {
+    const reason = await instagramOAuthErrorMessage(res);
+    console.error(`Instagram token check rejected by ${GRAPH_API}/me: HTTP ${res.status}${reason ? ` — ${reason}` : ""}`);
+    return { error: `${GRAPH_API}/me: ${res.status}${reason ? ` ${reason}` : ""}` };
+  }
   const data = await res.json().catch(() => null);
-  return data?.id ? { id: data.id, username: data.username } : null;
+  if (!data?.id) return { error: `${GRAPH_API}/me returned 200 but no account id.` };
+  return { id: data.id, username: data.username };
 }
 
 /**

@@ -63,9 +63,16 @@ export async function POST(request: NextRequest) {
   const { accessToken } = parsed.data;
 
   const resolved = await resolveInstagramUserId(accessToken);
-  if (!resolved) {
+  if ("error" in resolved) {
+    // Meta's own words, not a guess about the clipboard. This path is the
+    // fallback someone reaches for after OAuth has already failed them —
+    // telling them to re-copy a token that is in fact valid, but rejected
+    // for an entirely different reason, is the worst thing this screen can
+    // say. The paste box is still the right place for the detail: it is the
+    // connect surface, not the send surface (same distinction
+    // `readMetaError` draws in metaGraph.ts).
     return NextResponse.json(
-      { success: false, message: "That token didn't work — double-check you copied the whole thing." },
+      { success: false, message: `Meta refused that token — ${resolved.error}` },
       { status: 400 }
     );
   }

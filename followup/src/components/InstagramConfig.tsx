@@ -100,16 +100,24 @@ export default function InstagramConfig() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessToken: tokenDraft.trim() }),
       });
-      const data: { success: boolean; instagramUserId?: string; username?: string | null; receiving?: boolean; message?: string } = await res.json();
-      if (data.success) {
+      // `.catch(() => null)`: a crash or a timeout answers in HTML, not
+      // JSON. This used to throw here, skip the message entirely, and hand
+      // the button back as "Connect" — so a refused connection looked like
+      // a click that never happened (2026-09-24, four presses in six
+      // seconds). Every outcome now says something.
+      const data: { success: boolean; instagramUserId?: string; username?: string | null; receiving?: boolean; message?: string } | null =
+        await res.json().catch(() => null);
+      if (data?.success) {
         setConnected(true);
         setReceiving(!!data.receiving);
         setInstagramUserId(data.instagramUserId ?? null);
         setInstagramUsername(data.username ?? null);
         setTokenDraft("");
       } else {
-        setSaveError(data.message ?? "Couldn't save that token.");
+        setSaveError(data?.message ?? `FollowUp didn't answer properly (error ${res.status}). Nothing was saved — try again in a moment.`);
       }
+    } catch {
+      setSaveError("Couldn't reach FollowUp. Check your connection and try again.");
     } finally {
       setSaving(false);
     }

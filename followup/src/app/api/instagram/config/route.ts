@@ -78,19 +78,57 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  await prisma.business.update({
-    where: { id: ctx.businessId },
-    data: {
-      instagramAccessToken: accessToken,
-      instagramUserId: resolved.id,
-      // Written with the id, never on its own: a handle from one account
-      // next to the id of another would be worse than no handle at all.
-      instagramUsername: resolved.username ?? null,
-      // Cleared, then set below only if Meta confirms — a new token is a
-      // new subscription question, and the old answer does not carry over.
-      instagramWebhookSubscribedAt: null,
-    },
-  });
+  /**
+   * The same refusal the OAuth callback has always made, and this path
+   * never did.
+   *
+   * `instagramUserId` is unique across businesses: one Instagram account
+   * feeds one FollowUp account. The OAuth callback catches the collision
+   * and says so. This route did not, so pasting a token for an account
+   * already bound elsewhere threw out of the handler as a bare 500 —
+   * which the Settings card, reading only JSON, turned into nothing at all.
+   *
+   * On 2026-09-24 that is exactly what happened: four presses of Connect
+   * in six seconds, each audited as arriving, none saved, and the button
+   * simply returned to "Connect" with no word on screen. Worse than a
+   * wrong message, because it reads as the click not registering.
+   */
+  try {
+    await prisma.business.update({
+      where: { id: ctx.businessId },
+      data: {
+        instagramAccessToken: accessToken,
+        instagramUserId: resolved.id,
+        // Written with the id, never on its own: a handle from one account
+        // next to the id of another would be worse than no handle at all.
+        instagramUsername: resolved.username ?? null,
+        // Cleared, then set below only if Meta confirms — a new token is a
+        // new subscription question, and the old answer does not carry over.
+        instagramWebhookSubscribedAt: null,
+      },
+    });
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+      const who = resolved.username ? `@${resolved.username}` : "That Instagram account";
+      return NextResponse.json(
+        {
+          success: false,
+          message: `${who} is already connected to a different FollowUp account. One Instagram account can feed only one FollowUp account — disconnect it there first, or use another account.`,
+        },
+        { status: 409 }
+      );
+    }
+    // Anything else still answers in JSON. The error's name and Prisma code
+    // only — never its message, which for a validation error can reprint
+    // the arguments, and the arguments include the token.
+    const code = err && typeof err === "object" && "code" in err ? String(err.code) : undefined;
+    const name = err instanceof Error ? err.name : "UnknownError";
+    console.error(`Instagram token save failed for business ${ctx.businessId}: ${name}${code ? ` ${code}` : ""}`);
+    return NextResponse.json(
+      { success: false, message: `FollowUp couldn't save that connection (${name}${code ? ` ${code}` : ""}). Nothing was changed.` },
+      { status: 500 }
+    );
+  }
   // Same per-account webhook subscription as the OAuth callback; a
   // pasted token has the same permissions so the same call applies.
   const subscribed = await activateInstagramWebhooks(ctx.businessId, resolved.id, accessToken);

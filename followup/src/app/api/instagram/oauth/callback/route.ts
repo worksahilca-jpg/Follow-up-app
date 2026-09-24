@@ -49,7 +49,10 @@ export async function GET(request: NextRequest) {
   if ("error" in exchanged) return fail(exchanged.error);
 
   const resolved = await resolveInstagramUserId(exchanged.accessToken);
-  if (!resolved) return fail("Instagram connected, but we couldn't read the account details — try again.");
+  // "Try again" was advice for a transient blip, and this has never once
+  // been transient. Meta's reason rides through for the same purpose it
+  // does on the exchange above: it is the only instrument anyone has here.
+  if ("error" in resolved) return fail(`Instagram connected, but we couldn't read the account details — ${resolved.error}`);
 
   try {
     await prisma.business.update({
@@ -60,6 +63,7 @@ export async function GET(request: NextRequest) {
       data: {
         instagramAccessToken: exchanged.accessToken,
         instagramUserId: resolved.id,
+        instagramUsername: resolved.username ?? null,
         instagramWebhookSubscribedAt: null,
       },
     });

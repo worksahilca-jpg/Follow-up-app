@@ -1,7 +1,13 @@
 # Contributing to FollowUp
 
-Five people, one repo, `main` protected. This is the actual workflow — not aspirational, this
-is what's enforced.
+One repo, `main` protected. This is the actual workflow — not aspirational, this is what's
+enforced by branch protection and CI.
+
+FollowUp is a solo build today (`TEAM.md`), so in practice the review step is Sahil reviewing
+his own work or an agent's. The workflow below is still followed to the letter, because it is
+what keeps `main` deployable and gives every change a record — and because it is written to
+work unchanged the day a second person joins. Where it says "the reviewer", that is whoever
+owns the area in `TEAM.md`.
 
 ## Local setup
 
@@ -45,7 +51,7 @@ a feature that's broken.
 - Never work directly on `main`. It's protected: pull request required, 1 approval required, CI
   must pass. This applies to everyone, including Sahil — there's no bypass toggle enabled.
 - Branch off `main` for whatever you're doing: `<yourname>/<short-description>`, e.g.
-  `gautam/fix-mobile-nav`, `pransh/lead-pagination-cursor`. Keep branches scoped to one thing —
+  `sahil/fix-mobile-nav`, `sahil/lead-pagination-cursor`. Keep branches scoped to one thing —
   a PR that mixes an unrelated fix with your actual task is harder to review and harder to
   revert if something's wrong.
 - Rebase onto `main` before opening a PR if `main` has moved since you branched — don't let a PR
@@ -58,19 +64,24 @@ a feature that's broken.
   touched. If it doesn't request the right person (e.g. it's still on a placeholder username),
   tag them manually.
 - **1 approval minimum**, from someone who actually owns that area per `TEAM.md` — not just
-  whoever's free. A UI change needs Gautam or Sahil's eyes, not a backend-only review.
+  whoever's free. A UI change needs the eyes of someone who owns UI, not a backend-only review.
+  Today `CODEOWNERS` routes every path to `@worksahilca-jpg`; as the team grows, it is the file
+  that changes, not this rule.
 - **CI must be green**: typecheck, lint, build, and the test suite. A red check is never merged
   around — fix it or explain why it's not your PR's failure (see below).
-- If you're touching a file someone else's area also touches (the Pransh/Vansh integrations
-  overlap, the Sahil/Gautam frontend overlap — see `TEAM.md`), say so explicitly in the PR
-  description so it isn't a surprise in review.
+- **One check fails on every PR and always will**: `Vercel – followup-voice-agent` reports
+  "Deployment was blocked". That project is deliberately parked. The check that matters is
+  `Vercel – follow-up-app`. Nobody should spend an afternoon on this one — it is expected.
+- If you're touching a file that another area also owns — the integrations layer and the
+  backend overlap most often, see `TEAM.md` — say so explicitly in the PR description so it
+  isn't a surprise in review.
 
 ## What CI failing actually means
 
 - If your own change broke it: fix it before asking for review.
 - If a check was already red on `main` before your branch existed: say so in the PR, don't try
   to silently work around it (no disabling the test, no empty commits to "retry" — actually
-  understand why and fix it, or flag it in `#followup-alerts`/to Dipesh if it's infra-level).
+  understand why and fix it, or flag it in `#followup-alerts` if it's infra-level).
 
 ## Testing — everyone's job, not QA's alone
 

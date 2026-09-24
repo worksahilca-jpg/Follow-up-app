@@ -28,7 +28,7 @@ export async function GET() {
     // the Facebook config route. instagramUserId is written and cleared
     // alongside it and answers the same question without decrypting a
     // credential on every Settings load.
-    select: { instagramUserId: true, instagramWebhookSubscribedAt: true },
+    select: { instagramUserId: true, instagramUsername: true, instagramWebhookSubscribedAt: true },
   });
 
   return NextResponse.json({
@@ -39,6 +39,7 @@ export async function GET() {
     // silent, so Settings asks both and says so.
     receiving: !!business?.instagramWebhookSubscribedAt,
     instagramUserId: business?.instagramUserId ?? null,
+    instagramUsername: business?.instagramUsername ?? null,
     webhookUrl: `${appUrl()}/api/instagram/webhook`,
     verifyToken: WEBHOOK_VERIFY_TOKEN,
     oauthAvailable: instagramOAuthAvailable(),
@@ -63,9 +64,16 @@ export async function POST(request: NextRequest) {
   const { accessToken } = parsed.data;
 
   const resolved = await resolveInstagramUserId(accessToken);
-  if (!resolved) {
+  if ("error" in resolved) {
+    // Meta's own words, not a guess about the clipboard. This path is the
+    // fallback someone reaches for after OAuth has already failed them —
+    // telling them to re-copy a token that is in fact valid, but rejected
+    // for an entirely different reason, is the worst thing this screen can
+    // say. The paste box is still the right place for the detail: it is the
+    // connect surface, not the send surface (same distinction
+    // `readMetaError` draws in metaGraph.ts).
     return NextResponse.json(
-      { success: false, message: "That token didn't work — double-check you copied the whole thing." },
+      { success: false, message: `Meta refused that token — ${resolved.error}` },
       { status: 400 }
     );
   }
@@ -75,6 +83,9 @@ export async function POST(request: NextRequest) {
     data: {
       instagramAccessToken: accessToken,
       instagramUserId: resolved.id,
+      // Written with the id, never on its own: a handle from one account
+      // next to the id of another would be worse than no handle at all.
+      instagramUsername: resolved.username ?? null,
       // Cleared, then set below only if Meta confirms — a new token is a
       // new subscription question, and the old answer does not carry over.
       instagramWebhookSubscribedAt: null,
@@ -120,7 +131,7 @@ export async function DELETE() {
 
   await prisma.business.update({
     where: { id: ctx.businessId },
-    data: { instagramAccessToken: null, instagramUserId: null, instagramWebhookSubscribedAt: null },
+    data: { instagramAccessToken: null, instagramUserId: null, instagramUsername: null, instagramWebhookSubscribedAt: null },
   });
   return NextResponse.json({ success: true });
 }

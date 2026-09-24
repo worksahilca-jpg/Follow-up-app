@@ -109,6 +109,44 @@ If a reviewer probes anything, it will be this — and the answer holds.
 
 ---
 
+## 3b. Pre-flight — verified 2026-09-24, before recording
+
+Checked against the live database and the inbound code path, so none of it is assumed.
+
+**The reviewer account is ready.** `followupbase.review@gmail.com` is ADMIN (the Connect route
+requires it), onboarded, `holdAllForApproval` **true**, `autonomousAllowed` **false**. No
+Instagram connected yet, as expected.
+
+**The webhook plumbing is proven.** The founder's own business has been connected and
+webhook-subscribed since 2026-09-20, which means the Meta app's callback URL and verify token
+are correct at the app level. A second account connecting does not re-test that.
+
+**The draft appears in seconds, not on a cron.** `processMetaEnvelope` calls
+`scoreAndDraftForLead(lead.id)` inline on the inbound webhook. The lead is created, scored and
+drafted inside the request. Nothing to wait for on camera.
+
+**Nothing sends on its own — confirmed in code, not assumed.** The inbound path also calls
+`acknowledgeNewLead`, which would otherwise fire an automatic DM. `acknowledge.ts` checks
+`holdAllForApproval` and returns `{ sent: false, reason: "held for approval" }`, recording an
+`ai.hold` instead. **This is what makes §3's justification literally true** for a reviewer
+testing the account — worth knowing, because a reviewer who saw an unapproved message go out
+would be reading a contradiction of the submission.
+
+### Three things that will ruin a take
+
+1. **"Approve & send" now waits ten seconds.** Shipped 2026-09-24 (#317). The button is
+   replaced by *"Sending to <name> in 10s"* and an Undo. Nothing leaves until the clock runs
+   out. **Let it run** — pressing again or cutting early will look like a broken product.
+   It is worth narrating: a grace period is a trust feature, and Video B is a trust argument.
+2. **Be logged into the DEMO Instagram account in that browser.** Meta's consent screen uses
+   whatever Instagram session the browser already has, not the one you meant.
+3. **Do not connect the founder's own Instagram account.** `instagramUserId` is unique across
+   businesses; `28693476873589439` is already bound to the FollowUp business, and the callback
+   will refuse with *"That Instagram account is already connected to another FollowUp
+   account."* On camera that reads as a broken connect flow.
+
+---
+
 ## 4. Screencast shot list
 
 Per the playbook, **most 2026 rejections are here.** Record one per permission. English UI, zoom

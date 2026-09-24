@@ -535,53 +535,72 @@ export async function exchangeInstagramAuthCode(
   if (typeof shortLivedToken !== "string") return { error: "Instagram didn't return an access token." };
 
   /**
-   * The long-lived exchange, attempted both ways Meta offers.
+   * The long-lived exchange, and the one thing Meta will still not do.
    *
-   * ## What went wrong on the first live connect
+   * ## What is now known, from two live attempts
    *
-   * 2026-09-23, connecting a brand-new demo account, the owner saw:
+   * **2026-09-23.** Connecting a brand-new demo account, the short-lived
+   * exchange above succeeded — so the code, the secret and the redirect
+   * URI are all correct — and this last step returned
+   * "Unsupported request - method type: get". `method type: get` is Meta
+   * saying the PATH does not accept GET.
    *
-   *   "Couldn't extend that Instagram sign-in (Instagram said: Unsupported
-   *    request - method type: get)"
+   * **2026-09-24.** Since the Instagram-Login endpoint is documented to
+   * accept GET, the hypothesis was that this app belongs to the
+   * Facebook-Login family, whose long-lived exchange lives elsewhere. So
+   * both were tried, and the second answered it:
    *
-   * The short-lived exchange above had already succeeded, so the code, the
-   * secret and the redirect URI were all correct — only this last step
-   * failed. `method type: get` is Meta saying the PATH does not accept GET,
-   * which the Instagram-Login endpoint below does. The most likely reading
-   * is that this app is registered on the Facebook-Login family, where the
-   * long-lived exchange lives at a different address.
+   *   graph.instagram.com: 400 Unsupported request - method type: get [100]
+   *   graph.facebook.com:  400 Error validating application. Cannot get
+   *                        application info due to a system error. [101]
    *
-   * That reading could not be confirmed: Meta's documentation is
-   * unreachable from the build sandbox, the Vercel log connector returns
-   * 403 for this project, and testing the URL by hand proved nothing
-   * because a fabricated token fails auth (code 190) before the path is
-   * ever evaluated. Rather than rewrite a working-looking line from
-   * memory — which is how a channel goes down for everyone who currently
-   * connects fine — both are tried in order.
+   * **Code 101 is "the app id is not recognised here".** Graph does not
+   * know this app at all, which it would if the app were registered on
+   * that family. So the hypothesis was WRONG and is now closed: this is
+   * an Instagram-Login app, and `graph.instagram.com/access_token` is the
+   * right address.
    *
-   * The Instagram flavour stays FIRST, so any account this already works
-   * for keeps the identical code path and the identical result. The
-   * Facebook flavour is only reached once the first has already failed,
-   * where the alternative today is failing outright.
+   * Which leaves exactly what Meta said, and nothing else: the address is
+   * right, and the METHOD is wrong. There are two methods. The GET stays
+   * first and unchanged — it is what the documentation describes and what
+   * any already-working account uses — and POST follows it.
    *
-   * Whichever runs, the outcome names the host it came from. One real
-   * connect attempt now answers which family this app belongs to — which
-   * neither reasoning nor a hand-built request could.
+   * Both carry identical parameters, built once above, so the two attempts
+   * can never drift into asking for different things.
+   *
+   * Still not confirmable from here: Meta's docs are egress-blocked from
+   * the build sandbox, the Vercel log connector returns 403 for this
+   * project, and a hand-built request proves nothing because a fabricated
+   * token fails auth (190) before the path is evaluated. The owner-facing
+   * error is therefore the instrument — each real attempt has narrowed
+   * this by one hypothesis, and it names every host and reason so the next
+   * one can too.
    */
-  const attempts: Array<{ label: string; url: string }> = [
+  const exchangeParams = {
+    grant_type: "ig_exchange_token",
+    client_secret: appSecret,
+    access_token: shortLivedToken,
+  };
+
+  const attempts: Array<{ label: string; url: string; init?: RequestInit }> = [
     {
-      label: "graph.instagram.com",
-      url: `${GRAPH_OAUTH}/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(appSecret)}&access_token=${encodeURIComponent(shortLivedToken)}`,
+      label: "graph.instagram.com GET",
+      url: `${GRAPH_OAUTH}/access_token?${new URLSearchParams(exchangeParams)}`,
     },
     {
-      label: "graph.facebook.com",
-      url: `https://graph.facebook.com/${GRAPH_VERSION}/oauth/access_token?grant_type=fb_exchange_token&client_id=${encodeURIComponent(appId)}&client_secret=${encodeURIComponent(appSecret)}&fb_exchange_token=${encodeURIComponent(shortLivedToken)}`,
+      label: "graph.instagram.com POST",
+      url: `${GRAPH_OAUTH}/access_token`,
+      init: {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(exchangeParams),
+      },
     },
   ];
 
   const failures: string[] = [];
   for (const attempt of attempts) {
-    const res = await fetch(attempt.url);
+    const res = await fetch(attempt.url, attempt.init);
     if (res.ok) {
       const body = await res.json().catch(() => ({}));
       const token = body?.access_token;

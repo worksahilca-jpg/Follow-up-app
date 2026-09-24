@@ -157,13 +157,21 @@ describe("Instagram one-click connect", () => {
 
       expect(await exchangeInstagramAuthCode("code", "https://followupbase.io/cb")).toEqual({ accessToken: "IGQV-long" });
       expect(fetchSpy).toHaveBeenCalledTimes(2);
-      const second = String(fetchSpy.mock.calls[1][0]);
-      expect(second).toContain("graph.instagram.com/access_token");
-      expect(second).toContain("grant_type=ig_exchange_token");
+      const [second, init] = fetchSpy.mock.calls[1] as [string, RequestInit | undefined];
+      expect(String(second)).toContain("graph.instagram.com/access_token");
+      expect(String(second)).toContain("grant_type=ig_exchange_token");
+      // GET: no init at all, so the documented path is byte-for-byte what
+      // it always was for any account this already works for.
+      expect(init).toBeUndefined();
     });
 
-    it("falls back to Facebook when Instagram refuses the method", async () => {
-      // The observed failure, verbatim. Before this the connect died here.
+    it("retries the same address with POST when Meta refuses GET", async () => {
+      // Meta's own words, verbatim, from the 2026-09-23 connect: the
+      // address is right and the METHOD is wrong. The Facebook fallback
+      // that used to sit here was disproved on 2026-09-24 by code 101
+      // ("Error validating application") — Graph does not recognise this
+      // app id at all, so it is not a Facebook-Login app. POST is what is
+      // left.
       vi.spyOn(console, "error").mockImplementation(() => {});
       vi.spyOn(console, "log").mockImplementation(() => {});
       const refusal = new Response(
@@ -174,13 +182,21 @@ describe("Instagram one-click connect", () => {
         .spyOn(global, "fetch")
         .mockResolvedValueOnce(shortLivedOk())
         .mockResolvedValueOnce(refusal)
-        .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: "EAAG-long" }), { status: 200 }));
+        .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: "IGQV-long" }), { status: 200 }));
 
-      expect(await exchangeInstagramAuthCode("code", "https://followupbase.io/cb")).toEqual({ accessToken: "EAAG-long" });
-      const third = String(fetchSpy.mock.calls[2][0]);
-      expect(third).toContain("graph.facebook.com");
-      expect(third).toContain("grant_type=fb_exchange_token");
-      expect(third).toContain("fb_exchange_token=IGQV-short");
+      expect(await exchangeInstagramAuthCode("code", "https://followupbase.io/cb")).toEqual({ accessToken: "IGQV-long" });
+
+      const [url, init] = fetchSpy.mock.calls[2] as [string, RequestInit];
+      expect(String(url)).toBe("https://graph.instagram.com/access_token");
+      expect(init.method).toBe("POST");
+      // Same parameters as the GET, built once, so the two attempts can
+      // never drift into asking Meta for different things.
+      const body = new URLSearchParams(String(init.body));
+      expect(body.get("grant_type")).toBe("ig_exchange_token");
+      expect(body.get("access_token")).toBe("IGQV-short");
+      expect(body.get("client_secret")).toBe("shh");
+      // And the secret must not also be in the URL on the POST.
+      expect(String(url)).not.toContain("shh");
     });
 
     it("names both hosts and both reasons when neither works", async () => {
@@ -199,8 +215,8 @@ describe("Instagram one-click connect", () => {
         );
 
       const message = (await exchangeInstagramAuthCode("code", "https://followupbase.io/cb")) as { error: string };
-      expect(message.error).toContain("graph.instagram.com: 400 Unsupported request - method type: get");
-      expect(message.error).toContain("graph.facebook.com: 400 Invalid OAuth access token");
+      expect(message.error).toContain("graph.instagram.com GET: 400 Unsupported request - method type: get");
+      expect(message.error).toContain("graph.instagram.com POST: 400 Invalid OAuth access token");
       // The secret is in both request URLs and must be in neither answer.
       expect(message.error).not.toContain("shh");
     });

@@ -124,6 +124,42 @@ describe("pasting an Instagram access token", () => {
     );
   });
 
+  // 2026-09-24: four presses of Connect, each audited as arriving, none
+  // saved, and nothing on screen. The account was already bound to another
+  // business; the unique constraint threw out of the handler as a bare 500.
+  it("says plainly when the account is already connected to another FollowUp account", async () => {
+    resolveInstagramUserId.mockResolvedValue({ id: "28693476873589439", username: "followup.demo" });
+    businessUpdate.mockRejectedValueOnce(Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
+
+    const res = await POST(post(TOKEN));
+    const body = await res.json();
+
+    expect(res.status).toBe(409);
+    expect(body.success).toBe(false);
+    expect(body.message).toContain("@followup.demo");
+    expect(body.message).toContain("already connected to a different FollowUp account");
+  });
+
+  it("answers in JSON for any other save failure, and never repeats the token", async () => {
+    resolveInstagramUserId.mockResolvedValue({ id: "1", username: "x" });
+    // A validation error's message can reprint the query's arguments —
+    // including the token. Only the name and code may reach the owner.
+    businessUpdate.mockRejectedValueOnce(
+      Object.assign(new Error(`Invalid invocation: { instagramAccessToken: "${TOKEN}" }`), {
+        name: "PrismaClientValidationError",
+      })
+    );
+
+    const res = await POST(post(TOKEN));
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.success).toBe(false);
+    expect(body.message).toContain("PrismaClientValidationError");
+    expect(body.message).toContain("Nothing was changed");
+    expect(body.message).not.toContain(TOKEN);
+  });
+
   it("does not treat an unreachable Meta as a bad token", async () => {
     resolveInstagramUserId.mockResolvedValue({
       error: "Couldn't reach https://graph.instagram.com/v21.0 at all.",

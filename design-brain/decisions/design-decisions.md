@@ -6117,3 +6117,95 @@ harness before the product.*
    this logic is worse — but the bulk path's only proof is the same browser run.
 4. **A card that resolves mid-countdown is untested.** The unmount flush should send it via
    `keepalive`, and that branch was not exercised, only read.
+
+---
+
+## 2026-09-23 — The rule said Autonomous, the leads went Assisted, and nothing said so
+
+Three paths can put a lead on Auto. Two refuse without the account's permission. One did not.
+
+| Path | Permission check, before today |
+|---|---|
+| `POST /api/leads/[id]/automation` | 403, with `AUTONOMOUS_NOT_ALLOWED_MESSAGE` |
+| `POST /api/leads/bulk-automation` | 403, same sentence |
+| **`POST /api/source-rules`** | **none** |
+
+So an owner picked "Autonomous" from a dropdown that offered it, the save succeeded with no
+complaint, the Settings row read "Autonomous" indefinitely — and `applySourceRouting` started
+every lead that rule touched on **Assisted** instead. The downgrade itself is right: a
+permission can be revoked after a rule was legitimately saved, and new leads must not land on
+a mode the owner has taken back. What was wrong is that **no third thing in the product knew
+both facts.** Not the rule row, not the lead, not the audit trail.
+
+Worse than either refusing or obeying. A product that refuses teaches you something; one that
+obeys does what you asked. This one accepted and then quietly disagreed with itself, and the
+only way to find out was to notice that leads from a channel you had set to Auto kept arriving
+in the approval queue — which is the exact "why hasn't this sent?" question FollowUp exists to
+make unnecessary.
+
+`requireAdmin` on that route was never this check and the route's own comment shows the
+confusion: it already described the AUTONOMOUS risk and answered it with a role gate. **Who is
+asking and whether the account has consented are different questions.** An admin without the
+permission is precisely the person who hit this.
+
+### Four moves
+
+1. **The API refuses**, with the same sentence as its two siblings, and writes nothing. A
+   saved-but-downgraded rule is the defect.
+2. **The dropdown stops offering it** — `SourceRoutingSection` took no props at all and had no
+   way to know. `GET` now returns `autonomousAllowed`. The option is **disabled, not removed**:
+   an option that vanishes teaches nothing, while one visible and unavailable, with the reason
+   under it, says what to do. It stays selectable on a rule already set to it, so the dropdown
+   can still show its own value rather than rendering blank.
+3. **A stranded rule says so on its own row.** What it is doing now, then why, then where to
+   change it — *"Sending without review is switched off for this account, so new Instagram
+   leads start on Assisted — they wait for your OK."* Not "invalid rule": the rule is fine, the
+   permission is off, and those have different fixes.
+4. **The downgrade is audited.** `automation.downgraded`, carrying source, requested, applied
+   and reason — the per-lead trail that answers "when did this start" months later, where the
+   Settings row answers the standing state.
+
+### The check that mattered most took one query
+
+Production, before writing anything: **eighteen source rules across every account, all
+ASSISTED, `autonomousAllowed` false everywhere.** Nobody is stranded today. So this is
+preventive, and — the useful half — **no data migration was needed.** Second time tonight that
+asking the database first changed what got built.
+
+### Rendering found a defect that was not mine
+
+At 390px the row's `<select>` ran off the right edge of the card. The row pinned it with
+`shrink-0` while a `<select>` sizes itself to its longest option ("Leave unclaimed — first to
+grab it gets it"), so it simply overflowed — and the chevron was off-screen entirely. It
+predates this work. Fixed here because it is the row being changed: the source name holds its
+width, the dropdown gives way. Now 33px clear inside the card, chevrons visible for the first
+time.
+
+### Tests
+
+15 new across two files. Verified by removal: deleting the permission gate fails 2, gating
+every tier instead of just Auto fails 2, dropping `autonomousAllowed` from GET fails 1; on the
+routing side, never recording fails 3, recording on every rule fails 3, not downgrading fails
+2, auditing before the lead update fails 3. 1787 pass; build, tsc, eslint clean. Rendered at
+phone width with a stranded rule: the line appears on that row only, the option is disabled on
+the others, no console errors.
+
+**One existing test had its premise changed rather than patched.** `adminGate.test.ts`
+asserted an admin *can* save an Autonomous rule — true when the route never asked, false now
+without the permission. Updated to grant the permission explicitly, so it remains a test of
+the ROLE gate and the two stay independent, instead of being quietly made green.
+
+### Self-critique
+
+1. **The audit event is written but nothing reads it.** The lead page's AI trail may surface
+   `automation.downgraded` generically; it was not checked, and no view names this event. The
+   trail is for a question nobody can ask through the UI yet.
+2. **The stranded-rule line is untested by anyone but me.** It is inferred copy — no owner has
+   hit this state, because nobody in production has.
+3. **`autonomousAllowed` defaults to `true` on the client** while loading. Optimistic on
+   purpose (claiming a restriction that is not there is worse than briefly missing one, and the
+   server refuses either way), but it does mean a failed GET leaves Auto offerable in a UI that
+   cannot save it.
+4. **The fourth path is closed; a fifth is not ruled out.** Three routes were audited because
+   three were known. Nothing systematically proves no other writer sets `automationTier`
+   directly.

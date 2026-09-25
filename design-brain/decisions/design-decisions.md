@@ -6307,3 +6307,83 @@ message passes.
 **Weak spots, named.** The card does not refresh itself after the refusal; the owner has to
 reload to see the new message. The lead page's Send now still has no 10-second undo (the
 other half of F7) — that is a component change and was left for the founder's UI pass.
+
+## 2026-09-25 — Alerts outside the app ^alerts-outside-the-app
+
+**What changed.** An owner is now told by email and by a phone/computer notification
+(Web Push) when a customer has written and FollowUp's reply is waiting for their OK. Before
+this the bell inside FollowUp was the only alert, so it only reached owners who were already
+in the app. Founder's brief and approval, 2026-09-25: "yes build both". The goal is to be
+told within minutes and approve within five.
+
+**The UI, which is small on purpose (the screens are the founder's).** There is one new
+**Alerts** section in Settings → Advanced, directly under Automation, because Automation is
+where "replies wait for you" is decided. It uses one existing `box`, the existing `Switch`,
+one secondary button in the page's existing bordered style, and the page's existing text
+styles. There are no new tokens, colours, fonts or icons. Rows:
+- "Email me when a customer is waiting". This is a per-person switch, on by default.
+- "Turn on FollowUp notifications on this device", with the line "On iPhone, add FollowUp
+  to your Home Screen first." underneath. The line is hidden when FollowUp is already
+  opened from the Home Screen. Once the device is on, the row reads "FollowUp notifications
+  are on for this device." with a "Turn off" button.
+- A row is hidden when its channel has no keys on the server, and the whole section is
+  hidden when neither channel has keys. This follows Outlook's precedent: a switch that
+  reads "on" while nothing can be sent would be a promise we aren't keeping.
+- `/settings#alerts` opens the Advanced tab. Every alert email's footer links there.
+
+**What the owner reads outside the app.** All of it is plain. There are no exclamation
+marks and no AI wording. It never includes the draft or the reason it was held, because
+an alert that contains the reply invites sending it without reading it. Customer text is
+cut to 140 characters (100 on a lock screen).
+- Email subject "Jane is waiting for your reply" ("A customer" when all we have is a
+  placeholder name). The body says who wrote and on which channel, quotes their message,
+  says "FollowUp's reply is ready — open it to send.", links to the lead, and has an
+  opt-out footer.
+- Push title "Jane is waiting". The body is their line; tapping opens the lead.
+- A burst of more than 3 in one minute becomes "12 customers are waiting for your OK" /
+  "12 customers are waiting". This is the same threshold as the bell (`holdNotices.ts`).
+- After 20 emails in the owner's own day, one "More customers are waiting for your reply"
+  email goes out, then no more email until tomorrow. Push continues.
+
+**Rendered** with the real Settings page in a temporary harness route (it was deleted and
+isn't committed) and Playwright Chromium, with the APIs mocked, at 1440 (light and dark)
+and 390 (off, on, blocked, iPhone Safari tab). Screenshots are in
+`followup/research/audit/2026-09-25-alerts-outside-the-app-*.png`. The render caught one
+flaw, now fixed: at 390px the long button label wrapped to two centred lines and read as
+stray text beside the left-aligned hint. It's now left-aligned. The harness has no Sidebar,
+so the sticky tab row overlaps the top of the 390px shots. That comes from the harness,
+not from this change.
+
+### Design review (design-review.md), honestly
+
+- ✅ Clarity: two controls, each named by its outcome. No jargon ("push", "subscribe",
+  "VAPID" never reach the screen).
+- ✅ Consistency: existing Switch, box, button border style and error style. There's one
+  primary action per row and no new tokens.
+- ✅ Trust: nothing reads "on" unless it can send. Turning off is one press. The email
+  says why the owner got it and how to stop it.
+- ⚠️ Touch target: the button is about 38px tall, the same as every other bordered button
+  on this page, which is below the 44px in `components/buttons.md`. I followed the page
+  rather than fixing one button.
+- ⚠️ Loading: the section appears after `/api/alerts` answers, so the Feedback section
+  below it shifts down once. It's in the Advanced tab and below the fold, so this is minor.
+- ⚠️ The iPhone Safari-tab state shows a disabled button with the hint underneath. The
+  hint explains it, but a disabled button is still a weak affordance.
+- ⚠️ No "sent to <address>" line under the email switch. I dropped it to keep the block
+  minimal. An owner with several addresses can't see where alerts go.
+
+### Weak spots, named
+
+1. **Some waiting customers aren't "held" yet, so they don't alert yet.** An alert fires
+   only when a reply is actually waiting in Approvals. On a holding account, a customer's
+   first message is held within minutes (instant-reply path). A customer writing *again*
+   in a conversation the owner already answered gets no held reply until the unanswered
+   rule steps in (24 hours by default), so the alert comes then. Changing that is
+   automation.ts territory, and another agent is working on the cadence there.
+2. **The setting lives under Advanced.** Owners won't go looking there. The founder may
+   want a one-time prompt on Today ("Get told when a customer is waiting") pointing here.
+   That's a screen change and was left for him.
+3. **Email HTML is hand-written with literal colours.** Email clients can't read CSS
+   tokens. It's deliberately bare: text, one quote bar, one link.
+4. **Delivery timing rests on a one-minute cron.** Expect 1–2 minutes after the reply is
+   ready. Vercel doesn't promise exact cron timing.

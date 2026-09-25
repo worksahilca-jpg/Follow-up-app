@@ -87,6 +87,37 @@ async function adminsOf(businessId: string, cache: Map<string, string[]>): Promi
   return ids;
 }
 
+/**
+ * Who hears about a held lead: its assignee, or every admin on the
+ * business when nobody is assigned. Grouped by person, because both the
+ * bell and the burst collapse below are per person.
+ *
+ * Exported for src/lib/ownerAlerts.ts, which tells the same people the
+ * same thing outside the app. One resolver, so a phone alert can never go
+ * to someone the bell did not, or skip someone it did.
+ */
+export async function groupByRecipient<T extends { leadId: string; businessId: string; assignedToId: string | null }>(
+  items: T[]
+): Promise<Map<string, T[]>> {
+  const byUser = new Map<string, T[]>();
+  const adminCache = new Map<string, string[]>();
+  for (const item of items) {
+    let userIds: string[];
+    try {
+      userIds = item.assignedToId ? [item.assignedToId] : await adminsOf(item.businessId, adminCache);
+    } catch (err) {
+      console.error(`Could not resolve owners for lead ${item.leadId}:`, err);
+      continue;
+    }
+    for (const userId of userIds) {
+      const list = byUser.get(userId);
+      if (list) list.push(item);
+      else byUser.set(userId, [item]);
+    }
+  }
+  return byUser;
+}
+
 export type FlushResult = {
   /** Notification rows actually created. One summary counts as one. */
   rows: number;
@@ -129,22 +160,7 @@ export async function flushHoldNotices(
   // is one, every admin otherwise. The same fallback notifyNeglect and
   // notifyLeadOwners already use, and the reason the grouping below is by
   // user rather than by lead.
-  const byUser = new Map<string, HoldNotice[]>();
-  const adminCache = new Map<string, string[]>();
-  for (const notice of notices) {
-    let userIds: string[];
-    try {
-      userIds = notice.assignedToId ? [notice.assignedToId] : await adminsOf(notice.businessId, adminCache);
-    } catch (err) {
-      console.error(`Could not resolve owners for lead ${notice.leadId}:`, err);
-      continue;
-    }
-    for (const userId of userIds) {
-      const list = byUser.get(userId);
-      if (list) list.push(notice);
-      else byUser.set(userId, [notice]);
-    }
-  }
+  const byUser = await groupByRecipient(notices);
 
   let rows = 0;
   const covered = new Set<string>();

@@ -77,3 +77,7 @@ proves its value or fails silently.
 - `[TO DECIDE]` Escalation notification design.
 - `[TO DECIDE]` Email/push notification policy — out-of-app notification is a design
   surface too, and for a mobile-first owner persona possibly the most important one.
+
+  **First version shipped 2026-09-25** from the founder's brief ("yes build both"): see
+  `[[design-decisions#^alerts-outside-the-app]]`. That records what was built to a brief, not a
+  settled policy — cadence, content and where the setting lives are still open.

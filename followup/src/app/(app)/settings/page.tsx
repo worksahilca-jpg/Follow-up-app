@@ -19,6 +19,7 @@ import CrmConfig from "@/components/CrmConfig";
 import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
+import AlertsSection from "@/components/AlertsSection";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
@@ -64,6 +65,9 @@ const SECTION_TAB: Record<string, SettingsTab> = {
   team: "team",
   billing: "billing",
   automation: "advanced",
+  // Linked from the footer of every alert email ("turn them off in
+  // Settings"), so it has to open on the right tab.
+  alerts: "advanced",
   feedback: "advanced",
   data: "advanced",
 };
@@ -1604,6 +1608,12 @@ function SettingsPageInner() {
         </>
         )}
       </section>
+
+      {/* Directly under Automation: that section decides that replies wait
+          for the owner, and this is how the owner hears one is waiting.
+          Renders nothing until the server has at least one alert channel
+          set up — see the component. */}
+      <AlertsSection />
       </div>
 
       <div hidden={activeTab !== "team"} className="space-y-10">

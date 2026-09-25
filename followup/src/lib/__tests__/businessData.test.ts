@@ -49,6 +49,8 @@ vi.mock("@/lib/db", () => ({
     rateLimitHit: { deleteMany: trackedDeleteMany("rateLimitHit") },
     filteredEmail: { deleteMany: trackedDeleteMany("filteredEmail") },
     integration: { deleteMany: trackedDeleteMany("integration") },
+    pushSubscription: { deleteMany: trackedDeleteMany("pushSubscription") },
+    ownerAlert: { deleteMany: trackedDeleteMany("ownerAlert") },
     aIInsight: { deleteMany: trackedDeleteMany("aIInsight") },
     outboundSend: { deleteMany: trackedDeleteMany("outboundSend") },
     sendClaim: { deleteMany: trackedDeleteMany("sendClaim") },
@@ -126,6 +128,10 @@ describe("deleteBusinessData", () => {
     expect(callOrder.indexOf("savedFilter")).toBeLessThan(callOrder.indexOf("user"));
     expect(callOrder.indexOf("notification")).toBeLessThan(callOrder.indexOf("user"));
     expect(callOrder.indexOf("integration")).toBeLessThan(callOrder.indexOf("user"));
+    // A deleted business must leave no way to reach anyone's phone.
+    expect(callOrder).toContain("pushSubscription");
+    expect(callOrder.indexOf("pushSubscription")).toBeLessThan(callOrder.indexOf("user"));
+    expect(callOrder.indexOf("ownerAlert")).toBeLessThan(callOrder.indexOf("user"));
     // A queued outbound send holds a required FK to Lead — and it carries
     // real message text, so an erasure that skipped it would leave this
     // business's drafts behind.

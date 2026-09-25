@@ -46,10 +46,29 @@ export async function grantBetaPlan(businessId: string): Promise<boolean> {
   return count > 0;
 }
 
+/**
+ * Ends the beta plan. Leaves `holdAllForApproval` exactly where it was.
+ *
+ * This used to set it to false — so removing someone from the tester list
+ * on /admin quietly switched their account to sending on its own. Nobody
+ * asked for that: not the owner, whose account it is, and not the founder,
+ * who was only taking a plan away.
+ *
+ * It is the one remaining path to the event that lost the product's first
+ * real user. On 2026-09-07 FollowUp sent two emails from a tester's Gmail
+ * that he had never approved, at 13:00 and 20:00 on the automation's
+ * hourly tick. He disconnected at 21:57 the same evening. Hold-for-approval
+ * became the default on 2026-09-21 precisely so that cannot happen again;
+ * a plan change must not undo it behind the owner's back.
+ *
+ * Turning the hold off is the owner's decision, made in Settings, where
+ * the four facts about what unreviewed sending does are shown. A billing
+ * change is not that decision.
+ */
 export async function revokeBetaPlan(businessId: string): Promise<boolean> {
   const { count } = await prisma.business.updateMany({
     where: { id: businessId, subscriptionStatus: BETA_SUBSCRIPTION_STATUS },
-    data: { subscriptionStatus: null, tier: "free", holdAllForApproval: false },
+    data: { subscriptionStatus: null, tier: "free" },
   });
   return count > 0;
 }

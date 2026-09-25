@@ -4,7 +4,7 @@ import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
-import { assertSafeWebhookUrl, UnsafeWebhookUrlError } from "@/lib/ssrf";
+import { assertSafeWebhookUrl, postJsonToTenantUrl, UnsafeWebhookUrlError } from "@/lib/ssrf";
 
 const outboundWebhookSchema = z.object({ url: z.string().nullable().optional() });
 
@@ -111,12 +111,14 @@ export async function PUT() {
     // a hostname that resolved to a public address when it was saved can
     // be re-pointed at a private one later (DNS rebinding), and this
     // handler is otherwise a direct, low-latency SSRF oracle: it fetches
-    // immediately and reports back reachability. See src/lib/ssrf.ts.
-    await assertSafeWebhookUrl(business.outboundWebhookUrl);
-    const res = await fetch(business.outboundWebhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    // immediately and reports back reachability. postJsonToTenantUrl
+    // checks the URL, then checks the address again at connect time, and
+    // never follows a redirect (a public hostname that 30x's to an
+    // internal address would otherwise bypass the check entirely). See
+    // src/lib/ssrf.ts.
+    const res = await postJsonToTenantUrl(
+      business.outboundWebhookUrl,
+      {
         event: "webhook.test",
         leadId: "test",
         name: "Test Lead",
@@ -126,13 +128,10 @@ export async function PUT() {
         stage: "NEW",
         dealValue: 0,
         timestamp: new Date().toISOString(),
-      }),
-      signal: AbortSignal.timeout(8000),
-      // Never follow a redirect — a public hostname that 30x's to an
-      // internal address would otherwise bypass the check above entirely.
-      redirect: "manual",
-    });
-    if (!res.ok) {
+      },
+      { timeoutMs: 8000 }
+    );
+    if (res.status < 200 || res.status > 299) {
       return NextResponse.json(
         { success: false, message: `Endpoint responded with ${res.status}.` },
         { status: 502 }

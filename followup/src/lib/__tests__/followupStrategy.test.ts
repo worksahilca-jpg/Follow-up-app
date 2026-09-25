@@ -126,7 +126,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("OPENAI_API_KEY", "test-key");
   p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
-    where.action === "auto_send" ? { enabled: true, triggerDays: 5 } : where.action === "unanswered_reply" ? { enabled: true, triggerHours: 24 } : null
+    where.action === "auto_send" ? { enabled: true, triggerDays: 3 } : where.action === "unanswered_reply" ? { enabled: true, triggerHours: 24 } : null
   );
   p.lead.findMany.mockResolvedValue([]);
   p.lead.update.mockResolvedValue({});
@@ -148,7 +148,10 @@ beforeEach(() => {
 
 describe("the quiet-lead calendar", () => {
   it("is day 3, 7, 14 and 30 while the owner has left the Settings value alone", () => {
-    expect(quietReminderDays(5)).toEqual([3, 7, 14, 30]);
+    expect(quietReminderDays(3)).toEqual([3, 7, 14, 30]);
+    // The number on screen is reminder 1's day, literally: 5 is a choice now,
+    // not the old default read as "day 3" (reminderCadence.ts).
+    expect(quietReminderDays(5)).toEqual([5, 9, 16, 32]);
   });
 
   it("uses a silence value the owner changed as reminder 1, and keeps the later ones in order", () => {
@@ -162,14 +165,14 @@ describe("where a quiet lead is in the cadence", () => {
   const t = (direction: string, msAgo: number, trigger: string | null = null): TimelineMessage => ({ direction, at: Date.now() - msAgo, trigger });
 
   it("counts from the message they went quiet on: reminder 1 is due on day 3", () => {
-    const plan = quietReminderPlan([t("inbound", 10 * D), t("outbound", 4 * D)], 0, 5)!;
+    const plan = quietReminderPlan([t("inbound", 10 * D), t("outbound", 4 * D)], 0, 3)!;
     expect(plan.step).toBe(0);
     expect(Math.round((Date.now() - plan.dueAt!.getTime()) / D)).toBe(1); // due a day ago (day 3 of 4)
   });
 
   it("moves to reminder 2 once reminder 1 has gone — however it went, approved from Today included", () => {
     // A "manual" send carries no automation marker; it still counts.
-    const plan = quietReminderPlan([t("inbound", 20 * D), t("outbound", 12 * D), t("outbound", 9 * D, "manual")], 0, 5)!;
+    const plan = quietReminderPlan([t("inbound", 20 * D), t("outbound", 12 * D), t("outbound", 9 * D, "manual")], 0, 3)!;
     expect(plan.step).toBe(1);
     expect(plan.dueAt!.getTime()).toBeLessThanOrEqual(Date.now());
   });
@@ -178,32 +181,32 @@ describe("where a quiet lead is in the cadence", () => {
     const plan = quietReminderPlan(
       [t("inbound", 44 * D), t("outbound", 40 * D), t("outbound", 37 * D), t("outbound", 33 * D), t("outbound", 26 * D), t("outbound", 10 * D)],
       0,
-      5
+      3
     )!;
     expect(plan).toEqual({ step: 4, dueAt: null });
   });
 
   it("stops the moment they reply — a lead whose own message is newest is not quiet", () => {
-    expect(quietReminderPlan([t("outbound", 10 * D), t("inbound", 1 * M)], 0, 5)).toBeNull();
+    expect(quietReminderPlan([t("outbound", 10 * D), t("inbound", 1 * M)], 0, 3)).toBeNull();
   });
 
   it("keeps the gap after a reminder that was approved late, instead of sending the next one the day after", () => {
     // Reminder 1 went on day 6 (approved late): reminder 2 is day 10, not day 7.
     const anchor = 8 * D;
-    const plan = quietReminderPlan([t("inbound", 9 * D), t("outbound", anchor), t("outbound", anchor - 6 * D)], 0, 5)!;
+    const plan = quietReminderPlan([t("inbound", 9 * D), t("outbound", anchor), t("outbound", anchor - 6 * D)], 0, 3)!;
     expect(plan.step).toBe(1);
     expect(Math.round((plan.dueAt!.getTime() - (Date.now() - anchor)) / D)).toBe(10);
   });
 
   it("ignores the instant acknowledgement, which is not a touch", () => {
-    const plan = quietReminderPlan([t("inbound", 10 * D), t("outbound", 10 * D - M, "instant_ack"), t("outbound", 5 * D)], 0, 5)!;
+    const plan = quietReminderPlan([t("inbound", 10 * D), t("outbound", 10 * D - M, "instant_ack"), t("outbound", 5 * D)], 0, 3)!;
     expect(plan.step).toBe(0);
   });
 
   it("does not start again after a welcome back went unanswered", () => {
     const timeline = [t("inbound", 200 * D), t("outbound", 190 * D), t("outbound", 60 * D)];
     expect(reactivationAlreadySent(timeline, 45)).toBe(true);
-    expect(quietReminderPlan(timeline, 0, 5)).toEqual({ step: 4, dueAt: null });
+    expect(quietReminderPlan(timeline, 0, 3)).toEqual({ step: 4, dueAt: null });
   });
 });
 
@@ -495,7 +498,7 @@ describe("the fresh pass", () => {
 
   it("does nothing where the owner switched off 'Reply for me when I haven't'", async () => {
     p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
-      where.action === "auto_send" ? { enabled: true, triggerDays: 5 } : where.action === "unanswered_reply" ? { enabled: false, triggerHours: 24 } : null
+      where.action === "auto_send" ? { enabled: true, triggerDays: 3 } : where.action === "unanswered_reply" ? { enabled: false, triggerHours: 24 } : null
     );
     const r = await runAutomationForBusiness("biz1", { freshLeadIds: ["q1"] });
     expect(r.checked).toBe(0);
@@ -529,7 +532,7 @@ describe("what the lead's badge says", () => {
     canSend: true,
     holdAllForApproval: true,
     masterEnabled: true,
-    silenceTriggerDays: 5,
+    silenceTriggerDays: 3,
     unansweredEnabled: true,
     unansweredHours: 24,
     deadLeadEnabled: true,

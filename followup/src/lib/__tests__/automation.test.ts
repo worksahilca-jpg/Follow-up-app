@@ -101,7 +101,7 @@ beforeEach(() => {
   vi.stubEnv("OPENAI_API_KEY", "test-key");
   // First call: the "auto_send" master row; second: the unanswered-reply rule.
   p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
-    where.action === "auto_send" ? { enabled: true, triggerDays: 5 } : { enabled: true, triggerHours: 24 }
+    where.action === "auto_send" ? { enabled: true, triggerDays: 3 } : { enabled: true, triggerHours: 24 }
   );
   // First findMany is the silence query, second the unanswered query.
   p.lead.findMany.mockResolvedValue([]);
@@ -367,7 +367,7 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
 
   it("is skipped entirely when the business turned the rule off", async () => {
     p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
-      where.action === "auto_send" ? { enabled: true, triggerDays: 5 } : { enabled: false, triggerHours: 24 }
+      where.action === "auto_send" ? { enabled: true, triggerDays: 3 } : { enabled: false, triggerHours: 24 }
     );
     await runAutomationForBusiness("biz1");
     // The silence query, plus the day-2–7 handoff scan (draftDmHandoffs),
@@ -454,7 +454,7 @@ describe("silence automation risk gate", () => {
   });
 
   it("does nothing at all when the master switch is off", async () => {
-    p.automation.findFirst.mockResolvedValue({ enabled: false, triggerDays: 5 });
+    p.automation.findFirst.mockResolvedValue({ enabled: false, triggerDays: 3 });
     const r = await runAutomationForBusiness("biz1");
     expect(r.checked).toBe(0);
     expect(p.lead.findMany).not.toHaveBeenCalled();
@@ -903,7 +903,7 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
   it("never queries for dead leads at all when the rule is turned off", async () => {
     p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
       where.action === "auto_send"
-        ? { enabled: true, triggerDays: 5 }
+        ? { enabled: true, triggerDays: 3 }
         : where.action === DEAD_LEAD_ACTION
           ? { enabled: false, triggerDays: 45 }
           : { enabled: true, triggerHours: 24 }
@@ -918,7 +918,7 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
   it("respects a business-configured dead-lead day threshold instead of the 45-day default", async () => {
     p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
       where.action === "auto_send"
-        ? { enabled: true, triggerDays: 5 }
+        ? { enabled: true, triggerDays: 3 }
         : where.action === DEAD_LEAD_ACTION
           ? { enabled: true, triggerDays: 90 }
           : { enabled: true, triggerHours: 24 }
@@ -968,7 +968,7 @@ describe("Meta's 24-hour window ceiling on the unanswered rule", () => {
   /** Business-configured unanswered window, in hours. */
   function configureUnansweredHours(triggerHours: number) {
     p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
-      where.action === "auto_send" ? { enabled: true, triggerDays: 5 } : { enabled: true, triggerHours }
+      where.action === "auto_send" ? { enabled: true, triggerDays: 3 } : { enabled: true, triggerHours }
     );
   }
 

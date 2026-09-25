@@ -6451,3 +6451,13 @@ and `followup/research/product/2026-09-15-reaching-back-out-to-ignored-leads.md`
   because existing drafts carry no kind (`Lead.suggestedDraftKind`).
 - The badge reads "due" from the moment a customer writes; for messages that arrived before
   the deploy it can read due up to a few hours before the hourly rule acts.
+
+## 2026-09-25 — Settings says what the follow-up strategy does ^settings-strategy-copy
+
+**Founder:** "yes fix them" — to fixing only the Settings sentences the strategy made untrue.
+
+- Summary: "drafts up to four reminders to a quiet lead, on days 3, 7, 14 and 30" (was "a nudge after 5 days"); "drafts a reply within minutes of a new message" (was "if you haven't answered within 24 hours").
+- Field: "First reminder after [3] days", with the calendar and "each one different, then FollowUp stops" under it; the reply field reads "If a reply was missed, check again after [N] hours" — it is only the backstop now.
+- The number means what it says: the seeded default moved 5 → 3 (migration `20260925130000_quiet_reminder_default` moves rows still on 5). The special case that read 5 as "day 3" was dropped — it made the field show 5 while the first reminder went on day 3.
+
+**Weak spot:** an owner who deliberately chose 5 before today is moved to 3 with everyone else; there was no way to tell them apart.

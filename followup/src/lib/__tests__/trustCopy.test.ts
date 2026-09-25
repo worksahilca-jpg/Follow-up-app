@@ -71,14 +71,15 @@ describe("the instant-reply promise", () => {
  * above: a true sentence that went stale when the code moved.
  */
 describe("the unanswered-rule promise", () => {
-  it("tells the owner the Meta channels are capped, in the sentence that describes what is active", () => {
-    // Matched on source shape: the clause is built in describeAutomationState()
-    // from the same constant the engine uses, so this also fails if someone
-    // rewrites it around a literal number that could drift.
-    // The interpolation itself, closing paren included — so this pins the
-    // summary sentence specifically, not the explanatory note below the
-    // field, which has its own assertion.
-    expect(settings()).toMatch(/\$\{UNANSWERED_META_DM_MAX_HOURS\} on Instagram and Messenger\)/);
+  it("promises what is now active: a reply within minutes, not after the hours setting", () => {
+    // Since the follow-up strategy (2026-09-25) a new message is answered
+    // or held within minutes on every channel (the fresh-replies cron); the
+    // hours field is only the backstop. The summary sentence used to quote
+    // that field — "if you haven't answered within 24 hours (20 on
+    // Instagram and Messenger)" — which became untrue the day this shipped.
+    expect(settings()).toMatch(/drafts a reply within minutes of a new message/);
+    expect(settings()).toMatch(/replies within minutes of a new message, holding anything about price/);
+    expect(settings()).not.toMatch(/if you haven't answered within \$\{unansweredHours\}/);
   });
 
   it("does not hardcode the ceiling anywhere in Settings", () => {

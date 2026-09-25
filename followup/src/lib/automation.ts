@@ -191,58 +191,15 @@ export const DEAD_LEAD_DEFAULT_DAYS = 45;
  * The quiet-lead cadence — founder's follow-up strategy, 2026-09-25.
  * ------------------------------------------------------------------ */
 
-/**
- * The Settings "Wait N days before nudging a quiet lead" value every
- * account is seeded with (auth.ts) and the settings route falls back to.
- * Only used to tell "the owner left it alone" from "the owner chose a
- * number" — see quietReminderDays.
- */
-export const SILENCE_DEFAULT_TRIGGER_DAYS = 5;
-
-/**
- * Four reminders, at days 3, 7, 14 and 30 after the message the customer
- * went quiet on, and then nothing.
- *
- * This replaced one flat trigger that nudged every `triggerDays` forever
- * with the same generic draft. research/product/2026-09-09-followup-
- * cadence-best-practices.md §2 and prioritized change #1: the category has
- * converged on an escalating, widening cadence (day 3, 7, 14, 21–30) with
- * a different angle each time, and on a ceiling — a person who has not
- * answered four different messages is not answering, and a fifth is the
- * point where persistence becomes pestering.
- *
- * Days are counted from the ANCHOR (see quietReminderPlan), not from the
- * previous reminder, so the calendar a customer sees is the one above.
- */
-export const QUIET_REMINDER_DEFAULT_DAYS: readonly number[] = [3, 7, 14, 30];
+// The reminder calendar lives in @/lib/reminderCadence (no server imports,
+// so Settings can show the same days); re-exported here for existing callers.
+import { SILENCE_DEFAULT_TRIGGER_DAYS, QUIET_REMINDER_DEFAULT_DAYS, quietReminderDays } from "@/lib/reminderCadence";
+export { SILENCE_DEFAULT_TRIGGER_DAYS, QUIET_REMINDER_DEFAULT_DAYS, quietReminderDays };
 
 /** Outbound messages this close to the previous counted one are the same touch (a split answer, a quick correction). */
 const SAME_TOUCH_MS = 12 * 3_600_000;
 const DAY_MS = 86_400_000;
 
-/**
- * The day each reminder is due, for this business.
- *
- * An owner who changed the Settings silence value meant it, so it becomes
- * reminder 1's delay rather than being silently ignored (founder's call,
- * 2026-09-25). The later reminders keep the default calendar where they
- * can, and are pushed back only as far as it takes to keep at least the
- * default gap after the one before — an owner who asked for 10 days before
- * the first nudge did not ask for the second one four days later... or
- * earlier than the first.
- *
- * Left at the seeded default, the value means nothing about timing and the
- * research cadence applies unchanged.
- */
-export function quietReminderDays(triggerDays: number): number[] {
-  const defaults = QUIET_REMINDER_DEFAULT_DAYS;
-  if (!Number.isFinite(triggerDays) || triggerDays === SILENCE_DEFAULT_TRIGGER_DAYS) return [...defaults];
-  const days = [Math.max(1, Math.round(triggerDays))];
-  for (let i = 1; i < defaults.length; i++) {
-    days.push(Math.max(defaults[i], days[i - 1] + (defaults[i] - defaults[i - 1])));
-  }
-  return days;
-}
 
 /** One message as the cadence reads it — the shape both the engine (Prisma rows) and the badge (Message) reduce to. */
 export type TimelineMessage = {

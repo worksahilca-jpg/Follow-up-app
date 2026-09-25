@@ -22,7 +22,7 @@ vi.mock("@/lib/integrations/gmail", () => ({
 
 import { prisma } from "@/lib/db";
 import { getGoogleCalendarBusyTimes } from "@/lib/integrations/gmail";
-import { getAvailableSlots, createBooking } from "@/lib/booking";
+import { getAvailableSlots, createBooking, getBookingContext } from "@/lib/booking";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -162,5 +162,21 @@ describe("createBooking", () => {
     const result = await createBooking("lead1", "2026-09-14T13:00:00.000Z");
 
     expect(result.success).toBe(false);
+  });
+});
+
+// The booking link answers anyone who holds it, unauthenticated. The page
+// only ever greets by first name, so that is all the API gives out
+// (audits 2026-09-16 M-2, 2026-09-26).
+describe("getBookingContext — what an unauthenticated link holder learns", () => {
+  it("gives the first name only, never the full name", async () => {
+    p.lead.findUnique.mockResolvedValue({ name: "Priya  Ramaswamy-Shah", business: { name: "Acme Plumbing" } });
+    const ctx = await getBookingContext("lead1");
+    expect(ctx).toEqual({ leadName: "Priya", businessName: "Acme Plumbing", durationMinutes: 30 });
+  });
+
+  it("is null for an unknown id", async () => {
+    p.lead.findUnique.mockResolvedValue(null);
+    await expect(getBookingContext("nope")).resolves.toBeNull();
   });
 });

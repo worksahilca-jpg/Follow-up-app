@@ -61,14 +61,23 @@ export interface BookingContext {
   durationMinutes: number;
 }
 
-/** What the public booking page needs to render — who this is for, nothing else. */
+/**
+ * What the public booking page needs to render — who this is for, nothing else.
+ *
+ * First name only. This answers anyone holding the link, with no sign-in,
+ * and the link travels: in follow-up emails, in the outbound-webhook
+ * payload's leadId, in whatever the lead forwards. The page has only ever
+ * shown the first name ("Hi Priya —"), so the full name was disclosure
+ * with no use (audits 2026-09-16 M-2, 2026-09-26).
+ */
 export async function getBookingContext(leadId: string): Promise<BookingContext | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
     select: { name: true, business: { select: { name: true } } },
   });
   if (!lead) return null;
-  return { leadName: lead.name, businessName: lead.business.name, durationMinutes: SLOT_MINUTES };
+  const firstName = lead.name.trim().split(/\s+/)[0] ?? "";
+  return { leadName: firstName, businessName: lead.business.name, durationMinutes: SLOT_MINUTES };
 }
 
 /** Open slots for this lead's business over the next LOOKAHEAD_DAYS, as ISO strings. */

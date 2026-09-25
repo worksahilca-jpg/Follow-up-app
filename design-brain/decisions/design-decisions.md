@@ -6264,3 +6264,27 @@ its full stop by the flex row's gap.
    their Instagram will see the old name until they reconnect. Acceptable for a display
    string; routing keys on the id, which never changes.
 3. **Only Instagram.** The Facebook Messenger card has the same shape and was not checked.
+
+## 2026-09-25 — Email replies thread ^email-replies-thread
+
+**What changed.** `sendFollowUpToLead` (src/lib/sending.ts) now replies into the
+customer's newest email thread whenever no thread was passed in. Before, only the instant
+acknowledgement threaded; every approved or automated email started a new conversation
+under an AI-written subject (daily-path audit 2026-09-25 F3).
+
+**Decided by the founder**, 2026-09-25 ([[approved#^A-020]]). The trade he accepted: Gmail
+only keeps a message in a thread when the Subject matches, so for a reply to an existing
+email the subject is always `Re: <their subject>`, whatever the Subject box says.
+
+**Fails open.** If Gmail won't return the original's headers, the email still goes out,
+fresh, exactly as before. Never a failed send over threading.
+
+**Left for the UI (not done — screens are the founder's):** the composer and the Today
+card still show and require a Subject for email leads, including ones that will now reply
+in-thread. The honest version shows "Replying to: <their subject>" in place of the box when
+a thread exists.
+
+**Weak spots, named.** The newest customer email picks the thread; a lead writing in two
+separate threads is answered in the most recent one. Outlook replies via Graph `/reply`,
+which quotes the original and cannot carry List-Unsubscribe headers — same as the instant
+ack's Outlook path already did.

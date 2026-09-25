@@ -1024,6 +1024,40 @@ export function sanitizeHeaderValue(value: string): string {
   return value.replace(/[\r\n\x00-\x08\x0b\x0c\x0e-\x1f]+/g, " ").trim();
 }
 
+/**
+ * The two headers a reply needs from the customer's own email: its
+ * RFC 2822 `Message-ID` (for In-Reply-To/References) and its Subject.
+ *
+ * Gmail only files a sent message into an existing thread when the
+ * threadId is given, In-Reply-To/References name a message in it, and the
+ * Subject matches (Gmail API "Manage threads"). The stored Message.
+ * externalId is Gmail's API id, not the RFC Message-ID, so the header has
+ * to be read back — one metadata call, no body (daily-path audit
+ * 2026-09-25 F3). Null on any failure: the caller then sends a fresh
+ * email as it always has, rather than not sending.
+ */
+export async function getGmailReplyHeaders(
+  businessId: string,
+  gmailMessageId: string
+): Promise<{ messageIdHeader: string; subject: string } | null> {
+  try {
+    const authed = await getAuthedGmailClient(businessId);
+    if (!authed) return null;
+    const res = await authed.gmail.users.messages.get({
+      userId: "me",
+      id: gmailMessageId,
+      format: "metadata",
+      metadataHeaders: ["Message-ID", "Subject"],
+    });
+    const messageIdHeader = getHeader(res.data.payload?.headers, "Message-ID");
+    if (!messageIdHeader) return null;
+    return { messageIdHeader, subject: getHeader(res.data.payload?.headers, "Subject") };
+  } catch (err) {
+    console.error(`Couldn't read reply headers for Gmail message in business ${businessId}:`, err instanceof Error ? err.name : "UnknownError");
+    return null;
+  }
+}
+
 export async function sendEmail(
   businessId: string,
   params: {

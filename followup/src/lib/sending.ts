@@ -17,7 +17,7 @@ import { prisma } from "@/lib/db";
 import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
 import { checkSendCap } from "@/lib/sendCaps";
 import { claimSend, releaseSendClaim, SEND_CLAIM_WINDOW_MS } from "@/lib/sendClaim";
-import { getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
+import { getGmailReplyHeaders, getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
 import { getWhatsAppCloudConnection, sendWhatsAppCloud } from "@/lib/whatsappCloud";
@@ -96,6 +96,47 @@ async function detectEmailProvider(businessId: string, leadId: string): Promise<
   // Neither connected — sendEmail() will fail with a clear "not
   // connected" message, same behavior as before Outlook existed.
   return "gmail";
+}
+
+/**
+ * The customer's newest email that a reply should answer, in the mailbox
+ * the reply goes out from — or null (a form or CSV lead with no captured
+ * thread, or a thread from a message with no id).
+ *
+ * Why (daily-path audit 2026-09-25 F3): only the instant acknowledgement
+ * threaded. Every Approve & send and every automated follow-up started a
+ * brand-new email under an AI-written subject, so the customer got a
+ * stranger's email with no history instead of a reply under their own
+ * message, and their answer to it opened a second conversation. Replying
+ * like a person hits Reply was the founder's call, 2026-09-25.
+ */
+async function emailReplyTarget(
+  leadId: string,
+  provider: "gmail" | "outlook"
+): Promise<{ messageExternalId: string; threadId: string | null } | null> {
+  const newest = await prisma.message.findFirst({
+    where: {
+      direction: "inbound",
+      externalId: { not: null },
+      conversation: {
+        leadId,
+        channel: "email",
+        // A null provider is a Gmail thread from before the column existed
+        // (see Conversation.emailProvider).
+        ...(provider === "outlook" ? { emailProvider: "outlook" } : { OR: [{ emailProvider: "gmail" }, { emailProvider: null }] }),
+      },
+    },
+    orderBy: { sentAt: "desc" },
+    select: { externalId: true, conversation: { select: { externalId: true } } },
+  });
+  if (!newest?.externalId) return null;
+  return { messageExternalId: newest.externalId, threadId: newest.conversation.externalId };
+}
+
+/** "Re: <their subject>", never "Re: Re: …" — the subject Gmail needs to keep a reply in the thread. */
+export function replySubject(original: string): string | null {
+  const bare = original.replace(/^\s*((re|fwd?|aw|sv)\s*:\s*)+/i, "").trim();
+  return bare ? `Re: ${bare}` : null;
 }
 
 /**
@@ -616,25 +657,45 @@ export async function sendFollowUpToLead(
       // the thread, and measured in the audit trail — and none of those
       // should carry a link that isn't part of what anyone wrote.
       emailProvider = await detectEmailProvider(lead.businessId, lead.id);
+      const fallbackSubject = options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`;
+      // A caller that already knows the thread (the instant ack, the retry
+      // queue) passes it; everyone else replies under the customer's newest
+      // email. Only when there is none does a fresh email go out.
+      const target = options.emailThreadId || options.emailInReplyTo ? null : await emailReplyTarget(lead.id, emailProvider);
       if (emailProvider === "outlook") {
         const result = await sendOutlookEmail(lead.businessId, {
           to: lead.email,
-          subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
+          subject: fallbackSubject,
           body,
           // Graph's /reply endpoint takes the specific message's own id,
           // not an RFC822 Message-ID header — acknowledgeNewLead's Outlook
           // path passes that Graph id through as emailInReplyTo (same
           // field Gmail's flow uses for its own, differently-shaped id).
-          replyToMessageId: options.emailInReplyTo,
+          // Graph threads a /reply and keeps its subject by itself.
+          replyToMessageId: options.emailInReplyTo ?? target?.messageExternalId,
         });
         if (!result.success) return providerFailure(result, "Outlook didn't confirm this message sent.");
       } else {
+        let threadId = options.emailThreadId;
+        let inReplyTo = options.emailInReplyTo;
+        let subject = fallbackSubject;
+        if (target?.threadId) {
+          const headers = await getGmailReplyHeaders(lead.businessId, target.messageExternalId);
+          if (headers) {
+            threadId = target.threadId;
+            inReplyTo = headers.messageIdHeader;
+            // Their subject, not ours: Gmail keeps a message in the thread
+            // only when the Subject matches, so a subject typed in the
+            // composer is set aside for a reply to an existing email.
+            subject = replySubject(headers.subject) ?? fallbackSubject;
+          }
+        }
         const result = await sendEmail(lead.businessId, {
           to: lead.email,
-          subject: options.subject ?? `Following up on your inquiry, ${lead.name.split(" ")[0]}`,
+          subject,
           body,
-          threadId: options.emailThreadId,
-          inReplyTo: options.emailInReplyTo,
+          threadId,
+          inReplyTo,
         });
         if (!result.success) return providerFailure(result, "Gmail didn't confirm this message sent.");
         externalId = result.messageId ?? undefined;

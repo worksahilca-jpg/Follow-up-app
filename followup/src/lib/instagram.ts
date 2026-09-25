@@ -23,8 +23,22 @@ export const GRAPH_API = `https://graph.instagram.com/${GRAPH_VERSION}`;
 const GRAPH_OAUTH = "https://graph.instagram.com";
 
 /**
- * Instagram DM capture via the Instagram Graph API (Meta Developer App
- * "FollowUp", App ID 2713853435677364). Unlike Twilio/the generic
+ * Instagram DM capture via the Instagram Graph API. Two ids, easily mixed
+ * up: the Meta Developer App "FollowUp" is 2713853435677364 (the Facebook
+ * app — webhooks, App Review), but Instagram Login uses the separate
+ * Instagram app inside it, "FollowUp-IG", 1070892255325237. INSTAGRAM_APP_ID
+ * and INSTAGRAM_APP_SECRET are that Instagram pair, never the Facebook one
+ * (docs/meta-oauth-setup.md).
+ *
+ * If "Connect with Instagram" fails at the long-lived exchange with
+ * "Unsupported request - method type: get [100]" on both GET and POST, check
+ * the account's ROLE before touching this code: on 2026-09-25 that exact
+ * error was an account that was not an accepted Instagram Tester on the app.
+ * Accepting the invite (instagram.com/accounts/manage_access → Tester
+ * invites) made the same code connect first time. Two code changes (#319,
+ * #320) were spent on the wrong cause before that was found.
+ *
+ * Unlike Twilio/the generic
  * webhook, this is a SINGLE app-wide integration — one Meta app, one
  * webhook callback URL configured once in the Meta console — not a
  * per-business URL/secret. Each business's own connected Instagram

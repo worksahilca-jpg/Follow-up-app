@@ -163,11 +163,17 @@ describe("computeAutomationStatus", () => {
     const echo: Message = { ...msg("outbound", 5), channel: "instagram", source: "instagram_direct" };
     const l = lead({ conversation: [echo, msg("inbound", 4)] });
 
-    // 4h since the lead wrote: past the 3h first-reply window, but the
-    // owner HAS replied, so the business's real 24h window applies.
+    // SUPERSEDED (2026-09-25): this asserted a 20-hour countdown (the 24h
+    // window, since the echo counts as a reply). Since the fresh-reply pass,
+    // a message nobody has answered is answered or held within minutes on
+    // every channel, whichever threshold the HOURLY rule would use — so the
+    // badge's answer is "due", and a countdown here would promise a wait the
+    // engine no longer makes. The echo-counts-as-a-reply rule itself is
+    // still pinned where it still decides something: the engine's threshold
+    // (automation.test.ts, "does NOT shorten the window once a real reply
+    // has gone out") and the countdown below, which applies after an ack.
     const status = computeAutomationStatus(l, RULES, NOW);
-    expect(status.kind).toBe("waiting");
-    expect((status as { etaHours: number }).etaHours).toBe(20);
+    expect(status).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
   it("still uses the short first-reply window when the only outbound echo is inbound-direction noise", () => {
@@ -184,11 +190,15 @@ describe("computeAutomationStatus", () => {
     expect(computeAutomationStatus(l, { ...RULES, masterEnabled: false }, NOW)).toEqual({ kind: "account_paused", reason: "unanswered", heldForApproval: false });
   });
 
+  // Re-pointed 2026-09-25: the countdown now exists only where the fresh
+  // pass deliberately stands aside — the instant acknowledgement already
+  // answered this message, and the fuller reply follows the 3-hour
+  // first-reply rule. (It used to be pinned on a 24h window at 20 hours.)
   it("shows waiting with a rough ETA before the unanswered threshold is reached", () => {
-    const l = lead({ conversation: [msg("outbound", 48), msg("inbound", 20)] });
+    const l = lead({ conversation: [msg("inbound", 2), { ...msg("outbound", 1.95), trigger: "instant_ack" }] });
     const status = computeAutomationStatus(l, RULES, NOW);
     expect(status.kind).toBe("waiting");
-    expect((status as { etaHours: number }).etaHours).toBe(4); // 24h threshold - 20h elapsed
+    expect((status as { etaHours: number }).etaHours).toBe(1); // 3h first-reply threshold - 2h elapsed
   });
 
   it("shows due_soon(dead_lead) once lastContacted crosses the dead-lead threshold", () => {
@@ -218,12 +228,19 @@ describe("computeAutomationStatus", () => {
     expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
-  it("falls back to the dead-lead/silence threshold when the lead wrote but the unanswered rule itself is disabled", () => {
+  // SUPERSEDED (2026-09-25): this used to expect due_soon(silence) — the
+  // flat silence rule nudged a lead whose own message was the newest thing
+  // in the thread. The four-reminder cadence is for someone who went quiet
+  // after OUR message; a "light nudge" to someone waiting on us is the
+  // wrong message, and with "Reply for me" switched off the owner has said
+  // FollowUp should not answer for them. Nothing is due until the dead-lead
+  // threshold, and the badge says so.
+  it("promises nothing when the lead wrote last and the unanswered rule itself is disabled", () => {
     const l = lead({
       lastContacted: new Date(NOW.getTime() - 6 * 86_400_000).toISOString(),
       conversation: [msg("inbound", 1)],
     });
-    expect(computeAutomationStatus(l, { ...RULES, unansweredEnabled: false }, NOW)).toEqual({ kind: "due_soon", reason: "silence", heldForApproval: false });
+    expect(computeAutomationStatus(l, { ...RULES, unansweredEnabled: false }, NOW)).toEqual({ kind: "waiting", etaHours: null, heldForApproval: false });
   });
 
   it("shows sent when we already replied and nothing else is currently due", () => {
@@ -288,9 +305,15 @@ describe("the unanswered badge against Meta's window ceiling", () => {
     });
   });
 
-  it("leaves an email lead at 21 hours still counting down, as the owner configured", () => {
+  // SUPERSEDED (2026-09-25), the three below: each asserted a countdown
+  // ("not due_soon") for an unanswered message hours old. The fresh-reply
+  // pass answers or holds such a message within minutes of its arrival on
+  // every channel, so it is due, not counting down. What each still pins is
+  // its Meta half: email never reads as a shutting window, a 72-hour setting
+  // never outlasts Meta's, and hour 19 is not yet painted gold.
+  it("never reads an email lead at 21 hours as a shutting window — there is no window", () => {
     const status = computeAutomationStatus(dmLead(21, "email"), RULES, NOW);
-    expect(status.kind).not.toBe("due_soon");
+    expect(status).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
   it("holds the ceiling against a business that configured 72 hours", () => {
@@ -303,15 +326,15 @@ describe("the unanswered badge against Meta's window ceiling", () => {
       hoursLeft: 3,
       heldForApproval: false,
     });
-    // …and the same lead on email genuinely does have days to go.
-    expect(computeAutomationStatus(dmLead(21, "email"), slow, NOW).kind).not.toBe("due_soon");
+    // …and the same lead on email is not on any clock of Meta's.
+    expect(computeAutomationStatus(dmLead(21, "email"), slow, NOW).kind).not.toBe("meta_window_closing");
   });
 
-  it("still counts down on an Instagram lead at 19 hours", () => {
+  it("does not warn about the window on an Instagram lead at 19 hours", () => {
     const status = computeAutomationStatus(dmLead(19, "instagram"), RULES, NOW);
-    expect(status.kind).not.toBe("due_soon");
-    // And no warning yet either: hour 19 is an ordinary, healthy
-    // conversation and must not be painted gold.
+    expect(status.kind).toBe("due_soon");
+    // No warning yet: hour 19 is an ordinary, healthy conversation and
+    // must not be painted gold.
     expect(status.kind).not.toBe("meta_window_closing");
   });
 });
@@ -355,10 +378,13 @@ describe("a 'Not now' tap on the lead's own page", () => {
     expect(computeAutomationStatus(l, RULES, NOW)).toEqual({ kind: "sent" });
   });
 
-  it("still counts down after an ANSWER tap — the owner is expected to reply, and FollowUp will if they don't", () => {
+  // Was "waiting" (a countdown) until 2026-09-25; an answer tap is a reply
+  // the fresh pass now picks up within minutes. The point is unchanged: an
+  // ANSWER is not an exit, so it is live, not "sent".
+  it("still treats an ANSWER tap as a reply that is owed — the owner is expected to reply, and FollowUp will if they don't", () => {
     const l = lead({ conversation: [{ ...msg("outbound", 6), trigger: "unanswered", channel: "instagram" }, { ...msg("inbound", 5), channel: "instagram", quickReplyPayload: ANSWER }] });
     const status = computeAutomationStatus(l, RULES, NOW);
-    expect(status.kind).toBe("waiting");
+    expect(status).toEqual({ kind: "due_soon", reason: "unanswered", heldForApproval: false });
   });
 
   it("restarts everything once the lead types again after an exit tap", () => {
@@ -417,7 +443,9 @@ describe("an account that holds every message for approval", () => {
   });
 
   it("marks a waiting lead as held", () => {
-    const l = lead({ conversation: [msg("inbound", 2)] });
+    // Waiting = the ack answered this message and the fuller reply is on
+    // the 3-hour first-reply rule (the only countdown left since 2026-09-25).
+    const l = lead({ conversation: [msg("inbound", 2), { ...msg("outbound", 1.95), trigger: "instant_ack" }] });
     const status = computeAutomationStatus(l, HELD, NOW);
     expect(status).toMatchObject({ kind: "waiting", heldForApproval: true });
   });

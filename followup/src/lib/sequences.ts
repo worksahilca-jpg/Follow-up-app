@@ -574,7 +574,17 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // below. The 5-minute claim lock above self-expires well before
         // the next hourly cron tick, so nothing needs to be explicitly
         // reset for this lead to be reconsidered once it's daytime.
-        if (!isWithinSendWindow(new Date(), timezone)) {
+        //
+        // Only where something could actually SEND. On a holding account
+        // every step is drafted and held for the owner, and holding is not
+        // sending: the draft should be on Today whenever the step comes
+        // due, 3am included (founder's follow-up strategy, 2026-09-25 —
+        // "drafting and holding happen at any hour"). Where the step could
+        // go out on its own, the window is still checked here, BEFORE the
+        // draft: this file keeps no cached draft to reuse, so deferring
+        // after drafting would buy the same draft again every hour of the
+        // night.
+        if (!holdAll && !isWithinSendWindow(new Date(), timezone)) {
           return { kind: "deferred" as const };
         }
 
@@ -807,6 +817,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
               sequenceStepDueAt: null, sequenceStepScheduledAt: null,
               suggestedMessage: message,
               suggestedSubject: draft.subject,
+              suggestedDraftKind: null,
               // A new draft is unjudged (audit 2026-09-25 F2).
               suggestedRiskLevel: null,
               suggestedRiskReason: null,

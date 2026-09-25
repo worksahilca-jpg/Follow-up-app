@@ -9,8 +9,13 @@ import { encryptPlaintextSecrets } from "@/lib/secretsSweep";
 // Hobby tier's cap; past a few hundred tenants this becomes a fan-out.
 export const maxDuration = 300;
 
-// GET /api/cron/gmail-sync — invoked every few minutes by Vercel Cron (see
-// vercel.json). Until this existed, a new email only became a lead when
+// GET /api/cron/gmail-sync — invoked every two minutes by Vercel Cron (see
+// vercel.json). Push (/api/integrations/gmail/push) is what normally sees a
+// new email within seconds; this tick is the floor when push is not set up
+// or a notification is lost, and at the old ten minutes that floor alone
+// broke the five-minute reply promise (founder's follow-up strategy,
+// 2026-09-25). An incremental tick with nothing new is a single list call.
+// Until this existed, a new email only became a lead when
 // the owner pressed "Sync now" in Settings — which is the exact opposite of
 // "no lead goes cold": the lead was cold from the moment it arrived. Same
 // CRON_SECRET protection as /api/cron/automation.

@@ -6387,3 +6387,67 @@ not from this change.
    tokens. It's deliberately bare: text, one quote bar, one link.
 4. **Delivery timing rests on a one-minute cron.** Expect 1–2 minutes after the reply is
    ready. Vercel doesn't promise exact cron timing.
+
+## 2026-09-25 — The follow-up strategy ^followup-strategy
+
+**Approved by the founder**, 2026-09-25, with one clarification the same day (auto-send
+accounts must actually *send* a low-risk reply within five minutes, not just draft it).
+Backend only; no screen was touched. Grounded in
+`followup/research/product/2026-09-09-followup-cadence-best-practices.md` (§2, changes #1–#5)
+and `followup/research/product/2026-09-15-reaching-back-out-to-ignored-leads.md` (§1.2, §5, §7.1).
+
+### What now happens
+
+1. **A new message is ready within five minutes, any hour, every channel.** A new worker
+   (`/api/cron/fresh-replies`, every minute) picks up any customer message under an hour old
+   that nobody has answered. On a holding account (the default) the drafted reply is put on
+   Today and the owner is told ("Maya wrote 3 minutes ago and hasn't heard back — a reply is
+   drafted and waiting for your approval."). On an account that sends without asking, a
+   low-risk reply goes out; anything the risk check flags still waits. The two-minute DM
+   head start is kept (it batches quick DMs and lets a present owner answer first); email
+   and SMS wait one minute so the capture request finishes first. Gmail and Outlook syncs
+   moved from every 10 minutes to every 2 so an email is *seen* in time.
+2. **Drafting and holding are no longer blocked by the send window.** Only sending is. A
+   holding account gets reminders, replies and workflow steps on Today at 3am too.
+3. **A quiet lead gets four different reminders, then nothing.** Day 3, 7, 14 and 30 after
+   the message they went quiet on (or the owner's own Settings silence value as reminder 1,
+   if they changed it from 5). Angles: (1) light nudge restating what they asked; (2)
+   something new and useful; (3) one easy closing question; (4) a short last message that
+   leaves the door open, no question that needs an answer. No apology in any of them. The
+   step is *counted from the thread*, so a reminder approved from Today advances it exactly
+   like an automatic one. A lead in the owner's own workflow gets none of these.
+4. **One welcome back at the dead-lead threshold (45 days), never a second.** It apologises
+   only when the customer's own message was the last thing in the thread (we ignored them);
+   a lead who went quiet on *us* gets no apology — the research's §7.1 finding was that the
+   old hint apologised to exactly the wrong group. Someone who wrote 45+ days ago and was
+   never answered now gets the belated-answer steer (they got none before).
+5. **Reminders and welcome backs** go out 8:00–20:00 business-local (was 8–18), stop the
+   moment the customer writes (including in the seconds while one is being drafted), use the
+   channel they last used, and at most one such automatic message goes to a lead per local
+   calendar day.
+
+### Weak spots, named
+
+- **Settings now says things that are not true** (the screen is the founder's; not changed):
+  "Wait 5 days before nudging a quiet lead" / "nudges a quiet lead after 5 days" — at the
+  default the first reminder is day 3; "this never fires again until they've gone quiet for
+  the full window once more" — it is four reminders then stop; "Reply for me… if a lead's
+  message goes unanswered for this many hours" and "drafts a reply if you haven't answered
+  within 24 hours" — it is now within minutes. These need rewording before testers read them.
+- **On an auto-send account the owner's "Step in after N hours" no longer holds back a reply
+  to a fresh message** (founder's instruction). An owner who set 6 hours to answer first now
+  gets ~1–3 minutes. The hours value still governs the hourly safety net.
+- **On an auto-send account a brand-new lead's five-minute reply is the instant
+  acknowledgement.** The fuller drafted answer still follows the 3-hour first-reply rule —
+  sending both within a minute is the "two replies" moment the DM grace period exists to stop.
+- **Reminders barely reach Instagram/Messenger** (Meta's 24-hour door shuts before day 3) and
+  on WhatsApp past 24 hours the approved template goes instead of the reminder's words.
+- The one-per-day rule exempts replies and owner-built workflow steps (their hour-level
+  delays exist to land inside Meta's window). It is a per-lead promise for FollowUp's own
+  unprompted messages, not a global one.
+- A two-minute sync can overlap itself on a long daily deep pass and classify the same new
+  thread twice. The hourly silence scan now loads every quiet lead each hour.
+- One-time cost after deploy: held reminders and cold-unanswered drafts are rebuilt once,
+  because existing drafts carry no kind (`Lead.suggestedDraftKind`).
+- The badge reads "due" from the moment a customer writes; for messages that arrived before
+  the deploy it can read due up to a few hours before the hourly rule acts.

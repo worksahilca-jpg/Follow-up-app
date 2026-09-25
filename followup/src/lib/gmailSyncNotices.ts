@@ -8,7 +8,7 @@ import { gmailSelfAddress } from "@/lib/integrations/gmail";
  *
  * While the Google app is in Testing mode, Google ends every refresh token
  * after seven days (research/integrations/2026-09-06-gmail-oauth-
- * verification.md). The ten-minute sync already parks such a connection at
+ * verification.md). The periodic sync already parks such a connection at
  * `needs_reconnect` (src/lib/gmailSync.ts), and that part is right. What
  * followed was not: on any account with leads, the only place the owner
  * could find out was one line on Today, below everything else. No bell, no
@@ -43,8 +43,10 @@ import { gmailSelfAddress } from "@/lib/integrations/gmail";
 
 /**
  * How long an inbox must have gone without a successful sync, failing on
- * consecutive ticks, before the owner is told. Two hours is twelve
- * ten-minute ticks: long past a rate limit or a short Google incident,
+ * consecutive ticks, before the owner is told. Two hours is sixty
+ * two-minute ticks (twelve, when the sync ran every ten minutes — the
+ * threshold is time, not a tick count, so the move to two minutes on
+ * 2026-09-25 did not change it): long past a rate limit or a short Google incident,
  * short enough that a real, persistent break costs an afternoon rather
  * than a week. Not tuned against data; there is none yet, which is a
  * reason to keep it named here rather than inline.

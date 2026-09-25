@@ -100,7 +100,10 @@ async function draftReactivation(
   const draft = await generateFollowUpMessage(
     { name: lead.name, conversation },
     voiceSamples,
-    deadLeadMessageHint(daysSinceContact)
+    // "business": this batch only ever sends to COLD — we answered, they
+    // went quiet (sendableWhere below). No apology for them; that is only
+    // for someone we ignored (research 2026-09-15 §1.2, Steer E).
+    deadLeadMessageHint(daysSinceContact, "business")
   );
   const body = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
     languageSample: latestInboundText(conversation),

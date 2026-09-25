@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { localHour, isWithinSendWindow } from "@/lib/sendWindow";
+import { localHour, isWithinSendWindow, localDateKey } from "@/lib/sendWindow";
 
 // Fixed UTC instants, checked against a couple of real IANA timezones —
 // deliberately not mocking Intl, since the whole point is to trust the
@@ -28,9 +28,24 @@ describe("isWithinSendWindow", () => {
     expect(isWithinSendWindow(new Date("2026-01-15T08:00:00Z"), "America/New_York")).toBe(false);
   });
 
-  it("blocks exactly at the window's exclusive end (6pm)", () => {
-    // 2026-01-15T23:00:00Z = 6pm EST.
-    expect(isWithinSendWindow(new Date("2026-01-15T23:00:00Z"), "America/New_York")).toBe(false);
+  // The window runs to 8pm since the founder's follow-up strategy
+  // (2026-09-25); it used to end at 6pm.
+  it("allows a reminder in the early evening (7pm)", () => {
+    // 2026-01-16T00:00:00Z = 7pm EST on the 15th.
+    expect(isWithinSendWindow(new Date("2026-01-16T00:00:00Z"), "America/New_York")).toBe(true);
+  });
+
+  it("blocks exactly at the window's exclusive end (8pm)", () => {
+    // 2026-01-16T01:00:00Z = 8pm EST on the 15th.
+    expect(isWithinSendWindow(new Date("2026-01-16T01:00:00Z"), "America/New_York")).toBe(false);
+  });
+});
+
+describe("localDateKey", () => {
+  it("is the business's own calendar day, not UTC's", () => {
+    // 03:30 UTC on the 16th is still the evening of the 15th in New York.
+    expect(localDateKey(new Date("2026-01-16T03:30:00Z"), "America/New_York")).toBe("2026-01-15");
+    expect(localDateKey(new Date("2026-01-16T03:30:00Z"), "Asia/Kolkata")).toBe("2026-01-16");
   });
 
   it("allows exactly at the window's inclusive start (8am)", () => {

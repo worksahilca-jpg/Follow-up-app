@@ -659,6 +659,20 @@ model Lead {
   // routine, and an owner facing 600 of them had to read all 600.
   suggestedRiskLevel  String?
   suggestedRiskReason String?
+  // WHAT the cached draft above was written as, when FollowUp wrote it on
+  // purpose for something other than a plain reply: "reminder_1" to
+  // "reminder_4" (the quiet-lead cadence, src/lib/automation.ts),
+  // "reactivation" (the 45-day welcome back), or "belated_reply" (an
+  // answer owed to someone nobody replied to for 45+ days). Null is an
+  // ordinary reply — what scoring.ts writes.
+  //
+  // suggestedDraftedFor answers "is this draft still about the current
+  // conversation"; this answers "is it the right KIND of message". The two
+  // stopped being the same question when the silence rule became four
+  // different reminders (founder's follow-up strategy, 2026-09-25): a lead
+  // whose step-1 nudge sat unapproved until day 45 has a draft that is
+  // perfectly current and exactly the wrong message for a welcome back.
+  suggestedDraftKind  String?
   // Why FollowUp did NOT read this lead or write anything for it — set
   // whenever checkAiEligibility (@/lib/billing) refuses, cleared the
   // moment a score/draft actually lands (src/lib/scoring.ts).
@@ -934,6 +948,11 @@ model Lead {
   // shape as OutboundSend's status/nextAttemptAt index), and a
   // business-prefixed index cannot serve it.
   @@index([ackDueAt])
+  // The fresh-reply worker's "who wrote in the last hour" scan
+  // (runFreshRepliesForAllBusinesses in src/lib/automation.ts). Same shape
+  // and same reason as ackDueAt just above: once a minute, every tenant at
+  // once, a narrow recent range — which only an unprefixed index can serve.
+  @@index([lastContacted])
 }
 
 model Conversation {

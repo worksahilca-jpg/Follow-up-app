@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/gmail-sync",
-      "schedule": "*/10 * * * *"
+      "schedule": "*/2 * * * *"
     },
     {
       "path": "/api/cron/weekly-digest",
@@ -18,7 +18,7 @@
     },
     {
       "path": "/api/cron/outlook-sync",
-      "schedule": "*/10 * * * *"
+      "schedule": "*/2 * * * *"
     },
     {
       "path": "/api/cron/office",
@@ -34,6 +34,10 @@
     },
     {
       "path": "/api/cron/instant-ack",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/fresh-replies",
       "schedule": "* * * * *"
     },
     {

@@ -31,6 +31,7 @@ import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS } from "@/lib/metaWind
 import { CRM_PROVIDERS, isCrmProvider } from "@/lib/crm";
 import { isTransientError } from "@/lib/transientError";
 import { requireActiveBilling } from "@/lib/billing";
+import { localDateKey } from "@/lib/sendWindow";
 import {
   claimNextDueSend,
   hasSendInFlight,
@@ -286,6 +287,35 @@ export type SendResult = {
 };
 
 /**
+ * Has any automated message already gone to this lead today, in the
+ * business's own calendar day? See the one-per-day rule in
+ * sendFollowUpToLead.
+ *
+ * Read off FollowUp rows (automated = true), which every automated send
+ * writes — the instant ack, a fresh reply, a workflow step, a reminder —
+ * so the answer covers every path, not just the caller's. Fails CLOSED:
+ * if the question cannot be answered, the unprompted message waits a day,
+ * which costs a day; sending it might cost the customer's patience.
+ */
+async function alreadyMessagedAutomaticallyToday(leadId: string, businessId: string): Promise<boolean> {
+  try {
+    const latest = await prisma.followUp.findFirst({
+      where: { leadId, automated: true, sentAt: { not: null } },
+      orderBy: { sentAt: "desc" },
+      select: { sentAt: true },
+    });
+    if (!latest?.sentAt) return false;
+    // Only the one plain column — Business carries encrypted secrets (db.ts).
+    const business = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true } });
+    const timeZone = business?.timezone ?? "America/New_York";
+    return localDateKey(latest.sentAt, timeZone) === localDateKey(new Date(), timeZone);
+  } catch (err) {
+    console.error(`Could not check today's automated sends for lead ${leadId}:`, err);
+    return true;
+  }
+}
+
+/**
  * Meta's window on Instagram and Messenger, judged before the provider is
  * called — so an automated send past 24 hours is a plain refusal here,
  * never a Graph 400 read back from cron JSON (audit 2026-09-16, P1), and
@@ -478,9 +508,10 @@ export async function sendFollowUpToLead(
   // Every message this product sends is a reply to someone who contacted
   // the business first. Even the coldest one in the reactivation batch goes
   // to a person who filled in a form or sent an email and then never heard
-  // back — and deadLeadMessageHint() now requires the draft to say exactly
-  // that: you got in touch about X, sorry we never came back to you. A
-  // recipient reading that recognises it instantly. It is an overdue reply,
+  // back — and deadLeadMessageHint() requires the draft to open on exactly
+  // that conversation, in their own terms ("you got in touch about X"),
+  // with "sorry we never came back to you" added only where that is true
+  // (since 2026-09-25). A recipient reading that recognises it instantly. It is an overdue reply,
   // not an approach, and an "unsubscribe" line stapled to the bottom would
   // misdescribe it as a mailing — which is both untrue and corrosive to the
   // one thing this product sells, that its messages read as if the owner
@@ -495,8 +526,9 @@ export async function sendFollowUpToLead(
   // a day to people who asked, not a list blast.
   //
   // What would make this wrong: if the drafts stopped naming the original
-  // enquiry and the missed reply, or if volume rose to where recipients no
-  // longer recognise the sender. Both are worth re-checking together.
+  // enquiry (and the missed reply, where there was one), or if volume rose
+  // to where recipients no longer recognise the sender. Both are worth
+  // re-checking together.
   // Daily volume ceiling. Applies to AUTOMATED sends only — a human
   // emailing their own customer is never rate-limited by us — and lives
   // here, in the one funnel every automated path goes through, so a caller
@@ -510,6 +542,33 @@ export async function sendFollowUpToLead(
     const capKind = options.trigger === "dead_lead_reactivation" ? "reactivation" : "automated";
     const cap = await checkSendCap(lead.businessId, capKind);
     if (!cap.allowed) return { success: false, message: cap.reason, failure: "refused" };
+  }
+
+  // At most one automatic message FollowUp starts on its own, per lead, per
+  // calendar day in the business's time zone — founder's follow-up
+  // strategy, 2026-09-25. The volume cap above is a fuse for the whole
+  // account; this is the per-person promise that nobody is chased twice in
+  // a day, however two paths happen to line up (a reminder and a
+  // reactivation, the hourly run and a manual "check now", a retry).
+  //
+  // What counts: every automated send to this lead today, whatever started
+  // it. What is held back: only the unprompted kinds — a quiet-lead
+  // reminder ("silence") and a welcome back. A reply to something the
+  // customer wrote is never refused by this: they asked, and answering the
+  // second message of a busy day is the product working, not pestering.
+  // An owner-built workflow is left to its own timing too — its hour-level
+  // delays exist to place a second touch inside Meta's 24-hour window
+  // (sequences.ts), and quietly pushing that to tomorrow would close the
+  // window it was built for.
+  if (options.automated && (options.trigger === "silence" || options.trigger === "dead_lead_reactivation")) {
+    if (await alreadyMessagedAutomaticallyToday(lead.id, lead.businessId)) {
+      const firstName = lead.name.split(" ")[0];
+      return {
+        success: false,
+        message: `FollowUp already sent ${firstName} an automatic message today — the next one waits until tomorrow.`,
+        failure: "refused",
+      };
+    }
   }
 
   /**

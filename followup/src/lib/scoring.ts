@@ -190,6 +190,10 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       // can tell a still-current draft from a stale one instead of
       // rebuilding it every 20 hours (see schema.prisma).
       suggestedDraftedFor: new Date(conversation[conversation.length - 1].date),
+      // A reply, not a reminder or a welcome back: the automation must not
+      // mistake it for one of its own purpose-written drafts
+      // (Lead.suggestedDraftKind).
+      suggestedDraftKind: null,
       // What their newest message was written in, refreshed every pass.
       // `languageSetAt` is therefore "when we last read it", not "when we
       // decided" — a lead who switches from Hinglish to English is a lead

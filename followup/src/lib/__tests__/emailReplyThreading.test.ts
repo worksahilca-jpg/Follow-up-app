@@ -18,7 +18,7 @@ vi.mock("@/lib/db", () => ({
     conversation: { findFirst: vi.fn(), create: vi.fn() },
     sendClaim: { create: vi.fn(), updateMany: vi.fn(async () => ({ count: 0 })), deleteMany: vi.fn() },
     message: { create: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn(), count: vi.fn(async () => 1) },
-    followUp: { create: vi.fn() },
+    followUp: { create: vi.fn(), findFirst: vi.fn() },
     business: { findUnique: vi.fn(async () => ({ allowModelTraining: false })) },
     outboundSend: { findFirst: vi.fn(), create: vi.fn() },
   },
@@ -76,6 +76,9 @@ beforeEach(() => {
   p.message.create.mockResolvedValue({});
   p.message.updateMany.mockResolvedValue({ count: 1 });
   p.followUp.create.mockResolvedValue({});
+  // No automated message to this lead yet today — the one-per-day rule
+  // for reminders (sendFollowUpToLead, 2026-09-25) lets these through.
+  p.followUp.findFirst.mockResolvedValue(null);
   p.outboundSend.findFirst.mockResolvedValue(null);
   gmailSend.mockResolvedValue({ success: true, messageId: "sent1" });
   outlookSend.mockResolvedValue({ success: true });

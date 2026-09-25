@@ -138,7 +138,7 @@ describe("a workflow step held for approval", () => {
 
   it("is collected for the batch, not written one row at a time", () => {
     const branch = source.slice(source.indexOf('if (holdAll || risk.riskLevel !== "low")'));
-    expect(branch.slice(0, 1800), "workflow holds notify one row per lead again").toMatch(/heldNotices\.push\(/);
+    expect(branch.slice(0, 2600), "workflow holds notify one row per lead again").toMatch(/heldNotices\.push\(/);
   });
 
   it("flushes what it collected", () => {
@@ -172,4 +172,37 @@ describe("a day-2-7 DM handoff", () => {
       /^async function notifyLeadOwners\(/m
     );
   });
+});
+
+describe("the hold record itself", () => {
+  // Daily-path sweep 2026-09-25 #5. The "ai.hold" row IS the queue entry
+  // (pendingApprovals.ts derives "Needs your OK" from it). Written
+  // fire-and-forget, one failed write left a finished draft in no queue,
+  // the lead claimed for twenty hours, and the owner already told it was
+  // waiting.
+  const source = read("automation.ts");
+
+  it("is never written fire-and-forget", () => {
+    expect(source, "an ai.hold is written with `void` again").not.toMatch(/void recordAudit\([\s\S]{0,80}?"ai\.hold"/);
+  });
+
+  it("is written before anyone is told a draft is waiting", () => {
+    const at = source.indexOf('if (unansweredIds.has(lead.id)) {');
+    const before = source.slice(Math.max(0, at - 1200), at);
+    expect(before, "the owner is notified before the hold is known to exist").toMatch(/await recordHold\(/);
+  });
+
+  it("hands the lead back to the next run when it could not be written", () => {
+    const fn = source.slice(source.indexOf("async function recordHold("));
+    const body = fn.slice(0, fn.indexOf("\n}"));
+    expect(body).toMatch(/lastAutomationCheckedAt: null/);
+  });
+});
+
+describe("the hold record on the other two paths", () => {
+  for (const file of ["acknowledge.ts", "sequences.ts"]) {
+    it(`is awaited in ${file}`, () => {
+      expect(read(file), `${file} writes ai.hold fire-and-forget again`).not.toMatch(/void recordAudit\([\s\S]{0,80}?"ai\.hold"/);
+    });
+  }
 });

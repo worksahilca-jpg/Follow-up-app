@@ -179,6 +179,32 @@ function quietSince(cutoff: Date, notBefore?: Date): Prisma.LeadWhereInput {
 }
 
 export const DEAD_LEAD_ACTION = "dead_lead_reactivation";
+
+const HOLD_NOT_RECORDED = "the draft is written but couldn't be added to your approvals — trying again next run";
+
+/**
+ * Record that a draft is held for the owner, and say whether it stuck.
+ *
+ * The "ai.hold" row is not only a record: it is what puts the draft in
+ * front of the owner (pendingApprovals.ts derives the queue from it). It
+ * used to be written fire-and-forget, so one failed write left a written
+ * draft in no queue, with the lead claimed for twenty hours and the owner
+ * already told something was waiting (daily-path sweep 2026-09-25 #5).
+ * On failure the claim is handed back, so the next tick reuses the saved
+ * draft and tries again.
+ */
+async function recordHold(lead: { id: string; businessId: string }, meta: Record<string, unknown>): Promise<boolean> {
+  const written = await recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
+    targetType: "lead",
+    targetId: lead.id,
+    meta,
+  });
+  if (written !== false) return true;
+  await prisma.lead
+    .updateMany({ where: { id: lead.id }, data: { lastAutomationCheckedAt: null } })
+    .catch((e) => console.error(`Failed to release automation claim for lead ${lead.id}:`, e));
+  return false;
+}
 export const DEAD_LEAD_NAME = "Reactivate cold leads";
 // research/product/2026-09-09-followup-cadence-best-practices.md, §3: a
 // lead a business has genuinely stopped chasing — not just a few days
@@ -1320,12 +1346,10 @@ export async function runAutomationForBusiness(
           });
         }
         const reason = `FollowUp couldn't write a short enough DM for ${lead.name.split(" ")[0]} (${dmShapeFailed}) — this one needs your eye before it goes`;
+        if (!(await recordHold(lead, { riskLevel: "shape", reason: dmShapeFailed, trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence" }))) {
+          return { kind: "skipped", note: `${lead.name}: ${HOLD_NOT_RECORDED}` };
+        }
         if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
-        void recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
-          targetType: "lead",
-          targetId: lead.id,
-          meta: { riskLevel: "shape", reason: dmShapeFailed, trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence" },
-        });
         return { kind: "held", note: `${lead.name}: ${reason}` };
       }
 
@@ -1347,16 +1371,16 @@ export async function runAutomationForBusiness(
           });
         }
         const reason = UNGROUNDED_DRAFT_REASONS[emailShapeFailed] ?? UNGROUNDED_DRAFT_REASONS.digits;
-        if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
-        void recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
-          targetType: "lead",
-          targetId: lead.id,
-          meta: {
+        if (
+          !(await recordHold(lead, {
             riskLevel: "shape",
             reason,
             trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence",
-          },
-        });
+          }))
+        ) {
+          return { kind: "skipped", note: `${lead.name}: ${HOLD_NOT_RECORDED}` };
+        }
+        if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");
         return { kind: "held", note: `${lead.name}: ${reason}` };
       }
 
@@ -1654,6 +1678,29 @@ export async function runAutomationForBusiness(
            * which says something this one cannot — that the lead wrote and
            * was left. Everything else gets the plainer sentence.
            */
+          // Held-not-sent is as much a real AI decision as a send — the
+          // risk gate is exactly the guarantee Rule 3 (trust ships like a
+          // feature) is about, so it belongs in the same audit trail an
+          // actual send gets (see the "ai.send" call in sendFollowUpToLead,
+          // src/lib/sending.ts), not just a string in this run's summary.
+          // Written FIRST, and checked: this row is what puts the draft in
+          // the owner's queue (pendingApprovals.ts). If it is lost, telling
+          // the owner a draft is waiting would point at nothing — so the
+          // lead is handed back to the next tick instead, which reuses the
+          // saved draft and tries again.
+          if (
+            !(await recordHold(lead, {
+              riskLevel: risk.riskLevel,
+              reason: holdReason,
+              trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence",
+              // Which of the four reminders this was, so the trail can say
+              // "reminder 3 of 4" rather than just "silence".
+              ...(reminderStep !== undefined ? { reminderStep: reminderStep + 1 } : {}),
+              ...(freshInboundAt ? { fresh: true } : {}),
+            }))
+          ) {
+            return { kind: "skipped", note: `${lead.name}: ${HOLD_NOT_RECORDED}` };
+          }
           if (unansweredIds.has(lead.id)) {
             // Kept immediate and kept individual. This one says the lead
             // WROTE and was left waiting, and for how long — a fact about
@@ -1672,24 +1719,6 @@ export async function runAutomationForBusiness(
               message: `${firstName} — a follow-up is written and waiting for your approval.`,
             });
           }
-          // Held-not-sent is as much a real AI decision as a send — the
-          // risk gate is exactly the guarantee Rule 3 (trust ships like a
-          // feature) is about, so it belongs in the same audit trail an
-          // actual send gets (see the "ai.send" call in sendFollowUpToLead,
-          // src/lib/sending.ts), not just a string in this run's summary.
-          void recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
-            targetType: "lead",
-            targetId: lead.id,
-            meta: {
-              riskLevel: risk.riskLevel,
-              reason: holdReason,
-              trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence",
-              // Which of the four reminders this was, so the trail can say
-              // "reminder 3 of 4" rather than just "silence".
-              ...(reminderStep !== undefined ? { reminderStep: reminderStep + 1 } : {}),
-              ...(freshInboundAt ? { fresh: true } : {}),
-            },
-          });
           return { kind: "held", note: `${lead.name}: ${holdReason}` };
         }
       }
@@ -1945,11 +1974,15 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
       const daysLeft = Math.max(1, Math.floor((META_HUMAN_AGENT_MAX_HOURS - hours) / 24));
       const firstName = lead.name.split(" ")[0];
       const reason = `${firstName} didn't reply to the automatic follow-ups on ${platform}, and Meta now only lets a person send the next one — you have ${daysLeft} day${daysLeft === 1 ? "" : "s"}. This draft is yours to send, or leave.`;
-      void recordAudit({ businessId, userId: null }, "ai.hold", {
-        targetType: "lead",
-        targetId: lead.id,
-        meta: { riskLevel: "window", reason, trigger: "dm_handoff", channel, daysLeft },
-      });
+      if (!(await recordHold(lead, { riskLevel: "window", reason, trigger: "dm_handoff", channel, daysLeft }))) {
+        // The draft above is stamped as answering this message, which is
+        // what stops the next run redrafting it. Without the hold it is in
+        // no queue, so take the stamp back and let the next run try again.
+        await prisma.lead
+          .update({ where: { id: lead.id }, data: { suggestedDraftedFor: null } })
+          .catch((e) => console.error(`Failed to reset handoff draft for lead ${lead.id}:`, e));
+        continue;
+      }
       handoffNotices.push({
         leadId: lead.id,
         businessId: lead.businessId,

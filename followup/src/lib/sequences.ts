@@ -823,11 +823,18 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
               suggestedRiskReason: null,
             },
           });
-          void recordAudit({ businessId, userId: null }, "ai.hold", {
-            targetType: "lead",
-            targetId: lead.id,
-            meta: { riskLevel: risk.riskLevel, reason: risk.reason, trigger: "sequence", sequenceName: sequence.name },
-          });
+          // Awaited, and tried twice: this row is the queue entry, not a
+          // note about it (daily-path sweep 2026-09-25 #5). The notice below
+          // still goes either way — the draft is on the lead's page.
+          const hold = () =>
+            recordAudit({ businessId, userId: null }, "ai.hold", {
+              targetType: "lead",
+              targetId: lead.id,
+              meta: { riskLevel: risk.riskLevel, reason: risk.reason, trigger: "sequence", sequenceName: sequence.name },
+            });
+          if ((await hold()) === false && (await hold()) === false) {
+            console.error(`Held workflow step for lead ${lead.id} could not be added to Approvals.`);
+          }
           // Two different facts, so two different sentences. "Needs your
           // OK" on a hold-everything account would read as "this one
           // looked risky", which is untrue and teaches the owner to

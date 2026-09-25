@@ -7,12 +7,17 @@ import type { SessionContext } from "@/lib/session";
  * every sensitive action; it never throws and never blocks the action —
  * a failure to write the audit row is logged, not surfaced. Pass only
  * identifiers and counts in `meta`: no credentials, no message bodies.
+ *
+ * Resolves `false` when the row was not written. Most callers ignore it:
+ * the row is a record OF the action. A few rows ARE the action — an
+ * "ai.hold" is what puts a draft in front of the owner (pendingApprovals.ts)
+ * — and those callers check it.
  */
 export async function recordAudit(
   ctx: SessionContext | { businessId: string; userId?: string | null },
   action: string,
   details: { targetType?: string; targetId?: string; meta?: Record<string, unknown> } = {}
-): Promise<void> {
+): Promise<boolean> {
   try {
     let ip: string | null = null;
     try {
@@ -32,7 +37,9 @@ export async function recordAudit(
         ip,
       },
     });
+    return true;
   } catch (err) {
     console.error(`Audit write failed for ${action}:`, err);
+    return false;
   }
 }

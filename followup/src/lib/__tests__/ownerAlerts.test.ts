@@ -39,6 +39,11 @@ const h = vi.hoisted(() => ({
 vi.mock("@/lib/db", () => {
   let seq = 0;
   const matches = (r: Row, where: Record<string, unknown>) => {
+    const id = where.id as string | { in?: string[] } | undefined;
+    if (typeof id === "string" && r.id !== id) return false;
+    if (id && typeof id === "object" && id.in && !id.in.includes(r.id)) return false;
+    if (where.emailedAt === null && r.emailedAt !== null) return false;
+    if (where.pushedAt === null && r.pushedAt !== null) return false;
     if (where.userId && r.userId !== where.userId) return false;
     if (where.kind && r.kind !== where.kind) return false;
     const leadIn = (where.leadId as { in?: string[] } | undefined)?.in;
@@ -110,6 +115,11 @@ vi.mock("@/lib/db", () => {
           if (row) Object.assign(row, data);
           return row;
         }),
+        deleteMany: vi.fn(async ({ where }: { where: Record<string, unknown> }) => {
+          const gone = h.rows.filter((r) => matches(r, where));
+          for (const r of gone) h.rows.splice(h.rows.indexOf(r), 1);
+          return { count: gone.length };
+        }),
       },
     },
   };
@@ -174,7 +184,7 @@ beforeEach(() => {
   h.users.push({ id: "owner1", email: "owner@shop.test", businessId: "biz1", role: "ADMIN", alertEmailEnabled: true });
   h.pushConfigured.value = true;
   h.sendPushToUser.mockReset();
-  h.sendPushToUser.mockResolvedValue({ delivered: 1, removed: 0 });
+  h.sendPushToUser.mockResolvedValue({ delivered: 1, removed: 0, failed: 0 });
   fetchMock.mockReset();
   fetchMock.mockResolvedValue({ ok: true, status: 200, text: async () => "" });
   vi.stubGlobal("fetch", fetchMock);
@@ -312,6 +322,52 @@ describe("once per waiting customer", () => {
     await runOwnerAlerts(NOW);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(h.sendPushToUser).not.toHaveBeenCalled();
+  });
+});
+
+describe("a delivery that really failed is tried again (daily-path sweep 2026-09-25 #2)", () => {
+  it("releases the claim when the email service refuses and no phone took it, then alerts on the next run", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    addCustomer(1);
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 503, text: async () => "unavailable" });
+    h.sendPushToUser.mockResolvedValueOnce({ delivered: 0, removed: 0, failed: 1 });
+    await runOwnerAlerts(NOW);
+    expect(h.rows.filter((r) => r.kind === "customer")).toHaveLength(0);
+
+    await runOwnerAlerts(NOW);
+    const rows = h.rows.filter((r) => r.kind === "customer");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].emailedAt).not.toBeNull();
+  });
+
+  it("releases every customer a failed summary covered", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    for (let n = 1; n <= 5; n++) addCustomer(n);
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 503, text: async () => "unavailable" });
+    h.sendPushToUser.mockResolvedValueOnce({ delivered: 0, removed: 0, failed: 1 });
+    await runOwnerAlerts(NOW);
+    expect(h.rows).toHaveLength(0);
+    await runOwnerAlerts(NOW);
+    expect(h.rows.filter((r) => r.kind === "summary")).toHaveLength(1);
+  });
+
+  it("keeps the claim when one channel landed", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    addCustomer(1);
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 503, text: async () => "unavailable" });
+    await runOwnerAlerts(NOW);
+    const rows = h.rows.filter((r) => r.kind === "customer");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].pushedAt).not.toBeNull();
+  });
+
+  it("keeps the claim when nothing was even tried (email off, no phone) — no retry loop", async () => {
+    h.users[0].alertEmailEnabled = false;
+    addCustomer(1);
+    h.sendPushToUser.mockResolvedValue({ delivered: 0, removed: 0, failed: 0 });
+    await runOwnerAlerts(NOW);
+    await runOwnerAlerts(NOW);
+    expect(h.rows.filter((r) => r.kind === "customer")).toHaveLength(1);
   });
 });
 

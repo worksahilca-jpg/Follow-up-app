@@ -447,6 +447,14 @@ async function alertOne(
     ? await prisma.ownerAlert.count({ where: { userId: user.id, emailedAt: { gte: dayStart } } })
     : 0;
 
+  /**
+   * A send that was really attempted and did not land — the email service
+   * refused it, or a still-subscribed phone did not take it. Distinct from a
+   * deliberate skip (email switched off, today's allowance used, no phone
+   * registered), which is a finished decision, not a failure.
+   */
+  let attemptFailed = false;
+
   /** One email, if the person wants them and today's allowance has room. Returns whether it went. */
   const email = async (content: EmailContent, idempotencyKey: string): Promise<boolean> => {
     if (!emailOn) return false;
@@ -471,6 +479,8 @@ async function alertOne(
     if (sent.sent) {
       emailedToday += 1;
       result.emails += 1;
+    } else {
+      attemptFailed = true;
     }
     return sent.sent;
   };
@@ -479,6 +489,7 @@ async function alertOne(
     if (!channels.push) return false;
     const r = await sendPushToUser(user.id, payload);
     result.pushes += r.delivered;
+    if (r.delivered === 0 && r.failed > 0) attemptFailed = true;
     return r.delivered > 0;
   };
 
@@ -489,6 +500,7 @@ async function alertOne(
       data: { userId: user.id, businessId: user.businessId as string, kind: "summary" },
       select: { id: true },
     });
+    attemptFailed = false;
     const emailed = await email(summaryEmail(claimed.length, base), summary.id);
     const pushed = await push(summaryPush(claimed.length));
     if (emailed || pushed) {
@@ -496,12 +508,19 @@ async function alertOne(
         where: { id: summary.id },
         data: { ...(emailed ? { emailedAt: new Date() } : {}), ...(pushed ? { pushedAt: new Date() } : {}) },
       });
+    } else if (attemptFailed) {
+      // Same rule as one customer, below: a summary that reached nobody
+      // leaves every customer it covered un-told. Release them all.
+      await prisma.ownerAlert.deleteMany({ where: { id: { in: [summary.id, ...claimed.map((c) => c.rowId)] } } });
+      result.customers -= claimed.length;
+      return;
     }
     result.summaries += 1;
     return;
   }
 
   for (const { customer, rowId } of claimed) {
+    attemptFailed = false;
     const emailed = await email(customerEmail(customer, base), rowId);
     const pushed = await push(customerPush(customer));
     if (emailed || pushed) {
@@ -509,6 +528,15 @@ async function alertOne(
         where: { id: rowId },
         data: { ...(emailed ? { emailedAt: new Date() } : {}), ...(pushed ? { pushedAt: new Date() } : {}) },
       });
+    } else if (attemptFailed) {
+      // Nothing reached them and something really tried. The claim row is
+      // what marks this customer "told", so keep it and they are never
+      // announced (daily-path sweep 2026-09-25 #2). Released, the next
+      // minute's run claims and tries again — until the wait stops being
+      // new (ALERT_RECENT_MS), and the daily setup check reports a key that
+      // keeps failing.
+      await prisma.ownerAlert.deleteMany({ where: { id: rowId, emailedAt: null, pushedAt: null } });
+      result.customers -= 1;
     }
   }
 }

@@ -68,7 +68,7 @@ describe("without VAPID keys", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     h.subs.push(sub("s1"));
     expect(isPushConfigured()).toBe(false);
-    expect(await sendPushToUser("u1", payload)).toEqual({ delivered: 0, removed: 0 });
+    expect(await sendPushToUser("u1", payload)).toEqual({ delivered: 0, removed: 0, failed: 0 });
     await sendPushToUser("u1", payload);
     expect(prisma.pushSubscription.findMany).not.toHaveBeenCalled();
     expect(h.sendNotification).not.toHaveBeenCalled();
@@ -81,7 +81,7 @@ describe("delivery", () => {
   it("sends to every device the person has, signed with the configured keys", async () => {
     h.subs.push(sub("s1"), sub("s2", "web.push.apple.com"));
     const r = await sendPushToUser("u1", payload);
-    expect(r).toEqual({ delivered: 2, removed: 0 });
+    expect(r).toEqual({ delivered: 2, removed: 0, failed: 0 });
     const [target, body, options] = h.sendNotification.mock.calls[0];
     expect(target).toEqual({ endpoint: h.subs[0].endpoint, keys: { p256dh: h.subs[0].p256dh, auth: h.subs[0].auth } });
     expect(JSON.parse(body)).toEqual(payload);
@@ -98,7 +98,7 @@ describe("delivery", () => {
     h.sendNotification.mockRejectedValueOnce(new h.WebPushError(status));
     const r = await sendPushToUser("u1", payload);
     expect(h.deleted).toEqual(["gone"]);
-    expect(r).toEqual({ delivered: 1, removed: 1 });
+    expect(r).toEqual({ delivered: 1, removed: 1, failed: 0 });
   });
 
   it("keeps a device through a temporary failure", async () => {
@@ -107,7 +107,8 @@ describe("delivery", () => {
     h.sendNotification.mockRejectedValueOnce(new h.WebPushError(503));
     const r = await sendPushToUser("u1", payload);
     expect(h.deleted).toEqual([]);
-    expect(r).toEqual({ delivered: 0, removed: 0 });
+    // Counted, so the owner-alert run knows to try again next minute.
+    expect(r).toEqual({ delivered: 0, removed: 0, failed: 1 });
   });
 
   it("never calls an endpoint that is not a browser push service, and drops the row", async () => {

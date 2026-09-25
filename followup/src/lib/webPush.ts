@@ -81,7 +81,11 @@ export type PushPayload = {
   tag: string;
 };
 
-export type PushResult = { delivered: number; removed: number };
+/**
+ * `failed` counts devices that are still subscribed but did not take this
+ * push (a 5xx, a timeout) — worth trying again, unlike `removed`.
+ */
+export type PushResult = { delivered: number; removed: number; failed: number };
 
 /**
  * Send one payload to every device a person has turned notifications on for.
@@ -99,7 +103,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
       loggedMissingKeys = true;
       console.warn("FollowUp notifications are off: VAPID keys are not set (see docs/alerts-setup.md).");
     }
-    return { delivered: 0, removed: 0 };
+    return { delivered: 0, removed: 0, failed: 0 };
   }
 
   const subscriptions = await prisma.pushSubscription.findMany({
@@ -109,6 +113,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
 
   let delivered = 0;
   let removed = 0;
+  let failed = 0;
   const body = JSON.stringify(payload);
   for (const sub of subscriptions) {
     // Re-checked at send time, not only when the row was saved: a row
@@ -141,11 +146,12 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
         await prisma.pushSubscription.deleteMany({ where: { id: sub.id } });
         removed += 1;
       } else {
+        failed += 1;
         console.error(`Push to a device of user ${userId} failed${status ? ` (${status})` : ""}:`, err instanceof Error ? err.message : err);
       }
     }
   }
-  return { delivered, removed };
+  return { delivered, removed, failed };
 }
 
 /** Test seam: the "log once" flag is per process. */

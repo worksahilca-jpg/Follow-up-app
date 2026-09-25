@@ -2089,9 +2089,13 @@ export async function runAutomationForAllBusinesses(): Promise<AutomationResult>
 }
 
 /**
- * How many recently-active leads one tick looks at. A lead whose message
- * is not reached this minute is reached the next; the cap only bounds a
- * burst (a Gmail reconnect touching hundreds of threads at once).
+ * How many recently-active leads one tick looks at, newest first. The cap
+ * only bounds a burst (a Gmail reconnect touching hundreds of threads at
+ * once). It used to read oldest-first: leads already answered stay in the
+ * hour-long window, so with more than this many the same oldest ones were
+ * re-read every minute and the message that arrived a minute ago — the one
+ * the five-minute promise is about — was never reached (daily-path sweep
+ * 2026-09-25 #7). Anything past the cap is still covered by the hourly run.
  */
 const FRESH_SCAN_LIMIT = 500;
 
@@ -2127,7 +2131,7 @@ export async function runFreshRepliesForAllBusinesses(): Promise<AutomationResul
       sequenceId: null,
     },
     select: { id: true, businessId: true },
-    orderBy: { lastContacted: "asc" },
+    orderBy: { lastContacted: "desc" },
     take: FRESH_SCAN_LIMIT,
   });
   const byBusiness = new Map<string, string[]>();

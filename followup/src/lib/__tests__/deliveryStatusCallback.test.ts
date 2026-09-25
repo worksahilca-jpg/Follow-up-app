@@ -12,6 +12,8 @@ vi.mock("@/lib/db", () => ({ prisma: { business: { findUnique } } }));
 vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn() }));
 vi.mock("@/lib/sourceRouting", () => ({ applySourceRouting: vi.fn() }));
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
+// Callbacks go to the host that answers without a redirect (inboundBaseUrl.test.ts).
+vi.mock("@/lib/siteUrl", () => ({ inboundBaseUrl: () => "https://www.followupbase.io" }));
 vi.mock("@/lib/monitoring", () => ({ recordAuthFailure: vi.fn() }));
 
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
@@ -39,7 +41,7 @@ describe("sendSms StatusCallback", () => {
 
     const [, init] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
     const body = decodeURIComponent(String(init.body));
-    expect(body).toContain("StatusCallback=https://followupbase.io/api/twilio/status/sekret123");
+    expect(body).toContain("StatusCallback=https://www.followupbase.io/api/twilio/status/sekret123");
   });
 
   it("omits StatusCallback when the business has no Twilio secret yet", async () => {
@@ -75,7 +77,7 @@ describe("sendWhatsApp StatusCallback", () => {
 
     const [, init] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
     const body = decodeURIComponent(String(init.body));
-    expect(body).toContain("StatusCallback=https://followupbase.io/api/twilio/status/sekret123");
+    expect(body).toContain("StatusCallback=https://www.followupbase.io/api/twilio/status/sekret123");
   });
 
   it("also attaches it on the template-retry send", async () => {
@@ -88,6 +90,6 @@ describe("sendWhatsApp StatusCallback", () => {
 
     const [, retryInit] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[1];
     const retryBody = decodeURIComponent(String(retryInit.body));
-    expect(retryBody).toContain("StatusCallback=https://followupbase.io/api/twilio/status/sekret123");
+    expect(retryBody).toContain("StatusCallback=https://www.followupbase.io/api/twilio/status/sekret123");
   });
 });

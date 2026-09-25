@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/db";
 import { pickAssignee } from "@/lib/assignment";
 import { appUrl } from "@/lib/stripe";
+import { inboundBaseUrl } from "@/lib/siteUrl";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { recordAuthFailure } from "@/lib/monitoring";
 import type { Lead } from "@prisma/client";
@@ -39,7 +40,9 @@ export function validateTwilioSignature(
 
 /**
  * Twilio signs the exact URL it was configured with in the Console — the
- * same one Settings generated via appUrl() (src/app/api/twilio/config).
+ * same one Settings generated (src/app/api/twilio/config) — on the www
+ * host since 2026-09-25, on the apex before; candidateSignedUrls() below
+ * accepts either spelling.
  * `request.url` inside a Next.js route handler isn't reliably identical
  * byte-for-byte on every platform (proxy/protocol rewriting is a known,
  * silent source of signature-validation failures elsewhere), so every
@@ -47,18 +50,19 @@ export function validateTwilioSignature(
  * pathname instead of trusting request.url directly.
  */
 export function canonicalRequestUrl(request: Request): string {
-  return `${appUrl()}${new URL(request.url).pathname}`;
+  const { pathname, search } = new URL(request.url);
+  return `${appUrl()}${pathname}${search}`;
 }
 
 /**
  * StatusCallback URL for an outbound SMS/WhatsApp send — same
- * appUrl()-based construction as recordingStatusCallback in
+ * inboundBaseUrl()-based construction as recordingStatusCallback in
  * src/app/api/twilio/voice/[secret]/route.ts, pointed at the delivery-
  * status webhook instead. Twilio POSTs here every time a message's
  * status changes (queued → sent → delivered/undelivered/failed).
  */
 function statusCallbackUrl(secret: string): string {
-  return `${appUrl()}/api/twilio/status/${secret}`;
+  return `${inboundBaseUrl()}/api/twilio/status/${secret}`;
 }
 
 /**
@@ -72,7 +76,11 @@ function statusCallbackUrl(secret: string): string {
  * which host spelling is accepted, never the secret or the params.
  */
 function candidateSignedUrls(request: Request): string[] {
-  const pathname = new URL(request.url).pathname;
+  // Path AND query: Twilio signs the whole URL it called, and the voice
+  // fallback action is configured as ".../voice/<secret>?stage=fallback".
+  // Dropping the query made every fallback request look forged.
+  const { pathname: path, search } = new URL(request.url);
+  const pathname = `${path}${search}`;
   const base = appUrl();
   const candidates = new Set<string>([`${base}${pathname}`]);
   const toggled = /^https?:\/\/www\./i.test(base) ? base.replace(/^(https?:\/\/)www\./i, "$1") : base.replace(/^(https?:\/\/)/i, "$1www.");

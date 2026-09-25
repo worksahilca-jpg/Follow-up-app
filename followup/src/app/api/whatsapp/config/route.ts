@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { appUrl } from "@/lib/stripe";
+import { inboundBaseUrl } from "@/lib/siteUrl";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
@@ -62,7 +62,7 @@ export async function GET() {
     // the token never leave the server.
     appId: process.env.FACEBOOK_APP_ID ?? null,
     configId: process.env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID ?? null,
-    webhookUrl: `${appUrl()}/api/whatsapp/webhook`,
+    webhookUrl: `${inboundBaseUrl()}/api/whatsapp/webhook`,
     verifyToken: WEBHOOK_VERIFY_TOKEN,
   });
 }

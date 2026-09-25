@@ -780,26 +780,38 @@ export async function sendFollowUpToLead(
   // the best chance of landing if the database is only intermittently
   // reachable.
   // ---------------------------------------------------------------
+  // One value, written to both rows. The Message copy is what lets the
+  // neglect judgment (automation.ts, automationStatus.ts) see the instant
+  // ack as boilerplate rather than as "someone answered" — see
+  // Message.trigger in schema.prisma for the bug that was.
+  const trigger = options.trigger ?? (options.automated ? "silence" : "manual");
+
+  // Did the draft go out as FollowUp wrote it? Whitespace-insensitive,
+  // because the composer re-wraps text; anything else is an edit. No
+  // draft on the lead (a message typed from scratch, an instant ack)
+  // means nothing to compare, so null rather than a false "unedited".
+  const squash = (s: string) => s.replace(/\s+/g, " ").trim();
+  const draftEdited = lead.suggestedMessage ? squash(body) !== squash(lead.suggestedMessage) : null;
+
+  // The draft is spent once it has gone out — as written, or as the owner's
+  // own edit of it (a manual send answers the same message the draft did).
+  // Nothing marked it spent before 2026-09-25 (ui-bug-hunt B8): after an
+  // Approve & send on Today, the lead page offered the same text again
+  // under "AI-suggested follow-up", and a second Send once the 60-second
+  // duplicate guard lapsed sent it twice. Never cleared by an instant ack:
+  // that is a different message, and the draft it leaves is the real reply.
+  const draftSpent = draftEdited === false || (trigger === "manual" && draftEdited !== null);
+
   try {
     await prisma.lead.update({
       where: { id: lead.id },
-      data: { lastContacted: new Date() },
+      data: {
+        lastContacted: new Date(),
+        ...(draftSpent ? { suggestedMessage: null, suggestedRiskLevel: null, suggestedRiskReason: null } : {}),
+      },
     });
 
     const conversation = await findOrCreateConversation(lead.id, channel, emailProvider ? { emailProvider } : {});
-
-    // One value, written to both rows. The Message copy is what lets the
-    // neglect judgment (automation.ts, automationStatus.ts) see the instant
-    // ack as boilerplate rather than as "someone answered" — see
-    // Message.trigger in schema.prisma for the bug that was.
-    const trigger = options.trigger ?? (options.automated ? "silence" : "manual");
-
-    // Did the draft go out as FollowUp wrote it? Whitespace-insensitive,
-    // because the composer re-wraps text; anything else is an edit. No
-    // draft on the lead (a message typed from scratch, an instant ack)
-    // means nothing to compare, so null rather than a false "unedited".
-    const squash = (s: string) => s.replace(/\s+/g, " ").trim();
-    const draftEdited = lead.suggestedMessage ? squash(body) !== squash(lead.suggestedMessage) : null;
 
     // The draft itself is kept only where the business said yes to
     // improving FollowUp (Settings → Your data). A failed lookup means no,

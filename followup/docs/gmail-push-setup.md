@@ -14,7 +14,11 @@ One-time setup in the Google Cloud project that owns the OAuth client
    `gmail-api-push@system.gserviceaccount.com` with role **Pub/Sub Publisher**.
 4. **Create a push subscription** on that topic:
    - Delivery type: Push
-   - Endpoint URL: `https://followupbase.io/api/integrations/gmail/push?secret=<GMAIL_PUSH_SECRET>`
+   - Endpoint URL: `https://www.followupbase.io/api/integrations/gmail/push?secret=<GMAIL_PUSH_SECRET>`
+     — **with `www.`**. The bare `followupbase.io` redirects to www, and Pub/Sub push does
+     not follow redirects: every notification to the bare address fails and Gmail quietly
+     falls back to the ten-minute sync. (Found 2026-09-25, when the same redirect was
+     found blocking every Meta webhook.)
      (generate the secret with `openssl rand -base64 32` and URL-encode it, or use a
      long random alphanumeric string to avoid encoding at all)
    - Acknowledgement deadline: 10 seconds (default); the endpoint replies 204 immediately.

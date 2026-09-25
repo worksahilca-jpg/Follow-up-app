@@ -45,6 +45,20 @@ describe("Twilio signature validation", () => {
     expect(validateTwilioRequestSignature(TOKEN, request, params, sign(signedUrl, params))).toBe(true);
   });
 
+  it("accepts a signature over a URL with a query string (the voice fallback action)", () => {
+    // Twilio signs the full URL it called, query included. The voice route
+    // configures its fallback as .../voice/<secret>?stage=fallback.
+    const signedUrl = "https://www.followupbase.io/api/twilio/voice/secret1?stage=fallback";
+    const request = new Request("https://www.followupbase.io/api/twilio/voice/secret1?stage=fallback", { method: "POST" });
+    expect(validateTwilioRequestSignature(TOKEN, request, params, sign(signedUrl, params))).toBe(true);
+  });
+
+  it("rejects a signature over a different query string", () => {
+    const signedUrl = "https://www.followupbase.io/api/twilio/voice/secret1?stage=other";
+    const request = new Request("https://www.followupbase.io/api/twilio/voice/secret1?stage=fallback", { method: "POST" });
+    expect(validateTwilioRequestSignature(TOKEN, request, params, sign(signedUrl, params))).toBe(false);
+  });
+
   it("rejects a signature for a different path even on a known host", () => {
     const signedUrl = "https://followupbase.io/api/twilio/voice/secret1";
     const request = new Request("https://followupbase.io/api/twilio/sms/secret1", { method: "POST" });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { appUrl } from "@/lib/stripe";
+import { inboundBaseUrl } from "@/lib/siteUrl";
 import { getTwilioNumberConfig, listRecentTwilioCalls, setTwilioNumberWebhooks } from "@/lib/twilio";
 
 /**
@@ -27,8 +27,8 @@ async function loadTwilio(businessId: string) {
     authToken: business.twilioAuthToken,
     phoneNumber: business.twilioPhoneNumber,
     expected: {
-      voiceUrl: `${appUrl()}/api/twilio/voice/${business.twilioSecret}`,
-      smsUrl: `${appUrl()}/api/twilio/sms/${business.twilioSecret}`,
+      voiceUrl: `${inboundBaseUrl()}/api/twilio/voice/${business.twilioSecret}`,
+      smsUrl: `${inboundBaseUrl()}/api/twilio/sms/${business.twilioSecret}`,
     },
   };
 }

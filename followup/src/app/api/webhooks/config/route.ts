@@ -2,13 +2,13 @@ import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { appUrl } from "@/lib/stripe";
+import { inboundBaseUrl } from "@/lib/siteUrl";
 import { requireAdmin } from "@/lib/session";
 import { requireRecentAuth } from "@/lib/reauth";
 import { recordAudit } from "@/lib/audit";
 
 function webhookUrl(secret: string): string {
-  return `${appUrl()}/api/webhooks/lead/${secret}`;
+  return `${inboundBaseUrl()}/api/webhooks/lead/${secret}`;
 }
 
 /**

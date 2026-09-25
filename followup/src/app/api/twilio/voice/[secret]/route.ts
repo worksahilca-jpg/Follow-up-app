@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
-import { appUrl } from "@/lib/stripe";
+import { inboundBaseUrl } from "@/lib/siteUrl";
 import {
   claimMissedCallTextBack,
   escapeXml,
@@ -26,7 +26,7 @@ const MISSED_CALL_TEXT_COOLDOWN_MINUTES = 30;
 // `stage=fallback` branch below) — "the call never just drops" applies to
 // both an agent that was never turned on and one that failed mid-call.
 function voicemailTwiml(secret: string): Response {
-  const recordingStatusCallback = `${appUrl()}/api/twilio/voice/transcription/${secret}`;
+  const recordingStatusCallback = `${inboundBaseUrl()}/api/twilio/voice/transcription/${secret}`;
   return twiml(
     `<Response>` +
       `<Say>Thanks for calling. Please leave a message after the tone, then hang up or press pound.</Say>` +
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (business.voiceAgentEnabled) {
     const streamUrl = voiceAgentStreamUrl(secret);
     if (streamUrl) {
-      const actionUrl = `${appUrl()}/api/twilio/voice/${secret}?stage=fallback`;
+      const actionUrl = `${inboundBaseUrl()}/api/twilio/voice/${secret}?stage=fallback`;
       return twiml(
         `<Response>` +
           `<Say>You're speaking with an AI assistant for ${escapeXml(business.name)}. This call may be recorded.</Say>` +

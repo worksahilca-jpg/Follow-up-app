@@ -138,12 +138,31 @@ export function validateMetaSignature(rawBody: string, signatureHeader: string |
  *
  * `accountId` is optional on purpose: a token for which Meta returns no
  * usable `user_id` still connects exactly as it did before, and the
- * account simply keeps today's behaviour until it has one.
+ * account simply keeps today's behaviour until it has one. The same goes
+ * for Meta refusing the field outright: Graph fails a whole request over
+ * one field it does not recognise on that node, so a 400 is retried once
+ * with the fields connect has always asked for. Asking for `user_id` can
+ * therefore never cost a connection that works today.
  */
 export async function resolveInstagramUserId(
   accessToken: string
 ): Promise<{ id: string; accountId?: string; username?: string } | { error: string }> {
-  const url = `${GRAPH_API}/me?fields=id,user_id,username&access_token=${encodeURIComponent(accessToken)}`;
+  const withAccountId = await readInstagramMe(accessToken, "id,user_id,username");
+  if ("error" in withAccountId && withAccountId.status === 400) {
+    const without = await readInstagramMe(accessToken, "id,username");
+    if ("error" in without) return { error: without.error };
+    console.error("Instagram /me refused the fields including user_id and accepted id,username; connected without the professional-account id.");
+    return without;
+  }
+  return "error" in withAccountId ? { error: withAccountId.error } : withAccountId;
+}
+
+/** One /me read. `status` rides along on an HTTP refusal so the caller can tell a 400 from the rest. */
+async function readInstagramMe(
+  accessToken: string,
+  fields: string
+): Promise<{ id: string; accountId?: string; username?: string } | { error: string; status?: number }> {
+  const url = `${GRAPH_API}/me?fields=${fields}&access_token=${encodeURIComponent(accessToken)}`;
   let res: Response;
   try {
     res = await fetch(url);
@@ -155,7 +174,7 @@ export async function resolveInstagramUserId(
   if (!res.ok) {
     const reason = await instagramOAuthErrorMessage(res);
     console.error(`Instagram token check rejected by ${GRAPH_API}/me: HTTP ${res.status}${reason ? ` — ${reason}` : ""}`);
-    return { error: `${GRAPH_API}/me: ${res.status}${reason ? ` ${reason}` : ""}` };
+    return { error: `${GRAPH_API}/me: ${res.status}${reason ? ` ${reason}` : ""}`, status: res.status };
   }
   // Read as text first so `user_id` can be taken from the exact digits Meta
   // sent — see graphIdField.

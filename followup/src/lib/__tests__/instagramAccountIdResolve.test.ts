@@ -75,10 +75,33 @@ describe("resolveInstagramUserId", () => {
   });
 
   it("still refuses a token Meta refused, with Meta's reason and never the token", async () => {
-    fetchMock.mockResolvedValue(body(JSON.stringify({ error: { message: "Invalid OAuth access token", code: 190 } }), 400));
+    fetchMock.mockImplementation(async () => body(JSON.stringify({ error: { message: "Invalid OAuth access token", code: 190 } }), 400));
     const resolved = await resolveInstagramUserId(TOKEN);
     expect(resolved).toEqual({ error: expect.stringContaining("Invalid OAuth access token") });
     expect(JSON.stringify(resolved)).not.toContain(TOKEN);
+  });
+
+  // Graph fails a whole request over one field it does not recognise. That
+  // must never turn "also ask for user_id" into "connecting stopped working".
+  it("still connects if Meta refuses the user_id field, by asking again for what connect always asked for", async () => {
+    fetchMock
+      .mockResolvedValueOnce(body(JSON.stringify({ error: { message: "(#100) Tried accessing nonexisting field (user_id)", code: 100 } }), 400))
+      .mockResolvedValueOnce(body(JSON.stringify({ id: APP_SCOPED, username: "followupbase" })));
+    expect(await resolveInstagramUserId(TOKEN)).toEqual({ id: APP_SCOPED, username: "followupbase" });
+    const fields = fetchMock.mock.calls.map((c) => new URL(String(c[0])).searchParams.get("fields"));
+    expect(fields).toEqual(["id,user_id,username", "id,username"]);
+  });
+
+  it("asks only once when the refusal is not a 400, and returns the same shape of error as before", async () => {
+    fetchMock.mockImplementation(async () => body(JSON.stringify({ error: { message: "Service temporarily unavailable", code: 2 } }), 503));
+    expect(await resolveInstagramUserId(TOKEN)).toEqual({ error: expect.stringContaining("503") });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry when Meta could not be reached at all", async () => {
+    fetchMock.mockRejectedValue(new TypeError("fetch failed"));
+    expect(await resolveInstagramUserId(TOKEN)).toEqual({ error: expect.stringContaining("Couldn't reach") });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("still refuses a 200 that names no account", async () => {

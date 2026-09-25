@@ -413,3 +413,5 @@ promises, who it's for, works with, prices, four questions, start free) with fou
 questions for the founder before any design starts. Written up in
 `design-brain/research/landing-page/2026-09-18-structure-v1.md`. Design is paused until he
 answers.
+
+**2026-09-25 — In-app benchmark: what do the best inbox, CRM and approval tools do so a two-minute owner knows who needs them, why, and what to do, and trusts automated work?** Method: 38 WebSearch queries plus two primary sources read in full (Microsoft CHI 2019 human–AI guidelines; Apple's notification and tab bar guidelines). WebFetch was blocked; most product claims are grade B, from help-page summaries. Findings: 13 patterns. FollowUp is ahead on hold reasons, a guarded routine pile, and an honest undo. It is behind on waiting time per card, counts that disagree, the reply shown in grey, "You" on every sent message, owner-side translation, and anything outside the app. Top 5 ranked. Nothing decided. Written up in `ux-patterns/2026-09-25-in-app-experience-benchmark.md`.

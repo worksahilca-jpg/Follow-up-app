@@ -8,7 +8,8 @@ import { captureDirectReply, createInboundMessageIfNew } from "@/lib/instagram";
 import { findOrCreateLeadByPhone } from "@/lib/twilio";
 import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import { pickAssignee } from "@/lib/assignment";
-import { judgeHistoryThread, knownOnAnotherChannel } from "@/lib/inbound/whatsappHistoryFilter";
+import { judgeHistoryThread, knownOnAnotherChannel, parseStoredThread } from "@/lib/inbound/whatsappHistoryFilter";
+import type { ClassifierBusinessContext } from "@/lib/integrations/openai";
 // Named UiMessage locally: this file already has its own WaMessage (Meta's
 // wire shape), and two things called Message in one file is how the wrong
 // one gets used.
@@ -24,12 +25,16 @@ import type { Message as UiMessage } from "@/lib/types";
  * coexistence.md), and each entry routes to the business whose
  * whatsappPhoneNumberId matches value.metadata.phone_number_id:
  *
- *  - `messages`            a customer wrote, or a status update for a
- *                          message FollowUp sent (sent/delivered/read/failed)
+ *  - `messages`            someone wrote, or a status update for a message
+ *                          FollowUp sent (sent/delivered/read/failed). From
+ *                          someone who is not a lead yet, the chat is judged
+ *                          first (judgeUnknownContact below): it is the
+ *                          owner's own number, and their family writes to it
  *  - `smb_message_echoes`  the OWNER replied from the WhatsApp Business app
  *                          on their phone. Captured as a real outbound
  *                          message so FollowUp never replies on top of it and
- *                          the human-neglect rule sees the thread as answered
+ *                          the human-neglect rule sees the thread as answered.
+ *                          To someone not a lead yet: judged the same way
  *  - `history`             a one-time sync of past chats (up to 6 months)
  *                          when a number is first connected. Capture ONLY:
  *                          no acknowledgement, no drafts, no routing.
@@ -154,8 +159,149 @@ export async function processWhatsAppCloudEnvelope(payload: { object?: string; e
   }
 }
 
+/**
+ * How much of a set-aside chat is kept, newest last. Enough for Restore to
+ * bring back the conversation that mattered and for the next look to read
+ * (stage 2 reads 20); a family chat that runs for months must not grow one
+ * row without limit.
+ */
+export const SET_ASIDE_THREAD_MAX_MESSAGES = 50;
+
+type GateResult =
+  | { admit: true; prior: UiMessage[]; setAsideRowId?: string }
+  | { admit: false };
+
+/**
+ * A live message, or the owner's own message, with someone who is not a
+ * lead yet: is this chat customer business, or the owner's private life?
+ *
+ * Coexistence is the owner's OWN number — the one their family, their
+ * friends and their bank write to. Until 2026-09-25 only the one-time
+ * history import asked; every live message from anyone became a lead,
+ * scored and drafted for, so connecting a personal number filled the
+ * pipeline with the owner's private chats. Founder's call that day: judge
+ * live chats too, the same way.
+ *
+ * Deliberately the same two-stage judge as the history import
+ * (judgeHistoryThread), with the same bar ("make sure no leads slip over")
+ * and the same fail-open direction on an error. What live adds:
+ *
+ *  - A chat set aside is not set aside for good. Every new message in it
+ *    with words in it is judged again, on the whole kept thread, so the
+ *    brother-in-law who asks for a quote in March becomes a lead in March.
+ *  - The owner's own messages count. A price or a time the owner sends is
+ *    the strongest sign of all (stage 2 is told to look for it), so an
+ *    echo to someone new is judged as well rather than turned straight
+ *    into a lead or thrown away.
+ *  - Nothing is thrown away. A set-aside chat keeps its messages in the
+ *    filtered list the mailboxes already use, where the owner can see the
+ *    reason and bring it back with one tap.
+ *
+ * Only called when no lead has this number. A number that is already a
+ * lead, on any channel, is never second-guessed here.
+ */
+async function judgeUnknownContact(
+  businessId: string,
+  business: ClassifierBusinessContext | undefined,
+  waId: string,
+  name: string | undefined,
+  message: UiMessage,
+  hasOwnWords: boolean
+): Promise<GateResult> {
+  const threadId = `whatsapp:${waId}`;
+  const phone = `+${waId}`;
+  const row = await prisma.filteredEmail.findUnique({
+    where: { businessId_threadId: { businessId, threadId } },
+    select: { id: true, threadPayload: true },
+  });
+  const stored = row ? parseStoredThread(row.threadPayload) : null;
+  const prior = stored?.messages ?? [];
+
+  // Meta redelivered a message already set aside: judged already, and
+  // judging it again would spend a call to learn nothing.
+  if (message.id && prior.some((m) => m.id === message.id)) return { admit: false };
+
+  const thread = [...prior, message]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(-SET_ASIDE_THREAD_MAX_MESSAGES);
+  const displayName = name ?? stored?.name ?? undefined;
+
+  // A photo or a sticker in a chat already set aside adds nothing to read.
+  // Kept with the rest, judged again when there are words.
+  const verdict =
+    row && !hasOwnWords
+      ? null
+      : await judgeHistoryThread(thread, { name: displayName ?? "WhatsApp contact", phone }, business, {
+          // The caller only gets here when no lead has this number at all.
+          knownOnAnotherChannel: false,
+        });
+
+  if (verdict?.import) return { admit: true, prior, setAsideRowId: row?.id };
+
+  const payload = { phone, name: displayName ?? null, messages: thread };
+  await prisma.filteredEmail.upsert({
+    where: { businessId_threadId: { businessId, threadId } },
+    update: {
+      ...(verdict ? { reason: verdict.reason } : {}),
+      ...(name ? { senderName: name } : {}),
+      threadPayload: payload,
+      lastMessageAt: new Date(message.date),
+    },
+    create: {
+      businessId,
+      threadId,
+      provider: "whatsapp",
+      senderName: displayName ?? phone,
+      senderPhone: phone,
+      reason: verdict?.reason ?? "Not customer business so far.",
+      threadPayload: payload,
+      lastMessageAt: new Date(message.date),
+    },
+  });
+  return { admit: false };
+}
+
+/**
+ * The chat that was set aside, written into the new lead's conversation
+ * before today's message, so the owner and the drafter see how it got
+ * here. Idempotent on the wamid, like every other WhatsApp write.
+ */
+async function writeSetAsideThread(conversationId: string, messages: UiMessage[]): Promise<void> {
+  for (const m of messages) {
+    if (!m.id) continue;
+    await prisma.message.upsert({
+      where: { externalId: m.id },
+      update: {},
+      create: {
+        conversationId,
+        direction: m.direction,
+        body: m.body,
+        externalId: m.id,
+        sentAt: new Date(m.date),
+        ...(m.direction === "inbound" ? {} : { source: "whatsapp_direct" }),
+      },
+    });
+  }
+}
+
+/** The business's name and trade, for the judge — fetched once per delivery, and only if someone new wrote. */
+function businessContextLoader(businessId: string): () => Promise<ClassifierBusinessContext | undefined> {
+  let loaded: Promise<ClassifierBusinessContext | undefined> | null = null;
+  return () => {
+    loaded ??= prisma.business
+      .findUnique({ where: { id: businessId }, select: { name: true, industry: true } })
+      .then((b) => b ?? undefined);
+    return loaded;
+  };
+}
+
+async function isLead(businessId: string, phone: string): Promise<boolean> {
+  return (await prisma.lead.findFirst({ where: { businessId, phone }, select: { id: true } })) !== null;
+}
+
 async function handleMessages(businessId: string, value: { messages?: unknown; statuses?: unknown; contacts?: unknown }): Promise<void> {
   const names = contactNames(value);
+  const businessContext = businessContextLoader(businessId);
 
   for (const raw of Array.isArray(value.messages) ? value.messages : []) {
     const m = (raw ?? {}) as WaMessage;
@@ -167,8 +313,30 @@ async function handleMessages(businessId: string, value: { messages?: unknown; s
     const sentAt = whenSent(m.timestamp);
     // "+" + wa_id: the same identity an SMS from that number would have, so
     // one person is one lead whichever way they wrote (see findOrCreateLeadByPhone).
-    const lead = await findOrCreateLeadByPhone(businessId, `+${from}`, "WhatsApp", names.get(from));
+    const phone = `+${from}`;
+
+    // Someone who is not a lead yet: customer, or the owner's private
+    // life? Set-aside chats stop here — no lead, no acknowledgement, no
+    // draft — and wait in the filtered list.
+    let gate: GateResult = { admit: true, prior: [] };
+    if (!(await isLead(businessId, phone))) {
+      gate = await judgeUnknownContact(
+        businessId,
+        await businessContext(),
+        from,
+        names.get(from),
+        { id: wamid ?? "", direction: "inbound", channel: "whatsapp", body: content.body, date: sentAt.toISOString(), opened: false },
+        content.ownWords.length > 0
+      );
+      if (!gate.admit) continue;
+    }
+
+    const lead = await findOrCreateLeadByPhone(businessId, phone, "WhatsApp", names.get(from));
     const conversation = await findOrCreateConversation(lead.id, "whatsapp");
+    if (gate.prior.length > 0) await writeSetAsideThread(conversation.id, gate.prior);
+    // Only once the lead and its history exist: dropping the row first
+    // would lose the chat if anything above failed.
+    if (gate.setAsideRowId) await prisma.filteredEmail.deleteMany({ where: { id: gate.setAsideRowId, businessId } });
     const isNew = await createInboundMessageIfNew(conversation.id, content.body, sentAt, wamid);
 
     // STOP/START before anything else touches this lead — the same rule,
@@ -239,14 +407,40 @@ async function handleMessages(businessId: string, value: { messages?: unknown; s
  */
 async function handleEchoes(businessId: string, value: { message_echoes?: unknown; contacts?: unknown }): Promise<void> {
   const names = contactNames(value);
+  const businessContext = businessContextLoader(businessId);
   for (const raw of Array.isArray(value.message_echoes) ? value.message_echoes : []) {
     const m = (raw ?? {}) as WaMessage & { to?: unknown };
     const to = typeof m.to === "string" ? m.to : "";
     const content = whatsappMessageContent(m);
     if (!to || !content) continue;
-    const lead = await findOrCreateLeadByPhone(businessId, `+${to}`, "WhatsApp", names.get(to));
+    const phone = `+${to}`;
     const wamid = typeof m.id === "string" ? m.id : undefined;
-    await captureDirectReply(lead.id, "whatsapp", content.body, "whatsapp_direct", wamid, whenSent(m.timestamp));
+    const sentAt = whenSent(m.timestamp);
+
+    // The owner messaging someone who is not a lead yet — their brother,
+    // or a buyer they were referred to. Judged like an inbound message
+    // (see judgeUnknownContact); a quote from the owner is what stage 2
+    // looks for first.
+    let gate: GateResult = { admit: true, prior: [] };
+    if (!(await isLead(businessId, phone))) {
+      gate = await judgeUnknownContact(
+        businessId,
+        await businessContext(),
+        to,
+        names.get(to),
+        { id: wamid ?? "", direction: "outbound", channel: "whatsapp", body: content.body, date: sentAt.toISOString(), opened: false },
+        content.ownWords.length > 0
+      );
+      if (!gate.admit) continue;
+    }
+
+    const lead = await findOrCreateLeadByPhone(businessId, phone, "WhatsApp", names.get(to));
+    if (gate.prior.length > 0) {
+      const conversation = await findOrCreateConversation(lead.id, "whatsapp");
+      await writeSetAsideThread(conversation.id, gate.prior);
+    }
+    if (gate.setAsideRowId) await prisma.filteredEmail.deleteMany({ where: { id: gate.setAsideRowId, businessId } });
+    await captureDirectReply(lead.id, "whatsapp", content.body, "whatsapp_direct", wamid, sentAt);
   }
 }
 

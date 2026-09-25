@@ -30,6 +30,11 @@ import type { Message } from "@/lib/types";
  * then it is recorded where the owner can see it and take it back — it is
  * never deleted and never silently dropped.
  *
+ * Since 2026-09-25 the live path asks too: a message from, or to, someone
+ * who is not a lead yet goes through this same judge before it becomes
+ * one, and a chat set aside is judged again whenever it says more
+ * (judgeUnknownContact in whatsappCloud.ts).
+ *
  * The two errors are not equal and this file is deliberately lopsided
  * about them. Missing a real customer is the failure the whole product
  * exists to prevent. A private chat appearing in the pipeline is untidy

@@ -75,7 +75,7 @@ describe("a seller is never a lead, whatever the model says", () => {
     // pitch, marks it a prospect while still correctly identifying who is
     // selling. The old code returned that verdict untouched.
     modelSays({
-      whoIsSelling: "the sender",
+      whoIsSelling: "sender is selling to this business",
       isProspect: true,
       reason: "Henji is enthusiastic about discussing the corporate party.",
     });
@@ -86,7 +86,7 @@ describe("a seller is never a lead, whatever the model says", () => {
 
   it("keeps the model's own sentence, so the owner can see why it was filtered", async () => {
     modelSays({
-      whoIsSelling: "the sender",
+      whoIsSelling: "sender is selling to this business",
       isProspect: true,
       reason: "Henji is a photographer offering to shoot the business's event.",
     });
@@ -96,7 +96,7 @@ describe("a seller is never a lead, whatever the model says", () => {
   });
 
   it("supplies a sentence when the model left one empty", async () => {
-    modelSays({ whoIsSelling: "the sender", isProspect: true, reason: "" });
+    modelSays({ whoIsSelling: "sender is selling to this business", isProspect: true, reason: "" });
 
     const result = await classifyAsProspect(photographerPitch, henji, business);
     expect(result.isProspect).toBe(false);
@@ -104,7 +104,7 @@ describe("a seller is never a lead, whatever the model says", () => {
   });
 
   it("passes a seller straight through when the model already said false", async () => {
-    modelSays({ whoIsSelling: "the sender", isProspect: false, reason: "A photographer pitching their services." });
+    modelSays({ whoIsSelling: "sender is selling to this business", isProspect: false, reason: "A photographer pitching their services." });
 
     const result = await classifyAsProspect(photographerPitch, henji, business);
     expect(result).toEqual({ isProspect: false, reason: "A photographer pitching their services." });
@@ -114,10 +114,10 @@ describe("a seller is never a lead, whatever the model says", () => {
 describe("a contradiction resolves toward the customer, and nothing else is promoted", () => {
   // "Not selling to us" does not make someone a customer — a newsletter and
   // a password reset are both "neither" — so "neither" is never promoted.
-  // Only the model's own "this business" is (found live 2026-09-25).
+  // Only the model's own "sender wants to buy" is (found live 2026-09-25).
   it("keeps a sender the model itself says is asking about this business's work", async () => {
     modelSays({
-      whoIsSelling: "this business",
+      whoIsSelling: "sender wants to buy from this business",
       isProspect: false,
       reason: "The sender is asking about pricing for a service they want, indicating they are a customer.",
     });
@@ -131,7 +131,7 @@ describe("a contradiction resolves toward the customer, and nothing else is prom
 
   it("leaves a real customer alone", async () => {
     modelSays({
-      whoIsSelling: "this business",
+      whoIsSelling: "sender wants to buy from this business",
       isProspect: true,
       reason: "asking what a shoot for their wedding would cost",
     });
@@ -157,7 +157,7 @@ describe("a contradiction resolves toward the customer, and nothing else is prom
 
 describe("the question is asked before the verdict, and the prompt says so", () => {
   it("generates whoIsSelling first — field order is generation order", async () => {
-    modelSays({ whoIsSelling: "this business", isProspect: true, reason: "asking about a shoot" });
+    modelSays({ whoIsSelling: "sender wants to buy from this business", isProspect: true, reason: "asking about a shoot" });
     await classifyAsProspect(photographerPitch, henji, business);
 
     const schema = create.mock.calls[0][0].response_format.json_schema.schema;
@@ -169,10 +169,17 @@ describe("the question is asked before the verdict, and the prompt says so", () 
     // the way they did live on 2026-09-25.
     expect(fields.indexOf("reason")).toBeLessThan(fields.indexOf("isProspect"));
     expect(schema.required).toEqual(["whoIsSelling", "reason", "isProspect"]);
+    // Labels that say which way the money goes. "the sender" read as "the
+    // one paying" and filtered a customer asking a price (live 2026-09-25).
+    expect(schema.properties.whoIsSelling.enum).toEqual([
+      "sender is selling to this business",
+      "sender wants to buy from this business",
+      "neither",
+    ]);
   });
 
   it("names the trades that read like customers, not just the B2B commodity list", async () => {
-    modelSays({ whoIsSelling: "this business", isProspect: true, reason: "asking about a shoot" });
+    modelSays({ whoIsSelling: "sender wants to buy from this business", isProspect: true, reason: "asking about a shoot" });
     await classifyAsProspect(photographerPitch, henji, business);
 
     const system = create.mock.calls[0][0].messages[0].content as string;
@@ -186,7 +193,7 @@ describe("the question is asked before the verdict, and the prompt says so", () 
   });
 
   it("tells the model a warm tone is not evidence of a customer", async () => {
-    modelSays({ whoIsSelling: "this business", isProspect: true, reason: "asking about a shoot" });
+    modelSays({ whoIsSelling: "sender wants to buy from this business", isProspect: true, reason: "asking about a shoot" });
     await classifyAsProspect(photographerPitch, henji, business);
 
     const system = create.mock.calls[0][0].messages[0].content as string;

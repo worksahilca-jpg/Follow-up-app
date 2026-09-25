@@ -403,6 +403,35 @@ function stripQuotedReply(body: string): string {
 export type ClassifierBusinessContext = { name: string; industry: string | null };
 
 /**
+ * No trade on file, or the onboarding catch-all "Other" (src/lib/industries.ts).
+ * Either way the classifier does not know what this business sells.
+ */
+export function isUnknownTrade(industry: string | null): boolean {
+  return !industry || industry.trim().toLowerCase() === "other";
+}
+
+/** `"Acme", a plumbing business` — never `a Other business`. */
+function businessIdentity(business: ClassifierBusinessContext): string {
+  return `"${business.name}"${isUnknownTrade(business.industry) ? "" : `, a ${business.industry} business`}`;
+}
+
+/**
+ * Found live 2026-09-25: a business on "Other" got "how much for a quote
+ * next week?" from a real person, and the classifier set it aside as "not
+ * a customer of this business" — it could not see a match between the
+ * request and a trade it had never been told. Without the trade, the
+ * request cannot be ruled out on fit, so it is not; the pitch rules below
+ * still apply in full.
+ */
+const UNKNOWN_TRADE_RULE =
+  "You have NOT been told what this business sells, so never answer false because a request does not " +
+  "obviously match its name or seems outside its line of work — you cannot know that. A real person asking " +
+  "this business for a price, a quote, availability, a booking, or about work they want done is a prospective " +
+  "customer: true, unless they are the one selling (see whoIsSelling). When a real person's request might be " +
+  "for this business, answer true — the owner can set it aside in one click; a customer who is never answered " +
+  "is lost.";
+
+/**
  * Whose work would be paid for in this thread — the question the verdict
  * turns on. See PROSPECT_CLASSIFICATION_SCHEMA for why it is answered
  * first and enforced in code afterwards.
@@ -439,9 +468,11 @@ export async function classifyAsProspect(
   // his real deals. Every verdict is now made as someone in this
   // business would make it.
   const businessLine = business
-    ? `The inbox belongs to "${business.name}"${business.industry ? `, a ${business.industry} business` : ""}. ` +
-      `Judge every thread the way an experienced person in that exact line of work would.`
-    : "The inbox belongs to a small business.";
+    ? isUnknownTrade(business.industry)
+      ? `The inbox belongs to ${businessIdentity(business)}. ${UNKNOWN_TRADE_RULE}`
+      : `The inbox belongs to ${businessIdentity(business)}. ` +
+        `Judge every thread the way an experienced person in that exact line of work would.`
+    : `The inbox belongs to a small business. ${UNKNOWN_TRADE_RULE}`;
 
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -655,7 +686,7 @@ export async function classifyThreadOutcome(
   }));
 
   const businessLine = business
-    ? `The inbox belongs to "${business.name}"${business.industry ? `, a ${business.industry} business` : ""}. ` +
+    ? `The inbox belongs to ${businessIdentity(business)}. ` +
       `Judge how this thread ended the way an experienced person in that exact line of work would.`
     : "The inbox belongs to a small business.";
 

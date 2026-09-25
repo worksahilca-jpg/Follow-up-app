@@ -21,6 +21,7 @@ import {
   generateInstantReply,
   assessAckRisk,
   classifyAsProspect,
+  isUnknownTrade,
   scoreLead,
 } from "@/lib/integrations/openai";
 
@@ -593,6 +594,54 @@ describe("prospect classifier (classifyAsProspect) — solicitations disguised a
     create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ isProspect: true, reason: "n/a" }) } }] });
     await classifyAsProspect(conversation, { name: "Jamie", email: "jamie@example.com" });
     expect(create.mock.calls[0][0].temperature).toBe(0);
+  });
+});
+
+// Found live 2026-09-25: on a business set to "Other", "how much for a quote
+// next week?" was set aside as "not a customer of this business" — the model
+// had no trade to match the request against, so it ruled on fit it could not
+// know.
+describe("prospect classifier (classifyAsProspect) — a business whose trade is unknown", () => {
+  const systemFor = async (business?: { name: string; industry: string | null }) => {
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ whoIsSelling: "this business", isProspect: true, reason: "n/a" }) } }] });
+    await classifyAsProspect(conversation, { name: "Jamie", email: "jamie@example.com" }, business);
+    return create.mock.calls[0][0].messages[0].content as string;
+  };
+
+  it.each([
+    ["Other", { name: "FollowUp", industry: "Other" }],
+    ["no industry", { name: "FollowUp", industry: null }],
+    ["no business at all", undefined],
+  ])("tells the model not to rule a real request out on fit (%s)", async (_label, business) => {
+    const system = await systemFor(business);
+    expect(system).toMatch(/You have NOT been told what this business sells/);
+    expect(system).toMatch(/a price, a quote, availability, a booking/);
+    // The pitch rules are untouched: a seller is still never a customer.
+    expect(system).toMatch(/unless they are the one selling/);
+    expect(system).toMatch(/settle whoIsSelling/);
+  });
+
+  it("never calls it 'a Other business'", async () => {
+    const system = await systemFor({ name: "FollowUp", industry: "Other" });
+    expect(system).toMatch(/belongs to "FollowUp"\. /);
+    expect(system).not.toMatch(/a Other business/);
+  });
+
+  it("leaves a business with a known trade judged as that trade, without the unknown-trade rule", async () => {
+    const system = await systemFor({ name: "Riverside Glass", industry: "auto glass repair" });
+    expect(system).toMatch(/"Riverside Glass", a auto glass repair business/);
+    expect(system).toMatch(/exact line of work/);
+    expect(system).not.toMatch(/NOT been told what this business sells/);
+  });
+});
+
+describe("isUnknownTrade", () => {
+  it("is true for no industry and for the onboarding catch-all, in any case", () => {
+    expect(isUnknownTrade(null)).toBe(true);
+    expect(isUnknownTrade("")).toBe(true);
+    expect(isUnknownTrade("Other")).toBe(true);
+    expect(isUnknownTrade(" other ")).toBe(true);
+    expect(isUnknownTrade("Real estate")).toBe(false);
   });
 });
 

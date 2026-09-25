@@ -17,9 +17,18 @@
  *  6. someone who is not a lead yet is judged before becoming one — the
  *     owner's own number carries their private life (2026-09-25). A chat
  *     set aside keeps its messages, is judged again when it says more,
- *     and becomes a lead with its history the moment it looks like work.
+ *     and becomes a lead with its history the moment it looks like work;
+ *  7. two messages from the same new number judged at the same time both
+ *     survive, whichever way each is judged (security pass 2026-09-25 F4).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+type FilteredRow = { id: string; threadPayload: unknown };
+type FilteredWrite = {
+  where: { businessId_threadId: { businessId: string; threadId: string } };
+  update: Record<string, unknown>;
+  create: Record<string, unknown>;
+};
 
 const {
   businessFindUnique,
@@ -32,31 +41,62 @@ const {
   filteredFindUnique,
   filteredUpsert,
   filteredDeleteMany,
-} = vi.hoisted(() => ({
-  businessFindUnique: vi.fn(),
-  leadUpdate: vi.fn(async () => ({})),
-  leadUpdateMany: vi.fn(async () => ({ count: 1 })),
-  leadFindFirst: vi.fn(async (): Promise<{ id: string } | null> => null),
-  leadCreate: vi.fn(async (args: { data: Record<string, unknown> }) => ({ id: "lead-hist", ...args.data })),
-  messageUpdateMany: vi.fn(async () => ({ count: 1 })),
-  messageUpsert: vi.fn(async () => ({})),
-  filteredFindUnique: vi.fn(async (): Promise<{ id: string; threadPayload: unknown } | null> => null),
-  filteredUpsert: vi.fn(async () => ({})),
-  filteredDeleteMany: vi.fn(async () => ({ count: 1 })),
-}));
-vi.mock("@/lib/db", () => ({
-  prisma: {
+  lockKeys,
+  runTransaction,
+} = vi.hoisted(() => {
+  // pg_advisory_xact_lock, in memory: one holder at a time, released when
+  // its transaction ends. Enough to let the race tests below interleave
+  // two deliveries the way two webhook requests would.
+  let lockTail: Promise<void> = Promise.resolve();
+  const lockKeys: unknown[] = [];
+  return {
+    businessFindUnique: vi.fn(),
+    leadUpdate: vi.fn(async () => ({})),
+    leadUpdateMany: vi.fn(async () => ({ count: 1 })),
+    leadFindFirst: vi.fn(async (): Promise<{ id: string } | null> => null),
+    leadCreate: vi.fn(async (args: { data: Record<string, unknown> }) => ({ id: "lead-hist", ...args.data })),
+    messageUpdateMany: vi.fn(async () => ({ count: 1 })),
+    messageUpsert: vi.fn<(args: { where: { externalId: string } }) => Promise<object>>(async () => ({})),
+    filteredFindUnique: vi.fn(async (): Promise<FilteredRow | null> => null),
+    filteredUpsert: vi.fn<(args: FilteredWrite) => Promise<object>>(async () => ({})),
+    filteredDeleteMany: vi.fn<(args: { where: { id: string; businessId: string } }) => Promise<{ count: number }>>(async () => ({ count: 1 })),
+    lockKeys,
+    runTransaction: async (client: object, fn: (tx: unknown) => Promise<unknown>) => {
+      let release: (() => void) | undefined;
+      const tx = {
+        ...client,
+        $executeRaw: async (_sql: TemplateStringsArray, ...values: unknown[]) => {
+          lockKeys.push(values[0]);
+          const before = lockTail;
+          lockTail = new Promise<void>((resolve) => (release = resolve));
+          await before;
+          return 1;
+        },
+      };
+      try {
+        return await fn(tx);
+      } finally {
+        release?.();
+      }
+    },
+  };
+});
+vi.mock("@/lib/db", () => {
+  const prisma = {
     business: { findUnique: businessFindUnique },
     lead: { update: leadUpdate, updateMany: leadUpdateMany, findFirst: leadFindFirst, create: leadCreate },
     message: { updateMany: messageUpdateMany, upsert: messageUpsert },
     filteredEmail: { findUnique: filteredFindUnique, upsert: filteredUpsert, deleteMany: filteredDeleteMany },
-  },
-}));
+  };
+  return { prisma: { ...prisma, $transaction: (fn: (tx: unknown) => Promise<unknown>) => runTransaction(prisma, fn) } };
+});
 
 // The one judge every channel shares. Says "customer" unless a test says
 // otherwise, so the flows above the gate run as they always did.
 const { classifyAsProspect } = vi.hoisted(() => ({
-  classifyAsProspect: vi.fn(async (): Promise<{ isProspect: boolean; reason: string }> => ({ isProspect: true, reason: "asks about work" })),
+  classifyAsProspect: vi.fn<(messages: { body: string }[], ...rest: unknown[]) => Promise<{ isProspect: boolean; reason: string }>>(
+    async () => ({ isProspect: true, reason: "asks about work" })
+  ),
 }));
 vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect }));
 
@@ -70,7 +110,7 @@ const { findOrCreateLeadByPhone } = vi.hoisted(() => ({
 vi.mock("@/lib/twilio", () => ({ findOrCreateLeadByPhone }));
 
 const { createInboundMessageIfNew, captureDirectReply } = vi.hoisted(() => ({
-  createInboundMessageIfNew: vi.fn(async () => true),
+  createInboundMessageIfNew: vi.fn<(conversationId: string, body: string, sentAt: Date, wamid?: string) => Promise<boolean>>(async () => true),
   captureDirectReply: vi.fn(async () => {}),
 }));
 vi.mock("@/lib/instagram", () => ({ createInboundMessageIfNew, captureDirectReply }));
@@ -104,10 +144,10 @@ function envelope(field: string, value: Record<string, unknown>) {
   };
 }
 
-function customerText(text: string, id = "wamid.1") {
+function customerText(text: string, id = "wamid.1", timestamp = nowSeconds()) {
   return envelope("messages", {
     contacts: [{ profile: { name: "Priya" }, wa_id: CUSTOMER }],
-    messages: [{ from: CUSTOMER, id, timestamp: nowSeconds(), type: "text", text: { body: text } }],
+    messages: [{ from: CUSTOMER, id, timestamp, type: "text", text: { body: text } }],
   });
 }
 
@@ -120,6 +160,12 @@ beforeEach(() => {
   filteredFindUnique.mockResolvedValue(null);
   tooManyRecentActions.mockResolvedValue(false);
   classifyAsProspect.mockResolvedValue({ isProspect: true, reason: "asks about work" });
+  // Replaced with an in-memory store by the race tests (F4 below).
+  filteredUpsert.mockResolvedValue({});
+  filteredDeleteMany.mockResolvedValue({ count: 1 });
+  messageUpsert.mockResolvedValue({});
+  findOrCreateLeadByPhone.mockResolvedValue({ id: "lead-wa", name: "Priya", assignedToId: null });
+  lockKeys.length = 0;
 });
 
 describe("a customer's WhatsApp message", () => {
@@ -349,6 +395,133 @@ describe("someone who isn't a lead yet (the owner's own number)", () => {
     expect(messageUpsert).toHaveBeenCalledWith(expect.objectContaining({ where: { externalId: "wamid.p1" } }));
     expect(filteredDeleteMany).toHaveBeenCalledWith({ where: { id: "filtered-1", businessId: "biz1" } });
     expect(captureDirectReply).toHaveBeenCalledWith("lead-wa", "whatsapp", "$2,400 for the deck, I can start Tuesday", "whatsapp_direct", "wamid.e2", expect.any(Date));
+  });
+});
+
+/**
+ * Security pass 2026-09-25 F4. Two webhooks for the same new number run
+ * side by side, and each spends seconds waiting on the judge. The set-aside
+ * row used to be read before the judge and written back whole after it,
+ * so whichever finished second decided what the chat held.
+ *
+ * Each test holds both messages at the judge until both deliveries have
+ * read the row, then lets them finish in a chosen order.
+ */
+describe("two messages from the same new number at once", () => {
+  const threadId = `whatsapp:${CUSTOMER}`;
+  const t = Math.floor(Date.now() / 1000);
+  const personal = { isProspect: false, reason: "Family chat" };
+  const work = { isProspect: true, reason: "asks for a quote" };
+
+  /** The set-aside row and the lead, in memory, so both deliveries read and write the same state. */
+  function world() {
+    const rows = new Map<string, FilteredRow>();
+    let lead: { id: string; name: string; assignedToId: null } | null = null;
+    // Every wamid written into the lead's conversation, by either route in.
+    const onLead = new Set<string>();
+    let n = 0;
+    filteredFindUnique.mockImplementation(async () => {
+      const row = rows.get(threadId);
+      return row ? { id: row.id, threadPayload: structuredClone(row.threadPayload) } : null;
+    });
+    filteredUpsert.mockImplementation(async ({ where, update, create }) => {
+      const key = where.businessId_threadId.threadId;
+      const row = rows.get(key);
+      if (row) Object.assign(row, update);
+      else rows.set(key, { ...create, id: `row-${++n}`, threadPayload: create.threadPayload });
+      return {};
+    });
+    filteredDeleteMany.mockImplementation(async ({ where }) => {
+      const hit = [...rows].find(([, row]) => row.id === where.id);
+      if (hit) rows.delete(hit[0]);
+      return { count: hit ? 1 : 0 };
+    });
+    leadFindFirst.mockImplementation(async () => lead);
+    findOrCreateLeadByPhone.mockImplementation(async () => (lead ??= { id: "lead-wa", name: "Priya", assignedToId: null }));
+    messageUpsert.mockImplementation(async ({ where }) => {
+      onLead.add(where.externalId);
+      return {};
+    });
+    createInboundMessageIfNew.mockImplementation(async (_conversationId, _body, _sentAt, wamid) => {
+      if (!wamid || onLead.has(wamid)) return false;
+      onLead.add(wamid);
+      return true;
+    });
+    const setAside = (messages: { id: string; body: string; date: string }[]) =>
+      rows.set(threadId, { id: "row-0", threadPayload: { phone: `+${CUSTOMER}`, name: "Priya", messages: messages.map((m) => ({ ...m, direction: "inbound" })) } });
+    const keptIds = () => [...rows.values()].flatMap((row) => (row.threadPayload as { messages: { id: string }[] }).messages.map((m) => m.id));
+    return { rows, onLead, setAside, keptIds };
+  }
+
+  /** The judge answers only when the test says so, per message (keyed on the newest message it was shown). */
+  function heldJudge(verdictFor: (newest: string) => { isProspect: boolean; reason: string }) {
+    const gates = new Map<string, { open: () => void; opened: Promise<void> }>();
+    const gate = (body: string) => {
+      let g = gates.get(body);
+      if (!g) {
+        let open = () => {};
+        const opened = new Promise<void>((resolve) => (open = resolve));
+        g = { open, opened };
+        gates.set(body, g);
+      }
+      return g;
+    };
+    classifyAsProspect.mockImplementation(async (messages) => {
+      const newest = messages[messages.length - 1].body;
+      await gate(newest).opened;
+      return verdictFor(newest);
+    });
+    return { release: (body: string) => gate(body).open() };
+  }
+
+  it("keeps both when both are set aside", async () => {
+    const w = world();
+    const judge = heldJudge(() => personal);
+    const first = processWhatsAppCloudEnvelope(customerText("Hi", "wamid.a", String(t)));
+    const second = processWhatsAppCloudEnvelope(customerText("are you free Saturday?", "wamid.b", String(t + 1)));
+    // Both have read "no row" and are waiting on the judge.
+    await vi.waitFor(() => expect(classifyAsProspect).toHaveBeenCalledTimes(2));
+    judge.release("Hi");
+    judge.release("are you free Saturday?");
+    await Promise.all([first, second]);
+
+    expect(w.keptIds()).toEqual(["wamid.a", "wamid.b"]);
+    expect(findOrCreateLeadByPhone).not.toHaveBeenCalled();
+    // One lock per chat, not one for the whole business.
+    expect(lockKeys).toContain(`whatsapp_set_aside:biz1:${CUSTOMER}`);
+  });
+
+  it("moves a message set aside mid-judge into the lead the chat became, and leaves no row behind", async () => {
+    const w = world();
+    w.setAside([{ id: "wamid.p1", body: "Happy Diwali!", date: new Date((t - 3600) * 1000).toISOString() }]);
+    const judge = heldJudge((newest) => (newest.includes("quote") ? work : personal));
+    const lead = processWhatsAppCloudEnvelope(customerText("Can I get a quote for the deck?", "wamid.a", String(t)));
+    const family = processWhatsAppCloudEnvelope(customerText("Say hi to mom", "wamid.b", String(t + 1)));
+    await vi.waitFor(() => expect(classifyAsProspect).toHaveBeenCalledTimes(2));
+    judge.release("Say hi to mom");
+    await family; // set aside: the row now holds p1 and b
+    judge.release("Can I get a quote for the deck?");
+    await lead; // let through, with the row it read before b arrived
+
+    expect([...w.onLead].sort()).toEqual(["wamid.a", "wamid.b", "wamid.p1"]);
+    expect(w.rows.size).toBe(0);
+  });
+
+  it("lets a message through when the chat became a lead while it was being judged", async () => {
+    const w = world();
+    const judge = heldJudge((newest) => (newest.includes("quote") ? work : personal));
+    const lead = processWhatsAppCloudEnvelope(customerText("Can I get a quote for the deck?", "wamid.a", String(t)));
+    const family = processWhatsAppCloudEnvelope(customerText("hi there", "wamid.b", String(t + 1)));
+    await vi.waitFor(() => expect(classifyAsProspect).toHaveBeenCalledTimes(2));
+    judge.release("Can I get a quote for the deck?");
+    await lead; // the lead exists now
+    judge.release("hi there");
+    await family;
+
+    expect([...w.onLead].sort()).toEqual(["wamid.a", "wamid.b"]);
+    expect(w.rows.size).toBe(0);
+    // Recorded as the lead's own message, with the same follow-through.
+    expect(scoreAndDraftForLead).toHaveBeenCalledTimes(2);
   });
 });
 

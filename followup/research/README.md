@@ -62,7 +62,8 @@ order and later ones assume the earlier fixes landed.
 `2026-09-09-sixth-pass-audit.md` · `2026-09-09-seventh-pass-audit.md` ·
 `2026-09-16-bug-hunt-automation-and-send-engine.md` ·
 `2026-09-16-security-audit-auth-tenancy-and-api.md` ·
-`2026-09-16-security-audit-meta-surface.md`
+`2026-09-16-security-audit-meta-surface.md` ·
+`2026-09-24-app-review-path-audit.md` — the stored Instagram id is the app-scoped one, so webhooks never match and FollowUp's own sends come back as a lead (F1/F2)
 
 `backend-backlog.md` is the one undated file — a running list rather than a pass.
 
@@ -114,6 +115,7 @@ order and later ones assume the earlier fixes landed.
 | `2026-09-16-training-data-sources-for-human-texture.md` | |
 | `2026-09-16-what-makes-a-short-message-read-as-human.md` | |
 | `2026-09-19-multilingual-accuracy-data.md` | |
+| `2026-09-24-simplify-the-app.md` | The biggest learning cost is 12 send controls across 4 screens; proposes a 3-item menu and one "Sending" tab. Includes which earlier simplification ideas shipped |
 
 ## `customers/` — who this is for
 

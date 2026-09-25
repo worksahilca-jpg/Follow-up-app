@@ -54,7 +54,7 @@ const { tooManyRecentActions } = vi.hoisted(() => ({ tooManyRecentActions: vi.fn
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions }));
 
 const { classifyAsProspect } = vi.hoisted(() => ({ classifyAsProspect: vi.fn() }));
-vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect }));
+vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect, classifyWithSecondLook: classifyAsProspect }));
 
 const { deleteLeadCascade, archiveLeadThreadsAsFiltered } = vi.hoisted(() => ({
   deleteLeadCascade: vi.fn(async () => {}),

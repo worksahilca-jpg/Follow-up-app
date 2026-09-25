@@ -15,7 +15,7 @@ vi.mock("@/lib/db", () => ({ prisma: { integration: { findFirst: integrationFind
 
 // gmail.ts's own imports, none of which a status read touches.
 vi.mock("googleapis", () => ({ google: {} }));
-vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect: vi.fn() }));
+vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect: vi.fn(), classifyWithSecondLook: vi.fn() }));
 vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn() }));
 vi.mock("@/lib/outboundWebhook", () => ({ notifyLeadEvent: vi.fn() }));
 vi.mock("@/lib/engagement", () => ({ checkRapidEngagement: vi.fn() }));

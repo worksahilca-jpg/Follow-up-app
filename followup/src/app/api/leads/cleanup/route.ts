@@ -3,7 +3,7 @@ import { getSessionContext } from "@/lib/session";
 import { hasActiveAccess, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { deleteLeadCascade, archiveLeadThreadsAsFiltered } from "@/lib/leads-admin";
-import { classifyAsProspect } from "@/lib/integrations/openai";
+import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { toTranscript } from "@/lib/transcript";
@@ -190,7 +190,7 @@ export async function POST() {
 
     let verdict: { isProspect: boolean; reason: string };
     try {
-      verdict = await classifyAsProspect(
+      verdict = await classifyWithSecondLook(
         messages,
         { name: lead.name, email: lead.email ?? "unknown" },
         businessContext ?? undefined

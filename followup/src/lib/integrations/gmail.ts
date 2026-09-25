@@ -30,7 +30,7 @@ import { google } from "googleapis";
 import type { gmail_v1 } from "googleapis";
 import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
-import { classifyAsProspect } from "@/lib/integrations/openai";
+import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -648,7 +648,7 @@ async function processThreadRefs(
           date: m.sentAt.toISOString(),
           opened: false,
         }));
-        const { isProspect, reason } = await classifyAsProspect(transcript, counterpart, businessContext ?? undefined);
+        const { isProspect, reason } = await classifyWithSecondLook(transcript, counterpart, businessContext ?? undefined);
         if (!isProspect) {
           // Not a lead — but never silently. Record the verdict where the
           // owner can see it and overrule it (Settings → Gmail).

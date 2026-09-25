@@ -29,7 +29,7 @@
 
 import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
-import { classifyAsProspect } from "@/lib/integrations/openai";
+import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -395,7 +395,7 @@ async function processConversations(
           date: m.sentAt.toISOString(),
           opened: false,
         }));
-        const { isProspect, reason } = await classifyAsProspect(transcript, counterpart, businessContext ?? undefined);
+        const { isProspect, reason } = await classifyWithSecondLook(transcript, counterpart, businessContext ?? undefined);
         if (!isProspect) {
           await prisma.filteredEmail.upsert({
             where: { businessId_threadId: { businessId, threadId: conversationId } },

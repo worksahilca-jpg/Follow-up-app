@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { decryptSecret } from "@/lib/crypto";
+import { decryptSecret, encryptionEnabled } from "@/lib/crypto";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
-import { activateFacebookPageWebhooks, type ManagedPage } from "@/lib/facebook";
+import { activateFacebookPageWebhooks, resolveFacebookPage, type ManagedPage } from "@/lib/facebook";
 
 const selectPageSchema = z.object({ pageId: z.string() });
 
@@ -33,6 +33,22 @@ export async function POST(request: NextRequest) {
   }
   const page = pages.find((p) => p.id === pageId);
   if (!page) return NextResponse.json({ success: false, message: "Pick one of the Pages shown." }, { status: 400 });
+
+  // The cookie is only tamper-proof when it is really encrypted. Without
+  // TOKEN_ENCRYPTION_KEY, encryptSecret() stores plain JSON and
+  // decryptSecret() passes it straight through, so an admin could write
+  // any Page id into the cookie in devtools and claim another business's
+  // Page — every Messenger DM for it would then route here (audits
+  // 2026-09-16 Meta #4, 2026-09-26 A-7). In that state the token has to
+  // prove the Page itself, the same check the paste-a-token path makes.
+  if (!encryptionEnabled()) {
+    const resolved = await resolveFacebookPage(page.accessToken);
+    if (resolved?.id !== pageId) {
+      const res = NextResponse.json({ success: false, message: "That sign-in expired — connect Facebook again." }, { status: 400 });
+      res.cookies.delete("fb_pending_pages");
+      return res;
+    }
+  }
 
   try {
     await prisma.business.update({

@@ -121,6 +121,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     twilioPhoneNumber: business.twilioPhoneNumber,
     whatsappPhoneNumber: business.whatsappPhoneNumber,
     instagramUserId: business.instagramUserId,
+    instagramAccountId: business.instagramAccountId,
     facebookPageId: business.facebookPageId,
     facebookPageName: business.facebookPageName,
   };

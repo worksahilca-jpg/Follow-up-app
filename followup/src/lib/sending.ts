@@ -611,6 +611,10 @@ export async function sendFollowUpToLead(
     } else if (channel === "instagram") {
       const result = await sendInstagramMessage(lead.businessId, instagramRecipientId(lead.phone!), body, { quickReplies: options.quickReplies, humanAgent });
       if (!result.success) return providerFailure(result, "Instagram didn't confirm this message sent.");
+      // Meta's message id, so the poller's read-back of this same message
+      // (src/lib/instagramPoll.ts → captureDirectReply's upsert on
+      // externalId) lands on this row instead of creating a second one.
+      externalId = result.messageId;
     } else if (channel === "messenger") {
       const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body, { quickReplies: options.quickReplies, humanAgent });
       if (!result.success) return providerFailure(result, "Facebook didn't confirm this message sent.");
@@ -810,15 +814,37 @@ export async function sendFollowUpToLead(
       }
     }
 
-    await prisma.message.create({
-      data: {
-        conversationId: conversation.id,
-        direction: "outbound",
-        body: recordedBody,
-        externalId,
-        trigger,
-      },
-    });
+    try {
+      await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          direction: "outbound",
+          body: recordedBody,
+          externalId,
+          trigger,
+        },
+      });
+    } catch (err) {
+      // The read-back got here first. Between the provider saying yes and
+      // this line, the same message can already have been stored by the
+      // path that reads the account's own messages back — an echo webhook
+      // or the Instagram poller — under the same provider id, labelled as
+      // sent outside FollowUp. A row with this message's own provider id
+      // IS this message, so it is claimed rather than duplicated: marked
+      // as FollowUp's (source null) with this send's trigger. Without this
+      // the unique violation skipped the FollowUp row below as well.
+      //
+      // Only ever this lead's own outbound row. externalId is unique across
+      // every tenant, and not every provider's ids are (a Gmail id is unique
+      // per mailbox), so a collision with someone else's message is left
+      // untouched and reported exactly as it was before this existed.
+      if (!(externalId && err && typeof err === "object" && "code" in err && err.code === "P2002")) throw err;
+      const claimed = await prisma.message.updateMany({
+        where: { externalId, direction: "outbound", conversation: { leadId: lead.id } },
+        data: { source: null, trigger },
+      });
+      if (claimed.count === 0) throw err;
+    }
 
     await prisma.followUp.create({
       data: {

@@ -97,8 +97,16 @@ async function graphJson(path: string, accessToken: string): Promise<unknown | n
  * as an outbound message on the lead rather than treating the business as
  * a lead. The recipient of an echo is the person being talked to, so the
  * lead lookup stays symmetric.
+ *
+ * "The account itself" is EITHER of its ids. The poller reads through the
+ * app-scoped id (instagramUserId, 2869…), but the Conversations API
+ * reports the account's own messages as `from` its professional-account
+ * id (instagramAccountId, 1784…). Comparing against the first alone is
+ * how, on 2026-09-25, the founder's business came to have a lead whose
+ * phone was its own account, built from its own replies (audit
+ * 2026-09-24 F1/F2).
  */
-function toMessagingEvent(message: GraphMessage, igUserId: string): Record<string, unknown> | null {
+function toMessagingEvent(message: GraphMessage, igUserId: string, ownIds: ReadonlySet<string>): Record<string, unknown> | null {
   const mid = typeof message.id === "string" ? message.id : null;
   const fromId = typeof message.from?.id === "string" ? message.from.id : null;
   const sentAt = parseGraphTime(message.created_time);
@@ -121,10 +129,10 @@ function toMessagingEvent(message: GraphMessage, igUserId: string): Record<strin
   // unchanged.
   const username = typeof message.from?.username === "string" ? message.from.username : undefined;
 
-  const isEcho = fromId === igUserId;
+  const isEcho = ownIds.has(fromId);
   if (isEcho) {
     const to = Array.isArray(message.to?.data) ? (message.to.data as { id?: unknown }[]) : [];
-    const recipientId = to.map((t) => t?.id).find((id): id is string => typeof id === "string" && id !== igUserId);
+    const recipientId = to.map((t) => t?.id).find((id): id is string => typeof id === "string" && !ownIds.has(id));
     if (!recipientId) return null;
     return {
       sender: { id: igUserId },
@@ -150,12 +158,17 @@ function toMessagingEvent(message: GraphMessage, igUserId: string): Record<strin
  * distinction is what stops a rate-limited or expired-token tick from
  * looking like "nothing new" and quietly carrying the cursor past a
  * window nobody ever read.
+ *
+ * `accountId` is the professional-account id (Business.instagramAccountId)
+ * when it is known; see toMessagingEvent for why it matters.
  */
 export async function fetchNewInstagramEvents(
   igUserId: string,
   accessToken: string,
-  since: Date
+  since: Date,
+  accountId?: string | null
 ): Promise<{ ok: boolean; events: Record<string, unknown>[] }> {
+  const ownIds: ReadonlySet<string> = new Set(accountId ? [igUserId, accountId] : [igUserId]);
   const listed = (await graphJson(
     `${encodeURIComponent(igUserId)}/conversations?platform=instagram&fields=id,updated_time&limit=${CONVERSATION_LIMIT}`,
     accessToken
@@ -182,7 +195,7 @@ export async function fetchNewInstagramEvents(
     for (const message of messages) {
       const sentAt = parseGraphTime(message?.created_time);
       if (!sentAt || sentAt.getTime() <= since.getTime()) continue;
-      const event = toMessagingEvent(message, igUserId);
+      const event = toMessagingEvent(message, igUserId, ownIds);
       if (event) events.push({ at: sentAt.getTime(), event });
     }
   }
@@ -198,6 +211,7 @@ export async function fetchNewInstagramEvents(
 export async function pollInstagramForBusiness(business: {
   id: string;
   instagramUserId: string;
+  instagramAccountId?: string | null;
   instagramAccessToken: string;
   instagramSyncedAt: Date | null;
 }): Promise<{ events: number }> {
@@ -206,7 +220,12 @@ export async function pollInstagramForBusiness(business: {
   const cursor = business.instagramSyncedAt ? business.instagramSyncedAt.getTime() - OVERLAP_MS : now - FIRST_RUN_LOOKBACK_MS;
   const since = new Date(Math.max(cursor, floor));
 
-  const { ok, events } = await fetchNewInstagramEvents(business.instagramUserId, business.instagramAccessToken, since);
+  const { ok, events } = await fetchNewInstagramEvents(
+    business.instagramUserId,
+    business.instagramAccessToken,
+    since,
+    business.instagramAccountId
+  );
   if (events.length > 0) {
     await processMetaEnvelope({
       object: "instagram",
@@ -227,7 +246,7 @@ export async function pollInstagramForBusiness(business: {
 export async function pollInstagramForAllBusinesses(): Promise<{ businesses: number; events: number }> {
   const businesses = await prisma.business.findMany({
     where: { instagramUserId: { not: null }, instagramAccessToken: { not: null } },
-    select: { id: true, instagramUserId: true, instagramAccessToken: true, instagramSyncedAt: true },
+    select: { id: true, instagramUserId: true, instagramAccountId: true, instagramAccessToken: true, instagramSyncedAt: true },
   });
 
   let events = 0;
@@ -236,6 +255,7 @@ export async function pollInstagramForAllBusinesses(): Promise<{ businesses: num
       const result = await pollInstagramForBusiness({
         id: business.id,
         instagramUserId: business.instagramUserId!,
+        instagramAccountId: business.instagramAccountId,
         instagramAccessToken: business.instagramAccessToken!,
         instagramSyncedAt: business.instagramSyncedAt,
       });

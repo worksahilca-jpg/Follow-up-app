@@ -237,6 +237,87 @@ describe("pollInstagramForAllBusinesses", () => {
 });
 
 /**
+ * "Is this our own message?" against BOTH of the account's ids (audit
+ * 2026-09-24 F1/F2). The poller reads through the app-scoped id (IG above,
+ * 2869…), but the Conversations API reports the account's own messages as
+ * `from` its professional-account id (1784…). Comparing against IG alone
+ * rebuilt every message the business sent — FollowUp's approved replies and
+ * the owner's own from the phone — as an inbound DM from the business, and
+ * on 2026-09-25 production had the resulting lead: phone ig:17841427527466039.
+ */
+describe("the account's own messages, by its professional-account id", () => {
+  const PRO = "17841427527466039";
+  const since = () => new Date(Date.now() - 300_000);
+
+  it("are echoes addressed to the lead, not DMs from the business", async () => {
+    mockGraph(
+      [{ id: "c1", updated_time: metaTime(10_000) }],
+      { c1: [{ id: "m-ours", created_time: metaTime(10_000), from: { id: PRO, username: "followupbase" }, to: { data: [{ id: LEAD }] }, message: "Yes, Saturday works." }] }
+    );
+    const { events } = await fetchNewInstagramEvents(IG, TOKEN, since(), PRO);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toEqual(expect.objectContaining({ recipient: { id: LEAD } }));
+    expect(events[0].message).toEqual(expect.objectContaining({ is_echo: true, mid: "m-ours" }));
+    // Not rebuilt as a DM from "@followupbase" — the sender of an echo is
+    // the account, and processMetaEnvelope files it on the recipient.
+    expect(events[0].sender).toEqual({ id: IG });
+  });
+
+  it("never pick one of the account's own ids as the person being talked to", async () => {
+    mockGraph(
+      [{ id: "c1", updated_time: metaTime(10_000) }],
+      { c1: [{ id: "m-ours", created_time: metaTime(10_000), from: { id: PRO }, to: { data: [{ id: IG }, { id: PRO }, { id: LEAD }] }, message: "hi" }] }
+    );
+    const { events } = await fetchNewInstagramEvents(IG, TOKEN, since(), PRO);
+    expect(events[0].recipient).toEqual({ id: LEAD });
+  });
+
+  it("leave a lead's own DM exactly as it was: inbound, from the lead", async () => {
+    mockGraph(
+      [{ id: "c1", updated_time: metaTime(10_000) }],
+      { c1: [{ id: "m-lead", created_time: metaTime(10_000), from: { id: LEAD }, to: { data: [{ id: PRO }] }, message: "is Saturday free?" }] }
+    );
+    const { events } = await fetchNewInstagramEvents(IG, TOKEN, since(), PRO);
+    expect(events[0]).toEqual(expect.objectContaining({ sender: { id: LEAD }, recipient: { id: IG } }));
+    expect((events[0].message as { is_echo?: boolean }).is_echo).toBeUndefined();
+  });
+
+  it("are read with the stored professional-account id on every tick", async () => {
+    mockGraph(
+      [{ id: "c1", updated_time: metaTime(10_000) }],
+      { c1: [{ id: "m-ours", created_time: metaTime(10_000), from: { id: PRO }, to: { data: [{ id: LEAD }] }, message: "Yes, Saturday works." }] }
+    );
+    await pollInstagramForBusiness({
+      id: "biz1",
+      instagramUserId: IG,
+      instagramAccountId: PRO,
+      instagramAccessToken: TOKEN,
+      instagramSyncedAt: new Date(Date.now() - 300_000),
+    });
+    expect(processMetaEnvelope).toHaveBeenCalledWith({
+      object: "instagram",
+      entry: [{ id: IG, messaging: [expect.objectContaining({ recipient: { id: LEAD }, message: expect.objectContaining({ is_echo: true }) })] }],
+    });
+  });
+
+  it("are recognised for every business the tick reads, because the id is selected", async () => {
+    businessFindMany.mockResolvedValueOnce([
+      { id: "biz1", instagramUserId: IG, instagramAccountId: PRO, instagramAccessToken: TOKEN, instagramSyncedAt: new Date(Date.now() - 300_000) },
+    ] as never);
+    mockGraph(
+      [{ id: "c1", updated_time: metaTime(10_000) }],
+      { c1: [{ id: "m-ours", created_time: metaTime(10_000), from: { id: PRO }, to: { data: [{ id: LEAD }] }, message: "Yes, Saturday works." }] }
+    );
+    await pollInstagramForAllBusinesses();
+    expect(businessFindMany).toHaveBeenCalledWith(expect.objectContaining({ select: expect.objectContaining({ instagramAccountId: true }) }));
+    expect(processMetaEnvelope).toHaveBeenCalledWith({
+      object: "instagram",
+      entry: [{ id: IG, messaging: [expect.objectContaining({ message: expect.objectContaining({ is_echo: true }) })] }],
+    });
+  });
+});
+
+/**
  * The sender's handle. Meta's webhook payload has no username, so a lead
  * created from one is "Instagram DM" — and the first real lead was
  * greeted "Hi! Instagram, ..." on 2026-09-19 because that placeholder

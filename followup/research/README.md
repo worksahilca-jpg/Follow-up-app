@@ -66,6 +66,7 @@ order and later ones assume the earlier fixes landed.
 `2026-09-24-app-review-path-audit.md` — the stored Instagram id is the app-scoped one, so webhooks never match and FollowUp's own sends come back as a lead (F1/F2)
 · `2026-09-25-daily-path-bug-hunt.md` — "Send all routine" can re-send the same drafts; a new draft inherits the old risk verdict; approved emails start new Gmail threads
 · `2026-09-25-ui-bug-hunt.md` — what shows wrongly on camera in the App Review takes, false "sends on its own" copy, a lead-page double-send, dark-mode and phone-width bugs
+· `2026-09-25-pr324-review.md` — security review of the Instagram account-id fix (#324): merge with follow-ups; each account must reconnect (or be backfilled) before it takes effect
 
 `backend-backlog.md` is the one undated file — a running list rather than a pass.
 

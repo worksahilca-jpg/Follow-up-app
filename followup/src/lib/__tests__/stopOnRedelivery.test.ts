@@ -34,7 +34,9 @@ const { acknowledgeNewLead, scoreAndDraftForLead } = vi.hoisted(() => ({
 
 vi.mock("@/lib/db", () => ({
   prisma: {
-    lead: { update: leadUpdate },
+    // Already a lead: a redelivered message was recorded once, on a lead,
+    // so the WhatsApp new-contact check (whatsappCloud.ts) never runs here.
+    lead: { update: leadUpdate, findFirst: vi.fn(async () => ({ id: "lead1" })) },
     business: { findUnique: vi.fn(async () => ({ id: "biz1" })) },
   },
 }));

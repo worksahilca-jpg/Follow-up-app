@@ -70,6 +70,16 @@ against a live account. **The first live connect pins each of these.**
    - `history` → past chats, capture only: no acknowledgement, no drafts, no source routing,
      no sequences. Only threads whose newest message is within
      `HISTORY_IMPORT_MAX_AGE_DAYS` (30) are imported; older ones are not leads anymore.
+   - **Someone who is not a lead yet (added 2026-09-25).** The owner's own number is also
+     where their family, friends and bank write. Before, every live message from anyone
+     became a lead and got a draft. Now a message from, or an owner's message to, a number
+     with no lead goes through the same two-stage judge as the history import. A personal
+     chat is set aside in the filtered list, keeping up to 50 messages. It gets no lead, no
+     acknowledgement and no draft. It is judged again each time it says something new in
+     words, and becomes a lead, with the kept chat, as soon as it looks like work. It fails
+     open on a classifier error. Cost: up to two classifier calls per new text message in a
+     set-aside chat. Known gap: the filtered list only shows in Settings when Gmail or
+     Outlook is connected.
 4. **Outbound** — `sendWhatsAppCloud` (`src/lib/whatsappCloud.ts`), used by
    `sendFollowUpToLead` whenever the business has a Cloud connection (the Twilio path
    remains the fallback for a business that only configured Twilio). Inside 24 hours of the

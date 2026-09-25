@@ -13,7 +13,11 @@
  *  4. a delivery status lands on the outbound row, scoped to the business;
  *  5. the history sync captures recent threads and nothing else: no
  *     acknowledgement, no drafts, no source routing, and threads older
- *     than the cutoff are skipped.
+ *     than the cutoff are skipped;
+ *  6. someone who is not a lead yet is judged before becoming one — the
+ *     owner's own number carries their private life (2026-09-25). A chat
+ *     set aside keeps its messages, is judged again when it says more,
+ *     and becomes a lead with its history the moment it looks like work.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -25,22 +29,36 @@ const {
   leadCreate,
   messageUpdateMany,
   messageUpsert,
+  filteredFindUnique,
+  filteredUpsert,
+  filteredDeleteMany,
 } = vi.hoisted(() => ({
   businessFindUnique: vi.fn(),
   leadUpdate: vi.fn(async () => ({})),
   leadUpdateMany: vi.fn(async () => ({ count: 1 })),
-  leadFindFirst: vi.fn(async () => null),
+  leadFindFirst: vi.fn(async (): Promise<{ id: string } | null> => null),
   leadCreate: vi.fn(async (args: { data: Record<string, unknown> }) => ({ id: "lead-hist", ...args.data })),
   messageUpdateMany: vi.fn(async () => ({ count: 1 })),
   messageUpsert: vi.fn(async () => ({})),
+  filteredFindUnique: vi.fn(async (): Promise<{ id: string; threadPayload: unknown } | null> => null),
+  filteredUpsert: vi.fn(async () => ({})),
+  filteredDeleteMany: vi.fn(async () => ({ count: 1 })),
 }));
 vi.mock("@/lib/db", () => ({
   prisma: {
     business: { findUnique: businessFindUnique },
     lead: { update: leadUpdate, updateMany: leadUpdateMany, findFirst: leadFindFirst, create: leadCreate },
     message: { updateMany: messageUpdateMany, upsert: messageUpsert },
+    filteredEmail: { findUnique: filteredFindUnique, upsert: filteredUpsert, deleteMany: filteredDeleteMany },
   },
 }));
+
+// The one judge every channel shares. Says "customer" unless a test says
+// otherwise, so the flows above the gate run as they always did.
+const { classifyAsProspect } = vi.hoisted(() => ({
+  classifyAsProspect: vi.fn(async (): Promise<{ isProspect: boolean; reason: string }> => ({ isProspect: true, reason: "asks about work" })),
+}));
+vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect }));
 
 const { findOrCreateLeadByPhone } = vi.hoisted(() => ({
   findOrCreateLeadByPhone: vi.fn(async () => ({ id: "lead-wa", name: "Priya", assignedToId: null })),
@@ -94,6 +112,8 @@ beforeEach(() => {
   businessFindUnique.mockResolvedValue({ id: "biz1" });
   createInboundMessageIfNew.mockResolvedValue(true);
   leadFindFirst.mockResolvedValue(null);
+  filteredFindUnique.mockResolvedValue(null);
+  classifyAsProspect.mockResolvedValue({ isProspect: true, reason: "asks about work" });
 });
 
 describe("a customer's WhatsApp message", () => {
@@ -122,6 +142,7 @@ describe("a customer's WhatsApp message", () => {
   });
 
   it("records STOP on the lead and sends no acknowledgement", async () => {
+    leadFindFirst.mockResolvedValue({ id: "lead-wa" });
     await processWhatsAppCloudEnvelope(customerText("STOP"));
     expect(leadUpdate).toHaveBeenCalledWith({ where: { id: "lead-wa" }, data: { optedOutAt: expect.any(Date) } });
     expect(acknowledgeNewLead).not.toHaveBeenCalled();
@@ -140,6 +161,7 @@ describe("a customer's WhatsApp message", () => {
 
 describe("the owner's reply from their phone (echo)", () => {
   it("is captured as an outbound message, not treated as a lead message", async () => {
+    leadFindFirst.mockResolvedValue({ id: "lead-wa" });
     await processWhatsAppCloudEnvelope(
       envelope("smb_message_echoes", {
         message_echoes: [{ from: "14165550199", to: CUSTOMER, id: "wamid.echo", timestamp: nowSeconds(), type: "text", text: { body: "Yes we do — when suits?" } }],
@@ -149,6 +171,142 @@ describe("the owner's reply from their phone (echo)", () => {
     expect(createInboundMessageIfNew).not.toHaveBeenCalled();
     expect(acknowledgeNewLead).not.toHaveBeenCalled();
     expect(scoreAndDraftForLead).not.toHaveBeenCalled();
+  });
+});
+
+describe("someone who isn't a lead yet (the owner's own number)", () => {
+  const personal = { isProspect: false, reason: "Family chat about dinner plans" };
+  const earlier = new Date(Date.now() - 60 * 60_000).toISOString();
+  const keptThread = (messages: { id: string; direction: "inbound" | "outbound"; body: string; date: string }[]) => ({
+    id: "filtered-1",
+    threadPayload: { phone: `+${CUSTOMER}`, name: "Priya", messages },
+  });
+
+  it("is set aside when the chat is personal: no lead, no acknowledgement, no draft — but the message is kept", async () => {
+    classifyAsProspect.mockResolvedValue(personal);
+    await processWhatsAppCloudEnvelope(customerText("Dinner at 8 tonight?", "wamid.p1"));
+
+    // Two looks before anything is set aside (stage 2 only on a no).
+    expect(classifyAsProspect).toHaveBeenCalledTimes(2);
+    expect(findOrCreateLeadByPhone).not.toHaveBeenCalled();
+    expect(createInboundMessageIfNew).not.toHaveBeenCalled();
+    expect(acknowledgeNewLead).not.toHaveBeenCalled();
+    expect(scoreAndDraftForLead).not.toHaveBeenCalled();
+    expect(filteredUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { businessId_threadId: { businessId: "biz1", threadId: `whatsapp:${CUSTOMER}` } },
+        create: expect.objectContaining({
+          provider: "whatsapp",
+          senderPhone: `+${CUSTOMER}`,
+          reason: personal.reason,
+          threadPayload: expect.objectContaining({ messages: [expect.objectContaining({ id: "wamid.p1", direction: "inbound", body: "Dinner at 8 tonight?" })] }),
+        }),
+      })
+    );
+  });
+
+  it("never judges a number that is already a lead", async () => {
+    leadFindFirst.mockResolvedValue({ id: "lead-wa" });
+    await processWhatsAppCloudEnvelope(customerText("Any update on the quote?"));
+    expect(classifyAsProspect).not.toHaveBeenCalled();
+    expect(findOrCreateLeadByPhone).toHaveBeenCalled();
+    expect(scoreAndDraftForLead).toHaveBeenCalledWith("lead-wa");
+  });
+
+  it("becomes a lead, with the whole set-aside chat, the moment it turns into work", async () => {
+    filteredFindUnique.mockResolvedValue(keptThread([{ id: "wamid.p1", direction: "inbound", body: "Happy Diwali!", date: earlier }]));
+    await processWhatsAppCloudEnvelope(customerText("Also, can you look at my basement?", "wamid.p2"));
+
+    // Judged on the kept chat plus the new message, not the new message alone.
+    const [thread] = classifyAsProspect.mock.calls[0] as unknown as [{ id: string }[]];
+    expect(thread.map((m) => m.id)).toEqual(["wamid.p1", "wamid.p2"]);
+
+    expect(findOrCreateLeadByPhone).toHaveBeenCalledWith("biz1", `+${CUSTOMER}`, "WhatsApp", "Priya");
+    expect(messageUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { externalId: "wamid.p1" }, create: expect.objectContaining({ direction: "inbound", body: "Happy Diwali!" }) })
+    );
+    expect(filteredDeleteMany).toHaveBeenCalledWith({ where: { id: "filtered-1", businessId: "biz1" } });
+    expect(createInboundMessageIfNew).toHaveBeenCalledWith("conv-wa", "Also, can you look at my basement?", expect.any(Date), "wamid.p2");
+    expect(acknowledgeNewLead).toHaveBeenCalled();
+    expect(scoreAndDraftForLead).toHaveBeenCalledWith("lead-wa");
+  });
+
+  it("stays set aside, with the new message added, while it is still personal", async () => {
+    classifyAsProspect.mockResolvedValue(personal);
+    filteredFindUnique.mockResolvedValue(keptThread([{ id: "wamid.p1", direction: "inbound", body: "Happy Diwali!", date: earlier }]));
+    await processWhatsAppCloudEnvelope(customerText("Say hi to mom", "wamid.p2"));
+
+    expect(findOrCreateLeadByPhone).not.toHaveBeenCalled();
+    expect(filteredDeleteMany).not.toHaveBeenCalled();
+    expect(filteredUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({
+          reason: personal.reason,
+          threadPayload: expect.objectContaining({ messages: [expect.objectContaining({ id: "wamid.p1" }), expect.objectContaining({ id: "wamid.p2" })] }),
+        }),
+      })
+    );
+  });
+
+  it("spends nothing on a redelivery of a message already set aside", async () => {
+    filteredFindUnique.mockResolvedValue(keptThread([{ id: "wamid.p1", direction: "inbound", body: "Happy Diwali!", date: earlier }]));
+    await processWhatsAppCloudEnvelope(customerText("Happy Diwali!", "wamid.p1"));
+    expect(classifyAsProspect).not.toHaveBeenCalled();
+    expect(filteredUpsert).not.toHaveBeenCalled();
+    expect(findOrCreateLeadByPhone).not.toHaveBeenCalled();
+  });
+
+  it("keeps a photo in a set-aside chat without judging it again", async () => {
+    filteredFindUnique.mockResolvedValue(keptThread([{ id: "wamid.p1", direction: "inbound", body: "Happy Diwali!", date: earlier }]));
+    await processWhatsAppCloudEnvelope(
+      envelope("messages", {
+        messages: [{ from: CUSTOMER, id: "wamid.img2", timestamp: nowSeconds(), type: "image", image: { id: "m2", mime_type: "image/jpeg" } }],
+      })
+    );
+    expect(classifyAsProspect).not.toHaveBeenCalled();
+    expect(findOrCreateLeadByPhone).not.toHaveBeenCalled();
+    expect(filteredUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({ threadPayload: expect.objectContaining({ messages: [expect.anything(), expect.objectContaining({ id: "wamid.img2" })] }) }),
+      })
+    );
+  });
+
+  it("lets the message through when the judge fails — a lost customer is the worse mistake", async () => {
+    classifyAsProspect.mockRejectedValue(new Error("OpenAI down"));
+    await processWhatsAppCloudEnvelope(customerText("Hi, quote for a deck?"));
+    expect(findOrCreateLeadByPhone).toHaveBeenCalled();
+    expect(scoreAndDraftForLead).toHaveBeenCalledWith("lead-wa");
+    expect(filteredUpsert).not.toHaveBeenCalled();
+  });
+
+  it("sets aside the owner's own message to someone new when it is personal", async () => {
+    classifyAsProspect.mockResolvedValue(personal);
+    await processWhatsAppCloudEnvelope(
+      envelope("smb_message_echoes", {
+        message_echoes: [{ from: "14165550199", to: CUSTOMER, id: "wamid.e1", timestamp: nowSeconds(), type: "text", text: { body: "Reached home, call you later" } }],
+      })
+    );
+    expect(findOrCreateLeadByPhone).not.toHaveBeenCalled();
+    expect(captureDirectReply).not.toHaveBeenCalled();
+    expect(filteredUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ threadPayload: expect.objectContaining({ messages: [expect.objectContaining({ id: "wamid.e1", direction: "outbound" })] }) }),
+      })
+    );
+  });
+
+  it("makes a lead when the owner sends a set-aside contact a quote", async () => {
+    filteredFindUnique.mockResolvedValue(keptThread([{ id: "wamid.p1", direction: "inbound", body: "hey", date: earlier }]));
+    await processWhatsAppCloudEnvelope(
+      envelope("smb_message_echoes", {
+        message_echoes: [{ from: "14165550199", to: CUSTOMER, id: "wamid.e2", timestamp: nowSeconds(), type: "text", text: { body: "$2,400 for the deck, I can start Tuesday" } }],
+      })
+    );
+    expect(findOrCreateLeadByPhone).toHaveBeenCalledWith("biz1", `+${CUSTOMER}`, "WhatsApp", undefined);
+    expect(messageUpsert).toHaveBeenCalledWith(expect.objectContaining({ where: { externalId: "wamid.p1" } }));
+    expect(filteredDeleteMany).toHaveBeenCalledWith({ where: { id: "filtered-1", businessId: "biz1" } });
+    expect(captureDirectReply).toHaveBeenCalledWith("lead-wa", "whatsapp", "$2,400 for the deck, I can start Tuesday", "whatsapp_direct", "wamid.e2", expect.any(Date));
   });
 });
 

@@ -245,11 +245,23 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
     const recipientId: string | undefined = entry.id;
     if (!recipientId) continue;
 
-    const business = await prisma.business.findUnique({
-      where: { instagramUserId: recipientId },
-      select: { id: true },
-    });
+    // Either of the account's two ids. A real webhook's entry.id is the
+    // professional-account id (instagramAccountId, 1784…); the poller
+    // (src/lib/instagramPoll.ts) builds its envelopes with the app-scoped
+    // id it reads through (instagramUserId). Matching only the latter is
+    // why a real webhook never found its business (audit 2026-09-24 F1).
+    // Two unique lookups, in that order, rather than one OR: each can match
+    // at most one business, so the answer is never "whichever row came
+    // back first".
+    const select = { id: true, instagramUserId: true, instagramAccountId: true } as const;
+    const business =
+      (await prisma.business.findUnique({ where: { instagramUserId: recipientId }, select })) ??
+      (await prisma.business.findUnique({ where: { instagramAccountId: recipientId }, select }));
     if (!business) continue; // event for an Instagram account no business here has connected
+
+    // Every id this account is known by. A message FROM one of these is
+    // the business talking, never a lead — whatever the producer marked it.
+    const ownIds = new Set([recipientId, business.instagramUserId, business.instagramAccountId].filter((id): id is string => !!id));
 
     for (const event of entry.messaging ?? []) {
       const senderId: string | undefined = event.sender?.id;
@@ -269,9 +281,15 @@ export async function processMetaEnvelope(payload: { object?: string; entry?: un
       // out — and still lets the existing human-neglect trigger
       // (src/lib/automation.ts) rescue it later if Meta's agent replied
       // once and then the thread went quiet.
-      if (event.message?.is_echo) {
+      //
+      // A sender that is the account itself counts too, is_echo or not —
+      // the same belt the Messenger path below wears (`senderId === pageId`).
+      // Filing the business as a lead from itself is the failure the
+      // 2026-09-25 production data showed (a lead with phone
+      // ig:17841427527466039, the business's own account).
+      if (event.message?.is_echo || ownIds.has(senderId)) {
         const echoRecipientId: string | undefined = event.recipient?.id;
-        if (!echoRecipientId) continue;
+        if (!echoRecipientId || ownIds.has(echoRecipientId)) continue;
         const lead = await findOrCreateLeadByInstagram(business.id, echoRecipientId);
         await captureDirectReply(lead.id, "instagram", content.body, "instagram_direct", event.message?.mid, eventSentAt(event));
         continue;

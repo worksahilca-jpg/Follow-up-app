@@ -23,8 +23,22 @@ export const GRAPH_API = `https://graph.instagram.com/${GRAPH_VERSION}`;
 const GRAPH_OAUTH = "https://graph.instagram.com";
 
 /**
- * Instagram DM capture via the Instagram Graph API (Meta Developer App
- * "FollowUp", App ID 2713853435677364). Unlike Twilio/the generic
+ * Instagram DM capture via the Instagram Graph API. Two ids, easily mixed
+ * up: the Meta Developer App "FollowUp" is 2713853435677364 (the Facebook
+ * app — webhooks, App Review), but Instagram Login uses the separate
+ * Instagram app inside it, "FollowUp-IG", 1070892255325237. INSTAGRAM_APP_ID
+ * and INSTAGRAM_APP_SECRET are that Instagram pair, never the Facebook one
+ * (docs/meta-oauth-setup.md).
+ *
+ * If "Connect with Instagram" fails at the long-lived exchange with
+ * "Unsupported request - method type: get [100]" on both GET and POST, check
+ * the account's ROLE before touching this code: on 2026-09-25 that exact
+ * error was an account that was not an accepted Instagram Tester on the app.
+ * Accepting the invite (instagram.com/accounts/manage_access → Tester
+ * invites) made the same code connect first time. Two code changes (#319,
+ * #320) were spent on the wrong cause before that was found.
+ *
+ * Unlike Twilio/the generic
  * webhook, this is a SINGLE app-wide integration — one Meta app, one
  * webhook callback URL configured once in the Meta console — not a
  * per-business URL/secret. Each business's own connected Instagram
@@ -122,11 +136,47 @@ export function validateMetaSignature(rawBody: string, signatureHeader: string |
  *
  * `error` carries Meta's sentence and code; it never carries the token,
  * which is not echoed in a Graph error body and is not interpolated here.
+ *
+ * Two ids come back, and they are not the same number (2026-09-25):
+ *  - `id` is APP-SCOPED for Instagram API with Instagram Login (the
+ *    founder's @followupbase: 28693476873589439). Stored as
+ *    instagramUserId and used for /{id}/messages, /{id}/conversations and
+ *    /{id}/subscribed_apps, which all accept it and all work today.
+ *  - `user_id` is the professional-account id (17841427527466039) — the
+ *    number Meta's console shows, the `entry.id` on a webhook, and the
+ *    `from.id` on the account's own messages in the Conversations API.
+ *    Returned as `accountId`, stored as instagramAccountId.
+ * Keying routing and echo detection on `id` alone meant a webhook never
+ * found its business and the poller filed the business's own sends as a
+ * lead from itself (research/audit/2026-09-24-app-review-path-audit.md F1).
+ *
+ * `accountId` is optional on purpose: a token for which Meta returns no
+ * usable `user_id` still connects exactly as it did before, and the
+ * account simply keeps today's behaviour until it has one. The same goes
+ * for Meta refusing the field outright: Graph fails a whole request over
+ * one field it does not recognise on that node, so a 400 is retried once
+ * with the fields connect has always asked for. Asking for `user_id` can
+ * therefore never cost a connection that works today.
  */
 export async function resolveInstagramUserId(
   accessToken: string
-): Promise<{ id: string; username?: string } | { error: string }> {
-  const url = `${GRAPH_API}/me?fields=id,username&access_token=${encodeURIComponent(accessToken)}`;
+): Promise<{ id: string; accountId?: string; username?: string } | { error: string }> {
+  const withAccountId = await readInstagramMe(accessToken, "id,user_id,username");
+  if ("error" in withAccountId && withAccountId.status === 400) {
+    const without = await readInstagramMe(accessToken, "id,username");
+    if ("error" in without) return { error: without.error };
+    console.error("Instagram /me refused the fields including user_id and accepted id,username; connected without the professional-account id.");
+    return without;
+  }
+  return "error" in withAccountId ? { error: withAccountId.error } : withAccountId;
+}
+
+/** One /me read. `status` rides along on an HTTP refusal so the caller can tell a 400 from the rest. */
+async function readInstagramMe(
+  accessToken: string,
+  fields: string
+): Promise<{ id: string; accountId?: string; username?: string } | { error: string; status?: number }> {
+  const url = `${GRAPH_API}/me?fields=${fields}&access_token=${encodeURIComponent(accessToken)}`;
   let res: Response;
   try {
     res = await fetch(url);
@@ -138,11 +188,52 @@ export async function resolveInstagramUserId(
   if (!res.ok) {
     const reason = await instagramOAuthErrorMessage(res);
     console.error(`Instagram token check rejected by ${GRAPH_API}/me: HTTP ${res.status}${reason ? ` — ${reason}` : ""}`);
-    return { error: `${GRAPH_API}/me: ${res.status}${reason ? ` ${reason}` : ""}` };
+    return { error: `${GRAPH_API}/me: ${res.status}${reason ? ` ${reason}` : ""}`, status: res.status };
   }
-  const data = await res.json().catch(() => null);
+  // Read as text first so `user_id` can be taken from the exact digits Meta
+  // sent — see graphIdField.
+  const raw = await res.text().catch(() => "");
+  let data: Record<string, unknown> | null = null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") data = parsed as Record<string, unknown>;
+  } catch {
+    data = null;
+  }
   if (!data?.id) return { error: `${GRAPH_API}/me returned 200 but no account id.` };
-  return { id: data.id, username: data.username };
+  const accountId = graphIdField(raw, data, "user_id");
+  if (data.user_id !== undefined && !accountId) {
+    // Present but not something we can store exactly. Logged (it is a
+    // public account id, never the token) so the first case of it is seen;
+    // the connection goes ahead on `id` alone, as it always has.
+    console.error(`Instagram /me returned a user_id FollowUp could not read exactly (${typeof data.user_id}).`);
+  }
+  return {
+    id: data.id as string,
+    ...(accountId ? { accountId } : {}),
+    username: typeof data.username === "string" ? data.username : undefined,
+  };
+}
+
+/**
+ * One numeric Graph id field, exactly as Meta wrote it.
+ *
+ * Graph returns ids as strings, which is the only shape that survives
+ * JSON.parse intact: 17841427527466039 is larger than
+ * Number.MAX_SAFE_INTEGER, so if it ever arrived as a bare JSON number the
+ * parsed value would already be a DIFFERENT account id (…6040). The digits
+ * are then taken from the raw body instead of trusting the rounded number.
+ * Anything that is not all digits is refused rather than stored, because a
+ * wrong id here routes one business's DMs by another's number.
+ */
+function graphIdField(raw: string, data: Record<string, unknown>, field: string): string | undefined {
+  const value = data[field];
+  if (typeof value === "string") return /^\d+$/.test(value) ? value : undefined;
+  if (typeof value === "number") {
+    const exact = raw.match(new RegExp(`"${field}"\\s*:\\s*(\\d+)\\s*[,}]`));
+    return exact?.[1];
+  }
+  return undefined;
 }
 
 /**
@@ -162,7 +253,9 @@ async function graphGet(path: string, accessToken: string): Promise<{ ok: true; 
  * GET /api/instagram/diagnose:
  *  - account: who is actually connected (username, account_type) — the
  *    connect flow stores only the numeric id, so a connect made while the
- *    wrong Instagram account was logged in is invisible otherwise;
+ *    wrong Instagram account was logged in is invisible otherwise. Asks
+ *    for `user_id` too, so the app-scoped `id` and the professional-account
+ *    id can be compared side by side against what is stored;
  *  - subscription: does Meta list this app under the account's
  *    subscribed_apps, and with which fields;
  *  - conversations: can the token read the account's DM threads at all
@@ -171,7 +264,7 @@ async function graphGet(path: string, accessToken: string): Promise<{ ok: true; 
  */
 export async function instagramDiagnostics(igUserId: string, accessToken: string) {
   const [account, subscription, conversations] = await Promise.all([
-    graphGet("me?fields=id,username,name,account_type", accessToken),
+    graphGet("me?fields=id,user_id,username,name,account_type", accessToken),
     graphGet(`${encodeURIComponent(igUserId)}/subscribed_apps`, accessToken),
     graphGet(`${encodeURIComponent(igUserId)}/conversations?platform=instagram&fields=id,updated_time&limit=3`, accessToken),
   ]);
@@ -316,7 +409,15 @@ export async function sendInstagramMessage(
     // result and in the log for anyone debugging.
     return { ...failure, message: ownerFacingMetaError(failure.message ?? "", "Instagram rejected this message.") };
   }
-  return { success: true };
+  // Meta's id for this message. It used to be thrown away, so FollowUp's
+  // own send was stored with no externalId, and when the poller read it
+  // back minutes later nothing matched: it came back either as a phantom
+  // lead from the business itself or as a second copy labelled "sent
+  // directly on Instagram" (audit 2026-09-24 F2). A 200 without a readable
+  // body is still a send that happened, so a missing id is not a failure.
+  const sent = await res.json().catch(() => null);
+  const messageId = typeof sent?.message_id === "string" && sent.message_id ? sent.message_id : undefined;
+  return messageId ? { success: true, messageId } : { success: true };
 }
 
 /**

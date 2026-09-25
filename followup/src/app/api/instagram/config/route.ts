@@ -82,9 +82,10 @@ export async function POST(request: NextRequest) {
    * The same refusal the OAuth callback has always made, and this path
    * never did.
    *
-   * `instagramUserId` is unique across businesses: one Instagram account
-   * feeds one FollowUp account. The OAuth callback catches the collision
-   * and says so. This route did not, so pasting a token for an account
+   * `instagramUserId` and `instagramAccountId` are each unique across
+   * businesses: one Instagram account feeds one FollowUp account. A
+   * collision on either is the same P2002, and gets the same answer. The
+   * OAuth callback catches the collision and says so. This route did not, so pasting a token for an account
    * already bound elsewhere threw out of the handler as a bare 500 —
    * which the Settings card, reading only JSON, turned into nothing at all.
    *
@@ -99,6 +100,11 @@ export async function POST(request: NextRequest) {
       data: {
         instagramAccessToken: accessToken,
         instagramUserId: resolved.id,
+        // The professional-account id that webhooks and the poller match
+        // on (see resolveInstagramUserId). Null, never left stale, when
+        // Meta gives none: a previous account's id beside this account's
+        // token would route that account's DMs here.
+        instagramAccountId: resolved.accountId ?? null,
         // Written with the id, never on its own: a handle from one account
         // next to the id of another would be worse than no handle at all.
         instagramUsername: resolved.username ?? null,
@@ -169,7 +175,15 @@ export async function DELETE() {
 
   await prisma.business.update({
     where: { id: ctx.businessId },
-    data: { instagramAccessToken: null, instagramUserId: null, instagramUsername: null, instagramWebhookSubscribedAt: null },
+    data: {
+      instagramAccessToken: null,
+      instagramUserId: null,
+      // Cleared with the other id, so a disconnected account no longer
+      // routes webhooks here and can be connected to another business.
+      instagramAccountId: null,
+      instagramUsername: null,
+      instagramWebhookSubscribedAt: null,
+    },
   });
   return NextResponse.json({ success: true });
 }

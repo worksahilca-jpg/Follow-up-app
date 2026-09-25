@@ -5,10 +5,19 @@ Without this, Settings still works: a business pastes an access token by hand
 these env vars aren't set). This is the one-time console setup to turn on the
 "Connect with Instagram" / "Connect with Facebook" buttons instead.
 
-Both live under the same Meta Developer App ("FollowUp") already used for the
-Instagram/Facebook webhook (see `src/lib/instagram.ts`'s doc comment for the
-App ID), but they are **two separate products with two separate credential
-pairs** — don't mix them up.
+Both live under the same Meta Developer App ("FollowUp", `2713853435677364`)
+already used for the Instagram/Facebook webhook, but they are **two separate
+products with two separate credential pairs** — don't mix them up. Instagram
+Login uses the **Instagram app** shown on the Instagram use-case page
+("FollowUp-IG", `1070892255325237`), not the Facebook app ID above.
+
+**Before debugging a failed Instagram connect, check the account's role.**
+While the app has Standard Access, only accounts added under App roles →
+Instagram Testers *and* accepted from that account
+(instagram.com/accounts/manage_access → Tester invites) can connect. A
+non-tester fails late and misleadingly — at the long-lived token exchange,
+with "Unsupported request - method type: get [100]" — after the first
+exchange has already succeeded. That cost two wrong fixes on 2026-09-23/24.
 
 ## 1. Instagram API with Instagram Login
 

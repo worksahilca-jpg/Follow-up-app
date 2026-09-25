@@ -63,11 +63,16 @@ export async function GET(request: NextRequest) {
       data: {
         instagramAccessToken: exchanged.accessToken,
         instagramUserId: resolved.id,
+        // Same write as the id, same reason as the paste path
+        // (config/route.ts): null rather than a previous account's.
+        instagramAccountId: resolved.accountId ?? null,
         instagramUsername: resolved.username ?? null,
         instagramWebhookSubscribedAt: null,
       },
     });
   } catch (err) {
+    // Either unique id colliding means the same thing: this account is
+    // already bound to another business.
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
       return fail("That Instagram account is already connected to another FollowUp account.");
     }

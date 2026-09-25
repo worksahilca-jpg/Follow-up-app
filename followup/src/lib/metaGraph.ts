@@ -18,6 +18,12 @@ export type MetaSendResult = {
   status?: number;
   code?: number;
   subcode?: number;
+  // Meta's id for the message it accepted (`message_id` in the Send API's
+  // 200 body). Set on success when Meta returns one. src/lib/sending.ts
+  // stores it as Message.externalId so that when the same message is read
+  // back (the conversation poller, or an echo webhook), the upsert on
+  // externalId finds FollowUp's own row instead of recording it twice.
+  messageId?: string;
 };
 
 /**

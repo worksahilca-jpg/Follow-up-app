@@ -815,7 +815,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         if (regenerated) {
           await prisma.lead.update({
             where: { id: lead.id },
-            data: { suggestedMessage: message, suggestedSubject: null, suggestedQuickReplies: { question: "shape_failed", buttons: [] }, suggestedDraftedFor: newestMessageAt },
+            data: { suggestedMessage: message, suggestedSubject: null, suggestedQuickReplies: { question: "shape_failed", buttons: [] }, suggestedDraftedFor: newestMessageAt, suggestedRiskLevel: null, suggestedRiskReason: null },
           });
         }
         const reason = `FollowUp couldn't write a short enough DM for ${lead.name.split(" ")[0]} (${dmShapeFailed}) — this one needs your eye before it goes`;
@@ -842,7 +842,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         if (regenerated) {
           await prisma.lead.update({
             where: { id: lead.id },
-            data: { suggestedMessage: message, suggestedSubject: subject ?? null, suggestedDraftedFor: newestMessageAt },
+            data: { suggestedMessage: message, suggestedSubject: subject ?? null, suggestedDraftedFor: newestMessageAt, suggestedRiskLevel: null, suggestedRiskReason: null },
           });
         }
         const reason = UNGROUNDED_DRAFT_REASONS[emailShapeFailed] ?? UNGROUNDED_DRAFT_REASONS.digits;
@@ -1343,6 +1343,8 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
           suggestedSubject: null,
           suggestedQuickReplies: { question: DM_HANDOFF_QUESTION, buttons: [] },
           suggestedDraftedFor: new Date(inbound.date),
+          suggestedRiskLevel: null,
+          suggestedRiskReason: null,
         },
       });
       const platform = channel === "instagram" ? "Instagram" : "Messenger";

@@ -303,7 +303,24 @@ model Business {
   // because both of its connect paths refuse to save at all when the
   // subscription fails, so it can never reach this state.
   instagramWebhookSubscribedAt DateTime?
+  // The `id` from /me: for Instagram API with Instagram Login this is an
+  // APP-SCOPED id (the founder's is 2869…), not the account id Meta shows
+  // in its console. Kept as-is because the three Graph calls that key on
+  // it — /{id}/messages, /{id}/conversations, /{id}/subscribed_apps — all
+  // work with it today, and a real reply went out through it on 2026-09-19.
   instagramUserId      String? @unique
+  // The professional-account id (`user_id` from /me; the founder's is
+  // 17841427527466039). This is what webhooks carry as `entry.id` and what
+  // the Conversations API reports as a message's `from.id`, so it is the
+  // one that routing and "is this our own message?" have to match. Before
+  // this column existed, neither did: webhooks never routed, and the
+  // poller filed the business's own sends as a lead from itself
+  // (research/audit/2026-09-24-app-review-path-audit.md F1/F2). Null on any
+  // account connected before 2026-09-25 until
+  // scripts/backfill-instagram-account-id.ts is run, and on a token for
+  // which Meta returns no user_id. Unique for the same reason as the id
+  // above: one Instagram account feeds one FollowUp account.
+  instagramAccountId   String? @unique
   // The handle, as Meta reported it at connect time. Settings showed only
   // the numeric id until 2026-09-24, and an owner cannot tell from
   // "17841427527466039" whether the account they connected is the one they

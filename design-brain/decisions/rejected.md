@@ -386,3 +386,18 @@ direction" into the brain on the same day the approved logo is in production —
 contradicts what shipped is worse than no rule. Ported here instead, with the contradiction
 resolved rather than hidden, per this brain's own supersede-don't-delete rule. PR #232 is
 closed as superseded by this entry.
+
+## R-014 — The hero lead-flow diagram as it stands: flat, and filling the screen ^R-014
+**Date:** 2026-09-25
+**Scope:** Landing page hero (the A-012 diagram)
+**Rejected (in part):** on the website review page, the founder commented on the diagram:
+*"this whole diagram is very boring the concept is cool but not that advanced and it is in the
+whole screen too"*.
+**What survives:** the **concept** — leads coming in from every channel, FollowUp in the middle,
+customers answering on the right. He called it cool. Do not drop the idea.
+**What is rejected:** the execution: flat cards and thin wires, and its size (full screen width
+under the headline).
+**Inferred principle (marked inferred):** "advanced" here most likely means depth and craft —
+the same story told with more dimension and motion that explains, in a smaller footprint — not a
+new concept. Asked which reading he means before rebuilding (R-008: no rebuild on a guess).
+**Supersedes, partly:** [[approved#^A-012|A-012]] — its concept stands, its look and size do not.

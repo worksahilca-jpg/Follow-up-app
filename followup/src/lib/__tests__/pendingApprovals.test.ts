@@ -78,9 +78,49 @@ describe("getPendingApprovals — a lead already answered leaves the queue", () 
     p.auditEvent.findMany.mockResolvedValue([event()]);
     p.lead.findMany.mockResolvedValue([lead()]);
     await getPendingApprovals("biz1");
-    expect(p.auditEvent.findMany.mock.calls[0][0].where.action).toEqual({
-      notIn: ["lead.classification_overridden", "ai.instant_ack"],
-    });
+    const asked = p.auditEvent.findMany.mock.calls[0][0].where.action.in as string[];
+    expect(asked).toContain("ai.hold");
+    expect(asked).not.toContain("lead.classification_overridden");
+  });
+
+  // Daily-path sweep 2026-09-25 #6: a denylist let every new kind of lead
+  // event hide a hold. Only decisions are asked for now.
+  it("does not let a DM tap, an opt-in or a quiet-lead verdict hide a hold", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([lead()]);
+    await getPendingApprovals("biz1");
+    const asked = p.auditEvent.findMany.mock.calls[0][0].where.action.in as string[];
+    for (const noise of ["lead.dm_answer", "lead.opt_in", "ai.quiet_outcome_classified", "lead.classification_overridden"]) {
+      expect(asked, `${noise} can hide a held draft again`).not.toContain(noise);
+    }
+  });
+
+  it("keeps a hold when the only newer event is the acknowledgement", async () => {
+    // The acknowledgement is an "ai.send" with trigger instant_ack in meta.
+    p.auditEvent.findMany.mockResolvedValue([
+      event({ id: "ack", action: "ai.send", meta: { trigger: "instant_ack" }, createdAt: new Date("2026-09-10T12:00:01Z") }),
+      event(),
+    ]);
+    p.lead.findMany.mockResolvedValue([lead()]);
+    expect(await getPendingApprovals("biz1")).toHaveLength(1);
+  });
+
+  it("drops a hold when a real send is newer", async () => {
+    p.auditEvent.findMany.mockResolvedValue([
+      event({ id: "sent", action: "ai.send", meta: { trigger: "silence" }, createdAt: new Date("2026-09-10T12:10:00Z") }),
+      event(),
+    ]);
+    p.lead.findMany.mockResolvedValue([lead()]);
+    expect(await getPendingApprovals("biz1")).toEqual([]);
+  });
+
+  it("drops a hold when the customer opted out after it", async () => {
+    p.auditEvent.findMany.mockResolvedValue([
+      event({ id: "stop", action: "lead.opt_out", meta: null, createdAt: new Date("2026-09-10T13:00:00Z") }),
+      event(),
+    ]);
+    p.lead.findMany.mockResolvedValue([lead()]);
+    expect(await getPendingApprovals("biz1")).toEqual([]);
   });
 
   it("does not count the instant acknowledgement as an answer", async () => {

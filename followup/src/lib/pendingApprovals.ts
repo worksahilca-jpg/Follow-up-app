@@ -21,18 +21,44 @@ import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
  * resolved and the lead drops out of the queue on its own, with no
  * separate "resolved" flag to keep in sync.
  */
-const SCAN_LIMIT = 500;
+const SCAN_LIMIT = 2000;
 
 /**
- * Lead events that say nothing about the held draft, so they must not be
- * read as "the most recent decision" (found live 2026-09-25). "This was a
- * lead" imports the thread, which drafts and holds, and then records the
- * override a few milliseconds later — so the override became the newest
- * event and the held draft vanished from the queue and from owner alerts.
- * The instant acknowledgement is the same shape: it can go out after the
- * hold, and "we got your message" is not an answer to the customer.
+ * The lead events that decide a held draft: the hold itself, and whatever
+ * resolves it. An allowlist, not a denylist (daily-path sweep 2026-09-25
+ * #6). The denylist this replaces named two events that say nothing about
+ * the draft — "This was a lead" and the acknowledgement — and every event
+ * added since had the same effect unnoticed: a DM button tap, an opt-in, a
+ * quiet-lead verdict, each became "the most recent event" and the held
+ * draft left the queue and the owner alerts with nobody having decided
+ * anything.
+ *
+ * An opt-out and a DM "not now" are here because they do decide it: that
+ * customer asked not to hear more. The send-failure rows are kept as they
+ * were — they record the outcome of a release, not a new event.
  */
-const NOT_A_DECISION = ["lead.classification_overridden", "ai.instant_ack"];
+export const DECISION_EVENTS = [
+  "ai.hold",
+  "ai.hold_dismissed",
+  "ai.send",
+  "ai.send_queued",
+  "ai.send_failed",
+  "ai.send_abandoned",
+  "lead.send",
+  "lead.opt_out",
+  "lead.dm_exit",
+];
+
+/**
+ * The acknowledgement is recorded as an ordinary "ai.send" whose meta
+ * says `trigger: "instant_ack"` (acknowledge.ts merges it there). It can go
+ * out after a hold, and "we got your message" is not an answer to the
+ * customer, so it never counts as the decision. The old denylist named an
+ * "ai.instant_ack" action no code writes, so it never matched.
+ */
+function isAcknowledgement(e: { action: string; meta: unknown }): boolean {
+  return e.action === "ai.send" && (e.meta as Record<string, unknown> | null)?.trigger === "instant_ack";
+}
 
 // How much of the lead's own message to carry into the queue — this is a
 // compact list view, not the full lead page; a reviewer needs enough to
@@ -116,11 +142,20 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
   // a stale hold that never got resolved is a real bug worth surfacing
   // some other way (a metrics pass), not by scanning the whole table on
   // every page load.
-  const recentEvents = await prisma.auditEvent.findMany({
-    where: { businessId, targetType: "lead", targetId: { not: null }, action: { notIn: NOT_A_DECISION } },
+  // Newest first, then the first qualifying event per lead is its latest
+  // decision. Reduced here rather than with `distinct`, because the
+  // acknowledgement has to be skipped by its meta, which `distinct` would
+  // already have picked before it could be looked at.
+  const decisionEvents = await prisma.auditEvent.findMany({
+    where: { businessId, targetType: "lead", targetId: { not: null }, action: { in: DECISION_EVENTS } },
     orderBy: { createdAt: "desc" },
-    distinct: ["targetId"],
     take: SCAN_LIMIT,
+  });
+  const seen = new Set<string>();
+  const recentEvents = decisionEvents.filter((e) => {
+    if (isAcknowledgement(e) || seen.has(e.targetId as string)) return false;
+    seen.add(e.targetId as string);
+    return true;
   });
 
   const held = recentEvents.filter((e) => e.action === "ai.hold" && e.targetId);
@@ -173,7 +208,7 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
   const laterSends = await prisma.message.findMany({
     where: {
       direction: "outbound",
-      // The acknowledgement is not an answer (NOT_A_DECISION above). A
+      // The acknowledgement is not an answer (isAcknowledgement above). A
       // bare `not` would also drop null triggers — an owner's reply synced
       // from their inbox — so both are spelled out, as in ownerAlerts.ts.
       OR: [{ trigger: null }, { trigger: { not: "instant_ack" } }],

@@ -15,7 +15,7 @@ import { getVoiceSamples } from "@/lib/voice";
 import { checkAiEligibility } from "@/lib/billing";
 import { detectLeadLanguage, leadLanguageOf } from "@/lib/leadLanguage";
 import { SCORE_HIGH, SCORE_MEDIUM } from "@/lib/scoreThresholds";
-import { notifySlack } from "@/lib/slack";
+import { escapeSlackText, notifySlack } from "@/lib/slack";
 import type { Message } from "@/lib/types";
 import { Prisma, type Priority as DbPriority } from "@prisma/client";
 
@@ -237,7 +237,11 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // doesn't, so the team never misses a hot lead just because nobody's
   // been assigned to it yet).
   if (becameHot) {
-    void notifySlack(`🔥 *${lead.name}*${lead.company ? ` (${lead.company})` : ""} just became a hot lead — ${scoreResult.reason}`);
+    // Every interpolated piece is stranger-typed text: escaped so it can
+    // only ever be text in Slack, never a link or a channel ping.
+    void notifySlack(
+      `🔥 *${escapeSlackText(lead.name)}*${lead.company ? ` (${escapeSlackText(lead.company)})` : ""} just became a hot lead — ${escapeSlackText(scoreResult.reason)}`
+    );
   }
 
   return true;

@@ -56,15 +56,19 @@ describe("holding every message for approval is the default", () => {
     expect(grant.slice(0, grant.indexOf("}\n\n"))).toContain("holdAllForApproval: true");
   });
 
-  it("only ever turns the hold OFF where that is the deliberate meaning", () => {
+  it("never turns the hold OFF from a literal — only the owner's own switch may", () => {
     /*
-     * revokeBetaPlan sets it false, and that is correct: it drops the
-     * account back to Free, where automation.ts refuses to send anyway.
+     * SUPERSEDED (2026-09-25): this used to exempt revokeBetaPlan, on the
+     * reasoning that dropping to Free made the hold moot because
+     * automation.ts refuses to send there. That was half true. The hourly
+     * automation does refuse on Free; the instant reply does not — it is
+     * gated by the monthly AI allowance, not the tier — so a removed tester
+     * with the hold off got unapproved first replies. revokeBetaPlan no
+     * longer touches the hold, and the exemption is gone.
      *
-     * This asserts nothing ELSE in the codebase writes `false` to it. The
-     * owner's own switch in Settings posts a value rather than a literal,
-     * so it does not appear here — which is the point. A literal `false`
-     * anywhere new is a decision to let something send unread, and it
+     * The owner's own switch in Settings posts a value rather than a
+     * literal, so it does not appear here — which is the point. A literal
+     * `false` anywhere is a decision to let something send unread, and it
      * should have to be argued for rather than typed in passing.
      */
     const offenders: string[] = [];
@@ -77,8 +81,6 @@ describe("holding every message for approval is the default", () => {
       }
       for (const [i, line] of source.split("\n").entries()) {
         if (!/holdAllForApproval\s*:\s*false/.test(line)) continue;
-        // The one sanctioned case.
-        if (file === "src/lib/billing.ts" && source.slice(0, source.indexOf(line)).includes("revokeBetaPlan")) continue;
         offenders.push(`${file}:${i + 1}`);
       }
     }

@@ -58,8 +58,18 @@ describe("the beta plan", () => {
     await revokeBetaPlan("biz1");
     expect(updateMany).toHaveBeenCalledWith({
       where: { id: "biz1", subscriptionStatus: "beta" },
-      data: { subscriptionStatus: null, tier: "free", holdAllForApproval: false },
+      data: { subscriptionStatus: null, tier: "free" },
     });
+  });
+
+  // 2026-09-25: revoking used to write holdAllForApproval: false, so
+  // removing someone from the tester list switched their account to
+  // sending on its own. Free does not stop the instant reply (it is gated
+  // by the monthly AI allowance, not the tier), so that was a live path to
+  // an unapproved message. A plan change is not the owner's decision.
+  it("never touches the approval hold", async () => {
+    await revokeBetaPlan("biz1");
+    expect(updateMany.mock.calls[0][0].data).not.toHaveProperty("holdAllForApproval");
   });
 
   it("by email: grants the tester's business, and does nothing for a tester who hasn't signed in yet", async () => {

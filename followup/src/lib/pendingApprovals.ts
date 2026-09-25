@@ -134,12 +134,50 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
   });
   const leadById = new Map(leads.map((l) => [l.id, l]));
 
+  /**
+   * Anything sent to the lead AFTER the hold resolves it, however it went.
+   *
+   * Until 2026-09-25 the only way out of this queue was a later audit
+   * event naming the lead. "Send all routine" writes none — it records one
+   * business-level `approvals.send_safe` row — so every lead it sent stayed
+   * here, and the next press sent the same drafts to the same people again.
+   * Its own copy ("press again for the next batch") invited exactly that.
+   * An owner who answered from the Gmail app was in the same position: the
+   * reply synced in as an outbound message, the hold stayed, and the pile
+   * could send them an AI reply on top of their own.
+   *
+   * The message table is the ground truth for "has this person been
+   * answered", so the queue asks it directly rather than trusting every
+   * send path to remember to write the right audit row. One query for all
+   * held leads, bounded below by the oldest hold.
+   */
+  const heldIds = held.map((e) => e.targetId as string);
+  const oldestHold = held.reduce((min, e) => (e.createdAt < min ? e.createdAt : min), held[0].createdAt);
+  const laterSends = await prisma.message.findMany({
+    where: {
+      direction: "outbound",
+      sentAt: { gt: oldestHold },
+      conversation: { leadId: { in: heldIds }, lead: { businessId } },
+    },
+    select: { sentAt: true, conversation: { select: { leadId: true } } },
+  });
+  const lastSentByLead = new Map<string, Date>();
+  for (const m of laterSends) {
+    const id = m.conversation.leadId;
+    const prev = lastSentByLead.get(id);
+    if (!prev || m.sentAt > prev) lastSentByLead.set(id, m.sentAt);
+  }
+
   const approvals: PendingApproval[] = [];
   for (const event of held) {
     const lead = leadById.get(event.targetId as string);
     // No draft text to show (the hold predates suggestedMessage being
     // set, or the lead was deleted) — nothing for the owner to approve.
     if (!lead?.suggestedMessage) continue;
+    // Already answered since this draft was held — by the bulk button, a
+    // send from another screen, or the owner replying from their own inbox.
+    const sentAfter = lastSentByLead.get(lead.id);
+    if (sentAfter && sentAfter > event.createdAt) continue;
     const meta = (event.meta ?? {}) as Record<string, unknown>;
 
     let lastInbound: { body: string; channel: string; sentAt: Date } | null = null;

@@ -62,7 +62,10 @@ order and later ones assume the earlier fixes landed.
 `2026-09-09-sixth-pass-audit.md` · `2026-09-09-seventh-pass-audit.md` ·
 `2026-09-16-bug-hunt-automation-and-send-engine.md` ·
 `2026-09-16-security-audit-auth-tenancy-and-api.md` ·
-`2026-09-16-security-audit-meta-surface.md`
+`2026-09-16-security-audit-meta-surface.md` ·
+`2026-09-24-app-review-path-audit.md` — the stored Instagram id is the app-scoped one, so webhooks never match and FollowUp's own sends come back as a lead (F1/F2)
+· `2026-09-25-daily-path-bug-hunt.md` — "Send all routine" can re-send the same drafts; a new draft inherits the old risk verdict; approved emails start new Gmail threads
+· `2026-09-25-ui-bug-hunt.md` — what shows wrongly on camera in the App Review takes, false "sends on its own" copy, a lead-page double-send, dark-mode and phone-width bugs
 
 `backend-backlog.md` is the one undated file — a running list rather than a pass.
 
@@ -114,6 +117,8 @@ order and later ones assume the earlier fixes landed.
 | `2026-09-16-training-data-sources-for-human-texture.md` | |
 | `2026-09-16-what-makes-a-short-message-read-as-human.md` | |
 | `2026-09-19-multilingual-accuracy-data.md` | |
+| `2026-09-24-simplify-the-app.md` | The biggest learning cost is 12 send controls across 4 screens; proposes a 3-item menu and one "Sending" tab. Includes which earlier simplification ideas shipped |
+| `2026-09-25-first-run-hunt.md` | A new tester's journey, ranked by what makes them give up. Includes the Manoj timeline and the `/admin` tester-removal path that turns sending on unasked |
 
 ## `customers/` — who this is for
 

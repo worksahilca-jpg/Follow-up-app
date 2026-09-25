@@ -29,10 +29,11 @@
 import { prisma } from "@/lib/db";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
-import { sendFollowUpToLead, detectNonEmailChannel } from "@/lib/sending";
+import { sendFollowUpToLead, detectNonEmailChannel, metaWindowFor } from "@/lib/sending";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
 import { leadLanguageOf } from "@/lib/leadLanguage";
-import { hasAnySendChannel } from "@/lib/sendChannels";
+import { canSendOn, hasAnySendChannel } from "@/lib/sendChannels";
+import { META_DM_WINDOW_HOURS } from "@/lib/metaWindow";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { flushHoldNotices, type HoldNotice } from "@/lib/holdNotices";
 import { getVoiceSamples } from "@/lib/voice";
@@ -677,6 +678,72 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
             `"${sequence.name}" stopped for ${lead.name} — they haven't messaged you yet, so FollowUp won't text or WhatsApp them on its own. The first message is yours to send.`
           );
           return { kind: "skipped" as const, note: `${lead.name}: has never written, so no automatic text or WhatsApp` };
+        }
+        // The Instagram / Messenger form of the check above (security pass
+        // 2026-09-25, F8). sendFollowUpToLead refuses an automated DM to a
+        // lead who has never written on that channel — an echo lead, filed
+        // because the owner DM'd them first — or who last wrote more than
+        // 24 hours ago; Meta would refuse it anyway. That refusal used to
+        // come AFTER a draft and a risk check, and left the lead enrolled on
+        // the same step, so the owner heard "couldn't send" every hour,
+        // forever: two OpenAI calls and a notification an hour. Judged by
+        // metaWindowFor, the clock the send itself uses, so the two cannot
+        // disagree; the silence rule skips on the same test before drafting
+        // (automation.ts).
+        //
+        // Stopped rather than left waiting, the same call as the text and
+        // WhatsApp case above: only the lead writing can reopen the window,
+        // and a lead who writes is already handed to the owner by
+        // stop-on-reply. Waiting would ask the same question every hour
+        // with nothing that could turn it into a yes on its own.
+        if (channel === "instagram" || channel === "messenger") {
+          const { hoursSinceLead } = await metaWindowFor(lead.id, channel);
+          if (hoursSinceLead === null || hoursSinceLead > META_DM_WINDOW_HOURS) {
+            const platform = channel === "instagram" ? "Instagram" : "Messenger";
+            try {
+              await prisma.lead.update({
+                where: { id: lead.id },
+                data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+              });
+            } catch (err) {
+              return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
+            }
+            await notifySequenceIssue(
+              lead,
+              hoursSinceLead === null
+                ? `"${sequence.name}" stopped for ${lead.name} — they haven't messaged you on ${platform} yet, so Meta doesn't allow a message to them there. They'll need to write first.`
+                : `"${sequence.name}" stopped for ${lead.name} — Meta's 24-hour window on ${platform} has closed, so an automatic follow-up can't go out now.`
+            );
+            return {
+              kind: "skipped" as const,
+              note:
+                hoursSinceLead === null
+                  ? `${lead.name}: has never written on ${platform}, so Meta allows no message there`
+                  : `${lead.name}: Meta's 24-hour window on ${platform} has closed`,
+            };
+          }
+        }
+        // The channel itself has to be connected, not just "something"
+        // (daily-path bug hunt 2026-09-25, F5). hasAnySendChannel at the top
+        // of this function asks only whether anything is; with Gmail dead
+        // and an Instagram token still stored, an email step drafted,
+        // risk-checked and failed at the send on every hourly tick (the
+        // claim above expires in five minutes), with a "couldn't send"
+        // notification each time — up to ten OpenAI rounds and ten
+        // notifications per enrolled lead per day.
+        //
+        // Paused, not stopped: unlike the three exits above, this one is
+        // fixed by the owner reconnecting, and every beta account loses
+        // Gmail on day 7 (same audit, F6) — cancelling each of its workflows
+        // would be the wrong answer to a token expiring. Left enrolled on
+        // the same step, like the eligibility gate above: the look each
+        // hour is a query, with no draft and no notification, and the step
+        // runs on the first tick after the reconnect.
+        if (!(await canSendOn(businessId, channel))) {
+          return {
+            kind: "skipped" as const,
+            note: `${lead.name}: nothing connected can send on ${channel} — step paused until it is reconnected`,
+          };
         }
         const draft = await generateFollowUpMessage(
           { name: lead.name, conversation },

@@ -35,6 +35,11 @@ vi.mock("@/lib/pendingApprovals", () => ({ getPendingApprovals }));
 
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 
+// The once-a-week claim (audit 2026-09-25 daily path, F11) always finds an
+// empty week here; what it guarantees is pinned in
+// src/lib/__tests__/weeklyDigestOnce.test.ts, against the real claim.
+vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: vi.fn(async () => false) }));
+
 import { GET } from "@/app/api/cron/weekly-digest/route";
 
 function business(overrides: Partial<{ id: string; subscriptionStatus: string | null; tier: string }>) {

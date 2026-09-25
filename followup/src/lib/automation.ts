@@ -40,7 +40,7 @@ import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { requireActiveBilling, checkAiEligibility } from "@/lib/billing";
 import { leadLanguageOf } from "@/lib/leadLanguage";
-import { hasAnySendChannel } from "@/lib/sendChannels";
+import { canSendOn, hasAnySendChannel } from "@/lib/sendChannels";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { flushHoldNotices, type HoldNotice } from "@/lib/holdNotices";
 import { getVoiceSamples } from "@/lib/voice";
@@ -752,6 +752,21 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
             note: `${lead.name}: Meta's window on ${sendChannel === "instagram" ? "Instagram" : "Messenger"} has closed — only a person can send now; the draft is on the lead's page`,
           };
         }
+      }
+      // The channel this lead would be answered on has to be connected, not
+      // just "something" (daily-path bug hunt 2026-09-25, F5). With Gmail
+      // dead and an Instagram token still stored, hasAnySendChannel passed
+      // and every email lead was drafted, risk-checked, held and announced
+      // every ~20 hours for a message sendEmail would refuse. Same exit as
+      // the closed Meta window just above: no draft, no risk check, no
+      // notification, and the claim is KEPT, so it is looked at again on
+      // the normal ~20-hour cadence — and resumes on its own the pass after
+      // a reconnect, because canSendOn is read fresh every time.
+      if (sendChannel && !(await canSendOn(businessId, sendChannel))) {
+        return {
+          kind: "skipped",
+          note: `${lead.name}: nothing connected can send on ${sendChannel} — no draft written until it is reconnected`,
+        };
       }
       // A cached draft written as an email (suggestedQuickReplies null —
       // every row from before that column, and every lead whose last

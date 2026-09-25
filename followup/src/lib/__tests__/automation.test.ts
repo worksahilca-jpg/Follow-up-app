@@ -1415,7 +1415,10 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
   it("leaves a lead whose newest message is their own to the unanswered rule", async () => {
     const l = quietDmLead(30);
     (l.conversations as Array<{ messages: Record<string, unknown>[] }>)[0].messages.push({
-      id: "again", direction: "inbound", body: "hello?", sentAt: new Date(Date.now() - 28 * H), opened: false,
+      // After FollowUp's reply at -27h, so it really is their newest. It was
+      // -28h — before that reply — and only passed while transcripts were
+      // read in array order (daily-path sweep 2026-09-25 #1).
+      id: "again", direction: "inbound", body: "hello?", sentAt: new Date(Date.now() - 26 * H), opened: false,
     });
     queueHandoff(l);
     expect((await runAutomationForBusiness("biz1")).handedOff).toBe(0);

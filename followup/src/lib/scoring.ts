@@ -7,6 +7,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { byTranscriptOrder } from "@/lib/transcript";
 import { scoreLead, generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { dmChannelOf } from "@/lib/dmDrafts";
@@ -86,7 +87,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       quickReplyPayload: m.quickReplyPayload ?? undefined,
       deliveryStatus: m.deliveryStatus ?? undefined,
     }))
-  );
+  ).sort(byTranscriptOrder);
   if (conversation.length === 0) return false;
 
   // How this lead writes, read from their NEWEST message, every time.

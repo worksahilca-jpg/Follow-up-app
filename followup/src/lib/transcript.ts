@@ -53,10 +53,19 @@ export function toTranscript(conversations: TranscriptConversation[]): Message[]
         opened: m.opened,
       }))
     )
-    .sort(
-      (a, b) =>
-        a.date.localeCompare(b.date) ||
-        (TIE_RANK[a.direction] ?? 0) - (TIE_RANK[b.direction] ?? 0) ||
-        a.id.localeCompare(b.id)
-    );
+    .sort(byTranscriptOrder);
+}
+
+/**
+ * The same total order, for callers that build their own Message objects
+ * (scoring carries fields this module's shape doesn't). Sort with this, or
+ * "the newest message" is the last message of whichever thread Postgres
+ * returned last (daily-path sweep 2026-09-25 #1).
+ */
+export function byTranscriptOrder(a: Pick<Message, "date" | "direction" | "id">, b: Pick<Message, "date" | "direction" | "id">): number {
+  return (
+    a.date.localeCompare(b.date) ||
+    (TIE_RANK[a.direction] ?? 0) - (TIE_RANK[b.direction] ?? 0) ||
+    a.id.localeCompare(b.id)
+  );
 }

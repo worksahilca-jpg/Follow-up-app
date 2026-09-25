@@ -30,6 +30,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { byTranscriptOrder } from "@/lib/transcript";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
 import { conversationText } from "@/lib/dmDrafts";
@@ -1041,7 +1042,7 @@ export async function runAutomationForBusiness(
           trigger: m.trigger ?? undefined,
           quickReplyPayload: m.quickReplyPayload ?? undefined,
         }))
-      );
+      ).sort(byTranscriptOrder);
 
       const isDeadLead = deadIds.has(lead.id);
 
@@ -1910,7 +1911,7 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
         trigger: m.trigger ?? undefined,
         quickReplyPayload: m.quickReplyPayload ?? undefined,
       }))
-    );
+    ).sort(byTranscriptOrder);
     const inbound = [...conversation].reverse().find((m) => m.direction === "inbound" && m.channel === channel);
     if (!inbound) continue;
     const hours = (now - new Date(inbound.date).getTime()) / H;

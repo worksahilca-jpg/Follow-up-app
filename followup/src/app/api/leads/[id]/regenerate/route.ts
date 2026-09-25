@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { byTranscriptOrder } from "@/lib/transcript";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, billingLockedMessage, checkAiEligibility } from "@/lib/billing";
 import { prisma } from "@/lib/db";
@@ -80,7 +81,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       trigger: m.trigger ?? undefined,
       quickReplyPayload: m.quickReplyPayload ?? undefined,
     }))
-  );
+  ).sort(byTranscriptOrder);
 
   try {
     const voiceSamples = await getVoiceSamples(lead.businessId);

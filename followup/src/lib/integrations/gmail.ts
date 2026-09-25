@@ -817,6 +817,23 @@ async function processThreadRefs(
  * leads that do pass still comes from the AI layer's scoreLead(), not from
  * this sync step.
  */
+/**
+ * Which address is "me" in this mailbox: the inbox that was actually
+ * connected, not the address the owner signs in to FollowUp with.
+ *
+ * The connect flow lets the owner pick any Google account, and a trade
+ * business routinely signs in as sam.smith@gmail.com but connects
+ * info@samsplumbing.ca. Keyed on the login email, the sync filed the
+ * owner's own replies from info@ as the customer's (so the unanswered rule
+ * drafted a reply to the owner's words), and every thread the owner
+ * started became a lead that is the business itself (daily-path audit
+ * 2026-09-25 F4). Outlook already did this right. The login email remains
+ * the fallback for connections made before accountEmail was stored.
+ */
+export function gmailSelfAddress(integration: { accountEmail?: string | null; user: { email: string } }): string {
+  return (integration.accountEmail ?? integration.user.email).toLowerCase();
+}
+
 export async function fetchSalesConversations(
   businessId: string,
   options: { since?: Date } & Pick<SyncOptions, "maxClassifications" | "onResult"> = {}
@@ -824,7 +841,7 @@ export async function fetchSalesConversations(
   const authed = await getAuthedGmailClient(businessId);
   if (!authed) return [];
   const { gmail, integration } = authed;
-  const selfEmail = integration.user.email.toLowerCase();
+  const selfEmail = gmailSelfAddress(integration);
 
   // `since` is the automatic sync's narrowing: only threads with activity
   // after that instant (Gmail's `after:` takes epoch seconds). The manual
@@ -875,7 +892,7 @@ export async function importGmailThread(businessId: string, threadId: string): P
   const authed = await getAuthedGmailClient(businessId);
   if (!authed) return null;
   const { gmail, integration } = authed;
-  const selfEmail = integration.user.email.toLowerCase();
+  const selfEmail = gmailSelfAddress(integration);
   const [lead] = await processThreadRefs(businessId, gmail, selfEmail, [{ id: threadId }], "Gmail", {
     skipClassification: true,
   });
@@ -909,7 +926,7 @@ export async function fetchSpamProspects(businessId: string): Promise<Lead[]> {
   const authed = await getAuthedGmailClient(businessId);
   if (!authed) return [];
   const { gmail, integration } = authed;
-  const selfEmail = integration.user.email.toLowerCase();
+  const selfEmail = gmailSelfAddress(integration);
 
   const { data: listData } = await gmail.users.threads.list({
     userId: "me",
@@ -970,7 +987,7 @@ export async function sendEmail(
   const subject = sanitizeHeaderValue(params.subject);
   const inReplyTo = params.inReplyTo ? sanitizeHeaderValue(params.inReplyTo) : undefined;
   const raw = [
-    `From: ${integration.user.email}`,
+    `From: ${gmailSelfAddress(integration)}`,
     `To: ${to}`,
     `Subject: ${subject}`,
     ...(inReplyTo ? [`In-Reply-To: ${inReplyTo}`, `References: ${inReplyTo}`] : []),

@@ -24,10 +24,29 @@ import { z } from "zod";
  * enough for a legitimate client to fix its request, never a raw zod
  * issue dump or a stack trace.
  */
+/**
+ * The largest JSON body any route here accepts: 1 MB. The biggest real
+ * body in the app is a few kilobytes (a workflow's steps, a message); the
+ * public ones (embed form, booking) are far smaller. Next.js route handlers
+ * have no body limit of their own (bodySizeLimit is for Server Actions),
+ * so without this the only ceiling is the platform's (4.5 MB on Vercel
+ * Functions), and every byte of it would be parsed before zod could
+ * refuse it.
+ *
+ * Checked on the declared Content-Length, before reading anything. A
+ * chunked body with no length still falls back to the platform ceiling
+ * and to each schema's own per-field caps.
+ */
+export const MAX_JSON_BODY_BYTES = 1024 * 1024;
+
 export async function parseJsonBody<S extends z.ZodTypeAny>(
   request: Request,
   schema: S
 ): Promise<{ ok: true; data: z.infer<S> } | { ok: false; response: NextResponse }> {
+  const declared = Number(request.headers?.get("content-length") ?? NaN);
+  if (Number.isFinite(declared) && declared > MAX_JSON_BODY_BYTES) {
+    return { ok: false, response: NextResponse.json({ success: false, message: "Request body is too large." }, { status: 413 }) };
+  }
   const raw = await request.json().catch(() => undefined);
   const result = schema.safeParse(raw);
   if (result.success) return { ok: true, data: result.data };

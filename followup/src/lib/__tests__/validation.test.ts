@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
-import { parseJsonBody, parseObject, cleanedText } from "@/lib/validation";
+import { parseJsonBody, parseObject, cleanedText, MAX_JSON_BODY_BYTES } from "@/lib/validation";
 
 function fakeRequest(body: unknown): Request {
   return { json: async () => body } as unknown as Request;
@@ -55,6 +55,32 @@ describe("parseJsonBody", () => {
   it("rejects a body that isn't an object at all", async () => {
     const result = await parseJsonBody(fakeRequest("just a string"), schema);
     expect(result.ok).toBe(false);
+  });
+
+  it("refuses a body declared larger than the cap with a 413, without reading it", async () => {
+    let read = false;
+    const request = new Request("https://app.test/api/x", {
+      method: "POST",
+      headers: { "content-type": "application/json", "content-length": String(MAX_JSON_BODY_BYTES + 1) },
+      body: JSON.stringify({ name: "Priya" }),
+    });
+    const spy = Object.assign(request, { json: async () => { read = true; return { name: "Priya" }; } });
+    const result = await parseJsonBody(spy, schema);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.response.status).toBe(413);
+    expect(read).toBe(false);
+  });
+
+  it("still accepts a real request whose declared size is within the cap", async () => {
+    const body = JSON.stringify({ name: "Priya", age: 30 });
+    const request = new Request("https://app.test/api/x", {
+      method: "POST",
+      headers: { "content-type": "application/json", "content-length": String(body.length) },
+      body,
+    });
+    const result = await parseJsonBody(request, schema);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data).toEqual({ name: "Priya", age: 30 });
   });
 });
 

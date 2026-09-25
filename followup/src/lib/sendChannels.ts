@@ -23,31 +23,37 @@ import { prisma } from "@/lib/db";
  */
 export async function hasAnySendChannel(businessId: string): Promise<boolean> {
   const [business, inbox] = await Promise.all([
+    // The same four questions as before, asked in the WHERE clause, with
+    // only the id selected. src/lib/db.ts decrypts every token column that
+    // comes back in a row, so selecting four real credentials to test them
+    // for null (twice per business per hour, and on lead pages) decrypted
+    // them for nothing (daily-path audit 2026-09-25 F12). An IS NOT NULL
+    // test on the stored ciphertext needs no decryption at all.
+    //
+    // Why not just the id columns, as the Facebook/WhatsApp config GETs do:
+    // Twilio's Account SID and Auth Token are saved independently
+    // (src/app/api/twilio/config), so a SID alone does not mean Twilio can
+    // send. Testing the tokens here keeps every answer exactly what it was.
     prisma.business.findUnique({
-      where: { id: businessId },
-      select: {
-        instagramUserId: true,
-        instagramAccessToken: true,
-        facebookPageId: true,
-        facebookPageAccessToken: true,
-        whatsappPhoneNumberId: true,
-        whatsappAccessToken: true,
-        twilioAccountSid: true,
-        twilioAuthToken: true,
-        twilioPhoneNumber: true,
-        whatsappPhoneNumber: true,
+      where: {
+        id: businessId,
+        OR: [
+          { instagramUserId: { not: null }, instagramAccessToken: { not: null } },
+          { facebookPageId: { not: null }, facebookPageAccessToken: { not: null } },
+          { whatsappPhoneNumberId: { not: null }, whatsappAccessToken: { not: null } },
+          {
+            twilioAccountSid: { not: null },
+            twilioAuthToken: { not: null },
+            OR: [{ twilioPhoneNumber: { not: null } }, { whatsappPhoneNumber: { not: null } }],
+          },
+        ],
       },
+      select: { id: true },
     }),
     prisma.integration.findFirst({
       where: { status: "connected", provider: { in: ["gmail", "outlook"] }, user: { businessId } },
       select: { id: true },
     }),
   ]);
-  if (inbox) return true;
-  if (!business) return false;
-  if (business.instagramUserId && business.instagramAccessToken) return true;
-  if (business.facebookPageId && business.facebookPageAccessToken) return true;
-  if (business.whatsappPhoneNumberId && business.whatsappAccessToken) return true;
-  if (business.twilioAccountSid && business.twilioAuthToken && (business.twilioPhoneNumber || business.whatsappPhoneNumber)) return true;
-  return false;
+  return !!inbox || !!business;
 }

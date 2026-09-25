@@ -118,7 +118,15 @@ async function getGmailIntegration(businessId: string) {
 }
 
 export async function getGmailStatus(businessId: string): Promise<GmailConnectionStatus> {
-  const integration = await getGmailIntegration(businessId);
+  // Not getGmailIntegration(): that loads the whole row, and src/lib/db.ts
+  // decrypts the refresh and access tokens on every read. This runs on
+  // every dashboard load, every email send and the setup checklist, and it
+  // only ever needed four plain columns (daily-path audit 2026-09-25 F12).
+  // The token-using callers below keep the full row; they need it.
+  const integration = await prisma.integration.findFirst({
+    where: { provider: "gmail", status: "connected", user: { businessId } },
+    select: { accountEmail: true, watchExpiration: true, lastSyncedAt: true, user: { select: { email: true } } },
+  });
   if (!integration) {
     // A revoked connection is parked at status "needs_reconnect", so the
     // "connected" lookup above misses it — but the business DID connect an
@@ -126,7 +134,7 @@ export async function getGmailStatus(businessId: string): Promise<GmailConnectio
     // never-connected empty state.
     const revoked = await prisma.integration.findFirst({
       where: { provider: "gmail", status: "needs_reconnect", user: { businessId } },
-      include: { user: true },
+      select: { accountEmail: true, user: { select: { email: true } } },
     });
     if (revoked) {
       return {
@@ -184,6 +192,40 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
   const profile = await gmail.users.getProfile({ userId: "me" });
   const email = profile.data.emailAddress;
   if (!email) throw new Error("Couldn't determine the connected Gmail address.");
+
+  // One inbox, one business (daily-path audit 2026-09-25 F8). Nothing
+  // stopped the same inbox being connected under two businesses, and the
+  // sync keys a thread on Conversation.externalId, which is globally
+  // unique: the second business found the first one's conversations, so
+  // its new mail was written into the FIRST business's lead, and its own
+  // leads were drafted with no messages at all. Push picks one of the two
+  // at random. Refused here, before anything is stored, with the sentence
+  // the Instagram/Facebook/WhatsApp connects use (#322) plus what to do.
+  //
+  // Only a live connection on ANOTHER business counts: a second admin of
+  // the same business, or one whose old connection is parked or
+  // disconnected, is not the case.
+  //
+  // The token Google just issued is deliberately NOT revoked: it is the
+  // same Google account and the same OAuth client as the other business's
+  // connection, and revoking it could end that grant too.
+  const self = await prisma.user.findUnique({ where: { id: userId }, select: { businessId: true } });
+  if (self?.businessId) {
+    const takenElsewhere = await prisma.integration.findFirst({
+      where: {
+        provider: "gmail",
+        status: "connected",
+        accountEmail: { equals: email, mode: "insensitive" },
+        user: { businessId: { not: null }, NOT: { businessId: self.businessId } },
+      },
+      select: { id: true },
+    });
+    if (takenElsewhere) {
+      throw new Error(
+        "That Gmail inbox is already connected to another FollowUp account. Disconnect it there first, or connect a different inbox."
+      );
+    }
+  }
 
   const existing = await prisma.integration.findUnique({
     where: { userId_provider: { userId, provider: "gmail" } },
@@ -458,6 +500,11 @@ function isAutomatedSender(email: string): boolean {
   return AUTOMATED_SENDER_PATTERNS.some((p) => p.test(email));
 }
 
+/** Prisma's unique-constraint violation — the loser of a create race. */
+function isUniqueViolation(err: unknown): boolean {
+  return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
+}
+
 /**
  * Shared by fetchSalesConversations() and fetchSpamProspects() — everything
  * from "fetch one thread's messages" through "upsert Lead/Conversation/
@@ -723,27 +770,50 @@ async function processThreadRefs(
       await applySourceRouting(businessId, lead.id, sourceLabel);
     }
 
+    // The same race as the lead above, one step later (daily-path audit
+    // 2026-09-25 F9). The push sync and the cron tick can both reach a
+    // brand-new thread, both read no conversation, and both create one;
+    // externalId is unique, so the loser's create throws. The loser can be
+    // the sync that won lead.create, the only one with isNewLead, and the
+    // throw ended its thread before acknowledgeNewLead below: the lead got
+    // no instant reply and, on a holding account, no first-reply hold until
+    // the three-hour pass. The winner's row is the one this thread belongs
+    // to, so re-read it and carry on, as findOrCreateConversation does.
     let conversation = await prisma.conversation.findUnique({
       where: { externalId: thread.id! },
     });
     if (!conversation) {
-      conversation = await prisma.conversation.create({
-        data: { leadId: lead.id, channel: "email", externalId: thread.id!, emailProvider: "gmail" },
-      });
+      try {
+        conversation = await prisma.conversation.create({
+          data: { leadId: lead.id, channel: "email", externalId: thread.id!, emailProvider: "gmail" },
+        });
+      } catch (err) {
+        if (!isUniqueViolation(err)) throw err;
+        conversation = await prisma.conversation.findUnique({ where: { externalId: thread.id! } });
+        if (!conversation) throw err;
+      }
     }
 
     for (const m of parsedMessages) {
-      await prisma.message.upsert({
-        where: { externalId: m.id },
-        update: {},
-        create: {
-          conversationId: conversation.id,
-          direction: m.direction,
-          body: m.body,
-          sentAt: m.sentAt,
-          externalId: m.id,
-        },
-      });
+      try {
+        await prisma.message.upsert({
+          where: { externalId: m.id },
+          update: {},
+          create: {
+            conversationId: conversation.id,
+            direction: m.direction,
+            body: m.body,
+            sentAt: m.sentAt,
+            externalId: m.id,
+          },
+        });
+      } catch (err) {
+        // The racing sync above wrote this message between this upsert's
+        // read and its insert. It exists, which is all `update: {}` asks
+        // for, and throwing here would lose the acknowledgement exactly as
+        // the conversation race did (F9).
+        if (!isUniqueViolation(err)) throw err;
+      }
     }
     // Safe to call unconditionally, including on a resync of an old
     // thread — checkRapidEngagement() only looks at messages from the

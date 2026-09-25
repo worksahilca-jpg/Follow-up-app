@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { appUrl } from "@/lib/stripe";
+import { inboundBaseUrl } from "@/lib/siteUrl";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
@@ -48,9 +48,9 @@ export async function GET() {
   const secret = business?.twilioSecret ?? null;
   return NextResponse.json({
     success: true,
-    smsUrl: secret ? `${appUrl()}/api/twilio/sms/${secret}` : null,
-    voiceUrl: secret ? `${appUrl()}/api/twilio/voice/${secret}` : null,
-    whatsappUrl: secret ? `${appUrl()}/api/twilio/whatsapp/${secret}` : null,
+    smsUrl: secret ? `${inboundBaseUrl()}/api/twilio/sms/${secret}` : null,
+    voiceUrl: secret ? `${inboundBaseUrl()}/api/twilio/voice/${secret}` : null,
+    whatsappUrl: secret ? `${inboundBaseUrl()}/api/twilio/whatsapp/${secret}` : null,
     hasAuthToken: !!business?.twilioAuthToken,
     accountSid: business?.twilioAccountSid ?? null,
     phoneNumber: business?.twilioPhoneNumber ?? null,
@@ -127,9 +127,9 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    smsUrl: `${appUrl()}/api/twilio/sms/${secret}`,
-    voiceUrl: `${appUrl()}/api/twilio/voice/${secret}`,
-    whatsappUrl: `${appUrl()}/api/twilio/whatsapp/${secret}`,
+    smsUrl: `${inboundBaseUrl()}/api/twilio/sms/${secret}`,
+    voiceUrl: `${inboundBaseUrl()}/api/twilio/voice/${secret}`,
+    whatsappUrl: `${inboundBaseUrl()}/api/twilio/whatsapp/${secret}`,
   });
 }
 

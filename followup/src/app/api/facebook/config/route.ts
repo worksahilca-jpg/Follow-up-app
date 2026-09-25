@@ -4,7 +4,7 @@ import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { activateFacebookPageWebhooks, facebookOAuthAvailable, resolveFacebookPage, unsubscribeFacebookPageWebhooks } from "@/lib/facebook";
 import { WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
-import { appUrl } from "@/lib/stripe";
+import { inboundBaseUrl } from "@/lib/siteUrl";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 
@@ -39,7 +39,7 @@ export async function GET() {
     receiving: !!business?.facebookWebhookSubscribedAt,
     pageId: business?.facebookPageId ?? null,
     pageName: business?.facebookPageName ?? null,
-    webhookUrl: `${appUrl()}/api/instagram/webhook`,
+    webhookUrl: `${inboundBaseUrl()}/api/instagram/webhook`,
     verifyToken: WEBHOOK_VERIFY_TOKEN,
     oauthAvailable: facebookOAuthAvailable(),
   });

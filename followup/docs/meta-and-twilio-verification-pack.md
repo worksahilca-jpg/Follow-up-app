@@ -48,7 +48,7 @@ the registration and the paperwork above.
 
 1. Settings → Basic → **Data deletion instructions URL**: `https://followupbase.io/privacy`.
    Without this Meta will not let you submit at all.
-2. Confirm the webhook is live: `https://followupbase.io/api/instagram/webhook` answers Meta's
+2. Confirm the webhook is live: `https://www.followupbase.io/api/instagram/webhook` (with `www.`) answers Meta's
    check. Ask me and I confirm it from the code.
 
 ### Step 4 — Record one screencast per permission

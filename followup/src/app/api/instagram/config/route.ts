@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { activateInstagramWebhooks, instagramOAuthAvailable, resolveInstagramUserId, unsubscribeInstagramWebhooks, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
-import { appUrl } from "@/lib/stripe";
+import { inboundBaseUrl } from "@/lib/siteUrl";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
@@ -40,7 +40,7 @@ export async function GET() {
     receiving: !!business?.instagramWebhookSubscribedAt,
     instagramUserId: business?.instagramUserId ?? null,
     instagramUsername: business?.instagramUsername ?? null,
-    webhookUrl: `${appUrl()}/api/instagram/webhook`,
+    webhookUrl: `${inboundBaseUrl()}/api/instagram/webhook`,
     verifyToken: WEBHOOK_VERIFY_TOKEN,
     oauthAvailable: instagramOAuthAvailable(),
   });

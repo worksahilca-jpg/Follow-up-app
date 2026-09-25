@@ -60,7 +60,8 @@ On 2026-09-19 the cause was #2: the Facebook app secret had been pasted as
 first live connect on 2026-09-19 produced no webhook for a real DM):
 1. Dashboard webhook for the Instagram product: Instagram → API setup with
    Instagram Login → "Configure webhooks" → callback URL
-   `https://followupbase.io/api/instagram/webhook`, verify token
+   `https://www.followupbase.io/api/instagram/webhook` (**with `www.`** — see
+   "Webhooks go to www" below), verify token
    `followup_ig_a8f3c1e0d92b47`, then subscribe the **`messages`** field.
    This is separate from the WhatsApp product's webhook.
 2. Per-account subscription: the app now calls
@@ -112,7 +113,7 @@ menus; if a label differs, take the closest match):
    setup" asks you to accept the WhatsApp Business Platform terms and gives
    the app a free test number. Accept; nothing else is reachable before it.
 3. **Webhook**: under the same use case, Configuration → Callback URL
-   `https://followupbase.io/api/whatsapp/webhook`, verify token the one shown
+   `https://www.followupbase.io/api/whatsapp/webhook` (**with `www.`**), verify token the one shown
    in Settings → WhatsApp → "Meta console reference" (same token as Instagram).
    Subscribe to exactly `messages`, `smb_message_echoes`, `history`,
    `smb_app_state_sync` (not `message_echoes`, which is Messenger's).
@@ -155,6 +156,18 @@ business's behalf.
 generate a token with the two WhatsApp permissions, then use "Have an access
 token instead?" in Settings → WhatsApp with the phone number ID and the WABA ID
 from WhatsApp Manager → Phone numbers.
+
+## Webhooks go to www; OAuth redirect URIs stay on the bare domain
+
+`followupbase.io` redirects to `www.followupbase.io`. A browser follows that,
+so the OAuth **redirect URIs** above work on the bare domain and should stay
+as registered. A webhook sender does not reliably follow it: until
+2026-09-25 both Meta callback URLs were the bare domain, Meta's POSTs arrived
+at www as GETs, were refused, and **no WhatsApp or Instagram webhook had been
+processed since Sep 19** (Instagram only worked through the three-minute
+poll). Every **callback/webhook URL** you register anywhere — Meta, Stripe,
+Google Pub/Sub, Zapier — must be the `www.` address. Settings → "Meta console
+reference" prints the right one.
 
 ## After setting the env vars
 

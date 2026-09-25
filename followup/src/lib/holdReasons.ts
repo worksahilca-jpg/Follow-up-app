@@ -81,6 +81,15 @@ export const UNTOUCHED_LEAD_REASON =
   "FollowUp has never seen a message on this lead, so this draft is written from what you typed in and nothing else";
 
 /**
+ * A phone lead the owner messaged first, who has never written back.
+ * FollowUp never texts or WhatsApps someone on its own who has not
+ * contacted the business (security pass 2026-09-25 F1), so the first
+ * message is the owner's to send.
+ */
+export const NEVER_WROTE_REASON =
+  "they have never messaged you, so FollowUp won't text or WhatsApp them on its own — the first message is yours to send";
+
+/**
  * assessSendRisk threw. Held rather than sent, in both schedulers: an
  * unchecked message going out is worse than a review nobody needed.
  */

@@ -9,7 +9,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/db", () => ({
-  prisma: { message: { findFirst: vi.fn() } },
+  prisma: { message: { findFirst: vi.fn() }, conversation: { findFirst: vi.fn(async () => null) } },
 }));
 
 import { prisma } from "@/lib/db";

@@ -32,7 +32,8 @@ vi.mock("@/lib/db", () => ({
     // the normal state for every test in this file — they are about other
     // guards entirely. `deleteMany` is the release on a failed send.
     sendClaim: { create: vi.fn(), updateMany: vi.fn(async () => ({ count: 0 })), deleteMany: vi.fn() },
-    message: { create: vi.fn(), findFirst: vi.fn(), count: vi.fn(async () => 0) },
+    // count = inbound messages: this lead has written (sending.ts refuses an automatic text to one who never has).
+    message: { create: vi.fn(), findFirst: vi.fn(), count: vi.fn(async () => 1) },
     followUp: { create: vi.fn() },
     outboundSend: {
       findFirst: vi.fn(),

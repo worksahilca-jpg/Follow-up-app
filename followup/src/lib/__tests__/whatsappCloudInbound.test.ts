@@ -60,6 +60,10 @@ const { classifyAsProspect } = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect }));
 
+// Per-chat re-judge cap (security pass 2026-09-25 F2): under it unless a test says otherwise.
+const { tooManyRecentActions } = vi.hoisted(() => ({ tooManyRecentActions: vi.fn(async () => false) }));
+vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions }));
+
 const { findOrCreateLeadByPhone } = vi.hoisted(() => ({
   findOrCreateLeadByPhone: vi.fn(async () => ({ id: "lead-wa", name: "Priya", assignedToId: null })),
 }));
@@ -109,10 +113,12 @@ function customerText(text: string, id = "wamid.1") {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  businessFindUnique.mockResolvedValue({ id: "biz1" });
+  // A paying business, so AI may run for it.
+  businessFindUnique.mockResolvedValue({ id: "biz1", name: "Condo Co", industry: "real estate", tier: "pro", subscriptionStatus: "active" });
   createInboundMessageIfNew.mockResolvedValue(true);
   leadFindFirst.mockResolvedValue(null);
   filteredFindUnique.mockResolvedValue(null);
+  tooManyRecentActions.mockResolvedValue(false);
   classifyAsProspect.mockResolvedValue({ isProspect: true, reason: "asks about work" });
 });
 
@@ -278,6 +284,42 @@ describe("someone who isn't a lead yet (the owner's own number)", () => {
     expect(findOrCreateLeadByPhone).toHaveBeenCalled();
     expect(scoreAndDraftForLead).toHaveBeenCalledWith("lead-wa");
     expect(filteredUpsert).not.toHaveBeenCalled();
+  });
+
+  it("looks again with the full read only, once, when a set-aside chat says more", async () => {
+    classifyAsProspect.mockResolvedValue(personal);
+    filteredFindUnique.mockResolvedValue(keptThread([{ id: "wamid.p1", direction: "inbound", body: "Happy Diwali!", date: earlier }]));
+    await processWhatsAppCloudEnvelope(customerText("Say hi to mom", "wamid.p2"));
+    // Stage 1 re-reads an opening that already said no: skipped.
+    expect(classifyAsProspect).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the message but spends nothing once a chat passes its hourly cap", async () => {
+    tooManyRecentActions.mockResolvedValue(true);
+    filteredFindUnique.mockResolvedValue(keptThread([{ id: "wamid.p1", direction: "inbound", body: "Happy Diwali!", date: earlier }]));
+    await processWhatsAppCloudEnvelope(customerText("spam spam spam", "wamid.p9"));
+    expect(tooManyRecentActions).toHaveBeenCalledWith("biz1", `whatsapp_rejudge:${CUSTOMER}`, expect.objectContaining({ windowMinutes: 60 }));
+    expect(classifyAsProspect).not.toHaveBeenCalled();
+    expect(findOrCreateLeadByPhone).not.toHaveBeenCalled();
+    expect(filteredUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({ update: expect.objectContaining({ threadPayload: expect.objectContaining({ messages: [expect.anything(), expect.objectContaining({ id: "wamid.p9" })] }) }) })
+    );
+  });
+
+  it("spends no AI for a Free business (WhatsApp isn't on the Free plan): someone new is captured as before", async () => {
+    businessFindUnique.mockResolvedValue({ id: "biz1", name: "Condo Co", industry: null, tier: "free", subscriptionStatus: null });
+    await processWhatsAppCloudEnvelope(customerText("Dinner at 8?", "wamid.f1"));
+    expect(classifyAsProspect).not.toHaveBeenCalled();
+    expect(findOrCreateLeadByPhone).toHaveBeenCalled();
+  });
+
+  it("spends no AI for a lapsed business, and a set-aside chat stays set aside", async () => {
+    businessFindUnique.mockResolvedValue({ id: "biz1", name: "Condo Co", industry: null, tier: "pro", subscriptionStatus: "canceled" });
+    filteredFindUnique.mockResolvedValue(keptThread([{ id: "wamid.p1", direction: "inbound", body: "Happy Diwali!", date: earlier }]));
+    await processWhatsAppCloudEnvelope(customerText("Say hi to mom", "wamid.l2"));
+    expect(classifyAsProspect).not.toHaveBeenCalled();
+    expect(findOrCreateLeadByPhone).not.toHaveBeenCalled();
+    expect(filteredUpsert).toHaveBeenCalled();
   });
 
   it("sets aside the owner's own message to someone new when it is personal", async () => {

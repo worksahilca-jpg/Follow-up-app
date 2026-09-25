@@ -110,7 +110,12 @@ export async function judgeHistoryThread(
   messages: Message[],
   contact: { name: string; phone: string },
   business: ClassifierBusinessContext | undefined,
-  signals: DeepSignals
+  signals: DeepSignals,
+  // A chat that was already set aside, being looked at again because it
+  // said more. Stage 1 reads the opening, which has not changed and
+  // already said no — so it is skipped, and only the full look runs
+  // (security pass 2026-09-25 F2: half the cost of every re-judge).
+  options?: { alreadySetAside?: boolean }
 ): Promise<HistoryVerdict> {
   // Nothing to read is not evidence of anything. Import.
   if (messages.length === 0) return { import: true };
@@ -124,8 +129,10 @@ export async function judgeHistoryThread(
   const counterpart = { name: contact.name, email: contact.phone };
 
   try {
-    const stageOne = await classifyAsProspect(messages, counterpart, business);
-    if (stageOne.isProspect) return { import: true };
+    if (!options?.alreadySetAside) {
+      const stageOne = await classifyAsProspect(messages, counterpart, business);
+      if (stageOne.isProspect) return { import: true };
+    }
 
     // --- Stage 2: the same judge, more evidence ------------------------
     //

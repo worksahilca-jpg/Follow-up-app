@@ -12,6 +12,7 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     auditEvent: { findMany: vi.fn() },
     lead: { findMany: vi.fn(), findFirst: vi.fn() },
+    message: { findMany: vi.fn() },
   },
 }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
@@ -45,6 +46,40 @@ beforeEach(() => {
   p.auditEvent.findMany.mockResolvedValue([]);
   p.lead.findMany.mockResolvedValue([]);
   p.lead.findFirst.mockResolvedValue(null);
+  p.message.findMany.mockResolvedValue([]);
+});
+
+describe("getPendingApprovals — a lead already answered leaves the queue", () => {
+  // 2026-09-25 audit F1: "Send all routine" writes no per-lead audit row,
+  // so every lead it sent stayed held and the next press re-sent the same
+  // drafts. The queue now asks the message table instead.
+  it("drops a held lead that has been sent something since the hold", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([lead()]);
+    p.message.findMany.mockResolvedValue([
+      { sentAt: new Date("2026-09-10T12:05:00Z"), conversation: { leadId: "lead1" } },
+    ]);
+    expect(await getPendingApprovals("biz1")).toEqual([]);
+  });
+
+  it("keeps a held lead whose only outbound message predates the hold", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([lead()]);
+    p.message.findMany.mockResolvedValue([
+      { sentAt: new Date("2026-09-10T11:00:00Z"), conversation: { leadId: "lead1" } },
+    ]);
+    expect(await getPendingApprovals("biz1")).toHaveLength(1);
+  });
+
+  it("only asks about this business's leads, and only outbound messages after the oldest hold", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([lead()]);
+    await getPendingApprovals("biz1");
+    const where = p.message.findMany.mock.calls[0][0].where;
+    expect(where.direction).toBe("outbound");
+    expect(where.sentAt).toEqual({ gt: new Date("2026-09-10T12:00:00Z") });
+    expect(where.conversation).toEqual({ leadId: { in: ["lead1"] }, lead: { businessId: "biz1" } });
+  });
 });
 
 describe("getPendingApprovals", () => {

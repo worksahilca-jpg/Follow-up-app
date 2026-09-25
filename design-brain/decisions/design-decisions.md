@@ -6461,3 +6461,14 @@ and `followup/research/product/2026-09-15-reaching-back-out-to-ignored-leads.md`
 - The number means what it says: the seeded default moved 5 → 3 (migration `20260925130000_quiet_reminder_default` moves rows still on 5). The special case that read 5 as "day 3" was dropped — it made the field show 5 while the first reminder went on day 3.
 
 **Weak spot:** an owner who deliberately chose 5 before today is moved to 3 with everyone else; there was no way to tell them apart.
+
+## 2026-09-26 — Hero sketching moved to Figma
+
+The founder chose to sketch the new hero in Figma rather than on paper. A board was set up in
+his team's drafts: **FollowUp — Hero sketch**, https://www.figma.com/design/DQXZgweQPGuLh9CPUBfAFS.
+It holds a "Read me first" brief (the story, the rules every direction keeps, the three questions
+from the 2026-09-25 hero research), rough first-screen frames for D1–D5 on the charcoal ground with
+the approved headline (A-013) and buyer line (A-014), and blank desktop (1440) and phone (390)
+frames with the maximum picture area dashed in. Green (`--sage`) stands in for the one
+"answered" colour and is explicitly a placeholder (R-004: build with a placeholder, change one
+value when he reacts). Nothing on the board is approved; R-014 stands until he picks.

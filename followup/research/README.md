@@ -64,6 +64,7 @@ order and later ones assume the earlier fixes landed.
 `2026-09-16-security-audit-auth-tenancy-and-api.md` ·
 `2026-09-16-security-audit-meta-surface.md` ·
 `2026-09-24-app-review-path-audit.md` — the stored Instagram id is the app-scoped one, so webhooks never match and FollowUp's own sends come back as a lead (F1/F2)
+· `2026-09-25-daily-path-bug-hunt.md` — "Send all routine" can re-send the same drafts; a new draft inherits the old risk verdict; approved emails start new Gmail threads
 
 `backend-backlog.md` is the one undated file — a running list rather than a pass.
 

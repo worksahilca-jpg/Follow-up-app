@@ -527,6 +527,23 @@ export type SyncOptions = {
   onResult?: (info: { truncated: boolean }) => void;
 };
 
+/**
+ * When a Gmail message arrived, for ordering and for "who wrote last".
+ *
+ * Gmail's own receive time (`internalDate`) first. The Date header is
+ * written by whoever sent the mail, so it can say anything: a message
+ * dated next year stayed the "newest" in its thread forever and pinned the
+ * lead's last contact in the future, and one dated last year arrived
+ * already looking stale (daily-path sweep 2026-09-25 #8). The header is
+ * the fallback only, and never later than now; an unreadable one is now.
+ */
+export function gmailMessageTime(internalDate: string | null | undefined, dateHeader: string | undefined, now = new Date()): Date {
+  const received = internalDate ? Number(internalDate) : NaN;
+  const claimed = dateHeader ? new Date(dateHeader).getTime() : NaN;
+  const ms = Number.isFinite(received) && received > 0 ? received : Number.isFinite(claimed) ? claimed : now.getTime();
+  return new Date(Math.min(ms, now.getTime()));
+}
+
 /** A Lead plus whether THIS run actually changed it — new lead, or a newer message than it had — so callers re-score only what moved, not every known lead on every pass. */
 export type SyncedLead = Lead & { touched: boolean };
 
@@ -587,13 +604,12 @@ async function processThreadRefs(
       .filter((m): m is typeof m & { id: string } => Boolean(m.id))
       .map((m) => {
         const from = parseFromHeader(getHeader(m.payload?.headers, "From"));
-        const dateHeader = getHeader(m.payload?.headers, "Date");
         return {
           id: m.id,
           from,
           direction: (from.email === selfEmail ? "outbound" : "inbound") as "outbound" | "inbound",
           body: extractPlainTextBody(m.payload).slice(0, 5000),
-          sentAt: dateHeader ? new Date(dateHeader) : new Date(),
+          sentAt: gmailMessageTime(m.internalDate, getHeader(m.payload?.headers, "Date")),
           messageIdHeader: getHeader(m.payload?.headers, "Message-ID") || undefined,
         };
       });

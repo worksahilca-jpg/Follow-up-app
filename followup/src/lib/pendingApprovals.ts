@@ -23,6 +23,17 @@ import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
  */
 const SCAN_LIMIT = 500;
 
+/**
+ * Lead events that say nothing about the held draft, so they must not be
+ * read as "the most recent decision" (found live 2026-09-25). "This was a
+ * lead" imports the thread, which drafts and holds, and then records the
+ * override a few milliseconds later — so the override became the newest
+ * event and the held draft vanished from the queue and from owner alerts.
+ * The instant acknowledgement is the same shape: it can go out after the
+ * hold, and "we got your message" is not an answer to the customer.
+ */
+const NOT_A_DECISION = ["lead.classification_overridden", "ai.instant_ack"];
+
 // How much of the lead's own message to carry into the queue — this is a
 // compact list view, not the full lead page; a reviewer needs enough to
 // judge the draft against, not the whole email. Truncated, never the raw
@@ -106,7 +117,7 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
   // some other way (a metrics pass), not by scanning the whole table on
   // every page load.
   const recentEvents = await prisma.auditEvent.findMany({
-    where: { businessId, targetType: "lead", targetId: { not: null } },
+    where: { businessId, targetType: "lead", targetId: { not: null }, action: { notIn: NOT_A_DECISION } },
     orderBy: { createdAt: "desc" },
     distinct: ["targetId"],
     take: SCAN_LIMIT,
@@ -162,6 +173,10 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
   const laterSends = await prisma.message.findMany({
     where: {
       direction: "outbound",
+      // The acknowledgement is not an answer (NOT_A_DECISION above). A
+      // bare `not` would also drop null triggers — an owner's reply synced
+      // from their inbox — so both are spelled out, as in ownerAlerts.ts.
+      OR: [{ trigger: null }, { trigger: { not: "instant_ack" } }],
       sentAt: { gt: oldestHold },
       conversation: { leadId: { in: heldIds }, lead: { businessId } },
     },

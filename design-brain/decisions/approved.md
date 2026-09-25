@@ -465,3 +465,18 @@ no captured thread (form, CSV, manual) still gets a fresh email with the typed s
 **Consequence for the UI (founder's to design):** on a lead with an email thread the
 composer's Subject field no longer decides the subject. Until the screen says so, it is
 a field that does nothing there. See [[design-decisions#2026-09-25 — Email replies thread]].
+
+## A-021 — The home-screen icon: white mark, full-bleed on ink ^A-021
+
+**Approved:** 2026-09-25, founder: *"looks sharp"* — after re-adding FollowUp to his phone's
+home screen from the #329 icons.
+
+The brand app icon (`public/brand/png/followup-app-icon-1024.png`) resized down, not
+re-rendered: the white mark on ink `#111312`, filling the whole square so the phone's own
+mask shapes the corners. iPhone reads `src/app/apple-icon.png` (180, no transparency);
+Android reads `public/icons/icon-192.png`, `icon-512.png` and `icon-maskable-512.png` via
+`src/app/manifest.ts`. What was wrong before: the manifest pointed at the 32×32 favicon,
+so the phone stretched it and it blurred.
+
+**Lesson:** a phone keeps the icon from the moment it was added. After an icon change, it
+must be removed and re-added (iPhone: clear Safari website data first) before judging it.

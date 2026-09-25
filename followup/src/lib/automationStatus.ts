@@ -22,7 +22,18 @@
  * is never called from it, so nothing here can affect what actually sends.
  */
 
-import { UNANSWERED_ACTION, UNANSWERED_DEFAULT_HOURS, DEAD_LEAD_ACTION, DEAD_LEAD_DEFAULT_DAYS, effectiveUnansweredHours } from "@/lib/automation";
+import {
+  UNANSWERED_ACTION,
+  UNANSWERED_DEFAULT_HOURS,
+  DEAD_LEAD_ACTION,
+  DEAD_LEAD_DEFAULT_DAYS,
+  SILENCE_DEFAULT_TRIGGER_DAYS,
+  effectiveUnansweredHours,
+  quietReminderPlan,
+  reactivationAlreadySent,
+  isConsentKeyword,
+  type TimelineMessage,
+} from "@/lib/automation";
 import { isExitPayload } from "@/lib/quickReplies";
 import { prisma } from "@/lib/db";
 import { hasAnySendChannel } from "@/lib/sendChannels";
@@ -87,7 +98,7 @@ export async function getBusinessAutomationRules(businessId: string): Promise<Bu
     canSend,
     holdAllForApproval: business?.holdAllForApproval ?? true,
     masterEnabled: master?.enabled ?? false,
-    silenceTriggerDays: master?.triggerDays ?? 5,
+    silenceTriggerDays: master?.triggerDays ?? SILENCE_DEFAULT_TRIGGER_DAYS,
     unansweredEnabled: unanswered?.enabled ?? true,
     unansweredHours: unanswered?.triggerHours ?? UNANSWERED_DEFAULT_HOURS,
     deadLeadEnabled: deadLead?.enabled ?? true,
@@ -311,7 +322,16 @@ export function computeAutomationStatus(
   // A tap on the honest-no chip ends the automatic follow-ups (the same
   // rule as findUnansweredLeads(), and it must stay the same rule): the
   // badge must not count down to a message the engine will never send.
-  const lastIsInbound = last?.direction === "inbound" && !isExitPayload(last.quickReplyPayload);
+  // A bare STOP/START is consent, not a question — the engine never drafts
+  // a reply to one (findUnansweredLeads, freshInboundToAnswer), so neither
+  // may the badge count down to one.
+  const lastIsInbound = last?.direction === "inbound" && !isExitPayload(last.quickReplyPayload) && !isConsentKeyword(last.body);
+  const timeline: TimelineMessage[] = lead.conversation.map((m) => ({
+    direction: m.direction,
+    at: new Date(m.date).getTime(),
+    trigger: m.trigger ?? null,
+    quickReplyPayload: m.quickReplyPayload ?? null,
+  }));
 
   // Priority order mirrors automation.ts's own merge: unanswered (the lead
   // wrote and got ignored) beats dead-lead reactivation, which beats plain
@@ -336,21 +356,39 @@ export function computeAutomationStatus(
     // lead the next cron tick is about to send.
     const thresholdHours = effectiveUnansweredHours(rules.unansweredHours, hasSubstantiveOutbound, last!.channel);
     const hoursSince = (now.getTime() - new Date(last!.date).getTime()) / 3_600_000;
-    if (hoursSince >= thresholdHours) due = "unanswered";
+    // The fresh-reply worker (founder's follow-up strategy, 2026-09-25)
+    // answers or holds a new message within minutes, so from the moment
+    // they write this lead IS due — counting down "3 hours" would promise
+    // a wait the engine no longer makes. The two exceptions are the ones
+    // freshInboundToAnswer makes: a message the instant acknowledgement
+    // already answered (the fuller reply then follows the first-reply
+    // rule, which is what the countdown describes), and a voicemail or
+    // call, which stays on the hourly rule.
+    const ackAnsweredIt = lead.conversation.some((m) => isAck(m) && new Date(m.date) >= new Date(last!.date));
+    const freshPassOwnsIt = !ackAnsweredIt && last!.channel !== "call";
+    if (freshPassOwnsIt || hoursSince >= thresholdHours) due = "unanswered";
     else etaHours = thresholdHours - hoursSince;
   }
 
   if (!due) {
     const daysSinceContact = (now.getTime() - new Date(lead.lastContacted).getTime()) / 86_400_000;
-    if (rules.deadLeadEnabled && daysSinceContact >= rules.deadLeadDays) {
+    // The quiet-lead cadence, read by the same pure function the engine
+    // uses (quietReminderPlan) — four reminders, then nothing until the
+    // welcome back. Null when they spoke last, which the unanswered branch
+    // above has already described.
+    const plan = quietReminderPlan(timeline, new Date(lead.lastContacted).getTime(), rules.silenceTriggerDays, rules.deadLeadDays);
+    if (rules.deadLeadEnabled && daysSinceContact >= rules.deadLeadDays && !reactivationAlreadySent(timeline, rules.deadLeadDays)) {
       due = "dead_lead";
-    } else if (daysSinceContact >= rules.silenceTriggerDays) {
+    } else if (plan?.dueAt && plan.dueAt.getTime() <= now.getTime()) {
       due = "silence";
-    } else if (etaHours === null) {
+    } else if (etaHours === null && plan?.dueAt) {
       // Only fills in an ETA here when the unanswered branch above didn't
       // already set a more urgent (and more relevant, since it's the
-      // branch actually governing this lead) one.
-      etaHours = (rules.silenceTriggerDays - daysSinceContact) * 24;
+      // branch actually governing this lead) one. With the cadence
+      // finished there is no ETA at all, and the lead reads as "sent"
+      // below — nothing more is coming until it reaches the dead-lead
+      // threshold.
+      etaHours = (plan.dueAt.getTime() - now.getTime()) / 3_600_000;
     }
   }
 

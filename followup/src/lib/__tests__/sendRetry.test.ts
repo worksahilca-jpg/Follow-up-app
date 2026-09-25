@@ -34,7 +34,7 @@ vi.mock("@/lib/db", () => ({
     sendClaim: { create: vi.fn(), updateMany: vi.fn(async () => ({ count: 0 })), deleteMany: vi.fn() },
     // count = inbound messages: this lead has written (sending.ts refuses an automatic text to one who never has).
     message: { create: vi.fn(), findFirst: vi.fn(), count: vi.fn(async () => 1) },
-    followUp: { create: vi.fn() },
+    followUp: { create: vi.fn(), findFirst: vi.fn() },
     outboundSend: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -138,6 +138,9 @@ beforeEach(() => {
   p.message.create.mockResolvedValue({});
   p.message.findFirst.mockResolvedValue(null);
   p.followUp.create.mockResolvedValue({});
+  // No automated message to this lead yet today — the one-per-day rule
+  // for reminders (sendFollowUpToLead, 2026-09-25) lets these through.
+  p.followUp.findFirst.mockResolvedValue(null);
   p.outboundSend.findFirst.mockResolvedValue(null);
   p.outboundSend.findMany.mockResolvedValue([]);
   p.outboundSend.updateMany.mockResolvedValue({ count: 1 });

@@ -77,7 +77,21 @@ function lead(overrides: Record<string, unknown> = {}) {
     // provenance unknown = treated as stale, which is what a row from
     // before this column looks like.
     suggestedDraftedFor: null as Date | null,
-    conversations: [{ channel: "email", messages: [{ id: "m1", direction: "inbound", body: "Is the roof original?", sentAt: new Date(), opened: false }] }],
+    // A QUIET lead: they asked, we answered, they have not written since.
+    // Since the four-reminder cadence (2026-09-25) the silence rule only
+    // ever reaches a lead whose newest message is ours — one whose newest
+    // message is theirs is owed a reply, which is the unanswered rule's —
+    // so this fixture used to be a lead the silence rule would now,
+    // correctly, leave alone. Six days quiet: reminder 1 (day 3) is due.
+    conversations: [
+      {
+        channel: "email",
+        messages: [
+          { id: "m0", direction: "inbound", body: "Is the roof original?", sentAt: new Date(Date.now() - 10 * 86_400_000), opened: false },
+          { id: "m1", direction: "outbound", body: "It is, yes. Happy to send the inspection notes.", sentAt: new Date(Date.now() - 6 * 86_400_000), opened: false },
+        ],
+      },
+    ],
     followUps: [],
     ...overrides,
   };
@@ -87,7 +101,7 @@ beforeEach(() => {
   vi.stubEnv("OPENAI_API_KEY", "test-key");
   // First call: the "auto_send" master row; second: the unanswered-reply rule.
   p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
-    where.action === "auto_send" ? { enabled: true, triggerDays: 5 } : { enabled: true, triggerHours: 24 }
+    where.action === "auto_send" ? { enabled: true, triggerDays: 3 } : { enabled: true, triggerHours: 24 }
   );
   // First findMany is the silence query, second the unanswered query.
   p.lead.findMany.mockResolvedValue([]);
@@ -353,7 +367,7 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
 
   it("is skipped entirely when the business turned the rule off", async () => {
     p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
-      where.action === "auto_send" ? { enabled: true, triggerDays: 5 } : { enabled: false, triggerHours: 24 }
+      where.action === "auto_send" ? { enabled: true, triggerDays: 3 } : { enabled: false, triggerHours: 24 }
     );
     await runAutomationForBusiness("biz1");
     // The silence query, plus the day-2–7 handoff scan (draftDmHandoffs),
@@ -388,7 +402,12 @@ describe("silence automation risk gate", () => {
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
     expect(r.sent).toBe(1);
-    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), { automated: true, trigger: "silence", subject: expect.any(String), channel: "email" });
+    expect(send).toHaveBeenCalledWith(
+      "lead1",
+      expect.any(String),
+      // Which of the four reminders went out rides along to the audit trail.
+      expect.objectContaining({ automated: true, trigger: "silence", subject: expect.any(String), channel: "email", extraAuditMeta: { reminderStep: 1 } })
+    );
   });
 
   it("fails closed: a risk check that throws holds the lead", async () => {
@@ -435,7 +454,7 @@ describe("silence automation risk gate", () => {
   });
 
   it("does nothing at all when the master switch is off", async () => {
-    p.automation.findFirst.mockResolvedValue({ enabled: false, triggerDays: 5 });
+    p.automation.findFirst.mockResolvedValue({ enabled: false, triggerDays: 3 });
     const r = await runAutomationForBusiness("biz1");
     expect(r.checked).toBe(0);
     expect(p.lead.findMany).not.toHaveBeenCalled();
@@ -561,16 +580,34 @@ describe("send-window gate (src/lib/sendWindow.ts)", () => {
     expect(p.lead.updateMany).toHaveBeenLastCalledWith({ where: { id: "lead1" }, data: { lastAutomationCheckedAt: null } });
   });
 
-  it("never even attempts to draft or risk-check a deferred lead", async () => {
+  // SUPERSEDED 2026-09-25 (founder's follow-up strategy): this used to pin
+  // "never even attempts to draft or risk-check a deferred lead". Drafting
+  // and holding now happen at any hour and only the SEND waits — so a
+  // deferred lead IS drafted and judged, and what is pinned instead is that
+  // the work is kept for the next tick rather than bought twice.
+  it("drafts and judges a deferred lead, and keeps both so the morning tick does not pay again", async () => {
     sendWindow.mockReturnValue(false);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
-    await runAutomationForBusiness("biz1");
-    expect(risk).not.toHaveBeenCalled();
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.deferred).toBe(1);
+    expect(send).not.toHaveBeenCalled();
+    expect(risk).toHaveBeenCalledTimes(1);
+    expect(p.lead.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "lead1" },
+        data: expect.objectContaining({ suggestedMessage: expect.any(String), suggestedDraftKind: "reminder_1", suggestedRiskLevel: "low" }),
+      })
+    );
   });
 
   it("looks up the send window against the business's own configured timezone", async () => {
     p.business.findUnique.mockResolvedValue({ timezone: "Asia/Kolkata" });
-    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
+    // The window is asked just before the send now, so the draft has to
+    // get that far: an Assisted lead with a low verdict. (An Auto lead on
+    // this account, which never permitted Auto, is held as backlog first.)
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     await runAutomationForBusiness("biz1");
     expect(sendWindow).toHaveBeenCalledWith(expect.any(Date), "Asia/Kolkata");
   });
@@ -866,7 +903,7 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
   it("never queries for dead leads at all when the rule is turned off", async () => {
     p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
       where.action === "auto_send"
-        ? { enabled: true, triggerDays: 5 }
+        ? { enabled: true, triggerDays: 3 }
         : where.action === DEAD_LEAD_ACTION
           ? { enabled: false, triggerDays: 45 }
           : { enabled: true, triggerHours: 24 }
@@ -881,7 +918,7 @@ describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
   it("respects a business-configured dead-lead day threshold instead of the 45-day default", async () => {
     p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
       where.action === "auto_send"
-        ? { enabled: true, triggerDays: 5 }
+        ? { enabled: true, triggerDays: 3 }
         : where.action === DEAD_LEAD_ACTION
           ? { enabled: true, triggerDays: 90 }
           : { enabled: true, triggerHours: 24 }
@@ -931,7 +968,7 @@ describe("Meta's 24-hour window ceiling on the unanswered rule", () => {
   /** Business-configured unanswered window, in hours. */
   function configureUnansweredHours(triggerHours: number) {
     p.automation.findFirst.mockImplementation(async ({ where }: { where: { action: string } }) =>
-      where.action === "auto_send" ? { enabled: true, triggerDays: 5 } : { enabled: true, triggerHours }
+      where.action === "auto_send" ? { enabled: true, triggerDays: 3 } : { enabled: true, triggerHours }
     );
   }
 
@@ -1328,7 +1365,9 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
 
   it("never sends automatically past the window — the silence rule skips the lead without drafting", async () => {
     replyChannel.mockResolvedValue("instagram");
-    p.lead.findMany.mockResolvedValueOnce([quietDmLead(30)]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    // 80 hours, not 30: reminder 1 is due three days after our last
+    // message (2026-09-25 cadence), and this pins what happens once it is.
+    p.lead.findMany.mockResolvedValueOnce([quietDmLead(80)]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
     risk.mockResolvedValue({ riskLevel: "low", reason: "" });
     const r = await runAutomationForBusiness("biz1");
     expect(send).not.toHaveBeenCalled();
@@ -1478,6 +1517,9 @@ describe("an account that holds every automated message", () => {
         lead({
           suggestedMessage: "Already drafted and already judged.",
           suggestedDraftedFor: new Date("2999-01-01"),
+          // Current means the right KIND too since the cadence (2026-09-25):
+          // this is the step-1 reminder the fixture's quiet lead is due.
+          suggestedDraftKind: "reminder_1",
           suggestedRiskLevel: "low",
           suggestedRiskReason: null,
         }),
@@ -1501,6 +1543,7 @@ describe("an account that holds every automated message", () => {
         lead({
           suggestedMessage: "Drafted before verdicts were recorded.",
           suggestedDraftedFor: new Date("2999-01-01"),
+          suggestedDraftKind: "reminder_1",
           suggestedRiskLevel: null,
         }),
       ])
@@ -1649,12 +1692,18 @@ describe("a lead with no conversation at all", () => {
 describe("an email draft that names a figure nobody wrote", () => {
   const ASKED = "Do you have availability next week, and what would it cost?";
 
+  // They asked, we answered without a figure, they went quiet — so the
+  // silence rule's reminder is what gets drafted (a lead whose own message
+  // is newest belongs to the unanswered rule since 2026-09-25).
   function leadWhoAsked(over: Record<string, unknown> = {}) {
     return lead({
       conversations: [
         {
           channel: "email",
-          messages: [{ id: "m1", direction: "inbound", body: ASKED, sentAt: new Date(), opened: false }],
+          messages: [
+            { id: "m1", direction: "inbound", body: ASKED, sentAt: new Date(Date.now() - 6 * 86_400_000), opened: false },
+            { id: "m2", direction: "outbound", body: "Let me check the calendar for you.", sentAt: new Date(Date.now() - 5 * 86_400_000), opened: false },
+          ],
         },
       ],
       ...over,
@@ -1714,7 +1763,8 @@ describe("an email draft that names a figure nobody wrote", () => {
             {
               channel: "email",
               messages: [
-                { id: "m1", direction: "inbound", body: `${ASKED} My budget is $100.`, sentAt: new Date(), opened: false },
+                { id: "m1", direction: "inbound", body: `${ASKED} My budget is $100.`, sentAt: new Date(Date.now() - 6 * 86_400_000), opened: false },
+                { id: "m2", direction: "outbound", body: "Let me check the calendar for you.", sentAt: new Date(Date.now() - 5 * 86_400_000), opened: false },
               ],
             },
           ],
@@ -1896,6 +1946,8 @@ describe("the moment Auto is switched on", () => {
     // a way of turning Auto off, and the founder asked for Auto working.
     grantedAccount();
     p.lead.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         lead({
           automationTier: "AUTONOMOUS",
@@ -1924,6 +1976,8 @@ describe("the moment Auto is switched on", () => {
       holdAllForApproval: false,
     });
     p.lead.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         lead({
           automationTier: "AUTONOMOUS",
@@ -1949,7 +2003,7 @@ describe("the moment Auto is switched on", () => {
         lead({
           automationTier: "AUTONOMOUS",
           conversations: [
-            { channel: "email", messages: [{ direction: "inbound", body: "Old one.", sentAt: new Date("2026-09-01T10:00:00Z") }] },
+            { channel: "email", messages: [{ direction: "inbound", body: "Old one.", sentAt: new Date("2026-09-01T10:00:00Z") }, { direction: "outbound", body: "Answered.", sentAt: new Date("2026-09-01T11:00:00Z") }] },
           ],
         }),
       ])
@@ -1996,7 +2050,7 @@ describe("the moment sending on your behalf is switched on", () => {
       .mockResolvedValueOnce([
         lead({
           conversations: [
-            { channel: "email", messages: [{ direction: "inbound", body: "Months ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+            { channel: "email", messages: [{ direction: "inbound", body: "Months ago.", sentAt: new Date("2026-08-01T10:00:00Z") }, { direction: "outbound", body: "Answered.", sentAt: new Date("2026-08-01T11:00:00Z") }] },
           ],
         }),
       ])
@@ -2012,6 +2066,8 @@ describe("the moment sending on your behalf is switched on", () => {
   it("sends on a conversation that moved after the switch", async () => {
     justGranted();
     p.lead.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         lead({
           conversations: [
@@ -2044,7 +2100,7 @@ describe("the moment sending on your behalf is switched on", () => {
       .mockResolvedValueOnce([
         lead({
           conversations: [
-            { channel: "email", messages: [{ direction: "inbound", body: "Months ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+            { channel: "email", messages: [{ direction: "inbound", body: "Months ago.", sentAt: new Date("2026-08-01T10:00:00Z") }, { direction: "outbound", body: "Answered.", sentAt: new Date("2026-08-01T11:00:00Z") }] },
           ],
         }),
       ])
@@ -2098,7 +2154,7 @@ describe("the sentence on a backlog draft", () => {
       .mockResolvedValueOnce([
         lead({
           conversations: [
-            { channel: "email", messages: [{ direction: "inbound", body: "Weeks ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+            { channel: "email", messages: [{ direction: "inbound", body: "Weeks ago.", sentAt: new Date("2026-08-01T10:00:00Z") }, { direction: "outbound", body: "Answered.", sentAt: new Date("2026-08-01T11:00:00Z") }] },
           ],
         }),
       ])
@@ -2142,7 +2198,7 @@ describe("the sentence on a backlog draft", () => {
       .mockResolvedValueOnce([
         lead({
           conversations: [
-            { channel: "email", messages: [{ direction: "inbound", body: "Weeks ago.", sentAt: new Date("2026-08-01T10:00:00Z") }] },
+            { channel: "email", messages: [{ direction: "inbound", body: "Weeks ago.", sentAt: new Date("2026-08-01T10:00:00Z") }, { direction: "outbound", body: "Answered.", sentAt: new Date("2026-08-01T11:00:00Z") }] },
           ],
         }),
       ])

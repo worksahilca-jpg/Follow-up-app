@@ -206,6 +206,17 @@ everything stops the instant the lead replies), and the owner can set any lead
 to OFF or AUTONOMOUS. Validated the same day by the first outside tester (a
 realtor): "amazing if it will be taking follow up from each and every one."
 
+> **Timing corrected 2026-09-25 (founder's follow-up strategy).** "starts **on** (5-day
+> window)" above, and "a lead who wrote and got no answer for N hours (default 24)" in the
+> 2026-09-07 status below, no longer describe what runs. Now: a new message on any channel
+> has its reply drafted and held on Today (or, on an account that sends without asking, a
+> low-risk reply sent) within five minutes, at any hour. A quiet lead gets four different
+> reminders — day 3, 7, 14 and 30 after our last message, or the owner's own silence setting
+> for the first — then nothing until one welcome back at the dead-lead threshold (45 days).
+> Reminders go out 8:00–20:00 local, at most one automatic reminder per lead per day. The
+> switch still starts on. Detail: `design-brain/decisions/design-decisions.md`,
+> "2026-09-25 — The follow-up strategy".
+
 ## Rule 1, closed (2026-09-06)
 
 **Decision: FollowUp stays horizontal. No vertical.** Considered and declined —

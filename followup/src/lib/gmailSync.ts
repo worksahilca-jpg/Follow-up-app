@@ -180,7 +180,7 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
       const message = err instanceof Error ? err.message : String(err);
 
       // `invalid_grant` is different in kind from every other sync failure.
-      // A rate limit or a timeout is worth retrying in ten minutes; a revoked
+      // A rate limit or a timeout is worth retrying next tick; a revoked
       // refresh token never recovers — only the owner reconnecting fixes it.
       //
       // Left as "connected" (which is what happened before this), the

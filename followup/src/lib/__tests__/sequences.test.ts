@@ -380,6 +380,20 @@ describe("send-window gate (src/lib/sendWindow.ts)", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  // Founder's follow-up strategy, 2026-09-25: drafting and holding happen
+  // at any hour, only sending waits. On a holding account nothing a step
+  // writes is sent, so the step is drafted and put on Today when it comes
+  // due — 3am included — rather than waiting for 8am to be written at all.
+  it("holds a step on a holding account at night instead of deferring it", async () => {
+    sendWindow.mockReturnValue(false);
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", holdAllForApproval: true });
+    p.lead.findMany.mockResolvedValue([enrolledOnEmailStep()]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.held).toBe(1);
+    expect(r.deferred).toBe(0);
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it("does not gate a CHANGE_STAGE step on the send window — it never contacts the lead", async () => {
     sendWindow.mockReturnValue(false);
     p.lead.findMany.mockResolvedValue([enrolledOnStageStep()]);
@@ -521,6 +535,9 @@ describe("risk-gated hold (a workflow step's draft isn't automatically safe)", (
         sequenceStepScheduledAt: null,
         suggestedMessage: "draft",
         suggestedSubject: "Following up",
+        // A workflow step's draft, never mistaken for one of FollowUp's own
+        // reminders (Lead.suggestedDraftKind, 2026-09-25).
+        suggestedDraftKind: null,
         // 2026-09-25 (audit F2): a new draft never keeps the previous
         // draft's risk verdict. Here the "high" was this pass's own, but
         // under hold-all it is a placeholder; unjudged is the true state.

@@ -116,7 +116,12 @@ function emailLead(overrides: Record<string, unknown> = {}) {
     conversations: [
       {
         channel: "email",
-        messages: [{ id: "m1", direction: "inbound", body: "Is the roof original?", sentAt: new Date(Date.now() - 6 * 86_400_000), opened: false }],
+        // A quiet lead — they asked, we answered, nothing since — so the
+        // silence rule's first reminder is due (2026-09-25 cadence).
+        messages: [
+          { id: "m1", direction: "inbound", body: "Is the roof original?", sentAt: new Date(Date.now() - 6 * 86_400_000), opened: false },
+          { id: "m2", direction: "outbound", body: "It is, yes.", sentAt: new Date(Date.now() - 5 * 86_400_000), opened: false },
+        ],
       },
     ],
     followUps: [],
@@ -163,11 +168,16 @@ describe("the silence rule never drafts for a channel that cannot send", () => {
       conversations: [
         {
           channel: "instagram",
-          messages: [{ id: "m1", direction: "inbound", body: "Still available?", sentAt: new Date(Date.now() - 2 * 3_600_000), opened: false }],
+          messages: [{ id: "m1", direction: "inbound", body: "Still available?", sentAt: new Date(Date.now() - 4 * 3_600_000), opened: false }],
         },
       ],
     });
-    await silencePass(igLead);
+    // Reached through the unanswered rule: a DM lead is only ever inside
+    // Meta's 24-hour window while their own message is the newest one, and
+    // a quiet lead's first reminder is days away (2026-09-25 cadence). Same
+    // per-lead channel check either way — that is what this pins.
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([igLead]);
+    await runAutomationForBusiness("biz1");
     expect(canSend).toHaveBeenCalledWith("biz1", "instagram");
     expect(draft).toHaveBeenCalled();
   });

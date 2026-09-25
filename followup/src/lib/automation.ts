@@ -48,6 +48,8 @@ import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import { isTransientError } from "@/lib/transientError";
 import { greetingFirstName } from "@/lib/leadName";
+import { isOptOutMessage, isOptInMessage } from "@/lib/optOutKeywords";
+import { ackGracePeriodMs } from "@/lib/acknowledge";
 import type { Message } from "@/lib/types";
 
 export const UNANSWERED_ACTION = "unanswered_reply";
@@ -185,6 +187,268 @@ export const DEAD_LEAD_NAME = "Reactivate cold leads";
 // for the main rule.
 export const DEAD_LEAD_DEFAULT_DAYS = 45;
 
+/* ------------------------------------------------------------------ *
+ * The quiet-lead cadence — founder's follow-up strategy, 2026-09-25.
+ * ------------------------------------------------------------------ */
+
+// The reminder calendar lives in @/lib/reminderCadence (no server imports,
+// so Settings can show the same days); re-exported here for existing callers.
+import { SILENCE_DEFAULT_TRIGGER_DAYS, QUIET_REMINDER_DEFAULT_DAYS, quietReminderDays } from "@/lib/reminderCadence";
+export { SILENCE_DEFAULT_TRIGGER_DAYS, QUIET_REMINDER_DEFAULT_DAYS, quietReminderDays };
+
+/** Outbound messages this close to the previous counted one are the same touch (a split answer, a quick correction). */
+const SAME_TOUCH_MS = 12 * 3_600_000;
+const DAY_MS = 86_400_000;
+
+
+/** One message as the cadence reads it — the shape both the engine (Prisma rows) and the badge (Message) reduce to. */
+export type TimelineMessage = {
+  direction: string;
+  at: number; // ms since epoch
+  trigger?: string | null;
+  quickReplyPayload?: string | null;
+};
+
+function isAckMessage(m: { direction: string; trigger?: string | null }): boolean {
+  return m.direction === "outbound" && m.trigger === "instant_ack";
+}
+
+/**
+ * Has a welcome back already gone out since the customer last wrote?
+ *
+ * Read off the thread itself: an outbound message that followed at least
+ * `deadLeadDays` of silence IS a reactivation, however it went out —
+ * automatically, approved from Today, or typed by the owner after a long
+ * gap. Reading a trigger column instead would miss the second and third,
+ * and the second is the normal case on a holding account.
+ *
+ * Why it matters: research/product/2026-09-15-reaching-back-out-to-
+ * ignored-leads.md §6.7 — one reactivation that goes unanswered is the
+ * end; repeated attempts did worse than sending nothing in the largest
+ * field experiment on file. Before this, the dead-lead rule fired again
+ * every 45 days for as long as the lead existed.
+ */
+export function reactivationAlreadySent(messages: TimelineMessage[], deadLeadDays: number): boolean {
+  const judged = messages.filter((m) => !isAckMessage(m)).sort((a, b) => a.at - b.at);
+  let lastInbound = -1;
+  judged.forEach((m, i) => {
+    if (m.direction === "inbound") lastInbound = i;
+  });
+  for (let i = Math.max(1, lastInbound + 1); i < judged.length; i++) {
+    if (judged[i].direction === "outbound" && judged[i].at - judged[i - 1].at >= deadLeadDays * DAY_MS) return true;
+  }
+  return false;
+}
+
+export type QuietReminderPlan = {
+  /** 0-based index of the NEXT reminder; equal to the cadence length once it is finished. */
+  step: number;
+  /** When that reminder is due; null once the cadence is finished. */
+  dueAt: Date | null;
+};
+
+/**
+ * Where this lead is in the quiet-lead cadence — pure, so the engine and
+ * the lead's status badge (src/lib/automationStatus.ts) cannot disagree
+ * about it, which has shipped as a bug twice already for the unanswered
+ * rule.
+ *
+ * Returns null when the customer spoke last: that lead is not quiet, a
+ * reply is owed (the unanswered rule), or they tapped "Not now" and
+ * nothing automatic goes to them at all. Either way the cadence has nothing
+ * to say — "stop the moment they reply" is this line.
+ *
+ * Stateless on purpose. The step is COUNTED from the thread rather than
+ * stored:
+ *   - the anchor is our first message after their last one — the message
+ *     they went quiet on (or, with no messages at all, `fallbackAnchorMs`,
+ *     the lead's creation);
+ *   - every later outbound touch counts, whoever sent it. A reminder the
+ *     owner approved from Today is a "manual" send with no automation
+ *     marker, and it must advance the cadence exactly like an automatic
+ *     one — otherwise a holding account would get reminder 1 again three
+ *     days after approving reminder 1. An owner's own nudge counts for the
+ *     same reason: the customer does not care who pressed Send, only how
+ *     many times they have been chased.
+ * No column can drift from what the customer actually received, because
+ * there is no column.
+ *
+ * Due at the later of the calendar day (anchor + days[step]) and the
+ * default gap after the previous touch — so a reminder approved late
+ * pushes the next one back instead of landing the day after it.
+ */
+export function quietReminderPlan(
+  messages: TimelineMessage[],
+  fallbackAnchorMs: number,
+  triggerDays: number,
+  deadLeadDays: number = DEAD_LEAD_DEFAULT_DAYS
+): QuietReminderPlan | null {
+  const days = quietReminderDays(triggerDays);
+  const judged = messages.filter((m) => !isAckMessage(m)).sort((a, b) => a.at - b.at);
+  const newest = judged[judged.length - 1];
+  if (newest && newest.direction === "inbound") return null;
+
+  // A welcome back went out after the cadence and nobody answered it: the
+  // cadence does not start again on top of it (see reactivationAlreadySent).
+  if (reactivationAlreadySent(messages, deadLeadDays)) return { step: days.length, dueAt: null };
+
+  let lastInbound = -1;
+  judged.forEach((m, i) => {
+    if (m.direction === "inbound") lastInbound = i;
+  });
+  const ours = judged.slice(lastInbound + 1);
+  const anchor = ours.length > 0 ? ours[0].at : fallbackAnchorMs;
+  let touches = 0;
+  let lastTouch = anchor;
+  for (const m of ours.slice(1)) {
+    if (m.at - lastTouch >= SAME_TOUCH_MS) {
+      touches += 1;
+      lastTouch = m.at;
+    }
+  }
+  if (touches >= days.length) return { step: days.length, dueAt: null };
+  const onCalendar = anchor + days[touches] * DAY_MS;
+  const afterPrevious = touches === 0 ? onCalendar : lastTouch + (days[touches] - days[touches - 1]) * DAY_MS;
+  return { step: touches, dueAt: new Date(Math.max(onCalendar, afterPrevious)) };
+}
+
+/**
+ * The angle of each reminder, passed to the drafting prompt as its
+ * messageHint — the same steering mechanism deadLeadMessageHint and
+ * workflow steps use, deliberately not a second system prompt.
+ *
+ * Four different jobs, so no two read alike and none is "just checking
+ * in" (founder, 2026-09-25; research 2026-09-09 §2 "each touch changing
+ * the message angle"). The rules every one of them repeats rather than
+ * assumes, per research 2026-09-15 §5:
+ *   - no apology — the customer went quiet on US, nobody failed them, and
+ *     an apology to someone unaware of any failure lowers trust (§1.2,
+ *     Steer E);
+ *   - no fact the conversation does not contain — the grounding check
+ *     holds a draft that invents one anyway, but a hint that invites
+ *     "offer a time slot" without this line would be inviting it;
+ *   - never the words that signal nothing new to say.
+ * Step 4 is research Steer D ("closing the file"): no question that needs
+ * an answer, no deadline, nothing a person could read as pressure.
+ */
+export function quietReminderHint(step: number, daysQuiet: number): string {
+  const number = Math.min(Math.max(step, 0), QUIET_REMINDER_DEFAULT_DAYS.length - 1) + 1;
+  const angles = [
+    "Angle for this one — a light nudge: remind them, in one short line and in their own terms, what they " +
+      "asked about, and if the conversation already contains the answer, put that answer in front of them " +
+      "again. End with one easy question.",
+    "Angle for this one — something new and useful the earlier messages did not offer: another option that " +
+      "fits what they described, an offer to find a time that suits them, or one relevant detail from this " +
+      "conversation they may have missed. Do not restate the previous nudge. Do not name a specific day, time, " +
+      "price or figure unless it already appears in the conversation.",
+    "Angle for this one — one easy closing question and nothing else: ask whether they are still looking or " +
+      "would rather you close this off, in a way that makes either answer feel completely fine. Two short " +
+      "sentences at most.",
+    "Angle for this one — the last message that will be sent about this. Two short sentences at most: say you " +
+      "will leave it here for now, and that the door is open whenever they want to pick it back up. No question " +
+      "that needs an answer, no deadline, no \"last chance\", nothing that reads as pressure.",
+  ];
+  return (
+    `This is reminder ${number} of 4 to someone who went quiet after the last message here — nothing from them ` +
+    `in about ${daysQuiet} days. ${angles[number - 1]} ` +
+    "Do not apologise: they stopped replying, nobody let them down. Never write \"just checking in\", " +
+    "\"circling back\", \"touching base\", \"following up\" or anything that means the same — every message must " +
+    "give them a reason to read it. Do not repeat the wording or the angle of any earlier message in this " +
+    "conversation. Never state a price, date, time or fact that is not already in the conversation."
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * A reply within five minutes — founder's follow-up strategy, 2026-09-25.
+ * ------------------------------------------------------------------ */
+
+/**
+ * How recent a customer's message has to be for the fresh-reply worker to
+ * treat it as "they just wrote" — and so answer it at any hour, outside
+ * the send window. Same hour the instant acknowledgement uses for the same
+ * question (STALE_AFTER_MS in acknowledge.ts): past it, the hourly
+ * unanswered rule is the one that owns the lead.
+ */
+export const FRESH_REPLY_WINDOW_MS = 60 * 60_000;
+
+/**
+ * The shortest wait before the fresh-reply worker acts on a message,
+ * on channels with no DM grace period (email, SMS, a web form).
+ *
+ * Long enough that the capture request that recorded the message has
+ * finished what it does in-line — the instant acknowledgement decides (and
+ * sends or holds) inside that same request, and scoring writes the draft —
+ * so the worker finds a settled lead rather than racing the webhook into a
+ * second reply. One minute, plus the worker's one-minute tick, keeps the
+ * total well inside five.
+ */
+export const FRESH_REPLY_SETTLE_MS = 60_000;
+
+/**
+ * How long the worker waits for scoring's draft before writing one itself.
+ * A capture path normally scores in-line within seconds; a sync that hit
+ * its per-run scoring cap does not, and waiting for the next sync would
+ * break the five-minute promise.
+ */
+export const FRESH_DRAFT_WAIT_MS = 2 * 60_000;
+
+/** Nothing to answer: STOP/START are consent, handled by the capture path, never replied to by a draft. Exported for the status badge, which must agree. */
+export function isConsentKeyword(body: string | null | undefined): boolean {
+  return typeof body === "string" && (isOptOutMessage(body) || isOptInMessage(body));
+}
+
+/**
+ * The newest customer message the fresh-reply worker should answer now,
+ * or null. Pure, and exported so its rules can be pinned directly.
+ *
+ * Every refusal is a reason the lead is not this worker's to answer:
+ *   - someone already answered (the last message, instant ack aside, is ours);
+ *   - they tapped "Not now", or the message is a STOP/START keyword;
+ *   - a voicemail or missed call — the call path has its own text-back,
+ *     and a second automatic text two minutes later is the double reply;
+ *   - older than FRESH_REPLY_WINDOW_MS — the hourly rule owns it;
+ *   - younger than its channel's wait: the DM grace period on Instagram,
+ *     Messenger and WhatsApp (DM_ACK_GRACE_PERIOD_MS — the owner's chance
+ *     to answer first, and what batches three quick DMs into one reply),
+ *     FRESH_REPLY_SETTLE_MS elsewhere;
+ *   - the instant acknowledgement already answered THIS message — that was
+ *     the reply within minutes, and a second automatic one straight after
+ *     it is the "two slightly different replies" moment the grace period
+ *     was built to prevent (acknowledge.ts). The fuller answer follows on
+ *     the first-reply rule;
+ *   - scoring's draft is not ready yet and FRESH_DRAFT_WAIT_MS has not
+ *     passed — the next tick will find it ready rather than pay twice;
+ *   - it was already handled: lastAutomationCheckedAt is at or after it.
+ */
+export function freshInboundToAnswer(
+  lead: {
+    suggestedDraftedFor: Date | null;
+    lastAutomationCheckedAt: Date | null;
+    conversations: { channel: string; messages: { direction: string; sentAt: Date; trigger: string | null; body: string; quickReplyPayload: string | null }[] }[];
+  },
+  nowMs: number
+): Date | null {
+  const all = lead.conversations.flatMap((c) => c.messages.map((m) => ({ ...m, channel: c.channel })));
+  const judged = all.filter((m) => !isAckMessage(m));
+  if (judged.length === 0) return null;
+  const last = judged.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
+  if (last.direction !== "inbound") return null;
+  if (isExitPayload(last.quickReplyPayload) || isConsentKeyword(last.body)) return null;
+  if (last.channel === "call") return null;
+  const age = nowMs - last.sentAt.getTime();
+  if (age > FRESH_REPLY_WINDOW_MS) return null;
+  const channelWait =
+    last.channel === "instagram" || last.channel === "messenger" || last.channel === "whatsapp"
+      ? Math.max(FRESH_REPLY_SETTLE_MS, ackGracePeriodMs(last.channel))
+      : FRESH_REPLY_SETTLE_MS;
+  if (age < channelWait) return null;
+  if (all.some((m) => isAckMessage(m) && m.sentAt >= last.sentAt)) return null;
+  const draftReady = lead.suggestedDraftedFor != null && lead.suggestedDraftedFor >= last.sentAt;
+  if (!draftReady && age < FRESH_DRAFT_WAIT_MS) return null;
+  if (lead.lastAutomationCheckedAt && lead.lastAutomationCheckedAt >= last.sentAt) return null;
+  return last.sentAt;
+}
+
 /**
  * The narrow allowlist of failures worth retrying — moved to
  * src/lib/transientError.ts (a leaf module with no imports) now that the
@@ -241,8 +505,25 @@ const EMPTY_RESULT: AutomationResult = {
  * Passed as generateFollowUpMessage()'s messageHint, the same steering
  * mechanism sequences.ts already uses per-step — this is deliberately
  * NOT a second system prompt, just a stronger steer on the existing one.
+ *
+ * `lastFrom` is who spoke last, and it decides the apology — the one part
+ * of this message the research is clearest about
+ * (research/product/2026-09-15-reaching-back-out-to-ignored-leads.md §1.2,
+ * §5 Steer A/E, §7.1). An apology helps someone who already knows they
+ * were failed and backfires on someone who does not, because the apology
+ * itself manufactures the grievance. So:
+ *   - "lead": they wrote and nobody here answered (reactivation.ts's
+ *     COLD_UNANSWERED). They know. One warm apology, then the answer they
+ *     were owed.
+ *   - "business": we answered and THEY went quiet (COLD). Nobody failed
+ *     them. No apology — the welcome back names the time, brings something
+ *     new, and asks for little.
+ * Until 2026-09-25 every message got the apology, which in practice meant
+ * it went almost only to the second group: the dead-lead branch is
+ * reached by leads whose last message is ours, and the reactivation batch
+ * sends to COLD alone. The research's §7.1 flagged exactly that.
  */
-export function deadLeadMessageHint(daysSinceContact: number): string {
+export function deadLeadMessageHint(daysSinceContact: number, lastFrom: "lead" | "business" = "business"): string {
   return (
     `This lead has gone genuinely cold — nobody, on either side, has said anything in about ${daysSinceContact} ` +
     "days. This is a reactivation message, not a routine follow-up: name that actual elapsed time plainly " +
@@ -251,26 +532,36 @@ export function deadLeadMessageHint(daysSinceContact: number): string {
     "campaigns found that's the single most-cited reason this kind of message gets ignored, since it signals " +
     "nothing new to offer. Lead with something concrete and useful instead: reference a specific detail from " +
     "what they were originally interested in, not a generic status question. " +
-    // The two facts that make this message land as a belated reply rather
-    // than an unsolicited approach — founder's call, 2026-09-15, and the
-    // reasoning is worth keeping: THEY made contact first, and nobody here
-    // answered. A recipient who is reminded of both recognises the message
-    // instantly and reads it as overdue courtesy. One who isn't is being
-    // emailed by a stranger about nothing in particular, months later,
-    // which is the definition of the thing people report as spam.
+    // What makes this message land as a belated reply rather than an
+    // unsolicited approach — founder's call, 2026-09-15, and the reasoning
+    // is worth keeping: the recipient has to recognise, in the first line,
+    // which conversation this continues. One who does reads it as overdue
+    // courtesy. One who doesn't is being emailed by a stranger about
+    // nothing in particular, months later, which is the definition of the
+    // thing people report as spam.
     //
     // This is also what makes the absence of an unsubscribe line defensible
     // rather than merely convenient: the message is a continuation of a
-    // conversation the recipient started. If these two instructions are
-    // ever dropped, that stops being true, and the decision to omit the
-    // unsubscribe should be revisited at the same time.
-    "Two things must be unmistakable. First, that THEY got in touch originally — say so plainly, in their " +
-    "own terms (\"you got in touch about...\", \"you asked us about...\"), so there is no moment where they " +
-    "wonder who this is or why they are hearing from you. Second, acknowledge honestly that they never got a " +
-    "proper reply — one short, unfussy line, no grovelling and no excuses (\"sorry we never came back to you " +
-    "on this\"). Then ask one clear question about whether they still need it. The whole message should read " +
-    "like a person who just found this in their inbox and felt bad about it, because that is exactly what " +
-    "happened."
+    // conversation the recipient took part in. If this instruction is ever
+    // dropped, that stops being true, and the decision to omit the
+    // unsubscribe should be revisited at the same time. (Only the apology
+    // was split out on 2026-09-25; the recognition line stays for both.)
+    (lastFrom === "lead"
+      ? "Two things must be unmistakable. First, that THEY got in touch originally — say so plainly, in their " +
+        "own terms (\"you got in touch about...\", \"you asked us about...\"), so there is no moment where they " +
+        "wonder who this is or why they are hearing from you. Second, acknowledge honestly that they never got a " +
+        "proper reply — one short, unfussy line, no grovelling and no excuses (\"sorry we never came back to you " +
+        "on this\"), and never a second apology later in the message. Then actually answer what they asked, as " +
+        "far as this conversation allows, and ask one clear question about whether they still need it. The whole " +
+        "message should read like a person who just found this in their inbox and felt bad about it, because " +
+        "that is exactly what happened."
+      : "Make it unmistakable, in the first line, which conversation this continues — in their own terms if they " +
+        "got in touch first (\"you asked us about...\") — so there is no moment where they wonder who this is. " +
+        "Do not apologise and do not say they never heard back: they did, and then went quiet, and an apology to " +
+        "someone nobody let down reads as a confession of a failure they never noticed. Bring them something they " +
+        "did not have last time — another way you could help with what they wanted, or a detail from this " +
+        "conversation that still matters — without stating any price, date or fact the conversation does not " +
+        "contain, and ask for little: one easy question they can answer in a few words, or ignore at no cost.")
   );
 }
 
@@ -306,6 +597,10 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
       businessId,
       automationTier: { not: "OFF" },
       stage: { notIn: ["WON", "LOST"] },
+      // The owner's workflow owns an enrolled lead (enrollLead sets the
+      // tier OFF, which already excludes it; this holds even if someone
+      // later flips the tier back on from the lead's page).
+      sequenceId: null,
       OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
       conversations: { some: { messages: { some: { direction: "inbound", sentAt: { lte: queryCutoff } } } } },
     },
@@ -339,6 +634,10 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
     // not "unanswered": they were answered, and they declined. Anything they
     // TYPE later is a newer inbound and everything restarts.
     if (isExitPayload(last.quickReplyPayload)) return false;
+    // A bare STOP or START is consent, recorded by the capture path — not
+    // a question. Holding a drafted "reply" to someone's STOP in Approvals
+    // invites the one message that must never be sent.
+    if (isConsentKeyword(last.body)) return false;
     // A lead with no substantive outbound reply yet gets the shorter
     // first-reply threshold; everyone already in a real back-and-forth
     // keeps the business's normal unanswered-reply window. "Substantive"
@@ -360,8 +659,71 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
   });
 }
 
+/**
+ * The fresh-reply worker's candidates: the leads it was handed, narrowed
+ * to those with a customer message to answer right now
+ * (freshInboundToAnswer), minus any already sitting on Today for that same
+ * message — the instant acknowledgement holds a brand-new lead's first
+ * reply on a holding account (acknowledge.ts), and a second hold for the
+ * same message would be a second notification about one thing.
+ *
+ * Returns the message time per lead as well, because that is what the
+ * claim is keyed on (see the claim in runAutomationForBusiness).
+ */
+async function findFreshUnansweredLeads(businessId: string, leadIds: string[]) {
+  if (leadIds.length === 0) return { leads: [], inboundAt: new Map<string, Date>() };
+  const nowMs = Date.now();
+  const candidates = await prisma.lead.findMany({
+    where: {
+      id: { in: leadIds },
+      businessId,
+      automationTier: { not: "OFF" },
+      stage: { notIn: ["WON", "LOST"] },
+      sequenceId: null,
+      // An acknowledgement still inside its DM grace period (or being sent
+      // right now) decides this lead first; the next tick sees the result.
+      ackDueAt: null,
+    },
+    include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
+  });
+  const inboundAt = new Map<string, Date>();
+  for (const lead of candidates) {
+    const at = freshInboundToAnswer(lead, nowMs);
+    if (at) inboundAt.set(lead.id, at);
+  }
+  if (inboundAt.size === 0) return { leads: [], inboundAt };
+
+  const earliest = new Date(Math.min(...[...inboundAt.values()].map((d) => d.getTime())));
+  const holds = await prisma.auditEvent.findMany({
+    where: { businessId, action: "ai.hold", targetType: "lead", targetId: { in: [...inboundAt.keys()] }, createdAt: { gte: earliest } },
+    select: { targetId: true, createdAt: true },
+  });
+  for (const hold of holds) {
+    const at = hold.targetId ? inboundAt.get(hold.targetId) : undefined;
+    if (at && hold.createdAt >= at) inboundAt.delete(hold.targetId!);
+  }
+  return { leads: candidates.filter((l) => inboundAt.has(l.id)), inboundAt };
+}
+
 function hoursAgo(date: Date): number {
   return Math.max(1, Math.round((Date.now() - date.getTime()) / 3_600_000));
+}
+
+/**
+ * "3 minutes" or "5h" — how long a customer has been waiting, for the
+ * notification that says so. hoursAgo alone rounds everything under an
+ * hour UP to "1h", which was harmless while the unanswered rule never
+ * looked at a message younger than three hours; the fresh-reply worker
+ * acts on messages a few minutes old, and "wrote 1h ago" about a message
+ * from two minutes ago is simply untrue.
+ */
+function waitedFor(date: Date): string {
+  const minutes = Math.round((Date.now() - date.getTime()) / 60_000);
+  if (minutes < 60) {
+    const m = Math.max(1, minutes);
+    return `${m} minute${m === 1 ? "" : "s"}`;
+  }
+  return `${hoursAgo(date)}h`;
 }
 
 type LeadOutcome =
@@ -376,7 +738,21 @@ type LeadOutcome =
   // module's own doc comment for why this gates the send, not eligibility.
   | { kind: "deferred" };
 
-export async function runAutomationForBusiness(businessId: string): Promise<AutomationResult> {
+export async function runAutomationForBusiness(
+  businessId: string,
+  /**
+   * `freshLeadIds`: run ONLY the reply-within-five-minutes pass, for these
+   * leads — what the once-a-minute worker (runFreshRepliesForAllBusinesses)
+   * calls. Every guard below applies exactly as it does hourly: the master
+   * switch, billing, the connected channel, the Meta window, the hold
+   * setting, the backlog and Auto permissions, the risk check, the shape
+   * checks, the caps and the claim. What differs is WHEN a lead qualifies
+   * (minutes after it wrote, not hours) and that the reply is not held back
+   * by the send window — the customer is awake, they just wrote.
+   */
+  options: { freshLeadIds?: string[] } = {}
+): Promise<AutomationResult> {
+  const fresh = options.freshLeadIds !== undefined;
   const automation = await prisma.automation.findFirst({
     where: { businessId, action: "auto_send" },
   });
@@ -404,7 +780,15 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     return EMPTY_RESULT;
   }
 
-  const cutoff = new Date(Date.now() - automation.triggerDays * 24 * 60 * 60 * 1000);
+  // The quiet-lead cadence (quietReminderPlan). The query below only has to
+  // be broad enough to include every lead that COULD be due — the plan
+  // itself decides who is — so it asks for leads quiet at least as long as
+  // the shortest wait anywhere in the cadence: reminder 1's delay, or the
+  // smallest gap between two reminders, whichever is less.
+  const triggerDays = automation.triggerDays;
+  const reminderDays = quietReminderDays(triggerDays);
+  const shortestWaitDays = Math.min(reminderDays[0], ...reminderDays.slice(1).map((d, i) => d - reminderDays[i]));
+  const cutoff = new Date(Date.now() - shortestWaitDays * 24 * 60 * 60 * 1000);
   // Runs hourly (vercel.json). A lead this pass sends to gets a new
   // lastContacted and drops out of the window on its own; a lead it holds
   // for approval does not, so it's excluded from re-assessment for most of
@@ -414,6 +798,10 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   const unansweredRule = await prisma.automation.findFirst({ where: { businessId, action: UNANSWERED_ACTION } });
   const unansweredEnabled = unansweredRule?.enabled ?? true; // on by default, like everything else here
   const unansweredHours = unansweredRule?.triggerHours ?? UNANSWERED_DEFAULT_HOURS;
+  // A reply within minutes IS "Reply for me when I haven't", just sooner —
+  // an owner who switched that off has said FollowUp should not answer for
+  // them, and the fast pass honours it the same way the hourly one does.
+  if (fresh && !unansweredEnabled) return EMPTY_RESULT;
 
   // Fetched once for the whole run, not per lead — every lead in this
   // batch belongs to the same business, so the send-window check below
@@ -476,12 +864,25 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
   const deadLeadDays = deadLeadRule?.triggerDays ?? DEAD_LEAD_DEFAULT_DAYS;
   const deadCutoff = new Date(Date.now() - deadLeadDays * 24 * 60 * 60 * 1000);
 
-  const [silent, deadLeads, voiceSamples, unanswered] = await Promise.all([
-    prisma.lead.findMany({
+  // The fresh pass looks at nothing but the leads it was handed: no quiet
+  // leads, no cold ones — those are FollowUp reaching out, and they stay on
+  // the hourly tick and inside the send window.
+  const freshFound = fresh ? await findFreshUnansweredLeads(businessId, options.freshLeadIds ?? []) : null;
+  if (freshFound && freshFound.leads.length === 0) return EMPTY_RESULT;
+
+  const [quietCandidates, deadCandidates, voiceSamples, unanswered] = await Promise.all([
+    fresh
+      ? Promise.resolve([])
+      : prisma.lead.findMany({
       where: {
         businessId,
         automationTier: { not: "OFF" },
         stage: { notIn: ["WON", "LOST"] },
+        // The owner's workflow wins: a lead enrolled in one gets none of the
+        // default reminders on top (founder, 2026-09-25). enrollLead already
+        // sets such a lead to OFF; this holds even if the tier is flipped
+        // back on from the lead's page while it is still enrolled.
+        sequenceId: null,
         // A lead past the dead-lead threshold exits the normal silence
         // cadence entirely — it belongs to the `deadLeads` query below
         // instead, with its own messaging. Passed as the lower bound of a
@@ -497,12 +898,13 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       },
       include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
     }),
-    deadLeadEnabled
+    deadLeadEnabled && !fresh
       ? prisma.lead.findMany({
           where: {
             businessId,
             automationTier: { not: "OFF" },
             stage: { notIn: ["WON", "LOST"] },
+            sequenceId: null,
             AND: [quietSince(deadCutoff)],
             OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
           },
@@ -512,8 +914,32 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     // Same voice sample set for every lead in this business — fetched once
     // up front rather than inside the per-lead loop below.
     getVoiceSamples(businessId),
-    unansweredEnabled ? findUnansweredLeads(businessId, unansweredHours, recheckCutoff) : Promise.resolve([]),
+    freshFound
+      ? Promise.resolve(freshFound.leads)
+      : unansweredEnabled
+        ? findUnansweredLeads(businessId, unansweredHours, recheckCutoff)
+        : Promise.resolve([]),
   ]);
+
+  const nowMs = Date.now();
+  const timelineOf = (l: { conversations: { messages: { direction: string; sentAt: Date; trigger: string | null; quickReplyPayload: string | null }[] }[] }): TimelineMessage[] =>
+    l.conversations.flatMap((c) =>
+      c.messages.map((m) => ({ direction: m.direction, at: m.sentAt.getTime(), trigger: m.trigger, quickReplyPayload: m.quickReplyPayload }))
+    );
+
+  // Only the quiet leads whose next reminder is actually due, and which
+  // reminder it is. A lead whose four reminders have all gone out drops
+  // out here and stays out until it either writes (the unanswered rule) or
+  // reaches the dead-lead threshold (the welcome back).
+  const reminderStepById = new Map<string, number>();
+  const silent = quietCandidates.filter((l) => {
+    const plan = quietReminderPlan(timelineOf(l), (l.lastContacted ?? l.createdAt ?? new Date(nowMs)).getTime(), triggerDays, deadLeadDays);
+    if (!plan?.dueAt || plan.dueAt.getTime() > nowMs) return false;
+    reminderStepById.set(l.id, plan.step);
+    return true;
+  });
+  // One welcome back per silence, not one every 45 days forever.
+  const deadLeads = deadCandidates.filter((l) => !reactivationAlreadySent(timelineOf(l), deadLeadDays));
 
   // Merge in priority order — unanswered (the lead wrote and got ignored)
   // is the most urgent, dead-lead reactivation is a deliberate exit from
@@ -547,32 +973,39 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // lead. Re-using the same OR clause the eligibility query above used
       // means only the first caller to land here wins; everyone else's
       // WHERE matches zero rows once this commits.
+      //
+      // The fresh pass claims against the MESSAGE rather than against the
+      // 20-hour recheck: "nobody has looked at this lead since this message
+      // arrived". A lead the hourly run held this morning must still be
+      // answerable the minute it writes again this afternoon — the 20-hour
+      // clause would have made it wait until tomorrow — and two fresh ticks
+      // racing each other still cannot both win, because the winner's stamp
+      // is newer than the message.
+      const freshInboundAt = freshFound?.inboundAt.get(lead.id);
       const claim = await prisma.lead.updateMany({
         where: {
           id: lead.id,
-          OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
+          OR: freshInboundAt
+            ? [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: freshInboundAt } }]
+            : [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
         },
         data: { lastAutomationCheckedAt: new Date() },
       });
       if (claim.count === 0) return { kind: "claimed" };
 
-      // Outside the business's local send window (e.g. 3am) — release the
-      // claim instead of drafting/sending, so the very next hourly cron
-      // tick (not a 20-hour recheckCutoff wait) re-considers this lead
-      // once it's actually daytime. Checked here rather than in the
-      // eligibility query above so it's evaluated at send time, not at
-      // whatever moment the batch was fetched.
-      if (!isWithinSendWindow(new Date(), timezone)) {
-        await prisma.lead.updateMany({ where: { id: lead.id }, data: { lastAutomationCheckedAt: null } });
-        return { kind: "deferred" };
-      }
+      // The send window used to be checked HERE, before any drafting, so a
+      // message that arrived at 9pm was not even drafted until 8am — on a
+      // holding account, the owner opened Today in the evening and found
+      // nothing waiting. Founder's follow-up strategy, 2026-09-25: drafting
+      // and holding happen at any hour; only the send waits. The check now
+      // sits just before sendFollowUpToLead, below every hold decision.
 
       // Free tier's AI processing pause (@/lib/billing) applies here too,
       // not just at initial capture (scoring.ts) — otherwise a lead that
       // never got scored because it was over cap or on a disallowed
       // channel would still get a fresh draft (and possibly an autonomous
       // send) the moment it went silent, defeating the whole point of the
-      // pause. Kept claimed (not released like the send-window case above)
+      // pause. Kept claimed (not released like the send-window case below)
       // so it's naturally rechecked in ~20h via recheckCutoff rather than
       // every single hourly tick — this isn't transient the way "outside
       // business hours" is.
@@ -781,11 +1214,54 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       let regenerated = false;
       let dmShapeFailed: string | null = null;
       let emailShapeFailed: string | null = null;
-      if (!message || !cachedShapeFits || ((isDeadLead || isUnanswered) && !draftIsCurrent)) {
+
+      // Which message this is, which decides both the steer and whether
+      // the cached draft is the right one (Lead.suggestedDraftKind):
+      //   - a welcome back to a cold lead — with the apology only if THEY
+      //     spoke last (deadLeadMessageHint);
+      //   - a reply owed to someone who wrote 45+ days ago and was never
+      //     answered — the belated answer, apology included. Until
+      //     2026-09-25 this lead got NO steer at all, because the merge
+      //     hands it the unanswered framing, which had none (research
+      //     2026-09-15 §7.1);
+      //   - reminder N of the quiet-lead cadence (quietReminderHint);
+      //   - otherwise an ordinary reply, null, which is what scoring.ts
+      //     writes.
+      const reminderStep = reminderStepById.get(lead.id);
+      const daysQuiet = Math.floor((nowMs - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000);
+      const theyWroteLast = (() => {
+        const judged = conversation.filter((m) => !(m.direction === "outbound" && m.trigger === "instant_ack"));
+        const newest = judged.reduce<Message | null>((a, m) => (!a || m.date > a.date ? m : a), null);
+        return newest?.direction === "inbound";
+      })();
+      const draftKind: string | null = isDeadLead
+        ? "reactivation"
+        : isUnanswered && isCold
+          ? "belated_reply"
+          : reminderStep !== undefined
+            ? `reminder_${reminderStep + 1}`
+            : null;
+      const messageHint = isDeadLead
+        ? deadLeadMessageHint(daysQuiet, theyWroteLast ? "lead" : "business")
+        : draftKind === "belated_reply"
+          ? deadLeadMessageHint(daysQuiet, "lead")
+          : // An untouched lead has no conversation for a reminder to
+            // refer back to; it keeps the plain draft it always had and is
+            // held for the owner whatever it says (UNTOUCHED_LEAD_REASON).
+            reminderStep !== undefined && !isUntouched
+            ? quietReminderHint(reminderStep, daysQuiet)
+            : undefined;
+      // "Current" now means the right conversation AND the right kind of
+      // message. For silence this is new: a quiet lead used to reuse
+      // whatever draft was cached, which was usually scoring's reply to
+      // their last message — the wrong message entirely once we have
+      // answered it and they have gone quiet. An untouched lead has no
+      // message to date a draft against, and nothing can change under it
+      // without one, so its draft stays current once it is the right kind.
+      const draftFitsNow =
+        (isUntouched || draftIsCurrent) && (lead.suggestedDraftKind ?? null) === draftKind;
+      if (!message || !cachedShapeFits || ((isDeadLead || isUnanswered || reminderStep !== undefined) && !draftFitsNow)) {
         regenerated = true;
-        const messageHint = isDeadLead
-          ? deadLeadMessageHint(Math.floor((Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000))
-          : undefined;
         if (isDm) {
           // The lead's decided language/register, off the row already
           // loaded — so the day-3 follow-up uses the same usted/tú the
@@ -839,7 +1315,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         if (regenerated) {
           await prisma.lead.update({
             where: { id: lead.id },
-            data: { suggestedMessage: message, suggestedSubject: null, suggestedQuickReplies: { question: "shape_failed", buttons: [] }, suggestedDraftedFor: newestMessageAt, suggestedRiskLevel: null, suggestedRiskReason: null },
+            data: { suggestedMessage: message, suggestedSubject: null, suggestedQuickReplies: { question: "shape_failed", buttons: [] }, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null },
           });
         }
         const reason = `FollowUp couldn't write a short enough DM for ${lead.name.split(" ")[0]} (${dmShapeFailed}) — this one needs your eye before it goes`;
@@ -866,7 +1342,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         if (regenerated) {
           await prisma.lead.update({
             where: { id: lead.id },
-            data: { suggestedMessage: message, suggestedSubject: subject ?? null, suggestedDraftedFor: newestMessageAt, suggestedRiskLevel: null, suggestedRiskReason: null },
+            data: { suggestedMessage: message, suggestedSubject: subject ?? null, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null },
           });
         }
         const reason = UNGROUNDED_DRAFT_REASONS[emailShapeFailed] ?? UNGROUNDED_DRAFT_REASONS.digits;
@@ -944,6 +1420,10 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         !holdAll &&
         autoSendAllowedAt != null &&
         (newestMessageAt == null || newestMessageAt <= autoSendAllowedAt);
+      // A verdict this pass paid for on a draft that is then NOT held — kept
+      // so that a send the window defers (below) does not throw it away and
+      // buy the same answer again next hour.
+      let verdictToKeep: { riskLevel: "low" | "medium" | "high"; reason: string } | null = null;
       if (holdAll || isUntouched || phoneNeverWrote || effectiveTier !== "AUTONOMOUS" || tier === "free") {
         /**
          * Every draft that reaches here gets a verdict, including ones
@@ -1024,6 +1504,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           // an unconfigured/demo environment.
           risk = { riskLevel: "low", reason: "" };
         }
+        if (riskAssessed) verdictToKeep = risk;
 
         // A cold-lead reactivation ALWAYS waits for a human, whatever the
         // risk classifier thinks.
@@ -1080,6 +1561,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
                       suggestedSubject: subject ?? null,
                       suggestedQuickReplies: quickReplies ? (quickReplies as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
                       suggestedDraftedFor: newestMessageAt,
+                      suggestedDraftKind: draftKind,
                     }
                   : {}),
                 // Written with the draft it judged, so the next pass
@@ -1102,10 +1584,9 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
           // lead who merely went quiet is a judgement call about whether to
           // reach back out; a lead who WROTE and never got an answer is a
           // different fact about the business, and the approval card should
-          // not describe it as if the lead simply drifted away.
-          const daysQuiet = Math.floor(
-            (Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000
-          );
+          // not describe it as if the lead simply drifted away. (`daysQuiet`
+          // is the same count the draft's steer above was given.)
+          //
           // "They", not the raw lead.name, when FollowUp doesn't actually
           // know who this is: an Instagram DM lead is filed as "Instagram
           // DM" until a handle is learned, and "Instagram went quiet 5
@@ -1202,6 +1683,10 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
               riskLevel: risk.riskLevel,
               reason: holdReason,
               trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence",
+              // Which of the four reminders this was, so the trail can say
+              // "reminder 3 of 4" rather than just "silence".
+              ...(reminderStep !== undefined ? { reminderStep: reminderStep + 1 } : {}),
+              ...(freshInboundAt ? { fresh: true } : {}),
             },
           });
           return { kind: "held", note: `${lead.name}: ${holdReason}` };
@@ -1209,11 +1694,90 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       }
 
       const trigger = unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence";
+
+      /**
+       * The send window — now the LAST thing before the send, not the first
+       * thing after the claim (see the note at the claim above).
+       *
+       * What it holds back: anything FollowUp starts on its own (the four
+       * reminders, the welcome back) and a reply to a message that is no
+       * longer fresh, by email or text — a customer's 1am email answered by
+       * the hourly rule at 4am is still a text at 4am. What it does not:
+       *   - the fresh pass. The customer wrote minutes ago; they are awake.
+       *   - a late reply on Instagram, Messenger or WhatsApp. Meta's 24-hour
+       *     window is the clock that matters there, and holding a reply owed
+       *     since 11pm until 8am can put it past the point where it may be
+       *     sent at all.
+       *
+       * Deferring keeps what this pass already paid for — the draft, its
+       * kind and stamp, and any verdict — so the next in-window tick reuses
+       * it instead of buying it again, and releases the claim so that tick
+       * is the very next one rather than one twenty hours away.
+       */
+      const replyOnMetaWindow =
+        trigger === "unanswered" && (sendChannel === "instagram" || sendChannel === "messenger" || sendChannel === "whatsapp");
+      if (!freshInboundAt && !replyOnMetaWindow && !isWithinSendWindow(new Date(), timezone)) {
+        if (regenerated || verdictToKeep) {
+          await prisma.lead.update({
+            where: { id: lead.id },
+            data: {
+              ...(regenerated
+                ? {
+                    suggestedMessage: message,
+                    suggestedSubject: subject ?? null,
+                    suggestedQuickReplies: quickReplies ? (quickReplies as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
+                    suggestedDraftedFor: newestMessageAt,
+                    suggestedDraftKind: draftKind,
+                  }
+                : {}),
+              suggestedRiskLevel: verdictToKeep?.riskLevel ?? null,
+              suggestedRiskReason: verdictToKeep?.reason || null,
+            },
+          });
+        }
+        await prisma.lead.updateMany({ where: { id: lead.id }, data: { lastAutomationCheckedAt: null } });
+        return { kind: "deferred" };
+      }
+
+      /**
+       * "Stop the moment they reply", made true for the seconds between
+       * reading this conversation and sending into it.
+       *
+       * Drafting and checking take real time — two model calls — and a
+       * customer who writes in that gap would otherwise get a reminder, or
+       * a reply to their previous message, on top of the one they just
+       * sent. A conditional write rather than a read: it succeeds only if
+       * nothing newer than what this pass drafted against has arrived, and
+       * it refreshes the claim while it is at it. If the conversation moved,
+       * the claim is handed back so the fresh-reply worker can answer what
+       * they actually said.
+       */
+      //
+      // Measured across every conversation this lead has, not off
+      // `newestMessageAt` (the last row of the last conversation): a lead
+      // with an older email thread and a newer WhatsApp one would otherwise
+      // look "moved" on every pass and never be sent anything.
+      const allSentAt = lead.conversations.flatMap((c) => c.messages.map((m) => m.sentAt.getTime()));
+      if (allSentAt.length > 0) {
+        const readUpTo = new Date(Math.max(...allSentAt));
+        const stillCurrent = await prisma.lead.updateMany({
+          where: { id: lead.id, conversations: { none: { messages: { some: { sentAt: { gt: readUpTo } } } } } },
+          data: { lastAutomationCheckedAt: new Date() },
+        });
+        if (stillCurrent.count === 0) {
+          await prisma.lead.updateMany({ where: { id: lead.id }, data: { lastAutomationCheckedAt: null } });
+          return { kind: "skipped", note: `${lead.name}: the conversation moved while this was being written — nothing sent` };
+        }
+      }
+
       const result = await sendFollowUpToLead(lead.id, message, {
         automated: true,
         trigger,
         subject,
         channel: sendChannel,
+        ...(reminderStep !== undefined || freshInboundAt
+          ? { extraAuditMeta: { ...(reminderStep !== undefined ? { reminderStep: reminderStep + 1 } : {}), ...(freshInboundAt ? { fresh: true } : {}) } }
+          : {}),
         // The chips under a DM, each tagged with which message carried it
         // and which question it answers, so a tap comes back as an answer
         // rather than a bare word (src/lib/quickReplies.ts).
@@ -1257,7 +1821,9 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
     console.error(`Hold notifications failed for business ${businessId}:`, err)
   );
 
-  const handedOff = await draftDmHandoffs(businessId, voiceSamples, tier);
+  // The day-2–7 handoff is about windows closing over days; the fresh pass
+  // runs every minute and has no business re-scanning for it.
+  const handedOff = fresh ? 0 : await draftDmHandoffs(businessId, voiceSamples, tier);
 
   const sent = outcomes.filter((o) => o.kind === "sent").length;
   const heldOutcomes = outcomes.filter((o): o is { kind: "held"; note: string } => o.kind === "held");
@@ -1369,6 +1935,7 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
           suggestedSubject: null,
           suggestedQuickReplies: { question: DM_HANDOFF_QUESTION, buttons: [] },
           suggestedDraftedFor: new Date(inbound.date),
+          suggestedDraftKind: null,
           suggestedRiskLevel: null,
           suggestedRiskReason: null,
         },
@@ -1426,7 +1993,7 @@ async function notifyNeglect(
   outcome: "held" | "sent"
 ): Promise<void> {
   const lastInbound = [...conversation].reverse().find((m) => m.direction === "inbound");
-  const waited = lastInbound ? `${hoursAgo(new Date(lastInbound.date))}h` : "a while";
+  const waited = lastInbound ? waitedFor(new Date(lastInbound.date)) : "a while";
   const message =
     outcome === "sent"
       ? `${lead.name} wrote ${waited} ago and hadn't heard back — FollowUp replied for you. Check the thread.`
@@ -1481,6 +2048,77 @@ export async function runAutomationForAllBusinesses(): Promise<AutomationResult>
     totals.sent += result.sent;
     totals.held += result.held;
     totals.deferred += result.deferred;
+    totals.skipped.push(...result.skipped);
+    totals.heldReasons.push(...result.heldReasons);
+  }
+  return totals;
+}
+
+/**
+ * How many recently-active leads one tick looks at. A lead whose message
+ * is not reached this minute is reached the next; the cap only bounds a
+ * burst (a Gmail reconnect touching hundreds of threads at once).
+ */
+const FRESH_SCAN_LIMIT = 500;
+
+/**
+ * A reply within five minutes of any new message, on every channel, at any
+ * hour — founder's follow-up strategy, 2026-09-25. Called once a minute by
+ * /api/cron/fresh-replies.
+ *
+ * Why this exists: the draft was always written within seconds (every
+ * capture path scores in-line), but getting it IN FRONT of anyone waited
+ * on the hourly unanswered rule — three hours for a lead's first real
+ * reply, 24 (20 on Instagram and Messenger) for every message after that,
+ * and only between 8am and 6pm. A returning customer who wrote at 7pm was
+ * first shown to the owner, or answered, the next evening.
+ *
+ * On a holding account (the default), "within five minutes" means the
+ * draft is on Today and the owner has been told. On an account that sends
+ * without asking, a low-risk reply goes out; anything the risk check flags
+ * still waits, exactly as Settings promises. Both are
+ * runAutomationForBusiness's own decisions — this only finds the leads and
+ * hands them over, so there is still exactly one place those rules live.
+ *
+ * Found by lastContacted, which every capture path moves when a message
+ * arrives (and every send moves when one leaves — those are filtered out
+ * by freshInboundToAnswer, since their newest message is ours).
+ */
+export async function runFreshRepliesForAllBusinesses(): Promise<AutomationResult> {
+  const recent = await prisma.lead.findMany({
+    where: {
+      lastContacted: { gte: new Date(Date.now() - FRESH_REPLY_WINDOW_MS) },
+      automationTier: { not: "OFF" },
+      stage: { notIn: ["WON", "LOST"] },
+      sequenceId: null,
+    },
+    select: { id: true, businessId: true },
+    orderBy: { lastContacted: "asc" },
+    take: FRESH_SCAN_LIMIT,
+  });
+  const byBusiness = new Map<string, string[]>();
+  for (const l of recent) byBusiness.set(l.businessId, [...(byBusiness.get(l.businessId) ?? []), l.id]);
+
+  // Same isolation as the hourly fan-out: one business failing must not
+  // cost every other business its replies this minute.
+  const results = await mapWithConcurrency([...byBusiness.entries()], 3, async ([businessId, freshLeadIds]) => {
+    try {
+      return await runAutomationForBusiness(businessId, { freshLeadIds });
+    } catch (err) {
+      console.error(`Fresh-reply run failed for business ${businessId}:`, err);
+      return {
+        ...EMPTY_RESULT,
+        skipped: [`Business ${businessId}: ${err instanceof Error ? err.message : "unknown error"}`],
+      } satisfies AutomationResult;
+    }
+  });
+
+  const totals: AutomationResult = { ...EMPTY_RESULT, skipped: [], heldReasons: [] };
+  for (const result of results) {
+    totals.checked += result.checked;
+    totals.unanswered += result.unanswered;
+    totals.sent += result.sent;
+    totals.held += result.held;
     totals.skipped.push(...result.skipped);
     totals.heldReasons.push(...result.heldReasons);
   }

@@ -223,6 +223,11 @@ export async function deleteBusinessData(
     prisma.filteredEmail.deleteMany({ where: { businessId } }),
     prisma.crmConnection.deleteMany({ where: { businessId } }),
     prisma.notification.deleteMany({ where: { user: { businessId } } }),
+    // Both cascade from User already; listed so the erasure reads as
+    // complete without knowing that. Devices first: a deleted business
+    // must have no way left to reach anyone's phone.
+    prisma.pushSubscription.deleteMany({ where: { user: { businessId } } }),
+    prisma.ownerAlert.deleteMany({ where: { user: { businessId } } }),
     prisma.integration.deleteMany({ where: { user: { businessId } } }),
     prisma.user.deleteMany({ where: { businessId } }),
     prisma.business.delete({ where: { id: businessId } }),

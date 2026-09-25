@@ -3,7 +3,7 @@ import { encryptionEnabled } from "@/lib/crypto";
 
 /**
  * One-way migration of legacy plaintext credentials to encrypted form.
- * Runs from the every-ten-minutes Gmail cron once TOKEN_ENCRYPTION_KEY is
+ * Runs from the every-two-minutes Gmail cron once TOKEN_ENCRYPTION_KEY is
  * set: finds rows whose credential columns don't carry the "enc:v1:"
  * prefix and re-saves them (the client extension in src/lib/db.ts does
  * the actual encrypting on write). Becomes a no-op within a couple of

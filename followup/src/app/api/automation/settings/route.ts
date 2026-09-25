@@ -4,6 +4,7 @@ import { parseJsonBody } from "@/lib/validation";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
+import { SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
 import { INSTANT_ACK_ACTION, INSTANT_ACK_NAME, isInstantAckEnabled } from "@/lib/acknowledge";
 import {
   UNANSWERED_ACTION,
@@ -71,7 +72,7 @@ const settingsSchema = z.object({
 // the "Automation" section in Settings.
 export async function GET() {
   const ctx = await getSessionContext();
-  if (!ctx) return NextResponse.json({ enabled: false, triggerDays: 5 }, { status: 401 });
+  if (!ctx) return NextResponse.json({ enabled: false, triggerDays: SILENCE_DEFAULT_TRIGGER_DAYS }, { status: 401 });
 
   const automation = await prisma.automation.findFirst({
     where: { businessId: ctx.businessId, action: AUTOMATION_ACTION },
@@ -99,7 +100,7 @@ export async function GET() {
   });
   return NextResponse.json({
     enabled: automation?.enabled ?? true,
-    triggerDays: automation?.triggerDays ?? 5,
+    triggerDays: automation?.triggerDays ?? SILENCE_DEFAULT_TRIGGER_DAYS,
     instantAck: await isInstantAckEnabled(ctx.businessId),
     unansweredReply: await getUnansweredReplySetting(ctx.businessId),
     deadLeadReactivation: await getDeadLeadReactivationSetting(ctx.businessId),
@@ -247,7 +248,7 @@ export async function POST(request: NextRequest) {
   }
 
   const enabled = Boolean(body.enabled);
-  const triggerDays = body.triggerDays !== undefined && Number.isFinite(body.triggerDays) ? Math.max(1, Math.min(30, Math.round(body.triggerDays))) : 5;
+  const triggerDays = body.triggerDays !== undefined && Number.isFinite(body.triggerDays) ? Math.max(1, Math.min(30, Math.round(body.triggerDays))) : SILENCE_DEFAULT_TRIGGER_DAYS;
 
   const existing = await prisma.automation.findFirst({
     where: { businessId: ctx.businessId, action: AUTOMATION_ACTION },

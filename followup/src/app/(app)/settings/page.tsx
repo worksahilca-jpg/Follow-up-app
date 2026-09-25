@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
+import { quietReminderDays, SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
 import Switch from "@/components/Switch";
 import TeamSection from "@/components/TeamSection";
 import BusinessProfileSection from "@/components/BusinessProfileSection";
@@ -19,6 +20,7 @@ import CrmConfig from "@/components/CrmConfig";
 import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
+import AlertsSection from "@/components/AlertsSection";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
@@ -64,6 +66,9 @@ const SECTION_TAB: Record<string, SettingsTab> = {
   team: "team",
   billing: "billing",
   automation: "advanced",
+  // Linked from the footer of every alert email ("turn them off in
+  // Settings"), so it has to open on the right tab.
+  alerts: "advanced",
   feedback: "advanced",
   data: "advanced",
 };
@@ -143,7 +148,7 @@ function SettingsPageInner() {
   const [outlookSyncResult, setOutlookSyncResult] = useState<string | null>(null);
   const [outlookDisconnecting, setOutlookDisconnecting] = useState(false);
 
-  const [autoAfterDays, setAutoAfterDays] = useState(5);
+  const [autoAfterDays, setAutoAfterDays] = useState(SILENCE_DEFAULT_TRIGGER_DAYS);
   const [automationOn, setAutomationOn] = useState(false);
   const [automationLoaded, setAutomationLoaded] = useState(false);
   const [automationSaving, setAutomationSaving] = useState(false);
@@ -462,18 +467,17 @@ function SettingsPageInner() {
           ? "drafts an instant acknowledgement for every new lead"
           : "sends an instant acknowledgement to every new lead"
       );
-    const writes = holdAllForApproval ? "drafts a nudge for" : "nudges";
-    if (automationOn) clauses.push(`${writes} a quiet lead after ${autoAfterDays} day${autoAfterDays === 1 ? "" : "s"} of silence`);
+    // The four-reminder calendar the engine actually uses (founder's
+    // follow-up strategy, 2026-09-25) — not one nudge after N days.
+    if (automationOn) clauses.push(`${holdAllForApproval ? "drafts" : "sends"} up to four reminders to a quiet lead, on days ${listDays(quietReminderDays(autoAfterDays))}`);
+    // Within minutes of a new message, at any hour (the fresh-replies cron,
+    // 2026-09-25). The hours field below is only the backstop for a message
+    // that minute check missed, so it is not what this sentence promises.
     if (unansweredOn) {
-      // On Instagram and Messenger the engine caps this at
-      // UNANSWERED_META_DM_MAX_HOURS whatever is configured (see
-      // @/lib/metaWindow). This sentence describes what is ACTIVE, so it has
-      // to say so, or it is the exact false promise trustCopy.test.ts exists
-      // to catch — a number the owner set, silently meaning something else.
-      const dmCapped = unansweredHours > UNANSWERED_META_DM_MAX_HOURS;
       clauses.push(
-        `${holdAllForApproval ? "drafts a reply" : "steps in"} if you haven't answered within ${unansweredHours} hour${unansweredHours === 1 ? "" : "s"}` +
-          (dmCapped ? ` (${UNANSWERED_META_DM_MAX_HOURS} on Instagram and Messenger)` : "")
+        holdAllForApproval
+          ? "drafts a reply within minutes of a new message"
+          : "replies within minutes of a new message, holding anything about price or anything sensitive for you"
       );
     }
     if (deadLeadOn)
@@ -1423,7 +1427,7 @@ function SettingsPageInner() {
           </div>
           {automationOn && (
             <div className="mt-4 flex items-center gap-2 text-sm">
-              <span>Wait</span>
+              <span>First reminder after</span>
               <input
                 type="number"
                 min={1}
@@ -1433,13 +1437,13 @@ function SettingsPageInner() {
                 onBlur={() => saveAutomationSettings(automationOn, autoAfterDays)}
                 className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
               />
-              <span>days before nudging a quiet lead</span>
+              <span>days</span>
             </div>
           )}
           <p className="text-xs text-ink-soft mt-3">
-            The moment a lead replies, the silence clock resets — this never fires again until they&apos;ve gone
-            quiet for the full window once more, so it can&apos;t talk past a conversation that&apos;s actually
-            happening.
+            {automationOn && <>Reminders on days {listDays(quietReminderDays(autoAfterDays))}, each one different, then FollowUp stops. </>}
+            The moment a lead replies, the reminders stop; if they go quiet again later, the four start over. Reminders
+            only go out between 8am and 8pm, never more than one a day.
           </p>
           <p className="text-xs text-ink-soft mt-2">
             Every new lead starts in Assisted; set any lead to Off or Autonomous on its page. Every automated message is still logged in the lead&apos;s conversation
@@ -1505,10 +1509,10 @@ function SettingsPageInner() {
             <div>
               <p className="font-medium text-sm">Reply for me when I haven&apos;t</p>
               <p className="text-xs text-ink-soft mt-1">
-                The case that loses the most deals: a lead writes, and nobody answers. If a lead&apos;s message goes
-                unanswered for this many hours, FollowUp drafts the reply and either sends it (Assisted, only when the
-                safety check says it&apos;s safe — never pricing, terms, or a tense thread) or holds it for your
-                one-click approval, and tells you either way. <strong>Our promise:</strong> it never talks over you —
+                The case that loses the most deals: a lead writes, and nobody answers. Within minutes of their
+                message, day or night, FollowUp drafts the reply and either sends it (only when you let it send
+                without asking and the safety check says it&apos;s safe — never pricing, terms, or a tense thread) or
+                holds it for your one-click approval, and tells you either way. <strong>Our promise:</strong> it never talks over you —
                 the moment anyone replies, the lead is no longer &ldquo;unanswered.&rdquo;
               </p>
             </div>
@@ -1530,7 +1534,7 @@ function SettingsPageInner() {
           )}
           {unansweredOn && (
             <div className="mt-4 flex items-center gap-2 text-sm">
-              <span>Step in after</span>
+              <span>If a reply was missed, check again after</span>
               <input
                 type="number"
                 min={1}
@@ -1604,6 +1608,12 @@ function SettingsPageInner() {
         </>
         )}
       </section>
+
+      {/* Directly under Automation: that section decides that replies wait
+          for the owner, and this is how the owner hears one is waiting.
+          Renders nothing until the server has at least one alert channel
+          set up — see the component. */}
+      <AlertsSection />
       </div>
 
       <div hidden={activeTab !== "team"} className="space-y-10">
@@ -1898,4 +1908,9 @@ function IntegrationRow({
       )}
     </div>
   );
+}
+
+/** "3, 7, 14 and 30" — the reminder days as an owner reads them. */
+function listDays(days: number[]): string {
+  return days.length < 2 ? days.join("") : `${days.slice(0, -1).join(", ")} and ${days[days.length - 1]}`;
 }

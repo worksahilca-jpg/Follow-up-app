@@ -6307,3 +6307,157 @@ message passes.
 **Weak spots, named.** The card does not refresh itself after the refusal; the owner has to
 reload to see the new message. The lead page's Send now still has no 10-second undo (the
 other half of F7) — that is a component change and was left for the founder's UI pass.
+
+## 2026-09-25 — Alerts outside the app ^alerts-outside-the-app
+
+**What changed.** An owner is now told by email and by a phone/computer notification
+(Web Push) when a customer has written and FollowUp's reply is waiting for their OK. Before
+this the bell inside FollowUp was the only alert, so it only reached owners who were already
+in the app. Founder's brief and approval, 2026-09-25: "yes build both". The goal is to be
+told within minutes and approve within five.
+
+**The UI, which is small on purpose (the screens are the founder's).** There is one new
+**Alerts** section in Settings → Advanced, directly under Automation, because Automation is
+where "replies wait for you" is decided. It uses one existing `box`, the existing `Switch`,
+one secondary button in the page's existing bordered style, and the page's existing text
+styles. There are no new tokens, colours, fonts or icons. Rows:
+- "Email me when a customer is waiting". This is a per-person switch, on by default.
+- "Turn on FollowUp notifications on this device", with the line "On iPhone, add FollowUp
+  to your Home Screen first." underneath. The line is hidden when FollowUp is already
+  opened from the Home Screen. Once the device is on, the row reads "FollowUp notifications
+  are on for this device." with a "Turn off" button.
+- A row is hidden when its channel has no keys on the server, and the whole section is
+  hidden when neither channel has keys. This follows Outlook's precedent: a switch that
+  reads "on" while nothing can be sent would be a promise we aren't keeping.
+- `/settings#alerts` opens the Advanced tab. Every alert email's footer links there.
+
+**What the owner reads outside the app.** All of it is plain. There are no exclamation
+marks and no AI wording. It never includes the draft or the reason it was held, because
+an alert that contains the reply invites sending it without reading it. Customer text is
+cut to 140 characters (100 on a lock screen).
+- Email subject "Jane is waiting for your reply" ("A customer" when all we have is a
+  placeholder name). The body says who wrote and on which channel, quotes their message,
+  says "FollowUp's reply is ready — open it to send.", links to the lead, and has an
+  opt-out footer.
+- Push title "Jane is waiting". The body is their line; tapping opens the lead.
+- A burst of more than 3 in one minute becomes "12 customers are waiting for your OK" /
+  "12 customers are waiting". This is the same threshold as the bell (`holdNotices.ts`).
+- After 20 emails in the owner's own day, one "More customers are waiting for your reply"
+  email goes out, then no more email until tomorrow. Push continues.
+
+**Rendered** with the real Settings page in a temporary harness route (it was deleted and
+isn't committed) and Playwright Chromium, with the APIs mocked, at 1440 (light and dark)
+and 390 (off, on, blocked, iPhone Safari tab). Screenshots are in
+`followup/research/audit/2026-09-25-alerts-outside-the-app-*.png`. The render caught one
+flaw, now fixed: at 390px the long button label wrapped to two centred lines and read as
+stray text beside the left-aligned hint. It's now left-aligned. The harness has no Sidebar,
+so the sticky tab row overlaps the top of the 390px shots. That comes from the harness,
+not from this change.
+
+### Design review (design-review.md), honestly
+
+- ✅ Clarity: two controls, each named by its outcome. No jargon ("push", "subscribe",
+  "VAPID" never reach the screen).
+- ✅ Consistency: existing Switch, box, button border style and error style. There's one
+  primary action per row and no new tokens.
+- ✅ Trust: nothing reads "on" unless it can send. Turning off is one press. The email
+  says why the owner got it and how to stop it.
+- ⚠️ Touch target: the button is about 38px tall, the same as every other bordered button
+  on this page, which is below the 44px in `components/buttons.md`. I followed the page
+  rather than fixing one button.
+- ⚠️ Loading: the section appears after `/api/alerts` answers, so the Feedback section
+  below it shifts down once. It's in the Advanced tab and below the fold, so this is minor.
+- ⚠️ The iPhone Safari-tab state shows a disabled button with the hint underneath. The
+  hint explains it, but a disabled button is still a weak affordance.
+- ⚠️ No "sent to <address>" line under the email switch. I dropped it to keep the block
+  minimal. An owner with several addresses can't see where alerts go.
+
+### Weak spots, named
+
+1. **Some waiting customers aren't "held" yet, so they don't alert yet.** An alert fires
+   only when a reply is actually waiting in Approvals. On a holding account, a customer's
+   first message is held within minutes (instant-reply path). A customer writing *again*
+   in a conversation the owner already answered gets no held reply until the unanswered
+   rule steps in (24 hours by default), so the alert comes then. Changing that is
+   automation.ts territory, and another agent is working on the cadence there.
+2. **The setting lives under Advanced.** Owners won't go looking there. The founder may
+   want a one-time prompt on Today ("Get told when a customer is waiting") pointing here.
+   That's a screen change and was left for him.
+3. **Email HTML is hand-written with literal colours.** Email clients can't read CSS
+   tokens. It's deliberately bare: text, one quote bar, one link.
+4. **Delivery timing rests on a one-minute cron.** Expect 1–2 minutes after the reply is
+   ready. Vercel doesn't promise exact cron timing.
+
+## 2026-09-25 — The follow-up strategy ^followup-strategy
+
+**Approved by the founder**, 2026-09-25, with one clarification the same day (auto-send
+accounts must actually *send* a low-risk reply within five minutes, not just draft it).
+Backend only; no screen was touched. Grounded in
+`followup/research/product/2026-09-09-followup-cadence-best-practices.md` (§2, changes #1–#5)
+and `followup/research/product/2026-09-15-reaching-back-out-to-ignored-leads.md` (§1.2, §5, §7.1).
+
+### What now happens
+
+1. **A new message is ready within five minutes, any hour, every channel.** A new worker
+   (`/api/cron/fresh-replies`, every minute) picks up any customer message under an hour old
+   that nobody has answered. On a holding account (the default) the drafted reply is put on
+   Today and the owner is told ("Maya wrote 3 minutes ago and hasn't heard back — a reply is
+   drafted and waiting for your approval."). On an account that sends without asking, a
+   low-risk reply goes out; anything the risk check flags still waits. The two-minute DM
+   head start is kept (it batches quick DMs and lets a present owner answer first); email
+   and SMS wait one minute so the capture request finishes first. Gmail and Outlook syncs
+   moved from every 10 minutes to every 2 so an email is *seen* in time.
+2. **Drafting and holding are no longer blocked by the send window.** Only sending is. A
+   holding account gets reminders, replies and workflow steps on Today at 3am too.
+3. **A quiet lead gets four different reminders, then nothing.** Day 3, 7, 14 and 30 after
+   the message they went quiet on (or the owner's own Settings silence value as reminder 1,
+   if they changed it from 5). Angles: (1) light nudge restating what they asked; (2)
+   something new and useful; (3) one easy closing question; (4) a short last message that
+   leaves the door open, no question that needs an answer. No apology in any of them. The
+   step is *counted from the thread*, so a reminder approved from Today advances it exactly
+   like an automatic one. A lead in the owner's own workflow gets none of these.
+4. **One welcome back at the dead-lead threshold (45 days), never a second.** It apologises
+   only when the customer's own message was the last thing in the thread (we ignored them);
+   a lead who went quiet on *us* gets no apology — the research's §7.1 finding was that the
+   old hint apologised to exactly the wrong group. Someone who wrote 45+ days ago and was
+   never answered now gets the belated-answer steer (they got none before).
+5. **Reminders and welcome backs** go out 8:00–20:00 business-local (was 8–18), stop the
+   moment the customer writes (including in the seconds while one is being drafted), use the
+   channel they last used, and at most one such automatic message goes to a lead per local
+   calendar day.
+
+### Weak spots, named
+
+- **Settings now says things that are not true** (the screen is the founder's; not changed):
+  "Wait 5 days before nudging a quiet lead" / "nudges a quiet lead after 5 days" — at the
+  default the first reminder is day 3; "this never fires again until they've gone quiet for
+  the full window once more" — it is four reminders then stop; "Reply for me… if a lead's
+  message goes unanswered for this many hours" and "drafts a reply if you haven't answered
+  within 24 hours" — it is now within minutes. These need rewording before testers read them.
+- **On an auto-send account the owner's "Step in after N hours" no longer holds back a reply
+  to a fresh message** (founder's instruction). An owner who set 6 hours to answer first now
+  gets ~1–3 minutes. The hours value still governs the hourly safety net.
+- **On an auto-send account a brand-new lead's five-minute reply is the instant
+  acknowledgement.** The fuller drafted answer still follows the 3-hour first-reply rule —
+  sending both within a minute is the "two replies" moment the DM grace period exists to stop.
+- **Reminders barely reach Instagram/Messenger** (Meta's 24-hour door shuts before day 3) and
+  on WhatsApp past 24 hours the approved template goes instead of the reminder's words.
+- The one-per-day rule exempts replies and owner-built workflow steps (their hour-level
+  delays exist to land inside Meta's window). It is a per-lead promise for FollowUp's own
+  unprompted messages, not a global one.
+- A two-minute sync can overlap itself on a long daily deep pass and classify the same new
+  thread twice. The hourly silence scan now loads every quiet lead each hour.
+- One-time cost after deploy: held reminders and cold-unanswered drafts are rebuilt once,
+  because existing drafts carry no kind (`Lead.suggestedDraftKind`).
+- The badge reads "due" from the moment a customer writes; for messages that arrived before
+  the deploy it can read due up to a few hours before the hourly rule acts.
+
+## 2026-09-25 — Settings says what the follow-up strategy does ^settings-strategy-copy
+
+**Founder:** "yes fix them" — to fixing only the Settings sentences the strategy made untrue.
+
+- Summary: "drafts up to four reminders to a quiet lead, on days 3, 7, 14 and 30" (was "a nudge after 5 days"); "drafts a reply within minutes of a new message" (was "if you haven't answered within 24 hours").
+- Field: "First reminder after [3] days", with the calendar and "each one different, then FollowUp stops" under it; the reply field reads "If a reply was missed, check again after [N] hours" — it is only the backstop now.
+- The number means what it says: the seeded default moved 5 → 3 (migration `20260925130000_quiet_reminder_default` moves rows still on 5). The special case that read 5 as "day 3" was dropped — it made the field show 5 while the first reminder went on day 3.
+
+**Weak spot:** an owner who deliberately chose 5 before today is moved to 3 with everyone else; there was no way to tell them apart.

@@ -29,8 +29,77 @@ model User {
   savedFilters            SavedFilter[]
   stoppedReactivationRuns ReactivationRun[] @relation("StoppedReactivationRuns")
 
+  // "Email me when a customer is waiting" (Settings → Alerts). On by
+  // default because the whole point is reaching an owner who is NOT in the
+  // app — an alert they have to find and switch on first reaches nobody.
+  // Push has no column: a device is on exactly when it has a
+  // PushSubscription row, and turning it off deletes the row.
+  alertEmailEnabled       Boolean           @default(true)
+  pushSubscriptions       PushSubscription[]
+  ownerAlerts             OwnerAlert[]
+
   // Every Gmail sync/automation lookup resolves the connected account via
   // "the user(s) on this business" — without this, that's a table scan.
+  @@index([businessId])
+}
+
+// One browser/device that asked for FollowUp notifications (Web Push), for
+// one person. See src/lib/webPush.ts and src/lib/ownerAlerts.ts.
+//
+// Per USER, not per business: an alert is about "you have a customer
+// waiting", and a phone belongs to a person. Cascade-deleted with the user
+// so an erased account leaves no way to reach its old devices.
+//
+// `endpoint` is the push service's URL for this one browser install — a
+// capability URL, unique by nature. `p256dh`/`auth` are the browser's keys
+// the payload is encrypted to; they only let us write to this device, not
+// read anything, so they are stored plain like the endpoint itself.
+model PushSubscription {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  createdAt  DateTime  @default(now())
+  // Last successful delivery. Null until the first one — a subscription
+  // that never delivers is distinguishable from one that stopped.
+  lastUsedAt DateTime?
+
+  @@index([userId])
+}
+
+// What an owner has already been told outside the app about a waiting
+// customer, and the ledger the daily email cap counts. See
+// src/lib/ownerAlerts.ts.
+//
+// Two kinds of row:
+//  - kind "customer": one per (person, lead, wait). The unique index is the
+//    claim — two overlapping cron ticks cannot both alert the same wait —
+//    and its existence is "already told". A new wait (the customer wrote
+//    again after the owner acted) has a new waitStartedAt, so it re-arms.
+//  - kind "summary" / "more_waiting": one per email or push that covered
+//    several customers at once. leadId and waitStartedAt are null.
+//
+// leadId is deliberately not a relation, for the same reason as
+// Notification.leadId: the record of what was said should outlive the lead.
+// No message text is stored here — only who, which lead, and when.
+model OwnerAlert {
+  id            String    @id @default(cuid())
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  businessId    String
+  leadId        String?
+  waitStartedAt DateTime?
+  kind          String // customer | summary | more_waiting
+  // Set when an email about this row actually went out. The daily cap is
+  // a count of these; a row covered by a summary, or over the cap, has none.
+  emailedAt     DateTime?
+  pushedAt      DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@unique([userId, leadId, waitStartedAt])
+  @@index([userId, createdAt])
   @@index([businessId])
 }
 
@@ -590,6 +659,20 @@ model Lead {
   // routine, and an owner facing 600 of them had to read all 600.
   suggestedRiskLevel  String?
   suggestedRiskReason String?
+  // WHAT the cached draft above was written as, when FollowUp wrote it on
+  // purpose for something other than a plain reply: "reminder_1" to
+  // "reminder_4" (the quiet-lead cadence, src/lib/automation.ts),
+  // "reactivation" (the 45-day welcome back), or "belated_reply" (an
+  // answer owed to someone nobody replied to for 45+ days). Null is an
+  // ordinary reply — what scoring.ts writes.
+  //
+  // suggestedDraftedFor answers "is this draft still about the current
+  // conversation"; this answers "is it the right KIND of message". The two
+  // stopped being the same question when the silence rule became four
+  // different reminders (founder's follow-up strategy, 2026-09-25): a lead
+  // whose step-1 nudge sat unapproved until day 45 has a draft that is
+  // perfectly current and exactly the wrong message for a welcome back.
+  suggestedDraftKind  String?
   // Why FollowUp did NOT read this lead or write anything for it — set
   // whenever checkAiEligibility (@/lib/billing) refuses, cleared the
   // moment a score/draft actually lands (src/lib/scoring.ts).
@@ -865,6 +948,11 @@ model Lead {
   // shape as OutboundSend's status/nextAttemptAt index), and a
   // business-prefixed index cannot serve it.
   @@index([ackDueAt])
+  // The fresh-reply worker's "who wrote in the last hour" scan
+  // (runFreshRepliesForAllBusinesses in src/lib/automation.ts). Same shape
+  // and same reason as ackDueAt just above: once a minute, every tenant at
+  // once, a narrow recent range — which only an unprefixed index can serve.
+  @@index([lastContacted])
 }
 
 model Conversation {
@@ -1520,6 +1608,9 @@ model AuditEvent {
 
   @@index([businessId, createdAt])
   @@index([targetId])
+  // The owner-alert cron asks "which businesses held anything in the last
+  // few hours?" every minute, across every business (src/lib/ownerAlerts.ts).
+  @@index([action, createdAt])
 }
 
 // Stripe does not guarantee webhook delivery is exactly-once or in order

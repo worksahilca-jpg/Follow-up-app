@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/gmail-sync",
-      "schedule": "*/10 * * * *"
+      "schedule": "*/2 * * * *"
     },
     {
       "path": "/api/cron/weekly-digest",
@@ -18,7 +18,7 @@
     },
     {
       "path": "/api/cron/outlook-sync",
-      "schedule": "*/10 * * * *"
+      "schedule": "*/2 * * * *"
     },
     {
       "path": "/api/cron/office",
@@ -37,8 +37,16 @@
       "schedule": "* * * * *"
     },
     {
+      "path": "/api/cron/fresh-replies",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/instagram-poll",
       "schedule": "*/3 * * * *"
+    },
+    {
+      "path": "/api/cron/owner-alerts",
+      "schedule": "* * * * *"
     }
   ]
 }

@@ -111,10 +111,24 @@ describe("a seller is never a lead, whatever the model says", () => {
   });
 });
 
-describe("the override only ever removes a lead, never invents one", () => {
-  // The rule is one-directional on purpose. "Not selling to us" does not
-  // make someone a customer — a newsletter and a password reset are both
-  // "neither" — so this must never turn a false into a true.
+describe("a contradiction resolves toward the customer, and nothing else is promoted", () => {
+  // "Not selling to us" does not make someone a customer — a newsletter and
+  // a password reset are both "neither" — so "neither" is never promoted.
+  // Only the model's own "this business" is (found live 2026-09-25).
+  it("keeps a sender the model itself says is asking about this business's work", async () => {
+    modelSays({
+      whoIsSelling: "this business",
+      isProspect: false,
+      reason: "The sender is asking about pricing for a service they want, indicating they are a customer.",
+    });
+
+    const result = await classifyAsProspect(photographerPitch, henji, business);
+    expect(result).toEqual({
+      isProspect: true,
+      reason: "The sender is asking about pricing for a service they want, indicating they are a customer.",
+    });
+  });
+
   it("leaves a real customer alone", async () => {
     modelSays({
       whoIsSelling: "this business",
@@ -151,6 +165,10 @@ describe("the question is asked before the verdict, and the prompt says so", () 
     expect(fields[0]).toBe("whoIsSelling");
     expect(fields.indexOf("whoIsSelling")).toBeLessThan(fields.indexOf("isProspect"));
     expect(schema.required).toContain("whoIsSelling");
+    // The reasoning is written before the verdict, so the two can't disagree
+    // the way they did live on 2026-09-25.
+    expect(fields.indexOf("reason")).toBeLessThan(fields.indexOf("isProspect"));
+    expect(schema.required).toEqual(["whoIsSelling", "reason", "isProspect"]);
   });
 
   it("names the trades that read like customers, not just the B2B commodity list", async () => {

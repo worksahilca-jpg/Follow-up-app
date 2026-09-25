@@ -320,6 +320,17 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
           "\"neither\" — no commercial direction at all (personal mail, an automated notification, a newsletter, " +
           "a recruiter). Judge by who would send the invoice at the end, not by who sounds keener.",
       },
+      // Before the verdict, not after it (found live 2026-09-25): written
+      // last, the sentence could say "they are a customer" under a verdict
+      // of false, and the owner was shown the contradiction as the reason
+      // the email was filtered. Field order is generation order, so the
+      // verdict is now written with the reasoning already on the page.
+      reason: {
+        type: "string",
+        description:
+          "One short sentence explaining the call. When the sender is the one selling, say so plainly and name " +
+          "what they are offering — that sentence is shown to the owner as the reason the thread was filtered.",
+      },
       isProspect: {
         type: "boolean",
         // This description is sent to the model as part of the structured-
@@ -349,16 +360,10 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
           "employment paperwork aimed at the owner, any vendor/agency/broker/insurer soliciting the business " +
           "(however personally worded), automated platform notifications, and newsletters — see the system " +
           "message for the full rules, which this summary never overrides. " +
-          "This must be false whenever whoIsSelling is \"the sender\".",
-      },
-      reason: {
-        type: "string",
-        description:
-          "One short sentence explaining the call. When the sender is the one selling, say so plainly and name " +
-          "what they are offering — that sentence is shown to the owner as the reason the thread was filtered.",
+          "This must be false whenever whoIsSelling is \"the sender\", and true whenever it is \"this business\".",
       },
     },
-    required: ["whoIsSelling", "isProspect", "reason"],
+    required: ["whoIsSelling", "reason", "isProspect"],
     additionalProperties: false,
   },
 } as const;
@@ -562,15 +567,29 @@ export async function classifyAsProspect(
   // photographer's "I'd love to discuss your event" is the warmest input
   // there is.
   //
-  // Deliberately one-directional. A sender who is NOT selling is not
-  // automatically a customer — an automated notification and a newsletter
-  // are both "neither" — so this only ever turns a true into a false, and
-  // never manufactures a lead the model did not find.
+  // A sender who is NOT selling is not automatically a customer — an
+  // automated notification and a newsletter are both "neither" — so
+  // "neither" is never promoted. Only the model's own "this business" is
+  // (below).
   if (parsed.whoIsSelling === "the sender" && parsed.isProspect) {
     return {
       isProspect: false,
       reason: parsed.reason || "The sender is offering their own services to this business, not asking about its.",
     };
+  }
+
+  // The other half of the same invariant, and the founder's bar ("make sure
+  // no leads slip", 2026-09-20). "this business" is, by the schema's own
+  // definition, someone asking about or engaged in work this business is
+  // paid for — which is exactly what isProspect true means. A false next to
+  // it is the model contradicting itself (found live 2026-09-25: "asking
+  // about pricing … indicating they are a customer", filtered anyway), and a
+  // contradiction resolves toward keeping the customer: a stray lead costs
+  // the owner one click, a filtered customer is never answered. "neither"
+  // is still never promoted — a newsletter is not selling to us, and it is
+  // not a customer either.
+  if (parsed.whoIsSelling === "this business" && !parsed.isProspect) {
+    return { isProspect: true, reason: parsed.reason };
   }
 
   return { isProspect: parsed.isProspect, reason: parsed.reason };

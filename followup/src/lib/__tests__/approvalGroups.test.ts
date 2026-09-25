@@ -52,6 +52,7 @@ function approval(over: Partial<PendingApproval> = {}): PendingApproval {
     draftMessage: "…",
     leadLastMessage: null,
     leadLastMessageChannel: null,
+    leadLastMessageAt: null,
     ...over,
   };
 }

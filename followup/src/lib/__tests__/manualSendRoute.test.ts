@@ -21,7 +21,13 @@ vi.mock("@/lib/sending", () => ({ sendFollowUpToLead }));
 vi.mock("@/lib/audit", () => ({ recordAudit }));
 vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true), billingLockedMessage: vi.fn(async () => "") }));
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: vi.fn(async () => false) }));
-vi.mock("@/lib/db", () => ({ prisma: { lead: { findFirst: vi.fn(async () => ({ id: "lead1" })) } } }));
+const { messageFindFirst } = vi.hoisted(() => ({ messageFindFirst: vi.fn(async (): Promise<{ sentAt: Date } | null> => null) }));
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    lead: { findFirst: vi.fn(async () => ({ id: "lead1" })), findUnique: vi.fn(async () => ({ name: "Jane Doe" })) },
+    message: { findFirst: messageFindFirst },
+  },
+}));
 
 import { POST } from "@/app/api/leads/[id]/send/route";
 
@@ -35,6 +41,7 @@ function post(body: unknown) {
 beforeEach(() => {
   vi.clearAllMocks();
   sendFollowUpToLead.mockResolvedValue({ success: true });
+  messageFindFirst.mockResolvedValue(null);
 });
 
 describe("the manual send route", () => {
@@ -63,5 +70,45 @@ describe("the manual send route", () => {
     expect(res.status).toBe(500);
     expect((await res.json()).message).toMatch(/more than 7 days ago/);
     expect(recordAudit).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Daily-path audit 2026-09-25 F7: the lead wrote again after the owner
+ * opened the card or the lead page. What was on screen answers a
+ * conversation that has moved on, so nothing is sent.
+ */
+describe("a send against a conversation that has moved on", () => {
+  const SEEN = "2026-09-25T13:00:00.000Z";
+
+  it("is refused with a 409 and nothing is sent when the lead wrote after what was on screen", async () => {
+    messageFindFirst.mockResolvedValue({ sentAt: new Date("2026-09-25T13:20:00.000Z") });
+    const res = await post({ message: "Tuesday at 3 works.", seenInboundAt: SEEN });
+    const body = await res.json();
+    expect(res.status).toBe(409);
+    expect(body).toEqual(expect.objectContaining({ success: false, stale: true, message: expect.stringContaining("Jane wrote again") }));
+    expect(sendFollowUpToLead).not.toHaveBeenCalled();
+    expect(messageFindFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { direction: "inbound", sentAt: { gt: new Date(SEEN) }, conversation: { leadId: "lead1" } },
+    }));
+  });
+
+  it("goes through when nothing newer has arrived", async () => {
+    const res = await post({ message: "Tuesday at 3 works.", seenInboundAt: SEEN });
+    expect(res.status).toBe(200);
+    expect(sendFollowUpToLead).toHaveBeenCalled();
+  });
+
+  it("behaves exactly as before when the caller doesn't say what it saw", async () => {
+    messageFindFirst.mockResolvedValue({ sentAt: new Date() });
+    const res = await post({ message: "Tuesday at 3 works." });
+    expect(res.status).toBe(200);
+    expect(messageFindFirst).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed timestamp instead of guessing", async () => {
+    const res = await post({ message: "Tuesday at 3 works.", seenInboundAt: "yesterday" });
+    expect(res.status).toBe(400);
+    expect(sendFollowUpToLead).not.toHaveBeenCalled();
   });
 });

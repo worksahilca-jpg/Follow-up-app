@@ -58,6 +58,7 @@ function approval(over: Record<string, unknown> = {}) {
     draftMessage: "Just checking in.",
     leadLastMessage: null,
     leadLastMessageChannel: null,
+    leadLastMessageAt: null,
     ...over,
   };
 }

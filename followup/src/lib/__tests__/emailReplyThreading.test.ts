@@ -96,7 +96,7 @@ describe("Approve & send on an email lead", () => {
   });
 
   it("does the same for an automated follow-up", async () => {
-    await sendFollowUpToLead("lead1", "Just checking in on the quote.", { trigger: "automation", automated: true, channel: "email" });
+    await sendFollowUpToLead("lead1", "Just checking in on the quote.", { trigger: "silence", automated: true, channel: "email" });
     expect(sent()).toEqual(expect.objectContaining({ threadId: THREAD, inReplyTo: RFC_ID, subject: "Re: Kitchen reno quote?" }));
   });
 

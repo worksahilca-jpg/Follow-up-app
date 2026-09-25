@@ -76,6 +76,12 @@ export type PendingApproval = {
   // with no visible context for what it's actually replying to.
   leadLastMessage: string | null;
   leadLastMessageChannel: string | null;
+  /**
+   * When that message arrived (ISO). Sent back with Approve & send as
+   * `seenInboundAt`, so the server can refuse a draft the lead has since
+   * answered (daily-path audit 2026-09-25 F7).
+   */
+  leadLastMessageAt: string | null;
 };
 
 /**
@@ -200,6 +206,7 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
       draftMessage: lead.suggestedMessage,
       leadLastMessage: lastInbound ? truncate(lastInbound.body, LEAD_MESSAGE_PREVIEW_LENGTH) : null,
       leadLastMessageChannel: lastInbound?.channel ?? null,
+      leadLastMessageAt: lastInbound ? lastInbound.sentAt.toISOString() : null,
     });
   }
   /*

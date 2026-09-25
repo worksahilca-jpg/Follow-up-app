@@ -6288,3 +6288,22 @@ a thread exists.
 separate threads is answered in the most recent one. Outlook replies via Graph `/reply`,
 which quotes the original and cannot carry List-Unsubscribe headers — same as the instant
 ack's Outlook path already did.
+
+## 2026-09-25 — A reply to a conversation that has moved on is refused ^stale-send-refused
+
+**What changed.** Approve & send (Today) and Send now (lead page) now tell the server when
+the newest message they were showing arrived. If the lead has written since, the send is
+refused with: *"Jane wrote again since you opened this. Nothing was sent — read their new
+message first."* (daily-path audit 2026-09-25 F7). Founder: "yes, you do it", 2026-09-25.
+
+**No visual change.** One data field in each send, and the sentence lands in the error line
+each surface already has. No layout, token or component was touched.
+
+**Why checked against the screen, not the draft.** The server re-drafts as soon as a new
+message arrives, so it cannot tell a stale card from an owner who read the new message and
+typed a reply. What the owner *saw* is the only honest test: someone who has seen the new
+message passes.
+
+**Weak spots, named.** The card does not refresh itself after the refusal; the owner has to
+reload to see the new message. The lead page's Send now still has no 10-second undo (the
+other half of F7) — that is a component change and was left for the founder's UI pass.

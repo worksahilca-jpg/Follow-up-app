@@ -71,6 +71,25 @@ describe("getPendingApprovals — a lead already answered leaves the queue", () 
     expect(await getPendingApprovals("biz1")).toHaveLength(1);
   });
 
+  // Found live 2026-09-25: "This was a lead" holds a draft, then records the
+  // override a few ms later. With the override as the newest event, the
+  // draft left the queue and the owner was never alerted.
+  it("never lets the restore override or the acknowledgement stand in for a decision", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([lead()]);
+    await getPendingApprovals("biz1");
+    expect(p.auditEvent.findMany.mock.calls[0][0].where.action).toEqual({
+      notIn: ["lead.classification_overridden", "ai.instant_ack"],
+    });
+  });
+
+  it("does not count the instant acknowledgement as an answer", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([lead()]);
+    await getPendingApprovals("biz1");
+    expect(p.message.findMany.mock.calls[0][0].where.OR).toEqual([{ trigger: null }, { trigger: { not: "instant_ack" } }]);
+  });
+
   it("only asks about this business's leads, and only outbound messages after the oldest hold", async () => {
     p.auditEvent.findMany.mockResolvedValue([event()]);
     p.lead.findMany.mockResolvedValue([lead()]);

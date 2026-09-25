@@ -12,14 +12,14 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { businessFindMany, businessFindUnique, businessUpdateMany, resolveInstagramUserId } = vi.hoisted(() => ({
+const { businessFindMany, businessFindFirst, businessUpdateMany, resolveInstagramUserId } = vi.hoisted(() => ({
   businessFindMany: vi.fn(),
-  businessFindUnique: vi.fn(async () => null),
+  businessFindFirst: vi.fn(async () => null),
   businessUpdateMany: vi.fn(async () => ({ count: 1 })),
   resolveInstagramUserId: vi.fn(),
 }));
 vi.mock("@/lib/db", () => ({
-  prisma: { business: { findMany: businessFindMany, findUnique: businessFindUnique, updateMany: businessUpdateMany } },
+  prisma: { business: { findMany: businessFindMany, findFirst: businessFindFirst, updateMany: businessUpdateMany } },
 }));
 vi.mock("@/lib/instagram", () => ({ resolveInstagramUserId }));
 
@@ -34,7 +34,7 @@ const founder = { id: "cmtibjn400000iq84yxpzsw45", instagramUserId: APP_SCOPED, 
 beforeEach(() => {
   vi.clearAllMocks();
   businessFindMany.mockResolvedValue([founder]);
-  businessFindUnique.mockResolvedValue(null);
+  businessFindFirst.mockResolvedValue(null);
   businessUpdateMany.mockResolvedValue({ count: 1 });
   resolveInstagramUserId.mockResolvedValue({ id: APP_SCOPED, accountId: PROFESSIONAL, username: "followupbase" });
 });
@@ -73,13 +73,28 @@ describe("backfillInstagramAccountIds", () => {
   // The unique index is what stops one Instagram account feeding two
   // businesses; the backfill reports it and leaves both rows alone.
   it("never attaches an account that another business already holds", async () => {
-    businessFindUnique.mockResolvedValue({ id: "some-other-business" } as never);
+    businessFindFirst.mockResolvedValue({ id: "some-other-business" } as never);
     const [dry] = await backfillInstagramAccountIds({ apply: false });
     expect(dry).toEqual(expect.objectContaining({ outcome: "already_attached", detail: expect.stringContaining("some-other-business") }));
 
     const [applied] = await backfillInstagramAccountIds({ apply: true });
     expect(applied.outcome).toBe("already_attached");
     expect(businessUpdateMany).not.toHaveBeenCalled();
+  });
+
+  // The per-column unique index cannot see an account id sitting in the
+  // OTHER column of another business (pr324-review P4), so the holder
+  // check looks in both.
+  it("looks for another holder in both id columns, never this business", async () => {
+    await backfillInstagramAccountIds({ apply: false });
+    expect(businessFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: { not: founder.id },
+          OR: [{ instagramAccountId: PROFESSIONAL }, { instagramUserId: PROFESSIONAL }],
+        },
+      })
+    );
   });
 
   it("treats the unique index refusing the write as 'already attached', not as a crash", async () => {

@@ -25,7 +25,7 @@ const { businessUpdate } = vi.hoisted(() => ({ businessUpdate: vi.fn(async () =>
 
 vi.mock("@/lib/session", () => ({ getSessionContext, requireAdmin }));
 vi.mock("@/lib/instagram", () => ({ exchangeInstagramAuthCode, resolveInstagramUserId, activateInstagramWebhooks }));
-vi.mock("@/lib/db", () => ({ prisma: { business: { update: businessUpdate } } }));
+vi.mock("@/lib/db", () => ({ prisma: { business: { update: businessUpdate, findUnique: vi.fn(async () => null), findFirst: vi.fn(async () => null) } } }));
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
 

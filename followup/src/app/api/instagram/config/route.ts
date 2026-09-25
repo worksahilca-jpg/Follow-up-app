@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { activateInstagramWebhooks, instagramOAuthAvailable, resolveInstagramUserId, unsubscribeInstagramWebhooks, WEBHOOK_VERIFY_TOKEN } from "@/lib/instagram";
+import { planInstagramIdWrite } from "@/lib/instagramConnectGuard";
 import { inboundBaseUrl } from "@/lib/siteUrl";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
@@ -94,6 +95,21 @@ export async function POST(request: NextRequest) {
    * simply returned to "Connect" with no word on screen. Worse than a
    * wrong message, because it reads as the click not registering.
    */
+  const alreadyConnectedElsewhere = () => {
+    const who = resolved.username ? `@${resolved.username}` : "That Instagram account";
+    return NextResponse.json(
+      {
+        success: false,
+        message: `${who} is already connected to a different FollowUp account. One Instagram account can feed only one FollowUp account — disconnect it there first, or use another account.`,
+      },
+      { status: 409 }
+    );
+  };
+  // Both ids decided in one place with the OAuth callback: keep a good
+  // professional id on a same-account reconnect, and refuse an account
+  // another business holds in EITHER id column (instagramConnectGuard.ts).
+  const plan = await planInstagramIdWrite(ctx.businessId, resolved);
+  if (!plan.ok) return alreadyConnectedElsewhere();
   try {
     await prisma.business.update({
       where: { id: ctx.businessId },
@@ -102,9 +118,10 @@ export async function POST(request: NextRequest) {
         instagramUserId: resolved.id,
         // The professional-account id that webhooks and the poller match
         // on (see resolveInstagramUserId). Null, never left stale, when
-        // Meta gives none: a previous account's id beside this account's
-        // token would route that account's DMs here.
-        instagramAccountId: resolved.accountId ?? null,
+        // Meta gives none for a different account: a previous account's
+        // id beside this account's token would route that account's DMs
+        // here. Kept when it is the same account (planInstagramIdWrite).
+        instagramAccountId: plan.instagramAccountId,
         // Written with the id, never on its own: a handle from one account
         // next to the id of another would be worse than no handle at all.
         instagramUsername: resolved.username ?? null,
@@ -114,16 +131,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
-    if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
-      const who = resolved.username ? `@${resolved.username}` : "That Instagram account";
-      return NextResponse.json(
-        {
-          success: false,
-          message: `${who} is already connected to a different FollowUp account. One Instagram account can feed only one FollowUp account — disconnect it there first, or use another account.`,
-        },
-        { status: 409 }
-      );
-    }
+    if (err && typeof err === "object" && "code" in err && err.code === "P2002") return alreadyConnectedElsewhere();
     // Anything else still answers in JSON. The error's name and Prisma code
     // only — never its message, which for a validation error can reprint
     // the arguments, and the arguments include the token.

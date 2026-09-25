@@ -46,7 +46,7 @@ vi.mock("@/lib/instagram", () => ({
   instagramOAuthAvailable: () => true,
   WEBHOOK_VERIFY_TOKEN: "verify-tok",
 }));
-vi.mock("@/lib/db", () => ({ prisma: { business: { update: businessUpdate, findUnique: vi.fn(async () => null) } } }));
+vi.mock("@/lib/db", () => ({ prisma: { business: { update: businessUpdate, findUnique: vi.fn(async () => null), findFirst: vi.fn(async () => null) } } }));
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
 

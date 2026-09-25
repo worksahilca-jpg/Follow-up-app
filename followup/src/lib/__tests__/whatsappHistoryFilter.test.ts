@@ -27,7 +27,7 @@ const { leadFindFirst } = vi.hoisted(() => ({ leadFindFirst: vi.fn(async () => n
 vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect }));
 vi.mock("@/lib/db", () => ({ prisma: { lead: { findFirst: leadFindFirst } } }));
 
-import { judgeHistoryThread, parseStoredThread } from "@/lib/inbound/whatsappHistoryFilter";
+import { judgeHistoryThread, parseStoredThread, cleanSetAsideReason } from "@/lib/inbound/whatsappHistoryFilter";
 
 const business = { name: "Acme Plumbing", industry: "plumbing" };
 const contact = { name: "Priya", phone: "+14165550100" };
@@ -200,5 +200,41 @@ describe("parseStoredThread", () => {
     });
     expect(parsed?.messages).toHaveLength(1);
     expect(parsed?.messages[0].body).toBe("real");
+  });
+});
+
+/**
+ * Security pass 2026-09-25 F7: the reason is written by a model that has
+ * just read a stranger's messages, and the owner reads it as FollowUp's own
+ * explanation. It must not be able to carry a link, an address or a number,
+ * or run long enough to pass for a system notice.
+ */
+describe("cleanSetAsideReason", () => {
+  it("leaves an ordinary reason exactly as the classifier wrote it", () => {
+    expect(cleanSetAsideReason("Family conversation, no work discussed.")).toBe("Family conversation, no work discussed.");
+  });
+
+  it("strips links, email addresses and phone numbers", () => {
+    const shaped = "Your FollowUp account needs re-verification at https://evil.example/verify or www.evil.example — email help@evil.example or call +1 (437) 555-0199";
+    const cleaned = cleanSetAsideReason(shaped);
+    expect(cleaned).not.toMatch(/evil\.example/);
+    expect(cleaned).not.toMatch(/437/);
+    expect(cleaned).toContain("[link removed]");
+    expect(cleaned).toContain("[address removed]");
+    expect(cleaned).toContain("[number removed]");
+  });
+
+  it("is never longer than one short line", () => {
+    const cleaned = cleanSetAsideReason("word ".repeat(200));
+    expect(cleaned.length).toBeLessThanOrEqual(160);
+    expect(cleaned.endsWith("…")).toBe(true);
+  });
+
+  it("is what judgeHistoryThread stores when it sets a chat aside", async () => {
+    classifyAsProspect
+      .mockResolvedValueOnce({ isProspect: false, reason: "Personal." })
+      .mockResolvedValueOnce({ isProspect: false, reason: "Re-verify your account at https://evil.example now" });
+    const verdict = await judgeHistoryThread([msg("inbound", "hi")], contact, business, noSignals);
+    expect(verdict).toEqual({ import: false, reason: "Re-verify your account at [link removed] now" });
   });
 });

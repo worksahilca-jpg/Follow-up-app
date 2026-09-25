@@ -5,6 +5,7 @@ import { appUrl } from "@/lib/stripe";
 import { activateInstagramWebhooks, exchangeInstagramAuthCode, resolveInstagramUserId } from "@/lib/instagram";
 import { recordAudit } from "@/lib/audit";
 import { oauthNextCookie, oauthReturnUrl } from "@/lib/oauthReturn";
+import { planInstagramIdWrite } from "@/lib/instagramConnectGuard";
 
 export async function GET(request: NextRequest) {
   const ctx = await getSessionContext();
@@ -54,6 +55,13 @@ export async function GET(request: NextRequest) {
   // does on the exchange above: it is the only instrument anyone has here.
   if ("error" in resolved) return fail(`Instagram connected, but we couldn't read the account details — ${resolved.error}`);
 
+  // Both ids decided in one place with the paste path: keep a good
+  // professional id on a same-account reconnect, and refuse an account
+  // another business holds in EITHER id column (instagramConnectGuard.ts).
+  const alreadyConnectedElsewhere = "That Instagram account is already connected to another FollowUp account.";
+  const plan = await planInstagramIdWrite(ctx.businessId, resolved);
+  if (!plan.ok) return fail(alreadyConnectedElsewhere);
+
   try {
     await prisma.business.update({
       where: { id: ctx.businessId },
@@ -64,8 +72,9 @@ export async function GET(request: NextRequest) {
         instagramAccessToken: exchanged.accessToken,
         instagramUserId: resolved.id,
         // Same write as the id, same reason as the paste path
-        // (config/route.ts): null rather than a previous account's.
-        instagramAccountId: resolved.accountId ?? null,
+        // (config/route.ts): null rather than a previous account's, kept
+        // when it is the same account.
+        instagramAccountId: plan.instagramAccountId,
         instagramUsername: resolved.username ?? null,
         instagramWebhookSubscribedAt: null,
       },
@@ -74,7 +83,7 @@ export async function GET(request: NextRequest) {
     // Either unique id colliding means the same thing: this account is
     // already bound to another business.
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
-      return fail("That Instagram account is already connected to another FollowUp account.");
+      return fail(alreadyConnectedElsewhere);
     }
     throw err;
   }

@@ -18,18 +18,21 @@
  *                         with "A stored credential is encrypted but
  *                         TOKEN_ENCRYPTION_KEY is not set" and nothing runs
  *
- * From the followup/ directory:
+ * From the followup/ directory. The tsx version is pinned because this runs
+ * with DATABASE_URL and TOKEN_ENCRYPTION_KEY in its environment: an
+ * unpinned `npx tsx` would run whatever was published most recently
+ * (pr324-review P7). Bump it deliberately, not by accident.
  *
  *   # 1. Dry run (the default). Reads, asks Meta /me?fields=user_id for each
  *   #    business, and prints what it WOULD write. Writes nothing.
- *   npx --yes tsx scripts/backfill-instagram-account-id.ts
+ *   npx --yes tsx@4.23.15 scripts/backfill-instagram-account-id.ts
  *
  *   # 2. Read the output. Then write:
- *   npx --yes tsx scripts/backfill-instagram-account-id.ts --apply
+ *   npx --yes tsx@4.23.15 scripts/backfill-instagram-account-id.ts --apply
  *
  * If the variables live in an env file, Node's own flag loads it without
  * putting secrets in shell history (tsx passes it through to Node):
- *   npx --yes tsx --env-file=<file> scripts/backfill-instagram-account-id.ts
+ *   npx --yes tsx@4.23.15 --env-file=<file> scripts/backfill-instagram-account-id.ts
  *
  * Output, one line per business: `<businessId> @<handle>: <outcome> <accountId>`.
  * Outcomes are listed in src/lib/instagramAccountBackfill.ts. Anything
@@ -49,7 +52,7 @@
 import { prisma } from "@/lib/db";
 import { backfillInstagramAccountIds, needsAttention } from "@/lib/instagramAccountBackfill";
 
-const USAGE = "Usage: npx --yes tsx scripts/backfill-instagram-account-id.ts [--apply]\n" +
+const USAGE = "Usage: npx --yes tsx@4.23.15 scripts/backfill-instagram-account-id.ts [--apply]\n" +
   "  (no flag)  dry run: calls Meta, prints what would change, writes nothing\n" +
   "  --apply    write instagramAccountId for each business that resolves cleanly";
 

@@ -98,8 +98,14 @@ export async function backfillInstagramAccountIds(options: {
     // Reported in the dry run too, so the conflict is visible before any
     // write. The unique index is still what actually prevents it — this
     // read can be raced; the constraint cannot.
-    const holder = await prisma.business.findUnique({ where: { instagramAccountId: accountId }, select: { id: true } });
-    if (holder && holder.id !== business.id) {
+    // Either column: the same account can sit in another business's
+    // instagramUserId, which the per-column unique index would not catch
+    // (pr324-review P4).
+    const holder = await prisma.business.findFirst({
+      where: { id: { not: business.id }, OR: [{ instagramAccountId: accountId }, { instagramUserId: accountId }] },
+      select: { id: true },
+    });
+    if (holder) {
       record({ ...base, outcome: "already_attached", accountId, detail: `held by business ${holder.id}` });
       continue;
     }

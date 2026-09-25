@@ -82,9 +82,15 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
    */
   const send = useUndoableSend({
     url: `/api/leads/${item.leadId}/send`,
-    body: JSON.stringify(
-      item.draftSubject ? { message: item.draftMessage, subject: item.draftSubject } : { message: item.draftMessage }
-    ),
+    body: JSON.stringify({
+      message: item.draftMessage,
+      ...(item.draftSubject ? { subject: item.draftSubject } : {}),
+      // The newest thing the lead had said when this card was drawn. If
+      // they have written since, the server refuses with a 409 and says so,
+      // instead of sending a reply to a message that is no longer the last
+      // word (daily-path audit 2026-09-25 F7).
+      ...(item.leadLastMessageAt ? { seenInboundAt: item.leadLastMessageAt } : {}),
+    }),
     onResponse: async (res) => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {

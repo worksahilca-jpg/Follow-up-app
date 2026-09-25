@@ -23,9 +23,10 @@ const { resolveInstagramUserId, activateInstagramWebhooks, unsubscribeInstagramW
   unsubscribeInstagramWebhooks: vi.fn(async () => undefined),
   exchangeInstagramAuthCode: vi.fn(async () => ({ accessToken: "IGQV-long-lived" })),
 }));
-const { businessUpdate, businessFindUnique } = vi.hoisted(() => ({
+const { businessUpdate, businessFindUnique, businessFindFirst } = vi.hoisted(() => ({
   businessUpdate: vi.fn(async () => ({})),
   businessFindUnique: vi.fn(async () => null),
+  businessFindFirst: vi.fn(async () => null),
 }));
 
 vi.mock("@/lib/session", () => ({ getSessionContext, requireAdmin }));
@@ -37,7 +38,7 @@ vi.mock("@/lib/instagram", () => ({
   instagramOAuthAvailable: () => true,
   WEBHOOK_VERIFY_TOKEN: "verify",
 }));
-vi.mock("@/lib/db", () => ({ prisma: { business: { update: businessUpdate, findUnique: businessFindUnique } } }));
+vi.mock("@/lib/db", () => ({ prisma: { business: { update: businessUpdate, findUnique: businessFindUnique, findFirst: businessFindFirst } } }));
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
 
@@ -71,6 +72,7 @@ const accountIdTaken = () =>
 beforeEach(() => {
   businessUpdate.mockReset().mockResolvedValue({});
   businessFindUnique.mockReset().mockResolvedValue(null);
+  businessFindFirst.mockReset().mockResolvedValue(null);
   resolveInstagramUserId.mockReset().mockResolvedValue({ id: APP_SCOPED, accountId: PROFESSIONAL, username: "followupbase" });
   requireAdmin.mockReset().mockResolvedValue(true);
 });
@@ -136,6 +138,85 @@ describe("connecting with OAuth", () => {
     const location = res.headers.get("location") ?? "";
     expect(location).toContain("instagram=error");
     expect(decodeURIComponent(location.replace(/\+/g, " "))).toContain("already connected to another FollowUp account");
+  });
+});
+
+/**
+ * pr324-review P5: resolveInstagramUserId retries without `user_id` on ANY
+ * 400, so a reconnect of the very same account could come back without the
+ * professional id and blank the one webhooks route on.
+ */
+describe("reconnecting the same account when Meta leaves out user_id", () => {
+  const stored = { instagramUserId: APP_SCOPED, instagramAccountId: PROFESSIONAL };
+
+  it("keeps the stored professional-account id on a pasted token", async () => {
+    businessFindUnique.mockResolvedValue(stored as never);
+    resolveInstagramUserId.mockResolvedValue({ id: APP_SCOPED, username: "followupbase" });
+    const res = await paste();
+    expect(res.status).toBe(200);
+    expect(businessUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ instagramUserId: APP_SCOPED, instagramAccountId: PROFESSIONAL }) })
+    );
+  });
+
+  it("keeps it through OAuth too", async () => {
+    businessFindUnique.mockResolvedValue(stored as never);
+    resolveInstagramUserId.mockResolvedValue({ id: APP_SCOPED });
+    await callback();
+    expect(businessUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ instagramAccountId: PROFESSIONAL }) }));
+  });
+
+  it("still writes null when it is a DIFFERENT account with no user_id", async () => {
+    businessFindUnique.mockResolvedValue(stored as never);
+    resolveInstagramUserId.mockResolvedValue({ id: "29999999999999999" });
+    await paste();
+    expect(businessUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ instagramUserId: "29999999999999999", instagramAccountId: null }) })
+    );
+  });
+
+  it("takes Meta's user_id over the stored one when Meta does return it", async () => {
+    businessFindUnique.mockResolvedValue({ instagramUserId: APP_SCOPED, instagramAccountId: "17841400000000009" } as never);
+    await paste();
+    expect(businessUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ instagramAccountId: PROFESSIONAL }) }));
+  });
+});
+
+/**
+ * pr324-review P4: each id column is unique on its own, so an account id
+ * sitting in the OTHER column of another business clashed with nothing and
+ * the same account could be saved twice.
+ */
+describe("an account another business holds in the other id column", () => {
+  it("is refused on paste before anything is written", async () => {
+    businessFindFirst.mockResolvedValue({ id: "b2" } as never);
+    const res = await paste();
+    const body = await res.json();
+    expect(res.status).toBe(409);
+    expect(body.message).toContain("already connected to a different FollowUp account");
+    expect(businessUpdate).not.toHaveBeenCalled();
+    expect(activateInstagramWebhooks).not.toHaveBeenCalled();
+  });
+
+  it("is refused through OAuth before anything is written", async () => {
+    businessFindFirst.mockResolvedValue({ id: "b2" } as never);
+    const res = await callback();
+    const location = res.headers.get("location") ?? "";
+    expect(location).toContain("instagram=error");
+    expect(decodeURIComponent(location.replace(/\+/g, " "))).toContain("already connected to another FollowUp account");
+    expect(businessUpdate).not.toHaveBeenCalled();
+  });
+
+  it("checks both ids in both columns, and never counts this business", async () => {
+    await paste();
+    expect(businessFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: { not: "b1" },
+          OR: [{ instagramUserId: { in: [APP_SCOPED, PROFESSIONAL] } }, { instagramAccountId: { in: [APP_SCOPED, PROFESSIONAL] } }],
+        },
+      })
+    );
   });
 });
 

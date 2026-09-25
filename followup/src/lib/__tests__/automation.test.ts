@@ -26,10 +26,11 @@ vi.mock("@/lib/sending", () => ({
   // on sendFollowUpToLead()'s own email-if-present default.
   detectAutomatedReplyChannel: vi.fn(async () => "email"),
 }));
-// Every business in these tests has something connected — the
-// "nothing connected, no drafting" gate (src/lib/sendChannels.ts) is
-// pinned in its own file.
-vi.mock("@/lib/sendChannels", () => ({ hasAnySendChannel: vi.fn(async () => true) }));
+// Every business in these tests has something connected, and can send on
+// the lead's own channel — the "nothing connected, no drafting" gate and
+// its per-lead form canSendOn (src/lib/sendChannels.ts) are pinned in
+// sendChannels.test.ts, canSendOn.test.ts and draftOnlyWhatCanSend.test.ts.
+vi.mock("@/lib/sendChannels", () => ({ hasAnySendChannel: vi.fn(async () => true), canSendOn: vi.fn(async () => true) }));
 vi.mock("@/lib/billing", () => ({
   requireActiveBilling: vi.fn(async () => true),
   // One gate now, for every tier — not two Free-only helpers. Plus's

@@ -20,12 +20,15 @@ export default function MessageComposer({
   initialSubject,
   leadName,
   leadEmail,
+  seenInboundAt,
 }: {
   leadId: string;
   initialMessage: string;
   initialSubject?: string;
   leadName: string;
   leadEmail?: string;
+  /** When the newest message from the lead on this page arrived (ISO) — see the send route's stale check. */
+  seenInboundAt?: string;
 }) {
   const isEmail = Boolean(leadEmail);
   const [message, setMessage] = useState(initialMessage);
@@ -59,7 +62,11 @@ export default function MessageComposer({
       const res = await fetch(`/api/leads/${leadId}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isEmail ? { message, subject } : { message }),
+        body: JSON.stringify({
+          message,
+          ...(isEmail ? { subject } : {}),
+          ...(seenInboundAt ? { seenInboundAt } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Send failed.");

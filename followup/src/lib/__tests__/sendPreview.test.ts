@@ -57,6 +57,7 @@ const approval = ({ reason, leadName = "Someone", heldAt = new Date("2026-09-22T
   draftMessage: "…",
   leadLastMessage: null,
   leadLastMessageChannel: null,
+  leadLastMessageAt: null,
 });
 
 beforeEach(() => vi.clearAllMocks());

@@ -99,6 +99,7 @@ describe("getPendingApprovals", () => {
         draftMessage: "Here is the quote.",
         leadLastMessage: null,
         leadLastMessageChannel: null,
+        leadLastMessageAt: null,
       },
     ]);
   });
@@ -130,6 +131,8 @@ describe("getPendingApprovals", () => {
     const result = await getPendingApprovals("biz1");
     expect(result[0].leadLastMessage).toBe("Newer text follow-up");
     expect(result[0].leadLastMessageChannel).toBe("text");
+    // Sent back with Approve & send so a draft the lead has since answered is refused (F7).
+    expect(result[0].leadLastMessageAt).toBe("2026-09-10T15:00:00.000Z");
   });
 
   it("truncates a very long inbound message rather than shipping the whole body to the dashboard", async () => {

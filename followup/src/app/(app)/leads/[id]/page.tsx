@@ -126,6 +126,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             initialSubject={lead.suggestedSubject}
             leadName={lead.name}
             leadEmail={lead.email || undefined}
+            seenInboundAt={newestInboundAt(lead.conversation)}
           />
 
           <ConversationThread messages={lead.conversation} leadName={lead.name} />
@@ -217,4 +218,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       </div>
     </div>
   );
+}
+
+/** When the newest message from the lead on this page arrived — what the owner has "seen" when they press Send. */
+function newestInboundAt(messages: { direction: string; date: string }[]): string | undefined {
+  let newest: number | undefined;
+  for (const m of messages) {
+    if (m.direction !== "inbound") continue;
+    const t = Date.parse(m.date);
+    if (Number.isFinite(t) && (newest === undefined || t > newest)) newest = t;
+  }
+  return newest === undefined ? undefined : new Date(newest).toISOString();
 }

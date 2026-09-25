@@ -51,6 +51,7 @@ const held = (hoursAgo: number, id = "lead1", name = "Harpreet Kaur") => ({
   draftMessage: "draft",
   leadLastMessage: null,
   leadLastMessageChannel: null,
+  leadLastMessageAt: null,
 });
 
 beforeEach(() => {

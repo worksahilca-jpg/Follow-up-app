@@ -36,14 +36,14 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: September 10, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: September 25, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
             <h2 className="font-display text-xl text-ink">Who we are</h2>
             <p className="mt-2">
-              FollowUp (&quot;FollowUp&quot;, &quot;we&quot;, &quot;us&quot;) provides an AI-assisted sales
-              follow-up tool. This policy explains what data we collect, why, and how you can control it.
+              FollowUp (&quot;FollowUp&quot;, &quot;we&quot;, &quot;us&quot;) helps businesses reply to their own
+              customers on time. This policy explains what data we collect, why, and how you can control it.
               Contact us at{" "}
               <a href="mailto:contact@followupbase.io" className="underline">
                 contact@followupbase.io
@@ -60,22 +60,33 @@ export default function PrivacyPage() {
                 sign-in.
               </li>
               <li>
-                <strong className="text-ink">Gmail data</strong> — with your explicit permission, we read
-                recent inbox threads to identify sales conversations, and store the ones we identify as leads
-                (sender, subject, message content, timestamps) so we can score them and draft follow-ups. We
-                only ever send email on your behalf when you click Send, or when you&apos;ve explicitly turned
-                on automated sending for a specific lead.
+                <strong className="text-ink">Gmail and Outlook data</strong> — with your explicit permission, we
+                read recent inbox threads to identify customer conversations, and store the ones we identify as
+                leads (sender, subject, message content, timestamps) so we can score them and draft replies.
+                By default, FollowUp never sends anything until you approve it. If you choose to turn on
+                sending without asking (in Settings, or for a specific lead), FollowUp sends only simple,
+                low-risk follow-ups for you; anything about price or anything sensitive still waits for you.
               </li>
               <li>
                 <strong className="text-ink">Instagram and Facebook data</strong> — with your explicit permission
                 (connecting your Instagram professional account or Facebook Page), we receive the direct messages
                 and lead-form submissions sent to your account, so we can identify them as leads, score them, and
-                draft replies. We only ever send a reply on your behalf when you click Send, or when
-                you&apos;ve explicitly turned on automated sending for a specific lead.
+                draft replies. By default, FollowUp never sends anything until you approve it. If you choose to turn on
+                sending without asking (in Settings, or for a specific lead), FollowUp sends only simple,
+                low-risk follow-ups for you; anything about price or anything sensitive still waits for you.
               </li>
               <li>
-                <strong className="text-ink">Leads you add yourself</strong> — manually entered leads or ones
-                imported via CSV.
+                <strong className="text-ink">WhatsApp data</strong> — when you connect your WhatsApp Business
+                number through Meta, we receive the messages sent to and from that number so we can identify
+                customers and draft replies. Because it may be the same number you use for personal chats, a
+                message from someone who isn&apos;t already a lead is first checked by our AI provider. Chats
+                that look personal are set aside rather than treated as leads; we keep them only so you can
+                bring one back if we got it wrong, and they are deleted with your account.
+              </li>
+              <li>
+                <strong className="text-ink">Leads you add yourself</strong> — manually entered leads, ones
+                imported via CSV, and contacts from a CRM you connect (Follow Up Boss or HubSpot), where we also
+                add a note back when you send a message.
               </li>
               <li>
                 <strong className="text-ink">Billing info</strong> — handled entirely by Stripe; we never see
@@ -84,6 +95,10 @@ export default function PrivacyPage() {
               <li>
                 <strong className="text-ink">Usage data</strong> — basic product analytics (pages visited,
                 features used) to improve FollowUp.
+              </li>
+              <li>
+                <strong className="text-ink">A record of what FollowUp did</strong> — every message FollowUp
+                drafts, holds or sends is written down with the reason, so you can see what happened and why.
               </li>
             </ul>
           </section>
@@ -125,7 +140,8 @@ export default function PrivacyPage() {
               . Specifically:
             </p>
             <ul className="mt-2 space-y-2 list-disc pl-5">
-              <li>We only request the permissions needed to receive Instagram/Messenger DMs and Facebook Lead Ads submissions, and to reply to them on your behalf.</li>
+              <li>We only request the permissions needed to receive Instagram/Messenger DMs, WhatsApp messages and Facebook Lead Ads submissions, and to reply to them on your behalf.</li>
+              <li>We only reply to people who have messaged your business first. We never message people who haven&apos;t contacted you.</li>
               <li>We never use this data for advertising, and never sell it.</li>
               <li>We never allow humans to read it except: (a) with your explicit consent, (b) to investigate abuse or a security issue, or (c) to comply with the law.</li>
               <li>We never transfer it to third parties except our AI processing provider (to draft/score follow-ups on your behalf), or as required by law.</li>
@@ -151,7 +167,17 @@ export default function PrivacyPage() {
               To score leads and draft follow-up messages, relevant conversation text is sent to our AI
               provider (currently OpenAI) for processing. That provider does not use your data to train its
               models under our account terms with them. AI-drafted messages are never sent without your
-              approval unless you&apos;ve explicitly opted a specific lead into automated sending.
+              approval unless you have turned on sending without asking, as described above.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-display text-xl text-ink">Helping improve FollowUp (off unless you turn it on)</h2>
+            <p className="mt-2">
+              In Settings you can choose to help improve FollowUp. It is off by default. If you turn it on, we
+              keep FollowUp&apos;s draft beside the message you actually sent, and review the differences in
+              de-identified form (names, email addresses and phone numbers removed) to improve how FollowUp
+              writes. We do not train AI models on your data. You can turn it off at any time.
             </p>
           </section>
 
@@ -159,12 +185,13 @@ export default function PrivacyPage() {
             <h2 className="font-display text-xl text-ink">Data retention &amp; deletion</h2>
             <p className="mt-2">
               We keep your data for as long as your account is active. You can delete an individual lead (and
-              its full conversation history) at any time from that lead&apos;s page. To delete your entire
-              account and all associated data, email{" "}
+              its full conversation history) at any time from that lead&apos;s page. You can export all of
+              your data, or delete your entire account and all associated data, yourself from Settings → Your
+              data. You can also email{" "}
               <a href="mailto:contact@followupbase.io" className="underline">
                 contact@followupbase.io
               </a>{" "}
-              — we&apos;ll confirm deletion within 2 business days. Revoking FollowUp&apos;s Gmail access at{" "}
+              and we&apos;ll confirm deletion within 2 business days. Revoking FollowUp&apos;s Gmail access at{" "}
               <a
                 href="https://myaccount.google.com/permissions"
                 target="_blank"
@@ -181,12 +208,15 @@ export default function PrivacyPage() {
           <section>
             <h2 className="font-display text-xl text-ink">Third parties we use</h2>
             <ul className="mt-2 space-y-2 list-disc pl-5">
-              <li><strong className="text-ink">Google</strong> — sign-in and Gmail access.</li>
-              <li><strong className="text-ink">Meta</strong> — Instagram DM, Messenger, and Facebook Lead Ads access.</li>
-              <li><strong className="text-ink">Twilio</strong> — SMS, WhatsApp, and voice call sending/receiving.</li>
+              <li><strong className="text-ink">Google</strong> — sign-in, Gmail and Google Calendar access.</li>
+              <li><strong className="text-ink">Microsoft</strong> — Outlook / Microsoft 365 access, if you connect it.</li>
+              <li><strong className="text-ink">Meta</strong> — Instagram DM, Messenger, Facebook Lead Ads and WhatsApp access.</li>
+              <li><strong className="text-ink">Twilio</strong> — text messages and voice calls, if you connect it (and WhatsApp for businesses that connected it through Twilio before).</li>
+              <li><strong className="text-ink">Follow Up Boss and HubSpot</strong> — only if you connect your CRM.</li>
               <li><strong className="text-ink">OpenAI</strong> — AI scoring and message drafting.</li>
               <li><strong className="text-ink">Stripe</strong> — subscription billing.</li>
-              <li><strong className="text-ink">Supabase / hosting infrastructure</strong> — database and application hosting.</li>
+              <li><strong className="text-ink">Supabase and Vercel</strong> — database and application hosting.</li>
+              <li><strong className="text-ink">Sentry</strong> — error reports, with email addresses and phone numbers removed.</li>
             </ul>
             <p className="mt-2">We never sell your data.</p>
           </section>

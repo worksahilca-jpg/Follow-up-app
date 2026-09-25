@@ -169,8 +169,13 @@ export async function processWhatsAppCloudEnvelope(payload: { object?: string; e
  */
 export const SET_ASIDE_THREAD_MAX_MESSAGES = 50;
 
+/**
+ * `prior` is the set-aside chat as the judge saw it, for the caller to
+ * write into the new lead first. What was added to the row after that
+ * look is picked up by takeSetAsideChat, under the lock.
+ */
 type GateResult =
-  | { admit: true; prior: UiMessage[]; setAsideRowId?: string }
+  | { admit: true; prior: UiMessage[] }
   | { admit: false };
 
 /**
@@ -268,29 +273,137 @@ async function judgeUnknownContact(
         { alreadySetAside: !!row }
       );
 
-  if (verdict?.import) return { admit: true, prior, setAsideRowId: row?.id };
+  if (verdict?.import) return { admit: true, prior };
 
-  const payload = { phone, name: displayName ?? null, messages: thread };
-  await prisma.filteredEmail.upsert({
-    where: { businessId_threadId: { businessId, threadId } },
-    update: {
-      ...(verdict ? { reason: verdict.reason } : {}),
-      ...(name ? { senderName: name } : {}),
-      threadPayload: payload,
-      lastMessageAt: new Date(message.date),
-    },
-    create: {
-      businessId,
-      threadId,
-      provider: "whatsapp",
-      senderName: displayName ?? phone,
-      senderPhone: phone,
-      reason: verdict?.reason ?? "Not customer business so far.",
-      threadPayload: payload,
-      lastMessageAt: new Date(message.date),
-    },
+  return keepSetAside(businessId, waId, name, message, verdict?.reason);
+}
+
+/**
+ * The advisory-lock key for one chat's set-aside row. A lock on the row
+ * itself cannot do this job: the first message from someone new has no
+ * row to lock yet, and that is exactly when two messages race.
+ */
+function setAsideLockKey(businessId: string, waId: string): string {
+  return `whatsapp_set_aside:${businessId}:${waId}`;
+}
+
+/**
+ * Keeps one message in a set-aside chat.
+ *
+ * Merged, under a lock on the chat, into what the row holds NOW — not the
+ * copy judgeUnknownContact read before the judge ran, which is seconds old
+ * by the time the judge answers (security pass 2026-09-25 F4). This used
+ * to write that copy back whole. "Hi" and "are you free Saturday?"
+ * arriving together both read no row: whichever wrote second replaced the
+ * first, or hit the unique index and failed its delivery. Either way one
+ * message survived only in InboundWebhookEvent, which nothing replays.
+ *
+ * The lock is held for a read and a write, never across the judge's
+ * OpenAI calls (the rule src/lib/rateLimit.ts sets out).
+ *
+ * If this number became a lead while the message was being judged — the
+ * other message of the pair was let through — this one is let through
+ * too, rather than written into a row beside a lead that will never read
+ * it. A number that is a lead is never second-guessed. The other half of
+ * that race is closed in takeSetAsideChat.
+ *
+ * The merged chat was not judged as a whole. The next message with words
+ * in it is, the same as a message kept past the hourly cap.
+ */
+async function keepSetAside(
+  businessId: string,
+  waId: string,
+  name: string | undefined,
+  message: UiMessage,
+  reason: string | undefined
+): Promise<GateResult> {
+  const threadId = `whatsapp:${waId}`;
+  const phone = `+${waId}`;
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${setAsideLockKey(businessId, waId)}))`;
+    if (await tx.lead.findFirst({ where: { businessId, phone }, select: { id: true } })) return { admit: true, prior: [] };
+
+    const row = await tx.filteredEmail.findUnique({
+      where: { businessId_threadId: { businessId, threadId } },
+      select: { threadPayload: true },
+    });
+    const stored = row ? parseStoredThread(row.threadPayload) : null;
+    const kept = stored?.messages ?? [];
+    // A redelivery racing its own first delivery is kept once.
+    const thread = (message.id && kept.some((m) => m.id === message.id) ? kept : [...kept, message])
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(-SET_ASIDE_THREAD_MAX_MESSAGES);
+    const displayName = name ?? stored?.name ?? undefined;
+    const payload = { phone, name: displayName ?? null, messages: thread };
+    // The newest message kept, not this one: the other message of a pair
+    // may be the later one and already be in the row.
+    const lastMessageAt = new Date(thread[thread.length - 1].date);
+
+    await tx.filteredEmail.upsert({
+      where: { businessId_threadId: { businessId, threadId } },
+      update: {
+        ...(reason ? { reason } : {}),
+        ...(name ? { senderName: name } : {}),
+        threadPayload: payload,
+        lastMessageAt,
+      },
+      create: {
+        businessId,
+        threadId,
+        provider: "whatsapp",
+        senderName: displayName ?? phone,
+        senderPhone: phone,
+        reason: reason ?? "Not customer business so far.",
+        threadPayload: payload,
+        lastMessageAt,
+      },
+    });
+    return { admit: false };
   });
-  return { admit: false };
+}
+
+/**
+ * Moves the rest of a set-aside chat into the lead it has just become,
+ * then deletes the row.
+ *
+ * The caller has already written what the judge saw (`written`). This
+ * takes the same lock as keepSetAside, reads the row as it is NOW, writes
+ * anything added since, and only then deletes it (security pass
+ * 2026-09-25 F4). Before this, the row was deleted by the id read before
+ * the judge ran, so a message set aside in between was deleted with it.
+ * And when there was no row at that first read, nothing looked again, so
+ * a message set aside while its neighbour was being let through stayed
+ * in a set-aside row beside a lead that did not have it.
+ *
+ * Called only once the lead exists, and that closes the race from this
+ * side. A set-aside write that gets the lock after this one finds the
+ * lead and lets its message through instead (keepSetAside).
+ *
+ * The message being processed is left to the caller, which records it
+ * with its acknowledgement and draft like any other.
+ */
+async function takeSetAsideChat(
+  businessId: string,
+  waId: string,
+  conversationId: string,
+  written: UiMessage[],
+  currentId: string | undefined
+): Promise<void> {
+  const threadId = `whatsapp:${waId}`;
+  const done = new Set(written.map((m) => m.id));
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${setAsideLockKey(businessId, waId)}))`;
+    const row = await tx.filteredEmail.findUnique({
+      where: { businessId_threadId: { businessId, threadId } },
+      select: { id: true, threadPayload: true },
+    });
+    if (!row) return;
+    const added = (parseStoredThread(row.threadPayload)?.messages ?? []).filter((m) => !done.has(m.id) && m.id !== currentId);
+    await writeSetAsideThread(conversationId, added, tx);
+    // Only once the lead and its history exist: dropping the row first
+    // would lose the chat if anything above failed.
+    await tx.filteredEmail.deleteMany({ where: { id: row.id, businessId } });
+  });
 }
 
 /**
@@ -298,10 +411,14 @@ async function judgeUnknownContact(
  * before today's message, so the owner and the drafter see how it got
  * here. Idempotent on the wamid, like every other WhatsApp write.
  */
-async function writeSetAsideThread(conversationId: string, messages: UiMessage[]): Promise<void> {
+async function writeSetAsideThread(
+  conversationId: string,
+  messages: UiMessage[],
+  db: Pick<typeof prisma, "message"> = prisma
+): Promise<void> {
   for (const m of messages) {
     if (!m.id) continue;
-    await prisma.message.upsert({
+    await db.message.upsert({
       where: { externalId: m.id },
       update: {},
       create: {
@@ -354,7 +471,7 @@ async function handleMessages(businessId: string, value: { messages?: unknown; s
     // Someone who is not a lead yet: customer, or the owner's private
     // life? Set-aside chats stop here — no lead, no acknowledgement, no
     // draft — and wait in the filtered list.
-    let gate: GateResult = { admit: true, prior: [] };
+    let gate: GateResult | null = null;
     if (!(await isLead(businessId, phone))) {
       gate = await judgeUnknownContact(
         businessId,
@@ -369,10 +486,12 @@ async function handleMessages(businessId: string, value: { messages?: unknown; s
 
     const lead = await findOrCreateLeadByPhone(businessId, phone, "WhatsApp", names.get(from));
     const conversation = await findOrCreateConversation(lead.id, "whatsapp");
-    if (gate.prior.length > 0) await writeSetAsideThread(conversation.id, gate.prior);
-    // Only once the lead and its history exist: dropping the row first
-    // would lose the chat if anything above failed.
-    if (gate.setAsideRowId) await prisma.filteredEmail.deleteMany({ where: { id: gate.setAsideRowId, businessId } });
+    if (gate) {
+      if (gate.prior.length > 0) await writeSetAsideThread(conversation.id, gate.prior);
+      // Even with no row at the judge's look: one may have been written
+      // since, by a message from the same number judged alongside this one.
+      await takeSetAsideChat(businessId, from, conversation.id, gate.prior, wamid);
+    }
     const isNew = await createInboundMessageIfNew(conversation.id, content.body, sentAt, wamid);
 
     // STOP/START before anything else touches this lead — the same rule,
@@ -457,7 +576,7 @@ async function handleEchoes(businessId: string, value: { message_echoes?: unknow
     // or a buyer they were referred to. Judged like an inbound message
     // (see judgeUnknownContact); a quote from the owner is what stage 2
     // looks for first.
-    let gate: GateResult = { admit: true, prior: [] };
+    let gate: GateResult | null = null;
     if (!(await isLead(businessId, phone))) {
       gate = await judgeUnknownContact(
         businessId,
@@ -471,11 +590,13 @@ async function handleEchoes(businessId: string, value: { message_echoes?: unknow
     }
 
     const lead = await findOrCreateLeadByPhone(businessId, phone, "WhatsApp", names.get(to));
-    if (gate.prior.length > 0) {
+    if (gate) {
+      // The same conversation captureDirectReply opens below, opened a
+      // moment earlier so the set-aside chat lands in it first.
       const conversation = await findOrCreateConversation(lead.id, "whatsapp");
-      await writeSetAsideThread(conversation.id, gate.prior);
+      if (gate.prior.length > 0) await writeSetAsideThread(conversation.id, gate.prior);
+      await takeSetAsideChat(businessId, to, conversation.id, gate.prior, wamid);
     }
-    if (gate.setAsideRowId) await prisma.filteredEmail.deleteMany({ where: { id: gate.setAsideRowId, businessId } });
     await captureDirectReply(lead.id, "whatsapp", content.body, "whatsapp_direct", wamid, sentAt);
   }
 }

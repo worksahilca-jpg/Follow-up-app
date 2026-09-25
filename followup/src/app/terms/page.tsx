@@ -25,7 +25,7 @@ export default function TermsPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Terms of Service</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: September 2, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: September 25, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -40,9 +40,11 @@ export default function TermsPage() {
           <section>
             <h2 className="font-display text-xl text-ink">2. What FollowUp does</h2>
             <p className="mt-2">
-              FollowUp connects to your Gmail account (with your permission) to identify sales conversations,
-              score them using AI, and draft follow-up messages. Messages are only sent with your approval,
-              unless you explicitly opt a specific lead into automated sending — see our{" "}
+              FollowUp connects to the accounts you choose (Gmail or Outlook, Instagram, Facebook, WhatsApp),
+              with your permission, to identify customer conversations, score them using AI, and draft
+              replies. By default, messages are only sent with your approval. If you turn on sending without
+              asking (for your account or for a specific lead), FollowUp sends simple, low-risk follow-ups for
+              you — see our{" "}
               <Link href="/privacy" className="underline">
                 Privacy Policy
               </Link>{" "}
@@ -62,7 +64,8 @@ export default function TermsPage() {
             <h2 className="font-display text-xl text-ink">4. Acceptable use</h2>
             <p className="mt-2">You agree not to use FollowUp to:</p>
             <ul className="mt-2 space-y-1 list-disc pl-5">
-              <li>Send spam, unsolicited bulk email, or content that violates anti-spam law (e.g. CAN-SPAM).</li>
+              <li>Send spam, unsolicited bulk email, or content that violates anti-spam law (e.g. CAN-SPAM or CASL).</li>
+              <li>Contact people who haven&apos;t contacted your business, or break the rules of the platforms you connect (Google, Microsoft, Meta, WhatsApp).</li>
               <li>Send content that&apos;s illegal, harassing, fraudulent, or infringes someone else&apos;s rights.</li>
               <li>Attempt to gain unauthorized access to FollowUp&apos;s systems or another user&apos;s account.</li>
               <li>Reverse-engineer or resell the Service without our written permission.</li>
@@ -74,7 +77,7 @@ export default function TermsPage() {
             <p className="mt-2">
               FollowUp uses AI to score leads and draft messages. AI output can be wrong or inappropriate —
               you&apos;re responsible for reviewing and approving anything sent under your name (or for the
-              consequences of turning on automated sending for a lead, if you choose to).
+              consequences of turning on sending without asking, if you choose to).
             </p>
           </section>
 
@@ -90,7 +93,7 @@ export default function TermsPage() {
           <section>
             <h2 className="font-display text-xl text-ink">7. Termination</h2>
             <p className="mt-2">
-              You can stop using FollowUp and delete your account at any time. We may suspend or terminate
+              You can stop using FollowUp and delete your account at any time from Settings → Your data. We may suspend or terminate
               your access if you violate these terms, and will make reasonable efforts to notify you first
               except where immediate action is needed (e.g. abuse or security risk).
             </p>

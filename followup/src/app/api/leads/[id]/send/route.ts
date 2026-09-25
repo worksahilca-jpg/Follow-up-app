@@ -14,6 +14,9 @@ const sendSchema = z.object({
   // being emailed (see MessageComposer.tsx) — a text/WhatsApp/Instagram
   // send has no subject concept.
   subject: z.string().trim().min(1).optional(),
+  // When the newest message from the lead that was on screen arrived
+  // (ISO). Optional: a caller that doesn't send it behaves as before.
+  seenInboundAt: z.string().datetime().optional(),
 });
 
 // POST /api/leads/[id]/send — the one place a real email actually goes out.
@@ -34,7 +37,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const parsed = await parseJsonBody(request, sendSchema);
   if (!parsed.ok) return parsed.response;
-  const { message, subject } = parsed.data;
+  const { message, subject, seenInboundAt } = parsed.data;
+
+  // The lead wrote again after the owner last looked (daily-path audit
+  // 2026-09-25 F7). The words being sent answer a conversation that has
+  // moved on — an old draft, or a reply typed before the new message
+  // arrived — so it is refused and the owner reads first. Checked against
+  // what was on THEIR screen, not against when the draft was written: an
+  // owner who has seen the new message and still wants to send passes.
+  if (seenInboundAt) {
+    const newer = await prisma.message.findFirst({
+      where: { direction: "inbound", sentAt: { gt: new Date(seenInboundAt) }, conversation: { leadId: id } },
+      orderBy: { sentAt: "desc" },
+      select: { sentAt: true },
+    });
+    if (newer) {
+      const lead = await prisma.lead.findUnique({ where: { id }, select: { name: true } });
+      const first = lead?.name.split(" ")[0] || "They";
+      return NextResponse.json(
+        { success: false, stale: true, message: `${first} wrote again since you opened this. Nothing was sent — read their new message first.` },
+        { status: 409 }
+      );
+    }
+  }
 
   // `humanSend` is what lets an Instagram/Messenger reply go out between
   // 24 hours and 7 days after the lead's last message, under Meta's

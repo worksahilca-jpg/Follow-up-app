@@ -451,3 +451,17 @@ structure read one level flatter than every other screen. Both fixed.
 **Scope.** Headings only. Body, caption and metric sizes stay `[TO DECIDE]` — nobody has
 looked at those on a real screen, and deciding them from a table is the mistake
 `typography.md` already warns against.
+
+## A-020 — An email reply goes out as a reply, under the customer's subject ^A-020
+
+**Approved:** 2026-09-25, founder: *"yes"* — to: "reply in the same thread, like hitting
+Reply, subject 'Re: their subject'; the Subject box is ignored for those replies."
+
+When a lead has a captured email thread, Approve & send, Send now and every automated
+follow-up answer the customer's newest email in that thread (Gmail: threadId +
+In-Reply-To/References + `Re: <their subject>`; Outlook: Graph's own reply). A lead with
+no captured thread (form, CSV, manual) still gets a fresh email with the typed subject.
+
+**Consequence for the UI (founder's to design):** on a lead with an email thread the
+composer's Subject field no longer decides the subject. Until the screen says so, it is
+a field that does nothing there. See [[design-decisions#2026-09-25 — Email replies thread]].

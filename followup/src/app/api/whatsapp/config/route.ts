@@ -119,9 +119,6 @@ export async function POST(request: NextRequest) {
     data.whatsappWabaId = wabaId;
     data.whatsappDisplayNumber = number.displayNumber;
     data.whatsappConnectMode = null;
-    void recordAudit(ctx, "integration.whatsapp.connect", { meta: { via: "token", phoneNumberId } });
-  } else {
-    void recordAudit(ctx, "integration.whatsapp.update");
   }
 
   try {
@@ -131,6 +128,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "That WhatsApp number is already connected to another FollowUp account." }, { status: 409 });
     }
     throw err;
+  }
+  // Recorded only once the save has held. Written before it, a refused
+  // connect (the 409 above: the number is on another account) still left
+  // "WhatsApp connected" in the trail (security pass 2026-09-25 F6) — the
+  // same order whatsapp/connect/route.ts already uses.
+  if (data.whatsappAccessToken) {
+    void recordAudit(ctx, "integration.whatsapp.connect", { meta: { via: "token", phoneNumberId } });
+  } else {
+    void recordAudit(ctx, "integration.whatsapp.update");
   }
   return NextResponse.json({ success: true, displayNumber: data.whatsappDisplayNumber ?? undefined });
 }
@@ -146,7 +152,17 @@ export async function DELETE() {
     where: { id: ctx.businessId },
     select: { whatsappWabaId: true, whatsappAccessToken: true },
   });
-  if (b?.whatsappWabaId && b.whatsappAccessToken) await unsubscribeAppFromWaba(b.whatsappWabaId, b.whatsappAccessToken);
+  // Unsubscribing is per WhatsApp Business ACCOUNT, not per number: Meta
+  // stops every webhook for every number in it. An agency or franchise can
+  // have two numbers in one account on two FollowUp businesses, and one of
+  // them disconnecting must not silently deafen the other (security pass
+  // 2026-09-25 F5). So only the last business on that account unsubscribes.
+  if (b?.whatsappWabaId && b.whatsappAccessToken) {
+    const sharedWith = await prisma.business.count({
+      where: { id: { not: ctx.businessId }, whatsappWabaId: b.whatsappWabaId },
+    });
+    if (sharedWith === 0) await unsubscribeAppFromWaba(b.whatsappWabaId, b.whatsappAccessToken);
+  }
 
   await prisma.business.update({
     where: { id: ctx.businessId },

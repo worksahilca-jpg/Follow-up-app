@@ -4,6 +4,7 @@ import { ensureGmailWatch, fetchSalesConversations, isAuthRevoked } from "@/lib/
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { detectReplies } from "@/lib/outcomes";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { notifyGmailAccessLost, notifyIfGmailSyncKeepsFailing, readGmailSyncSnapshot } from "@/lib/gmailSyncNotices";
 import type { Lead } from "@/lib/types";
 
 // The automatic sync asks Gmail for threads newer than the last completed
@@ -193,7 +194,10 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
       // lookup in the app fall through to false, stops the pointless retry
       // loop, and gives getGmailStatus a state it can put a sentence to.
       const revoked = isAuthRevoked(err);
-      await prisma.integration
+      // Read before the write below replaces lastSyncError: whether the
+      // previous tick failed too is part of the "keeps failing" threshold.
+      const before = await readGmailSyncSnapshot(businessId);
+      const recorded = await prisma.integration
         .updateMany({
           where: { provider: "gmail", status: "connected", user: { businessId } },
           data: {
@@ -212,7 +216,22 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
               : {}),
           },
         })
-        .catch((e) => console.error(`Failed to record sync error for business ${businessId}:`, e));
+        .catch((e) => {
+          console.error(`Failed to record sync error for business ${businessId}:`, e);
+          return null;
+        });
+
+      // Parking alone told nobody: the owner of an account with leads found
+      // out from one line at the bottom of Today, on day 7 of every beta
+      // (daily-path audit 2026-09-25 F6). Tell the admins in the bell —
+      // once. The update above only matches a row still "connected", so
+      // exactly one tick per death gets a count here: a concurrent tick
+      // that lost the race gets 0, and later ticks never select the parked
+      // row at all. Only a reconnect makes the next death count again.
+      if (recorded && recorded.count > 0) {
+        if (revoked) await notifyGmailAccessLost(businessId, before);
+        else await notifyIfGmailSyncKeepsFailing(businessId, before);
+      }
     }
   });
 

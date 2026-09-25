@@ -166,7 +166,7 @@ export async function judgeHistoryThread(
     const stageTwo = await classifyAsProspect(recent, counterpart, deepContext, { maxMessages: STAGE_TWO_MESSAGES });
     if (stageTwo.isProspect) return { import: true };
 
-    return { import: false, reason: stageTwo.reason };
+    return { import: false, reason: cleanSetAsideReason(stageTwo.reason) };
   } catch (err) {
     // Fails open, the same as gmail.ts: better an untidy pipeline than a
     // lost customer, and a classifier outage must never quietly cost the
@@ -174,6 +174,33 @@ export async function judgeHistoryThread(
     console.error(`WhatsApp history classification failed for ${contact.phone}:`, err);
     return { import: true };
   }
+}
+
+/**
+ * The classifier's one-line reason, made safe to show as FollowUp's own
+ * words (security pass 2026-09-25 F7).
+ *
+ * The reason is written by a model that has just read a stranger's
+ * messages, and the owner reads it in the set-aside list as FollowUp
+ * explaining itself. A message engineered for it could make that line
+ * read like a system notice — "your account needs re-verification at …".
+ * It renders as text, so this is not an injection into the page; it is
+ * an injection into the owner's trust. So: no links, no email addresses,
+ * no phone numbers, and short. A real reason ("personal chat about a
+ * family dinner") loses nothing.
+ */
+const SET_ASIDE_REASON_MAX = 160;
+export function cleanSetAsideReason(reason: string): string {
+  const cleaned = reason
+    .replace(/\b(?:https?:\/\/|www\.)\S+/gi, "[link removed]")
+    .replace(/\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b/g, "[address removed]")
+    // Seven or more digits, allowing the usual separators: a phone number
+    // or a code, never something a reason needs to say.
+    .replace(/\+?\d[\d\s().-]{5,}\d/g, "[number removed]")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (cleaned.length <= SET_ASIDE_REASON_MAX) return cleaned;
+  return `${cleaned.slice(0, SET_ASIDE_REASON_MAX - 1).trimEnd()}…`;
 }
 
 /** What a filtered WhatsApp row keeps so Restore can rebuild the thread. */

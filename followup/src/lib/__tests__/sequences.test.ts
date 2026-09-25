@@ -502,6 +502,11 @@ describe("risk-gated hold (a workflow step's draft isn't automatically safe)", (
         sequenceStepScheduledAt: null,
         suggestedMessage: "draft",
         suggestedSubject: "Following up",
+        // 2026-09-25 (audit F2): a new draft never keeps the previous
+        // draft's risk verdict. Here the "high" was this pass's own, but
+        // under hold-all it is a placeholder; unjudged is the true state.
+        suggestedRiskLevel: null,
+        suggestedRiskReason: null,
       },
     });
   });

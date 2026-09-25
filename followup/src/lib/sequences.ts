@@ -720,6 +720,9 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
               sequenceStepDueAt: null, sequenceStepScheduledAt: null,
               suggestedMessage: message,
               suggestedSubject: draft.subject,
+              // A new draft is unjudged (audit 2026-09-25 F2).
+              suggestedRiskLevel: null,
+              suggestedRiskReason: null,
             },
           });
           void recordAudit({ businessId, userId: null }, "ai.hold", {

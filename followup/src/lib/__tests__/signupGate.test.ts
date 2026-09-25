@@ -126,6 +126,35 @@ describe("a stranger who found the site", () => {
   });
 });
 
+// Security audit 2026-09-26, A-5: the email is the identity everywhere
+// below the gate (existing-account match, tester list, invites). An address
+// Google itself reports as unverified must not sign in as its owner.
+describe("an address Google has not verified", () => {
+  const google = { provider: "google", type: "oauth", providerAccountId: "g-1" };
+
+  it("cannot sign in to the existing account that owns that address", async () => {
+    p.user.findUnique.mockResolvedValue({ id: "u1", email: "owner@acme.com", businessId: "biz1", name: "Owner" });
+    await expect(
+      signIn({ user: { email: "owner@acme.com", name: "Owner" }, account: google, profile: { email: "owner@acme.com", email_verified: false } })
+    ).resolves.toBe(false);
+  });
+
+  it("is not let in by a tester-list match either", async () => {
+    vi.stubEnv("ALLOWED_EMAILS", "tester@example.com");
+    await expect(
+      signIn({ user: { email: "tester@example.com" }, account: google, profile: { email_verified: false } })
+    ).resolves.toBe(false);
+    expect(p.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("changes nothing for a verified address", async () => {
+    p.user.findUnique.mockResolvedValue({ id: "u1", email: "owner@acme.com", businessId: "biz1", name: "Owner" });
+    await expect(
+      signIn({ user: { email: "owner@acme.com", name: "Owner" }, account: google, profile: { email: "owner@acme.com", email_verified: true } })
+    ).resolves.toBe(true);
+  });
+});
+
 describe("the three ways in that are a real invitation", () => {
   it("lets in an address on the tester list", async () => {
     vi.stubEnv("ALLOWED_EMAILS", "friend@example.com, harsh@example.com");

@@ -135,8 +135,20 @@ export const authOptions: NextAuthOptions = {
     signIn: "/signin",
   },
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
       if (!user.email) return false;
+      // Everything below trusts the email as identity: it finds the
+      // existing User by address and signs straight into that account,
+      // and it matches ALLOWED_EMAILS, approved AccessRequests and team
+      // invites by address. Google says in the ID token whether it has
+      // verified the address; next-auth does not check it. A Google
+      // account whose address Google reports as unverified must not be
+      // able to become the person who owns that address here (security
+      // audit 2026-09-26, A-5). Refuses only an explicit `false`, so a
+      // provider response without the claim behaves exactly as before.
+      if (account?.provider === "google" && (profile as { email_verified?: boolean } | undefined)?.email_verified === false) {
+        return false;
+      }
       const email = user.email.toLowerCase();
 
       // Who is a beta tester: the env allowlist, or an email the founder

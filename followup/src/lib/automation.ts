@@ -74,7 +74,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -730,6 +730,15 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
       // paragraph it always was.
       const sendChannel = (await detectAutomatedReplyChannel(lead)) ?? undefined;
       const isDm = sendChannel === "instagram" || sendChannel === "messenger";
+      // A phone lead who has never written to the business: the owner
+      // messaged them first (a WhatsApp echo, an owner-only history thread,
+      // a restored chat). An automatic text to someone who never contacted
+      // us is the consent question isUntouched names below, so it is held
+      // exactly like one, whatever the tier (security pass 2026-09-25 F1).
+      // sendFollowUpToLead refuses it too; holding here is what keeps the
+      // owner told instead of a silent daily refusal.
+      const phoneNeverWrote =
+        (sendChannel === "text" || sendChannel === "whatsapp") && !conversation.some((m) => m.direction === "inbound");
       // Past Meta's 24-hour window nothing automatic may go out on these
       // channels, and sendFollowUpToLead would refuse it anyway — so no
       // draft, no risk check, no OpenAI spend. The owner's own day-2–7
@@ -920,7 +929,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         !holdAll &&
         autoSendAllowedAt != null &&
         (newestMessageAt == null || newestMessageAt <= autoSendAllowedAt);
-      if (holdAll || isUntouched || effectiveTier !== "AUTONOMOUS" || tier === "free") {
+      if (holdAll || isUntouched || phoneNeverWrote || effectiveTier !== "AUTONOMOUS" || tier === "free") {
         /**
          * Every draft that reaches here gets a verdict, including ones
          * that are going to be held no matter what it says.
@@ -955,7 +964,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         // this whole mechanism exists to avoid, aimed at the back
         // catalogue instead of at cold leads.
         let riskAssessed = false;
-        if (isUntouched) {
+        if (isUntouched || phoneNeverWrote) {
           // The one case where the old reasoning still holds completely.
           // An untouched lead is held because FollowUp has not seen what
           // the owner may already have done about it, and
@@ -1030,7 +1039,7 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
         // `isCold`, so this only ever holds MORE than before, never less.
         // `isBackfilled` joins `isCold` for the same reason and with the
         // same shape: it only ever holds MORE than before, never less.
-        if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched) {
+        if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
           // it with the message it was written against, which is what lets
@@ -1112,6 +1121,8 @@ export async function runAutomationForBusiness(businessId: string): Promise<Auto
                 // only way to read it properly.
                 isUntouched
                 ? UNTOUCHED_LEAD_REASON
+              : phoneNeverWrote
+                ? NEVER_WROTE_REASON
               : holdAll
                 ? HOLD_ALL_AUTOMATION_REASON
               : // Below holdAll on purpose. While the hold is on, THAT is

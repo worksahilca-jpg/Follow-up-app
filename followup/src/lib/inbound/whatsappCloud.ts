@@ -10,6 +10,8 @@ import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import { pickAssignee } from "@/lib/assignment";
 import { judgeHistoryThread, knownOnAnotherChannel, parseStoredThread } from "@/lib/inbound/whatsappHistoryFilter";
 import type { ClassifierBusinessContext } from "@/lib/integrations/openai";
+import { hasActiveAccess, isChannelAvailableOnFreeTier } from "@/lib/billing";
+import { tooManyRecentActions } from "@/lib/rateLimit";
 // Named UiMessage locally: this file already has its own WaMessage (Meta's
 // wire shape), and two things called Message in one file is how the wrong
 // one gets used.
@@ -200,9 +202,22 @@ type GateResult =
  * Only called when no lead has this number. A number that is already a
  * lead, on any channel, is never second-guessed here.
  */
+/**
+ * How often one set-aside chat may be looked at again: at most this many
+ * times an hour. A real customer's burst of messages fits well inside it;
+ * someone sending thousands of messages to a business's public number
+ * does not get thousands of paid classifier calls (security pass
+ * 2026-09-25 F2). Over the cap the message is still kept with the chat,
+ * and the next look reads it.
+ */
+export const REJUDGE_MAX_PER_HOUR = 6;
+
+/** The business, as the new-contact check needs it: who they are, and whether AI may run for them at all. */
+type JudgeContext = { classifier: ClassifierBusinessContext | undefined; aiAllowed: boolean };
+
 async function judgeUnknownContact(
   businessId: string,
-  business: ClassifierBusinessContext | undefined,
+  context: JudgeContext,
   waId: string,
   name: string | undefined,
   message: UiMessage,
@@ -226,15 +241,32 @@ async function judgeUnknownContact(
     .slice(-SET_ASIDE_THREAD_MAX_MESSAGES);
   const displayName = name ?? stored?.name ?? undefined;
 
+  // No AI for this business (lapsed billing, or a Free plan, which does
+  // not cover WhatsApp): the check is a paid classifier call like every
+  // other AI step, and checkAiEligibility is the rule for those (security
+  // pass 2026-09-25 F2). Someone new is let through as before this check
+  // existed — capture is free, and scoring pauses itself. A chat already
+  // set aside stays set aside, with this message kept.
+  if (!context.aiAllowed && !row) return { admit: true, prior: [] };
+
   // A photo or a sticker in a chat already set aside adds nothing to read.
-  // Kept with the rest, judged again when there are words.
-  const verdict =
-    row && !hasOwnWords
-      ? null
-      : await judgeHistoryThread(thread, { name: displayName ?? "WhatsApp contact", phone }, business, {
-          // The caller only gets here when no lead has this number at all.
-          knownOnAnotherChannel: false,
-        });
+  // Kept with the rest, judged again when there are words. So is a message
+  // past this chat's hourly cap, or any message when AI is off.
+  const skipLook =
+    !!row &&
+    (!hasOwnWords ||
+      !context.aiAllowed ||
+      (await tooManyRecentActions(businessId, `whatsapp_rejudge:${waId}`, { windowMinutes: 60, max: REJUDGE_MAX_PER_HOUR })));
+  const verdict = skipLook
+    ? null
+    : await judgeHistoryThread(
+        thread,
+        { name: displayName ?? "WhatsApp contact", phone },
+        context.classifier,
+        // The caller only gets here when no lead has this number at all.
+        { knownOnAnotherChannel: false },
+        { alreadySetAside: !!row }
+      );
 
   if (verdict?.import) return { admit: true, prior, setAsideRowId: row?.id };
 
@@ -284,13 +316,17 @@ async function writeSetAsideThread(conversationId: string, messages: UiMessage[]
   }
 }
 
-/** The business's name and trade, for the judge — fetched once per delivery, and only if someone new wrote. */
-function businessContextLoader(businessId: string): () => Promise<ClassifierBusinessContext | undefined> {
-  let loaded: Promise<ClassifierBusinessContext | undefined> | null = null;
+/** The business's name, trade and AI eligibility, for the judge — fetched once per delivery, and only if someone new wrote. */
+function businessContextLoader(businessId: string): () => Promise<JudgeContext> {
+  let loaded: Promise<JudgeContext> | null = null;
   return () => {
     loaded ??= prisma.business
-      .findUnique({ where: { id: businessId }, select: { name: true, industry: true } })
-      .then((b) => b ?? undefined);
+      .findUnique({ where: { id: businessId }, select: { name: true, industry: true, subscriptionStatus: true, tier: true } })
+      .then((b) => ({
+        classifier: b ? { name: b.name, industry: b.industry } : undefined,
+        // The same two tests checkAiEligibility applies to every lead.
+        aiAllowed: !!b && hasActiveAccess(b.subscriptionStatus, b.tier) && (b.tier !== "free" || isChannelAvailableOnFreeTier("WhatsApp")),
+      }));
     return loaded;
   };
 }

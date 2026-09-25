@@ -658,6 +658,26 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
             opened: m.opened,
           }))
         );
+        // Never an automatic text or WhatsApp to someone who has not
+        // written to the business (security pass 2026-09-25 F1):
+        // sendFollowUpToLead refuses it, and a refusal here would stay
+        // enrolled and re-draft at OpenAI cost every hour. Structural, like
+        // the no-channel case above, so it exits the same way: once, told.
+        if ((channel === "text" || channel === "whatsapp") && !conversation.some((m) => m.direction === "inbound")) {
+          try {
+            await prisma.lead.update({
+              where: { id: lead.id },
+              data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+            });
+          } catch (err) {
+            return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
+          }
+          await notifySequenceIssue(
+            lead,
+            `"${sequence.name}" stopped for ${lead.name} — they haven't messaged you yet, so FollowUp won't text or WhatsApp them on its own. The first message is yours to send.`
+          );
+          return { kind: "skipped" as const, note: `${lead.name}: has never written, so no automatic text or WhatsApp` };
+        }
         const draft = await generateFollowUpMessage(
           { name: lead.name, conversation },
           voiceSamples,

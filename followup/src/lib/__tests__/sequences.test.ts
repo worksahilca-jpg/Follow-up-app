@@ -259,6 +259,9 @@ describe("one lead's DB error doesn't abort the rest of the batch", () => {
 describe("channel-switching within a workflow (research rec #4)", () => {
   function enrolledOnStep(stepIndex: number, overrides: Record<string, unknown> = {}) {
     const l = enrolled("outbound");
+    // They wrote first, days ago: FollowUp never texts or WhatsApps someone
+    // who has not (security pass 2026-09-25 F1 — tested below).
+    l.conversations[0].messages.unshift({ id: "m0", direction: "inbound", body: "Is the condo still available?", sentAt: new Date(Date.now() - 3 * 86400_000), opened: false });
     l.sequenceStepIndex = stepIndex;
     l.sequence = {
       ...l.sequence,
@@ -308,6 +311,21 @@ describe("channel-switching within a workflow (research rec #4)", () => {
     p.lead.findMany.mockResolvedValue([enrolledOnStep(1, { phone: "+15551234567" })]);
     await runSequencesForBusiness("biz1");
     expect(composeEmail).not.toHaveBeenCalled();
+  });
+
+  it("stops, once and told, instead of texting someone who has never written", async () => {
+    nonEmailChannel.mockResolvedValue("whatsapp");
+    const l = enrolled("outbound"); // the owner wrote twice; they never did
+    l.sequenceStepIndex = 1;
+    l.sequence = { ...l.sequence, steps: [{ ...step, order: 0, action: "EMAIL" }, { ...step, order: 1, action: "EMAIL" }] };
+    p.lead.findMany.mockResolvedValue([{ ...l, phone: "+15551234567" }]);
+    await runSequencesForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(draftMessage).not.toHaveBeenCalled();
+    expect(p.lead.update).toHaveBeenCalledWith({
+      where: { id: "lead1" },
+      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+    });
   });
 
   it("tells the AI it's drafting a text, not an email, when escalating", async () => {

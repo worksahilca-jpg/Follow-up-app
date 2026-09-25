@@ -55,7 +55,18 @@ async function detectPhoneChannel(leadId: string): Promise<"whatsapp" | "text"> 
     orderBy: { sentAt: "desc" },
     select: { conversation: { select: { channel: true } } },
   });
-  return lastInbound?.conversation.channel === "whatsapp" ? "whatsapp" : "text";
+  if (lastInbound) return lastInbound.conversation.channel === "whatsapp" ? "whatsapp" : "text";
+  // They have never written. A lead whose only thread is WhatsApp — the
+  // owner messaged them first from the WhatsApp Business app — is a
+  // WhatsApp contact, not an SMS one: the owner's Send goes where they
+  // expect, under Meta's template rules, instead of as a text from a
+  // Twilio number the person has never seen (security pass 2026-09-25 F1).
+  const latest = await prisma.conversation.findFirst({
+    where: { leadId, channel: { in: ["whatsapp", "text"] } },
+    orderBy: { createdAt: "desc" },
+    select: { channel: true },
+  });
+  return latest?.channel === "whatsapp" ? "whatsapp" : "text";
 }
 
 /**
@@ -327,6 +338,26 @@ export async function sendFollowUpToLead(
       message: "This lead texted STOP — SMS/WhatsApp sending is blocked until they text START to opt back in.",
       failure: "refused",
     };
+  }
+
+  // Never an automatic text or WhatsApp to someone who has not written to
+  // the business, on any channel. Instagram and Messenger already refuse
+  // this below (Meta requires it); SMS and WhatsApp had no equivalent, so
+  // a lead the owner messaged first from their phone could be enrolled by
+  // a WhatsApp source rule and texted from the business's Twilio number
+  // without ever having contacted it (security pass 2026-09-25 F1). The
+  // owner's own send is untouched: a person choosing to message someone
+  // is their call, not FollowUp's.
+  if ((channel === "text" || channel === "whatsapp") && options.automated) {
+    const hasWritten = await prisma.message.count({ where: { conversation: { leadId: lead.id }, direction: "inbound" } });
+    if (hasWritten === 0) {
+      const firstName = lead.name.split(" ")[0];
+      return {
+        success: false,
+        message: `${firstName} hasn't messaged you yet, so FollowUp won't text or WhatsApp them on its own. The first message is yours to send.`,
+        failure: "refused",
+      };
+    }
   }
 
   // The same hard stop for Instagram and Messenger DMs, which had none at

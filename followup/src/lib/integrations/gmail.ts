@@ -623,7 +623,19 @@ async function processThreadRefs(
     // back to the older, broader heuristic rather than dropping every
     // lead in demo/unconfigured environments. `skipClassification` is
     // the owner's explicit "this was a lead" override (importGmailThread).
-    if (process.env.OPENAI_API_KEY && !alreadyKnown && !options.skipClassification) {
+    // A known customer starting a NEW thread is still a known customer.
+    // The check above is per thread, so without this their second thread
+    // was judged from scratch and could be set aside — never reaching the
+    // lead, never drafted for, never alerted (daily-path sweep 2026-09-25
+    // #3). WhatsApp already never second-guesses a number it knows.
+    const knownCustomer =
+      !alreadyKnown &&
+      !!(await prisma.lead.findUnique({
+        where: { businessId_email: { businessId, email: counterpart.email } },
+        select: { id: true },
+      }));
+
+    if (process.env.OPENAI_API_KEY && !alreadyKnown && !knownCustomer && !options.skipClassification) {
       // A thread this classifier already rejected stays rejected until it
       // gets a new message — otherwise the every-ten-minutes sync would
       // pay OpenAI to re-reach the same verdict on the same mail forever.

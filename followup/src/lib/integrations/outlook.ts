@@ -373,7 +373,19 @@ async function processConversations(
 
     const newestMessageAt = parsedMessages[parsedMessages.length - 1].sentAt;
 
-    if (process.env.OPENAI_API_KEY && !alreadyKnown && !options.skipClassification) {
+    // A known customer starting a NEW thread is still a known customer.
+    // The check above is per thread, so without this their second thread
+    // was judged from scratch and could be set aside — never reaching the
+    // lead, never drafted for, never alerted (daily-path sweep 2026-09-25
+    // #3). WhatsApp already never second-guesses a number it knows.
+    const knownCustomer =
+      !alreadyKnown &&
+      !!(await prisma.lead.findUnique({
+        where: { businessId_email: { businessId, email: counterpart.email } },
+        select: { id: true },
+      }));
+
+    if (process.env.OPENAI_API_KEY && !alreadyKnown && !knownCustomer && !options.skipClassification) {
       const priorVerdict = await prisma.filteredEmail.findUnique({
         where: { businessId_threadId: { businessId, threadId: conversationId } },
         select: { lastMessageAt: true },

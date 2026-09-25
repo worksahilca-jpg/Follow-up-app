@@ -603,7 +603,7 @@ describe("prospect classifier (classifyAsProspect) — solicitations disguised a
 // know.
 describe("prospect classifier (classifyAsProspect) — a business whose trade is unknown", () => {
   const systemFor = async (business?: { name: string; industry: string | null }) => {
-    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ whoIsSelling: "this business", isProspect: true, reason: "n/a" }) } }] });
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ whoIsSelling: "sender wants to buy from this business", isProspect: true, reason: "n/a" }) } }] });
     await classifyAsProspect(conversation, { name: "Jamie", email: "jamie@example.com" }, business);
     return create.mock.calls[0][0].messages[0].content as string;
   };

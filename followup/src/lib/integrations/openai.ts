@@ -311,14 +311,21 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
     properties: {
       whoIsSelling: {
         type: "string",
-        enum: ["the sender", "this business", "neither"],
+        // Labels that say which way the money goes. They used to be "the
+        // sender" / "this business" as answers to "whose work is being
+        // bought?" — and a customer asking the price of a coat was filtered
+        // twice live on 2026-09-25 with a reason saying "they are a
+        // customer": "the sender" reads as "the sender is the one paying",
+        // which is the opposite of what it meant.
+        enum: ["sender is selling to this business", "sender wants to buy from this business", "neither"],
         description:
-          "Decide this FIRST, before the verdict. In this thread, whose work is being bought? " +
-          "\"the sender\" — they are offering, pitching, or promoting a service or product of THEIRS, and this " +
-          "business would be the customer. \"this business\" — the sender is asking about, requesting, " +
-          "negotiating, or already engaged in work that THIS business performs and gets paid for. " +
-          "\"neither\" — no commercial direction at all (personal mail, an automated notification, a newsletter, " +
-          "a recruiter). Judge by who would send the invoice at the end, not by who sounds keener.",
+          "Decide this FIRST, before the verdict. Which way would money flow? " +
+          "\"sender is selling to this business\" — they are offering, pitching, or promoting a service or product " +
+          "of THEIRS, and this business would pay them. \"sender wants to buy from this business\" — the sender is " +
+          "asking about, requesting, pricing, negotiating, or already engaged in work or products that THIS " +
+          "business provides, and would pay this business. \"neither\" — no commercial direction at all (personal " +
+          "mail, an automated notification, a newsletter, a recruiter). Judge by who would send the invoice at the " +
+          "end, not by who sounds keener.",
       },
       // Before the verdict, not after it (found live 2026-09-25): written
       // last, the sentence could say "they are a customer" under a verdict
@@ -360,7 +367,8 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
           "employment paperwork aimed at the owner, any vendor/agency/broker/insurer soliciting the business " +
           "(however personally worded), automated platform notifications, and newsletters — see the system " +
           "message for the full rules, which this summary never overrides. " +
-          "This must be false whenever whoIsSelling is \"the sender\", and true whenever it is \"this business\".",
+          "This must be false whenever whoIsSelling is \"sender is selling to this business\", and true whenever " +
+          "it is \"sender wants to buy from this business\".",
       },
     },
     required: ["whoIsSelling", "reason", "isProspect"],
@@ -441,7 +449,9 @@ const UNKNOWN_TRADE_RULE =
  * turns on. See PROSPECT_CLASSIFICATION_SCHEMA for why it is answered
  * first and enforced in code afterwards.
  */
-export type WhoIsSelling = "the sender" | "this business" | "neither";
+export type WhoIsSelling = "sender is selling to this business" | "sender wants to buy from this business" | "neither";
+const SELLER: WhoIsSelling = "sender is selling to this business";
+const BUYER: WhoIsSelling = "sender wants to buy from this business";
 
 export async function classifyAsProspect(
   conversation: Message[],
@@ -488,9 +498,11 @@ export async function classifyAsProspect(
           `You triage a small business owner's inbox before it reaches their CRM. ${businessLine} ` +
           // The first question, asked first, because it is the one the
           // classifier was getting wrong. See whoIsSelling in the schema.
-          "FIRST, before anything else, settle whoIsSelling: in this thread, whose work would be paid for? " +
-          "Someone offering, pitching, or promoting THEIR OWN service to this business is selling, and the " +
-          "answer is \"the sender\" — which makes the verdict false, always, with no exception for how warm, " +
+          "FIRST, before anything else, settle whoIsSelling: in this thread, which way would money flow? " +
+          "Someone asking what this business charges, or asking for its work or products, wants to buy — " +
+          "\"sender wants to buy from this business\". Someone offering, pitching, or promoting THEIR OWN service " +
+          "to this business is selling, and the answer is \"sender is selling to this business\" — which makes the " +
+          "verdict false, always, with no exception for how warm, " +
           "specific, flattering or well-informed about this business the message is. Selling is not only " +
           "insurance, software, ads and financing. A photographer, videographer, designer, contractor, " +
           "consultant, agency, bookkeeper, cleaner or any other skilled person writing to offer the business " +
@@ -569,9 +581,8 @@ export async function classifyAsProspect(
   //
   // A sender who is NOT selling is not automatically a customer — an
   // automated notification and a newsletter are both "neither" — so
-  // "neither" is never promoted. Only the model's own "this business" is
-  // (below).
-  if (parsed.whoIsSelling === "the sender" && parsed.isProspect) {
+  // "neither" is never promoted. Only the model's own BUYER is (below).
+  if (parsed.whoIsSelling === SELLER && parsed.isProspect) {
     return {
       isProspect: false,
       reason: parsed.reason || "The sender is offering their own services to this business, not asking about its.",
@@ -579,7 +590,7 @@ export async function classifyAsProspect(
   }
 
   // The other half of the same invariant, and the founder's bar ("make sure
-  // no leads slip", 2026-09-20). "this business" is, by the schema's own
+  // no leads slip", 2026-09-20). BUYER is, by the schema's own
   // definition, someone asking about or engaged in work this business is
   // paid for — which is exactly what isProspect true means. A false next to
   // it is the model contradicting itself (found live 2026-09-25: "asking
@@ -588,7 +599,7 @@ export async function classifyAsProspect(
   // the owner one click, a filtered customer is never answered. "neither"
   // is still never promoted — a newsletter is not selling to us, and it is
   // not a customer either.
-  if (parsed.whoIsSelling === "this business" && !parsed.isProspect) {
+  if (parsed.whoIsSelling === BUYER && !parsed.isProspect) {
     return { isProspect: true, reason: parsed.reason };
   }
 

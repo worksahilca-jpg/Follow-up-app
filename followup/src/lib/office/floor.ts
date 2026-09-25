@@ -9,6 +9,7 @@
 
 import { prisma } from "@/lib/db";
 import { startOfUtcDay } from "@/lib/office/runner";
+import { requirePlatformAdmin } from "@/lib/platformAdmin";
 
 export interface DeskView {
   key: string;
@@ -53,6 +54,11 @@ export interface Floor {
 }
 
 export async function getFloor(now: Date = new Date()): Promise<Floor> {
+  // Its own check, not only the page's: the same belt-and-braces rule
+  // getPlatformAdminData() follows. A layout is not a security boundary in
+  // the App Router (see the note in src/app/admin/office/page.tsx), so the
+  // function that reads cross-tenant rows proves the caller itself.
+  await requirePlatformAdmin();
   const dayStart = startOfUtcDay(now);
 
   const [roles, todayByRole, recent, runsToday] = await Promise.all([

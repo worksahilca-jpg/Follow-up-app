@@ -1000,3 +1000,19 @@ real) → Underneath → Pricing → Questions → Start free.
 **Result:** the desktop page is about 8,000px (about 9 laptop screens, down from about 11). I'd estimated 6–7. The
 honest gap is that each remaining section is doing a job. Further cuts are the founder's call (listed in
 design-decisions).
+
+## A-055 — Three more cuts to the landing page ^A-055
+
+**Approved:** 2026-09-26, founder: *"yes do all three"*.
+**What specifically:**
+1. **Your control:** "What it can see" (the four Google permissions) moves to /security. The switches stay, as a
+   two-column list. The closing line becomes "It asks Google only for what it needs, and can't see anything you
+   haven't connected. The full list, and what we haven't done yet:" plus the link.
+2. **Underneath:** just the four outcome columns (Today, Follow-up plans, Rules, Your week). No tabs and no Today
+   frame.
+3. **The gap:** the quote heading and one line: "A CRM stores names. A reminder tells you it's time. FollowUp tells
+   you who, and why, every day."
+
+**Result:** desktop is 7,193px (about 8 laptop screens, down from about 11 before any trimming). It's one board.
+The phone is two boards.
+**Needed when built:** /security must list the four Google permissions (the Security board already does).

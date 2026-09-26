@@ -6867,3 +6867,24 @@ cards) now uses the landing wash, with grain, dark text and a black Send (canvas
 progress bars stay black, because each is one small action or state. Recorded as R-018.
 **Weak spot:** on the landing hero the reply card now sits on a washed panel, so it's gradient on gradient. It
 reads, thanks to its border and shadow, but it's softer than before. Worth watching.
+
+## 2026-09-26 — "We talked" drawn (proposed; from the Close study)
+
+From `followup/research/product/2026-09-26-close-follow-up-workflow.md` #1 (Close's "Mark as Responded"). Two phone
+artboards next to the conversation (canvas version 27):
+
+- **Before:** under Send and Edit, two quiet links: **We talked · Don't send**.
+- **After one tap:**
+  - the reply card goes;
+  - the history gets a line: "You talked with Grace · Today, 10:12";
+  - a white note says "FollowUp won't check in with Grace. If Grace writes again, it shows up here like any new
+    message.";
+  - a toast says "Check-ins stopped for Grace", with **Undo**.
+- No confirm dialog: Undo is the safety net (calm, one tap). The toast is white, not black (R-018).
+
+**Weak spots:**
+- Two quiet links side by side could be mis-tapped. Each is a 44px target, and Undo covers the rest.
+- A person with no waiting reply (only a check-in coming up) also needs the link, on the person page header. That
+  isn't drawn yet.
+- Desktop gets the same link beside "Don't send". Not drawn, to leave the approved desktop boards alone until this
+  is approved.

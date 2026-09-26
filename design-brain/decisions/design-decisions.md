@@ -7142,3 +7142,23 @@ Weak spots I noticed:
 - **Kept as drawn:** "Back in week 2" stays as the last funnel row, even though its base is activated testers.
 - **Replaced:** the old four-number tester box on /admin (Added, Signed in, Inbox connected, First lead). The new
   steps cover it, and connected now means any source.
+
+### 2026-09-26: #350 merged (A-047 built), and the Framer motion study drawn
+- **Merged:** #350, first value on /admin and Today.
+- **Drawn on the canvas (v37), all proposed.** Motion is drawn as storyboards: frames in time, each saying what moves,
+  for how long, and what happens under reduce motion.
+  - **MotionCloseUp:** Today after the undo window ends. The card folds into "Sent to Priya" (180 ms), that line
+    fades, and the cards below slide up on a spring (about 220 ms). Omar ends where Priya was. Don't send and Later
+    work the same way ("Won't send to Priya", "Priya set aside until 2:00 pm").
+  - **MotionUndo:** a thin line under "Sending to Priya in Xs · Undo" drains in a straight line over the 10 seconds.
+    It stops on Undo and the buttons come back. The safe pile gets the same line.
+  - **MotionOpen:** the Later menu grows from "Later" (150 ms, from the top right). "See an example" opens downward
+    and pushes the rules below. "Every step" opens in place. Closing takes 120 ms.
+  - **MotionRetire:** removes the load fades on Today, Pipeline's stagger and count-up, and the unused sparkle and
+    tilt. The landing hero is unchanged. This decides the open item in `brand/motion.md`.
+  - **MotionTokens:** `--motion-fast` 150 ms, `--motion-move` 220 in and 120 out, `--motion-layout` a spring, and
+    `--motion-time` linear. These are `[TO DECIDE]`, so they're the founder's call.
+- **Weak spots I noticed:**
+  - Storyboards show timing but not feel. The only honest check is the built thing, in a render recording.
+  - The close-up only happens after the undo window ends. For those 10 seconds the card is still there, which is
+    right, but the send can feel delayed. The undo line is what makes that wait make sense.

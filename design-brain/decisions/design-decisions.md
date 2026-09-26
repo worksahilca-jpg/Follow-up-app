@@ -6779,3 +6779,25 @@ Answered one at a time, each recorded where it belongs:
 - The weekly email leads with the win (A-034).
 - "Email Sahil" on the beta sign-in (A-035).
 - First replies right after connecting: a product decision, logged in PRODUCT_DIRECTION.md (2026-09-26).
+
+## 2026-09-26 — The founder's analytics page, designed (Admin · how FollowUp is being used)
+
+Founder: "Where is the design of analytics for me?" The code had been written first; this corrects the order.
+There are two artboards (desktop and phone, canvas version 22) with this week's real, counts-only numbers:
+
+- **Leads with the one thing to act on:** "Replies are being written. Most are still waiting for an owner to
+  press Send." Then four big numbers (the Apple principle): 27 customers got a written reply, 5 sent by owners,
+  23 waiting for an OK, 1 came back.
+- **The week against the week before**, as a ruled table: new customers, replies written, sent by owners, sent
+  automatically, quick "got it" replies, "Don't send", came back, and accounts where someone acted.
+- **Which parts get used:** "x of 10" with a thin bar each.
+- **Website visits:** it links to Vercel, with the honest empty state "Starts counting once Analytics is
+  switched on in Vercel".
+- The phone shows the same content stacked: numbers 2×2, then a plain list (R-015: no table on the phone).
+
+**Two counting fixes found while designing:**
+- "Replies written" counted repeat hold events. It now counts customers.
+- "Waiting" counted a stale column. It now uses the latest decision.
+
+**Not yet matched:** the live code's section still uses the current app styling and has no big-number band.
+Once the founder approves this design, the code follows it before shipping.

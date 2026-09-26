@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import Switch from "@/components/Switch";
+import RuleExample from "@/components/RuleExample";
 
 export type RuleRecordCounts = { wrote: number; sent: number; waiting: number };
 
@@ -24,6 +25,7 @@ export default function RuleCard({
   record,
   error,
   children,
+  exampleRule,
 }: {
   when: ReactNode;
   does: ReactNode;
@@ -38,6 +40,8 @@ export default function RuleCard({
   error?: string | null;
   /** Anything this rule needs beyond its sentence (a second setting, a note). */
   children?: ReactNode;
+  /** The rule's key, for "See an example" (A-044). Omitted: no button. */
+  exampleRule?: string;
 }) {
   const parts = record
     ? [
@@ -58,6 +62,7 @@ export default function RuleCard({
         <Switch checked={checked} onChange={onToggle} disabled={disabled} label={label} />
       </div>
       {children}
+      {exampleRule && checked && <RuleExample rule={exampleRule} />}
       {error && (
         <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
           {error}

@@ -1508,6 +1508,7 @@ function SettingsPageInner() {
             }}
             disabled={!automationLoaded || instantAckSaving}
             label="Thank new customers right away"
+            exampleRule={"instant_ack"}
             record={ruleRecords?.instant_ack ?? null}
             error={instantAckError}
           >
@@ -1529,6 +1530,7 @@ function SettingsPageInner() {
             }}
             disabled={!automationLoaded || unansweredSaving}
             label="Reply when you haven't"
+            exampleRule={"unanswered"}
             record={ruleRecords?.unanswered ?? null}
             error={unansweredError}
           >
@@ -1585,6 +1587,7 @@ function SettingsPageInner() {
             }}
             disabled={!automationLoaded || automationSaving}
             label="Check in when they go quiet"
+            exampleRule={"silence"}
             record={ruleRecords?.silence ?? null}
             error={automationError}
           >
@@ -1627,6 +1630,7 @@ function SettingsPageInner() {
             }}
             disabled={!automationLoaded || deadLeadSaving}
             label="Welcome back after a long silence"
+            exampleRule={DEAD_LEAD_RULE}
             record={ruleRecords?.[DEAD_LEAD_RULE] ?? null}
             error={deadLeadError}
           />

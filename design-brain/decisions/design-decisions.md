@@ -7162,3 +7162,14 @@ Weak spots I noticed:
   - Storyboards show timing but not feel. The only honest check is the built thing, in a render recording.
   - The close-up only happens after the undo window ends. For those 10 seconds the card is still there, which is
     right, but the send can feel delayed. The undo line is what makes that wait make sense.
+
+### 2026-09-26: A-048 approved and built
+- **PR #351:** the close-up on Today, the undo line, open in place, and the tokens.
+  - One deviation from the storyboard: the result line holds 0.7 s, not 0.2 s, so it can be read. Flagged in the PR.
+  - The close-up animates position only (`layout="position"`), so nothing gets stretched. Reduce motion skips it
+    through the existing `MotionConfig`.
+  - The undo line is a CSS animation rather than framer. Framer's reduce-motion handling would have jumped it to
+    empty; CSS lets it hold still.
+- **Part 2 PR:** removals. `FadeIn`, `Reveal` and `CountUp` are now unused in the app but still in the codebase. Only
+  sparkle and tilt were approved for deletion.
+- `brand/motion.md`'s three `[TO DECIDE]` items are marked decided.

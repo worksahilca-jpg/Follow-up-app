@@ -32,7 +32,7 @@ is S-07, so they should not be reached for when a future screen wants "some poli
 only palette colors, and is genuinely well built. The problem is not craft — it is that
 they are ornament, and ornament is what the brand rejects.
 
-**`[TO DECIDE]` — retire the decorative motion from the authenticated app** (aurora on the
+**DECIDED (2026-09-26, [[approved#^A-048|A-048]]): retired.** Was: `[TO DECIDE]` — retire the decorative motion from the authenticated app (aurora on the
 dashboard, `Reveal` across three pages, `CountUp` on anxiety metrics), and delete the
 unused primitives so they aren't reached for later. Marketing pages are a separate
 question with more latitude. **This is the founder's decision to make** — flagged here
@@ -90,9 +90,9 @@ rather than acted on.
 
 ## Open decisions
 
-- `[TO DECIDE]` Named duration/easing tokens (`--motion-fast`, `--ease-out`) instead of
-  inline values.
-- `[TO DECIDE]` Retiring the decorative motion listed above from the authenticated app.
-- `[TO DECIDE]` Whether `CountUp` stays on lead metrics.
+- ~~Named duration/easing tokens~~ — **decided 2026-09-26 (A-048):** `--motion-fast` 150 ms, `--motion-move` 220 ms,
+  `--motion-exit` 120 ms, `--ease-out`, `--ease-in`, one layout spring; mirrored in `src/lib/motion.ts`.
+- ~~Retiring the decorative motion~~ — **decided 2026-09-26 (A-048):** removed.
+- ~~Whether `CountUp` stays on lead metrics~~ — **decided 2026-09-26 (A-048):** no.
 - ~~Whether `prefers-reduced-motion` is honored~~ — **verified 2026-09-12: yes**, every
   decorative animation in `globals.css` is gated behind it. Keep that standard.

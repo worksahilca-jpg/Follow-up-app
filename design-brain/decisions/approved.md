@@ -868,3 +868,20 @@ asked about explicitly.
   customer's name and says FollowUp keeps watching. No confetti, points or streaks.
 - **Guardrails:** no analytics SDK, only our own tables, founder-only.
 **Built:** PR #350.
+
+## A-048 — Motion that explains a change of state (Framer study) ^A-048
+
+**Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 37). That includes the motion tokens,
+which were marked "your call".
+**What specifically:**
+- **Today:** a finished card folds into what happened ("Sent to Priya."), then leaves, and the cards below slide up
+  into its place. The same happens for Don't send ("Won't send to Priya.").
+- **Undo:** a thin line drains in a straight line over the 10-second window, on each card and on the safe pile. It
+  holds still under reduce motion, and the seconds still count.
+- **Open in place:** the Later choices, "See an example", "Read a few first" and "Every step" open from their
+  trigger. They take 220 ms to open and 120 ms to close.
+- **Removed from the app:** load fades, Pipeline's stagger and count-up, and the sparkle and tilt primitives. The
+  landing hero is unchanged.
+- **Tokens:** `--motion-fast` 150 ms, `--motion-move` 220 ms, `--motion-exit` 120 ms, ease-out in and ease-in out,
+  and one spring for layout. The same numbers live in `src/lib/motion.ts`.
+**Built:** PR #351 (moments and tokens) and the part 2 PR (removals).

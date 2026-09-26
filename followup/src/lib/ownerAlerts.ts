@@ -140,8 +140,9 @@ async function waitingCustomersFor(businessId: string, now: Date): Promise<Waiti
   const since = now.getTime() - ALERT_RECENT_MS;
   // Cheap first cut on what the queue already knows, so a backlog of fifty
   // old holds costs no per-lead queries on every tick.
+  // A card set aside with "Later" (A-046) has been seen; it isn't news.
   const fresh = (await getPendingApprovals(businessId)).filter(
-    (a) => a.leadLastMessageAt && Math.max(a.heldAt.getTime(), new Date(a.leadLastMessageAt).getTime()) >= since
+    (a) => !a.laterUntil && a.leadLastMessageAt && Math.max(a.heldAt.getTime(), new Date(a.leadLastMessageAt).getTime()) >= since
   );
   if (fresh.length === 0) return [];
   const ids = fresh.map((a) => a.leadId);

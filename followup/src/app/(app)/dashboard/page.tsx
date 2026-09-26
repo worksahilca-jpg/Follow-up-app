@@ -15,6 +15,7 @@ import { withBasis, sentAsWritten } from "@/lib/showTheWork";
 import { weekLine } from "@/lib/weekLine";
 import { describeWait, describeWaitClause, startOfLocalDay } from "@/lib/calmToday";
 import { countHandledToday } from "@/lib/handledToday";
+import { laterTodayAvailable } from "@/lib/later";
 import { loadComingUp } from "@/lib/comingUpData";
 import { ComingUpList, ComingUpLine } from "@/components/ComingUp";
 import { getSessionContext } from "@/lib/session";
@@ -117,7 +118,9 @@ export default async function DashboardPage() {
   // "Waiting 5 h" on each card and in the "Start with" line (A-046), worked
   // out here so the server and the browser show the same words.
   const now = new Date();
-  const approvalItems: ApprovalItem[] = (await withBasis(approvals, timezone)).map((a) => ({
+  // Set aside with "Later" (A-046): off Today until it comes back.
+  const setAside = approvals.filter((a) => a.laterUntil).length;
+  const approvalItems: ApprovalItem[] = (await withBasis(approvals.filter((a) => !a.laterUntil), timezone)).map((a) => ({
     ...a,
     wait: describeWait(a, now),
     waitClause: describeWaitClause(a, now),
@@ -236,7 +239,7 @@ export default async function DashboardPage() {
       {cantSend && (
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
-      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} />
+      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} />
 
       {leads.length === 0 ? (
         <FadeIn className="mt-10">

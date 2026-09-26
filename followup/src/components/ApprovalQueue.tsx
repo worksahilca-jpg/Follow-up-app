@@ -73,13 +73,20 @@ function ApprovalCard({
   item,
   onResolved,
   sendLocked = false,
+  laterToday = true,
 }: {
   item: ApprovalItem;
   onResolved: (leadId: string) => void;
   /** Only admins send, and this person isn't one (A-041). */
   sendLocked?: boolean;
+  /** Whether "Later today" (2pm) is still ahead in the owner's day (A-046). */
+  laterToday?: boolean;
 }) {
-  const [busy, setBusy] = useState<"send" | "dismiss" | "talked" | null>(null);
+  const [busy, setBusy] = useState<"send" | "dismiss" | "talked" | "later" | null>(null);
+  // "Later" (A-046): set aside until a time, back by itself or as soon as
+  // the customer writes. Not "handled", so it never counts toward the day.
+  const [laterOpen, setLaterOpen] = useState(false);
+  const [laterUntil, setLaterUntil] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // "We talked" (design brain A-039): the card stays for a few seconds
   // saying what happened, with Undo, then leaves the queue.
@@ -159,7 +166,47 @@ function ApprovalCard({
     }
   }
 
+  async function setLater(when: "later_today" | "tomorrow_morning" | "clear") {
+    setBusy("later");
+    setError(null);
+    try {
+      const res = await fetch(`/api/leads/${item.leadId}/later`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ when }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't save that.");
+      setLaterUntil(data.until ?? null);
+      setLaterOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't save that.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const firstName = item.leadName.split(" ")[0] || item.leadName;
+  if (laterUntil) {
+    const at = new Date(laterUntil);
+    const tomorrow = at.toDateString() !== new Date().toDateString();
+    const time = at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return (
+      <div className="box px-4 py-4 flex flex-wrap items-center justify-between gap-3" role="status">
+        <p className="text-sm">
+          {item.leadName} is set aside until {tomorrow ? `tomorrow at ${time}` : time}, or until {firstName} writes again.
+        </p>
+        <button
+          onClick={() => setLater("clear")}
+          disabled={busy !== null}
+          className="rounded-lg px-3 py-1.5 text-sm font-medium border disabled:opacity-60"
+          style={{ borderColor: "var(--line)", color: "var(--ink)" }}
+        >
+          {busy === "later" ? "…" : "Undo"}
+        </button>
+      </div>
+    );
+  }
   if (talked) {
     return (
       <div className="box px-4 py-4 flex flex-wrap items-center justify-between gap-3" role="status">
@@ -285,12 +332,41 @@ function ApprovalCard({
             {busy === "talked" ? "…" : "We talked"}
           </button>
           <button
+            onClick={() => setLaterOpen((v) => !v)}
+            disabled={busy !== null || send.busy}
+            aria-expanded={laterOpen}
+            className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-ink-soft hover:bg-paper disabled:opacity-60"
+          >
+            Later
+          </button>
+          <button
             onClick={dontSend}
             disabled={busy !== null || send.busy}
             className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-ink-soft hover:bg-paper disabled:opacity-60"
           >
             {busy === "dismiss" ? "…" : "Don't send"}
           </button>
+        </div>
+      )}
+      {laterOpen && !send.pending && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {laterToday && (
+            <button
+              onClick={() => setLater("later_today")}
+              disabled={busy !== null}
+              className="rounded-lg px-3 py-1.5 text-sm border border-line hover:bg-paper disabled:opacity-60"
+            >
+              Later today · 2 pm
+            </button>
+          )}
+          <button
+            onClick={() => setLater("tomorrow_morning")}
+            disabled={busy !== null}
+            className="rounded-lg px-3 py-1.5 text-sm border border-line hover:bg-paper disabled:opacity-60"
+          >
+            Tomorrow morning · 9 am
+          </button>
+          <span className="text-xs text-ink-soft">Comes straight back if {firstName} writes again. The reply stays as it is.</span>
         </div>
       )}
       {/* Says what IS true (nothing left) rather than "Cancelled", which
@@ -305,6 +381,8 @@ export default function ApprovalQueue({
   answeredForYou = 0,
   sendLocked = false,
   handledToday = 0,
+  laterToday = true,
+  setAside = 0,
 }: {
   items: ApprovalItem[];
   /** Only admins send, and this person isn't one (A-041). */
@@ -313,6 +391,10 @@ export default function ApprovalQueue({
   answeredForYou?: number;
   /** People the owner dealt with since their midnight (A-031 / A-046). */
   handledToday?: number;
+  /** "Later today" still ahead in the owner's day (A-046). */
+  laterToday?: boolean;
+  /** Cards set aside with Later, hidden until they come back. */
+  setAside?: number;
 }) {
   const [resolved, setResolved] = useState<Set<string>>(new Set());
   const visible = items.filter((i) => !resolved.has(i.leadId));
@@ -412,7 +494,7 @@ export default function ApprovalQueue({
       )}
 
       {/* Today has an end (A-031, A-046). Desktop only: the phone gets less (R-015). */}
-      <div className="mt-3 hidden sm:block max-w-md">
+      <div className="mt-3 hidden sm:block max-w-xl">
         <div className="h-[3px] rounded-full" style={{ backgroundColor: "var(--line)" }}>
           <div
             className="h-[3px] rounded-full"
@@ -424,6 +506,7 @@ export default function ApprovalQueue({
             {handled} of {total}
           </span>{" "}
           handled today · When the list is empty, you&apos;re done for today.
+          {setAside > 0 && ` ${setAside} set aside for later.`}
         </p>
       </div>
 
@@ -493,6 +576,7 @@ export default function ApprovalQueue({
                   item={item}
                   onResolved={(leadId) => setResolved((prev) => new Set(prev).add(leadId))}
                   sendLocked={sendLocked}
+                  laterToday={laterToday}
                 />
               ))}
 

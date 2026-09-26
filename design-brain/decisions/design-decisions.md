@@ -6638,3 +6638,30 @@ After A-024 ("both, build the inbox next"), three artboards were added: **App ·
 - "Reply ready" and "Needs you" both mean "waiting for your OK", which may be one distinction too many. Worth asking.
 - The desktop conversation has no link to the person's attributes beyond "Open person".
 - There's no empty state ("You're all caught up") yet.
+
+## 2026-09-26 — The hero follows Intercom's sales order (the order only, not the look)
+
+Founder: copy Intercom's *sales hierarchy*, not its visual identity. That hierarchy is: clear proposition → short
+explanation → start free trial / view demo → "14-day free trial · no credit card" → social proof →
+product demonstration. It is applied to the hero on both artboards (canvas version 10):
+
+1. **Proposition:** A-013's headline, unchanged.
+2. **Short explanation:** A-014's buyer line stays as the first sentence. One new sentence follows,
+   built from the page's existing claims: "FollowUp reads your email, DMs and website messages, shows you
+   who is going quiet, and writes the reply. You decide what gets sent."
+3. **Start free + "See it work":** Start free stays the only black button. "View demo" became a quiet
+   link with a play mark that jumps to the Try it demo on the page. It is **not** a second conversion, so
+   A-023's one goal holds, and so does the research's warning against a second CTA (conversion-strategies §5).
+   If the founder wants a full second button, that deviates from A-023 and needs his say.
+4. **Risk reversal:** "Free while in beta · No credit card" on one line, then "Nothing sends without your OK
+   · Delete everything, any time" on the next. These are A-022's three promises, now set as two short lines.
+   No invented trial length.
+5. **Social proof:** the tester slot moves directly under the buttons and is shaped like a real quote
+   (quote, face, first name · trade · city). It stays **empty until a real tester says yes**. There are no
+   logos or counts, because nothing real exists yet (research 2.6, A-010).
+6. **Product demonstration:** the message → reply example. On desktop it stays on the right (A-022). On the
+   phone it now comes after the proof, in Intercom's order.
+
+**Weak spot:** the empty proof slot sits in the most valuable spot on the page. Until a tester quote exists,
+it shows a gap to anyone looking at the design. Getting two or three quotes from testers is now the
+highest-value thing the founder can do for the landing page.

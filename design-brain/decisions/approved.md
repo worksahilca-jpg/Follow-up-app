@@ -361,6 +361,7 @@ future copy in this spot: a poke is allowed when it is true, kind, and the reade
 about themselves.
 
 ## A-015 — The full page: hero, gap, why it exists, how it works, why not a reminder, product cards, four promises, works with, as it happens, features, prices, questions ^A-015
+**SUPERSEDED (2026-09-26)** in its section order by [[approved#^A-023|A-023]] (nine sections).
 
 **Approved:** 2026-09-19, founder: "cool, that's it." After "make it like this but with the
 old version's information" and "more older ones": the settled hero (A-013, A-014, A-012's
@@ -497,3 +498,27 @@ must be removed and re-added (iPhone: clear Safari website data first) before ju
 **Supersedes:** R-006 (the all-light page, rejected 2026-09-18) and R-010's device-theme rule,
 for the landing page. **Changes A-013's styling only:** the wording stands; the serif emphasis
 is gone. Direction recorded in `[[design-decisions#^light-elevenlabs]]`.
+
+## A-023 — The landing page plan: nine sections, one question each, one goal ^A-023
+
+**Approved:** 2026-09-26, founder, on the plan table: "we are going good." Sections 2–4 were
+also kept as built ("lets keep building").
+
+**The plan, in order:** 1 Hero (A-022) · 2 "Works with" strip · 3 The gap · 4 How it works in
+three steps · 5 See it working · 6 Promises · 7 Pricing · 8 Questions · 9 Final "Start free".
+
+**Rules that came with it:**
+- One goal, "Start free", in the top bar, the hero, after How it works, after Pricing and at the end.
+- Per section: a small label, one big thin line, one sentence, then the example.
+- Black and white; the reply card is the one black "answered" moment.
+- Phone version for every section.
+- Motion only in the hero.
+- Real tester quotes under the hero and by the final button once testers agree; nothing fake before.
+
+**Cut from the 2026-09-18 page (A-015):** "Why FollowUp exists" (merged into The gap), "Why not
+just set a reminder?" (becomes an FAQ), the big "Works with" section (now the strip), and "As it
+happens" and "Features" (merged into See it working). Supersedes A-015's section order.
+
+**Built so far (Figma, "Page v3"):** the "Works with" strip, and The gap with "Today · 3 people
+need you" beside it. How it works: "Three steps. Two minutes to start.", three soft cards with
+thin numerals.

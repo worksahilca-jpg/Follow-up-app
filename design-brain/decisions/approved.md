@@ -770,6 +770,8 @@ drawn detail.
 
 ## A-042 — Outcome-first copy (Ramp study) ^A-042
 
+**PARTLY SUPERSEDED (2026-09-26) by [A-045](#A-045):** Today's three "This week" tiles become one line.
+
 **Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 32).
 **What specifically:**
 - Landing features become "Less chasing. More booking." Six outcomes, each with the feature as the small line.
@@ -783,6 +785,8 @@ drawn detail.
 at design time.
 
 ## A-043 — Show the work, not the robot (Intercom study) ^A-043
+
+**PARTLY SUPERSEDED (2026-09-26) by [A-045](#A-045):** "sent as written" joins Today's one line.
 
 **Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 33).
 **What specifically:**
@@ -813,3 +817,14 @@ at design time.
   and change a day. "Start from scratch" is a quiet link.
 - "Your rules" (A-041) stays as the summary beside the cards.
 - Guardrails: no flowchart or branching, and no live test that sends.
+
+## A-045 — Today's numbers: one line ^A-045
+
+**Approved:** 2026-09-26, founder: "yes fold into one line". This was asked after the conflict check found Today
+gathering more pieces than A-027's "analytics becomes one line on Today".
+**What specifically:**
+- The "This week" tiles (A-042) and "You sent X of Y without changing a word" (A-043) become one quiet line on desktop
+  Today. For example: "This week: 11 customers answered · 2 came back · 1 booked · 18 of 21 sent as written".
+- Each part appears only when it's more than zero. The line is hidden when every part is zero.
+- The phone doesn't show it (R-015).
+- Today's order stays: warnings (paused, can't send) → Needs your OK → the rest.

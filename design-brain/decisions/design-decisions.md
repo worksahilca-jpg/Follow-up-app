@@ -6553,3 +6553,41 @@ artboards, following the conversion research (`research/landing-page/2026-09-26-
 **Weak spots, named:** the page is long on phone (~10,400px). The FAQ answers are dense for
 the grade-5 reading target. The Try-it box sits inside a section that already has tabs, which
 may be too much in one place.
+
+## 2026-09-26 — Trims, a different phone, soft washes, pen marks, and three facts
+
+Founder, in one run: "trim those, keep building", then the phone isn't meant to be the same as desktop
+(now brand principle 4), then "can we add gradients too in the theme and make it more human made",
+then "copy from apple too". All of it is on the canvas (version 6). **Not yet reacted to.**
+
+- **Trims.** The FAQ answers are now one or two short sentences each, still true to the product.
+  On desktop, Try it is the fourth tab of See it working instead of a separate box, and "Try it"
+  is in the top bar (the research says demos in the top bar get clicked most).
+- **Phone, rebuilt to the new rule.** Same words, far fewer pictures:
+  - The hero example is compact.
+  - The gap's list is cut. The gap's sentence still says it, and "One list" shows it.
+  - How it works is a numbered list.
+  - See it working is four tabs, one example at a time.
+  - The promises are a divider list.
+  - Pricing is a Free / Plus / Pro switcher showing one plan at a time (Plus first).
+  - The FAQ starts closed.
+  - The phone went from about 9,000px to about 6,000px.
+- **Gradients, within the old rules.** They are soft apricot, rose-sand and dusty-blue washes on the warm surface, with
+  a fine paper grain on top. They appear in exactly two places: behind the hero example and behind the final
+  "Start free". The page ground stays one tone (R-010's lesson). They are low-saturation and grained so
+  they don't read as the cheap gradients S-02 bans. Proposed values, not final tokens: `.fu-wash-hero`
+  and `.fu-wash-end` in the artboards' styles.
+- **"Human made", read as: marks a person's hand would make.** This is inferred; he hasn't said what he meant.
+  A two-pass pen underline under "follow up" and under "free" in "Start free.", and a loose pen arrow
+  from the customer's message to the reply (the arrow fades in with the reply). No handwriting font was
+  added, because adding a font needs his OK. No photos of people (R-011).
+- **From Apple, the principle only:** one true number, set big, with a short line under it. A slim band
+  after "Works with" shows **$0** while in beta, **2 min** to connect, and **1 list** a day of who needs you and why.
+  These are all product facts, with no counts or proof invented. It puts price and "the catch" inside the
+  first two screens (research 2.4). No Apple layout, type or imagery was reproduced.
+
+**Weak spots, named:**
+- The washes could still feel decorative. If he says "too much", the grain and the dusty blue are the
+  first things to drop.
+- The pen arrow is fixed while the reply animates, so it fades with it.
+- The phone frame height is estimated (6,100px), so there may be empty space at the bottom.

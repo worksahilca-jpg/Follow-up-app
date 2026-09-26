@@ -67,6 +67,8 @@ Configuration is progressive: powerful when sought, invisible when not.
 
 **Test:** would someone who has never seen this screen know what to do in five seconds?
 
+**The phone is not a shrunk desktop** (founder, 2026-09-26: *"it is not supposed to be same… the information should be same, the message should be same… the diagrams and all that are consuming lots of space in mobile version"*). On a phone, keep every word and every claim, and cut or compress the pictures: big mock cards become one compact example, card grids become divider lists, several stacked demos become tabs showing one at a time, three price cards become a switcher. A visual stays on the phone only if the words can't carry that point alone.
+
 ---
 
 ## 5. Clarity over cleverness, always

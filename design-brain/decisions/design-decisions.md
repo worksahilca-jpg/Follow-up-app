@@ -7369,3 +7369,17 @@ around "on its own, except the decision". Desktop is still about 7,200px.
 
 **Blocker before this page can go live:** the product still holds every reply by default and refuses Autonomous (the
 2026-09-21 decision). Shipping this page before the product changes would make the page untrue.
+
+### 2026-09-26: five review fixes (canvas v54, founder: "Yes, fix all five")
+1. **Hero picture:** removed the leftover empty white box.
+2. **The gap:** "…FollowUp answers them and follows up, every day." It used to say "tells you who", which was the old
+   idea.
+3. **See it working, Spanish example:**
+   - It's now sent on its own: "¡Hola! Sí, trabajamos los sábados. ¿Qué hora le viene bien?"
+   - It carries the line "Sent on its own. No price, no date to promise."
+   - It used to offer "Saturday at 10" with Send/Edit, which is a date and so a decision.
+4. **Your control:** the closing line is one clean sentence plus the link.
+5. **Pricing, Plus:** "Follows up on its own, on every channel" moved to the top of its list.
+
+**Rule learned (A-056):** any example that promises a price or a date must be shown as a decision that comes to the
+owner, never as something sent on its own.

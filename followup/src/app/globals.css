@@ -211,8 +211,54 @@ h1, h2, h3, .font-display {
    component: a quiet, consistent 150ms transition on every interactive
    element, without touching each component's own classes. */
 a, button, input, select, textarea, [tabindex] {
-  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease,
-    box-shadow 150ms ease, opacity 150ms ease, transform 150ms ease;
+  transition: background-color var(--motion-fast) ease, border-color var(--motion-fast) ease, color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease, opacity var(--motion-fast) ease, transform var(--motion-fast) ease;
+}
+
+/* Motion tokens (design brain A-048, the Framer study). Four speeds and
+   nothing else; the framer-motion side reads the same numbers from
+   src/lib/motion.ts. Motion explains a change of state or doesn't exist
+   (brand/motion.md). */
+:root {
+  --motion-fast: 150ms; /* switches, buttons, controls coming back */
+  --motion-move: 220ms; /* something entering: a menu, an example, a result */
+  --motion-exit: 120ms; /* the same thing leaving, faster */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  /* Lets `details` animate to its natural height (below). */
+  interpolate-size: allow-keywords;
+}
+
+/* "Every step, with times" and any other disclosure opens in place, from
+   where it was tapped (A-048). Browsers without ::details-content just
+   open it, which is fine. */
+details.open-in-place::details-content {
+  block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition: block-size var(--motion-move) var(--ease-out), opacity var(--motion-move) var(--ease-out),
+    content-visibility var(--motion-move) allow-discrete;
+}
+details.open-in-place[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+
+/* The undo window, drawn (A-048): a line that drains over exactly the
+   time left. Linear, because it is time. */
+@keyframes undo-drain {
+  from {
+    transform: scaleX(var(--undo-from, 1));
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.undo-line {
+  transform-origin: left center;
+  animation-name: undo-drain;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
 }
 
 /* A quiet default hover cue for the many flat buttons/links in the app
@@ -390,6 +436,13 @@ input::placeholder, textarea::placeholder {
   .switch,
   .switch-knob {
     transition-duration: 1ms;
+  }
+  /* The line holds still; the seconds beside it still count. */
+  .undo-line {
+    animation: none;
+  }
+  details.open-in-place::details-content {
+    transition: none;
   }
   .switch:not(:disabled):active .switch-knob,
   .switch[data-on]:not(:disabled):active .switch-knob {

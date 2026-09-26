@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { OPEN_IN_PLACE } from "@/lib/motion";
 import { Eye } from "lucide-react";
 
 type Example = { leadId: string; leadName: string; what: string; text: string };
@@ -52,7 +54,8 @@ export default function RuleExample({ rule }: { rule: string }) {
         </button>
       )}
       {example && (
-        <div className="rounded-lg p-4" style={{ backgroundColor: "var(--card-2)" }} role="status">
+        // Opens where "See an example" was (A-048).
+        <motion.div initial={OPEN_IN_PLACE.initial} animate={OPEN_IN_PLACE.animate} className="rounded-lg p-4" style={{ backgroundColor: "var(--card-2)" }} role="status">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <p className="text-xs text-ink-soft">
               Example: {example.what} for <span className="text-ink font-medium">{example.leadName}</span>
@@ -67,7 +70,7 @@ export default function RuleExample({ rule }: { rule: string }) {
           </div>
           <p className="mt-2 text-sm leading-relaxed whitespace-pre-wrap">{example.text}</p>
           <p className="mt-2 text-xs text-ink-soft">Only an example. Nothing was sent.</p>
-        </div>
+        </motion.div>
       )}
       {note && <p className="mt-2 text-xs text-ink-soft">{note}</p>}
     </div>

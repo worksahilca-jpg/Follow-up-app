@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check, X, Inbox, Eye, Languages, Send, MessageCircle, Users, Mail, ListChecks, PenLine, BellOff } from "lucide-react";
+import { ArrowRight, Check, X, Inbox, Eye, Languages, Send, MessageCircle, Users, Mail, PenLine, BellOff } from "lucide-react";
 import styles from "./landing-dark.module.css";
 import NavDark from "@/components/landing/dark/NavDark";
 import HeroFlow from "@/components/landing/dark/HeroFlow";
@@ -125,22 +125,24 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---------- How it works ---------- */}
+      {/* ---------- What changes (design brain A-040, the Notion study): the
+          outcomes for the owner, not what the machine does. id="how" stays so
+          the nav link still lands here. ---------- */}
       <section id="how" className={styles.section} style={{ paddingTop: 0 }}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
+          <span className={styles.badge}>What changes</span>
           <h2 className={styles.h2}>
-            How it <span className={styles.em}>works.</span>
+            Two minutes to connect. <span className={styles.em}>Then this changes.</span>
           </h2>
         </RevealLight>
-        <div className={styles.grid4}>
+        <div className={styles.grid3}>
           {[
-            [<Mail key="a" className="h-5 w-5" />, "Connect your inbox", "Gmail, Outlook, Instagram, Messenger, WhatsApp, your website. Two minutes."],
-            [<Eye key="b" className="h-5 w-5" />, "It spots who is going quiet", "It reads every conversation and notices who has not heard back."],
-            [<ListChecks key="c" className="h-5 w-5" />, "You get a short list each day", "Who needs you today, and why. Not a whole system to dig through."],
-            [<Send key="d" className="h-5 w-5" />, "It writes the reply", "Send it, change it, or let simple ones go out on their own. Your choice, for each customer."],
+            [<Mail key="a" className="h-5 w-5" />, "Every message gets a reply", "Connect your inbox, Instagram, WhatsApp or website. FollowUp writes a reply for every customer who writes in."],
+            [<Eye key="b" className="h-5 w-5" />, "You see who's slipping away", "A short list each day: who has gone quiet, and why. Nobody falls through."],
+            [<Send key="c" className="h-5 w-5" />, "You step in only when it matters", "Anything about price waits for your OK. Simple replies can go on their own. Your choice."],
           ].map(([icon, t, b], i) => (
             <RevealLight key={t as string} delay={i * 0.07}>
-              <div className={styles.card}>
+              <div className={styles.card} style={{ height: "100%" }}>
                 <span className={styles.iconChip}>{icon}</span>
                 <h3 className={styles.cardTitle} style={{ fontSize: 17 }}>
                   {t as string}
@@ -156,6 +158,40 @@ export default function LandingPage() {
           </Link>
           <p className={styles.heroNote} style={{ marginTop: 12 }}>Free while in beta. Two minutes to connect.</p>
         </RevealLight>
+      </section>
+
+      {/* ---------- How a normal week goes (A-040): three made-up examples,
+          labelled as such twice. Replaced by real tester stories once testers
+          agree (A-023); never passed off as customers. ---------- */}
+      <section id="stories" className={styles.section} style={{ paddingTop: 0 }}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
+          <span className={styles.badge}>Examples</span>
+          <h2 className={styles.h2}>
+            How a normal week <span className={styles.em}>goes.</span>
+          </h2>
+          <p className={styles.lede}>Made-up names, real situations.</p>
+        </RevealLight>
+        <div className={styles.grid3}>
+          {[
+            ["Dan, plumber", "7:40 PM, under a sink", "Instagram", "How much would a full bathroom redo be?", "FollowUp wrote the reply. It named a price, so it waited for Dan's OK.", "Dan sent it at 8:05. Visit booked for Thursday."],
+            ["Maya, realtor", "At a showing, phone on silent", "WhatsApp", "Is the house on Elm St still available?", "FollowUp wrote the reply. When Tom went quiet, it wrote a check-in on day 3.", "Tom answered the check-in. Showing booked for Saturday."],
+            ["Ana, salon owner", "Mid-cut, hands busy", "Instagram", "¿Tienen cita el sábado por la mañana?", "FollowUp wrote the reply in Spanish, ready for when the cut was done.", "Ana sent it after the cut. Booked Saturday at 10."],
+          ].map(([who, when, channel, said, did, outcome], i) => (
+            <RevealLight key={who} delay={i * 0.07}>
+              <div className={styles.story} style={{ marginBottom: 0, height: "100%" }}>
+                <p className={styles.cardTitle} style={{ fontSize: 16, marginTop: 0 }}>{who}</p>
+                <p className={styles.storyBy} style={{ marginTop: 2 }}>{when}</p>
+                <p className={styles.storyBy} style={{ marginTop: 16 }}>A customer on {channel}:</p>
+                <p className={styles.storyQuote} style={{ marginTop: 4 }}>&ldquo;{said}&rdquo;</p>
+                <p className={styles.cardBody} style={{ marginTop: 14 }}>{did}</p>
+                <p className={styles.storyQuote} style={{ marginTop: 14, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <Check className="h-4 w-4 shrink-0" style={{ marginTop: 4 }} aria-hidden="true" />
+                  <span>{outcome}</span>
+                </p>
+              </div>
+            </RevealLight>
+          ))}
+        </div>
       </section>
 
       {/* ---------- Why not just a reminder ---------- */}

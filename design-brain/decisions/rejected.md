@@ -206,6 +206,7 @@ answers, five days of silence, one short FollowUp question with buttons, the lea
 **Evidence:** the 2026-09-18 "light direction" entry in `[[design-decisions]]`; `HeroStoryLight.tsx`.
 
 ## R-006 — An all-light marketing page (white and grey only, no dark ground anywhere) ^R-006
+**SUPERSEDED (2026-09-26)** by [[approved#^A-022|A-022]]: the founder moved the landing page to white with black type.
 
 **Rejected:** 2026-09-18, founder, on seeing the first full render: "bro where is that black greyish
 gradient" → asked where it should go → "whole page with white and black and greyish gradient".
@@ -302,6 +303,7 @@ any page direction. A product mockup can still live further down (the Product ca
 `[[design-decisions]]` 2026-09-18, "Hero illustration".
 
 ## R-010 — The black → white gradient across the page ^R-010
+**SUPERSEDED (2026-09-26)** by [[approved#^A-022|A-022]]: the founder moved the landing page to white with black type.
 
 **Rejected:** 2026-09-18, founder, on the live preview, minutes after the device-theme rule:
 "we will do full black with dark mode and white with light, so no transition."

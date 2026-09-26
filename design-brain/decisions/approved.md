@@ -480,3 +480,20 @@ so the phone stretched it and it blurred.
 
 **Lesson:** a phone keeps the icon from the moment it was added. After an icon change, it
 must be removed and re-added (iPhone: clear Safari website data first) before judging it.
+
+## A-022 — The white hero (Hero v3 · light): black type, plain thin headline, the reply as the one black card ^A-022
+
+**Approved:** 2026-09-26, founder, on the Figma build: "keep it plain, move to the next section."
+
+**What specifically was approved:**
+- Warm off-white ground (`#fdfcfc`), black type, warm-grey secondary text.
+- The approved headline wording (A-013) set in three plain lines of Public Sans Light, with no
+  serif italic ("keep it plain").
+- The buyer line (A-014), one black "Start free" pill, and three promises right under it:
+  nothing sends without your OK, no card, delete everything any time.
+- On the right, under half the width: source chips, a small stack of waiting messages, and
+  FollowUp's reply as the only black card, with Send and Edit.
+
+**Supersedes:** R-006 (the all-light page, rejected 2026-09-18) and R-010's device-theme rule,
+for the landing page. **Changes A-013's styling only:** the wording stands; the serif emphasis
+is gone. Direction recorded in `[[design-decisions#^light-elevenlabs]]`.

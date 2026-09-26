@@ -477,20 +477,22 @@ export default function LandingPage() {
       <section id="features" className={styles.section} style={{ paddingTop: 0 }}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <h2 className={styles.h2} style={{ fontSize: "clamp(28px, 3.4vw, 40px)" }}>
-            Everything you need, <span className={styles.em}>nothing you don&apos;t.</span>
+            Less chasing. <span className={styles.em}>More booking.</span>
           </h2>
         </RevealLight>
         <div className={styles.grid3}>
           {[
-            [<Inbox key="i" className="h-5 w-5" />, "Every customer in one place", "Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form. One list."],
-            [<Eye key="e" className="h-5 w-5" />, "Know who is slipping", "FollowUp tells you which customers are going quiet, and why."],
-            [<Languages key="l" className="h-5 w-5" />, "Speaks their language", "They write in Spanish, they get answered in Spanish. Any language."],
-            [<Send key="s" className="h-5 w-5" />, "Follows up for you", "Simple replies go out on their own. Anything about money waits for you."],
-            [<MessageCircle key="m" className="h-5 w-5" />, "Made for Instagram and WhatsApp", "Short messages with buttons, so a customer can answer with one tap."],
-            [<Users key="u" className="h-5 w-5" />, "Works for a team", "New customers are shared out evenly. Everyone sees what is waiting."],
+            // Outcome first, the feature as the small print (design brain A-042,
+            // the Ramp study). Every number here is true by construction.
+            [<Inbox key="i" className="h-5 w-5" />, "No message missed", "Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form, in one list."],
+            [<Eye key="e" className="h-5 w-5" />, "Catch them before they go cold", "A short list of who has gone quiet, and why."],
+            [<Languages key="l" className="h-5 w-5" />, "Answer in any language", "They write in Spanish, they get Spanish back."],
+            [<Send key="s" className="h-5 w-5" />, "Check-ins you'd forget", "Day 3, 7, 14 and 30. It stops the moment they answer."],
+            [<MessageCircle key="m" className="h-5 w-5" />, "Customers answer with one tap", "On Instagram and Messenger: short messages with buttons."],
+            [<Users key="u" className="h-5 w-5" />, "Nobody's customers get dropped", "New customers are shared out evenly. Everyone sees what's waiting."],
           ].map(([icon, t, b], i) => (
             <RevealLight key={t as string} delay={(i % 3) * 0.07}>
-              <div className={styles.card}>
+              <div className={styles.card} style={{ height: "100%" }}>
                 <span className={styles.iconChip}>{icon}</span>
                 <h3 className={styles.cardTitle} style={{ fontSize: 17 }}>
                   {t as string}
@@ -525,7 +527,7 @@ export default function LandingPage() {
               <p className={styles.priceNote}>No credit card required.</p>
               <p className={styles.priceListLabel}>Including:</p>
               <ul className={styles.priceList}>
-                {["Gmail or Outlook, plus your website form", `Up to ${FREE_TIER_LEAD_CAP} customers a month`, "See who is slipping, and why", "You approve every reply before it goes out"].map((f) => (
+                {["No email or form enquiry missed", `Up to ${FREE_TIER_LEAD_CAP} customers a month`, "Catch customers before they go cold", "Nothing sends without your OK"].map((f) => (
                   <li key={f}>
                     <span className={styles.check}>
                       <Check className="h-3 w-3" />
@@ -549,7 +551,7 @@ export default function LandingPage() {
               <p className={styles.priceNote}>No credit card required to start.</p>
               <p className={styles.priceListLabel}>Free plus:</p>
               <ul className={styles.priceList}>
-                {["Instagram, Messenger and WhatsApp", "FollowUp replies for you", "Replies in your customer's language", "Bring in contacts from HubSpot or Follow Up Boss", "A weekly report of what it did for you"].map((f) => (
+                {["No DM missed on Instagram, Messenger or WhatsApp", "Simple replies send themselves, if you want", "Answer in any language", "Your CRM contacts, followed up too", "Every Monday: who came back, who booked"].map((f) => (
                   <li key={f}>
                     <span className={styles.check}>
                       <Check className="h-3 w-3" />
@@ -575,7 +577,7 @@ export default function LandingPage() {
               <ul className={styles.priceList}>
                 {/* The paid version of the same overclaim — worst of the
                     four, because someone is being charged for it. */}
-                {["See who on your team is behind, and where", "New customers shared out evenly across your team", "No limit on customers", "Priority support"].map((f) => (
+                {["Know which teammate is falling behind", "Every new customer gets an owner", "No limit on customers", "Priority support"].map((f) => (
                   <li key={f}>
                     <span className={styles.check}>
                       <Check className="h-3 w-3" />

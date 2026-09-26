@@ -9,6 +9,7 @@ import { getLeads, getStats, getUpcomingBookings } from "@/lib/leads-data";
 import { formatCurrency, getGreeting } from "@/lib/demo-data";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { describeTrigger, getRescueReport } from "@/lib/rescued";
+import { countCustomersAnswered } from "@/lib/weeklyDigest";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
@@ -84,6 +85,12 @@ export default async function DashboardPage() {
   const upcomingBookings = await getUpcomingBookings();
   const ctx = await getSessionContext();
   const rescue = ctx ? await getRescueReport(ctx.businessId, 7) : null;
+  // "This week" (design brain A-042, the Ramp study): customers, not
+  // messages, the same count the Monday email uses.
+  const weekEnd = new Date();
+  const answeredThisWeek = ctx
+    ? await countCustomersAnswered(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000), weekEnd)
+    : 0;
   const approvals = ctx ? await getPendingApprovals(ctx.businessId) : [];
   // Passed straight through. This used to be re-mapped field by field,
   // which dropped whatever the mapping had not been told about — see
@@ -320,27 +327,19 @@ export default async function DashboardPage() {
               390px, where one-per-row spent ~370px of the first screen on
               three numbers and pushed "About to be lost", the thing the page
               is for, below the fold. */}
-          <RevealGroup on="mount" className="grid grid-cols-3 gap-3 mt-6">
+          {/* What the week gave back, in outcomes (A-042): customers answered,
+              who came back, what got booked. Who is at risk right now is the
+              headline above and the list below, so it isn't a tile too. */}
+          <p className="mt-6 text-xs font-medium uppercase tracking-wider text-ink-soft">This week</p>
+          <RevealGroup on="mount" className="grid grid-cols-3 gap-3 mt-2">
             <RevealItem>
-              <StatCard
-                label="At risk right now"
-                value={<CountUp to={stats.atRisk} />}
-                accent="var(--coral)"
-              />
+              <StatCard label="Customers answered" value={<CountUp to={answeredThisWeek} />} accent="var(--slate)" />
             </RevealItem>
             <RevealItem>
-              <StatCard
-                label="Answered for you"
-                value={<CountUp to={rescue?.answeredForYou ?? 0} />}
-                accent="var(--slate)"
-              />
+              <StatCard label="Came back" value={<CountUp to={rescue?.rescued ?? 0} />} accent="var(--sage)" />
             </RevealItem>
             <RevealItem>
-              <StatCard
-                label="Came back"
-                value={<CountUp to={rescue?.rescued ?? 0} />}
-                accent="var(--sage)"
-              />
+              <StatCard label="Booked" value={<CountUp to={rescue?.booked ?? 0} />} accent="var(--ink)" />
             </RevealItem>
           </RevealGroup>
 

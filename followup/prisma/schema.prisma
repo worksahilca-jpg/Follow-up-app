@@ -787,6 +787,13 @@ model Lead {
   // src/lib/talked.ts. Undo sets it back to null.
   talkedAt DateTime?
 
+  // "Catching up" (design brain A-043): a two-or-three sentence summary of
+  // a long conversation, and how many messages it covered. Regenerated
+  // only when the count changes, so reading a lead doesn't cost a model
+  // call every time.
+  catchUpText  String?
+  catchUpCount Int?
+
   // The DM grace period (src/lib/acknowledge.ts, DM_ACK_GRACE_PERIOD_MS).
   //
   // On Instagram, Messenger and WhatsApp the acknowledgement is no longer

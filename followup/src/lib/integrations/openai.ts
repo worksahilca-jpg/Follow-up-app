@@ -1687,3 +1687,84 @@ export async function assessAckRisk(
   const parsed = JSON.parse(raw) as { reasoning: string; verdict: "ok" | "not_ok"; reason: string };
   return { verdict: parsed.verdict, reason: parsed.reason };
 }
+
+/**
+ * Rewrite a reply the owner is looking at: shorter, warmer, more formal,
+ * or into the customer's language (design brain A-043, the Intercom
+ * study: small verbs on the reply, not a separate AI screen).
+ *
+ * It only reshapes what is already there. It may not add a price, a date,
+ * a promise or any fact that is neither in the reply nor in the
+ * conversation, the same rule every draft here follows. The result still
+ * waits for the owner to send it.
+ */
+export type RewriteStyle = "shorter" | "warmer" | "formal" | "language";
+
+const REWRITE_INSTRUCTION: Record<RewriteStyle, string> = {
+  shorter: "Make it shorter: keep every fact and the question it asks, drop filler. Aim for about half the length.",
+  warmer: "Make it warmer and more personal, like a friendly small-business owner, without getting longer or gushing.",
+  formal: "Make it more formal and polished, still plain and short.",
+  language: "Put it into the language the customer writes in, matching how they write.",
+};
+
+export async function rewriteReply(
+  text: string,
+  style: RewriteStyle,
+  conversation: Message[],
+  leadLanguage?: Partial<LeadLanguage> | null
+): Promise<string> {
+  if (!process.env.OPENAI_API_KEY || !text.trim()) return text;
+  const client = getClient();
+  const decided = style === "language" ? registerInstruction(leadLanguage) : "";
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You rewrite a reply a small-business owner is about to send to a customer. " +
+          REWRITE_INSTRUCTION[style] +
+          (decided ? " FollowUp has already decided how this customer writes: " + decided : "") +
+          " Keep the same meaning and the same facts. Never add a price, date, time, promise, discount or any fact " +
+          "that is not already in the reply or the conversation. Keep names unchanged. " +
+          (style === "language" ? "" : "Keep the reply in the language it is already written in. ") +
+          "Output only the rewritten reply, with no quotes and no explanation." +
+          UNTRUSTED_CONVERSATION_NOTICE,
+      },
+      { role: "user", content: `${formatTranscript(conversation)}\n\nReply to rewrite:\n${text.slice(0, 2000)}` },
+    ],
+  });
+  const out = completion.choices[0]?.message?.content?.trim() ?? "";
+  // A rewrite that comes back empty or balloons is refused rather than
+  // shown: the owner keeps what they had.
+  if (!out || out.length > Math.max(400, text.length * 3)) return text;
+  return out;
+}
+
+/**
+ * "Catching up" at the top of a long conversation (A-043): two or three
+ * short sentences a teammate can read instead of the whole thread. Only
+ * what the conversation says, in plain English for the owner.
+ */
+export async function summarizeConversation(conversation: Message[], leadFirstName: string): Promise<string | null> {
+  if (!process.env.OPENAI_API_KEY || conversation.length === 0) return null;
+  const client = getClient();
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content:
+          `Summarise this conversation between a small business and a customer called ${leadFirstName || "the customer"}, ` +
+          "for the business owner who is about to reply. Two or three short sentences in English: what they asked " +
+          "for, what the business said or quoted (with the date if it matters), and where it stands now. Say " +
+          "\"you\" for the business. Only state what the conversation says; never guess, add or recommend anything. " +
+          "Output the sentences only." +
+          UNTRUSTED_CONVERSATION_NOTICE,
+      },
+      { role: "user", content: formatTranscript(conversation) },
+    ],
+  });
+  const out = completion.choices[0]?.message?.content?.trim() ?? "";
+  return out ? out.slice(0, 500) : null;
+}

@@ -22,6 +22,8 @@ export default function MessageComposer({
   leadEmail,
   seenInboundAt,
   sendLocked = false,
+  basis,
+  languageName,
 }: {
   leadId: string;
   initialMessage: string;
@@ -32,6 +34,10 @@ export default function MessageComposer({
   seenInboundAt?: string;
   /** Only admins send, and this person isn't one (A-041): write and edit, but no Send. */
   sendLocked?: boolean;
+  /** "Based on …" (A-043, @/lib/basedOn): what the draft rests on. Null when there's nothing to point at. */
+  basis?: string | null;
+  /** The customer's language when it isn't English ("Spanish"), for the "In Spanish" rewrite. */
+  languageName?: string | null;
 }) {
   const isEmail = Boolean(leadEmail);
   const [message, setMessage] = useState(initialMessage);
@@ -41,6 +47,32 @@ export default function MessageComposer({
   const [sending, setSending] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Which rewrite is running (A-043). The reply is replaced in place and
+  // still waits for Send.
+  const [rewriting, setRewriting] = useState<string | null>(null);
+  // "Based on" describes the draft as written; once edited or rewritten it
+  // no longer does, so it goes away.
+  const [edited, setEdited] = useState(false);
+
+  async function rewrite(style: "shorter" | "warmer" | "formal" | "language") {
+    setRewriting(style);
+    setError(null);
+    try {
+      const res = await fetch(`/api/leads/${leadId}/rewrite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: message, style }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't rewrite it.");
+      setMessage(data.text);
+      setEdited(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't rewrite it.");
+    } finally {
+      setRewriting(null);
+    }
+  }
 
   async function regenerate() {
     setRegenerating(true);
@@ -50,6 +82,7 @@ export default function MessageComposer({
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Regeneration failed.");
       setMessage(data.message);
+      setEdited(true);
       if (typeof data.subject === "string") setSubject(data.subject);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Regeneration failed.");
@@ -92,7 +125,7 @@ export default function MessageComposer({
   if (sent) {
     return (
       <section>
-        <h2 className="font-display text-xl">AI-suggested follow-up</h2>
+        <h2 className="font-display text-xl">Your reply, ready</h2>
         {sentTemplate ? (
           /* Not a success message. What went out was the template; these
              words did not reach anyone, and the one useful thing to say is
@@ -121,10 +154,8 @@ export default function MessageComposer({
           underneath already says what drafted this and that nothing sends
           without approval, which is the part that earns trust. The icon was
           decoration standing in for an explanation that's already there. */}
-      <h2 className="font-display text-xl">AI-suggested follow-up</h2>
-      <p className="text-xs text-ink-soft mt-1">
-        FollowUp drafted this based on your conversation. Nothing sends without your approval.
-      </p>
+      <h2 className="font-display text-xl">Your reply, ready</h2>
+      <p className="text-xs text-ink-soft mt-1">Written from your conversation. Nothing sends until you do.</p>
 
       <div className="mt-3 rounded-lg border border-line bg-card overflow-hidden">
         {isEmail && (
@@ -154,12 +185,38 @@ export default function MessageComposer({
         )}
         <textarea
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => {
+            setMessage(e.target.value);
+            setEdited(true);
+          }}
           rows={5}
           className="w-full p-3 text-sm leading-relaxed bg-transparent focus:outline-none resize-y"
         />
       </div>
 
+      {basis && !edited && <p className="mt-2 text-xs text-ink-soft">{basis}</p>}
+      {/* Rewrite (A-043, the Intercom study): verbs on the reply itself. */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-ink-soft mr-1">Rewrite it:</span>
+        {(
+          [
+            ["shorter", "Shorter"],
+            ["warmer", "Warmer"],
+            ["formal", "More formal"],
+            ...(languageName ? [["language", `In ${languageName}`]] : []),
+          ] as ["shorter" | "warmer" | "formal" | "language", string][]
+        ).map(([style, label]) => (
+          <button
+            key={style}
+            type="button"
+            onClick={() => rewrite(style)}
+            disabled={rewriting !== null || sending || regenerating || !message.trim()}
+            className="min-h-9 sm:min-h-0 rounded-full border border-line px-3 py-1 text-xs font-medium disabled:opacity-60"
+          >
+            {rewriting === style ? "Rewriting…" : label}
+          </button>
+        ))}
+      </div>
       {isEmail && !subject.trim() && (
         <p className="mt-1.5 text-xs text-ink-soft">A subject line is required before this can send.</p>
       )}

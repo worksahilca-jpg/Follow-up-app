@@ -228,6 +228,11 @@ const USUAL_SCRIPT: Record<string, string> = {
  * carries the timestamp, and repeating it here would be two clocks to
  * keep in sync.
  */
+/** The language's plain English name ("Spanish"), or the code itself when there isn't one on file. */
+export function languageName(code: string): string {
+  return LANGUAGE_NAMES[code] ?? code;
+}
+
 export function describeLeadLanguage(lang: LeadLanguage | null): string | null {
   if (!lang) return null;
   const name = LANGUAGE_NAMES[lang.language] ?? lang.language;

@@ -52,7 +52,8 @@ import SafePilePeek from "@/components/SafePilePeek";
  * one-click pile would have been permanently empty, with no error
  * anywhere. An alias cannot drop a field.
  */
-export type ApprovalItem = PendingApproval;
+/** A waiting reply, plus "Based on …" (A-043) when there is something to point at. */
+export type ApprovalItem = PendingApproval & { basis?: string | null };
 
 const CHANNEL_LABEL: Record<string, string> = {
   email: "email",
@@ -213,6 +214,7 @@ function ApprovalCard({
         <p className="text-xs font-medium text-ink-soft">The draft reply:</p>
         {item.draftSubject && <p className="font-medium mt-1">{item.draftSubject}</p>}
         <p className="text-ink-soft whitespace-pre-wrap mt-1">{item.draftMessage}</p>
+        {item.basis && <p className="mt-1.5 text-xs text-ink-soft">{item.basis}</p>}
       </div>
       {error && (
         <p className="text-xs mt-1.5" style={{ color: "var(--coral)" }}>

@@ -781,3 +781,19 @@ drawn detail.
 
 **Built:** PR #340. The small line on "one tap" now says "On Instagram and Messenger", which fixes the weak spot noted
 at design time.
+
+## A-043 — Show the work, not the robot (Intercom study) ^A-043
+
+**Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 33).
+**What specifically:**
+- "AI" comes off working screens: "Your reply, ready" (sub-line "Written from your conversation. Nothing sends until
+  you do."), "What FollowUp did", "N sorted by how likely they are to book", "Answers your calls".
+- One quiet "Based on …" line under each waiting reply. It names only what's in the conversation, and it's built
+  without a model call. An amount counts as "you quoted" only if it first appeared in the owner's own message.
+- Rewrite chips on the reply: Shorter · Warmer · More formal · In <their language>. The reply still waits for the owner.
+- Today: "You sent X of Y replies without changing a word." Real data only (`draftEdited`).
+- "Catching up": two or three factual sentences at the top of conversations with 7+ messages, and a link to show them
+  all.
+- Guardrails: no sparkles, bot avatars or chat-with-the-AI screen (S-13).
+
+**Built:** PR #342. Rewrite chips are 36px tall on phones so they're easy to tap (the weak spot found in review).

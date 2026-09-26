@@ -7029,3 +7029,8 @@ Founder: "yes design all five". On the canvas, version 33. These are new boards;
   small model call per long conversation.
 - "Sent as written" can look low for owners who like to edit. That's still true, and it's the point.
 - "More formal" vs "Warmer" might overlap for some owners.
+
+### 2026-09-26: Intercom "show the work" built (A-043)
+Founder approved all five designs from canvas v33. They're built in PR #342. "Based on" is deterministic, so it's
+checkable and free. The catch-up summary is cached per message count, so it costs one model call per new message at
+most. The rewrite chips got a taller tap target on phones after self-review.

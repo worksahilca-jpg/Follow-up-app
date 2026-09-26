@@ -6999,3 +6999,33 @@ construction (days 3/7/14/30, 6 channels).
 
 **Weak spots:** "Customers answer with one tap" only holds on Instagram and Messenger (quick replies). The small line
 says "made for DMs", but a reader could still take it as true for email.
+
+## 2026-09-26: AI inside the workflow, drawn (Intercom study)
+
+Founder: "yes design all five". On the canvas, version 33. These are new boards; the approved boards are untouched.
+
+1. **WordsCompare.** The four places the app still says "AI", and what each should say instead:
+   - "AI-suggested follow-up" → "Your reply, ready"
+   - "Consent & AI activity" → "What FollowUp did"
+   - "AI-scored 12" → "12 sorted by how likely they are to book"
+   - "Live AI voice agent" → "Answers your calls"
+2. **"Based on" (InboxAI desktop, ThreadCatchUpPhone).** One quiet line under the reply naming what it used, for
+   example "her message this morning and the $6,500 you quoted on Sep 20". It only names facts that are in the
+   conversation. A first draft cited "your Saturday hours in Settings", which is a setting FollowUp doesn't have, so
+   it was cut.
+3. **Rewrite (InboxAI desktop, EditRewritePhone).**
+   - Desktop: "Rewrite it: Shorter · Warmer · More formal" under the actions.
+   - Phone: the chips live inside Edit (R-015: less on the phone screen). "In Spanish" appears when the owner typed in
+     a language other than the customer's, with the line "You wrote in English. Ana wrote in Spanish."
+   - It still waits for OK.
+4. **"Sent as written" (TodayProof).** Under This week: "You sent 18 of 21 replies without changing a word. The other
+   3 you edited first." It's measured from `FollowUp.draftEdited`, which is stored for every account.
+5. **Catching up (ThreadCatchUpPhone).** At the top of a long conversation: "Priya asked about a full bathroom redo.
+   You quoted $6,500 on Sep 20. She went quiet, then asked if Thursday still works." It has a "Show all 9 messages"
+   link.
+
+**Weak spots:**
+- "Based on" and "Catching up" need the model to report what it used. That's a backend change, and it costs one more
+  small model call per long conversation.
+- "Sent as written" can look low for owners who like to edit. That's still true, and it's the point.
+- "More formal" vs "Warmer" might overlap for some owners.

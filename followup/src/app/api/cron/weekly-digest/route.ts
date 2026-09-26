@@ -3,8 +3,7 @@ import { requireCronSecret } from "@/lib/cronAuth";
 import { prisma } from "@/lib/db";
 import { hasActiveAccess } from "@/lib/billing";
 import { sendEmail } from "@/lib/integrations/gmail";
-import { getRescueReport, renderRescueDigest } from "@/lib/rescued";
-import { getPendingApprovals } from "@/lib/pendingApprovals";
+import { gatherWeeklyDigest, renderWeeklyDigest } from "@/lib/weeklyDigest";
 import { appUrl } from "@/lib/stripe";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { tooManyRecentActions } from "@/lib/rateLimit";
@@ -30,7 +29,7 @@ const DIGEST_CLAIM_WINDOW_MINUTES = 7 * 24 * 60;
 
 /**
  * GET /api/cron/weekly-digest — Monday mornings (vercel.json). Emails every
- * admin of every active business "what FollowUp saved you this week",
+ * admin of every active business their week (src/lib/weeklyDigest.ts),
  * sent from the business's own connected Gmail (no third-party mailer,
  * nothing leaves the account). Businesses without a connected Gmail are
  * skipped — the same report is always on the dashboard.
@@ -52,6 +51,7 @@ export async function GET(request: NextRequest) {
     select: {
       id: true,
       name: true,
+      timezone: true,
       subscriptionStatus: true,
       tier: true,
       users: { where: { role: "ADMIN" }, select: { id: true, email: true } },
@@ -74,21 +74,12 @@ export async function GET(request: NextRequest) {
       return;
     }
     try {
-      const report = await getRescueReport(b.id, 7);
-      // What is written and waiting. On an account with
-      // holdAllForApproval on — the default since 2026-09-21 — automated
-      // sends are zero by construction, so without this the weekly email
-      // reports a week of nothing to a business whose queue may hold a
-      // dozen replies that have sat there since Monday.
-      const awaitingApproval = (await getPendingApprovals(b.id)).length;
-      const body = renderRescueDigest(b.name, report, appUrl(), awaitingApproval);
-      // The subject leads with whatever actually needs them. "0 came
-      // back, 0 answered for you" is a demoralising and useless subject
-      // on an account that is holding twelve drafts.
-      const subject =
-        awaitingApproval > 0
-          ? `FollowUp this week: ${awaitingApproval} ${awaitingApproval === 1 ? "reply is" : "replies are"} waiting for your OK`
-          : `FollowUp this week: ${report.rescued} came back, ${report.answeredForYou} answered for you`;
+      // The week's win, the replies waiting for an OK by name, and the
+      // numbers beside last week's (design brain A-034, A-037, A-038). The
+      // subject leads with the win, else with what needs them: on a
+      // holding account — the default since 2026-09-21 — "0 came back, 0
+      // answered for you" would be a useless subject over a full queue.
+      const { subject, text, html } = renderWeeklyDigest(await gatherWeeklyDigest(b, appUrl()));
       for (const u of b.users) {
         // The claim, one per admin per week, taken right before the send.
         // It is the same atomic check-and-record the rate limits use
@@ -116,7 +107,7 @@ export async function GET(request: NextRequest) {
           alreadySent += 1;
           continue;
         }
-        const r = await sendEmail(b.id, { to: u.email, subject, body });
+        const r = await sendEmail(b.id, { to: u.email, subject, body: text, html });
         if (r.success) sent += 1;
       }
     } catch (err) {

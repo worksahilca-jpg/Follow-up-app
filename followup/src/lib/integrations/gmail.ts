@@ -26,6 +26,7 @@
  * connect route) to re-consent and pick up the new scope.
  */
 
+import { randomUUID } from "crypto";
 import { google } from "googleapis";
 import type { gmail_v1 } from "googleapis";
 import { prisma } from "@/lib/db";
@@ -1025,6 +1026,35 @@ export function sanitizeHeaderValue(value: string): string {
 }
 
 /**
+ * The body lines of a raw message, after the headers. Plain text alone is
+ * exactly what sendEmail always sent. With `html`, a multipart/alternative
+ * body: plain text first, HTML last (the part a mail app prefers when it
+ * can show it). Both parts are base64 in 76-character lines, so a long
+ * HTML line can never break the 998-character limit on a message line.
+ */
+export function mimeBody(text: string, html?: string, boundary = `fu-${randomUUID()}`): string[] {
+  if (html === undefined) return ["Content-Type: text/plain; charset=utf-8", "", text];
+  const b64 = (s: string) => Buffer.from(s, "utf-8").toString("base64").replace(/.{76}(?=.)/g, "$&\r\n");
+  return [
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=utf-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    b64(text),
+    `--${boundary}`,
+    "Content-Type: text/html; charset=utf-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    b64(html),
+    `--${boundary}--`,
+    "",
+  ];
+}
+
+/**
  * The two headers a reply needs from the customer's own email: its
  * RFC 2822 `Message-ID` (for In-Reply-To/References) and its Subject.
  *
@@ -1073,6 +1103,13 @@ export async function sendEmail(
      * so a value carrying CRLF can't inject headers of its own.
      */
     extraHeaders?: string[];
+    /**
+     * A designed HTML version, sent beside `body` as multipart/alternative
+     * so a mail app that blocks HTML still shows the plain text. Only the
+     * owner's own weekly email uses it; every message to a customer stays
+     * plain text.
+     */
+    html?: string;
   }
 ): Promise<{ success: boolean; messageId?: string; message?: string }> {
   const authed = await getAuthedGmailClient(businessId);
@@ -1098,9 +1135,7 @@ export async function sendEmail(
     // Sanitised the same way every other header value is: a header line
     // carrying a CR or LF would let its content inject further headers.
     ...(params.extraHeaders ?? []).map((h: string) => sanitizeHeaderValue(h)),
-    "Content-Type: text/plain; charset=utf-8",
-    "",
-    params.body,
+    ...mimeBody(params.body, params.html),
   ].join("\r\n");
 
   const encoded = Buffer.from(raw)

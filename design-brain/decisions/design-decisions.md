@@ -7207,3 +7207,15 @@ All proposed. Sample names only, and no pronouns in product copy.
     here.
   - The reply speed needs a definition. Median time from a customer's message to our first reply (sent by anyone),
     this week.
+
+### 2026-09-26: A-050 built (PRs #354, #355, #356)
+- **#354 words:** "customer" on owner-facing screens. Technical Settings sections, Meta's "Lead Ads", admin, routes
+  and the A-013 hero stay as they are.
+- **#355:**
+  - The places line lives inside the approval queue, so it's live as the owner sends.
+  - `isWaitingOnCustomer`: not closed, the newest message is ours, and the instant ack isn't an answer.
+  - `nextFor` is shared by Coming up and `/waiting`.
+  - Reply speed is the median from the first customer message of a turn to the first non-ack reply, this week.
+  - Weak spot: desktop shows "Handled today" twice (the new line and A-046's progress line).
+- **#356:** `PROOF_STORIES` ships empty. The section doesn't render until a story is complete and has a consent
+  date.

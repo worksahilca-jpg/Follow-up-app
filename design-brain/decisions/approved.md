@@ -915,4 +915,4 @@ after How it works, after Pricing and at the end.
 - **Check-ins state their condition:** "unless Priya writes first".
 - **Proof on the landing page:** each tester's own before and after reply time, plus their words. It renders only
   when every field is real and agreed (A-023).
-**Built:** PR #354 (words). The rest follows.
+**Built:** PR #354 (words), #355 (three places, waiting list, "unless", reply speed), #356 (proof, hidden until real).

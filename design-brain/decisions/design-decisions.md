@@ -7091,3 +7091,11 @@ The founder said "yes design all five". Six boards:
 Weak spots I noticed:
 - Adding "Later" next to "Don't send" is a change to A-026's reply block. It needs his explicit OK.
 - The desktop row now carries four things on the right (wait, Later, action button). It's busy.
+
+### 2026-09-26: A-046 part 1 built (PR #345), and two notes
+- **SUPERSEDED ORDER:** the founder's 2026-09-23 instruction ("sort according to the sources then scores") is
+  superseded inside each source by A-046's "longest waiting first". The source grouping stays and score breaks ties.
+  This is flagged to him in the PR, and reverting is one line.
+- **No pronouns in generated copy.** The canvas drew "She's waited 5 hours" and "She comes straight back if she
+  writes again". The app can't know anyone's pronouns, so the built copy uses the name or a relative clause: "Start
+  with Priya, who has waited 5 hours". Apply this to Later's sheet too.

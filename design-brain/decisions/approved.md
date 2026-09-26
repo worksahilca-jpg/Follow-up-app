@@ -484,8 +484,8 @@ must be removed and re-added (iPhone: clear Safari website data first) before ju
 
 ## A-022 — The white hero (Hero v3 · light): black type, plain thin headline, the reply as the one black card ^A-022
 
-**PARTLY SUPERSEDED (2026-09-26) for the phone by [A-058](#^A-058):** on the phone the headline is bold (Public Sans
-600). The desktop keeps the thin headline.
+**Headline weight reconfirmed (2026-09-26, [A-059](#^A-059)):** thin on both desktop and phone. A-058 briefly made the
+phone headline bold; that was reversed the same day.
 
 **PARTLY SUPERSEDED (2026-09-26) by [R-018](rejected.md#R-018):** the reply is no longer a black card. It is the landing
 gradient with dark text; only Send stays black.
@@ -1093,6 +1093,9 @@ placeholder handles and no links to empty profiles.
 
 ## A-058 — The phone's first screen: the picture in view, bold headline ^A-058
 
+**SUPERSEDED IN PART (2026-09-26) by [A-059](#^A-059):** the bold headline is reversed. Everything else in A-058
+stands.
+
 **Approved:** 2026-09-26, founder: *"B looks better, put it on the phone page"*. He chose it over A (the same layout
 with the thin headline).
 **What specifically (PhoneV2, canvas v57):**
@@ -1110,3 +1113,12 @@ with the thin headline).
 **Result:** the phone page is about 6,560px.
 **Rejected alongside:** option A (the thin headline on the phone). No reason was given. Inferred (marked inferred):
 on a small screen, the thin weight doesn't hold attention.
+
+## A-059 — Thin headline on both desktop and phone ^A-059
+
+**Approved:** 2026-09-26, founder. Asked whether the desktop headline should become bold to match the phone, he
+answered: *"thin is fine for both please"*.
+**What specifically:** the headline stays Public Sans 300 on desktop and on the phone (40px, three lines). The phone
+keeps the rest of A-058: the one-line lede, the picture in the first screen, and the button row.
+**What this settles:** the phone's "boring" problem (R-021) was about the picture being below the fold, not about the
+headline's weight. That's inferred from this answer, and marked inferred.

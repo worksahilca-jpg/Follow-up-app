@@ -7424,3 +7424,7 @@ The founder picked B, the bold headline. It replaced the hero section on PhoneV2
 removed from the canvas. A-022 is marked partly superseded for the phone.
 **Open, for when this is built:** the phone headline is bold and the desktop headline is thin. It's a deliberate
 split for now. Check with the founder before building whether the desktop should match.
+
+### 2026-09-26: headline thin on both (A-059, canvas v58)
+The founder chose thin for both desktop and phone. PhoneV2's headline went back to Public Sans 300, and the bold
+from A-058 is reversed. The layout from A-058 stays. The desktop/phone split that A-058 left open is now closed.

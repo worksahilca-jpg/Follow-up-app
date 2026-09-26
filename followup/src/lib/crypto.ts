@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import * as Sentry from "@sentry/nextjs";
 
 /**
  * Encryption at rest for third-party credentials FollowUp holds on a
@@ -28,6 +29,25 @@ function loadKey(): Buffer | null {
     if (!warned) {
       warned = true;
       console.warn("TOKEN_ENCRYPTION_KEY is not set — third-party credentials are being stored unencrypted.");
+      // In production a console line is read by nobody, so a deploy
+      // missing the key stored every Gmail refresh token, Meta page token
+      // and Twilio auth token in plaintext with nothing anywhere saying so
+      // (audits 2026-09-16 M-3, 2026-09-26 A-8). Reported as a security
+      // alert through the same Sentry path as auth failures. Not a throw:
+      // if the live deployment is in this state today, failing closed
+      // would take every integration down at once; this makes the state
+      // impossible to miss instead.
+      if (process.env.NODE_ENV === "production") {
+        try {
+          Sentry.captureMessage("TOKEN_ENCRYPTION_KEY is not set in production — credentials are stored unencrypted", {
+            level: "error",
+            tags: { security_alert: "true", config_problem: "token_encryption_key_missing" },
+            fingerprint: ["config", "token-encryption-key-missing"],
+          });
+        } catch {
+          // Reporting must never break the credential read/write itself.
+        }
+      }
     }
     return null;
   }

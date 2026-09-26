@@ -1058,3 +1058,32 @@ earn trust → offer automation) is now the opposite order. It's mitigated by:
 - instant stop on reply;
 - the audit trail ("It's honest");
 - the "Ask me before everything" switch.
+
+## A-057 — A shorter phone page, and a real footer ^A-057
+
+**Approved:** 2026-09-26, founder: *"yes do all four and at the bottom, we should do something like this, right? All
+big companies have their blogs and stuff, and their handles, contact info, and all that stuff."* (He sent a
+screenshot of a large multi-column site footer as the example.)
+**What specifically, phone (PhoneV2, canvas v55):**
+1. **How it works:** three numbered lines, no frames.
+2. **Sarah's story:** plain lines on a thin timeline. A red dot marks the one decision that came to the owner.
+3. **Your control:** the promises are a short list with a bold lead-in. The switches are small chips under "Switches,
+   any time".
+4. **Pricing:** the three money answers move into the FAQ ("What happens when the beta ends?", "What counts as a
+   customer?", "Is my data safe? Can I leave?").
+
+**Result:** the phone page is one board again, about 6,730px (down from about 8,000 over two boards).
+
+**What specifically, footer (desktop and phone):**
+- A brand column: logo, "So no customer gets forgotten.", and contact@followupbase.io.
+- Four columns:
+  - **Product:** How it works, See it working, Pricing, Questions, Sign in;
+  - **Works with:** Gmail, Outlook, Instagram, Messenger, WhatsApp, Website form (plain text, no logos);
+  - **Trust:** Security, Privacy, Terms, Delete your data;
+  - **Follow:** Blog, LinkedIn, Instagram, X, drawn dashed as placeholders.
+- A bottom row: "© 2026 FollowUp".
+- On the phone, the columns sit in a 2×2 grid under the brand.
+
+**The rule for the Follow column (A-023 applied to the footer):** a blog or social link appears only once that
+account exists and has something on it. None exist yet, so on the live page the Follow column is hidden. No
+placeholder handles and no links to empty profiles.

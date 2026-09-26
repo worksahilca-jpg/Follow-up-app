@@ -7383,3 +7383,16 @@ around "on its own, except the decision". Desktop is still about 7,200px.
 
 **Rule learned (A-056):** any example that promises a price or a date must be shown as a decision that comes to the
 owner, never as something sent on its own.
+
+### 2026-09-26: shorter phone page and a real footer (A-057, canvas v55)
+The founder said the phone page was too long, then approved four phone cuts and asked for a big-company footer.
+- The phone went from about 8,000px over two boards to about 6,730px on one board. How it works, Sarah's story and
+  Your control became plain lines, and the money answers moved into the FAQ.
+- Both pages got a footer: brand and contact, then Product, Works with, Trust and Follow.
+- Follow (blog and socials) is dashed on the canvas and hidden on the live page until the accounts are real.
+- The desktop FAQ answer "Why not just set a reminder?" now matches A-056: "A reminder tells you it's time.
+  FollowUp does the follow-up itself, and tells you only what needs you."
+- Desktop is about 7,460px.
+
+**Weak, named:** the desktop footer's Works with column repeats the "Works with" strip near the top. It's kept
+because footers are where people look for this, but it's the first thing to cut if the footer feels heavy.

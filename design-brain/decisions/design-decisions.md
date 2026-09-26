@@ -7258,3 +7258,8 @@ right), and every written reply uses the wash. Rule logged as R-019.
 
 Open: PR #357 builds the story into the live `page.tsx`, which still uses the older live styling. Its story block
 uses a black reply bubble (against R-018). It needs to follow the canvas before merge.
+
+### 2026-09-26: sketch first (A-052)
+The founder paused all live design changes. The canvas is the work until he finalizes it, then it goes to main in
+one pass. PR #357 was closed unmerged and its branch kept. The A-051 onboarding step was not started. What's already
+on main (#350 to #356) stays.

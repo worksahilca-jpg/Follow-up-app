@@ -930,3 +930,20 @@ after How it works, after Pricing and at the end.
   also asked for a line in the tester terms ("add the line, build it").
   **HELD (2026-09-26):** our Google Limited Use disclosure limits Gmail data to finding conversations and sending
   follow-ups. The founder decides before this is built.
+**Build PAUSED (2026-09-26):** the founder, after R-019: "no dont want any changes in live product lets just focus
+on sketching i will finalliese and we will push the design to the main." PR #357 (the story, promise and lede) was
+closed unmerged, and the preview-first onboarding step was not started. Everything stays on the canvas until the
+founder finalizes it.
+
+## A-052 — Sketch first. Nothing ships to the live product until the founder finalizes the canvas ^A-052
+
+**Approved:** 2026-09-26, founder: *"no dont want any changes in live product lets just focus on sketching i will
+finalliese and we will push the design to the main."*
+**What specifically:**
+- For now, design work stays on the Claude Design canvas. No PRs change the live product's look or copy.
+- The founder finalizes the canvas. Then the finished design goes to main in one planned pass.
+- Every new board follows the sketched canvas system (R-019), not the live page.
+- It supersedes the "approve, build" habit (a study approved and then shipped in small PRs straight away) until the
+  founder says otherwise.
+**Not covered:** fixing real bugs and security issues in the live product is not design work. It still goes through
+normal PRs, and he merges.

@@ -97,7 +97,7 @@ export function describeAutomationStatus(
         detail:
           status.hoursLeftForPerson === null
             ? `More than 7 days have passed since they wrote, so ${status.channel} won't deliver a message from you at all now. If they write again, everything reopens.`
-            : `${status.channel} only lets you reply for ${formatWindowLeft(status.hoursLeftForPerson)}, and only in person — FollowUp can't send this one for you. Open ${status.channel} and reply there.`,
+            : `FollowUp won't send anything on its own now. A reply you send yourself can still go out for ${formatWindowLeft(status.hoursLeftForPerson)}.`,
         bg: "var(--coral-soft)",
         fg: "var(--coral)",
         emphasis: true,

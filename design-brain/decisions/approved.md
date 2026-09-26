@@ -869,6 +869,10 @@ asked about explicitly.
   customer's name and says FollowUp keeps watching. No confetti, points or streaks.
 - **Guardrails:** no analytics SDK, only our own tables, founder-only.
 **Built:** PR #350.
+**CONFIRMED (2026-09-26):** after the founder's reference strategy proposed a different wording, the founder kept
+A-047 as the counted definition: "yes keep it". The strategy's wording ("the owner finds a conversation that needs
+follow-up and acts on it") becomes the **onboarding target** for the first session, not the activation number.
+It's the "First reply ready → First reply sent" step in /admin.
 
 ## A-048 — Motion that explains a change of state (Framer study) ^A-048
 
@@ -897,8 +901,3 @@ It scrolls to the product demo ("See who needs you, and why."). It comes from th
 **Amends:** [[#^A-023|A-023]]'s "one goal" rule, for the hero only. "Start free" stays the one goal in the top bar,
 after How it works, after Pricing and at the end.
 **Built:** PR #353.
-
-**CONFIRMED (2026-09-26):** after the founder's reference strategy proposed a different wording, the founder kept
-A-047 as the counted definition: "yes keep it". The strategy's wording ("the owner finds a conversation that needs
-follow-up and acts on it") becomes the **onboarding target** for the first session, not the activation number.
-It's the "First reply ready → First reply sent" step in /admin.

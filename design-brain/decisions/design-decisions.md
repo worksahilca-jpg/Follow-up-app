@@ -6830,3 +6830,32 @@ email is the one place that reaches an owner who hasn't opened the app.
 **Weak spots:** the win sentence depends on the trigger being a check-in on silence. A win from the instant
 "got it" reply or from the owner's own send needs its own wording, and the owner's own send is not FollowUp's
 win and must not be claimed as one.
+
+## 2026-09-26 — The weekly email becomes a designed email (Wispr Flow structure)
+
+The founder asked for the weekly email to be "more professional and interesting", like Wispr Flow's, with
+background imagery, the logo, links and gradients, and the company at the end. Streaks were to be skipped. Two
+artboards, **Weekly email · designed** (phone 390) and **· desktop mail 760** (canvas version 25):
+
+1. **Header:** the landing wash with grain as the background image, the FollowUp lockup, the week's dates, and
+   "Your week, Northside Plumbing".
+2. **This week's win:** a white card overlapping the header. "Tom Reid came back and booked.", one sentence on
+   how, and a chip with the booking time.
+3. **The week in customers:** three big numbers (answered, came back, booked), each with "Last week: N".
+4. **Waiting for your OK:** "3 replies are written and waiting.", three rows (name, channel, how long), one black
+   button **Open FollowUp**, and "Nothing goes out until you send it."
+5. **Where customers wrote from:** thin bars by channel, then "Busiest time: most messages came in between 6 and
+   9 PM."
+6. **Footer on the closing wash:** the lockup, "So no customer gets forgotten.", Website · Privacy · Terms ·
+   Contact, "Write to Sahil", and why they get this (from their own Gmail, every Monday).
+
+A-037's order still holds for the action: the win first, then who's waiting. Here the numbers sit between
+them, following Wispr's highlight-then-numbers pattern. **Flag for the founder:** that is a small change from
+A-037 (numbers last). Kept here because the numbers are now compact and visual.
+
+**Weak spots:**
+- The pen underline from the landing isn't used. SVG doesn't render in Gmail, so it would need to be an image.
+- Gmail and Outlook render CSS gradients inconsistently. In code the washes must be hosted PNGs, not CSS.
+- "Busiest time" and "Where customers wrote from" are new counts that need code, and the busiest time must use
+  the business's time zone.
+- The plain-text versions (A-037) remain as the text part of the email, for clients that block images.

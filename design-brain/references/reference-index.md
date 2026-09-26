@@ -119,3 +119,4 @@ that may have changed or may never have existed — would poison every decision 
 Start it by sending anything you like. See `workflows/reference-workflow.md`.
 
 - **Attio: how CRM data can look light** (crm, 2026-09-26, INBOX): lines not boxes, colour only for state, two sizes / two weights / two inks, record = attributes + timeline. `crm/2026-09-26-attio-data-ui.md`
+- **Wispr Flow: the weekly stats email** (messaging, 2026-09-26, USED): highlights card first, big numbers with one comparison each, where / peak time, one button, branded footer. No streaks, leaderboards or percentiles. `messaging/2026-09-26-wispr-flow-weekly-email.md`

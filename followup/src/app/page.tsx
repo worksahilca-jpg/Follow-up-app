@@ -44,6 +44,13 @@ export default function LandingPage() {
               <Link href="/signin" className={styles.btn}>
                 Start free <ArrowRight className="h-4 w-4" />
               </Link>
+              {/* The lower-commitment step (A-049, founder's reference
+                  strategy): for someone not ready to sign in, a look at
+                  the product instead of leaving. Quiet, so "Start free"
+                  stays the one main action. */}
+              <a href="#product" className={styles.btnGhost}>
+                See how it works
+              </a>
             </div>
             {/* The beta caveat, founder's call 2026-09-22. Six places on
                 this page sell replies going out on their own, and

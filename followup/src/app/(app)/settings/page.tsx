@@ -21,6 +21,8 @@ import BookingCalendarConfig from "@/components/BookingCalendarConfig";
 import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
 import AlertsSection from "@/components/AlertsSection";
+import OnlyAdminsSendSetting from "@/components/OnlyAdminsSendSetting";
+import { yourRules } from "@/lib/yourRules";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
@@ -212,6 +214,13 @@ function SettingsPageInner() {
   // above. That one asks whether anything sends by itself; this asks
   // whether anything may send WITHOUT BEING CHECKED.
   const [autonomousAllowed, setAutonomousAllowed] = useState(false);
+  // Pause all sending, and who may send (A-041). Read with the rest of the
+  // automation settings; the rules card and the permission card both
+  // depend on them.
+  const [sendingPaused, setSendingPaused] = useState(false);
+  const [onlyAdminsSend, setOnlyAdminsSend] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [pauseSaving, setPauseSaving] = useState(false);
   const [autonomousSaving, setAutonomousSaving] = useState(false);
   const [autonomousError, setAutonomousError] = useState<string | null>(null);
   // Granting it asks first; revoking does not. The asymmetry is the
@@ -283,6 +292,9 @@ function SettingsPageInner() {
           deadLeadReactivation?: { enabled: boolean; days: number };
           holdAllForApproval?: boolean;
           autonomousAllowed?: boolean;
+          sendingPaused?: boolean;
+          onlyAdminsSend?: boolean;
+          isAdmin?: boolean;
         }) => {
           setAutomationOn(data.enabled);
           setAutoAfterDays(data.triggerDays);
@@ -293,6 +305,9 @@ function SettingsPageInner() {
           setDeadLeadDays(data.deadLeadReactivation?.days ?? 45);
           setHoldAllForApproval(data.holdAllForApproval ?? false);
           setAutonomousAllowed(data.autonomousAllowed ?? false);
+          setSendingPaused(data.sendingPaused ?? false);
+          setOnlyAdminsSend(data.onlyAdminsSend ?? false);
+          setIsAdmin(data.isAdmin ?? false);
         }
       )
       .finally(() => setAutomationLoaded(true));
@@ -405,11 +420,40 @@ function SettingsPageInner() {
         return;
       }
       setHoldAllForApproval(!granted);
+      // Either decision replaces a pause (see the settings route).
+      setSendingPaused(false);
       setConfirmingPermission(false);
     } catch {
       setPermissionError("Couldn't reach the server — try again.");
     } finally {
       setPermissionSaving(false);
+    }
+  }
+
+  /**
+   * Pause all sending, or resume it (A-041). Same no-optimistic-flip rule
+   * as the permission above: the screen moves when the server has.
+   */
+  async function savePause(paused: boolean) {
+    setPauseSaving(true);
+    setPermissionError(null);
+    try {
+      const res = await fetch("/api/automation/pause", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paused }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setPermissionError(data.message ?? "Couldn't save — try again.");
+        return;
+      }
+      setSendingPaused(paused);
+      setHoldAllForApproval(paused);
+    } catch {
+      setPermissionError("Couldn't reach the server — try again.");
+    } finally {
+      setPauseSaving(false);
     }
   }
 
@@ -1106,7 +1150,59 @@ function SettingsPageInner() {
             happen, and granting takes a second, explicit press. Turning
             it back off is one press, no confirmation — stopping should
             never be harder than starting. */}
+        {/* Your rules (A-041, from the Mercury study): the rules FollowUp is
+            following right now, as sentences an owner can check, above the
+            controls that change them. Built from the same settings those
+            controls save, so it can't drift from them. */}
+        {automationLoaded && (
+          <div className="mt-4 box p-5">
+            <p className="font-medium text-sm">Your rules</p>
+            <p className="text-xs text-ink-soft mt-1">What FollowUp follows for your business, right now.</p>
+            <ul className="mt-3 space-y-2">
+              {yourRules({ holdAll: holdAllForApproval, paused: sendingPaused, autonomousAllowed, onlyAdminsSend }).map((rule) => (
+                <li key={rule} className="flex items-start gap-2 text-sm">
+                  <Check className="h-4 w-4 mt-0.5 shrink-0" aria-hidden="true" />
+                  <span>{rule}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="mt-4 box p-5">
+          {sendingPaused ? (
+            /* Paused: a hold the owner meant to be temporary. Resume puts
+               sending back as it was; anything that waited during the
+               pause keeps waiting (see @/lib/sendingControl). */
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Sending is paused</p>
+                <p className="text-xs text-ink-soft mt-1">
+                  Everything waits for your OK until you resume. What waited during the pause still waits for you.
+                  {!isAdmin && " An admin can resume it."}
+                </p>
+                {isAdmin && (
+                  <button
+                    onClick={() => saveSendPermission(false)}
+                    disabled={permissionSaving || pauseSaving}
+                    className="mt-3 text-xs font-medium underline underline-offset-2 text-ink-soft"
+                  >
+                    Stop sending by itself for good
+                  </button>
+                )}
+              </div>
+              {isAdmin && (
+                <button
+                  onClick={() => savePause(false)}
+                  disabled={pauseSaving || permissionSaving}
+                  className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-60"
+                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                >
+                  {pauseSaving ? "Resuming…" : "Resume"}
+                </button>
+              )}
+            </div>
+          ) : (
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="font-medium text-sm">
@@ -1117,20 +1213,34 @@ function SettingsPageInner() {
                   ? "Every follow-up it writes waits in Approvals until you send it. Nothing reaches a customer without you."
                   : "Simple, low-risk follow-ups go out on their own. Anything about price, or anything sensitive, still waits for you — and it stops the moment a customer replies."}
               </p>
+              {/* Stopping for good stays one press, as it always was; it
+                  just moves under Pause, which is what most owners who
+                  want to stop for now actually mean. */}
+              {!holdAllForApproval && isAdmin && (
+                <button
+                  onClick={() => saveSendPermission(false)}
+                  disabled={permissionSaving || pauseSaving}
+                  className="mt-3 text-xs font-medium underline underline-offset-2 text-ink-soft"
+                >
+                  {permissionSaving ? "Saving…" : "Stop sending by itself for good"}
+                </button>
+              )}
             </div>
             {!holdAllForApproval && (
+              /* Anyone on the team can pause: it only ever holds messages. */
               <button
-                onClick={() => saveSendPermission(false)}
-                disabled={permissionSaving}
+                onClick={() => savePause(true)}
+                disabled={pauseSaving || permissionSaving}
                 className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium border"
                 style={{ borderColor: "var(--line)" }}
               >
-                {permissionSaving ? "Saving…" : "Stop sending"}
+                {pauseSaving ? "Pausing…" : "Pause all sending"}
               </button>
             )}
           </div>
+          )}
 
-          {holdAllForApproval && !confirmingPermission && (
+          {holdAllForApproval && !sendingPaused && !confirmingPermission && (
             <button
               onClick={() => {
                 setConfirmingPermission(true);
@@ -1151,7 +1261,7 @@ function SettingsPageInner() {
             </button>
           )}
 
-          {holdAllForApproval && confirmingPermission && (
+          {holdAllForApproval && !sendingPaused && confirmingPermission && (
             <div className="mt-4 rounded-lg p-4" style={{ backgroundColor: "var(--card-2)" }}>
               {/* --card-2, not --ink-soft. The first draft used
                   --ink-soft for this surface, which is a TEXT token
@@ -1638,6 +1748,7 @@ function SettingsPageInner() {
         <div className="mt-4">
           <TeamSection />
         </div>
+        <OnlyAdminsSendSetting onChange={setOnlyAdminsSend} />
       </section>
 
       <section id="lead-routing" className="scroll-mt-16">

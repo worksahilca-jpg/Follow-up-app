@@ -21,6 +21,7 @@ export default function MessageComposer({
   leadName,
   leadEmail,
   seenInboundAt,
+  sendLocked = false,
 }: {
   leadId: string;
   initialMessage: string;
@@ -29,6 +30,8 @@ export default function MessageComposer({
   leadEmail?: string;
   /** When the newest message from the lead on this page arrived (ISO) — see the send route's stale check. */
   seenInboundAt?: string;
+  /** Only admins send, and this person isn't one (A-041): write and edit, but no Send. */
+  sendLocked?: boolean;
 }) {
   const isEmail = Boolean(leadEmail);
   const [message, setMessage] = useState(initialMessage);
@@ -165,7 +168,11 @@ export default function MessageComposer({
           {error}
         </p>
       )}
+      {sendLocked && (
+        <p className="mt-2 text-xs text-ink-soft">Only admins send on this account. An admin will see this reply waiting.</p>
+      )}
       <div className="mt-3 flex flex-wrap gap-2">
+        {!sendLocked && (
         <button
           onClick={send}
           disabled={sending || regenerating || !canSend}
@@ -174,6 +181,7 @@ export default function MessageComposer({
         >
           <Send className="h-3.5 w-3.5" /> {sending ? "Sending…" : "Send now"}
         </button>
+        )}
         <button
           onClick={regenerate}
           disabled={sending || regenerating}

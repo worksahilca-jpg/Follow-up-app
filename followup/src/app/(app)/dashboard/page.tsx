@@ -3,6 +3,7 @@ import StatCard from "@/components/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import ApprovalQueue, { type ApprovalItem } from "@/components/ApprovalQueue";
 import SetupStrip from "@/components/SetupStrip";
+import SendingPausedBanner from "@/components/SendingPausedBanner";
 import TestLeadButton from "@/components/TestLeadButton";
 import { getLeads, getStats, getUpcomingBookings } from "@/lib/leads-data";
 import { formatCurrency, getGreeting } from "@/lib/demo-data";
@@ -93,13 +94,19 @@ export default async function DashboardPage() {
   // component, so without it "Good morning" came from the server's
   // clock — UTC on Vercel — and greeted a Toronto owner at 8pm with it.
   const business = ctx
-    ? await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true } })
+    ? await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true } })
     : null;
   const timezone = business?.timezone ?? "America/New_York";
   // Business.holdAllForApproval — as of 2026-09-20 this stops every
   // automated message including the instant reply, so it changes what
   // this screen can honestly promise.
   const holdAll = business?.holdAllForApproval ?? false;
+  // Pause all sending, and Only admins send (A-041). The role is read here
+  // rather than trusted from the session, which doesn't carry it.
+  const me = ctx ? await prisma.user.findUnique({ where: { id: ctx.userId }, select: { role: true } }) : null;
+  const isAdmin = me?.role === "ADMIN";
+  const sendingPaused = Boolean(business?.sendingPausedAt);
+  const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const gmail = ctx ? await getGmailStatus(ctx.businessId) : { connected: false };
   const outlook = ctx ? await getOutlookStatus(ctx.businessId) : { connected: false };
   // An inbox is connected if EITHER provider is. Checking only Gmail is what
@@ -186,7 +193,8 @@ export default async function DashboardPage() {
           not need a hero. */}
       <PageHeader title={getGreeting(timezone)} subtitle={headline()} />
 
-      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} />
+      {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
+      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} />
 
       {leads.length === 0 ? (
         <FadeIn className="mt-10">

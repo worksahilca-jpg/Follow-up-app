@@ -364,6 +364,20 @@ model Business {
   // (No account is in that older state today: all of them still hold.)
   autoSendAllowedAt    DateTime?
 
+  // "Pause all sending" (design brain A-041, the Mercury study). Set when
+  // someone pauses an account that was sending by itself: the pause turns
+  // holdAllForApproval back on, which is the one gate every automated path
+  // already reads, and this stamp is what remembers it was a pause rather
+  // than a decision to stop for good, so the app can offer Resume. Null
+  // whenever the account isn't paused.
+  sendingPausedAt      DateTime?
+
+  // "Only admins send" (A-041). When true, a teammate with the SALES role
+  // can still write, edit and hold replies, but the one route a person
+  // sends through (POST /api/leads/[id]/send) refuses them. Off by
+  // default: a team that never asked for it sees no change.
+  onlyAdminsSend       Boolean   @default(false)
+
   // When Meta last confirmed this app is subscribed to the account's
   // `messages` webhook. Null on a connected account means the
   // subscription never succeeded — the account is saved and readable,

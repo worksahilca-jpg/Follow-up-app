@@ -7,6 +7,7 @@ import { sendFollowUpToLead } from "@/lib/sending";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
+import { sendRefusal } from "@/lib/sendingControl";
 
 const sendSchema = z.object({
   message: z.string().trim().min(1, "Message can't be empty."),
@@ -34,6 +35,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
   const owned = await prisma.lead.findFirst({ where: { id, businessId: ctx.businessId }, select: { id: true } });
   if (!owned) return NextResponse.json({ success: false, message: "Lead not found." }, { status: 404 });
+
+  // "Only admins send" (A-041). Checked here because this is the one route
+  // a person sends through; the routine pile's send-safe is admin-only
+  // already, and automated sends never act as a teammate.
+  const refused = await sendRefusal(ctx.businessId, ctx.userId);
+  if (refused) return NextResponse.json({ success: false, adminOnly: true, message: refused }, { status: 403 });
 
   const parsed = await parseJsonBody(request, sendSchema);
   if (!parsed.ok) return parsed.response;

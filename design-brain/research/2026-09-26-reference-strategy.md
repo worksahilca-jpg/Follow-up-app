@@ -141,9 +141,9 @@ doesn't make understanding worse, strongly consider removing it.
 - **Curiosity:** every CTA says "Start free". The document's example is "Find who needs a follow-up".
 
 ### Conflicts with approved decisions (need the founder, not a guess)
-1. **Hero secondary action.** The document asks for "one lower-commitment action". A-023 says "One goal, 'Start
+1. **Hero secondary action.** RESOLVED 2026-09-26: A-049, option B. The document asks for "one lower-commitment action". A-023 says "One goal, 'Start
    free', in the top bar, the hero, after How it works, after Pricing and at the end."
-2. **The activation moment.** The document says *discovers a genuine conversation that needs follow-up and takes
+2. **The activation moment.** RESOLVED 2026-09-26: keep A-047 as the count; the document's wording is the onboarding target. The document says *discovers a genuine conversation that needs follow-up and takes
    action on it*. A-047 (approved today) says *a customer got a reply that FollowUp wrote*. They're close, but the
    document's is earlier and wider: any action counts, not only a send.
 

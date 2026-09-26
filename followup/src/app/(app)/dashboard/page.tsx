@@ -1,5 +1,4 @@
 import Link from "next/link";
-import StatCard from "@/components/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import ApprovalQueue, { type ApprovalItem } from "@/components/ApprovalQueue";
 import SetupStrip from "@/components/SetupStrip";
@@ -11,6 +10,7 @@ import { getAtRiskLeads } from "@/lib/rescue";
 import { describeTrigger, getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
 import { withBasis, sentAsWritten } from "@/lib/showTheWork";
+import { weekLine } from "@/lib/weekLine";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
@@ -20,8 +20,6 @@ import { getOutlookStatus } from "@/lib/integrations/outlook";
 import { ArrowRight } from "lucide-react";
 import { ItemBox, ItemBoxList, type ItemTone } from "@/components/ItemBox";
 import FadeIn from "@/components/motion/FadeIn";
-import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
-import CountUp from "@/components/motion/CountUp";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
 // no seconds) since this is a status line, not a live clock.
@@ -107,6 +105,13 @@ export default async function DashboardPage() {
   // "Based on" under each waiting reply, and "sent as written" (A-043).
   const approvalItems: ApprovalItem[] = await withBasis(approvals, timezone);
   const written = ctx ? await sentAsWritten(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000)) : { asWritten: 0, total: 0 };
+  const thisWeek = weekLine({
+    answered: answeredThisWeek,
+    cameBack: rescue?.rescued ?? 0,
+    booked: rescue?.booked ?? 0,
+    asWritten: written.asWritten,
+    sent: written.total,
+  });
   // Business.holdAllForApproval — as of 2026-09-20 this stops every
   // automated message including the instant reply, so it changes what
   // this screen can honestly promise.
@@ -319,42 +324,11 @@ export default async function DashboardPage() {
         </FadeIn>
       ) : (
         <>
-          {/* Same on-mount stagger as the landing page's hero (RevealGroup
-              on="mount"). 13 tiles cut to 3 — the ones that answer a real
-              question an owner asks ("is anyone about to fall through the
-              cracks," "is this thing earning its keep") rather than every
-              number the app happens to be able to compute. */}
-          {/* Three across at every width, not stacked below sm. These three
-              values are single- or double-digit counts, and StatCard already
-              reserves two lines for a wrapping label — so three-up fits at
-              390px, where one-per-row spent ~370px of the first screen on
-              three numbers and pushed "About to be lost", the thing the page
-              is for, below the fold. */}
-          {/* What the week gave back, in outcomes (A-042): customers answered,
-              who came back, what got booked. Who is at risk right now is the
-              headline above and the list below, so it isn't a tile too. */}
-          <p className="mt-6 text-xs font-medium uppercase tracking-wider text-ink-soft">This week</p>
-          <RevealGroup on="mount" className="grid grid-cols-3 gap-3 mt-2">
-            <RevealItem>
-              <StatCard label="Customers answered" value={<CountUp to={answeredThisWeek} />} accent="var(--slate)" />
-            </RevealItem>
-            <RevealItem>
-              <StatCard label="Came back" value={<CountUp to={rescue?.rescued ?? 0} />} accent="var(--sage)" />
-            </RevealItem>
-            <RevealItem>
-              <StatCard label="Booked" value={<CountUp to={rescue?.booked ?? 0} />} accent="var(--ink)" />
-            </RevealItem>
-          </RevealGroup>
-          {/* The proof the drafts are good, counted rather than claimed (A-043). */}
-          {written.total > 0 && (
-            <p className="mt-3 text-sm text-ink-soft">
-              <span className="text-ink font-medium">
-                You sent {written.asWritten} of {written.total} {written.total === 1 ? "reply" : "replies"} without changing a word.
-              </span>
-              {written.total - written.asWritten > 0 &&
-                ` The other ${written.total - written.asWritten} you edited first.`}
-            </p>
-          )}
+          {/* Today's numbers, in one quiet line (A-045). This was three
+              "This week" tiles (A-042) and a separate "sent as written"
+              sentence (A-043); the founder folded them into one line, as
+              A-027 first planned. Desktop only: the phone gets less (R-015). */}
+          {thisWeek && <p className="mt-6 hidden sm:block text-sm text-ink-soft tabular-nums">{thisWeek}</p>}
 
           {atRisk.length > 0 && (
             <FadeIn className="mt-10">

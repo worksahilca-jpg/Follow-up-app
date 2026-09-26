@@ -29,7 +29,7 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
-      setError("Give this lead a name to continue.");
+      setError("Give this customer a name to continue.");
       return;
     }
     setSaving(true);
@@ -69,7 +69,7 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl">Add a lead</h2>
+          <h2 className="font-display text-xl">Add a customer</h2>
           <button onClick={onClose} className="text-ink-soft hover:text-ink" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
@@ -157,7 +157,7 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
               className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
-              {saving ? "Saving…" : "Add lead"}
+              {saving ? "Saving…" : "Add customer"}
             </button>
           </div>
         </form>

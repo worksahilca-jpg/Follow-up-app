@@ -183,7 +183,7 @@ export default function OnboardingSources({
 
   return (
     <div className="mt-8">
-      <h2 className="font-display text-xl text-center">Where do your leads come from?</h2>
+      <h2 className="font-display text-xl text-center">Where do your customers write to you?</h2>
       <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
         Connect the ones you use. Leave the rest — FollowUp won&apos;t ask about them again, and they&apos;re all
         in Settings whenever you want them.

@@ -93,7 +93,7 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
-      setError("Give this lead a name to continue.");
+      setError("Give this customer a name to continue.");
       return;
     }
     recognitionRef.current?.stop();

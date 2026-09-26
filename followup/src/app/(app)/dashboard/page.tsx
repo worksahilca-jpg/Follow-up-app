@@ -207,7 +207,7 @@ export default async function DashboardPage() {
       parts.push(`${approvalItems.length} draft${approvalItems.length === 1 ? "" : "s"} need${approvalItems.length === 1 ? "s" : ""} your OK`);
     }
     if (stats.atRisk > 0) {
-      parts.push(`${stats.atRisk} lead${stats.atRisk === 1 ? "" : "s"} going quiet`);
+      parts.push(`${stats.atRisk} customer${stats.atRisk === 1 ? "" : "s"} going quiet`);
     }
     if (parts.length > 0) return parts.join(" · ");
 
@@ -235,7 +235,7 @@ export default async function DashboardPage() {
      * below owns that explanation and has three properly-reasoned
      * branches for it; this line only has to stop claiming calm.
      */
-    if (leads.length === 0) return "No leads yet.";
+    if (leads.length === 0) return "No customers yet.";
 
     return "Nothing needs your OK right now.";
   }
@@ -290,10 +290,10 @@ export default async function DashboardPage() {
                     reply started waiting for approval too. */}
                 <p className="text-lg leading-relaxed">
                   {holdAll
-                    ? "FollowUp is watching your inbox. When a lead writes, it writes the reply and puts it in Approvals for you — nothing goes out until you send it."
+                    ? "FollowUp is watching your inbox. When a customer writes, FollowUp writes the reply and puts it in Approvals for you — nothing goes out until you send it."
                     : inbox.instant
-                      ? "FollowUp is watching your inbox. The moment a lead writes, it replies within a minute and shows you here."
-                      : "FollowUp is watching your inbox. It checks for new leads every ten minutes, then replies and shows you here."}
+                      ? "FollowUp is watching your inbox. The moment a customer writes, it replies within a minute and shows you here."
+                      : "FollowUp is watching your inbox. It checks for new customers every ten minutes, then replies and shows you here."}
                 </p>
                 <p className="text-sm text-ink-soft mt-3 flex items-center justify-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--sage)" }} />

@@ -99,7 +99,7 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
           state, and the count is work waiting (A-048). */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
         <div>
-          <StatCard label="Active leads" value={String(visible.length)} accent="var(--slate)" />
+          <StatCard label="Active customers" value={String(visible.length)} accent="var(--slate)" />
         </div>
         <div>
           <StatCard label="Total pipeline value" value={formatCurrency(totalValue)} />
@@ -122,15 +122,15 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
       {visible.length === 0 ? (
         <EmptyState
           icon={Inbox}
-          title={mineOnly ? "No leads assigned to you" : "No leads yet"}
+          title={mineOnly ? "No customers assigned to you" : "No customers yet"}
           description={
             mineOnly
-              ? "Nothing's assigned to you right now — check back once new leads come in."
+              ? "Nothing's assigned to you right now — check back once new customers come in."
               : /* Named Gmail alone until 2026-09-22 — see the note on the
                    same sentence in leads/LeadsPageClient.tsx. Eight sources
                    feed this pipeline; telling a WhatsApp business to connect
                    an inbox is how a screen sends someone to the wrong place. */
-                "Connect a lead source in Settings — your inbox, website form, DMs or CRM — and your pipeline fills in as leads arrive."
+                "Connect where your customers write to you in Settings — your inbox, website form, DMs or CRM — and your pipeline fills in as they arrive."
           }
           action={
             mineOnly ? undefined : (
@@ -292,7 +292,7 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
                   pipeline, an individual empty column is a real, useful
                   fact again, so the per-column message comes back. */}
               {stage.leads.length === 0 && leads.length > 0 && (
-                <p className="text-xs text-ink-soft italic">No leads at this stage</p>
+                <p className="text-xs text-ink-soft italic">No customers at this stage</p>
               )}
             </div>
           </div>

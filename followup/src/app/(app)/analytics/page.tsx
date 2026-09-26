@@ -33,7 +33,7 @@ export default async function AnalyticsPage() {
             title="No data yet"
             /* Third copy of the Gmail-only sentence, fixed with the other
                two on 2026-09-22 — see leads/LeadsPageClient.tsx. */
-            description="Connect a lead source in Settings — your inbox, website form, DMs or CRM — or add a lead by hand. Your stats show up here once there's activity to measure."
+            description="Connect where your customers write to you in Settings — your inbox, website form, DMs or CRM — or add one by hand. Your stats show up here once there's activity to measure."
             action={
               <Link
                 href="/settings"
@@ -95,7 +95,7 @@ export default async function AnalyticsPage() {
             </p>
             <FactList
               facts={[
-                { label: "Total leads", value: String(data.totalLeads) },
+                { label: "Customers", value: String(data.totalLeads) },
                 { label: "Active", value: String(data.activeCount) },
                 { label: "Won", value: String(data.wonCount) },
                 { label: "Reply rate", value: data.followUpsSentTotal > 0 ? `${data.replyRate}%` : "—" },

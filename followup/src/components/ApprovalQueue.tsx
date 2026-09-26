@@ -490,7 +490,7 @@ export default function ApprovalQueue({
               ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
               : "Anything FollowUp isn't sure about will show up here before it sends."}
             {answeredForYou > 0 &&
-              ` It answered ${answeredForYou} ${answeredForYou === 1 ? "lead" : "leads"} on its own this week.`}
+              ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}
           </p>
         </div>
       </motion.div>

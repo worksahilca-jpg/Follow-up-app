@@ -6764,3 +6764,18 @@ The study is `research/ux-patterns/2026-09-26-calendly-one-job-simplicity.md`. I
 **Proposed, needs the founder:** three top-level places across the app (Today, Inbox, Settings). Pipeline,
 Analytics, Follow-up plans and Activity would stop being pages of their own. That goes one step past the
 2026-09-10 proposal of four, and it removes pages that exist today.
+
+## 2026-09-26 — Founder's one-by-one answers on the open design questions
+
+Answered one at a time, each recorded where it belongs:
+- "Don't send": a quiet link on the phone (A-026).
+- Meta window time only when nearly up (A-028).
+- Desktop keeps coloured dots, but only "Needs you" is bold (A-029, R-016).
+- One group, "Needs you" (A-030).
+- Keep "handled today" on desktop (A-031).
+- Keep the landing washes (A-032).
+- No handwriting font (R-017).
+- "See it work" stays a link (A-033).
+- The weekly email leads with the win (A-034).
+- "Email Sahil" on the beta sign-in (A-035).
+- First replies right after connecting: a product decision, logged in PRODUCT_DIRECTION.md (2026-09-26).

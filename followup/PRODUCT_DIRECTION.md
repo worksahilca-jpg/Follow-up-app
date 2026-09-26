@@ -390,3 +390,21 @@ another two on top — five minutes, which is not a business that looks awake. A
 timed from when the lead wrote it (`eventSentAt` in `src/lib/inbound/meta.ts`), so the head
 start is spent by the time a late message is found, and the conversation timeline reads in
 the order things were actually said.
+
+## First replies are written right after connecting (CEO decision, 2026-09-26)
+
+Asked "When someone connects their email, write the replies for customers who never got an answer right away,
+instead of within the hour?", the founder said: **"yes right away."**
+
+Why: the first minutes decide whether a new owner believes the product. The proof screen (design brain,
+2026-09-26, "Start · first value") shows a real customer from the last 90 days and the reply FollowUp wrote for
+them. That only works if the reply exists when the screen loads.
+
+What this does and doesn't change:
+- Right after the first sync, FollowUp drafts replies for the **few most recent unanswered customers**, not for
+  every lead in 90 days, so the AI cost per sign-up stays small.
+- Every one of those drafts **waits for the owner's OK**. Hold-by-default is unchanged, and nothing is sent to an
+  old lead on its own.
+- The hourly automation still handles everyone else, as before.
+
+Not built yet. This is the decision; the implementation is a backend change for when the start flow is built.

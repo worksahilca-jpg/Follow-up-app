@@ -945,6 +945,70 @@
   gap: 8px;
   justify-content: center;
 }
+/* ---------- your control (A-041): ruled lists, not more cards ---------- */
+
+.controlLists {
+  display: grid;
+  gap: 40px;
+  margin-top: 64px;
+}
+@media (min-width: 900px) {
+  .controlLists {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 64px;
+  }
+}
+.controlLabel {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.controlIntro {
+  margin-top: 12px;
+  margin-bottom: 16px;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.controlRow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.controlRowTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+}
+.controlRowSub {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.controlFoot {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 32px;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.controlFoot a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .footer {
   border-top: 1px solid var(--line);
 }

@@ -23,7 +23,7 @@ import DataPrivacySection from "@/components/DataPrivacySection";
 import AlertsSection from "@/components/AlertsSection";
 import OnlyAdminsSendSetting from "@/components/OnlyAdminsSendSetting";
 import SignInsSection from "@/components/SignInsSection";
-import { yourRules } from "@/lib/yourRules";
+import YourRulesCard from "@/components/YourRulesCard";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
@@ -1153,23 +1153,9 @@ function SettingsPageInner() {
             happen, and granting takes a second, explicit press. Turning
             it back off is one press, no confirmation — stopping should
             never be harder than starting. */}
-        {/* Your rules (A-041, from the Mercury study): the rules FollowUp is
-            following right now, as sentences an owner can check, above the
-            controls that change them. Built from the same settings those
-            controls save, so it can't drift from them. */}
+        {/* Above the controls that change them. */}
         {automationLoaded && (
-          <div className="mt-4 box p-5">
-            <p className="font-medium text-sm">Your rules</p>
-            <p className="text-xs text-ink-soft mt-1">What FollowUp follows for your business, right now.</p>
-            <ul className="mt-3 space-y-2">
-              {yourRules({ holdAll: holdAllForApproval, paused: sendingPaused, autonomousAllowed, onlyAdminsSend }).map((rule) => (
-                <li key={rule} className="flex items-start gap-2 text-sm">
-                  <Check className="h-4 w-4 mt-0.5 shrink-0" aria-hidden="true" />
-                  <span>{rule}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <YourRulesCard holdAll={holdAllForApproval} paused={sendingPaused} autonomousAllowed={autonomousAllowed} onlyAdminsSend={onlyAdminsSend} />
         )}
 
         <div className="mt-4 box p-5">

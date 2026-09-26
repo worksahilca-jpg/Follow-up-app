@@ -223,7 +223,7 @@ export default function PrivacyPage() {
               <li><strong className="text-ink">Stripe</strong> — subscription billing.</li>
               <li><strong className="text-ink">Supabase and Vercel</strong> — database and application hosting.</li>
               <li><strong className="text-ink">Sentry</strong> — error reports, with email addresses and phone numbers removed.</li>
-              <li><strong className="text-ink">Resend</strong> — the alert emails FollowUp sends to you when a customer is waiting (sent from the United States).</li>
+              <li><strong className="text-ink">Resend</strong> — the alert emails FollowUp sends to you, like when a customer is waiting or your account is signed in from a new device (sent from the United States).</li>
             </ul>
             <p className="mt-2">We never sell your data.</p>
           </section>

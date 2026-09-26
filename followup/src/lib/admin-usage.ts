@@ -14,7 +14,7 @@ import { requirePlatformAdmin } from "@/lib/platformAdmin";
 
 export interface UsageWeek {
   newCustomers: number; // leads created
-  repliesWritten: number; // drafts FollowUp wrote (held for OK, or sent on its own)
+  repliesWritten: number; // customers FollowUp wrote a reply for (held for OK, or sent on its own)
   sentByOwner: number; // replies a person sent from FollowUp
   sentAutomatically: number; // follow-ups FollowUp sent itself, not counting the "got it" reply
   instantAcks: number; // the quick "got your message" replies
@@ -40,10 +40,12 @@ const DAY = 24 * 60 * 60 * 1000;
 
 async function usageBetween(from: Date, to: Date): Promise<UsageWeek> {
   const range = { gte: from, lt: to };
-  const [newCustomers, repliesWritten, sentByOwner, sentAutomatically, instantAcks, dismissed, cameBackRows, activeRows] =
+  const [newCustomers, repliesWrittenRows, sentByOwner, sentAutomatically, instantAcks, dismissed, cameBackRows, activeRows] =
     await Promise.all([
       prisma.lead.count({ where: { createdAt: range } }),
-      prisma.auditEvent.count({ where: { action: { in: ["ai.hold", "ai.send"] }, createdAt: range } }),
+      // Customers, not events: a held draft is re-examined every hour and
+      // each pass can log another hold for the same person.
+      prisma.auditEvent.groupBy({ by: ["targetId"], where: { action: { in: ["ai.hold", "ai.send"] }, targetId: { not: null }, createdAt: range } }),
       prisma.followUp.count({ where: { status: "sent", automated: false, sentAt: range } }),
       prisma.followUp.count({
         where: { status: "sent", automated: true, sentAt: range, NOT: { trigger: "instant_ack" } },
@@ -57,7 +59,7 @@ async function usageBetween(from: Date, to: Date): Promise<UsageWeek> {
     ]);
   return {
     newCustomers,
-    repliesWritten,
+    repliesWritten: repliesWrittenRows.length,
     sentByOwner,
     sentAutomatically,
     instantAcks,

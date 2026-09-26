@@ -7,7 +7,7 @@ const VERCEL_ANALYTICS_URL = "https://vercel.com/north-frame3/follow-up-app/anal
 
 const ROWS: { key: keyof UsageWeek; label: string; note: string }[] = [
   { key: "newCustomers", label: "New customers came in", note: "Leads created, every channel" },
-  { key: "repliesWritten", label: "Replies FollowUp wrote", note: "Held for an OK, or sent on its own" },
+  { key: "repliesWritten", label: "Customers FollowUp wrote a reply for", note: "Held for an OK, or sent on its own" },
   { key: "sentByOwner", label: "Replies owners sent", note: "A person pressed Send" },
   { key: "sentAutomatically", label: "Follow-ups sent automatically", note: "Not counting the quick “got it”" },
   { key: "instantAcks", label: "Quick “got your message” replies", note: "Sent right away to new customers" },

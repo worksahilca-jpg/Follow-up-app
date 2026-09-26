@@ -17,6 +17,7 @@ import { describeWait, describeWaitClause, startOfLocalDay } from "@/lib/calmTod
 import { countHandledToday } from "@/lib/handledToday";
 import { laterTodayAvailable } from "@/lib/later";
 import { loadComingUp } from "@/lib/comingUpData";
+import { isWaitingOnCustomer, medianReplyMs } from "@/lib/waitingOn";
 import { ComingUpList, ComingUpLine } from "@/components/ComingUp";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
@@ -144,7 +145,10 @@ export default async function DashboardPage() {
   // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
   const comingUp = ctx && leads.length > 0 ? await loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null;
   const written = ctx ? await sentAsWritten(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000)) : { asWritten: 0, total: 0 };
+  // The middle of the three places (A-050): answered, not answered back.
+  const waitingOn = leads.filter((l) => !awaitingOk.has(l.id) && isWaitingOnCustomer(l)).length;
   const thisWeek = weekLine({
+    heardBackMs: medianReplyMs(leads, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000), weekEnd),
     answered: answeredThisWeek,
     cameBack: rescue?.rescued ?? 0,
     booked: rescue?.booked ?? 0,
@@ -255,7 +259,7 @@ export default async function DashboardPage() {
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
-      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} />
+      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} waitingOn={waitingOn} />
 
       {leads.length === 0 ? (
         <div className="mt-10">

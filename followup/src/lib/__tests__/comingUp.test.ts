@@ -63,9 +63,9 @@ describe("day labels, in the owner's time zone", () => {
 
   it("groups items under their day", () => {
     const items = [
-      { leadId: "1", name: "A", at: new Date(NOW.getTime() + DAY), what: "x" },
-      { leadId: "2", name: "B", at: new Date(NOW.getTime() + DAY + 3600_000), what: "x" },
-      { leadId: "3", name: "C", at: new Date(NOW.getTime() + 3 * DAY), what: "x" },
+      { leadId: "1", name: "A", at: new Date(NOW.getTime() + DAY), what: "x", unless: true },
+      { leadId: "2", name: "B", at: new Date(NOW.getTime() + DAY + 3600_000), what: "x", unless: true },
+      { leadId: "3", name: "C", at: new Date(NOW.getTime() + 3 * DAY), what: "x", unless: true },
     ];
     expect(groupByDay(items, NOW, "America/Toronto").map((g) => [g.day, g.items.length])).toEqual([["Tomorrow", 2], ["Tuesday", 1]]);
   });

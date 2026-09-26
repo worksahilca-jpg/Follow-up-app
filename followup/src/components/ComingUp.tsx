@@ -28,7 +28,11 @@ export function ComingUpList({
                 <li key={it.leadId}>
                   <Link href={`/leads/${it.leadId}`} className="flex items-baseline justify-between gap-3 py-2.5 hover:underline">
                     <span className="font-medium text-sm">{it.name}</span>
-                    <span className="text-xs text-ink-soft text-right">{it.what}</span>
+                    <span className="text-xs text-ink-soft text-right">
+                      {it.what}
+                      {/* A-050: a check-in is a promise with a condition. */}
+                      {it.unless && `, unless ${it.name.split(" ")[0] || it.name} writes first`}
+                    </span>
                   </Link>
                 </li>
               ))}

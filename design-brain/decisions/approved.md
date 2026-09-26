@@ -484,6 +484,9 @@ must be removed and re-added (iPhone: clear Safari website data first) before ju
 
 ## A-022 — The white hero (Hero v3 · light): black type, plain thin headline, the reply as the one black card ^A-022
 
+**PARTLY SUPERSEDED (2026-09-26) for the phone by [A-058](#^A-058):** on the phone the headline is bold (Public Sans
+600). The desktop keeps the thin headline.
+
 **PARTLY SUPERSEDED (2026-09-26) by [R-018](rejected.md#R-018):** the reply is no longer a black card. It is the landing
 gradient with dark text; only Send stays black.
 
@@ -1087,3 +1090,23 @@ screenshot of a large multi-column site footer as the example.)
 **The rule for the Follow column (A-023 applied to the footer):** a blog or social link appears only once that
 account exists and has something on it. None exist yet, so on the live page the Follow column is hidden. No
 placeholder handles and no links to empty profiles.
+
+## A-058 — The phone's first screen: the picture in view, bold headline ^A-058
+
+**Approved:** 2026-09-26, founder: *"B looks better, put it on the phone page"*. He chose it over A (the same layout
+with the thin headline).
+**What specifically (PhoneV2, canvas v57):**
+- **Headline:** the approved wording (A-013), in Public Sans 600 at 40px, three lines.
+- **Line under it:** "It answers every customer and follows up on its own. Only the decisions come to you."
+- **Picture, in the first screen:** three cards play in order:
+  1. the customer asks on Instagram;
+  2. "Sent on its own · 1 min";
+  3. "Needs you · the price. Reply written. You add the number."
+  Under reduce motion, all three simply show.
+- **Buttons:** "Start free" is full width and ends at about 670px, above where a phone browser cuts off. Under it,
+  one row holds "See how it works" and "Free in beta · No card".
+
+**Scope:** phone only. The founder said the desktop is fine, so it keeps the thin headline (A-022).
+**Result:** the phone page is about 6,560px.
+**Rejected alongside:** option A (the thin headline on the phone). No reason was given. Inferred (marked inferred):
+on a small screen, the thin weight doesn't hold attention.

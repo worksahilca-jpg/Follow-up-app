@@ -7418,3 +7418,9 @@ display type on the canvas, so choosing B changes A-022 for the phone.
 
 **Weak, named:** the lede no longer says "in their language". Multilingual is shown later, in See it working, not
 in the first screen.
+
+### 2026-09-26: phone first screen B goes on the page (A-058, canvas v57)
+The founder picked B, the bold headline. It replaced the hero section on PhoneV2, and the two option boards were
+removed from the canvas. A-022 is marked partly superseded for the phone.
+**Open, for when this is built:** the phone headline is bold and the desktop headline is thin. It's a deliberate
+split for now. Check with the founder before building whether the desktop should match.

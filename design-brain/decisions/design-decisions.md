@@ -6520,3 +6520,13 @@ until he approves the light build, and then get `SUPERSEDED (2026-09-26)` pointi
 **Copied from ElevenLabs:** principles only. A tiny, huge, thin headline; very few words per
 block; almost no colour; black pill buttons; warm-white calm. **Not copied:** their layout,
 font files, logo wall or voice-picker demo.
+
+## 2026-09-26 — The redesign moves from Figma to a Claude Design canvas
+
+Founder: "copy here, we will design in claude design", after asking why we weren't using it.
+The four built sections (A-022 hero, "Works with" strip, The gap, How it works, See it working)
+were copied into a Claude Design canvas: **FollowUp Landing Page**,
+https://claude.ai/artifact/R3b94hcjTh2f5AKaW6qbWx. It has two artboards, desktop 1440 and
+phone 390, built as real HTML. The hero's motion runs there: the message drops in, the reply turns
+over, on a slow 7-second loop, with none under reduced motion. The See it working tabs can be
+clicked. The Figma file stays as the record of earlier versions; new work happens on the canvas.

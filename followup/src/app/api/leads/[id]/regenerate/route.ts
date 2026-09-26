@@ -10,6 +10,7 @@ import type { Message } from "@/lib/types";
 import { dmChannelOf } from "@/lib/dmDrafts";
 import { draftDm } from "@/lib/dmDrafting";
 import { Prisma } from "@prisma/client";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // POST /api/leads/[id]/regenerate — asks the AI for a fresh draft against
 // this lead's real conversation, and saves it as the new suggested message.
@@ -124,7 +125,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     });
     return NextResponse.json({ success: true, message: newMessage, subject: newSubject ?? undefined });
   } catch (err) {
-    const reason = err instanceof Error ? err.message : "Regeneration failed.";
+    const reason = publicErrorMessage(err, "Regeneration failed.", "leads/[id]/regenerate");
     return NextResponse.json({ success: false, message: reason }, { status: 500 });
   }
 }

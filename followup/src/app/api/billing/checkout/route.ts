@@ -9,6 +9,7 @@ import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { TRIAL_PERIOD_DAYS, hasActiveAccess } from "@/lib/billing";
 import { VOICE_ADDON_AVAILABLE } from "@/lib/pricing";
+import { publicErrorMessage } from "@/lib/publicError";
 
 const bodySchema = z.object({
   tier: z.enum(["plus", "pro"]),
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ success: true, url: session.url });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't start checkout.";
+    const message = publicErrorMessage(err, "Couldn't start checkout.", "billing/checkout");
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

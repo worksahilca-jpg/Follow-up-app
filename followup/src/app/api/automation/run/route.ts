@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { runAutomationForBusiness } from "@/lib/automation";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // Same per-lead AI drafting + Gmail send work as the cron route, just
 // scoped to one business — can still take a while with a large opted-in
@@ -24,7 +25,7 @@ export async function POST() {
     const result = await runAutomationForBusiness(ctx.businessId);
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Automation run failed.";
+    const message = publicErrorMessage(err, "Automation run failed.", "automation/run");
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

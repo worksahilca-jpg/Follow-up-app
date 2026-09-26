@@ -463,3 +463,18 @@ Status: NOT BUILT. It needs:
 - an onboarding step;
 - the chosen tier stored per business;
 - AUTONOMOUS allowed again behind the risk gate.
+
+### Old customers wait for one tap; new ones go automatically (founder, 2026-09-26)
+
+Asked whether, on Automatic, FollowUp should also message old customers (from the last 90 days, never answered) on
+its own, the founder said: **"yes new ones automatic, old ones ask with one tap"**.
+
+- **New customers** (who write after connecting) are handled automatically when the owner chose Automatic.
+- **Old customers** found in the first sync are never messaged on their own. The owner sees one short list, e.g.
+  "12 people never got a reply", with the replies already written, and sends them all with one tap. The owner can
+  also open and skip any of them.
+- **Why:** a message out of the blue to someone who wrote months ago is where an automatic tool looks like spam
+  (trust outranks speed).
+- It fits the 2026-09-26 "first replies written right after connecting" decision. Those drafts are exactly this list.
+
+Status: NOT BUILT.

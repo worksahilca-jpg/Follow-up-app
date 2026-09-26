@@ -8,13 +8,18 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => {
+  const prisma = {
     lead: { findUnique: vi.fn(), update: vi.fn() },
     business: { findUnique: vi.fn() },
-    booking: { findMany: vi.fn(), create: vi.fn() },
-  },
-}));
+    booking: { findMany: vi.fn(), create: vi.fn(), findFirst: vi.fn(async () => null) },
+    $executeRaw: vi.fn(async () => 0),
+    // The booking check-and-insert runs in one transaction under a
+    // per-lead lock; the mock hands the callback the same client.
+    $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(prisma)),
+  };
+  return { prisma };
+});
 vi.mock("@/lib/integrations/gmail", () => ({
   createCalendarEvent: vi.fn(async () => ({ created: true })),
   getGoogleCalendarBusyTimes: vi.fn(async () => []),
@@ -162,6 +167,33 @@ describe("createBooking", () => {
     const result = await createBooking("lead1", "2026-09-14T13:00:00.000Z");
 
     expect(result.success).toBe(false);
+  });
+
+  // Audits 2026-09-16 M-2 / 2026-09-26 A-11: one unauthenticated link
+  // could book every open slot for ten days, each a real calendar event.
+  it("refuses a second upcoming booking for the same lead, and books nothing", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.booking.findFirst.mockResolvedValueOnce({ id: "b-existing" });
+
+    const result = await createBooking("lead1", "2026-09-14T14:00:00.000Z");
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.message).toMatch(/already have a call booked/i);
+    expect(p.booking.create).not.toHaveBeenCalled();
+  });
+
+  it("checks for an upcoming booking under a per-lead lock, inside one transaction", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.booking.create.mockResolvedValue({ scheduledAt: new Date("2026-09-14T13:00:00.000Z") });
+    p.lead.update.mockResolvedValue({});
+
+    await createBooking("lead1", "2026-09-14T13:00:00.000Z");
+
+    expect(p.$transaction).toHaveBeenCalledTimes(1);
+    expect(p.$executeRaw).toHaveBeenCalledTimes(1);
+    expect(p.booking.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ leadId: "lead1", status: "confirmed" }) })
+    );
   });
 });
 

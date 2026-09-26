@@ -21,6 +21,29 @@ import { TIER_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // real thing before we diverge. What is not copied, by standing rule: fake
 // testimonials, a fake logo strip, "book a demo" as the only action, annual
 // pricing. See design-brain/decisions/design-decisions.md, 2026-09-18.
+// The demo as one customer's story (A-051). Sample person; every step is
+// what the product really does.
+const STORY: { when: string; what: string; detail: React.ReactNode }[] = [
+  { when: "Tuesday, 10:12", what: "Sarah asked about a price.", detail: <p className={styles.storyTheirs}>Hi, how much for a full kitchen repaint?</p> },
+  { when: "Thursday", what: "No reply for 2 days.", detail: <p className={styles.storyNote}>You meant to answer. The week got busy.</p> },
+  {
+    when: "Thursday, 9:00",
+    what: "Sarah moves to the top of Today.",
+    detail: (
+      <div className={styles.storyToday}>
+        <span className={styles.rowName}>Sarah Johnson</span>
+        <span className={styles.rowMeta}>Asked about price · Waiting 2 days</span>
+      </div>
+    ),
+  },
+  {
+    when: "Thursday, 9:00",
+    what: "The reply is already written.",
+    detail: <p className={styles.storyOurs}>Hi Sarah, a full kitchen repaint usually runs $1,800 to $2,400. Could I take a look on Friday?</p>,
+  },
+  { when: "Thursday, 9:02", what: "You check it and send.", detail: <p className={styles.storyNote}>Sent to Sarah. FollowUp checks in Monday, unless Sarah writes first.</p> },
+];
+
 export default function LandingPage() {
   const proof = realProof();
   return (
@@ -237,7 +260,26 @@ export default function LandingPage() {
           <h2 className={styles.h2}>
             See who needs you, <span className={styles.em}>and why.</span>
           </h2>
-          <p className={styles.lede}>FollowUp does the part nobody has time for: remembering every customer and writing back.</p>
+          <p className={styles.lede}>One customer, start to finish. This is what happens to every one of them.</p>
+        </RevealLight>
+
+        {/* One story, in order (A-051, the Intercom study): where "See how
+            it works" in the hero lands. Numbered because it really is a
+            sequence. Made-up customer, real steps; the product cards stay
+            below it. */}
+        <RevealLight>
+          <ol className={styles.story}>
+            {STORY.map((step, i) => (
+              <li key={step.what} className={styles.storyStep}>
+                <span className={styles.storyNum} aria-hidden="true">{i + 1}</span>
+                <div>
+                  <div className={styles.rowSub}>{step.when}</div>
+                  <div className={styles.storyWhat}>{step.what}</div>
+                  {step.detail}
+                </div>
+              </li>
+            ))}
+          </ol>
         </RevealLight>
 
         <div className={styles.grid2}>
@@ -354,12 +396,12 @@ export default function LandingPage() {
           <h2 className={styles.h2}>
             What it will <span className={styles.em}>and won&apos;t do.</span>
           </h2>
-          <p className={styles.lede}>Four promises built into the product, and the switches that stay in your hands.</p>
+          <p className={styles.lede}>Four promises built into the product, and the switches that stay in your hands. Before anything goes out, you see exactly what it would write, to your own customers.</p>
         </RevealLight>
         <div className={styles.grid4}>
           {[
             ["When a customer replies, it stops. No more messages to them.", "Stops"],
-            ["It never talks about money without you. Anything about price waits for you to send.", "Safe"],
+            ["When it isn\u2019t sure, it asks you. Prices, dates and anything tense wait for your OK.", "Safe"],
             ["Every message it sends is written down, with the reason it was sent.", "Honest"],
             ["You can delete everything it has, whenever you want.", "Yours"],
           ].map(([q, tag], i) => (

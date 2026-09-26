@@ -544,3 +544,11 @@ are approved as drawn. He asked for the next screen, not for changes, which is e
 open person or conversation beside the list, and the held reply as the one black card. It covers the
 direction, not every detail. The state-dot colours are still a separate open question.
 **In the same breath he rejected the phone versions (R-015),** so this approval is desktop-only.
+
+## A-026 — Phone reply block: two buttons, plus a quiet "Don't send" link ^A-026
+
+**Approved:** 2026-09-26, founder, "ok", after asking "do we need dont send?" and hearing why.
+**What specifically:** on the phone, the reply block has **Send** (primary) and **Edit** as buttons, and
+**"Don't send"** as a small grey text link underneath. It isn't a third button, but it is always there.
+**Why it stays:** without it, the only way to clear an unwanted draft is to send or rewrite it; the person stays
+on "needs you" and the reminders keep coming (principle 1: the owner can always stop a message).

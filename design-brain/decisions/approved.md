@@ -598,3 +598,9 @@ The dot is the only colour; the pill stays white with a hairline border and the 
 These values are now the approved state tokens. They were a proposal since A-024.
 **Phone is unchanged** (R-015/A-027): a single black dot for "needs you", no colour coding.
 **Reason inferred (marked inferred):** at a desk, scanning many rows at once, colour helps; on the phone, one decision at a time, it doesn't.
+
+**Refined the same minute (founder):** *"The needs should only be the bold font… like you have highlighted on the
+right side. The rest should not be that highlighted."* Final rule for state pills everywhere, desktop app and landing examples:
+- **"Needs you"** (and the landing's "Held for you"): bold, black text.
+- **Every other state:** regular weight, soft grey text (`#57534e`).
+- The coloured dot stays on all of them. Emphasis marks what needs action; colour tells the states apart.

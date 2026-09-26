@@ -678,3 +678,18 @@ right side. The rest should not be that highlighted."* Final rule for state pill
 
 Counts only, no names. More numbers can be added later on request ("We can add stuff later on in analytics for
 me, right?"). The live /admin section was matched to this before shipping.
+
+## A-037 — The weekly email's design, with who's waiting above the numbers ^A-037
+
+**Approved:** 2026-09-26, founder: "yes go with it" (canvas version 24, "Weekly email" artboards).
+**What specifically:**
+- Plain text, from the owner's own Gmail to themselves. No bold, no buttons, no brand colour.
+- **A week with a win:** the subject and first line are the win ("Tom Reid came back and booked."), then one
+  sentence on how. Next come the replies waiting for an OK, **by name**, with the channel and how long each
+  customer has waited, then "Nothing goes out until you send it." and the link. **The numbers come last**
+  (customers answered, came back, booked).
+- **No win yet:** it leads with the waiting replies by name. The week is one sentence at the end.
+- **A quiet week:** "A quiet week." plus one sentence.
+**Why:** A-034 puts the win first, to show the value. Main goal #1 puts the waiting names second: they are the
+leads most at risk of being lost. Principle 7 means counting customers, not messages. The numbers are the least
+actionable part, so they go last. This refines A-034; it does not replace it.

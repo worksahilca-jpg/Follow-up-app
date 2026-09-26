@@ -553,6 +553,8 @@ direction, not every detail. The state-dot colours are still a separate open que
 
 ## A-026 — Phone reply block: two buttons, plus a quiet "Don't send" link ^A-026
 
+**AMENDED (2026-09-26) by [A-046](#A-046):** a second quiet link, "Later", sits beside "Don't send".
+
 **Approved:** 2026-09-26, founder, "ok", after asking "do we need dont send?" and hearing why.
 **What specifically:** on the phone, the reply block has **Send** (primary) and **Edit** as buttons, and
 **"Don't send"** as a small grey text link underneath. It isn't a third button, but it is always there.
@@ -828,3 +830,23 @@ gathering more pieces than A-027's "analytics becomes one line on Today".
 - Each part appears only when it's more than zero. The line is hidden when every part is zero.
 - The phone doesn't show it (R-015).
 - Today's order stays: warnings (paused, can't send) → Needs your OK → the rest.
+
+## A-046 — A calm Today: longest waiting first, an end, once each, coming up, later (Todoist study) ^A-046
+
+**Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 35). This includes "Later", which was
+asked about explicitly.
+**What specifically:**
+- **Order:** "Needs your OK" puts drafts that need judgement first, then longest waiting first. Each card shows the
+  wait as a fact about the customer: "Waiting 5 h" when they wrote, "Quiet 6 days" for a check-in.
+- **Start line:** "Start with Priya. She's waited 5 hours and asked about a price." No score.
+- **An end:**
+  - Desktop gets A-031's handled line: "1 of 5 handled today · When the list is empty, you're done for today."
+  - An empty list shows "You're done for today. FollowUp keeps watching. It will tell you when someone writes." There
+    is no confetti, no points and no streak.
+- **Once each:** "About to be lost" leaves out anyone already in "Needs your OK".
+- **Coming up:** who FollowUp writes to next, grouped by day. On desktop it's a card beside the list. On the phone it's
+  one line that opens the list.
+- **Later:**
+  - A quiet link beside "Don't send" offers "Later today (2pm)" or "Tomorrow morning (9am)".
+  - The card comes back by itself, or at once if the customer writes again.
+  - The draft is kept.

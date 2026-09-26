@@ -6665,3 +6665,27 @@ product demonstration. It is applied to the hero on both artboards (canvas versi
 **Weak spot:** the empty proof slot sits in the most valuable spot on the page. Until a tester quote exists,
 it shows a gap to anyone looking at the design. Getting two or three quotes from testers is now the
 highest-value thing the founder can do for the landing page.
+
+## 2026-09-26 — Landing examples in the line style; the Today screen; Duolingo, calmly
+
+"keep building", then, mid-build, "study Duolingo for its progress completion celebration habit loops and
+look where we can implement in our product." Canvas version 11.
+
+- **Landing product examples now follow A-024.**
+  - The gap's "Today" list, the held-reply example and the "One list" example use hairline rows.
+  - A small channel icon sits beside each name, and a white pill with a coloured dot shows each state. The heavy shadows are gone.
+  - The hero's message → reply stays as approved (A-022).
+- **Today, the app's home** (desktop, phone, and the phone's "all caught up" state), using the Duolingo study
+  (`research/ux-patterns/2026-09-26-duolingo-progress-and-completion.md`):
+  - A finite list, "4 customers are waiting on you", with a thin progress line: "1 of 5 handled today · When
+    the list is empty, you're done for today."
+  - Two groups: **Needs you** (Review) and **Ready to send** (Send, or "Send both" for the routine pile only).
+  - **This week** leads with a real win, "Tom Reid came back and booked", beside outcome counts (answered,
+    came back, booked). There's never a count of messages sent.
+  - **All caught up:** a pen-drawn check, "You're all caught up.", the day's line full, and one promise about
+    notifications. No confetti, no animation.
+- **Not taken from Duolingo:** streaks, XP, leagues, the mascot, and guilt or urgency reminders. These were already
+  excluded, and the study adds Duolingo's own cost: in one survey, 62% of users felt guilty after missing a day.
+
+**Weak spots:** the "This week" numbers and Tom's story are sample data; the caught-up screen reuses the hero
+wash, so the gradient has now spread into the app (a third place). Ask whether that's wanted.

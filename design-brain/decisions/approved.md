@@ -681,6 +681,9 @@ me, right?"). The live /admin section was matched to this before shipping.
 
 ## A-037 — The weekly email's design, with who's waiting above the numbers ^A-037
 
+**PARTLY SUPERSEDED (2026-09-26) by [A-038](#A-038):** the email is now a designed HTML email, and the numbers sit
+between the win and the waiting list. The plain-text wording below stays as the email's text version.
+
 **Approved:** 2026-09-26, founder: "yes go with it" (canvas version 24, "Weekly email" artboards).
 **What specifically:**
 - Plain text, from the owner's own Gmail to themselves. No bold, no buttons, no brand colour.
@@ -693,3 +696,23 @@ me, right?"). The live /admin section was matched to this before shipping.
 **Why:** A-034 puts the win first, to show the value. Main goal #1 puts the waiting names second: they are the
 leads most at risk of being lost. Principle 7 means counting customers, not messages. The numbers are the least
 actionable part, so they go last. This refines A-034; it does not replace it.
+
+## A-038 — The weekly email, designed (Wispr Flow structure, no streaks) ^A-038
+
+**Approved:** 2026-09-26, founder: "yes go with it" (canvas version 25, "Weekly email · designed", phone and desktop).
+**What specifically:**
+- A designed HTML email, still sent from the owner's own Gmail to themselves, with the A-037 plain text as its
+  text version.
+- **Header:** the landing wash with grain as the background image, the FollowUp lockup, the dates, and "Your week,
+  {business}".
+- **Win card** overlapping the header: label, "Tom Reid came back and booked.", one sentence on how, and a chip
+  with the booking time.
+- **Three big numbers:** answered, came back, booked, each with "Last week: N". Customers, never messages.
+- **Waiting for your OK:** the names, channel and wait time, one black **Open FollowUp** button, and "Nothing goes
+  out until you send it."
+- **Where customers wrote from** (thin bars) and the **busiest time**.
+- **Footer** on the closing wash: lockup, "So no customer gets forgotten.", Website · Privacy · Terms · Contact,
+  "Write to Sahil", and why they get it.
+- **Not included:** streaks, leaderboards, percentiles, stock photos, and blog links (there is no blog).
+**Why:** the founder wanted it "more professional and interesting" like Wispr Flow's. The structure is Wispr's,
+the restraint is FollowUp's.

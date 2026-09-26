@@ -27,5 +27,7 @@ declare module "next-auth/jwt" {
     // Last time businessId was re-verified against the DB — see the
     // periodic-revalidation comment in src/lib/auth.ts's jwt callback.
     checkedAt?: number;
+    // Set when "Sign out everywhere" ends this session (src/lib/auth.ts).
+    expired?: boolean;
   }
 }

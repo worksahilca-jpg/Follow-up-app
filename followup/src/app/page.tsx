@@ -299,14 +299,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---------- Stories grid, with our rules instead of invented customers ---------- */}
-      <section className={styles.section} style={{ paddingTop: 0 }}>
+      {/* ---------- Your control: the four promises, then what it can see and
+          what stays in the owner's hands (design brain A-041, the Mercury
+          study). Every line is true of the product as shipped; the controls
+          named here are in Settings. ---------- */}
+      <section id="control" className={styles.section} style={{ paddingTop: 0 }}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
-          <span className={styles.badge}>Our promises</span>
+          <span className={styles.badge}>Your control</span>
           <h2 className={styles.h2}>
             What it will <span className={styles.em}>and won&apos;t do.</span>
           </h2>
-          <p className={styles.lede}>Four promises. Each one is built into the product, not just written here.</p>
+          <p className={styles.lede}>Four promises built into the product, and the switches that stay in your hands.</p>
         </RevealLight>
         <div className={styles.grid4}>
           {[
@@ -335,6 +338,51 @@ export default function LandingPage() {
             </RevealLight>
           ))}
         </div>
+        <RevealLight>
+          <div className={styles.controlLists}>
+            {(
+              [
+                [
+                  "What it can see",
+                  "It asks Google for four things. Nothing more.",
+                  [
+                    ["Read your email", "To find the customers writing to you."],
+                    ["Send email as you", "Replies go out from your own address."],
+                    ["Add events to your calendar", "Only when a customer books a time."],
+                    ["See your email address", "To know which account is yours."],
+                  ],
+                ],
+                [
+                  "What stays in your hands",
+                  "Switches you can use any time, without asking us.",
+                  [
+                    ["Every reply waits for your OK", "Until you choose to let the simple ones go by themselves."],
+                    ["Pause all sending", "One tap holds everything. Your settings stay as they are."],
+                    ["Only admins send", "Your team writes and edits replies. An admin sends them."],
+                    ["Recent sign-ins", "See where your account was signed in, and sign out everywhere."],
+                  ],
+                ],
+              ] as [string, string, [string, string][]][]
+            ).map(([label, intro, rows]) => (
+              <div key={label}>
+                <p className={styles.controlLabel}>{label}</p>
+                <p className={styles.controlIntro}>{intro}</p>
+                <ul>
+                  {rows.map(([t, sub]) => (
+                    <li key={t} className={styles.controlRow}>
+                      <span className={styles.controlRowTitle}>{t}</span>
+                      <span className={styles.controlRowSub}>{sub}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className={styles.controlFoot}>
+            <p>It can&apos;t see anything you haven&apos;t connected. And we say plainly what we haven&apos;t done yet.</p>
+            <Link href="/security">How we keep your data safe</Link>
+          </div>
+        </RevealLight>
       </section>
 
       {/* ---------- Integrations ---------- */}
@@ -618,6 +666,7 @@ export default function LandingPage() {
           <div className={styles.footerLinks}>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
+            <Link href="/security">Security</Link>
             <a href="mailto:contact@followupbase.io">Contact</a>
             <Link href="/signin">Sign in</Link>
           </div>

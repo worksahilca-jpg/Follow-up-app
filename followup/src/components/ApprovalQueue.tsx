@@ -62,7 +62,16 @@ const CHANNEL_LABEL: Record<string, string> = {
   instagram: "Instagram",
 };
 
-function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (leadId: string) => void }) {
+function ApprovalCard({
+  item,
+  onResolved,
+  sendLocked = false,
+}: {
+  item: ApprovalItem;
+  onResolved: (leadId: string) => void;
+  /** Only admins send, and this person isn't one (A-041). */
+  sendLocked?: boolean;
+}) {
   const [busy, setBusy] = useState<"send" | "dismiss" | "talked" | null>(null);
   const [error, setError] = useState<string | null>(null);
   // "We talked" (design brain A-039): the card stays for a few seconds
@@ -234,14 +243,21 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-2 mt-3">
-          <button
-            onClick={send.start}
-            disabled={busy !== null || send.busy}
-            className="rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
-            style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-          >
-            {send.busy ? "Sending…" : "Approve & send"}
-          </button>
+          {/* Only admins send (A-041): a teammate keeps Edit, We talked and
+              Don't send, and is told who sends instead of seeing a button
+              the server would refuse. */}
+          {sendLocked ? (
+            <span className="text-sm text-ink-soft mr-1">An admin sends this one.</span>
+          ) : (
+            <button
+              onClick={send.start}
+              disabled={busy !== null || send.busy}
+              className="rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
+              style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+            >
+              {send.busy ? "Sending…" : "Approve & send"}
+            </button>
+          )}
           <Link
             href={`/leads/${item.leadId}`}
             className="rounded-lg px-3.5 py-1.5 text-sm font-medium border border-line hover:bg-paper"
@@ -275,8 +291,11 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
 export default function ApprovalQueue({
   items,
   answeredForYou = 0,
+  sendLocked = false,
 }: {
   items: ApprovalItem[];
+  /** Only admins send, and this person isn't one (A-041). */
+  sendLocked?: boolean;
   /** Replies FollowUp sent on its own this week — what it did instead of asking. */
   answeredForYou?: number;
 }) {
@@ -406,7 +425,7 @@ export default function ApprovalQueue({
               FollowUp checked each one and found nothing that needs a decision. Nothing goes out until you press.
             </p>
           </div>
-          <SafePileAction count={summary.safeToSend} source={null} accent />
+          {!sendLocked && <SafePileAction count={summary.safeToSend} source={null} accent />}
         </div>
       )}
 
@@ -432,6 +451,7 @@ export default function ApprovalQueue({
                   key={item.leadId}
                   item={item}
                   onResolved={(leadId) => setResolved((prev) => new Set(prev).add(leadId))}
+                  sendLocked={sendLocked}
                 />
               ))}
 
@@ -473,7 +493,7 @@ export default function ApprovalQueue({
                     {group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
                     {group.safeToSend[0] && <span className="text-ink"> — top is {group.safeToSend[0].leadName}</span>}
                   </p>
-                  <SafePileAction count={group.safeToSend.length} source={group.source} />
+                  {!sendLocked && <SafePileAction count={group.safeToSend.length} source={group.source} />}
                   {/* Full width, so opening it drops the sample below the
                       row rather than squeezing it between the sentence
                       and the button. Closed it is just a link at the end

@@ -101,7 +101,7 @@ describe("granting permission to send", () => {
     // conversations that ended long ago.
     expect(businessUpdate).toHaveBeenCalledWith({
       where: { id: "biz_1" },
-      data: { holdAllForApproval: false, autoSendAllowedAt: expect.any(Date) },
+      data: { holdAllForApproval: false, autoSendAllowedAt: expect.any(Date), sendingPausedAt: null },
     });
   });
 
@@ -114,7 +114,7 @@ describe("granting permission to send", () => {
     // first time and releasing everything held in between.
     expect(businessUpdate).toHaveBeenCalledWith({
       where: { id: "biz_1" },
-      data: { holdAllForApproval: true, autoSendAllowedAt: null },
+      data: { holdAllForApproval: true, autoSendAllowedAt: null, sendingPausedAt: null },
     });
   });
 

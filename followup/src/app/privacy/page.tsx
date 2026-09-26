@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: September 25, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: September 26, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -58,6 +58,12 @@ export default function PrivacyPage() {
               <li>
                 <strong className="text-ink">Account info</strong> — your name and email address from Google
                 sign-in.
+              </li>
+              <li>
+                <strong className="text-ink">Sign-ins</strong> — each time you sign in, the kind of browser and
+                device (for example, &quot;Chrome on Mac&quot;) and the approximate city our host reports. Never
+                your IP address. We keep them for 90 days so you can see recent sign-ins in Settings and so we can
+                email you about a sign-in from a device we haven&apos;t seen before.
               </li>
               <li>
                 <strong className="text-ink">Gmail and Outlook data</strong> — with your explicit permission, we
@@ -217,7 +223,7 @@ export default function PrivacyPage() {
               <li><strong className="text-ink">Stripe</strong> — subscription billing.</li>
               <li><strong className="text-ink">Supabase and Vercel</strong> — database and application hosting.</li>
               <li><strong className="text-ink">Sentry</strong> — error reports, with email addresses and phone numbers removed.</li>
-              <li><strong className="text-ink">Resend</strong> — the alert emails FollowUp sends to you when a customer is waiting (sent from the United States).</li>
+              <li><strong className="text-ink">Resend</strong> — the alert emails FollowUp sends to you, like when a customer is waiting or your account is signed in from a new device (sent from the United States).</li>
             </ul>
             <p className="mt-2">We never sell your data.</p>
           </section>

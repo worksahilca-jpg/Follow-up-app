@@ -19,6 +19,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 import { isInstagramLeadId, isSocialLeadId } from "@/lib/instagramId";
 import type { LeadLanguage } from "@/lib/leadLanguage";
+import { sendLockedForSession } from "@/lib/sendingControl";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const lead = await getLeadById(id);
   if (!lead) notFound();
-  const [auditTrail, freeTierStatus] = await Promise.all([getLeadAuditTrail(id), getFreeTierStatus()]);
+  const [auditTrail, freeTierStatus, sendLocked] = await Promise.all([getLeadAuditTrail(id), getFreeTierStatus(), sendLockedForSession()]);
   const autonomousAllowed = freeTierStatus?.tier !== "free";
 
   return (
@@ -135,6 +136,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             leadName={lead.name}
             leadEmail={lead.email || undefined}
             seenInboundAt={newestInboundAt(lead.conversation)}
+            sendLocked={sendLocked}
           />
 
           <ConversationThread messages={lead.conversation} leadName={lead.name} />

@@ -38,6 +38,12 @@ model User {
   pushSubscriptions       PushSubscription[]
   ownerAlerts             OwnerAlert[]
 
+  // Sign-ins and "Sign out everywhere" (design brain A-041). A session
+  // whose Google sign-in happened before this moment is ended the next
+  // time the JWT callback revalidates it (within REVALIDATE_INTERVAL_MS).
+  sessionsRevokedAt       DateTime?
+  signIns                 SignIn[]
+
   // Every Gmail sync/automation lookup resolves the connected account via
   // "the user(s) on this business" — without this, that's a table scan.
   @@index([businessId])
@@ -363,6 +369,20 @@ model Business {
   // where a grant was actually recorded — every grant from 2026-09-23 on.
   // (No account is in that older state today: all of them still hold.)
   autoSendAllowedAt    DateTime?
+
+  // "Pause all sending" (design brain A-041, the Mercury study). Set when
+  // someone pauses an account that was sending by itself: the pause turns
+  // holdAllForApproval back on, which is the one gate every automated path
+  // already reads, and this stamp is what remembers it was a pause rather
+  // than a decision to stop for good, so the app can offer Resume. Null
+  // whenever the account isn't paused.
+  sendingPausedAt      DateTime?
+
+  // "Only admins send" (A-041). When true, a teammate with the SALES role
+  // can still write, edit and hold replies, but the one route a person
+  // sends through (POST /api/leads/[id]/send) refuses them. Off by
+  // default: a team that never asked for it sees no change.
+  onlyAdminsSend       Boolean   @default(false)
 
   // When Meta last confirmed this app is subscribed to the account's
   // `messages` webhook. Null on a connected account means the
@@ -1857,4 +1877,20 @@ model AgentRun {
 
   @@index([roleId, startedAt])
   @@index([startedAt])
+}
+
+// One row per real Google sign-in (design brain A-041), kept 90 days, so
+// Settings can show recent sign-ins and a sign-in from a device or place
+// not seen before can be emailed to its owner. Deliberately coarse: a
+// browser-and-system label and a city from the host's geo headers. The
+// raw user agent and the IP address are never stored.
+model SignIn {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device    String
+  place     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }

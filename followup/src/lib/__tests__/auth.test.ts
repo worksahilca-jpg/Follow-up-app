@@ -23,6 +23,10 @@ const { txInviteFindFirst, txInviteDeleteMany, txBusinessCreate, txUserUpdate, t
 // The beta plan grant (src/lib/billing.ts) is its own concern, pinned in
 // betaPlan.test.ts; here it must simply not throw and not touch the flow.
 vi.mock("@/lib/billing", () => ({ grantBetaPlan: vi.fn(async () => true) }));
+// Recording a sign-in is its own concern (signIns.test.ts); here it must
+// be called on a real sign-in and never on an ordinary request.
+const { captureSignIn } = vi.hoisted(() => ({ captureSignIn: vi.fn(async () => {}) }));
+vi.mock("@/lib/signIns", () => ({ captureSignIn }));
 
 vi.mock("@/lib/db", () => ({
   prisma: {
@@ -103,6 +107,35 @@ describe("jwt callback", () => {
     expect(token.userId).toBeUndefined();
   });
 
+  it("records the sign-in on a real sign-in, and only then", async () => {
+    await jwt({ token: { businessId: "biz1", userId: "u1", checkedAt: Date.now() }, user: { email: "a@b.com" } });
+    expect(captureSignIn).toHaveBeenCalledWith("a@b.com");
+    captureSignIn.mockClear();
+    await jwt({ token: { businessId: "biz1", userId: "u1", authTime: 123, checkedAt: Date.now() } });
+    expect(captureSignIn).not.toHaveBeenCalled();
+  });
+
+  it("ends a session signed in before 'Sign out everywhere', dropping every claim", async () => {
+    const authTime = Date.now() - 60 * 60 * 1000;
+    p.user.findUnique.mockResolvedValueOnce({ businessId: "biz1", sessionsRevokedAt: new Date(authTime + 1000) });
+    const token = await jwt({ token: { email: "a@b.com", businessId: "biz1", userId: "u1", authTime, checkedAt: Date.now() - 10 * 60 * 1000 } });
+    expect(token).toEqual({ expired: true });
+  });
+
+  it("keeps a session signed in again after 'Sign out everywhere'", async () => {
+    const authTime = Date.now() - 60 * 1000;
+    p.user.findUnique.mockResolvedValueOnce({ businessId: "biz1", sessionsRevokedAt: new Date(authTime - 1000) });
+    const token = await jwt({ token: { businessId: "biz1", userId: "u1", authTime, checkedAt: Date.now() - 10 * 60 * 1000 } });
+    expect(token.businessId).toBe("biz1");
+    expect(token.expired).toBeUndefined();
+  });
+
+  it("keeps an ended session ended, without looking anyone up", async () => {
+    const token = await jwt({ token: { expired: true } });
+    expect(token).toEqual({ expired: true });
+    expect(p.user.findUnique).not.toHaveBeenCalled();
+  });
+
   it("refreshes businessId on revalidation when it simply changed", async () => {
     p.user.findUnique.mockResolvedValueOnce({ businessId: "biz2" });
     const staleCheckedAt = Date.now() - 10 * 60 * 1000;
@@ -113,6 +146,11 @@ describe("jwt callback", () => {
 });
 
 describe("session callback", () => {
+  it("reads an ended session as no session at all", async () => {
+    const out = await session({ session: { user: { email: "a@b.com" }, expires: "x" }, token: { expired: true } });
+    expect(out).toEqual({});
+  });
+
   it("carries authTime onto the session even with no user object yet", async () => {
     const result = await session({ session: {}, token: { authTime: 555 } });
     expect(result.authTime).toBe(555);

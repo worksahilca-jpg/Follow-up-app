@@ -7170,6 +7170,6 @@ Weak spots I noticed:
     through the existing `MotionConfig`.
   - The undo line is a CSS animation rather than framer. Framer's reduce-motion handling would have jumped it to
     empty; CSS lets it hold still.
-- **Part 2 PR:** removals. `FadeIn`, `Reveal` and `CountUp` are now unused in the app but still in the codebase. Only
+- **PR #352:** removals. `FadeIn`, `Reveal` and `CountUp` are now unused in the app but still in the codebase. Only
   sparkle and tilt were approved for deletion.
 - `brand/motion.md`'s three `[TO DECIDE]` items are marked decided.

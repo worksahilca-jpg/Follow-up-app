@@ -884,4 +884,4 @@ which were marked "your call".
   landing hero is unchanged.
 - **Tokens:** `--motion-fast` 150 ms, `--motion-move` 220 ms, `--motion-exit` 120 ms, ease-out in and ease-in out,
   and one spring for layout. The same numbers live in `src/lib/motion.ts`.
-**Built:** PR #351 (moments and tokens) and the part 2 PR (removals).
+**Built:** PR #351 (moments and tokens) and PR #352 (removals).

@@ -512,6 +512,7 @@ three steps · 5 See it working · 6 Promises · 7 Pricing · 8 Questions · 9 F
 
 **Rules that came with it:**
 - One goal, "Start free", in the top bar, the hero, after How it works, after Pricing and at the end.
+  **AMENDED (2026-09-26) by [[#^A-049|A-049]]:** the hero also has a quiet "See how it works".
 - Per section: a small label, one big thin line, one sentence, then the example.
 - Black and white; the reply card is the one black "answered" moment.
 - Phone version for every section.
@@ -885,3 +886,14 @@ which were marked "your call".
 - **Tokens:** `--motion-fast` 150 ms, `--motion-move` 220 ms, `--motion-exit` 120 ms, ease-out in and ease-in out,
   and one spring for layout. The same numbers live in `src/lib/motion.ts`.
 **Built:** PR #351 (moments and tokens) and PR #352 (removals).
+
+## A-049 — Hero: "Start free" plus a lower-commitment "See how it works" ^A-049
+
+**Approved:** 2026-09-26, founder: "B, build it", after seeing both options rendered on the real page (desktop and
+phone).
+**What specifically:** in the landing hero, a quiet outlined "See how it works" sits beside the black "Start free".
+It scrolls to the product demo ("See who needs you, and why."). It comes from the founder's reference strategy
+(`research/2026-09-26-reference-strategy.md`): one primary action and one lower-commitment action.
+**Amends:** [[#^A-023|A-023]]'s "one goal" rule, for the hero only. "Start free" stays the one goal in the top bar,
+after How it works, after Pricing and at the end.
+**Built:** PR #353.

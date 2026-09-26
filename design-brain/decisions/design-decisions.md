@@ -7173,3 +7173,11 @@ Weak spots I noticed:
 - **PR #352:** removals. `FadeIn`, `Reveal` and `CountUp` are now unused in the app but still in the codebase. Only
   sparkle and tilt were approved for deletion.
 - `brand/motion.md`'s three `[TO DECIDE]` items are marked decided.
+
+### 2026-09-26: the founder's reference strategy, and A-049
+- The founder shared a reference strategy PDF. It's transcribed and checked against what exists in
+  `research/2026-09-26-reference-strategy.md`, and its key rule is added to `workflows/design-review.md`.
+- **First conflict resolved:** the hero gets a second, lower-commitment action (A-049, option B, PR #353).
+- **Still open:** the activation wording (PDF vs A-047), and the gaps listed in that file (Close unstudied,
+  Intercom conversion, HubSpot pricing, Connect → Find → Follow up, proof, depth, "Waiting for customer", offering
+  automation once trust is earned).

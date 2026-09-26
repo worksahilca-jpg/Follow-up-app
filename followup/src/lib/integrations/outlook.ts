@@ -366,10 +366,19 @@ async function processConversations(
     const counterpart = parsedMessages.find((m) => m.from.email && !isAutomatedOrSelf(m.from.email, selfEmail))?.from;
     if (!counterpart) return null;
 
-    const alreadyKnown = !!(await prisma.conversation.findUnique({
+    const known = await prisma.conversation.findUnique({
       where: { externalId: conversationId },
-      select: { id: true },
-    }));
+      select: { id: true, lead: { select: { businessId: true } } },
+    });
+    // Conversation.externalId is unique across ALL businesses. An id held
+    // by another business's conversation is never "ours" — the writes
+    // below would put this mailbox's mail on that tenant's lead (security
+    // audit 2026-09-26, A-10). Same guard as the Gmail import.
+    if (known && known.lead.businessId !== businessId) {
+      console.warn(`Outlook conversation ${conversationId} for business ${businessId} collides with another business's conversation — skipped.`);
+      return null;
+    }
+    const alreadyKnown = !!known;
 
     const newestMessageAt = parsedMessages[parsedMessages.length - 1].sentAt;
 
@@ -506,6 +515,14 @@ async function processConversations(
       conversation = await prisma.conversation.create({
         data: { leadId: lead.id, channel: "email", externalId: conversationId, emailProvider: "outlook" },
       });
+    }
+    // Re-checked on the row actually resolved (see the Gmail import).
+    if (conversation.leadId !== lead.id) {
+      const owner = await prisma.lead.findUnique({ where: { id: conversation.leadId }, select: { businessId: true } });
+      if (owner?.businessId !== businessId) {
+        console.warn(`Outlook conversation ${conversationId} for business ${businessId} resolved to another business's conversation — skipped.`);
+        return null;
+      }
     }
 
     for (const m of parsedMessages) {

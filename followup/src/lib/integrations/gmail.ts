@@ -611,10 +611,20 @@ async function processThreadRefs(
     // spend for a verdict that's already on file. Only genuinely new
     // threads get classified; known ones go straight to picking up any
     // new messages below.
-    const alreadyKnown = !!(await prisma.conversation.findUnique({
+    const known = await prisma.conversation.findUnique({
       where: { externalId: thread.id! },
-      select: { id: true },
-    }));
+      select: { id: true, lead: { select: { businessId: true } } },
+    });
+    // Conversation.externalId is unique across ALL businesses, and every
+    // lookup below is by that id alone. A thread id already held by
+    // another business's conversation must never be read as "ours": the
+    // code below would append this mailbox's messages to that other
+    // business's lead (security audit 2026-09-26, A-10). Skipped instead.
+    if (known && known.lead.businessId !== businessId) {
+      console.warn(`Gmail thread ${thread.id} for business ${businessId} collides with another business's conversation — skipped.`);
+      return null;
+    }
+    const alreadyKnown = !!known;
 
     const newestMessageAt = parsedMessages[parsedMessages.length - 1].sentAt;
 
@@ -791,6 +801,16 @@ async function processThreadRefs(
         if (!isUniqueViolation(err)) throw err;
         conversation = await prisma.conversation.findUnique({ where: { externalId: thread.id! } });
         if (!conversation) throw err;
+      }
+    }
+    // The early check above, again, for the row this thread actually
+    // resolved to (a race can put another business's row here between the
+    // two reads): never write this mailbox's mail into another tenant.
+    if (conversation.leadId !== lead.id) {
+      const owner = await prisma.lead.findUnique({ where: { id: conversation.leadId }, select: { businessId: true } });
+      if (owner?.businessId !== businessId) {
+        console.warn(`Gmail thread ${thread.id} for business ${businessId} resolved to another business's conversation — skipped.`);
+        return null;
       }
     }
 

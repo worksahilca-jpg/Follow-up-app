@@ -7336,3 +7336,17 @@ Weak spots:
   when this is built.
 - The desktop frame is sized to the tallest state of the interactive parts, so the page may end with some empty
   space.
+
+### 2026-09-26: first review of the combined page (canvas v50, R-020)
+The founder circled four things on MainV2. All four were changed on MainV2 and PhoneV2:
+- the underline and the arrow were removed;
+- the hero channel chips were removed (Works with stays);
+- the lede was rewritten to say what it does.
+
+His circles were review marks and were taken off the page after the fix.
+
+The canvas caps a board at 8,000px, so the combined page is now two boards each:
+- MainV2 (hero to Your control) and MainV2b (proof to the end);
+- PhoneV2 (hero to Examples) and PhoneV2b (Your control to the end).
+
+Before this, everything below about 8,000px was cut off.

@@ -474,3 +474,29 @@ every new board. That means:
 Where the live site differs, the canvas wins. Before drawing, open Main.dc.html and match it. Don't use the live
 page or memory.
 **What replaced it (canvas version 41):** all nine boards were redrawn in that system.
+
+## R-020 — Hand-drawn marks (underline, arrow), repeated channel lists, and the "Only for owners…" hero line ^R-020
+
+**Rejected:** 2026-09-26, founder, circling them on the combined landing page (MainV2):
+- *"I'm seeing Works with twice … at the bottom as well and in the front"*
+- *"I don't like that concept of drawing that arrow and underlines"*
+- *"Only for owners who have this thing … I'm not getting that kick"*
+
+**What was rejected:**
+1. The hand-drawn swash under "follow up" in the headline.
+2. The hand-drawn curved arrow between the message card and the reply card in the hero picture.
+3. The channel chips in the hero picture (Gmail, Instagram, WhatsApp, Website), with the "Works with" strip right
+   below saying the same thing.
+4. The hero lede opening "Only for owners who have leads and don't have time to reply."
+
+**The principle:**
+- No hand-drawn decoration anywhere. It's the same family as R-017 (handwriting), so the whole hand-made-mark
+  direction is dead.
+- Say a thing once on a screen.
+- The line under the headline says what FollowUp does, never who it's for or a qualifier. (That part is inferred from
+  "no kick", and matches the reference strategy's note that the explanation line was a qualifier.)
+
+**What replaced it (canvas v50):**
+- The underline, the arrow and the chips are gone. The "Works with" strip stays as the one place the channels appear.
+- New lede: "FollowUp reads your email, DMs and website messages, finds every customer still waiting on you, and
+  writes the reply. You just check it and send."

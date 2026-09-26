@@ -645,3 +645,13 @@ right side. The rest should not be that highlighted."* Final rule for state pill
 - **"▶ See it work"** sits beside it as a quiet text link with a play mark. It jumps to the Try it demo on the page.
 - This keeps A-023's one goal and the research's "no second CTA" finding (conversion-strategies §5), while
   following Intercom's order (start / view demo).
+
+## A-034 — The weekly email leads with a real win ^A-034
+
+**Approved:** 2026-09-26, founder: "lead with the win".
+**What specifically:**
+- The weekly digest opens with one true outcome in plain words, for example "Tom Reid came back and booked":
+  a customer who went quiet and replied after a check-in.
+- The outcome counts follow underneath: answered, came back, booked. Never messages sent (principle 7).
+- If the week had no win, it opens with the plain count and says nothing is waiting.
+- **Status:** a design and copy decision for the existing weekly digest (Phase B). Implementing it is a code change for later.

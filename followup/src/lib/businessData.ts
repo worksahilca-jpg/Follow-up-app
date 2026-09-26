@@ -18,6 +18,7 @@
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { getStripe } from "@/lib/stripe";
+import { Prisma } from "@prisma/client";
 
 export interface BusinessExport {
   exportedAt: string;
@@ -257,6 +258,13 @@ export async function deleteBusinessData(
     prisma.ownerAlert.deleteMany({ where: { user: { businessId } } }),
     prisma.integration.deleteMany({ where: { user: { businessId } } }),
     prisma.user.deleteMany({ where: { businessId } }),
+    // The audit trail outlives the business on purpose (who did what,
+    // when), but its `meta` carries people: a cleaned-up lead's name and
+    // email, an unsubscribed address, a sender's number. Kept, that is
+    // personal data surviving an erasure request (audit 2026-09-16 H-1(b),
+    // fixed 2026-09-26). The action, time and target id stay; the details
+    // and the IP go.
+    prisma.auditEvent.updateMany({ where: { businessId }, data: { meta: Prisma.DbNull, ip: null } }),
     prisma.business.delete({ where: { id: businessId } }),
   ]);
 

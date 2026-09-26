@@ -57,7 +57,13 @@ vi.mock("@/lib/db", () => ({
     inboundWebhookEvent: { deleteMany: trackedDeleteMany("inboundWebhookEvent") },
     suppression: { deleteMany: trackedDeleteMany("suppression") },
     reactivationRun: { deleteMany: trackedDeleteMany("reactivationRun") },
-    auditEvent: { findMany: vi.fn(async () => []) },
+    auditEvent: {
+      findMany: vi.fn(async () => []),
+      updateMany: vi.fn(async () => {
+        callOrder.push("auditEventScrub");
+        return { count: 0 };
+      }),
+    },
     // The unattributed Meta envelopes are cleared with raw SQL (they have
     // no businessId to filter on). Records the bound LIKE pattern.
     $executeRaw: vi.fn(async (_strings: TemplateStringsArray, ...values: unknown[]) => {
@@ -169,6 +175,23 @@ describe("deleteBusinessData", () => {
       'rawEnvelope:%"102030405060708"%',
       'rawEnvelope:%"555000111222"%',
     ]);
+  });
+
+  // Audit 2026-09-16 H-1(b): the audit trail survives erasure by design,
+  // but its meta held people's names, emails and numbers.
+  it("keeps the audit trail but strips the personal details out of it", async () => {
+    await deleteBusinessData("biz1", { userId: "u1", email: "a@b.com" });
+    expect(p.auditEvent.updateMany).toHaveBeenCalledWith({
+      where: { businessId: "biz1" },
+      data: { meta: expect.anything(), ip: null },
+    });
+    const data = (p.auditEvent.updateMany.mock.calls[0] as [{ data: { meta: unknown } }])[0].data;
+    // Prisma.DbNull: the column set to SQL NULL, not the JSON value null.
+    expect(String(data.meta)).toMatch(/DbNull/);
+    // Scrubbed inside the same transaction, before the business row goes;
+    // the deletion's own audit record is written after, and is not scrubbed.
+    expect(callOrder).toContain("auditEventScrub");
+    expect(recordAudit).toHaveBeenCalledWith({ businessId: "biz1", userId: "u1" }, "business.delete", expect.anything());
   });
 
   it("never builds a pattern from an id that isn't all digits", async () => {

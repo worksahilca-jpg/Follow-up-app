@@ -24,6 +24,8 @@ Report results as: ✅ pass · ⚠️ weak, and here's how · ❌ fails, and her
 - [ ] Related things are grouped by proximity, not by boxes
 - [ ] Nothing competes with the primary action
 - [ ] Removing any element would lose information (if not, remove it)
+- [ ] Key rule (founder's reference strategy, 2026-09-26): every element helps the visitor understand, trust, or
+      want FollowUp. If removing it doesn't make understanding worse, strongly consider removing it.
 
 ## 3. Navigation
 - [ ] The user knows where they are

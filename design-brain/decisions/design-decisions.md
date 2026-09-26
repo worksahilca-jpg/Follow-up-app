@@ -6461,3 +6461,13 @@ and `followup/research/product/2026-09-15-reaching-back-out-to-ignored-leads.md`
 - The number means what it says: the seeded default moved 5 → 3 (migration `20260925130000_quiet_reminder_default` moves rows still on 5). The special case that read 5 as "day 3" was dropped — it made the field show 5 while the first reminder went on day 3.
 
 **Weak spot:** an owner who deliberately chose 5 before today is moved to 3 with everyone else; there was no way to tell them apart.
+
+## 2026-09-26 — Team invites join through their link ^invite-link-copy
+
+**Why (security, not taste):** audit 2026-09-16 H-2. An invite used to join its address to the inviting team the first time that address signed in, silently — a stranger's admin could pre-claim anyone. Joining now needs the invite's own link (`followup/src/lib/inviteToken.ts`).
+
+- Team settings, pending invites: each row gets a small text button **"Copy invite link"** (turns to "Copied" for two seconds), beside the existing cancel ×. Same fallback as the booking-link button when the clipboard is refused.
+- Helper line under the invite form: "They join by opening their invite link and signing in with this email. If you have Gmail connected, we'll email the link to them; otherwise copy it from the list above and send it yourself." Replaces "They'll join automatically the next time they sign in", which is no longer true.
+- Sign-in page: `?invite=1` shows a quiet note ("Your invite is ready. Continue with the Google account for the email address it was sent to."); `error=InviteLink` tells an invited person to open their link; `error=InviteInvalid` says the link is no longer valid. Coral for the two errors, ink-soft for the note — the existing error/notice styling on that card.
+
+**Weak spots:** not looked at in a browser inside Settings (needs a signed-in session and a database; the sign-in page states were checked as server-rendered HTML only). The Settings tier picker still promises "14-day free trial" to a business that already had one — since the same audit a returning business pays at checkout, so that line needs its own copy pass (frontend). Not a founder-approved design; logged here so the next session knows why the copy changed.

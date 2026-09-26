@@ -35,6 +35,7 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
 import { grantBetaPlan } from "@/lib/billing";
+import { inviteTokenMatches, readInviteCookie } from "@/lib/inviteToken";
 
 /**
  * The founder's tester list, read per call rather than at module load.
@@ -87,7 +88,7 @@ function publicSignupEnabled(): boolean {
  * empty business instead of the team that invited them.
  */
 const INVITE_VALID_DAYS = 30;
-function inviteWindowStart(): Date {
+export function inviteWindowStart(): Date {
   return new Date(Date.now() - INVITE_VALID_DAYS * 24 * 60 * 60_000);
 }
 
@@ -96,7 +97,9 @@ function inviteWindowStart(): Date {
  *
  * Now always yes, which is what "invite-only" has to mean: an admin
  * naming an address IS the invitation. Exported for the Settings panel,
- * which reports this to the owner.
+ * which reports this to the owner. Since 2026-09-26 the invitee has to
+ * open the invite's link before signing in (src/lib/inviteToken.ts) —
+ * still no allowlist, still no founder step, but no silent join either.
  *
  * It was not always yes. The old gate checked ALLOWED_EMAILS before it
  * ever looked for an invite, so while the allowlist was set an invited
@@ -163,6 +166,24 @@ export const authOptions: NextAuthOptions = {
 
       const existing = await prisma.user.findUnique({ where: { email } });
 
+      // The invite this browser came through, if any: a signed link
+      // (src/lib/inviteToken.ts) for a live invite to THIS address. Only
+      // such an invite may put someone into another business — an invite
+      // someone merely created for an address no longer joins that
+      // address's owner to a stranger's team the first time they sign in
+      // (security audit 2026-09-16 H-2, fixed 2026-09-26).
+      let provenInviteId: string | null = null;
+      if (!existing?.businessId) {
+        const cookie = await readInviteCookie();
+        if (cookie && inviteTokenMatches(cookie.inviteId, email, cookie.token)) {
+          const live = await prisma.invite.findFirst({
+            where: { id: cookie.inviteId, email, createdAt: { gte: inviteWindowStart() } },
+            select: { id: true },
+          });
+          provenInviteId = live?.id ?? null;
+        }
+      }
+
       /**
        * The gate, and it governs sign-UP, not sign-in.
        *
@@ -180,20 +201,26 @@ export const authOptions: NextAuthOptions = {
        *   1. ALLOWED_EMAILS — the founder's own tester list.
        *   2. An approved AccessRequest — the same thing granted from
        *      /admin without a redeploy.
-       *   3. A pending, unexpired team invite — an admin of an existing
-       *      business asked for this person by email.
+       *   3. A pending, unexpired team invite, opened through its link —
+       *      an admin of an existing business asked for this person by
+       *      email, and this browser came through that invitation
+       *      (src/lib/inviteToken.ts). Invited but without the link gets
+       *      a "use your invite link" message rather than a refusal.
        *
        * Anything else is refused unless PUBLIC_SIGNUP is explicitly
        * "true". Checked BEFORE the transaction below so a refusal creates
        * nothing: no user row, no business, and the invite (if any) is left
        * unconsumed for a legitimate attempt later.
        */
-      if (!existing?.businessId && !isTester && !publicSignupEnabled()) {
+      if (!existing?.businessId && !isTester && !publicSignupEnabled() && !provenInviteId) {
         const invited = await prisma.invite.findFirst({
           where: { email, createdAt: { gte: inviteWindowStart() } },
           select: { id: true },
         });
         if (!invited) return false;
+        // Invited, but not through the link. Say so rather than a bare
+        // refusal — the fix is to open the link, not to ask for access.
+        return "/signin?error=InviteLink";
       }
       if (existing) {
         // Returning user with a business already — nothing to create. If
@@ -250,9 +277,21 @@ export const authOptions: NextAuthOptions = {
         // someone past the gate but stale here would drop them into a
         // brand-new business of their own instead of the team that
         // invited them.
-        const pendingInvite = await tx.invite.findFirst({
-          where: { email, createdAt: { gte: inviteWindowStart() } },
-        });
+        //
+        // Only the invite this browser proved through its link (see
+        // provenInviteId above). Any other invite for the address stays
+        // pending and unconsumed; the person gets their own business, which
+        // is what they were let in to have.
+        const pendingInvite = provenInviteId
+          ? await tx.invite.findFirst({
+              where: { id: provenInviteId, email, createdAt: { gte: inviteWindowStart() } },
+            })
+          : null;
+
+        // The invite was cancelled between the gate and here, and it was
+        // this person's only way in: refuse rather than hand them a
+        // business of their own, which would be a sign-up nobody granted.
+        if (!pendingInvite && !isTester && !publicSignupEnabled()) return null;
 
         const businessId = pendingInvite
           ? pendingInvite.businessId
@@ -290,6 +329,7 @@ export const authOptions: NextAuthOptions = {
         }
         return businessId;
       });
+      if (!joinedBusinessId) return false;
 
       if (isTester) await grantBetaPlan(joinedBusinessId);
       return true;

@@ -137,7 +137,26 @@ function SignInPageInner() {
             .
           </p>
         )}
-        {!autoRetrying && error && error !== "AccessDenied" && (
+        {/* Team invites need their link since 2026-09-26 (security audit
+            H-2). Someone invited who signs in without it is told what to
+            do, not refused as a stranger. */}
+        {!error && searchParams.get("invite") === "1" && (
+          <p className="mt-4 text-sm text-ink-soft">
+            Your invite is ready. Continue with the Google account for the email address it was sent to.
+          </p>
+        )}
+        {!autoRetrying && error === "InviteLink" && (
+          <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
+            You&apos;ve been invited to a team. Open the invite link you were sent, then sign in from there. No link?
+            Ask the person who invited you to copy it from their Team settings.
+          </p>
+        )}
+        {!autoRetrying && error === "InviteInvalid" && (
+          <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
+            That invite link isn&apos;t valid any more. Ask the person who invited you for a new one.
+          </p>
+        )}
+        {!autoRetrying && error && error !== "AccessDenied" && error !== "InviteLink" && error !== "InviteInvalid" && (
           <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
             Sign-in failed — please try again. <span className="text-ink-soft">({error})</span>
           </p>

@@ -27,6 +27,8 @@ import { getOutlookStatus } from "@/lib/integrations/outlook";
 import { ArrowRight } from "lucide-react";
 import { ItemBox, ItemBoxList, type ItemTone } from "@/components/ItemBox";
 import FadeIn from "@/components/motion/FadeIn";
+import FirstValueNote from "@/components/FirstValueNote";
+import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
 // no seconds) since this is a status line, not a live clock.
@@ -126,6 +128,20 @@ export default async function DashboardPage() {
     waitClause: describeWaitClause(a, now),
   }));
   const handledToday = ctx ? await countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0;
+  // "Your first reply went out through FollowUp" (A-047): only on the day
+  // the business's first value happened, so it is said once with nothing stored.
+  const firstSend = ctx
+    ? await prisma.followUp.findFirst({
+        where: { ...FIRST_VALUE_SEND, lead: { businessId: ctx.businessId } },
+        orderBy: { sentAt: "asc" },
+        select: { sentAt: true, channel: true, repliedAt: true, lead: { select: { name: true } } },
+      })
+    : null;
+  const firstValue = firstValueNote(
+    firstSend?.sentAt ? { sentAt: firstSend.sentAt, channel: firstSend.channel, repliedAt: firstSend.repliedAt, leadName: firstSend.lead.name } : null,
+    now,
+    timezone
+  );
   // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
   const comingUp = ctx && leads.length > 0 ? await loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null;
   const written = ctx ? await sentAsWritten(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000)) : { asWritten: 0, total: 0 };
@@ -239,6 +255,7 @@ export default async function DashboardPage() {
       {cantSend && (
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
+      {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
       <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} />
 
       {leads.length === 0 ? (

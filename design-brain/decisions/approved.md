@@ -582,3 +582,19 @@ navigation, peers, and our own usage counts).
   more days").
 **Why:** principle 2. Urgency is stated once, precisely, where it's actionable. A 20-hour countdown is clutter;
 the last few hours are the one thing the owner must not miss.
+
+## A-029 — Desktop keeps the coloured state dots ^A-029
+
+**Approved:** 2026-09-26, founder: "Colored one", choosing between two side-by-side versions on the canvas
+("Compare · status dots"). I had recommended black-only.
+**What specifically:** on desktop, each state pill keeps a small coloured dot:
+- **muted rust:** needs you
+- **ochre:** going quiet
+- **slate:** waiting
+- **sage:** reply ready / sent
+- **greys:** checked in, done
+
+The dot is the only colour; the pill stays white with a hairline border and the word always says the state.
+These values are now the approved state tokens. They were a proposal since A-024.
+**Phone is unchanged** (R-015/A-027): a single black dot for "needs you", no colour coding.
+**Reason inferred (marked inferred):** at a desk, scanning many rows at once, colour helps; on the phone, one decision at a time, it doesn't.

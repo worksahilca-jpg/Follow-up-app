@@ -423,3 +423,11 @@ when it's styled cleanly. The phone gets one decision per screen, bigger type, f
 coding. Anything that's only "nice to know" moves off the phone screen.
 
 **Do not propose again:** desktop-density screens on the phone, in any styling.
+
+## R-016 — Black-only state dots on desktop ^R-016
+
+**Rejected:** 2026-09-26, founder, "Colored one", on the side-by-side comparison. The proposal was a black dot and bold text
+for "needs you", and grey for every other state.
+**Stated reason:** none. **Inferred (marked inferred):** the desktop table is scanned many rows at a time, and
+colour makes the states distinguishable at a glance. It's the Attio principle "colour only for state", which the
+founder accepted. **Do not re-propose** removing colour from the desktop state dots.

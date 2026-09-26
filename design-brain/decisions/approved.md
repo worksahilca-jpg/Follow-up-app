@@ -722,3 +722,15 @@ actionable part, so they go last. This refines A-034; it does not replace it.
 - **Not included:** streaks, leaderboards, percentiles, stock photos, and blog links (there is no blog).
 **Why:** the founder wanted it "more professional and interesting" like Wispr Flow's. The structure is Wispr's,
 the restraint is FollowUp's.
+
+## A-039 — "We talked": one tap stops check-ins after an offline conversation ^A-039
+
+**Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 27, "We talked" artboards).
+**What specifically:**
+- Under a waiting reply, two quiet links: **We talked · Don't send**.
+- One tap stops FollowUp's check-ins for that customer and removes them from Needs you.
+- The history gets a line: "You talked with {name} · {time}". A note says FollowUp won't check in, and that a new
+  message from them still shows up.
+- No confirm dialog. A white toast, "Check-ins stopped for {name}", offers **Undo**.
+**Why:** Close's "Mark as Responded" (Close study #1). FollowUp can't see calls or meetings, and checking in after
+you've spoken breaks trust (principle 1).

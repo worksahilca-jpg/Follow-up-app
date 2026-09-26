@@ -1,3 +1,5 @@
+import { formatSpan } from "@/lib/activation";
+
 /**
  * Today's numbers in one line (design brain A-045): "This week: 11
  * customers answered · 2 came back · 1 booked · 18 of 21 sent without
@@ -7,8 +9,17 @@
  * A part is left out when it is zero, and the whole line is null when
  * every part is, so the screen never shows a row of zeros.
  */
-export function weekLine(w: { answered: number; cameBack: number; booked: number; asWritten: number; sent: number }): string | null {
+export function weekLine(w: {
+  answered: number;
+  cameBack: number;
+  booked: number;
+  asWritten: number;
+  sent: number;
+  // A-050: the median time customers heard back, from our own records.
+  heardBackMs?: number | null;
+}): string | null {
   const parts: string[] = [];
+  if (w.heardBackMs != null) parts.push(`customers heard back in ${formatSpan(w.heardBackMs)}`);
   if (w.answered > 0) parts.push(`${w.answered} ${w.answered === 1 ? "customer" : "customers"} answered`);
   if (w.cameBack > 0) parts.push(`${w.cameBack} came back`);
   if (w.booked > 0) parts.push(`${w.booked} booked`);

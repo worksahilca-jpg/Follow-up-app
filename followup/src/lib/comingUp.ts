@@ -15,7 +15,15 @@ import type { Lead } from "@/lib/types";
  * Days only, never a time: the engine runs hourly and only between 8am and
  * 8pm, so an hour would be a promise it doesn't make.
  */
-export type ComingUpItem = { leadId: string; name: string; at: Date; what: string };
+export type ComingUpItem = {
+  leadId: string;
+  name: string;
+  at: Date;
+  what: string;
+  // A check-in or plan step: it only happens if the customer stays quiet,
+  // so the screen says "unless Priya writes first" (A-050, the Close study).
+  unless: boolean;
+};
 
 const DAY = 86_400_000;
 const ORDINAL = ["First", "Second", "Third", "Last"];
@@ -29,23 +37,24 @@ function timeline(lead: Lead): TimelineMessage[] {
   }));
 }
 
-function nextFor(lead: Lead, rules: BusinessAutomationRules, now: Date): { at: Date; what: string } | null {
+/** What FollowUp will do next for this customer, and when; null when nothing is planned. */
+export function nextFor(lead: Lead, rules: BusinessAutomationRules, now: Date): { at: Date; what: string; unless: boolean } | null {
   const status = lead.automationStatus;
   if (!status) return null;
   switch (status.kind) {
     case "workflow":
-      return { at: new Date(now.getTime() + status.dueInDays * DAY), what: `Next step of “${status.sequenceName}”` };
+      return { at: new Date(now.getTime() + status.dueInDays * DAY), what: `Next step of “${status.sequenceName}”`, unless: true };
     case "waiting":
-      return status.etaHours !== null ? { at: new Date(now.getTime() + status.etaHours * 3_600_000), what: "A reply to their message" } : null;
+      return status.etaHours !== null ? { at: new Date(now.getTime() + status.etaHours * 3_600_000), what: "A reply to their message", unless: false } : null;
     case "sent": {
       const t = timeline(lead);
       const lastContacted = new Date(lead.lastContacted).getTime();
       if (rules.masterEnabled) {
         const plan = quietReminderPlan(t, lastContacted, rules.silenceTriggerDays, rules.deadLeadDays);
-        if (plan?.dueAt) return { at: plan.dueAt, what: `${ORDINAL[Math.min(plan.step, ORDINAL.length - 1)]} check-in` };
+        if (plan?.dueAt) return { at: plan.dueAt, what: `${ORDINAL[Math.min(plan.step, ORDINAL.length - 1)]} check-in`, unless: true };
       }
       if (rules.deadLeadEnabled && !reactivationAlreadySent(t, rules.deadLeadDays)) {
-        return { at: new Date(lastContacted + rules.deadLeadDays * DAY), what: `Welcome back, after ${rules.deadLeadDays} quiet days` };
+        return { at: new Date(lastContacted + rules.deadLeadDays * DAY), what: `Welcome back, after ${rules.deadLeadDays} quiet days`, unless: true };
       }
       return null;
     }
@@ -73,7 +82,7 @@ export function getComingUp(
     if (!next) continue;
     const t = next.at.getTime();
     if (t <= now.getTime() || t > until) continue;
-    out.push({ leadId: lead.id, name: lead.name, at: next.at, what: next.what });
+    out.push({ leadId: lead.id, name: lead.name, at: next.at, what: next.what, unless: next.unless });
   }
   return out.sort((a, b) => a.at.getTime() - b.at.getTime());
 }

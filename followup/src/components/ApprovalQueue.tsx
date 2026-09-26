@@ -80,7 +80,7 @@ function ApprovalCard({
 }: {
   item: ApprovalItem;
   /** Done with this card. `result` is what happened, said for a moment before it leaves (A-048). */
-  onResolved: (leadId: string, result: string | null) => void;
+  onResolved: (leadId: string, result: string | null, sent?: boolean) => void;
   /** Only admins send, and this person isn't one (A-041). */
   sendLocked?: boolean;
   /** Whether "Later today" (2pm) is still ahead in the owner's day (A-046). */
@@ -134,7 +134,7 @@ function ApprovalCard({
         setError(typeof data.message === "string" ? data.message : "Send failed.");
         return;
       }
-      onResolved(item.leadId, `Sent to ${firstName}.`);
+      onResolved(item.leadId, `Sent to ${firstName}.`, true);
     },
     onNetworkError: () => setError("Couldn't reach FollowUp. Check your connection and try again."),
   });
@@ -397,6 +397,7 @@ export default function ApprovalQueue({
   handledToday = 0,
   laterToday = true,
   setAside = 0,
+  waitingOn = 0,
 }: {
   items: ApprovalItem[];
   /** Only admins send, and this person isn't one (A-041). */
@@ -409,6 +410,8 @@ export default function ApprovalQueue({
   laterToday?: boolean;
   /** Cards set aside with Later, hidden until they come back. */
   setAside?: number;
+  /** Customers we answered who haven't answered back (A-050). */
+  waitingOn?: number;
 }) {
   const [resolved, setResolved] = useState<Set<string>>(new Set());
   // A card that is done says what happened for a moment, then leaves and
@@ -420,7 +423,10 @@ export default function ApprovalQueue({
     return () => pending.forEach(clearTimeout);
   }, []);
   // Stable, so a card's own timers (We talked) aren't restarted by every re-render.
-  const resolve = useCallback((leadId: string, result: string | null) => {
+  // Sent from this list: those customers are now waiting on themselves (A-050).
+  const [sentHere, setSentHere] = useState(0);
+  const resolve = useCallback((leadId: string, result: string | null, sent?: boolean) => {
+    if (sent) setSentHere((n) => n + 1);
     if (!result) {
       setResolved((prev) => new Set(prev).add(leadId));
       return;
@@ -471,6 +477,8 @@ export default function ApprovalQueue({
     // Faded in only when the owner emptied the list just now; an empty
     // Today on load simply is (no motion without a change of state).
     return (
+      <>
+      <PlacesLine needsYou={0} waitingOn={waitingOn + sentHere} handled={handled} />
       <motion.div
         initial={items.length > 0 ? { opacity: 0 } : false}
         animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
@@ -494,6 +502,7 @@ export default function ApprovalQueue({
           </p>
         </div>
       </motion.div>
+      </>
     );
   }
 
@@ -519,6 +528,7 @@ export default function ApprovalQueue({
 
   return (
     <div className="mt-6">
+      <PlacesLine needsYou={active.length} waitingOn={waitingOn + sentHere} handled={handled} />
       <h2 className="font-display text-xl flex items-center gap-2">
         <ShieldCheck className="h-4 w-4" style={{ color: "var(--ink)" }} />
         Needs your OK ({summary.needsYou})
@@ -702,5 +712,36 @@ export default function ApprovalQueue({
       </div>
       </LayoutGroup>
     </div>
+  );
+}
+
+/**
+ * The three places a conversation can be (A-050, the Close study): needs
+ * you, waiting on the customer, handled. Every customer is in exactly one.
+ * Live, so it moves as the owner works. The phone gets the short form
+ * (R-015): the queue below already says what needs them.
+ */
+function PlacesLine({ needsYou, waitingOn, handled }: { needsYou: number; waitingOn: number; handled: number }) {
+  // A new account has nothing in any place yet: say nothing rather than three zeros.
+  if (needsYou + waitingOn + handled === 0) return null;
+  return (
+    <>
+      <p className="mt-6 mb-4 hidden sm:block text-sm text-ink-soft tabular-nums">
+        Needs you <span className="text-ink font-medium">{needsYou}</span>
+        <span aria-hidden="true"> · </span>
+        <Link href="/waiting" className="hover:underline underline-offset-4">
+          Waiting on customers <span className="text-ink font-medium">{waitingOn}</span>
+        </Link>
+        <span aria-hidden="true"> · </span>
+        Handled today <span className="text-ink font-medium">{handled}</span>
+      </p>
+      <p className="mt-4 mb-4 sm:hidden text-sm text-ink-soft tabular-nums">
+        <Link href="/waiting" className="underline-offset-4 hover:underline">
+          {waitingOn} waiting on customers
+        </Link>
+        {" · "}
+        {handled} handled today
+      </p>
+    </>
   );
 }

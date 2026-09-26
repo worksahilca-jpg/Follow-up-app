@@ -484,6 +484,9 @@ must be removed and re-added (iPhone: clear Safari website data first) before ju
 
 ## A-022 — The white hero (Hero v3 · light): black type, plain thin headline, the reply as the one black card ^A-022
 
+**PARTLY SUPERSEDED (2026-09-26) by [R-018](rejected.md#R-018):** the reply is no longer a black card. It is the landing
+gradient with dark text; only Send stays black.
+
 **Approved:** 2026-09-26, founder, on the Figma build: "keep it plain, move to the next section."
 
 **What specifically was approved:**
@@ -538,6 +541,9 @@ that question, so they remain a proposal. Also not settled: whether the People a
 are approved as drawn. He asked for the next screen, not for changes, which is encouraging but not approval.
 
 ## A-025 — The desktop app direction (People, Inbox, Today) ^A-025
+
+**PARTLY SUPERSEDED (2026-09-26) by [R-018](rejected.md#R-018):** the reply is no longer a black card. It is the landing
+gradient with dark text; only Send stays black.
 
 **Approved:** 2026-09-26, founder: *"I believe we are going well with the desktop one."*
 **What this covers:** the direction of the three desktop app artboards: sidebar, ruled table or list, the

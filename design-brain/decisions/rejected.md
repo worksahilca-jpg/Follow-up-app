@@ -439,3 +439,15 @@ founder accepted. **Do not re-propose** removing colour from the desktop state d
 **Reason (my recommendation, accepted):** the pen-drawn underline and arrow already carry the hand-made feel; a
 handwriting font tends to read as a gimmick and adds a font dependency.
 **Do not re-propose** a handwriting font. The pen marks are the approved human touch.
+
+## R-018 — The reply as a big black card ("too black") ^R-018
+
+**Rejected:** 2026-09-26, founder, in a canvas comment on the proof screen's reply card: *"I'm not liking this black
+theme. It's everywhere. It's too black. Can we add that or gradient things?"*
+**What was rejected:** the large black reply card (white text, white Send) used on every screen: the proof screen,
+Today, the conversation, Inbox, People, and three cards on the landing page.
+**The principle (inferred):** big dark surfaces repeated on every screen read as heavy, not calm. Black should be
+rare: the one action (a small Send or Start button), not whole blocks.
+**What replaced it (canvas version 26):** the landing wash (warm peach, rose and slate, with grain; A-032) and dark
+text, a faint border, a black Send and a light Edit. Partly supersedes A-022 and A-025 ("the one black card").
+**Still open:** whether the small black buttons should be softened too. The founder was asked in the thread.

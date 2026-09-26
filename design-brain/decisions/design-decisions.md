@@ -6859,3 +6859,11 @@ A-037 (numbers last). Kept here because the numbers are now compact and visual.
 - "Busiest time" and "Where customers wrote from" are new counts that need code, and the busiest time must use
   the business's time zone.
 - The plain-text versions (A-037) remain as the text part of the email, for clients that block images.
+
+## 2026-09-26 — Reply cards: from black to the landing gradient
+
+A canvas comment from the founder: "too black ... gradient things". Every big black reply card (7 screens, 11
+cards) now uses the landing wash, with grain, dark text and a black Send (canvas version 26). Buttons, dots and
+progress bars stay black, because each is one small action or state. Recorded as R-018.
+**Weak spot:** on the landing hero the reply card now sits on a washed panel, so it's gradient on gradient. It
+reads, thanks to its border and shadow, but it's softer than before. Worth watching.

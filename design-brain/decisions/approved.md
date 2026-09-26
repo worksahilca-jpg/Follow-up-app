@@ -797,3 +797,19 @@ at design time.
 - Guardrails: no sparkles, bot avatars or chat-with-the-AI screen (S-13).
 
 **Built:** PR #342. Rewrite chips are 36px tall on phones so they're easy to tap (the weak spot found in review).
+
+## A-044 — Follow-up rules as sentences (Zapier study) ^A-044
+
+**Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 34), after a plain-words recap.
+**What specifically:**
+- In Settings, each automatic rule is one sentence: "When …, FollowUp …". Each has one switch, the one number that
+  matters (editable in place) and a "stops when" / "unless" line. No "trigger", "action" or "workflow" words.
+- "See an example" on each rule shows what it would write for a real recent customer. It's marked as an example and
+  never sent.
+- A "This week" record under each rule: wrote · you sent · waiting. Real counts only, hidden when zero. On the phone
+  it's on the rule's own screen, not the list (R-015).
+- A rule that can't run says so where the owner looks: on Today, with the one fix (for example, "Reconnect Gmail").
+- Follow-up plans: three ready plans (After a quote, After a no-show, Seasonal check-in), counted in days. You pick one
+  and change a day. "Start from scratch" is a quiet link.
+- "Your rules" (A-041) stays as the summary beside the cards.
+- Guardrails: no flowchart or branching, and no live test that sends.

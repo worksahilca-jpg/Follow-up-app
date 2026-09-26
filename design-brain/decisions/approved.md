@@ -636,3 +636,12 @@ right side. The rest should not be that highlighted."* Final rule for state pill
 - The page ground stays one tone (R-010's lesson). They're low saturation and grained (S-02).
 - Values: `.fu-wash-hero`, `.fu-wash-end` and `.fu-grain` in the landing artboards. They're now approved.
 - **Not in the app:** the phone's all-caught-up screen dropped its wash in the phone rebuild (R-015).
+
+## A-033 — "See it work" stays a quiet link, not a second button ^A-033
+
+**Approved:** 2026-09-26, founder: "keep it as a link".
+**What specifically:**
+- In the landing hero, **Start free** is the only button.
+- **"▶ See it work"** sits beside it as a quiet text link with a play mark. It jumps to the Try it demo on the page.
+- This keeps A-023's one goal and the research's "no second CTA" finding (conversion-strategies §5), while
+  following Intercom's order (start / view demo).

@@ -6912,3 +6912,44 @@ Founder: "yes design both" (Notion study #1 and #2). On the canvas (version 28),
 - The numerals 1-2-3 stay on the outcome cards (A-023's approved look), but outcomes aren't a strict sequence.
 - The page is about 440px longer. The stories section sits between "What changes" and "See it working", which
   now shows similar replies again; watch for repetition.
+
+## 2026-09-26 — Trust and control, drawn (Mercury study)
+
+Founder: "yes design both build all" (all five proposals in
+`research/ux-patterns/2026-09-26-mercury-trust-and-control.md`). Drawn on the canvas, version 29:
+
+- **Landing, "Our promises" becomes "Your control."** The approved heading and the four promise cards stay (A-023).
+  Two ruled lists are added under them:
+  - "What it can see": the four Google permissions, in plain words.
+  - "What stays in your hands": every reply waits, pause all sending, only admins send, a new sign-in email.
+
+  Then one honest line, "It can't see anything you haven't connected. And we say plainly what we haven't done yet.",
+  and a link to /security. On phone, the list rows are titles only (R-015: less on the phone).
+- **/security, "Security, in plain words."** Six sections with an "On this page" list:
+  - what it can see, with each technical permission name beside it;
+  - how it's kept;
+  - what you control;
+  - who else handles it;
+  - **what we haven't done yet** (no SOC 2, no outside penetration test, Google verification still in progress);
+  - found a problem?
+
+  The footer gets a Security link.
+- **App, Settings.** A "Your rules" card (the rules FollowUp already follows, as plain sentences), "Pause all sending",
+  "Only admins send" (a switch under Your team), and a row to "Sign-ins and security".
+- **App, Sign-ins.** Where the account is signed in (device, city, when), "Sign out everywhere", and a note that
+  new sign-in emails are always on.
+- **Email, new sign-in.** Sent from FollowUp's own address. It shows the device, the rough location and the time,
+  "If this was you, you don't need to do anything", and "Not you? Sign out everywhere".
+- **Today, paused:** "Sending is paused. Everything waits for your OK." with Resume.
+- **Today, as a teammate when only admins send:** Edit only, and "Only admins send on this account."
+
+**Honesty rules applied:** every claim was checked in the code first. Nothing claims SOC 2, "bank-grade", or a
+badge. The claims about pause, admins-only and sign-in emails only go live on the landing page after those features
+ship.
+
+**Weak spots:**
+- /security is long, which suits a reference page but not a skim.
+- The landing section grew about 575px on desktop.
+- Pause matters only when auto-send is on. With the default ("every reply waits"), it has nothing to hold, so the
+  button shows only when something can send by itself.
+- Sign-in emails need Resend configured in production. Without it they're silently skipped, like the existing alerts.

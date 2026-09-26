@@ -752,3 +752,18 @@ you've spoken breaks trust (principle 1).
   Each card shows the customer's message, what FollowUp did, and a ticked outcome.
 - Always labelled as examples. They're replaced by real tester stories when testers agree (A-023 rule stands).
 **Refines A-023:** section 4 keeps its place and its look; only its words change. The stories are a new section 4b.
+
+## A-041 — Trust and control: all five Mercury proposals, to build ^A-041
+
+**Approved:** 2026-09-26, founder: "yes design both build all".
+**What specifically:**
+1. A "Your control" section on the landing page and a plain-words /security page, with an honest "not done yet" list.
+2. The rules FollowUp follows, shown as plain sentences in Settings.
+3. "Only admins send" as a team option.
+4. An email when the account is signed in from a new device, plus "Sign out everywhere".
+5. "Pause all sending".
+
+**Rules that come with it:** only true, checkable claims. Never SOC 2, "bank-grade", or badges we don't hold (A-023).
+Name the limits before anyone has to ask (Mercury's "not a bank" lesson).
+**Status:** the canvas drawings (version 29) haven't been reviewed yet. This approves building the five, not every
+drawn detail.

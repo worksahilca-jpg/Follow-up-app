@@ -511,3 +511,30 @@ change it"**.
 
 Status: NOT BUILT as a default. The template exists; making it the automatic default is part of the Automatic
 build.
+
+### Who it's for: anyone with more leads than follow-up (founder, 2026-09-26)
+
+> "Any small businesses, or even big ones, can create teams, right? Any small businesses with teams, solo
+> entrepreneurs, or realtors and consultants who are getting a lot of leads but are lacking in following up. This
+> product is mainly for them."
+
+- **The customer is defined by the problem, not the industry.** They get a lot of leads and fall behind on following
+  up.
+- This covers:
+  - solo owners;
+  - small businesses with teams;
+  - realtors and consultants;
+  - bigger businesses using teams.
+- **Teams are first-class** (Pro: shared customers, who's behind), not an add-on.
+- **Design consequence:** the page's examples should be mixed (a home service, a realtor, a consultant), so no reader
+  thinks "this is for plumbers only".
+
+## The auto follow-up direction, complete (2026-09-26)
+
+The five answers above settle the direction:
+1. **Onboarding asks Automatic or Assisted.** FollowUp does what the owner chose.
+2. **Old customers** get one list, sent with one tap. **New customers** are handled automatically.
+3. **A price or date waiting 30 minutes** gets a holding message that promises nothing. Tense moments get nothing
+   automatic.
+4. **Check-ins:** days 3, 7, 14 and 30, then stop. It stops at once on a reply. The owner can change the plan.
+5. **Who it's for:** anyone with more leads than follow-up, solo or team.

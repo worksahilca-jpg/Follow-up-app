@@ -97,6 +97,14 @@ export type PendingApproval = {
    * answered (daily-path audit 2026-09-25 F7).
    */
   leadLastMessageAt: string | null;
+  /**
+   * Set aside with "Later" (A-046) until this time, or null when it isn't.
+   * Already null once the time has passed or the customer has written
+   * since, so callers only ever see a deferral that is still in force.
+   * Today and the "still waiting" reminders hide these; every count keeps
+   * them.
+   */
+  laterUntil: Date | null;
 };
 
 /**
@@ -111,7 +119,7 @@ export function compareApprovals(a: { reason: string; heldAt: Date }, b: { reaso
   return b.heldAt.getTime() - a.heldAt.getTime();
 }
 
-export async function getPendingApprovals(businessId: string): Promise<PendingApproval[]> {
+export async function getPendingApprovals(businessId: string, now: Date = new Date()): Promise<PendingApproval[]> {
   // One row per lead — the most recent AuditEvent naming that lead —
   // scoped to a bounded recent window so a business with years of audit
   // history doesn't force a full-table distinct scan on every dashboard
@@ -137,6 +145,8 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
       name: true,
       source: true,
       talkedAt: true,
+      laterUntil: true,
+      laterSetAt: true,
       score: true,
       suggestedSubject: true,
       suggestedMessage: true,
@@ -215,7 +225,13 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
       if (m && (!lastInbound || m.sentAt > lastInbound.sentAt)) lastInbound = { body: m.body, channel: c.channel, sentAt: m.sentAt };
     }
 
+    const later =
+      lead.laterUntil && lead.laterUntil > now && !(lastInbound && lead.laterSetAt && lastInbound.sentAt > lead.laterSetAt)
+        ? lead.laterUntil
+        : null;
+
     approvals.push({
+      laterUntil: later,
       leadId: lead.id,
       leadName: lead.name,
       source: lead.source,

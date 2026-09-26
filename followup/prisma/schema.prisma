@@ -787,6 +787,13 @@ model Lead {
   // src/lib/talked.ts. Undo sets it back to null.
   talkedAt DateTime?
 
+  // "Later" (design brain A-046): the owner set a waiting reply aside until
+  // this time. It comes back by itself then, or at once if the customer
+  // writes after laterSetAt. The draft is untouched. Only Today and the
+  // "still waiting" reminders read it; every count still includes it.
+  laterUntil DateTime?
+  laterSetAt DateTime?
+
   // "Catching up" (design brain A-043): a two-or-three sentence summary of
   // a long conversation, and how many messages it covered. Regenerated
   // only when the count changes, so reading a lead doesn't cost a model

@@ -20,7 +20,7 @@ function a(over: Partial<PendingApproval> = {}): PendingApproval {
   return {
     leadId: `l${seq}`, leadName: `Lead ${seq}`, source: "Gmail", score: 50, draftRiskLevel: null, riskLevel: "low",
     reason: "the reply mentions a price", trigger: "unanswered", heldAt: new Date("2026-09-26T10:00:00Z"),
-    draftSubject: null, draftMessage: "…", leadLastMessage: "hi", leadLastMessageChannel: "email", leadLastMessageAt: null,
+    draftSubject: null, draftMessage: "…", leadLastMessage: "hi", leadLastMessageChannel: "email", leadLastMessageAt: null, laterUntil: null,
     ...over,
   };
 }

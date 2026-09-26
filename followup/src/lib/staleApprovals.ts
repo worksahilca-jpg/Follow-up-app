@@ -79,7 +79,9 @@ export async function remindStaleApprovals(
     return { checked: 0, reminded: 0 };
   }
 
-  const stale = pending.filter((p) => now.getTime() - p.heldAt.getTime() >= STALE_APPROVAL_AFTER_MS);
+  // Set aside with "Later" (A-046): the owner has said when to come back
+  // to it, so a reminder before then is a nag.
+  const stale = pending.filter((p) => !p.laterUntil && now.getTime() - p.heldAt.getTime() >= STALE_APPROVAL_AFTER_MS);
   if (stale.length === 0) return { checked: pending.length, reminded: 0 };
 
   // Who to tell, resolved once for the whole business rather than per

@@ -9,11 +9,12 @@ import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 
 const sendSchema = z.object({
-  message: z.string().trim().min(1, "Message can't be empty."),
+  // 50,000 characters is a very long email; the bound is only against abuse.
+  message: z.string().trim().min(1, "Message can't be empty.").max(50_000),
   // Optional: the composer only shows/requires a Subject field for leads
   // being emailed (see MessageComposer.tsx) — a text/WhatsApp/Instagram
   // send has no subject concept.
-  subject: z.string().trim().min(1).optional(),
+  subject: z.string().trim().min(1).max(1000).optional(),
   // When the newest message from the lead that was on screen arrived
   // (ISO). Optional: a caller that doesn't send it behaves as before.
   seenInboundAt: z.string().datetime().optional(),

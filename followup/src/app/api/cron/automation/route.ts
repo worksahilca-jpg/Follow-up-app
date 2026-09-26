@@ -3,6 +3,7 @@ import { requireCronSecret } from "@/lib/cronAuth";
 import { runAutomationForAllBusinesses } from "@/lib/automation";
 import { runSequencesForAllBusinesses } from "@/lib/sequences";
 import { pruneInboundWebhookEvents, pruneSetAsideThreads } from "@/lib/inboundEvents";
+import { pruneRateLimitHits } from "@/lib/rateLimit";
 import { remindStaleApprovalsForAllBusinesses } from "@/lib/staleApprovals";
 
 // One invocation covers every business with automation enabled — at real
@@ -101,6 +102,13 @@ export async function GET(request: NextRequest) {
       failed("set-aside thread pruning")(err);
       return { cleared: 0 };
     });
+    // RateLimitHit off the unretained list too: one row per attempt at a
+    // limited endpoint, public ones included, so without this a stranger
+    // could grow it without bound. Same isolation as the prune above.
+    const prunedRateLimitHits = await pruneRateLimitHits().catch((err) => {
+      failed("rate-limit hit pruning")(err);
+      return { deleted: 0 };
+    });
 
     /*
      * 500 only when BOTH send paths died, which is the one case where the
@@ -112,7 +120,7 @@ export async function GET(request: NextRequest) {
      * no response at all, and the console.error above is what carries the
      * failure to Sentry either way.
      */
-    const body = { success: errors.length === 0, automation, sequences, staleApprovals, pruned, prunedSetAside, errors };
+    const body = { success: errors.length === 0, automation, sequences, staleApprovals, pruned, prunedSetAside, prunedRateLimitHits, errors };
     const nothingRan = automation === null && sequences === null;
     return NextResponse.json(body, { status: nothingRan ? 500 : 200 });
   } catch (err) {

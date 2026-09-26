@@ -9,9 +9,9 @@ import { parseJsonBody } from "@/lib/validation";
 import type { AutomationTier } from "@prisma/client";
 
 const sourceRuleSchema = z.object({
-  source: z.string(),
+  source: z.string().max(200),
   routeToPool: z.boolean().optional(),
-  sequenceId: z.string().nullable().optional(),
+  sequenceId: z.string().max(64).nullable().optional(),
   automationTierDefault: z.enum(["OFF", "ASSISTED", "AUTONOMOUS"]).nullable().optional(),
 });
 

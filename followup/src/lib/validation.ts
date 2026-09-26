@@ -25,10 +25,29 @@ import { isSocialLeadId } from "@/lib/instagramId";
  * enough for a legitimate client to fix its request, never a raw zod
  * issue dump or a stack trace.
  */
+/**
+ * The largest JSON body any route here accepts: 1 MB. The biggest real
+ * body in the app is a few kilobytes (a workflow's steps, a message); the
+ * public ones (embed form, booking) are far smaller. Next.js route handlers
+ * have no body limit of their own (bodySizeLimit is for Server Actions),
+ * so without this the only ceiling is the platform's (4.5 MB on Vercel
+ * Functions), and every byte of it would be parsed before zod could
+ * refuse it.
+ *
+ * Checked on the declared Content-Length, before reading anything. A
+ * chunked body with no length still falls back to the platform ceiling
+ * and to each schema's own per-field caps.
+ */
+export const MAX_JSON_BODY_BYTES = 1024 * 1024;
+
 export async function parseJsonBody<S extends z.ZodTypeAny>(
   request: Request,
   schema: S
 ): Promise<{ ok: true; data: z.infer<S> } | { ok: false; response: NextResponse }> {
+  const declared = Number(request.headers?.get("content-length") ?? NaN);
+  if (Number.isFinite(declared) && declared > MAX_JSON_BODY_BYTES) {
+    return { ok: false, response: NextResponse.json({ success: false, message: "Request body is too large." }, { status: 413 }) };
+  }
   const raw = await request.json().catch(() => undefined);
   const result = schema.safeParse(raw);
   if (result.success) return { ok: true, data: result.data };
@@ -130,5 +149,8 @@ export const sequenceStepSchema = z.object({
   delayDays: z.coerce.number().optional(),
   action: z.enum(["EMAIL", "CHANGE_STAGE"]),
   stageTo: z.enum(["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"]).nullable().optional(),
-  messageHint: z.string().nullable().optional(),
+  // Goes into the drafting prompt on every run of the step, on the shared
+  // OpenAI key — so it is bounded. A hint is a sentence or a paragraph;
+  // 4000 characters is far past any real one.
+  messageHint: z.string().max(4000).nullable().optional(),
 });

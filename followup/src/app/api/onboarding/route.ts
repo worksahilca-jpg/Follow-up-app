@@ -10,7 +10,7 @@ const MAX_NAME_LENGTH = 120;
 const onboardingSchema = z.object({
   finish: z.boolean().optional(),
   name: z.string().trim().max(MAX_NAME_LENGTH).optional(),
-  industry: z.string().trim().optional(),
+  industry: z.string().trim().max(200).optional(),
   teamSize: z.coerce.number().optional(),
 });
 

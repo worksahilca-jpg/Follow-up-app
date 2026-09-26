@@ -5,9 +5,11 @@ import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { inviteMember } from "@/lib/team";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
+import { tooManyRecentActions } from "@/lib/rateLimit";
 
 const inviteSchema = z.object({
-  email: z.string(),
+  // 320 is the longest a real address can be (64 local + @ + 255 domain).
+  email: z.string().max(320),
   // Absent entirely defaults to SALES; present-but-invalid is rejected —
   // matches the pre-existing behavior this replaces.
   role: z
@@ -25,6 +27,12 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
+  }
+  // An invite can send an email from the business's connected mailbox
+  // (src/lib/team.ts). 30 an hour is a whole team onboarding at once; it
+  // stops the endpoint being used as a bulk mailer.
+  if (await tooManyRecentActions(ctx.businessId, "team.invite", { windowMinutes: 60, max: 30 })) {
+    return NextResponse.json({ success: false, message: "Too many requests — try again in a few minutes." }, { status: 429 });
   }
 
   const parsed = await parseJsonBody(request, inviteSchema);

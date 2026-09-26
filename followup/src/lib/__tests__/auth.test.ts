@@ -54,7 +54,7 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 
 import { prisma } from "@/lib/db";
-import { authOptions } from "@/lib/auth";
+import { authOptions, SESSION_ABSOLUTE_MAX_AGE_MS } from "@/lib/auth";
 import { INVITE_COOKIE, inviteCookieValue, inviteToken } from "@/lib/inviteToken";
 
 /** This browser opened invite `inviteId`'s link, issued to `email`; the invite is live. */
@@ -93,22 +93,28 @@ describe("jwt callback", () => {
   });
 
   it("never touches authTime on an ordinary request reusing an existing token", async () => {
+    // An hour-old sign-in (inside the absolute session limit below).
+    const authTime = Date.now() - 60 * 60 * 1000;
     const token = await jwt({
-      token: { businessId: "biz1", userId: "u1", authTime: 123, checkedAt: Date.now() },
+      token: { businessId: "biz1", userId: "u1", authTime, checkedAt: Date.now() },
     });
-    expect(token.authTime).toBe(123);
+    expect(token.authTime).toBe(authTime);
   });
+
+  // Every live token carries the authTime its sign-in stamped; the tests
+  // below model an ordinary request an hour after signing in.
+  const signedInAnHourAgo = () => Date.now() - 60 * 60 * 1000;
 
   it("resolves businessId for a token that never got one yet", async () => {
     p.user.findUnique.mockResolvedValueOnce({ id: "u1", businessId: "biz1" });
-    const token = await jwt({ token: { email: "a@b.com" } });
+    const token = await jwt({ token: { email: "a@b.com", authTime: signedInAnHourAgo() } });
     expect(token.businessId).toBe("biz1");
     expect(token.userId).toBe("u1");
     expect(typeof token.checkedAt).toBe("number");
   });
 
   it("leaves a token checked moments ago alone — no DB hit", async () => {
-    const token = await jwt({ token: { businessId: "biz1", userId: "u1", checkedAt: Date.now() } });
+    const token = await jwt({ token: { businessId: "biz1", userId: "u1", checkedAt: Date.now(), authTime: signedInAnHourAgo() } });
     expect(p.user.findUnique).not.toHaveBeenCalled();
     expect(token.businessId).toBe("biz1");
   });
@@ -116,7 +122,7 @@ describe("jwt callback", () => {
   it("strips businessId/userId once revalidation finds the user was removed from their team", async () => {
     p.user.findUnique.mockResolvedValueOnce({ businessId: null });
     const staleCheckedAt = Date.now() - 10 * 60 * 1000; // well past the 5-minute interval
-    const token = await jwt({ token: { businessId: "biz1", userId: "u1", checkedAt: staleCheckedAt } });
+    const token = await jwt({ token: { businessId: "biz1", userId: "u1", checkedAt: staleCheckedAt, authTime: signedInAnHourAgo() } });
     expect(token.businessId).toBeUndefined();
     expect(token.userId).toBeUndefined();
   });
@@ -124,9 +130,65 @@ describe("jwt callback", () => {
   it("refreshes businessId on revalidation when it simply changed", async () => {
     p.user.findUnique.mockResolvedValueOnce({ businessId: "biz2" });
     const staleCheckedAt = Date.now() - 10 * 60 * 1000;
-    const token = await jwt({ token: { businessId: "biz1", userId: "u1", checkedAt: staleCheckedAt } });
+    const token = await jwt({ token: { businessId: "biz1", userId: "u1", checkedAt: staleCheckedAt, authTime: signedInAnHourAgo() } });
     expect(token.businessId).toBe("biz2");
     expect(token.userId).toBe("u1");
+  });
+});
+
+/**
+ * The absolute session limit (SESSION_ABSOLUTE_MAX_AGE_MS). NextAuth
+ * re-issues a JWT cookie on every session read, so its own maxAge is only
+ * an idle timeout; without this a cookie in steady use — a copied one
+ * included — stayed valid forever.
+ */
+describe("absolute session limit", () => {
+  const justOverTheLimit = () => Date.now() - SESSION_ABSOLUTE_MAX_AGE_MS - 60_000;
+
+  it("keeps a session whose sign-in is a day short of the limit", async () => {
+    const authTime = Date.now() - SESSION_ABSOLUTE_MAX_AGE_MS + 24 * 60 * 60 * 1000;
+    const token = await jwt({ token: { email: "a@b.com", businessId: "biz1", userId: "u1", checkedAt: Date.now(), authTime } });
+    expect(token.expired).toBeUndefined();
+    expect(token.businessId).toBe("biz1");
+  });
+
+  it("drops every claim once the sign-in is older than the limit — however recently the cookie was used", async () => {
+    const token = await jwt({
+      token: { email: "a@b.com", name: "A", businessId: "biz1", userId: "u1", checkedAt: Date.now(), authTime: justOverTheLimit() },
+    });
+    expect(token).toEqual({ expired: true });
+  });
+
+  it("does not look the user back up by email and re-grant the claims", async () => {
+    p.user.findUnique.mockResolvedValue({ id: "u1", businessId: "biz1" });
+    const token = await jwt({ token: { email: "a@b.com", authTime: justOverTheLimit() } });
+    expect(token).toEqual({ expired: true });
+    expect(p.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("treats a token with no authTime (minted before stamping began) as too old", async () => {
+    const token = await jwt({ token: { email: "a@b.com", businessId: "biz1", userId: "u1", checkedAt: Date.now() } });
+    expect(token).toEqual({ expired: true });
+  });
+
+  it("stays expired on every later request — nothing on the token can bring it back", async () => {
+    p.user.findUnique.mockResolvedValue({ id: "u1", businessId: "biz1" });
+    const again = await jwt({ token: { expired: true } });
+    expect(again).toEqual({ expired: true });
+  });
+
+  it("a fresh Google sign-in starts a new session, whatever the old cookie said", async () => {
+    const before = Date.now();
+    p.user.findUnique.mockResolvedValueOnce({ id: "u1", businessId: "biz1" });
+    const token = await jwt({ token: { email: "a@b.com" }, user: { email: "a@b.com" } });
+    expect(token.expired).toBeUndefined();
+    expect(token.authTime).toBeGreaterThanOrEqual(before);
+    expect(token.businessId).toBe("biz1");
+  });
+
+  it("reports an expired token as no session at all — no email left for isPlatformAdmin to read", async () => {
+    const result = await session({ session: { user: { email: "founder@example.com" }, expires: "x" }, token: { expired: true } });
+    expect(result).toEqual({});
   });
 });
 

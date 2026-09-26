@@ -75,7 +75,7 @@ const schema = z.object({
   templateLanguage: z.string().trim().max(16).optional(),
   templateBody: z.string().trim().max(2000).optional(),
   // The paste-a-token fallback: all three together, or none.
-  accessToken: z.string().trim().min(1).optional(),
+  accessToken: z.string().trim().min(1).max(4096).optional(),
   phoneNumberId: z.string().trim().regex(/^\d+$/, "The phone number ID is digits only.").optional(),
   wabaId: z.string().trim().regex(/^\d+$/, "The WhatsApp Business Account ID is digits only.").optional(),
 });

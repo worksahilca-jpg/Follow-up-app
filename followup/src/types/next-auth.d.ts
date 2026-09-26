@@ -27,5 +27,9 @@ declare module "next-auth/jwt" {
     // Last time businessId was re-verified against the DB — see the
     // periodic-revalidation comment in src/lib/auth.ts's jwt callback.
     checkedAt?: number;
+    // Set by the jwt callback once the sign-in behind this token is older
+    // than the absolute session limit — the token then carries nothing
+    // else, and the session callback reports "signed out".
+    expired?: boolean;
   }
 }

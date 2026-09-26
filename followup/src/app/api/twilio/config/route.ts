@@ -9,12 +9,14 @@ import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 
 const twilioConfigSchema = z.object({
-  authToken: z.string().trim().optional(),
-  accountSid: z.string().trim().optional(),
-  phoneNumber: z.string().trim().optional(),
-  whatsappPhoneNumber: z.string().trim().optional(),
-  whatsappTemplateSid: z.string().trim().optional(),
-  whatsappTemplateBody: z.string().trim().optional(),
+  // Size bounds only, all far past real values (a Twilio SID/token is 34/32
+  // characters; a WhatsApp template body is capped at 1024 by Meta).
+  authToken: z.string().trim().max(256).optional(),
+  accountSid: z.string().trim().max(128).optional(),
+  phoneNumber: z.string().trim().max(64).optional(),
+  whatsappPhoneNumber: z.string().trim().max(64).optional(),
+  whatsappTemplateSid: z.string().trim().max(128).optional(),
+  whatsappTemplateBody: z.string().trim().max(4096).optional(),
   voiceAgentEnabled: z.boolean().optional(),
 });
 

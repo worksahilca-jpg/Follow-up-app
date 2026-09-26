@@ -6,7 +6,7 @@ import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { assertSafeWebhookUrl, UnsafeWebhookUrlError } from "@/lib/ssrf";
 
-const outboundWebhookSchema = z.object({ url: z.string().nullable().optional() });
+const outboundWebhookSchema = z.object({ url: z.string().max(2048).nullable().optional() });
 
 /**
  * GET/POST /api/webhooks/outbound — the signed-in business's own outbound

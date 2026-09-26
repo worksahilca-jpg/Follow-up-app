@@ -129,5 +129,8 @@ export const sequenceStepSchema = z.object({
   delayDays: z.coerce.number().optional(),
   action: z.enum(["EMAIL", "CHANGE_STAGE"]),
   stageTo: z.enum(["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"]).nullable().optional(),
-  messageHint: z.string().nullable().optional(),
+  // Goes into the drafting prompt on every run of the step, on the shared
+  // OpenAI key — so it is bounded. A hint is a sentence or a paragraph;
+  // 4000 characters is far past any real one.
+  messageHint: z.string().max(4000).nullable().optional(),
 });

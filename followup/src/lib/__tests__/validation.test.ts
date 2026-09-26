@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
-import { parseJsonBody, parseObject, cleanedText, MAX_JSON_BODY_BYTES } from "@/lib/validation";
+import { parseJsonBody, parseObject, cleanedText, MAX_JSON_BODY_BYTES, sequenceStepSchema } from "@/lib/validation";
 
 function fakeRequest(body: unknown): Request {
   return { json: async () => body } as unknown as Request;
@@ -107,5 +107,19 @@ describe("cleanedText", () => {
     expect(schema.parse({ note: 12345 }).note).toBe("");
     expect(schema.parse({ note: { nested: true } }).note).toBe("");
     expect(schema.parse({}).note).toBe("");
+  });
+});
+
+describe("sequenceStepSchema — the step hint that reaches the drafting prompt", () => {
+  const step = (messageHint: string | null) => ({ delayHours: 24, action: "EMAIL", messageHint });
+
+  it("accepts a long but real hint, and none at all", () => {
+    expect(sequenceStepSchema.safeParse(step("x".repeat(4000))).success).toBe(true);
+    expect(sequenceStepSchema.safeParse(step(null)).success).toBe(true);
+    expect(sequenceStepSchema.safeParse({ delayHours: 24, action: "EMAIL" }).success).toBe(true);
+  });
+
+  it("refuses a hint past 4000 characters — it would be paid for on every draft", () => {
+    expect(sequenceStepSchema.safeParse(step("x".repeat(4001))).success).toBe(false);
   });
 });

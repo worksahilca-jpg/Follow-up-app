@@ -6,7 +6,7 @@ import { getSequences, createSequence } from "@/lib/sequences";
 import { parseJsonBody, sequenceStepSchema } from "@/lib/validation";
 
 const createSequenceSchema = z.object({
-  name: z.string(),
+  name: z.string().max(200),
   steps: z.array(sequenceStepSchema).default([]),
 });
 

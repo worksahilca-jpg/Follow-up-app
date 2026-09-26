@@ -1122,3 +1122,24 @@ answered: *"thin is fine for both please"*.
 keeps the rest of A-058: the one-line lede, the picture in the first screen, and the button row.
 **What this settles:** the phone's "boring" problem (R-021) was about the picture being below the fold, not about the
 headline's weight. That's inferred from this answer, and marked inferred.
+
+## A-060 — The auto follow-up flow and the mixed-example landing page ^A-060
+
+**Approved:** 2026-09-26, founder: *"all good"*, on canvas v59.
+**What specifically:**
+- **Onboarding:** OnbConnect ("Nothing is sent yet: next, you choose how it works") → OnbChoose (Automatic,
+  recommended, with one example; or Assisted) → OnbOldCustomers ("12 people never got a reply", "Send all 10", price
+  questions set aside for Today).
+- **TodayHoldingPhone:** a price decision showing the "we got you" message already sent, and a "$ price" slot in the
+  written reply.
+- **Landing page (MainV2 / PhoneV2):**
+  - mixed examples (home service, realtor, consultant);
+  - "Your team" in Underneath;
+  - FAQ 1 names Automatic / Assisted;
+  - the hero reply asks for a photo instead of promising "this week";
+  - the story shows the holding message at 10:42.
+
+**Still open before building:**
+- the "$ price" slot needs a spec;
+- the product itself must do all of this (PRODUCT_DIRECTION, "The auto follow-up direction, complete") before the
+  page ships.

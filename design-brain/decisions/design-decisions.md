@@ -7049,3 +7049,24 @@ Weak spots I noticed:
 - The desktop cards show the record and the example together, which is dense. On the phone the record is on the
   detail screen only.
 - The ready plans' step wording is a first draft.
+
+### 2026-09-26: Conflict check across today's studies (Notion, Mercury, Ramp, Intercom, Zapier)
+The founder asked me to check that the studies and references don't conflict.
+- **Consistent:**
+  - A-044's rule cards keep "Your rules" (A-041) beside them.
+  - Plans stay under Settings (A-027).
+  - No "AI" labels (A-043, S-13).
+  - No invented numbers (A-023). The "This week" records come from real holds and sends.
+  - Nothing re-proposes a rejected item.
+- **Fixed while building:**
+  - The instant-reply card says "writes a short thank-you" on a holding account, never "thanks them" (it would be
+    held).
+  - The record says "sent", not "you sent", because a rule can send on its own.
+- **Open, founder's call:** Today is gathering more pieces:
+  - "This week" tiles (A-042);
+  - "sent as written" (A-043);
+  - the can't-send notice (A-044);
+  - "Coming up", still to design.
+
+  A-027 said analytics would become "one line on Today". Today now shows more than that, so ask whether to fold the
+  numbers into one line.

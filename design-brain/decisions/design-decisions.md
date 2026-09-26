@@ -7263,3 +7263,46 @@ uses a black reply bubble (against R-018). It needs to follow the canvas before 
 The founder paused all live design changes. The canvas is the work until he finalizes it, then it goes to main in
 one pass. PR #357 was closed unmerged and its branch kept. The A-051 onboarding step was not started. What's already
 on main (#350 to #356) stays.
+
+### 2026-09-26: Linear + Attio drawn, and every remaining PDF point covered (canvas v42)
+Founder: "yes design all five and cover each and every single thing one by one". All boards are proposed and
+sketch-only (A-052), in the canvas system (R-019).
+
+The Linear and Attio proposals (`ux-patterns/2026-09-26-linear-attio-landing.md`):
+1. **DepthTabs** (desktop and phone): "Simple on the outside. The rest is there when you want it."
+   - One frame with four tabs: Today, Follow-up plans, Rules, Your week.
+   - It reuses See it working's tab device.
+   - It sits after Your control and before Pricing.
+2. **HowItWorks** (desktop and phone): Connect → Find → Follow up, each with a small real frame.
+   - Replaces "What changes", whose card 3 claimed replies could go on their own.
+3. **SectionRhythm:** the shared layout (eyebrow, heading left, one line right, full-width frame), shown on
+   Examples and Your control. No word changes.
+4. **SeeItDecides:** "It decides who comes first and what to say. You decide what gets sent."
+5. **ProofStory** (desktop and phone): a customer story page in a fixed shape. Placeholders only, and it exists only
+   with a real, written OK (A-023).
+
+The rest of the PDF:
+- **JourneyMap:** the whole landing page in the PDF's order, each section marked Kept / Changed / New / Placed /
+  Hidden. FeaturesOutcomes (benefits) is placed at step 10.
+- **ConnectFind:** the setup button says "Find who needs a reply" (curiosity). The title says "customers", not
+  "leads" (A-050).
+- **PricingClear** (desktop and phone), from the new HubSpot/Intercom study
+  (`ux-patterns/2026-09-26-hubspot-intercom-pricing.md`):
+  - a one-line beta promise;
+  - Plus marked "Recommended for one owner";
+  - three money answers under the plans.
+
+Found and fixed on the boards: three lines on the sketched Main that aren't true any more.
+- "What changes", card 3: "Simple replies can go on their own."
+- Plus: "Simple replies send themselves, if you want."
+- FAQ 1: "You can let it send the simple ones by itself."
+
+Every reply waits for the owner's OK.
+
+Weak spots I see:
+- DepthTabs shows the three other tabs as small previews under the frame. On the real page they'd be one frame that
+  switches, so the board over-shows.
+- SectionRhythm makes the page more uniform. The risk is that it feels repetitive, and Linear gets away with it
+  because every frame is rich.
+- Still waiting on the founder: the hero number (Google Limited Use), and offering automation once trust is earned
+  (product behaviour).

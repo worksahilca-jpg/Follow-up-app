@@ -570,3 +570,15 @@ navigation, peers, and our own usage counts).
   - Activity becomes "what FollowUp did" inside each person.
   - Nothing goes into a "More" drawer.
 - **Guard:** re-check the usage counts at 30 accounts before deleting any page's code.
+
+## A-028 — Meta reply-window time: shown only when it's nearly up ^A-028
+
+**Approved:** 2026-09-26, founder: "ok go with it".
+**What specifically:**
+- In a conversation on Instagram or Messenger, the time left in the reply window is **hidden** while there's plenty.
+- **One line** appears only near the end (for example "3 hours left to reply here"), matching the existing
+  "window shuts in N hours" state.
+- After the window closes, the badge fixed in PR #334 takes over ("a reply you send yourself can still go out for N
+  more days").
+**Why:** principle 2. Urgency is stated once, precisely, where it's actionable. A 20-hour countdown is clutter;
+the last few hours are the one thing the owner must not miss.

@@ -7396,3 +7396,25 @@ The founder said the phone page was too long, then approved four phone cuts and 
 
 **Weak, named:** the desktop footer's Works with column repeats the "Works with" strip near the top. It's kept
 because footers are where people look for this, but it's the first thing to cut if the footer feels heavy.
+
+### 2026-09-26: the phone's first screen, two versions (R-021, canvas v56)
+The founder called the phone's first screen boring (R-021). I drew two versions next to PhoneV2.
+**Both versions:**
+- The headline (A-013) stays.
+- The paragraph becomes one line: "It answers every customer and follows up on its own. Only the decisions come to
+  you."
+- The picture moves into the first screen and plays in order:
+  1. the customer asks on Instagram;
+  2. "Sent on its own · 1 min";
+  3. "Needs you · the price. Reply written. You add the number."
+  This is motion that explains (A-048). Under reduce motion all three simply show.
+- "Start free" ends at about 670px, above where a phone browser cuts off (about 750px).
+- "See how it works" and "Free in beta · No card" share one row.
+- "Prices and dates always come to you" leaves the check lines, because the third card now shows it. Saying it once
+  follows R-020.
+
+**The difference:** A keeps the thin headline (A-022). B sets it in Public Sans 600. B would be the first bold
+display type on the canvas, so choosing B changes A-022 for the phone.
+
+**Weak, named:** the lede no longer says "in their language". Multilingual is shown later, in See it working, not
+in the first screen.

@@ -500,3 +500,17 @@ page or memory.
 - The underline, the arrow and the chips are gone. The "Works with" strip stays as the one place the channels appear.
 - New lede: "FollowUp reads your email, DMs and website messages, finds every customer still waiting on you, and
   writes the reply. You just check it and send."
+
+## R-021 — The phone's first screen as all text ^R-021
+
+**Rejected:** 2026-09-26, founder, on PhoneV2 (canvas v55): *"for the website for laptop or desktop, it's good, but
+for mobile, it's very boring. I don't think anybody will see… I don't think anybody will catch that on their phone.
+Desktop is fine."*
+**What was rejected:** the phone's first screen: headline, a four-line paragraph, the buttons and two check lines. The
+picture of FollowUp replying started at the very bottom, so on a phone nobody saw it without scrolling.
+**What survives:** the desktop hero. There the picture sits beside the text, so it's in view.
+**Inferred principle (marked inferred):** on a phone, the first screen has to *show* FollowUp doing its job, not just
+describe it. Stacking the desktop's text column above the picture pushes the product below the fold.
+**Open:** "bold, full letters" could mean the thin headline, or the wall of text. Both versions are drawn
+(PhoneHeroA thin, PhoneHeroB bold) for the founder to pick.
+**Do not propose again:** a phone hero where the picture starts below the first screen.

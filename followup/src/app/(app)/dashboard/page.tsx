@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/PageHeader";
 import ApprovalQueue, { type ApprovalItem } from "@/components/ApprovalQueue";
 import SetupStrip from "@/components/SetupStrip";
 import SendingPausedBanner from "@/components/SendingPausedBanner";
+import CantSendNotice from "@/components/CantSendNotice";
+import { hasAnySendChannel } from "@/lib/sendChannels";
 import TestLeadButton from "@/components/TestLeadButton";
 import { getLeads, getStats, getUpcomingBookings } from "@/lib/leads-data";
 import { formatCurrency, getGreeting } from "@/lib/demo-data";
@@ -119,6 +121,9 @@ export default async function DashboardPage() {
   const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const gmail = ctx ? await getGmailStatus(ctx.businessId) : { connected: false };
   const outlook = ctx ? await getOutlookStatus(ctx.businessId) : { connected: false };
+  // Nothing to send from: every rule still reads "on" in Settings, and none
+  // of them can do anything (A-044). Only asked once there are people.
+  const cantSend = ctx && leads.length > 0 ? !(await hasAnySendChannel(ctx.businessId)) : false;
   // An inbox is connected if EITHER provider is. Checking only Gmail is what
   // made the empty state claim "FollowUp is watching your inbox" to a business
   // that had connected Outlook and never got the confirmation line, and to a
@@ -204,6 +209,9 @@ export default async function DashboardPage() {
       <PageHeader title={getGreeting(timezone)} subtitle={headline()} />
 
       {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
+      {cantSend && (
+        <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
+      )}
       <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} />
 
       {leads.length === 0 ? (

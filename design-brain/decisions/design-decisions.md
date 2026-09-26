@@ -7181,3 +7181,29 @@ Weak spots I noticed:
 - **Still open:** the activation wording (PDF vs A-047), and the gaps listed in that file (Close unstudied,
   Intercom conversion, HubSpot pricing, Connect → Find → Follow up, proof, depth, "Waiting for customer", offering
   automation once trust is earned).
+
+### 2026-09-26: the Close study drawn (canvas v38)
+All proposed. Sample names only, and no pronouns in product copy.
+- **ThreePlaces** (desktop):
+  - One line under the headline: "Needs you 3 · Waiting on customers 7 · Handled today 4".
+  - The week line now leads with "customers heard back in 6 min" (median, from our own records).
+  - The sidebar reads "Customers".
+- **WaitingOnCustomers** (desktop) and **WaitingPhone:**
+  - Everyone we answered who hasn't answered back yet.
+  - Columns: last from you, when, and what happens next, e.g. "Checks in Monday, unless Omar writes first." It also
+    covers "Last check-in sent…" and "You marked We talked…".
+  - Nothing to do on this page.
+- **ThreePlacesPhone:** a single line, "7 waiting on customers · 4 handled today", under the headline (R-015).
+- **CustomerWords:** where the app says "lead" and what it becomes. The route stays `/leads`, and the A-013 hero
+  line stays.
+- **UnlessCheckIn:** Coming up, with each check-in stating its condition.
+- **ProofWaiting / ProofWaitingPhone:**
+  - A landing proof section built from a tester's own before and after reply time plus their words.
+  - Brackets are placeholders on the board only. The live section renders only when every field is real and agreed
+    (A-023).
+- **Weak spots I noticed:**
+  - "Waiting on customers" needs a clear rule for who's in it: the last message is ours, it's not closed, and the
+    customer hasn't said stop. Someone who got only the instant acknowledgement probably belongs in Needs you, not
+    here.
+  - The reply speed needs a definition. Median time from a customer's message to our first reply (sent by anyone),
+    this week.

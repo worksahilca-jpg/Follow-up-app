@@ -408,3 +408,12 @@ What this does and doesn't change:
 - The hourly automation still handles everyone else, as before.
 
 Not built yet. This is the decision; the implementation is a backend change for when the start flow is built.
+
+## The landing page "Try it" stays an example until the beta opens (CEO decision, 2026-09-26)
+
+Asked whether to make the landing page's "Try it" box write a real AI reply to whatever a visitor pastes, the founder
+said: **"wait until beta opens."**
+
+Why: while sign-up is invite-only (R-012), a visitor who tries it can't become a customer, so each try is AI
+cost with no possible conversion, and an open AI endpoint invites abuse. Until then, the box shows a fixed example
+reply, clearly labelled "Example reply". Revisit when the beta opens; it will need per-visitor rate limits.

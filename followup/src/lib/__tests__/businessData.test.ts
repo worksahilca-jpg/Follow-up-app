@@ -58,6 +58,12 @@ vi.mock("@/lib/db", () => ({
     suppression: { deleteMany: trackedDeleteMany("suppression") },
     reactivationRun: { deleteMany: trackedDeleteMany("reactivationRun") },
     auditEvent: { findMany: vi.fn(async () => []) },
+    // The unattributed Meta envelopes are cleared with raw SQL (they have
+    // no businessId to filter on). Records the bound LIKE pattern.
+    $executeRaw: vi.fn(async (_strings: TemplateStringsArray, ...values: unknown[]) => {
+      callOrder.push(`rawEnvelope:${String(values[0])}`);
+      return 0;
+    }),
     $transaction: vi.fn(async (queries: Promise<unknown>[]) => Promise.all(queries)),
   },
 }));
@@ -143,6 +149,32 @@ describe("deleteBusinessData", () => {
     expect(callOrder).toContain("inboundWebhookEvent");
     // Business itself is always the very last thing removed.
     expect(p.business.delete).toHaveBeenCalledWith({ where: { id: "biz1" } });
+  });
+
+  // Audit 2026-09-16 Meta #9: Meta envelopes are stored unattributed
+  // (businessId NULL), so the businessId delete above never reached them
+  // and a deleted business's DM text outlived its erasure.
+  it("also erases the unattributed Meta envelopes that name this business's accounts", async () => {
+    p.business.findUnique.mockResolvedValueOnce({
+      ...business,
+      instagramUserId: "17841400000000001",
+      instagramAccountId: "17841400000000001", // same id twice: one delete
+      facebookPageId: "102030405060708",
+      whatsappPhoneNumberId: "555000111222",
+    });
+    await deleteBusinessData("biz1", { userId: "u1", email: "a@b.com" });
+    const raw = callOrder.filter((c) => c.startsWith("rawEnvelope:"));
+    expect(raw).toEqual([
+      'rawEnvelope:%"17841400000000001"%',
+      'rawEnvelope:%"102030405060708"%',
+      'rawEnvelope:%"555000111222"%',
+    ]);
+  });
+
+  it("never builds a pattern from an id that isn't all digits", async () => {
+    p.business.findUnique.mockResolvedValueOnce({ ...business, instagramUserId: "%", facebookPageId: null });
+    await deleteBusinessData("biz1", { userId: "u1", email: "a@b.com" });
+    expect(callOrder.filter((c) => c.startsWith("rawEnvelope:"))).toEqual([]);
   });
 
   it("writes the audit record only after the transaction succeeds, and it's never deleted", async () => {

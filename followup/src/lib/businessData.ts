@@ -157,6 +157,26 @@ export type DeletionResult = { success: true } | { success: false; message: stri
  * typed back) before calling this; this function itself only guards against
  * a bad businessId, not against being called by mistake.
  */
+/**
+ * Deletes for the Meta envelopes that name this business's accounts.
+ * Only all-digit ids (every Meta id is one), so nothing in the LIKE
+ * pattern is a wildcard; the id is matched with its quotes, as a JSON
+ * string value, so it cannot match inside a longer number.
+ */
+function unattributedEnvelopeDeletes(business: {
+  instagramUserId?: string | null;
+  instagramAccountId?: string | null;
+  facebookPageId?: string | null;
+  whatsappPhoneNumberId?: string | null;
+}) {
+  const ids = [business.instagramUserId, business.instagramAccountId, business.facebookPageId, business.whatsappPhoneNumberId]
+    .filter((id): id is string => typeof id === "string" && /^\d+$/.test(id));
+  return [...new Set(ids)].map(
+    (id) =>
+      prisma.$executeRaw`DELETE FROM "InboundWebhookEvent" WHERE "businessId" IS NULL AND "provider" = 'meta' AND "payload"::text LIKE ${`%"${id}"%`}`
+  );
+}
+
 export async function deleteBusinessData(
   businessId: string,
   initiatedBy: { userId: string; email: string }
@@ -220,6 +240,13 @@ export async function deleteBusinessData(
     // cleared explicitly here or a deleted business's inbound messages
     // would outlive the erasure.
     prisma.inboundWebhookEvent.deleteMany({ where: { businessId } }),
+    // Meta's (Instagram, Messenger, Lead Ads, WhatsApp) raw envelopes are
+    // stored with businessId NULL — one envelope can carry several
+    // accounts — so the line above never reached them, and a deleted
+    // business's DM text and senders' ids outlived its erasure by 14-90
+    // days (audit 2026-09-16 Meta #9, fixed 2026-09-26). Matched by this
+    // business's own Meta ids, quoted, as they appear in the payload.
+    ...unattributedEnvelopeDeletes(business),
     prisma.filteredEmail.deleteMany({ where: { businessId } }),
     prisma.crmConnection.deleteMany({ where: { businessId } }),
     prisma.notification.deleteMany({ where: { user: { businessId } } }),

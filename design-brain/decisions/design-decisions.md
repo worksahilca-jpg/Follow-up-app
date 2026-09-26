@@ -6689,3 +6689,32 @@ look where we can implement in our product." Canvas version 11.
 
 **Weak spots:** the "This week" numbers and Tom's story are sample data; the caught-up screen reuses the hero
 wash, so the gradient has now spread into the app (a third place). Ask whether that's wanted.
+
+## 2026-09-26 — The start flow: sign in → connect → the proof screen
+
+"keep building", then "where we let the design lets continue". Canvas version 13. Three phone screens, in the
+Attio-line style (A-024), in the order a new customer meets them after "Start free":
+
+1. **Sign in (private beta).**
+   - The founder's own wording: "FollowUp is in a private beta. Sign in with the Google account Sahil added."
+   - One black "Continue with Google" button, with the same two reassurance lines as the hero.
+   - Below a rule: **"Not in the beta yet? Email Sahil"**, a mailto link with a note already written (research §3.2). It is marked on the
+     screen as a **proposal that needs his OK**, because R-012 (the private beta) is his rule.
+2. **Connect your sources** ("Where do your leads come from?", the existing wording).
+   - One ruled list: Gmail or Outlook, Instagram, Facebook Page, WhatsApp, Website form. Each row uses the
+     existing onboarding line.
+   - A connected inbox shows "Reading the last 90 days…". That matches the real first sync, which uses `newer_than:90d`.
+   - One promise line underneath, and "Step 2 of 3".
+3. **The proof screen** (the research's highest-priority item, `2026-09-10-ux-simplification.md` §3).
+   - "From the last 90 days: 3 customers never got an answer." Then counts: 14 wrote, 11 answered, 3 waiting.
+   - Priya's real-looking message, and her reply as the one black card: "Your reply is ready · it waits for your OK".
+   - "See all 3 on Today", or "I'll look later".
+
+**Depends on a product decision, not a design one:** the proof screen needs the first replies to be written
+**right after connecting**. Today drafts come from the hourly automation, so a new user may see the reply later.
+This was already asked of the founder ("can FollowUp write drafts at night / right away?") and is still open.
+
+**Weak spots:**
+- Sign-in and connect are phone-only so far. Desktop would be the same column, centred.
+- The proof numbers are sample data.
+- "Continue with Google" has no Google mark. Google's button rules may require their own button style when this is built.

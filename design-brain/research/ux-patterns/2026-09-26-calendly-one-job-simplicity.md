@@ -57,3 +57,47 @@ break principle 1 (trust) and A-017.
 - OpenView, SaaS viral loops: https://openviewpartners.com/blog/saas-product-viral-loop/
 - AfroTech, Tope Awotona: https://afrotech.com/tope-awotona-calendly-afrotech-labs
 - Uitify/Foundey, the UX story of Calendly: https://uitify.com/blog/from-frustration-to-viral-adoption-the-ux-story-of-calendly
+
+---
+
+## Follow-up research (same day): is cutting the menu to three right?
+
+The founder asked: *"I guess we should do more research about it."* There are three checks.
+
+**1. Platform rules (B).**
+- Apple's HIG: use **3–5 tabs** on iPhone, and avoid a "More" tab.
+- Material 3: a navigation bar holds **3–5 destinations**.
+- Three tabs is inside both.
+- https://developer.apple.com/design/human-interface-guidelines/tab-bars · https://m3.material.io/components/navigation-bar/guidelines
+
+**2. Hidden navigation costs (B, NN/g, 179 participants).**
+- Hiding navigation behind a menu cut discoverability by about 20% and slowed people down (15% on mobile).
+- **Implication:** whatever leaves the menu must move into a screen people already open, like the person page or Settings. It must not move into a hidden "More" drawer.
+- https://www.nngroup.com/articles/hamburger-menus/
+
+**3. Similar products (B–C, from help-centre summaries).**
+- Podium (the closest: small-business messaging) is built around one Inbox for every channel.
+- Follow Up Boss's phone app centres on People and Inbox.
+- Jobber uses a bottom bar plus a "More" tab. HubSpot's app has a Tasks tab.
+- A messaging-first app for small businesses with a few tabs is normal. Three is the low end, and Podium is close to it.
+- https://podium.my.site.com/knowledgebase/s/article/Navigating-the-Podium-Mobile-App-Inbox · https://help.followupboss.com/hc/en-us/articles/360016174733-iPhone-App-Overview · https://help.getjobber.com/hc/en-us/articles/7061327071639-Jobber-App-Basics
+
+**4. Our own usage** (production database, 2026-09-26; counts only; **10 accounts, 33 customers**, so directional, not proof):
+
+| Feature | Used by |
+|---|---|
+| Replies (sent, held, dismissed) | 216 actions, the core |
+| Pipeline stages moved | 1 of 10 accounts |
+| Follow-up plans created | 1 of 10 |
+| Saved lists | 0 |
+| Tasks | 0 |
+| Deals | 1 |
+
+**Conclusion:**
+- Three places on the phone (Today, Inbox, Settings) fits the platform rules, the category, and what testers actually do.
+- On desktop, add People (A-025).
+- Nothing removed should go into a hidden "More". Instead:
+  - a person's stage and deal value become fields on the person page, for the one account that uses them;
+  - the follow-up plan lives in Settings;
+  - "what FollowUp did" lives inside each person.
+- **Re-check the usage counts at 30 accounts** before deleting any page's code.

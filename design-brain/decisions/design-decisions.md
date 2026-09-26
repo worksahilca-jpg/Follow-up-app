@@ -6530,3 +6530,26 @@ https://claude.ai/artifact/R3b94hcjTh2f5AKaW6qbWx. It has two artboards, desktop
 phone 390, built as real HTML. The hero's motion runs there: the message drops in, the reply turns
 over, on a slow 7-second loop, with none under reduced motion. The See it working tabs can be
 clicked. The Figma file stays as the record of earlier versions; new work happens on the canvas.
+
+## 2026-09-26 — The rest of the nine-section plan (A-023) added to the canvas
+
+Founder: "add everything that is stated to get the best conversion rate". Added on both
+artboards, following the conversion research (`research/landing-page/2026-09-26-conversion-strategies.md`):
+
+- **Try it** box inside See it working. Paste a message, get an example reply. It is marked
+  "EXAMPLE REPLY · WAITS FOR YOUR OK" and shows `[YOUR PRICE]` rather than inventing a price.
+  It is a mock-up: a real version would cost AI money per visitor. That's the founder's call, still open.
+- **Our promises**: four cards, IT STOPS / IT'S SAFE / IT'S HONEST / IT'S YOURS.
+- **Pricing**: "Free while in beta." Free $0, Plus $39 (the one outlined plan), Pro $79,
+  using the site's existing feature lists.
+- **Questions**: an accordion of six real questions, answered in the site's existing words, plus the
+  contact email. Correction made: the Instagram 24-hour answer now says it "writes the reply for
+  you to send, or sends it itself if you have allowed that", which matches hold-by-default,
+  not "sends automatically".
+- **Start free**: the big final button, with the three promises repeated under it.
+- **Tester quote slots**: two dashed boxes, one under the hero and one at the end. They stay
+  **empty until a real tester agrees**. No invented testimonials.
+
+**Weak spots, named:** the page is long on phone (~10,400px). The FAQ answers are dense for
+the grade-5 reading target. The Try-it box sits inside a section that already has tabs, which
+may be too much in one place.

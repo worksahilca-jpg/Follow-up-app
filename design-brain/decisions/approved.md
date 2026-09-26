@@ -734,3 +734,21 @@ the restraint is FollowUp's.
 - No confirm dialog. A white toast, "Check-ins stopped for {name}", offers **Undo**.
 **Why:** Close's "Mark as Responded" (Close study #1). FollowUp can't see calls or meetings, and checking in after
 you've spoken breaks trust (principle 1).
+
+## A-040 — Landing: "What changes" (outcomes) and "How a normal week goes" (example stories) ^A-040
+
+**Approved:** 2026-09-26, founder: "approve both" (canvas version 28; Notion study,
+`research/ux-patterns/2026-09-26-notion-jobs-and-outcomes.md`).
+**What specifically:**
+- **"How it works" becomes "What changes":** "Two minutes to connect. Then this changes." The three cards are
+  outcomes: "Every message gets a reply", "You see who's slipping away", "You step in only when it matters". The
+  soft cards and thin numerals stay (A-023).
+- **New section right after it, "Examples · How a normal week goes."**, with "Made-up names, real situations." Three
+  story cards:
+  - Dan the plumber at 7:40 PM: a price question held for his OK, then a visit booked;
+  - Maya the realtor at a showing: a day-3 check-in, then a showing booked;
+  - Ana the salon owner mid-cut: a reply in Spanish, then a Saturday booking.
+
+  Each card shows the customer's message, what FollowUp did, and a ticked outcome.
+- Always labelled as examples. They're replaced by real tester stories when testers agree (A-023 rule stands).
+**Refines A-023:** section 4 keeps its place and its look; only its words change. The stories are a new section 4b.

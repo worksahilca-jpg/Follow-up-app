@@ -120,3 +120,4 @@ Start it by sending anything you like. See `workflows/reference-workflow.md`.
 
 - **Attio: how CRM data can look light** (crm, 2026-09-26, INBOX): lines not boxes, colour only for state, two sizes / two weights / two inks, record = attributes + timeline. `crm/2026-09-26-attio-data-ui.md`
 - **Wispr Flow: the weekly stats email** (messaging, 2026-09-26, USED): highlights card first, big numbers with one comparison each, where / peak time, one button, branded footer. No streaks, leaderboards or percentiles. `messaging/2026-09-26-wispr-flow-weekly-email.md`
+- **Linear: calm hierarchy** (design-systems, 2026-09-26, REVIEWED): navigation recedes so content leads, one header shape everywhere, three weights with one job each, warmer less-saturated greys, disclosure in layers. Not taken: dark canvas, command menu, display options. `design-systems/2026-09-26-linear-calm-hierarchy.md`

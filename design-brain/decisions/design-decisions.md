@@ -7219,3 +7219,30 @@ All proposed. Sample names only, and no pronouns in product copy.
   - Weak spot: desktop shows "Handled today" twice (the new line and A-046's progress line).
 - **#356:** `PROOF_STORIES` ships empty. The section doesn't render until a story is complete and has a consent
   date.
+
+### 2026-09-26: the Intercom study drawn (canvas v40)
+The founder had saved canvas v39 with one change: an empty white box on the Main board, with no text. It's kept as
+it is (the publish sent only the new boards). It's not treated as feedback.
+
+All proposed:
+- **PreviewFirst** (desktop and phone):
+  - Setup step 3: "Here's what FollowUp would write to your last 3 customers." with the line "Nothing was sent."
+  - Each draft shows the customer's own words, the reply, and Send, Edit or Skip.
+  - Only customers still waiting on a reply are included.
+- **DemoStory** (desktop and phone):
+  - Where "See how it works" lands: one numbered sequence, because it really is a sequence. Sarah asks about a
+    price → no reply for 2 days → Sarah moves to the top of Today → the reply is already written → you check it and
+    send ("…checks in Monday, unless Sarah writes first").
+  - The existing product cards stay below it.
+- **SafePromise:**
+  - The "Safe" promise becomes "When it isn't sure, it asks you. Prices, dates and anything tense wait for your OK."
+  - The section's lede adds "Before anything goes out, you see exactly what it would write, to your own customers."
+- **HeroProof** (desktop and phone):
+  - One line under the hero note: "Across 6 beta businesses this month, customers heard back in a median of 9
+    minutes", with its base under it.
+  - Placeholder numbers. It renders only with at least 3 businesses and 20 replies in 30 days. The founder's call.
+- **Weak spots I noticed:**
+  - PreviewFirst needs a rule for the case where there's no reply-worthy conversation yet. It should say so plainly
+    and skip to Today.
+  - HeroProof pools testers' data into one public number. Testers should know that in the beta terms before it
+    ever appears.

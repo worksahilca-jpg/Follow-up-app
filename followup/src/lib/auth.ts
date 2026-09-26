@@ -116,6 +116,30 @@ export function inviteAloneIsEnough(): boolean {
 // live credential for a month.
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
+/**
+ * The week above, measured from the SIGN-IN, not from the last request.
+ *
+ * NextAuth's `maxAge` alone does not deliver "a week at most": with the
+ * JWT strategy every /api/auth/session call (SessionProvider makes one on
+ * every page load and window focus) re-issues the cookie with a fresh
+ * maxAge (node_modules/next-auth/core/routes/session.js). So `maxAge` is
+ * an idle timeout, and a cookie in steady use — including one an attacker
+ * copied — never expired at all. This caps it at a week from the last real
+ * Google round trip (authTime), which is what the comment above always
+ * promised. A step-up re-auth (src/lib/reauth.ts) is a real round trip
+ * too, so it restarts the week.
+ *
+ * Exported for the tests; one number to change if a week proves too short.
+ */
+export const SESSION_ABSOLUTE_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000;
+
+function signInIsTooOld(authTime: unknown): boolean {
+  // No authTime at all means a token minted before 2026-09-08 (#117), when
+  // stamping began — its sign-in is of unknown age, so it is treated as
+  // too old: one fresh sign-in, then normal.
+  return typeof authTime !== "number" || Date.now() - authTime > SESSION_ABSOLUTE_MAX_AGE_MS;
+}
+
 // How often a still-valid session gets its businessId re-checked against
 // the DB (see the jwt callback below) — bounds how long someone removed
 // from their team (removeMember() in team.ts sets businessId to null) can
@@ -293,6 +317,13 @@ export const authOptions: NextAuthOptions = {
         // browser for days" — the step-up check before rotating a secret
         // or deleting a business.
         token.authTime = Date.now();
+      } else if (signInIsTooOld(token.authTime)) {
+        // Past the absolute limit (see SESSION_ABSOLUTE_MAX_AGE_MS). Every
+        // claim goes — not just userId/businessId: the email alone is what
+        // isPlatformAdmin() and /api/office/run read, and the businessId
+        // branch below would otherwise look the user up by that email and
+        // hand the claims straight back. Returned before that branch runs.
+        return { expired: true };
       }
 
       // Re-derived right after sign-in (when `user` is present) AND
@@ -343,6 +374,12 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      // An expired token is "signed out" everywhere at once: next-auth
+      // builds session.user from the cookie it just decoded, not from the
+      // token returned above, so the old email would otherwise still be on
+      // this one response. An empty object is what both getServerSession
+      // and next-auth/react read as "no session".
+      if (token.expired) return {} as typeof session;
       if (session.user && token.userId && token.businessId) {
         session.user.id = token.userId;
         session.user.businessId = token.businessId;

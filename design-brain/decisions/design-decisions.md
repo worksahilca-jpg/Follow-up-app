@@ -6967,3 +6967,9 @@ ship.
   later. It says the We talked rule and who can send instead.
 - **Pause lives inside the existing permission card.** When something sends by itself, "Pause all sending" is the
   button and "Stop sending by itself for good" is the quiet link. This avoids two near-identical switches.
+
+## 2026-09-26: A-040 built (PR #339)
+
+- "What changes" and "How a normal week goes" are now on the live landing page. They use the live page's card
+  style (icons, not thin numerals), because the live page hasn't moved to the canvas design yet.
+- The wording is exactly as approved.

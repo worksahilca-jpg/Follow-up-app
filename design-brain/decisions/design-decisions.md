@@ -7070,3 +7070,24 @@ The founder asked me to check that the studies and references don't conflict.
 
   A-027 said analytics would become "one line on Today". Today now shows more than that, so ask whether to fold the
   numbers into one line.
+
+### 2026-09-26: Todoist study drawn (canvas v35, proposed)
+The founder said "yes design all five". Six boards:
+- **TodayCalm** (desktop):
+  - "Start with Priya. She's waited 5 hours…".
+  - The A-031 handled line.
+  - Needs you ordered longest-waiting first, with "Waiting 5 h" on each row and a quiet "Later" (menu shown open).
+  - "About to be lost" lists only people who aren't already above.
+  - The A-045 week line.
+  - A "Coming up" card grouped by day.
+- **TodayCalmDone** (desktop): "You're done for today." with what FollowUp keeps watching, the next real thing, and
+  Coming up. No confetti.
+- **TodayCalmPhone:** the wait on the card, Later beside "Don't send", and a single "Coming up" line.
+- **LaterPhone:** a sheet with "Later today · 2:00 pm", "Tomorrow morning · 9:00 am", and "comes straight back if she
+  writes again". Later changes product behaviour, so it's the founder's call.
+- **ComingUpPhone:** the list, grouped by day.
+- **TodayDonePhone:** the done state, minimal (R-015).
+
+Weak spots I noticed:
+- Adding "Later" next to "Don't send" is a change to A-026's reply block. It needs his explicit OK.
+- The desktop row now carries four things on the right (wait, Later, action button). It's busy.

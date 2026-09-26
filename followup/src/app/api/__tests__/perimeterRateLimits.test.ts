@@ -27,6 +27,8 @@ const h = vi.hoisted(() => ({
   runSequencesForBusiness: vi.fn(),
   inviteMember: vi.fn(),
   createBooking: vi.fn(),
+  getBookingContext: vi.fn(),
+  getAvailableSlots: vi.fn(),
 }));
 
 vi.mock("@/lib/session", () => ({ getSessionContext: h.getSessionContext }));
@@ -47,12 +49,12 @@ vi.mock("@/lib/sequences", () => ({ runSequencesForBusiness: h.runSequencesForBu
 vi.mock("@/lib/team", () => ({ inviteMember: h.inviteMember }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => undefined) }));
 vi.mock("@/lib/booking", () => ({
-  getBookingContext: vi.fn(),
-  getAvailableSlots: vi.fn(),
+  getBookingContext: h.getBookingContext,
+  getAvailableSlots: h.getAvailableSlots,
   createBooking: h.createBooking,
 }));
 
-import { POST as bookPOST } from "@/app/api/book/[leadId]/route";
+import { GET as bookGET, POST as bookPOST } from "@/app/api/book/[leadId]/route";
 import { POST as automationRunPOST } from "@/app/api/automation/run/route";
 import { POST as sequencesRunPOST } from "@/app/api/sequences/run/route";
 import { POST as invitePOST } from "@/app/api/team/invites/route";
@@ -74,6 +76,31 @@ beforeEach(() => {
   h.runSequencesForBusiness.mockResolvedValue({ ran: 0 });
   h.inviteMember.mockResolvedValue({ success: true });
   h.createBooking.mockResolvedValue({ success: true, scheduledAt: "2026-10-01T15:00:00.000Z" });
+  h.getBookingContext.mockResolvedValue({ leadName: "Sam", businessName: "Shop", durationMinutes: 30 });
+  h.getAvailableSlots.mockResolvedValue(["2026-10-01T15:00:00.000Z"]);
+});
+
+describe("GET /api/book/[leadId] — public slot list", () => {
+  it("lists slots under the limit, keyed to the link", async () => {
+    const res = await bookGET(req(undefined), leadParams);
+    expect(res.status).toBe(200);
+    expect((await res.json()).slots).toEqual(["2026-10-01T15:00:00.000Z"]);
+    expect(h.tooManyRecentActions).toHaveBeenCalledWith("biz1", "book.view:lead1", { windowMinutes: 10, max: 120 });
+  });
+
+  it("refuses with 429 over the limit and never asks the calendar", async () => {
+    h.tooManyRecentActions.mockResolvedValue(true);
+    const res = await bookGET(req(undefined), leadParams);
+    expect(res.status).toBe(429);
+    expect(h.getAvailableSlots).not.toHaveBeenCalled();
+  });
+
+  it("answers an unknown link 404 as before, without touching the limiter", async () => {
+    h.getBookingContext.mockResolvedValue(null);
+    const res = await bookGET(req(undefined), leadParams);
+    expect(res.status).toBe(404);
+    expect(h.tooManyRecentActions).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST /api/book/[leadId] — public booking", () => {

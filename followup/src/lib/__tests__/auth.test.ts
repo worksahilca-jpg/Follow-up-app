@@ -45,8 +45,24 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+// Joining a team needs the invite link's cookie since 2026-09-26 (security
+// audit H-2; the gate side is pinned in signupGate.test.ts).
+const { cookieJar } = vi.hoisted(() => ({ cookieJar: new Map<string, string>() }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ get: (name: string) => (cookieJar.has(name) ? { name, value: cookieJar.get(name)! } : undefined) }),
+}));
+vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
+
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
+import { INVITE_COOKIE, inviteCookieValue, inviteToken } from "@/lib/inviteToken";
+
+/** This browser opened invite `inviteId`'s link, issued to `email`; the invite is live. */
+function openedInviteLink(inviteId: string, email: string) {
+  vi.stubEnv("NEXTAUTH_SECRET", "test-nextauth-secret");
+  cookieJar.set(INVITE_COOKIE, inviteCookieValue(inviteId, inviteToken(inviteId, email)));
+  gateInviteFindFirst.mockResolvedValue({ id: inviteId });
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -61,6 +77,8 @@ beforeEach(() => {
   p.user.findUnique.mockReset();
   vi.clearAllMocks();
   vi.unstubAllEnvs();
+  cookieJar.clear();
+  gateInviteFindFirst.mockResolvedValue(null);
   txBusinessCreate.mockResolvedValue({ id: "newBiz1" });
 });
 
@@ -162,6 +180,7 @@ describe("signIn callback — invite consumption", () => {
    * accidentally consume one.
    */
   it("only looks for invites issued recently, so a forgotten one stops working", async () => {
+    openedInviteLink("invite0", "new@example.com");
     await signIn({ user: { email: "new@example.com", name: "New" } });
     const where = txInviteFindFirst.mock.calls.at(-1)?.[0]?.where;
     expect(where.email).toBe("new@example.com");
@@ -173,6 +192,7 @@ describe("signIn callback — invite consumption", () => {
   });
 
   it("joins the inviting business at the invited role instead of creating a new one", async () => {
+    openedInviteLink("invite1", "invited@example.com");
     txInviteFindFirst.mockResolvedValue({ id: "invite1", businessId: "existingBiz", role: "SALES" });
     const ok = await signIn({ user: { email: "invited@example.com", name: "Invited Person" } });
     expect(ok).toBe(true);
@@ -185,6 +205,7 @@ describe("signIn callback — invite consumption", () => {
 
   it("re-attaches a returning, team-less user (removed earlier) to a new invite", async () => {
     p.user.findUnique.mockResolvedValue({ id: "u1", email: "returning@example.com", businessId: null, name: "Old Name" });
+    openedInviteLink("invite2", "returning@example.com");
     txInviteFindFirst.mockResolvedValue({ id: "invite2", businessId: "otherBiz", role: "SALES" });
     const ok = await signIn({ user: { email: "returning@example.com", name: "New Name" } });
     expect(ok).toBe(true);
@@ -196,6 +217,7 @@ describe("signIn callback — invite consumption", () => {
   });
 
   it("does not throw when a concurrent sign-in already consumed the invite (deleteMany finds nothing)", async () => {
+    openedInviteLink("invite3", "race@example.com");
     txInviteFindFirst.mockResolvedValue({ id: "invite3", businessId: "existingBiz", role: "SALES" });
     txInviteDeleteMany.mockResolvedValue({ count: 0 }); // the other concurrent request already deleted it
     await expect(signIn({ user: { email: "race@example.com", name: "Race Condition" } })).resolves.toBe(true);

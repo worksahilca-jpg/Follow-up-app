@@ -9,7 +9,7 @@
  */
 import * as Sentry from "@sentry/nextjs";
 import { beforeSend, beforeSendTransaction } from "@/lib/sentryScrub";
-import { notifySlack } from "@/lib/slack";
+import { escapeSlackText, notifySlack } from "@/lib/slack";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -36,7 +36,9 @@ Sentry.init({
     const scrubbed = beforeSend(event);
     if (scrubbed) {
       const message = scrubbed.exception?.values?.[0]?.value ?? scrubbed.message ?? "Unknown error";
-      void notifySlack(`🚨 *Server error* (${scrubbed.environment ?? "unknown env"}): ${message}`);
+      // An error message can carry request-derived text; escaped so it
+      // stays text in Slack (see escapeSlackText).
+      void notifySlack(`🚨 *Server error* (${scrubbed.environment ?? "unknown env"}): ${escapeSlackText(message)}`);
     }
     return scrubbed;
   },

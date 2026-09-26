@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/session";
 import { getReactivationBatch } from "@/lib/reactivation";
+import { publicErrorMessage } from "@/lib/publicError";
 
 /**
  * GET /api/reactivation/batch — the bucketed back-catalogue view for the
@@ -39,7 +40,7 @@ export async function GET() {
     const batch = await getReactivationBatch(ctx.businessId);
     return NextResponse.json({ success: true, batch });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Could not load the reactivation batch.";
+    const message = publicErrorMessage(err, "Could not load the reactivation batch.", "reactivation/batch");
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

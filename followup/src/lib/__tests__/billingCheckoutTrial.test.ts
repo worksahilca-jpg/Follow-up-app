@@ -36,10 +36,14 @@ const { sessionsCreate, customersCreate } = vi.hoisted(() => ({
   sessionsCreate: vi.fn(async () => ({ url: "https://checkout.stripe.com/session123" })),
   customersCreate: vi.fn(async () => ({ id: "cus_new" })),
 }));
+const { subscriptionsList } = vi.hoisted(() => ({
+  subscriptionsList: vi.fn(async (): Promise<{ data: unknown[] }> => ({ data: [] })),
+}));
 vi.mock("@/lib/stripe", () => ({
   getStripe: () => ({
     checkout: { sessions: { create: sessionsCreate } },
     customers: { create: customersCreate },
+    subscriptions: { list: subscriptionsList },
   }),
   priceIdForTier: (tier: "plus" | "pro") => (tier === "pro" ? "price_pro" : "price_plus"),
   VOICE_FLAT_PRICE_ID: "price_voice_flat",
@@ -75,6 +79,38 @@ describe("POST /api/billing/checkout — free trial", () => {
         subscription_data: { trial_period_days: TRIAL_PERIOD_DAYS },
         payment_method_collection: "if_required",
       })
+    );
+  });
+
+  // Security audit 2026-09-26, A-9: the trial needs no card, so a trial
+  // granted on every checkout was Pro forever for free — let it lapse,
+  // press Upgrade, repeat.
+  it("gives no second trial to a business whose earlier subscription lapsed", async () => {
+    findUnique.mockResolvedValue({
+      stripeCustomerId: "cus_existing",
+      stripeSubscriptionId: "sub_old",
+      subscriptionStatus: "canceled",
+      name: "Acme Plumbing",
+    });
+    await POST(postRequest());
+    const args = (sessionsCreate.mock.calls[0] as unknown as [Record<string, unknown>])[0];
+    expect(args.subscription_data).toBeUndefined();
+  });
+
+  it("gives no second trial when Stripe knows an earlier subscription the row has forgotten", async () => {
+    subscriptionsList.mockResolvedValueOnce({ data: [{ id: "sub_old", status: "canceled" }] });
+    await POST(postRequest());
+    expect(subscriptionsList).toHaveBeenCalledWith({ customer: "cus_existing", status: "all", limit: 1 });
+    const args = (sessionsCreate.mock.calls[0] as unknown as [Record<string, unknown>])[0];
+    expect(args.subscription_data).toBeUndefined();
+  });
+
+  it("does not ask Stripe about history for a brand-new customer", async () => {
+    findUnique.mockResolvedValue({ stripeCustomerId: null, name: "Acme Plumbing" });
+    await POST(postRequest());
+    expect(subscriptionsList).not.toHaveBeenCalled();
+    expect(sessionsCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ subscription_data: { trial_period_days: TRIAL_PERIOD_DAYS } })
     );
   });
 

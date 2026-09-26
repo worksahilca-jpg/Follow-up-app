@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { buildOutlookAuthUrl } from "@/lib/integrations/outlook";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // GET /api/integrations/outlook/connect — kicks off the Microsoft
 // identity-platform consent screen. Linked from the "Connect" button on
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     if (next) res.cookies.set("outlook_oauth_next", next, cookieOpts);
     return res;
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to start Outlook sign-in";
+    const message = publicErrorMessage(err, "Failed to start Outlook sign-in", "integrations/outlook/connect");
     const url = new URL(next === "onboarding" ? "/onboarding" : "/settings", request.url);
     url.searchParams.set("outlook", "error");
     url.searchParams.set("message", message);

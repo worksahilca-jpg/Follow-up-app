@@ -5,6 +5,7 @@ import { hasActiveAccess, billingLockedMessage } from "@/lib/billing";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { classifyQuietLeads } from "@/lib/reactivation";
 import { recordAudit } from "@/lib/audit";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // One pass is up to DEFAULT_CLASSIFY_LIMIT (60) OpenAI calls at
 // concurrency 4 — seconds, not minutes, but comfortably past a default
@@ -112,7 +113,7 @@ export async function POST() {
 
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Could not judge your quiet leads.";
+    const message = publicErrorMessage(err, "Could not judge your quiet leads.", "reactivation/classify");
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { exchangeOutlookAuthCode } from "@/lib/integrations/outlook";
 import { recordAudit } from "@/lib/audit";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // GET /api/integrations/outlook/callback — Microsoft redirects here after
 // the user approves (or denies) consent. This URL must exactly match a
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
     res = NextResponse.redirect(returnTo);
   } catch (err) {
     returnTo.searchParams.set("outlook", "error");
-    returnTo.searchParams.set("message", err instanceof Error ? err.message : "Outlook connection failed.");
+    returnTo.searchParams.set("message", publicErrorMessage(err, "Outlook connection failed.", "integrations/outlook/callback"));
     res = NextResponse.redirect(returnTo);
   }
 

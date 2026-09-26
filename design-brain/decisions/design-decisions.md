@@ -6484,3 +6484,13 @@ frames) above the **Hero ideas (reference)** page, a "FollowUp colours" variable
 text styles (Display, serif emphasis, section heading, body, mono label, button). Everything
 still goes through the brain: check rejected.md before building what he describes, and say so if
 a direction runs into a rejection rather than silently building it.
+
+## 2026-09-26 — Team invites join through their link ^invite-link-copy
+
+**Why (security, not taste):** audit 2026-09-16 H-2. An invite used to join its address to the inviting team the first time that address signed in, silently — a stranger's admin could pre-claim anyone. Joining now needs the invite's own link (`followup/src/lib/inviteToken.ts`).
+
+- Team settings, pending invites: each row gets a small text button **"Copy invite link"** (turns to "Copied" for two seconds), beside the existing cancel ×. Same fallback as the booking-link button when the clipboard is refused.
+- Helper line under the invite form: "They join by opening their invite link and signing in with this email. If you have Gmail connected, we'll email the link to them; otherwise copy it from the list above and send it yourself." Replaces "They'll join automatically the next time they sign in", which is no longer true.
+- Sign-in page: after an invite link is opened, a quiet note names the team — "Signing in will add you to **{Business}**'s team. Continue with the Google account for the email address the invite was sent to." The name is read server-side from the invite the browser's cookie names, never from the URL, so a crafted link cannot show a fake team; `error=InviteLink` tells an invited person to open their link; `error=InviteInvalid` says the link is no longer valid. Coral for the two errors, ink-soft for the note — the existing error/notice styling on that card.
+
+**Weak spots:** not looked at in a browser inside Settings (needs a signed-in session and a database; the sign-in page states were checked as server-rendered HTML only). The Settings tier picker still promises "14-day free trial" to a business that already had one — since the same audit a returning business pays at checkout, so that line needs its own copy pass (frontend). Not a founder-approved design; logged here so the next session knows why the copy changed.

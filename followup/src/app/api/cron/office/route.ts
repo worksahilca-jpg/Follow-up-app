@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { syncRoles } from "@/lib/office/roles";
 import { runShift } from "@/lib/office/runner";
+import { requireCronSecret } from "@/lib/cronAuth";
 
 // Desks run one after another rather than in parallel — a handful of live
 // desks is not worth the concurrency, and serial runs keep the spend
@@ -19,11 +20,12 @@ export const maxDuration = 300;
 // decides whether there is anything to do — a shift with nothing to report
 // is recorded, costs nothing, and calls no model.
 export async function GET(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  if (!secret || auth !== `Bearer ${secret}`) {
-    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
-  }
+  // The shared guard, not an inline copy: this route used to compare with
+  // `!==` (a timing side-channel on CRON_SECRET) and reported nothing on a
+  // failed attempt, unlike every other cron route (audits 2026-09-16 L-1,
+  // 2026-09-26 A-3).
+  const unauthorized = requireCronSecret(request, "office");
+  if (unauthorized) return unauthorized;
 
   try {
     // Keeps the roster in step with src/lib/office/roles.ts on every tick,

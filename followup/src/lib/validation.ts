@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isSocialLeadId } from "@/lib/instagramId";
 
 /**
  * Parses and validates a request's JSON body against a zod schema in one
@@ -92,6 +93,25 @@ export const cleanedText = (max: number) =>
     .transform((v) => (typeof v === "string" ? v.trim().slice(0, max) : ""));
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * A phone number a person or an integration typed in — never a DM address.
+ *
+ * Lead.phone doubles as the Instagram/Messenger address: "ig:<igsid>" and
+ * "fb:<psid>" decide the channel and the recipient of every send
+ * (src/lib/instagramId.ts). Those two prefixes may only ever be written by
+ * the Meta inbound path. Taken from a public form, a webhook or a CSV,
+ * "ig:1784…" minted a lead FollowUp treated as an Instagram contact, and
+ * one matching a real DM lead merged a stranger's words into that
+ * customer's thread through the duplicate-phone path (audits 2026-09-16
+ * Meta #7, 2026-09-26 A-6). Same forgiving shape as cleanedText: such a
+ * value becomes "" rather than failing the request.
+ */
+export function sanitizeUserPhone(value: string): string {
+  return isSocialLeadId(value.trim()) ? "" : value;
+}
+
+export const cleanedPhone = (max: number) => cleanedText(max).transform(sanitizeUserPhone);
 
 /**
  * A workflow builder step (src/lib/sequences.ts's SequenceStepInput) —

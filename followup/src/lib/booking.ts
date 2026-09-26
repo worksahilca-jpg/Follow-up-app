@@ -61,14 +61,23 @@ export interface BookingContext {
   durationMinutes: number;
 }
 
-/** What the public booking page needs to render — who this is for, nothing else. */
+/**
+ * What the public booking page needs to render — who this is for, nothing else.
+ *
+ * First name only. This answers anyone holding the link, with no sign-in,
+ * and the link travels: in follow-up emails, in the outbound-webhook
+ * payload's leadId, in whatever the lead forwards. The page has only ever
+ * shown the first name ("Hi Priya —"), so the full name was disclosure
+ * with no use (audits 2026-09-16 M-2, 2026-09-26).
+ */
 export async function getBookingContext(leadId: string): Promise<BookingContext | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
     select: { name: true, business: { select: { name: true } } },
   });
   if (!lead) return null;
-  return { leadName: lead.name, businessName: lead.business.name, durationMinutes: SLOT_MINUTES };
+  const firstName = lead.name.trim().split(/\s+/)[0] ?? "";
+  return { leadName: firstName, businessName: lead.business.name, durationMinutes: SLOT_MINUTES };
 }
 
 /** Open slots for this lead's business over the next LOOKAHEAD_DAYS, as ISO strings. */
@@ -152,11 +161,36 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
   // again. Now there are two bookings, the first is a phantom nobody is going
   // to attend, it blocks that slot against everyone else, and it counts in
   // the digest. The business shows up for one of them.
+  //
+  // One upcoming call per lead. The link is unauthenticated and travels
+  // (emails, forwards, the outbound-webhook payload), and nothing capped
+  // it: whoever held one link could POST every open slot for ten days —
+  // ~160 bookings, each a real event on the owner's Google Calendar with
+  // an invite to the lead's address, and no slot left for any other lead
+  // (audits 2026-09-16 M-2, 2026-09-26 A-11). The check and the insert
+  // share a per-lead advisory lock so two tabs posting at once cannot
+  // both pass it.
   let booking;
   try {
-    booking = await prisma.booking.create({
-      data: { businessId: lead.businessId, leadId: lead.id, scheduledAt },
+    const outcome = await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`booking:${lead.id}`}))`;
+      const upcoming = await tx.booking.findFirst({
+        where: { leadId: lead.id, status: "confirmed", scheduledAt: { gte: new Date() } },
+        select: { id: true },
+      });
+      if (upcoming) return { alreadyBooked: true as const };
+      return {
+        alreadyBooked: false as const,
+        booking: await tx.booking.create({ data: { businessId: lead.businessId, leadId: lead.id, scheduledAt } }),
+      };
     });
+    if (outcome.alreadyBooked) {
+      return {
+        success: false,
+        message: "You already have a call booked. To change it, reply to the message that sent you this link.",
+      };
+    }
+    booking = outcome.booking;
   } catch {
     // Unique constraint on (businessId, scheduledAt) — this one really is
     // "someone else got there first", and nothing has been committed.

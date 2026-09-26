@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getStripe, appUrl } from "@/lib/stripe";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // POST /api/billing/portal — hands back a URL to Stripe's hosted billing
 // portal, where a business can update their card, view invoices, or
@@ -33,7 +34,7 @@ export async function POST() {
     });
     return NextResponse.json({ success: true, url: session.url });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't open billing portal.";
+    const message = publicErrorMessage(err, "Couldn't open billing portal.", "billing/portal");
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

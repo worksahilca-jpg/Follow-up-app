@@ -3,6 +3,7 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { syncOutlookForBusiness } from "@/lib/outlookSync";
 import { tooManyRecentActions } from "@/lib/rateLimit";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // Mirrors /api/integrations/gmail/sync's maxDuration reasoning — a full
 // pull plus classification plus scoring easily exceeds a default
@@ -26,7 +27,7 @@ export async function POST() {
     const { count, scored, repliesDetected, leads } = await syncOutlookForBusiness(ctx.businessId);
     return NextResponse.json({ success: true, count, scored, repliesDetected, leads });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Outlook sync failed.";
+    const message = publicErrorMessage(err, "Outlook sync failed.", "integrations/outlook/sync");
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

@@ -12,7 +12,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { lookup } = vi.hoisted(() => ({ lookup: vi.fn() }));
 vi.mock("node:dns/promises", () => ({ default: { lookup } }));
 
-import { assertSafeWebhookUrl, UnsafeWebhookUrlError } from "@/lib/ssrf";
+import http from "node:http";
+import type { AddressInfo } from "node:net";
+import { assertSafeWebhookUrl, guardedLookup, postJsonToTenantUrl, UnsafeWebhookUrlError } from "@/lib/ssrf";
 
 beforeEach(() => {
   lookup.mockReset();
@@ -73,5 +75,100 @@ describe("assertSafeWebhookUrl", () => {
   it("rejects a hostname that fails to resolve", async () => {
     lookup.mockRejectedValue(new Error("ENOTFOUND"));
     await expect(assertSafeWebhookUrl("http://nowhere.invalid/x")).rejects.toBeInstanceOf(UnsafeWebhookUrlError);
+  });
+
+  // Security audit 2026-09-26, A-2. The URL parser rewrites
+  // [::ffff:127.0.0.1] to [::ffff:7f00:1]; the old check matched only the
+  // dotted spelling, so every one of these was ACCEPTED.
+  it.each([
+    "http://[::ffff:127.0.0.1]/x",
+    "http://[::ffff:7f00:1]/x",
+    "http://[0:0:0:0:0:ffff:a9fe:a9fe]/latest/meta-data/",
+    "http://[::ffff:169.254.169.254]/latest/meta-data/",
+    "http://[::127.0.0.1]/x",
+    "http://[::ffff:0:127.0.0.1]/x",
+    "http://[64:ff9b::a9fe:a9fe]/x",
+    "http://[64:ff9b:1::1]/x",
+    "http://[2002:7f00:1::1]/x",
+    "http://[2002:a9fe:a9fe::]/x",
+    "http://[2001:0:4136:e378:8000:63bf:3fff:fdd2]/x",
+    "http://[fec0::1]/x",
+    "http://[ff02::1]/x",
+    "http://[::]/x",
+  ])("rejects the IPv6 spelling of an internal address %s", async (u) => {
+    await expect(assertSafeWebhookUrl(u)).rejects.toBeInstanceOf(UnsafeWebhookUrlError);
+    expect(lookup).not.toHaveBeenCalled();
+  });
+
+  it.each(["http://100.64.0.1/x", "http://100.100.100.200/latest/meta-data/", "http://198.18.0.1/x", "http://192.0.0.170/x"])(
+    "rejects the internal-use IPv4 range literal %s",
+    async (u) => {
+      await expect(assertSafeWebhookUrl(u)).rejects.toBeInstanceOf(UnsafeWebhookUrlError);
+    }
+  );
+
+  it("rejects a hostname whose AAAA answer is an IPv4-mapped internal address in hex form", async () => {
+    lookup.mockResolvedValue([{ address: "::ffff:a9fe:a9fe" }]);
+    await expect(assertSafeWebhookUrl("http://aaaa.example.com/x")).rejects.toBeInstanceOf(UnsafeWebhookUrlError);
+  });
+
+  it.each(["http://[2606:4700:4700::1111]/x", "http://[::ffff:203.0.113.10]/x", "http://[64:ff9b::cb00:710a]/x", "http://100.63.255.255/x", "http://100.128.0.1/x"])(
+    "still accepts the public address %s",
+    async (u) => {
+      await expect(assertSafeWebhookUrl(u)).resolves.toBeInstanceOf(URL);
+    }
+  );
+});
+
+describe("guardedLookup — the check at connect time", () => {
+  it("hands a public address through to the socket", async () => {
+    lookup.mockResolvedValue([{ address: "203.0.113.10", family: 4 }]);
+    const result = await new Promise<unknown[]>((resolve) =>
+      guardedLookup("hooks.example.com", {}, (err, address, family) => resolve([err, address, family]))
+    );
+    expect(result).toEqual([null, "203.0.113.10", 4]);
+  });
+
+  it("answers the all:true form Node uses for happy-eyeballs", async () => {
+    lookup.mockResolvedValue([{ address: "203.0.113.10", family: 4 }]);
+    const result = await new Promise<unknown[]>((resolve) =>
+      guardedLookup("hooks.example.com", { all: true }, (err, address) => resolve([err, address]))
+    );
+    expect(result).toEqual([null, [{ address: "203.0.113.10", family: 4 }]]);
+  });
+
+  it("refuses when the answer at connect time is private", async () => {
+    lookup.mockResolvedValue([{ address: "127.0.0.1", family: 4 }]);
+    const err = await new Promise<unknown>((resolve) => guardedLookup("rebind.example.com", {}, (e) => resolve(e)));
+    expect(err).toBeInstanceOf(UnsafeWebhookUrlError);
+  });
+});
+
+describe("postJsonToTenantUrl — DNS rebinding", () => {
+  it("never connects when the hostname was public at check time and private at connect time", async () => {
+    let hits = 0;
+    const server = http.createServer((_req, res) => {
+      hits += 1;
+      res.end("internal");
+    });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", () => r()));
+    const { port } = server.address() as AddressInfo;
+
+    // First answer (the up-front check): public. Second (the socket's
+    // own lookup): loopback — what a rebinding DNS server does.
+    lookup.mockResolvedValueOnce([{ address: "203.0.113.10", family: 4 }]);
+    lookup.mockResolvedValue([{ address: "127.0.0.1", family: 4 }]);
+
+    try {
+      await expect(postJsonToTenantUrl(`http://rebind.example.com:${port}/hook`, { a: 1 }, { timeoutMs: 2000 })).rejects.toBeTruthy();
+      expect(hits).toBe(0);
+      expect(lookup).toHaveBeenCalledTimes(2);
+    } finally {
+      await new Promise<void>((r) => server.close(() => r()));
+    }
+  });
+
+  it("refuses an internal IP literal before opening any socket", async () => {
+    await expect(postJsonToTenantUrl("http://[::ffff:7f00:1]:1/x", {})).rejects.toBeInstanceOf(UnsafeWebhookUrlError);
   });
 });

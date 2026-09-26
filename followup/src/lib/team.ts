@@ -18,7 +18,7 @@
 import { prisma } from "@/lib/db";
 import type { TeamRole } from "@prisma/client";
 import { sendEmail } from "@/lib/integrations/gmail";
-import { appUrl } from "@/lib/stripe";
+import { inviteLink } from "@/lib/inviteToken";
 
 export interface TeamMemberSummary {
   id: string;
@@ -37,6 +37,8 @@ export interface PendingInvite {
   email: string;
   role: TeamRole;
   createdAt: string;
+  /** Admins only. Null when links cannot be signed on this deployment. */
+  link?: string | null;
 }
 
 export interface TeamData {
@@ -90,9 +92,25 @@ export async function getTeamData(businessId: string, actingUserId: string): Pro
 
   return {
     members,
-    invites: invites.map((i) => ({ id: i.id, email: i.email, role: i.role, createdAt: i.createdAt.toISOString() })),
+    invites: invites.map((i) => ({
+      id: i.id,
+      email: i.email,
+      role: i.role,
+      createdAt: i.createdAt.toISOString(),
+      // The link the invitee opens to join (src/lib/inviteToken.ts). Only
+      // for admins — the people who hand it out.
+      ...(actingUser.role === "ADMIN" ? { link: safeInviteLink(i.id, i.email) } : {}),
+    })),
     currentUserRole: actingUser.role,
   };
+}
+
+function safeInviteLink(inviteId: string, email: string): string | null {
+  try {
+    return inviteLink(inviteId, email);
+  } catch {
+    return null; // no NEXTAUTH_SECRET: no link rather than a broken page
+  }
 }
 
 async function requireAdmin(businessId: string, actingUserId: string): Promise<{ ok: true } | { ok: false; message: string }> {
@@ -112,12 +130,13 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * written by the caller) is the source of truth, so failure here must
  * never throw or bubble up to fail the invite itself.
  */
-async function sendInviteEmail(businessId: string, email: string, role: TeamRole): Promise<boolean> {
+async function sendInviteEmail(businessId: string, inviteId: string, email: string, role: TeamRole): Promise<boolean> {
   try {
     const business = await prisma.business.findUnique({ where: { id: businessId }, select: { name: true } });
     const businessName = business?.name ?? "a FollowUp workspace";
     const roleLabel = role === "ADMIN" ? "an admin" : "a sales team member";
-    const signInUrl = `${appUrl()}/signin`;
+    // Joining needs this link now, not just the address (src/lib/inviteToken.ts).
+    const link = inviteLink(inviteId, email);
 
     const result = await sendEmail(businessId, {
       to: email,
@@ -127,9 +146,10 @@ async function sendInviteEmail(businessId: string, email: string, role: TeamRole
         ``,
         `You've been invited to join ${businessName}'s team on FollowUp as ${roleLabel}.`,
         ``,
-        `To accept, just sign in at ${signInUrl} using this exact email address (${email}) — your account will be added to the team automatically.`,
+        `To accept, open this link and sign in with Google using this email address (${email}):`,
+        link,
         ``,
-        `If you weren't expecting this invite, you can safely ignore this email.`,
+        `If you weren't expecting this invite, you can safely ignore this email — nothing happens unless you open the link.`,
       ].join("\n"),
     });
     return result.success;
@@ -159,7 +179,7 @@ export async function inviteMember(
     return { success: false, message: "That email already belongs to a different team." };
   }
 
-  await prisma.invite.upsert({
+  const invite = await prisma.invite.upsert({
     where: { businessId_email: { businessId, email } },
     update: { role },
     create: { businessId, email, role },
@@ -167,7 +187,7 @@ export async function inviteMember(
 
   // Best-effort courtesy on top of the Invite row above, which is already
   // the source of truth — an email failure here must never fail the invite.
-  const emailSent = await sendInviteEmail(businessId, email, role);
+  const emailSent = await sendInviteEmail(businessId, invite.id, email, role);
   return { success: true, emailSent };
 }
 

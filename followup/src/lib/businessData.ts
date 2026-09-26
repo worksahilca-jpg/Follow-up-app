@@ -18,6 +18,7 @@
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { getStripe } from "@/lib/stripe";
+import { Prisma } from "@prisma/client";
 
 export interface BusinessExport {
   exportedAt: string;
@@ -39,6 +40,15 @@ export interface BusinessExport {
   crmConnection: Record<string, unknown> | null;
   productFeedback: Record<string, unknown>[];
   auditLog: Record<string, unknown>[];
+  // Added 2026-09-26 (audit 2026-09-16 H-1(c)): each holds personal data
+  // the business holds about people — opt-outs, set-aside senders and
+  // their messages, queued message bodies, AI verdicts, reactivation runs
+  // — so the access export was incomplete without them.
+  suppressions: Record<string, unknown>[];
+  filteredConversations: Record<string, unknown>[];
+  outboundSends: Record<string, unknown>[];
+  aiInsights: Record<string, unknown>[];
+  reactivationRuns: Record<string, unknown>[];
 }
 
 /**
@@ -72,6 +82,11 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     crmConnection,
     productFeedback,
     auditLog,
+    suppressions,
+    filteredConversations,
+    outboundSends,
+    aiInsights,
+    reactivationRuns,
   ] = await Promise.all([
     prisma.user.findMany({
       where: { businessId },
@@ -96,6 +111,11 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     }),
     prisma.productFeedback.findMany({ where: { businessId } }),
     prisma.auditEvent.findMany({ where: { businessId }, orderBy: { createdAt: "desc" } }),
+    prisma.suppression.findMany({ where: { businessId } }),
+    prisma.filteredEmail.findMany({ where: { businessId } }),
+    prisma.outboundSend.findMany({ where: { businessId } }),
+    prisma.aIInsight.findMany({ where: { lead: { businessId } } }),
+    prisma.reactivationRun.findMany({ where: { businessId } }),
   ]);
 
   // Picked explicitly (rather than destructuring-and-omitting the secret
@@ -146,6 +166,11 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     crmConnection,
     productFeedback,
     auditLog,
+    suppressions,
+    filteredConversations,
+    outboundSends,
+    aiInsights,
+    reactivationRuns,
   };
 }
 
@@ -157,6 +182,26 @@ export type DeletionResult = { success: true } | { success: false; message: stri
  * typed back) before calling this; this function itself only guards against
  * a bad businessId, not against being called by mistake.
  */
+/**
+ * Deletes for the Meta envelopes that name this business's accounts.
+ * Only all-digit ids (every Meta id is one), so nothing in the LIKE
+ * pattern is a wildcard; the id is matched with its quotes, as a JSON
+ * string value, so it cannot match inside a longer number.
+ */
+function unattributedEnvelopeDeletes(business: {
+  instagramUserId?: string | null;
+  instagramAccountId?: string | null;
+  facebookPageId?: string | null;
+  whatsappPhoneNumberId?: string | null;
+}) {
+  const ids = [business.instagramUserId, business.instagramAccountId, business.facebookPageId, business.whatsappPhoneNumberId]
+    .filter((id): id is string => typeof id === "string" && /^\d+$/.test(id));
+  return [...new Set(ids)].map(
+    (id) =>
+      prisma.$executeRaw`DELETE FROM "InboundWebhookEvent" WHERE "businessId" IS NULL AND "provider" = 'meta' AND "payload"::text LIKE ${`%"${id}"%`}`
+  );
+}
+
 export async function deleteBusinessData(
   businessId: string,
   initiatedBy: { userId: string; email: string }
@@ -220,6 +265,13 @@ export async function deleteBusinessData(
     // cleared explicitly here or a deleted business's inbound messages
     // would outlive the erasure.
     prisma.inboundWebhookEvent.deleteMany({ where: { businessId } }),
+    // Meta's (Instagram, Messenger, Lead Ads, WhatsApp) raw envelopes are
+    // stored with businessId NULL — one envelope can carry several
+    // accounts — so the line above never reached them, and a deleted
+    // business's DM text and senders' ids outlived its erasure by 14-90
+    // days (audit 2026-09-16 Meta #9, fixed 2026-09-26). Matched by this
+    // business's own Meta ids, quoted, as they appear in the payload.
+    ...unattributedEnvelopeDeletes(business),
     prisma.filteredEmail.deleteMany({ where: { businessId } }),
     prisma.crmConnection.deleteMany({ where: { businessId } }),
     prisma.notification.deleteMany({ where: { user: { businessId } } }),
@@ -230,6 +282,13 @@ export async function deleteBusinessData(
     prisma.ownerAlert.deleteMany({ where: { user: { businessId } } }),
     prisma.integration.deleteMany({ where: { user: { businessId } } }),
     prisma.user.deleteMany({ where: { businessId } }),
+    // The audit trail outlives the business on purpose (who did what,
+    // when), but its `meta` carries people: a cleaned-up lead's name and
+    // email, an unsubscribed address, a sender's number. Kept, that is
+    // personal data surviving an erasure request (audit 2026-09-16 H-1(b),
+    // fixed 2026-09-26). The action, time and target id stay; the details
+    // and the IP go.
+    prisma.auditEvent.updateMany({ where: { businessId }, data: { meta: Prisma.DbNull, ip: null } }),
     prisma.business.delete({ where: { id: businessId } }),
   ]);
 

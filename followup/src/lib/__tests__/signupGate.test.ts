@@ -65,8 +65,17 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+// The browser's cookies during the sign-in callback — where the invite
+// link's cookie (src/lib/inviteToken.ts) is read from.
+const { cookieJar } = vi.hoisted(() => ({ cookieJar: new Map<string, string>() }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ get: (name: string) => (cookieJar.has(name) ? { name, value: cookieJar.get(name)! } : undefined) }),
+}));
+vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
+
 import { prisma } from "@/lib/db";
 import { authOptions, inviteAloneIsEnough } from "@/lib/auth";
+import { INVITE_COOKIE, inviteCookieValue, inviteToken } from "@/lib/inviteToken";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -75,9 +84,16 @@ const signIn = authOptions.callbacks!.signIn as any;
 
 const stranger = { email: "thakur2005harsh@gmail.com", name: "Harsh Thakur" };
 
+/** This browser opened the invite link for `inviteId`, issued to `email`. */
+function openedInviteLink(inviteId: string, email: string) {
+  cookieJar.set(INVITE_COOKIE, inviteCookieValue(inviteId, inviteToken(inviteId, email)));
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.unstubAllEnvs();
+  vi.stubEnv("NEXTAUTH_SECRET", "test-nextauth-secret");
+  cookieJar.clear();
   p.user.findUnique.mockResolvedValue(null);
   p.accessRequest.findUnique.mockResolvedValue(null);
   gateInviteFindFirst.mockResolvedValue(null);
@@ -126,6 +142,35 @@ describe("a stranger who found the site", () => {
   });
 });
 
+// Security audit 2026-09-26, A-5: the email is the identity everywhere
+// below the gate (existing-account match, tester list, invites). An address
+// Google itself reports as unverified must not sign in as its owner.
+describe("an address Google has not verified", () => {
+  const google = { provider: "google", type: "oauth", providerAccountId: "g-1" };
+
+  it("cannot sign in to the existing account that owns that address", async () => {
+    p.user.findUnique.mockResolvedValue({ id: "u1", email: "owner@acme.com", businessId: "biz1", name: "Owner" });
+    await expect(
+      signIn({ user: { email: "owner@acme.com", name: "Owner" }, account: google, profile: { email: "owner@acme.com", email_verified: false } })
+    ).resolves.toBe(false);
+  });
+
+  it("is not let in by a tester-list match either", async () => {
+    vi.stubEnv("ALLOWED_EMAILS", "tester@example.com");
+    await expect(
+      signIn({ user: { email: "tester@example.com" }, account: google, profile: { email_verified: false } })
+    ).resolves.toBe(false);
+    expect(p.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("changes nothing for a verified address", async () => {
+    p.user.findUnique.mockResolvedValue({ id: "u1", email: "owner@acme.com", businessId: "biz1", name: "Owner" });
+    await expect(
+      signIn({ user: { email: "owner@acme.com", name: "Owner" }, account: google, profile: { email: "owner@acme.com", email_verified: true } })
+    ).resolves.toBe(true);
+  });
+});
+
 describe("the three ways in that are a real invitation", () => {
   it("lets in an address on the tester list", async () => {
     vi.stubEnv("ALLOWED_EMAILS", "friend@example.com, harsh@example.com");
@@ -144,10 +189,11 @@ describe("the three ways in that are a real invitation", () => {
     await expect(signIn({ user: stranger })).resolves.toBe(false);
   });
 
-  it("lets in someone an admin invited to their team", async () => {
+  it("lets in someone an admin invited to their team, through the invite link", async () => {
     // Without this the fail-closed gate would break team invites on every
     // deployment: the invite is consumed AFTER the gate, so a gate that
     // could not see it would refuse every invited teammate.
+    openedInviteLink("invite1", "teammate@example.com");
     gateInviteFindFirst.mockResolvedValue({ id: "invite1" });
     txInviteFindFirst.mockResolvedValue({ id: "invite1", businessId: "theirBiz", role: "SALES" });
     await expect(signIn({ user: { email: "teammate@example.com", name: "Teammate" } })).resolves.toBe(true);
@@ -206,6 +252,7 @@ describe("closing the door must not lock anyone out", () => {
 
   it("lets a removed user back in on a fresh invite", async () => {
     p.user.findUnique.mockResolvedValue({ id: "u1", email: "removed@example.com", businessId: null, name: "Removed" });
+    openedInviteLink("invite9", "removed@example.com");
     gateInviteFindFirst.mockResolvedValue({ id: "invite9" });
     txInviteFindFirst.mockResolvedValue({ id: "invite9", businessId: "biz2", role: "SALES" });
     await expect(signIn({ user: { email: "removed@example.com", name: "Removed" } })).resolves.toBe(true);
@@ -213,5 +260,67 @@ describe("closing the door must not lock anyone out", () => {
 
   it("still refuses a sign-in with no email", async () => {
     await expect(signIn({ user: {} })).resolves.toBe(false);
+  });
+});
+
+// Security audit 2026-09-16 H-2, fixed 2026-09-26. Any admin of any
+// business could create an invite for any address; the first time that
+// address signed in, it was silently joined to the stranger's team (as
+// ADMIN, if the invite said so), and everything it then connected — its
+// Gmail inbox, its leads — belonged to that tenant. Joining now needs the
+// invite's own link, opened in this browser, for this address.
+describe("an invite someone else created is not a trap", () => {
+  it("an approved tester with a pending stranger's invite gets their own business, and the invite stays pending", async () => {
+    p.accessRequest.findUnique.mockResolvedValue({ status: "approved" });
+    gateInviteFindFirst.mockResolvedValue({ id: "trap-invite" });
+    txInviteFindFirst.mockResolvedValue({ id: "trap-invite", businessId: "attackerBiz", role: "ADMIN" });
+
+    await expect(signIn({ user: stranger })).resolves.toBe(true);
+
+    expect(txBusinessCreate).toHaveBeenCalled();
+    expect(txUserCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ businessId: "newBiz", role: "ADMIN" }) })
+    );
+    expect(txInviteDeleteMany).not.toHaveBeenCalled();
+  });
+
+  it("someone invited but without the link is told to use it, and nothing is created", async () => {
+    gateInviteFindFirst.mockResolvedValue({ id: "invite1" });
+    await expect(signIn({ user: { email: "teammate@example.com" } })).resolves.toBe("/signin?error=InviteLink");
+    expect(p.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("a link issued to a different address does not work for this one", async () => {
+    openedInviteLink("invite1", "someone-else@example.com");
+    gateInviteFindFirst.mockResolvedValue({ id: "invite1" });
+    txInviteFindFirst.mockResolvedValue({ id: "invite1", businessId: "theirBiz", role: "SALES" });
+    await expect(signIn({ user: { email: "teammate@example.com" } })).resolves.toBe("/signin?error=InviteLink");
+    expect(txUserCreate).not.toHaveBeenCalled();
+  });
+
+  it("a forged token does not work", async () => {
+    cookieJar.set(INVITE_COOKIE, inviteCookieValue("invite1", "A".repeat(43)));
+    gateInviteFindFirst.mockResolvedValue({ id: "invite1" });
+    await expect(signIn({ user: { email: "teammate@example.com" } })).resolves.toBe("/signin?error=InviteLink");
+  });
+
+  it("an invite cancelled between the gate and the join is not a free sign-up", async () => {
+    openedInviteLink("invite1", "teammate@example.com");
+    gateInviteFindFirst.mockResolvedValue({ id: "invite1" });
+    txInviteFindFirst.mockResolvedValue(null); // gone by the time the transaction looks
+    await expect(signIn({ user: { email: "teammate@example.com" } })).resolves.toBe(false);
+    expect(txBusinessCreate).not.toHaveBeenCalled();
+    expect(txUserCreate).not.toHaveBeenCalled();
+  });
+
+  it("joins exactly the invite the link names, never another one for the same address", async () => {
+    openedInviteLink("invite-B", "teammate@example.com");
+    gateInviteFindFirst.mockResolvedValue({ id: "invite-B" });
+    txInviteFindFirst.mockResolvedValue({ id: "invite-B", businessId: "bizB", role: "SALES" });
+    await signIn({ user: { email: "teammate@example.com" } });
+    expect(txInviteFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: "invite-B", email: "teammate@example.com" }) })
+    );
+    expect(txInviteDeleteMany).toHaveBeenCalledWith({ where: { id: "invite-B" } });
   });
 });

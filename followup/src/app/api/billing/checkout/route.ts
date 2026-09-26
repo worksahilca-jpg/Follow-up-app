@@ -9,6 +9,7 @@ import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { TRIAL_PERIOD_DAYS, hasActiveAccess } from "@/lib/billing";
 import { VOICE_ADDON_AVAILABLE } from "@/lib/pricing";
+import { publicErrorMessage } from "@/lib/publicError";
 
 const bodySchema = z.object({
   tier: z.enum(["plus", "pro"]),
@@ -106,12 +107,23 @@ export async function POST(request: NextRequest) {
       lineItems.push({ price: VOICE_METERED_PRICE_ID });
     }
 
+    // One free trial per business, not one per checkout. The trial asks for
+    // no card, and nothing stopped a business whose trial had ended (and
+    // whose unpaid subscription had lapsed) from pressing Upgrade again for
+    // a fresh 14 days — Pro indefinitely, for nothing, never entering a
+    // card (security audit 2026-09-26, A-9). A business that has ever had
+    // a subscription, here or on its Stripe customer, starts paid.
+    const hadSubscriptionBefore =
+      !!business.stripeSubscriptionId ||
+      (!!business.stripeCustomerId &&
+        (await stripe.subscriptions.list({ customer: customerId, status: "all", limit: 1 })).data.length > 0);
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
       client_reference_id: ctx.businessId,
       line_items: lineItems,
-      // Every new subscription starts with a free trial (see TRIAL_PERIOD_DAYS
+      // A first subscription starts with a free trial (see TRIAL_PERIOD_DAYS
       // in @/lib/billing) — requireActiveBilling() already treats a
       // "trialing" Stripe status the same as "active", so no gating code
       // needed to change. payment_method_collection: "if_required" means
@@ -119,8 +131,9 @@ export async function POST(request: NextRequest) {
       // (i.e. during the trial) — matches the landing page's own "no credit
       // card required to see it for yourself." A card is still collected
       // automatically the moment the trial ends and the first invoice is
-      // actually due, same as any other Stripe subscription.
-      subscription_data: { trial_period_days: TRIAL_PERIOD_DAYS },
+      // actually due, same as any other Stripe subscription. Without a
+      // trial the first invoice is due today, so Checkout asks for a card.
+      ...(hadSubscriptionBefore ? {} : { subscription_data: { trial_period_days: TRIAL_PERIOD_DAYS } }),
       payment_method_collection: "if_required",
       success_url: `${appUrl()}/settings?billing=success`,
       cancel_url: `${appUrl()}/settings?billing=canceled`,
@@ -131,7 +144,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ success: true, url: session.url });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't start checkout.";
+    const message = publicErrorMessage(err, "Couldn't start checkout.", "billing/checkout");
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

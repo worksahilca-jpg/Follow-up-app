@@ -31,6 +31,8 @@ interface Invite {
   email: string;
   role: TeamRole;
   createdAt: string;
+  /** The link the teammate opens to join; admins only (src/lib/inviteToken.ts). */
+  link?: string | null;
 }
 
 function formatCurrency(n: number): string {
@@ -106,6 +108,22 @@ export default function TeamSection() {
       setError(err instanceof Error ? err.message : "Couldn't send invite.");
     } finally {
       setInviting(false);
+    }
+  }
+
+  // Which invite's link was just copied, for the two-second "Copied".
+  const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
+
+  async function copyInviteLink(inv: Invite) {
+    if (!inv.link) return;
+    try {
+      await navigator.clipboard.writeText(inv.link);
+      setCopiedInviteId(inv.id);
+      setTimeout(() => setCopiedInviteId((cur) => (cur === inv.id ? null : cur)), 2000);
+    } catch {
+      // Clipboard can be refused (permissions, insecure context) — same
+      // fallback as the booking-link button, so the link is never lost.
+      window.prompt(`Copy ${inv.email}'s invite link:`, inv.link);
     }
   }
 
@@ -196,13 +214,20 @@ export default function TeamSection() {
           <p className="text-xs font-medium text-ink-soft">Pending invites</p>
           <div className="mt-2 box divide-y divide-line">
             {invites.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between px-5 py-2.5 text-sm">
-                <span className="text-ink-soft">
+              <div key={inv.id} className="flex items-center justify-between gap-3 px-5 py-2.5 text-sm">
+                <span className="text-ink-soft min-w-0 truncate">
                   {inv.email} · <span className="text-xs">{inv.role === "ADMIN" ? "Admin" : "Sales"}</span>
                 </span>
-                <button onClick={() => cancelInvite(inv.id)} aria-label="Cancel invite" style={{ color: "var(--coral)" }}>
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <div className="flex items-center gap-3 shrink-0">
+                  {inv.link && (
+                    <button onClick={() => copyInviteLink(inv)} className="text-xs font-medium underline underline-offset-2">
+                      {copiedInviteId === inv.id ? "Copied" : "Copy invite link"}
+                    </button>
+                  )}
+                  <button onClick={() => cancelInvite(inv.id)} aria-label="Cancel invite" style={{ color: "var(--coral)" }}>
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -239,9 +264,14 @@ export default function TeamSection() {
       {isAdmin && (
         <p className="text-xs text-ink-soft mt-2">
           {inviteAloneIsEnough ? (
+            /* Joining needs the invite link since 2026-09-26 (security
+               audit H-2): an address alone used to pull its owner into
+               this team the first time they signed in, whether or not
+               they meant to join. */
             <>
-              They&apos;ll join automatically the next time they sign in with this email. If you have Gmail
-              connected, we&apos;ll also send them a heads-up.
+              They join by opening their invite link and signing in with this email. If you have Gmail
+              connected, we&apos;ll email the link to them; otherwise copy it from the list above and send it
+              yourself.
             </>
           ) : (
             /* The truth while the beta allowlist is on: sign-in checks
@@ -264,10 +294,10 @@ export default function TeamSection() {
         <p className="text-xs mt-1" style={{ color: inviteEmailSent ? "var(--sage)" : "var(--coral)" }}>
           {inviteEmailSent
             ? inviteAloneIsEnough
-              ? "Invite sent — they'll join automatically the moment they sign in with this email."
+              ? "Invite sent — we emailed them their link."
               : "Invite sent — it's saved and waiting for them, once they've been let into the beta."
             : inviteAloneIsEnough
-              ? "Invite created — no email could be sent (connect Gmail under Settings to enable that), so let them know to sign in with this email to join."
+              ? "Invite created, but no email could be sent (connect Gmail under Settings to enable that). Copy their invite link above and send it to them."
               : "Invite created — no email could be sent (connect Gmail under Settings to enable that), so let them know yourself."}
         </p>
       )}

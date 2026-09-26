@@ -39,7 +39,8 @@ const { runAutomation, runSequences, remindStale, prune, cronAuth } = vi.hoisted
 vi.mock("@/lib/automation", () => ({ runAutomationForAllBusinesses: runAutomation }));
 vi.mock("@/lib/sequences", () => ({ runSequencesForAllBusinesses: runSequences }));
 vi.mock("@/lib/staleApprovals", () => ({ remindStaleApprovalsForAllBusinesses: remindStale }));
-vi.mock("@/lib/inboundEvents", () => ({ pruneInboundWebhookEvents: prune }));
+const { pruneSetAside } = vi.hoisted(() => ({ pruneSetAside: vi.fn(async () => ({ cleared: 0 })) }));
+vi.mock("@/lib/inboundEvents", () => ({ pruneInboundWebhookEvents: prune, pruneSetAsideThreads: pruneSetAside }));
 vi.mock("@/lib/cronAuth", () => ({ requireCronSecret: cronAuth }));
 
 import { GET } from "@/app/api/cron/automation/route";
@@ -151,6 +152,20 @@ describe("the smaller jobs", () => {
     expect(status).toBe(200);
     expect(body.pruned).toEqual({ deleted: 0 });
     expect(body.errors[0]).toContain("pruning");
+  });
+
+  // Security pass 2026-09-25 F3: the set-aside WhatsApp chats' messages
+  // are swept by the same hourly tick, and a failed sweep is as harmless.
+  it("sweeps set-aside chats' messages, and a failed sweep does not fail the tick", async () => {
+    pruneSetAside.mockResolvedValueOnce({ cleared: 3 });
+    const ok = await call();
+    expect(pruneSetAside).toHaveBeenCalled();
+    expect(ok.body.prunedSetAside).toEqual({ cleared: 3 });
+
+    pruneSetAside.mockRejectedValueOnce(new Error("nope"));
+    const failedSweep = await call();
+    expect(failedSweep.status).toBe(200);
+    expect(failedSweep.body.prunedSetAside).toEqual({ cleared: 0 });
   });
 });
 

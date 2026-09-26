@@ -6494,3 +6494,29 @@ a direction runs into a rejection rather than silently building it.
 - Sign-in page: after an invite link is opened, a quiet note names the team — "Signing in will add you to **{Business}**'s team. Continue with the Google account for the email address the invite was sent to." The name is read server-side from the invite the browser's cookie names, never from the URL, so a crafted link cannot show a fake team; `error=InviteLink` tells an invited person to open their link; `error=InviteInvalid` says the link is no longer valid. Coral for the two errors, ink-soft for the note — the existing error/notice styling on that card.
 
 **Weak spots:** not looked at in a browser inside Settings (needs a signed-in session and a database; the sign-in page states were checked as server-rendered HTML only). The Settings tier picker still promises "14-day free trial" to a business that already had one — since the same audit a returning business pays at checkout, so that line needs its own copy pass (frontend). Not a founder-approved design; logged here so the next session knows why the copy changed.
+
+## 2026-09-26 — Founder: "white background, everything black, close to ElevenLabs" ^light-elevenlabs
+
+**His words:** "Change your theme to white and black rather than black and white. The background
+should be white, and everything should be black, the typography and all. Close to ElevenLabs."
+Said after pasting the elevenlabs.io homepage ("look how cool this is") and asking to copy "the
+typography and everything … as simple as possible and impactful … the best hooks."
+
+**What it reverses, pending his reaction to the build:** R-006 (an all-light marketing page) and
+R-010's rule that the page follows the device theme. Not marked superseded yet: both stand
+until he approves the light build, and then get `SUPERSEDED (2026-09-26)` pointing here.
+
+**What was built (Figma, "Hero v3 · light", desktop 1440 and phone 390, below Hero v2):**
+- Warm off-white ground `#fdfcfc`, black type `#0a0a0a`, warm grey `#57534e` for secondary text.
+- The headline set in Public Sans **Light**, 64 desktop / 42 phone, with tight tracking. This is
+  the ElevenLabs principle (a thin display weight, set huge and tight) done with the typeface
+  already in the system, not their licensed Waldenburg.
+- The serif italic emphasis is dropped in this version, which deviates from the A-013 build
+  (the wording is unchanged). This is flagged to him, not decided.
+- The reply card is the one black object on the page, which makes the "answered" moment the
+  highest contrast on screen. The green placeholder accent is not used.
+- A "Light" mode was added to the "FollowUp colours" variables.
+
+**Copied from ElevenLabs:** principles only. A tiny, huge, thin headline; very few words per
+block; almost no colour; black pill buttons; warm-white calm. **Not copied:** their layout,
+font files, logo wall or voice-picker demo.

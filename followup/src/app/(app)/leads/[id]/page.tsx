@@ -20,6 +20,9 @@ import { Mail, Phone, MessageSquare } from "lucide-react";
 import { isInstagramLeadId, isSocialLeadId } from "@/lib/instagramId";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import { sendLockedForSession } from "@/lib/sendingControl";
+import CatchUp from "@/components/CatchUp";
+import { describeBasis } from "@/lib/basedOn";
+import { languageName } from "@/lib/leadLanguage";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +32,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   if (!lead) notFound();
   const [auditTrail, freeTierStatus, sendLocked] = await Promise.all([getLeadAuditTrail(id), getFreeTierStatus(), sendLockedForSession()]);
   const autonomousAllowed = freeTierStatus?.tier !== "free";
+  // "Based on" and the "In <language>" rewrite (A-043).
+  const basis = lead.suggestedMessage
+    ? describeBasis({
+        draft: lead.suggestedMessage,
+        leadFirstName: lead.name.split(" ")[0] ?? "",
+        messages: lead.conversation.map((m) => ({ direction: m.direction === "inbound" ? "inbound" : "outbound", body: m.body, sentAt: new Date(m.date), source: m.source ?? null, channel: m.channel })),
+      })
+    : null;
+  const replyLanguage = lead.languageRead && lead.languageRead.language !== "en" ? languageName(lead.languageRead.language) : null;
 
   return (
     <div>
@@ -137,9 +149,14 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             leadEmail={lead.email || undefined}
             seenInboundAt={newestInboundAt(lead.conversation)}
             sendLocked={sendLocked}
+            basis={basis}
+            languageName={replyLanguage}
           />
 
-          <ConversationThread messages={lead.conversation} leadName={lead.name} />
+          <CatchUp leadId={lead.id} />
+          <div id="conversation" className="scroll-mt-16">
+            <ConversationThread messages={lead.conversation} leadName={lead.name} />
+          </div>
 
           {lead.scoreFactors.length > 0 && (
             <CollapsibleSection title="See the factors behind the score">
@@ -202,7 +219,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </div>
 
           <div>
-            <CollapsibleSection title="Consent & AI activity">
+            <CollapsibleSection title="What FollowUp did">
               <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
             </CollapsibleSection>
           </div>

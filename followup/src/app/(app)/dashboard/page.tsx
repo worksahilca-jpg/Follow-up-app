@@ -10,6 +10,7 @@ import { formatCurrency, getGreeting } from "@/lib/demo-data";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { describeTrigger, getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
+import { withBasis, sentAsWritten } from "@/lib/showTheWork";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
@@ -95,7 +96,6 @@ export default async function DashboardPage() {
   // Passed straight through. This used to be re-mapped field by field,
   // which dropped whatever the mapping had not been told about — see
   // ApprovalItem's own note.
-  const approvalItems: ApprovalItem[] = approvals;
   const setupSteps = ctx ? await getIncompleteSetupSteps(ctx.businessId) : [];
   // The owner's own wall clock, for the greeting. This is a server
   // component, so without it "Good morning" came from the server's
@@ -104,6 +104,9 @@ export default async function DashboardPage() {
     ? await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true } })
     : null;
   const timezone = business?.timezone ?? "America/New_York";
+  // "Based on" under each waiting reply, and "sent as written" (A-043).
+  const approvalItems: ApprovalItem[] = await withBasis(approvals, timezone);
+  const written = ctx ? await sentAsWritten(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000)) : { asWritten: 0, total: 0 };
   // Business.holdAllForApproval — as of 2026-09-20 this stops every
   // automated message including the instant reply, so it changes what
   // this screen can honestly promise.
@@ -342,6 +345,16 @@ export default async function DashboardPage() {
               <StatCard label="Booked" value={<CountUp to={rescue?.booked ?? 0} />} accent="var(--ink)" />
             </RevealItem>
           </RevealGroup>
+          {/* The proof the drafts are good, counted rather than claimed (A-043). */}
+          {written.total > 0 && (
+            <p className="mt-3 text-sm text-ink-soft">
+              <span className="text-ink font-medium">
+                You sent {written.asWritten} of {written.total} {written.total === 1 ? "reply" : "replies"} without changing a word.
+              </span>
+              {written.total - written.asWritten > 0 &&
+                ` The other ${written.total - written.asWritten} you edited first.`}
+            </p>
+          )}
 
           {atRisk.length > 0 && (
             <FadeIn className="mt-10">

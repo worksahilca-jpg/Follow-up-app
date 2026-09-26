@@ -780,7 +780,7 @@ function SettingsPageInner() {
       if (data.count === 0) {
         setSyncResult("Synced — no new sales conversations found in your recent inbox.");
       } else {
-        const scoredNote = data.scored > 0 ? `, AI-scored ${data.scored}` : "";
+        const scoredNote = data.scored > 0 ? `, ${data.scored} sorted by how likely they are to book` : "";
         setSyncResult(`Synced ${data.count} lead${data.count === 1 ? "" : "s"} from your inbox${scoredNote}.`);
       }
     } catch (err) {
@@ -817,7 +817,7 @@ function SettingsPageInner() {
       if (data.count === 0) {
         setOutlookSyncResult("Synced — no new sales conversations found in your recent inbox.");
       } else {
-        const scoredNote = data.scored > 0 ? `, AI-scored ${data.scored}` : "";
+        const scoredNote = data.scored > 0 ? `, ${data.scored} sorted by how likely they are to book` : "";
         setOutlookSyncResult(`Synced ${data.count} lead${data.count === 1 ? "" : "s"} from your inbox${scoredNote}.`);
       }
     } catch (err) {

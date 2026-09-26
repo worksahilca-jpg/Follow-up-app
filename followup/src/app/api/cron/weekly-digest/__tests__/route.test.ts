@@ -19,19 +19,14 @@ vi.mock("@/lib/db", () => ({ prisma: { business: { findMany } } }));
 const { sendEmail } = vi.hoisted(() => ({ sendEmail: vi.fn(async () => ({ success: true })) }));
 vi.mock("@/lib/integrations/gmail", () => ({ sendEmail }));
 
-const { getRescueReport, renderRescueDigest } = vi.hoisted(() => ({
-  getRescueReport: vi.fn(async () => ({ rescued: 2, answeredForYou: 3 })),
-  renderRescueDigest: vi.fn(() => "<p>digest</p>"),
+// What goes in the email (the week's win, the replies waiting for an OK,
+// the numbers) is pinned in src/lib/__tests__/weeklyDigest.test.ts; this
+// file is about who gets one.
+const { gatherWeeklyDigest, renderWeeklyDigest } = vi.hoisted(() => ({
+  gatherWeeklyDigest: vi.fn(async () => ({})),
+  renderWeeklyDigest: vi.fn(() => ({ subject: "FollowUp this week", text: "digest", html: "<p>digest</p>" })),
 }));
-vi.mock("@/lib/rescued", () => ({ getRescueReport, renderRescueDigest }));
-
-// How many replies are written and waiting. The digest asks for this so
-// it can lead with what needs the owner — on a holding account (the
-// default since 2026-09-21) the automated-send counts above are zero by
-// construction, and a digest built only from them reports a week of
-// nothing to a business sitting on a full approval queue.
-const { getPendingApprovals } = vi.hoisted(() => ({ getPendingApprovals: vi.fn(async () => [] as unknown[]) }));
-vi.mock("@/lib/pendingApprovals", () => ({ getPendingApprovals }));
+vi.mock("@/lib/weeklyDigest", () => ({ gatherWeeklyDigest, renderWeeklyDigest }));
 
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 
@@ -94,5 +89,11 @@ describe("GET /api/cron/weekly-digest — access gating", () => {
     const body = await res.json();
     expect(sendEmail).not.toHaveBeenCalled();
     expect(body.skipped).toBe(1);
+  });
+
+  it("sends the designed email with its plain-text version beside it", async () => {
+    findMany.mockResolvedValue([business({ subscriptionStatus: "active", tier: "plus" })]);
+    await GET(req());
+    expect(sendEmail).toHaveBeenCalledWith("biz-1", expect.objectContaining({ subject: "FollowUp this week", body: "digest", html: "<p>digest</p>" }));
   });
 });

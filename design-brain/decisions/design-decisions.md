@@ -6801,3 +6801,32 @@ There are two artboards (desktop and phone, canvas version 22) with this week's 
 
 **Not yet matched:** the live code's section still uses the current app styling and has no big-number band.
 Once the founder approves this design, the code follows it before shipping.
+
+## 2026-09-26 — The weekly email, designed (A-034: lead with the win)
+
+Three phone artboards (canvas version 23), one for each kind of week. The email stays **plain text** from the
+owner's own Gmail to themselves, as the code sends it today (`gmail.ts`, text/plain). So the design is words and
+order only: no bold, no buttons, no brand colour. The link is blue only because every mail app does that itself.
+
+- **A week with a win:** the subject and the first line are the win ("Tom Reid came back and booked"). Then one
+  sentence on how: quiet for 3 days, FollowUp checked in, replied 5 hours later, booked for Thursday. Then the
+  week in outcomes (customers answered, came back, booked). Then the replies waiting for an OK, by name, with
+  "Nothing goes out until you send it." and the link.
+- **No win yet, replies waiting** (the most common week today): leads with the waiting replies, by name, channel
+  and how long. The week is one sentence at the end.
+- **A quiet week:** "A quiet week." Then one sentence: answered, nobody back yet, nothing waiting.
+
+**Why the waiting names are in it:** the analytics page found 23 replies waiting against 5 sent by owners. The
+email is the one place that reaches an owner who hasn't opened the app.
+
+**Code changes this needs (not built):**
+- "Customers answered" must count distinct customers who got any reply that week. Today's digest counts
+  automated sends ("Answered for you"), which is messages, not customers (principle 7).
+- The win needs the booking per customer (`Booking.scheduledAt` for that lead); today the report only has a
+  total.
+- The waiting list uses `getPendingApprovals`: `leadName`, the channel, and `heldAt` for "waiting N days".
+- The link goes to Today once the navigation cut ships; until then, `/dashboard`.
+
+**Weak spots:** the win sentence depends on the trigger being a check-in on silence. A win from the instant
+"got it" reply or from the owner's own send needs its own wording, and the owner's own send is not FollowUp's
+win and must not be claimed as one.

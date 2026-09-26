@@ -655,3 +655,13 @@ right side. The rest should not be that highlighted."* Final rule for state pill
 - The outcome counts follow underneath: answered, came back, booked. Never messages sent (principle 7).
 - If the week had no win, it opens with the plain count and says nothing is waiting.
 - **Status:** a design and copy decision for the existing weekly digest (Phase B). Implementing it is a code change for later.
+
+## A-035 — "Email Sahil" on the private-beta sign-in screen ^A-035
+
+**Approved:** 2026-09-26, founder: "yes add it" (research §3.2, `2026-09-26-conversion-strategies.md`).
+**What specifically:**
+- Under the sign-in button: "Not in the beta yet? Email Sahil. A short note is already written for you."
+- An outlined button opens the visitor's email to contact@followupbase.io, with a pre-written note ("Hi Sahil, I run a ___
+  business and I'd like to try FollowUp.").
+- It's a link, not a form, a waitlist or a data capture, so R-012 still holds.
+- **Status:** design approved. The live sign-in page (`SignInClient.tsx`) changes when the app is built from these designs.

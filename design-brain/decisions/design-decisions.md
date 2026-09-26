@@ -7428,3 +7428,48 @@ split for now. Check with the founder before building whether the desktop should
 ### 2026-09-26: headline thin on both (A-059, canvas v58)
 The founder chose thin for both desktop and phone. PhoneV2's headline went back to Public Sans 300, and the bold
 from A-058 is reversed. The layout from A-058 stays. The desktop/phone split that A-058 left open is now closed.
+
+### 2026-09-26: the auto follow-up flow drawn, and the page's examples mixed (canvas v59, proposed)
+Drawn after the founder settled the product direction (PRODUCT_DIRECTION.md, five answers). All four new boards are
+phone 390, to the right of PhoneV2.
+1. **OnbConnect (step 2 of 4):**
+   - ConnectFind with its promise made true: "Nothing is sent yet: next, you choose how it works."
+   - The old "Nothing is sent without your OK" is no longer true on Automatic.
+2. **OnbChoose (step 3 of 4):** "How should FollowUp work?"
+   - Two choices: Automatic (Recommended, with one example sent on its own) and Assisted ("Every reply waits for
+     you").
+   - Under both: "Either way, it stops the moment a customer replies."
+   - "Change it any time in Settings."
+3. **OnbOldCustomers (step 4 of 4):** "12 people never got a reply."
+   - "Ready to send · 10": one reply shown written, two rows, and "See all 10".
+   - A red-dot note: "2 ask about a price. They wait for you in Today."
+   - "Send all 10" is the one tap; "Not now, keep them in Today".
+   - It replaces PreviewFirst (3 customers, each sent one by one).
+4. **TodayHoldingPhone:** "1 decision needs you."
+   - Sarah's price question, with the sent line: "10:42 · So Sarah isn't left waiting, it sent: 'Thanks Sarah!
+     Let me check and I'll send you the price soon.'"
+   - The reply is written, with a dashed "$ price" slot to fill.
+   - Below it: "Sent on its own today · 6".
+
+**Landing page (MainV2 and PhoneV2):**
+- **Mixed examples:**
+  - home services: the hero tap, Priya's bathroom, Mike;
+  - a realtor: Grace's viewing check-in, and the Spanish example now asks about a house on Elm Street;
+  - a consultant: Omar's coaching sessions, and Sarah's story is now a coaching package.
+- **"Your team" added to Underneath** (5 columns on desktop, 5 rows on phone).
+- **FAQ 1** now names the Automatic / Assisted choice.
+
+**Truth fixes found while doing it (A-056 rule: prices and dates are decisions):**
+- The hero reply said "We can do that this week", which is a date promise. It's now "Happy to quote that. Could you
+  send a photo of your current tap?"
+- The story's step 2 sent "I'll get you an exact price today" in the first minute, which is a time promise. The
+  story now shows the real flow:
+  1. the price comes to you;
+  2. at 10:42 the holding message goes out ("No number, no promise");
+  3. at 12:40 you add the number.
+
+**Weak, named:**
+- The "$ price" slot in Today is a new pattern. It needs a spec (keyboard, currency, what Send does while it's
+  empty) before it's built.
+- The old-customer list shows only 3 of 10 on the phone, so the owner sends 7 unseen. They're one tap from "See
+  all", and the risk gate has already cleared them. Revisit if testers are uneasy.

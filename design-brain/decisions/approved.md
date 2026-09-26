@@ -767,3 +767,17 @@ you've spoken breaks trust (principle 1).
 Name the limits before anyone has to ask (Mercury's "not a bank" lesson).
 **Status:** the canvas drawings (version 29) haven't been reviewed yet. This approves building the five, not every
 drawn detail.
+
+## A-042 — Outcome-first copy (Ramp study) ^A-042
+
+**Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 32).
+**What specifically:**
+- Landing features become "Less chasing. More booking." Six outcomes, each with the feature as the small line.
+- Pricing lines lead with the outcome.
+- Today shows "This week": customers answered, came back, booked. Not on the phone Today (R-015).
+- Numbers only when they're true by construction or measured. There is no time-saved estimate, because the founder
+  didn't answer that question.
+- **Kept in mind for later:** a real proof number once testers agree (A-023).
+
+**Built:** PR #340. The small line on "one tap" now says "On Instagram and Messenger", which fixes the weak spot noted
+at design time.

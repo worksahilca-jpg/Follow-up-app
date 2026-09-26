@@ -6888,3 +6888,27 @@ artboards next to the conversation (canvas version 27):
   isn't drawn yet.
 - Desktop gets the same link beside "Don't send". Not drawn, to leave the approved desktop boards alone until this
   is approved.
+
+## 2026-09-26 — Landing: "How it works" as outcomes, and three example stories (Notion study)
+
+Founder: "yes design both" (Notion study #1 and #2). On the canvas (version 28), desktop and phone:
+
+- **"How it works" → "What changes".** The heading is "Two minutes to connect. Then this changes." The three
+  cards say what changes for the owner, not what the machine does:
+  - "Every message gets a reply" (was "Connect your inbox");
+  - "You see who's slipping away" (was "It spots who is going quiet");
+  - "You step in only when it matters" (was "It writes the reply. You decide.").
+
+  The section's `id="how"` stays, so the nav link still works.
+- **A new section after it, "Examples · How a normal week goes."**, with "Made-up names, real situations." Three
+  cards (Dan the plumber at 7:40 PM, Maya the realtor at a showing, Ana the salon owner mid-cut). Each has the
+  customer's message, what FollowUp did, and a ticked outcome ("Visit booked for Thursday").
+- **Honesty:** they're labelled as examples, twice (the section label and the line under the heading). A-023 still
+  holds: real tester quotes only when testers agree. These cards are replaced by real stories then.
+- The stories repeat the product's promises in action: a price waits for the owner's OK, a day-3 check-in, a reply in
+  Spanish.
+
+**Weak spots:**
+- The numerals 1-2-3 stay on the outcome cards (A-023's approved look), but outcomes aren't a strict sequence.
+- The page is about 440px longer. The stories section sits between "What changes" and "See it working", which
+  now shows similar replies again; watch for repetition.

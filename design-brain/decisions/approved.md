@@ -930,6 +930,12 @@ after How it works, after Pricing and at the end.
   also asked for a line in the tester terms ("add the line, build it").
   **HELD (2026-09-26):** our Google Limited Use disclosure limits Gmail data to finding conversations and sending
   follow-ups. The founder decides before this is built.
+**Hero number DECIDED (2026-09-26): off the page for now (option A).** The founder was given three choices: keep it
+off, count it only from non-Gmail channels, or check Google's policy first. He answered "yes record A", after the
+recommendation that a pooled number from a handful of testers reads weak, the real trust lever is showing the
+product, and it avoids the Gmail question entirely. The tester-terms line isn't needed either. When a tester has a
+real before and after, the number goes on their customer story page (ProofStory, A-023). The HeroProof boards stay on
+the canvas as a parked idea.
 **Build PAUSED (2026-09-26):** the founder, after R-019: "no dont want any changes in live product lets just focus
 on sketching i will finalliese and we will push the design to the main." PR #357 (the story, promise and lede) was
 closed unmerged, and the preview-first onboarding step was not started. Everything stays on the canvas until the

@@ -7306,3 +7306,9 @@ Weak spots I see:
   because every frame is rich.
 - Still waiting on the founder: the hero number (Google Limited Use), and offering automation once trust is earned
   (product behaviour).
+
+### 2026-09-26: the hero number stays off (A-051, option A)
+Decided by the founder. No pooled reply-speed number under the hero, and no tester-terms line. Real numbers belong
+to one tester's story, with their written OK (ProofStory). The Google Limited Use question doesn't arise. The page
+leans into "It does the work. You stay in charge.", shown with real product screens and true promises, not numbers
+or logos.

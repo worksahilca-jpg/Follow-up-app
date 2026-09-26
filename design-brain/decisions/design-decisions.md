@@ -7350,3 +7350,14 @@ The canvas caps a board at 8,000px, so the combined page is now two boards each:
 - PhoneV2 (hero to Examples) and PhoneV2b (Your control to the end).
 
 Before this, everything below about 8,000px was cut off.
+
+### 2026-09-26: trimmed (A-054, canvas v51)
+- MainV2 is one board again, 7,995px.
+- PhoneV2 is split in two: hero to See it working, then Your control to the end.
+- The proof marker became a sticky note beside the board.
+
+**Options to go shorter:**
+1. Move "What it can see" (the four Google permissions) from Your control to /security, leaving a link. Saves about
+   350px.
+2. Drop the Today frame in Underneath and keep just the four tabs with their outcome lines. Saves about 400px.
+3. Shorten The gap to its heading and one line. Saves about 250px.

@@ -977,3 +977,26 @@ normal PRs, and he merges.
 **Put together:** MainV2 (desktop) and PhoneV2 (phone) are the whole landing page in the journey order. They're built
 on copies of the sketched Main and Phone, so the working tabs, "Try it" and the FAQ still work. This is the board the
 founder finalizes before anything goes to main (A-052).
+
+## A-054 — The landing page, trimmed to what it needs ^A-054
+
+**Approved:** 2026-09-26, founder. He asked "Do you think it's a big landing page…?", then said *"yes trim it like
+this"* to the proposed cuts.
+**What specifically:**
+- **Cut:**
+  - "In short" ($0 / 2 min / 1 list), which repeated the hero's trust lines and Pricing;
+  - "Examples" (a normal week), which is a second story next to Sarah's;
+  - the tester-quote slot in the hero and in Start free, because proof lives in one place.
+- **Merged:** "What you get" into "Underneath". The four tabs each carry one outcome line: no message missed,
+  check-ins you'd forget, nothing goes out without your OK, your Monday week.
+- **Also:**
+  - Sarah's story sits beside its heading.
+  - There's less space between sections.
+  - The hand-drawn underline under "Start free" is gone (R-020).
+
+**Order:** Hero → Works with → The gap → How it works → One customer → See it working → Your control → (Proof, when
+real) → Underneath → Pricing → Questions → Start free.
+
+**Result:** the desktop page is about 8,000px (about 9 laptop screens, down from about 11). I'd estimated 6–7. The
+honest gap is that each remaining section is doing a job. Further cuts are the founder's call (listed in
+design-decisions).

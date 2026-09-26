@@ -7099,3 +7099,10 @@ Weak spots I noticed:
 - **No pronouns in generated copy.** The canvas drew "She's waited 5 hours" and "She comes straight back if she
   writes again". The app can't know anyone's pronouns, so the built copy uses the name or a relative clause: "Start
   with Priya, who has waited 5 hours". Apply this to Later's sheet too.
+
+### 2026-09-26: A-046 finished, and A-044 part 2 built
+- **Merged:** #345 (calm order, handled line, done state, once each), #346 (Coming up), and #347 (Later, with the
+  `lead_later` migration). A-046 is fully built.
+- **Built, awaiting merge:** #348, "See an example" on each rule (A-044 part 2). It makes one model call per tap and
+  never stores or sends.
+- **Left from A-044:** the ready-made follow-up plans (Plans board).

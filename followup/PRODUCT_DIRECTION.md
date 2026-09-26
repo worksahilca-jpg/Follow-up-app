@@ -497,3 +497,17 @@ minutes, the founder chose **option 2**: FollowUp sends a short holding message.
   off on Assisted; confirm when building.
 
 Status: NOT BUILT.
+
+### Default check-ins: days 3, 7, 14 and 30, then stop (founder, 2026-09-26)
+
+Asked how many times FollowUp should check in on a customer who went quiet, the founder said: **"keep it, owner can
+change it"**.
+
+- **The default plan** is the existing recommended cadence (`RECOMMENDED_CADENCE`, workflows page): check-ins on
+  day 3, day 7, day 14 and day 30, then it stops.
+- It stops at once if the customer writes back (the stop-on-reply guarantee).
+- On Automatic, this plan runs on its own for every new customer. Today it is a template the owner has to pick.
+- The owner can change the days, the number of check-ins, or turn it off.
+
+Status: NOT BUILT as a default. The template exists; making it the automatic default is part of the Automatic
+build.

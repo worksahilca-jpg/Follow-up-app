@@ -63,6 +63,21 @@ const appCsp = [
 ].join("; ");
 
 /**
+ * The public booking page (/book/[leadId]) — a lead arriving from a link
+ * in an email, never a signed-in user on their way to Settings, so it
+ * never needs Meta's SDK and never needs eval. Same policy as the app
+ * otherwise, including frame-ancestors 'none' (nobody embeds it). It can't
+ * client-side navigate into the app, which matters: a CSP belongs to the
+ * document, so a soft navigation onward would carry this stricter policy
+ * into pages that load the SDK.
+ */
+const bookCsp = appCsp
+  .replace(" 'unsafe-eval'", isDev ? " 'unsafe-eval'" : "")
+  .replace(" https://connect.facebook.net", "")
+  .replace(" https://www.facebook.com https://graph.facebook.com", "")
+  .replace(" https://www.facebook.com https://web.facebook.com", "");
+
+/**
  * The widget runs inside strangers' pages, so it gets its own, much
  * narrower policy rather than the app's: it renders one form and talks to
  * one same-origin endpoint (src/app/embed/[businessId]/page.tsx →
@@ -100,7 +115,6 @@ const permissionsPolicy = [
   "usb=()",
   "serial=()",
   "hid=()",
-  "bluetooth=()",
   "midi=()",
   "accelerometer=()",
   "gyroscope=()",
@@ -114,7 +128,13 @@ const commonHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: permissionsPolicy },
-  { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+  // Two years, the value hstspreload.org asks for. `preload` itself is
+  // deliberately absent: it is a near-irreversible commitment for every
+  // subdomain, and only means anything once the apex (followupbase.io,
+  // redirected by Vercel before this config runs) serves HSTS too — a
+  // founder decision, in research/audit/2026-09-26-security-hardening-
+  // perimeter.md's checklist.
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
   { key: "X-DNS-Prefetch-Control", value: "off" },
   { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
 ];
@@ -137,6 +157,13 @@ const nextConfig: NextConfig = {
           // postMessage to window.opener — working.
           { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
         ],
+      },
+      {
+        // Public booking page: the app's headers from the rule above, with
+        // a narrower CSP. Listed after it so this value wins (Next applies
+        // the last matching rule's value for a repeated key).
+        source: "/book/:path*",
+        headers: [{ key: "Content-Security-Policy", value: bookCsp }],
       },
       {
         // The widget page customers put on their own sites: frameable by anyone.

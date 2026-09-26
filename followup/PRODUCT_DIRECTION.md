@@ -417,3 +417,22 @@ said: **"wait until beta opens."**
 Why: while sign-up is invite-only (R-012), a visitor who tries it can't become a customer, so each try is AI
 cost with no possible conversion, and an open AI endpoint invites abuse. Until then, the box shows a fixed example
 reply, clearly labelled "Example reply". Revisit when the beta opens; it will need per-visitor rate limits.
+
+
+## Auto follow-up is the centre; only decisions go to the owner (founder, 2026-09-26)
+
+> "I want this product to be more focused on auto because the main thing is that this product will be
+> auto-following and handing over the human decision part to the users. Everything else will be done by follow-up."
+
+Direction, recorded as said:
+- FollowUp answers, checks in and follows up on its own by default.
+- Only decisions go to the owner: a price, a date, a tense moment, or anything the risk gate isn't sure of.
+- "Ask me before everything" becomes an owner switch instead of the default.
+
+This reverses the 2026-09-21 hold-by-default for new accounts and points at the mission's end state ("no human does
+this job").
+
+**Status: direction only, NOT BUILT.** The live product still holds every reply and refuses AUTONOMOUS. Building it
+means changing the default tier or hold setting and allowing AUTONOMOUS again behind the existing risk gate. The
+founder decides when (design-brain A-052: no live changes until the canvas is finalized). The landing page drawn for
+this (canvas v53) must not ship before the product does this.

@@ -7361,3 +7361,11 @@ Before this, everything below about 8,000px was cut off.
    350px.
 2. Drop the Today frame in Underneath and keep just the four tabs with their outcome lines. Saves about 400px.
 3. Shorten The gap to its heading and one line. Saves about 250px.
+
+### 2026-09-26: the page leans into auto follow-up (A-056, canvas v53)
+The founder set the product's centre: FollowUp does the following up; the owner only makes decisions. Every
+approval-first line on MainV2 and PhoneV2 was rewritten (listed in A-056). How it works and Sarah's story were redrawn
+around "on its own, except the decision". Desktop is still about 7,200px.
+
+**Blocker before this page can go live:** the product still holds every reply by default and refuses Autonomous (the
+2026-09-21 decision). Shipping this page before the product changes would make the page untrue.

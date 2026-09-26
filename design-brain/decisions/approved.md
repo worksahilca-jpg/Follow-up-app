@@ -1016,3 +1016,45 @@ design-decisions).
 **Result:** desktop is 7,193px (about 8 laptop screens, down from about 11 before any trimming). It's one board.
 The phone is two boards.
 **Needed when built:** /security must list the four Google permissions (the Security board already does).
+
+## A-056 — FollowUp follows up on its own; only decisions come to the owner ^A-056
+
+**Decided:** 2026-09-26, founder: *"I want this product to be more focused on auto because the main thing is that
+this product will be auto-following and handing over the human decision part to the users. Everything else will be
+done by follow-up."*
+**What it means for design:**
+- The page's spine is "It follows up on its own. It hands you only the decisions."
+- Decisions are a price, a date, a tense moment, or anything it isn't sure of.
+- The owner's control moves from "approve every reply" to three things:
+  - decisions come to you;
+  - it stops the moment they reply;
+  - one switch, **"Ask me before everything"**, turns approval-first back on.
+
+**On the canvas (v53):**
+- **Hero lede:** "FollowUp answers every customer and follows up on its own, in their language. When something needs
+  your decision, like a price or a date, it hands it to you."
+- **Hero trust line:** "Prices and dates always come to you."
+- **Hero picture:** "Sent for you · 1 min", with no Send/Edit.
+- **How it works:** "Connect. It follows up. You decide." Three steps:
+  - Connect;
+  - It follows up on its own (a sent log, and one "Needs you");
+  - Only the decisions come to you.
+- **Sarah's story:** "On its own, except the price." FollowUp answers in a minute → the price comes to you → you
+  send → it checks in by itself on Friday.
+- **See it working:** "It follows up on its own. It hands you only the decisions…" The tab is "Decisions come to
+  you".
+- **Switches:** "Ask me before everything", with "Turn it on and every reply waits for your OK."
+- **Pricing:**
+  - Free: "Prices and dates always come to you".
+  - Plus: "Follows up on its own, on every channel".
+- **FAQ 1:** "Will it send things on its own? Yes, the everyday ones…"
+
+**It reverses:** the 2026-09-21 product default "hold every message for approval". That default still runs in the
+live product. **The page must not ship until the product sends low-risk follow-ups on its own by default and refuses
+nothing it now allows.** It's a product change, and it's built only on the founder's word (A-052).
+**The research tension, named:** the reference strategy's "trust before delegation" (detect → suggest → approve →
+earn trust → offer automation) is now the opposite order. It's mitigated by:
+- decisions always come to you;
+- instant stop on reply;
+- the audit trail ("It's honest");
+- the "Ask me before everything" switch.

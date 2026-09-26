@@ -22,6 +22,7 @@ import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
 import AlertsSection from "@/components/AlertsSection";
 import OnlyAdminsSendSetting from "@/components/OnlyAdminsSendSetting";
+import SignInsSection from "@/components/SignInsSection";
 import { yourRules } from "@/lib/yourRules";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
@@ -72,6 +73,8 @@ const SECTION_TAB: Record<string, SettingsTab> = {
   // Settings"), so it has to open on the right tab.
   alerts: "advanced",
   feedback: "advanced",
+  // Linked from the new-sign-in email ("Not you? Sign out everywhere").
+  security: "advanced",
   data: "advanced",
 };
 
@@ -1950,6 +1953,11 @@ function SettingsPageInner() {
             </>
           )}
         </div>
+      </section>
+
+      <section id="security" className="scroll-mt-16">
+        <h2 className="font-display text-xl">Sign-ins and security</h2>
+        <SignInsSection />
       </section>
 
       <section id="data" className="scroll-mt-16">

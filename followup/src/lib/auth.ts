@@ -35,6 +35,7 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
 import { grantBetaPlan } from "@/lib/billing";
+import { captureSignIn } from "@/lib/signIns";
 
 /**
  * The founder's tester list, read per call rather than at module load.
@@ -293,6 +294,14 @@ export const authOptions: NextAuthOptions = {
         // browser for days" — the step-up check before rotating a secret
         // or deleting a business.
         token.authTime = Date.now();
+        // Recent sign-ins in Settings, and an email when one comes from a
+        // device or place not seen before (A-041). Never blocks: it runs
+        // after the response and swallows its own failures.
+        await captureSignIn(user.email);
+      } else if (token.expired) {
+        // Signed out everywhere (below). Stays out until a real Google
+        // sign-in, which starts from a fresh token.
+        return token;
       }
 
       // Re-derived right after sign-in (when `user` is present) AND
@@ -327,7 +336,16 @@ export const authOptions: NextAuthOptions = {
       // minutes) a zero-DB-hit no-op, same as before this existed.
       const lastChecked = typeof token.checkedAt === "number" ? token.checkedAt : 0;
       if (token.userId && Date.now() - lastChecked > REVALIDATE_INTERVAL_MS) {
-        const dbUser = await prisma.user.findUnique({ where: { id: token.userId }, select: { businessId: true } });
+        const dbUser = await prisma.user.findUnique({ where: { id: token.userId }, select: { businessId: true, sessionsRevokedAt: true } });
+        // "Sign out everywhere" (A-041): a session whose Google sign-in
+        // came before the revocation ends here, on every device, within
+        // one revalidation interval. Every claim goes, the email too:
+        // the branch above would otherwise look the user up by email and
+        // hand the claims straight back.
+        const revokedAt = dbUser?.sessionsRevokedAt?.getTime();
+        if (revokedAt && (typeof token.authTime !== "number" || token.authTime < revokedAt)) {
+          return { expired: true };
+        }
         if (!dbUser?.businessId) {
           // Removed from their team, or the user row itself is gone —
           // strip the claims that grant data access. getSessionContext()
@@ -343,6 +361,9 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      // Signed out everywhere: "no session" to both getServerSession and
+      // next-auth/react, rather than a user with the old email on it.
+      if (token.expired) return {} as typeof session;
       if (session.user && token.userId && token.businessId) {
         session.user.id = token.userId;
         session.user.businessId = token.businessId;

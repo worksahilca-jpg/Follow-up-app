@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
 import { runAutomationForAllBusinesses } from "@/lib/automation";
 import { runSequencesForAllBusinesses } from "@/lib/sequences";
-import { pruneInboundWebhookEvents } from "@/lib/inboundEvents";
+import { pruneInboundWebhookEvents, pruneSetAsideThreads } from "@/lib/inboundEvents";
 import { remindStaleApprovalsForAllBusinesses } from "@/lib/staleApprovals";
 
 // One invocation covers every business with automation enabled — at real
@@ -95,6 +95,12 @@ export async function GET(request: NextRequest) {
       failed("inbound webhook event pruning")(err);
       return { deleted: 0 };
     });
+    // Same stance for the set-aside WhatsApp chats' messages (the owner's
+    // private conversations): 30 days, then only the row remains.
+    const prunedSetAside = await pruneSetAsideThreads().catch((err) => {
+      failed("set-aside thread pruning")(err);
+      return { cleared: 0 };
+    });
 
     /*
      * 500 only when BOTH send paths died, which is the one case where the
@@ -106,7 +112,7 @@ export async function GET(request: NextRequest) {
      * no response at all, and the console.error above is what carries the
      * failure to Sentry either way.
      */
-    const body = { success: errors.length === 0, automation, sequences, staleApprovals, pruned, errors };
+    const body = { success: errors.length === 0, automation, sequences, staleApprovals, pruned, prunedSetAside, errors };
     const nothingRan = automation === null && sequences === null;
     return NextResponse.json(body, { status: nothingRan ? 500 : 200 });
   } catch (err) {

@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { processTwilioInbound } from "@/lib/inbound/twilioMessage";
 import { processMetaEnvelope } from "@/lib/inbound/meta";
@@ -267,6 +267,30 @@ const UNPROCESSED_RETENTION_DAYS = 90;
  * given a policy on day one rather than becoming the fourth table on that
  * list.
  */
+/**
+ * How long a set-aside WhatsApp chat keeps its messages.
+ *
+ * The WhatsApp history judge sets aside the owner's private chats — family,
+ * friends, the bank — and keeps each whole thread (up to 50 messages, plain
+ * JSON, not encrypted) in FilteredEmail.threadPayload so "Restore" can bring
+ * it back. The schema promised those were "deleted the moment the row is
+ * restored or swept"; there was no sweep, so they were kept forever
+ * (security pass 2026-09-25 F3, fixed 2026-09-26). After this many days
+ * without a new message the messages go; the row stays, so the owner can
+ * still see who was set aside, and Restore says plainly that the messages
+ * weren't kept.
+ */
+const SET_ASIDE_THREAD_RETENTION_DAYS = 30;
+
+export async function pruneSetAsideThreads(now: Date = new Date()): Promise<{ cleared: number }> {
+  const cutoff = new Date(now.getTime() - SET_ASIDE_THREAD_RETENTION_DAYS * 24 * 60 * 60_000);
+  const result = await prisma.filteredEmail.updateMany({
+    where: { provider: "whatsapp", threadPayload: { not: Prisma.DbNull }, lastMessageAt: { lt: cutoff } },
+    data: { threadPayload: Prisma.DbNull },
+  });
+  return { cleared: result.count };
+}
+
 export async function pruneInboundWebhookEvents(now: Date = new Date()): Promise<{ deleted: number }> {
   const processedCutoff = new Date(now.getTime() - PROCESSED_RETENTION_DAYS * 24 * 60 * 60_000);
   const unprocessedCutoff = new Date(now.getTime() - UNPROCESSED_RETENTION_DAYS * 24 * 60 * 60_000);

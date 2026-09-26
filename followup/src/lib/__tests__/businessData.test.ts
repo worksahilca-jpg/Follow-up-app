@@ -47,16 +47,16 @@ vi.mock("@/lib/db", () => ({
     crmConnection: { findUnique: vi.fn(async () => null), deleteMany: trackedDeleteMany("crmConnection") },
     productFeedback: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("productFeedback") },
     rateLimitHit: { deleteMany: trackedDeleteMany("rateLimitHit") },
-    filteredEmail: { deleteMany: trackedDeleteMany("filteredEmail") },
+    filteredEmail: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("filteredEmail") },
     integration: { deleteMany: trackedDeleteMany("integration") },
     pushSubscription: { deleteMany: trackedDeleteMany("pushSubscription") },
     ownerAlert: { deleteMany: trackedDeleteMany("ownerAlert") },
-    aIInsight: { deleteMany: trackedDeleteMany("aIInsight") },
-    outboundSend: { deleteMany: trackedDeleteMany("outboundSend") },
+    aIInsight: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("aIInsight") },
+    outboundSend: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("outboundSend") },
     sendClaim: { deleteMany: trackedDeleteMany("sendClaim") },
     inboundWebhookEvent: { deleteMany: trackedDeleteMany("inboundWebhookEvent") },
-    suppression: { deleteMany: trackedDeleteMany("suppression") },
-    reactivationRun: { deleteMany: trackedDeleteMany("reactivationRun") },
+    suppression: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("suppression") },
+    reactivationRun: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("reactivationRun") },
     auditEvent: {
       findMany: vi.fn(async () => []),
       updateMany: vi.fn(async () => {
@@ -228,6 +228,26 @@ describe("exportBusinessData", () => {
   it("keeps ordinary, non-secret business fields", async () => {
     const result = await exportBusinessData("biz1");
     expect(result?.business).toMatchObject({ id: "biz1", name: "Acme Realty" });
+  });
+
+  // Audit 2026-09-16 H-1(c): the access export left out five tables that
+  // hold personal data about the business's contacts.
+  it("includes opt-outs, set-aside conversations, queued sends, AI verdicts and reactivation runs", async () => {
+    p.suppression.findMany.mockResolvedValueOnce([{ id: "s1", address: "stop@example.com" }]);
+    p.filteredEmail.findMany.mockResolvedValueOnce([{ id: "f1", senderEmail: "someone@example.com" }]);
+    p.outboundSend.findMany.mockResolvedValueOnce([{ id: "o1", body: "Hi there" }]);
+    p.aIInsight.findMany.mockResolvedValueOnce([{ id: "a1" }]);
+    p.reactivationRun.findMany.mockResolvedValueOnce([{ id: "r1" }]);
+
+    const result = await exportBusinessData("biz1");
+
+    expect(result?.suppressions).toEqual([{ id: "s1", address: "stop@example.com" }]);
+    expect(result?.filteredConversations).toEqual([{ id: "f1", senderEmail: "someone@example.com" }]);
+    expect(result?.outboundSends).toEqual([{ id: "o1", body: "Hi there" }]);
+    expect(result?.aiInsights).toEqual([{ id: "a1" }]);
+    expect(result?.reactivationRuns).toEqual([{ id: "r1" }]);
+    expect(p.suppression.findMany).toHaveBeenCalledWith({ where: { businessId: "biz1" } });
+    expect(p.aIInsight.findMany).toHaveBeenCalledWith({ where: { lead: { businessId: "biz1" } } });
   });
 });
 

@@ -40,6 +40,15 @@ export interface BusinessExport {
   crmConnection: Record<string, unknown> | null;
   productFeedback: Record<string, unknown>[];
   auditLog: Record<string, unknown>[];
+  // Added 2026-09-26 (audit 2026-09-16 H-1(c)): each holds personal data
+  // the business holds about people — opt-outs, set-aside senders and
+  // their messages, queued message bodies, AI verdicts, reactivation runs
+  // — so the access export was incomplete without them.
+  suppressions: Record<string, unknown>[];
+  filteredConversations: Record<string, unknown>[];
+  outboundSends: Record<string, unknown>[];
+  aiInsights: Record<string, unknown>[];
+  reactivationRuns: Record<string, unknown>[];
 }
 
 /**
@@ -73,6 +82,11 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     crmConnection,
     productFeedback,
     auditLog,
+    suppressions,
+    filteredConversations,
+    outboundSends,
+    aiInsights,
+    reactivationRuns,
   ] = await Promise.all([
     prisma.user.findMany({
       where: { businessId },
@@ -97,6 +111,11 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     }),
     prisma.productFeedback.findMany({ where: { businessId } }),
     prisma.auditEvent.findMany({ where: { businessId }, orderBy: { createdAt: "desc" } }),
+    prisma.suppression.findMany({ where: { businessId } }),
+    prisma.filteredEmail.findMany({ where: { businessId } }),
+    prisma.outboundSend.findMany({ where: { businessId } }),
+    prisma.aIInsight.findMany({ where: { lead: { businessId } } }),
+    prisma.reactivationRun.findMany({ where: { businessId } }),
   ]);
 
   // Picked explicitly (rather than destructuring-and-omitting the secret
@@ -147,6 +166,11 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     crmConnection,
     productFeedback,
     auditLog,
+    suppressions,
+    filteredConversations,
+    outboundSends,
+    aiInsights,
+    reactivationRuns,
   };
 }
 

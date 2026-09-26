@@ -110,7 +110,7 @@ export default function ActivationSection({ activation: a }: { activation: Activ
             )}
           </div>
 
-          <details className="mt-4 box overflow-hidden sm:hidden">
+          <details className="open-in-place mt-4 box overflow-hidden sm:hidden">
             <summary className="px-5 py-4 text-sm cursor-pointer">Every step, with times</summary>
             <div className="overflow-x-auto border-t border-line">
               <Funnel funnel={a.funnel} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, ShieldCheck } from "lucide-react";
 import { groupApprovalsBySource, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
@@ -9,6 +9,9 @@ import { useUndoableSend } from "@/components/useUndoableSend";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import SafePileAction from "@/components/SafePileAction";
 import SafePilePeek from "@/components/SafePilePeek";
+import UndoLine from "@/components/UndoLine";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import { MOTION, OPEN_IN_PLACE, RESULT_HOLD_MS } from "@/lib/motion";
 
 /**
  * "Needs your OK" — research/product/2026-09-10-ux-simplification.md
@@ -76,13 +79,15 @@ function ApprovalCard({
   laterToday = true,
 }: {
   item: ApprovalItem;
-  onResolved: (leadId: string) => void;
+  /** Done with this card. `result` is what happened, said for a moment before it leaves (A-048). */
+  onResolved: (leadId: string, result: string | null) => void;
   /** Only admins send, and this person isn't one (A-041). */
   sendLocked?: boolean;
   /** Whether "Later today" (2pm) is still ahead in the owner's day (A-046). */
   laterToday?: boolean;
 }) {
   const [busy, setBusy] = useState<"send" | "dismiss" | "talked" | "later" | null>(null);
+  const firstName = item.leadName.split(" ")[0] || item.leadName;
   // "Later" (A-046): set aside until a time, back by itself or as soon as
   // the customer writes. Not "handled", so it never counts toward the day.
   const [laterOpen, setLaterOpen] = useState(false);
@@ -93,7 +98,8 @@ function ApprovalCard({
   const [talked, setTalked] = useState(false);
   useEffect(() => {
     if (!talked) return;
-    const timer = setTimeout(() => onResolved(item.leadId), 8000);
+    // It has already said what happened for eight seconds, so it just leaves.
+    const timer = setTimeout(() => onResolved(item.leadId, null), 8000);
     return () => clearTimeout(timer);
   }, [talked, item.leadId, onResolved]);
 
@@ -128,7 +134,7 @@ function ApprovalCard({
         setError(typeof data.message === "string" ? data.message : "Send failed.");
         return;
       }
-      onResolved(item.leadId);
+      onResolved(item.leadId, `Sent to ${firstName}.`);
     },
     onNetworkError: () => setError("Couldn't reach FollowUp. Check your connection and try again."),
   });
@@ -140,7 +146,7 @@ function ApprovalCard({
       const res = await fetch(`/api/leads/${item.leadId}/dismiss-hold`, { method: "POST" });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't dismiss it.");
-      onResolved(item.leadId);
+      onResolved(item.leadId, `Won't send to ${firstName}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't dismiss it.");
       setBusy(null);
@@ -186,7 +192,6 @@ function ApprovalCard({
     }
   }
 
-  const firstName = item.leadName.split(" ")[0] || item.leadName;
   if (laterUntil) {
     const at = new Date(laterUntil);
     const tomorrow = at.toDateString() !== new Date().toDateString();
@@ -299,6 +304,12 @@ function ApprovalCard({
           >
             Undo
           </button>
+          {/* The ten seconds, drawn (A-048). */}
+          {send.endsAt !== null && (
+            <div className="basis-full">
+              <UndoLine endsAt={send.endsAt} />
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-2 mt-3">
@@ -348,8 +359,10 @@ function ApprovalCard({
           </button>
         </div>
       )}
+      <AnimatePresence initial={false}>
       {laterOpen && !send.pending && (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+        // Opens from the Later it came from, and closes the same way (A-048).
+        <motion.div key="later" {...OPEN_IN_PLACE} className="mt-2 flex flex-wrap items-center gap-2">
           {laterToday && (
             <button
               onClick={() => setLater("later_today")}
@@ -367,8 +380,9 @@ function ApprovalCard({
             Tomorrow morning · 9 am
           </button>
           <span className="text-xs text-ink-soft">Comes straight back if {firstName} writes again. The reply stays as it is.</span>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
       {/* Says what IS true (nothing left) rather than "Cancelled", which
           describes the press instead of the outcome. */}
       {send.cancelled && <p className="mt-1.5 text-xs text-ink-soft">Stopped — nothing was sent.</p>}
@@ -397,7 +411,36 @@ export default function ApprovalQueue({
   setAside?: number;
 }) {
   const [resolved, setResolved] = useState<Set<string>>(new Set());
+  // A card that is done says what happened for a moment, then leaves and
+  // the list closes up (A-048, the Framer study): leadId -> "Sent to Priya."
+  const [leaving, setLeaving] = useState<Record<string, string>>({});
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => {
+    const pending = timers.current;
+    return () => pending.forEach(clearTimeout);
+  }, []);
+  // Stable, so a card's own timers (We talked) aren't restarted by every re-render.
+  const resolve = useCallback((leadId: string, result: string | null) => {
+    if (!result) {
+      setResolved((prev) => new Set(prev).add(leadId));
+      return;
+    }
+    setLeaving((prev) => ({ ...prev, [leadId]: result }));
+    timers.current.push(
+      setTimeout(() => {
+        setResolved((prev) => new Set(prev).add(leadId));
+        setLeaving((prev) => {
+          const next = { ...prev };
+          delete next[leadId];
+          return next;
+        });
+      }, RESULT_HOLD_MS)
+    );
+  }, []);
   const visible = items.filter((i) => !resolved.has(i.leadId));
+  // What still needs a decision: the counts and the "Start with" line
+  // never include a card that is on its way out.
+  const active = visible.filter((i) => !leaving[i.leadId]);
   /**
    * How many needs-you cards each source has been asked to show.
    *
@@ -419,14 +462,21 @@ export default function ApprovalQueue({
   // and it is the state the owner most wants to be in, so it gets said out
   // loud, with what FollowUp did instead of asking.
   // Handled here since the page loaded count too, so the line moves as the owner works.
-  const handled = handledToday + (items.length - visible.length);
+  const handled = handledToday + (items.length - active.length);
 
   if (visible.length === 0) {
     // A finish line, not a blank (A-046, the Todoist study): said calmly,
     // with what FollowUp keeps doing. No confetti, points or streaks.
     const done = handled > 0;
+    // Faded in only when the owner emptied the list just now; an empty
+    // Today on load simply is (no motion without a change of state).
     return (
-      <div className="mt-6 box px-5 py-5 flex items-start gap-4" role="status">
+      <motion.div
+        initial={items.length > 0 ? { opacity: 0 } : false}
+        animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
+        className="mt-6 box px-5 py-5 flex items-start gap-4"
+        role="status"
+      >
         <span
           aria-hidden="true"
           className="h-9 w-9 shrink-0 rounded-full border border-line flex items-center justify-center"
@@ -443,7 +493,7 @@ export default function ApprovalQueue({
               ` It answered ${answeredForYou} ${answeredForYou === 1 ? "lead" : "leads"} on its own this week.`}
           </p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -458,14 +508,14 @@ export default function ApprovalQueue({
    * names, and it was already fixed here once.
    */
   const groups = groupApprovalsBySource(visible);
-  const summary = summariseGroups(groups);
+  const summary = summariseGroups(groupApprovalsBySource(active));
   // How many sources actually contribute a routine draft — not how many
   // groups exist. A group that is all needs-you has no routine row, so
   // counting groups would keep the whole-queue box on screen beside a
   // single routine row and reintroduce the twin buttons.
   const groupsWithRoutine = groups.filter((g) => g.safeToSend.length > 0).length;
-  const focusWait = summary.focusOn ? visible.find((i) => i.leadId === summary.focusOn?.leadId)?.waitClause ?? null : null;
-  const total = handled + visible.length;
+  const focusWait = summary.focusOn ? active.find((i) => i.leadId === summary.focusOn?.leadId)?.waitClause ?? null : null;
+  const total = handled + active.length;
 
   return (
     <div className="mt-6">
@@ -553,32 +603,51 @@ export default function ApprovalQueue({
         </div>
       )}
 
-      <div className="mt-6 flex flex-col gap-6">
+      <LayoutGroup>
+      <div className="mt-6 flex flex-col gap-6 relative">
         {groups.map((group) => {
           const shownHere = visibleCount(group.needsYou.length, expanded[group.source] ?? QUEUE_PAGE_SIZE);
           const hiddenHere = group.needsYou.length - shownHere;
+          // Not counting a card that is saying "Sent to Priya" on its way out.
+          const needHere = group.needsYou.filter((i) => !leaving[i.leadId]).length;
           return (
-          <section key={group.source}>
+          <motion.section key={group.source} layout="position" transition={{ layout: MOTION.layout }}>
             {/* Dense heading, not a box — see the note above. */}
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="text-sm font-medium">{group.source}</h3>
               <p className="text-xs text-ink-soft tabular-nums">
-                {group.needsYou.length > 0 && `${group.needsYou.length} need${group.needsYou.length === 1 ? "s" : ""} you`}
-                {group.needsYou.length > 0 && group.safeToSend.length > 0 && " · "}
+                {needHere > 0 && `${needHere} need${needHere === 1 ? "s" : ""} you`}
+                {needHere > 0 && group.safeToSend.length > 0 && " · "}
                 {group.safeToSend.length > 0 && `${group.safeToSend.length} routine`}
               </p>
             </div>
 
-            <div className="mt-2 flex flex-col gap-2">
-              {group.needsYou.slice(0, shownHere).map((item) => (
-                <ApprovalCard
-                  key={item.leadId}
-                  item={item}
-                  onResolved={(leadId) => setResolved((prev) => new Set(prev).add(leadId))}
-                  sendLocked={sendLocked}
-                  laterToday={laterToday}
-                />
-              ))}
+            <div className="mt-2 flex flex-col gap-2 relative">
+              {/* A-048: a finished card folds into what happened, then
+                  leaves, and the cards below slide up into its place
+                  rather than jumping. Position only, so nothing is
+                  stretched; reduced motion skips all of it. */}
+              <AnimatePresence initial={false} mode="popLayout">
+                {group.needsYou.slice(0, shownHere).map((item) => (
+                  <motion.div
+                    key={item.leadId}
+                    layout="position"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
+                    exit={{ opacity: 0, transition: { duration: MOTION.exit, ease: MOTION.easeIn } }}
+                    transition={{ layout: MOTION.layout }}
+                  >
+                    {leaving[item.leadId] ? (
+                      <div className="box px-4 py-3 flex items-center gap-2 text-sm text-ink-soft" role="status">
+                        <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        {leaving[item.leadId]}
+                      </div>
+                    ) : (
+                      <ApprovalCard item={item} onResolved={resolve} sendLocked={sendLocked} laterToday={laterToday} />
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
               {/* The folded tail. Same row shape as the routine pile
                   below it — a sentence, the best name in it, and one
@@ -589,7 +658,7 @@ export default function ApprovalQueue({
                   so nothing here hides how much is waiting; it only
                   declines to draw it. */}
               {hiddenHere > 0 && (
-                <div className="box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm text-ink-soft">
                     {hiddenHere} more {hiddenHere === 1 ? "needs" : "need"} your OK
                     {group.needsYou[shownHere] && (
@@ -608,11 +677,11 @@ export default function ApprovalQueue({
                         the kind of small lie this product cannot afford. */}
                     Show {nextStep(group.needsYou.length, shownHere)} more
                   </button>
-                </div>
+                </motion.div>
               )}
 
               {group.safeToSend.length > 0 && (
-                <div className="box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm text-ink-soft">
                     {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"}
                     {group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
@@ -624,13 +693,14 @@ export default function ApprovalQueue({
                       and the button. Closed it is just a link at the end
                       of the row and costs a line of nothing. */}
                   <SafePilePeek items={group.safeToSend} />
-                </div>
+                </motion.div>
               )}
             </div>
-          </section>
+          </motion.section>
           );
         })}
       </div>
+      </LayoutGroup>
     </div>
   );
 }

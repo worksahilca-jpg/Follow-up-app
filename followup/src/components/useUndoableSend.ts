@@ -54,6 +54,8 @@ export type UndoableSend = {
   pending: boolean;
   /** Whole seconds left, for the label. */
   secs: number;
+  /** When the window closes (epoch ms), for the draining line; null when not pending. */
+  endsAt: number | null;
   /** True when the last press was taken back and nothing was sent. */
   cancelled: boolean;
   /** True while the request itself is in flight, after the window. */
@@ -171,5 +173,5 @@ export function useUndoableSend({
     setCancelled(true);
   }, []);
 
-  return { pending: endsAt !== null, secs, cancelled, busy, start, undo };
+  return { pending: endsAt !== null, secs, endsAt, cancelled, busy, start, undo };
 }

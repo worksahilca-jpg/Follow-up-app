@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { OPEN_IN_PLACE } from "@/lib/motion";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import { sampleForSpotCheck, describeSample } from "@/lib/spotCheck";
 
@@ -54,7 +56,8 @@ export default function SafePilePeek({ items }: { items: PendingApproval[] }) {
   }
 
   return (
-    <div className="w-full">
+    // Opens where "Read a few first" was (A-048).
+    <motion.div initial={OPEN_IN_PLACE.initial} animate={OPEN_IN_PLACE.animate} className="w-full">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-ink-soft">{caption}</p>
         <button onClick={() => setOpen(false)} className="text-xs font-medium underline underline-offset-2 text-ink-soft">
@@ -80,6 +83,6 @@ export default function SafePilePeek({ items }: { items: PendingApproval[] }) {
           </li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   );
 }

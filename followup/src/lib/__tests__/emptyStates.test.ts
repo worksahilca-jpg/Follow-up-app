@@ -106,7 +106,7 @@ describe("what an empty screen still has to do", () => {
     // wrongly-named one.
     const source = app("(app)/leads/LeadsPageClient.tsx");
     const block = source.slice(source.indexOf("{leads.length === 0 && ("));
-    expect(block.slice(0, 1400)).toContain("Add a lead");
+    expect(block.slice(0, 1400)).toContain("Add a customer");
     expect(block.slice(0, 1400)).toContain('href="/settings"');
   });
 
@@ -121,6 +121,6 @@ describe("what an empty screen still has to do", () => {
     // A shared pipeline filtered to one person is empty for a different
     // reason, and telling them to connect a source would be wrong.
     const source = app("(app)/pipeline/PipelinePageClient.tsx");
-    expect(source).toContain("No leads assigned to you");
+    expect(source).toContain("No customers assigned to you");
   });
 });

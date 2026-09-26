@@ -457,7 +457,7 @@ function OnboardingFormInner({
 function HowItWorks({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => void }) {
   const beats = [
     {
-      title: "It watches where your leads arrive",
+      title: "It watches where your customers write to you",
       body: "Your inbox, your DMs, your website form — whichever of those you connect next.",
     },
     {

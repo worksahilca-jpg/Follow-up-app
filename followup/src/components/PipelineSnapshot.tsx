@@ -51,7 +51,7 @@ export default function PipelineSnapshot({
           </BarChart>
         </ResponsiveContainer>
       ) : (
-        <div className="h-full flex items-center justify-center text-sm text-ink-soft">No leads yet.</div>
+        <div className="h-full flex items-center justify-center text-sm text-ink-soft">No customers yet.</div>
       )}
     </div>
   );

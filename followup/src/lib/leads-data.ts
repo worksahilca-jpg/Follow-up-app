@@ -281,12 +281,12 @@ export async function getWeeklyReport(leads: Lead[]) {
     revenueGenerated,
     insight:
       hot.length > 0
-        ? `You have ${hot.length} high-priority lead${hot.length === 1 ? "" : "s"} that ${
+        ? `You have ${hot.length} high-priority customer${hot.length === 1 ? "" : "s"} that ${
             hot.length === 1 ? "hasn't" : "haven't"
           } closed yet — following up within 48 hours tends to convert best.`
         : leads.length === 0
-        ? "No leads yet — connect Gmail in Settings and sync your inbox to get started."
-        : "No high-priority leads right now — nice and caught up.",
+        ? "No customers yet — connect Gmail in Settings and sync your inbox to get started."
+        : "No high-priority customers right now — nice and caught up.",
   };
 }
 

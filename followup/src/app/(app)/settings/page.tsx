@@ -24,10 +24,11 @@ import AlertsSection from "@/components/AlertsSection";
 import OnlyAdminsSendSetting from "@/components/OnlyAdminsSendSetting";
 import SignInsSection from "@/components/SignInsSection";
 import YourRulesCard from "@/components/YourRulesCard";
+import RuleCard, { RuleNumber, type RuleRecordCounts } from "@/components/RuleCard";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
-import { Mail, Calendar, Check, RefreshCw, Zap, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
+import { Mail, Calendar, Check, RefreshCw, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -200,12 +201,17 @@ function SettingsPageInner() {
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
-  // The 4 automation rules used to be 4 separate panels, each repeating its
-  // own "Our promise" paragraph — research/product/2026-09-10-ux-
-  // simplification.md §7: one switch + one plain-English summary up top,
-  // with the individual rules and their timings tucked behind an expander
-  // for whoever actually wants to tune them.
-  const [automationDetailsOpen, setAutomationDetailsOpen] = useState(false);
+  // "This week" under each rule (A-044). Null until counted, and stays
+  // null if counting failed, so a card shows no record rather than zeros.
+  const [ruleRecords, setRuleRecords] = useState<Record<string, RuleRecordCounts> | null>(null);
+  useEffect(() => {
+    fetch("/api/automation/rule-records")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.success && d.records) setRuleRecords(d.records);
+      })
+      .catch(() => {});
+  }, []);
   // Granting permission to send is the one control on this page that
   // causes real messages to reach real customers, so it does not share
   // the automation section's optimistic-flip pattern: nothing moves on
@@ -1473,239 +1479,178 @@ function SettingsPageInner() {
           )}
         </div>
 
-        <div className="mt-4 box p-5">
+        {/* The four rules as sentences (design brain A-044, the Zapier
+            study). Each used to be a switch named after the machinery
+            ("Auto follow-up on silence") with a paragraph under it, behind
+            a "Change the timings" expander. Now each rule says what
+            happens, when it stops, and what it did this week, with its
+            one number inside the sentence. Same settings, same saves. */}
+        <p className="mt-6 text-sm text-ink-soft">
+          {holdAllForApproval
+            ? "What FollowUp does on its own. Everything these write waits for your OK."
+            : "What FollowUp does on its own. Simple messages go by themselves; anything about price waits for you."}
+        </p>
+        <div className="mt-3 space-y-3">
+          <RuleCard
+            when="When a new customer writes for the first time,"
+            does={holdAllForApproval ? "FollowUp writes a short thank-you right away." : "FollowUp thanks them right away."}
+            stops={
+              <>
+                Once per lead, in their language. It never states a price, a date, a time or a number the lead
+                didn&apos;t write, and if a check has any doubt it falls back to a fixed, always-safe line.
+              </>
+            }
+            checked={instantAckOn}
+            onToggle={() => {
+              const next = !instantAckOn;
+              setInstantAckOn(next);
+              saveInstantAck(next);
+            }}
+            disabled={!automationLoaded || instantAckSaving}
+            label="Thank new customers right away"
+            record={ruleRecords?.instant_ack ?? null}
+            error={instantAckError}
+          >
+            <p className="text-xs text-ink-soft mt-2">
+              On WhatsApp, Instagram and Messenger it waits two to three minutes first, so you can answer yourself.
+              Never if you&apos;ve already replied, and never to someone who asked us to stop.
+            </p>
+          </RuleCard>
+
+          <RuleCard
+            when="When a customer writes and you haven't answered,"
+            does="FollowUp writes a reply within minutes."
+            stops="Anything about price or a tense conversation waits for you. It stops the moment anyone replies."
+            checked={unansweredOn}
+            onToggle={() => {
+              const next = !unansweredOn;
+              setUnansweredOn(next);
+              saveUnanswered(next, unansweredHours);
+            }}
+            disabled={!automationLoaded || unansweredSaving}
+            label="Reply when you haven't"
+            record={ruleRecords?.unanswered ?? null}
+            error={unansweredError}
+          >
+            {unansweredOn && (
+              <p className="mt-3 text-sm">
+                If one was missed, it checks again after{" "}
+                <RuleNumber
+                  value={unansweredHours}
+                  min={1}
+                  max={168}
+                  onChange={setUnansweredHours}
+                  onCommit={() => saveUnanswered(unansweredOn, unansweredHours)}
+                  label="Hours before checking again"
+                  disabled={unansweredSaving}
+                />{" "}
+                hours.
+              </p>
+            )}
+            {/* Only while the number is actually being overridden. At 20 or
+                below the ceiling changes nothing, and a note that changes
+                nothing is noise (brand principle 8). */}
+            {unansweredOn && unansweredHours > UNANSWERED_META_DM_MAX_HOURS && (
+              <p className="text-xs text-ink-soft mt-2">
+                On Instagram and Messenger, FollowUp steps in by {UNANSWERED_META_DM_MAX_HOURS} hours whatever you set
+                here. Meta only lets a business reply within a day of the lead&apos;s last message — after that,
+                nothing gets through.
+              </p>
+            )}
+          </RuleCard>
+
+          <RuleCard
+            when="When they go quiet after you wrote,"
+            does={
+              <>
+                FollowUp checks in on day{" "}
+                <RuleNumber
+                  value={autoAfterDays}
+                  min={1}
+                  max={30}
+                  onChange={setAutoAfterDays}
+                  onCommit={() => saveAutomationSettings(automationOn, autoAfterDays)}
+                  label="Day of the first check-in"
+                  disabled={!automationOn || automationSaving}
+                />
+                , then {listDays(quietReminderDays(autoAfterDays).slice(1))}.
+              </>
+            }
+            stops="It stops the moment they answer, or when you mark “We talked”. Only between 8am and 8pm, never more than one a day."
+            checked={automationOn}
+            onToggle={() => {
+              const next = !automationOn;
+              setAutomationOn(next);
+              saveAutomationSettings(next, autoAfterDays);
+            }}
+            disabled={!automationLoaded || automationSaving}
+            label="Check in when they go quiet"
+            record={ruleRecords?.silence ?? null}
+            error={automationError}
+          >
+            {automationOn && (
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={handleRunAutomationNow}
+                  disabled={runningNow}
+                  className="text-xs font-medium underline underline-offset-2 text-ink-soft disabled:opacity-60"
+                >
+                  {runningNow ? "Checking…" : "Check for anyone waiting, right now"}
+                </button>
+                {runResult && <span className="text-xs text-ink-soft">{runResult}</span>}
+              </div>
+            )}
+          </RuleCard>
+
+          <RuleCard
+            when="When nobody has written for"
+            does={
+              <>
+                <RuleNumber
+                  value={deadLeadDays}
+                  min={30}
+                  max={180}
+                  onChange={setDeadLeadDays}
+                  onCommit={() => saveDeadLead(deadLeadOn, deadLeadDays)}
+                  label="Days of silence before a welcome-back"
+                  disabled={!deadLeadOn || deadLeadSaving}
+                />{" "}
+                days, FollowUp writes one welcome-back message.
+              </>
+            }
+            stops="Once per customer. It says how long it's been and leads with something worth their time, never a vague “just checking in”."
+            checked={deadLeadOn}
+            onToggle={() => {
+              const next = !deadLeadOn;
+              setDeadLeadOn(next);
+              saveDeadLead(next, deadLeadDays);
+            }}
+            disabled={!automationLoaded || deadLeadSaving}
+            label="Welcome back after a long silence"
+            record={ruleRecords?.[DEAD_LEAD_RULE] ?? null}
+            error={deadLeadError}
+          />
+        </div>
+
+        {/* All four at once, below them: the one-press stop (and its exact
+            restore) that used to be the section's only visible control. */}
+        <div className="mt-3 box p-5">
           <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="font-medium text-sm">Automatic follow-ups</p>
+            <div className="min-w-0">
+              <p className="font-medium text-sm">All four together</p>
               <p className="text-xs text-ink-soft mt-1">{describeAutomationState()}</p>
             </div>
             <Switch
               checked={anyAutomationOn}
               onChange={handleMasterToggle}
               disabled={!automationLoaded || automationBusy}
-              label="Automatic follow-ups"
+              label="All automatic follow-ups"
             />
           </div>
-          {(automationError || instantAckError || unansweredError || deadLeadError) && (
-            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
-              {automationError || instantAckError || unansweredError || deadLeadError}
-            </p>
-          )}
-          <button
-            onClick={() => setAutomationDetailsOpen((v) => !v)}
-            className="mt-4 text-xs font-medium underline underline-offset-2 text-ink-soft"
-          >
-            {automationDetailsOpen ? "Hide the individual rules" : "Change the timings"}
-          </button>
-        </div>
-
-        {automationDetailsOpen && (
-        <>
-        <div className="mt-4 box p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-sm">Auto follow-up on silence</p>
-              <p className="text-xs text-ink-soft mt-1">
-                Leads in Assisted or Autonomous (every new lead starts in Assisted) get an AI-drafted check-in
-                after this many days of no response. <strong>Our promise:</strong>{" "}
-                Assisted never sends anything about pricing, terms, or a tense conversation without your approval,
-                and every follow-up stops the instant the lead replies. Autonomous sends every draft with no review
-                at all — opt-in per lead only.
-              </p>
-            </div>
-            <Switch
-              checked={automationOn}
-              onChange={() => {
-                const next = !automationOn;
-                setAutomationOn(next);
-                saveAutomationSettings(next, autoAfterDays);
-              }}
-              disabled={!automationLoaded || automationSaving}
-              label="Auto follow-up on silence"
-            />
-          </div>
-          {automationOn && (
-            <div className="mt-4 flex items-center gap-2 text-sm">
-              <span>First reminder after</span>
-              <input
-                type="number"
-                min={1}
-                max={30}
-                value={autoAfterDays}
-                onChange={(e) => setAutoAfterDays(Number(e.target.value))}
-                onBlur={() => saveAutomationSettings(automationOn, autoAfterDays)}
-                className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
-              />
-              <span>days</span>
-            </div>
-          )}
           <p className="text-xs text-ink-soft mt-3">
-            {automationOn && <>Reminders on days {listDays(quietReminderDays(autoAfterDays))}, each one different, then FollowUp stops. </>}
-            The moment a lead replies, the reminders stop; if they go quiet again later, the four start over. Reminders
-            only go out between 8am and 8pm, never more than one a day.
+            You can turn these off for one customer on their own page.
           </p>
-          <p className="text-xs text-ink-soft mt-2">
-            Every new lead starts in Assisted; set any lead to Off or Autonomous on its page. Every automated message is still logged in the lead&apos;s conversation
-            history, and you can turn this off per-lead any time.
-          </p>
-          {automationOn && (
-            <div className="mt-4 pt-4 border-t border-line flex items-center gap-3">
-              <button
-                onClick={handleRunAutomationNow}
-                disabled={runningNow}
-                className="text-sm font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
-                style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
-              >
-                <Zap className={`h-3.5 w-3.5 ${runningNow ? "animate-pulse" : ""}`} />
-                {runningNow ? "Checking…" : "Check for anyone waiting, right now"}
-              </button>
-              {runResult && <span className="text-xs text-ink-soft">{runResult}</span>}
-            </div>
-          )}
-          {automationOn && (
-            <p className="text-xs text-ink-soft mt-2">
-              This also runs automatically every hour, so a lead that goes quiet is caught the same day — this
-              button is just for checking sooner, or confirming it&apos;s working.
-            </p>
-          )}
         </div>
-        <div className="mt-4 box p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-sm">Instant reply to new leads</p>
-              <p className="text-xs text-ink-soft mt-1">
-                Within a minute of a new lead&apos;s first email, FollowUp sends a short &ldquo;thanks, we got your
-                message, I&apos;ll get back to you shortly,&rdquo; in the language they wrote in. On WhatsApp, Instagram
-                and Messenger it waits two to three minutes first, so you get the chance to answer the message yourself
-                — reply in that time and FollowUp stays quiet. If it does reply, it tells you what it sent.{" "}
-                <strong>Our promise:</strong> it&apos;s written for that specific message, so it reads like you
-                rather than a template &mdash; but it is checked twice before it goes out, and it never states a fact
-                about your business. It cannot quote a price, a date, a time or a number the lead didn&apos;t write
-                themselves, and it cannot answer their question. If either check has any doubt, it falls back to a
-                fixed, always-safe line instead. It goes out once per lead only, never if you&apos;ve already replied,
-                and never to someone who asked us to stop. Your real answer still comes from you.
-              </p>
-            </div>
-            <Switch
-              checked={instantAckOn}
-              onChange={() => {
-                const next = !instantAckOn;
-                setInstantAckOn(next);
-                saveInstantAck(next);
-              }}
-              disabled={!automationLoaded || instantAckSaving}
-              label="Instant reply to new leads"
-            />
-          </div>
-          {instantAckError && (
-            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
-              {instantAckError}
-            </p>
-          )}
-        </div>
-        <div className="mt-4 box p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-sm">Reply for me when I haven&apos;t</p>
-              <p className="text-xs text-ink-soft mt-1">
-                The case that loses the most deals: a lead writes, and nobody answers. Within minutes of their
-                message, day or night, FollowUp drafts the reply and either sends it (only when you let it send
-                without asking and the safety check says it&apos;s safe — never pricing, terms, or a tense thread) or
-                holds it for your one-click approval, and tells you either way. <strong>Our promise:</strong> it never talks over you —
-                the moment anyone replies, the lead is no longer &ldquo;unanswered.&rdquo;
-              </p>
-            </div>
-            <Switch
-              checked={unansweredOn}
-              onChange={() => {
-                const next = !unansweredOn;
-                setUnansweredOn(next);
-                saveUnanswered(next, unansweredHours);
-              }}
-              disabled={!automationLoaded || unansweredSaving}
-              label="Reply for me when I haven't"
-            />
-          </div>
-          {unansweredError && (
-            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
-              {unansweredError}
-            </p>
-          )}
-          {unansweredOn && (
-            <div className="mt-4 flex items-center gap-2 text-sm">
-              <span>If a reply was missed, check again after</span>
-              <input
-                type="number"
-                min={1}
-                max={168}
-                value={unansweredHours}
-                onChange={(e) => setUnansweredHours(Number(e.target.value))}
-                onBlur={() => saveUnanswered(unansweredOn, unansweredHours)}
-                className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
-              />
-              <span>hours without a reply from you</span>
-            </div>
-          )}
-          {/* Only while the number is actually being overridden. At 20 or
-              below the ceiling changes nothing, and a note that changes
-              nothing is noise (brand principle 8). It appears the moment the
-              owner types 21, on the same screen as the field, which is
-              where the "why did it go out early" question would otherwise
-              be asked. */}
-          {unansweredOn && unansweredHours > UNANSWERED_META_DM_MAX_HOURS && (
-            <p className="text-xs text-ink-soft mt-2">
-              On Instagram and Messenger, FollowUp steps in by {UNANSWERED_META_DM_MAX_HOURS} hours whatever you set
-              here. Meta only lets a business reply within a day of the lead&apos;s last message — after that,
-              nothing gets through.
-            </p>
-          )}
-        </div>
-        <div className="mt-4 box p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-sm">Reactivate cold leads</p>
-              <p className="text-xs text-ink-soft mt-1">
-                A lead nobody&apos;s heard from in a while isn&apos;t dead — real-estate reactivation data puts the
-                odds of winning one back at 5-15%, often at 3-4x the conversion rate of a brand-new lead. Once a lead
-                has gone quiet this many days on both sides, FollowUp switches to a different kind of message —
-                naming how long it&apos;s actually been and leading with something worth their time, never a vague
-                &ldquo;just checking in&rdquo; — instead of repeating the same follow-up.
-              </p>
-            </div>
-            <Switch
-              checked={deadLeadOn}
-              onChange={() => {
-                const next = !deadLeadOn;
-                setDeadLeadOn(next);
-                saveDeadLead(next, deadLeadDays);
-              }}
-              disabled={!automationLoaded || deadLeadSaving}
-              label="Reactivate cold leads"
-            />
-          </div>
-          {deadLeadError && (
-            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
-              {deadLeadError}
-            </p>
-          )}
-          {deadLeadOn && (
-            <div className="mt-4 flex items-center gap-2 text-sm">
-              <span>Switch to reactivation after</span>
-              <input
-                type="number"
-                min={30}
-                max={180}
-                value={deadLeadDays}
-                onChange={(e) => setDeadLeadDays(Number(e.target.value))}
-                onBlur={() => saveDeadLead(deadLeadOn, deadLeadDays)}
-                className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
-              />
-              <span>days of silence on both sides</span>
-            </div>
-          )}
-        </div>
-        </>
-        )}
       </section>
 
       {/* Directly under Automation: that section decides that replies wait
@@ -2014,6 +1959,13 @@ function IntegrationRow({
     </div>
   );
 }
+
+/**
+ * The welcome-back rule's key in the records (DEAD_LEAD_ACTION in
+ * @/lib/automation). Spelled out here because this client component must
+ * not import automation.ts, which pulls in the database client.
+ */
+const DEAD_LEAD_RULE = "dead_lead_reactivation";
 
 /** "3, 7, 14 and 30" — the reminder days as an owner reads them. */
 function listDays(days: number[]): string {

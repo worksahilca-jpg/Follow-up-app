@@ -451,3 +451,26 @@ rare: the one action (a small Send or Start button), not whole blocks.
 **What replaced it (canvas version 26):** the landing wash (warm peach, rose and slate, with grain; A-032) and dark
 text, a faint border, a black Send and a light Edit. Partly supersedes A-022 and A-025 ("the one black card").
 **Still open:** whether the small black buttons should be softened too. The founder was asked in the thread.
+
+## R-019 — New canvas boards drawn in the live site's older type, not the sketched canvas system ^R-019
+
+**Rejected:** 2026-09-26, founder, looking at the Intercom and Close boards (DemoStory, SafePromise, HeroProof,
+ProofWaiting): *"why i am seeing older theme designs in the new canvas you are drawing"* and *"this is the design
+that we sketched but why are you sketching the new canvas according to the old fonts"*. Pointed at Main, App and Today.
+**What was rejected:**
+- Instrument Serif italic in headlines ("and why.", "using it.").
+- Centered 500/600-weight headings.
+- A black reply bubble. That had already been rejected in R-018 and came back through the live site's styling.
+
+All of these were copied from the live `page.tsx` instead of the canvas.
+**The principle:** the sketched canvas (Main.dc.html, Today.dc.html, TodayPhone.dc.html) is the design system for
+every new board. That means:
+- Public Sans headings at weight 300: 48px in sections, 64px in the hero.
+- IBM Plex Mono eyebrows at 11px, spaced 0.1em.
+- Left-aligned sections padded 100px 184px.
+- White cards with a #e7e5e2 border and 22px radius.
+- The peach/rose/slate wash with grain for any written reply. Black only for the one small action.
+
+Where the live site differs, the canvas wins. Before drawing, open Main.dc.html and match it. Don't use the live
+page or memory.
+**What replaced it (canvas version 41):** all nine boards were redrawn in that system.

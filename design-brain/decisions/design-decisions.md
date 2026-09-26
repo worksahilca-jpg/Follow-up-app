@@ -7246,3 +7246,15 @@ All proposed:
     and skip to Today.
   - HeroProof pools testers' data into one public number. Testers should know that in the beta terms before it
     ever appears.
+
+### 2026-09-26: new boards redrawn in the sketched system (canvas v41, R-019)
+The founder flagged that the Intercom and Close boards looked like the old theme. The cause: their headlines and
+reply bubble were copied from the live landing page (Instrument Serif italic, heavy centered headings, a black
+bubble), not from the canvas the founder sketched.
+
+Redrawn to match Main and Today: PreviewFirst, PreviewFirstPhone, DemoStory, DemoStoryPhone, SafePromise,
+HeroProof, HeroProofPhone, ProofWaiting and ProofWaitingPhone. DemoStory is now two columns (heading left, story
+right), and every written reply uses the wash. Rule logged as R-019.
+
+Open: PR #357 builds the story into the live `page.tsx`, which still uses the older live styling. Its story block
+uses a black reply bubble (against R-018). It needs to follow the canvas before merge.

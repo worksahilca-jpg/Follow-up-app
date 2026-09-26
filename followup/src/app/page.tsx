@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Check, X, Inbox, Eye, Languages, Send, MessageCircle, Users, Mail, PenLine, BellOff } from "lucide-react";
 import styles from "./landing-dark.module.css";
+import { realProof } from "@/lib/proof";
 import NavDark from "@/components/landing/dark/NavDark";
 import HeroFlow from "@/components/landing/dark/HeroFlow";
 import FaqDark from "@/components/landing/dark/FaqDark";
@@ -21,6 +22,7 @@ import { TIER_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // testimonials, a fake logo strip, "book a demo" as the only action, annual
 // pricing. See design-brain/decisions/design-decisions.md, 2026-09-18.
 export default function LandingPage() {
+  const proof = realProof();
   return (
     <div className={`${styles.root} ${publicSans.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable}`}>
       <NavDark />
@@ -477,6 +479,45 @@ export default function LandingPage() {
           </RevealLight>
         </div>
       </section>
+
+      {/* ---------- Proof (A-050) ----------
+          A tester's own before and after, in their numbers and words. The
+          section is not rendered at all until a story is complete and agreed
+          (src/lib/proof.ts): no placeholder, no fake quote (A-023). */}
+      {proof.length > 0 && (
+        <section id="proof" className={styles.section} style={{ paddingTop: 0 }}>
+          <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
+            <span className={styles.badge}>Proof</span>
+            <h2 className={styles.h2}>
+              From the first owners <span className={styles.em}>using it.</span>
+            </h2>
+            <p className={styles.lede}>Their own numbers and their own words.</p>
+          </RevealLight>
+          <div className={styles.grid2}>
+            {proof.map((p, i) => (
+              <RevealLight key={p.firstName + p.business} delay={i * 0.07}>
+                <figure className={styles.card} style={{ height: "100%", margin: 0 }}>
+                  <p className={styles.cardBody} style={{ marginTop: 0 }}>
+                    <s>{p.before}</s> →{" "}
+                    <span className={styles.cardTitle} style={{ display: "inline", fontSize: 28, letterSpacing: "-0.03em" }}>
+                      {p.after}
+                    </span>
+                  </p>
+                  <p className={styles.cardBody} style={{ fontSize: 13 }}>
+                    for a customer to hear back, from their own FollowUp records
+                  </p>
+                  <blockquote className={styles.cardTitle} style={{ fontSize: 18, margin: "14px 0 0" }}>
+                    <span className={styles.em}>&ldquo;{p.quote}&rdquo;</span>
+                  </blockquote>
+                  <figcaption className={styles.cardBody}>
+                    <strong>{p.firstName}</strong> · {p.business}
+                  </figcaption>
+                </figure>
+              </RevealLight>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ---------- Real-time ---------- */}
       <section className={styles.section} style={{ paddingTop: 0 }}>

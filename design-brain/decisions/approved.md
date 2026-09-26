@@ -552,3 +552,21 @@ direction, not every detail. The state-dot colours are still a separate open que
 **"Don't send"** as a small grey text link underneath. It isn't a third button, but it is always there.
 **Why it stays:** without it, the only way to clear an unwanted draft is to send or rewrite it; the person stays
 on "needs you" and the reminders keep coming (principle 1: the owner can always stop a message).
+
+## A-027 — Three places on the phone, four on the desktop ^A-027
+
+**Approved:** 2026-09-26, founder: "yes go with it", after the navigation research (appended to
+`research/ux-patterns/2026-09-26-calendly-one-job-simplicity.md`: Apple/Material 3–5 tabs, NN/g's cost of hidden
+navigation, peers, and our own usage counts).
+
+**What specifically:**
+- **Phone:** Today · Inbox · Settings.
+- **Desktop:** Today · Inbox · People, with Settings at the bottom of the sidebar. No "Sources" block in the sidebar;
+  sources live in Settings.
+- **Folded, not hidden:**
+  - Pipeline becomes a stage and deal-value field on the person page.
+  - Follow-up plans becomes the plan card in Settings.
+  - Analytics becomes the weekly email plus one line on Today.
+  - Activity becomes "what FollowUp did" inside each person.
+  - Nothing goes into a "More" drawer.
+- **Guard:** re-check the usage counts at 30 accounts before deleting any page's code.

@@ -6591,3 +6591,25 @@ then "copy from apple too". All of it is on the canvas (version 6). **Not yet re
   first things to drop.
 - The pen arrow is fixed while the reply animates, so it fades with it.
 - The phone frame height is estimated (6,100px), so there may be empty space at the bottom.
+
+## 2026-09-26 — Attio as a reference for data screens; a first FollowUp "People" screen
+
+Founder: "i want ui reference from Attio", then "how clean CRM data can look … spacing, tables, contacts,
+inbox, line interface, restraint colors, and how they make complicated data feel light." Typography stays
+ours ("we have the good one").
+
+- **Reference filed:** `references/crm/2026-09-26-attio-data-ui.md`. attio.com, Mobbin (paid) and the
+  analysis sites were blocked, so it's built from graded written sources, not screenshots. His own
+  screenshots would make it stronger.
+- **Applied on the canvas** as a new artboard, "App · people · desktop 1440". It's a proposal for the app, not
+  the landing page. It shows the ruled table (Name, Channel, Last message, Waiting, State), sorted by who needs
+  you first, with Priya's record open beside it. Her record has label → value attributes, including **"Why it's here"**
+  (brand principle 3), a quiet conversation timeline, and the held reply as the one black card.
+- **Proposed, not decided:** state colours live only in a 7px dot on a white pill. They are muted rust (needs you),
+  ochre (going quiet), slate (waiting), sage (reply ready) and greys (checked in, done). These are new colour
+  tokens, so they need the founder's OK.
+- **Not taken from Attio,** because its user is a desk power user and ours is an owner on a phone:
+  custom attributes, keyboard-first features, density for its own sake. On a phone, this table becomes a list.
+
+**Weak spots:** the table is desktop-only so far; the sidebar's "Sources" counts are sample numbers; no
+inbox view yet (the conversation lives inside the person's page).

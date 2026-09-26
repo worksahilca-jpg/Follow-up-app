@@ -117,3 +117,5 @@ that needs prior art. Fabricating a reference library from memory — describing
 that may have changed or may never have existed — would poison every decision downstream.
 
 Start it by sending anything you like. See `workflows/reference-workflow.md`.
+
+- **Attio: how CRM data can look light** (crm, 2026-09-26, INBOX): lines not boxes, colour only for state, two sizes / two weights / two inks, record = attributes + timeline. `crm/2026-09-26-attio-data-ui.md`

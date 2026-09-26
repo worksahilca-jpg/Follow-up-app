@@ -431,3 +431,11 @@ for "needs you", and grey for every other state.
 **Stated reason:** none. **Inferred (marked inferred):** the desktop table is scanned many rows at a time, and
 colour makes the states distinguishable at a glance. It's the Attio principle "colour only for state", which the
 founder accepted. **Do not re-propose** removing colour from the desktop state dots.
+
+## R-017 — A handwriting font / handwritten note on the landing page ^R-017
+
+**Rejected:** 2026-09-26, founder: "skip it". It was offered as an option for "more human made" (a note like
+"you tap send" beside the reply).
+**Reason (my recommendation, accepted):** the pen-drawn underline and arrow already carry the hand-made feel; a
+handwriting font tends to read as a gimmick and adds a font dependency.
+**Do not re-propose** a handwriting font. The pen marks are the approved human touch.

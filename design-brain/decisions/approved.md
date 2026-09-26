@@ -901,3 +901,18 @@ It scrolls to the product demo ("See who needs you, and why."). It comes from th
 **Amends:** [[#^A-023|A-023]]'s "one goal" rule, for the hero only. "Start free" stays the one goal in the top bar,
 after How it works, after Pricing and at the end.
 **Built:** PR #353.
+
+## A-050 — Talk like the owner, and show the three places (Close study) ^A-050
+
+**Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 38).
+**What specifically:**
+- **Words:** "customer", never "lead", on owner-facing screens. The page becomes "Customers". The route, the data
+  and the A-013 hero line stay.
+- **Three places on Today:** "Needs you · Waiting on customers · Handled today". "Waiting on customers" lists
+  everyone we answered who hasn't answered back, each with what happens next. On the phone it's one line.
+- **Reply speed:** the week line leads with the median time customers heard back this week, from our own records
+  only.
+- **Check-ins state their condition:** "unless Priya writes first".
+- **Proof on the landing page:** each tester's own before and after reply time, plus their words. It renders only
+  when every field is real and agreed (A-023).
+**Built:** PR #354 (words). The rest follows.

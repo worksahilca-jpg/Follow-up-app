@@ -7106,3 +7106,29 @@ Weak spots I noticed:
 - **Built, awaiting merge:** #348, "See an example" on each rule (A-044 part 2). It makes one model call per tap and
   never stores or sends.
 - **Left from A-044:** the ready-made follow-up plans (Plans board).
+
+### 2026-09-26: #349 merged (A-044 done), and the Amplitude study drawn
+- **Merged:** #348 (see an example) and #349 (ready plans). A-044 is fully built.
+- **First value, agreed by the founder ("yes merge it, design all five"):** first value is *a customer got a reply
+  that FollowUp wrote* (the first message a rule wrote that went out, approved or automatic). A tester is
+  **activated** when that happens within 7 days of first signing in. **Proof** is that customer writing back. Proof
+  is shown when it happens but isn't needed to count as activated. It goes into `PRODUCT_DIRECTION.md` when it's
+  built.
+- **Drawn on the canvas (v36), all proposed:**
+  - **FirstValueDefinition:** the three sentences, so every screen and study uses the same words.
+  - **AdminActivation** (desktop): the four-number band (activated, median days to first value, back in week 2,
+    customers who wrote back).
+    - One sentence names the biggest drop and the slowest step.
+    - Then the eight-step funnel (Invited → … → Back in week 2), with the median time since the step before.
+    - Then "Who's stuck", longest first, with the last step, why, days stuck, and an Email link.
+    - All numbers are labelled "Sample numbers".
+  - **AdminActivationPhone:** the headline number, one sentence, who's stuck, and a link to every step (R-015).
+  - **FirstValuePhone / FirstValueToday:** a single calm card above the usual list: "Your first reply went out
+    through FollowUp. Priya Shah got it on Instagram this morning. From here FollowUp keeps watching, and tells
+    you when Priya writes back." It uses the name, not a pronoun, and appears once. No confetti or streaks.
+- **Guardrails kept:** no analytics SDK, counted from our own tables, founder-only. There are no automatic emails to
+  stuck testers; the Email link opens the founder's own mail.
+- **Weak spots I noticed:**
+  - "Back in week 2" sits in the funnel, but its base is activated testers, not the row above. That could mislead.
+    It may belong only in the band.
+  - The Today card must know when to stop showing. "Once" needs a stored flag, which is a small schema change.

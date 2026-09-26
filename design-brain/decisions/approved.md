@@ -616,3 +616,13 @@ right side. The rest should not be that highlighted."* Final rule for state pill
   reply is routine.
 - "Send both" was removed with the second group.
 **Why:** both groups waited for the same tap. Two nearly identical groups were extra thinking (principle 4).
+
+## A-031 — Desktop Today keeps the "handled today" line ^A-031
+
+**Approved:** 2026-09-26, founder: "keep it".
+**What specifically:**
+- On desktop Today, a thin progress line: "1 of 5 handled today · When the list is empty, you're done for today."
+- It's the one Duolingo idea kept (`research/ux-patterns/2026-09-26-duolingo-progress-and-completion.md`):
+  the day has an end.
+- **Desktop only.** The phone stays without it (R-015).
+- It's never a streak, never points.

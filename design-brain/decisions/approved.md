@@ -626,3 +626,13 @@ right side. The rest should not be that highlighted."* Final rule for state pill
   the day has an end.
 - **Desktop only.** The phone stays without it (R-015).
 - It's never a streak, never points.
+
+## A-032 — The landing page's soft colour washes stay ^A-032
+
+**Approved:** 2026-09-26, founder: "keep them".
+**What specifically:**
+- On the landing page only, two soft washes (apricot, rose-sand and a little dusty blue) with a fine paper grain, in exactly two
+  places: behind the hero example and behind the final "Start free".
+- The page ground stays one tone (R-010's lesson). They're low saturation and grained (S-02).
+- Values: `.fu-wash-hero`, `.fu-wash-end` and `.fu-grain` in the landing artboards. They're now approved.
+- **Not in the app:** the phone's all-caught-up screen dropped its wash in the phone rebuild (R-015).

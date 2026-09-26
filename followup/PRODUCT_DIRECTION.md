@@ -436,3 +436,30 @@ this job").
 means changing the default tier or hold setting and allowing AUTONOMOUS again behind the existing risk gate. The
 founder decides when (design-brain A-052: no live changes until the canvas is finalized). The landing page drawn for
 this (canvas v53) must not ship before the product does this.
+
+### Day one: the owner chooses Automatic or Assisted in onboarding (founder, 2026-09-26)
+
+> "For the first day, the follow-up will be doing its job. It will be fetching all the leads and doing the basics.
+> Mainly in onboarding, it will be asking the user whether they want the follow-up to follow up automatically or
+> they want the assisted ones… Suppose they have many leads, and they will not be able to handle each and every
+> single message, right? The follow-up will be doing that job… For the first time, it will be asking permission and
+> stuff, and then whatever the user will say, it will be doing that."
+
+What this means:
+- **From the first sync, FollowUp fetches every lead and does the basics** (finds who is waiting, scores, writes
+  replies).
+- **Onboarding asks one explicit question: Automatic or Assisted.**
+  - Automatic: FollowUp sends and follows up on its own. Decisions (price, date, tense, unsure) still come to the
+    owner.
+  - Assisted: every reply waits for the owner's OK.
+- FollowUp then does exactly what the owner chose. The owner can change it later (the "Ask me before everything"
+  switch).
+- **Why:** an owner with many leads can't answer every message by hand. Automatic is what makes FollowUp worth having.
+- **Assumed, not yet confirmed:** Automatic is the recommended choice on that screen.
+- **Replaces:** hold-by-default (2026-09-21). The owner's own answer in onboarding now sets the default, instead of
+  every account starting held.
+
+Status: NOT BUILT. It needs:
+- an onboarding step;
+- the chosen tier stored per business;
+- AUTONOMOUS allowed again behind the risk gate.

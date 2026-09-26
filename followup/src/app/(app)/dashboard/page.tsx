@@ -13,6 +13,8 @@ import { describeTrigger, getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
 import { withBasis, sentAsWritten } from "@/lib/showTheWork";
 import { weekLine } from "@/lib/weekLine";
+import { describeWait, describeWaitClause, startOfLocalDay } from "@/lib/calmToday";
+import { countHandledToday } from "@/lib/handledToday";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
@@ -82,7 +84,6 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const leads = await getLeads();
   const stats = getStats(leads);
-  const atRisk = getAtRiskLeads(leads).slice(0, 8);
   const upcomingBookings = await getUpcomingBookings();
   const ctx = await getSessionContext();
   const rescue = ctx ? await getRescueReport(ctx.businessId, 7) : null;
@@ -93,6 +94,12 @@ export default async function DashboardPage() {
     ? await countCustomersAnswered(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000), weekEnd)
     : 0;
   const approvals = ctx ? await getPendingApprovals(ctx.businessId) : [];
+  // Each person once on Today (A-046): anyone already waiting for the
+  // owner's OK is left out of "About to be lost".
+  const awaitingOk = new Set(approvals.map((a) => a.leadId));
+  const atRisk = getAtRiskLeads(leads)
+    .filter((l) => !awaitingOk.has(l.id))
+    .slice(0, 8);
   // Passed straight through. This used to be re-mapped field by field,
   // which dropped whatever the mapping had not been told about — see
   // ApprovalItem's own note.
@@ -105,7 +112,15 @@ export default async function DashboardPage() {
     : null;
   const timezone = business?.timezone ?? "America/New_York";
   // "Based on" under each waiting reply, and "sent as written" (A-043).
-  const approvalItems: ApprovalItem[] = await withBasis(approvals, timezone);
+  // "Waiting 5 h" on each card and in the "Start with" line (A-046), worked
+  // out here so the server and the browser show the same words.
+  const now = new Date();
+  const approvalItems: ApprovalItem[] = (await withBasis(approvals, timezone)).map((a) => ({
+    ...a,
+    wait: describeWait(a, now),
+    waitClause: describeWaitClause(a, now),
+  }));
+  const handledToday = ctx ? await countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0;
   const written = ctx ? await sentAsWritten(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000)) : { asWritten: 0, total: 0 };
   const thisWeek = weekLine({
     answered: answeredThisWeek,
@@ -217,7 +232,7 @@ export default async function DashboardPage() {
       {cantSend && (
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
-      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} />
+      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} />
 
       {leads.length === 0 ? (
         <FadeIn className="mt-10">

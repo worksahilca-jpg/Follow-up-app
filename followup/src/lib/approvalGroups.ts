@@ -39,6 +39,7 @@
  */
 import { isHeldOnlyByApprovalSetting, BACKLOG_BEFORE_PERMISSION_REASON } from "@/lib/holdReasons";
 import type { PendingApproval } from "@/lib/pendingApprovals";
+import { byLongestWaiting } from "@/lib/calmToday";
 
 /**
  * What a group is called when the lead carries no source at all — a lead
@@ -51,7 +52,7 @@ export const UNKNOWN_SOURCE_LABEL = "Added by hand";
 /** Everything the UI needs about one source's share of the queue. */
 export type ApprovalGroup = {
   source: string;
-  /** Read these. Ordered by score, highest first — the focus order. */
+  /** Read these. Longest waiting first (A-046) — the focus order. */
   needsYou: PendingApproval[];
   /** Routine. Offered as one action, never as 40 things to read. */
   safeToSend: PendingApproval[];
@@ -131,7 +132,7 @@ export function groupApprovalsBySource(approvals: PendingApproval[]): ApprovalGr
     // (a daily cap, a closed messaging window) then spends what it has
     // on the leads worth the most rather than on whichever came back
     // from the database first.
-    needsYou.sort(byScoreThenRecency);
+    needsYou.sort(byLongestWaiting);
     safeToSend.sort(byScoreThenRecency);
 
     groups.push({
@@ -151,8 +152,11 @@ export function groupApprovalsBySource(approvals: PendingApproval[]): ApprovalGr
     const aHas = a.topNeedsYouScore !== null;
     const bHas = b.topNeedsYouScore !== null;
     if (aHas !== bHas) return aHas ? -1 : 1;
-    if (aHas && bHas && a.topNeedsYouScore !== b.topNeedsYouScore) {
-      return (b.topNeedsYouScore as number) - (a.topNeedsYouScore as number);
+    // The source whose first card has waited longest goes first (A-046),
+    // so the top of the page and the "Start with" line are the same person.
+    if (aHas && bHas) {
+      const byWait = byLongestWaiting(a.needsYou[0], b.needsYou[0]);
+      if (byWait !== 0) return byWait;
     }
     if (a.topScore !== b.topScore) return b.topScore - a.topScore;
     const aSize = a.needsYou.length + a.safeToSend.length;

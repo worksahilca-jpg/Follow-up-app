@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { Check, ShieldCheck } from "lucide-react";
 import { groupApprovalsBySource, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
 import { QUEUE_PAGE_SIZE, nextStep, visibleCount } from "@/lib/queuePaging";
 import { useUndoableSend } from "@/components/useUndoableSend";
@@ -53,7 +53,13 @@ import SafePilePeek from "@/components/SafePilePeek";
  * anywhere. An alias cannot drop a field.
  */
 /** A waiting reply, plus "Based on …" (A-043) when there is something to point at. */
-export type ApprovalItem = PendingApproval & { basis?: string | null };
+export type ApprovalItem = PendingApproval & {
+  basis?: string | null;
+  /** "Waiting 5 h" / "Quiet 6 days" (A-046), worked out on the server. */
+  wait?: string | null;
+  /** The same fact for the "Start with" line: "who has waited 5 hours". */
+  waitClause?: string | null;
+};
 
 const CHANNEL_LABEL: Record<string, string> = {
   email: "email",
@@ -174,9 +180,13 @@ function ApprovalCard({
 
   return (
     <div className="box px-4 py-4">
-      <Link href={`/leads/${item.leadId}`} className="font-medium hover:underline">
-        {item.leadName}
-      </Link>
+      <div className="flex items-baseline justify-between gap-3">
+        <Link href={`/leads/${item.leadId}`} className="font-medium hover:underline">
+          {item.leadName}
+        </Link>
+        {/* How long they've waited, as a fact about the customer (A-046). */}
+        {item.wait && <span className="shrink-0 text-xs text-ink-soft tabular-nums">{item.wait}</span>}
+      </div>
       {/* The reason moves directly under the name, above everything else. It
           used to render last, at 12px, after the draft — but the reason is
           what tells you what to check the draft FOR. Reading it afterwards
@@ -294,12 +304,15 @@ export default function ApprovalQueue({
   items,
   answeredForYou = 0,
   sendLocked = false,
+  handledToday = 0,
 }: {
   items: ApprovalItem[];
   /** Only admins send, and this person isn't one (A-041). */
   sendLocked?: boolean;
   /** Replies FollowUp sent on its own this week — what it did instead of asking. */
   answeredForYou?: number;
+  /** People the owner dealt with since their midnight (A-031 / A-046). */
+  handledToday?: number;
 }) {
   const [resolved, setResolved] = useState<Set<string>>(new Set());
   const visible = items.filter((i) => !resolved.has(i.leadId));
@@ -323,22 +336,29 @@ export default function ApprovalQueue({
   // identical to something having gone wrong. An empty queue is a real state
   // and it is the state the owner most wants to be in, so it gets said out
   // loud, with what FollowUp did instead of asking.
+  // Handled here since the page loaded count too, so the line moves as the owner works.
+  const handled = handledToday + (items.length - visible.length);
+
   if (visible.length === 0) {
+    // A finish line, not a blank (A-046, the Todoist study): said calmly,
+    // with what FollowUp keeps doing. No confetti, points or streaks.
+    const done = handled > 0;
     return (
-      <div className="mt-6">
-        <div
-          className="relative box py-3 pl-4 pr-3"
+      <div className="mt-6 box px-5 py-5 flex items-start gap-4" role="status">
+        <span
+          aria-hidden="true"
+          className="h-9 w-9 shrink-0 rounded-full border border-line flex items-center justify-center"
         >
-          <span
-            aria-hidden="true"
-            className="absolute inset-y-0 left-0 w-[3px] rounded-l-[var(--radius-box)]"
-            style={{ backgroundColor: "var(--sage)" }}
-          />
-          <p className="text-sm font-medium">Nothing needs your OK right now.</p>
-          <p className="mt-1 text-xs text-ink-soft">
-            {answeredForYou > 0
-              ? `FollowUp answered ${answeredForYou} ${answeredForYou === 1 ? "lead" : "leads"} on its own this week. Anything it wasn't sure about would be here.`
+          <Check className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <p className="font-medium">{done ? "You're done for today." : "Nothing needs your OK right now."}</p>
+          <p className="mt-1 text-sm text-ink-soft">
+            {done
+              ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
               : "Anything FollowUp isn't sure about will show up here before it sends."}
+            {answeredForYou > 0 &&
+              ` It answered ${answeredForYou} ${answeredForYou === 1 ? "lead" : "leads"} on its own this week.`}
           </p>
         </div>
       </div>
@@ -362,6 +382,8 @@ export default function ApprovalQueue({
   // counting groups would keep the whole-queue box on screen beside a
   // single routine row and reintroduce the twin buttons.
   const groupsWithRoutine = groups.filter((g) => g.safeToSend.length > 0).length;
+  const focusWait = summary.focusOn ? visible.find((i) => i.leadId === summary.focusOn?.leadId)?.waitClause ?? null : null;
+  const total = handled + visible.length;
 
   return (
     <div className="mt-6">
@@ -376,17 +398,34 @@ export default function ApprovalQueue({
           show first. */}
       {summary.focusOn ? (
         <p className="text-sm text-ink-soft mt-1">
+          {/* The person and a fact about them, never a bare score (A-046). */}
           Start with{" "}
           <Link href={`/leads/${summary.focusOn.leadId}`} className="font-medium text-ink hover:underline">
             {summary.focusOn.leadName}
-          </Link>{" "}
-          — {summary.focusOn.source}, scored {summary.focusOn.score}.
+          </Link>
+          {focusWait ? `, ${focusWait}.` : ` on ${summary.focusOn.source}.`}
         </p>
       ) : (
         <p className="text-sm text-ink-soft mt-1">
           Nothing here needs a decision — the rest are routine.
         </p>
       )}
+
+      {/* Today has an end (A-031, A-046). Desktop only: the phone gets less (R-015). */}
+      <div className="mt-3 hidden sm:block max-w-md">
+        <div className="h-[3px] rounded-full" style={{ backgroundColor: "var(--line)" }}>
+          <div
+            className="h-[3px] rounded-full"
+            style={{ width: `${total > 0 ? Math.round((100 * handled) / total) : 0}%`, backgroundColor: "var(--ink)" }}
+          />
+        </div>
+        <p className="mt-1.5 text-xs text-ink-soft tabular-nums">
+          <span className="text-ink font-medium">
+            {handled} of {total}
+          </span>{" "}
+          handled today · When the list is empty, you&apos;re done for today.
+        </p>
+      </div>
 
       {/* Said once, above everything, rather than 48 times on 48 cards.
           The cards still carry their own sentence — this is the line that

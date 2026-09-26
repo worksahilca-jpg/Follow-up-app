@@ -4,6 +4,8 @@ import StatCard from "@/components/StatCard";
 import AccessRequestList from "@/components/AccessRequestList";
 import AdminCharts from "@/components/AdminCharts";
 import { getPlatformAdminData } from "@/lib/admin-data";
+import { getProductUsage } from "@/lib/admin-usage";
+import ProductUsageSection from "@/components/ProductUsageSection";
 import { formatCurrency } from "@/lib/demo-data";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +26,7 @@ function channelLabel(provider: string): string {
 const SIGNUP_GRID = "grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1.5fr)_auto]";
 
 export default async function AdminPage() {
-  const data = await getPlatformAdminData();
+  const [data, usage] = await Promise.all([getPlatformAdminData(), getProductUsage()]);
 
   return (
     <div>
@@ -53,6 +55,8 @@ export default async function AdminPage() {
         an integration (Gmail, Outlook, Instagram, or Facebook); the rest are dormant. MRR is a rough estimate —
         paid-tier businesses with a currently active or trialing subscription, times that tier&apos;s list price.
       </p>
+
+      <ProductUsageSection usage={usage} />
 
       <div className="mt-10">
         <AdminCharts

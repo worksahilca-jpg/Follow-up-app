@@ -25,6 +25,9 @@ const ACTION_COPY: Record<string, (meta: Record<string, unknown> | null) => { la
     label: "FollowUp drafted a reply and held it for review",
     detail: (meta?.reason as string) || describeTrigger(meta, "held"),
   }),
+  // "We talked" (src/lib/talked.ts, design brain A-039).
+  "lead.talked": () => ({ label: "You talked with them", detail: "Check-ins stopped until they write again" }),
+  "lead.talked_undone": () => ({ label: "You undid \"We talked\"", detail: "Check-ins are back on" }),
 };
 
 /**

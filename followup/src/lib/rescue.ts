@@ -1,3 +1,4 @@
+import { settledByTalk, lastInboundTime } from "@/lib/talked";
 import type { Lead, Message } from "@/lib/types";
 
 /**
@@ -46,6 +47,12 @@ function clamp(n: number, lo: number, hi: number): number {
 export function assessRescue(lead: Lead, now: Date = new Date()): RescueAssessment {
   if (lead.stage === "won" || lead.stage === "lost") {
     return { score: 0, atRisk: false, reason: "Closed.", waitingHours: null, silentDays: null, unreachable: false };
+  }
+
+  // "We talked" (src/lib/talked.ts): the owner answered them in person or
+  // on a call. Not at risk until they write again.
+  if (lead.talkedAt && settledByTalk(new Date(lead.talkedAt), lastInboundTime(lead.conversation))) {
+    return { score: 0, atRisk: false, reason: "You talked with them.", waitingHours: null, silentDays: null, unreachable: false };
   }
 
   const messages = [...lead.conversation].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());

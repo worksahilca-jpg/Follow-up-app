@@ -916,3 +916,17 @@ after How it works, after Pricing and at the end.
 - **Proof on the landing page:** each tester's own before and after reply time, plus their words. It renders only
   when every field is real and agreed (A-023).
 **Built:** PR #354 (words), #355 (three places, waiting list, "unless", reply speed), #356 (proof, hidden until real).
+
+## A-051 — Trust before delegation, and a hero that converts (Intercom study) ^A-051
+
+**Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 40).
+**What specifically:**
+- **Preview first:** the last setup step shows "Here's what FollowUp would write to your last 3 customers. Nothing
+  was sent." Each draft has Send, Edit or Skip. When there's nothing to show, it says so and goes to Today.
+- **One story:** "See how it works" lands on Sarah's case in five numbered steps. The product cards stay below.
+- **Promise:** "When it isn't sure, it asks you. Prices, dates and anything tense wait for your OK." The control lede
+  adds "Before anything goes out, you see exactly what it would write, to your own customers."
+- **Hero number:** a real, pooled reply-speed line, only above a threshold and always with its base. The founder
+  also asked for a line in the tester terms ("add the line, build it").
+  **HELD (2026-09-26):** our Google Limited Use disclosure limits Gmail data to finding conversations and sending
+  follow-ups. The founder decides before this is built.

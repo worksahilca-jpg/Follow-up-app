@@ -6953,3 +6953,17 @@ ship.
 - Pause matters only when auto-send is on. With the default ("every reply waits"), it has nothing to hold, so the
   button shows only when something can send by itself.
 - Sign-in emails need Resend configured in production. Without it they're silently skipped, like the existing alerts.
+
+**Built (same day), PR #338 `claude/trust-controls`.** Canvas version 30 was changed to match what shipped:
+- **"An email when someone new signs in" became "Recent sign-ins"**, on the landing page and on the Sign-ins board.
+  The email only goes out when Resend is set up in production, and the page must not promise it before then.
+  /security shows the email line only when it's configured.
+- **"Where your account is signed in right now" became "Recent sign-ins."** Sessions live in a cookie, so FollowUp
+  can list sign-ins but can't see which browsers still hold a session.
+- **"Sign out everywhere" says "within 5 minutes".** That's the revalidation interval.
+- **"Sign-ins end after a week" was dropped from /security.** The one-week absolute limit is on the dev branch and
+  not on main yet.
+- **Your rules no longer claims "after the last check-in, it stops for good".** Dead-lead reactivation can still write
+  later. It says the We talked rule and who can send instead.
+- **Pause lives inside the existing permission card.** When something sends by itself, "Pause all sending" is the
+  button and "Stop sending by itself for good" is the quiet link. This avoids two near-identical switches.

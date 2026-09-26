@@ -478,3 +478,22 @@ its own, the founder said: **"yes new ones automatic, old ones ask with one tap"
 - It fits the 2026-09-26 "first replies written right after connecting" decision. Those drafts are exactly this list.
 
 Status: NOT BUILT.
+
+### A "we got you" message when a decision waits 30 minutes (founder, 2026-09-26)
+
+Asked what should happen when a price or date question has come to the owner and the owner hasn't answered in 30
+minutes, the founder chose **option 2**: FollowUp sends a short holding message.
+
+- Example: "Thanks Sarah! Let me check and I'll send you the price soon."
+- **When:** only if the owner hasn't answered the decision 30 minutes after it came in. If the owner answers first,
+  nothing extra is sent.
+- **Once per decision**, never repeated.
+- It goes in the customer's language, from the owner's own address, in the business's voice.
+- **It promises nothing:** no number, no day, no time. The decision still waits for the owner, with the real reply
+  already written.
+- **Price and date decisions only.** A tense moment (a complaint, an angry customer) gets no automatic message. It goes
+  to the owner only. (My recommendation, stated with the options and not objected to. Confirm when building.)
+- **Applies on Automatic.** On Assisted, the holding message would also need the owner's OK, which defeats it. Assumed
+  off on Assisted; confirm when building.
+
+Status: NOT BUILT.

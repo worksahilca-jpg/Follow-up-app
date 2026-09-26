@@ -150,3 +150,75 @@ doesn't make understanding worse, strongly consider removing it.
 ### Key rule
 Already in `workflows/design-review.md` ("Removing any element would lose information (if not, remove it)"). The
 document's sharper wording, "does this help the visitor understand, trust, or want FollowUp?", is added there.
+
+
+---
+
+## Coverage check, every point of the document (2026-09-26, second pass)
+
+Checked against the **sketched canvas** (Main, Phone and the app boards), not the live site (R-019, A-052).
+✓ = designed on the canvas · ◐ = partly · ✗ = missing · ⏸ = waits on the founder
+
+### The references
+
+| Reference | Studied | On the canvas | Gap |
+|---|---|---|---|
+| Linear (feel) | ✓ `ux-patterns/2026-09-26-linear-attio-landing.md` + the app note | ◐ | One section rhythm (P2) is missing |
+| Attio (product) | ✓ same file + the app note | ◐ | The "simple outside" depth section and the story shape are missing |
+| Close | ✓ | ✓ ThreePlaces, Waiting, UnlessCheckIn, ProofWaiting | — |
+| Intercom (hero, trust) | ✓ | ✓ PreviewFirst, DemoStory, SafePromise | Hero number ⏸ |
+| Intercom (AI inside workflows) | ✓ | ✓ InboxAI, EditRewrite, ThreadCatchUp | — |
+| Stripe | ✓ | ◐ Plans, Rules | Not on the landing page (it becomes the depth section) |
+| Notion | ✓ | ✓ Examples ("How a normal week goes") | — |
+| Mercury | ✓ | ✓ Your control, Security, SettingsControl | — |
+| Ramp | ✓ | ◐ FeaturesOutcomes drawn | Not placed in the Main flow |
+| Zapier | ✓ | ✓ Rules, RuleDetail | — |
+| Duolingo | ✓ | ✓ TodayDone, FirstValue | — |
+| Todoist | ✓ | ✓ TodayCalm, TodayCalmDone | — |
+| Amplitude | ✓ | ✓ FirstValue, AdminActivation | — |
+| Framer | ✓ | ✓ Motion boards | — |
+| **HubSpot / Intercom pricing** | **✗** | ◐ Pricing section exists | **Not studied.** The last reference left. |
+
+### The landing journey (Main)
+
+| Step | Canvas | Verdict |
+|---|---|---|
+| Hero: that's my problem | Headline, a lede that explains, Start free and See it work, $0 / no card | ✓ |
+| Problem: this happens to me | "The gap" | ✓ |
+| How it works: that's simple | "Two minutes to connect. Then this changes." as three text cards | ◐ Not Connect → Find → Follow up, and no product frames. **Card 3 says simple replies can go on their own, which is no longer true.** |
+| Demo: now I understand it | See it working (tabs) + DemoStory (proposed) | ✓ |
+| AI experience: why, next, control | See it working + InboxAI | ✓ |
+| Trust: I'm still in control | Your control + SafePromise | ✓ |
+| Compatibility | "Works with" strip under the hero | ✓ Earlier than the document's order, which helps the hero |
+| Proof: I believe it | ProofWaiting (hidden until real) | ◐ Correctly empty. The story shape is missing. |
+| Benefits: easier life | FeaturesOutcomes drawn, not in the flow | ◐ |
+| Product depth: power underneath | nothing | **✗** |
+| Pricing / FAQ | ✓ | Pricing not yet studied against HubSpot and Intercom |
+| Final CTA | ✓ | — |
+
+### Psychology and product principles
+
+| Principle | Status |
+|---|---|
+| Curiosity ("Find who needs a follow-up") | **✗** Every action says Start free or Connect. The setup button could say "Find who needs a reply". |
+| Truthful loss framing | ✓ Waiting times are facts, not made-up urgency |
+| Open loops (you / customer / handled) | ✓ ThreePlaces |
+| Visible progress to caught up | ✓ TodayCalm → TodayCalmDone |
+| Recognition over recall | ✓ |
+| Progressive disclosure | ✓ in the app, ✗ on the landing page (the depth section) |
+| Trust before delegation, its last step | ⏸ TodayProof shows "sent 18 of 21 without changing a word", but offering automation after that is product behaviour, so it's the founder's call |
+| Immediate feedback | ✓ Motion (A-048) |
+| Activation target (a real conversation, acted on) | ✓ PreviewFirst |
+| Key rule (understand, trust, want) | ✓ in design-review.md |
+
+### What's left, in one list
+
+1. The product depth section (Linear/Attio proposal 1).
+2. How it works as Connect → Find → Follow up, and fix card 3's wrong sentence (proposal 2).
+3. One section rhythm (proposal 3).
+4. Say what it decides (proposal 4).
+5. The proof story shape (proposal 5).
+6. Place FeaturesOutcomes (benefits) in the Main flow.
+7. A curiosity action: "Find who needs a reply" on the setup button.
+8. HubSpot / Intercom pricing: the last unstudied reference.
+9. ⏸ Founder decisions: the hero number (Google Limited Use), and offering automation after trust.

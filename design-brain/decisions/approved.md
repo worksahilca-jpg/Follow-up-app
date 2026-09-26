@@ -522,3 +522,17 @@ happens" and "Features" (merged into See it working). Supersedes A-015's section
 **Built so far (Figma, "Page v3"):** the "Works with" strip, and The gap with "Today · 3 people
 need you" beside it. How it works: "Three steps. Two minutes to start.", three soft cards with
 thin numerals.
+
+## A-024 — Attio's data principles, for the app and for the landing page's product examples ^A-024
+
+**Approved:** 2026-09-26, founder. Asked where the Attio-based People screen should go (the app's redesign,
+the landing page's product examples, or both), he answered: "both, build the inbox next."
+
+**What this settles:** the principles in `references/crm/2026-09-26-attio-data-ui.md` are the way FollowUp
+shows data, in the app and wherever the landing page shows the product. That means lines instead of boxes,
+colour only for state, two sizes / two weights / two inks, and a person's page as label → value plus a quiet
+timeline. The typography stays ours (Public Sans, Plex Mono).
+
+**Not settled by this:** the state-dot colours (muted rust, ochre, slate, sage, greys). He didn't answer
+that question, so they remain a proposal. Also not settled: whether the People and Inbox screens themselves
+are approved as drawn. He asked for the next screen, not for changes, which is encouraging but not approval.

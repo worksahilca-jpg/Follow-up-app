@@ -6613,3 +6613,28 @@ ours ("we have the good one").
 
 **Weak spots:** the table is desktop-only so far; the sidebar's "Sources" counts are sample numbers; no
 inbox view yet (the conversation lives inside the person's page).
+
+## 2026-09-26 — The inbox: customer conversations only, every channel, one list
+
+After A-024 ("both, build the inbox next"), three artboards were added: **App · inbox · desktop**,
+**App · inbox · phone**, and **App · conversation · phone**.
+
+- **What the inbox is, and isn't (PRODUCT_DIRECTION rule 4).** It holds only customer conversations, from
+  every connected channel, grouped by who needs you: *Needs you → Reply ready → Everyone else*. It has no folders,
+  labels, archive or "compose new email". A general email client is exactly the free-platform ground rule 4
+  warns about.
+- **Desktop:** three panes (sidebar, conversation list, open conversation). In the list, a row's state
+  is only a 7px dot, because the group label already names it. The open conversation shows the customer's
+  message, FollowUp's automatic welcome labelled as such, a thin event line ("FollowUp wrote a reply"), and
+  the held reply as the one black card with Send / Edit / Don't send. The header shows a true channel limit:
+  "Messenger lets you reply here for 23 more hours."
+- **Phone (brand principle 4, the phone rule):** the list is its own screen with filter chips and a bottom
+  tab bar (Today, Inbox, People, Settings). The conversation is its own screen, with the held reply at the
+  bottom and 44px buttons.
+- The same people and states as the People screen, so the two read as one product. The sidebar's Inbox
+  count is now 8 on both.
+
+**Weak spots:**
+- "Reply ready" and "Needs you" both mean "waiting for your OK", which may be one distinction too many. Worth asking.
+- The desktop conversation has no link to the person's attributes beyond "Open person".
+- There's no empty state ("You're all caught up") yet.

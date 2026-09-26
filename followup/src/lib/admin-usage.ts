@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
+import { getPendingApprovals } from "@/lib/pendingApprovals";
 
 /**
  * "How FollowUp is being used", for the founder's /admin page (founder's
@@ -69,31 +70,22 @@ async function usageBetween(from: Date, to: Date): Promise<UsageWeek> {
   };
 }
 
-// A lead's draft is waiting when the LAST decision about it was a hold. Not
-// "has a suggestedMessage": a draft can outlive its own send, so that count
-// ran at 30 of 33 when 23 were really waiting. Same events the approvals
-// list reads (pendingApprovals.ts).
-const DECISION_EVENTS = [
-  "ai.hold",
-  "ai.hold_dismissed",
-  "ai.send",
-  "ai.send_queued",
-  "ai.send_failed",
-  "ai.send_abandoned",
-  "lead.send",
-  "lead.opt_out",
-  "lead.dm_exit",
-];
-
-async function countWaitingForOk(): Promise<number> {
-  const latest = await prisma.auditEvent.findMany({
-    where: { action: { in: DECISION_EVENTS }, targetId: { not: null } },
-    orderBy: [{ targetId: "asc" }, { createdAt: "desc" }],
-    distinct: ["targetId"],
-    select: { action: true },
-    take: 5000,
+// How many drafts are waiting for an owner's OK right now, across every
+// account: exactly what each owner sees in "Needs your OK". It used to
+// re-derive that from the latest decision event alone, which missed the
+// other ways a draft stops waiting: the owner answered some other way
+// (a newer outbound message), marked "We talked", or the lead left the
+// list. So it counted more than any owner was actually being asked.
+// Reusing getPendingApprovals keeps the two from drifting apart again.
+export async function countWaitingForOk(): Promise<number> {
+  const accounts = await prisma.auditEvent.findMany({
+    where: { action: "ai.hold" },
+    distinct: ["businessId"],
+    select: { businessId: true },
   });
-  return latest.filter((e) => e.action === "ai.hold").length;
+  let total = 0;
+  for (const { businessId } of accounts) total += (await getPendingApprovals(businessId)).length;
+  return total;
 }
 
 export async function getProductUsage(now: Date = new Date()): Promise<ProductUsage> {

@@ -13,7 +13,6 @@ import SmartViewForm from "@/components/SmartViewForm";
 import EmptyState from "@/components/EmptyState";
 import CleanupLeadsButton from "@/components/CleanupLeadsButton";
 import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, MoreHorizontal } from "lucide-react";
-import FadeIn from "@/components/motion/FadeIn";
 import { PageHeader } from "@/components/PageHeader";
 import { ItemBox, ItemBoxList, type ItemTone } from "@/components/ItemBox";
 
@@ -398,7 +397,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           the box, which the one-hue-per-box cap (S-05) doesn't allow, and its
           number never carried a unit anyone could read. The score still leads
           the sort, and the detail page still explains it. */}
-      <FadeIn className="mt-6">
+      <div className="mt-6">
         <ItemBoxList>
           {filtered.map((lead) => (
             <ItemBox
@@ -454,7 +453,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
             }
           />
         )}
-      </FadeIn>
+      </div>
     </div>
   );
 }

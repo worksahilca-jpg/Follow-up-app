@@ -6472,3 +6472,15 @@ the approved headline (A-013) and buyer line (A-014), and blank desktop (1440) a
 frames with the maximum picture area dashed in. Green (`--sage`) stands in for the one
 "answered" colour and is explicitly a placeholder (R-004: build with a placeholder, change one
 value when he reacts). Nothing on the board is approved; R-014 stands until he picks.
+
+## 2026-09-26 — How the website redesign is made: the founder directs, Claude builds in Figma
+
+The founder's words: "I will be designing the website with the help of you, and you will be
+guiding me on Figma… I will be giving you the directions, and you'll be building it one by one."
+So: one section at a time, in the order he names, from his direction — not a full proposal to
+react to. The same Figma file now has a **Website** page (empty desktop 1440 and phone 390 home
+frames) above the **Hero ideas (reference)** page, a "FollowUp colours" variable collection
+(paper, card, line, ink, ink-soft, and `answered` as the one placeholder strong colour) and seven
+text styles (Display, serif emphasis, section heading, body, mono label, button). Everything
+still goes through the brain: check rejected.md before building what he describes, and say so if
+a direction runs into a rejection rather than silently building it.

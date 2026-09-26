@@ -7132,3 +7132,13 @@ Weak spots I noticed:
   - "Back in week 2" sits in the funnel, but its base is activated testers, not the row above. That could mislead.
     It may belong only in the band.
   - The Today card must know when to stop showing. "Once" needs a stored flag, which is a small schema change.
+
+### 2026-09-26: A-047 approved and built (PR #350)
+- **No schema change for "once":** the Today card shows only on the day the business's first value happened. The
+  send already carries its date, so nothing new is stored.
+- **The instant "got your message" doesn't count as first value.** It's the same boilerplate for everyone, which
+  matches how admin usage already treats it (Message.trigger in the schema). This narrows "whether approved or by
+  itself" by one case. It's flagged to the founder.
+- **Kept as drawn:** "Back in week 2" stays as the last funnel row, even though its base is activated testers.
+- **Replaced:** the old four-number tester box on /admin (Added, Signed in, Inbox connected, First lead). The new
+  steps cover it, and connected now means any source.

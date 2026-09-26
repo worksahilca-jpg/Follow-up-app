@@ -850,3 +850,21 @@ asked about explicitly.
   - A quiet link beside "Don't send" offers "Later today (2pm)" or "Tomorrow morning (9am)".
   - The card comes back by itself, or at once if the customer writes again.
   - The draft is kept.
+
+## A-047 — First value, measured and said once (Amplitude study) ^A-047
+
+**Approved:** 2026-09-26, founder: "yes approve it, build it" (canvas version 36).
+**What specifically:**
+- **Definition:** first value is "a customer got a reply that FollowUp wrote". Activated means first value within 7 days
+  of first sign-in. Proof is that customer writing back. This is recorded in `PRODUCT_DIRECTION.md`.
+- **/admin "Who reaches first value":**
+  - The band: activated, median time to first value, back in week 2, and heard back.
+  - One sentence naming the biggest drop and the slowest step.
+  - Eight steps with counts and median times.
+  - "Who's stuck", longest first, with the last step, why, days and an Email link. The link is the founder's own mail;
+    nothing is sent automatically.
+- **Phone /admin:** the headline, the sentence, who's stuck, and "Every step, with times" (R-015).
+- **Today:** one calm card on the day it happens: "Your first reply went out through FollowUp." It gives the
+  customer's name and says FollowUp keeps watching. No confetti, points or streaks.
+- **Guardrails:** no analytics SDK, only our own tables, founder-only.
+**Built:** PR #350.

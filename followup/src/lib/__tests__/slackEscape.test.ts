@@ -54,36 +54,59 @@ describe("escapeSlackText", () => {
   });
 });
 
+function hotLead(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "lead1",
+    businessId: "biz1",
+    name: "<https://evil.example/login|Your Stripe payout failed — verify now>",
+    company: "<!channel>",
+    priority: "NONE",
+    assignedToId: null,
+    source: "Website form",
+    createdAt: new Date("2026-09-05T12:00:00Z"),
+    dealValue: 0,
+    lastContacted: null,
+    business: { tier: "plus", name: "Acme Plumbing" },
+    language: null,
+    languageScript: null,
+    languageRegister: null,
+    languageSetAt: null,
+    conversations: [
+      { channel: "web", messages: [{ id: "m1", direction: "inbound", body: "Buying today", sentAt: new Date(), opened: false }] },
+    ],
+    ...overrides,
+  };
+}
+
 describe("the hot-lead Slack line", () => {
   it("cannot carry a link or a channel ping from a stranger's form fields", async () => {
-    findUnique.mockResolvedValue({
-      id: "lead1",
-      businessId: "biz1",
-      name: "<https://evil.example/login|Your Stripe payout failed — verify now>",
-      company: "<!channel>",
-      priority: "NONE",
-      assignedToId: null,
-      source: "Website form",
-      createdAt: new Date("2026-09-05T12:00:00Z"),
-      dealValue: 0,
-      lastContacted: null,
-      business: { tier: "plus" },
-      language: null,
-      languageScript: null,
-      languageRegister: null,
-      languageSetAt: null,
-      conversations: [
-        { channel: "web", messages: [{ id: "m1", direction: "inbound", body: "Buying today", sentAt: new Date(), opened: false }] },
-      ],
-    });
-
+    findUnique.mockResolvedValue(hotLead());
     await scoreAndDraftForLead("lead1");
-
     expect(notifySlack).toHaveBeenCalledTimes(1);
     const text = (notifySlack.mock.calls[0] as unknown as [string])[0];
     expect(text).not.toMatch(/[<>]/);
-    expect(text).toContain("&lt;https://evil.example/login|Your Stripe payout failed");
-    expect(text).toContain("&lt;!channel&gt;");
-    expect(text).toContain("&lt;!here&gt;");
+    expect(text).not.toContain("evil.example");
+    expect(text).not.toContain("!channel");
+    expect(text).not.toContain("!here");
+  });
+
+  // Audit 2026-09-16 M-4: FollowUp's own team Slack is not the business's.
+  // A customer's name, company and the AI's summary of their message stay
+  // out of it; which business it was is enough for the team.
+  it("names the business, never the customer", async () => {
+    findUnique.mockResolvedValue(hotLead({ name: "Priya Shah", company: "Shah Dental" }));
+    await scoreAndDraftForLead("lead1");
+    const text = (notifySlack.mock.calls[0] as unknown as [string])[0];
+    expect(text).toContain("Acme Plumbing");
+    expect(text).not.toContain("Priya");
+    expect(text).not.toContain("Shah Dental");
+    expect(text).not.toContain("Ready to buy");
+  });
+
+  it("escapes a business name an owner typed", async () => {
+    findUnique.mockResolvedValue(hotLead({ business: { tier: "plus", name: "<!channel> Acme" } }));
+    await scoreAndDraftForLead("lead1");
+    const text = (notifySlack.mock.calls[0] as unknown as [string])[0];
+    expect(text).toContain("&lt;!channel&gt; Acme");
   });
 });

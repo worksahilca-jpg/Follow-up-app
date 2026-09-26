@@ -38,7 +38,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     where: { id: leadId },
     include: {
       conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } },
-      business: { select: { tier: true } },
+      business: { select: { tier: true, name: true } },
     },
   });
   if (!lead) return false;
@@ -237,11 +237,14 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // doesn't, so the team never misses a hot lead just because nobody's
   // been assigned to it yet).
   if (becameHot) {
-    // Every interpolated piece is stranger-typed text: escaped so it can
-    // only ever be text in Slack, never a link or a channel ping.
-    void notifySlack(
-      `🔥 *${escapeSlackText(lead.name)}*${lead.company ? ` (${escapeSlackText(lead.company)})` : ""} just became a hot lead — ${escapeSlackText(scoreResult.reason)}`
-    );
+    // Which business, never which customer. This is FollowUp's own team
+    // Slack, not the business's: a customer's lead name, company and the
+    // AI's summary of what they wrote do not belong in it, and slack.ts
+    // has said so since it was written (audits 2026-09-16 M-4,
+    // 2026-09-26). The owner still gets the named, detailed version in
+    // the app (the Notification above) and in their own alerts. The
+    // business name is escaped because an owner types it.
+    void notifySlack(`🔥 A lead just became hot for *${escapeSlackText(lead.business?.name ?? "a business")}*.`);
   }
 
   return true;

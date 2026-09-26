@@ -7312,3 +7312,27 @@ Decided by the founder. No pooled reply-speed number under the hero, and no test
 to one tester's story, with their written OK (ProofStory). The Google Limited Use question doesn't arise. The page
 leans into "It does the work. You stay in charge.", shown with real product screens and true promises, not numbers
 or logos.
+
+### 2026-09-26: the landing page put together (A-053, canvas v44)
+MainV2 and PhoneV2 are copies of the sketched Main and Phone with every approved piece in the PDF's order:
+1. Hero ("See how it works" lands on the story).
+2. Works with.
+3. In short.
+4. The gap.
+5. How it works.
+6. One customer.
+7. See it working (with the decides line).
+8. Examples.
+9. Your control (wider Safe promise, preview line, switch line made true).
+10. Proof (hidden until real, shown only as a dashed canvas marker).
+11. What you get.
+12. Underneath.
+13. Pricing.
+14. Questions.
+15. Start free.
+
+Weak spots:
+- Underneath's tabs are drawn, not wired. Only Today shows. The other three need the same logic as See it working
+  when this is built.
+- The desktop frame is sized to the tallest state of the interactive parts, so the page may end with some empty
+  space.

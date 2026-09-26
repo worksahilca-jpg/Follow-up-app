@@ -953,3 +953,27 @@ finalliese and we will push the design to the main."*
   founder says otherwise.
 **Not covered:** fixing real bugs and security issues in the live product is not design work. It still goes through
 normal PRs, and he merges.
+
+## A-053 — Linear + Attio, the rest of the PDF, and the page put together ^A-053
+
+**Approved:** 2026-09-26, founder: *"yes approve it, put it all together"* (canvas v42–v43).
+**What specifically:**
+- **Underneath** (DepthTabs): "Simple on the outside. The rest is there when you want it."
+  - One product frame with four tabs: Today, Follow-up plans, Rules, Your week.
+  - It sits after Your control and before Pricing.
+- **How it works** as Connect → Find → Follow up, each step with a small real frame. It replaces "What changes".
+- **One section rhythm:** eyebrow and heading on the left, one line on the right, then one full-width frame.
+- **See it working** adds "It decides who comes first and what to say. You decide what gets sent."
+- **Customer story page** (ProofStory): outcome, before → after, their words, one screen. It exists only when every
+  field is real and the customer has agreed in writing (A-023).
+- **Pricing:**
+  - the line "In the beta you get everything in Pro, free. No card, so nothing can be charged.";
+  - Plus marked "Recommended for one owner";
+  - three money answers under the plans.
+- **Setup button:** "Find who needs a reply".
+- **Three untrue lines removed everywhere.** They said simple replies can send by themselves (card 3, the Plus plan,
+  FAQ 1, and the control switch line). Every reply waits for the owner's OK.
+
+**Put together:** MainV2 (desktop) and PhoneV2 (phone) are the whole landing page in the journey order. They're built
+on copies of the sketched Main and Phone, so the working tabs, "Try it" and the FAQ still work. This is the board the
+founder finalizes before anything goes to main (A-052).

@@ -6742,3 +6742,25 @@ all-caught-up screens were rebuilt in place (canvas version 14), and the proof s
   (principle 1: the owner must always be able to stop a message).
 - Removing the Messenger window line hides a real deadline. It should come back only when the window is
   about to close, as the existing "window shuts in N hours" badge already does.
+
+## 2026-09-26 — Calendly: one job, and the follow-up plan as one card
+
+"study Calendly for one job: simplicity for follow-up application. Make the co[r]e instantly understandable."
+The study is `research/ux-patterns/2026-09-26-calendly-one-job-simplicity.md`. It's on the canvas as a new phone screen,
+**App · settings**, version 16:
+
+- **"Your follow-up plan"** is one card, Calendly's pre-made "30 minute meeting" in our terms, taken straight
+  from the live code (`reminderCadence.ts`):
+  - Right away: a quick "got your message" reply.
+  - Day 3, 7, 14, 30: a check-in, if they go quiet.
+  - Then: it stops, and it stops the moment they answer.
+  - Always: every other reply waits for your OK.
+  - One "Change" link. No workflow builder on this screen.
+- **"Where customers write":** the connected sources, plus "Add another".
+- **"Sending":** one switch, "Send simple replies by themselves", off by default, with "Anything about price always
+  waits for you."
+- Everything else is behind **"More settings"**.
+
+**Proposed, needs the founder:** three top-level places across the app (Today, Inbox, Settings). Pipeline,
+Analytics, Follow-up plans and Activity would stop being pages of their own. That goes one step past the
+2026-09-10 proposal of four, and it removes pages that exist today.

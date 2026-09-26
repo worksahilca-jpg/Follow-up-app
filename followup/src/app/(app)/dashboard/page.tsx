@@ -26,7 +26,6 @@ import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
 import { ArrowRight } from "lucide-react";
 import { ItemBox, ItemBoxList, type ItemTone } from "@/components/ItemBox";
-import FadeIn from "@/components/motion/FadeIn";
 import FirstValueNote from "@/components/FirstValueNote";
 import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 
@@ -259,7 +258,7 @@ export default async function DashboardPage() {
       <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} />
 
       {leads.length === 0 ? (
-        <FadeIn className="mt-10">
+        <div className="mt-10">
           {/* research/product/2026-09-10-ux-simplification.md §3/§7.1: the
               old empty state was four zeroed stat tiles and a generic
               "No leads yet" box — a worse first impression than one
@@ -368,7 +367,7 @@ export default async function DashboardPage() {
               step. SetupStrip returns null when there is nothing left, so
               it is safe in both branches. */}
           <SetupStrip steps={setupSteps} />
-        </FadeIn>
+        </div>
       ) : (
         <>
           {/* Today's numbers, in one quiet line (A-045). This was three
@@ -378,7 +377,7 @@ export default async function DashboardPage() {
           {thisWeek && <p className="mt-6 hidden sm:block text-sm text-ink-soft tabular-nums">{thisWeek}</p>}
 
           {atRisk.length > 0 && (
-            <FadeIn className="mt-10">
+            <div className="mt-10">
               <h2 className="font-display text-xl">About to be lost</h2>
               <p className="text-sm text-ink-soft mt-1">
                 Automation is already working these — the ones at the top need you.
@@ -408,17 +407,17 @@ export default async function DashboardPage() {
                   />
                 ))}
               </ItemBoxList>
-            </FadeIn>
+            </div>
           )}
 
           {/* Coming up (A-046): the full list on desktop, one line on the
               phone that opens it (R-015). Hidden when nothing is planned. */}
           {comingUp && comingUp.total > 0 && (
             <>
-              <FadeIn className="mt-10 hidden sm:block">
+              <div className="mt-10 hidden sm:block">
                 <h2 className="font-display text-xl">Coming up</h2>
                 <ComingUpList groups={comingUp.groups} holdAll={comingUp.holdAll} />
-              </FadeIn>
+              </div>
               <ComingUpLine
                 first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }}
                 total={comingUp.total}
@@ -447,7 +446,7 @@ export default async function DashboardPage() {
           )}
 
           {rescue && rescue.leads.length > 0 && (
-            <FadeIn className="mt-10">
+            <div className="mt-10">
               <h2 className="font-display text-xl">What FollowUp did for you this week</h2>
               {/* This sentence stays exactly as written. It is a trust claim —
                   it tells the owner the number below is not padded with their
@@ -472,11 +471,11 @@ export default async function DashboardPage() {
                   />
                 ))}
               </ItemBoxList>
-            </FadeIn>
+            </div>
           )}
 
           {upcomingBookings.length > 0 && (
-            <FadeIn className="mt-10">
+            <div className="mt-10">
               <h2 className="font-display text-xl">Upcoming calls</h2>
               <ItemBoxList className="mt-4">
                 {upcomingBookings.map((b) => (
@@ -494,15 +493,15 @@ export default async function DashboardPage() {
                   />
                 ))}
               </ItemBoxList>
-            </FadeIn>
+            </div>
           )}
 
-          <FadeIn className="mt-10 mb-6">
+          <div className="mt-10 mb-6">
             <Link href="/analytics" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline">
               See all numbers
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-          </FadeIn>
+          </div>
         </>
       )}
     </div>

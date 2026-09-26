@@ -403,3 +403,23 @@ under the headline).
 the same story told with more dimension and motion that explains, in a smaller footprint — not a
 new concept. Asked which reading he means before rebuilding (R-008: no rebuild on a guess).
 **Supersedes, partly:** [[approved#^A-012|A-012]] — its concept stands, its look and size do not.
+
+## R-015 — The first phone app screens: too much on each screen ^R-015
+
+**Rejected:** 2026-09-26, founder, on the canvas: *"the mobile interface still looks very complex. I would
+rather ignore using it on my phone. Make it more simple so that I can also be habitable with my phone, because
+users will be mostly using their phone… very clean, neat, and simple."*
+
+**What was rejected:** the first phone versions of Today, Inbox, the conversation screen, and "all caught up".
+Specifically, what each screen carried:
+- **Today:** a progress bar with a caption, two section labels, "Send both", a win card, times and icons on every row.
+- **Inbox:** filter chips, three group labels, and a coloured dot per row.
+- **Conversation:** a window-time line, an event divider, and a mono label.
+- **All caught up:** a colour wash, a progress bar, and an outcomes grid.
+
+**Stated reason:** too complex; he wouldn't use it on his own phone.
+**Inferred principle (marked inferred):** the desktop's information density doesn't transfer to the phone, even
+when it's styled cleanly. The phone gets one decision per screen, bigger type, fewer labels, and no colour
+coding. Anything that's only "nice to know" moves off the phone screen.
+
+**Do not propose again:** desktop-density screens on the phone, in any styling.

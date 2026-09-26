@@ -69,6 +69,8 @@ Configuration is progressive: powerful when sought, invisible when not.
 
 **The phone is not a shrunk desktop** (founder, 2026-09-26: *"it is not supposed to be same… the information should be same, the message should be same… the diagrams and all that are consuming lots of space in mobile version"*). On a phone, keep every word and every claim, and cut or compress the pictures: big mock cards become one compact example, card grids become divider lists, several stacked demos become tabs showing one at a time, three price cards become a switcher. A visual stays on the phone only if the words can't carry that point alone.
 
+**The phone must be habitable** (founder, 2026-09-26: *"make it more simple so that I can also be habitable with my phone, because users will be mostly using their phone"*). In the app, one screen = one decision: the next person who needs you, their message, your reply, and a big Send. No progress bars, filter chips, section labels, colour dots or stats on the phone. If the owner wouldn't open it between jobs with one thumb, it's too much.
+
 ---
 
 ## 5. Clarity over cleverness, always

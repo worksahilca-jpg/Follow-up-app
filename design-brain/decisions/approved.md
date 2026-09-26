@@ -536,3 +536,11 @@ timeline. The typography stays ours (Public Sans, Plex Mono).
 **Not settled by this:** the state-dot colours (muted rust, ochre, slate, sage, greys). He didn't answer
 that question, so they remain a proposal. Also not settled: whether the People and Inbox screens themselves
 are approved as drawn. He asked for the next screen, not for changes, which is encouraging but not approval.
+
+## A-025 — The desktop app direction (People, Inbox, Today) ^A-025
+
+**Approved:** 2026-09-26, founder: *"I believe we are going well with the desktop one."*
+**What this covers:** the direction of the three desktop app artboards: sidebar, ruled table or list, the
+open person or conversation beside the list, and the held reply as the one black card. It covers the
+direction, not every detail. The state-dot colours are still a separate open question.
+**In the same breath he rejected the phone versions (R-015),** so this approval is desktop-only.

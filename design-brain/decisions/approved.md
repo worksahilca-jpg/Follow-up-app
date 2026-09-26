@@ -604,3 +604,15 @@ right side. The rest should not be that highlighted."* Final rule for state pill
 - **"Needs you"** (and the landing's "Held for you"): bold, black text.
 - **Every other state:** regular weight, soft grey text (`#57534e`).
 - The coloured dot stays on all of them. Emphasis marks what needs action; colour tells the states apart.
+
+## A-030 — One group, "Needs you", instead of "Needs you" and "Reply ready" ^A-030
+
+**Approved:** 2026-09-26, founder: "one group".
+**What specifically:**
+- Everyone waiting on the owner's OK is in one group, **Needs you**, with one line under each name saying why
+  (for example "The reply mentions a price, so it waits for you").
+- The "Reply ready" state and group are gone, from Today, Inbox and People.
+- On desktop Today, the row's button still differs: **Review** where judgement is needed (price), **Send** where the
+  reply is routine.
+- "Send both" was removed with the second group.
+**Why:** both groups waited for the same tap. Two nearly identical groups were extra thinking (principle 4).

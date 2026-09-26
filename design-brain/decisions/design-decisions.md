@@ -6973,3 +6973,29 @@ ship.
 - "What changes" and "How a normal week goes" are now on the live landing page. They use the live page's card
   style (icons, not thin numerals), because the live page hasn't moved to the canvas design yet.
 - The wording is exactly as approved.
+
+## 2026-09-26: Outcome-first copy drawn (Ramp study)
+
+Founder: "yes design all four, for 5th keep that in mind". On the canvas, version 32:
+
+1. **Features grid → "What you get · Less chasing. More booking."** Six outcomes, each with the feature as the small
+   line: No message missed · Catch them before they go cold · Answer in any language · Check-ins you'd forget (day 3,
+   7, 14, 30; stops when they answer) · Customers answer with one tap · Nobody's customers get dropped.
+   - These are new boards (desktop and phone) for the **live** landing page.
+   - The canvas page plan (A-023) folded Features into "See it working", so this section isn't added to the canvas
+     Main or Phone boards.
+2. **Pricing lines outcome-first on Main and Phone.** For example, "No email or form enquiry missed", "Catch customers
+   before they go cold", "Every Monday: who came back, who booked", "Every new customer gets an owner". Limits (20
+   customers a month, no limit on customers) and "Priority support" stay as they were.
+3. **The app's weekly result line was already designed.** Desktop Today's "This week" block shows answered, came
+   back and booked. On phone it stays off Today (R-015 rules out outcome grids there). Building it means the live
+   stat cards get the "this week" label and "booked".
+4. **Heading:** "Everything you need, nothing you don't" → "Less chasing. More booking."
+5. **Kept in mind, not built:** a real proof number (for example, "Testers answered N customers this month") once
+   testers agree (A-023).
+
+The "time saved" estimate wasn't answered, so no estimate appears anywhere. Every number shown is true by
+construction (days 3/7/14/30, 6 channels).
+
+**Weak spots:** "Customers answer with one tap" only holds on Instagram and Messenger (quick replies). The small line
+says "made for DMs", but a reader could still take it as true for email.

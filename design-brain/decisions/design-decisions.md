@@ -6718,3 +6718,27 @@ This was already asked of the founder ("can FollowUp write drafts at night / rig
 - Sign-in and connect are phone-only so far. Desktop would be the same column, centred.
 - The proof numbers are sample data.
 - "Continue with Google" has no Google mark. Google's button rules may require their own button style when this is built.
+
+## 2026-09-26 — The phone app, rebuilt: one decision per screen (after R-015)
+
+The founder said the phone screens were too complex to use. The phone Today, Inbox, conversation and
+all-caught-up screens were rebuilt in place (canvas version 14), and the proof screen was lightened:
+
+- **Today:** "4 people need you." Then **one** person card: name, channel and age, their message, and your reply
+  as the black block with a big **Send** and an **Edit**. Under it, a plain "Next" list of three names. The
+  progress bar, section labels, "Send both", the win card and colour dots are gone.
+- **Inbox:** a title, then "Needs you" and "Earlier". Each row is a big avatar, name, one line and a time. A single
+  black dot marks who needs you. There are no chips, no coloured states and no channel icons.
+- **Conversation:** back, name, channel. Her message, the auto-reply (labelled "Auto-reply"), and your reply
+  with Send and Edit. The window-time line and the event divider are gone.
+- **All caught up:** a pen check, "You're all caught up.", one sentence, and one quiet line: "This week: Tom Reid
+  came back and booked." No wash, no progress bar, no grid. This also removes the gradient from the app.
+- **Tab bar:** three tabs (Today, Inbox, Settings) instead of four. On the phone, People lives inside Inbox.
+- **Phone labels:** sentence case at 13–14px instead of mono capitals, which read as technical on a phone.
+- **Proof screen:** the stats grid is gone. One sentence now leads into Priya's card.
+
+**Weak spots:**
+- "Don't send" is no longer on the phone reply block; it would sit behind Edit. Check that's acceptable
+  (principle 1: the owner must always be able to stop a message).
+- Removing the Messenger window line hides a real deadline. It should come back only when the window is
+  about to close, as the existing "window shuts in N hours" badge already does.

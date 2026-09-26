@@ -665,3 +665,16 @@ right side. The rest should not be that highlighted."* Final rule for state pill
   business and I'd like to try FollowUp.").
 - It's a link, not a form, a waitlist or a data capture, so R-012 still holds.
 - **Status:** design approved. The live sign-in page (`SignInClient.tsx`) changes when the app is built from these designs.
+
+## A-036 — The founder's analytics page ^A-036
+
+**Approved:** 2026-09-26, founder: "okay cool", on the "Admin · how FollowUp is being used" artboards.
+**What specifically:**
+1. A headline sentence worked out from the numbers.
+2. Four big numbers: written, sent by owners, waiting, came back.
+3. This week against last week, as a ruled table.
+4. "Which parts get used" with thin bars.
+5. Website visits via Vercel, with an honest empty state.
+
+Counts only, no names. More numbers can be added later on request ("We can add stuff later on in analytics for
+me, right?"). The live /admin section was matched to this before shipping.

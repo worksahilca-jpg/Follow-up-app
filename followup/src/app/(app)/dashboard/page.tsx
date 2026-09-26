@@ -16,6 +16,8 @@ import { weekLine } from "@/lib/weekLine";
 import { describeWait, describeWaitClause, startOfLocalDay } from "@/lib/calmToday";
 import { countHandledToday } from "@/lib/handledToday";
 import { laterTodayAvailable } from "@/lib/later";
+import { loadComingUp } from "@/lib/comingUpData";
+import { ComingUpList, ComingUpLine } from "@/components/ComingUp";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
@@ -124,6 +126,8 @@ export default async function DashboardPage() {
     waitClause: describeWaitClause(a, now),
   }));
   const handledToday = ctx ? await countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0;
+  // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
+  const comingUp = ctx && leads.length > 0 ? await loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null;
   const written = ctx ? await sentAsWritten(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000)) : { asWritten: 0, total: 0 };
   const thisWeek = weekLine({
     answered: answeredThisWeek,
@@ -388,6 +392,21 @@ export default async function DashboardPage() {
                 ))}
               </ItemBoxList>
             </FadeIn>
+          )}
+
+          {/* Coming up (A-046): the full list on desktop, one line on the
+              phone that opens it (R-015). Hidden when nothing is planned. */}
+          {comingUp && comingUp.total > 0 && (
+            <>
+              <FadeIn className="mt-10 hidden sm:block">
+                <h2 className="font-display text-xl">Coming up</h2>
+                <ComingUpList groups={comingUp.groups} holdAll={comingUp.holdAll} />
+              </FadeIn>
+              <ComingUpLine
+                first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }}
+                total={comingUp.total}
+              />
+            </>
           )}
 
           {/* Configuration sits below the two work sections, not between them.

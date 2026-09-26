@@ -105,7 +105,7 @@ doesn't make understanding worse, strongly consider removing it.
   - Linear and Attio each have one reference note (`references/design-systems/…linear…`,
     `references/crm/…attio…`).
 - **Not studied:**
-  - **Close.** One of the five deepest, and never studied. It's only mentioned in the 09-25 in-app benchmark.
+  - **Close.** STUDIED 2026-09-26: `ux-patterns/2026-09-26-close-lead-language.md`. It was one of the five deepest, and never studied until then. It's only mentioned in the 09-25 in-app benchmark.
   - **Intercom for hero conversion and trust.** Not studied as its own question.
   - **HubSpot / Intercom pricing and free entry.** Not studied.
 - **Studied, but not "deepest":** Linear and Attio have one note each. The document asks for them to be among the

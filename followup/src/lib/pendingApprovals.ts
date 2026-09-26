@@ -32,7 +32,11 @@ const SCAN_LIMIT = 500;
  * The instant acknowledgement is the same shape: it can go out after the
  * hold, and "we got your message" is not an answer to the customer.
  */
-const NOT_A_DECISION = ["lead.classification_overridden", "ai.instant_ack"];
+// "We talked" and its Undo are not decisions about the draft either: the
+// talk is read from Lead.talkedAt below, so Undo brings the held draft
+// straight back. As a decision event, the Undo would itself have become
+// the lead's latest decision and left the draft out of the queue for good.
+const NOT_A_DECISION = ["lead.classification_overridden", "ai.instant_ack", "lead.talked", "lead.talked_undone"];
 
 // How much of the lead's own message to carry into the queue — this is a
 // compact list view, not the full lead page; a reviewer needs enough to
@@ -132,6 +136,7 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
       id: true,
       name: true,
       source: true,
+      talkedAt: true,
       score: true,
       suggestedSubject: true,
       suggestedMessage: true,
@@ -199,6 +204,9 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
     // send from another screen, or the owner replying from their own inbox.
     const sentAfter = lastSentByLead.get(lead.id);
     if (sentAfter && sentAfter > event.createdAt) continue;
+    // Or answered where FollowUp cannot see it: "We talked"
+    // (src/lib/talked.ts). Undo clears the stamp, and the draft is back.
+    if (lead.talkedAt && lead.talkedAt > event.createdAt) continue;
     const meta = (event.meta ?? {}) as Record<string, unknown>;
 
     let lastInbound: { body: string; channel: string; sentAt: Date } | null = null;

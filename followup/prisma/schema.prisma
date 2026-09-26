@@ -759,6 +759,14 @@ model Lead {
   // per lead, never twice, no matter how many channels or webhooks fire.
   acknowledgedAt DateTime?
 
+  // "We talked" (design brain A-039): the owner spoke with this customer
+  // somewhere FollowUp cannot see — a call, in person — at this time.
+  // Every automatic path reads it as "answered, and the check-ins are
+  // finished" until the customer writes again: a message from them newer
+  // than this is a new conversation, and everything resumes. See
+  // src/lib/talked.ts. Undo sets it back to null.
+  talkedAt DateTime?
+
   // The DM grace period (src/lib/acknowledge.ts, DM_ACK_GRACE_PERIOD_MS).
   //
   // On Instagram, Messenger and WhatsApp the acknowledgement is no longer

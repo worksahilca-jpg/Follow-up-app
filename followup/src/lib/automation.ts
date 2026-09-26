@@ -30,6 +30,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { settledByTalk, lastInboundTime } from "@/lib/talked";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
 import { conversationText } from "@/lib/dmDrafts";
@@ -424,6 +425,7 @@ export function freshInboundToAnswer(
   lead: {
     suggestedDraftedFor: Date | null;
     lastAutomationCheckedAt: Date | null;
+    talkedAt?: Date | null;
     conversations: { channel: string; messages: { direction: string; sentAt: Date; trigger: string | null; body: string; quickReplyPayload: string | null }[] }[];
   },
   nowMs: number
@@ -434,6 +436,7 @@ export function freshInboundToAnswer(
   const last = judged.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
   if (last.direction !== "inbound") return null;
   if (isExitPayload(last.quickReplyPayload) || isConsentKeyword(last.body)) return null;
+  if (settledByTalk(lead.talkedAt, last.sentAt)) return null;
   if (last.channel === "call") return null;
   const age = nowMs - last.sentAt.getTime();
   if (age > FRESH_REPLY_WINDOW_MS) return null;
@@ -638,6 +641,9 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
     // a question. Holding a drafted "reply" to someone's STOP in Approvals
     // invites the one message that must never be sent.
     if (isConsentKeyword(last.body)) return false;
+    // "We talked" (src/lib/talked.ts): the owner answered this message in
+    // person or on a call, where FollowUp cannot see it.
+    if (settledByTalk(lead.talkedAt, last.sentAt)) return false;
     // A lead with no substantive outbound reply yet gets the shorter
     // first-reply threshold; everyone already in a real back-and-forth
     // keeps the business's normal unanswered-reply window. "Substantive"
@@ -932,14 +938,19 @@ export async function runAutomationForBusiness(
   // out here and stays out until it either writes (the unanswered rule) or
   // reaches the dead-lead threshold (the welcome back).
   const reminderStepById = new Map<string, number>();
+  // "We talked" finishes the check-ins until they write again, and the
+  // welcome back with them (src/lib/talked.ts).
+  const talkedOut = (l: { talkedAt: Date | null; conversations: { messages: { direction: string; sentAt: Date }[] }[] }) =>
+    settledByTalk(l.talkedAt, lastInboundTime(l.conversations.flatMap((c) => c.messages)));
   const silent = quietCandidates.filter((l) => {
+    if (talkedOut(l)) return false;
     const plan = quietReminderPlan(timelineOf(l), (l.lastContacted ?? l.createdAt ?? new Date(nowMs)).getTime(), triggerDays, deadLeadDays);
     if (!plan?.dueAt || plan.dueAt.getTime() > nowMs) return false;
     reminderStepById.set(l.id, plan.step);
     return true;
   });
   // One welcome back per silence, not one every 45 days forever.
-  const deadLeads = deadCandidates.filter((l) => !reactivationAlreadySent(timelineOf(l), deadLeadDays));
+  const deadLeads = deadCandidates.filter((l) => !talkedOut(l) && !reactivationAlreadySent(timelineOf(l), deadLeadDays));
 
   // Merge in priority order — unanswered (the lead wrote and got ignored)
   // is the most urgent, dead-lead reactivation is a deliberate exit from
@@ -1922,6 +1933,7 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
     const newest = conversation[conversation.length - 1];
     if (!newest || newest.direction !== "outbound") continue;
     if (isExitPayload(inbound.quickReplyPayload)) continue;
+    if (settledByTalk(lead.talkedAt, new Date(inbound.date))) continue;
     const already = readStoredQuickReplies(lead.suggestedQuickReplies);
     if (already?.question === DM_HANDOFF_QUESTION && lead.suggestedDraftedFor && lead.suggestedDraftedFor >= new Date(inbound.date)) continue;
     if (!(await checkAiEligibility(businessId, lead, tier)).ok) continue;

@@ -574,3 +574,38 @@ describe("what the lead's badge says", () => {
     expect(done).toEqual({ kind: "sent" });
   });
 });
+
+/* ------------------------------------------------------------------ *
+ * "We talked" (design brain A-039, src/lib/talked.ts): the owner answered
+ * them somewhere FollowUp can't see, so nothing automatic goes out until
+ * they write again.
+ * ------------------------------------------------------------------ */
+
+describe("after the owner says 'We talked'", () => {
+  it("sends no check-in to a quiet customer the owner has spoken to", async () => {
+    hourly({ silence: [aLead([row("inbound", 20 * D), row("outbound", 12 * D), row("outbound", 9 * D)], { talkedAt: ago(1 * D) })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(draft).not.toHaveBeenCalled();
+  });
+
+  it("does not reply to a message the owner already answered in person", async () => {
+    hourly({ unanswered: [aLead([row("outbound", 40 * H), row("inbound", 25 * H)], { talkedAt: ago(2 * H) })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(draft).not.toHaveBeenCalled();
+  });
+
+  it("answers them again as soon as they write after the talk", async () => {
+    hourly({ unanswered: [aLead([row("outbound", 40 * H), row("inbound", 25 * H)], { talkedAt: ago(30 * H) })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(1);
+  });
+
+  it("leaves a fresh message alone only when the talk came after it", () => {
+    const m = row("inbound", 70_000);
+    const base = { suggestedDraftedFor: m.sentAt, lastAutomationCheckedAt: null, conversations: [{ channel: "email", messages: [m] }] };
+    expect(freshInboundToAnswer({ ...base, talkedAt: new Date() } as Parameters<typeof freshInboundToAnswer>[0], Date.now())).toBeNull();
+    expect(freshInboundToAnswer({ ...base, talkedAt: ago(D) } as Parameters<typeof freshInboundToAnswer>[0], Date.now())).toEqual(m.sentAt);
+  });
+});

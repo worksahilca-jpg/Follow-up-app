@@ -12,6 +12,7 @@ import DeleteLeadButton from "@/components/DeleteLeadButton";
 import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
 import LeadTrustPanel from "@/components/LeadTrustPanel";
 import AutomationStatusBadge from "@/components/AutomationStatusBadge";
+import WeTalkedButton from "@/components/WeTalkedButton";
 import CollapsibleSection from "@/components/CollapsibleSection";
 import ConversationThread from "@/components/ConversationThread";
 import { PageHeader } from "@/components/PageHeader";
@@ -104,8 +105,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           up front since it's already computed to answer the one question
           that actually varies by lead state: what's FollowUp doing here,
           and is anything waiting on you. See automationStatus.ts. */}
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap items-start gap-x-4 gap-y-2">
         <AutomationStatusBadge status={lead.automationStatus} />
+        {/* "We talked" (design brain A-039) sits with the status because it
+            changes the status: after a call or a visit, FollowUp stops
+            checking in until they write again. Not on a closed lead,
+            where nothing is checking in anyway. */}
+        {lead.automationStatus?.kind !== "closed" && (
+          <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} />
+        )}
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 mt-8">

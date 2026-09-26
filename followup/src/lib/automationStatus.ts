@@ -35,6 +35,7 @@ import {
   type TimelineMessage,
 } from "@/lib/automation";
 import { isExitPayload } from "@/lib/quickReplies";
+import { settledByTalk, lastInboundTime } from "@/lib/talked";
 import { prisma } from "@/lib/db";
 import { hasAnySendChannel } from "@/lib/sendChannels";
 import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
@@ -108,6 +109,10 @@ export async function getBusinessAutomationRules(businessId: string): Promise<Bu
 
 export type AutomationStatus =
   | { kind: "closed" } // WON/LOST — automation never touches these regardless of anything else
+  // "We talked" (src/lib/talked.ts): the owner answered them somewhere
+  // FollowUp cannot see, and nothing automatic happens until they write
+  // again. `at` is Lead.talkedAt, ISO.
+  | { kind: "talked"; at: string }
   // FollowUp refused to read this lead or write anything for it, and said
   // why (Lead.aiPausedReason, written by checkAiEligibility's three call
   // sites). Ranked above every timing state below on purpose: while this
@@ -191,6 +196,9 @@ export interface AutomationStatusLead {
   // nothing is paused. Passed in rather than looked up because this
   // function stays pure and does no queries of its own.
   aiPausedReason: string | null;
+  // Lead.talkedAt, ISO — see the "talked" state above. Optional because
+  // most callers build this from rows that predate the column.
+  talkedAt?: string | null;
 }
 
 /**
@@ -257,6 +265,15 @@ export function computeAutomationStatus(
   now: Date = new Date()
 ): AutomationStatus {
   if (lead.stage === "won" || lead.stage === "lost") return { kind: "closed" };
+
+  // Directly below closed and above everything else: after "We talked"
+  // no automatic path looks at this lead until they write again (the same
+  // check every engine path makes, src/lib/talked.ts), so every state
+  // below would describe a follow-up that is not coming.
+  if (lead.talkedAt) {
+    const talkedAt = new Date(lead.talkedAt);
+    if (settledByTalk(talkedAt, lastInboundTime(lead.conversation))) return { kind: "talked", at: lead.talkedAt };
+  }
 
   // Before every timing rule below, and before the workflow branch: a
   // paused lead is not waiting, not due, and not on a plan that will

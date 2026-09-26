@@ -39,6 +39,16 @@ export function describeAutomationStatus(
   status: Exclude<AutomationStatus, { kind: "closed" }>
 ): { icon: typeof Zap; label: string; detail?: string; bg: string; fg: string; pulse?: boolean; emphasis?: boolean } {
   switch (status.kind) {
+    // Calm, not coral: nothing went wrong. The owner answered them where
+    // FollowUp cannot see (src/lib/talked.ts) and said so.
+    case "talked":
+      return {
+        icon: CheckCircle2,
+        label: "You talked with them",
+        detail: `On ${new Date(status.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}. FollowUp won't check in until they write again.`,
+        bg: "var(--line)",
+        fg: "var(--ink-soft)",
+      };
     case "workflow":
       return {
         icon: Workflow,

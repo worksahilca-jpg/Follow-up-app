@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { groupApprovalsBySource, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
@@ -63,8 +63,16 @@ const CHANNEL_LABEL: Record<string, string> = {
 };
 
 function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (leadId: string) => void }) {
-  const [busy, setBusy] = useState<"send" | "dismiss" | null>(null);
+  const [busy, setBusy] = useState<"send" | "dismiss" | "talked" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // "We talked" (design brain A-039): the card stays for a few seconds
+  // saying what happened, with Undo, then leaves the queue.
+  const [talked, setTalked] = useState(false);
+  useEffect(() => {
+    if (!talked) return;
+    const timer = setTimeout(() => onResolved(item.leadId), 8000);
+    return () => clearTimeout(timer);
+  }, [talked, item.leadId, onResolved]);
 
   /**
    * Ten seconds to change your mind, same as the routine pile.
@@ -114,6 +122,44 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
       setError(err instanceof Error ? err.message : "Couldn't dismiss it.");
       setBusy(null);
     }
+  }
+
+  async function weTalked(undo: boolean) {
+    setBusy("talked");
+    setError(null);
+    try {
+      const res = await fetch(`/api/leads/${item.leadId}/talked`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(undo ? { undo: true } : {}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't save that.");
+      setTalked(!undo);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't save that.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const firstName = item.leadName.split(" ")[0] || item.leadName;
+  if (talked) {
+    return (
+      <div className="box px-4 py-4 flex flex-wrap items-center justify-between gap-3" role="status">
+        <p className="text-sm">
+          Check-ins stopped for {firstName}. FollowUp won&apos;t write to them until they write again.
+        </p>
+        <button
+          onClick={() => weTalked(true)}
+          disabled={busy !== null}
+          className="rounded-lg px-3 py-1.5 text-sm font-medium border disabled:opacity-60"
+          style={{ borderColor: "var(--line)", color: "var(--ink)" }}
+        >
+          {busy === "talked" ? "…" : "Undo"}
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -202,6 +248,14 @@ function ApprovalCard({ item, onResolved }: { item: ApprovalItem; onResolved: (l
           >
             Edit
           </Link>
+          <button
+            onClick={() => weTalked(false)}
+            disabled={busy !== null || send.busy}
+            title={`You spoke with ${firstName} on a call or in person. FollowUp stops checking in until they write again.`}
+            className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-ink-soft hover:bg-paper disabled:opacity-60"
+          >
+            {busy === "talked" ? "…" : "We talked"}
+          </button>
           <button
             onClick={dontSend}
             disabled={busy !== null || send.busy}

@@ -7034,3 +7034,18 @@ Founder: "yes design all five". On the canvas, version 33. These are new boards;
 Founder approved all five designs from canvas v33. They're built in PR #342. "Based on" is deterministic, so it's
 checkable and free. The catch-up summary is cached per message count, so it costs one model call per new message at
 most. The rewrite chips got a taller tap target on phones after self-review.
+
+### 2026-09-26: Zapier study drawn (canvas v34, proposed)
+The founder said "yes design all five". The five boards:
+- **Rules** (desktop): four rule cards as "When …, FollowUp …" sentences, each with a switch, an editable number, a
+  "stops when" line, a "This week" record and "See an example" (shown open). "Your rules" (A-041) stays beside them.
+- **RulesPhone:** the four sentences and switches only (R-015).
+- **RuleDetailPhone:** one rule opened, with a day stepper, the record and an example marked "Nothing was sent".
+- **RuleBlockedPhone:** Today when nothing can send ("Check-ins can't go out", with Reconnect Gmail).
+- **Plans** (desktop): three ready plans shown as day timelines, one open to edit, and "Start from scratch" as a quiet
+  link.
+
+Weak spots I noticed:
+- The desktop cards show the record and the example together, which is dense. On the phone the record is on the
+  detail screen only.
+- The ready plans' step wording is a first draft.

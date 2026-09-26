@@ -78,3 +78,28 @@ export async function tooManyRecentActions(
 ): Promise<boolean> {
   return checkAndRecordHit(businessId, action, opts);
 }
+
+/**
+ * How long a RateLimitHit row is kept. Must stay longer than the longest
+ * window any caller passes — today the weekly digest's 7-day "already sent
+ * this week" claim (src/app/api/cron/weekly-digest/route.ts) — or a prune
+ * would make an in-window hit disappear and let the action run again.
+ * Twice that, for margin.
+ */
+export const RATE_LIMIT_RETENTION_DAYS = 14;
+
+/**
+ * Deletes hits older than RATE_LIMIT_RETENTION_DAYS. Run from the hourly
+ * cron (src/app/api/cron/automation/route.ts).
+ *
+ * Every attempt at a limited endpoint writes a row — over the limit
+ * included, by design (see checkAndRecordHit) — and nothing ever deleted
+ * them except erasing a whole business. On the public embed and booking
+ * endpoints that made the table something a stranger could grow without
+ * bound, one request per row.
+ */
+export async function pruneRateLimitHits(now: Date = new Date()): Promise<{ deleted: number }> {
+  const cutoff = new Date(now.getTime() - RATE_LIMIT_RETENTION_DAYS * 24 * 60 * 60_000);
+  const { count } = await prisma.rateLimitHit.deleteMany({ where: { createdAt: { lt: cutoff } } });
+  return { deleted: count };
+}

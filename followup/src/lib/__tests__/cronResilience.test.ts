@@ -28,11 +28,12 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { runAutomation, runSequences, remindStale, prune, cronAuth } = vi.hoisted(() => ({
+const { runAutomation, runSequences, remindStale, prune, pruneHits, cronAuth } = vi.hoisted(() => ({
   runAutomation: vi.fn(),
   runSequences: vi.fn(),
   remindStale: vi.fn(),
   prune: vi.fn(),
+  pruneHits: vi.fn(),
   cronAuth: vi.fn(),
 }));
 
@@ -40,6 +41,7 @@ vi.mock("@/lib/automation", () => ({ runAutomationForAllBusinesses: runAutomatio
 vi.mock("@/lib/sequences", () => ({ runSequencesForAllBusinesses: runSequences }));
 vi.mock("@/lib/staleApprovals", () => ({ remindStaleApprovalsForAllBusinesses: remindStale }));
 vi.mock("@/lib/inboundEvents", () => ({ pruneInboundWebhookEvents: prune }));
+vi.mock("@/lib/rateLimit", () => ({ pruneRateLimitHits: pruneHits }));
 vi.mock("@/lib/cronAuth", () => ({ requireCronSecret: cronAuth }));
 
 import { GET } from "@/app/api/cron/automation/route";
@@ -59,6 +61,7 @@ beforeEach(() => {
   runSequences.mockResolvedValue({ advanced: 3 });
   remindStale.mockResolvedValue({ checked: 5, reminded: 1 });
   prune.mockResolvedValue({ deleted: 7 });
+  pruneHits.mockResolvedValue({ deleted: 40 });
 });
 
 describe("a healthy tick", () => {
@@ -71,6 +74,7 @@ describe("a healthy tick", () => {
     expect(body.sequences).toEqual({ advanced: 3 });
     expect(body.staleApprovals).toEqual({ checked: 5, reminded: 1 });
     expect(body.pruned).toEqual({ deleted: 7 });
+    expect(body.prunedRateLimitHits).toEqual({ deleted: 40 });
   });
 });
 
@@ -151,6 +155,15 @@ describe("the smaller jobs", () => {
     expect(status).toBe(200);
     expect(body.pruned).toEqual({ deleted: 0 });
     expect(body.errors[0]).toContain("pruning");
+  });
+
+  it("a failed rate-limit prune does not fail the tick, and the other prune still runs", async () => {
+    pruneHits.mockRejectedValue(new Error("nope"));
+    const { status, body } = await call();
+    expect(status).toBe(200);
+    expect(body.pruned).toEqual({ deleted: 7 });
+    expect(body.prunedRateLimitHits).toEqual({ deleted: 0 });
+    expect(body.errors[0]).toContain("rate-limit hit pruning");
   });
 });
 

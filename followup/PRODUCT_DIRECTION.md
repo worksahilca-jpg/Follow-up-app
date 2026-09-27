@@ -445,8 +445,13 @@ Direction, recorded as said:
 This reverses the 2026-09-21 hold-by-default for new accounts and points at the mission's end state ("no human does
 this job").
 
-**Status: direction only, NOT BUILT.** The live product still holds every reply and refuses AUTONOMOUS. Building it
-means changing the default tier or hold setting and allowing AUTONOMOUS again behind the existing risk gate. The
+**Status: direction only, NOT BUILT** (at the time; see "Built" below). The live product still holds every reply.
+
+**Correction (2026-09-27, while building):** this entry said building it meant "allowing AUTONOMOUS again behind the
+existing risk gate". That was wrong. AUTONOMOUS is the per-lead mode that SKIPS the risk check, which is the opposite of
+"only decisions go to the owner". Automatic is the account-wide send permission (`holdAllForApproval = false`, stamped
+`autoSendAllowedAt`) with every lead on the default ASSISTED tier: the risk check runs on every draft, low-risk ones send,
+and the rest wait for the owner. AUTONOMOUS stays behind its own separate permission, unchanged. The
 founder decides when (design-brain A-052: no live changes until the canvas is finalized). The landing page drawn for
 this (canvas v53) must not ship before the product does this.
 
@@ -551,3 +556,14 @@ The five answers above settle the direction:
    automatic.
 4. **Check-ins:** days 3, 7, 14 and 30, then stop. It stops at once on a reply. The owner can change the plan.
 5. **Who it's for:** anyone with more leads than follow-up, solo or team.
+
+### Built (2026-09-27, one PR on the designated branch)
+- **Onboarding** asks "How should FollowUp work?": Automatic (recommended) or Assisted. Automatic grants the send
+  permission; Assisted keeps the hold. Changeable in Settings, which now names the same two modes.
+- **Old customers:** the last onboarding screen writes their replies straight away and offers "Send all N" (the
+  existing routine pile, `/api/approvals/send-safe`). Anything about a price or a date is never in that batch.
+- **The 30-minute "we got you" message:** `src/lib/holdingMessage.ts`, cron every 5 minutes. The risk check now names
+  the decision (price, date, tense, other), and only price and date get one.
+- **Check-ins 3/7/14/30:** already the engine default (`QUIET_REMINDER_DEFAULT_DAYS`). No change needed.
+- **Existing accounts are not changed.** Every account that exists today keeps holding until its owner chooses
+  Automatic in Settings.

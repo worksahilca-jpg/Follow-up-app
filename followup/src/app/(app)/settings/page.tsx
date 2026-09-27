@@ -1201,7 +1201,9 @@ function SettingsPageInner() {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="font-medium text-sm">
-                {holdAllForApproval ? "FollowUp asks you before every message" : "FollowUp sends on your behalf"}
+                {/* Named as in onboarding's "How should FollowUp work?" step, so
+                    the choice an owner made there is recognisable here. */}
+                {holdAllForApproval ? "Assisted: FollowUp asks you before every message" : "Automatic: FollowUp sends on your behalf"}
               </p>
               <p className="text-xs text-ink-soft mt-1">
                 {holdAllForApproval
@@ -1296,8 +1298,15 @@ function SettingsPageInner() {
                   {sendPreview.heldOnlyBySetting > 0 ? (
                     <>
                       <strong>{sendPreview.heldOnlyBySetting}</strong>{" "}
-                      {sendPreview.heldOnlyBySetting === 1 ? "is" : "are"} waiting only because of this setting — FollowUp
-                      will check {sendPreview.heldOnlyBySetting === 1 ? "it" : "those"} and send what passes.
+                      {sendPreview.heldOnlyBySetting === 1 ? "is" : "are"} waiting only because of this setting.{" "}
+                      {/* Was "FollowUp will check those and send what passes",
+                          which stopped being true on 2026-09-23: granting
+                          stamps autoSendAllowedAt, and everything already
+                          waiting stays waiting (the backlog rule in
+                          automation.ts) until the owner releases it. */}
+                      Turning this on won&apos;t send {sendPreview.heldOnlyBySetting === 1 ? "it" : "them"} — only
+                      conversations from now on go out by themselves. You can send what&apos;s already waiting with one tap
+                      in Today.
                     </>
                   ) : (
                     <>None of them are waiting only because of this setting.</>

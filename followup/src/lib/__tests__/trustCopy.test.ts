@@ -366,9 +366,15 @@ describe("what onboarding promises while asking for send access", () => {
     ).not.toMatch(/isn't certain about waits for your OK/i);
   });
 
-  it("says plainly that every message waits", () => {
-    expect(onboarding(), "onboarding no longer states the hold at all").toMatch(
-      /Every message it writes waits for your OK/i
+  // Founder, 2026-09-26: onboarding now ASKS — Automatic or Assisted — so
+  // the promise is no longer "every message waits". What has to stay true
+  // is that both choices are stated plainly, including what still waits
+  // on Automatic, before anything is granted.
+  it("names both choices and what each one does", () => {
+    const text = onboarding();
+    expect(text, "the Assisted choice no longer says every reply waits").toMatch(/Every reply waits for you/i);
+    expect(text, "the Automatic choice no longer says what still comes to the owner").toMatch(
+      /Prices, dates and tricky moments come to you/i
     );
   });
 

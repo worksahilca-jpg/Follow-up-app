@@ -7948,3 +7948,13 @@ of view while step 1 played.
   Weak spot: on a narrow phone, where Email and Phone stack, the form is about 740px and still scrolls a little
   inside the frame. Businesses that already pasted the old code keep a 540px frame until they paste it again.
 
+
+### 2026-09-27: two strategy gaps closed
+**Founder:** *"what we decided while designing it should be the same as we studied the strategy"*. After the check
+(`research/2026-09-26-reference-strategy.md`, "Checked against the live product"), he said *"yes fix both"*.
+- **Curiosity action:** the onboarding step "How should FollowUp work?" now ends in "Find who needs a reply", not
+  "Continue". The next screen lists who never got a reply. This is A-053's setup button, moved to the step that
+  actually leads to the finding.
+- **"That's simple":** the demo's heading now has one line under it: "Connect your inbox in 2 minutes. It finds
+  who's waiting and follows up." It stands in for How it works, which A-063 folded into the demo.
+- **Weak:** "2 minutes" is the founder's own claim from the earlier page, not a measured number.

@@ -66,7 +66,6 @@ export async function processTwilioInbound(
   // stored row — appends nothing and re-acknowledges nobody. Returns false
   // only when this exact SID is already recorded.
   const isNew = await createInboundMessageIfNew(conversation.id, body, new Date(), formParams.MessageSid);
-  if (!isNew) return;
 
   // STOP/START are handled before anything else touches this lead: a STOP
   // must never be answered by an automated "we got your message" (see
@@ -87,6 +86,14 @@ export async function processTwilioInbound(
       meta: { channel, via: "keyword" },
     });
   }
+
+  // Twilio redelivered it — recorded already, and consent above is settled
+  // either way, so nothing below re-runs. Below the consent block, as on
+  // the Meta and WhatsApp Cloud paths (stopOnRedelivery.test.ts): above it,
+  // a STOP whose first processing died after the message row was written
+  // was skipped on every redelivery, and the opt-out was never recorded.
+  // Safe to repeat — the update is idempotent.
+  if (!isNew) return;
 
   if (!optingOut) {
     // SMS replies within the minute, before the slower scoring — see

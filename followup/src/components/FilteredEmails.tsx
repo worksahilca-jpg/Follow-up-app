@@ -57,11 +57,11 @@ export default function FilteredEmails() {
   return (
     <div className="mt-3 pt-3 border-t border-line">
       <p className="text-[13px] font-medium flex items-center gap-1.5">
-        <EyeOff className="h-3.5 w-3.5" /> Filtered out as not leads
+        <EyeOff className="h-3.5 w-3.5" /> Filtered out
       </p>
       <p className="text-[13px] text-ink-soft mt-1">
-        Emails the AI decided weren&apos;t sales inquiries — personal mail, recruiters, vendors, notifications.
-        Every call it made is listed here with its reason. If it got one wrong, one click makes it a lead.
+        Emails FollowUp decided weren&apos;t from customers: personal mail, recruiters, suppliers, notifications.
+        Each one is listed with its reason. If it got one wrong, one click makes it a customer.
       </p>
       {items.length === 0 ? (
         <p className="text-[13px] text-ink-soft mt-2">Nothing filtered out recently.</p>

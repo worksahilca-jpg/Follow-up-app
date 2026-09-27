@@ -253,7 +253,7 @@ export default async function DashboardPage() {
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
       <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-7">
       <div className="min-w-0">
-      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} waitingOn={waitingOn} />
+      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} waitingOn={waitingOn} holdAll={holdAll} />
 
       {leads.length === 0 ? (
         <div className="mt-10">
@@ -288,7 +288,7 @@ export default async function DashboardPage() {
                     reply started waiting for approval too. */}
                 <p className="text-lg leading-relaxed">
                   {holdAll
-                    ? "FollowUp is watching your inbox. When a customer writes, FollowUp writes the reply and puts it in Approvals for you — nothing goes out until you send it."
+                    ? "FollowUp is watching your inbox. When a customer writes, FollowUp writes the reply and puts it in Today for you — nothing goes out until you send it."
                     : inbox.instant
                       ? "FollowUp is watching your inbox. The moment a customer writes, it replies within a minute and shows you here."
                       : "FollowUp is watching your inbox. It checks for new customers every ten minutes, then replies and shows you here."}

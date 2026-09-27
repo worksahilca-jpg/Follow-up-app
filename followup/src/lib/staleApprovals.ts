@@ -169,7 +169,7 @@ export async function remindStaleApprovals(
   // count would be the only thing that had lied.
   const flushed = await flushHoldNotices(due, {
     // Carries STALE_APPROVAL_MARKER so the dedup above can recognise it.
-    summary: (count) => `${count} leads are ${STALE_APPROVAL_MARKER}. Open Approvals to read them.`,
+    summary: (count) => `${count} leads are ${STALE_APPROVAL_MARKER}. Open Today to read them.`,
   }).catch((err) => {
     console.error(`Stale-approval reminders failed for business ${businessId}:`, err);
     return { rows: 0, leads: 0 };

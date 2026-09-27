@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Wand2 } from "lucide-react";
+import { ListFilter } from "lucide-react";
 
 interface CleanupResult {
   checked: number;
@@ -65,8 +65,8 @@ export default function CleanupLeadsButton({
           "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium border border-line"
         }
       >
-        <Wand2 className="h-4 w-4 text-ink-soft" />
-        Clean up leads
+        <ListFilter className="h-4 w-4 text-ink-soft" />
+        Clean up customers
       </button>
 
       {open && (
@@ -80,8 +80,8 @@ export default function CleanupLeadsButton({
             <>
               <p className="text-sm">
                 {result.removedCount === 0
-                  ? `Checked ${result.checked} lead${result.checked === 1 ? "" : "s"} — nothing looked wrong.`
-                  : `Removed ${result.removedCount} of ${result.checked} leads that weren't real sales conversations.`}
+                  ? `Checked ${result.checked} ${result.checked === 1 ? "customer" : "customers"} — nothing looked wrong.`
+                  : `Removed ${result.removedCount} of ${result.checked} that weren't real customers. They can be put back from Settings → Email.`}
               </p>
               {result.removed.length > 0 && (
                 <>
@@ -98,7 +98,7 @@ export default function CleanupLeadsButton({
               {result.kept.length > 0 && (
                 <>
                   <p className="text-xs font-medium text-ink-soft mt-3">
-                    Kept — the AI&apos;s reasoning for each, so you can judge if it&apos;s right
+                    Kept — FollowUp&apos;s reason for each, so you can judge if it&apos;s right
                   </p>
                   <ul className="mt-1 space-y-1 text-xs text-ink-soft max-h-40 overflow-y-auto">
                     {result.kept.map((r) => (
@@ -116,8 +116,8 @@ export default function CleanupLeadsButton({
           ) : (
             <>
               <p className="text-sm" style={{ color: "var(--coral)" }}>
-                This re-checks every Gmail-sourced lead against the AI and deletes the ones that aren&apos;t
-                real sales conversations. Can&apos;t be undone.
+                This re-checks every customer who came from Gmail and removes the ones that aren&apos;t real
+                customers. Anyone removed can be put back from Settings → Email, under &ldquo;Filtered out&rdquo;.
               </p>
               <div className="mt-3 flex gap-2">
                 <button

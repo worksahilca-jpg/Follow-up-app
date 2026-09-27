@@ -7807,3 +7807,24 @@ F obvious. The leaves are an F's two arms with no stem. Canvas v73, proposed.
 
 **Note:** the rejected F-with-a-stem of 2026-09-18 was a different drawing, built from the brief's words before the
 leaves existed. This keeps the founder's leaves and adds only the spine he asked for.
+
+### 2026-09-27: logo, a small f from the leaves, "two curves where I circled" (LogoSmallF)
+**Founder:** drew a circle with the canvas pen on LogoMoreF (F1). It was saved inside the F1 preview box. Then:
+*"make it sound like small f and where i circled make it two curves"*.
+
+**Where he circled** (mapped from the saved stroke onto F1's drawing): around the lower leaf and the start of the stem,
+reaching left past the stem. That is where a lowercase f's crossbar sits.
+
+**Read as:** a lowercase f.
+- The top leaf stays and becomes the f's hook.
+- The stem leans with it.
+- The middle becomes a crossbar of two curves.
+
+**LogoSmallF (canvas v74), proposed.** His circle is redrawn on F1 on the board, so the reading can be checked.
+- **S1. Two curves, joined.** Two small leaves, one each side of the stem, on one rising line. **Recommended.**
+  Shown in use.
+- **S2.** The same with the brand's thin gap around the stem. The gap also cuts a hairline where the stem meets the
+  hook: a flaw in this drawing.
+- **S3. One wave.** If "two curves" meant a single wavy stroke through the stem. Softer, more playful.
+
+**Open:** whether "two curves" meant S1's two leaves or S3's wave. The board shows both.

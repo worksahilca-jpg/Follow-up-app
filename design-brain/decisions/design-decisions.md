@@ -8265,3 +8265,9 @@ From the 2026-09-27 strategy audit, item 4, after checking each claim against th
   - The 14-day trial on upgrade isn't the "no free trial" the plan rules out. That rule is about public sign-up.
 - **Left for the founder:** Settings' plan lines say Free is "assisted only", but the code lets any plan choose
   Automatic. Which one is right is a pricing decision, not wording.
+
+## 2026-09-27 — Assisted by default, chosen in setup, any plan (A-070)
+
+- Setup's "How should FollowUp work?" now starts on Assisted. This morning's fix had left it on nothing chosen.
+- Settings' plan lines no longer say Free is "assisted only" or that Plus adds "autonomous send". Plus now names what
+  is actually Plus-only: "Handle it all" for customers you choose. The lines also say "customers", not "leads".

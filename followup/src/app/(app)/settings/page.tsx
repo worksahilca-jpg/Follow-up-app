@@ -1818,10 +1818,10 @@ function SettingsPageInner() {
                   <p className="font-display text-2xl mt-1">{TIER_INFO[tier].priceLabel}</p>
                   <p className="text-[13px] text-ink-soft mt-2">
                     {tier === "free"
-                      ? "Email + web widget, 20 leads/mo, assisted only. No card needed — this is where you are now."
+                      ? "Email and your website form, 20 new customers a month. No card needed — this is where you are now."
                       : tier === "plus"
-                      ? "Every channel (WhatsApp, Instagram, Messenger, CRM sync) plus autonomous send. 14-day free trial."
-                      : "Everything in Plus, no lead cap, multi-agent lead routing, priority support. 14-day free trial."}
+                      ? "Every channel (WhatsApp, Instagram, Messenger, your CRM), and “Handle it all” for customers you choose. 14-day free trial."
+                      : "Everything in Plus, no limit on customers, new customers shared across your team, priority support. 14-day free trial."}
                   </p>
                   {tier === "free" && billingLoaded && (
                     <div className="mt-3">

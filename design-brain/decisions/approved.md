@@ -1363,3 +1363,15 @@ drawing first.
   - the rest as quiet rows that open in place, with "How it handles …" open by default.
 **Research behind it:** Stripe's three layers, Zapier's "a rule that can't run says so at the top", Calendly and NN/g
 on hidden menus, Mercury's plain control, Attio's record panel, and the 2026-09-12 trust study.
+
+## A-070 — Assisted by default, on every plan; the owner chooses in setup ^A-070
+
+**Approved:** 2026-09-27, founder: *"Assisted should be the default but we will be asking them on onboarding what they
+prefer and they can change it anytime."*
+**What specifically:**
+- Every new account starts on **Assisted**: every reply waits for the owner (`holdAllForApproval` defaults to true).
+- Setup asks "How should FollowUp work?" with **Assisted chosen to start with**. Choosing Automatic is a deliberate
+  tap, never the result of pressing the only button.
+- **Any plan, Free included,** may choose Automatic in setup or in Settings, and change it any time.
+- Only the per-customer "Handle it all" (no risk check at all) is a Plus feature.
+**Supersedes the plan lines** that said Free is "assisted only".

@@ -281,6 +281,8 @@ render of the page with the dark hero, the light middle and the dark close.
 - The logo: two leaves as drawn in #69 (favicon) and #71 (horizontal lockup) of the exploration
   sheet. Supersedes the F-with-a-stem build from the brief's text the same day. Geometry and
   ratios in `followup/public/brand/README.md`; decision entry in `[[design-decisions]]`.
+  **Logo direction SUPERSEDED (2026-09-27)** by [[approved#^A-061|A-061]] (two messages). The leaves stay in
+  production until the refined drawing is approved.
 
 **Not covered:** the accent colour (still the placeholder indigo, unchosen); the app's restyle.
 
@@ -1143,3 +1145,28 @@ headline's weight. That's inferred from this answer, and marked inferred.
 - the "$ price" slot needs a spec;
 - the product itself must do all of this (PRODUCT_DIRECTION, "The auto follow-up direction, complete") before the
   page ships.
+
+## A-061 — Logo direction: two messages (option H) ^A-061
+
+**Approved:** 2026-09-27, founder, on the six-more board (LogoOptions2): *"h souds my vibe"*.
+
+**What was chosen:** a direction, not a final drawing.
+- A message, then a smaller one after it, below and to the right.
+- The chat meaning: they wrote, and the follow-up came.
+- The gap between the two is kept open.
+- Solid, black and white, leaning forward slightly.
+
+**Not chosen:** my recommendation, E (flag), and runner-up, A (sharper leaves). No reason was given. Inferred
+(marked inferred): the founder wants the mark to look like conversation, the thing FollowUp handles, rather than
+like the email tool's flag.
+
+**Still open:**
+- the exact shapes, lean, gap and proportions;
+- the wordmark pairing;
+- a similarity check against well-known marks;
+- a trademark search.
+
+The founder also asked, in the same breath, to study the reference companies' logos first. Those findings go into
+the refinement.
+
+**Weak, named when it was proposed:** "looks like any chat app". The refinement has to make it ownable.

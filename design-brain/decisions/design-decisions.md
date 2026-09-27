@@ -7635,3 +7635,26 @@ unsaved edits, so it was not published over them.
 **Runner-up: A (sharper leaves).** Nothing to relearn. It fixes the small sizes.
 
 **Advised against: F and G.** A letter f in a dark rounded square reads as Facebook's app icon.
+
+### 2026-09-27: logo, the reference study and H refined (LogoH)
+**Founder:** *"h souds my vibe"* (A-061), then *"lets study the logos of the companies also that we took refrence"*.
+
+**Study** (`references/design-systems/2026-09-27-reference-company-logos.md`):
+- 11 of the 14 reference marks looked at. Mercury, Ramp and Close weren't available here.
+- **Finding for H:** Attio, a CRM, uses a big and a small leaning rounded form. H as first drawn sat close to it.
+- **Finding for the old direction:** the current leaves and option B sit near Framer's abstract F.
+- **Open ground:** none of the eleven shows two people, a message and its answer.
+
+**LogoH (canvas v67):**
+- **Four versions:**
+  - **H1:** plain pills.
+  - **H2:** each message keeps one sharp corner pointing at who spoke. Recommended.
+  - **H3:** H2 heavier.
+  - **H4:** leaning, as first drawn, marked "closest to Attio, not recommended".
+- **H2 shown in use:** the site header, a browser tab at real size, a phone home screen among plain icons, a
+  notification email, and a dark footer.
+
+**Weak, named:**
+- At 16 px, H2 reads as two short dashes. The sharp corners only show from about 24 px.
+- Two-bubble chat marks are a common family. Distinct inside this reference set, not in the whole world. Needs a
+  trademark search before registering.

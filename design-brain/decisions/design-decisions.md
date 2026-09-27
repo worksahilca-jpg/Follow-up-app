@@ -7836,3 +7836,14 @@ reaching left past the stem. That is where a lowercase f's crossbar sits.
 - **Cost of the day, named:** ten boards and several dozen marks. The useful output is the principles: R-022, R-023,
   the one-second message, and the reference-logo study. Next time a logo change comes up, start from A-062 and those,
   and ask for the one-second message first.
+
+### 2026-09-27: less to read approved for the landing page and /security (A-063, A-064)
+**Founder:** *"yes to all three"*: merge #358, the lean landing page (MainLean, PhoneLean), and the lean /security
+(SecurityLean, SecurityLeanPhone).
+- #358 was squash-merged the same turn.
+- A-053, A-055 and A-060 are superseded in part, and the phone rule in brand-principles is superseded in part. Each
+  carries a pointer to A-063.
+- **Build order:** PR 1 (auto follow-up: Automatic/Assisted, old customers, holding message, default check-ins) goes
+  first, because the page and /security describe it. The landing and /security build follows in PR 2, on top of the
+  MainV2 build already on the landing branch.
+

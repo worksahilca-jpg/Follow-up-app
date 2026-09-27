@@ -961,6 +961,9 @@ normal PRs, and he merges.
 
 ## A-053 — Linear + Attio, the rest of the PDF, and the page put together ^A-053
 
+**SUPERSEDED IN PART (2026-09-27) by [A-063](#^A-063):** How it works and See it working (with its tabs) are replaced
+by one watchable demo. The rest of A-053 stands.
+
 **Approved:** 2026-09-26, founder: *"yes approve it, put it all together"* (canvas v42–v43).
 **What specifically:**
 - **Underneath** (DepthTabs): "Simple on the outside. The rest is there when you want it."
@@ -1007,6 +1010,9 @@ honest gap is that each remaining section is doing a job. Further cuts are the f
 design-decisions).
 
 ## A-055 — Three more cuts to the landing page ^A-055
+
+**SUPERSEDED IN PART (2026-09-27) by [A-063](#^A-063):** Your control keeps only Pause all sending as a picture; the
+other switches move to /security. Items 2 and 3 stand.
 
 **Approved:** 2026-09-26, founder: *"yes do all three"*.
 **What specifically:**
@@ -1127,6 +1133,9 @@ headline's weight. That's inferred from this answer, and marked inferred.
 
 ## A-060 — The auto follow-up flow and the mixed-example landing page ^A-060
 
+**SUPERSEDED IN PART (2026-09-27) by [A-063](#^A-063):** on the landing page, Sarah's story is no longer its own
+section; it plays inside the demo. The onboarding and Today parts stand.
+
 **Approved:** 2026-09-26, founder: *"all good"*, on canvas v59.
 **What specifically:**
 - **Onboarding:** OnbConnect ("Nothing is sent yet: next, you choose how it works") → OnbChoose (Automatic,
@@ -1197,3 +1206,58 @@ They stay on the canvas as history. Any future logo change starts from this entr
 - R-022: no letter whose meaning hides in a small detail.
 - R-023: no heavy or chunky marks.
 - The logo's one-second message, if it ever changes, is "every message gets a reply".
+
+## A-063 — The landing page with less to read (MainLean, PhoneLean) ^A-063
+
+**Approved:** 2026-09-27, founder: *"yes to all three"* (merge #358, this page, and A-064).
+**Came from:** his question "too much information no?" and the measurement against the reference PDF
+(design-decisions, 2026-09-27).
+**What specifically:**
+- **One demo** replaces How it works, One customer and See it working. It is the real Today screen playing Sarah's story
+  in 5 steps:
+  1. she asks the price;
+  2. it comes to you with the reply written and a "$ price" slot;
+  3. after 30 minutes the holding line goes out, word for word from `holdingMessage.ts`;
+  4. you add $1,200 and send;
+  5. on Friday it checks in, she replies, and the check-ins stop.
+- **Captions:** five short numbered lines, because they are a sequence.
+  - Desktop: all five show; the current one darkens and a line fills under it.
+  - Phone: one at a time, with five progress segments.
+- **Pause and Replay** (WCAG 2.2.2). Reduced motion shows the end state as still frames.
+- **Label:** "An example, not a real customer".
+- **Your control:** four one-line promises and one picture, the Pause all sending switch. The other switches move to
+  /security.
+- **Each promise said once.** The hero's second trust line goes; Free loses "Prices and dates always come to you"; the
+  final call keeps one reassurance; Underneath gets shorter lines; the desktop money answers move into Questions.
+- **Nav:** "Try it" goes with the tabs.
+- **Target:** about 700 words and about 6 screens on desktop (from 1,204 words and about 9).
+
+**It supersedes:**
+- A-053 in part (How it works, See it working);
+- A-055 item 1 in part (the switches);
+- A-060 in part (the story as its own section);
+- brand principle "The phone is not a shrunk desktop", in part: on the landing page the phone no longer keeps every
+  word; it keeps every *claim*, said once.
+
+**Weak, named when proposed, still true:**
+- The loop is 24 seconds. Someone who scrolls past in 5 sees only step 1.
+- The first frame is a single message and says little on its own.
+- The desktop demo window is 800 px tall, the biggest object on the page.
+
+**Still needed when built:** the "$ price" slot spec (A-060), and the product doing what the demo shows (A-056).
+
+## A-064 — /security with less to read (SecurityLean, SecurityLeanPhone) ^A-064
+
+**Approved:** 2026-09-27, founder: *"yes to all three"*.
+**What specifically:** the same facts as the approved /security page, shown instead of listed:
+- a flow picture: inbox → FollowUp → your customer, "from your own address";
+- the Google permission names as chips (A-055 moved them here);
+- six "kept" facts, each with an icon;
+- the switches as a picture of Settings (A-063 moved them here);
+- the companies FollowUp uses as a 3-column table;
+- the honest "not done yet" block, kept word for word.
+
+**Measured:** desktop 428 words and 3,242 px, from 624 and 4,262.
+**Depends on PR 1:** the first switch says "Or choose Automatic". Ship it only once onboarding offers that choice;
+until then keep the live wording "only if you turn that on".
+

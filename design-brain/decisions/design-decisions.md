@@ -8154,3 +8154,17 @@ Four boards on the canvas (v80): SettingsAll, SettingsAllPhone, SettingsChannel 
 - **Weak, named:**
   - Each setting on its own page means more clicks for someone changing several things.
   - On a wide screen the list sits beside the overview, not under it.
+- **Checked against the research the same day** (founder: *"are you drawing according to the research… i want all
+  of this to be strategic"*). Two gaps were found and fixed on the canvas (v81):
+  - **Stripe study, Layer 3; Calendly study, "say no on the first screens":** the CRM, Zapier/webhooks and routing rows
+    moved into a last group, "For advanced setups: most businesses never need these". Before, they carried the same
+    weight as Email.
+  - **Zapier study, "a rule that can't run finds out one lead at a time":** anything that stopped working now rises to
+    the top as "One thing needs you". The example is a Facebook Page that stopped sending messages, and it says what's
+    paused and how to fix it.
+  - **Kept, because the research supports it:**
+    - one scannable list, never a hidden drawer (Calendly study, the menu-hiding finding);
+    - plan and Pause first (Mercury, Stripe Layer 1–2);
+    - the customer's side column as a record panel (Attio), with how FollowUp handles this person visible at a glance
+      (the 2026-09-12 trust study).
+- **Principle, from the founder:** every drawing names the research it follows, checked before it's shown, not after.

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { PageHeader } from "@/components/PageHeader";
+import SettingsOverview from "@/components/app/SettingsOverview";
 import { quietReminderDays, SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
 import Switch from "@/components/Switch";
 import TeamSection from "@/components/TeamSection";
@@ -443,6 +443,13 @@ function SettingsPageInner() {
    * Pause all sending, or resume it (A-041). Same no-optimistic-flip rule
    * as the permission above: the screen moves when the server has.
    */
+  /** From the overview cards to a section of "More settings". */
+  function openMore(section: string) {
+    const tab = SECTION_TAB[section];
+    if (tab) setActiveTab(tab);
+    requestAnimationFrame(() => document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
   async function savePause(paused: boolean) {
     setPauseSaving(true);
     setPermissionError(null);
@@ -880,7 +887,27 @@ function SettingsPageInner() {
           end the other five — see its own doc comment. Hand-rolling it here
           meant Settings drifted on title size, subtitle colour and spacing
           the moment any of those changed anywhere else. */}
-      <PageHeader title="Settings" subtitle="Connect your inbox, set follow-up rules, and manage your team." />
+      <div>
+        <h1 className="text-[32px] leading-[1.1]">Settings</h1>
+        <div className="mt-6">
+          <SettingsOverview
+            gmail={{ connected: gmailConnected, email: gmailEmail }}
+            outlook={{ connected: outlookConnected, email: outlookEmail }}
+            checkInDays={quietReminderDays(autoAfterDays)}
+            instantAck={instantAckOn}
+            holdAll={holdAllForApproval}
+            paused={sendingPaused}
+            pauseSaving={pauseSaving}
+            onPause={savePause}
+            isAdmin={isAdmin}
+            onOpenMore={openMore}
+          />
+        </div>
+      </div>
+
+      {/* "More settings": every connection's own controls, the team,
+          billing and data, as before. */}
+      <h2 id="more-settings" className="scroll-mt-20 text-[22px] leading-tight">More settings</h2>
 
       {/* Below lg a fixed top bar (Sidebar.tsx) covers the top of the viewport,
           so `top-0` parked this tab row underneath it and the tabs vanished as

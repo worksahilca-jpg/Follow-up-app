@@ -4,7 +4,6 @@ import { getFreeTierStatus } from "@/lib/billing";
 import { formatCurrency, formatDate } from "@/lib/demo-data";
 import PriorityPill from "@/components/PriorityPill";
 import StageSelector from "@/components/StageSelector";
-import MessageComposer from "@/components/MessageComposer";
 import LeadAutomationToggle from "@/components/LeadAutomationToggle";
 import LeadWorkflowEnrollment from "@/components/LeadWorkflowEnrollment";
 import LeadAssignmentSelect from "@/components/LeadAssignmentSelect";
@@ -14,15 +13,21 @@ import LeadTrustPanel from "@/components/LeadTrustPanel";
 import AutomationStatusBadge from "@/components/AutomationStatusBadge";
 import WeTalkedButton from "@/components/WeTalkedButton";
 import CollapsibleSection from "@/components/CollapsibleSection";
-import ConversationThread from "@/components/ConversationThread";
-import { PageHeader } from "@/components/PageHeader";
-import { Mail, Phone, MessageSquare } from "lucide-react";
-import { isInstagramLeadId, isSocialLeadId } from "@/lib/instagramId";
+import { Mail, Phone } from "lucide-react";
+import { isSocialLeadId } from "@/lib/instagramId";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import { sendLockedForSession } from "@/lib/sendingControl";
 import CatchUp from "@/components/CatchUp";
 import { describeBasis } from "@/lib/basedOn";
 import { languageName } from "@/lib/leadLanguage";
+import Link from "next/link";
+import ReplyCard from "@/components/app/ReplyCard";
+import Thread from "@/components/app/Thread";
+import { Initials, waitingFor } from "@/components/app/canvasBits";
+import { getSessionContext } from "@/lib/session";
+import { getPendingApprovals, type PendingApproval } from "@/lib/pendingApprovals";
+import { prisma } from "@/lib/db";
+import type { Lead, Message } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -42,209 +47,216 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     : null;
   const replyLanguage = lead.languageRead && lead.languageRead.language !== "en" ? languageName(lead.languageRead.language) : null;
 
+  // The canvas conversation (App, Inbox, InboxAI, ThreadPhone boards):
+  // who this is and why it's here, the conversation, then the reply.
+  // Everything else about the customer sits below, under "More about".
+  const ctx = await getSessionContext();
+  const [approval, business] = ctx
+    ? await Promise.all([
+        getPendingApprovals(ctx.businessId).then((all) => all.find((a) => a.leadId === lead.id) ?? null),
+        prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } }),
+      ])
+    : [null, null];
+  const timeZone = business?.timezone ?? "America/New_York";
+  const firstName = lead.name.split(" ")[0] ?? lead.name;
+  const firstMessage = lead.conversation[0];
+  const channel = channelName(lastInbound(lead.conversation)?.channel ?? firstMessage?.channel ?? null, lead.source);
+  const now = new Date();
+
   return (
-    <div>
-      {/* There was no way back to the list from here — a real dead end on a
-          phone, where the browser's own back button is the only escape and
-          people don't reliably reach for it inside an app. */}
-      <PageHeader back={{ href: "/leads", label: "Leads" }} title={lead.name} subtitle={lead.company} />
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
+      <div className="min-w-0">
+        <Link href="/inbox" className="text-[13px] text-ink-faint hover:text-ink-soft">
+          ← Inbox
+        </Link>
+        <div className="mt-3 flex items-center gap-3.5">
+          <Initials name={lead.name} size={44} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-[26px] leading-tight">{lead.name}</h1>
+              {approval && (
+                <span className="rounded-full border border-line bg-card px-2.5 py-0.5 text-[12.5px] font-medium">Needs you</span>
+              )}
+            </div>
+            <div className="mt-0.5 text-[13.5px] text-ink-faint">
+              {[channel, firstMessage ? `first message ${timeAgoWords(firstMessage.date, now)}` : null].filter(Boolean).join(" · ")}
+            </div>
+          </div>
+        </div>
 
-      {/* The 64px score circle used to sit top-right — the second-largest
-          element on the page, containing a bare number — while the sentence
-          explaining it ("Why this score") sat several hundred pixels below in
-          the left column. A verdict and its reasoning separated by the entire
-          layout. They are one thing now: the sentence leads, the number is a
-          small figure beside it, and the weighted factors stay available
-          under the fold rather than being the first thing read.
+        <div className="mt-7">
+          <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} />
+        </div>
 
-          When the AI hasn't looked at this lead yet, say so — the same
-          honesty PriorityPill already applies. "No reason given" is very
-          different from "we haven't looked", and on an unanswered buyer
-          question the difference is the whole product. */}
-      <div className="mt-4 flex items-start gap-3">
-        <p className="flex-1 text-sm leading-relaxed text-ink-soft">
-          {lead.scoreReason || "FollowUp hasn't reviewed this lead yet — no score reasoning available."}
-        </p>
-        {lead.scoreReason && (
-          <span className="shrink-0 font-mono text-sm tabular-nums text-ink-soft" title="Lead score, 0–100">
-            {lead.score}/100
-          </span>
-        )}
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <PriorityPill priority={lead.priority} reviewed={lead.reviewed} />
-        <StageSelector leadId={lead.id} stage={lead.stage} />
-        <span className="text-sm font-medium">
-          {formatCurrency(lead.dealValue)} potential
-        </span>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {lead.phone && isSocialLeadId(lead.phone) ? (
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft">
-            <MessageSquare className="h-3.5 w-3.5" /> {isInstagramLeadId(lead.phone) ? "Instagram DM" : "Facebook Messenger"}
-          </span>
-        ) : (
-          lead.phone && (
-            <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium">
-              <Phone className="h-3.5 w-3.5" /> {lead.phone}
-            </a>
-          )
-        )}
-        <CopyBookingLinkButton leadId={lead.id} />
-        {/* Demoted from the page's one filled button to a plain link. It opens
-            mailto:, which leaves FollowUp entirely — whatever gets sent has no
-            record here, no audit trail and no effect on scoring, which is a
-            direct hole in "own the conversation". Making it the most prominent
-            control on the page actively pushed people out of the product. The
-            composer below is the real way to reply; this stays for the cases
-            where someone genuinely wants their own mail client.
-
-            Whether it should exist at all is a product call, not a design one
-            — flagged for Sahil, not decided here. */}
-        {lead.email && (
-          <a
-            href={`mailto:${lead.email}`}
-            className="inline-flex items-center gap-1.5 text-sm text-ink-soft underline underline-offset-2"
-          >
-            <Mail className="h-3.5 w-3.5" /> Open in your mail app
-          </a>
-        )}
-      </div>
-
-      {/* research/product/2026-09-10-ux-simplification.md §8: this used to
-          be one card buried at the top of a 7-card sidebar stack — moved
-          up front since it's already computed to answer the one question
-          that actually varies by lead state: what's FollowUp doing here,
-          and is anything waiting on you. See automationStatus.ts. */}
-      <div className="mt-6 flex flex-wrap items-start gap-x-4 gap-y-2">
-        <AutomationStatusBadge status={lead.automationStatus} />
-        {/* "We talked" (design brain A-039) sits with the status because it
-            changes the status: after a call or a visit, FollowUp stops
-            checking in until they write again. Not on a closed lead,
-            where nothing is checking in anyway. */}
-        {lead.automationStatus?.kind !== "closed" && (
-          <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} />
-        )}
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-8 mt-8">
-        {/* min-w-0 on the grid items. An `auto` grid track's minimum is its
-            item's min-content size, and min-width:0 on an inner flex item
-            only lets that item shrink — it does not stop the nowrap text
-            inside it (the composer's "To Name <email>" row) from propagating
-            its full width up through the track. Without this the whole lead
-            page was 539px wide on a 390px phone and scrolled sideways. */}
-        <div className="min-w-0 md:col-span-2 space-y-8">
-          {/* The composer is the page's actual job and it used to be THIRD in
-              this column, under an unbounded conversation list. It comes
-              first now — the reason to be on this screen is reachable without
-              scrolling past twenty old messages. */}
-          <MessageComposer
+        <div className="mt-6">
+          <ReplyCard
             leadId={lead.id}
-            initialMessage={lead.suggestedMessage}
-            initialSubject={lead.suggestedSubject}
             leadName={lead.name}
             leadEmail={lead.email || undefined}
+            draft={lead.suggestedMessage}
+            draftSubject={lead.suggestedSubject}
+            waiting={Boolean(approval)}
             seenInboundAt={newestInboundAt(lead.conversation)}
             sendLocked={sendLocked}
             basis={basis}
             languageName={replyLanguage}
           />
-
+        </div>
+        <div className="mt-4">
           <CatchUp leadId={lead.id} />
-          <div id="conversation" className="scroll-mt-16">
-            <ConversationThread messages={lead.conversation} leadName={lead.name} />
-          </div>
+        </div>
+      </div>
 
-          {lead.scoreFactors.length > 0 && (
-            <CollapsibleSection title="See the factors behind the score">
-              <div className="space-y-1.5">
-                {lead.scoreFactors.map((f) => (
-                  <div key={f.label} className="flex items-center justify-between text-sm">
-                    <span className="text-ink-soft">{f.label}</span>
-                    <span
-                      className="font-medium tabular-nums"
-                      style={{ color: f.weight >= 0 ? "var(--sage)" : "var(--coral)" }}
-                    >
-                      {f.weight >= 0 ? "+" : ""}
-                      {f.weight}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CollapsibleSection>
+      <aside className="mt-10 min-w-0 lg:mt-0">
+        <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-2.5 rounded-2xl border border-line bg-card p-5 text-[14px]">
+          <Details lead={lead} approval={approval} now={now} />
+        </dl>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {lead.automationStatus?.kind !== "closed" && (
+            <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} />
+          )}
+          <CopyBookingLinkButton leadId={lead.id} />
+          {lead.phone && !isSocialLeadId(lead.phone) && (
+            <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-sm font-medium">
+              <Phone className="h-3.5 w-3.5" /> Call
+            </a>
+          )}
+          {lead.email && (
+            <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 text-sm text-ink-soft underline underline-offset-2">
+              <Mail className="h-3.5 w-3.5" /> Open in your mail app
+            </a>
           )}
         </div>
 
-        {/* Was: a `divide-y` wrapper around four CollapsibleSections, two of
-            which wrapped their own `rounded-xl border bg-card` card — three
-            box levels deep, the clearest S-09 violation in the app. Each
-            section is now the box, sitting directly on the paper, one level. */}
-        <aside className="min-w-0 space-y-2">
-          <div>
-            <CollapsibleSection title="Details">
-              <dl className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <dt className="text-ink-soft">Source</dt>
-                    <dd>{lead.source}</dd>
-                  </div>
-                  <div className="flex justify-between items-start gap-3">
-                    <dt className="text-ink-soft shrink-0">Assigned to</dt>
-                    <dd>
-                      <LeadAssignmentSelect
-                        leadId={lead.id}
-                        initialAssignedToId={lead.assignedToId}
-                        initialAssignedToName={lead.assignedTo}
-                      />
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-ink-soft">Last contacted</dt>
-                    <dd>{formatDate(lead.lastContacted)}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-ink-soft">Next follow-up</dt>
-                    <dd>{lead.nextFollowUp ? formatDate(lead.nextFollowUp) : "—"}</dd>
-                  </div>
-              </dl>
-            </CollapsibleSection>
-          </div>
-
-          <div>
-            <CollapsibleSection title="Notes">
-              <p className="text-sm text-ink-soft leading-relaxed">{lead.notes || "No notes yet."}</p>
-            </CollapsibleSection>
-          </div>
-
-          <div>
-            <CollapsibleSection title="What FollowUp did">
-              <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
-            </CollapsibleSection>
-          </div>
-
-          <div>
-            <CollapsibleSection title="Automation & follow-up plan">
-              <div className="space-y-3">
-                <LeadAutomationToggle
-                  leadId={lead.id}
-                  initialTier={lead.automationTier}
-                  autonomousAllowed={autonomousAllowed}
-                  holdAllForApproval={freeTierStatus?.holdAllForApproval ?? false}
-                />
-                <LeadWorkflowEnrollment leadId={lead.id} />
+        <div className="mt-6 space-y-2">
+          <CollapsibleSection title={`More about ${firstName}`}>
+            <div className="space-y-4 text-sm">
+              <AutomationStatusBadge status={lead.automationStatus} />
+              <div className="flex flex-wrap items-center gap-3">
+                <PriorityPill priority={lead.priority} reviewed={lead.reviewed} />
+                <StageSelector leadId={lead.id} stage={lead.stage} />
+                <span className="font-medium">{formatCurrency(lead.dealValue)} potential</span>
               </div>
-            </CollapsibleSection>
-          </div>
-
+              <dl className="space-y-2">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-soft">Came from</dt>
+                  <dd>{lead.source}</dd>
+                </div>
+                <div className="flex justify-between items-start gap-3">
+                  <dt className="text-ink-soft shrink-0">Assigned to</dt>
+                  <dd>
+                    <LeadAssignmentSelect leadId={lead.id} initialAssignedToId={lead.assignedToId} initialAssignedToName={lead.assignedTo} />
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-soft">Last contacted</dt>
+                  <dd>{formatDate(lead.lastContacted)}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-soft">Next follow-up</dt>
+                  <dd>{lead.nextFollowUp ? formatDate(lead.nextFollowUp) : "—"}</dd>
+                </div>
+              </dl>
+              <p className="leading-relaxed text-ink-soft">{lead.scoreReason || "FollowUp hasn't reviewed this customer yet."}</p>
+              {lead.notes && <p className="leading-relaxed text-ink-soft">{lead.notes}</p>}
+            </div>
+          </CollapsibleSection>
+          <CollapsibleSection title="What FollowUp did">
+            <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
+          </CollapsibleSection>
+          <CollapsibleSection title="Follow-up plan">
+            <div className="space-y-3">
+              <LeadAutomationToggle
+                leadId={lead.id}
+                initialTier={lead.automationTier}
+                autonomousAllowed={autonomousAllowed}
+                holdAllForApproval={freeTierStatus?.holdAllForApproval ?? false}
+              />
+              <LeadWorkflowEnrollment leadId={lead.id} />
+            </div>
+          </CollapsibleSection>
           <div className="pt-4">
             <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
           </div>
-        </aside>
-      </div>
+        </div>
+      </aside>
     </div>
   );
+}
+
+/** State / Why it's here / Waiting / Language, as the canvas App board lists them. */
+function Details({ lead, approval, now }: { lead: Lead; approval: PendingApproval | null; now: Date }) {
+  const lastIn = lastInbound(lead.conversation);
+  const first = lead.name.split(" ")[0] ?? lead.name;
+  const kind = lead.automationStatus?.kind;
+  const state = approval
+    ? "Needs you"
+    : kind === "closed"
+      ? "Closed"
+      : kind === "talked"
+        ? "You talked"
+        : kind === "waiting" || kind === "sent" || kind === "due_soon" || kind === "workflow"
+          ? `Waiting on ${first}`
+          : "Handled";
+  const why = approval ? sentenceCase(approval.reason) + "." : null;
+  return (
+    <>
+      <dt className="text-ink-faint">State</dt>
+      <dd>{state}</dd>
+      {why && (
+        <>
+          <dt className="text-ink-faint">Why it&apos;s here</dt>
+          <dd className="text-ink-soft">{why}</dd>
+        </>
+      )}
+      {approval && (
+        <>
+          <dt className="text-ink-faint">Waiting</dt>
+          <dd>{waitingFor(approval.heldAt, now)}</dd>
+        </>
+      )}
+      {!approval && lastIn && (
+        <>
+          <dt className="text-ink-faint">Last wrote</dt>
+          <dd>{timeAgoWords(lastIn.date, now)}</dd>
+        </>
+      )}
+      <dt className="text-ink-faint">Language</dt>
+      <dd>{lead.languageRead ? languageName(lead.languageRead.language) : "Not read yet"}</dd>
+    </>
+  );
+}
+
+function lastInbound(messages: Message[]): Message | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) if (messages[i].direction === "inbound") return messages[i];
+  return undefined;
+}
+
+function channelName(channel: string | null, source: string): string {
+  const names: Record<string, string> = {
+    email: "Email",
+    text: "Text",
+    call: "Phone",
+    whatsapp: "WhatsApp",
+    instagram: "Instagram",
+    messenger: "Messenger",
+    web: "Website form",
+  };
+  return (channel && names[channel]) || source || "";
+}
+
+function timeAgoWords(iso: string, now: Date): string {
+  const min = Math.max(1, Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000));
+  if (min < 60) return `${min} min ago`;
+  const h = Math.floor(min / 60);
+  if (h < 48) return `${h} ${h === 1 ? "hour" : "hours"} ago`;
+  const d = Math.floor(h / 24);
+  return `${d} days ago`;
+}
+
+function sentenceCase(s: string): string {
+  return s ? s[0].toUpperCase() + s.slice(1) : s;
 }
 
 /** When the newest message from the lead on this page arrived — what the owner has "seen" when they press Send. */

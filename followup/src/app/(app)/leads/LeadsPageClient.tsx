@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Lead } from "@/lib/types";
-import { formatCurrency, daysSince } from "@/lib/demo-data";
+import { daysSince } from "@/lib/demo-data";
 import { matchesSavedFilter, type SavedFilterCriteria, type SavedFilterSummary } from "@/lib/savedFilterMatch";
 import AddLeadForm from "@/components/AddLeadForm";
 import ImportLeadsForm from "@/components/ImportLeadsForm";
@@ -14,7 +14,18 @@ import EmptyState from "@/components/EmptyState";
 import CleanupLeadsButton from "@/components/CleanupLeadsButton";
 import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, MoreHorizontal } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
-import { ItemBox, ItemBoxList, type ItemTone } from "@/components/ItemBox";
+import { type ItemTone } from "@/components/ItemBox";
+import { Initials, shortAge } from "@/components/app/canvasBits";
+
+const CHANNEL_NAMES: Record<string, string> = {
+  email: "Email",
+  text: "Text",
+  call: "Phone",
+  whatsapp: "WhatsApp",
+  instagram: "Instagram",
+  messenger: "Messenger",
+  web: "Website form",
+};
 
 /**
  * The rail tone, and the word that tone stands for, for one lead.
@@ -36,36 +47,6 @@ function urgencyTone(lead: Lead): { tone: ItemTone; label: string } {
   return { tone: "coral", label: `Silent ${d} days` };
 }
 
-/**
- * The rest of line 2 — the facts that used to be four separate columns, three
- * of which (`PriorityPill`, `AutomationStatusBadge`, the assignee) were
- * `hidden` below md/lg. On a 390px phone the row used to survive as a bare
- * score number and a dollar figure: nothing that tells an owner whether to
- * act. These are words, so they survive at every width.
- *
- * Capped at two so line 2 stays one line. Order is by what would make someone
- * act: priority, then whether anything is actually going to happen on its own,
- * then whether it belongs to anybody.
- */
-function leadFacts(lead: Lead): string | undefined {
-  if (lead.stage === "won" || lead.stage === "lost") return undefined;
-
-  const parts: string[] = [];
-  if (lead.priority === "high") parts.push("high priority");
-
-  const a = lead.automationStatus;
-  if (a) {
-    if (a.kind === "off") parts.push("automation off");
-    else if (a.kind === "workflow_paused") parts.push("plan paused");
-    else if (a.kind === "account_paused") parts.push("auto follow-up off");
-    else if (a.kind === "due_soon") parts.push("following up soon");
-    else if (a.kind === "workflow") parts.push(`on ${a.sequenceName}`);
-  }
-
-  if (!lead.assignedToId) parts.push("unassigned");
-
-  return parts.length ? parts.slice(0, 2).join(" · ") : undefined;
-}
 
 const filters = [
   { id: "all", label: "All" },
@@ -404,18 +385,52 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           number never carried a unit anyone could read. The score still leads
           the sort, and the detail page still explains it. */}
       <div className="mt-6">
-        <ItemBoxList>
-          {filtered.map((lead) => (
-            <ItemBox
-              key={lead.id}
-              href={`/leads/${lead.id}`}
-              title={lead.company ? `${lead.name} · ${lead.company}` : lead.name}
-              figure={<span className="text-ink font-medium">{formatCurrency(lead.dealValue)}</span>}
-              status={urgencyTone(lead)}
-              fact={leadFacts(lead)}
-            />
-          ))}
-        </ItemBoxList>
+        {/* The canvas People table (App board): who, where, what they last
+            said, how long, and the state in words. */}
+        {filtered.length > 0 && (
+          <div className="overflow-hidden rounded-[18px] border border-line bg-card">
+            <div className="hidden grid-cols-[44px_200px_110px_minmax(0,1fr)_90px_150px] gap-4 px-5 py-3 text-[12.5px] font-medium text-ink-faint md:grid">
+              <span />
+              <span>Name</span>
+              <span>Channel</span>
+              <span>Last message</span>
+              <span>Waiting</span>
+              <span>State</span>
+            </div>
+            {filtered.map((lead) => {
+              const last = lead.conversation[lead.conversation.length - 1];
+              const state = urgencyTone(lead);
+              return (
+                <Link
+                  key={lead.id}
+                  href={`/leads/${lead.id}`}
+                  className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 border-t border-line-2 px-4 py-3.5 first:border-t-0 hover:bg-paper md:grid-cols-[44px_200px_110px_minmax(0,1fr)_90px_150px] md:gap-4 md:px-5 md:first:border-t md:first:border-line-2"
+                >
+                  <Initials name={lead.name} size={32} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[14.5px] font-medium">{lead.name}</span>
+                    <span className="block truncate text-[13px] text-ink-faint md:hidden">
+                      {last ? (last.direction === "outbound" ? `You: ${last.body}` : last.body) : lead.company || lead.source}
+                    </span>
+                  </span>
+                  <span className="hidden truncate text-[13.5px] text-ink-soft md:block">{CHANNEL_NAMES[last?.channel ?? ""] ?? lead.source}</span>
+                  <span className="hidden truncate text-[13.5px] text-ink-soft md:block">
+                    {last ? (last.direction === "outbound" ? `You: ${last.body}` : last.body) : "—"}
+                  </span>
+                  <span className="hidden text-[13px] text-ink-faint tabular-nums md:block">{last ? shortAge(last.date) : "—"}</span>
+                  <span className="text-right text-[13px] md:text-left" style={{ color: state ? `var(--${state.tone})` : "var(--ink-soft)" }}>
+                    {state?.label ?? "—"}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+        {filtered.length > 0 && (
+          <p className="mt-3 text-[13px] text-ink-faint">
+            {filtered.length} of {leads.length} {leads.length === 1 ? "customer" : "customers"} · sorted by who needs you first
+          </p>
+        )}
 
         {filtered.length === 0 && leads.length > 0 && (
           <p className="py-8 text-center text-sm text-ink-soft">

@@ -5,44 +5,46 @@ import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Reveal from "@/components/landing/Reveal";
 import LogoMark from "@/components/LogoMark";
 
-// The sign-in screen on the app's own tokens (globals.css): the same
-// charcoal-or-white ground as the landing page and the app, the brand
-// symbol, one card, one button. It used to scope the navy-era
-// landing.module.css and carry a floating-chip 3D scene behind the card;
-// both went on 2026-09-19 with the move to the black-and-white system —
-// the one thing a visitor has to do here is click precisely, and nothing
-// should compete with that.
+// The sign-in screen, on the canvas SignIn board (2026-09-27).
 //
 // Everything below the markup is unchanged: the actual sign-in logic
 // (auto-retry, error states, the Google button itself) is as before.
 // The already-signed-in redirect lives one level up, in page.tsx (a server
 // component) — it runs before this client UI ever mounts.
 export default function SignInClient({ inviteBusinessName }: { inviteBusinessName?: string | null } = {}) {
+  // The canvas SignIn board: the brand top-left, one column, a thin
+  // headline, one black button, two plain promises, and a way in for
+  // someone who isn't in the beta yet.
   return (
-    <div className="relative min-h-screen overflow-hidden bg-paper text-ink">
-      {/* The same soft light the landing page puts behind its hero. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[70vh]"
-        style={{ background: "radial-gradient(60% 55% at 50% 0%, var(--accent-soft) 0%, transparent 70%)" }}
-      />
-      <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-16">
-        <Link href="/" className="mb-10 flex items-center gap-2.5" aria-label="FollowUp home">
+    <div className="min-h-screen bg-paper text-ink flex flex-col">
+      <header className="h-[60px] shrink-0 px-5 sm:px-8 flex items-center">
+        <Link href="/" className="flex items-center gap-2" aria-label="FollowUp home">
           <LogoMark height={22} />
-          <span className="text-[17px] font-bold" style={{ letterSpacing: "-0.02em" }}>
-            FollowUp
-          </span>
+          <span className="text-base font-semibold">FollowUp</span>
         </Link>
-        <Suspense fallback={null}>
-          <SignInPageInner inviteBusinessName={inviteBusinessName ?? null} />
-        </Suspense>
-        <Link href="/" className="mt-8 text-xs font-medium text-ink-soft transition-opacity hover:opacity-70">
-          ← Back to home
-        </Link>
-      </div>
+      </header>
+      <main className="flex-1 flex justify-center px-5 pt-7 sm:pt-20 pb-10">
+        <div className="w-full max-w-[400px] flex flex-col">
+          <Suspense fallback={null}>
+            <SignInPageInner inviteBusinessName={inviteBusinessName ?? null} />
+          </Suspense>
+          <div className="mt-8 pt-6 border-t border-line">
+            <div className="text-[17px] font-medium">Not in the beta yet?</div>
+            <p className="mt-1.5 text-[15px] leading-normal text-ink-soft">Email Sahil. A short note is already written for you.</p>
+            <a
+              href="mailto:contact@followupbase.io?subject=Trying%20FollowUp&body=Hi%20Sahil%2C%20I%20run%20a%20___%20business%20and%20I%27d%20like%20to%20try%20FollowUp."
+              className="mt-3.5 flex items-center justify-center gap-2 min-h-[52px] rounded-full border border-line bg-card px-6 text-base font-medium text-ink"
+            >
+              Email Sahil
+            </a>
+          </div>
+          <Link href="/" className="mt-10 text-sm text-ink-soft hover:text-ink">
+            ← Back to followupbase.io
+          </Link>
+        </div>
+      </main>
     </div>
   );
 }
@@ -99,18 +101,16 @@ function SignInPageInner({ inviteBusinessName }: { inviteBusinessName: string | 
   }, [autoRetrying]);
 
   return (
-    <Reveal className="w-full max-w-sm">
-      <div
-        className="relative w-full rounded-[var(--radius-box)] bg-card p-8 text-center"
-        style={{ boxShadow: "var(--shadow-box-lift)" }}
-      >
+    <div>
+      <div>
         {/* Not "Welcome back": the landing page's button lands first-time
             visitors on this exact screen, so roughly half the traffic here
             has never signed in before. */}
-        <h1 className="text-xl font-bold" style={{ letterSpacing: "-0.02em" }}>
-          Sign in to FollowUp
-        </h1>
-        <p className="mt-2 text-sm text-ink-soft">FollowUp is in a private beta. Sign in with the Google account Sahil added.</p>
+        <div className="font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-ink-faint">Private beta</div>
+        <h1 className="mt-2.5 text-4xl leading-[1.05]">Sign in to FollowUp.</h1>
+        <p className="mt-3 text-base leading-relaxed text-ink-soft">
+          FollowUp is in a private beta. Sign in with the Google account Sahil added.
+        </p>
 
         <button
           onClick={() => {
@@ -118,12 +118,23 @@ function SignInPageInner({ inviteBusinessName }: { inviteBusinessName: string | 
             signIn("google", { callbackUrl: "/dashboard" });
           }}
           disabled={redirecting || autoRetrying}
-          className="mt-7 w-full inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-transform hover:scale-[1.015] disabled:opacity-60 disabled:hover:scale-100"
+          className="mt-6 w-full inline-flex items-center justify-center gap-2 min-h-[52px] rounded-full px-6 text-base font-medium disabled:opacity-60"
           style={{ background: "var(--accent)", color: "var(--on-accent)" }}
         >
           <GoogleIcon className="h-4 w-4" />
           {redirecting || autoRetrying ? "Redirecting…" : "Continue with Google"}
         </button>
+
+        <ul className="mt-4 space-y-2 text-[14.5px] leading-snug text-ink-soft">
+          <li className="flex items-center gap-2">
+            <CheckMark />
+            Free while in beta · No credit card
+          </li>
+          <li className="flex items-center gap-2">
+            <CheckMark />
+            Prices and dates always come to you · Delete everything, any time
+          </li>
+        </ul>
 
         {/* A first-attempt OAuthCallback silently retries once (see the
             effect above) — don't flash the scary error while that's
@@ -166,7 +177,15 @@ function SignInPageInner({ inviteBusinessName }: { inviteBusinessName: string | 
           </p>
         )}
       </div>
-    </Reveal>
+    </div>
+  );
+}
+
+function CheckMark() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 text-ink">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
   );
 }
 

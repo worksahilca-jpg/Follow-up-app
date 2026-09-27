@@ -31,7 +31,7 @@ const nav = [
 
 import LogoMark from "@/components/LogoMark";
 
-export default function Sidebar() {
+export default function Sidebar({ businessName = "" }: { businessName?: string }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   // Below the lg breakpoint the sidebar itself becomes an off-canvas
@@ -45,17 +45,17 @@ export default function Sidebar() {
     <>
       {/* Mobile-only top bar — the sidebar itself is off-screen below lg,
           so this is what actually gets you to it and to notifications. */}
-      <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-card px-4 py-3">
+      <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-paper px-4 py-3">
         <Link href="/dashboard" className="flex items-center gap-2">
           <LogoMark height={20} />
-          <span className="font-display text-lg">FollowUp</span>
+          <span className="text-base font-semibold">FollowUp</span>
         </Link>
         <div className="flex items-center gap-1">
           <NotificationBell align="right" />
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
-            className="h-8 w-8 rounded-lg flex items-center justify-center text-ink-soft hover:bg-paper transition-colors"
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-ink-soft hover:bg-card-2 transition-colors"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -71,24 +71,26 @@ export default function Sidebar() {
         />
       )}
 
+      {/* The canvas App/Today boards: a warm grey column, the business as
+          the header (its first letter in a black square), plain nav rows,
+          and the current page as a white row with a hairline edge. */}
       <aside
         className={
-          "w-60 shrink-0 border-r border-line bg-card flex flex-col h-screen fixed lg:sticky top-0 inset-y-0 left-0 z-50 transition-transform duration-200 " +
+          "w-60 shrink-0 border-r border-line bg-sidebar flex flex-col h-screen fixed lg:sticky top-0 inset-y-0 left-0 z-50 transition-transform duration-200 " +
           (mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0")
         }
       >
-      <div className="px-5 pt-6 pb-5">
-        <div className="flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <LogoMark height={20} />
-            <span className="font-display text-lg" style={{ color: "var(--ink)" }}>
-              FollowUp
+      <div className="px-3 pt-3.5 pb-2">
+        <div className="flex items-center justify-between gap-2">
+          <Link href="/dashboard" className="flex min-w-0 items-center gap-2.5 h-9 px-1.5">
+            <span
+              aria-hidden
+              className="h-6 w-6 shrink-0 rounded-[7px] inline-flex items-center justify-center text-xs font-semibold"
+              style={{ background: "var(--accent)", color: "var(--on-accent)" }}
+            >
+              {(businessName.trim()[0] ?? "F").toUpperCase()}
             </span>
-            {/* Testers should never wonder whether a rough edge is on them.
-                It is on us, and this says so. */}
-            <span className="font-mono text-[10px] uppercase tracking-wider rounded-full px-1.5 py-0.5 text-ink-soft" style={{ background: "var(--accent-soft)" }}>
-              Beta
-            </span>
+            <span className="truncate text-sm font-semibold text-ink">{businessName || "FollowUp"}</span>
           </Link>
           <div className="flex items-center gap-1">
             <div className="hidden lg:block">
@@ -97,15 +99,15 @@ export default function Sidebar() {
             <button
               onClick={() => setMobileOpen(false)}
               aria-label="Close menu"
-              className="lg:hidden h-8 w-8 rounded-lg flex items-center justify-center text-ink-soft hover:bg-paper transition-colors"
+              className="lg:hidden h-8 w-8 rounded-lg flex items-center justify-center text-ink-soft hover:bg-card-2 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
         </div>
-        <p className="text-xs text-ink-soft mt-1 truncate">{session?.user?.email ?? ""}</p>
+        <p className="px-1.5 text-xs text-ink-faint truncate">{session?.user?.email ?? ""}</p>
       </div>
-      <nav className="flex-1 px-3 space-y-0.5">
+      <nav className="flex-1 px-3 pt-3 space-y-0.5">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname?.startsWith(href + "/");
           return (
@@ -113,24 +115,16 @@ export default function Sidebar() {
               key={href}
               href={href}
               onClick={() => setMobileOpen(false)}
-              className="relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors"
+              aria-current={active ? "page" : undefined}
+              className="flex items-center gap-2.5 h-8 rounded-lg px-2.5 text-sm border transition-colors"
               style={{
-                backgroundColor: active ? "var(--rust-soft)" : "transparent",
-                color: active ? "var(--rust)" : "var(--ink-soft)",
-                fontWeight: active ? 600 : 500,
+                backgroundColor: active ? "var(--card)" : "transparent",
+                borderColor: active ? "var(--line)" : "transparent",
+                color: active ? "var(--ink)" : "var(--ink-soft)",
+                fontWeight: active ? 500 : 400,
               }}
             >
-              {/* A thin accent bar instead of relying on the tint alone to
-                  say "you are here" — reads at a glance even for someone
-                  scanning quickly, not just on close inspection. */}
-              {active && (
-                <span
-                  className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full"
-                  style={{ backgroundColor: "var(--rust)" }}
-                  aria-hidden
-                />
-              )}
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4" strokeWidth={1.8} />
               {label}
             </Link>
           );
@@ -147,9 +141,9 @@ export default function Sidebar() {
       <FeedbackDialog />
       <button
         onClick={() => signOut({ callbackUrl: "/" })}
-        className="flex items-center gap-2.5 rounded-lg px-3 py-2 mx-3 mb-4 text-sm text-ink-soft hover:bg-paper transition-colors"
+        className="flex items-center gap-2.5 h-8 rounded-lg px-2.5 mx-3 mb-4 text-sm text-ink-soft hover:bg-card-2 transition-colors"
       >
-        <LogOut className="h-4 w-4" />
+        <LogOut className="h-4 w-4" strokeWidth={1.8} />
         Sign out
       </button>
       </aside>

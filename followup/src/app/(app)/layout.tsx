@@ -9,13 +9,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { onboarded: true },
+    select: { onboarded: true, name: true },
   });
   if (!business?.onboarded) redirect("/onboarding");
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
+      <Sidebar businessName={business.name ?? ""} />
       <main className="flex-1 min-w-0">
         {/* pt-20 clears the fixed mobile top bar (see Sidebar) below lg;
             at lg and up that bar doesn't render, so padding goes back to

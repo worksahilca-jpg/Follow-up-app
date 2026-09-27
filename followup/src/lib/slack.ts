@@ -16,6 +16,22 @@
  * anyone outside the team.
  */
 
+/**
+ * Makes untrusted text inert inside a Slack message.
+ *
+ * Slack parses `<...>` in message text as control sequences: `<url|label>`
+ * becomes a link with any label, and `<!channel>` / `<!here>` page the
+ * whole channel. A lead's name, company and the AI's summary of what they
+ * wrote are all typed by a stranger (the public embed form takes any
+ * name), so without this anyone could post a disguised phishing link into
+ * the founder's Slack, or ping the channel, just by filling in a contact
+ * form (security audit 2026-09-26, A-4). Slack's own rule: escape `&`,
+ * `<` and `>` and nothing else.
+ */
+export function escapeSlackText(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 5 * 60_000;
 let recentSends: number[] = [];

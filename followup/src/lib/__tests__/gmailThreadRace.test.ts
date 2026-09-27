@@ -42,7 +42,7 @@ vi.mock("googleapis", () => ({
   },
 }));
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
-vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect: vi.fn() }));
+vi.mock("@/lib/integrations/openai", () => ({ classifyAsProspect: vi.fn(), classifyWithSecondLook: vi.fn() }));
 vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn(async () => null) }));
 vi.mock("@/lib/outboundWebhook", () => ({ notifyLeadEvent: vi.fn(async () => undefined) }));
 vi.mock("@/lib/engagement", () => ({ checkRapidEngagement: vi.fn(async () => undefined) }));

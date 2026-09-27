@@ -20,7 +20,7 @@ import LogoMark from "@/components/LogoMark";
 // (auto-retry, error states, the Google button itself) is as before.
 // The already-signed-in redirect lives one level up, in page.tsx (a server
 // component) — it runs before this client UI ever mounts.
-export default function SignInClient() {
+export default function SignInClient({ inviteBusinessName }: { inviteBusinessName?: string | null } = {}) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-paper text-ink">
       {/* The same soft light the landing page puts behind its hero. */}
@@ -37,7 +37,7 @@ export default function SignInClient() {
           </span>
         </Link>
         <Suspense fallback={null}>
-          <SignInPageInner />
+          <SignInPageInner inviteBusinessName={inviteBusinessName ?? null} />
         </Suspense>
         <Link href="/" className="mt-8 text-xs font-medium text-ink-soft transition-opacity hover:opacity-70">
           ← Back to home
@@ -83,7 +83,7 @@ function readAutoRetry(error: string | null): boolean {
   return true;
 }
 
-function SignInPageInner() {
+function SignInPageInner({ inviteBusinessName }: { inviteBusinessName: string | null }) {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   // Google's PKCE/state verification cookies are set the instant signIn()
@@ -137,7 +137,30 @@ function SignInPageInner() {
             .
           </p>
         )}
-        {!autoRetrying && error && error !== "AccessDenied" && (
+        {/* Team invites need their link since 2026-09-26 (security audit
+            H-2). Someone invited who signs in without it is told what to
+            do, not refused as a stranger. */}
+        {/* Names the team, read server-side from the invite this browser
+            opened: signing in here joins it, so the person should know
+            whose workspace they are walking into before they do. */}
+        {!error && inviteBusinessName && (
+          <p className="mt-4 text-sm text-ink-soft">
+            Signing in will add you to <span className="font-medium text-ink">{inviteBusinessName}</span>&apos;s team. Continue
+            with the Google account for the email address the invite was sent to.
+          </p>
+        )}
+        {!autoRetrying && error === "InviteLink" && (
+          <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
+            You&apos;ve been invited to a team. Open the invite link you were sent, then sign in from there. No link?
+            Ask the person who invited you to copy it from their Team settings.
+          </p>
+        )}
+        {!autoRetrying && error === "InviteInvalid" && (
+          <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
+            That invite link isn&apos;t valid any more. Ask the person who invited you for a new one.
+          </p>
+        )}
+        {!autoRetrying && error && error !== "AccessDenied" && error !== "InviteLink" && error !== "InviteInvalid" && (
           <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
             Sign-in failed — please try again. <span className="text-ink-soft">({error})</span>
           </p>

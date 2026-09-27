@@ -9,7 +9,7 @@ import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 
-const accessTokenSchema = z.object({ accessToken: z.string().trim().min(1, "Paste a real access token.") });
+const accessTokenSchema = z.object({ accessToken: z.string().trim().min(1, "Paste a real access token.").max(4096) });
 
 /**
  * GET/POST/DELETE /api/instagram/config — this business's Instagram

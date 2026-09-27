@@ -5,6 +5,7 @@ import { fetchSpamProspects } from "@/lib/integrations/gmail";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { tooManyRecentActions } from "@/lib/rateLimit";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // Same time-limit reasoning as the regular sync route — see that file.
 export const maxDuration = 300;
@@ -45,7 +46,7 @@ export async function POST() {
 
     return NextResponse.json({ success: true, count: leads.length, scored });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Spam scan failed.";
+    const message = publicErrorMessage(err, "Spam scan failed.", "integrations/gmail/scan-spam");
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

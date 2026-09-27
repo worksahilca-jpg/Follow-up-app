@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { tooManyRecentLeads } from "@/lib/rateLimit";
 import { processInboundEvent, recordInboundWebhookEvent } from "@/lib/inboundEvents";
-import { cleanedText, EMAIL_RE, parseObject } from "@/lib/validation";
+import { cleanedPhone, cleanedText, EMAIL_RE, parseObject } from "@/lib/validation";
 import { recordAuthFailure } from "@/lib/monitoring";
 
 const MAX_TEXT = 200;
@@ -16,7 +16,7 @@ const MAX_MESSAGE = 4000;
 const webhookLeadSchema = z.object({
   name: cleanedText(MAX_TEXT),
   email: cleanedText(MAX_TEXT),
-  phone: cleanedText(40),
+  phone: cleanedPhone(40),
   message: cleanedText(MAX_MESSAGE),
 });
 

@@ -35,8 +35,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { HOLD_ALL_AUTOMATION_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
-const { pending, send } = vi.hoisted(() => ({ pending: vi.fn(), send: vi.fn() }));
+const { pending, send, prismaMock } = vi.hoisted(() => ({
+  pending: vi.fn(),
+  send: vi.fn(),
+  prismaMock: { lead: { findUnique: vi.fn() }, message: { findFirst: vi.fn() } },
+}));
 vi.mock("@/lib/pendingApprovals", () => ({ getPendingApprovals: pending }));
+vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
 vi.mock("@/lib/sending", () => ({ sendFollowUpToLead: send }));
 
 import { sendSafeApprovals } from "@/lib/bulkApprove";
@@ -66,7 +71,16 @@ function approval(over: Record<string, unknown> = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   send.mockResolvedValue({ success: true });
+  // By default each lead still holds the draft the queue showed, and nobody
+  // has written since.
+  prismaMock.lead.findUnique.mockImplementation(async () => ({
+    suggestedMessage: currentDraft,
+    suggestedDraftedFor: new Date("2026-09-23T00:30:00Z"),
+  }));
+  prismaMock.message.findFirst.mockResolvedValue(null);
 });
+
+let currentDraft = "Just checking in.";
 
 describe("what gets sent", () => {
   it("sends the drafts that are safe", async () => {
@@ -110,10 +124,45 @@ describe("what gets sent", () => {
   });
 
   it("sends the owner's own draft, with its subject, unchanged", async () => {
+    currentDraft = "Exact words.";
     pending.mockResolvedValue([approval({ draftMessage: "Exact words.", draftSubject: "Re: your quote" })]);
     await sendSafeApprovals({ businessId: "biz1" });
     expect(send.mock.calls[0][1]).toBe("Exact words.");
     expect(send.mock.calls[0][2]).toMatchObject({ subject: "Re: your quote", trigger: "manual" });
+    currentDraft = "Just checking in.";
+  });
+});
+
+describe("a draft that went out of date", () => {
+  it("is not sent when the customer wrote after it was drafted", async () => {
+    // Daily-path sweep 2026-09-25 #4: the pile was built from the draft as
+    // it was; a message since means the draft answers an older conversation.
+    prismaMock.message.findFirst.mockResolvedValueOnce({ id: "newer" });
+    pending.mockResolvedValue([approval({ leadName: "Priya Shah" }), approval()]);
+    const out = await sendSafeApprovals({ businessId: "biz1" });
+    expect(out.sent).toBe(1);
+    expect(out.skipped).toHaveLength(1);
+    expect(out.skipped[0].reason).toMatch(/Priya wrote again/);
+    expect(prismaMock.message.findFirst.mock.calls[0][0].where).toMatchObject({
+      direction: "inbound",
+      sentAt: { gt: new Date("2026-09-23T00:30:00Z") },
+    });
+  });
+
+  it("is not sent when the draft was rewritten after the queue was built", async () => {
+    prismaMock.lead.findUnique.mockResolvedValueOnce({ suggestedMessage: "A newer draft.", suggestedDraftedFor: null });
+    pending.mockResolvedValue([approval({ leadName: "Omar" })]);
+    const out = await sendSafeApprovals({ businessId: "biz1" });
+    expect(out.sent).toBe(0);
+    expect(send).not.toHaveBeenCalled();
+    expect(out.skipped[0].reason).toMatch(/Omar's draft changed/);
+  });
+
+  it("falls back to the hold time for a draft with no drafted-for date", async () => {
+    prismaMock.lead.findUnique.mockResolvedValueOnce({ suggestedMessage: "Just checking in.", suggestedDraftedFor: null });
+    pending.mockResolvedValue([approval()]);
+    await sendSafeApprovals({ businessId: "biz1" });
+    expect(prismaMock.message.findFirst.mock.calls[0][0].where.sentAt).toEqual({ gt: new Date("2026-09-23T01:00:00Z") });
   });
 });
 

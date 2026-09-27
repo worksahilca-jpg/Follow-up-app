@@ -8,6 +8,7 @@ import { restoreWhatsAppHistoryThread } from "@/lib/inbound/whatsappCloud";
 import { parseStoredThread } from "@/lib/inbound/whatsappHistoryFilter";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { recordAudit } from "@/lib/audit";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // POST /api/integrations/gmail/filtered/[id]/restore — "this was a lead":
 // the owner overrules the classifier, the thread is imported as a real
@@ -89,7 +90,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ success: true, leadId: lead.id });
   } catch (err) {
     return NextResponse.json(
-      { success: false, message: err instanceof Error ? err.message : "Couldn't import that email." },
+      { success: false, message: publicErrorMessage(err, "Couldn't import that email.", "integrations/gmail/filtered/[id]/restore") },
       { status: 500 }
     );
   }

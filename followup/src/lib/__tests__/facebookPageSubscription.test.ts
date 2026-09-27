@@ -51,9 +51,13 @@ vi.mock("@/lib/db", () => ({ prisma: { business: { update: businessUpdate, findU
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 vi.mock("@/lib/instagram", () => ({ WEBHOOK_VERIFY_TOKEN: "verify-tok" }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
+// Pass-through, i.e. the no-TOKEN_ENCRYPTION_KEY state — the one where
+// the picker cookie is plain JSON anyone can edit.
+const { encryptionEnabled } = vi.hoisted(() => ({ encryptionEnabled: vi.fn(() => false) }));
 vi.mock("@/lib/crypto", () => ({
   encryptSecret: (s: string) => s,
   decryptSecret: (s: string) => s,
+  encryptionEnabled,
 }));
 
 import { GET as oauthCallback } from "@/app/api/facebook/oauth/callback/route";
@@ -112,6 +116,31 @@ describe("connecting a Page through the picker, when the person manages several"
       json("https://followupbase.io/api/facebook/oauth/select-page", { pageId: "90210" }, `fb_pending_pages=${pages}`)
     );
     expect(activateFacebookPageWebhooks).toHaveBeenCalledWith("b1", "90210", "EAAG-page");
+  });
+
+  // Security audit 2026-09-26 A-7 (first raised 2026-09-16, Meta #4).
+  // Without the encryption key the cookie is plain JSON; an admin of one
+  // business could write another business's Page id into it and claim
+  // that Page's Messenger inbox. The token must now prove the Page.
+  it("refuses a hand-edited cookie whose token does not belong to the Page it names", async () => {
+    resolveFacebookPage.mockResolvedValueOnce({ id: "11111", name: "Attacker's own Page" });
+    const forged = JSON.stringify([{ id: "90210", name: "Victim Page", accessToken: "EAAG-attackers-own" }]);
+    const res = await selectPage(
+      json("https://followupbase.io/api/facebook/oauth/select-page", { pageId: "90210" }, `fb_pending_pages=${forged}`)
+    );
+    expect(res.status).toBe(400);
+    expect(businessUpdate).not.toHaveBeenCalled();
+    expect(activateFacebookPageWebhooks).not.toHaveBeenCalled();
+  });
+
+  it("trusts the cookie without an extra Graph call when it really is encrypted", async () => {
+    encryptionEnabled.mockReturnValueOnce(true);
+    resolveFacebookPage.mockClear();
+    await selectPage(
+      json("https://followupbase.io/api/facebook/oauth/select-page", { pageId: "90210" }, `fb_pending_pages=${pages}`)
+    );
+    expect(resolveFacebookPage).not.toHaveBeenCalled();
+    expect(businessUpdate).toHaveBeenCalled();
   });
 });
 

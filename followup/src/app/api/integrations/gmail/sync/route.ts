@@ -3,6 +3,7 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { syncGmailForBusiness } from "@/lib/gmailSync";
 import { tooManyRecentActions } from "@/lib/rateLimit";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // A full sync (up to 30 Gmail threads, each possibly classified, plus two
 // OpenAI calls per resulting lead for scoring/drafting) comfortably exceeds
@@ -34,7 +35,7 @@ export async function POST() {
     const { count, scored, repliesDetected, leads } = await syncGmailForBusiness(ctx.businessId);
     return NextResponse.json({ success: true, count, scored, repliesDetected, leads });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Gmail sync failed.";
+    const message = publicErrorMessage(err, "Gmail sync failed.", "integrations/gmail/sync");
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

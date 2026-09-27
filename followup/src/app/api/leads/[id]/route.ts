@@ -19,7 +19,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ success: false, message: "Lead not found." }, { status: 404 });
   }
 
-  await deleteLeadCascade(id);
+  // The tenant goes with it even though ownership was checked just above:
+  // deleteLeadCascade re-checks inside, right before the rows go, which is
+  // the guard that still holds if the check above is ever refactored away
+  // (audits 2026-09-16 L-2, 2026-09-26).
+  await deleteLeadCascade(id, ctx.businessId);
   void recordAudit(ctx, "lead.delete", { targetType: "lead", targetId: id });
 
   return NextResponse.json({ success: true });

@@ -6,7 +6,7 @@ import { getSequenceById, updateSequence, deleteSequence } from "@/lib/sequences
 import { parseJsonBody, sequenceStepSchema } from "@/lib/validation";
 
 const updateSequenceSchema = z.object({
-  name: z.string().optional(),
+  name: z.string().max(200).optional(),
   active: z.boolean().optional(),
   steps: z.array(sequenceStepSchema).optional(),
 });

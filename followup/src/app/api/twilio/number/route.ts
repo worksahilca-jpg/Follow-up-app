@@ -3,6 +3,7 @@ import { getSessionContext, requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { inboundBaseUrl } from "@/lib/siteUrl";
 import { getTwilioNumberConfig, listRecentTwilioCalls, setTwilioNumberWebhooks } from "@/lib/twilio";
+import { publicErrorMessage } from "@/lib/publicError";
 
 /**
  * GET/POST /api/twilio/number — the business's Twilio number, as Twilio
@@ -55,7 +56,7 @@ export async function GET() {
     });
   } catch (err) {
     return NextResponse.json(
-      { success: false, message: err instanceof Error ? err.message : "Twilio didn't respond." },
+      { success: false, message: publicErrorMessage(err, "Twilio didn't respond.", "twilio/number") },
       { status: 502 }
     );
   }
@@ -95,7 +96,7 @@ export async function POST() {
     });
   } catch (err) {
     return NextResponse.json(
-      { success: false, message: err instanceof Error ? err.message : "Twilio didn't respond." },
+      { success: false, message: publicErrorMessage(err, "Twilio didn't respond.", "twilio/number") },
       { status: 502 }
     );
   }

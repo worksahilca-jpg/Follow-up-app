@@ -39,6 +39,7 @@
  * already lives in the send path and is tested there; this layer's job is
  * to collect what that path refuses and say so out loud.
  */
+import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { isSafeToSendInBulk } from "@/lib/approvalGroups";
 import { sendFollowUpToLead } from "@/lib/sending";
@@ -99,6 +100,17 @@ export async function sendSafeApprovals({ businessId, source, limit }: BulkAppro
   // like a burst to the provider — which is the thing this whole file is
   // trying not to be.
   await mapWithConcurrency(batch, 3, async (approval) => {
+    // Re-read the lead at the moment of sending. The queue was built a
+    // moment ago from the draft as it was then; if the customer has written
+    // since that draft was written, or the draft itself has been rewritten,
+    // what would go out answers a conversation that no longer exists
+    // (daily-path sweep 2026-09-25 #4). The single-send route refuses the
+    // same case with the same sentence.
+    const stale = await staleReason(approval);
+    if (stale) {
+      skipped.push({ leadId: approval.leadId, leadName: approval.leadName, reason: stale });
+      return;
+    }
     const result = await sendFollowUpToLead(approval.leadId, approval.draftMessage, {
       // Approved by a person, exactly as the single-draft path records
       // it — this is not FollowUp deciding to send, it is the owner
@@ -122,4 +134,31 @@ export async function sendSafeApprovals({ businessId, source, limit }: BulkAppro
   });
 
   return { sent, skipped, remaining: Math.max(0, safe.length - batch.length) };
+}
+
+async function staleReason(approval: {
+  leadId: string;
+  leadName: string;
+  heldAt: Date;
+  draftMessage: string;
+}): Promise<string | null> {
+  const first = approval.leadName.split(" ")[0] || "This lead";
+  const lead = await prisma.lead.findUnique({
+    where: { id: approval.leadId },
+    select: { suggestedMessage: true, suggestedDraftedFor: true },
+  });
+  if (!lead || lead.suggestedMessage !== approval.draftMessage) {
+    return `${first}'s draft changed while this was sending. Nothing was sent — check the new draft.`;
+  }
+  // The draft answers everything up to suggestedDraftedFor; an older draft
+  // without it answers everything up to the hold.
+  const cutoff = lead.suggestedDraftedFor ?? approval.heldAt;
+  const newer = await prisma.message.findFirst({
+    where: { direction: "inbound", sentAt: { gt: cutoff }, conversation: { leadId: approval.leadId } },
+    select: { id: true },
+  });
+  if (newer) {
+    return `${first} wrote again after this draft was written. Nothing was sent — read their new message first.`;
+  }
+  return null;
 }

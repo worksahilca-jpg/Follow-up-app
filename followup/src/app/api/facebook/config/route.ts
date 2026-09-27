@@ -8,7 +8,7 @@ import { inboundBaseUrl } from "@/lib/siteUrl";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 
-const accessTokenSchema = z.object({ accessToken: z.string().trim().min(1, "Paste a real Page access token.") });
+const accessTokenSchema = z.object({ accessToken: z.string().trim().min(1, "Paste a real Page access token.").max(4096) });
 
 // Facebook Page (Messenger + Lead Ads) — see src/lib/facebook.ts. Same
 // shape as the Instagram config: paste a Page access token, the Page is

@@ -6461,3 +6461,1015 @@ and `followup/research/product/2026-09-15-reaching-back-out-to-ignored-leads.md`
 - The number means what it says: the seeded default moved 5 → 3 (migration `20260925130000_quiet_reminder_default` moves rows still on 5). The special case that read 5 as "day 3" was dropped — it made the field show 5 while the first reminder went on day 3.
 
 **Weak spot:** an owner who deliberately chose 5 before today is moved to 3 with everyone else; there was no way to tell them apart.
+
+## 2026-09-26 — Hero sketching moved to Figma
+
+The founder chose to sketch the new hero in Figma rather than on paper. A board was set up in
+his team's drafts: **FollowUp — Hero sketch**, https://www.figma.com/design/DQXZgweQPGuLh9CPUBfAFS.
+It holds a "Read me first" brief (the story, the rules every direction keeps, the three questions
+from the 2026-09-25 hero research), rough first-screen frames for D1–D5 on the charcoal ground with
+the approved headline (A-013) and buyer line (A-014), and blank desktop (1440) and phone (390)
+frames with the maximum picture area dashed in. Green (`--sage`) stands in for the one
+"answered" colour and is explicitly a placeholder (R-004: build with a placeholder, change one
+value when he reacts). Nothing on the board is approved; R-014 stands until he picks.
+
+## 2026-09-26 — How the website redesign is made: the founder directs, Claude builds in Figma
+
+The founder's words: "I will be designing the website with the help of you, and you will be
+guiding me on Figma… I will be giving you the directions, and you'll be building it one by one."
+So: one section at a time, in the order he names, from his direction — not a full proposal to
+react to. The same Figma file now has a **Website** page (empty desktop 1440 and phone 390 home
+frames) above the **Hero ideas (reference)** page, a "FollowUp colours" variable collection
+(paper, card, line, ink, ink-soft, and `answered` as the one placeholder strong colour) and seven
+text styles (Display, serif emphasis, section heading, body, mono label, button). Everything
+still goes through the brain: check rejected.md before building what he describes, and say so if
+a direction runs into a rejection rather than silently building it.
+
+## 2026-09-26 — Team invites join through their link ^invite-link-copy
+
+**Why (security, not taste):** audit 2026-09-16 H-2. An invite used to join its address to the inviting team the first time that address signed in, silently — a stranger's admin could pre-claim anyone. Joining now needs the invite's own link (`followup/src/lib/inviteToken.ts`).
+
+- Team settings, pending invites: each row gets a small text button **"Copy invite link"** (turns to "Copied" for two seconds), beside the existing cancel ×. Same fallback as the booking-link button when the clipboard is refused.
+- Helper line under the invite form: "They join by opening their invite link and signing in with this email. If you have Gmail connected, we'll email the link to them; otherwise copy it from the list above and send it yourself." Replaces "They'll join automatically the next time they sign in", which is no longer true.
+- Sign-in page: after an invite link is opened, a quiet note names the team — "Signing in will add you to **{Business}**'s team. Continue with the Google account for the email address the invite was sent to." The name is read server-side from the invite the browser's cookie names, never from the URL, so a crafted link cannot show a fake team; `error=InviteLink` tells an invited person to open their link; `error=InviteInvalid` says the link is no longer valid. Coral for the two errors, ink-soft for the note — the existing error/notice styling on that card.
+
+**Weak spots:** not looked at in a browser inside Settings (needs a signed-in session and a database; the sign-in page states were checked as server-rendered HTML only). The Settings tier picker still promises "14-day free trial" to a business that already had one — since the same audit a returning business pays at checkout, so that line needs its own copy pass (frontend). Not a founder-approved design; logged here so the next session knows why the copy changed.
+
+## 2026-09-26 — Founder: "white background, everything black, close to ElevenLabs" ^light-elevenlabs
+
+**His words:** "Change your theme to white and black rather than black and white. The background
+should be white, and everything should be black, the typography and all. Close to ElevenLabs."
+Said after pasting the elevenlabs.io homepage ("look how cool this is") and asking to copy "the
+typography and everything … as simple as possible and impactful … the best hooks."
+
+**What it reverses, pending his reaction to the build:** R-006 (an all-light marketing page) and
+R-010's rule that the page follows the device theme. Not marked superseded yet: both stand
+until he approves the light build, and then get `SUPERSEDED (2026-09-26)` pointing here.
+
+**What was built (Figma, "Hero v3 · light", desktop 1440 and phone 390, below Hero v2):**
+- Warm off-white ground `#fdfcfc`, black type `#0a0a0a`, warm grey `#57534e` for secondary text.
+- The headline set in Public Sans **Light**, 64 desktop / 42 phone, with tight tracking. This is
+  the ElevenLabs principle (a thin display weight, set huge and tight) done with the typeface
+  already in the system, not their licensed Waldenburg.
+- The serif italic emphasis is dropped in this version, which deviates from the A-013 build
+  (the wording is unchanged). This is flagged to him, not decided.
+- The reply card is the one black object on the page, which makes the "answered" moment the
+  highest contrast on screen. The green placeholder accent is not used.
+- A "Light" mode was added to the "FollowUp colours" variables.
+
+**Copied from ElevenLabs:** principles only. A tiny, huge, thin headline; very few words per
+block; almost no colour; black pill buttons; warm-white calm. **Not copied:** their layout,
+font files, logo wall or voice-picker demo.
+
+## 2026-09-26 — The redesign moves from Figma to a Claude Design canvas
+
+Founder: "copy here, we will design in claude design", after asking why we weren't using it.
+The four built sections (A-022 hero, "Works with" strip, The gap, How it works, See it working)
+were copied into a Claude Design canvas: **FollowUp Landing Page**,
+https://claude.ai/artifact/R3b94hcjTh2f5AKaW6qbWx. It has two artboards, desktop 1440 and
+phone 390, built as real HTML. The hero's motion runs there: the message drops in, the reply turns
+over, on a slow 7-second loop, with none under reduced motion. The See it working tabs can be
+clicked. The Figma file stays as the record of earlier versions; new work happens on the canvas.
+
+## 2026-09-26 — The rest of the nine-section plan (A-023) added to the canvas
+
+Founder: "add everything that is stated to get the best conversion rate". Added on both
+artboards, following the conversion research (`research/landing-page/2026-09-26-conversion-strategies.md`):
+
+- **Try it** box inside See it working. Paste a message, get an example reply. It is marked
+  "EXAMPLE REPLY · WAITS FOR YOUR OK" and shows `[YOUR PRICE]` rather than inventing a price.
+  It is a mock-up: a real version would cost AI money per visitor. That's the founder's call, still open.
+- **Our promises**: four cards, IT STOPS / IT'S SAFE / IT'S HONEST / IT'S YOURS.
+- **Pricing**: "Free while in beta." Free $0, Plus $39 (the one outlined plan), Pro $79,
+  using the site's existing feature lists.
+- **Questions**: an accordion of six real questions, answered in the site's existing words, plus the
+  contact email. Correction made: the Instagram 24-hour answer now says it "writes the reply for
+  you to send, or sends it itself if you have allowed that", which matches hold-by-default,
+  not "sends automatically".
+- **Start free**: the big final button, with the three promises repeated under it.
+- **Tester quote slots**: two dashed boxes, one under the hero and one at the end. They stay
+  **empty until a real tester agrees**. No invented testimonials.
+
+**Weak spots, named:** the page is long on phone (~10,400px). The FAQ answers are dense for
+the grade-5 reading target. The Try-it box sits inside a section that already has tabs, which
+may be too much in one place.
+
+## 2026-09-26 — Trims, a different phone, soft washes, pen marks, and three facts
+
+Founder, in one run: "trim those, keep building", then the phone isn't meant to be the same as desktop
+(now brand principle 4), then "can we add gradients too in the theme and make it more human made",
+then "copy from apple too". All of it is on the canvas (version 6). **Not yet reacted to.**
+
+- **Trims.** The FAQ answers are now one or two short sentences each, still true to the product.
+  On desktop, Try it is the fourth tab of See it working instead of a separate box, and "Try it"
+  is in the top bar (the research says demos in the top bar get clicked most).
+- **Phone, rebuilt to the new rule.** Same words, far fewer pictures:
+  - The hero example is compact.
+  - The gap's list is cut. The gap's sentence still says it, and "One list" shows it.
+  - How it works is a numbered list.
+  - See it working is four tabs, one example at a time.
+  - The promises are a divider list.
+  - Pricing is a Free / Plus / Pro switcher showing one plan at a time (Plus first).
+  - The FAQ starts closed.
+  - The phone went from about 9,000px to about 6,000px.
+- **Gradients, within the old rules.** They are soft apricot, rose-sand and dusty-blue washes on the warm surface, with
+  a fine paper grain on top. They appear in exactly two places: behind the hero example and behind the final
+  "Start free". The page ground stays one tone (R-010's lesson). They are low-saturation and grained so
+  they don't read as the cheap gradients S-02 bans. Proposed values, not final tokens: `.fu-wash-hero`
+  and `.fu-wash-end` in the artboards' styles.
+- **"Human made", read as: marks a person's hand would make.** This is inferred; he hasn't said what he meant.
+  A two-pass pen underline under "follow up" and under "free" in "Start free.", and a loose pen arrow
+  from the customer's message to the reply (the arrow fades in with the reply). No handwriting font was
+  added, because adding a font needs his OK. No photos of people (R-011).
+- **From Apple, the principle only:** one true number, set big, with a short line under it. A slim band
+  after "Works with" shows **$0** while in beta, **2 min** to connect, and **1 list** a day of who needs you and why.
+  These are all product facts, with no counts or proof invented. It puts price and "the catch" inside the
+  first two screens (research 2.4). No Apple layout, type or imagery was reproduced.
+
+**Weak spots, named:**
+- The washes could still feel decorative. If he says "too much", the grain and the dusty blue are the
+  first things to drop.
+- The pen arrow is fixed while the reply animates, so it fades with it.
+- The phone frame height is estimated (6,100px), so there may be empty space at the bottom.
+
+## 2026-09-26 — Attio as a reference for data screens; a first FollowUp "People" screen
+
+Founder: "i want ui reference from Attio", then "how clean CRM data can look … spacing, tables, contacts,
+inbox, line interface, restraint colors, and how they make complicated data feel light." Typography stays
+ours ("we have the good one").
+
+- **Reference filed:** `references/crm/2026-09-26-attio-data-ui.md`. attio.com, Mobbin (paid) and the
+  analysis sites were blocked, so it's built from graded written sources, not screenshots. His own
+  screenshots would make it stronger.
+- **Applied on the canvas** as a new artboard, "App · people · desktop 1440". It's a proposal for the app, not
+  the landing page. It shows the ruled table (Name, Channel, Last message, Waiting, State), sorted by who needs
+  you first, with Priya's record open beside it. Her record has label → value attributes, including **"Why it's here"**
+  (brand principle 3), a quiet conversation timeline, and the held reply as the one black card.
+- **Proposed, not decided:** state colours live only in a 7px dot on a white pill. They are muted rust (needs you),
+  ochre (going quiet), slate (waiting), sage (reply ready) and greys (checked in, done). These are new colour
+  tokens, so they need the founder's OK.
+- **Not taken from Attio,** because its user is a desk power user and ours is an owner on a phone:
+  custom attributes, keyboard-first features, density for its own sake. On a phone, this table becomes a list.
+
+**Weak spots:** the table is desktop-only so far; the sidebar's "Sources" counts are sample numbers; no
+inbox view yet (the conversation lives inside the person's page).
+
+## 2026-09-26 — The inbox: customer conversations only, every channel, one list
+
+After A-024 ("both, build the inbox next"), three artboards were added: **App · inbox · desktop**,
+**App · inbox · phone**, and **App · conversation · phone**.
+
+- **What the inbox is, and isn't (PRODUCT_DIRECTION rule 4).** It holds only customer conversations, from
+  every connected channel, grouped by who needs you: *Needs you → Reply ready → Everyone else*. It has no folders,
+  labels, archive or "compose new email". A general email client is exactly the free-platform ground rule 4
+  warns about.
+- **Desktop:** three panes (sidebar, conversation list, open conversation). In the list, a row's state
+  is only a 7px dot, because the group label already names it. The open conversation shows the customer's
+  message, FollowUp's automatic welcome labelled as such, a thin event line ("FollowUp wrote a reply"), and
+  the held reply as the one black card with Send / Edit / Don't send. The header shows a true channel limit:
+  "Messenger lets you reply here for 23 more hours."
+- **Phone (brand principle 4, the phone rule):** the list is its own screen with filter chips and a bottom
+  tab bar (Today, Inbox, People, Settings). The conversation is its own screen, with the held reply at the
+  bottom and 44px buttons.
+- The same people and states as the People screen, so the two read as one product. The sidebar's Inbox
+  count is now 8 on both.
+
+**Weak spots:**
+- "Reply ready" and "Needs you" both mean "waiting for your OK", which may be one distinction too many. Worth asking.
+- The desktop conversation has no link to the person's attributes beyond "Open person".
+- There's no empty state ("You're all caught up") yet.
+
+## 2026-09-26 — The hero follows Intercom's sales order (the order only, not the look)
+
+Founder: copy Intercom's *sales hierarchy*, not its visual identity. That hierarchy is: clear proposition → short
+explanation → start free trial / view demo → "14-day free trial · no credit card" → social proof →
+product demonstration. It is applied to the hero on both artboards (canvas version 10):
+
+1. **Proposition:** A-013's headline, unchanged.
+2. **Short explanation:** A-014's buyer line stays as the first sentence. One new sentence follows,
+   built from the page's existing claims: "FollowUp reads your email, DMs and website messages, shows you
+   who is going quiet, and writes the reply. You decide what gets sent."
+3. **Start free + "See it work":** Start free stays the only black button. "View demo" became a quiet
+   link with a play mark that jumps to the Try it demo on the page. It is **not** a second conversion, so
+   A-023's one goal holds, and so does the research's warning against a second CTA (conversion-strategies §5).
+   If the founder wants a full second button, that deviates from A-023 and needs his say.
+4. **Risk reversal:** "Free while in beta · No credit card" on one line, then "Nothing sends without your OK
+   · Delete everything, any time" on the next. These are A-022's three promises, now set as two short lines.
+   No invented trial length.
+5. **Social proof:** the tester slot moves directly under the buttons and is shaped like a real quote
+   (quote, face, first name · trade · city). It stays **empty until a real tester says yes**. There are no
+   logos or counts, because nothing real exists yet (research 2.6, A-010).
+6. **Product demonstration:** the message → reply example. On desktop it stays on the right (A-022). On the
+   phone it now comes after the proof, in Intercom's order.
+
+**Weak spot:** the empty proof slot sits in the most valuable spot on the page. Until a tester quote exists,
+it shows a gap to anyone looking at the design. Getting two or three quotes from testers is now the
+highest-value thing the founder can do for the landing page.
+
+## 2026-09-26 — Landing examples in the line style; the Today screen; Duolingo, calmly
+
+"keep building", then, mid-build, "study Duolingo for its progress completion celebration habit loops and
+look where we can implement in our product." Canvas version 11.
+
+- **Landing product examples now follow A-024.**
+  - The gap's "Today" list, the held-reply example and the "One list" example use hairline rows.
+  - A small channel icon sits beside each name, and a white pill with a coloured dot shows each state. The heavy shadows are gone.
+  - The hero's message → reply stays as approved (A-022).
+- **Today, the app's home** (desktop, phone, and the phone's "all caught up" state), using the Duolingo study
+  (`research/ux-patterns/2026-09-26-duolingo-progress-and-completion.md`):
+  - A finite list, "4 customers are waiting on you", with a thin progress line: "1 of 5 handled today · When
+    the list is empty, you're done for today."
+  - Two groups: **Needs you** (Review) and **Ready to send** (Send, or "Send both" for the routine pile only).
+  - **This week** leads with a real win, "Tom Reid came back and booked", beside outcome counts (answered,
+    came back, booked). There's never a count of messages sent.
+  - **All caught up:** a pen-drawn check, "You're all caught up.", the day's line full, and one promise about
+    notifications. No confetti, no animation.
+- **Not taken from Duolingo:** streaks, XP, leagues, the mascot, and guilt or urgency reminders. These were already
+  excluded, and the study adds Duolingo's own cost: in one survey, 62% of users felt guilty after missing a day.
+
+**Weak spots:** the "This week" numbers and Tom's story are sample data; the caught-up screen reuses the hero
+wash, so the gradient has now spread into the app (a third place). Ask whether that's wanted.
+
+## 2026-09-26 — The start flow: sign in → connect → the proof screen
+
+"keep building", then "where we let the design lets continue". Canvas version 13. Three phone screens, in the
+Attio-line style (A-024), in the order a new customer meets them after "Start free":
+
+1. **Sign in (private beta).**
+   - The founder's own wording: "FollowUp is in a private beta. Sign in with the Google account Sahil added."
+   - One black "Continue with Google" button, with the same two reassurance lines as the hero.
+   - Below a rule: **"Not in the beta yet? Email Sahil"**, a mailto link with a note already written (research §3.2). It is marked on the
+     screen as a **proposal that needs his OK**, because R-012 (the private beta) is his rule.
+2. **Connect your sources** ("Where do your leads come from?", the existing wording).
+   - One ruled list: Gmail or Outlook, Instagram, Facebook Page, WhatsApp, Website form. Each row uses the
+     existing onboarding line.
+   - A connected inbox shows "Reading the last 90 days…". That matches the real first sync, which uses `newer_than:90d`.
+   - One promise line underneath, and "Step 2 of 3".
+3. **The proof screen** (the research's highest-priority item, `2026-09-10-ux-simplification.md` §3).
+   - "From the last 90 days: 3 customers never got an answer." Then counts: 14 wrote, 11 answered, 3 waiting.
+   - Priya's real-looking message, and her reply as the one black card: "Your reply is ready · it waits for your OK".
+   - "See all 3 on Today", or "I'll look later".
+
+**Depends on a product decision, not a design one:** the proof screen needs the first replies to be written
+**right after connecting**. Today drafts come from the hourly automation, so a new user may see the reply later.
+This was already asked of the founder ("can FollowUp write drafts at night / right away?") and is still open.
+
+**Weak spots:**
+- Sign-in and connect are phone-only so far. Desktop would be the same column, centred.
+- The proof numbers are sample data.
+- "Continue with Google" has no Google mark. Google's button rules may require their own button style when this is built.
+
+## 2026-09-26 — The phone app, rebuilt: one decision per screen (after R-015)
+
+The founder said the phone screens were too complex to use. The phone Today, Inbox, conversation and
+all-caught-up screens were rebuilt in place (canvas version 14), and the proof screen was lightened:
+
+- **Today:** "4 people need you." Then **one** person card: name, channel and age, their message, and your reply
+  as the black block with a big **Send** and an **Edit**. Under it, a plain "Next" list of three names. The
+  progress bar, section labels, "Send both", the win card and colour dots are gone.
+- **Inbox:** a title, then "Needs you" and "Earlier". Each row is a big avatar, name, one line and a time. A single
+  black dot marks who needs you. There are no chips, no coloured states and no channel icons.
+- **Conversation:** back, name, channel. Her message, the auto-reply (labelled "Auto-reply"), and your reply
+  with Send and Edit. The window-time line and the event divider are gone.
+- **All caught up:** a pen check, "You're all caught up.", one sentence, and one quiet line: "This week: Tom Reid
+  came back and booked." No wash, no progress bar, no grid. This also removes the gradient from the app.
+- **Tab bar:** three tabs (Today, Inbox, Settings) instead of four. On the phone, People lives inside Inbox.
+- **Phone labels:** sentence case at 13–14px instead of mono capitals, which read as technical on a phone.
+- **Proof screen:** the stats grid is gone. One sentence now leads into Priya's card.
+
+**Weak spots:**
+- "Don't send" is no longer on the phone reply block; it would sit behind Edit. Check that's acceptable
+  (principle 1: the owner must always be able to stop a message).
+- Removing the Messenger window line hides a real deadline. It should come back only when the window is
+  about to close, as the existing "window shuts in N hours" badge already does.
+
+## 2026-09-26 — Calendly: one job, and the follow-up plan as one card
+
+"study Calendly for one job: simplicity for follow-up application. Make the co[r]e instantly understandable."
+The study is `research/ux-patterns/2026-09-26-calendly-one-job-simplicity.md`. It's on the canvas as a new phone screen,
+**App · settings**, version 16:
+
+- **"Your follow-up plan"** is one card, Calendly's pre-made "30 minute meeting" in our terms, taken straight
+  from the live code (`reminderCadence.ts`):
+  - Right away: a quick "got your message" reply.
+  - Day 3, 7, 14, 30: a check-in, if they go quiet.
+  - Then: it stops, and it stops the moment they answer.
+  - Always: every other reply waits for your OK.
+  - One "Change" link. No workflow builder on this screen.
+- **"Where customers write":** the connected sources, plus "Add another".
+- **"Sending":** one switch, "Send simple replies by themselves", off by default, with "Anything about price always
+  waits for you."
+- Everything else is behind **"More settings"**.
+
+**Proposed, needs the founder:** three top-level places across the app (Today, Inbox, Settings). Pipeline,
+Analytics, Follow-up plans and Activity would stop being pages of their own. That goes one step past the
+2026-09-10 proposal of four, and it removes pages that exist today.
+
+## 2026-09-26 — Founder's one-by-one answers on the open design questions
+
+Answered one at a time, each recorded where it belongs:
+- "Don't send": a quiet link on the phone (A-026).
+- Meta window time only when nearly up (A-028).
+- Desktop keeps coloured dots, but only "Needs you" is bold (A-029, R-016).
+- One group, "Needs you" (A-030).
+- Keep "handled today" on desktop (A-031).
+- Keep the landing washes (A-032).
+- No handwriting font (R-017).
+- "See it work" stays a link (A-033).
+- The weekly email leads with the win (A-034).
+- "Email Sahil" on the beta sign-in (A-035).
+- First replies right after connecting: a product decision, logged in PRODUCT_DIRECTION.md (2026-09-26).
+
+## 2026-09-26 — The founder's analytics page, designed (Admin · how FollowUp is being used)
+
+Founder: "Where is the design of analytics for me?" The code had been written first; this corrects the order.
+There are two artboards (desktop and phone, canvas version 22) with this week's real, counts-only numbers:
+
+- **Leads with the one thing to act on:** "Replies are being written. Most are still waiting for an owner to
+  press Send." Then four big numbers (the Apple principle): 27 customers got a written reply, 5 sent by owners,
+  23 waiting for an OK, 1 came back.
+- **The week against the week before**, as a ruled table: new customers, replies written, sent by owners, sent
+  automatically, quick "got it" replies, "Don't send", came back, and accounts where someone acted.
+- **Which parts get used:** "x of 10" with a thin bar each.
+- **Website visits:** it links to Vercel, with the honest empty state "Starts counting once Analytics is
+  switched on in Vercel".
+- The phone shows the same content stacked: numbers 2×2, then a plain list (R-015: no table on the phone).
+
+**Two counting fixes found while designing:**
+- "Replies written" counted repeat hold events. It now counts customers.
+- "Waiting" counted a stale column. It now uses the latest decision.
+
+**Not yet matched:** the live code's section still uses the current app styling and has no big-number band.
+Once the founder approves this design, the code follows it before shipping.
+
+## 2026-09-26 — The weekly email, designed (A-034: lead with the win)
+
+Three phone artboards (canvas version 23), one for each kind of week. The email stays **plain text** from the
+owner's own Gmail to themselves, as the code sends it today (`gmail.ts`, text/plain). So the design is words and
+order only: no bold, no buttons, no brand colour. The link is blue only because every mail app does that itself.
+
+- **A week with a win:** the subject and the first line are the win ("Tom Reid came back and booked"). Then one
+  sentence on how: quiet for 3 days, FollowUp checked in, replied 5 hours later, booked for Thursday. Then the
+  week in outcomes (customers answered, came back, booked). Then the replies waiting for an OK, by name, with
+  "Nothing goes out until you send it." and the link.
+- **No win yet, replies waiting** (the most common week today): leads with the waiting replies, by name, channel
+  and how long. The week is one sentence at the end.
+- **A quiet week:** "A quiet week." Then one sentence: answered, nobody back yet, nothing waiting.
+
+**Why the waiting names are in it:** the analytics page found 23 replies waiting against 5 sent by owners. The
+email is the one place that reaches an owner who hasn't opened the app.
+
+**Code changes this needs (not built):**
+- "Customers answered" must count distinct customers who got any reply that week. Today's digest counts
+  automated sends ("Answered for you"), which is messages, not customers (principle 7).
+- The win needs the booking per customer (`Booking.scheduledAt` for that lead); today the report only has a
+  total.
+- The waiting list uses `getPendingApprovals`: `leadName`, the channel, and `heldAt` for "waiting N days".
+- The link goes to Today once the navigation cut ships; until then, `/dashboard`.
+
+**Weak spots:** the win sentence depends on the trigger being a check-in on silence. A win from the instant
+"got it" reply or from the owner's own send needs its own wording, and the owner's own send is not FollowUp's
+win and must not be claimed as one.
+
+## 2026-09-26 — The weekly email becomes a designed email (Wispr Flow structure)
+
+The founder asked for the weekly email to be "more professional and interesting", like Wispr Flow's, with
+background imagery, the logo, links and gradients, and the company at the end. Streaks were to be skipped. Two
+artboards, **Weekly email · designed** (phone 390) and **· desktop mail 760** (canvas version 25):
+
+1. **Header:** the landing wash with grain as the background image, the FollowUp lockup, the week's dates, and
+   "Your week, Northside Plumbing".
+2. **This week's win:** a white card overlapping the header. "Tom Reid came back and booked.", one sentence on
+   how, and a chip with the booking time.
+3. **The week in customers:** three big numbers (answered, came back, booked), each with "Last week: N".
+4. **Waiting for your OK:** "3 replies are written and waiting.", three rows (name, channel, how long), one black
+   button **Open FollowUp**, and "Nothing goes out until you send it."
+5. **Where customers wrote from:** thin bars by channel, then "Busiest time: most messages came in between 6 and
+   9 PM."
+6. **Footer on the closing wash:** the lockup, "So no customer gets forgotten.", Website · Privacy · Terms ·
+   Contact, "Write to Sahil", and why they get this (from their own Gmail, every Monday).
+
+A-037's order still holds for the action: the win first, then who's waiting. Here the numbers sit between
+them, following Wispr's highlight-then-numbers pattern. **Flag for the founder:** that is a small change from
+A-037 (numbers last). Kept here because the numbers are now compact and visual.
+
+**Weak spots:**
+- The pen underline from the landing isn't used. SVG doesn't render in Gmail, so it would need to be an image.
+- Gmail and Outlook render CSS gradients inconsistently. In code the washes must be hosted PNGs, not CSS.
+- "Busiest time" and "Where customers wrote from" are new counts that need code, and the busiest time must use
+  the business's time zone.
+- The plain-text versions (A-037) remain as the text part of the email, for clients that block images.
+
+## 2026-09-26 — Reply cards: from black to the landing gradient
+
+A canvas comment from the founder: "too black ... gradient things". Every big black reply card (7 screens, 11
+cards) now uses the landing wash, with grain, dark text and a black Send (canvas version 26). Buttons, dots and
+progress bars stay black, because each is one small action or state. Recorded as R-018.
+**Weak spot:** on the landing hero the reply card now sits on a washed panel, so it's gradient on gradient. It
+reads, thanks to its border and shadow, but it's softer than before. Worth watching.
+
+## 2026-09-26 — "We talked" drawn (proposed; from the Close study)
+
+From `followup/research/product/2026-09-26-close-follow-up-workflow.md` #1 (Close's "Mark as Responded"). Two phone
+artboards next to the conversation (canvas version 27):
+
+- **Before:** under Send and Edit, two quiet links: **We talked · Don't send**.
+- **After one tap:**
+  - the reply card goes;
+  - the history gets a line: "You talked with Grace · Today, 10:12";
+  - a white note says "FollowUp won't check in with Grace. If Grace writes again, it shows up here like any new
+    message.";
+  - a toast says "Check-ins stopped for Grace", with **Undo**.
+- No confirm dialog: Undo is the safety net (calm, one tap). The toast is white, not black (R-018).
+
+**Weak spots:**
+- Two quiet links side by side could be mis-tapped. Each is a 44px target, and Undo covers the rest.
+- A person with no waiting reply (only a check-in coming up) also needs the link, on the person page header. That
+  isn't drawn yet.
+- Desktop gets the same link beside "Don't send". Not drawn, to leave the approved desktop boards alone until this
+  is approved.
+
+## 2026-09-26 — Landing: "How it works" as outcomes, and three example stories (Notion study)
+
+Founder: "yes design both" (Notion study #1 and #2). On the canvas (version 28), desktop and phone:
+
+- **"How it works" → "What changes".** The heading is "Two minutes to connect. Then this changes." The three
+  cards say what changes for the owner, not what the machine does:
+  - "Every message gets a reply" (was "Connect your inbox");
+  - "You see who's slipping away" (was "It spots who is going quiet");
+  - "You step in only when it matters" (was "It writes the reply. You decide.").
+
+  The section's `id="how"` stays, so the nav link still works.
+- **A new section after it, "Examples · How a normal week goes."**, with "Made-up names, real situations." Three
+  cards (Dan the plumber at 7:40 PM, Maya the realtor at a showing, Ana the salon owner mid-cut). Each has the
+  customer's message, what FollowUp did, and a ticked outcome ("Visit booked for Thursday").
+- **Honesty:** they're labelled as examples, twice (the section label and the line under the heading). A-023 still
+  holds: real tester quotes only when testers agree. These cards are replaced by real stories then.
+- The stories repeat the product's promises in action: a price waits for the owner's OK, a day-3 check-in, a reply in
+  Spanish.
+
+**Weak spots:**
+- The numerals 1-2-3 stay on the outcome cards (A-023's approved look), but outcomes aren't a strict sequence.
+- The page is about 440px longer. The stories section sits between "What changes" and "See it working", which
+  now shows similar replies again; watch for repetition.
+
+## 2026-09-26 — Trust and control, drawn (Mercury study)
+
+Founder: "yes design both build all" (all five proposals in
+`research/ux-patterns/2026-09-26-mercury-trust-and-control.md`). Drawn on the canvas, version 29:
+
+- **Landing, "Our promises" becomes "Your control."** The approved heading and the four promise cards stay (A-023).
+  Two ruled lists are added under them:
+  - "What it can see": the four Google permissions, in plain words.
+  - "What stays in your hands": every reply waits, pause all sending, only admins send, a new sign-in email.
+
+  Then one honest line, "It can't see anything you haven't connected. And we say plainly what we haven't done yet.",
+  and a link to /security. On phone, the list rows are titles only (R-015: less on the phone).
+- **/security, "Security, in plain words."** Six sections with an "On this page" list:
+  - what it can see, with each technical permission name beside it;
+  - how it's kept;
+  - what you control;
+  - who else handles it;
+  - **what we haven't done yet** (no SOC 2, no outside penetration test, Google verification still in progress);
+  - found a problem?
+
+  The footer gets a Security link.
+- **App, Settings.** A "Your rules" card (the rules FollowUp already follows, as plain sentences), "Pause all sending",
+  "Only admins send" (a switch under Your team), and a row to "Sign-ins and security".
+- **App, Sign-ins.** Where the account is signed in (device, city, when), "Sign out everywhere", and a note that
+  new sign-in emails are always on.
+- **Email, new sign-in.** Sent from FollowUp's own address. It shows the device, the rough location and the time,
+  "If this was you, you don't need to do anything", and "Not you? Sign out everywhere".
+- **Today, paused:** "Sending is paused. Everything waits for your OK." with Resume.
+- **Today, as a teammate when only admins send:** Edit only, and "Only admins send on this account."
+
+**Honesty rules applied:** every claim was checked in the code first. Nothing claims SOC 2, "bank-grade", or a
+badge. The claims about pause, admins-only and sign-in emails only go live on the landing page after those features
+ship.
+
+**Weak spots:**
+- /security is long, which suits a reference page but not a skim.
+- The landing section grew about 575px on desktop.
+- Pause matters only when auto-send is on. With the default ("every reply waits"), it has nothing to hold, so the
+  button shows only when something can send by itself.
+- Sign-in emails need Resend configured in production. Without it they're silently skipped, like the existing alerts.
+
+**Built (same day), PR #338 `claude/trust-controls`.** Canvas version 30 was changed to match what shipped:
+- **"An email when someone new signs in" became "Recent sign-ins"**, on the landing page and on the Sign-ins board.
+  The email only goes out when Resend is set up in production, and the page must not promise it before then.
+  /security shows the email line only when it's configured.
+- **"Where your account is signed in right now" became "Recent sign-ins."** Sessions live in a cookie, so FollowUp
+  can list sign-ins but can't see which browsers still hold a session.
+- **"Sign out everywhere" says "within 5 minutes".** That's the revalidation interval.
+- **"Sign-ins end after a week" was dropped from /security.** The one-week absolute limit is on the dev branch and
+  not on main yet.
+- **Your rules no longer claims "after the last check-in, it stops for good".** Dead-lead reactivation can still write
+  later. It says the We talked rule and who can send instead.
+- **Pause lives inside the existing permission card.** When something sends by itself, "Pause all sending" is the
+  button and "Stop sending by itself for good" is the quiet link. This avoids two near-identical switches.
+
+## 2026-09-26: A-040 built (PR #339)
+
+- "What changes" and "How a normal week goes" are now on the live landing page. They use the live page's card
+  style (icons, not thin numerals), because the live page hasn't moved to the canvas design yet.
+- The wording is exactly as approved.
+
+## 2026-09-26: Outcome-first copy drawn (Ramp study)
+
+Founder: "yes design all four, for 5th keep that in mind". On the canvas, version 32:
+
+1. **Features grid → "What you get · Less chasing. More booking."** Six outcomes, each with the feature as the small
+   line: No message missed · Catch them before they go cold · Answer in any language · Check-ins you'd forget (day 3,
+   7, 14, 30; stops when they answer) · Customers answer with one tap · Nobody's customers get dropped.
+   - These are new boards (desktop and phone) for the **live** landing page.
+   - The canvas page plan (A-023) folded Features into "See it working", so this section isn't added to the canvas
+     Main or Phone boards.
+2. **Pricing lines outcome-first on Main and Phone.** For example, "No email or form enquiry missed", "Catch customers
+   before they go cold", "Every Monday: who came back, who booked", "Every new customer gets an owner". Limits (20
+   customers a month, no limit on customers) and "Priority support" stay as they were.
+3. **The app's weekly result line was already designed.** Desktop Today's "This week" block shows answered, came
+   back and booked. On phone it stays off Today (R-015 rules out outcome grids there). Building it means the live
+   stat cards get the "this week" label and "booked".
+4. **Heading:** "Everything you need, nothing you don't" → "Less chasing. More booking."
+5. **Kept in mind, not built:** a real proof number (for example, "Testers answered N customers this month") once
+   testers agree (A-023).
+
+The "time saved" estimate wasn't answered, so no estimate appears anywhere. Every number shown is true by
+construction (days 3/7/14/30, 6 channels).
+
+**Weak spots:** "Customers answer with one tap" only holds on Instagram and Messenger (quick replies). The small line
+says "made for DMs", but a reader could still take it as true for email.
+
+## 2026-09-26: AI inside the workflow, drawn (Intercom study)
+
+Founder: "yes design all five". On the canvas, version 33. These are new boards; the approved boards are untouched.
+
+1. **WordsCompare.** The four places the app still says "AI", and what each should say instead:
+   - "AI-suggested follow-up" → "Your reply, ready"
+   - "Consent & AI activity" → "What FollowUp did"
+   - "AI-scored 12" → "12 sorted by how likely they are to book"
+   - "Live AI voice agent" → "Answers your calls"
+2. **"Based on" (InboxAI desktop, ThreadCatchUpPhone).** One quiet line under the reply naming what it used, for
+   example "her message this morning and the $6,500 you quoted on Sep 20". It only names facts that are in the
+   conversation. A first draft cited "your Saturday hours in Settings", which is a setting FollowUp doesn't have, so
+   it was cut.
+3. **Rewrite (InboxAI desktop, EditRewritePhone).**
+   - Desktop: "Rewrite it: Shorter · Warmer · More formal" under the actions.
+   - Phone: the chips live inside Edit (R-015: less on the phone screen). "In Spanish" appears when the owner typed in
+     a language other than the customer's, with the line "You wrote in English. Ana wrote in Spanish."
+   - It still waits for OK.
+4. **"Sent as written" (TodayProof).** Under This week: "You sent 18 of 21 replies without changing a word. The other
+   3 you edited first." It's measured from `FollowUp.draftEdited`, which is stored for every account.
+5. **Catching up (ThreadCatchUpPhone).** At the top of a long conversation: "Priya asked about a full bathroom redo.
+   You quoted $6,500 on Sep 20. She went quiet, then asked if Thursday still works." It has a "Show all 9 messages"
+   link.
+
+**Weak spots:**
+- "Based on" and "Catching up" need the model to report what it used. That's a backend change, and it costs one more
+  small model call per long conversation.
+- "Sent as written" can look low for owners who like to edit. That's still true, and it's the point.
+- "More formal" vs "Warmer" might overlap for some owners.
+
+### 2026-09-26: Intercom "show the work" built (A-043)
+Founder approved all five designs from canvas v33. They're built in PR #342. "Based on" is deterministic, so it's
+checkable and free. The catch-up summary is cached per message count, so it costs one model call per new message at
+most. The rewrite chips got a taller tap target on phones after self-review.
+
+### 2026-09-26: Zapier study drawn (canvas v34, proposed)
+The founder said "yes design all five". The five boards:
+- **Rules** (desktop): four rule cards as "When …, FollowUp …" sentences, each with a switch, an editable number, a
+  "stops when" line, a "This week" record and "See an example" (shown open). "Your rules" (A-041) stays beside them.
+- **RulesPhone:** the four sentences and switches only (R-015).
+- **RuleDetailPhone:** one rule opened, with a day stepper, the record and an example marked "Nothing was sent".
+- **RuleBlockedPhone:** Today when nothing can send ("Check-ins can't go out", with Reconnect Gmail).
+- **Plans** (desktop): three ready plans shown as day timelines, one open to edit, and "Start from scratch" as a quiet
+  link.
+
+Weak spots I noticed:
+- The desktop cards show the record and the example together, which is dense. On the phone the record is on the
+  detail screen only.
+- The ready plans' step wording is a first draft.
+
+### 2026-09-26: Conflict check across today's studies (Notion, Mercury, Ramp, Intercom, Zapier)
+The founder asked me to check that the studies and references don't conflict.
+- **Consistent:**
+  - A-044's rule cards keep "Your rules" (A-041) beside them.
+  - Plans stay under Settings (A-027).
+  - No "AI" labels (A-043, S-13).
+  - No invented numbers (A-023). The "This week" records come from real holds and sends.
+  - Nothing re-proposes a rejected item.
+- **Fixed while building:**
+  - The instant-reply card says "writes a short thank-you" on a holding account, never "thanks them" (it would be
+    held).
+  - The record says "sent", not "you sent", because a rule can send on its own.
+- **Open, founder's call:** Today is gathering more pieces:
+  - "This week" tiles (A-042);
+  - "sent as written" (A-043);
+  - the can't-send notice (A-044);
+  - "Coming up", still to design.
+
+  A-027 said analytics would become "one line on Today". Today now shows more than that, so ask whether to fold the
+  numbers into one line.
+
+### 2026-09-26: Todoist study drawn (canvas v35, proposed)
+The founder said "yes design all five". Six boards:
+- **TodayCalm** (desktop):
+  - "Start with Priya. She's waited 5 hours…".
+  - The A-031 handled line.
+  - Needs you ordered longest-waiting first, with "Waiting 5 h" on each row and a quiet "Later" (menu shown open).
+  - "About to be lost" lists only people who aren't already above.
+  - The A-045 week line.
+  - A "Coming up" card grouped by day.
+- **TodayCalmDone** (desktop): "You're done for today." with what FollowUp keeps watching, the next real thing, and
+  Coming up. No confetti.
+- **TodayCalmPhone:** the wait on the card, Later beside "Don't send", and a single "Coming up" line.
+- **LaterPhone:** a sheet with "Later today · 2:00 pm", "Tomorrow morning · 9:00 am", and "comes straight back if she
+  writes again". Later changes product behaviour, so it's the founder's call.
+- **ComingUpPhone:** the list, grouped by day.
+- **TodayDonePhone:** the done state, minimal (R-015).
+
+Weak spots I noticed:
+- Adding "Later" next to "Don't send" is a change to A-026's reply block. It needs his explicit OK.
+- The desktop row now carries four things on the right (wait, Later, action button). It's busy.
+
+### 2026-09-26: A-046 part 1 built (PR #345), and two notes
+- **SUPERSEDED ORDER:** the founder's 2026-09-23 instruction ("sort according to the sources then scores") is
+  superseded inside each source by A-046's "longest waiting first". The source grouping stays and score breaks ties.
+  This is flagged to him in the PR, and reverting is one line.
+- **No pronouns in generated copy.** The canvas drew "She's waited 5 hours" and "She comes straight back if she
+  writes again". The app can't know anyone's pronouns, so the built copy uses the name or a relative clause: "Start
+  with Priya, who has waited 5 hours". Apply this to Later's sheet too.
+
+### 2026-09-26: A-046 finished, and A-044 part 2 built
+- **Merged:** #345 (calm order, handled line, done state, once each), #346 (Coming up), and #347 (Later, with the
+  `lead_later` migration). A-046 is fully built.
+- **Built, awaiting merge:** #348, "See an example" on each rule (A-044 part 2). It makes one model call per tap and
+  never stores or sends.
+- **Left from A-044:** the ready-made follow-up plans (Plans board).
+
+### 2026-09-26: #349 merged (A-044 done), and the Amplitude study drawn
+- **Merged:** #348 (see an example) and #349 (ready plans). A-044 is fully built.
+- **First value, agreed by the founder ("yes merge it, design all five"):** first value is *a customer got a reply
+  that FollowUp wrote* (the first message a rule wrote that went out, approved or automatic). A tester is
+  **activated** when that happens within 7 days of first signing in. **Proof** is that customer writing back. Proof
+  is shown when it happens but isn't needed to count as activated. It goes into `PRODUCT_DIRECTION.md` when it's
+  built.
+- **Drawn on the canvas (v36), all proposed:**
+  - **FirstValueDefinition:** the three sentences, so every screen and study uses the same words.
+  - **AdminActivation** (desktop): the four-number band (activated, median days to first value, back in week 2,
+    customers who wrote back).
+    - One sentence names the biggest drop and the slowest step.
+    - Then the eight-step funnel (Invited → … → Back in week 2), with the median time since the step before.
+    - Then "Who's stuck", longest first, with the last step, why, days stuck, and an Email link.
+    - All numbers are labelled "Sample numbers".
+  - **AdminActivationPhone:** the headline number, one sentence, who's stuck, and a link to every step (R-015).
+  - **FirstValuePhone / FirstValueToday:** a single calm card above the usual list: "Your first reply went out
+    through FollowUp. Priya Shah got it on Instagram this morning. From here FollowUp keeps watching, and tells
+    you when Priya writes back." It uses the name, not a pronoun, and appears once. No confetti or streaks.
+- **Guardrails kept:** no analytics SDK, counted from our own tables, founder-only. There are no automatic emails to
+  stuck testers; the Email link opens the founder's own mail.
+- **Weak spots I noticed:**
+  - "Back in week 2" sits in the funnel, but its base is activated testers, not the row above. That could mislead.
+    It may belong only in the band.
+  - The Today card must know when to stop showing. "Once" needs a stored flag, which is a small schema change.
+
+### 2026-09-26: A-047 approved and built (PR #350)
+- **No schema change for "once":** the Today card shows only on the day the business's first value happened. The
+  send already carries its date, so nothing new is stored.
+- **The instant "got your message" doesn't count as first value.** It's the same boilerplate for everyone, which
+  matches how admin usage already treats it (Message.trigger in the schema). This narrows "whether approved or by
+  itself" by one case. It's flagged to the founder.
+- **Kept as drawn:** "Back in week 2" stays as the last funnel row, even though its base is activated testers.
+- **Replaced:** the old four-number tester box on /admin (Added, Signed in, Inbox connected, First lead). The new
+  steps cover it, and connected now means any source.
+
+### 2026-09-26: #350 merged (A-047 built), and the Framer motion study drawn
+- **Merged:** #350, first value on /admin and Today.
+- **Drawn on the canvas (v37), all proposed.** Motion is drawn as storyboards: frames in time, each saying what moves,
+  for how long, and what happens under reduce motion.
+  - **MotionCloseUp:** Today after the undo window ends. The card folds into "Sent to Priya" (180 ms), that line
+    fades, and the cards below slide up on a spring (about 220 ms). Omar ends where Priya was. Don't send and Later
+    work the same way ("Won't send to Priya", "Priya set aside until 2:00 pm").
+  - **MotionUndo:** a thin line under "Sending to Priya in Xs · Undo" drains in a straight line over the 10 seconds.
+    It stops on Undo and the buttons come back. The safe pile gets the same line.
+  - **MotionOpen:** the Later menu grows from "Later" (150 ms, from the top right). "See an example" opens downward
+    and pushes the rules below. "Every step" opens in place. Closing takes 120 ms.
+  - **MotionRetire:** removes the load fades on Today, Pipeline's stagger and count-up, and the unused sparkle and
+    tilt. The landing hero is unchanged. This decides the open item in `brand/motion.md`.
+  - **MotionTokens:** `--motion-fast` 150 ms, `--motion-move` 220 in and 120 out, `--motion-layout` a spring, and
+    `--motion-time` linear. These are `[TO DECIDE]`, so they're the founder's call.
+- **Weak spots I noticed:**
+  - Storyboards show timing but not feel. The only honest check is the built thing, in a render recording.
+  - The close-up only happens after the undo window ends. For those 10 seconds the card is still there, which is
+    right, but the send can feel delayed. The undo line is what makes that wait make sense.
+
+### 2026-09-26: A-048 approved and built
+- **PR #351:** the close-up on Today, the undo line, open in place, and the tokens.
+  - One deviation from the storyboard: the result line holds 0.7 s, not 0.2 s, so it can be read. Flagged in the PR.
+  - The close-up animates position only (`layout="position"`), so nothing gets stretched. Reduce motion skips it
+    through the existing `MotionConfig`.
+  - The undo line is a CSS animation rather than framer. Framer's reduce-motion handling would have jumped it to
+    empty; CSS lets it hold still.
+- **PR #352:** removals. `FadeIn`, `Reveal` and `CountUp` are now unused in the app but still in the codebase. Only
+  sparkle and tilt were approved for deletion.
+- `brand/motion.md`'s three `[TO DECIDE]` items are marked decided.
+
+### 2026-09-26: the founder's reference strategy, and A-049
+- The founder shared a reference strategy PDF. It's transcribed and checked against what exists in
+  `research/2026-09-26-reference-strategy.md`, and its key rule is added to `workflows/design-review.md`.
+- **First conflict resolved:** the hero gets a second, lower-commitment action (A-049, option B, PR #353).
+- **Still open:** the activation wording (PDF vs A-047), and the gaps listed in that file (Close unstudied,
+  Intercom conversion, HubSpot pricing, Connect → Find → Follow up, proof, depth, "Waiting for customer", offering
+  automation once trust is earned).
+
+### 2026-09-26: the Close study drawn (canvas v38)
+All proposed. Sample names only, and no pronouns in product copy.
+- **ThreePlaces** (desktop):
+  - One line under the headline: "Needs you 3 · Waiting on customers 7 · Handled today 4".
+  - The week line now leads with "customers heard back in 6 min" (median, from our own records).
+  - The sidebar reads "Customers".
+- **WaitingOnCustomers** (desktop) and **WaitingPhone:**
+  - Everyone we answered who hasn't answered back yet.
+  - Columns: last from you, when, and what happens next, e.g. "Checks in Monday, unless Omar writes first." It also
+    covers "Last check-in sent…" and "You marked We talked…".
+  - Nothing to do on this page.
+- **ThreePlacesPhone:** a single line, "7 waiting on customers · 4 handled today", under the headline (R-015).
+- **CustomerWords:** where the app says "lead" and what it becomes. The route stays `/leads`, and the A-013 hero
+  line stays.
+- **UnlessCheckIn:** Coming up, with each check-in stating its condition.
+- **ProofWaiting / ProofWaitingPhone:**
+  - A landing proof section built from a tester's own before and after reply time plus their words.
+  - Brackets are placeholders on the board only. The live section renders only when every field is real and agreed
+    (A-023).
+- **Weak spots I noticed:**
+  - "Waiting on customers" needs a clear rule for who's in it: the last message is ours, it's not closed, and the
+    customer hasn't said stop. Someone who got only the instant acknowledgement probably belongs in Needs you, not
+    here.
+  - The reply speed needs a definition. Median time from a customer's message to our first reply (sent by anyone),
+    this week.
+
+### 2026-09-26: A-050 built (PRs #354, #355, #356)
+- **#354 words:** "customer" on owner-facing screens. Technical Settings sections, Meta's "Lead Ads", admin, routes
+  and the A-013 hero stay as they are.
+- **#355:**
+  - The places line lives inside the approval queue, so it's live as the owner sends.
+  - `isWaitingOnCustomer`: not closed, the newest message is ours, and the instant ack isn't an answer.
+  - `nextFor` is shared by Coming up and `/waiting`.
+  - Reply speed is the median from the first customer message of a turn to the first non-ack reply, this week.
+  - Weak spot: desktop shows "Handled today" twice (the new line and A-046's progress line).
+- **#356:** `PROOF_STORIES` ships empty. The section doesn't render until a story is complete and has a consent
+  date.
+
+### 2026-09-26: the Intercom study drawn (canvas v40)
+The founder had saved canvas v39 with one change: an empty white box on the Main board, with no text. It's kept as
+it is (the publish sent only the new boards). It's not treated as feedback.
+
+All proposed:
+- **PreviewFirst** (desktop and phone):
+  - Setup step 3: "Here's what FollowUp would write to your last 3 customers." with the line "Nothing was sent."
+  - Each draft shows the customer's own words, the reply, and Send, Edit or Skip.
+  - Only customers still waiting on a reply are included.
+- **DemoStory** (desktop and phone):
+  - Where "See how it works" lands: one numbered sequence, because it really is a sequence. Sarah asks about a
+    price → no reply for 2 days → Sarah moves to the top of Today → the reply is already written → you check it and
+    send ("…checks in Monday, unless Sarah writes first").
+  - The existing product cards stay below it.
+- **SafePromise:**
+  - The "Safe" promise becomes "When it isn't sure, it asks you. Prices, dates and anything tense wait for your OK."
+  - The section's lede adds "Before anything goes out, you see exactly what it would write, to your own customers."
+- **HeroProof** (desktop and phone):
+  - One line under the hero note: "Across 6 beta businesses this month, customers heard back in a median of 9
+    minutes", with its base under it.
+  - Placeholder numbers. It renders only with at least 3 businesses and 20 replies in 30 days. The founder's call.
+- **Weak spots I noticed:**
+  - PreviewFirst needs a rule for the case where there's no reply-worthy conversation yet. It should say so plainly
+    and skip to Today.
+  - HeroProof pools testers' data into one public number. Testers should know that in the beta terms before it
+    ever appears.
+
+### 2026-09-26: new boards redrawn in the sketched system (canvas v41, R-019)
+The founder flagged that the Intercom and Close boards looked like the old theme. The cause: their headlines and
+reply bubble were copied from the live landing page (Instrument Serif italic, heavy centered headings, a black
+bubble), not from the canvas the founder sketched.
+
+Redrawn to match Main and Today: PreviewFirst, PreviewFirstPhone, DemoStory, DemoStoryPhone, SafePromise,
+HeroProof, HeroProofPhone, ProofWaiting and ProofWaitingPhone. DemoStory is now two columns (heading left, story
+right), and every written reply uses the wash. Rule logged as R-019.
+
+Open: PR #357 builds the story into the live `page.tsx`, which still uses the older live styling. Its story block
+uses a black reply bubble (against R-018). It needs to follow the canvas before merge.
+
+### 2026-09-26: sketch first (A-052)
+The founder paused all live design changes. The canvas is the work until he finalizes it, then it goes to main in
+one pass. PR #357 was closed unmerged and its branch kept. The A-051 onboarding step was not started. What's already
+on main (#350 to #356) stays.
+
+### 2026-09-26: Linear + Attio drawn, and every remaining PDF point covered (canvas v42)
+Founder: "yes design all five and cover each and every single thing one by one". All boards are proposed and
+sketch-only (A-052), in the canvas system (R-019).
+
+The Linear and Attio proposals (`ux-patterns/2026-09-26-linear-attio-landing.md`):
+1. **DepthTabs** (desktop and phone): "Simple on the outside. The rest is there when you want it."
+   - One frame with four tabs: Today, Follow-up plans, Rules, Your week.
+   - It reuses See it working's tab device.
+   - It sits after Your control and before Pricing.
+2. **HowItWorks** (desktop and phone): Connect → Find → Follow up, each with a small real frame.
+   - Replaces "What changes", whose card 3 claimed replies could go on their own.
+3. **SectionRhythm:** the shared layout (eyebrow, heading left, one line right, full-width frame), shown on
+   Examples and Your control. No word changes.
+4. **SeeItDecides:** "It decides who comes first and what to say. You decide what gets sent."
+5. **ProofStory** (desktop and phone): a customer story page in a fixed shape. Placeholders only, and it exists only
+   with a real, written OK (A-023).
+
+The rest of the PDF:
+- **JourneyMap:** the whole landing page in the PDF's order, each section marked Kept / Changed / New / Placed /
+  Hidden. FeaturesOutcomes (benefits) is placed at step 10.
+- **ConnectFind:** the setup button says "Find who needs a reply" (curiosity). The title says "customers", not
+  "leads" (A-050).
+- **PricingClear** (desktop and phone), from the new HubSpot/Intercom study
+  (`ux-patterns/2026-09-26-hubspot-intercom-pricing.md`):
+  - a one-line beta promise;
+  - Plus marked "Recommended for one owner";
+  - three money answers under the plans.
+
+Found and fixed on the boards: three lines on the sketched Main that aren't true any more.
+- "What changes", card 3: "Simple replies can go on their own."
+- Plus: "Simple replies send themselves, if you want."
+- FAQ 1: "You can let it send the simple ones by itself."
+
+Every reply waits for the owner's OK.
+
+Weak spots I see:
+- DepthTabs shows the three other tabs as small previews under the frame. On the real page they'd be one frame that
+  switches, so the board over-shows.
+- SectionRhythm makes the page more uniform. The risk is that it feels repetitive, and Linear gets away with it
+  because every frame is rich.
+- Still waiting on the founder: the hero number (Google Limited Use), and offering automation once trust is earned
+  (product behaviour).
+
+### 2026-09-26: the hero number stays off (A-051, option A)
+Decided by the founder. No pooled reply-speed number under the hero, and no tester-terms line. Real numbers belong
+to one tester's story, with their written OK (ProofStory). The Google Limited Use question doesn't arise. The page
+leans into "It does the work. You stay in charge.", shown with real product screens and true promises, not numbers
+or logos.
+
+### 2026-09-26: the landing page put together (A-053, canvas v44)
+MainV2 and PhoneV2 are copies of the sketched Main and Phone with every approved piece in the PDF's order:
+1. Hero ("See how it works" lands on the story).
+2. Works with.
+3. In short.
+4. The gap.
+5. How it works.
+6. One customer.
+7. See it working (with the decides line).
+8. Examples.
+9. Your control (wider Safe promise, preview line, switch line made true).
+10. Proof (hidden until real, shown only as a dashed canvas marker).
+11. What you get.
+12. Underneath.
+13. Pricing.
+14. Questions.
+15. Start free.
+
+Weak spots:
+- Underneath's tabs are drawn, not wired. Only Today shows. The other three need the same logic as See it working
+  when this is built.
+- The desktop frame is sized to the tallest state of the interactive parts, so the page may end with some empty
+  space.
+
+### 2026-09-26: first review of the combined page (canvas v50, R-020)
+The founder circled four things on MainV2. All four were changed on MainV2 and PhoneV2:
+- the underline and the arrow were removed;
+- the hero channel chips were removed (Works with stays);
+- the lede was rewritten to say what it does.
+
+His circles were review marks and were taken off the page after the fix.
+
+The canvas caps a board at 8,000px, so the combined page is now two boards each:
+- MainV2 (hero to Your control) and MainV2b (proof to the end);
+- PhoneV2 (hero to Examples) and PhoneV2b (Your control to the end).
+
+Before this, everything below about 8,000px was cut off.
+
+### 2026-09-26: trimmed (A-054, canvas v51)
+- MainV2 is one board again, 7,995px.
+- PhoneV2 is split in two: hero to See it working, then Your control to the end.
+- The proof marker became a sticky note beside the board.
+
+**Options to go shorter:**
+1. Move "What it can see" (the four Google permissions) from Your control to /security, leaving a link. Saves about
+   350px.
+2. Drop the Today frame in Underneath and keep just the four tabs with their outcome lines. Saves about 400px.
+3. Shorten The gap to its heading and one line. Saves about 250px.
+
+### 2026-09-26: the page leans into auto follow-up (A-056, canvas v53)
+The founder set the product's centre: FollowUp does the following up; the owner only makes decisions. Every
+approval-first line on MainV2 and PhoneV2 was rewritten (listed in A-056). How it works and Sarah's story were redrawn
+around "on its own, except the decision". Desktop is still about 7,200px.
+
+**Blocker before this page can go live:** the product still holds every reply by default and refuses Autonomous (the
+2026-09-21 decision). Shipping this page before the product changes would make the page untrue.
+
+### 2026-09-26: five review fixes (canvas v54, founder: "Yes, fix all five")
+1. **Hero picture:** removed the leftover empty white box.
+2. **The gap:** "…FollowUp answers them and follows up, every day." It used to say "tells you who", which was the old
+   idea.
+3. **See it working, Spanish example:**
+   - It's now sent on its own: "¡Hola! Sí, trabajamos los sábados. ¿Qué hora le viene bien?"
+   - It carries the line "Sent on its own. No price, no date to promise."
+   - It used to offer "Saturday at 10" with Send/Edit, which is a date and so a decision.
+4. **Your control:** the closing line is one clean sentence plus the link.
+5. **Pricing, Plus:** "Follows up on its own, on every channel" moved to the top of its list.
+
+**Rule learned (A-056):** any example that promises a price or a date must be shown as a decision that comes to the
+owner, never as something sent on its own.
+
+### 2026-09-26: shorter phone page and a real footer (A-057, canvas v55)
+The founder said the phone page was too long, then approved four phone cuts and asked for a big-company footer.
+- The phone went from about 8,000px over two boards to about 6,730px on one board. How it works, Sarah's story and
+  Your control became plain lines, and the money answers moved into the FAQ.
+- Both pages got a footer: brand and contact, then Product, Works with, Trust and Follow.
+- Follow (blog and socials) is dashed on the canvas and hidden on the live page until the accounts are real.
+- The desktop FAQ answer "Why not just set a reminder?" now matches A-056: "A reminder tells you it's time.
+  FollowUp does the follow-up itself, and tells you only what needs you."
+- Desktop is about 7,460px.
+
+**Weak, named:** the desktop footer's Works with column repeats the "Works with" strip near the top. It's kept
+because footers are where people look for this, but it's the first thing to cut if the footer feels heavy.
+
+### 2026-09-26: the phone's first screen, two versions (R-021, canvas v56)
+The founder called the phone's first screen boring (R-021). I drew two versions next to PhoneV2.
+**Both versions:**
+- The headline (A-013) stays.
+- The paragraph becomes one line: "It answers every customer and follows up on its own. Only the decisions come to
+  you."
+- The picture moves into the first screen and plays in order:
+  1. the customer asks on Instagram;
+  2. "Sent on its own · 1 min";
+  3. "Needs you · the price. Reply written. You add the number."
+  This is motion that explains (A-048). Under reduce motion all three simply show.
+- "Start free" ends at about 670px, above where a phone browser cuts off (about 750px).
+- "See how it works" and "Free in beta · No card" share one row.
+- "Prices and dates always come to you" leaves the check lines, because the third card now shows it. Saying it once
+  follows R-020.
+
+**The difference:** A keeps the thin headline (A-022). B sets it in Public Sans 600. B would be the first bold
+display type on the canvas, so choosing B changes A-022 for the phone.
+
+**Weak, named:** the lede no longer says "in their language". Multilingual is shown later, in See it working, not
+in the first screen.
+
+### 2026-09-26: phone first screen B goes on the page (A-058, canvas v57)
+The founder picked B, the bold headline. It replaced the hero section on PhoneV2, and the two option boards were
+removed from the canvas. A-022 is marked partly superseded for the phone.
+**Open, for when this is built:** the phone headline is bold and the desktop headline is thin. It's a deliberate
+split for now. Check with the founder before building whether the desktop should match.
+
+### 2026-09-26: headline thin on both (A-059, canvas v58)
+The founder chose thin for both desktop and phone. PhoneV2's headline went back to Public Sans 300, and the bold
+from A-058 is reversed. The layout from A-058 stays. The desktop/phone split that A-058 left open is now closed.
+
+### 2026-09-26: the auto follow-up flow drawn, and the page's examples mixed (canvas v59, proposed)
+Drawn after the founder settled the product direction (PRODUCT_DIRECTION.md, five answers). All four new boards are
+phone 390, to the right of PhoneV2.
+1. **OnbConnect (step 2 of 4):**
+   - ConnectFind with its promise made true: "Nothing is sent yet: next, you choose how it works."
+   - The old "Nothing is sent without your OK" is no longer true on Automatic.
+2. **OnbChoose (step 3 of 4):** "How should FollowUp work?"
+   - Two choices: Automatic (Recommended, with one example sent on its own) and Assisted ("Every reply waits for
+     you").
+   - Under both: "Either way, it stops the moment a customer replies."
+   - "Change it any time in Settings."
+3. **OnbOldCustomers (step 4 of 4):** "12 people never got a reply."
+   - "Ready to send · 10": one reply shown written, two rows, and "See all 10".
+   - A red-dot note: "2 ask about a price. They wait for you in Today."
+   - "Send all 10" is the one tap; "Not now, keep them in Today".
+   - It replaces PreviewFirst (3 customers, each sent one by one).
+4. **TodayHoldingPhone:** "1 decision needs you."
+   - Sarah's price question, with the sent line: "10:42 · So Sarah isn't left waiting, it sent: 'Thanks Sarah!
+     Let me check and I'll send you the price soon.'"
+   - The reply is written, with a dashed "$ price" slot to fill.
+   - Below it: "Sent on its own today · 6".
+
+**Landing page (MainV2 and PhoneV2):**
+- **Mixed examples:**
+  - home services: the hero tap, Priya's bathroom, Mike;
+  - a realtor: Grace's viewing check-in, and the Spanish example now asks about a house on Elm Street;
+  - a consultant: Omar's coaching sessions, and Sarah's story is now a coaching package.
+- **"Your team" added to Underneath** (5 columns on desktop, 5 rows on phone).
+- **FAQ 1** now names the Automatic / Assisted choice.
+
+**Truth fixes found while doing it (A-056 rule: prices and dates are decisions):**
+- The hero reply said "We can do that this week", which is a date promise. It's now "Happy to quote that. Could you
+  send a photo of your current tap?"
+- The story's step 2 sent "I'll get you an exact price today" in the first minute, which is a time promise. The
+  story now shows the real flow:
+  1. the price comes to you;
+  2. at 10:42 the holding message goes out ("No number, no promise");
+  3. at 12:40 you add the number.
+
+**Weak, named:**
+- The "$ price" slot in Today is a new pattern. It needs a spec (keyboard, currency, what Send does while it's
+  empty) before it's built.
+- The old-customer list shows only 3 of 10 on the phone, so the owner sends 7 unseen. They're one tap from "See
+  all", and the risk gate has already cleared them. Revisit if testers are uneasy.

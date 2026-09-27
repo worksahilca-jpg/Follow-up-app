@@ -3,6 +3,7 @@ import { ArrowLeft, Users, Clock, Receipt, ShieldCheck } from "lucide-react";
 import { syncRoles } from "@/lib/office/roles";
 import { getFloor, type DeskView, type RunView } from "@/lib/office/floor";
 import StatCard from "@/components/StatCard";
+import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import RunNowButton from "@/components/office/RunNowButton";
 
 export const dynamic = "force-dynamic";
@@ -158,6 +159,15 @@ function Shift({ run }: { run: RunView }) {
 }
 
 export default async function OfficePage() {
+  // The /admin layout's guard is NOT enough on its own. Next renders a page
+  // alongside its layout rather than after it, and a client navigation
+  // (an RSC request whose router-state header says the /admin layout is
+  // already on screen) renders this segment WITHOUT running the layout at
+  // all — so a request crafted that way reached getFloor() with no session
+  // and streamed the office's notes and spend back (security audit
+  // 2026-09-26, A-1). Checked here, first, before any query or write.
+  await requirePlatformAdmin();
+
   // Keeps the floor in step with src/lib/office/roles.ts without waiting
   // for a cron tick, so a lane you just wrote shows up on reload.
   await syncRoles();

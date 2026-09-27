@@ -505,6 +505,14 @@ describe("the fresh pass", () => {
     expect(p.lead.findMany).not.toHaveBeenCalled();
   });
 
+  it("reads the newest messages first, so a busy hour cannot starve the latest one", async () => {
+    // Daily-path sweep 2026-09-25 #7: oldest-first with a cap re-read the
+    // same already-answered leads every minute once the window was full.
+    p.lead.findMany.mockResolvedValue([]);
+    await runFreshRepliesForAllBusinesses();
+    expect(p.lead.findMany.mock.calls[0][0].orderBy).toEqual({ lastContacted: "desc" });
+  });
+
   it("finds recent leads across every business and hands each business only its own", async () => {
     p.lead.findMany
       .mockResolvedValueOnce([

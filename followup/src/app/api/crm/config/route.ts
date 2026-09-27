@@ -7,8 +7,8 @@ import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 
 const crmConfigSchema = z.object({
-  provider: z.string(),
-  apiKey: z.string().trim().min(1, "Paste a real API key."),
+  provider: z.string().max(40),
+  apiKey: z.string().trim().min(1, "Paste a real API key.").max(2048),
 });
 
 // One CRM connection per business — see CrmConnection in schema.prisma.

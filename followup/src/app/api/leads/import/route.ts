@@ -8,6 +8,7 @@ import { makeBatchAssigner } from "@/lib/assignment";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { recordAudit } from "@/lib/audit";
+import { sanitizeUserPhone } from "@/lib/validation";
 
 const MAX_FILE_BYTES = 2 * 1024 * 1024; // 2MB — plenty for a few thousand rows of lead data
 const MAX_ROWS = 1000;
@@ -144,7 +145,8 @@ export async function POST(request: NextRequest) {
     }
     if (email) seenEmailsInBatch.add(email);
 
-    const phone = columnMap.phone ? cleanText(row[columnMap.phone], 40) : "";
+    // Never an "ig:"/"fb:" DM address — see sanitizeUserPhone.
+    const phone = columnMap.phone ? sanitizeUserPhone(cleanText(row[columnMap.phone], 40)) : "";
     if (phone && (existingPhones.has(phone) || seenPhonesInBatch.has(phone))) {
       skipped.push(`Row ${rowNum} (${name}): duplicate phone number, skipped`);
       return;

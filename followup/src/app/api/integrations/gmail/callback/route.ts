@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { ensureGmailWatch, exchangeCodeForTokens } from "@/lib/integrations/gmail";
 import { recordAudit } from "@/lib/audit";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // GET /api/integrations/gmail/callback — Google redirects here after the
 // user approves (or denies) the consent screen. This URL must exactly match
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
     res = NextResponse.redirect(returnTo);
   } catch (err) {
     returnTo.searchParams.set("gmail", "error");
-    returnTo.searchParams.set("message", err instanceof Error ? err.message : "Gmail connection failed.");
+    returnTo.searchParams.set("message", publicErrorMessage(err, "Gmail connection failed.", "integrations/gmail/callback"));
     res = NextResponse.redirect(returnTo);
   }
 

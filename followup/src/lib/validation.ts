@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isSocialLeadId } from "@/lib/instagramId";
 
 /**
  * Parses and validates a request's JSON body against a zod schema in one
@@ -24,10 +25,29 @@ import { z } from "zod";
  * enough for a legitimate client to fix its request, never a raw zod
  * issue dump or a stack trace.
  */
+/**
+ * The largest JSON body any route here accepts: 1 MB. The biggest real
+ * body in the app is a few kilobytes (a workflow's steps, a message); the
+ * public ones (embed form, booking) are far smaller. Next.js route handlers
+ * have no body limit of their own (bodySizeLimit is for Server Actions),
+ * so without this the only ceiling is the platform's (4.5 MB on Vercel
+ * Functions), and every byte of it would be parsed before zod could
+ * refuse it.
+ *
+ * Checked on the declared Content-Length, before reading anything. A
+ * chunked body with no length still falls back to the platform ceiling
+ * and to each schema's own per-field caps.
+ */
+export const MAX_JSON_BODY_BYTES = 1024 * 1024;
+
 export async function parseJsonBody<S extends z.ZodTypeAny>(
   request: Request,
   schema: S
 ): Promise<{ ok: true; data: z.infer<S> } | { ok: false; response: NextResponse }> {
+  const declared = Number(request.headers?.get("content-length") ?? NaN);
+  if (Number.isFinite(declared) && declared > MAX_JSON_BODY_BYTES) {
+    return { ok: false, response: NextResponse.json({ success: false, message: "Request body is too large." }, { status: 413 }) };
+  }
   const raw = await request.json().catch(() => undefined);
   const result = schema.safeParse(raw);
   if (result.success) return { ok: true, data: result.data };
@@ -94,6 +114,25 @@ export const cleanedText = (max: number) =>
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
+ * A phone number a person or an integration typed in — never a DM address.
+ *
+ * Lead.phone doubles as the Instagram/Messenger address: "ig:<igsid>" and
+ * "fb:<psid>" decide the channel and the recipient of every send
+ * (src/lib/instagramId.ts). Those two prefixes may only ever be written by
+ * the Meta inbound path. Taken from a public form, a webhook or a CSV,
+ * "ig:1784…" minted a lead FollowUp treated as an Instagram contact, and
+ * one matching a real DM lead merged a stranger's words into that
+ * customer's thread through the duplicate-phone path (audits 2026-09-16
+ * Meta #7, 2026-09-26 A-6). Same forgiving shape as cleanedText: such a
+ * value becomes "" rather than failing the request.
+ */
+export function sanitizeUserPhone(value: string): string {
+  return isSocialLeadId(value.trim()) ? "" : value;
+}
+
+export const cleanedPhone = (max: number) => cleanedText(max).transform(sanitizeUserPhone);
+
+/**
  * A workflow builder step (src/lib/sequences.ts's SequenceStepInput) —
  * shared between /api/sequences and /api/sequences/[id], the two routes
  * that ever accept a step array from the client. Bounds/cross-field rules
@@ -110,5 +149,8 @@ export const sequenceStepSchema = z.object({
   delayDays: z.coerce.number().optional(),
   action: z.enum(["EMAIL", "CHANGE_STAGE"]),
   stageTo: z.enum(["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"]).nullable().optional(),
-  messageHint: z.string().nullable().optional(),
+  // Goes into the drafting prompt on every run of the step, on the shared
+  // OpenAI key — so it is bounded. A hint is a sentence or a paragraph;
+  // 4000 characters is far past any real one.
+  messageHint: z.string().max(4000).nullable().optional(),
 });

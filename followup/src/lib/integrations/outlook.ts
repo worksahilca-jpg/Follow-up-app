@@ -29,7 +29,7 @@
 
 import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
-import { classifyAsProspect } from "@/lib/integrations/openai";
+import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -366,14 +366,35 @@ async function processConversations(
     const counterpart = parsedMessages.find((m) => m.from.email && !isAutomatedOrSelf(m.from.email, selfEmail))?.from;
     if (!counterpart) return null;
 
-    const alreadyKnown = !!(await prisma.conversation.findUnique({
+    const known = await prisma.conversation.findUnique({
       where: { externalId: conversationId },
-      select: { id: true },
-    }));
+      select: { id: true, lead: { select: { businessId: true } } },
+    });
+    // Conversation.externalId is unique across ALL businesses. An id held
+    // by another business's conversation is never "ours" — the writes
+    // below would put this mailbox's mail on that tenant's lead (security
+    // audit 2026-09-26, A-10). Same guard as the Gmail import.
+    if (known && known.lead.businessId !== businessId) {
+      console.warn(`Outlook conversation ${conversationId} for business ${businessId} collides with another business's conversation — skipped.`);
+      return null;
+    }
+    const alreadyKnown = !!known;
 
     const newestMessageAt = parsedMessages[parsedMessages.length - 1].sentAt;
 
-    if (process.env.OPENAI_API_KEY && !alreadyKnown && !options.skipClassification) {
+    // A known customer starting a NEW thread is still a known customer.
+    // The check above is per thread, so without this their second thread
+    // was judged from scratch and could be set aside — never reaching the
+    // lead, never drafted for, never alerted (daily-path sweep 2026-09-25
+    // #3). WhatsApp already never second-guesses a number it knows.
+    const knownCustomer =
+      !alreadyKnown &&
+      !!(await prisma.lead.findUnique({
+        where: { businessId_email: { businessId, email: counterpart.email } },
+        select: { id: true },
+      }));
+
+    if (process.env.OPENAI_API_KEY && !alreadyKnown && !knownCustomer && !options.skipClassification) {
       const priorVerdict = await prisma.filteredEmail.findUnique({
         where: { businessId_threadId: { businessId, threadId: conversationId } },
         select: { lastMessageAt: true },
@@ -395,7 +416,7 @@ async function processConversations(
           date: m.sentAt.toISOString(),
           opened: false,
         }));
-        const { isProspect, reason } = await classifyAsProspect(transcript, counterpart, businessContext ?? undefined);
+        const { isProspect, reason } = await classifyWithSecondLook(transcript, counterpart, businessContext ?? undefined);
         if (!isProspect) {
           await prisma.filteredEmail.upsert({
             where: { businessId_threadId: { businessId, threadId: conversationId } },
@@ -506,6 +527,14 @@ async function processConversations(
       conversation = await prisma.conversation.create({
         data: { leadId: lead.id, channel: "email", externalId: conversationId, emailProvider: "outlook" },
       });
+    }
+    // Re-checked on the row actually resolved (see the Gmail import).
+    if (conversation.leadId !== lead.id) {
+      const owner = await prisma.lead.findUnique({ where: { id: conversation.leadId }, select: { businessId: true } });
+      if (owner?.businessId !== businessId) {
+        console.warn(`Outlook conversation ${conversationId} for business ${businessId} resolved to another business's conversation — skipped.`);
+        return null;
+      }
     }
 
     for (const m of parsedMessages) {

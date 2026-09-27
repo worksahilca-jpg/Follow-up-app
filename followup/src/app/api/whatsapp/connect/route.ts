@@ -23,7 +23,7 @@ import { exchangeWhatsAppSignupCode, lookupWhatsAppNumber, subscribeAppToWaba, w
  * the two differently. Only the code is secret; the ids are not.
  */
 const schema = z.object({
-  code: z.string().trim().min(1),
+  code: z.string().trim().min(1).max(4096),
   phoneNumberId: z.string().trim().regex(/^\d+$/),
   wabaId: z.string().trim().regex(/^\d+$/),
   event: z.enum(["FINISH", "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING"]).optional(),

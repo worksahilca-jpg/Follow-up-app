@@ -527,11 +527,17 @@ export async function acknowledgeNewLead(
      * queue on the next tick.
      */
     if (ackBusiness?.holdAllForApproval) {
-      void recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
-        targetType: "lead",
-        targetId: lead.id,
-        meta: { riskLevel: "low", reason: HOLD_ALL_FIRST_REPLY_REASON, trigger: "instant_ack" },
-      });
+      // Awaited, and tried twice: this row is the queue entry, not a note
+      // about it (daily-path sweep 2026-09-25 #5).
+      const hold = () =>
+        recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
+          targetType: "lead",
+          targetId: lead.id,
+          meta: { riskLevel: "low", reason: HOLD_ALL_FIRST_REPLY_REASON, trigger: "instant_ack" },
+        });
+      if ((await hold()) === false && (await hold()) === false) {
+        console.error(`Held first reply for lead ${lead.id} could not be added to Approvals.`);
+      }
       // The audit event puts the lead in Approvals; this is what tells a
       // human it is there. Without it the queue only exists for someone
       // who happens to open the dashboard — see notifyAckHeld.

@@ -47,17 +47,29 @@ vi.mock("@/lib/db", () => ({
     crmConnection: { findUnique: vi.fn(async () => null), deleteMany: trackedDeleteMany("crmConnection") },
     productFeedback: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("productFeedback") },
     rateLimitHit: { deleteMany: trackedDeleteMany("rateLimitHit") },
-    filteredEmail: { deleteMany: trackedDeleteMany("filteredEmail") },
+    filteredEmail: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("filteredEmail") },
     integration: { deleteMany: trackedDeleteMany("integration") },
     pushSubscription: { deleteMany: trackedDeleteMany("pushSubscription") },
     ownerAlert: { deleteMany: trackedDeleteMany("ownerAlert") },
-    aIInsight: { deleteMany: trackedDeleteMany("aIInsight") },
-    outboundSend: { deleteMany: trackedDeleteMany("outboundSend") },
+    aIInsight: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("aIInsight") },
+    outboundSend: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("outboundSend") },
     sendClaim: { deleteMany: trackedDeleteMany("sendClaim") },
     inboundWebhookEvent: { deleteMany: trackedDeleteMany("inboundWebhookEvent") },
-    suppression: { deleteMany: trackedDeleteMany("suppression") },
-    reactivationRun: { deleteMany: trackedDeleteMany("reactivationRun") },
-    auditEvent: { findMany: vi.fn(async () => []) },
+    suppression: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("suppression") },
+    reactivationRun: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("reactivationRun") },
+    auditEvent: {
+      findMany: vi.fn(async () => []),
+      updateMany: vi.fn(async () => {
+        callOrder.push("auditEventScrub");
+        return { count: 0 };
+      }),
+    },
+    // The unattributed Meta envelopes are cleared with raw SQL (they have
+    // no businessId to filter on). Records the bound LIKE pattern.
+    $executeRaw: vi.fn(async (_strings: TemplateStringsArray, ...values: unknown[]) => {
+      callOrder.push(`rawEnvelope:${String(values[0])}`);
+      return 0;
+    }),
     $transaction: vi.fn(async (queries: Promise<unknown>[]) => Promise.all(queries)),
   },
 }));
@@ -145,6 +157,49 @@ describe("deleteBusinessData", () => {
     expect(p.business.delete).toHaveBeenCalledWith({ where: { id: "biz1" } });
   });
 
+  // Audit 2026-09-16 Meta #9: Meta envelopes are stored unattributed
+  // (businessId NULL), so the businessId delete above never reached them
+  // and a deleted business's DM text outlived its erasure.
+  it("also erases the unattributed Meta envelopes that name this business's accounts", async () => {
+    p.business.findUnique.mockResolvedValueOnce({
+      ...business,
+      instagramUserId: "17841400000000001",
+      instagramAccountId: "17841400000000001", // same id twice: one delete
+      facebookPageId: "102030405060708",
+      whatsappPhoneNumberId: "555000111222",
+    });
+    await deleteBusinessData("biz1", { userId: "u1", email: "a@b.com" });
+    const raw = callOrder.filter((c) => c.startsWith("rawEnvelope:"));
+    expect(raw).toEqual([
+      'rawEnvelope:%"17841400000000001"%',
+      'rawEnvelope:%"102030405060708"%',
+      'rawEnvelope:%"555000111222"%',
+    ]);
+  });
+
+  // Audit 2026-09-16 H-1(b): the audit trail survives erasure by design,
+  // but its meta held people's names, emails and numbers.
+  it("keeps the audit trail but strips the personal details out of it", async () => {
+    await deleteBusinessData("biz1", { userId: "u1", email: "a@b.com" });
+    expect(p.auditEvent.updateMany).toHaveBeenCalledWith({
+      where: { businessId: "biz1" },
+      data: { meta: expect.anything(), ip: null },
+    });
+    const data = (p.auditEvent.updateMany.mock.calls[0] as [{ data: { meta: unknown } }])[0].data;
+    // Prisma.DbNull: the column set to SQL NULL, not the JSON value null.
+    expect(String(data.meta)).toMatch(/DbNull/);
+    // Scrubbed inside the same transaction, before the business row goes;
+    // the deletion's own audit record is written after, and is not scrubbed.
+    expect(callOrder).toContain("auditEventScrub");
+    expect(recordAudit).toHaveBeenCalledWith({ businessId: "biz1", userId: "u1" }, "business.delete", expect.anything());
+  });
+
+  it("never builds a pattern from an id that isn't all digits", async () => {
+    p.business.findUnique.mockResolvedValueOnce({ ...business, instagramUserId: "%", facebookPageId: null });
+    await deleteBusinessData("biz1", { userId: "u1", email: "a@b.com" });
+    expect(callOrder.filter((c) => c.startsWith("rawEnvelope:"))).toEqual([]);
+  });
+
   it("writes the audit record only after the transaction succeeds, and it's never deleted", async () => {
     await deleteBusinessData("biz1", { userId: "u1", email: "a@b.com" });
     expect(recordAudit).toHaveBeenCalledWith(
@@ -173,6 +228,26 @@ describe("exportBusinessData", () => {
   it("keeps ordinary, non-secret business fields", async () => {
     const result = await exportBusinessData("biz1");
     expect(result?.business).toMatchObject({ id: "biz1", name: "Acme Realty" });
+  });
+
+  // Audit 2026-09-16 H-1(c): the access export left out five tables that
+  // hold personal data about the business's contacts.
+  it("includes opt-outs, set-aside conversations, queued sends, AI verdicts and reactivation runs", async () => {
+    p.suppression.findMany.mockResolvedValueOnce([{ id: "s1", address: "stop@example.com" }]);
+    p.filteredEmail.findMany.mockResolvedValueOnce([{ id: "f1", senderEmail: "someone@example.com" }]);
+    p.outboundSend.findMany.mockResolvedValueOnce([{ id: "o1", body: "Hi there" }]);
+    p.aIInsight.findMany.mockResolvedValueOnce([{ id: "a1" }]);
+    p.reactivationRun.findMany.mockResolvedValueOnce([{ id: "r1" }]);
+
+    const result = await exportBusinessData("biz1");
+
+    expect(result?.suppressions).toEqual([{ id: "s1", address: "stop@example.com" }]);
+    expect(result?.filteredConversations).toEqual([{ id: "f1", senderEmail: "someone@example.com" }]);
+    expect(result?.outboundSends).toEqual([{ id: "o1", body: "Hi there" }]);
+    expect(result?.aiInsights).toEqual([{ id: "a1" }]);
+    expect(result?.reactivationRuns).toEqual([{ id: "r1" }]);
+    expect(p.suppression.findMany).toHaveBeenCalledWith({ where: { businessId: "biz1" } });
+    expect(p.aIInsight.findMany).toHaveBeenCalledWith({ where: { lead: { businessId: "biz1" } } });
   });
 });
 

@@ -3,13 +3,14 @@ import { getSessionContext } from "@/lib/session";
 import { hasActiveAccess, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { deleteLeadCascade, archiveLeadThreadsAsFiltered } from "@/lib/leads-admin";
-import { classifyAsProspect } from "@/lib/integrations/openai";
+import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { toTranscript } from "@/lib/transcript";
 import { requireAdmin } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
 import type { Prisma } from "@prisma/client";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // A business with a large backlog means one OpenAI classification call per
 // Gmail-sourced lead — comfortably past a default serverless timeout even
@@ -190,7 +191,7 @@ export async function POST() {
 
     let verdict: { isProspect: boolean; reason: string };
     try {
-      verdict = await classifyAsProspect(
+      verdict = await classifyWithSecondLook(
         messages,
         { name: lead.name, email: lead.email ?? "unknown" },
         businessContext ?? undefined
@@ -205,7 +206,7 @@ export async function POST() {
         id: lead.id,
         name: lead.name,
         removed: false,
-        reason: `Classification error: ${err instanceof Error ? err.message : "unknown error"}`,
+        reason: `Classification error: ${publicErrorMessage(err, "the AI check didn't answer")}`,
       };
     }
 
@@ -253,7 +254,7 @@ export async function POST() {
         id: lead.id,
         name: lead.name,
         removed: false,
-        reason: `Removal failed: ${err instanceof Error ? err.message : "unknown error"}`,
+        reason: `Removal failed: ${publicErrorMessage(err, "the database refused the delete")}`,
       };
     }
   });

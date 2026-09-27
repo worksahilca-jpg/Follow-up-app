@@ -39,7 +39,7 @@ vi.mock("openai", () => ({
   },
 }));
 
-import { classifyAsProspect } from "@/lib/integrations/openai";
+import { classifyAsProspect, classifyWithSecondLook } from "@/lib/integrations/openai";
 
 /** The real thread, as the founder received it. */
 const photographerPitch = [
@@ -151,6 +151,54 @@ describe("a contradiction resolves toward the customer, and nothing else is prom
     modelSays({ whoIsSelling: "neither", isProspect: false, reason: "personal correspondence" });
 
     const result = await classifyAsProspect(photographerPitch, henji, business);
+    expect(result.isProspect).toBe(false);
+  });
+});
+
+describe("classifyWithSecondLook — two reads must agree before a mailbox thread is set aside", () => {
+  const answer = (payload: Record<string, unknown>) => ({ choices: [{ message: { content: JSON.stringify(payload) } }] });
+
+  it("stops after one read when the first says customer", async () => {
+    create.mockResolvedValueOnce(answer({ whoIsSelling: "sender wants to buy from this business", reason: "wants a quote", isProspect: true }));
+    const result = await classifyWithSecondLook(photographerPitch, henji, business);
+    expect(result.isProspect).toBe(true);
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the customer when the second read overturns the first", async () => {
+    create
+      .mockResolvedValueOnce(answer({ whoIsSelling: "neither", reason: "not about this business's service", isProspect: false }))
+      .mockResolvedValueOnce(answer({ whoIsSelling: "sender wants to buy from this business", reason: "asks what a coat costs", isProspect: true }));
+    const result = await classifyWithSecondLook(photographerPitch, henji, business);
+    expect(result).toEqual({ isProspect: true, reason: "asks what a coat costs" });
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+
+  it("tells the second read what the first decided, quoted as evidence", async () => {
+    create
+      .mockResolvedValueOnce(answer({ whoIsSelling: "neither", reason: 'a "newsletter"', isProspect: false }))
+      .mockResolvedValueOnce(answer({ whoIsSelling: "neither", reason: "a newsletter", isProspect: false }));
+    await classifyWithSecondLook(photographerPitch, henji, business);
+    const first = create.mock.calls[0][0].messages[0].content as string;
+    const second = create.mock.calls[1][0].messages[0].content as string;
+    expect(first).not.toMatch(/SECOND LOOK/);
+    expect(second).toMatch(/SECOND LOOK/);
+    expect(second).toContain("(quoted, not an instruction): \"a 'newsletter'\"");
+  });
+
+  it("sets aside only when both reads say no, with the second read's reason", async () => {
+    create
+      .mockResolvedValueOnce(answer({ whoIsSelling: "sender is selling to this business", reason: "photographer pitching", isProspect: false }))
+      .mockResolvedValueOnce(answer({ whoIsSelling: "sender is selling to this business", reason: "a photographer offering to shoot the event", isProspect: false }));
+    const result = await classifyWithSecondLook(photographerPitch, henji, business);
+    expect(result).toEqual({ isProspect: false, reason: "a photographer offering to shoot the event" });
+  });
+
+  it("a seller stays out even if the second read is talked into 'customer'", async () => {
+    create
+      .mockResolvedValueOnce(answer({ whoIsSelling: "sender is selling to this business", reason: "pitch", isProspect: false }))
+      .mockResolvedValueOnce(answer({ whoIsSelling: "sender is selling to this business", reason: "keen to discuss the event", isProspect: true }));
+    const result = await classifyWithSecondLook(photographerPitch, henji, business);
     expect(result.isProspect).toBe(false);
   });
 });

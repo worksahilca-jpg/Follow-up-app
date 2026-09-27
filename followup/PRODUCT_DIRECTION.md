@@ -403,3 +403,151 @@ One definition, used by every screen, report and study (design brain A-047, from
 
 In code this is `FIRST_VALUE_SEND` in `src/lib/firstValue.ts`. /admin measures who reaches it from FollowUp's own
 records (no analytics SDK), and Today says it to the owner once, on the day it happens.
+
+## First replies are written right after connecting (CEO decision, 2026-09-26)
+
+Asked "When someone connects their email, write the replies for customers who never got an answer right away,
+instead of within the hour?", the founder said: **"yes right away."**
+
+Why: the first minutes decide whether a new owner believes the product. The proof screen (design brain,
+2026-09-26, "Start · first value") shows a real customer from the last 90 days and the reply FollowUp wrote for
+them. That only works if the reply exists when the screen loads.
+
+What this does and doesn't change:
+- Right after the first sync, FollowUp drafts replies for the **few most recent unanswered customers**, not for
+  every lead in 90 days, so the AI cost per sign-up stays small.
+- Every one of those drafts **waits for the owner's OK**. Hold-by-default is unchanged, and nothing is sent to an
+  old lead on its own.
+- The hourly automation still handles everyone else, as before.
+
+Not built yet. This is the decision; the implementation is a backend change for when the start flow is built.
+
+## The landing page "Try it" stays an example until the beta opens (CEO decision, 2026-09-26)
+
+Asked whether to make the landing page's "Try it" box write a real AI reply to whatever a visitor pastes, the founder
+said: **"wait until beta opens."**
+
+Why: while sign-up is invite-only (R-012), a visitor who tries it can't become a customer, so each try is AI
+cost with no possible conversion, and an open AI endpoint invites abuse. Until then, the box shows a fixed example
+reply, clearly labelled "Example reply". Revisit when the beta opens; it will need per-visitor rate limits.
+
+
+## Auto follow-up is the centre; only decisions go to the owner (founder, 2026-09-26)
+
+> "I want this product to be more focused on auto because the main thing is that this product will be
+> auto-following and handing over the human decision part to the users. Everything else will be done by follow-up."
+
+Direction, recorded as said:
+- FollowUp answers, checks in and follows up on its own by default.
+- Only decisions go to the owner: a price, a date, a tense moment, or anything the risk gate isn't sure of.
+- "Ask me before everything" becomes an owner switch instead of the default.
+
+This reverses the 2026-09-21 hold-by-default for new accounts and points at the mission's end state ("no human does
+this job").
+
+**Status: direction only, NOT BUILT.** The live product still holds every reply and refuses AUTONOMOUS. Building it
+means changing the default tier or hold setting and allowing AUTONOMOUS again behind the existing risk gate. The
+founder decides when (design-brain A-052: no live changes until the canvas is finalized). The landing page drawn for
+this (canvas v53) must not ship before the product does this.
+
+### Day one: the owner chooses Automatic or Assisted in onboarding (founder, 2026-09-26)
+
+> "For the first day, the follow-up will be doing its job. It will be fetching all the leads and doing the basics.
+> Mainly in onboarding, it will be asking the user whether they want the follow-up to follow up automatically or
+> they want the assisted ones… Suppose they have many leads, and they will not be able to handle each and every
+> single message, right? The follow-up will be doing that job… For the first time, it will be asking permission and
+> stuff, and then whatever the user will say, it will be doing that."
+
+What this means:
+- **From the first sync, FollowUp fetches every lead and does the basics** (finds who is waiting, scores, writes
+  replies).
+- **Onboarding asks one explicit question: Automatic or Assisted.**
+  - Automatic: FollowUp sends and follows up on its own. Decisions (price, date, tense, unsure) still come to the
+    owner.
+  - Assisted: every reply waits for the owner's OK.
+- FollowUp then does exactly what the owner chose. The owner can change it later (the "Ask me before everything"
+  switch).
+- **Why:** an owner with many leads can't answer every message by hand. Automatic is what makes FollowUp worth having.
+- **Assumed, not yet confirmed:** Automatic is the recommended choice on that screen.
+- **Replaces:** hold-by-default (2026-09-21). The owner's own answer in onboarding now sets the default, instead of
+  every account starting held.
+
+Status: NOT BUILT. It needs:
+- an onboarding step;
+- the chosen tier stored per business;
+- AUTONOMOUS allowed again behind the risk gate.
+
+### Old customers wait for one tap; new ones go automatically (founder, 2026-09-26)
+
+Asked whether, on Automatic, FollowUp should also message old customers (from the last 90 days, never answered) on
+its own, the founder said: **"yes new ones automatic, old ones ask with one tap"**.
+
+- **New customers** (who write after connecting) are handled automatically when the owner chose Automatic.
+- **Old customers** found in the first sync are never messaged on their own. The owner sees one short list, e.g.
+  "12 people never got a reply", with the replies already written, and sends them all with one tap. The owner can
+  also open and skip any of them.
+- **Why:** a message out of the blue to someone who wrote months ago is where an automatic tool looks like spam
+  (trust outranks speed).
+- It fits the 2026-09-26 "first replies written right after connecting" decision. Those drafts are exactly this list.
+
+Status: NOT BUILT.
+
+### A "we got you" message when a decision waits 30 minutes (founder, 2026-09-26)
+
+Asked what should happen when a price or date question has come to the owner and the owner hasn't answered in 30
+minutes, the founder chose **option 2**: FollowUp sends a short holding message.
+
+- Example: "Thanks Sarah! Let me check and I'll send you the price soon."
+- **When:** only if the owner hasn't answered the decision 30 minutes after it came in. If the owner answers first,
+  nothing extra is sent.
+- **Once per decision**, never repeated.
+- It goes in the customer's language, from the owner's own address, in the business's voice.
+- **It promises nothing:** no number, no day, no time. The decision still waits for the owner, with the real reply
+  already written.
+- **Price and date decisions only.** A tense moment (a complaint, an angry customer) gets no automatic message. It goes
+  to the owner only. (My recommendation, stated with the options and not objected to. Confirm when building.)
+- **Applies on Automatic.** On Assisted, the holding message would also need the owner's OK, which defeats it. Assumed
+  off on Assisted; confirm when building.
+
+Status: NOT BUILT.
+
+### Default check-ins: days 3, 7, 14 and 30, then stop (founder, 2026-09-26)
+
+Asked how many times FollowUp should check in on a customer who went quiet, the founder said: **"keep it, owner can
+change it"**.
+
+- **The default plan** is the existing recommended cadence (`RECOMMENDED_CADENCE`, workflows page): check-ins on
+  day 3, day 7, day 14 and day 30, then it stops.
+- It stops at once if the customer writes back (the stop-on-reply guarantee).
+- On Automatic, this plan runs on its own for every new customer. Today it is a template the owner has to pick.
+- The owner can change the days, the number of check-ins, or turn it off.
+
+Status: NOT BUILT as a default. The template exists; making it the automatic default is part of the Automatic
+build.
+
+### Who it's for: anyone with more leads than follow-up (founder, 2026-09-26)
+
+> "Any small businesses, or even big ones, can create teams, right? Any small businesses with teams, solo
+> entrepreneurs, or realtors and consultants who are getting a lot of leads but are lacking in following up. This
+> product is mainly for them."
+
+- **The customer is defined by the problem, not the industry.** They get a lot of leads and fall behind on following
+  up.
+- This covers:
+  - solo owners;
+  - small businesses with teams;
+  - realtors and consultants;
+  - bigger businesses using teams.
+- **Teams are first-class** (Pro: shared customers, who's behind), not an add-on.
+- **Design consequence:** the page's examples should be mixed (a home service, a realtor, a consultant), so no reader
+  thinks "this is for plumbers only".
+
+## The auto follow-up direction, complete (2026-09-26)
+
+The five answers above settle the direction:
+1. **Onboarding asks Automatic or Assisted.** FollowUp does what the owner chose.
+2. **Old customers** get one list, sent with one tap. **New customers** are handled automatically.
+3. **A price or date waiting 30 minutes** gets a holding message that promises nothing. Tense moments get nothing
+   automatic.
+4. **Check-ins:** days 3, 7, 14 and 30, then stop. It stops at once on a reply. The owner can change the plan.
+5. **Who it's for:** anyone with more leads than follow-up, solo or team.

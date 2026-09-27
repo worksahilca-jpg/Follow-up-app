@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
-import { parseJsonBody, parseObject, cleanedText } from "@/lib/validation";
+import { parseJsonBody, parseObject, cleanedText, MAX_JSON_BODY_BYTES, sequenceStepSchema } from "@/lib/validation";
 
 function fakeRequest(body: unknown): Request {
   return { json: async () => body } as unknown as Request;
@@ -56,6 +56,32 @@ describe("parseJsonBody", () => {
     const result = await parseJsonBody(fakeRequest("just a string"), schema);
     expect(result.ok).toBe(false);
   });
+
+  it("refuses a body declared larger than the cap with a 413, without reading it", async () => {
+    let read = false;
+    const request = new Request("https://app.test/api/x", {
+      method: "POST",
+      headers: { "content-type": "application/json", "content-length": String(MAX_JSON_BODY_BYTES + 1) },
+      body: JSON.stringify({ name: "Priya" }),
+    });
+    const spy = Object.assign(request, { json: async () => { read = true; return { name: "Priya" }; } });
+    const result = await parseJsonBody(spy, schema);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.response.status).toBe(413);
+    expect(read).toBe(false);
+  });
+
+  it("still accepts a real request whose declared size is within the cap", async () => {
+    const body = JSON.stringify({ name: "Priya", age: 30 });
+    const request = new Request("https://app.test/api/x", {
+      method: "POST",
+      headers: { "content-type": "application/json", "content-length": String(body.length) },
+      body,
+    });
+    const result = await parseJsonBody(request, schema);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data).toEqual({ name: "Priya", age: 30 });
+  });
 });
 
 describe("parseObject", () => {
@@ -81,5 +107,19 @@ describe("cleanedText", () => {
     expect(schema.parse({ note: 12345 }).note).toBe("");
     expect(schema.parse({ note: { nested: true } }).note).toBe("");
     expect(schema.parse({}).note).toBe("");
+  });
+});
+
+describe("sequenceStepSchema — the step hint that reaches the drafting prompt", () => {
+  const step = (messageHint: string | null) => ({ delayHours: 24, action: "EMAIL", messageHint });
+
+  it("accepts a long but real hint, and none at all", () => {
+    expect(sequenceStepSchema.safeParse(step("x".repeat(4000))).success).toBe(true);
+    expect(sequenceStepSchema.safeParse(step(null)).success).toBe(true);
+    expect(sequenceStepSchema.safeParse({ delayHours: 24, action: "EMAIL" }).success).toBe(true);
+  });
+
+  it("refuses a hint past 4000 characters — it would be paid for on every draft", () => {
+    expect(sequenceStepSchema.safeParse(step("x".repeat(4001))).success).toBe(false);
   });
 });

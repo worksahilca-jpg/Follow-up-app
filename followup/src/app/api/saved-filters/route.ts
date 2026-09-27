@@ -9,7 +9,7 @@ import { parseJsonBody } from "@/lib/validation";
 // pre-existing behavior of accepting whatever object shape was passed.
 const criteriaSchema = z
   .object({
-    source: z.string().optional(),
+    source: z.string().max(200).optional(),
     stage: z.enum(["new", "contacted", "qualified", "proposal", "negotiation", "won", "lost"]).optional(),
     priority: z.enum(["high", "medium", "low", "none"]).optional(),
     minDealValue: z.coerce.number().optional(),
@@ -18,7 +18,7 @@ const criteriaSchema = z
   .catch({});
 
 const savedFilterSchema = z.object({
-  name: z.string(),
+  name: z.string().max(200),
   shared: z.boolean().optional(),
   criteria: criteriaSchema.optional(),
 });

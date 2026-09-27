@@ -47,6 +47,10 @@
     {
       "path": "/api/cron/owner-alerts",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/setup-health",
+      "schedule": "7 13 * * *"
     }
   ]
 }

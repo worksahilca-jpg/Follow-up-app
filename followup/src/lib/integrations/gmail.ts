@@ -31,7 +31,7 @@ import { google } from "googleapis";
 import type { gmail_v1 } from "googleapis";
 import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
-import { classifyAsProspect } from "@/lib/integrations/openai";
+import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -528,6 +528,23 @@ export type SyncOptions = {
   onResult?: (info: { truncated: boolean }) => void;
 };
 
+/**
+ * When a Gmail message arrived, for ordering and for "who wrote last".
+ *
+ * Gmail's own receive time (`internalDate`) first. The Date header is
+ * written by whoever sent the mail, so it can say anything: a message
+ * dated next year stayed the "newest" in its thread forever and pinned the
+ * lead's last contact in the future, and one dated last year arrived
+ * already looking stale (daily-path sweep 2026-09-25 #8). The header is
+ * the fallback only, and never later than now; an unreadable one is now.
+ */
+export function gmailMessageTime(internalDate: string | null | undefined, dateHeader: string | undefined, now = new Date()): Date {
+  const received = internalDate ? Number(internalDate) : NaN;
+  const claimed = dateHeader ? new Date(dateHeader).getTime() : NaN;
+  const ms = Number.isFinite(received) && received > 0 ? received : Number.isFinite(claimed) ? claimed : now.getTime();
+  return new Date(Math.min(ms, now.getTime()));
+}
+
 /** A Lead plus whether THIS run actually changed it — new lead, or a newer message than it had — so callers re-score only what moved, not every known lead on every pass. */
 export type SyncedLead = Lead & { touched: boolean };
 
@@ -588,13 +605,12 @@ async function processThreadRefs(
       .filter((m): m is typeof m & { id: string } => Boolean(m.id))
       .map((m) => {
         const from = parseFromHeader(getHeader(m.payload?.headers, "From"));
-        const dateHeader = getHeader(m.payload?.headers, "Date");
         return {
           id: m.id,
           from,
           direction: (from.email === selfEmail ? "outbound" : "inbound") as "outbound" | "inbound",
           body: extractPlainTextBody(m.payload).slice(0, 5000),
-          sentAt: dateHeader ? new Date(dateHeader) : new Date(),
+          sentAt: gmailMessageTime(m.internalDate, getHeader(m.payload?.headers, "Date")),
           messageIdHeader: getHeader(m.payload?.headers, "Message-ID") || undefined,
         };
       });
@@ -612,10 +628,20 @@ async function processThreadRefs(
     // spend for a verdict that's already on file. Only genuinely new
     // threads get classified; known ones go straight to picking up any
     // new messages below.
-    const alreadyKnown = !!(await prisma.conversation.findUnique({
+    const known = await prisma.conversation.findUnique({
       where: { externalId: thread.id! },
-      select: { id: true },
-    }));
+      select: { id: true, lead: { select: { businessId: true } } },
+    });
+    // Conversation.externalId is unique across ALL businesses, and every
+    // lookup below is by that id alone. A thread id already held by
+    // another business's conversation must never be read as "ours": the
+    // code below would append this mailbox's messages to that other
+    // business's lead (security audit 2026-09-26, A-10). Skipped instead.
+    if (known && known.lead.businessId !== businessId) {
+      console.warn(`Gmail thread ${thread.id} for business ${businessId} collides with another business's conversation — skipped.`);
+      return null;
+    }
+    const alreadyKnown = !!known;
 
     const newestMessageAt = parsedMessages[parsedMessages.length - 1].sentAt;
 
@@ -624,7 +650,19 @@ async function processThreadRefs(
     // back to the older, broader heuristic rather than dropping every
     // lead in demo/unconfigured environments. `skipClassification` is
     // the owner's explicit "this was a lead" override (importGmailThread).
-    if (process.env.OPENAI_API_KEY && !alreadyKnown && !options.skipClassification) {
+    // A known customer starting a NEW thread is still a known customer.
+    // The check above is per thread, so without this their second thread
+    // was judged from scratch and could be set aside — never reaching the
+    // lead, never drafted for, never alerted (daily-path sweep 2026-09-25
+    // #3). WhatsApp already never second-guesses a number it knows.
+    const knownCustomer =
+      !alreadyKnown &&
+      !!(await prisma.lead.findUnique({
+        where: { businessId_email: { businessId, email: counterpart.email } },
+        select: { id: true },
+      }));
+
+    if (process.env.OPENAI_API_KEY && !alreadyKnown && !knownCustomer && !options.skipClassification) {
       // A thread this classifier already rejected stays rejected until it
       // gets a new message — otherwise the every-ten-minutes sync would
       // pay OpenAI to re-reach the same verdict on the same mail forever.
@@ -649,7 +687,7 @@ async function processThreadRefs(
           date: m.sentAt.toISOString(),
           opened: false,
         }));
-        const { isProspect, reason } = await classifyAsProspect(transcript, counterpart, businessContext ?? undefined);
+        const { isProspect, reason } = await classifyWithSecondLook(transcript, counterpart, businessContext ?? undefined);
         if (!isProspect) {
           // Not a lead — but never silently. Record the verdict where the
           // owner can see it and overrule it (Settings → Gmail).
@@ -792,6 +830,16 @@ async function processThreadRefs(
         if (!isUniqueViolation(err)) throw err;
         conversation = await prisma.conversation.findUnique({ where: { externalId: thread.id! } });
         if (!conversation) throw err;
+      }
+    }
+    // The early check above, again, for the row this thread actually
+    // resolved to (a race can put another business's row here between the
+    // two reads): never write this mailbox's mail into another tenant.
+    if (conversation.leadId !== lead.id) {
+      const owner = await prisma.lead.findUnique({ where: { id: conversation.leadId }, select: { businessId: true } });
+      if (owner?.businessId !== businessId) {
+        console.warn(`Gmail thread ${thread.id} for business ${businessId} resolved to another business's conversation — skipped.`);
+        return null;
       }
     }
 

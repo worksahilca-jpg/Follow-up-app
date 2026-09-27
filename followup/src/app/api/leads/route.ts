@@ -8,7 +8,7 @@ import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { tooManyRecentActions } from "@/lib/rateLimit";
-import { cleanedText, EMAIL_RE, parseJsonBody } from "@/lib/validation";
+import { cleanedPhone, cleanedText, EMAIL_RE, parseJsonBody } from "@/lib/validation";
 
 const MAX_TEXT = 200;
 
@@ -20,7 +20,7 @@ const manualLeadSchema = z.object({
   name: cleanedText(MAX_TEXT),
   company: cleanedText(MAX_TEXT),
   email: cleanedText(MAX_TEXT),
-  phone: cleanedText(40),
+  phone: cleanedPhone(40),
   source: cleanedText(MAX_TEXT),
   notes: cleanedText(2000),
   dealValue: z.coerce.number().catch(0),

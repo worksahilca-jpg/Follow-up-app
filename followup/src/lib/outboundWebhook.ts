@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { Lead } from "@prisma/client";
-import { assertSafeWebhookUrl } from "@/lib/ssrf";
+import { postJsonToTenantUrl } from "@/lib/ssrf";
 
 /**
  * Outbound lead-event webhook — the reverse direction of the inbound one
@@ -42,13 +42,6 @@ export async function notifyLeadEvent(
     const url = business?.outboundWebhookUrl;
     if (!url) return;
 
-    // Re-check right before every fire, not just when the URL was saved —
-    // a hostname can be re-pointed at an internal address after the fact
-    // (DNS rebinding), and this fires on every real lead event, so it's
-    // the one place in this codebase that repeatedly fetches a
-    // tenant-supplied URL server-side. See src/lib/ssrf.ts.
-    await assertSafeWebhookUrl(url);
-
     const payload = {
       event,
       leadId: lead.id,
@@ -63,18 +56,16 @@ export async function notifyLeadEvent(
       ...extra,
     };
 
-    // AbortSignal.timeout keeps a dead/slow endpoint from ever hanging this
-    // request past a few seconds — this is best-effort delivery, not a
-    // guaranteed one, so there's no retry queue here.
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(8000),
-      // Never follow a redirect — see the same note on the PUT test-fire
-      // handler in src/app/api/webhooks/outbound/route.ts.
-      redirect: "manual",
-    });
+    // Re-checked on every fire, not just when the URL was saved — a
+    // hostname can be re-pointed at an internal address after the fact
+    // (DNS rebinding), and this fires on every real lead event, so it's
+    // the one place in this codebase that repeatedly calls a
+    // tenant-supplied URL server-side. postJsonToTenantUrl validates the
+    // URL and then checks the address again at connect time, never
+    // follows a redirect, and times out after 8s — best-effort delivery,
+    // not a guaranteed one, so there's no retry queue here. See
+    // src/lib/ssrf.ts.
+    await postJsonToTenantUrl(url, payload, { timeoutMs: 8000 });
   } catch {
     // Swallow — see file header. The downstream tool being down or the URL
     // being stale is that business's problem to notice, not a reason to

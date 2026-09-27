@@ -206,6 +206,7 @@ answers, five days of silence, one short FollowUp question with buttons, the lea
 **Evidence:** the 2026-09-18 "light direction" entry in `[[design-decisions]]`; `HeroStoryLight.tsx`.
 
 ## R-006 — An all-light marketing page (white and grey only, no dark ground anywhere) ^R-006
+**SUPERSEDED (2026-09-26)** by [[approved#^A-022|A-022]]: the founder moved the landing page to white with black type.
 
 **Rejected:** 2026-09-18, founder, on seeing the first full render: "bro where is that black greyish
 gradient" → asked where it should go → "whole page with white and black and greyish gradient".
@@ -302,6 +303,7 @@ any page direction. A product mockup can still live further down (the Product ca
 `[[design-decisions]]` 2026-09-18, "Hero illustration".
 
 ## R-010 — The black → white gradient across the page ^R-010
+**SUPERSEDED (2026-09-26)** by [[approved#^A-022|A-022]]: the founder moved the landing page to white with black type.
 
 **Rejected:** 2026-09-18, founder, on the live preview, minutes after the device-theme rule:
 "we will do full black with dark mode and white with light, so no transition."
@@ -386,3 +388,129 @@ direction" into the brain on the same day the approved logo is in production —
 contradicts what shipped is worse than no rule. Ported here instead, with the contradiction
 resolved rather than hidden, per this brain's own supersede-don't-delete rule. PR #232 is
 closed as superseded by this entry.
+
+## R-014 — The hero lead-flow diagram as it stands: flat, and filling the screen ^R-014
+**Date:** 2026-09-25
+**Scope:** Landing page hero (the A-012 diagram)
+**Rejected (in part):** on the website review page, the founder commented on the diagram:
+*"this whole diagram is very boring the concept is cool but not that advanced and it is in the
+whole screen too"*.
+**What survives:** the **concept** — leads coming in from every channel, FollowUp in the middle,
+customers answering on the right. He called it cool. Do not drop the idea.
+**What is rejected:** the execution: flat cards and thin wires, and its size (full screen width
+under the headline).
+**Inferred principle (marked inferred):** "advanced" here most likely means depth and craft —
+the same story told with more dimension and motion that explains, in a smaller footprint — not a
+new concept. Asked which reading he means before rebuilding (R-008: no rebuild on a guess).
+**Supersedes, partly:** [[approved#^A-012|A-012]] — its concept stands, its look and size do not.
+
+## R-015 — The first phone app screens: too much on each screen ^R-015
+
+**Rejected:** 2026-09-26, founder, on the canvas: *"the mobile interface still looks very complex. I would
+rather ignore using it on my phone. Make it more simple so that I can also be habitable with my phone, because
+users will be mostly using their phone… very clean, neat, and simple."*
+
+**What was rejected:** the first phone versions of Today, Inbox, the conversation screen, and "all caught up".
+Specifically, what each screen carried:
+- **Today:** a progress bar with a caption, two section labels, "Send both", a win card, times and icons on every row.
+- **Inbox:** filter chips, three group labels, and a coloured dot per row.
+- **Conversation:** a window-time line, an event divider, and a mono label.
+- **All caught up:** a colour wash, a progress bar, and an outcomes grid.
+
+**Stated reason:** too complex; he wouldn't use it on his own phone.
+**Inferred principle (marked inferred):** the desktop's information density doesn't transfer to the phone, even
+when it's styled cleanly. The phone gets one decision per screen, bigger type, fewer labels, and no colour
+coding. Anything that's only "nice to know" moves off the phone screen.
+
+**Do not propose again:** desktop-density screens on the phone, in any styling.
+
+## R-016 — Black-only state dots on desktop ^R-016
+
+**Rejected:** 2026-09-26, founder, "Colored one", on the side-by-side comparison. The proposal was a black dot and bold text
+for "needs you", and grey for every other state.
+**Stated reason:** none. **Inferred (marked inferred):** the desktop table is scanned many rows at a time, and
+colour makes the states distinguishable at a glance. It's the Attio principle "colour only for state", which the
+founder accepted. **Do not re-propose** removing colour from the desktop state dots.
+
+## R-017 — A handwriting font / handwritten note on the landing page ^R-017
+
+**Rejected:** 2026-09-26, founder: "skip it". It was offered as an option for "more human made" (a note like
+"you tap send" beside the reply).
+**Reason (my recommendation, accepted):** the pen-drawn underline and arrow already carry the hand-made feel; a
+handwriting font tends to read as a gimmick and adds a font dependency.
+**Do not re-propose** a handwriting font. The pen marks are the approved human touch.
+
+## R-018 — The reply as a big black card ("too black") ^R-018
+
+**Rejected:** 2026-09-26, founder, in a canvas comment on the proof screen's reply card: *"I'm not liking this black
+theme. It's everywhere. It's too black. Can we add that or gradient things?"*
+**What was rejected:** the large black reply card (white text, white Send) used on every screen: the proof screen,
+Today, the conversation, Inbox, People, and three cards on the landing page.
+**The principle (inferred):** big dark surfaces repeated on every screen read as heavy, not calm. Black should be
+rare: the one action (a small Send or Start button), not whole blocks.
+**What replaced it (canvas version 26):** the landing wash (warm peach, rose and slate, with grain; A-032) and dark
+text, a faint border, a black Send and a light Edit. Partly supersedes A-022 and A-025 ("the one black card").
+**Still open:** whether the small black buttons should be softened too. The founder was asked in the thread.
+
+## R-019 — New canvas boards drawn in the live site's older type, not the sketched canvas system ^R-019
+
+**Rejected:** 2026-09-26, founder, looking at the Intercom and Close boards (DemoStory, SafePromise, HeroProof,
+ProofWaiting): *"why i am seeing older theme designs in the new canvas you are drawing"* and *"this is the design
+that we sketched but why are you sketching the new canvas according to the old fonts"*. Pointed at Main, App and Today.
+**What was rejected:**
+- Instrument Serif italic in headlines ("and why.", "using it.").
+- Centered 500/600-weight headings.
+- A black reply bubble. That had already been rejected in R-018 and came back through the live site's styling.
+
+All of these were copied from the live `page.tsx` instead of the canvas.
+**The principle:** the sketched canvas (Main.dc.html, Today.dc.html, TodayPhone.dc.html) is the design system for
+every new board. That means:
+- Public Sans headings at weight 300: 48px in sections, 64px in the hero.
+- IBM Plex Mono eyebrows at 11px, spaced 0.1em.
+- Left-aligned sections padded 100px 184px.
+- White cards with a #e7e5e2 border and 22px radius.
+- The peach/rose/slate wash with grain for any written reply. Black only for the one small action.
+
+Where the live site differs, the canvas wins. Before drawing, open Main.dc.html and match it. Don't use the live
+page or memory.
+**What replaced it (canvas version 41):** all nine boards were redrawn in that system.
+
+## R-020 — Hand-drawn marks (underline, arrow), repeated channel lists, and the "Only for owners…" hero line ^R-020
+
+**Rejected:** 2026-09-26, founder, circling them on the combined landing page (MainV2):
+- *"I'm seeing Works with twice … at the bottom as well and in the front"*
+- *"I don't like that concept of drawing that arrow and underlines"*
+- *"Only for owners who have this thing … I'm not getting that kick"*
+
+**What was rejected:**
+1. The hand-drawn swash under "follow up" in the headline.
+2. The hand-drawn curved arrow between the message card and the reply card in the hero picture.
+3. The channel chips in the hero picture (Gmail, Instagram, WhatsApp, Website), with the "Works with" strip right
+   below saying the same thing.
+4. The hero lede opening "Only for owners who have leads and don't have time to reply."
+
+**The principle:**
+- No hand-drawn decoration anywhere. It's the same family as R-017 (handwriting), so the whole hand-made-mark
+  direction is dead.
+- Say a thing once on a screen.
+- The line under the headline says what FollowUp does, never who it's for or a qualifier. (That part is inferred from
+  "no kick", and matches the reference strategy's note that the explanation line was a qualifier.)
+
+**What replaced it (canvas v50):**
+- The underline, the arrow and the chips are gone. The "Works with" strip stays as the one place the channels appear.
+- New lede: "FollowUp reads your email, DMs and website messages, finds every customer still waiting on you, and
+  writes the reply. You just check it and send."
+
+## R-021 — The phone's first screen as all text ^R-021
+
+**Rejected:** 2026-09-26, founder, on PhoneV2 (canvas v55): *"for the website for laptop or desktop, it's good, but
+for mobile, it's very boring. I don't think anybody will see… I don't think anybody will catch that on their phone.
+Desktop is fine."*
+**What was rejected:** the phone's first screen: headline, a four-line paragraph, the buttons and two check lines. The
+picture of FollowUp replying started at the very bottom, so on a phone nobody saw it without scrolling.
+**What survives:** the desktop hero. There the picture sits beside the text, so it's in view.
+**Inferred principle (marked inferred):** on a phone, the first screen has to *show* FollowUp doing its job, not just
+describe it. Stacking the desktop's text column above the picture pushes the product below the fold.
+**Open:** "bold, full letters" could mean the thin headline, or the wall of text. Both versions are drawn
+(PhoneHeroA thin, PhoneHeroB bold) for the founder to pick.
+**Do not propose again:** a phone hero where the picture starts below the first screen.

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { getSessionContext, requireAdmin } from "@/lib/session";
 import { startGmailOAuth } from "@/lib/integrations/gmail";
+import { publicErrorMessage } from "@/lib/publicError";
 
 // GET /api/integrations/gmail/connect — kicks off the Google OAuth consent
 // screen. Linked from the "Connect" button on Settings, and from the
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     if (next) res.cookies.set("gmail_oauth_next", next, cookieOpts);
     return res;
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to start Gmail OAuth";
+    const message = publicErrorMessage(err, "Failed to start Gmail OAuth", "integrations/gmail/connect");
     const url = new URL(next === "onboarding" ? "/onboarding" : "/settings", request.url);
     url.searchParams.set("gmail", "error");
     url.searchParams.set("message", message);

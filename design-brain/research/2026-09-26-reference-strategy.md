@@ -222,3 +222,47 @@ Checked against the **sketched canvas** (Main, Phone and the app boards), not th
 7. A curiosity action: "Find who needs a reply" on the setup button.
 8. HubSpot / Intercom pricing: the last unstudied reference.
 9. ⏸ Founder decisions: the hero number (Google Limited Use), and offering automation after trust.
+
+---
+
+## Checked against the live product (2026-09-27, after #358–#362)
+
+**Asked by the founder:** *"what we decided while designing it should be the same as we studied the strategy"*.
+Checked in the code on main (bb7cefd), not on the canvas.
+
+### Matches the document
+- **Hero:** problem headline, a lede that explains, "Start free" plus "See how it works", "Free in beta · No card".
+- **Problem:** "The gap".
+- **Demo:** the real Today screen playing Sarah's price question in five steps (A-063).
+- **AI experience:** why it needs you, the reply written, and the "$ price" blank.
+- **Trust:** Your control, plus /security.
+- **Compatibility:** "Works with".
+- **Proof:** empty until real (A-023).
+- **Benefits and depth:** "Underneath".
+- **Pricing:** no card, because it's true.
+- **FAQ and final CTA:** both there.
+- **App:**
+  - Needs you / Waiting on customers / Handled today;
+  - a queue that ends ("You're done for today.");
+  - reasons on every card;
+  - motion that confirms a change;
+  - the old-customers step in onboarding, as the activation moment.
+- **Customer-facing pages:** booking and form, calm, with the business as the brand.
+
+### Different on purpose (the founder decided; not to be "fixed")
+- **Trust before delegation.** The document's order is detect → suggest → approve → earn trust → offer automation.
+  A-056 put automation first ("Automatic, recommended" in onboarding). It's softened by:
+  - decisions always coming to the owner;
+  - an instant stop on reply;
+  - the Assisted choice;
+  - Pause all sending.
+- **How it works as its own section.** A-063 folded it into the demo ("too much information").
+- **"You're caught up."** A-046 approved "You're done for today." Same meaning.
+
+### Gaps
+1. **Curiosity action.** A-053 approved "Find who needs a reply" on the setup button. It never shipped: every
+   onboarding button says "Continue". The right place now is step 4 (Automatic / Assisted), whose button leads to
+   the "never got a reply" list.
+2. **"That's simple."** The page never says setup takes two minutes. A-063 cut How it works, and nothing carries that
+   line now.
+3. **Proof.** Correctly empty. It waits on two or three testers agreeing to a one-line quote (the founder's action).

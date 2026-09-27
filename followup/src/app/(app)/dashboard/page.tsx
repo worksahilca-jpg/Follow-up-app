@@ -126,6 +126,11 @@ export default async function DashboardPage() {
     ...a,
     wait: describeWait(a, now),
     waitClause: describeWaitClause(a, now),
+    // "FollowUp told Sarah you're on it · 6:40 pm" (A-060), in the
+    // business's own time, worked out here for the same reason as `wait`.
+    toldAt: a.customerToldAt
+      ? new Date(a.customerToldAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: timezone })
+      : null,
   }));
   const handledToday = ctx ? await countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0;
   // "Your first reply went out through FollowUp" (A-047): only on the day

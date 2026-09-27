@@ -43,8 +43,9 @@ import { greetingFirstName } from "@/lib/leadName";
 import { leadLanguageOf } from "@/lib/leadLanguage";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { HOLDING_TRIGGER } from "@/lib/notAnAnswer";
 
-export const HOLDING_TRIGGER = "holding";
+export { HOLDING_TRIGGER };
 
 /** How long a price or date question waits for the owner before the customer is told. */
 export const HOLDING_DELAY_MS = 30 * 60_000;

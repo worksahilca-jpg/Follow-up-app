@@ -171,6 +171,7 @@ describe("getPendingApprovals", () => {
         leadLastMessageChannel: null,
         leadLastMessageAt: null,
         laterUntil: null,
+        customerToldAt: null,
       },
     ]);
   });
@@ -311,3 +312,51 @@ describe("getPendingApprovals — 'We talked' (design brain A-039)", () => {
     expect(await getPendingApprovals("biz1")).toHaveLength(1);
   });
 });
+
+/**
+ * Today says when the customer was told the owner is on it (A-060): the
+ * 30-minute holding message. It is not an answer, so it must not take the
+ * lead out of the queue, and it must only be shown when it answered the
+ * customer's newest question.
+ */
+describe("getPendingApprovals — the customer was told the owner is on it", () => {
+  const asked = new Date("2026-09-10T11:00:00Z");
+  const withQuestion = () =>
+    lead({ conversations: [{ channel: "email", messages: [{ body: "How much is the package?", sentAt: asked }] }] });
+  // The queue asks the message table twice: real answers, then holding
+  // messages. Answer each by its filter, as the database would.
+  function messages(rows: { sentAt: Date; trigger: string | null }[]) {
+    p.message.findMany.mockImplementation(async (q: { where: { trigger?: string } }) =>
+      rows
+        .filter((r) => (q.where.trigger === "holding" ? r.trigger === "holding" : r.trigger !== "holding"))
+        .map((r) => ({ sentAt: r.sentAt, conversation: { leadId: "lead1" } }))
+    );
+  }
+
+  it("says when the holding message went, and keeps the lead waiting on the owner", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([withQuestion()]);
+    messages([{ sentAt: new Date("2026-09-10T12:30:00Z"), trigger: "holding" }]);
+    const [item] = await getPendingApprovals("biz1");
+    expect(item.customerToldAt).toBe("2026-09-10T12:30:00.000Z");
+  });
+
+  it("says nothing when no holding message went", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([withQuestion()]);
+    messages([]);
+    const [item] = await getPendingApprovals("biz1");
+    expect(item.customerToldAt).toBeNull();
+  });
+
+  it("says nothing when the customer has written again since", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([
+      lead({ conversations: [{ channel: "email", messages: [{ body: "Still there?", sentAt: new Date("2026-09-10T13:00:00Z") }] }] }),
+    ]);
+    messages([{ sentAt: new Date("2026-09-10T12:30:00Z"), trigger: "holding" }]);
+    const [item] = await getPendingApprovals("biz1");
+    expect(item.customerToldAt).toBeNull();
+  });
+});
+

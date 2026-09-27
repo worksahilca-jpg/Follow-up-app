@@ -34,6 +34,7 @@ import { prisma } from "@/lib/db";
 import { byTranscriptOrder } from "@/lib/transcript";
 import { settledByTalk, lastInboundTime } from "@/lib/talked";
 import { generateFollowUpMessage, assessSendRisk, type RiskTopic } from "@/lib/integrations/openai";
+import { hasPriceSlot, PRICE_SLOT_REASON } from "@/lib/priceSlot";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
 import { conversationText } from "@/lib/dmDrafts";
 import { ungroundedSpecifics } from "@/lib/grounding";
@@ -1461,7 +1462,12 @@ export async function runAutomationForBusiness(
       // so that a send the window defers (below) does not throw it away and
       // buy the same answer again next hour.
       let verdictToKeep: { riskLevel: "low" | "medium" | "high"; reason: string; topic?: RiskTopic } | null = null;
-      if (holdAll || isUntouched || phoneNeverWrote || effectiveTier !== "AUTONOMOUS" || tier === "free") {
+      // A draft with the price blank (src/lib/priceSlot.ts) waits for the
+      // owner's figure on every tier. AUTONOMOUS skips review below, so the
+      // blank has to send it through review here; otherwise the send layer
+      // would refuse it and nobody would ever see it.
+      const needsPrice = hasPriceSlot(message);
+      if (holdAll || isUntouched || phoneNeverWrote || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice) {
         /**
          * Every draft that reaches here gets a verdict, including ones
          * that are going to be held no matter what it says.
@@ -1541,6 +1547,13 @@ export async function runAutomationForBusiness(
           // behavior rather than holding every automated lead forever in
           // an unconfigured/demo environment.
           risk = { riskLevel: "low", reason: "" };
+        }
+        // Whatever the branch above decided, a blank is a decision for the
+        // owner and a price question (the 30-minute holding message keys
+        // off this topic). Stored, because it is a true verdict.
+        if (needsPrice) {
+          risk = { riskLevel: "high", reason: PRICE_SLOT_REASON, topic: "price" };
+          riskAssessed = true;
         }
         if (riskAssessed) verdictToKeep = risk;
 

@@ -1,4 +1,4 @@
-import { NOT_AN_ANSWER_TRIGGERS, isNotAnAnswer } from "@/lib/notAnAnswer";
+import { HOLDING_TRIGGER, NOT_AN_ANSWER_TRIGGERS, isNotAnAnswer } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
@@ -137,6 +137,14 @@ export type PendingApproval = {
    * them.
    */
   laterUntil: Date | null;
+  /**
+   * When FollowUp told the customer the owner is on it (the 30-minute
+   * holding message, src/lib/holdingMessage.ts), as ISO — only when that
+   * message answered their newest question. Null otherwise. Today says it
+   * on the card (A-060, TodayHoldingPhone), so the owner knows the customer
+   * is not waiting in silence.
+   */
+  customerToldAt: string | null;
 };
 
 /**
@@ -238,6 +246,24 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
     },
     select: { sentAt: true, conversation: { select: { leadId: true } } },
   });
+  // The holding messages among the same leads: "let me check" is not an
+  // answer, so it is filtered out above, but the owner should see it went.
+  const holdingSends = await prisma.message.findMany({
+    where: {
+      direction: "outbound",
+      trigger: HOLDING_TRIGGER,
+      sentAt: { gt: oldestHold },
+      conversation: { leadId: { in: heldIds }, lead: { businessId } },
+    },
+    select: { sentAt: true, conversation: { select: { leadId: true } } },
+  });
+  const lastHoldingByLead = new Map<string, Date>();
+  for (const m of holdingSends) {
+    const id = m.conversation.leadId;
+    const prev = lastHoldingByLead.get(id);
+    if (!prev || m.sentAt > prev) lastHoldingByLead.set(id, m.sentAt);
+  }
+
   const lastSentByLead = new Map<string, Date>();
   for (const m of laterSends) {
     const id = m.conversation.leadId;
@@ -266,6 +292,10 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       if (m && (!lastInbound || m.sentAt > lastInbound.sentAt)) lastInbound = { body: m.body, channel: c.channel, sentAt: m.sentAt };
     }
 
+    // Told since their newest message, so it answers the question in front of the owner.
+    const told = lastHoldingByLead.get(lead.id);
+    const customerToldAt = told && lastInbound && told > lastInbound.sentAt ? told.toISOString() : null;
+
     const later =
       lead.laterUntil && lead.laterUntil > now && !(lastInbound && lead.laterSetAt && lastInbound.sentAt > lead.laterSetAt)
         ? lead.laterUntil
@@ -287,6 +317,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       leadLastMessage: lastInbound ? truncate(lastInbound.body, LEAD_MESSAGE_PREVIEW_LENGTH) : null,
       leadLastMessageChannel: lastInbound?.channel ?? null,
       leadLastMessageAt: lastInbound ? lastInbound.sentAt.toISOString() : null,
+      customerToldAt,
     });
   }
   /*

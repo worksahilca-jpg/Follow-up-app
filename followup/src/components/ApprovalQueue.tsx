@@ -12,6 +12,7 @@ import SafePilePeek from "@/components/SafePilePeek";
 import UndoLine from "@/components/UndoLine";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE, RESULT_HOLD_MS } from "@/lib/motion";
+import { fillPriceSlot, hasPriceSlot, splitAtPriceSlot } from "@/lib/priceSlot";
 
 /**
  * "Needs your OK" — research/product/2026-09-10-ux-simplification.md
@@ -62,6 +63,8 @@ export type ApprovalItem = PendingApproval & {
   wait?: string | null;
   /** The same fact for the "Start with" line: "who has waited 5 hours". */
   waitClause?: string | null;
+  /** When the customer was told the owner is on it, in the business's time (A-060). */
+  toldAt?: string | null;
 };
 
 const CHANNEL_LABEL: Record<string, string> = {
@@ -93,6 +96,13 @@ function ApprovalCard({
   const [laterOpen, setLaterOpen] = useState(false);
   const [laterUntil, setLaterUntil] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The price blank (A-060): a price question's reply is written with a
+  // gap for the figure. Send stays off until it is filled, and the server
+  // refuses the blank anyway (src/lib/priceSlot.ts).
+  const needsPrice = hasPriceSlot(item.draftMessage);
+  const [price, setPrice] = useState("");
+  const priceMissing = needsPrice && !price.trim();
+  const message = needsPrice ? fillPriceSlot(item.draftMessage, price.trim()) : item.draftMessage;
   // "We talked" (design brain A-039): the card stays for a few seconds
   // saying what happened, with Undo, then leaves the queue.
   const [talked, setTalked] = useState(false);
@@ -120,7 +130,7 @@ function ApprovalCard({
   const send = useUndoableSend({
     url: `/api/leads/${item.leadId}/send`,
     body: JSON.stringify({
-      message: item.draftMessage,
+      message,
       ...(item.draftSubject ? { subject: item.draftSubject } : {}),
       // The newest thing the lead had said when this card was drawn. If
       // they have written since, the server refuses with a 409 and says so,
@@ -270,12 +280,59 @@ function ApprovalCard({
             {item.leadName.split(" ")[0]} said, over {CHANNEL_LABEL[item.leadLastMessageChannel ?? ""] ?? "message"}:
           </p>
           <p className="text-ink whitespace-pre-wrap mt-1">{item.leadLastMessage}</p>
+          {/* The 30-minute holding message went (A-060): the customer is not
+              waiting in silence, and the owner should know that before
+              deciding how fast this one has to be. */}
+          {item.customerToldAt && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-soft">
+              <Check size={13} aria-hidden="true" />
+              <span>
+                FollowUp told {firstName} you&apos;re on it
+                {item.toldAt && (
+                  <>
+                    {" · "}
+                    <time dateTime={item.customerToldAt}>{item.toldAt}</time>
+                  </>
+                )}
+              </span>
+            </p>
+          )}
         </div>
       )}
       <div className="mt-3 pt-3 border-t border-line text-sm leading-relaxed">
         <p className="text-xs font-medium text-ink-soft">The draft reply:</p>
         {item.draftSubject && <p className="font-medium mt-1">{item.draftSubject}</p>}
-        <p className="text-ink-soft whitespace-pre-wrap mt-1">{item.draftMessage}</p>
+        {needsPrice ? (
+          <p className="text-ink-soft whitespace-pre-wrap mt-1">
+            {splitAtPriceSlot(item.draftMessage).map((part, i) =>
+              i === 0 ? (
+                <span key={i}>{part}</span>
+              ) : (
+                <span key={i}>
+                  {i === 1 ? (
+                    <input
+                      id={`price-${item.leadId}`}
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      disabled={send.pending || send.busy}
+                      placeholder="$ price"
+                      aria-label={`The price for ${firstName}`}
+                      autoComplete="off"
+                      className="mx-0.5 inline-block h-8 w-28 rounded-md border border-dashed bg-paper px-2 align-baseline text-ink disabled:opacity-60"
+                      style={{ borderColor: price.trim() ? "var(--line)" : "var(--ink-soft)" }}
+                    />
+                  ) : (
+                    <span className="text-ink">{price.trim() || "$ price"}</span>
+                  )}
+                  {part}
+                </span>
+              )
+            )}
+          </p>
+        ) : (
+          <p className="text-ink-soft whitespace-pre-wrap mt-1">{item.draftMessage}</p>
+        )}
+        {priceMissing && <p className="mt-1.5 text-xs text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
         {item.basis && <p className="mt-1.5 text-xs text-ink-soft">{item.basis}</p>}
       </div>
       {error && (
@@ -321,7 +378,7 @@ function ApprovalCard({
           ) : (
             <button
               onClick={send.start}
-              disabled={busy !== null || send.busy}
+              disabled={busy !== null || send.busy || priceMissing}
               className="rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >

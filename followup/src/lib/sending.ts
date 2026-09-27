@@ -41,6 +41,7 @@ import {
   rescheduleSend,
   retireSend,
 } from "@/lib/sendQueue";
+import { hasPriceSlot, isFilledDraft, PRICE_SLOT } from "@/lib/priceSlot";
 
 /**
  * SMS and WhatsApp both live on Lead.phone (the same phone number
@@ -382,6 +383,18 @@ export async function sendFollowUpToLead(
 ): Promise<SendResult> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
   if (!lead) return { success: false, message: "Lead not found.", failure: "refused" };
+
+  // The price blank (src/lib/priceSlot.ts) is for the owner to fill in. A
+  // message that still has it never leaves, on any path: a person's send,
+  // the routine pile, a workflow, a retry. Checked before anything else
+  // happens, so nothing is queued or recorded for it.
+  if (hasPriceSlot(body) || hasPriceSlot(options.subject)) {
+    return {
+      success: false,
+      message: `Add the price first: the reply still says ${PRICE_SLOT} where the figure goes.`,
+      failure: "refused",
+    };
+  }
 
   const channel =
     options.channel ??
@@ -942,7 +955,10 @@ export async function sendFollowUpToLead(
   // draft on the lead (a message typed from scratch, an instant ack)
   // means nothing to compare, so null rather than a false "unedited".
   const squash = (s: string) => s.replace(/\s+/g, " ").trim();
-  const draftEdited = lead.suggestedMessage ? squash(body) !== squash(lead.suggestedMessage) : null;
+  // Filling the price blank is not an edit (src/lib/priceSlot.ts).
+  const draftEdited = lead.suggestedMessage
+    ? squash(body) !== squash(lead.suggestedMessage) && !isFilledDraft(lead.suggestedMessage, body)
+    : null;
 
   // The draft is spent once it has gone out — as written, or as the owner's
   // own edit of it (a manual send answers the same message the draft did).

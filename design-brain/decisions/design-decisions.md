@@ -7689,3 +7689,21 @@ Canvas v68, all proposed.
 
 **Wording that depends on PR 1:** the first switch says "Or choose Automatic". That is true once onboarding offers the
 choice. The live page's "only if you turn that on" stays true either way.
+
+### 2026-09-27: logo, a small f five ways (LogoF)
+**Founder:** *"can we do folded f or something like a small f has a like in between show some creativiy"*. Read as:
+a folded f, or a small f with something in between. Both readings were drawn. Canvas v69, all proposed.
+
+**The five:** each is a lowercase f leaning forward, with one detail.
+- **F1. Dog-eared f.** The f's head is a page with its corner folded down. His "folded f", joined with idea K.
+- **F2. Folded ribbon.** One strip of paper; the crossbar folds down at its end. The small fold turns to noise at 16 px.
+- **F3. f with a pause.** The stem breaks just under the crossbar, then carries on. The gap is the wait FollowUp
+  covers. **Recommended.** It holds at 16 px.
+- **F4. f carrying a message.** The crossbar is a small speech bubble. The tail is unreadable below 32 px.
+- **F5. f and its follow-up.** The crossbar runs forward and a dot follows it. The simplest.
+
+**Risk, named:** a plain white f on a dark rounded square reads as Facebook's app icon (G, earlier). On this board the
+app icon leads on white. The dark version is shown only to compare. Each f carries a detail (fold, gap, dot) that a
+plain f doesn't.
+
+**Not chosen yet.** The founder's H (A-061) still stands as the approved direction until he picks otherwise.

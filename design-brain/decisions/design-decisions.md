@@ -8048,3 +8048,26 @@ decided in the design"*.
   - The live Follow-up plans page still has a left-border note ("A plan stops the moment…"). It goes when the page is
     built from the drawing.
   - Pipeline on the phone shows one stage open at a time, which hides the others' customers.
+
+### 2026-09-27: "I don't see the design on live": Today doesn't match its drawing
+**Founder:** *"i dont see the design on live that i built on canvas … designs looks so sick but i am unsatisfied from
+th app"*.
+- **Checked by rendering the boards next to the built screens.** Inbox, the conversation and Settings are close to
+  their boards. **Today is not**, and it's the first screen:
+  - On the phone, TodayCalmPhone opens the first customer as a big card with the warm reply card and Send/Edit.
+    Built: a list with "Review".
+  - The rows show "Held because …" where the board shows the customer's own words.
+  - Today still stacks blocks the board doesn't have: the setup card, "Send a test lead to myself", "Upcoming calls",
+    "See all numbers", and a large warning box.
+  - On desktop, the Coming up column is missing when empty, and Review is outlined, not black.
+  - A near-empty live account never looks like a board drawn with a full day.
+- **Principle (inferred):** the founder judges the build against the drawing screen by screen. Structural
+  likeness isn't enough: the moments that make a drawing look good (the reply card up front, the customer's words)
+  have to be in the first view.
+- **Next:** rebuild Today to TodayCalm and TodayCalmPhone exactly, then show both side by side before merging.
+- **Also built today (A-066):**
+  - Pipeline, Numbers, What FollowUp did, Coming up, the Follow-up plans phone list, and Waiting matched to its
+    board.
+  - The Pipeline stage labels became "New" and "Proposal sent".
+  - "Held for you" now appears in What FollowUp did (from the same `ai.hold` rows as Approvals).
+  - Coming up shows days only, no clock time, because the engine never promises one.

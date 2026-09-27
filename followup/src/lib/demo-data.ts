@@ -458,10 +458,10 @@ export function getStats() {
 }
 
 export const PIPELINE_STAGES: { id: Lead["stage"]; label: string }[] = [
-  { id: "new", label: "New Lead" },
+  { id: "new", label: "New" },
   { id: "contacted", label: "Contacted" },
   { id: "qualified", label: "Qualified" },
-  { id: "proposal", label: "Proposal Sent" },
+  { id: "proposal", label: "Proposal sent" },
   { id: "negotiation", label: "Negotiation" },
   { id: "won", label: "Won" },
   { id: "lost", label: "Lost" },

@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { PageHeader } from "@/components/PageHeader";
+import Link from "next/link";
 import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft, Workflow as WorkflowIcon } from "lucide-react";
 import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
 import { READY_PLANS, toStepDelays, dayLabel, type ReadyPlan } from "@/lib/readyPlans";
@@ -72,7 +72,7 @@ function describeOffset(hours: number): string {
 const STAGE_OPTIONS: { value: string; label: string }[] = [
   { value: "CONTACTED", label: "Contacted" },
   { value: "QUALIFIED", label: "Qualified" },
-  { value: "PROPOSAL", label: "Proposal Sent" },
+  { value: "PROPOSAL", label: "Proposal sent" },
   { value: "NEGOTIATION", label: "Negotiation" },
   { value: "WON", label: "Won" },
   { value: "LOST", label: "Lost" },
@@ -92,6 +92,8 @@ export default function WorkflowsPage() {
 
   // Business.holdAllForApproval — true for every beta account.
   const [holdAllForApproval, setHoldAllForApproval] = useState(false);
+  // Phone: one ready plan open at a time (A-066); "" = all closed.
+  const [openPlan, setOpenPlan] = useState<string>(READY_PLANS[0]?.id ?? "");
 
   function load() {
     fetch("/api/sequences")
@@ -135,21 +137,27 @@ export default function WorkflowsPage() {
           state all avoid by saying "plan". */}
       {/* Ready plans first (A-044, the Zapier study): pick one, change a
           day. The blank builder is a quiet link, not the main button. */}
-      <PageHeader
-        title="Follow-up plans"
-        subtitle="Pick a plan, change a day if you want. Put someone on it from their page."
-      />
+      <Link href="/settings" className="text-[13px] text-ink-faint hover:text-ink">
+        ← Settings
+      </Link>
+      <h1 className="mt-2 text-[30px] leading-[1.12] lg:text-[34px]">Follow-up plans</h1>
+      {/* The stop-on-reply guarantee (PRODUCT_DIRECTION Rule 3) is said
+          here, in the one sentence everyone reads, as drawn (A-066). */}
+      <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">
+        Pick a plan and change a day if you want. Put someone on it from their page. It stops the moment they answer.
+      </p>
 
       {!creating && !picked && (
         <div className="mt-6">
-          <div className="grid gap-3 sm:grid-cols-3">
+          {/* Desktop: the three plans side by side. */}
+          <div className="hidden gap-3 lg:grid lg:grid-cols-3">
             {READY_PLANS.map((plan) => (
-              <div key={plan.id} className="box p-5 flex flex-col">
-                <p className="font-medium">{plan.name}</p>
-                <p className="text-xs text-ink-soft mt-0.5">{plan.who}</p>
-                <ul className="mt-3 flex-1 divide-y divide-line">
+              <div key={plan.id} className="flex flex-col rounded-[18px] border border-line bg-card p-5">
+                <p className="text-base font-medium">{plan.name}</p>
+                <p className="mt-0.5 text-[13px] text-ink-faint">{plan.who}</p>
+                <ul className="mt-3 flex-1">
                   {plan.steps.map((st) => (
-                    <li key={st.day} className="flex gap-3 py-2 text-sm">
+                    <li key={st.day} className="flex gap-3 border-t border-line-2 py-2.5 text-sm">
                       <span className="w-20 shrink-0 whitespace-nowrap font-medium tabular-nums">{dayLabel(st.day)}</span>
                       <span className="text-ink-soft">{st.label}</span>
                     </li>
@@ -157,16 +165,63 @@ export default function WorkflowsPage() {
                 </ul>
                 <button
                   onClick={() => setPicked(plan)}
-                  className="mt-3 rounded-lg border border-line px-3 py-2 text-sm font-medium hover:bg-paper"
+                  className="mt-3 h-10 rounded-full border px-4 text-sm font-medium"
+                  style={{ borderColor: "rgba(10,10,10,0.18)" }}
                 >
                   Use this plan
                 </button>
               </div>
             ))}
           </div>
+
+          {/* Phone: one list, one plan open (R-015). */}
+          <div className="overflow-hidden rounded-[18px] border border-line bg-card lg:hidden">
+            {READY_PLANS.map((plan, i) => {
+              const isOpen = openPlan === plan.id;
+              return (
+                <div key={plan.id} className={i ? "border-t border-line-2" : ""}>
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    onClick={() => setOpenPlan(isOpen ? "" : plan.id)}
+                    className="flex min-h-16 w-full items-center gap-2.5 px-4 py-2.5 text-left"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base font-medium">{plan.name}</span>
+                      <span className="mt-0.5 block text-[13.5px] text-ink-faint">
+                        {isOpen ? plan.who : plan.steps.map((st) => dayLabel(st.day)).join(" · ")}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      className="h-[18px] w-[18px] shrink-0 transition-transform"
+                      style={{ transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)", color: isOpen ? "var(--ink)" : "var(--ink-faint)" }}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-4">
+                      {plan.steps.map((st) => (
+                        <div key={st.day} className="flex gap-3.5 border-t border-line-2 py-[11px]">
+                          <span className="w-16 shrink-0 text-sm font-medium tabular-nums">{dayLabel(st.day)}</span>
+                          <span className="text-[14.5px] text-ink-soft">{st.label}</span>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => setPicked(plan)}
+                        className="mt-2 h-[50px] w-full rounded-full text-base font-semibold"
+                        style={{ background: "var(--accent)", color: "var(--on-accent)" }}
+                      >
+                        Use this plan
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
           <button
             onClick={() => setCreating(true)}
-            className="mt-3 text-xs font-medium underline underline-offset-2 text-ink-soft"
+            className="mt-2 inline-flex min-h-11 items-center text-sm text-ink-soft underline underline-offset-[3px]"
           >
             Start from scratch instead
           </button>
@@ -185,23 +240,6 @@ export default function WorkflowsPage() {
           onError={setError}
         />
       )}
-
-      {/* The guarantee, stated once, where it's relevant, as its own object
-          rather than as the tail of a paragraph. */}
-      <div
-        className="relative mt-6 box py-3 pl-4 pr-3"
-      >
-        <span
-          aria-hidden="true"
-          className="absolute inset-y-0 left-0 w-[3px] rounded-l-[var(--radius-box)]"
-          style={{ backgroundColor: "var(--sage)" }}
-        />
-        <p className="text-sm font-medium">A plan stops the moment the lead replies.</p>
-        <p className="mt-1 text-xs text-ink-soft">
-          You get notified, and nothing scheduled sends after that. FollowUp never talks past a conversation
-          that&apos;s actually happening.
-        </p>
-      </div>
 
       {/* --slate, not --coral: nothing is broken and nothing is lost. It
           is a fact about how far a plan runs on this account, said before

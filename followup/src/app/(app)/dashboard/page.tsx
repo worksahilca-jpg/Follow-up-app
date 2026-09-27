@@ -6,9 +6,8 @@ import CantSendNotice from "@/components/CantSendNotice";
 import { hasAnySendChannel } from "@/lib/sendChannels";
 import TestLeadButton from "@/components/TestLeadButton";
 import { getLeads, getStats, getUpcomingBookings } from "@/lib/leads-data";
-import { formatCurrency } from "@/lib/demo-data";
 import { getAtRiskLeads } from "@/lib/rescue";
-import { describeTrigger, getRescueReport } from "@/lib/rescued";
+import { getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
 import { withBasis, sentAsWritten } from "@/lib/showTheWork";
 import { weekLine } from "@/lib/weekLine";
@@ -25,7 +24,7 @@ import { getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
 import { ArrowRight } from "lucide-react";
-import { ItemBox, ItemBoxList, type ItemTone } from "@/components/ItemBox";
+import { Eyebrow, Initials } from "@/components/app/canvasBits";
 import FirstValueNote from "@/components/FirstValueNote";
 import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 
@@ -41,32 +40,6 @@ function timeAgo(iso: string): string {
   return `${Math.round(hours / 24)} day${Math.round(hours / 24) === 1 ? "" : "s"} ago`;
 }
 
-/**
- * The rail tone for an at-risk row, and the word it stands for.
- *
- * The rescue model already computes the two facts that matter — hours someone
- * has been waiting on an answer, days of silence after we wrote — so the
- * severity here is read off those rather than off the 0–100 score, which is a
- * blend the owner can't take apart. Waiting on a human beats going quiet:
- * somebody wrote in and nobody answered is the worse failure.
- */
-function atRiskStatus(rescue: { waitingHours: number | null; silentDays: number | null; unreachable?: boolean }): {
-  tone: ItemTone;
-  label: string;
-} {
-  // Nothing is arriving. The word says what to do (fix the number), the
-  // rail says it is as urgent as a customer left waiting.
-  if (rescue.unreachable) return { tone: "coral", label: "Can't reach" };
-  if (rescue.waitingHours !== null) {
-    const h = Math.round(rescue.waitingHours);
-    return { tone: h >= 4 ? "coral" : "gold", label: h < 1 ? "Waiting <1h" : `Waiting ${h}h` };
-  }
-  if (rescue.silentDays !== null) {
-    const d = Math.round(rescue.silentDays);
-    return { tone: d >= 7 ? "coral" : "gold", label: `Silent ${d} ${d === 1 ? "day" : "days"}` };
-  }
-  return { tone: "gold", label: "Needs a look" };
-}
 
 // This page reads live leads from the database on every request — never
 // bake a stale snapshot into the build.
@@ -262,9 +235,15 @@ export default async function DashboardPage() {
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>
       <h1 className="mt-1.5 text-[30px] sm:text-[34px] leading-[1.1]">
-        {approvalItems.length > 0
-          ? `${approvalItems.length} ${approvalItems.length === 1 ? "customer is" : "customers are"} waiting on you.`
-          : headline()}
+        {approvalItems.length > 0 ? (
+          <>
+            {/* The phone's shorter line, as TodayCalmPhone draws it. */}
+            <span className="sm:hidden">{`${approvalItems.length} ${approvalItems.length === 1 ? "customer needs" : "customers need"} you.`}</span>
+            <span className="hidden sm:inline">{`${approvalItems.length} ${approvalItems.length === 1 ? "customer is" : "customers are"} waiting on you.`}</span>
+          </>
+        ) : (
+          headline()
+        )}
       </h1>
 
       {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
@@ -389,143 +368,92 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <>
-          {/* Configuration sits below the two work sections, not between them.
-              It used to interrupt the approval queue and the at-risk list —
-              an incomplete-setup nag cutting the page's two actual jobs in
-              half. */}
-          <SetupStrip steps={setupSteps} />
-
-          {/* The test-lead button used to live ONLY in the zero-lead
-              branch above — so pressing it created a lead, which emptied
-              that branch, which removed the button. One use, then gone,
-              exactly when someone who had just watched it work wanted to
-              try it again on a channel they had only now connected. It
-              belongs with the setup strip, and it retires with it: an
-              account that has finished setting up does not need a demo of
-              its own product on its home screen. */}
-          {setupSteps.length > 0 && (
-            <div className="mt-6">
-              <TestLeadButton />
-            </div>
+          {/* The canvas Today (TodayCalm) has no setup or demo blocks between
+              the work: they show only once nothing needs the owner, so the
+              first screen is the people waiting (founder, 2026-09-27: "I
+              don't see the design on live"). Setup steps also live in
+              Settings. */}
+          {approvalItems.length === 0 && (
+            <>
+              <SetupStrip steps={setupSteps} />
+              {setupSteps.length > 0 && (
+                <div className="mt-6">
+                  <TestLeadButton />
+                </div>
+              )}
+            </>
           )}
 
-          {rescue && rescue.leads.length > 0 && (
-            <div className="mt-10">
-              <h2 className="font-display text-xl">What FollowUp did for you this week</h2>
-              {/* This sentence stays exactly as written. It is a trust claim —
-                  it tells the owner the number below is not padded with their
-                  own work — and it earns its space where the other section
-                  intros didn't. */}
-              <p className="text-sm text-ink-soft mt-1">
-                Only replies to messages FollowUp sent on its own count here — your own replies are yours.
-              </p>
-              <ItemBoxList className="mt-4">
-                {rescue.leads.slice(0, 6).map((l) => (
-                  <ItemBox
-                    key={l.id}
-                    href={`/leads/${l.id}`}
-                    title={l.name}
-                    figure={
-                      l.dealValue > 0 ? (
-                        <span className="text-ink font-medium">{formatCurrency(l.dealValue)}</span>
-                      ) : undefined
-                    }
-                    status={{ tone: "sage", label: "Came back" }}
-                    fact={`${describeTrigger(l.trigger)}, replied ${l.repliedAfterHours}h later`}
-                  />
+          {/* About to be lost, under the list, as drawn. Anyone already in
+              Needs you is left out (A-046, once each). */}
+          {atRisk.length > 0 && (
+            <section className="mt-7">
+              <div className="mb-2.5">
+                <Eyebrow>About to be lost · {atRisk.length}</Eyebrow>
+              </div>
+              <div className="overflow-hidden rounded-2xl border border-line bg-card divide-y divide-[var(--line-2)]">
+                {atRisk.map((lead) => (
+                  <Link key={lead.id} href={`/leads/${lead.id}`} className="flex items-center gap-3 px-[18px] py-3.5 hover:bg-paper">
+                    <Initials name={lead.name} size={30} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[14.5px] font-medium">{lead.name}</span>
+                      <span className="block text-[13.5px] leading-snug text-ink-soft">{lead.rescue.reason}</span>
+                    </span>
+                    <span className="h-8 shrink-0 rounded-full border border-line bg-card px-3.5 text-[13px] font-medium leading-8">Open</span>
+                  </Link>
                 ))}
-              </ItemBoxList>
-            </div>
+              </div>
+              <p className="mt-2 px-0.5 text-[13px] text-ink-faint">Anyone already above isn&apos;t listed again.</p>
+            </section>
           )}
 
-          {upcomingBookings.length > 0 && (
-            <div className="mt-10">
-              <h2 className="font-display text-xl">Upcoming calls</h2>
-              <ItemBoxList className="mt-4">
-                {upcomingBookings.map((b) => (
-                  <ItemBox
-                    key={b.id}
-                    href={`/leads/${b.leadId}`}
-                    title={b.leadName}
-                    figure={new Date(b.scheduledAt).toLocaleString(undefined, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  />
-                ))}
-              </ItemBoxList>
-            </div>
-          )}
-
-          <div className="mt-10 mb-6">
-            <Link href="/analytics" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline">
-              See all numbers
-              <ArrowRight className="h-3.5 w-3.5" />
+          {/* Today's numbers, in one quiet line (A-045), at the foot of the
+              list; it opens Numbers. Desktop only (R-015). */}
+          {thisWeek && (
+            <Link href="/analytics" className="mt-6 hidden text-sm text-ink-soft tabular-nums hover:text-ink sm:block">
+              {thisWeek}
             </Link>
-          </div>
+          )}
         </>
       )}
       </div>
       {leads.length > 0 && (
-        <aside className="mt-10 min-w-0 lg:mt-0">
-          {/* Today's numbers, in one quiet line (A-045). This was three
-              "This week" tiles (A-042) and a separate "sent as written"
-              sentence (A-043); the founder folded them into one line, as
-              A-027 first planned. Desktop only: the phone gets less (R-015). */}
-          {thisWeek && <p className="mt-6 hidden sm:block text-sm text-ink-soft tabular-nums">{thisWeek}</p>}
-
-          {atRisk.length > 0 && (
-            <div className="mt-8 first:mt-0">
-              <h2 className="font-display text-xl">About to be lost</h2>
-              <p className="text-sm text-ink-soft mt-1">
-                Automation is already working these — the ones at the top need you.
-              </p>
-              {/* Each row used to end in a coral 0–100 pill whose meaning lived
-                  in a `title` tooltip ("Rescue score, 0–100"). A number nobody
-                  can interpret without hovering — which a phone cannot do at
-                  all — fails the design brain's own test: if it needed a
-                  tooltip to be understood, redesign it rather than add the
-                  tooltip. The concrete fact underneath the score ("wrote 26h
-                  ago and is still waiting") is what the owner can actually act
-                  on, and the rescue model already computes it. The score stays
-                  on the lead page, where its full reasoning lives. */}
-              <ItemBoxList className="mt-4">
-                {atRisk.map((lead) => (
-                  <ItemBox
-                    key={lead.id}
-                    href={`/leads/${lead.id}`}
-                    title={lead.name}
-                    figure={
-                      lead.dealValue > 0 ? (
-                        <span className="text-ink font-medium">{formatCurrency(lead.dealValue)}</span>
-                      ) : undefined
-                    }
-                    status={atRiskStatus(lead.rescue)}
-                    fact={lead.rescue.reason}
-                  />
-                ))}
-              </ItemBoxList>
-            </div>
-          )}
-
-          {/* Coming up (A-046): the full list on desktop, one line on the
-              phone that opens it (R-015). Hidden when nothing is planned. */}
-          {comingUp && comingUp.total > 0 && (
-            <>
-              <div className="mt-8 hidden sm:block">
-                <h2 className="font-display text-xl">Coming up</h2>
-                <ComingUpList groups={comingUp.groups} holdAll={comingUp.holdAll} />
+        <aside className="mt-8 min-w-0 lg:mt-[52px]">
+          {/* Coming up (A-046) as the canvas's right-hand card; one line on
+              the phone that opens the list (R-015). */}
+          <div className="hidden rounded-[20px] border border-line bg-card p-5 sm:block">
+            <Eyebrow>Coming up</Eyebrow>
+            {comingUp && comingUp.total > 0 ? (
+              <ComingUpList groups={comingUp.groups} holdAll={comingUp.holdAll} />
+            ) : (
+              <p className="mt-2 text-sm text-ink-soft">Nothing planned for the next seven days.</p>
+            )}
+            {upcomingBookings.length > 0 && (
+              <div className="mt-5 border-t border-line-2 pt-4">
+                <p className="text-xs font-medium text-ink-soft">Booked calls</p>
+                <ul className="mt-1">
+                  {upcomingBookings.map((b) => (
+                    <li key={b.id}>
+                      <Link href={`/leads/${b.leadId}`} className="flex items-baseline justify-between gap-3 py-2 hover:underline">
+                        <span className="text-sm font-medium">{b.leadName}</span>
+                        <span className="text-xs text-ink-soft">
+                          {new Date(b.scheduledAt).toLocaleString("en-US", {
+                            weekday: "short",
+                            hour: "numeric",
+                            minute: "2-digit",
+                            timeZone: timezone,
+                          })}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ComingUpLine
-                first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }}
-                total={comingUp.total}
-              />
-            </>
+            )}
+          </div>
+          {comingUp && comingUp.total > 0 && (
+            <ComingUpLine first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }} total={comingUp.total} />
           )}
-
         </aside>
       )}
       </div>

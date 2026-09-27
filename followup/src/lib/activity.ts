@@ -18,7 +18,7 @@
 
 import { prisma } from "@/lib/db";
 
-export type ActivityType = "automated_send" | "sequence_paused" | "rapid_engagement" | "sequence_completed";
+export type ActivityType = "automated_send" | "sequence_paused" | "rapid_engagement" | "sequence_completed" | "held";
 
 export interface ActivityItem {
   id: string;
@@ -26,14 +26,14 @@ export interface ActivityItem {
   leadId: string | null;
   leadName: string | null;
   message: string;
-  detail: string | null; // the actual sent message, for automated_send only
+  detail: string | null; // the sent message (automated_send), or why a reply was held (held)
   occurredAt: string; // ISO
 }
 
 const LIMIT = 60;
 
 export async function getActivityFeed(businessId: string): Promise<ActivityItem[]> {
-  const [automatedSends, notifications, completedSequences] = await Promise.all([
+  const [automatedSends, notifications, completedSequences, holds] = await Promise.all([
     prisma.followUp.findMany({
       where: { automated: true, status: "sent", sentAt: { not: null }, lead: { businessId } },
       select: { id: true, leadId: true, message: true, sentAt: true, lead: { select: { name: true } } },
@@ -54,7 +54,26 @@ export async function getActivityFeed(businessId: string): Promise<ActivityItem[
       orderBy: { sequenceCompletedAt: "desc" },
       take: LIMIT,
     }),
+    // A reply FollowUp wrote but held for the owner's OK. The same row
+    // pendingApprovals.ts builds the queue from; its reason is the one the
+    // Inbox shows ("Held because …").
+    prisma.auditEvent.findMany({
+      where: { businessId, action: "ai.hold", targetType: "lead", targetId: { not: null } },
+      select: { id: true, targetId: true, meta: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+      take: LIMIT,
+    }),
   ]);
+
+  // Names for the rows that only carry an id (holds and notifications),
+  // looked up within this business only.
+  const namedIds = [
+    ...new Set([...holds.map((h) => h.targetId as string), ...notifications.map((n) => n.leadId).filter((id): id is string => !!id)]),
+  ];
+  const namedLeads = namedIds.length
+    ? await prisma.lead.findMany({ where: { businessId, id: { in: namedIds } }, select: { id: true, name: true } })
+    : [];
+  const leadNames = new Map(namedLeads.map((l) => [l.id, l.name]));
 
   const items: ActivityItem[] = [];
 
@@ -80,7 +99,7 @@ export async function getActivityFeed(businessId: string): Promise<ActivityItem[
       id: `notif-${n.id}`,
       type: n.message.includes("replied mid-sequence") ? "sequence_paused" : "rapid_engagement",
       leadId: n.leadId,
-      leadName: null,
+      leadName: n.leadId ? (leadNames.get(n.leadId) ?? null) : null,
       message: n.message,
       detail: null,
       occurredAt: n.createdAt.toISOString(),
@@ -96,6 +115,23 @@ export async function getActivityFeed(businessId: string): Promise<ActivityItem[
       message: `${l.name}'s workflow finished`,
       detail: null,
       occurredAt: (l.sequenceCompletedAt as Date).toISOString(),
+    });
+  }
+
+  for (const h of holds) {
+    const name = leadNames.get(h.targetId as string);
+    // A lead deleted since keeps no name here, and is left out.
+    if (!name) continue;
+    const meta = (h.meta ?? {}) as Record<string, unknown>;
+    const reason = typeof meta.reason === "string" ? meta.reason.trim().replace(/\.\s*$/, "") : "";
+    items.push({
+      id: `hold-${h.id}`,
+      type: "held",
+      leadId: h.targetId,
+      leadName: name,
+      message: `Held a reply for you: ${name}`,
+      detail: reason ? `Because ${reason}.` : null,
+      occurredAt: h.createdAt.toISOString(),
     });
   }
 

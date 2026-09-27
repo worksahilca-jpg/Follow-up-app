@@ -3,37 +3,45 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Lead, PipelineStage } from "@/lib/types";
 import { formatCurrency, daysSince } from "@/lib/demo-data";
 import { getPipelineData } from "@/lib/pipeline";
-import { PIPELINE_STAGES } from "@/lib/demo-data";
-import { urgencyColor } from "@/lib/urgency";
-import { PageHeader } from "@/components/PageHeader";
-import ScoreBadge from "@/components/ScoreBadge";
-import StatCard from "@/components/StatCard";
-import EmptyState from "@/components/EmptyState";
-import { Inbox } from "lucide-react";
+import { OPEN_IN_PLACE } from "@/lib/motion";
+import { Initials } from "@/components/app/canvasBits";
 
-const STAGE_WEIGHT: Record<string, number> = {
-  new: 0.1,
-  contacted: 0.25,
-  qualified: 0.4,
-  proposal: 0.6,
-  negotiation: 0.8,
-  won: 1,
-  lost: 0,
-};
-
+/**
+ * Pipeline, as drawn on the canvas (A-066): the open stages as quiet
+ * columns, each customer with their value, a total per stage, and one line
+ * for won and lost. No score badges and no stage dropdown on every card:
+ * on a computer a customer is dragged to another stage (or onto Won / Lost);
+ * anywhere, the stage can be changed from their own page.
+ *
+ * On the phone the stages are one list with one stage open at a time
+ * (R-015), because drag-and-drop doesn't exist on a touch screen.
+ *
+ * Out of the menu since A-027; reached from Settings › Everything else.
+ */
 const toDbStage = (s: PipelineStage) => s.toUpperCase();
+
+function quietLine(lead: Lead): string {
+  const d = daysSince(lead.lastContacted);
+  if (d <= 0) return "Touched today";
+  return `Quiet ${d} ${d === 1 ? "day" : "days"}`;
+}
+
+function money(n: number): string {
+  return n > 0 ? formatCurrency(n) : "—";
+}
 
 export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
   const { data: session } = useSession();
   const [mineOnly, setMineOnly] = useState(false);
-  // Local, optimistically-updated copy — a drag-and-drop move should feel
-  // instant, not wait on a round trip. Re-seeded whenever the server hands
-  // down fresh leads (e.g. after a real navigation) — adjusted during
-  // render (React's documented pattern for this) rather than an effect,
-  // so it doesn't cost an extra render pass.
+  // Local, optimistically-updated copy: a move should feel instant, not wait
+  // on a round trip. Re-seeded when the server hands down fresh leads,
+  // adjusted during render (React's documented pattern) rather than in an
+  // effect.
   const [localLeads, setLocalLeads] = useState(leads);
   const [prevLeadsProp, setPrevLeadsProp] = useState(leads);
   if (leads !== prevLeadsProp) {
@@ -44,6 +52,9 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<PipelineStage | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
+  // null = the default (first stage with anyone in it); "none" = all closed.
+  const [openStage, setOpenStage] = useState<string | null>(null);
+  const [showClosed, setShowClosed] = useState<"won" | "lost" | null>(null);
 
   const visible = useMemo(
     () => (mineOnly ? localLeads.filter((l) => l.assignedToId === session?.user?.id) : localLeads),
@@ -51,8 +62,13 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
   );
 
   const stages = useMemo(() => getPipelineData(visible), [visible]);
-  const totalValue = stages.filter((s) => s.id !== "won" && s.id !== "lost").reduce((sum, s) => sum + s.value, 0);
-  const weightedValue = stages.reduce((sum, s) => sum + s.value * (STAGE_WEIGHT[s.id] ?? 0), 0);
+  const open = stages.filter((s) => s.id !== "won" && s.id !== "lost");
+  const won = stages.find((s) => s.id === "won");
+  const lost = stages.find((s) => s.id === "lost");
+  const openValue = open.reduce((sum, s) => sum + s.value, 0);
+  const openCount = open.reduce((sum, s) => sum + s.leads.length, 0);
+  // On the phone the first stage with anyone in it starts open.
+  const phoneOpen = openStage ?? open.find((s) => s.leads.length > 0)?.id ?? null;
 
   async function moveLead(leadId: string, toStage: PipelineStage) {
     const lead = localLeads.find((l) => l.id === leadId);
@@ -71,235 +87,220 @@ export default function PipelinePageClient({ leads }: { leads: Lead[] }) {
       if (!res.ok) throw new Error();
     } catch {
       setLocalLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: previousStage } : l)));
-      setMoveError(`Couldn't move ${lead.name} — try again.`);
+      setMoveError(`Couldn't move ${lead.name}. Try again.`);
     }
   }
 
+  function dropProps(stageId: PipelineStage) {
+    return {
+      onDragOver: (e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOverStage(stageId);
+      },
+      onDragLeave: () => setDragOverStage((s) => (s === stageId ? null : s)),
+      onDrop: (e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOverStage(null);
+        const leadId = e.dataTransfer.getData("text/lead-id");
+        if (leadId) moveLead(leadId, stageId);
+      },
+    };
+  }
+
+  const closedList = showClosed === "won" ? won : showClosed === "lost" ? lost : null;
+
   return (
     <div>
-      <PageHeader
-        title="Pipeline"
-        subtitle="Where every deal stands, and what it's worth. Drag a card to move its stage."
-        actions={
-          <button
-            onClick={() => setMineOnly((v) => !v)}
-            className="rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors shrink-0"
-            style={{
-              backgroundColor: mineOnly ? "var(--ink)" : "var(--card)",
-              color: mineOnly ? "var(--paper)" : "var(--ink-soft)",
-              border: mineOnly ? "none" : "1px solid var(--line)",
-            }}
-          >
-            My leads only
-          </button>
-        }
-      />
-
-      {/* No load stagger and no counting numbers: loading is not a change of
-          state, and the count is work waiting (A-048). */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
-        <div>
-          <StatCard label="Active customers" value={String(visible.length)} accent="var(--slate)" />
+      <Link href="/settings" className="text-[13px] text-ink-faint hover:text-ink">
+        ← Settings
+      </Link>
+      <div className="mt-2 flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-[30px] leading-[1.12] lg:text-[34px]">Pipeline</h1>
+          <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">
+            {openCount === 0
+              ? "Nobody is in an open stage right now."
+              : `${formatCurrency(openValue)} open across ${openCount} ${openCount === 1 ? "customer" : "customers"}.`}
+            <span className="hidden lg:inline"> Drag someone to another stage, or move them from their page.</span>
+          </p>
         </div>
-        <div>
-          <StatCard label="Total pipeline value" value={formatCurrency(totalValue)} />
-        </div>
-        <div>
-          {/* Was "Weighted value" — jargon, and a number computed from a
-              hardcoded per-stage probability table (STAGE_WEIGHT above) that
-              is never shown anywhere. An owner can neither derive it nor
-              disagree with it. Renamed to what it's actually estimating, with
-              the basis stated underneath rather than hidden in the source. */}
-          <StatCard label="Likely to close" value={formatCurrency(Math.round(weightedValue))} />
-        </div>
+        <button
+          type="button"
+          onClick={() => setMineOnly((v) => !v)}
+          aria-pressed={mineOnly}
+          className="h-9 shrink-0 rounded-full border px-3.5 text-[13.5px] font-medium"
+          style={{
+            background: mineOnly ? "var(--ink)" : "var(--card)",
+            color: mineOnly ? "var(--on-accent)" : "var(--ink)",
+            borderColor: mineOnly ? "var(--ink)" : "var(--line)",
+          }}
+        >
+          Only mine
+        </button>
       </div>
 
-      <p className="mt-2 text-xs text-ink-soft">
-        &ldquo;Likely to close&rdquo; weights each deal by how far along it is — 10% at New, rising to 80% at
-        Negotiation. It&apos;s an estimate from stage alone, not a forecast.
-      </p>
-
-      {visible.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          title={mineOnly ? "No customers assigned to you" : "No customers yet"}
-          description={
-            mineOnly
-              ? "Nothing's assigned to you right now — check back once new customers come in."
-              : /* Named Gmail alone until 2026-09-22 — see the note on the
-                   same sentence in leads/LeadsPageClient.tsx. Eight sources
-                   feed this pipeline; telling a WhatsApp business to connect
-                   an inbox is how a screen sends someone to the wrong place. */
-                "Connect where your customers write to you in Settings — your inbox, website form, DMs or CRM — and your pipeline fills in as they arrive."
-          }
-          action={
-            mineOnly ? undefined : (
-              <Link
-                href="/settings"
-                className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium"
-                style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-              >
-                Go to Settings
-              </Link>
-            )
-          }
-        />
-      ) : null}
-
-      {/* The "Value by stage" bar chart that used to sit here showed exactly
-          the numbers the board prints in each column header, immediately
-          below it — the same data twice, with the chart going first. The
-          board is the better of the two because you can act on it. Deleted;
-          PipelineSnapshot still serves /analytics. */}
-
       {moveError && (
-        <p className="mt-4 text-sm" style={{ color: "var(--coral)" }}>
+        <p className="mt-4 text-sm" role="alert" style={{ color: "var(--coral)" }}>
           {moveError}
         </p>
       )}
 
-      {/* A pipeline is read left to right, and this was a `lg:grid-cols-4`
-          holding SEVEN stages — so the board wrapped 4 + 3 with a gap, which
-          destroys the one thing the visual exists for. Below lg it was worse:
-          two columns and four rows at sm, and at 390px seven stacked columns
-          and an endless vertical scroll.
+      {visible.length === 0 && (
+        <p className="mt-6 text-[15px] text-ink-soft">
+          {mineOnly ? (
+            "No customers assigned to you right now."
+          ) : (
+            <>
+              No customers yet. Connect where customers write to you in{" "}
+              <Link href="/settings" className="underline underline-offset-[3px]">
+                Settings
+              </Link>
+              : your inbox, website form, DMs or CRM. They arrive here.
+            </>
+          )}
+        </p>
+      )}
 
-          It's a real horizontal scroller now — seven fixed columns in stage
-          order at every width. On a phone that turns a seven-screen scroll
-          into one sideways swipe, which is also how every kanban the owner
-          has ever used behaves. The negative margins let the board bleed to
-          the screen edge so the next column is visibly cut off, which is what
-          tells someone it scrolls. */}
-      <div
-        className="mt-8 flex gap-4 overflow-x-auto -mx-4 px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
-      >
-        {stages.map((stage) => {
-          const closed = stage.id === "won" || stage.id === "lost";
-          return (
-          <div key={stage.id} className="w-[260px] shrink-0">
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOverStage(stage.id);
-            }}
-            onDragLeave={() => setDragOverStage((s) => (s === stage.id ? null : s))}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragOverStage(null);
-              const leadId = e.dataTransfer.getData("text/lead-id");
-              if (leadId) moveLead(leadId, stage.id);
-            }}
-            className="rounded-[var(--radius-box)] border p-4 min-h-[120px] transition-colors"
-            style={{
-              backgroundColor: "var(--card)",
-              borderColor: dragOverStage === stage.id ? "var(--rust)" : "var(--line)",
-              borderStyle: dragOverStage === stage.id ? "dashed" : "solid",
-              borderWidth: dragOverStage === stage.id ? 2 : 1,
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{stage.label}</h3>
-              {/* Won/Lost are a qualitatively different kind of column than
-                  the in-progress stages — a closed outcome, not a step on
-                  the way to one — so the count itself carries that via
-                  color instead of every column reading identically. */}
-              <span
-                className="text-xs font-medium rounded-full px-1.5 py-0.5 tabular-nums"
-                style={
-                  stage.id === "won"
-                    ? { color: "var(--sage)", backgroundColor: "var(--sage-soft)" }
-                    : stage.id === "lost"
-                      ? { color: "var(--coral)", backgroundColor: "var(--coral-soft)" }
-                      : { color: "var(--ink-soft)" }
-                }
-              >
-                {stage.leads.length}
-              </span>
+      {/* Desktop: the open stages side by side. */}
+      <div className="mt-6 hidden gap-3 lg:grid lg:grid-cols-5 lg:items-start">
+        {open.map((stage) => (
+          <section key={stage.id} className="min-w-0" {...dropProps(stage.id)}>
+            <div className="flex items-baseline justify-between px-1">
+              <h2 className="text-sm font-medium">
+                {stage.label} <span className="font-normal tabular-nums text-ink-faint">{stage.leads.length}</span>
+              </h2>
+              <span className="text-[13px] tabular-nums text-ink-faint">{money(stage.value)}</span>
             </div>
-            <p className="text-sm font-medium mt-0.5">
-              {formatCurrency(stage.value)}
-            </p>
-            <div className="mt-3 space-y-2">
-              {stage.leads.map((lead) => (
-                <div
-                  key={lead.id}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/lead-id", lead.id);
-                    e.dataTransfer.effectAllowed = "move";
-                    setDraggingId(lead.id);
-                  }}
-                  onDragEnd={() => setDraggingId(null)}
-                  className="rounded-lg border border-line pl-2 pr-2.5 py-2 text-xs hover:bg-paper cursor-grab active:cursor-grabbing border-l-[3px]"
-                  style={{
-                    opacity: draggingId === lead.id ? 0.4 : 1,
-                    borderLeftColor: closed ? "var(--line)" : urgencyColor(daysSince(lead.lastContacted)),
-                  }}
-                >
-                  {/* The name and the stage select used to share one row
-                      inside a 260px column. The select is ~120px and was
-                      shrink-0, the score badge 36px, so the name — the only
-                      thing that identifies the card — got about 30px and
-                      rendered as "Der…", "Kon…", "Sar…". Two rows instead:
-                      the lead reads first, the control sits under it. */}
-                  <div className="flex items-center gap-2">
-                    <ScoreBadge score={lead.score} size="sm" />
-                    <Link href={`/leads/${lead.id}`} className="min-w-0 truncate flex-1 font-medium hover:underline">
-                      {lead.name}
-                    </Link>
-                  </div>
-                  {/* The left rail's colour used to be the card's only
-                      urgency signal, with its meaning in a `title` tooltip —
-                      unreachable on a touch screen, and exactly the "colour
-                      carrying the meaning alone" that A-006 rules out. The
-                      same fact, in words, on the card. Closed columns say
-                      nothing: "silent 40 days" is not a problem on a deal
-                      that's already won or lost, which is why their rail is
-                      neutral too. */}
-                  {!closed && (
-                    <p className="mt-1 pl-1" style={{ color: urgencyColor(daysSince(lead.lastContacted)) }}>
-                      {daysSince(lead.lastContacted) === 0
-                        ? "Touched today"
-                        : `Silent ${daysSince(lead.lastContacted)} ${daysSince(lead.lastContacted) === 1 ? "day" : "days"}`}
-                    </p>
-                  )}
-                  {/* Dragging a card between columns needs a mouse — HTML5
-                      drag-and-drop has no touch support on any mobile
-                      browser, so this select is the only way to move a
-                      lead's stage on a phone. Kept visible on every screen
-                      size rather than hidden until touch, since it's a
-                      faster action than a drag even with a mouse. */}
-                  <select
-                    value={stage.id}
-                    onChange={(e) => moveLead(lead.id, e.target.value as PipelineStage)}
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={`Move ${lead.name} to a different stage`}
-                    className="mt-1.5 w-full text-xs rounded border border-line bg-paper px-1.5 py-1 text-ink-soft"
+            <div
+              className="mt-2 min-h-[64px] overflow-hidden rounded-[18px] border bg-card"
+              style={{
+                borderColor: dragOverStage === stage.id ? "var(--ink)" : "var(--line)",
+                borderStyle: dragOverStage === stage.id ? "dashed" : "solid",
+              }}
+            >
+              {stage.leads.length === 0 ? (
+                <p className="px-3.5 py-5 text-[13px] text-ink-faint">Nobody here.</p>
+              ) : (
+                stage.leads.map((lead, i) => (
+                  <div
+                    key={lead.id}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/lead-id", lead.id);
+                      e.dataTransfer.effectAllowed = "move";
+                      setDraggingId(lead.id);
+                    }}
+                    onDragEnd={() => setDraggingId(null)}
+                    className={"flex cursor-grab items-start gap-2.5 px-3.5 py-3 active:cursor-grabbing " + (i ? "border-t border-line-2" : "")}
+                    style={{ opacity: draggingId === lead.id ? 0.4 : 1 }}
                   >
-                    {PIPELINE_STAGES.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-              {/* Suppressed when the whole pipeline has zero leads — the
-                  top-level EmptyState above ("No leads yet — connect
-                  Gmail") already says this once; repeating it in all 7
-                  columns is the same message eight times on one screen.
-                  Once at least one real lead exists anywhere in the
-                  pipeline, an individual empty column is a real, useful
-                  fact again, so the per-column message comes back. */}
-              {stage.leads.length === 0 && leads.length > 0 && (
-                <p className="text-xs text-ink-soft italic">No customers at this stage</p>
+                    <Initials name={lead.name} size={28} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex justify-between gap-2">
+                        <Link href={`/leads/${lead.id}`} className="truncate text-sm font-medium hover:underline">
+                          {lead.name}
+                        </Link>
+                        <span className="shrink-0 text-[13px] tabular-nums text-ink-soft">{money(lead.dealValue)}</span>
+                      </div>
+                      <div className="mt-0.5 text-[12.5px] text-ink-faint">{quietLine(lead)}</div>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
-          </div>
-          </div>
+          </section>
+        ))}
+      </div>
+
+      {/* Phone: one stage open at a time. */}
+      <div className="mt-5 overflow-hidden rounded-[18px] border border-line bg-card lg:hidden">
+        {open.map((stage, i) => {
+          const isOpen = phoneOpen === stage.id;
+          return (
+            <div key={stage.id} className={i ? "border-t border-line-2" : ""}>
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() => setOpenStage(isOpen ? "none" : stage.id)}
+                className="flex min-h-14 w-full items-center gap-2.5 px-4 text-left"
+              >
+                <span className="flex-1 text-base font-medium">{stage.label}</span>
+                <span className="text-sm tabular-nums text-ink-faint">
+                  {stage.leads.length} · {money(stage.value)}
+                </span>
+                {isOpen ? <ChevronDown className="h-[18px] w-[18px]" /> : <ChevronRight className="h-[18px] w-[18px] text-ink-faint" />}
+              </button>
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div key="open" {...OPEN_IN_PLACE}>
+                    {stage.leads.length === 0 ? (
+                      <p className="border-t border-line-2 px-4 py-4 text-sm text-ink-faint">Nobody here.</p>
+                    ) : (
+                      stage.leads.map((lead) => (
+                        <Link
+                          key={lead.id}
+                          href={`/leads/${lead.id}`}
+                          className="flex min-h-[60px] items-center gap-3 border-t border-line-2 bg-paper px-4"
+                        >
+                          <Initials name={lead.name} size={34} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[15.5px] font-medium">{lead.name}</span>
+                            <span className="block text-[13.5px] text-ink-faint">{quietLine(lead)}</span>
+                          </span>
+                          <span className="text-sm tabular-nums text-ink-soft">{money(lead.dealValue)}</span>
+                        </Link>
+                      ))
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           );
         })}
       </div>
+
+      {/* Won and lost: one line. Each opens its list in place, and on a
+          computer each is also somewhere to drop a customer. */}
+      {(won || lost) && (
+        <div className="mt-5 flex flex-wrap gap-2">
+          {[won, lost].map((s) =>
+            s ? (
+              <button
+                key={s.id}
+                type="button"
+                {...dropProps(s.id)}
+                onClick={() => setShowClosed((v) => (v === s.id ? null : (s.id as "won" | "lost")))}
+                aria-expanded={showClosed === s.id}
+                className="rounded-full border px-3.5 py-1.5 text-sm text-ink-soft"
+                style={{
+                  borderColor: dragOverStage === s.id ? "var(--ink)" : "transparent",
+                  borderStyle: dragOverStage === s.id ? "dashed" : "solid",
+                  background: showClosed === s.id ? "var(--card)" : "transparent",
+                }}
+              >
+                {s.label}{" "}
+                <span className="font-semibold tabular-nums text-ink">
+                  {s.leads.length}
+                  {s.id === "won" && s.value > 0 ? ` · ${formatCurrency(s.value)}` : ""}
+                </span>
+              </button>
+            ) : null
+          )}
+        </div>
+      )}
+      <AnimatePresence initial={false}>
+        {closedList && closedList.leads.length > 0 && (
+          <motion.div key={closedList.id} {...OPEN_IN_PLACE} className="mt-2 max-w-[560px] overflow-hidden rounded-[18px] border border-line bg-card">
+            {closedList.leads.map((lead, i) => (
+              <Link key={lead.id} href={`/leads/${lead.id}`} className={"flex items-center gap-3 px-4 py-3 " + (i ? "border-t border-line-2" : "")}>
+                <Initials name={lead.name} size={28} />
+                <span className="flex-1 truncate text-sm font-medium">{lead.name}</span>
+                <span className="text-[13px] tabular-nums text-ink-soft">{money(lead.dealValue)}</span>
+              </Link>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

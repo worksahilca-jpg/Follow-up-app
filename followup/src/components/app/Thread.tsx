@@ -20,7 +20,20 @@ const TRIGGER_LABEL: Record<string, string> = {
   dead_lead_reactivation: "welcome-back message",
 };
 
-export default function Thread({ messages, leadName, timeZone, now }: { messages: Message[]; leadName: string; timeZone: string; now: Date }) {
+export default function Thread({
+  messages,
+  leadName,
+  timeZone,
+  now,
+  dense = false,
+}: {
+  messages: Message[];
+  leadName: string;
+  timeZone: string;
+  now: Date;
+  /** On desktop, the Inbox board's smaller type (14.5px bubbles, 460px wide). The phone keeps ThreadPhone's. */
+  dense?: boolean;
+}) {
   const first = leadName.split(" ")[0] ?? leadName;
   if (messages.length === 0) {
     return <p className="text-[15px] text-ink-soft">Nothing yet. The first message either way shows up here.</p>;
@@ -42,9 +55,9 @@ export default function Thread({ messages, leadName, timeZone, now }: { messages
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className={"flex flex-col " + (dense ? "gap-5 lg:gap-[18px]" : "gap-5")}>
       {groups.map((g) => (
-        <div key={g.key} className="flex flex-col gap-3.5">
+        <div key={g.key} className={"flex flex-col " + (dense ? "gap-3.5 lg:gap-[18px]" : "gap-3.5")}>
           <div className="text-center">
             <Eyebrow>{g.label}</Eyebrow>
           </div>
@@ -52,11 +65,16 @@ export default function Thread({ messages, leadName, timeZone, now }: { messages
             const at = time.format(new Date(m.date));
             if (m.direction === "inbound") {
               return (
-                <div key={m.id} className="flex max-w-[85%] flex-col items-start gap-1 self-start sm:max-w-[520px]">
+                <div key={m.id} className={"flex max-w-[85%] flex-col items-start gap-1 self-start " + (dense ? "sm:max-w-[520px] lg:max-w-[460px]" : "sm:max-w-[520px]")}>
                   <span className="text-[12.5px] text-ink-faint">
-                    <span className="font-medium text-ink-soft">{first}</span> · {at}
+                    <span className={"font-medium " + (dense ? "text-ink-soft lg:text-ink" : "text-ink-soft")}>{first}</span> · {at}
                   </span>
-                  <div className="whitespace-pre-wrap rounded-[20px_20px_20px_6px] border border-line bg-card px-4 py-3 text-base leading-relaxed">
+                  <div
+                    className={
+                      "whitespace-pre-wrap border border-line bg-card " +
+                      "rounded-[20px_20px_20px_6px] px-4 py-3 text-base leading-relaxed" + (dense ? " lg:rounded-[14px_14px_14px_4px] lg:px-3.5 lg:py-[11px] lg:text-[14.5px] lg:leading-normal" : "")
+                    }
+                  >
                     {m.body}
                   </div>
                 </div>
@@ -68,13 +86,16 @@ export default function Thread({ messages, leadName, timeZone, now }: { messages
                 ? `Sent by FollowUp · ${TRIGGER_LABEL[m.trigger]}`
                 : "You";
             return (
-              <div key={m.id} className="flex max-w-[85%] flex-col items-end gap-1 self-end sm:max-w-[520px]">
+              <div key={m.id} className={"flex max-w-[85%] flex-col items-end gap-1 self-end " + (dense ? "sm:max-w-[520px] lg:max-w-[460px]" : "sm:max-w-[520px]")}>
                 <span className="text-right text-[12.5px] text-ink-faint">
                   {who} · {at}
                   {m.opened ? " · Opened" : ""}
                 </span>
                 <div
-                  className="whitespace-pre-wrap rounded-[20px_20px_6px_20px] px-4 py-3 text-base leading-relaxed"
+                  className={
+                    "whitespace-pre-wrap " +
+                    "rounded-[20px_20px_6px_20px] px-4 py-3 text-base leading-relaxed" + (dense ? " lg:rounded-[14px_14px_4px_14px] lg:px-3.5 lg:py-[11px] lg:text-[14.5px] lg:leading-normal" : "")
+                  }
                   style={{ background: "var(--accent-soft)", color: "#3f3a36" }}
                 >
                   {m.body}

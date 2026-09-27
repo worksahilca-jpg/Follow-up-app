@@ -8205,3 +8205,24 @@ Four boards on the canvas (v80): SettingsAll, SettingsAllPhone, SettingsChannel 
   - Rows still open in place (down chevrons), where the drawing shows right chevrons.
   - The reply card on this page says "Based on…" where the drawing shows the hold reason. The reason is in the
     facts card above.
+
+## 2026-09-27 — Inbox rebuilt to its drawing (A-025, Inbox board)
+
+- **Founder feedback** (screenshot of the live Inbox): *"this totally doesn't match the canvas design"*. Correct: the
+  live Inbox used the phone's large type on desktop, a 32px title, grey group labels, no channel icons or state dots,
+  and a conversation header without the channel line.
+- **Now, on desktop, as drawn:**
+  - A 380px list with a 56px bar ("Inbox · N conversations") and mono group labels ("NEEDS YOU", "EVERYONE ELSE").
+  - Compact rows: 32px initials, 14px name with the channel icon, 13.5px preview, and a coloured state dot. The
+    selected row is marked by a warm fill and an ink edge.
+  - The conversation has a 56px header (name, Needs you pill, Open person) and a quiet line under it with the channel
+    and when they first wrote. Below that sit a centred 640px column, 14.5px bubbles and a compact reply card with
+    38px buttons.
+- **Phone unchanged** (InboxPhone / ThreadPhone keep their larger type and single black dot).
+- **Hold reason** is a plain 13px sentence above the card ("Held because it names a day."), not 11px capitals. The
+  strategy audit flagged the capitals as hard to read.
+- **Weak, named:**
+  - The drawing's "All channels" filter is not built. A button that does nothing would be fake, so it's left out
+    until the filter exists.
+  - The drawing's Meta reply-window note belongs on this line only near the end of the window (A-028). It isn't wired
+    here yet.

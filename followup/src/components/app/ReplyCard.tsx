@@ -42,6 +42,7 @@ export default function ReplyCard({
   sendLocked = false,
   basis,
   languageName,
+  dense = false,
 }: {
   leadId: string;
   leadName: string;
@@ -55,6 +56,8 @@ export default function ReplyCard({
   sendLocked?: boolean;
   basis?: string | null;
   languageName?: string | null;
+  /** On desktop, the Inbox board's smaller card (15px reply, 38px buttons). The phone keeps its 52px ones. */
+  dense?: boolean;
 }) {
   const router = useRouter();
   const first = leadName.split(" ")[0] ?? leadName;
@@ -157,7 +160,7 @@ export default function ReplyCard({
   const label = waiting ? "Reply ready · waits for your OK" : draft ? "Reply ready" : "Write a reply";
 
   return (
-    <div className="relative overflow-hidden rounded-[20px] p-5" style={WARM_CARD}>
+    <div className={"relative overflow-hidden rounded-[20px] p-5" + (dense ? " lg:rounded-[16px] lg:px-5 lg:py-[18px]" : "")} style={WARM_CARD}>
       <Eyebrow>{label}</Eyebrow>
 
       <AnimatePresence initial={false} mode="wait">
@@ -208,7 +211,7 @@ export default function ReplyCard({
           </div>
         </motion.div>
       ) : (
-        <p key="read" className="mt-2.5 whitespace-pre-wrap text-base leading-relaxed">
+        <p key="read" className={"mt-2.5 whitespace-pre-wrap text-base leading-relaxed" + (dense ? " lg:mt-2 lg:text-[15px] lg:leading-normal" : "")}>
           {needsPrice
             ? splitAtPriceSlot(text).map((part, i) =>
                 i === 0 ? (
@@ -247,13 +250,16 @@ export default function ReplyCard({
       )}
       {sendLocked && <p className="mt-2 text-[13px] text-ink-soft">Only admins send on this account. An admin will see this reply waiting.</p>}
 
-      <div className="mt-4 flex gap-2.5">
+      <div className={"mt-4 flex gap-2.5" + (dense ? " lg:mt-3.5 lg:items-center lg:gap-2" : "")}>
         {!sendLocked && (
           <button
             type="button"
             onClick={send}
             disabled={busy !== null || !canSend}
-            className="h-[52px] flex-1 rounded-full text-base font-semibold disabled:opacity-60 sm:flex-none sm:px-8"
+            className={
+              "h-[52px] flex-1 rounded-full text-base font-semibold disabled:opacity-60 sm:flex-none sm:px-8" +
+              (dense ? " lg:h-[38px] lg:px-4 lg:text-[14px]" : "")
+            }
             style={{ background: "var(--accent)", color: "var(--on-accent)" }}
           >
             {busy === "send" ? "Sending…" : "Send"}
@@ -264,7 +270,7 @@ export default function ReplyCard({
             type="button"
             onClick={() => setEditing(true)}
             disabled={busy !== null}
-            className="h-[52px] w-24 rounded-full border text-base font-medium"
+            className={"h-[52px] w-24 rounded-full border text-base font-medium" + (dense ? " lg:h-[38px] lg:w-auto lg:px-4 lg:text-[14px] lg:font-semibold" : "")}
             style={{ borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" }}
           >
             Edit
@@ -275,7 +281,7 @@ export default function ReplyCard({
             type="button"
             onClick={skip}
             disabled={busy !== null}
-            className="h-[52px] px-3 text-sm text-ink-soft disabled:opacity-60"
+            className={"h-[52px] px-3 text-sm text-ink-soft disabled:opacity-60" + (dense ? " lg:h-[38px] lg:px-2.5 lg:text-[14px]" : "")}
           >
             {busy === "skip" ? "…" : "Don't send"}
           </button>

@@ -20,7 +20,7 @@ export default function PriorityPill({ priority, reviewed = true }: { priority: 
   const c = !reviewed && priority === "none" ? notReviewed : config[priority];
   return (
     <span
-      className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+      className="inline-flex items-center rounded-full px-2.5 py-1 text-[13px] font-medium"
       style={{ backgroundColor: c.bg, color: c.fg }}
     >
       {c.label}

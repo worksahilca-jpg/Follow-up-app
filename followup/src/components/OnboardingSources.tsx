@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Check, ChevronDown, Mail } from "lucide-react";
+import { ChevronDown, Mail } from "lucide-react";
 import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 
 /**
@@ -94,28 +94,25 @@ function SourceRow({ source }: { source: OnboardingSource }) {
   const Icon = source.icon;
 
   return (
-    <li className="box px-4 py-3">
+    <li className="px-4 py-3.5">
       <div className="flex items-center gap-3">
         <div
-          className="h-9 w-9 shrink-0 rounded-lg flex items-center justify-center"
-          style={
-            source.connected
-              ? { backgroundColor: "var(--sage-soft)", color: "var(--sage)" }
-              : { backgroundColor: "var(--card)", color: "var(--ink-soft)" }
-          }
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]"
+          style={{ backgroundColor: "var(--card-2)", color: "var(--ink)" }}
         >
-          {source.connected ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+          <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">{source.name}</p>
-          <p className="text-xs text-ink-soft mt-0.5">
+          <p className="text-[15px] font-medium">{source.name}</p>
+          <p className="mt-0.5 text-[13px] leading-snug text-ink-soft">
             {source.connected && source.connectedNote ? source.connectedNote : source.line}
           </p>
         </div>
 
         {source.connected ? (
-          <span className="text-xs shrink-0" style={{ color: "var(--sage)" }}>
+          <span className="inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-line px-2.5 text-[12.5px] font-medium">
+            <span aria-hidden="true" className="h-[7px] w-[7px] rounded-full" style={{ backgroundColor: "var(--sage)" }} />
             Connected
           </span>
         ) : source.onConnect ? (
@@ -123,7 +120,7 @@ function SourceRow({ source }: { source: OnboardingSource }) {
             type="button"
             onClick={source.onConnect}
             disabled={source.connecting}
-            className="shrink-0 inline-flex min-h-11 items-center rounded-lg border border-line px-3 text-sm font-medium disabled:opacity-60"
+            className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-line bg-card px-3.5 text-[13.5px] font-medium disabled:opacity-60"
           >
             {source.connecting ? "Waiting…" : "Connect"}
           </button>
@@ -135,7 +132,7 @@ function SourceRow({ source }: { source: OnboardingSource }) {
               setOpen((v) => !v);
             }}
             aria-expanded={open}
-            className="shrink-0 inline-flex min-h-11 items-center gap-1 rounded-lg border border-line px-3 text-sm font-medium"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full border border-line bg-card px-3.5 text-[13.5px] font-medium"
           >
             Set up
             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -143,7 +140,7 @@ function SourceRow({ source }: { source: OnboardingSource }) {
         ) : (
           <a
             href={source.href}
-            className="shrink-0 inline-flex min-h-11 items-center rounded-lg border border-line px-3 text-sm font-medium"
+            className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-line bg-card px-3.5 text-[13.5px] font-medium"
           >
             Connect
           </a>
@@ -174,30 +171,37 @@ export default function OnboardingSources({
   sources,
   onDone,
   finishing,
+  children,
 }: {
   sources: OnboardingSource[];
   onDone: () => void;
   finishing: boolean;
+  /** Anything the step adds under the list (the first sync's progress, the learning switch). */
+  children?: ReactNode;
 }) {
   const connectedCount = sources.filter((s) => s.connected).length;
 
   return (
-    <div className="mt-8">
-      <h2 className="font-display text-xl text-center">Where do your customers write to you?</h2>
-      <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
-        Connect the ones you use. Leave the rest — FollowUp won&apos;t ask about them again, and they&apos;re all
-        in Settings whenever you want them.
-      </p>
+    // As OnbConnect: a left-aligned question, every source in one card,
+    // one line under it, and the black button at the foot.
+    <div className="flex flex-1 flex-col">
+      <h1 className="text-[30px] leading-[1.1] tracking-[-0.025em]">Where do customers write to you?</h1>
+      <p className="mt-2.5 text-[15.5px] leading-relaxed text-ink-soft">Connect one, and it finds who&apos;s waiting on you.</p>
 
-      <ul className="mt-5 space-y-2">
+      <ul className="mt-5 divide-y divide-[var(--line-2)] overflow-hidden rounded-[18px] border border-line bg-card">
         {sources.map((source) => (
           <SourceRow key={source.id} source={source} />
         ))}
       </ul>
 
-      <p className="text-xs text-ink-soft mt-3 leading-relaxed">
-        Zapier and your CRM connect from Settings — each needs a key or a URL pasted in.
+      <p className="mt-3.5 text-[13.5px] leading-relaxed text-ink-faint">
+        {/* The board's second sentence, "Nothing is sent yet", is left out:
+            the instant acknowledgement isn't held back during onboarding,
+            so it can't be promised here. */}
+        It reads your messages to find your customers. Zapier and your CRM connect from Settings.
       </p>
+
+      {children}
 
       {/* Always "Continue", never "Skip for now".
           Rendered and looked at: a full-width filled button reading "Skip
@@ -206,11 +210,12 @@ export default function OnboardingSources({
           question wants. Nothing here blocks the button either way, so the
           skipping does not need announcing; brand-principles.md #5 says the
           plain word beats the clever one. */}
+      <div className="mt-auto pb-7 pt-6">
       <button
         onClick={onDone}
         disabled={finishing}
-        className="w-full mt-5 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
-        style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+        className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 text-base font-medium disabled:opacity-60"
+        style={{ backgroundColor: "var(--ink)", color: "var(--on-accent)" }}
       >
         {finishing ? "Taking you there…" : "Continue"}
       </button>
@@ -220,10 +225,11 @@ export default function OnboardingSources({
           CSV import need no setup at all — and they should know that before
           they press a button labelled "Skip for now". */}
       {connectedCount === 0 && (
-        <p className="text-xs text-ink-soft text-center mt-3 leading-relaxed">
+        <p className="mt-3 text-center text-[13px] leading-relaxed text-ink-faint">
           You can still add leads by hand or from a spreadsheet — that needs no setup.
         </p>
       )}
+      </div>
     </div>
   );
 }

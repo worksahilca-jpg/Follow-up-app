@@ -56,7 +56,7 @@ export default function WeTalkedButton({ leadId, leadName, talked }: { leadId: s
         </button>
       )}
       {error && (
-        <span className="text-xs" style={{ color: "var(--coral)" }}>
+        <span className="text-[13px]" style={{ color: "var(--coral)" }}>
           {error}
         </span>
       )}

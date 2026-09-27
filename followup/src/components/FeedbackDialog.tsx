@@ -45,7 +45,7 @@ export default function FeedbackDialog() {
           setOpen(true);
           setSent(false);
         }}
-        className="flex items-center gap-2.5 rounded-lg px-3 py-2 mx-3 text-sm text-ink-soft hover:bg-paper transition-colors"
+        className="flex items-center gap-2.5 rounded-[12px] px-3 py-2 mx-3 text-sm text-ink-soft hover:bg-paper transition-colors"
       >
         <MessageSquare className="h-4 w-4" />
         Something broke?
@@ -65,7 +65,7 @@ export default function FeedbackDialog() {
                   Or what you wish it did. Goes straight to the people building FollowUp.
                 </p>
               </div>
-              <button onClick={() => setOpen(false)} aria-label="Close" className="h-8 w-8 rounded-lg flex items-center justify-center text-ink-soft hover:bg-paper">
+              <button onClick={() => setOpen(false)} aria-label="Close" className="h-8 w-8 rounded-[10px] flex items-center justify-center text-ink-soft hover:bg-paper">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -80,7 +80,7 @@ export default function FeedbackDialog() {
                   rows={4}
                   maxLength={2000}
                   placeholder="What were you doing, and what happened?"
-                  className="mt-4 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm"
+                  className="mt-4 w-full rounded-[12px] border border-line bg-card px-3 py-2 text-sm"
                 />
                 {error && (
                   <p className="mt-2 text-sm" style={{ color: "var(--coral)" }}>
@@ -88,13 +88,13 @@ export default function FeedbackDialog() {
                   </p>
                 )}
                 <div className="mt-3 flex justify-end gap-2">
-                  <button onClick={() => setOpen(false)} className="rounded-lg px-3.5 py-1.5 text-sm font-medium border border-line hover:bg-paper">
+                  <button onClick={() => setOpen(false)} className="rounded-full px-3.5 py-1.5 text-sm font-medium border border-line hover:bg-paper">
                     Not now
                   </button>
                   <button
                     onClick={send}
                     disabled={busy || !text.trim()}
-                    className="rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
+                    className="rounded-full px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
                     style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                   >
                     {busy ? "Sending…" : "Send"}

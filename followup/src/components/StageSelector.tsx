@@ -51,7 +51,7 @@ export default function StageSelector({ leadId, stage }: { leadId: string; stage
         ))}
       </select>
       {error && (
-        <span className="text-xs" style={{ color: "var(--coral)" }}>
+        <span className="text-[13px]" style={{ color: "var(--coral)" }}>
           {error}
         </span>
       )}

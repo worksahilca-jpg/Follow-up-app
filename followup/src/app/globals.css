@@ -66,6 +66,14 @@
   /* The box: a white card with a hairline edge and no drop shadow, as on
      every canvas board. Lifted surfaces (a dialog, a menu) keep a soft
      shadow, because they float above the page. */
+  /* State dots (A-029): the only colour on a state pill; the word always says the state. */
+  --state-needs: #b4532a;
+  --state-quiet: #b8892b;
+  --state-waiting: #7a8699;
+  --state-sent: #4f7a5a;
+  --state-checked: #a8a29e;
+  --state-done: #d6d3d1;
+
   --radius-box: 16px;
   --shadow-box: 0 0 0 1px var(--line);
   --shadow-box-hover: 0 0 0 1px var(--line-strong);

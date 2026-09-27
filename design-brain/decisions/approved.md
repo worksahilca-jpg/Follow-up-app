@@ -1309,3 +1309,18 @@ did, Coming up (desktop) and Follow-up plans (phone). Waiting on customers was a
   sends on its own or waits for an OK.
 - **Follow-up plans (phone):** the three plans as one list, one opened, and "Use this plan" as its button.
 - They all stay out of the menu (A-027).
+
+## A-067 — Today built to its drawing (TodayCalm, TodayCalmPhone) ^A-067
+
+**Approved:** 2026-09-27, founder: *"merge"*, after seeing Today's drawing next to the rebuilt screen (PR #367). This
+followed *"i dont see the design on live that i built on canvas"*.
+**What specifically:**
+- **Phone:** the first customer opens on its own, showing who, the channel, the wait and their own words, then the warm
+  reply card with Send and Edit, and Later, Don't send and We talked under it. The title is "N customers need you."
+- **Rows:** the customer's own words, then why the reply is held, a channel glyph, and a solid black Review / Send.
+- **Desktop:** Coming up is always the right-hand card, with booked calls inside it. About to be lost sits under the
+  list. The week line is at the foot and opens Numbers.
+- **Not on Today:** the setup strip and the test-lead button, unless nothing needs the owner. "What FollowUp did for
+  you this week" and "See all numbers" are gone.
+**Rule this sets:** a screen isn't done until it has been compared side by side with its board. Structural likeness
+is not enough.

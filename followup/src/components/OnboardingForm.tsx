@@ -7,11 +7,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 // icons InstagramConfig and FacebookConfig already use — this lucide
 // version carries no brand marks, and a channel wearing a different
 // icon on each screen is the drift the design brain exists to stop.
-import { ArrowRight, Globe, Loader2, Mail, MessageCircle, MessageSquare, Smartphone } from "lucide-react";
+import { ArrowRight, Check, Globe, Loader2, Mail, MessageCircle, MessageSquare, Smartphone } from "lucide-react";
 import LogoMark from "@/components/LogoMark";
 import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
 import OnboardingSources, { WebsiteFormPanel, type OnboardingSource } from "@/components/OnboardingSources";
 import { useWhatsAppSignup } from "@/lib/useWhatsAppSignup";
+import { WARM_CARD } from "@/components/app/ReplyCard";
+
+/** The one full-width black button at the foot of each setup step (OnbConnect, OnbChoose, OnbOldCustomers). */
+const PRIMARY =
+  "flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 text-base font-medium disabled:opacity-60";
+const PRIMARY_STYLE = { backgroundColor: "var(--ink)", color: "var(--on-accent)" } as const;
+const H1 = "text-[30px] leading-[1.1] tracking-[-0.025em]";
+const LEDE = "mt-2.5 text-[15.5px] leading-relaxed text-ink-soft";
 
 /**
  * Five steps: who you are, how this works, where your leads come from,
@@ -92,6 +100,8 @@ function OnboardingFormInner({
   const searchParams = useSearchParams();
 
   const [step, setStep] = useState<Step>(!step1Done ? 1 : resumeAtSources ? 3 : 2);
+  // Five screens, four steps as the owner counts them (the canvas's "Step N of 4").
+  const shownStep = step <= 2 ? 1 : step - 1;
   const [name, setName] = useState(initialName);
   const [industry, setIndustry] = useState(initialIndustry || "");
   const [teamSize, setTeamSize] = useState(initialTeamSize ?? 1);
@@ -309,30 +319,38 @@ function OnboardingFormInner({
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-10">
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <LogoMark height={24} />
-          <span className="font-display text-2xl">FollowUp</span>
-        </div>
+    // As the canvas draws setup (OnbConnect, OnbChoose, OnbOldCustomers):
+    // the mark on the left, "Step N of 4" on the right, then a left-aligned
+    // title and one black button at the foot. Steps 1 and 2 (about you, how
+    // it works) share "Step 1".
+    <div className="min-h-[100dvh] bg-paper">
+      <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col px-5">
+        <header className="flex h-[60px] shrink-0 items-center justify-between">
+          <span className="flex items-center gap-2">
+            <LogoMark height={22} />
+            <span className="text-base font-semibold">FollowUp</span>
+          </span>
+          <span className="flex items-center gap-2.5">
+            <span className="text-[12.5px] text-ink-faint">Step {shownStep} of 4</span>
+            {/* Ink, not the accent: the screen's one accent moment is its button (A-006). */}
+            <span className="flex gap-1" aria-hidden="true">
+              {([1, 2, 3, 4] as const).map((n) => (
+                <span
+                  key={n}
+                  className="h-[3px] w-[18px] rounded-full"
+                  style={{ backgroundColor: shownStep >= n ? "var(--ink)" : "var(--line)" }}
+                />
+              ))}
+            </span>
+          </span>
+        </header>
 
-        {/* Three pips now. Ink, not the accent: the screen's one accent
-            moment belongs to its primary button (A-006), and three coloured
-            marks above it would take that away. */}
-        <div className="flex items-center justify-center gap-1.5 mt-4">
-          {([1, 2, 3, 4] as const).map((n) => (
-            <span
-              key={n}
-              className="h-1.5 w-6 rounded-full"
-              style={{ backgroundColor: step >= n ? "var(--ink)" : "var(--line)" }}
-            />
-          ))}
-        </div>
-
+        <main className="flex flex-1 flex-col pt-5">
         {step === 1 && (
           <>
-            <p className="text-ink-soft text-center mt-4">A couple quick questions and you&apos;re set up.</p>
-            <form onSubmit={handleStep1Submit} className="mt-8 space-y-4">
+            <h1 className={H1}>About your business</h1>
+            <p className={LEDE}>A couple quick questions and you&apos;re set up.</p>
+            <form onSubmit={handleStep1Submit} className="mt-6 flex flex-1 flex-col gap-4">
               <div>
                 <label htmlFor="onboarding-business-name" className="text-sm font-medium block mb-1.5">
                   Business name
@@ -341,7 +359,7 @@ function OnboardingFormInner({
                   id="onboarding-business-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg border border-line bg-card px-3 py-2 text-sm"
+                  className="h-12 w-full rounded-xl border border-line bg-card px-3.5 text-base"
                   placeholder="e.g. Riverside Realty"
                 />
               </div>
@@ -354,7 +372,7 @@ function OnboardingFormInner({
                   id="onboarding-industry"
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
-                  className="w-full rounded-lg border border-line bg-card px-3 py-2 text-sm"
+                  className="h-12 w-full rounded-xl border border-line bg-card px-3.5 text-base"
                   required
                 >
                   <option value="" disabled>
@@ -379,7 +397,7 @@ function OnboardingFormInner({
                   max={500}
                   value={teamSize}
                   onChange={(e) => setTeamSize(Number(e.target.value))}
-                  className="w-24 rounded-lg border border-line bg-card px-3 py-2 text-sm text-center"
+                  className="h-12 w-24 rounded-xl border border-line bg-card px-3 text-center text-base"
                 />
               </div>
 
@@ -389,14 +407,12 @@ function OnboardingFormInner({
                 </p>
               )}
 
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
-                style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-              >
-                {saving ? "Saving…" : "Continue"}
-              </button>
+              <div className="mt-auto pb-7 pt-6">
+                <button type="submit" disabled={saving} className={PRIMARY} style={PRIMARY_STYLE}>
+                  {saving ? "Saving…" : "Continue"}
+                  {!saving && <ArrowRight className="h-4 w-4" />}
+                </button>
+              </div>
             </form>
           </>
         )}
@@ -404,13 +420,13 @@ function OnboardingFormInner({
         {step === 2 && <HowItWorks onContinue={() => setStep(3)} onSkip={() => setStep(3)} />}
 
         {step === 3 && (
-          <>
-            <OnboardingSources sources={sourceList} onDone={() => setStep(4)} finishing={false} />
+          <div className="flex flex-1 flex-col">
+            <OnboardingSources sources={sourceList} onDone={() => setStep(4)} finishing={false}>
 
             {inboxConnected && (
               <>
                 {(autoSyncState === "syncing" || autoSyncSummary) && (
-                  <p className="text-sm text-ink-soft text-center mt-3 leading-relaxed flex items-center justify-center gap-1.5">
+                  <p className="mt-3 flex items-center gap-1.5 text-sm leading-relaxed text-ink-soft">
                     {autoSyncState === "syncing" ? (
                       <>
                         <Loader2 className="h-3.5 w-3.5 animate-spin" /> Pulling in your first leads…
@@ -425,17 +441,19 @@ function OnboardingFormInner({
                     inbox — not buried in Settings they may never open. Off
                     by default; the switch is the consent
                     (docs/security-roadmap.md). */}
-                <div className="mt-4 box px-4 py-3">
+                <div className="mt-4 rounded-[18px] border border-line bg-card px-4 py-3">
                   <ImproveFollowUpToggle compact />
                 </div>
               </>
             )}
-          </>
+            </OnboardingSources>
+          </div>
         )}
 
         {step === 4 && <HowItShouldWork onChosen={() => setStep(5)} />}
 
         {step === 5 && <WaitingCustomers onDone={finishOnboarding} finishing={finishing} />}
+        </main>
       </div>
     </div>
   );
@@ -501,43 +519,41 @@ function HowItWorks({ onContinue, onSkip }: { onContinue: () => void; onSkip: ()
   ];
 
   return (
-    <div className="mt-8">
-      <h2 className="font-display text-xl text-center">How FollowUp works</h2>
+    <div className="flex flex-1 flex-col">
+      <h1 className={H1}>How FollowUp works</h1>
 
-      <ol className="mt-6 space-y-4">
+      <ol className="mt-6 overflow-hidden rounded-[18px] border border-line bg-card">
         {beats.map((beat, i) => (
-          <li key={beat.title} className="flex gap-3">
+          <li key={beat.title} className={"flex gap-3 px-4 py-4" + (i ? " border-t border-line-2" : "")}>
             {/* Numbered because this is a real sequence — a lead arrives,
                 then goes quiet, then gets written to. Not decoration. */}
             <span
               aria-hidden="true"
               className="h-6 w-6 shrink-0 rounded-full flex items-center justify-center text-xs font-medium"
-              style={{ backgroundColor: "var(--card)", color: "var(--ink-soft)" }}
+              style={{ backgroundColor: "var(--card-2)", color: "var(--ink-soft)" }}
             >
               {i + 1}
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-medium">{beat.title}</p>
-              <p className="text-xs text-ink-soft mt-0.5 leading-relaxed">{beat.body}</p>
+              <p className="text-[15px] font-medium">{beat.title}</p>
+              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-soft">{beat.body}</p>
             </div>
           </li>
         ))}
       </ol>
 
-      <button
-        onClick={onContinue}
-        className="w-full mt-7 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium"
-        style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-      >
-        Got it
-        <ArrowRight className="h-4 w-4" />
-      </button>
-      <button
-        onClick={onSkip}
-        className="w-full mt-2 inline-flex min-h-11 items-center justify-center text-sm text-ink-soft hover:text-ink transition-colors"
-      >
-        Skip
-      </button>
+      <div className="mt-auto pb-7 pt-6">
+        <button onClick={onContinue} className={PRIMARY} style={PRIMARY_STYLE}>
+          Got it
+          <ArrowRight className="h-4 w-4" />
+        </button>
+        <button
+          onClick={onSkip}
+          className="mt-1 inline-flex min-h-11 w-full items-center justify-center text-[15px] text-ink-soft transition-colors hover:text-ink"
+        >
+          Skip
+        </button>
+      </div>
     </div>
   );
 }
@@ -602,11 +618,11 @@ function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
   ];
 
   return (
-    <div className="mt-8">
-      <h2 className="font-display text-xl text-center">How should FollowUp work?</h2>
-      <p className="text-sm text-ink-soft text-center mt-2">You can change this any time in Settings.</p>
+    <div className="flex flex-1 flex-col">
+      <h1 className={H1}>How should FollowUp work?</h1>
+      <p className={LEDE}>You can change this any time in Settings.</p>
 
-      <div role="radiogroup" aria-label="How FollowUp works" className="mt-6 space-y-3">
+      <div role="radiogroup" aria-label="How FollowUp works" className="mt-[22px] flex flex-col gap-3">
         {options.map((o) => {
           const on = mode === o.id;
           return (
@@ -616,7 +632,7 @@ function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
               role="radio"
               aria-checked={on}
               onClick={() => setMode(o.id)}
-              className="box w-full text-left px-4 py-4 transition-colors"
+              className="w-full rounded-[20px] border border-line bg-card p-[18px] text-left transition-colors"
               // The ring is a border plus a 1px inset shadow rather than a
               // 2px border, so choosing a card never shifts its contents.
               style={on ? { borderColor: "var(--ink)", boxShadow: "inset 0 0 0 1px var(--ink)" } : undefined}
@@ -624,22 +640,32 @@ function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
               <span className="flex items-center gap-3">
                 <span
                   aria-hidden="true"
-                  className="h-5 w-5 shrink-0 rounded-full flex items-center justify-center"
+                  className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full"
                   style={{ border: `${on ? 2 : 1.5}px solid ${on ? "var(--ink)" : "var(--line)"}` }}
                 >
                   {on && <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--ink)" }} />}
                 </span>
-                <span className="text-base font-medium">{o.title}</span>
-                {o.badge && <span className="ml-auto text-xs text-ink-soft">{o.badge}</span>}
+                <span className="text-lg" style={{ fontWeight: on ? 600 : 500 }}>{o.title}</span>
+                {o.badge && (
+                  <span className="ml-auto font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-ink-soft">{o.badge}</span>
+                )}
               </span>
-              <span className="block text-sm text-ink-soft mt-2 pl-8 leading-relaxed">{o.body}</span>
+              <span className="mt-2.5 block pl-[34px] text-[15px] leading-relaxed text-ink-soft">{o.body}</span>
+              {/* One example of what Automatic sends, marked as an example (OnbChoose). */}
+              {o.id === "automatic" && on && (
+                <span className="mt-3.5 ml-[34px] block rounded-[14px] px-3.5 py-3" style={WARM_CARD}>
+                  <span className="block font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-ink-soft">Sent on its own · example</span>
+                  <span className="mt-1 block text-sm leading-snug">Thanks! Happy to quote that. Could you send a photo of your current tap?</span>
+                </span>
+              )}
             </button>
           );
         })}
       </div>
 
-      <p className="text-xs text-ink-soft mt-4 leading-relaxed">
-        Either way, it stops the moment a customer replies, and every message goes from your own address.
+      <p className="mt-[18px] flex items-start gap-2 text-sm leading-relaxed text-ink-soft">
+        <Check className="mt-0.5 h-[15px] w-[15px] shrink-0 text-ink" strokeWidth={2.2} aria-hidden="true" />
+        <span>Either way, it stops the moment a customer replies, and every message goes from your own address.</span>
       </p>
 
       {error && (
@@ -648,16 +674,13 @@ function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
         </p>
       )}
 
-      <button
-        onClick={choose}
-        disabled={saving}
-        className="w-full mt-6 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
-        style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-      >
+      <div className="mt-auto pb-7 pt-6">
+      <button onClick={choose} disabled={saving} className={PRIMARY} style={PRIMARY_STYLE}>
         {/* A-053's curiosity action: the next screen is the list of who never got a reply. */}
         {saving ? "Saving…" : "Find who needs a reply"}
         {!saving && <ArrowRight className="h-4 w-4" />}
       </button>
+      </div>
     </div>
   );
 }
@@ -736,9 +759,12 @@ function WaitingCustomers({ onDone, finishing }: { onDone: () => void; finishing
 
   if (state === "loading") {
     return (
-      <div className="mt-10 text-center">
-        <Loader2 className="h-5 w-5 animate-spin mx-auto text-ink-soft" />
-        <p className="text-sm text-ink-soft mt-3">Finding who&apos;s waiting on a reply…</p>
+      <div className="flex flex-1 flex-col">
+        <h1 className={H1}>Finding who&apos;s waiting on a reply…</h1>
+        <p className={LEDE + " flex items-center gap-2"}>
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          Reading the last 90 days. Nothing is sent.
+        </p>
       </div>
     );
   }
@@ -748,78 +774,92 @@ function WaitingCustomers({ onDone, finishing }: { onDone: () => void; finishing
 
   if (safe === 0) {
     return (
-      <div className="mt-8">
-        <h2 className="font-display text-xl text-center">{needsYou > 0 ? "A few people need you." : "No one is waiting."}</h2>
-        <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
+      <div className="flex flex-1 flex-col">
+        <h1 className={H1}>{needsYou > 0 ? "A few people need you." : "No one is waiting."}</h1>
+        <p className={LEDE}>
           {needsYou > 0
             ? `${needsYou} ${needsYou === 1 ? "customer asks" : "customers ask"} about a price, a date or something that needs your eye. ${needsYou === 1 ? "It waits" : "They wait"} for you in Today, with the reply written.`
             : "Anyone who writes from now on gets an answer. You'll see everything in Today."}
         </p>
-        <button
-          onClick={onDone}
-          disabled={finishing}
-          className="w-full mt-7 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
-          style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-        >
-          {finishing ? "Taking you there…" : "Go to Today"}
-        </button>
+        <div className="mt-auto pb-7 pt-6">
+          <button onClick={onDone} disabled={finishing} className={PRIMARY} style={PRIMARY_STYLE}>
+            {finishing ? "Taking you there…" : "Go to Today"}
+          </button>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="mt-8">
-      <h2 className="font-display text-xl text-center">
-        {safe} {safe === 1 ? "person is" : "people are"} waiting on a reply.
-      </h2>
-      <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
-        From the last 90 days. A reply is written for each. Nothing has been sent.
-      </p>
+  // As OnbOldCustomers: everyone who never got a reply, the first one with
+  // its written reply in the warm card, the rest as rows; the price
+  // questions named once; "Send all N" sends only the routine ones.
+  const total = safe + needsYou;
+  const preview = summary?.preview ?? [];
+  const [first, ...rest] = preview;
 
-      <ul className="box mt-5 divide-y" style={{ borderColor: "var(--line)" }}>
-        {summary?.preview.map((p) => (
-          <li key={p.leadId} className="px-4 py-3">
-            <p className="text-sm font-medium">{p.leadName}</p>
-            {p.theirMessage && <p className="text-xs text-ink-soft mt-0.5 line-clamp-1">“{p.theirMessage}”</p>}
-            <p className="text-sm mt-2 leading-relaxed line-clamp-3">{p.draftMessage}</p>
-          </li>
-        ))}
-        {safe > (summary?.preview.length ?? 0) && (
-          <li className="px-4 py-2.5 text-xs text-ink-soft">and {safe - (summary?.preview.length ?? 0)} more, all in Today</li>
+  return (
+    <div className="flex flex-1 flex-col">
+      <h1 className={H1}>
+        {total} {total === 1 ? "person" : "people"} never got a reply.
+      </h1>
+      <p className={LEDE}>From the last 90 days. A reply is written for each. Nothing has been sent.</p>
+
+      <div className="mt-[18px] overflow-hidden rounded-[20px] border border-line bg-card">
+        <p className="px-4 pb-2.5 pt-3.5 font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-ink-faint">
+          Ready to send · {safe}
+        </p>
+        {first && (
+          <div className="px-4 pb-3.5">
+            <p className="text-[15px] font-medium">{first.leadName}</p>
+            {first.theirMessage && <p className="mt-0.5 line-clamp-1 text-[13.5px] text-ink-soft">“{first.theirMessage}”</p>}
+            <p className="mt-2.5 rounded-[14px] px-3.5 py-3 text-sm leading-snug line-clamp-4" style={WARM_CARD}>
+              {first.draftMessage}
+            </p>
+          </div>
         )}
-      </ul>
+        {rest.map((p) => (
+          <div key={p.leadId} className="border-t border-line-2 px-4 py-3">
+            <p className="text-[15px] font-medium">{p.leadName}</p>
+            {p.theirMessage && <p className="mt-0.5 line-clamp-1 text-[13.5px] text-ink-soft">“{p.theirMessage}”</p>}
+          </div>
+        ))}
+        {safe > preview.length && (
+          <p className="border-t border-line-2 px-4 py-3 text-sm text-ink-soft">
+            and {safe - preview.length} more, all in Today
+          </p>
+        )}
+      </div>
 
       {needsYou > 0 && (
-        <p className="text-sm mt-3 leading-relaxed flex gap-2">
+        <p className="mt-2.5 flex items-start gap-2.5 rounded-2xl border border-line bg-card px-3.5 py-3 text-sm leading-relaxed">
           <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: "var(--coral)" }} />
           <span>
-            <span className="font-medium">{needsYou} {needsYou === 1 ? "needs" : "need"} you</span>
-            <span className="text-ink-soft"> — a price, a date or something tricky. {needsYou === 1 ? "It waits" : "They wait"} in Today, reply written.</span>
+            <span className="font-medium">
+              {needsYou} {needsYou === 1 ? "needs" : "need"} you.
+            </span>
+            <span className="text-ink-soft"> A price, a date or something tricky. {needsYou === 1 ? "It waits" : "They wait"} in Today, reply written.</span>
           </span>
         </p>
       )}
 
       {error && (
-        <p role="alert" className="text-sm mt-3" style={{ color: "var(--coral)" }}>
+        <p role="alert" className="mt-3 text-sm" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}
 
-      <button
-        onClick={sendAll}
-        disabled={state === "sending" || finishing}
-        className="w-full mt-6 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
-        style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-      >
-        {state === "sending" ? "Sending…" : `Send all ${safe}`}
-      </button>
-      <button
-        onClick={onDone}
-        disabled={state === "sending" || finishing}
-        className="w-full mt-2 inline-flex min-h-11 items-center justify-center text-sm text-ink-soft hover:text-ink transition-colors"
-      >
-        Not now, keep them in Today
-      </button>
+      <div className="mt-auto pb-6 pt-6">
+        <button onClick={sendAll} disabled={state === "sending" || finishing} className={PRIMARY} style={PRIMARY_STYLE}>
+          {state === "sending" ? "Sending…" : `Send all ${safe}`}
+        </button>
+        <button
+          onClick={onDone}
+          disabled={state === "sending" || finishing}
+          className="mt-1 inline-flex min-h-11 w-full items-center justify-center text-[15px] text-ink-soft transition-colors hover:text-ink"
+        >
+          Not now, keep them in Today
+        </button>
+      </div>
     </div>
   );
 }

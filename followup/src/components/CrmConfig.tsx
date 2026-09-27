@@ -104,12 +104,12 @@ export default function CrmConfig() {
   return (
     <div className="box p-5">
       <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
+        <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
           <Database className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Connect your CRM</p>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-[13px] text-ink-soft mt-1">
             Already run Follow Up Boss or HubSpot? Keep it — FollowUp imports your contacts every 10 minutes and
             works alongside it, watching for leads it&apos;s neglecting. When FollowUp sends a follow-up, a note goes
             back to the same contact in your CRM, so nothing is only in one place.
@@ -117,28 +117,28 @@ export default function CrmConfig() {
 
           {connected ? (
             <div className="mt-3">
-              <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }}>
+              <p className="text-[13px] flex items-center gap-1" style={{ color: "var(--sage)" }}>
                 <Check className="h-3.5 w-3.5" /> Connected to {provider ? PROVIDER_LABEL[provider] : "your CRM"}
                 {accountLabel ? ` (${accountLabel})` : ""}.
               </p>
-              <p className="text-xs text-ink-soft mt-1">
+              <p className="text-[13px] text-ink-soft mt-1">
                 {lastSyncedAt
                   ? `Last synced ${new Date(lastSyncedAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.`
                   : "First sync runs within 10 minutes."}
               </p>
               {lastSyncError && (
-                <p className="text-xs mt-1" style={{ color: "var(--coral)" }}>
+                <p className="text-[13px] mt-1" style={{ color: "var(--coral)" }}>
                   Last sync failed: {lastSyncError}
                 </p>
               )}
-              <button onClick={disconnect} disabled={saving} className="mt-2 text-xs font-medium" style={{ color: "var(--coral)" }}>
+              <button onClick={disconnect} disabled={saving} className="mt-2 text-[13px] font-medium" style={{ color: "var(--coral)" }}>
                 Disconnect
               </button>
             </div>
           ) : (
             <div className="mt-3 space-y-2">
               {saveError && (
-                <p className="text-xs" style={{ color: "var(--coral)" }}>
+                <p className="text-[13px]" style={{ color: "var(--coral)" }}>
                   {saveError}
                 </p>
               )}
@@ -152,7 +152,7 @@ export default function CrmConfig() {
                 <select
                   value={draftProvider}
                   onChange={(e) => setDraftProvider(e.target.value as Provider)}
-                  className="rounded-lg border border-line bg-paper px-2 py-1.5 text-xs"
+                  className="rounded-[12px] border border-line bg-paper px-2 py-1.5 text-[13px]"
                 >
                   <option value="followupboss">Follow Up Boss</option>
                   <option value="hubspot">HubSpot</option>
@@ -163,18 +163,18 @@ export default function CrmConfig() {
                   onChange={(e) => setKeyDraft(e.target.value)}
                   placeholder={KEY_LABEL[draftProvider]}
                   aria-label={KEY_LABEL[draftProvider]}
-                  className="w-full sm:w-auto sm:flex-1 min-w-0 rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                  className="w-full sm:w-auto sm:flex-1 min-w-0 rounded-[12px] border border-line bg-paper px-3 py-1.5 text-[13px]"
                 />
                 <button
                   onClick={connect}
                   disabled={saving || !keyDraft.trim()}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60 shrink-0"
+                  className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60 shrink-0"
                   style={{ backgroundColor: "var(--ink)" }}
                 >
                   {saving ? "Connecting…" : "Connect"}
                 </button>
               </div>
-              <p className="text-xs text-ink-soft">
+              <p className="text-[13px] text-ink-soft">
                 {draftProvider === "followupboss"
                   ? "Admin → API in Follow Up Boss."
                   : "Settings → Integrations → Private Apps in HubSpot (needs contacts read/write and notes write)."}

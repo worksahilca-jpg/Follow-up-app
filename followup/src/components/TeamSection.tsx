@@ -178,9 +178,9 @@ export default function TeamSection() {
                 {m.name}
                 {m.id === selfId && <span className="text-ink-soft font-normal"> (you)</span>}
               </p>
-              <p className="text-xs text-ink-soft truncate">{m.email}</p>
+              <p className="text-[13px] text-ink-soft truncate">{m.email}</p>
             </div>
-            <div className="hidden sm:flex gap-6 text-xs text-ink-soft shrink-0">
+            <div className="hidden sm:flex gap-6 text-[13px] text-ink-soft shrink-0">
               <span>{m.assignedLeads} leads</span>
               <span>{m.followUpsCompleted} completed</span>
               <span>{m.overdueFollowUps} overdue</span>
@@ -193,17 +193,17 @@ export default function TeamSection() {
                 <select
                   value={m.role}
                   onChange={(e) => changeRole(m.id, e.target.value as TeamRole)}
-                  className="rounded-lg border border-line bg-paper px-2 py-1 text-xs"
+                  className="rounded-[12px] border border-line bg-paper px-2 py-1 text-[13px]"
                 >
                   <option value="ADMIN">Admin</option>
                   <option value="SALES">Sales</option>
                 </select>
-                <button onClick={() => remove(m.id, m.name)} className="text-xs" style={{ color: "var(--coral)" }}>
+                <button onClick={() => remove(m.id, m.name)} className="text-[13px]" style={{ color: "var(--coral)" }}>
                   Remove
                 </button>
               </div>
             ) : (
-              <span className="text-xs text-ink-soft shrink-0 w-14 text-right">{m.role === "ADMIN" ? "Admin" : "Sales"}</span>
+              <span className="text-[13px] text-ink-soft shrink-0 w-14 text-right">{m.role === "ADMIN" ? "Admin" : "Sales"}</span>
             )}
           </div>
         ))}
@@ -211,16 +211,16 @@ export default function TeamSection() {
 
       {isAdmin && invites.length > 0 && (
         <div className="mt-4">
-          <p className="text-xs font-medium text-ink-soft">Pending invites</p>
+          <p className="text-[13px] font-medium text-ink-soft">Pending invites</p>
           <div className="mt-2 box divide-y divide-line">
             {invites.map((inv) => (
               <div key={inv.id} className="flex items-center justify-between gap-3 px-5 py-2.5 text-sm">
                 <span className="text-ink-soft min-w-0 truncate">
-                  {inv.email} · <span className="text-xs">{inv.role === "ADMIN" ? "Admin" : "Sales"}</span>
+                  {inv.email} · <span className="text-[13px]">{inv.role === "ADMIN" ? "Admin" : "Sales"}</span>
                 </span>
                 <div className="flex items-center gap-3 shrink-0">
                   {inv.link && (
-                    <button onClick={() => copyInviteLink(inv)} className="text-xs font-medium underline underline-offset-2">
+                    <button onClick={() => copyInviteLink(inv)} className="text-[13px] font-medium underline underline-offset-2">
                       {copiedInviteId === inv.id ? "Copied" : "Copy invite link"}
                     </button>
                   )}
@@ -241,12 +241,12 @@ export default function TeamSection() {
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="teammate@company.com"
-            className="flex-1 rounded-lg border border-line bg-paper px-3 py-2 text-sm"
+            className="flex-1 rounded-[12px] border border-line bg-paper px-3 py-2 text-sm"
           />
           <select
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value as TeamRole)}
-            className="rounded-lg border border-line bg-paper px-2 py-2 text-sm"
+            className="rounded-[12px] border border-line bg-paper px-2 py-2 text-sm"
           >
             <option value="SALES">Sales</option>
             <option value="ADMIN">Admin</option>
@@ -254,7 +254,7 @@ export default function TeamSection() {
           <button
             onClick={sendInvite}
             disabled={inviting || !inviteEmail.trim()}
-            className="inline-flex items-center gap-1.5 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
             style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
             <UserPlus className="h-3.5 w-3.5" /> {inviting ? "Sending…" : "Invite"}
@@ -262,7 +262,7 @@ export default function TeamSection() {
         </div>
       )}
       {isAdmin && (
-        <p className="text-xs text-ink-soft mt-2">
+        <p className="text-[13px] text-ink-soft mt-2">
           {inviteAloneIsEnough ? (
             /* Joining needs the invite link since 2026-09-26 (security
                audit H-2): an address alone used to pull its owner into
@@ -291,7 +291,7 @@ export default function TeamSection() {
         </p>
       )}
       {isAdmin && inviteEmailSent !== null && (
-        <p className="text-xs mt-1" style={{ color: inviteEmailSent ? "var(--sage)" : "var(--coral)" }}>
+        <p className="text-[13px] mt-1" style={{ color: inviteEmailSent ? "var(--sage)" : "var(--coral)" }}>
           {inviteEmailSent
             ? inviteAloneIsEnough
               ? "Invite sent — we emailed them their link."
@@ -303,12 +303,12 @@ export default function TeamSection() {
       )}
 
       {notice && (
-        <p className="text-xs mt-3" style={{ color: "var(--coral)" }}>
+        <p className="text-[13px] mt-3" style={{ color: "var(--coral)" }}>
           {notice}
         </p>
       )}
       {error && (
-        <p className="text-xs mt-3" style={{ color: "var(--coral)" }}>
+        <p className="text-[13px] mt-3" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

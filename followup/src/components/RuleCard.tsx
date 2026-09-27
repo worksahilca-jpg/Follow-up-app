@@ -64,12 +64,12 @@ export default function RuleCard({
       {children}
       {exampleRule && checked && <RuleExample rule={exampleRule} />}
       {error && (
-        <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+        <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}
       {parts.length > 0 && (
-        <p className="mt-4 pt-3 border-t border-line text-xs text-ink-soft tabular-nums">This week: {parts.join(" · ")}</p>
+        <p className="mt-4 pt-3 border-t border-line text-[13px] text-ink-soft tabular-nums">This week: {parts.join(" · ")}</p>
       )}
     </div>
   );
@@ -104,7 +104,7 @@ export function RuleNumber({
       aria-label={label}
       onChange={(e) => onChange(Number(e.target.value))}
       onBlur={onCommit}
-      className="mx-0.5 w-14 rounded-lg border border-line bg-paper px-1.5 py-0.5 text-center font-semibold align-baseline disabled:opacity-60"
+      className="mx-0.5 w-14 rounded-full border border-line bg-paper px-1.5 py-0.5 text-center font-semibold align-baseline disabled:opacity-60"
     />
   );
 }

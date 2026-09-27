@@ -124,7 +124,7 @@ export default function LeadAutomationToggle({
       <h3 className="text-sm font-semibold" style={{ color: "var(--slate)" }}>
         Automation
       </h3>
-      <div className="mt-3 flex rounded-lg border border-line overflow-hidden">
+      <div className="mt-3 flex rounded-[12px] border border-line overflow-hidden">
         {TIERS.map((t) => {
           const locked = t.value === "autonomous" && !autonomousAllowed;
           return (
@@ -133,7 +133,7 @@ export default function LeadAutomationToggle({
               onClick={() => select(t.value)}
               disabled={saving || locked}
               title={locked ? "Handle it all needs Plus or Pro" : undefined}
-              className="flex-1 px-2 py-1.5 text-xs font-medium disabled:opacity-60 inline-flex items-center justify-center gap-1"
+              className="flex-1 px-2 py-1.5 text-[13px] font-medium disabled:opacity-60 inline-flex items-center justify-center gap-1"
               style={{
                 backgroundColor: tier === t.value ? "var(--rust)" : "transparent",
                 color: tier === t.value ? "white" : "var(--ink-soft)",
@@ -146,11 +146,11 @@ export default function LeadAutomationToggle({
         })}
       </div>
       {!autonomousAllowed && tier !== "autonomous" && (
-        <p className="text-xs mt-2 text-ink-soft">
+        <p className="text-[13px] mt-2 text-ink-soft">
           &quot;Handle it all&quot; needs Plus or Pro — see Billing in Settings.
         </p>
       )}
-      <p className="text-xs mt-2 text-ink-soft leading-relaxed">
+      <p className="text-[13px] mt-2 text-ink-soft leading-relaxed">
         {holdAllForApproval ? HELD_DESCRIPTIONS[tier] : DESCRIPTIONS[tier]}
       </p>
       {/* Said once, under the control it changes the meaning of, rather
@@ -158,13 +158,13 @@ export default function LeadAutomationToggle({
           account, not about this lead, and repeating it three times would
           read as the product arguing with itself. */}
       {holdAllForApproval && (
-        <p className="text-xs mt-2 leading-relaxed" style={{ color: "var(--slate)" }}>
+        <p className="text-[13px] mt-2 leading-relaxed" style={{ color: "var(--slate)" }}>
           While you&apos;re on the beta plan, your account holds every follow-up for your approval — so whichever
           you pick here, you see it before your lead does.
         </p>
       )}
       {tier !== "off" && (
-        <p className="text-xs mt-2 text-ink-soft leading-relaxed">
+        <p className="text-[13px] mt-2 text-ink-soft leading-relaxed">
           The moment this lead replies, the silence clock resets — FollowUp won&apos;t{" "}
           {holdAllForApproval ? "write another follow-up" : "auto-send again"} until they&apos;ve gone quiet for the
           full window once more.
@@ -172,8 +172,8 @@ export default function LeadAutomationToggle({
       )}
 
       {confirmingAutonomous && (
-        <div className="mt-3 rounded-lg p-3" style={{ backgroundColor: "var(--coral-soft)" }}>
-          <p className="text-xs" style={{ color: "var(--coral)" }}>
+        <div className="mt-3 rounded-[12px] p-3" style={{ backgroundColor: "var(--coral-soft)" }}>
+          <p className="text-[13px]" style={{ color: "var(--coral)" }}>
             This lead will send every automated follow-up with no review — including anything that mentions
             pricing or follows a tense conversation. Sure?
           </p>
@@ -181,7 +181,7 @@ export default function LeadAutomationToggle({
             <button
               onClick={() => save("autonomous")}
               disabled={saving}
-              className="rounded-lg px-2.5 py-1 text-xs font-medium text-on-coral disabled:opacity-60"
+              className="rounded-full px-2.5 py-1 text-[13px] font-medium text-on-coral disabled:opacity-60"
               style={{ backgroundColor: "var(--coral-fill)" }}
             >
               Yes, go autonomous
@@ -189,7 +189,7 @@ export default function LeadAutomationToggle({
             <button
               onClick={() => setConfirmingAutonomous(false)}
               disabled={saving}
-              className="rounded-lg border border-line px-2.5 py-1 text-xs font-medium"
+              className="rounded-full border border-line px-2.5 py-1 text-[13px] font-medium"
             >
               Cancel
             </button>
@@ -198,7 +198,7 @@ export default function LeadAutomationToggle({
       )}
 
       {error && (
-        <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>
+        <p className="text-[13px] mt-2" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

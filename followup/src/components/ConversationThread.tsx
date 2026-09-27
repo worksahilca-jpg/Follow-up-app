@@ -82,7 +82,7 @@ export default function ConversationThread({
             // Radius and shadow still come from `.box`.
             style={{ backgroundColor: m.direction === "outbound" ? "var(--slate-soft)" : undefined }}
           >
-            <div className="flex items-center justify-between gap-3 text-xs text-ink-soft mb-1">
+            <div className="flex items-center justify-between gap-3 text-[13px] text-ink-soft mb-1">
               <span className="uppercase tracking-wide truncate">
                 {m.direction === "outbound" ? "You" : leadName} · {m.channel}
               </span>
@@ -90,13 +90,13 @@ export default function ConversationThread({
             </div>
             <p className="whitespace-pre-wrap">{m.body}</p>
             {m.source && (
-              <p className="text-xs mt-1" style={{ color: "var(--slate)" }}>
+              <p className="text-[13px] mt-1" style={{ color: "var(--slate)" }}>
                 Sent directly on {m.source === "messenger_direct" ? "Messenger" : "Instagram"} — not through FollowUp
                 {m.source.endsWith("_direct") ? " (likely Meta's own AI or a teammate replying from the native app)" : ""}
               </p>
             )}
             {m.opened && (
-              <p className="text-xs mt-1" style={{ color: "var(--sage)" }}>
+              <p className="text-[13px] mt-1" style={{ color: "var(--sage)" }}>
                 Opened
               </p>
             )}

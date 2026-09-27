@@ -42,11 +42,11 @@ export default function SendingPausedBanner({ canResume }: { canResume: boolean 
     <div role="status" className="mt-6 box px-4 py-3 flex flex-wrap items-center justify-between gap-3" style={{ backgroundColor: "var(--card-2)" }}>
       <div className="min-w-0">
         <p className="text-sm font-medium">Sending is paused</p>
-        <p className="text-xs text-ink-soft mt-0.5">
+        <p className="text-[13px] text-ink-soft mt-0.5">
           Everything waits for your OK.{canResume ? "" : " An admin can resume it."}
         </p>
         {error && (
-          <p className="text-xs mt-1" style={{ color: "var(--coral)" }}>
+          <p className="text-[13px] mt-1" style={{ color: "var(--coral)" }}>
             {error}
           </p>
         )}
@@ -55,7 +55,7 @@ export default function SendingPausedBanner({ canResume }: { canResume: boolean 
         <button
           onClick={resume}
           disabled={busy}
-          className="shrink-0 rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
+          className="shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
           style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
         >
           {busy ? "Resuming…" : "Resume"}

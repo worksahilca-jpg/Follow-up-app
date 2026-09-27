@@ -154,18 +154,18 @@ export default function InstagramConfig() {
   return (
     <div className="box p-5">
       <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
+        <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
           <MessageCircle className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Catch Instagram DMs</p>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-[13px] text-ink-soft mt-1">
             Anyone who messages your Instagram Business account becomes a lead and gets the instant reply,
             automatically.
           </p>
 
           {statusMessage && (
-            <p className="mt-2 text-xs" style={{ color: statusMessage.kind === "success" ? "var(--sage)" : "var(--coral)" }}>
+            <p className="mt-2 text-[13px]" style={{ color: statusMessage.kind === "success" ? "var(--sage)" : "var(--coral)" }}>
               {statusMessage.text}
             </p>
           )}
@@ -177,7 +177,7 @@ export default function InstagramConfig() {
                    centred tick drifts to the middle line — on the id
                    fallback it sat beside the number, not beside
                    "Connected". Found by rendering it at 390px. */
-                <p className="text-xs flex items-start gap-1" style={{ color: "var(--sage)" }}>
+                <p className="text-[13px] flex items-start gap-1" style={{ color: "var(--sage)" }}>
                   {/* The handle when Meta gave us one: "@followupbase" is
                       something an owner can check against the account they
                       meant; "17841427527466039" is not. The id stays as the
@@ -220,7 +220,7 @@ export default function InstagramConfig() {
                   stillWorks="FollowUp checks it for new DMs every few minutes and picks them up."
                 />
               )}
-              <button onClick={disconnect} disabled={saving} className="mt-2 text-xs font-medium" style={{ color: "var(--coral)" }}>
+              <button onClick={disconnect} disabled={saving} className="mt-2 text-[13px] font-medium" style={{ color: "var(--coral)" }}>
                 Disconnect
               </button>
             </div>
@@ -230,7 +230,7 @@ export default function InstagramConfig() {
                 <div>
                   <a
                     href="/api/instagram/oauth/start"
-                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-paper"
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-paper"
                     style={{ backgroundColor: "var(--ink)" }}
                   >
                     Connect with Instagram
@@ -238,7 +238,7 @@ export default function InstagramConfig() {
                   {/* Meta's rule while the app is unreviewed, said before
                       the click rather than discovered as a refusal after it
                       (docs/tester-onboarding-checklist.md). */}
-                  <p className="mt-2 text-xs text-ink-soft">
+                  <p className="mt-2 text-[13px] text-ink-soft">
                     While FollowUp is in beta, Meta only lets accounts Sahil added as testers connect. If Meta refuses,
                     ask him to add you.
                   </p>
@@ -249,7 +249,7 @@ export default function InstagramConfig() {
                    left to guess whether Instagram is unsupported, broken,
                    or something they did. Same sentence the WhatsApp panel
                    gives for the same state: it is ours to finish. */
-                <p className="text-xs text-ink-soft">
+                <p className="text-[13px] text-ink-soft">
                   One-click connect isn&apos;t switched on yet — it&apos;s waiting on FollowUp&apos;s setup with
                   Meta, not on anything at your end. Use an access token below in the meantime.
                 </p>
@@ -258,7 +258,7 @@ export default function InstagramConfig() {
               <div>
                 <button
                   onClick={() => setShowManual((v) => !v)}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+                  className="inline-flex items-center gap-1 text-[13px] font-medium text-ink-soft"
                 >
                   <ChevronDown className={`h-3 w-3 transition-transform ${showManual ? "rotate-180" : ""}`} />
                   {oauthAvailable ? "Have an access token instead?" : "Paste an access token"}
@@ -266,7 +266,7 @@ export default function InstagramConfig() {
                 {(showManual || !oauthAvailable) && (
                   <div className="mt-2">
                     {saveError && (
-                      <p className="mb-1.5 text-xs" style={{ color: "var(--coral)" }}>
+                      <p className="mb-1.5 text-[13px]" style={{ color: "var(--coral)" }}>
                         {saveError}
                       </p>
                     )}
@@ -276,12 +276,12 @@ export default function InstagramConfig() {
                         value={tokenDraft}
                         onChange={(e) => setTokenDraft(e.target.value)}
                         placeholder="Instagram access token"
-                        className="flex-1 rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                        className="flex-1 rounded-[12px] border border-line bg-paper px-3 py-1.5 text-[13px]"
                       />
                       <button
                         onClick={saveToken}
                         disabled={saving || !tokenDraft.trim()}
-                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                        className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
                         style={{ backgroundColor: "var(--ink)" }}
                       >
                         {saving ? "Connecting…" : "Connect"}
@@ -295,30 +295,30 @@ export default function InstagramConfig() {
 
           <button
             onClick={() => setShowExamples((v) => !v)}
-            className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+            className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-ink-soft"
           >
             <ChevronDown className={`h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
             Meta console reference
           </button>
           {showExamples && (
-            <div className="mt-2 rounded-lg bg-paper border border-line p-3 text-xs text-ink-soft space-y-2">
+            <div className="mt-2 rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-2">
               <p>Webhook (set up once, not per business) — subscribed to &quot;messages&quot; for Instagram.</p>
               <div>
                 <p className="font-medium text-ink">Callback URL</p>
-                <pre className="mt-1 rounded-lg bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">
+                <pre className="mt-1 rounded-[12px] bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">
                   {webhookUrl}
                 </pre>
-                <button onClick={() => copy("url", webhookUrl)} className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line">
+                <button onClick={() => copy("url", webhookUrl)} className="mt-1 inline-flex items-center gap-1.5 text-[13px] font-medium rounded-full px-2.5 py-1 border border-line">
                   {copied === "url" ? <Check className="h-3 w-3" /> : null}
                   {copied === "url" ? "Copied!" : "Copy"}
                 </button>
               </div>
               <div>
                 <p className="font-medium text-ink">Verify token</p>
-                <pre className="mt-1 rounded-lg bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">
+                <pre className="mt-1 rounded-[12px] bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">
                   {verifyToken}
                 </pre>
-                <button onClick={() => copy("token", verifyToken)} className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line">
+                <button onClick={() => copy("token", verifyToken)} className="mt-1 inline-flex items-center gap-1.5 text-[13px] font-medium rounded-full px-2.5 py-1 border border-line">
                   {copied === "token" ? <Check className="h-3 w-3" /> : null}
                   {copied === "token" ? "Copied!" : "Copy"}
                 </button>

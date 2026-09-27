@@ -28,7 +28,13 @@ import RuleCard, { RuleNumber, type RuleRecordCounts } from "@/components/RuleCa
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
-import { Mail, Calendar, Check, RefreshCw, CreditCard, Search, MessageSquareHeart, ShieldCheck } from "lucide-react";
+import { Mail, Calendar, Check, RefreshCw, CreditCard, Search } from "lucide-react";
+
+/** Section headings in More settings read like the overview's card labels
+ *  above (SettingsOverview): small and quiet, the card under them carries it.
+ *  Inline weight because the global h2 rule is unlayered. */
+const SECTION_LABEL = "text-sm text-ink-faint";
+const SECTION_STYLE = { fontWeight: 400, letterSpacing: 0 } as const;
 
 export default function SettingsPage() {
   return (
@@ -915,28 +921,28 @@ function SettingsPageInner() {
           bar doesn't render, so it goes back to 0. overflow-x-auto because the
           tabs don't all fit across a 390px phone. */}
       <nav
-        className="sticky top-[var(--app-header-h)] lg:top-0 z-10 -mx-1 flex gap-1 overflow-x-auto bg-paper/95 px-1 py-2 backdrop-blur-sm border-b border-line"
+        className="sticky top-[var(--app-header-h)] z-10 -mt-4 flex max-w-[640px] gap-5 overflow-x-auto border-b border-line bg-paper/95 pt-2 backdrop-blur-sm lg:top-0"
         aria-label="Settings sections"
       >
-        {(Object.keys(TAB_LABEL) as SettingsTab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className="rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors"
-            style={
-              activeTab === tab
-                ? { backgroundColor: "var(--ink)", color: "var(--paper)" }
-                : { color: "var(--ink-soft)" }
-            }
-          >
-            {TAB_LABEL[tab]}
-          </button>
-        ))}
+        {(Object.keys(TAB_LABEL) as SettingsTab[]).map((tab) => {
+          const on = activeTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              aria-pressed={on}
+              className="-mb-px whitespace-nowrap border-b-2 pb-2.5 text-[14.5px] transition-colors"
+              style={{ borderColor: on ? "var(--ink)" : "transparent", color: on ? "var(--ink)" : "var(--ink-soft)", fontWeight: on ? 500 : 400 }}
+            >
+              {TAB_LABEL[tab]}
+            </button>
+          );
+        })}
       </nav>
 
-      <div hidden={activeTab !== "connect"} className="space-y-10">
+      <div hidden={activeTab !== "connect"} className="max-w-[640px] space-y-8">
       <section id="integrations" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Integrations</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Integrations</h2>
         <div className="mt-4 space-y-3">
           <IntegrationRow
             icon={<Mail className="h-4 w-4" />}
@@ -955,7 +961,7 @@ function SettingsPageInner() {
               <button
                 onClick={handleGmailSync}
                 disabled={syncing}
-                className="text-sm font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
+                className="text-sm font-medium rounded-full px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
                 style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
@@ -964,24 +970,24 @@ function SettingsPageInner() {
               <button
                 onClick={handleGmailDisconnect}
                 disabled={disconnecting}
-                className="text-sm font-medium rounded-lg px-3 py-1.5 disabled:opacity-60"
+                className="text-sm font-medium rounded-full px-3 py-1.5 disabled:opacity-60"
                 style={{ backgroundColor: "var(--paper)", color: "var(--coral)", border: "1px solid var(--line)" }}
               >
                 {disconnecting ? "Disconnecting…" : "Disconnect"}
               </button>
               <a
                 href="/api/integrations/gmail/connect"
-                className="text-sm font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5"
+                className="text-sm font-medium rounded-full px-3 py-1.5 flex items-center gap-1.5"
                 style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
               >
                 <Calendar className="h-3.5 w-3.5" />
                 Reconnect
               </a>
-              {syncResult && <span className="text-xs text-ink-soft">{syncResult}</span>}
+              {syncResult && <span className="text-[13px] text-ink-soft">{syncResult}</span>}
             </div>
           )}
           {gmailConnected && (
-            <p className="sm:ml-[52px] text-xs text-ink-soft">
+            <p className="sm:ml-[52px] text-[13px] text-ink-soft">
               If you connected Gmail before booking links existed, click <strong>Reconnect</strong> once to grant
               calendar access.
             </p>
@@ -1000,15 +1006,15 @@ function SettingsPageInner() {
                 <button
                   onClick={handleScanSpam}
                   disabled={scanningSpam}
-                  className="text-sm font-medium rounded-lg border border-line px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60 hover:bg-paper transition-colors"
+                  className="text-sm font-medium rounded-full border border-line px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60 hover:bg-paper transition-colors"
                   style={{ color: "var(--ink-soft)" }}
                 >
                   <Search className={`h-3.5 w-3.5 ${scanningSpam ? "animate-pulse" : ""}`} />
                   {scanningSpam ? "Checking…" : "Scan spam for missed leads"}
                 </button>
-                {spamScanResult && <span className="text-xs text-ink-soft">{spamScanResult}</span>}
+                {spamScanResult && <span className="text-[13px] text-ink-soft">{spamScanResult}</span>}
               </div>
-              <p className="text-xs text-ink-soft mt-2">
+              <p className="text-[13px] text-ink-soft mt-2">
                 A real lead&apos;s first message can land in spam by mistake — this checks that folder specifically
                 and adds anything that looks like a genuine prospect, tagged so you can tell where it came from.
                 Manual only; it never runs on its own.
@@ -1016,7 +1022,7 @@ function SettingsPageInner() {
             </div>
           )}
           {gmailError && (
-            <p className="text-xs" style={{ color: "var(--coral)" }}>
+            <p className="text-[13px]" style={{ color: "var(--coral)" }}>
               {gmailError}
             </p>
           )}
@@ -1043,7 +1049,7 @@ function SettingsPageInner() {
               <button
                 onClick={handleOutlookSync}
                 disabled={outlookSyncing}
-                className="text-sm font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
+                className="text-sm font-medium rounded-full px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
                 style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${outlookSyncing ? "animate-spin" : ""}`} />
@@ -1052,16 +1058,16 @@ function SettingsPageInner() {
               <button
                 onClick={handleOutlookDisconnect}
                 disabled={outlookDisconnecting}
-                className="text-sm font-medium rounded-lg px-3 py-1.5 disabled:opacity-60"
+                className="text-sm font-medium rounded-full px-3 py-1.5 disabled:opacity-60"
                 style={{ backgroundColor: "var(--paper)", color: "var(--coral)", border: "1px solid var(--line)" }}
               >
                 {outlookDisconnecting ? "Disconnecting…" : "Disconnect"}
               </button>
-              {outlookSyncResult && <span className="text-xs text-ink-soft">{outlookSyncResult}</span>}
+              {outlookSyncResult && <span className="text-[13px] text-ink-soft">{outlookSyncResult}</span>}
             </div>
           )}
           {outlookError && (
-            <p className="text-xs" style={{ color: "var(--coral)" }}>
+            <p className="text-[13px]" style={{ color: "var(--coral)" }}>
               {outlookError}
             </p>
           )}
@@ -1072,7 +1078,7 @@ function SettingsPageInner() {
           )}
         </div>
         {!gmailConnected && !outlookConnected && (
-          <p className="text-xs text-ink-soft mt-2">
+          <p className="text-[13px] text-ink-soft mt-2">
             {/* Until 2026-09-22 this promised that the dashboard would show
                 nothing at all without an inbox. It sits under the
                 Gmail/Outlook panel, so naming the inbox is right — but the
@@ -1090,16 +1096,16 @@ function SettingsPageInner() {
           it's a CRM sync, unrelated to social DMs. Grouped with Connect
           since it's about where leads/contacts come from, not a channel. */}
       <section id="crm" className="scroll-mt-16">
-        <h2 className="font-display text-xl">CRM sync</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>CRM sync</h2>
         <div className="mt-4">
           <CrmConfig />
         </div>
       </section>
       </div>
 
-      <div hidden={activeTab !== "channels"} className="space-y-10">
+      <div hidden={activeTab !== "channels"} className="max-w-[640px] space-y-8">
       <section id="website-widget" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Website widget</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Website widget</h2>
         <div className="mt-4">
           <CopyEmbedSnippet />
           {/* Only appears if the owner told Today they have no website. */}
@@ -1111,14 +1117,14 @@ function SettingsPageInner() {
       </section>
 
       <section id="lead-webhook" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Lead webhook</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Lead webhook</h2>
         <div className="mt-4">
           <CopyWebhookUrl />
         </div>
       </section>
 
       <section id="outbound-webhook" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Outbound webhook</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Outbound webhook</h2>
         <div className="mt-4">
           <OutboundWebhookConfig />
         </div>
@@ -1138,7 +1144,7 @@ function SettingsPageInner() {
           asserts. */}
       {CARRIER_CHANNELS_AVAILABLE && (
         <section id="phone" className="scroll-mt-16">
-          <h2 className="font-display text-xl">Phone (SMS + calls)</h2>
+          <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Phone (SMS + calls)</h2>
           <div className="mt-4">
             <TwilioConfig />
           </div>
@@ -1148,16 +1154,16 @@ function SettingsPageInner() {
       {/* The three Meta channels sit together, in the order a business is
           most likely to already have them. */}
       <section id="whatsapp" className="scroll-mt-16">
-        <h2 className="font-display text-xl">WhatsApp</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>WhatsApp</h2>
         <div className="mt-4">
           <WhatsAppConfig />
         </div>
       </section>
 
       <section id="social" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Instagram &amp; Facebook</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Instagram &amp; Facebook</h2>
         {instagramError && (
-          <p className="text-xs" style={{ color: "var(--coral)" }}>
+          <p className="text-[13px]" style={{ color: "var(--coral)" }}>
             {instagramError}
           </p>
         )}
@@ -1168,9 +1174,9 @@ function SettingsPageInner() {
       </section>
       </div>
 
-      <div hidden={activeTab !== "advanced"} className="space-y-10">
+      <div hidden={activeTab !== "advanced"} className="max-w-[640px] space-y-8">
       <section id="automation" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Automation</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Automation</h2>
 
         {/* Permission to send, above the rules it governs — because it
             decides what all of them DO, and reading the timings first
@@ -1199,7 +1205,7 @@ function SettingsPageInner() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
                 <p className="font-medium text-sm">Sending is paused</p>
-                <p className="text-xs text-ink-soft mt-1">
+                <p className="text-[13px] text-ink-soft mt-1">
                   Everything waits for your OK until you resume. What waited during the pause still waits for you.
                   {!isAdmin && " An admin can resume it."}
                 </p>
@@ -1207,7 +1213,7 @@ function SettingsPageInner() {
                   <button
                     onClick={() => saveSendPermission(false)}
                     disabled={permissionSaving || pauseSaving}
-                    className="mt-3 text-xs font-medium underline underline-offset-2 text-ink-soft"
+                    className="mt-3 text-[13px] font-medium underline underline-offset-2 text-ink-soft"
                   >
                     Stop sending by itself for good
                   </button>
@@ -1217,7 +1223,7 @@ function SettingsPageInner() {
                 <button
                   onClick={() => savePause(false)}
                   disabled={pauseSaving || permissionSaving}
-                  className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-60"
+                  className="shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium disabled:opacity-60"
                   style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                 >
                   {pauseSaving ? "Resuming…" : "Resume"}
@@ -1232,7 +1238,7 @@ function SettingsPageInner() {
                     the choice an owner made there is recognisable here. */}
                 {holdAllForApproval ? "Assisted: FollowUp asks you before every message" : "Automatic: FollowUp sends on your behalf"}
               </p>
-              <p className="text-xs text-ink-soft mt-1">
+              <p className="text-[13px] text-ink-soft mt-1">
                 {holdAllForApproval
                   ? "Every follow-up it writes waits in Approvals until you send it. Nothing reaches a customer without you."
                   : "Simple, low-risk follow-ups go out on their own. Anything about price, or anything sensitive, still waits for you — and it stops the moment a customer replies."}
@@ -1244,7 +1250,7 @@ function SettingsPageInner() {
                 <button
                   onClick={() => saveSendPermission(false)}
                   disabled={permissionSaving || pauseSaving}
-                  className="mt-3 text-xs font-medium underline underline-offset-2 text-ink-soft"
+                  className="mt-3 text-[13px] font-medium underline underline-offset-2 text-ink-soft"
                 >
                   {permissionSaving ? "Saving…" : "Stop sending by itself for good"}
                 </button>
@@ -1255,7 +1261,7 @@ function SettingsPageInner() {
               <button
                 onClick={() => savePause(true)}
                 disabled={pauseSaving || permissionSaving}
-                className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium border"
+                className="shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium border"
                 style={{ borderColor: "var(--line)" }}
               >
                 {pauseSaving ? "Pausing…" : "Pause all sending"}
@@ -1279,14 +1285,14 @@ function SettingsPageInner() {
                   })
                   .catch(() => {});
               }}
-              className="mt-4 text-xs font-medium underline underline-offset-2 text-ink-soft"
+              className="mt-4 text-[13px] font-medium underline underline-offset-2 text-ink-soft"
             >
               Let FollowUp send without asking
             </button>
           )}
 
           {holdAllForApproval && !sendingPaused && confirmingPermission && (
-            <div className="mt-4 rounded-lg p-4" style={{ backgroundColor: "var(--card-2)" }}>
+            <div className="mt-4 rounded-[12px] p-4" style={{ backgroundColor: "var(--card-2)" }}>
               {/* --card-2, not --ink-soft. The first draft used
                   --ink-soft for this surface, which is a TEXT token
                   (#9ca3af / #52525b) — so the four facts below, set in
@@ -1301,7 +1307,7 @@ function SettingsPageInner() {
                   it. No "are you sure?" — that asks for nerve, not for a
                   decision. This asks them to read four facts. */}
               <p className="text-sm font-medium">If you allow this, from the next check onwards:</p>
-              <ul className="mt-2 space-y-1.5 text-xs text-ink-soft">
+              <ul className="mt-2 space-y-1.5 text-[13px] text-ink-soft">
                 <li>• FollowUp will send follow-ups to your customers itself, signed as your business.</li>
                 <li>• Only the simple, low-risk ones. Anything about price or anything sensitive still waits for you.</li>
                 <li>• It still stops the moment a customer replies.</li>
@@ -1320,7 +1326,7 @@ function SettingsPageInner() {
                   more. Absent when the count could not be read, rather than
                   showing a zero the queue does not support. */}
               {sendPreview && sendPreview.total > 0 && (
-                <p className="mt-3 text-xs" style={{ color: "var(--ink)" }}>
+                <p className="mt-3 text-[13px]" style={{ color: "var(--ink)" }}>
                   Right now {sendPreview.total} {sendPreview.total === 1 ? "follow-up is" : "follow-ups are"} waiting.{" "}
                   {sendPreview.heldOnlyBySetting > 0 ? (
                     <>
@@ -1361,7 +1367,7 @@ function SettingsPageInner() {
                 </p>
               )}
               {permissionError && (
-                <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+                <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
                   {permissionError}
                 </p>
               )}
@@ -1369,7 +1375,7 @@ function SettingsPageInner() {
                 <button
                   onClick={() => saveSendPermission(true)}
                   disabled={permissionSaving}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium"
+                  className="rounded-full px-3 py-1.5 text-[13px] font-medium"
                   style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                 >
                   {permissionSaving ? "Saving…" : "Yes, send on my behalf"}
@@ -1380,7 +1386,7 @@ function SettingsPageInner() {
                     setPermissionError(null);
                   }}
                   disabled={permissionSaving}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-ink-soft"
+                  className="rounded-full px-3 py-1.5 text-[13px] font-medium text-ink-soft"
                 >
                   Not yet
                 </button>
@@ -1389,7 +1395,7 @@ function SettingsPageInner() {
           )}
 
           {permissionError && !confirmingPermission && (
-            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+            <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
               {permissionError}
             </p>
           )}
@@ -1404,7 +1410,7 @@ function SettingsPageInner() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="font-medium text-sm">Let some leads skip the check</p>
-              <p className="mt-1 text-xs text-ink-soft leading-relaxed">
+              <p className="mt-1 text-[13px] text-ink-soft leading-relaxed">
                 {autonomousAllowed
                   ? "A lead set to \u201cHandle it all\u201d sends every reply straight away \u2014 including price, dates and tense conversations \u2014 with nobody reading it first."
                   : "Off. Every reply is checked before it goes, even on a lead set to \u201cHandle it all\u201d \u2014 anything about price, dates or a tense conversation waits for you."}
@@ -1441,7 +1447,7 @@ function SettingsPageInner() {
                     .catch(() => {});
                 }}
                 disabled={autonomousSaving}
-                className="shrink-0 rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
+                className="shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
                 style={
                   autonomousAllowed
                     ? { backgroundColor: "var(--card-2)", color: "var(--ink)" }
@@ -1454,16 +1460,16 @@ function SettingsPageInner() {
           </div>
 
           {!autonomousAllowed && confirmingAutonomous && (
-            <div className="mt-4 rounded-lg p-4" style={{ backgroundColor: "var(--card-2)" }}>
+            <div className="mt-4 rounded-[12px] p-4" style={{ backgroundColor: "var(--card-2)" }}>
               <p className="text-sm font-medium">If you allow this, from the next check onwards:</p>
-              <ul className="mt-2 space-y-1.5 text-xs text-ink-soft">
+              <ul className="mt-2 space-y-1.5 text-[13px] text-ink-soft">
                 <li>• Only leads you set to &ldquo;Handle it all&rdquo; are affected. Every new lead still starts in Assisted.</li>
                 <li>• On those leads, nobody reads the message first — including price, dates and tense conversations.</li>
                 <li>• The check that holds risky drafts back does not run on them.</li>
                 <li>• Every message is still written down, with the reason, and you can turn this off at any time.</li>
               </ul>
               {autonomousRuleSources && autonomousRuleSources.length > 0 && (
-                <p className="mt-3 text-xs" style={{ color: "var(--ink)" }}>
+                <p className="mt-3 text-[13px]" style={{ color: "var(--ink)" }}>
                   <strong>
                     {autonomousRuleSources.length === 1
                       ? `Your ${autonomousRuleSources[0]} rule`
@@ -1475,7 +1481,7 @@ function SettingsPageInner() {
                 </p>
               )}
               {autonomousError && (
-                <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+                <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
                   {autonomousError}
                 </p>
               )}
@@ -1489,7 +1495,7 @@ function SettingsPageInner() {
                     if (await saveAutonomousPermission(true)) setConfirmingAutonomous(false);
                   }}
                   disabled={autonomousSaving}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium"
+                  className="rounded-full px-3 py-1.5 text-[13px] font-medium"
                   style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                 >
                   {autonomousSaving ? "Saving\u2026" : "Yes, let those leads skip the check"}
@@ -1500,7 +1506,7 @@ function SettingsPageInner() {
                     setAutonomousError(null);
                   }}
                   disabled={autonomousSaving}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-ink-soft"
+                  className="rounded-full px-3 py-1.5 text-[13px] font-medium text-ink-soft"
                 >
                   Not yet
                 </button>
@@ -1509,7 +1515,7 @@ function SettingsPageInner() {
           )}
 
           {autonomousError && !confirmingAutonomous && (
-            <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+            <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
               {autonomousError}
             </p>
           )}
@@ -1548,7 +1554,7 @@ function SettingsPageInner() {
             record={ruleRecords?.instant_ack ?? null}
             error={instantAckError}
           >
-            <p className="text-xs text-ink-soft mt-2">
+            <p className="text-[13px] text-ink-soft mt-2">
               On WhatsApp, Instagram and Messenger it waits two to three minutes first, so you can answer yourself.
               Never if you&apos;ve already replied, and never to someone who asked us to stop.
             </p>
@@ -1589,7 +1595,7 @@ function SettingsPageInner() {
                 below the ceiling changes nothing, and a note that changes
                 nothing is noise (brand principle 8). */}
             {unansweredOn && unansweredHours > UNANSWERED_META_DM_MAX_HOURS && (
-              <p className="text-xs text-ink-soft mt-2">
+              <p className="text-[13px] text-ink-soft mt-2">
                 On Instagram and Messenger, FollowUp steps in by {UNANSWERED_META_DM_MAX_HOURS} hours whatever you set
                 here. Meta only lets a business reply within a day of the lead&apos;s last message — after that,
                 nothing gets through.
@@ -1632,11 +1638,11 @@ function SettingsPageInner() {
                 <button
                   onClick={handleRunAutomationNow}
                   disabled={runningNow}
-                  className="text-xs font-medium underline underline-offset-2 text-ink-soft disabled:opacity-60"
+                  className="text-[13px] font-medium underline underline-offset-2 text-ink-soft disabled:opacity-60"
                 >
                   {runningNow ? "Checking…" : "Check for anyone waiting, right now"}
                 </button>
-                {runResult && <span className="text-xs text-ink-soft">{runResult}</span>}
+                {runResult && <span className="text-[13px] text-ink-soft">{runResult}</span>}
               </div>
             )}
           </RuleCard>
@@ -1678,7 +1684,7 @@ function SettingsPageInner() {
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="font-medium text-sm">All four together</p>
-              <p className="text-xs text-ink-soft mt-1">{describeAutomationState()}</p>
+              <p className="text-[13px] text-ink-soft mt-1">{describeAutomationState()}</p>
             </div>
             <Switch
               checked={anyAutomationOn}
@@ -1687,7 +1693,7 @@ function SettingsPageInner() {
               label="All automatic follow-ups"
             />
           </div>
-          <p className="text-xs text-ink-soft mt-3">
+          <p className="text-[13px] text-ink-soft mt-3">
             You can turn these off for one customer on their own page.
           </p>
         </div>
@@ -1700,7 +1706,7 @@ function SettingsPageInner() {
       <AlertsSection />
       </div>
 
-      <div hidden={activeTab !== "team"} className="space-y-10">
+      <div hidden={activeTab !== "team"} className="max-w-[640px] space-y-8">
       {/* Who this business IS, above who works in it. Until 2026-09-20
           there was nowhere at all to change the business's own name or
           trade — they were asked once in the onboarding wizard and then
@@ -1708,15 +1714,15 @@ function SettingsPageInner() {
           for contacting My Business". This tab is the account-identity
           tab, so it belongs here and it belongs first. */}
       <section id="business" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Your business</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Your business</h2>
         <div className="mt-4">
           <BusinessProfileSection />
         </div>
       </section>
 
       <section id="team" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Team</h2>
-        <p className="text-sm text-ink-soft mt-1">
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Team</h2>
+        <p className="mt-1 text-[14.5px] leading-relaxed text-ink-soft">
           Admins can invite teammates, change roles, and remove people. Everyone can see who&apos;s on the team.
         </p>
         <div className="mt-4">
@@ -1726,7 +1732,7 @@ function SettingsPageInner() {
       </section>
 
       <section id="lead-routing" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Lead routing</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Lead routing</h2>
         {/* No subhead here — SourceRoutingSection's own intro line already
             says what this does ("what happens automatically... before
             anyone looks at it"); a second sentence saying the same thing
@@ -1737,9 +1743,9 @@ function SettingsPageInner() {
       </section>
       </div>
 
-      <div hidden={activeTab !== "billing"} className="space-y-10">
+      <div hidden={activeTab !== "billing"} className="max-w-[640px] space-y-8">
       <section id="billing" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Billing</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Billing</h2>
         {billingRedirect === "success" && (
           <p className="mt-2 text-sm" style={{ color: "var(--sage)" }}>
             Subscription active — thanks! It may take a few seconds to reflect below.
@@ -1757,7 +1763,7 @@ function SettingsPageInner() {
           <div className="mt-4 box p-5">
             <div className="flex items-center gap-4">
               <div
-                className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0"
                 style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
               >
                 <CreditCard className="h-4 w-4" />
@@ -1767,7 +1773,7 @@ function SettingsPageInner() {
                   FollowUp {TIER_INFO[billingTier].label} — {TIER_INFO[billingTier].priceLabel}
                   {voiceAddonEnabled && ` + Voice (${VOICE_ADDON_INFO.priceLabel})`}
                 </p>
-                <p className="text-xs text-ink-soft mt-0.5">
+                <p className="text-[13px] text-ink-soft mt-0.5">
                   {billingStatus === "beta"
                     ? "Beta — every Pro feature, free while you test. Nothing to pay and nothing to manage."
                     : billingStatus === "trialing"
@@ -1789,7 +1795,7 @@ function SettingsPageInner() {
                 <button
                   onClick={handleManageBilling}
                   disabled={billingBusy}
-                  className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
+                  className="shrink-0 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
                   style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                 >
                   {billingBusy ? "One sec…" : "Manage billing"}
@@ -1797,7 +1803,7 @@ function SettingsPageInner() {
               )}
             </div>
             {billingError && (
-              <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+              <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
                 {billingError}
               </p>
             )}
@@ -1809,7 +1815,7 @@ function SettingsPageInner() {
                 <div key={tier} className="box p-5">
                   <p className="text-sm font-medium">{TIER_INFO[tier].label}</p>
                   <p className="font-display text-2xl mt-1">{TIER_INFO[tier].priceLabel}</p>
-                  <p className="text-xs text-ink-soft mt-2">
+                  <p className="text-[13px] text-ink-soft mt-2">
                     {tier === "free"
                       ? "Email + web widget, 20 leads/mo, assisted only. No card needed — this is where you are now."
                       : tier === "plus"
@@ -1818,7 +1824,7 @@ function SettingsPageInner() {
                   </p>
                   {tier === "free" && billingLoaded && (
                     <div className="mt-3">
-                      <div className="flex items-baseline justify-between text-xs">
+                      <div className="flex items-baseline justify-between text-[13px]">
                         <span className="font-medium">
                           {leadsUsedThisMonth}/{FREE_TIER_LEAD_CAP} leads this month
                         </span>
@@ -1835,7 +1841,7 @@ function SettingsPageInner() {
                           }}
                         />
                       </div>
-                      <p className="text-xs text-ink-soft mt-1.5">
+                      <p className="text-[13px] text-ink-soft mt-1.5">
                         {leadsUsedThisMonth >= FREE_TIER_LEAD_CAP
                           ? "New leads still come in — they just won't be scored or drafted until next month, or you upgrade."
                           : "Resets on the 1st. Leads still come in past the cap, they just stop getting scored/drafted."}
@@ -1846,7 +1852,7 @@ function SettingsPageInner() {
                     <button
                       onClick={() => handleSubscribe(tier)}
                       disabled={billingBusy || awaitingActivation}
-                      className="mt-4 w-full text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
+                      className="mt-4 w-full text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
                       style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                     >
                       {billingBusy ? "One sec…" : awaitingActivation ? "Activating…" : "Start free trial"}
@@ -1872,7 +1878,7 @@ function SettingsPageInner() {
               </label>
             )}
             {billingError && (
-              <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+              <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
                 {billingError}
               </p>
             )}
@@ -1881,13 +1887,12 @@ function SettingsPageInner() {
       </section>
       </div>
 
-      <div hidden={activeTab !== "advanced"} className="space-y-10">
+      <div hidden={activeTab !== "advanced"} className="max-w-[640px] space-y-8">
       <section id="feedback" className="scroll-mt-16">
-        <h2 className="font-display text-xl flex items-center gap-2">
-          <MessageSquareHeart className="h-4 w-4 text-ink-soft" />
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>
           Something we should know?
         </h2>
-        <p className="text-sm text-ink-soft mt-1">
+        <p className="mt-1 text-[14.5px] leading-relaxed text-ink-soft">
           Not a support ticket — just a place to tell us what&apos;s working or what isn&apos;t. Entirely optional,
           only here if you want it.
         </p>
@@ -1904,19 +1909,19 @@ function SettingsPageInner() {
                 placeholder="Whatever's on your mind about FollowUp…"
                 rows={3}
                 maxLength={2000}
-                className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm resize-none"
+                className="w-full rounded-[12px] border border-line bg-paper px-3 py-2 text-sm resize-none"
               />
               <div className="mt-2 flex items-center justify-between">
                 <button
                   onClick={handleSendFeedback}
                   disabled={feedbackSending || !feedbackText.trim()}
-                  className="text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
+                  className="text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
                   style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                 >
                   {feedbackSending ? "Sending…" : "Send"}
                 </button>
                 {feedbackError && (
-                  <span className="text-xs" style={{ color: "var(--coral)" }}>
+                  <span className="text-[13px]" style={{ color: "var(--coral)" }}>
                     {feedbackError}
                   </span>
                 )}
@@ -1927,16 +1932,15 @@ function SettingsPageInner() {
       </section>
 
       <section id="security" className="scroll-mt-16">
-        <h2 className="font-display text-xl">Sign-ins and security</h2>
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Sign-ins and security</h2>
         <SignInsSection />
       </section>
 
       <section id="data" className="scroll-mt-16">
-        <h2 className="font-display text-xl flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-ink-soft" />
+        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>
           Your data
         </h2>
-        <p className="text-sm text-ink-soft mt-1">Export everything, or permanently delete this business.</p>
+        <p className="mt-1 text-[14.5px] leading-relaxed text-ink-soft">Export everything, or permanently delete this business.</p>
         <div className="mt-4">
           <DataPrivacySection />
         </div>
@@ -1979,20 +1983,20 @@ function IntegrationRow({
   );
 
   return (
-    <div className="rounded-lg border border-line px-4 py-3 flex items-center gap-4">
-      <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
+    <div className="rounded-[12px] border border-line px-4 py-3 flex items-center gap-4">
+      <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">{name}</p>
-        <p className="text-xs text-ink-soft mt-0.5">{description}</p>
+        <p className="text-[13px] text-ink-soft mt-0.5">{description}</p>
       </div>
       {!connected && href ? (
-        <a href={href} className="text-sm font-medium rounded-lg px-3 py-1.5 shrink-0" style={buttonStyle}>
+        <a href={href} className="text-sm font-medium rounded-full px-3 py-1.5 shrink-0" style={buttonStyle}>
           {label}
         </a>
       ) : (
-        <button onClick={onToggle} disabled={!onToggle} className="text-sm font-medium rounded-lg px-3 py-1.5 shrink-0" style={buttonStyle}>
+        <button onClick={onToggle} disabled={!onToggle} className="text-sm font-medium rounded-full px-3 py-1.5 shrink-0" style={buttonStyle}>
           {label}
         </button>
       )}

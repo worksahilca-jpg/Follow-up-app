@@ -147,14 +147,14 @@ export default function AddLeadForm({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium border border-line"
+              className="flex-1 rounded-full px-4 py-2.5 text-sm font-medium border border-line"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+              className="flex-1 rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-60"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
               {saving ? "Saving…" : "Add customer"}

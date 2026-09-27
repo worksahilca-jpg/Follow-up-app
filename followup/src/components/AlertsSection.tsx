@@ -198,7 +198,7 @@ export default function AlertsSection() {
 
   return (
     <section id="alerts" className="scroll-mt-16">
-      <h2 className="font-display text-xl">Alerts</h2>
+      <h2 className="text-sm text-ink-faint" style={{ fontWeight: 400, letterSpacing: 0 }}>Alerts</h2>
       <div className="mt-4 box p-5">
         {status.email.available && (
           <div className="flex items-center justify-between gap-4">
@@ -212,7 +212,7 @@ export default function AlertsSection() {
           </div>
         )}
         {emailError && (
-          <p className="mt-3 text-xs" style={{ color: "var(--coral)" }} role="alert">
+          <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }} role="alert">
             {emailError}
           </p>
         )}
@@ -226,7 +226,7 @@ export default function AlertsSection() {
                   type="button"
                   onClick={turnOffPush}
                   disabled={pushBusy}
-                  className="shrink-0 rounded-lg border px-3.5 py-2 text-sm font-medium disabled:opacity-60"
+                  className="shrink-0 rounded-full border px-3.5 py-2 text-sm font-medium disabled:opacity-60"
                   style={{ borderColor: "var(--line)" }}
                 >
                   Turn off
@@ -248,7 +248,7 @@ export default function AlertsSection() {
                   aria-busy={pushBusy}
                   // text-left: at 390px the label wraps, and centred it read
                   // as two stray lines beside the left-aligned hint below.
-                  className="rounded-lg border px-3.5 py-2 text-left text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="rounded-full border px-3.5 py-2 text-left text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ borderColor: "var(--line)" }}
                 >
                   Turn on FollowUp notifications on this device
@@ -257,12 +257,12 @@ export default function AlertsSection() {
                     allows notifications for a site opened from the Home
                     Screen. Not shown once they are there. */}
                 {!standalone && (
-                  <p className="mt-2 text-xs text-ink-soft">On iPhone, add FollowUp to your Home Screen first.</p>
+                  <p className="mt-2 text-[13px] text-ink-soft">On iPhone, add FollowUp to your Home Screen first.</p>
                 )}
               </>
             )}
             {pushError && (
-              <p className="mt-3 text-xs" style={{ color: "var(--coral)" }} role="alert">
+              <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }} role="alert">
                 {pushError}
               </p>
             )}

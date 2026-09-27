@@ -26,10 +26,10 @@ export default function CatchUp({ leadId }: { leadId: string }) {
 
   if (!text) return null;
   return (
-    <div className="rounded-lg p-4" style={{ backgroundColor: "var(--card-2)" }}>
+    <div className="rounded-[12px] p-4" style={{ backgroundColor: "var(--card-2)" }}>
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-sm font-semibold">Catching up</p>
-        <a href="#conversation" className="text-xs text-ink-soft underline underline-offset-2">
+        <a href="#conversation" className="text-[13px] text-ink-soft underline underline-offset-2">
           Show all {count} messages
         </a>
       </div>

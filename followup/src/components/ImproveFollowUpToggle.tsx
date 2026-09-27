@@ -66,12 +66,12 @@ export default function ImproveFollowUpToggle({ compact = false }: { compact?: b
       <div className="flex items-start justify-between gap-4 text-left">
         <div className="min-w-0">
           <p className="text-sm font-medium">Help improve FollowUp</p>
-          <p className="text-xs text-ink-soft mt-0.5">
+          <p className="text-[13px] text-ink-soft mt-0.5">
             Let us learn from the replies you edit. Names and contact details are removed first. Off unless you
             turn it on; change it any time in Settings.
           </p>
           {error && (
-            <p className="mt-1 text-xs" style={{ color: "var(--coral)" }}>
+            <p className="mt-1 text-[13px]" style={{ color: "var(--coral)" }}>
               {error}
             </p>
           )}
@@ -84,18 +84,18 @@ export default function ImproveFollowUpToggle({ compact = false }: { compact?: b
   return (
     <div className="box p-5">
       <div className="flex items-center gap-4">
-        <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
+        <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
           <PenLine className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Help improve FollowUp</p>
-          <p className="text-xs text-ink-soft mt-0.5">
+          <p className="text-[13px] text-ink-soft mt-0.5">
             When on, FollowUp keeps the draft it wrote next to what you actually sent, so we can see where its
             wording was wrong and fix it. Names, emails, phone numbers and addresses are removed before anyone
             reads it. Nothing is shared outside FollowUp, and no model is trained on it yet.
           </p>
           {error && (
-            <p className="mt-1 text-xs" style={{ color: "var(--coral)" }}>
+            <p className="mt-1 text-[13px]" style={{ color: "var(--coral)" }}>
               {error}
             </p>
           )}

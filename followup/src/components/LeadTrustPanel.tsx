@@ -110,13 +110,13 @@ export default function LeadTrustPanel({
         <div>
           <div className="flex items-center justify-between">
             <span
-              className="text-xs uppercase tracking-wide text-ink-soft"
+              className="text-[13px] uppercase tracking-wide text-ink-soft"
               title="How this person reached you — which is what makes replying legal and expected."
             >
               Why it&apos;s okay to message them
             </span>
             <span
-              className="rounded-full px-2 py-0.5 text-xs font-medium"
+              className="rounded-full px-2 py-0.5 text-[13px] font-medium"
               style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
             >
               {consent.label}
@@ -126,7 +126,7 @@ export default function LeadTrustPanel({
         </div>
 
         {optedOutAt ? (
-          <div className="flex items-start gap-2 rounded-lg p-2 text-xs" style={{ backgroundColor: "rgba(217,95,79,0.08)" }}>
+          <div className="flex items-start gap-2 rounded-[12px] p-2 text-[13px]" style={{ backgroundColor: "rgba(217,95,79,0.08)" }}>
             <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
             <span style={{ color: "var(--coral)" }}>
               Opted out of SMS/WhatsApp on {formatDate(optedOutAt)} (replied STOP) — texts and WhatsApp are blocked for
@@ -134,7 +134,7 @@ export default function LeadTrustPanel({
             </span>
           </div>
         ) : (
-          <div className="flex items-start gap-2 rounded-lg p-2 text-xs" style={{ backgroundColor: "rgba(122,157,127,0.08)" }}>
+          <div className="flex items-start gap-2 rounded-[12px] p-2 text-[13px]" style={{ backgroundColor: "rgba(122,157,127,0.08)" }}>
             <ShieldCheck className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--sage)" }} />
             <span style={{ color: "var(--sage)" }}>No opt-out on file — SMS and WhatsApp sends are allowed.</span>
           </div>
@@ -159,7 +159,7 @@ export default function LeadTrustPanel({
           here to prevent. */}
       <div className="mt-4 pt-3 border-t border-line">
         <h4
-          className="text-xs uppercase tracking-wide text-ink-soft flex items-center gap-1.5"
+          className="text-[13px] uppercase tracking-wide text-ink-soft flex items-center gap-1.5"
           title="FollowUp matches whatever language and tone the customer's most recent message is in — every reply, every time."
         >
           <Languages className="h-3.5 w-3.5" />
@@ -181,7 +181,7 @@ export default function LeadTrustPanel({
 
       <div className="mt-4 pt-3 border-t border-line">
         <h4
-          className="text-xs uppercase tracking-wide text-ink-soft flex items-center gap-1.5"
+          className="text-[13px] uppercase tracking-wide text-ink-soft flex items-center gap-1.5"
           title="Every message FollowUp sent or held for your approval for this customer."
         >
           <History className="h-3.5 w-3.5" />
@@ -198,9 +198,9 @@ export default function LeadTrustPanel({
                   <li key={entry.id} className="text-sm">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-medium">{copy.label}</span>
-                      <span className="text-xs text-ink-soft shrink-0">{formatDate(entry.createdAt)}</span>
+                      <span className="text-[13px] text-ink-soft shrink-0">{formatDate(entry.createdAt)}</span>
                     </div>
-                    {copy.detail && <p className="text-xs text-ink-soft mt-0.5">{copy.detail}</p>}
+                    {copy.detail && <p className="text-[13px] text-ink-soft mt-0.5">{copy.detail}</p>}
                   </li>
                 );
               })}
@@ -210,7 +210,7 @@ export default function LeadTrustPanel({
               // saying so — a lead with a longer history looked fully
               // audited when it wasn't. Nothing here is lost (AuditEvent
               // rows are permanent), only what's rendered is capped.
-              <p className="text-xs text-ink-soft mt-2.5 italic">
+              <p className="text-[13px] text-ink-soft mt-2.5 italic">
                 Showing the 25 most recent of {totalCount} actions.
               </p>
             )}

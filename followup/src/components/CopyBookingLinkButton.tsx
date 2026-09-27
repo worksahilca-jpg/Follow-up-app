@@ -23,7 +23,7 @@ export default function CopyBookingLinkButton({ leadId }: { leadId: string }) {
   return (
     <button
       onClick={copy}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium"
+      className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-medium"
     >
       <CalendarClock className="h-3.5 w-3.5" />
       {copied ? "Copied!" : "Copy booking link"}

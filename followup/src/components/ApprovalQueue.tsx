@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Check, Globe, Mail, MessageCircle, Phone } from "lucide-react";
+import { Check } from "lucide-react";
+import { ChannelIcon } from "@/components/app/ChannelIcon";
 import { WARM_CARD } from "@/components/app/ReplyCard";
 import { groupApprovalsBySource, isSafeToSendInBulk, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
 import { Eyebrow, Initials } from "@/components/app/canvasBits";
@@ -103,24 +104,6 @@ function usePhone(): boolean {
     () => window.matchMedia(PHONE_QUERY).matches,
     () => false
   );
-}
-
-/** The small channel glyph after a name, as the canvas rows draw it. */
-function ChannelGlyph({ channel }: { channel: string | null | undefined }) {
-  const cls = "h-3.5 w-3.5 shrink-0 text-ink-faint";
-  if (channel === "email") return <Mail className={cls} strokeWidth={1.8} aria-label="Email" />;
-  if (channel === "call" || channel === "text") return <Phone className={cls} strokeWidth={1.8} aria-label={channel === "call" ? "Phone" : "Text"} />;
-  if (channel === "web") return <Globe className={cls} strokeWidth={1.8} aria-label="Website form" />;
-  if (channel === "instagram")
-    return (
-      <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-label="Instagram" role="img">
-        <rect x="3" y="3" width="18" height="18" rx="5" />
-        <circle cx="12" cy="12" r="4" />
-      </svg>
-    );
-  if (channel === "whatsapp" || channel === "messenger")
-    return <MessageCircle className={cls} strokeWidth={1.8} aria-label={channel === "whatsapp" ? "WhatsApp" : "Messenger"} />;
-  return null;
 }
 
 function ApprovalCard({
@@ -315,7 +298,7 @@ function ApprovalCard({
             <Link href={`/leads/${item.leadId}`} className="hover:underline">
               {item.leadName}
             </Link>
-            <ChannelGlyph channel={item.leadLastMessageChannel} />
+            <ChannelIcon channel={item.leadLastMessageChannel} />
           </div>
           {!open && <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft line-clamp-2">{why}</p>}
           {open && (

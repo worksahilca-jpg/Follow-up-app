@@ -94,7 +94,7 @@ export default function NotificationBell({ align = "left" }: { align?: "left" | 
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Notifications"
-        className="relative h-8 w-8 rounded-lg flex items-center justify-center text-ink-soft hover:bg-paper transition-colors"
+        className="relative h-8 w-8 rounded-[10px] flex items-center justify-center text-ink-soft hover:bg-paper transition-colors"
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
@@ -121,7 +121,7 @@ export default function NotificationBell({ align = "left" }: { align?: "left" | 
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-line">
             <span className="text-sm font-medium">Notifications</span>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs font-medium" style={{ color: "var(--rust)" }}>
+              <button onClick={markAllRead} className="text-[13px] font-medium" style={{ color: "var(--rust)" }}>
                 Mark all read
               </button>
             )}
@@ -137,7 +137,7 @@ export default function NotificationBell({ align = "left" }: { align?: "left" | 
                   style={{ backgroundColor: n.read ? "transparent" : "var(--rust-soft)" }}
                 >
                   <p className="text-ink leading-snug">{n.message}</p>
-                  <p className="text-xs text-ink-soft mt-1">{timeAgo(n.createdAt)}</p>
+                  <p className="text-[13px] text-ink-soft mt-1">{timeAgo(n.createdAt)}</p>
                 </div>
               );
               return n.leadId ? (

@@ -13,7 +13,7 @@ import LeadTrustPanel from "@/components/LeadTrustPanel";
 import AutomationStatusBadge from "@/components/AutomationStatusBadge";
 import WeTalkedButton from "@/components/WeTalkedButton";
 import CollapsibleSection from "@/components/CollapsibleSection";
-import { Mail, Phone } from "lucide-react";
+import { ChevronLeft, Mail, Phone } from "lucide-react";
 import { isSocialLeadId } from "@/lib/instagramId";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import { sendLockedForSession } from "@/lib/sendingControl";
@@ -66,10 +66,24 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
       <div className="min-w-0">
-        <Link href="/inbox" className="text-[13px] text-ink-faint hover:text-ink-soft">
+        {/* Phone: the ThreadPhone header, back, name, where they wrote. */}
+        <div className="-mx-5 -mt-3 flex items-center gap-1 border-b border-line px-2 pb-2.5 sm:-mx-8 lg:hidden">
+          <Link href="/inbox" aria-label="Back to Inbox" className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-ink">
+            <ChevronLeft className="h-5 w-5" />
+          </Link>
+          <div className="min-w-0">
+            {/* Inline weight: the global h1 rule is thin and unlayered. */}
+            <h1 className="truncate text-[17px] leading-tight" style={{ fontWeight: 600, letterSpacing: "-0.01em" }}>
+              {lead.name}
+            </h1>
+            <p className="truncate text-[13px] text-ink-faint">{channel}</p>
+          </div>
+        </div>
+
+        <Link href="/inbox" className="hidden text-[13px] text-ink-faint hover:text-ink-soft lg:inline">
           ← Inbox
         </Link>
-        <div className="mt-3 flex items-center gap-3.5">
+        <div className="mt-3 hidden items-center gap-3.5 lg:flex">
           <Initials name={lead.name} size={44} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -84,7 +98,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        <div className="mt-7">
+        <div className="mt-5 lg:mt-7">
           <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} />
         </div>
 

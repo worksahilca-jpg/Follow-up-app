@@ -8071,3 +8071,59 @@ th app"*.
   - The Pipeline stage labels became "New" and "Proposal sent".
   - "Held for you" now appears in What FollowUp did (from the same `ai.hold` rows as Approvals).
   - Coming up shows days only, no clock time, because the engine never promises one.
+
+### 2026-09-27: Side by side: sign-in, onboarding, Customers, the conversation page
+Each built screen was rendered next to its board, as A-067 requires.
+- **Sign-in** matches SignIn. The one difference is on purpose: "Prices and dates always come to you".
+- **Onboarding** was still the old centred style. It now follows OnbConnect, OnbChoose and OnbOldCustomers:
+  - left-aligned 30px titles;
+  - "Step N of 4" with four dashes;
+  - every source in one card;
+  - radio cards with a RECOMMENDED badge and a warm example reply;
+  - the black button at the foot.
+- **Onboarding copy differences, on purpose:**
+  - OnbConnect's "Nothing is sent yet" is left out. The instant acknowledgement isn't held back during onboarding,
+    so it can't be promised.
+  - The "Find who needs a reply" button sits on the choose step, because the find runs after the choice.
+  - Instagram, Facebook and WhatsApp rows show only where they're configured.
+- **Customers** was missing three things from the App board:
+  - **The A-029 state dots.** They are now CSS tokens (`--state-*`) and a `StatePill`.
+  - **Channel icons.** `ChannelIcon` shows one even for a customer with no messages, using where they came from.
+  - **Opening beside the list (A-025).** `/leads?p=<id>` docks `PersonPanel` on the right edge, in the Inbox's
+    full-height frame. The panel has:
+    - the details (State, Why it's here, Waiting, Language);
+    - the conversation as the board's timeline, with the last six messages and the held reply shown as a coral
+      "Held because…" dot;
+    - the reply card only when one waits for the owner;
+    - "Open full page".
+  - The list keeps all its columns while a customer is open. On the phone the panel replaces the list, with
+    "← Customers".
+- **One rule for resting states.** `restingState` in canvasBits gives Won, Lost, Answered or Up to date, so the row and
+  the panel never disagree. Before this, the panel said "Answered" where the row said "Up to date".
+- **The conversation page on the phone** now has ThreadPhone's header: a back chevron, the name at 17px/600 and the
+  channel. The big desktop header is kept for desktop.
+- **Weak, named:**
+  - The board's "Asked about" row isn't built, because nothing records it reliably.
+  - The list is capped by the app's 1152px frame, so "Last message" is narrower than drawn.
+  - With nothing ready to send, the old-customers step is a title and a button over empty space.
+
+### 2026-09-27: The rest of the app put in the new look
+**Founder:** *"keep going until we changed the whole app i want the new design"*.
+Nothing new was designed here. The screens that were still in the old style got the approved system: tokens,
+the Settings overview's card and label, the underline tabs, pill buttons, and no text under 13px.
+- **Settings › More settings** (Connect, Channels, Team, Billing, Advanced):
+  - the section headings are now the overview's quiet grey labels;
+  - one 640px column;
+  - underline tabs in place of black pills;
+  - pill buttons;
+  - 12px text raised to 13px;
+  - lead routing as hairline rows, not boxes inside a box (S-09).
+- **The person page's side column and the dialogs:** the same text and shape pass. The "Nothing is connected to send
+  with" box was a pink-tinted alarm. It's now a white card with ink words and one small coral dot, which is how the
+  app draws state (A-029).
+- **The 404 and error pages** left the old dark-landing type (bold headline, italic serif). They now use the app's
+  thin title, a quiet line and one black button. The error page lost its alarm icon.
+- **Weak, named:**
+  - More settings is still long and dense. It's restyled, not redesigned. A drawn version (fewer sections, plainer
+    words) would do more, and is Sahil's call.
+  - The person page's side column still stacks a lot: consent, automation and plan. It needs a drawing too.

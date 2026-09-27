@@ -8071,3 +8071,38 @@ th app"*.
   - The Pipeline stage labels became "New" and "Proposal sent".
   - "Held for you" now appears in What FollowUp did (from the same `ai.hold` rows as Approvals).
   - Coming up shows days only, no clock time, because the engine never promises one.
+
+### 2026-09-27: Side by side: sign-in, onboarding, Customers, the conversation page
+Each built screen was rendered next to its board, as A-067 requires.
+- **Sign-in** matches SignIn. The one difference is on purpose: "Prices and dates always come to you".
+- **Onboarding** was still the old centred style. It now follows OnbConnect, OnbChoose and OnbOldCustomers:
+  - left-aligned 30px titles;
+  - "Step N of 4" with four dashes;
+  - every source in one card;
+  - radio cards with a RECOMMENDED badge and a warm example reply;
+  - the black button at the foot.
+- **Onboarding copy differences, on purpose:**
+  - OnbConnect's "Nothing is sent yet" is left out. The instant acknowledgement isn't held back during onboarding,
+    so it can't be promised.
+  - The "Find who needs a reply" button sits on the choose step, because the find runs after the choice.
+  - Instagram, Facebook and WhatsApp rows show only where they're configured.
+- **Customers** was missing three things from the App board:
+  - **The A-029 state dots.** They are now CSS tokens (`--state-*`) and a `StatePill`.
+  - **Channel icons.** `ChannelIcon` shows one even for a customer with no messages, using where they came from.
+  - **Opening beside the list (A-025).** `/leads?p=<id>` docks `PersonPanel` on the right edge, in the Inbox's
+    full-height frame. The panel has:
+    - the details (State, Why it's here, Waiting, Language);
+    - the conversation as the board's timeline, with the last six messages and the held reply shown as a coral
+      "Held because…" dot;
+    - the reply card only when one waits for the owner;
+    - "Open full page".
+  - The list keeps all its columns while a customer is open. On the phone the panel replaces the list, with
+    "← Customers".
+- **One rule for resting states.** `restingState` in canvasBits gives Won, Lost, Answered or Up to date, so the row and
+  the panel never disagree. Before this, the panel said "Answered" where the row said "Up to date".
+- **The conversation page on the phone** now has ThreadPhone's header: a back chevron, the name at 17px/600 and the
+  channel. The big desktop header is kept for desktop.
+- **Weak, named:**
+  - The board's "Asked about" row isn't built, because nothing records it reliably.
+  - The list is capped by the app's 1152px frame, so "Last message" is narrower than drawn.
+  - With nothing ready to send, the old-customers step is a title and a button over empty space.

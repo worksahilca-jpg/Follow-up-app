@@ -16,8 +16,8 @@ import { motion } from "framer-motion";
 import { MOTION } from "@/lib/motion";
 import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, MoreHorizontal } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
-import { type ItemTone } from "@/components/ItemBox";
-import { Initials, shortAge } from "@/components/app/canvasBits";
+import { Initials, restingState, shortAge, StatePill, type StateKey } from "@/components/app/canvasBits";
+import { ChannelIcon, channelFromSource } from "@/components/app/ChannelIcon";
 
 const CHANNEL_NAMES: Record<string, string> = {
   email: "Email",
@@ -38,18 +38,7 @@ const CHANNEL_NAMES: Record<string, string> = {
  * row explaining itself, and on a phone it was the only thing that survived at
  * all. Now the colour and "Silent 9 days" always travel together.
  */
-function urgencyTone(lead: Lead): { tone: ItemTone; label: string } {
-  if (lead.stage === "won") return { tone: "sage", label: "Won" };
-  if (lead.stage === "lost") return { tone: "slate", label: "Lost" };
-
-  const d = daysSince(lead.lastContacted);
-  if (d === 0) return { tone: "sage", label: "Touched today" };
-  if (d < 3) return { tone: "sage", label: `Silent ${d} ${d === 1 ? "day" : "days"}` };
-  if (d < 7) return { tone: "gold", label: `Silent ${d} days` };
-  return { tone: "coral", label: `Silent ${d} days` };
-}
-
-
+/** A row's state pill when it isn't in one of the three places (A-029's greys). */
 const filters = [
   { id: "all", label: "All" },
   { id: "mine", label: "Mine" },
@@ -139,8 +128,11 @@ const PLACE_LABEL: Record<Exclude<Place, "all">, string> = { needs: "Needs you",
 export default function LeadsPageClient({
   leads,
   places,
+  openId = null,
 }: {
   leads: Lead[];
+  /** The customer open beside the list (?p=), if any (A-025). */
+  openId?: string | null;
   /** The canvas's places, worked out on the server from the same sources Today uses. */
   places: { needs: string[]; quiet: string[]; waiting: string[] };
 }) {
@@ -455,7 +447,14 @@ export default function LeadsPageClient({
             said, how long, and the state in words. */}
         {filtered.length > 0 && (
           <div className="overflow-hidden rounded-[18px] border border-line bg-card">
-            <div className="hidden grid-cols-[44px_200px_110px_minmax(0,1fr)_90px_150px] gap-4 px-5 py-3 text-[12.5px] font-medium text-ink-faint md:grid">
+            {/* Open beside a customer, the columns tighten but stay, as the
+                App board keeps them. */}
+            <div
+              className={
+                "hidden gap-4 px-5 py-3 text-[12.5px] font-medium text-ink-faint md:grid " +
+                (openId ? "md:grid-cols-[32px_140px_104px_minmax(0,1fr)_44px_118px] md:gap-3 md:px-4" : "md:grid-cols-[44px_200px_130px_minmax(0,1fr)_90px_150px]")
+              }
+            >
               <span />
               <span>Name</span>
               <span>Channel</span>
@@ -466,14 +465,22 @@ export default function LeadsPageClient({
             {filtered.map((lead) => {
               const last = lead.conversation[lead.conversation.length - 1];
               const where = placeOf.get(lead.id);
-              const state = where
-                ? { tone: (where === "quiet" ? "coral" : where === "needs" ? "ink" : "slate") as ItemTone, label: PLACE_LABEL[where] }
-                : urgencyTone(lead);
+              const pill = where ? { state: where as StateKey, label: PLACE_LABEL[where] } : restingState(lead);
+              const selected = lead.id === openId;
               return (
                 <Link
                   key={lead.id}
-                  href={`/leads/${lead.id}`}
-                  className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 border-t border-line-2 px-4 py-3.5 first:border-t-0 hover:bg-paper md:grid-cols-[44px_200px_110px_minmax(0,1fr)_90px_150px] md:gap-4 md:px-5 md:first:border-t md:first:border-line-2"
+                  // Opens beside the list (A-025); the full page is one click from there.
+                  href={`/leads?p=${lead.id}`}
+                  scroll={false}
+                  aria-current={selected ? "true" : undefined}
+                  className={
+                    "grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 border-t border-line-2 px-4 py-3.5 first:border-t-0 hover:bg-paper md:gap-4 md:px-5 md:first:border-t md:first:border-line-2 " +
+                    (openId
+                      ? "md:grid-cols-[32px_140px_104px_minmax(0,1fr)_44px_118px] md:gap-3 md:px-4"
+                      : "md:grid-cols-[44px_200px_130px_minmax(0,1fr)_90px_150px]")
+                  }
+                  style={selected ? { background: "var(--card-2)", boxShadow: "inset 2px 0 0 var(--ink)" } : undefined}
                 >
                   <Initials name={lead.name} size={32} />
                   <span className="min-w-0">
@@ -482,13 +489,16 @@ export default function LeadsPageClient({
                       {last ? (last.direction === "outbound" ? `You: ${last.body}` : last.body) : lead.company || lead.source}
                     </span>
                   </span>
-                  <span className="hidden truncate text-[13.5px] text-ink-soft md:block">{CHANNEL_NAMES[last?.channel ?? ""] ?? lead.source}</span>
+                  <span className="hidden min-w-0 items-center gap-2 text-[13.5px] text-ink-soft md:flex">
+                    <ChannelIcon channel={last?.channel ?? channelFromSource(lead.source)} />
+                    <span className="truncate">{CHANNEL_NAMES[last?.channel ?? ""] ?? lead.source}</span>
+                  </span>
                   <span className="hidden truncate text-[13.5px] text-ink-soft md:block">
                     {last ? (last.direction === "outbound" ? `You: ${last.body}` : last.body) : "—"}
                   </span>
                   <span className="hidden text-[13px] text-ink-faint tabular-nums md:block">{last ? shortAge(last.date) : "—"}</span>
-                  <span className="text-right text-[13px] md:text-left" style={{ color: state ? `var(--${state.tone})` : "var(--ink-soft)" }}>
-                    {state?.label ?? "—"}
+                  <span className="justify-self-end md:justify-self-start">
+                    <StatePill state={pill.state} label={pill.label} />
                   </span>
                 </Link>
               );

@@ -48,3 +48,37 @@ export function GroupLabel({ children }: { children: React.ReactNode }) {
 export function Eyebrow({ children }: { children: React.ReactNode }) {
   return <span className="font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-ink-faint">{children}</span>;
 }
+
+export type StateKey = "needs" | "quiet" | "waiting" | "sent" | "checked" | "done";
+
+/**
+ * Where a customer rests when they're in none of Today's three places:
+ * won or lost, answered (we wrote last), or up to date. One rule, so the
+ * Customers row and the panel beside it never disagree.
+ */
+export function restingState(lead: {
+  stage: string;
+  conversation: { direction: string }[];
+}): { state: StateKey; label: string } {
+  if (lead.stage === "won") return { state: "done", label: "Won" };
+  if (lead.stage === "lost") return { state: "done", label: "Lost" };
+  const last = lead.conversation[lead.conversation.length - 1];
+  return last?.direction === "outbound" ? { state: "checked", label: "Answered" } : { state: "done", label: "Up to date" };
+}
+
+/**
+ * The state pill (A-029): white, a hairline border, one coloured dot, and
+ * the word. Needs you is the one state set in ink and medium weight.
+ */
+export function StatePill({ state, label }: { state: StateKey; label: string }) {
+  const strong = state === "needs";
+  return (
+    <span
+      className="inline-flex h-[26px] items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-card px-2.5 text-[12.5px]"
+      style={{ color: strong ? "var(--ink)" : "var(--ink-soft)", fontWeight: strong ? 600 : 400 }}
+    >
+      <span aria-hidden className="h-[7px] w-[7px] rounded-full" style={{ backgroundColor: `var(--state-${state})` }} />
+      {label}
+    </span>
+  );
+}

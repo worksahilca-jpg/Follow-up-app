@@ -514,3 +514,28 @@ describe it. Stacking the desktop's text column above the picture pushes the pro
 **Open:** "bold, full letters" could mean the thin headline, or the wall of text. Both versions are drawn
 (PhoneHeroA thin, PhoneHeroB bold) for the founder to pick.
 **Do not propose again:** a phone hero where the picture starts below the first screen.
+
+## R-022 — The small-f logos (F1–F5): a letter with a clever detail ^R-022
+
+**Rejected:** 2026-09-27, founder, on LogoF (canvas v69): *"it is not conveying the message bro"*.
+
+**What was rejected:** all five lowercase-f marks:
+- F1, dog-eared f;
+- F2, folded ribbon;
+- F3, f with a pause (my pick);
+- F4, f carrying a message;
+- F5, f and a dot.
+
+The founder asked for the f himself. The rejection is of what these f's say, not of asking.
+
+**Stated reason:** they don't convey the message.
+
+**Inferred principle (marked inferred):**
+- The mark has to say what FollowUp does at a glance.
+- A letter plus a small hidden detail (a gap, a fold, a dot) needs explaining, so it fails.
+- The detail was carrying the meaning, and at a glance nobody sees the detail.
+
+**Answered the same day:** *"Every message gets a reply"*. That's what the logo has to say in one second. See
+`[[design-decisions]]` 2026-09-27, "logo, every message gets a reply".
+
+**Do not propose again:** a letter (f or F) whose meaning lives in a small detail.

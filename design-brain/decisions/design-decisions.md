@@ -7707,3 +7707,24 @@ app icon leads on white. The dark version is shown only to compare. Each f carri
 plain f doesn't.
 
 **Not chosen yet.** The founder's H (A-061) still stands as the approved direction until he picks otherwise.
+
+### 2026-09-27: logo, every message gets a reply (LogoReply)
+**Founder:** after R-022 (the small f's "not conveying the message"), asked what the logo should say in one second.
+Chose *"Every message gets a reply"*. This is the brief for the mark from now on. It supports A-061 (H, two
+messages).
+
+**LogoReply (canvas v70).** Five marks that tell that story with no letter and no hidden detail:
+- **R1. Message and reply.** Their message drawn open, the reply drawn solid: they wrote, and the answer came back.
+  **Recommended.** It reads in one look.
+- **R2. Two-way message.** One bubble with a tail at each end. The second tail can read as a fin.
+- **R3. Answered.** A bubble with a tick. The clearest and the most common.
+- **R4. Reply on the corner.** Close to many chat-app icons.
+- **H2.** The refined H, to compare.
+
+R1 is also shown in use: header, tab, phone home screen, email, dark footer.
+
+**Weak, named:**
+- R1 is close to stock "chat" icons in common icon sets. Before it can be owned it needs a shape of its own, for
+  example the reply bubble's proportions or corners.
+- An open outline next to a solid shape departs from the old mark's "never outline it" rule. That rule was written for
+  the leaves. A new mark sets its own.

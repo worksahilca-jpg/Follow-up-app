@@ -23,6 +23,7 @@ vi.mock("@/lib/db", () => ({
     message: { findFirst: vi.fn() },
     automation: { findFirst: vi.fn() },
     business: { findUnique: vi.fn() },
+    auditEvent: { findFirst: vi.fn() },
   },
 }));
 vi.mock("@/lib/integrations/openai", () => ({
@@ -712,6 +713,16 @@ describe("holdAllForApproval stops the instant acknowledgement too", () => {
     // Ready to send" shipped to every beta tester on 2026-09-20.
     expect(meta.reason).toBe(HOLD_ALL_FIRST_REPLY_REASON);
     expect(renderHeldBecause(meta.reason)).toBe(`Held because ${HOLD_ALL_FIRST_REPLY_REASON}.`);
+  });
+
+  it("adds no second hold and no second alert when the customer is already waiting", async () => {
+    // DMs at 10:00, 10:10 and 10:20 used to make three holds and three
+    // bell notices (audit 2026-09-27, founder: yes).
+    p.auditEvent.findFirst.mockResolvedValueOnce({ action: "ai.hold" });
+    const result = await acknowledgeNewLead("lead1", { channel: "email", inboundText: "Also, do you do Saturdays?" });
+    expect(result.reason).toBe("already held for approval");
+    expect(result.sent).toBe(false);
+    expect(audit).not.toHaveBeenCalled();
   });
 
   it("records nothing when the account is not holding — a sent reply is not a held one", async () => {

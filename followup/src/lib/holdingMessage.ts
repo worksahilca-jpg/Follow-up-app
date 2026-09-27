@@ -188,8 +188,11 @@ export async function runHoldingMessagesForBusiness(businessId: string, now: Dat
       result.sent++;
     } else {
       // Released unless the send was parked for a retry (it is still going
-      // out), so a later tick can try again.
-      if (!outcome.queued) {
+      // out) or can never succeed (no channel, opted out, refused): a later
+      // tick tries a temporary failure again, but retrying a final one every
+      // five minutes for 20 hours only spends a paid translation call each
+      // time (founder, 2026-09-27).
+      if (!outcome.queued && !outcome.final) {
         await prisma.lead
           .updateMany({ where: { id: lead.id, holdingSentFor: newest.sentAt }, data: { holdingSentFor: lead.holdingSentFor } })
           .catch((e) => console.error(`Failed to release the holding claim for lead ${lead.id}:`, e));
@@ -212,12 +215,12 @@ async function sendHoldingMessage(
   },
   topic: HoldingTopic,
   customerMessage: string
-): Promise<{ sent: boolean; queued?: boolean; reason: string }> {
+): Promise<{ sent: boolean; queued?: boolean; final?: boolean; reason: string }> {
   const channel = await detectAutomatedReplyChannel(lead);
-  if (!channel) return { sent: false, reason: "no channel to reply on" };
+  if (!channel) return { sent: false, final: true, reason: "no channel to reply on" };
 
   const businessId = (await prisma.lead.findUnique({ where: { id: lead.id }, select: { businessId: true } }))?.businessId;
-  if (!businessId) return { sent: false, reason: "lead not found" };
+  if (!businessId) return { sent: false, final: true, reason: "lead not found" };
 
   const leadLanguage = leadLanguageOf(lead);
   const line = await localizeFixedText(HOLDING_LINES[topic], customerMessage, leadLanguage);
@@ -237,7 +240,12 @@ async function sendHoldingMessage(
     extraAuditMeta: { topic },
   });
   if (result.success) return { sent: true, reason: "sent" };
-  return { sent: false, queued: Boolean(result.queuedRetryAt), reason: result.message ?? "send failed" };
+  return {
+    sent: false,
+    queued: Boolean(result.queuedRetryAt),
+    final: result.failure === "refused" || result.failure === "permanent",
+    reason: result.message ?? "send failed",
+  };
 }
 
 /**

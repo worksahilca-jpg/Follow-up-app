@@ -220,6 +220,19 @@ describe("a failed send", () => {
     expect(p.lead.updateMany.mock.calls[1][0].data).toEqual({ holdingSentFor: null });
   });
 
+  it("keeps the claim when the send can never succeed, so it isn't retried", async () => {
+    // Opted out, no inbox, a refused channel: each retry would only spend
+    // another paid translation call (founder, 2026-09-27).
+    send.mockResolvedValue({ success: false, message: "They opted out.", failure: "refused" });
+    await runHoldingMessagesForBusiness("biz1", NOW);
+    expect(p.lead.updateMany).toHaveBeenCalledTimes(1);
+    send.mockClear();
+    p.lead.updateMany.mockClear();
+    send.mockResolvedValue({ success: false, message: "Invalid number", failure: "permanent" });
+    await runHoldingMessagesForBusiness("biz1", NOW);
+    expect(p.lead.updateMany).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps the claim when the send was parked for a retry", async () => {
     send.mockResolvedValue({ success: false, message: "blip", queuedRetryAt: new Date() });
     await runHoldingMessagesForBusiness("biz1", NOW);

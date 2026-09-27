@@ -526,6 +526,14 @@ export async function acknowledgeNewLead(
      * row for every reason except "error", so this does not re-enter the
      * queue on the next tick.
      */
+    // Already waiting for the owner: a second DM from the same person must
+    // not add another hold and another "a reply is waiting" alert (founder,
+    // 2026-09-27; the audit found DMs at 10:00, 10:10 and 10:20 made three).
+    // The queue is "latest AuditEvent is ai.hold", so the same test says
+    // whether this person is already in it.
+    const heldAlready = ackBusiness?.holdAllForApproval ? await alreadyHeld(lead.businessId, lead.id) : false;
+    if (heldAlready) return { sent: false, reason: "already held for approval" };
+
     if (ackBusiness?.holdAllForApproval) {
       // Awaited, and tried twice: this row is the queue entry, not a note
       // about it (daily-path sweep 2026-09-25 #5).
@@ -961,4 +969,23 @@ export async function runDueInstantAcks(
   }
 
   return result;
+}
+
+/**
+ * Whether this customer is already waiting in the owner's queue: the queue
+ * (pendingApprovals.ts) is every lead whose most recent AuditEvent is
+ * "ai.hold". A lookup failure answers "no", which only means one extra
+ * notice, never a missed one.
+ */
+async function alreadyHeld(businessId: string, leadId: string): Promise<boolean> {
+  try {
+    const latest = await prisma.auditEvent.findFirst({
+      where: { businessId, targetType: "lead", targetId: leadId },
+      orderBy: { createdAt: "desc" },
+      select: { action: true },
+    });
+    return latest?.action === "ai.hold";
+  } catch {
+    return false;
+  }
 }

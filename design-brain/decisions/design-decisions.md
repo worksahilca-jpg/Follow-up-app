@@ -8000,3 +8000,23 @@ let keep building those too"*, *"i want the whole app to be changed as we design
   - Desktop Inbox is a list, not the canvas's two-pane list + thread.
   - The Customers filter chips are the existing ones, not the canvas's four.
   - The sidebar's "Search customers" opens Customers with the search box focused. It isn't search-in-place.
+
+### 2026-09-27: the three gaps closed, and the motion put back
+**Founder:** *"yes build all three"*, *"let me know when our app is ready with new strategy and design and animations
+that we decided and motions"*.
+- **Desktop Inbox is two panes (Inbox, InboxAI boards):** the list on the left (360px), the open conversation on the
+  right, with the reply card pinned under the thread. `/inbox?c=<id>` opens one. With nothing chosen, the first
+  "Needs you" opens. On the phone it stays one thing at a time: the list, or the conversation with "← Inbox".
+  "Open person" goes to the full customer page.
+- **Customers has the canvas's four places:** All · Needs you · Going quiet · Waiting, as underlined tabs with counts.
+  They come from the same sources as Today (held replies, at-risk leads, waiting-on). The old filter chips are
+  behind a "Filter" button, not deleted. The list is ordered Needs you → Going quiet → Waiting, then by score.
+- **The sidebar searches in place:** type a name, email or phone and up to eight people drop down under the box.
+  Arrow keys and Enter work. The server reads the business from the session only.
+- **Motion (A-048):** a Today row opens in place (220ms in, 120ms out). A reply card fades into what happened once
+  it's sent or skipped. Editing swaps in with the same timing. Nothing else moves.
+- **Phone fix found in review:** the reply card in a phone conversation follows the thread instead of sticking to
+  the bottom, where the tab bar covered its Send button. The "Needs you" pill hides on the phone so the name fits.
+- **Weak, named:** Inbox rows don't show the channel. The "Earlier" list stops at 40. Pages the canvas never drew
+  (Pipeline, Follow-up plans, Numbers, Activity, Waiting, Coming up) use the new colours and type but keep their old
+  layouts.

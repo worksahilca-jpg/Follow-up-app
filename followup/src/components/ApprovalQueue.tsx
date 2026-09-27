@@ -303,8 +303,10 @@ function ApprovalCard({
           </>
         )}
       </div>
+      <AnimatePresence initial={false}>
       {open && (
-      <div className="px-[18px] pb-4 sm:pl-[60px]">
+      // Opens from the row it came from (A-048: open in place).
+      <motion.div key="open" {...OPEN_IN_PLACE} className="px-[18px] pb-4 sm:pl-[60px]">
       {item.wait && <p className="text-[12.5px] text-ink-faint sm:hidden">{item.wait}</p>}
       {item.reason && (
         <p className="mt-1 text-xs text-ink-soft">
@@ -493,8 +495,9 @@ function ApprovalCard({
       <button type="button" onClick={() => { setOpen(false); setLaterOpen(false); }} className="mt-3 text-[13px] text-ink-faint hover:text-ink-soft">
         Close
       </button>
-      </div>
+      </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }

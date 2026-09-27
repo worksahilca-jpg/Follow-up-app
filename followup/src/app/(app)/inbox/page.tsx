@@ -4,6 +4,9 @@ import { getSessionContext } from "@/lib/session";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { Initials, shortAge, GroupLabel } from "@/components/app/canvasBits";
 import type { Lead } from "@/lib/types";
+import { prisma } from "@/lib/db";
+import { sendLockedForSession } from "@/lib/sendingControl";
+import ConversationPane from "@/components/app/ConversationPane";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +16,15 @@ export const dynamic = "force-dynamic";
  * dot), then everyone else, newest first ("Earlier"). A row opens the
  * conversation, where the reply is.
  */
-export default async function InboxPage() {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
+  const { c } = await searchParams;
   const ctx = await getSessionContext();
-  const [leads, approvals] = await Promise.all([getLeads(), ctx ? getPendingApprovals(ctx.businessId) : Promise.resolve([])]);
+  const [leads, approvals, business, sendLocked] = await Promise.all([
+    getLeads(),
+    ctx ? getPendingApprovals(ctx.businessId) : Promise.resolve([]),
+    ctx ? prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } }) : Promise.resolve(null),
+    sendLockedForSession(),
+  ]);
   const now = new Date();
   const byId = new Map(leads.map((l) => [l.id, l]));
 
@@ -30,8 +39,18 @@ export default async function InboxPage() {
     .sort((a, b) => new Date(b.last.date).getTime() - new Date(a.last.date).getTime())
     .slice(0, 40);
 
+  // Desktop shows the list and one conversation side by side (canvas Inbox
+  // board). ?c= picks the conversation; without it, the first one that
+  // needs you (or the newest). On a phone ?c= shows that conversation on
+  // its own, and no ?c= shows the list.
+  const openId = c && byId.has(c) ? c : (needs[0]?.lead.id ?? earlier[0]?.lead.id ?? null);
+  const openLead = openId ? byId.get(openId)! : null;
+  const openApproval = openId ? (approvals.find((a) => a.leadId === openId) ?? null) : null;
+  const timeZone = business?.timezone ?? "America/New_York";
+
   return (
-    <div className="max-w-[720px]">
+    <div className="lg:-mx-14 lg:-mt-9 lg:-mb-12 lg:grid lg:h-[calc(100vh)] lg:grid-cols-[360px_minmax(0,1fr)]">
+    <div className={(c ? "hidden lg:block " : "") + "lg:overflow-y-auto lg:border-r lg:border-line lg:px-5 lg:pt-8"}>
       <h1 className="text-[32px] leading-[1.1]">Inbox</h1>
 
       {needs.length === 0 && earlier.length === 0 && (
@@ -45,7 +64,8 @@ export default async function InboxPage() {
             {needs.map(({ lead, approval }, i) => (
               <Row
                 key={lead.id}
-                href={`/leads/${lead.id}`}
+                href={`/inbox?c=${lead.id}`}
+                active={lead.id === openId}
                 name={lead.name}
                 age={shortAge(approval.heldAt, now)}
                 preview={approval.leadLastMessage ?? approval.reason}
@@ -64,7 +84,8 @@ export default async function InboxPage() {
             {earlier.map(({ lead, last }, i) => (
               <Row
                 key={lead.id}
-                href={`/leads/${lead.id}`}
+                href={`/inbox?c=${lead.id}`}
+                active={lead.id === openId}
                 name={lead.name}
                 age={shortAge(last.date, now)}
                 preview={last.direction === "outbound" ? `${last.trigger ? "FollowUp" : "You"}: ${last.body}` : last.body}
@@ -75,11 +96,23 @@ export default async function InboxPage() {
         </div>
       )}
     </div>
+    {openLead && (
+      <div className={(c ? "" : "hidden lg:block ") + "lg:overflow-y-auto"}>
+        {c && (
+          <Link href="/inbox" className="mb-3 inline-block text-[13px] text-ink-faint lg:hidden">
+            ← Inbox
+          </Link>
+        )}
+        <ConversationPane lead={openLead} approval={openApproval} timeZone={timeZone} now={now} sendLocked={sendLocked} />
+      </div>
+    )}
+    </div>
   );
 }
 
 function Row({
   href,
+  active = false,
   name,
   age,
   preview,
@@ -92,10 +125,15 @@ function Row({
   preview: string;
   unread?: boolean;
   first: boolean;
+  active?: boolean;
 }) {
   return (
     <li className={first ? "" : "border-t border-line-2"}>
-      <Link href={href} className="flex items-center gap-3.5 py-3.5 hover:bg-card-2/60 rounded-lg -mx-2 px-2">
+      <Link
+        href={href}
+        aria-current={active ? "true" : undefined}
+        className={"flex items-center gap-3.5 py-3.5 rounded-lg -mx-2 px-2 " + (active ? "lg:bg-card lg:ring-1 lg:ring-[var(--line)]" : "hover:bg-card-2/60")}
+      >
         <Initials name={name} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">

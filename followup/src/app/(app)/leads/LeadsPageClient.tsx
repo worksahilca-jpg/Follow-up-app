@@ -131,9 +131,28 @@ function LeadsMoreMenu({ onLogCall, onImport }: { onLogCall: () => void; onImpor
   );
 }
 
-export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
+type Place = "all" | "needs" | "quiet" | "waiting";
+const PLACE_LABEL: Record<Exclude<Place, "all">, string> = { needs: "Needs you", quiet: "Going quiet", waiting: "Waiting" };
+
+export default function LeadsPageClient({
+  leads,
+  places,
+}: {
+  leads: Lead[];
+  /** The canvas's places, worked out on the server from the same sources Today uses. */
+  places: { needs: string[]; quiet: string[]; waiting: string[] };
+}) {
   const { data: session } = useSession();
   const [filter, setFilter] = useState<FilterId>("all");
+  const [place, setPlace] = useState<Place>("all");
+  const [showFilters, setShowFilters] = useState(false);
+  const placeOf = useMemo(() => {
+    const m = new Map<string, Exclude<Place, "all">>();
+    for (const id of places.waiting) m.set(id, "waiting");
+    for (const id of places.quiet) m.set(id, "quiet");
+    for (const id of places.needs) m.set(id, "needs");
+    return m;
+  }, [places]);
   const [query, setQuery] = useState("");
   // The sidebar's "Search customers" box lands here with ?focus=search.
   const searchRef = useRef<HTMLInputElement>(null);
@@ -214,6 +233,8 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
       if (filter === "lost") list = list.filter((l) => l.stage === "lost");
     }
 
+    if (place !== "all") list = list.filter((l) => placeOf.get(l.id) === place);
+
     if (query.trim()) {
       const q = query.toLowerCase();
       list = list.filter(
@@ -221,8 +242,11 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
       );
     }
 
-    return list.sort((a, b) => b.score - a.score);
-  }, [leads, filter, query, session?.user?.id, activeSavedFilter, customCriteria]);
+    // "Sorted by who needs you first" (canvas): needs you, going quiet,
+    // waiting, then everyone else by score.
+    const rank = (id: string) => ({ needs: 0, quiet: 1, waiting: 2 })[placeOf.get(id) ?? "x" as never] ?? 3;
+    return list.sort((a, b) => rank(a.id) - rank(b.id) || b.score - a.score);
+  }, [leads, filter, place, placeOf, query, session?.user?.id, activeSavedFilter, customCriteria]);
 
   // Counts for the three chips that used to have a stat tile each above them.
   // Only these three: a number on every chip would be noise, and "All" is
@@ -244,7 +268,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           someone came here to do, cleaning up is not. */}
       <PageHeader
         title="Customers"
-        subtitle={`${leads.length} total, sorted by follow-up priority.`}
+        subtitle={`${leads.length} ${leads.length === 1 ? "customer" : "customers"}.`}
         actions={
           <LeadsMoreMenu
             onLogCall={() => setShowLogCall(true)}
@@ -290,7 +314,41 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           is where someone reading "Hot" wants the number anyway. This is the
           "gain density, lose elements" trade S-06 requires. */}
 
-      <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+      {/* The canvas's four places, with counts, as underlined tabs. */}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div role="tablist" aria-label="Which customers" className="flex gap-5 overflow-x-auto border-b border-line-2">
+          {(["all", "needs", "quiet", "waiting"] as Place[]).map((p) => {
+            const count = p === "all" ? leads.length : places[p].length;
+            const on = place === p;
+            return (
+              <button
+                key={p}
+                role="tab"
+                aria-selected={on}
+                onClick={() => setPlace(p)}
+                className="-mb-px shrink-0 whitespace-nowrap border-b-2 pb-2.5 text-sm"
+                style={{ borderColor: on ? "var(--ink)" : "transparent", color: on ? "var(--ink)" : "var(--ink-soft)", fontWeight: on ? 500 : 400 }}
+              >
+                {p === "all" ? "All" : PLACE_LABEL[p]} <span className="tabular-nums text-ink-faint">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowFilters((v) => !v)}
+          aria-expanded={showFilters}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-card px-3.5 text-sm font-medium"
+        >
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filter
+          {(filter !== "all" || activeSavedFilter || customCriteria) && (
+            <span className="text-ink-faint">· {activeSavedFilter?.name ?? (customCriteria ? "Custom" : activeFilterLabel)}</span>
+          )}
+        </button>
+      </div>
+
+      <div hidden={!showFilters} className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         {/* One scrolling line rather than flex-wrap: at 390px thirteen chips
             wrapped to three rows and pushed the list down again. */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 -mb-1 sm:flex-wrap sm:overflow-visible sm:pb-0 sm:mb-0">
@@ -399,7 +457,10 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
             </div>
             {filtered.map((lead) => {
               const last = lead.conversation[lead.conversation.length - 1];
-              const state = urgencyTone(lead);
+              const where = placeOf.get(lead.id);
+              const state = where
+                ? { tone: (where === "quiet" ? "coral" : where === "needs" ? "ink" : "slate") as ItemTone, label: PLACE_LABEL[where] }
+                : urgencyTone(lead);
               return (
                 <Link
                   key={lead.id}

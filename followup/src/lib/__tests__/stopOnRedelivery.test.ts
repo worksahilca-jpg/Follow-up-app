@@ -59,6 +59,7 @@ vi.mock("@/lib/inbound/whatsappHistoryFilter", () => ({
 }));
 
 import { processWhatsAppCloudEnvelope } from "@/lib/inbound/whatsappCloud";
+import { processTwilioInbound } from "@/lib/inbound/twilioMessage";
 
 function envelope(text: string) {
   return {
@@ -127,5 +128,33 @@ describe("a STOP that Meta redelivers", () => {
     expect(leadUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ optedOutAt: null }) })
     );
+  });
+});
+
+// The SMS/WhatsApp-over-Twilio path had the guard above the consent block
+// after the Meta and WhatsApp Cloud paths were fixed.
+describe("a STOP that Twilio redelivers", () => {
+  const sms = (body: string) => ({ From: "+14165550100", To: "+14165550199", Body: body, MessageSid: "SM-redelivered", NumMedia: "0" });
+
+  it("still opts the person out, even though the message was already recorded", async () => {
+    await processTwilioInbound("biz1", "text", sms("STOP"));
+    expect(leadUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "lead1" }, data: expect.objectContaining({ optedOutAt: expect.any(Date) }) })
+    );
+    expect(recordAudit).toHaveBeenCalledWith(expect.anything(), "lead.opt_out", expect.anything());
+  });
+
+  it("does not acknowledge or re-score the redelivered message", async () => {
+    await processTwilioInbound("biz1", "whatsapp", { ...sms("STOP"), From: "whatsapp:+14165550100" });
+    expect(leadUpdate).toHaveBeenCalledTimes(1);
+    expect(acknowledgeNewLead).not.toHaveBeenCalled();
+    expect(scoreAndDraftForLead).not.toHaveBeenCalled();
+  });
+
+  it("leaves an ordinary redelivered message alone", async () => {
+    await processTwilioInbound("biz1", "text", sms("is tomorrow still ok?"));
+    expect(leadUpdate).not.toHaveBeenCalled();
+    expect(acknowledgeNewLead).not.toHaveBeenCalled();
+    expect(scoreAndDraftForLead).not.toHaveBeenCalled();
   });
 });

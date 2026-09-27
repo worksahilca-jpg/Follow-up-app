@@ -104,13 +104,30 @@ describe("what gets sent", () => {
   });
 
   it("re-derives the list from the queue rather than taking it from the caller", async () => {
-    // sendSafeApprovals takes a businessId and an optional source — there
-    // is no parameter through which a caller could name the leads. This
-    // pins that, because adding one later would be the change that turns
-    // an edited page into an arbitrary send.
+    // The caller can narrow the list (`only`, the onboarding list's
+    // skips) but never supply it: the pile is always rebuilt from the
+    // queue and filtered for safety, so an edited page can't turn into an
+    // arbitrary send. See the two `only` cases below.
     pending.mockResolvedValue([approval()]);
     await sendSafeApprovals({ businessId: "biz1" });
     expect(pending).toHaveBeenCalledWith("biz1");
+  });
+
+  it("sends only the customers the owner kept, when given a list", async () => {
+    // The onboarding list: the owner skipped one, so only the other goes.
+    pending.mockResolvedValue([approval({ leadId: "kept" }), approval({ leadId: "skipped" })]);
+    const out = await sendSafeApprovals({ businessId: "biz1", only: ["kept"] });
+    expect(out.sent).toBe(1);
+    expect(send.mock.calls.map((c) => c[0])).toEqual(["kept"]);
+  });
+
+  it("can't use the list to add a draft that needs a human", async () => {
+    // Naming a held price question in `only` doesn't put it in the batch:
+    // the list only narrows the safe pile.
+    pending.mockResolvedValue([approval({ leadId: "price", reason: UNGROUNDED_DRAFT_REASONS.currency }), approval({ leadId: "safe" })]);
+    const out = await sendSafeApprovals({ businessId: "biz1", only: ["price", "safe", "notInQueue"] });
+    expect(out.sent).toBe(1);
+    expect(send.mock.calls.map((c) => c[0])).toEqual(["safe"]);
   });
 
   it("narrows to one source when asked", async () => {

@@ -9,11 +9,11 @@ import LeadWorkflowEnrollment from "@/components/LeadWorkflowEnrollment";
 import LeadAssignmentSelect from "@/components/LeadAssignmentSelect";
 import DeleteLeadButton from "@/components/DeleteLeadButton";
 import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
-import LeadTrustPanel from "@/components/LeadTrustPanel";
+import LeadTrustPanel, { consentLabel, lastActionSummary } from "@/components/LeadTrustPanel";
 import AutomationStatusBadge from "@/components/AutomationStatusBadge";
 import WeTalkedButton from "@/components/WeTalkedButton";
 import CollapsibleSection from "@/components/CollapsibleSection";
-import { ChevronLeft, Mail, Phone } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { isSocialLeadId } from "@/lib/instagramId";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import { sendLockedForSession } from "@/lib/sendingControl";
@@ -64,7 +64,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const now = new Date();
 
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-10">
       <div className="min-w-0">
         {/* Phone: the ThreadPhone header, back, name, where they wrote. */}
         <div className="-mx-5 -mt-3 flex items-center gap-1 border-b border-line px-2 pb-2.5 sm:-mx-8 lg:hidden">
@@ -147,25 +147,27 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           )}
         </dl>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        {/* Three pills, as drawn. The third is Call when there is a number
+            to call, and Email (their own mail app) when there isn't, so
+            an email-only customer still has a way to reach them directly. */}
+        <div className="mt-3.5 flex flex-wrap items-center gap-2">
           {lead.automationStatus?.kind !== "closed" && (
             <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} />
           )}
           <CopyBookingLinkButton leadId={lead.id} />
-          {lead.phone && !isSocialLeadId(lead.phone) && (
-            <a href={`tel:${lead.phone}`} className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-line bg-card px-3.5 text-sm font-medium">
-              <Phone className="h-3.5 w-3.5" /> Call
+          {lead.phone && !isSocialLeadId(lead.phone) ? (
+            <a href={`tel:${lead.phone}`} className={PILL}>
+              Call
             </a>
-          )}
-          {lead.email && (
-            <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 text-sm text-ink-soft underline underline-offset-2">
-              <Mail className="h-3.5 w-3.5" /> Open in your mail app
+          ) : lead.email ? (
+            <a href={`mailto:${lead.email}`} className={PILL}>
+              Email
             </a>
-          )}
+          ) : null}
         </div>
 
-        <div className="mt-4">
-          <AutomationStatusBadge status={lead.automationStatus} />
+        <div className="mt-3.5">
+          <AutomationStatusBadge status={lead.automationStatus} line />
         </div>
 
         <div className="mt-4 overflow-hidden rounded-[18px] border border-line bg-card">
@@ -177,8 +179,11 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               holdAllForApproval={freeTierStatus?.holdAllForApproval ?? false}
             />
           </CollapsibleSection>
-          <CollapsibleSection row title="What FollowUp did, and why it may write" status={auditTrail.totalCount ? `${auditTrail.totalCount} ${auditTrail.totalCount === 1 ? "step" : "steps"}` : undefined}>
-            <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
+          <CollapsibleSection row title={`Why it may write to ${firstName}`} status={lead.optedOutAt ? "Opted out of texts" : consentLabel(lead.source)}>
+            <LeadTrustPanel part="why" source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
+          </CollapsibleSection>
+          <CollapsibleSection row title="What FollowUp did" status={lastActionSummary(auditTrail, now) ?? "Nothing yet"}>
+            <LeadTrustPanel part="did" source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} />
           </CollapsibleSection>
           <CollapsibleSection row title="Follow-up plan" status={lead.nextFollowUp ? `Next ${formatDate(lead.nextFollowUp)}` : "None"}>
             <LeadWorkflowEnrollment leadId={lead.id} />
@@ -198,13 +203,16 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </CollapsibleSection>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-4">
           <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
         </div>
       </aside>
     </div>
   );
 }
+
+/** The side column's action pill (PersonSide: 38px, hairline, white). */
+const PILL = "inline-flex h-[38px] items-center rounded-full border border-line bg-card px-3.5 text-[14px] font-medium hover:bg-card-2";
 
 /** The per-customer setting in the same words as the control itself. */
 const TIER_WORDS: Record<string, string> = { off: "You do it", assisted: "Ask if risky", autonomous: "Handle it all" };

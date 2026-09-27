@@ -70,6 +70,14 @@ export type BulkApproveInput = {
   /** One source only ("Gmail"), or every source when omitted. */
   source?: string | null;
   /**
+   * Only these customers, when given: the onboarding list sends exactly the
+   * people the owner was shown and didn't skip (PRODUCT_DIRECTION, "old
+   * customers wait for one tap": the owner can open and skip any of them).
+   * Intersected with the safe pile, so it can narrow a batch but never add
+   * a held price or date question to it.
+   */
+  only?: ReadonlyArray<string> | null;
+  /**
    * How many to attempt in this press. Defaults to the product's own
    * daily automated ceiling — the number it already treats as a volume a
    * sending domain survives (see sendCaps.ts, where it is derived rather
@@ -79,13 +87,15 @@ export type BulkApproveInput = {
   limit?: number;
 };
 
-export async function sendSafeApprovals({ businessId, source, limit }: BulkApproveInput): Promise<BulkApproveOutcome> {
+export async function sendSafeApprovals({ businessId, source, limit, only }: BulkApproveInput): Promise<BulkApproveOutcome> {
+  const onlySet = only ? new Set(only) : null;
   const ceiling = Math.max(0, limit ?? DAILY_AUTOMATED_SEND_CAP);
 
   const queue = await getPendingApprovals(businessId);
   const safe = queue
     .filter((a) => isSafeToSendInBulk(a))
     .filter((a) => (source ? a.source === source : true))
+    .filter((a) => (onlySet ? onlySet.has(a.leadId) : true))
     // Highest score first, so a press truncated by the ceiling spends
     // what it has on the leads worth the most rather than on whichever
     // order the queue happened to arrive in.

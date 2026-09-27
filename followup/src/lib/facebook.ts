@@ -83,7 +83,15 @@ export async function sendMessengerMessage(
     // result and in the log for anyone debugging.
     return { ...failure, message: ownerFacingMetaError(failure.message ?? "", "Facebook rejected this message.") };
   }
-  return { success: true };
+  // Meta's id for this message, the same as sendInstagramMessage keeps: the
+  // Page's echo of this send (message_echoes, see
+  // subscribeFacebookPageWebhooks) carries it as `mid`, and captureDirectReply
+  // upserts on it. Without it the echo was stored as a second copy marked
+  // "sent directly on Messenger". A 200 without a readable body is still a
+  // send that happened.
+  const sent = await res.json().catch(() => null);
+  const messageId = typeof sent?.message_id === "string" && sent.message_id ? sent.message_id : undefined;
+  return messageId ? { success: true, messageId } : { success: true };
 }
 
 /**
@@ -102,6 +110,17 @@ export async function sendMessengerMessage(
  * submissions — the two things handlePageEvents() in the Meta webhook
  * route reads, and both of what this channel promises.
  *
+ * `message_echoes` carries what the Page itself sent: the owner answering
+ * from the Page inbox or Meta Business Suite, and Meta's own Business AI.
+ * Unlike Instagram, where an echo rides inside `messages` with is_echo,
+ * Messenger only sends echoes on this separate field. Without it
+ * handlePageEvents' echo branch never ran: an owner's reply from the Page
+ * inbox was never recorded, so the lead still read as unanswered, the
+ * acknowledgement's grace period could not see the owner answer first, and
+ * the unanswered rule drafted (or sent) a reply on top of the owner's.
+ * FollowUp's own sends echo too; sendMessengerMessage keeps Meta's id so
+ * that echo lands on FollowUp's row instead of beside it.
+ *
  * Best effort at the call sites: the connection is saved either way and
  * the outcome is persisted, so a Page that could not be subscribed says
  * so in Settings instead of sitting silently.
@@ -113,7 +132,7 @@ export async function subscribeFacebookPageWebhooks(
   const res = await fetch(`${GRAPH}/${encodeURIComponent(pageId)}/subscribed_apps`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ subscribed_fields: "messages,leadgen", access_token: pageAccessToken }),
+    body: new URLSearchParams({ subscribed_fields: "messages,message_echoes,leadgen", access_token: pageAccessToken }),
   });
   if (res.ok) return { ok: true };
   const failure = await readMetaError(res, "Facebook refused the webhook subscription.", "Facebook subscribed_apps");

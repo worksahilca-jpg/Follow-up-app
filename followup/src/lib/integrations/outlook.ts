@@ -36,7 +36,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { isFollowUpSender } from "@/lib/ownSenders";
+import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
 
 const AUTHORITY = "https://login.microsoftonline.com/common/oauth2/v2.0";
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -272,10 +272,6 @@ export async function disconnectOutlook(businessId: string): Promise<void> {
   });
 }
 
-function isAutomatedOrSelf(email: string, selfEmail: string): boolean {
-  return email === selfEmail || isAutomatedSender(email);
-}
-
 type GraphMessage = {
   id: string;
   conversationId: string;
@@ -296,6 +292,31 @@ function messageText(m: GraphMessage): string {
   const content = m.body?.content ?? m.bodyPreview ?? "";
   const text = m.body?.contentType === "html" ? stripHtml(content) : content;
   return text.slice(0, 5000);
+}
+
+function graphMessageTime(m: GraphMessage): number {
+  const t = new Date(m.receivedDateTime ?? m.sentDateTime ?? 0).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
+/**
+ * The Graph request for every message in one conversation.
+ *
+ * No `$orderby`. Graph only accepts `$filter` and `$orderby` together on
+ * messages when every ordered property also appears first in the filter;
+ * `conversationId eq …` ordered by `receivedDateTime` breaks that rule and
+ * is refused with `InefficientFilter` ("The restriction or sort order is
+ * too complex for this operation"). The caller read that 400 as "nothing
+ * here" and returned null, so no Outlook conversation ever became a lead.
+ * The caller sorts instead.
+ *
+ * The id is encoded: Graph conversation ids are base64 and can carry `+`,
+ * `/` and `=`, and a raw `+` in a query string arrives as a space. A quote
+ * is doubled, which is how OData escapes one inside a string literal.
+ */
+export function conversationMessagesPath(conversationId: string): string {
+  const filter = encodeURIComponent(`conversationId eq '${conversationId.replace(/'/g, "''")}'`);
+  return `/me/messages?$filter=${filter}&$select=id,conversationId,subject,bodyPreview,body,from,toRecipients,receivedDateTime,sentDateTime&$top=50`;
 }
 
 export type OutlookSyncOptions = {
@@ -323,10 +344,14 @@ async function processConversations(
   let classifications = 0;
   let truncated = false;
 
-  const businessContext = await prisma.business.findUnique({
+  const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { name: true, industry: true },
+    select: { name: true, industry: true, users: { select: { email: true } } },
   });
+  const businessContext = business ? { name: business.name, industry: business.industry } : null;
+  // The business itself: this mailbox and everyone on the team (see
+  // ownAddressSet). Their mail is ours, never a customer's.
+  const own = ownAddressSet(selfEmail, (business?.users ?? []).map((u) => u.email));
 
   const results = await mapWithConcurrency(conversationIds, 5, async (conversationId): Promise<SyncedLead | null> => {
     try {
@@ -341,13 +366,13 @@ async function processConversations(
   return results.filter((lead): lead is SyncedLead => lead !== null);
 
   async function processOneConversation(conversationId: string): Promise<SyncedLead | null> {
-    const res = await graphFetch(
-      businessId,
-      `/me/messages?$filter=conversationId eq '${conversationId}'&$select=id,conversationId,subject,bodyPreview,body,from,toRecipients,receivedDateTime,sentDateTime&$orderby=receivedDateTime asc&$top=50`
-    );
+    const res = await graphFetch(businessId, conversationMessagesPath(conversationId));
     if (!res || !res.ok) return null;
     const data: { value?: GraphMessage[] } = await res.json();
-    const graphMessages = data.value ?? [];
+    // Oldest first, sorted here: Graph refuses to sort this query itself
+    // (see conversationMessagesPath). Everything below reads the first
+    // message as the thread's opener and the last as its newest.
+    const graphMessages = [...(data.value ?? [])].sort((a, b) => graphMessageTime(a) - graphMessageTime(b));
     if (graphMessages.length === 0) return null;
 
     const parsedMessages = graphMessages.map((m) => {
@@ -357,14 +382,14 @@ async function processConversations(
       return {
         id: m.id,
         from: { name: fromName, email: fromEmail },
-        direction: (fromEmail === selfEmail ? "outbound" : "inbound") as "outbound" | "inbound",
+        direction: (own.has(fromEmail) ? "outbound" : "inbound") as "outbound" | "inbound",
         body: messageText(m),
         sentAt,
         subject: m.subject,
       };
     });
 
-    const counterpart = parsedMessages.find((m) => m.from.email && !isAutomatedOrSelf(m.from.email, selfEmail))?.from;
+    const counterpart = parsedMessages.find((m) => m.from.email && !own.has(m.from.email) && !isAutomatedSender(m.from.email))?.from;
     if (!counterpart) return null;
 
     const known = await prisma.conversation.findUnique({

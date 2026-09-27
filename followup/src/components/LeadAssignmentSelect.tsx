@@ -90,38 +90,45 @@ export default function LeadAssignmentSelect({
   // Until the member list loads, show the name the server already knows
   // rather than a select with only "Unassigned" in it.
   if (members.length === 0) {
-    return <span>{initialAssignedToName}</span>;
+    return <span>{initialAssignedToId ? initialAssignedToName : "Nobody"}</span>;
   }
 
   const canClaim = !current && !!session?.user?.id;
 
   return (
-    <div className="flex flex-col items-end">
+    <div className="flex flex-wrap items-center gap-x-1.5">
+      {/* Quiet, as the PersonSide board draws it: "Nobody · Take it". */}
+      <span className="relative inline-flex items-center">
       <select
         value={current}
         onChange={(e) => change(e.target.value)}
         disabled={saving}
-        className="rounded-[12px] border border-line bg-paper px-1.5 py-0.5 text-sm text-right disabled:opacity-60"
+        aria-label="Assigned to"
+        className="cursor-pointer appearance-none bg-transparent pr-4 text-[14.5px] [field-sizing:content] disabled:opacity-60"
       >
-        <option value="">Unassigned</option>
+        <option value="">Nobody</option>
         {members.map((m) => (
           <option key={m.id} value={m.id}>
             {m.name}
           </option>
         ))}
       </select>
+      <span className="pointer-events-none absolute right-0 text-[12px] text-ink-faint" aria-hidden>
+        ▾
+      </span>
+      </span>
       {canClaim && (
-        <button
-          onClick={claim}
-          disabled={saving}
-          className="text-[13px] mt-1 underline disabled:opacity-60"
-          style={{ color: "var(--coral)" }}
-        >
-          Claim it
-        </button>
+        <>
+          <span className="text-ink-faint" aria-hidden>
+            ·
+          </span>
+          <button onClick={claim} disabled={saving} className="text-[14.5px] underline underline-offset-2 disabled:opacity-60">
+            Take it
+          </button>
+        </>
       )}
       {error && (
-        <span className="text-[13px] mt-1" style={{ color: "var(--coral)" }}>
+        <span className="basis-full text-[13px] mt-1" style={{ color: "var(--coral)" }}>
           {error}
         </span>
       )}

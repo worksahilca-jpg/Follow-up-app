@@ -32,6 +32,10 @@ const schema = z.object({
   // quietly match nothing and report "0 sent" as though that were the
   // answer.
   source: z.enum(KNOWN_LEAD_SOURCES).nullish(),
+  // The onboarding list: exactly the customers shown and not skipped. The
+  // server still re-derives the safe pile and intersects, so this can only
+  // narrow a batch (see bulkApprove.ts).
+  only: z.array(z.string().min(1).max(64)).max(200).nullish(),
 });
 
 export async function POST(request: NextRequest) {
@@ -53,13 +57,14 @@ export async function POST(request: NextRequest) {
   const parsed = await parseJsonBody(request, schema);
   if (!parsed.ok) return parsed.response;
 
-  const result = await sendSafeApprovals({ businessId: ctx.businessId, source: parsed.data.source ?? null });
+  const result = await sendSafeApprovals({ businessId: ctx.businessId, source: parsed.data.source ?? null, only: parsed.data.only ?? null });
 
   // How many went out, to what, and what was refused — the question asked
   // after a customer gets a message nobody remembers authorising.
   void recordAudit(ctx, "approvals.send_safe", {
     meta: {
       source: parsed.data.source ?? null,
+      only: parsed.data.only?.length ?? null,
       sent: result.sent,
       skipped: result.skipped.length,
       remaining: result.remaining,

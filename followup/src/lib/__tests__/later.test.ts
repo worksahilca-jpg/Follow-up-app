@@ -33,6 +33,25 @@ describe("the two times", () => {
     expect(laterTime("tomorrow_morning", MORNING, TZ).toISOString()).toBe("2026-09-27T13:00:00.000Z");
   });
 
+  // The days the clocks change. Counting hours from local midnight put
+  // these an hour out: 3pm / 10am in March, 1pm / 8am in November.
+  it("is still 2pm and 9am on the days the clocks change", () => {
+    // Sunday 2026-03-08, clocks go forward at 2am (EST → EDT).
+    expect(laterTime("later_today", new Date("2026-03-08T14:00:00Z"), TZ).toISOString()).toBe("2026-03-08T18:00:00.000Z");
+    // Set on the Saturday: tomorrow 9am is 9am EDT.
+    expect(laterTime("tomorrow_morning", new Date("2026-03-07T20:00:00Z"), TZ).toISOString()).toBe("2026-03-08T13:00:00.000Z");
+    // Sunday 2026-11-01, clocks go back at 2am (EDT → EST).
+    expect(laterTime("later_today", new Date("2026-11-01T15:00:00Z"), TZ).toISOString()).toBe("2026-11-01T19:00:00.000Z");
+    expect(laterTime("tomorrow_morning", new Date("2026-10-31T20:00:00Z"), TZ).toISOString()).toBe("2026-11-01T14:00:00.000Z");
+  });
+
+  it("uses the owner's calendar day, not UTC's, late in the evening", () => {
+    // 21:30 Toronto on 2026-09-26 is already the 27th in UTC.
+    const lateEvening = new Date("2026-09-27T01:30:00Z");
+    expect(laterTime("tomorrow_morning", lateEvening, TZ).toISOString()).toBe("2026-09-27T13:00:00.000Z");
+    expect(laterTime("tomorrow_morning", lateEvening, "America/Vancouver").toISOString()).toBe("2026-09-27T16:00:00.000Z");
+  });
+
   it("only offers later today while 2pm is still at least half an hour away", () => {
     expect(laterTodayAvailable(MORNING, TZ)).toBe(true);
     expect(laterTodayAvailable(EVENING, TZ)).toBe(false);

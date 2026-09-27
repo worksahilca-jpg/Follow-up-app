@@ -33,19 +33,25 @@ export async function GET() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
 
-  const business = await prisma.business.findUnique({
-    where: { id: ctx.businessId },
-    select: {
-      twilioSecret: true,
-      twilioAuthToken: true,
-      twilioAccountSid: true,
-      twilioPhoneNumber: true,
-      whatsappPhoneNumber: true,
-      whatsappTemplateSid: true,
-      whatsappTemplateBody: true,
-      voiceAgentEnabled: true,
-    },
-  });
+  // The Auth Token is never selected, only counted: src/lib/db.ts decrypts
+  // an encrypted field on every read, and this GET (any team member) needs
+  // one boolean, not the credential (same rule as the Meta config routes;
+  // audit 2026-09-27). POST/DELETE store it as a non-empty string or null.
+  const [business, authTokenCount] = await Promise.all([
+    prisma.business.findUnique({
+      where: { id: ctx.businessId },
+      select: {
+        twilioSecret: true,
+        twilioAccountSid: true,
+        twilioPhoneNumber: true,
+        whatsappPhoneNumber: true,
+        whatsappTemplateSid: true,
+        whatsappTemplateBody: true,
+        voiceAgentEnabled: true,
+      },
+    }),
+    prisma.business.count({ where: { id: ctx.businessId, twilioAuthToken: { not: null } } }),
+  ]);
 
   const secret = business?.twilioSecret ?? null;
   return NextResponse.json({
@@ -53,7 +59,7 @@ export async function GET() {
     smsUrl: secret ? `${inboundBaseUrl()}/api/twilio/sms/${secret}` : null,
     voiceUrl: secret ? `${inboundBaseUrl()}/api/twilio/voice/${secret}` : null,
     whatsappUrl: secret ? `${inboundBaseUrl()}/api/twilio/whatsapp/${secret}` : null,
-    hasAuthToken: !!business?.twilioAuthToken,
+    hasAuthToken: authTokenCount > 0,
     accountSid: business?.twilioAccountSid ?? null,
     phoneNumber: business?.twilioPhoneNumber ?? null,
     whatsappPhoneNumber: business?.whatsappPhoneNumber ?? null,

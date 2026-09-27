@@ -550,15 +550,11 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           where: { id: lead.id },
           data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
         });
-        if (lead.assignedToId) {
-          await prisma.notification.create({
-            data: {
-              userId: lead.assignedToId,
-              leadId: lead.id,
-              message: `${lead.name} replied mid-sequence — "${sequence.name}" stopped so you can take it from here.`,
-            },
-          });
-        }
+        // Every admin when nobody is assigned, like every other workflow
+        // notice (notifySequenceIssue). Assignee-only, a reply from an
+        // unassigned customer stopped the plan and told nobody, and nothing
+        // automatic picks the lead up after (enrollLead left it OFF).
+        await notifySequenceIssue(lead, `${lead.name} replied mid-sequence — "${sequence.name}" stopped so you can take it from here.`);
       } catch (err) {
         return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
       }

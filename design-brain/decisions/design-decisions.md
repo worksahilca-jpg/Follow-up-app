@@ -8185,3 +8185,61 @@ Four boards on the canvas (v80): SettingsAll, SettingsAllPhone, SettingsChannel 
   from the owner's inbox as a customer called "FollowUp". They are now never a customer.
 - **Weak, named:** above about 1,700px there is still open space either side of the conversation column. That is
   deliberate (line length), but it can read as empty.
+
+## 2026-09-27 — Customer side column brought to its drawing (A-067 side-by-side)
+
+- **Compared** the live side column against PersonSide. Six gaps, all fixed to the drawing:
+  - Stage and Assigned to read as quiet text with a caret ("New ▾", "Nobody · Take it"), not boxed dropdowns.
+  - Three matching pills: We talked, Copy booking link, and Call. Call becomes Email for a customer with no number.
+  - "Can't send" is one calm line with a dot ("Replies can't go out yet… Connect in Settings"), not a card.
+  - "How it handles" fits on one line ("I'll do it / Ask if risky / Handle it all"), with ink selection and one sentence.
+  - "Why it may write to {name}" and "What FollowUp did" are two rows again, with status text ("Emailed you first",
+    "Held a reply · today").
+  - Delete is a quiet link, "Delete this customer".
+- **Column width:** 380px, as drawn. At 320px the pills and row titles wrapped.
+- **Settings compared too:** it matches SettingsAll. The "Everything else" links stay; they are the only route to
+  Pipeline, Numbers and Activity from a three-item navigation.
+- **Weak, named:**
+  - The "silence clock resets when they reply" paragraph was dropped from the handling control to keep one sentence.
+    The behaviour is unchanged, but it is no longer explained on this page.
+  - Rows still open in place (down chevrons), where the drawing shows right chevrons.
+  - The reply card on this page says "Based on…" where the drawing shows the hold reason. The reason is in the
+    facts card above.
+
+## 2026-09-27 — Inbox rebuilt to its drawing (A-025, Inbox board)
+
+- **Founder feedback** (screenshot of the live Inbox): *"this totally doesn't match the canvas design"*. Correct: the
+  live Inbox used the phone's large type on desktop, a 32px title, grey group labels, no channel icons or state dots,
+  and a conversation header without the channel line.
+- **Now, on desktop, as drawn:**
+  - A 380px list with a 56px bar ("Inbox · N conversations") and mono group labels ("NEEDS YOU", "EVERYONE ELSE").
+  - Compact rows: 32px initials, 14px name with the channel icon, 13.5px preview, and a coloured state dot. The
+    selected row is marked by a warm fill and an ink edge.
+  - The conversation has a 56px header (name, Needs you pill, Open person) and a quiet line under it with the channel
+    and when they first wrote. Below that sit a centred 640px column, 14.5px bubbles and a compact reply card with
+    38px buttons.
+- **Phone unchanged** (InboxPhone / ThreadPhone keep their larger type and single black dot).
+- **Hold reason** is a plain 13px sentence above the card ("Held because it names a day."), not 11px capitals. The
+  strategy audit flagged the capitals as hard to read.
+- **Weak, named:**
+  - The drawing's "All channels" filter is not built. A button that does nothing would be fake, so it's left out
+    until the filter exists.
+  - The drawing's Meta reply-window note belongs on this line only near the end of the window (A-028). It isn't wired
+    here yet.
+
+## 2026-09-27 — Three trust fixes from the strategy audit (founder: "fix 1-3")
+
+- **Onboarding's first send:**
+  - Every customer the button will write to is listed, up to 25. Each can be opened to read its reply, or skipped.
+  - The button sends exactly the people shown and not skipped (the new `only` list on send-safe, which can narrow the
+    safe pile but never add to it).
+  - The send gets the same 10-second undo Today has. Anyone past 25 waits in Today, never sent unseen.
+  - This follows PRODUCT_DIRECTION: "the owner can also open and skip any of them".
+- **How FollowUp should work:** neither Automatic nor Assisted starts chosen, and the button waits until the owner
+  picks. This follows the 2026-09-22 decision: sending is asked for, never assumed. Automatic keeps its
+  "Recommended" label.
+- **Inbox and the customer page:** Send now has the 10-second undo ("Sending to Grace in 9s · Undo"), the same hook
+  as Today, and leaving the page still sends. Before this, these were the only places a message couldn't be taken
+  back.
+- **Weak, named:** a 25-person cap on the onboarding list means a busy inbox leaves the rest for Today. That is
+  deliberate, since nobody gets a message the owner never saw, but it's one more step for them.

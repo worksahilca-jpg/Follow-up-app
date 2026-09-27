@@ -82,22 +82,101 @@ function describeTrigger(meta: Record<string, unknown> | null, verb: "sent" | "h
   return parts.length ? `${verb === "sent" ? "Sent" : "Held"} ${parts.join(" ")}` : undefined;
 }
 
+// The short words for the side column's "What FollowUp did" row (A-069,
+// PersonSide board: "Held a reply · today").
+const ACTION_SHORT: Record<string, string> = {
+  "lead.send": "You sent a message",
+  "ai.send": "Sent a reply",
+  "ai.hold": "Held a reply",
+  "lead.talked": "You talked",
+  "lead.talked_undone": "Check-ins back on",
+};
+
+/** "Held a reply · today": the newest thing FollowUp did, for a row's status. */
+export function lastActionSummary(auditTrail: LeadAuditTrail, now: Date = new Date()): string | undefined {
+  const latest = auditTrail.events[0];
+  if (!latest) return undefined;
+  const what = ACTION_SHORT[latest.action] ?? "Something happened";
+  const at = new Date(latest.createdAt);
+  const days = Math.round((startOfDay(now) - startOfDay(at)) / 86_400_000);
+  const when = days <= 0 ? "today" : days === 1 ? "yesterday" : formatDate(latest.createdAt);
+  return `${what} · ${when}`;
+}
+
+function startOfDay(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+/** The consent label ("Emailed you first") for the "Why it may write" row. */
+export function consentLabel(source: string): string {
+  return deriveConsentBasis(source).label;
+}
+
 export default function LeadTrustPanel({
   source,
   optedOutAt,
   auditTrail,
   languageRead,
+  part,
 }: {
   source: string;
   optedOutAt?: string | null;
   auditTrail: LeadAuditTrail;
   /** What FollowUp read the lead's latest message as; null = not read yet. */
   languageRead?: LeadLanguage | null;
+  /**
+   * The customer page's side column shows these as two rows (A-069):
+   * "why" is the consent basis, opt-out and language; "did" is the log.
+   * Inside a row there is no box or heading of its own (S-09).
+   */
+  part?: "why" | "did";
 }) {
   const consent = deriveConsentBasis(source);
   const language = describeLeadLanguage(languageRead ?? null);
   const { events, totalCount } = auditTrail;
   const truncated = totalCount > events.length;
+
+  if (part === "why") {
+    return (
+      <div className="space-y-2.5 text-[14px] leading-relaxed text-ink-soft">
+        <p>{consent.explanation}</p>
+        <p style={{ color: optedOutAt ? "var(--coral)" : undefined }}>
+          {optedOutAt
+            ? `Opted out of texts and WhatsApp on ${formatDate(optedOutAt)} (replied STOP). Those stay blocked until they reply START.`
+            : "No opt-out on file, so texts and WhatsApp are allowed."}
+        </p>
+        <p>
+          {language
+            ? `Their last message read as ${language} FollowUp replies to match it.`
+            : "FollowUp hasn\u2019t read a message from them yet. Replies will match whatever they write."}
+        </p>
+      </div>
+    );
+  }
+
+  if (part === "did") {
+    return events.length === 0 ? (
+      <p className="text-[14px] text-ink-soft">Nothing sent or held for this customer yet.</p>
+    ) : (
+      <div>
+        <ul className="space-y-2.5">
+          {events.map((entry) => {
+            const copy = (ACTION_COPY[entry.action] ?? (() => ({ label: entry.action })))(entry.meta);
+            return (
+              <li key={entry.id} className="text-[14px]">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-medium">{copy.label}</span>
+                  <span className="shrink-0 text-[13px] text-ink-faint">{formatDate(entry.createdAt)}</span>
+                </div>
+                {copy.detail && <p className="mt-0.5 text-[13px] text-ink-soft">{copy.detail}</p>}
+              </li>
+            );
+          })}
+        </ul>
+        {truncated && <p className="mt-2.5 text-[13px] text-ink-soft">Showing the 25 most recent of {totalCount} actions.</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="box p-4">

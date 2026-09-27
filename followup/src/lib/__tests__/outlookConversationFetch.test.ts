@@ -1,0 +1,149 @@
+/**
+ * An Outlook conversation's messages are fetched with a query Graph accepts.
+ *
+ * The fetch combined `$filter=conversationId eq …` with
+ * `$orderby=receivedDateTime asc`. Graph refuses that pairing on messages
+ * (InefficientFilter: an ordered property must also lead the filter), and
+ * the refusal was read as "no messages", so every Outlook conversation was
+ * dropped before any lead was written. The fake Graph below refuses the
+ * same way, returns the messages out of order, and uses an id with the
+ * characters a raw query string mangles.
+ */
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+const { prismaMock, acknowledgeNewLead } = vi.hoisted(() => ({
+  acknowledgeNewLead: vi.fn(async () => undefined),
+  prismaMock: {
+    integration: { findFirst: vi.fn() },
+    business: { findUnique: vi.fn() },
+    filteredEmail: { deleteMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn() },
+    lead: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },
+    conversation: { findUnique: vi.fn(), create: vi.fn() },
+    message: { upsert: vi.fn() },
+  },
+}));
+
+vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
+vi.mock("@/lib/integrations/openai", () => ({ classifyWithSecondLook: vi.fn() }));
+vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn(async () => null) }));
+vi.mock("@/lib/outboundWebhook", () => ({ notifyLeadEvent: vi.fn(async () => undefined) }));
+vi.mock("@/lib/engagement", () => ({ checkRapidEngagement: vi.fn(async () => undefined) }));
+vi.mock("@/lib/sourceRouting", () => ({ applySourceRouting: vi.fn(async () => undefined) }));
+vi.mock("@/lib/acknowledge", () => ({ acknowledgeNewLead }));
+
+import { conversationMessagesPath, importOutlookConversation } from "@/lib/integrations/outlook";
+
+const CONVERSATION_ID = "AAQkAGI2+abc/de==";
+const opener = new Date("2026-09-27T09:00:00Z");
+const reply = new Date("2026-09-27T09:30:00Z");
+const followUp = new Date("2026-09-27T10:15:00Z");
+
+function graphMessage(id: string, from: string, at: Date, text: string) {
+  return {
+    id,
+    conversationId: CONVERSATION_ID,
+    subject: "Kitchen quote",
+    body: { contentType: "text", content: text },
+    from: { emailAddress: { name: from === "info@samsplumbing.ca" ? "Sam" : "Jane Doe", address: from } },
+    receivedDateTime: at.toISOString(),
+  };
+}
+
+let requested: string[] = [];
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  requested = [];
+  prismaMock.integration.findFirst.mockResolvedValue({
+    id: "int1",
+    accessToken: "access",
+    refreshToken: "refresh",
+    tokenExpiresAt: new Date(Date.now() + 3_600_000),
+    accountEmail: "info@samsplumbing.ca",
+    user: { email: "sam.smith@gmail.com" },
+  });
+  prismaMock.business.findUnique.mockResolvedValue({ name: "Sam's Plumbing", industry: "Plumbing" });
+  prismaMock.filteredEmail.deleteMany.mockResolvedValue({ count: 0 });
+  prismaMock.conversation.findUnique.mockResolvedValue(null);
+  prismaMock.conversation.create.mockResolvedValue({ id: "conv1", leadId: "lead1" });
+  prismaMock.lead.findUnique.mockResolvedValue(null);
+  prismaMock.lead.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
+    id: "lead1",
+    company: null,
+    dealValue: 0,
+    score: 0,
+    scoreReason: null,
+    nextFollowUp: null,
+    notes: null,
+    automationTier: "ASSISTED",
+    ...data,
+  }));
+  prismaMock.message.upsert.mockResolvedValue({});
+
+  vi.spyOn(global, "fetch").mockImplementation(async (input) => {
+    const url = String(input);
+    requested.push(url);
+    const query = decodeURIComponent(url.split("?")[1] ?? "");
+    if (query.includes("$orderby")) {
+      return new Response(
+        JSON.stringify({ error: { code: "InefficientFilter", message: "The restriction or sort order is too complex for this operation." } }),
+        { status: 400 }
+      );
+    }
+    // Newest first, as Graph lists messages by default.
+    return new Response(
+      JSON.stringify({
+        value: [
+          graphMessage("m3", "jane@example.com", followUp, "Any update on the quote?"),
+          graphMessage("m2", "info@samsplumbing.ca", reply, "Thanks Jane, I'll send it today."),
+          graphMessage("m1", "jane@example.com", opener, "Could you quote a kitchen reno?"),
+        ],
+      }),
+      { status: 200 }
+    );
+  });
+});
+
+afterEach(() => vi.restoreAllMocks());
+
+describe("fetching one Outlook conversation", () => {
+  it("never asks Graph to sort a conversationId filter, and encodes the id", () => {
+    const path = conversationMessagesPath(CONVERSATION_ID);
+    expect(path).not.toContain("$orderby");
+    const filter = new URLSearchParams(path.split("?")[1]).get("$filter");
+    expect(filter).toBe(`conversationId eq '${CONVERSATION_ID}'`);
+  });
+
+  it("doubles a quote inside the id, as OData requires", () => {
+    const filter = new URLSearchParams(conversationMessagesPath("a'b").split("?")[1]).get("$filter");
+    expect(filter).toBe("conversationId eq 'a''b'");
+  });
+
+  it("turns the conversation into a lead, reading the messages oldest first", async () => {
+    const lead = await importOutlookConversation("biz1", CONVERSATION_ID);
+    expect(requested).toHaveLength(1);
+    expect(lead?.id).toBe("lead1");
+    expect(prismaMock.lead.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ email: "jane@example.com", lastContacted: followUp }) })
+    );
+    const stored = prismaMock.message.upsert.mock.calls.map((c) => c[0].create);
+    expect(stored.map((m: { externalId: string }) => m.externalId)).toEqual(["m1", "m2", "m3"]);
+    expect(stored.map((m: { direction: string }) => m.direction)).toEqual(["inbound", "outbound", "inbound"]);
+  });
+});
+
+describe("the Outlook sync and the business's own people", () => {
+  it("the owner writing from his sign-in address is not a new customer", async () => {
+    prismaMock.business.findUnique.mockResolvedValue({ name: "Sam's Plumbing", industry: "Plumbing", users: [{ email: "sam.smith@gmail.com" }] });
+    vi.mocked(global.fetch).mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ value: [graphMessage("m1", "sam.smith@gmail.com", opener, "Fwd: can you quote a kitchen reno?")] }), {
+          status: 200,
+        })
+    );
+    const lead = await importOutlookConversation("biz1", CONVERSATION_ID);
+    expect(lead).toBeNull();
+    expect(prismaMock.lead.create).not.toHaveBeenCalled();
+    expect(acknowledgeNewLead).not.toHaveBeenCalled();
+  });
+});

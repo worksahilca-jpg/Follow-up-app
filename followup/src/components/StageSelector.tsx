@@ -38,11 +38,14 @@ export default function StageSelector({ leadId, stage }: { leadId: string; stage
 
   return (
     <div className="inline-flex items-center gap-2">
+      {/* Quiet, as the PersonSide board draws it: the value and a caret. */}
+      <span className="relative inline-flex items-center">
       <select
         value={current}
         onChange={(e) => handleChange(e.target.value as PipelineStage)}
         disabled={saving}
-        className="text-sm rounded-full border border-line px-2.5 py-1 bg-card disabled:opacity-60"
+        aria-label="Stage"
+        className="cursor-pointer appearance-none bg-transparent pr-4 text-[14.5px] [field-sizing:content] disabled:opacity-60"
       >
         {PIPELINE_STAGES.map((s) => (
           <option key={s.id} value={s.id}>
@@ -50,6 +53,10 @@ export default function StageSelector({ leadId, stage }: { leadId: string; stage
           </option>
         ))}
       </select>
+      <span className="pointer-events-none absolute right-0 text-[12px] text-ink-faint" aria-hidden>
+        ▾
+      </span>
+      </span>
       {error && (
         <span className="text-[13px]" style={{ color: "var(--coral)" }}>
           {error}

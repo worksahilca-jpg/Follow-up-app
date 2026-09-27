@@ -15,10 +15,20 @@ const crmConfigSchema = z.object({
 export async function GET() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
-  const conn = await prisma.crmConnection.findUnique({ where: { businessId: ctx.businessId } });
+  // apiKey is never selected, only counted: src/lib/db.ts decrypts it on
+  // every read, and this GET (any team member) needs a boolean, not the
+  // credential (audit 2026-09-27). POST stores a non-empty key; DELETE
+  // removes the row.
+  const [conn, keyCount] = await Promise.all([
+    prisma.crmConnection.findUnique({
+      where: { businessId: ctx.businessId },
+      select: { provider: true, accountLabel: true, lastSyncedAt: true, lastSyncError: true },
+    }),
+    prisma.crmConnection.count({ where: { businessId: ctx.businessId, AND: [{ apiKey: { not: null } }, { apiKey: { not: "" } }] } }),
+  ]);
   return NextResponse.json({
     success: true,
-    connected: !!conn?.apiKey,
+    connected: keyCount > 0,
     provider: conn?.provider ?? null,
     accountLabel: conn?.accountLabel ?? null,
     lastSyncedAt: conn?.lastSyncedAt ?? null,

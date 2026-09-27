@@ -7789,3 +7789,21 @@ as a user and tell me"*.
 
 **Pending the founder's yes.** If he confirms: a new approval keeps the leaves, A-061 (H) is superseded, and the logo
 boards on the canvas become history.
+
+### 2026-09-27: logo, today's leaves made more like an F (LogoMoreF)
+**Founder:** after the honest read of the current mark, *"mke it more like f"*. Read as: keep the leaves, and make the
+F obvious. The leaves are an F's two arms with no stem. Canvas v73, proposed.
+
+**The versions:**
+- **NOW.** Today's leaves, for reference.
+- **F1. Leaf into stem.** The lower leaf carries on down into a stem, leaning with the leaves and ending in the same
+  chisel angle. Top arm, middle arm, spine; the leaves and the gap stay. **Recommended.** Shown in use.
+- **F2. Full stem.** Joined to both leaves. The most obvious F, a little heavier, with rough joins in this drawing.
+- **F3. Three pieces.** A slim separate stem. Clear, but closer to Framer's F built from pieces.
+
+**Weak, named:**
+- The mark is taller now (about 158:88 instead of 120:78), so it sits narrower beside the name.
+- F1's stem-to-leaf join needs a clean single outline before it ships. In this drawing it is three shapes overlapping.
+
+**Note:** the rejected F-with-a-stem of 2026-09-18 was a different drawing, built from the brief's words before the
+leaves existed. This keeps the founder's leaves and adds only the spine he asked for.

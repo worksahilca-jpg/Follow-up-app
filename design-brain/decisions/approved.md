@@ -1324,3 +1324,24 @@ followed *"i dont see the design on live that i built on canvas"*.
   you this week" and "See all numbers" are gone.
 **Rule this sets:** a screen isn't done until it has been compared side by side with its board. Structural likeness
 is not enough.
+
+## A-068 — The side-by-side fixes and the rest of the app in the new look ^A-068
+**Approved:** 2026-09-27, founder: *"merge"* (PR #368). This came after seeing the drawing-vs-app images and the More
+settings before/after, and followed *"keep going until we changed the whole app i want the new design"*.
+**What specifically:**
+- Onboarding as OnbConnect, OnbChoose and OnbOldCustomers.
+- Customers:
+  - the A-029 state dots;
+  - channel icons;
+  - a customer opening beside the list (A-025), with the details, the timeline and the reply card when one waits.
+- The conversation page on the phone with ThreadPhone's header.
+- Settings › More settings in the overview's look:
+  - quiet grey section labels;
+  - one column;
+  - underline tabs;
+  - pill buttons;
+  - nothing under 13px.
+- Automation state drawn calm: a white card, ink words and one small dot, never a tinted alarm box.
+- The 404 and error pages in the app's own type.
+**Still open:** More settings and the person page's side column are restyled, not redesigned. They would each need a
+drawing first.

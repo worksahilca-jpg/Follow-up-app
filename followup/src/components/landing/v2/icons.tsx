@@ -42,14 +42,6 @@ export function PlusIcon({ open }: { open: boolean }) {
   );
 }
 
-export function LockIcon() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" strokeWidth={2} {...base} style={{ color: "#736e68" }}>
-      <rect x="4" y="11" width="16" height="10" rx="2" />
-      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-    </svg>
-  );
-}
 
 const CHANNEL_PATHS: Record<string, React.ReactNode> = {
   Gmail: (

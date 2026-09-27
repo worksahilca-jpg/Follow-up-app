@@ -194,12 +194,12 @@ describe("the summary sentence on a holding account", () => {
  */
 /**
  * The landing page's words live in page.tsx and the three client pieces it
- * renders (src/components/landing/v2, A-053 → A-060), so the copy checks
- * read all four together.
+ * renders (src/components/landing/v2, A-053 → A-060, A-063), so the copy
+ * checks read all four together.
  */
 const LANDING_FILES = [
   ["app", "page.tsx"],
-  ["components", "landing", "v2", "SeeItWorking.tsx"],
+  ["components", "landing", "v2", "WatchDemo.tsx"],
   ["components", "landing", "v2", "Pricing.tsx"],
   ["components", "landing", "v2", "Questions.tsx"],
 ];
@@ -290,7 +290,10 @@ describe("what the landing page says about sending", () => {
   it("never drops the decisions guarantee", () => {
     const faq = landingCopy().slice(landingCopy().indexOf("Will it send things on its own?"));
     expect(faq, "the FAQ lost the price/date/tense guarantee").toMatch(/A price, a date or anything tense comes to you first/i);
-    expect(landingCopy(), "the hero trust line lost the guarantee").toMatch(/Prices and dates always come to you/i);
+    // Said once, in the hero's first line (A-063: each promise once), and
+    // shown in the demo, where the price comes to the owner.
+    expect(landingCopy(), "the hero lost the guarantee").toMatch(/When something needs your decision, like a price or a date, it hands it to you/i);
+    expect(landingCopy(), "the demo no longer shows the price coming to the owner").toMatch(/It comes to you, reply written/i);
   });
 
   it("does not promise a per-customer fully-automatic mode", () => {

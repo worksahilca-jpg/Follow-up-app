@@ -103,9 +103,9 @@ describe("the landing page's components make the same promises as the page", () 
     "../src/components/landing/dark/NavDark.tsx",
     "../src/components/landing/dark/FaqDark.tsx",
     "../src/components/landing/dark/StickyCta.tsx",
-    // The page rebuilt from the canvas (A-053 → A-060).
+    // The page rebuilt from the canvas (A-053 → A-060, A-063).
     "../src/app/page.tsx",
-    "../src/components/landing/v2/SeeItWorking.tsx",
+    "../src/components/landing/v2/WatchDemo.tsx",
     "../src/components/landing/v2/Pricing.tsx",
     "../src/components/landing/v2/Questions.tsx",
   ];

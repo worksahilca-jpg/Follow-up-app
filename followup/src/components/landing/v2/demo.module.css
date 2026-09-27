@@ -1,0 +1,254 @@
+/*
+  The watchable demo (design brain A-063): the real Today screen playing one
+  customer in five steps. One loop is 24 seconds.
+
+  At rest — no animation, which is what reduced motion gets — the demo shows
+  the END of the story: the whole conversation, "You're caught up", the pill
+  saying Stopped. So a still frame reads whole. Pieces that are only true for
+  a moment (.t) are hidden at rest; the timeline shows each in its window.
+
+  Each piece shows during a window of the loop, in seconds, written below as
+  a percentage of 24 s (4.8 s = 20%). Fades take 0.35 s; from 23.2 s
+  everything fades out and the loop starts again. Replay restarts the loop
+  in place (WatchDemo.tsx), so one set of keyframes is enough. Motion only
+  adds or changes what is on screen (A-048).
+
+Windows:
+  m1     Sarah asks           0.5 s → end
+  s1     came to you          4.8 s → end
+  m2     holding line         9.6 s → end
+  m3     you send $1,200     15.6 s → end
+  m4     Friday check-in     18.4 s → end
+  m5     Sarah replies       19.8 s → end
+  s2     check-ins stopped   20.5 s → end
+  cA     composer empty       0.2 s → 5.2 s
+  cB     reply written        5.2 s → 15.4 s
+  cBb    $ price slot         5.2 s → 14.0 s
+  cBf    $1,200 filled       14.0 s → 15.4 s
+  cC     nothing waiting     15.6 s → end
+  pNew   New                  0.5 s → 4.8 s
+  pNeed  Needs you            4.8 s → 15.4 s
+  pSent  Sent                15.4 s → 19.8 s
+  pStop  Stopped             19.8 s → end
+  hNew   1 new                0.5 s → 4.8 s
+  hNeed  1 needs you          4.8 s → 15.4 s
+  hDone  caught up           15.4 s → end
+  step 1                      0.0 s → 4.5 s
+  step 2                      4.5 s → 9.0 s
+  step 3                      9.0 s → 13.5 s
+  step 4                     13.5 s → 18.0 s
+  step 5                     18.0 s → 23.2 s
+*/
+
+/* ---------- layout ---------- */
+.demo {
+  display: grid;
+  grid-template-columns: 384px minmax(0, 640px);
+  grid-template-areas: "head win" "caps win" "ctl win" "note win";
+  grid-template-rows: auto auto auto 1fr;
+  justify-content: space-between;
+  column-gap: 48px;
+}
+.head { grid-area: head; }
+.caps { grid-area: caps; margin: 36px 0 0; padding: 0; list-style: none; border-bottom: 1px solid var(--line); }
+.caps li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px 0; border-top: 1px solid var(--line); }
+.num { width: 26px; height: 26px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--line); background: var(--card); display: flex; align-items: center; justify-content: center; font-family: var(--font-plex-mono), ui-monospace, monospace; font-size: 11px; font-weight: 500; }
+.cap { font-size: 18px; line-height: 1.4; font-weight: 500; letter-spacing: -0.01em; }
+.track { margin-top: 8px; height: 2px; }
+.bar { height: 2px; background: var(--ink); opacity: 0; transform-origin: 0 50%; }
+.pcaps { display: none; grid-area: pcaps; }
+.ctl { grid-area: ctl; margin-top: 24px; display: flex; align-items: center; gap: 10px; }
+.note { grid-area: note; align-self: end; padding-top: 24px; }
+.noteShort { display: none; }
+.win { grid-area: win; }
+
+.btn { font: inherit; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink); font-size: 14.5px; font-weight: 500; cursor: pointer; }
+.btn:hover { border-color: var(--ink); }
+
+/* ---------- the window ---------- */
+.window { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; box-shadow: 0 30px 60px -30px rgba(26, 20, 15, 0.18); }
+.winTop { height: 52px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line-2); }
+.winTitle { font-size: 15px; font-weight: 600; }
+.body { display: grid; grid-template-columns: 224px minmax(0, 1fr); }
+.list { background: #fafaf9; border-right: 1px solid var(--line-2); }
+.row { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line-2); }
+.rowOn { background: var(--card); }
+.av { width: 28px; height: 28px; box-sizing: border-box; border-radius: 999px; background: var(--avatar); border: 1px solid var(--line); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--soft); }
+.rowName { font-size: 14px; font-weight: 500; white-space: nowrap; }
+.rowOn .rowName { font-weight: 600; }
+.stack { display: grid; }
+.stack > * { grid-area: 1 / 1; }
+.status { margin-top: 2px; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--soft); white-space: nowrap; }
+.dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; }
+.conv { display: flex; flex-direction: column; min-width: 0; }
+.convHead { height: 44px; box-sizing: border-box; padding: 0 18px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line-2); font-size: 14px; }
+.convAv, .convPills { display: none; }
+.convPills > * { grid-area: 1 / 1; }
+.convName { font-weight: 600; }
+.convVia { color: var(--dim); }
+.pill { justify-self: end; display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px 0 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+.thread { min-height: 540px; box-sizing: border-box; padding: 16px 18px; display: flex; flex-direction: column; gap: 9px; }
+.meta { font-family: var(--font-plex-mono), ui-monospace, monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.inMsg, .outMsg { max-width: 84%; }
+.inMsg { align-self: flex-start; }
+.outMsg { align-self: flex-end; text-align: right; }
+.bub { margin-top: 5px; padding: 10px 14px; font-size: 14.5px; line-height: 1.45; text-align: left; }
+.bubIn { background: var(--fill); border-radius: 16px 16px 16px 4px; }
+.bubAuto { background: var(--card); border: 1px solid var(--line); border-radius: 16px 16px 4px 16px; }
+.bubYou { border: 1px solid rgba(10, 10, 10, 0.06); border-radius: 16px 16px 4px 16px; }
+.sys { align-self: center; display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--dim); }
+.sys .dot { width: 6px; height: 6px; }
+.composer { min-height: 136px; box-sizing: border-box; padding: 14px 16px; border-top: 1px solid var(--line-2); display: grid; background: var(--card); }
+.composer > * { grid-area: 1 / 1; align-self: start; }
+.empty { height: 44px; box-sizing: border-box; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; font-size: 14.5px; color: var(--stone); }
+.needs { display: flex; align-items: center; gap: 7px; color: var(--decision); }
+.draft { margin-top: 7px; font-size: 14.5px; line-height: 1.5; }
+.slot { display: inline-grid; vertical-align: baseline; }
+.slot > * { grid-area: 1 / 1; padding: 0 6px; border-radius: 6px; white-space: nowrap; }
+.slotEmpty { border: 1px dashed var(--dash); color: var(--stone); }
+.slotFull { background: var(--fill); font-weight: 500; }
+.acts { margin-top: 10px; display: flex; gap: 8px; }
+.send, .edit { display: inline-flex; align-items: center; height: 30px; padding: 0 14px; border-radius: 999px; font-size: 13.5px; font-weight: 500; }
+.send { background: var(--ink); color: #fff; }
+.edit { border: 1px solid var(--line); padding: 0 12px; }
+.done { height: 44px; display: flex; align-items: center; gap: 8px; font-size: 14.5px; color: var(--soft); }
+
+/* phone captions: one at a time, five segments */
+.one { display: flex; gap: 10px; align-items: baseline; opacity: 0; }
+.oneNum { flex-shrink: 0; }
+.oneText, .stillText { font-size: 18px; line-height: 1.35; font-weight: 500; letter-spacing: -0.01em; }
+.pcapList { display: grid; min-height: 50px; align-items: start; margin: 0; padding: 0; list-style: none; }
+.pcapList > * { grid-area: 1 / 1; }
+.segs { margin-top: 8px; display: flex; gap: 4px; }
+.segs > span { flex: 1; height: 3px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.seg { display: block; height: 3px; background: var(--ink); transform-origin: 0 50%; }
+
+/* resting state: what is only true for a moment is hidden */
+.t { opacity: 0; }
+
+/* paused: everything holds where it is */
+.paused, .paused * { animation-play-state: paused !important; }
+
+/* ---------- widths ---------- */
+/* Below the two-column desktop, captions go one at a time right above the
+   window (the phone's pattern), so the step being read and the screen
+   showing it are always in view together. */
+@media (max-width: 1080px) {
+  .demo { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "head head" "pcaps pcaps" "win win" "ctl note"; grid-template-rows: none; }
+  .caps { display: none; }
+  .pcaps { display: block; margin-top: 20px; }
+  .win { margin-top: 14px; max-width: 720px; }
+  .ctl { margin-top: 14px; }
+  .note { align-self: center; padding-top: 14px; justify-self: end; }
+}
+@media (max-width: 760px) {
+  .win { max-width: none; }
+  .noteLong { display: none; }
+  .noteShort { display: inline; }
+  .window { border-radius: 20px; box-shadow: 0 24px 48px -28px rgba(26, 20, 15, 0.2); }
+  .winTop, .list { display: none; }
+  .body { grid-template-columns: minmax(0, 1fr); }
+  .convHead { height: 52px; padding: 0 14px; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; }
+  .convAv, .convPills { display: inline-flex; }
+  .convPills { display: grid; }
+  .convTitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .thread { min-height: 0; padding: 14px; }
+  .inMsg, .outMsg { max-width: 80%; }
+  .composer { min-height: 142px; }
+}
+
+/* reduced motion: the end of the story, still; nothing to pause */
+@media (prefers-reduced-motion: reduce) {
+  .demo * { animation: none !important; }
+  .ctl, .segs { display: none; }
+  .demo { grid-template-areas: "head win" "caps win" "note win" "note win"; }
+}
+@media (prefers-reduced-motion: reduce) and (max-width: 1080px) {
+  .demo { grid-template-areas: "head head" "pcaps pcaps" "win win" "note note"; }
+  .note { justify-self: start; }
+}
+
+/* ---------- the timeline ---------- */
+@keyframes m1 { 0%, 2.08% { opacity: 0; transform: translateY(8px); } 3.54%, 96.67% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes s1 { 0%, 20% { opacity: 0; transform: translateY(8px); } 21.46%, 96.67% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes m2 { 0%, 40% { opacity: 0; transform: translateY(8px); } 41.46%, 96.67% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes m3 { 0%, 65% { opacity: 0; transform: translateY(8px); } 66.46%, 96.67% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes m4 { 0%, 76.67% { opacity: 0; transform: translateY(8px); } 78.12%, 96.67% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes m5 { 0%, 82.5% { opacity: 0; transform: translateY(8px); } 83.96%, 96.67% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes s2 { 0%, 85.42% { opacity: 0; transform: translateY(8px); } 86.88%, 96.67% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes cA { 0%, 0.83% { opacity: 0; } 2.29%, 21.67% { opacity: 1; } 23.12%, 100% { opacity: 0; } }
+@keyframes cB { 0%, 21.67% { opacity: 0; } 23.12%, 64.17% { opacity: 1; } 65.62%, 100% { opacity: 0; } }
+@keyframes cBb { 0%, 21.67% { opacity: 0; } 23.12%, 58.33% { opacity: 1; } 59.79%, 100% { opacity: 0; } }
+@keyframes cBf { 0%, 58.33% { opacity: 0; } 59.79%, 64.17% { opacity: 1; } 65.62%, 100% { opacity: 0; } }
+@keyframes cC { 0%, 65% { opacity: 0; } 66.46%, 96.67% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes pNew { 0%, 2.08% { opacity: 0; } 3.54%, 20% { opacity: 1; } 21.46%, 100% { opacity: 0; } }
+@keyframes pNeed { 0%, 20% { opacity: 0; } 21.46%, 64.17% { opacity: 1; } 65.62%, 100% { opacity: 0; } }
+@keyframes pSent { 0%, 64.17% { opacity: 0; } 65.62%, 82.5% { opacity: 1; } 83.96%, 100% { opacity: 0; } }
+@keyframes pStop { 0%, 82.5% { opacity: 0; } 83.96%, 96.67% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes hNew { 0%, 2.08% { opacity: 0; } 3.54%, 20% { opacity: 1; } 21.46%, 100% { opacity: 0; } }
+@keyframes hNeed { 0%, 20% { opacity: 0; } 21.46%, 64.17% { opacity: 1; } 65.62%, 100% { opacity: 0; } }
+@keyframes hDone { 0%, 64.17% { opacity: 0; } 65.62%, 96.67% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes press { 0%, 62.08% { transform: none; } 62.71% { transform: scale(.92); } 63.75%, 100% { transform: none; } }
+@keyframes cap1 { 0%, 18.75% { color: var(--ink); } 20%, 100% { color: var(--dim); } }
+@keyframes one1 { 0%, 18.75% { opacity: 1; } 20%, 100% { opacity: 0; } }
+@keyframes bar1 { 0% { opacity: 1; transform: scaleX(0); } 18.75% { opacity: 1; transform: scaleX(1); } 19.58%, 100% { opacity: 0; transform: scaleX(1); } }
+@keyframes seg1 { 0%, 0% { transform: scaleX(0); } 18.75%, 96.67% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+@keyframes cap2 { 0%, 18.75% { color: var(--dim); } 20%, 37.5% { color: var(--ink); } 38.75%, 100% { color: var(--dim); } }
+@keyframes one2 { 0%, 18.75% { opacity: 0; } 20%, 37.5% { opacity: 1; } 38.75%, 100% { opacity: 0; } }
+@keyframes bar2 { 0% { opacity: 0; transform: scaleX(0); } 18.75% { opacity: 1; transform: scaleX(0); } 37.5% { opacity: 1; transform: scaleX(1); } 38.33%, 100% { opacity: 0; transform: scaleX(1); } }
+@keyframes seg2 { 0%, 18.75% { transform: scaleX(0); } 37.5%, 96.67% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+@keyframes cap3 { 0%, 37.5% { color: var(--dim); } 38.75%, 56.25% { color: var(--ink); } 57.5%, 100% { color: var(--dim); } }
+@keyframes one3 { 0%, 37.5% { opacity: 0; } 38.75%, 56.25% { opacity: 1; } 57.5%, 100% { opacity: 0; } }
+@keyframes bar3 { 0% { opacity: 0; transform: scaleX(0); } 37.5% { opacity: 1; transform: scaleX(0); } 56.25% { opacity: 1; transform: scaleX(1); } 57.08%, 100% { opacity: 0; transform: scaleX(1); } }
+@keyframes seg3 { 0%, 37.5% { transform: scaleX(0); } 56.25%, 96.67% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+@keyframes cap4 { 0%, 56.25% { color: var(--dim); } 57.5%, 75% { color: var(--ink); } 76.25%, 100% { color: var(--dim); } }
+@keyframes one4 { 0%, 56.25% { opacity: 0; } 57.5%, 75% { opacity: 1; } 76.25%, 100% { opacity: 0; } }
+@keyframes bar4 { 0% { opacity: 0; transform: scaleX(0); } 56.25% { opacity: 1; transform: scaleX(0); } 75% { opacity: 1; transform: scaleX(1); } 75.83%, 100% { opacity: 0; transform: scaleX(1); } }
+@keyframes seg4 { 0%, 56.25% { transform: scaleX(0); } 75%, 96.67% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+@keyframes cap5 { 0%, 75% { color: var(--dim); } 76.25%, 96.67% { color: var(--ink); } 97.92%, 100% { color: var(--dim); } }
+@keyframes one5 { 0%, 75% { opacity: 0; } 76.25%, 96.67% { opacity: 1; } 97.92%, 100% { opacity: 0; } }
+@keyframes bar5 { 0% { opacity: 0; transform: scaleX(0); } 75% { opacity: 1; transform: scaleX(0); } 96.67% { opacity: 1; transform: scaleX(1); } 97.5%, 100% { opacity: 0; transform: scaleX(1); } }
+@keyframes seg5 { 0%, 75% { transform: scaleX(0); } 96.67%, 96.67% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+@keyframes still { 0%, 100% { opacity: 0; } }
+
+.run .kM1 { animation: m1 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kS1 { animation: s1 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kM2 { animation: m2 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kM3 { animation: m3 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kM4 { animation: m4 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kM5 { animation: m5 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kS2 { animation: s2 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kCA { animation: cA 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kCB { animation: cB 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kCBb { animation: cBb 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kCBf { animation: cBf 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kCC { animation: cC 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kPNew { animation: pNew 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kPNeed { animation: pNeed 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kPSent { animation: pSent 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kPStop { animation: pStop 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kHNew { animation: hNew 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kHNeed { animation: hNeed 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kHDone { animation: hDone 24s cubic-bezier(.2, .7, .2, 1) infinite; }
+.run .kPress { animation: press 24s ease infinite; }
+.run .kCap1 { animation: cap1 24s ease infinite; }
+.run .kOne1 { animation: one1 24s ease infinite; }
+.run .kBar1 { animation: bar1 24s linear infinite; }
+.run .kSeg1 { animation: seg1 24s linear infinite; }
+.run .kCap2 { animation: cap2 24s ease infinite; }
+.run .kOne2 { animation: one2 24s ease infinite; }
+.run .kBar2 { animation: bar2 24s linear infinite; }
+.run .kSeg2 { animation: seg2 24s linear infinite; }
+.run .kCap3 { animation: cap3 24s ease infinite; }
+.run .kOne3 { animation: one3 24s ease infinite; }
+.run .kBar3 { animation: bar3 24s linear infinite; }
+.run .kSeg3 { animation: seg3 24s linear infinite; }
+.run .kCap4 { animation: cap4 24s ease infinite; }
+.run .kOne4 { animation: one4 24s ease infinite; }
+.run .kBar4 { animation: bar4 24s linear infinite; }
+.run .kSeg4 { animation: seg4 24s linear infinite; }
+.run .kCap5 { animation: cap5 24s ease infinite; }
+.run .kOne5 { animation: one5 24s ease infinite; }
+.run .kBar5 { animation: bar5 24s linear infinite; }
+.run .kSeg5 { animation: seg5 24s linear infinite; }
+.run .kStill { animation: still 24s linear infinite; }

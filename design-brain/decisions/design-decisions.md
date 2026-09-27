@@ -7847,3 +7847,51 @@ reaching left past the stem. That is where a lowercase f's crossbar sits.
   first, because the page and /security describe it. The landing and /security build follows in PR 2, on top of the
   MainV2 build already on the landing branch.
 
+### 2026-09-27: the less-to-read landing page and /security built (A-063, A-064), for review
+**Founder:** *"merge #359 when it's green and are we ready to do the magic ??"* #359 (auto follow-up) was merged
+green. This entry is the build of the two pages he approved.
+
+**Landing page (`src/app/page.tsx`):**
+- **One demo** (`WatchDemo.tsx`, `demo.module.css`) replaces How it works, One customer and See it working. It uses
+  the same thread, timings and captions as MainLean/PhoneLean.
+  - It starts from step 1 the first time it comes into view.
+  - Pause and Replay are real buttons. Replay restarts in place, so keyboard focus stays on it.
+  - Reduced motion shows the end of the story, still, with no controls.
+  - The window is one piece of markup for both widths: the phone hides the Today bar and the list.
+- **Your control:** the four one-line promises and the Pause card; the link goes to /security.
+- **Each promise said once:**
+  - the hero's second trust line is gone;
+  - Free no longer says "Prices and dates always come to you";
+  - the final call keeps one reassurance;
+  - Underneath has the shorter lines;
+  - the money answers are in Questions at every width.
+- **Nav:** "How it works" goes to the demo. "Try it" is gone, and `SeeItWorking.tsx` is deleted.
+- **Tests:** the copy test now pins the hero's "like a price or a date, it hands it to you" and the demo's
+  "It comes to you, reply written" in place of the removed trust line.
+
+**/security (`src/app/security/page.tsx`, `security.module.css`):**
+- It is SecurityLean on the landing page's system: header, tokens and type.
+- The flow picture, permission chips, six kept facts, the Settings picture, the company table and "not done yet"
+  are all as drawn.
+- It keeps the live page's one condition: "New sign-in emails" shows only when alert email is configured; otherwise
+  the row is "Recent sign-ins".
+
+**One change from the drawing, deliberate:** between phone and desktop (761–1080 px), the captions show one at a
+time right above the window, the phone's pattern. Stacked above the window, the five captions pushed the screen out
+of view while step 1 played.
+
+**Measured locally:**
+- Desktop home: 5,997 px, 778 visible words (the drawing: 5,497 and 703).
+- Phone home: 6,545 px.
+- /security desktop: 3,351 px.
+- No sideways scroll at 375, 390, 768, 1024 or 1440.
+
+**Review against design-review.md, weak spots named:**
+- The demo's timestamps and the Settings picture's eyebrow are 10.5–11 px mono. They are inside pictures, and they
+  follow the approved eyebrow style, but they are below the 12 px line.
+- The desktop page is about 500 px taller than the drawing. The FAQ's open first answer and the real plan cards
+  account for most of it.
+- Still true from the proposal: the loop is 24 s, so a fast scroller sees step 1 only.
+- The window is `role="img"` with the whole story as its label. A screen reader hears the story once, not the
+  steps as they play.
+

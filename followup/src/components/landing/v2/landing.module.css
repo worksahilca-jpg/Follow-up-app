@@ -1,6 +1,7 @@
 /*
-  The landing page, as approved on the canvas (design brain A-053 → A-060):
-  MainV2 (desktop 1440) and PhoneV2 (phone 390), built as one page.
+  The landing page, as approved on the canvas (design brain A-063, on top
+  of A-053 → A-060): MainLean (desktop 1440) and PhoneLean (phone 390),
+  built as one page. The watchable demo has its own sheet (demo.module.css).
 
   The canvas system (R-019): Public Sans 300 headings, IBM Plex Mono 11px
   eyebrows, white cards with a warm 1px line and 22px corners, the
@@ -10,9 +11,9 @@
 
   Two widths are designed. Between them the desktop layout tightens its
   gutter; below 760px the phone layout takes over, and where the phone
-  design differs in content, not just layout (How it works as three lines,
-  the story as plain lines, promises as a list), both are rendered and one
-  is hidden with CSS — never two different truths, only two shapes of one.
+  design differs in content, not just layout (the demo's captions, the hero
+  picture, the plan picker), both are rendered and one is hidden with CSS —
+  never two different truths, only two shapes of one.
 */
 
 .root {
@@ -65,7 +66,6 @@
 
 /* ---------- surfaces ---------- */
 .card { box-sizing: border-box; background: var(--card); border: 1px solid var(--line); border-radius: 22px; }
-.cardPad { padding: 16px 18px; }
 .bubble { box-sizing: border-box; background: var(--card); border: 1px solid rgba(10, 10, 10, 0.06); border-radius: 18px; }
 .wash {
   position: relative; overflow: hidden; color: var(--ink);
@@ -99,14 +99,7 @@
 }
 .above { position: relative; z-index: 1; }
 
-.pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px 0 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 12.5px; font-weight: 500; color: var(--soft); white-space: nowrap; }
-.pillStrong { font-weight: 600; color: var(--ink); }
 .dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; }
-.avatar { width: 30px; height: 30px; border-radius: 999px; background: var(--avatar); border: 1px solid var(--line); box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--soft); flex-shrink: 0; }
-.row { display: flex; align-items: center; gap: 12px; padding: 11px 0; }
-.row + .row { border-top: 1px solid var(--line-2); }
-.rowName { font-size: 14.5px; font-weight: 500; }
-.rowSub { margin-top: 2px; font-size: 13px; line-height: 1.4; color: var(--soft); }
 .check { flex-shrink: 0; margin-top: 2px; }
 
 /* ---------- header ---------- */
@@ -144,7 +137,6 @@
 
 .heroLedeShort { display: none; }
 .heroTrustShort { display: none; align-items: center; gap: 6px; font-size: 14px; color: var(--soft); justify-self: end; }
-.storyLinesWrap { display: none; }
 
 /* The phone's first screen (A-058): three cards that play in order. */
 .phonePic { display: none; position: relative; height: 318px; border-radius: 24px; margin-top: 18px; }
@@ -163,71 +155,16 @@
 .worksList { display: flex; align-items: center; gap: 30px; font-size: 16px; font-weight: 500; flex-wrap: wrap; justify-content: center; margin: 0; padding: 0; list-style: none; }
 .worksList li { display: inline-flex; align-items: center; gap: 8px; }
 
-/* ---------- how it works ---------- */
-.steps { margin-top: 48px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; align-items: start; }
-.stepTitle { margin-top: 10px; font-size: 22px; line-height: 1.25; letter-spacing: -0.015em; }
-.stepBody { margin: 8px 0 16px; font-size: 15px; line-height: 1.5; color: var(--soft); }
-.fakeBtn { height: 32px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; }
-.stepLines { display: none; margin: 22px 0 0; padding: 0; list-style: none; }
-.stepLines li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
-
-/* ---------- story ---------- */
-.story { display: flex; justify-content: space-between; gap: 64px; }
-.storyHead { width: 400px; flex-shrink: 0; }
-.storyCard { flex-grow: 1; align-self: flex-start; max-width: 600px; padding: 30px 32px; }
-.tl { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 14px; }
-.tlRail { display: flex; flex-direction: column; align-items: center; }
-.tlNum { width: 26px; height: 26px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--line); background: var(--card); display: flex; align-items: center; justify-content: center; font-family: var(--font-plex-mono), monospace; font-size: 11px; font-weight: 500; }
-.tlLine { flex-grow: 1; width: 1px; background: var(--line); margin: 4px 0; }
-.tlBody { padding-bottom: 22px; min-width: 0; }
-.tlTitle { margin: 4px 0 10px; font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
-.theirBubble { display: inline-block; max-width: 400px; padding: 10px 14px; background: var(--fill); border-radius: 16px 16px 16px 4px; font-size: 15px; line-height: 1.45; }
-.sentLine { display: flex; align-items: flex-start; gap: 8px; font-size: 15px; line-height: 1.45; }
-.storyLines { display: none; margin: 22px 0 0; padding: 0; list-style: none; border-left: 1px solid var(--line); }
-.storyLines li { position: relative; padding: 0 0 16px 20px; }
-.storyLines li:last-child { padding-bottom: 0; }
-.storyDot { position: absolute; left: -4px; top: 5px; width: 7px; height: 7px; border-radius: 999px; background: var(--ink); }
-
-/* ---------- see it working ---------- */
-.see { margin-top: 56px; display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; }
-.tabs { width: 380px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
-.tab { font: inherit; text-align: left; cursor: pointer; padding: 18px 22px; border-radius: 16px; background: transparent; border: 1px solid transparent; color: var(--soft); }
-.tab[aria-selected="true"] { background: var(--card); border-color: var(--line); box-shadow: 0 8px 24px -6px rgba(26, 20, 15, 0.06); color: var(--ink); }
-.tabTitle { display: block; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
-.tabDesc { display: block; margin-top: 6px; font-size: 15px; line-height: 1.5; color: var(--soft); }
-.tabShort { display: none; }
-.stage { flex-grow: 1; max-width: 652px; min-height: 470px; box-sizing: border-box; background: var(--fill); border-radius: 24px; display: flex; align-items: center; justify-content: center; padding: 32px; }
-.stageTitle { display: none; }
-.scene { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 16px; }
-.sceneMsg { width: 390px; max-width: 85%; padding: 20px 22px; box-shadow: 0 14px 32px -6px rgba(26, 20, 15, 0.07); border: 1px solid var(--line); }
-.sceneReply { width: 390px; max-width: 85%; align-self: flex-end; box-sizing: border-box; padding: 20px 22px; border-radius: 18px; box-shadow: 0 22px 44px -6px rgba(26, 20, 15, 0.12); }
-.sceneP { margin: 10px 0 0; font-size: 16px; line-height: 1.45; }
-.panel { width: 100%; max-width: 460px; box-sizing: border-box; background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
-.panelHead { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
-.panelWhy { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 8px; padding: 12px 18px; border-bottom: 1px solid var(--line-2); font-size: 13.5px; line-height: 1.45; }
-.panelDraft { padding: 12px 14px; background: var(--fill); border-radius: 12px; font-size: 15px; line-height: 1.5; }
-.fakeSend { font-size: 13.5px; font-weight: 600; background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 999px; }
-.fakeEdit { font-size: 13.5px; font-weight: 600; border: 1px solid var(--line); background: var(--card); padding: 8px 16px; border-radius: 999px; }
-.fakeNo { font-size: 13.5px; font-weight: 500; color: var(--soft); padding: 9px 8px; }
-.logRow { display: flex; align-items: center; gap: 12px; padding: 13px 20px; border-top: 1px solid var(--line-2); }
-.tryBox { width: 100%; max-width: 520px; display: flex; flex-direction: column; }
-.tryLabel { font-size: 20px; letter-spacing: -0.01em; }
-.tryArea { margin-top: 14px; font: inherit; font-size: 16px; line-height: 1.5; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; resize: none; }
-.tryArea:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
-.tryRow { margin-top: 12px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-
-/* ---------- your control ---------- */
-.promises { margin-top: 56px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
-.promise { padding: 26px 24px 30px; display: flex; flex-direction: column; gap: 18px; }
-.promise p { margin: 0; font-size: 18px; line-height: 1.45; letter-spacing: -0.01em; }
-.switches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 72px; }
-.switch { padding: 16px 0; border-top: 1px solid var(--line-2); }
-.switchName { font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
-.switchBody { margin-top: 4px; font-size: 15.5px; line-height: 1.5; color: var(--soft); }
-.googleLine { margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; gap: 32px; }
+/* ---------- your control (A-063) ---------- */
+.control { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 64px; align-items: end; }
+.promiseRows { margin-top: 36px; max-width: 560px; border-bottom: 1px solid var(--line); }
+.promiseRows p { margin: 0; padding: 16px 0; border-top: 1px solid var(--line); font-size: 19px; line-height: 1.4; }
+.pauseCard { box-sizing: border-box; padding: 22px 24px; background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 24px 48px -30px rgba(26, 20, 15, 0.16); }
+.pauseRow { margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.toggle { flex-shrink: 0; width: 46px; height: 28px; box-sizing: border-box; border-radius: 999px; background: var(--line); padding: 3px; display: flex; }
+.toggle > span { width: 22px; height: 22px; border-radius: 999px; background: var(--card); box-shadow: 0 1px 3px rgba(10, 10, 10, 0.2); }
+.safeLink { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; font-size: 16px; }
 .underline { text-decoration: underline; text-underline-offset: 4px; }
-.promiseList { display: none; }
-.chips { display: none; }
 
 /* ---------- proof ---------- */
 .proofGrid { margin-top: 48px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
@@ -253,9 +190,6 @@
 .planNote { margin-top: 8px; font-size: 12.5px; color: var(--dim); text-align: center; }
 .planList { margin: 18px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line-2); list-style: none; display: flex; flex-direction: column; gap: 9px; }
 .planList li { display: flex; gap: 8px; font-size: 14px; line-height: 1.45; }
-.money { margin-top: 36px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
-.moneyQ { font-size: 16px; font-weight: 500; }
-.moneyA { margin: 6px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--soft); }
 .planPicker { display: none; }
 
 /* ---------- questions ---------- */
@@ -265,7 +199,6 @@
 .faqItem { border-bottom: 1px solid var(--line); }
 .faqQ { width: 100%; font: inherit; background: transparent; border: 0; padding: 22px 0; display: flex; justify-content: space-between; align-items: center; gap: 16px; cursor: pointer; text-align: left; color: var(--ink); font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
 .faqA { margin: 0; padding: 0 40px 24px 0; font-size: 16px; line-height: 1.6; color: var(--soft); }
-.faqPhoneOnly { display: none; }
 
 /* ---------- start free ---------- */
 .startBox { border-radius: 32px; }
@@ -292,19 +225,17 @@
   .hero { flex-direction: column; align-items: flex-start; min-height: 0; padding-top: 72px; }
   .heroPic { align-self: center; margin-top: -40px; }
   .head { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .story, .faqWrap { flex-direction: column; gap: 32px; }
-  .storyHead, .faqHead { width: 100%; }
-  .storyCard, .faqList { max-width: none; width: 100%; }
-  .see { flex-direction: column; }
-  .tabs { width: 100%; }
-  .stage { width: 100%; max-width: none; }
-  .promises { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .control { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .control > div:last-child { max-width: 420px; }
+  .faqWrap { flex-direction: column; gap: 32px; }
+  .faqHead { width: 100%; }
+  .faqList { max-width: none; width: 100%; }
   .cols { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 24px; }
   .footGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .footBrand { grid-column: 1 / -1; }
 }
 
-/* ========== phone (PhoneV2, A-057 / A-058) ========== */
+/* ========== phone (PhoneLean: A-057, A-058, A-063) ========== */
 @media (max-width: 760px) {
   .root { --gutter: 20px; }
   .h1 { font-size: 40px; letter-spacing: -0.03em; }
@@ -320,7 +251,6 @@
   .heroLede { margin-top: 12px; font-size: 16px; line-height: 1.5; }
   .heroLedeLong { display: none; }
   .heroLedeShort { display: inline; }
-  .storyLinesWrap { display: block; }
   .heroPic { display: none; }
   .phonePic { display: block; }
   .heroActions { margin-top: 18px; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; width: 100%; }
@@ -332,32 +262,10 @@
   .worksList { justify-content: flex-start; gap: 10px 20px; font-size: 16px; }
   .worksList svg { display: none; }
 
-  .steps { display: none; }
-  .stepLines { display: block; }
-  .storyCard { display: none; }
-  .storyLines { display: block; }
-
-  .see { margin-top: 24px; gap: 0; }
-  .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .tab { min-height: 44px; padding: 10px 12px; border-radius: 999px; text-align: center; background: var(--fill); border: 1.5px solid var(--fill); font-size: 14px; font-weight: 500; }
-  .tab[aria-selected="true"] { background: var(--card); border: 1.5px solid var(--ink); box-shadow: none; }
-  .tabTitle, .tabDesc { display: none; }
-  .tabShort { display: inline; }
-  .stage { background: transparent; padding: 0; min-height: 0; display: block; margin-top: 20px; }
-  .stageTitle { display: block; }
-  .scene, .panel, .tryBox { margin-top: 16px; }
-  .sceneMsg, .sceneReply { width: 280px; padding: 14px 16px; box-shadow: none; }
-  .sceneP { margin-top: 6px; font-size: 15px; }
-  .logRow { padding: 12px 16px; }
-  .tryLabel { font-size: 15px; font-weight: 500; }
-  .tryRow { flex-direction: column; align-items: stretch; text-align: center; }
-
-  .promises, .switchesBlock { display: none; }
-  .promiseList { display: block; margin-top: 18px; }
-  .promiseList p { margin: 0; padding: 11px 0; border-top: 1px solid var(--line); font-size: 16px; line-height: 1.45; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  .chip { padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 14px; background: var(--card); }
-  .googleLine { margin-top: 32px; padding-top: 20px; flex-direction: column; gap: 6px; }
+  .promiseRows { margin-top: 20px; }
+  .promiseRows p { padding: 12px 0; font-size: 17px; }
+  .control { gap: 24px; }
+  .control > div:last-child { max-width: none; }
 
   .proofGrid { grid-template-columns: minmax(0, 1fr); margin-top: 24px; }
 
@@ -367,13 +275,12 @@
   .colBody { margin-top: 3px; font-size: 14px; }
 
   .beta { flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 16px; margin-top: 18px; }
-  .plans, .money { display: none; }
+  .plans { display: none; }
   .planPicker { display: block; }
   .pickTabs { margin-top: 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .pickTab { font: inherit; min-height: 64px; padding: 10px 8px; border-radius: 16px; cursor: pointer; text-align: center; background: var(--fill); border: 1.5px solid var(--fill); color: var(--ink); }
   .pickTab[aria-selected="true"] { background: var(--card); border-color: var(--ink); }
 
-  .faqPhoneOnly { display: block; }
   .faqQ { font-size: 16px; padding: 18px 0; }
   .faqA { font-size: 15px; padding-right: 8px; }
 
@@ -385,7 +292,6 @@
   .footer { padding-block: 40px 32px; }
   .footGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 20px; }
 }
-
 
 @media (prefers-reduced-motion: reduce) {
   .heroMsg, .heroReply, .pc1, .pc2, .pc3 { animation: none; }

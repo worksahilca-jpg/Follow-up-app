@@ -6,16 +6,15 @@ import { PlusIcon } from "./icons";
 
 /**
  * "Straight answers." One list for both widths. The two money questions
- * are phone-only (A-057): on a desktop they sit under the price cards,
- * where people look for them; on a phone they moved here so the pricing
- * section could get shorter.
+ * moved here from under the price cards (A-057 on the phone, A-063 on the
+ * desktop), so the pricing section says only the prices.
  *
  * The first answer is the sending promise, and it has to match what
  * onboarding does (PRODUCT_DIRECTION, 2026-09-26): the owner chooses
  * Automatic or Assisted, and on Automatic prices, dates and anything tense
  * still come to them. trustCopy.test.ts pins it.
  */
-export const FAQS: { q: string; a: string; phoneOnly?: boolean }[] = [
+export const FAQS: { q: string; a: string }[] = [
   {
     q: "Will it send things on its own?",
     a: "If you choose Automatic when you set up, yes: thanks, answers it is sure of, and check-ins. A price, a date or anything tense comes to you first. It stops the moment a customer answers. Prefer to check everything? Choose Assisted, or switch any time in Settings.",
@@ -23,12 +22,10 @@ export const FAQS: { q: string; a: string; phoneOnly?: boolean }[] = [
   {
     q: "What happens when the beta ends?",
     a: "Nothing is charged unless you pick a plan. You stay on Free, with everything you set up.",
-    phoneOnly: true,
   },
   {
     q: "What counts as a customer?",
     a: "One new person who writes to you, counted once, however many messages they send.",
-    phoneOnly: true,
   },
   {
     q: "Why not just set a reminder?",
@@ -59,7 +56,7 @@ export default function Questions() {
       {FAQS.map((f, i) => {
         const isOpen = open === i;
         return (
-          <div key={f.q} className={`${styles.faqItem} ${f.phoneOnly ? styles.faqPhoneOnly : ""}`}>
+          <div key={f.q} className={styles.faqItem}>
             <h3 style={{ margin: 0 }}>
               <button
                 type="button"

@@ -8,9 +8,9 @@ import { FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 
 /**
  * Pricing (A-054/A-055, HubSpot/Intercom study). Desktop: three cards,
- * Plus marked quietly as recommended, and the three money answers under
- * them. Phone (A-057): pick a plan, see one; the money answers move into
- * the FAQ.
+ * Plus marked quietly as recommended. Phone (A-057): pick a plan, see one.
+ * The money answers live in the FAQ at both widths (A-063), and "prices and
+ * dates come to you" is said once, in the hero, not again here.
  *
  * Every line is a fact about the product today:
  *  - "Up to N new customers a month" is FREE_TIER_LEAD_CAP.
@@ -31,7 +31,6 @@ export const PLANS = [
       "No email or form enquiry missed",
       `Up to ${FREE_TIER_LEAD_CAP} new customers a month`,
       "Catch customers before they go cold",
-      "Prices and dates always come to you",
     ],
   },
   {

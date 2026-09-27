@@ -298,6 +298,31 @@ function messageText(m: GraphMessage): string {
   return text.slice(0, 5000);
 }
 
+function graphMessageTime(m: GraphMessage): number {
+  const t = new Date(m.receivedDateTime ?? m.sentDateTime ?? 0).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
+/**
+ * The Graph request for every message in one conversation.
+ *
+ * No `$orderby`. Graph only accepts `$filter` and `$orderby` together on
+ * messages when every ordered property also appears first in the filter;
+ * `conversationId eq …` ordered by `receivedDateTime` breaks that rule and
+ * is refused with `InefficientFilter` ("The restriction or sort order is
+ * too complex for this operation"). The caller read that 400 as "nothing
+ * here" and returned null, so no Outlook conversation ever became a lead.
+ * The caller sorts instead.
+ *
+ * The id is encoded: Graph conversation ids are base64 and can carry `+`,
+ * `/` and `=`, and a raw `+` in a query string arrives as a space. A quote
+ * is doubled, which is how OData escapes one inside a string literal.
+ */
+export function conversationMessagesPath(conversationId: string): string {
+  const filter = encodeURIComponent(`conversationId eq '${conversationId.replace(/'/g, "''")}'`);
+  return `/me/messages?$filter=${filter}&$select=id,conversationId,subject,bodyPreview,body,from,toRecipients,receivedDateTime,sentDateTime&$top=50`;
+}
+
 export type OutlookSyncOptions = {
   skipClassification?: boolean;
   maxClassifications?: number;
@@ -341,13 +366,13 @@ async function processConversations(
   return results.filter((lead): lead is SyncedLead => lead !== null);
 
   async function processOneConversation(conversationId: string): Promise<SyncedLead | null> {
-    const res = await graphFetch(
-      businessId,
-      `/me/messages?$filter=conversationId eq '${conversationId}'&$select=id,conversationId,subject,bodyPreview,body,from,toRecipients,receivedDateTime,sentDateTime&$orderby=receivedDateTime asc&$top=50`
-    );
+    const res = await graphFetch(businessId, conversationMessagesPath(conversationId));
     if (!res || !res.ok) return null;
     const data: { value?: GraphMessage[] } = await res.json();
-    const graphMessages = data.value ?? [];
+    // Oldest first, sorted here: Graph refuses to sort this query itself
+    // (see conversationMessagesPath). Everything below reads the first
+    // message as the thread's opener and the last as its newest.
+    const graphMessages = [...(data.value ?? [])].sort((a, b) => graphMessageTime(a) - graphMessageTime(b));
     if (graphMessages.length === 0) return null;
 
     const parsedMessages = graphMessages.map((m) => {

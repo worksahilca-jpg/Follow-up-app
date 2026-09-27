@@ -782,6 +782,9 @@ export async function sendFollowUpToLead(
     } else if (channel === "messenger") {
       const result = await sendMessengerMessage(lead.businessId, messengerRecipientId(lead.phone!), body, { quickReplies: options.quickReplies, humanAgent });
       if (!result.success) return providerFailure(result, "Facebook didn't confirm this message sent.");
+      // Same reason as Instagram above: the Page's echo of this message
+      // (message_echoes) upserts on this id.
+      externalId = result.messageId;
     } else if (channel === "whatsapp") {
       // The owner's own number through Meta (src/lib/whatsappCloud.ts) when
       // it is connected; otherwise the earlier Twilio sender, for a business

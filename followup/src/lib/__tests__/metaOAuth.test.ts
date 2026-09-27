@@ -288,7 +288,7 @@ describe("Facebook one-click connect", () => {
    * no Messenger DM, no Lead Ad, and a green tick in Settings saying
    * otherwise.
    */
-  it("subscribes the Page to BOTH messages and leadgen with the Page's own token", async () => {
+  it("subscribes the Page to messages, the Page's own echoes, and leadgen with the Page's own token", async () => {
     const fetchSpy = vi
       .spyOn(global, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
@@ -300,7 +300,11 @@ describe("Facebook one-click connect", () => {
     const body = new URLSearchParams(String(init.body));
     // Messenger DMs and Lead Ads are both of what this channel promises;
     // subscribing to one and not the other half-connects it silently.
-    expect(body.get("subscribed_fields")).toBe("messages,leadgen");
+    // message_echoes is how an owner's reply from the Page inbox reaches
+    // FollowUp at all: Messenger, unlike Instagram, never puts echoes in
+    // `messages`, so without it that reply was invisible and FollowUp
+    // answered the customer on top of it.
+    expect(body.get("subscribed_fields")).toBe("messages,message_echoes,leadgen");
     expect(body.get("access_token")).toBe("EAAG-page-tok");
   });
 

@@ -22,7 +22,7 @@ export default function CopyEmbedSnippet() {
   }, []);
 
   const snippet = embedUrl
-    ? `<iframe src="${embedUrl}" style="width:100%;max-width:420px;height:540px;border:none;" title="Contact us"></iframe>`
+    ? `<iframe src="${embedUrl}" style="width:100%;max-width:420px;height:660px;border:none;" title="Contact us"></iframe>`
     : "";
 
   async function copy() {

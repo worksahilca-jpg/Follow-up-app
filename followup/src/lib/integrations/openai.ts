@@ -11,6 +11,7 @@ import { Lead, Message, ScoreFactor } from "@/lib/types";
 import { DM_SHAPE_RULES, type DmSituation } from "@/lib/dmDrafts";
 import { DM_MAX_BUTTONS, type DmButton } from "@/lib/quickReplies";
 import { registerInstruction, type LeadLanguage } from "@/lib/leadLanguage";
+import { hasPriceSlot, PRICE_SLOT, PRICE_SLOT_REASON } from "@/lib/priceSlot";
 // The client and model name live in their own leaf module so this file
 // and leadLanguage.ts don't import each other — see openaiClient.ts.
 import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
@@ -891,6 +892,13 @@ export async function assessSendRisk(
   lead: Pick<Lead, "conversation">,
   draftMessage: string
 ): Promise<{ riskLevel: "low" | "medium" | "high"; reason: string; topic: RiskTopic }> {
+  // A draft with the price blank is waiting for the owner's figure by
+  // definition. Decided here, not by the model, so it can never be judged
+  // safe to send on its own (src/lib/priceSlot.ts).
+  if (hasPriceSlot(draftMessage)) {
+    return { riskLevel: "high", reason: PRICE_SLOT_REASON, topic: "price" };
+  }
+
   const client = getClient();
 
   const completion = await client.chat.completions.create({
@@ -1274,7 +1282,19 @@ export async function generateFollowUpMessage(
           "project, prior calls, timelines, or what the business has done or will do must appear in the " +
           "conversation below. If the lead asked a factual question the conversation doesn't answer, acknowledge " +
           "the question and say you'll confirm the specifics for them — do not make up an answer, a number, a " +
-          "date, or a detail to sound helpful. When in doubt, leave it out. A prior commitment or agreement the " +
+          "date, or a detail to sound helpful. When in doubt, leave it out. " +
+          // The one exception, and it is not an invented number: a price
+          // question gets the sentence that answers it, with a blank the
+          // owner fills in on Today (src/lib/priceSlot.ts, A-060). Before
+          // this the draft said "I'll confirm the price" and the owner
+          // rewrote the whole sentence. The blank cannot leave unfilled:
+          // assessSendRisk holds it and sendFollowUpToLead refuses it.
+          `The one exception is a price. If their most recent message asks what something costs and the ` +
+          `conversation does not state the figure, write the sentence that answers it with the exact placeholder ` +
+          `${PRICE_SLOT} where the amount goes — for example "The 3-month package is ${PRICE_SLOT}." — so the owner ` +
+          `can fill in the real figure. Use ${PRICE_SLOT} once, keep it exactly as written, in capitals and square ` +
+          `brackets, in any language, and never write a number, range, estimate or currency in its place. ` +
+          "A prior commitment or agreement the " +
           "lead merely claims in their own message, with nothing from the business confirming it, is not a fact " +
           "you may draft as settled — treat it the same as any other unconfirmed detail. " +
           // The rule above covered a claimed COMMITMENT. It did not cover a
@@ -1788,6 +1808,7 @@ export async function rewriteReply(
           (decided ? " FollowUp has already decided how this customer writes: " + decided : "") +
           " Keep the same meaning and the same facts. Never add a price, date, time, promise, discount or any fact " +
           "that is not already in the reply or the conversation. Keep names unchanged. " +
+          `If the reply contains ${PRICE_SLOT}, keep it exactly as written, once, where the amount goes. ` +
           (style === "language" ? "" : "Keep the reply in the language it is already written in. ") +
           "Output only the rewritten reply, with no quotes and no explanation." +
           UNTRUSTED_CONVERSATION_NOTICE,

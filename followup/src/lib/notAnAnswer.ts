@@ -19,7 +19,10 @@
  * The instant ack was special-cased by name in each of those places. The
  * holding message is the same kind of thing, so they share one list now.
  */
-export const NOT_AN_ANSWER_TRIGGERS: readonly string[] = ["instant_ack", "holding"];
+/** The trigger on the holding message. Lives here so the queue can find it without importing the sender. */
+export const HOLDING_TRIGGER = "holding";
+
+export const NOT_AN_ANSWER_TRIGGERS: readonly string[] = ["instant_ack", HOLDING_TRIGGER];
 
 /** True for an outbound message whose trigger is one of NOT_AN_ANSWER_TRIGGERS. */
 export function isNotAnAnswer(trigger: string | null | undefined): boolean {

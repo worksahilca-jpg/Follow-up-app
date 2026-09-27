@@ -7895,3 +7895,41 @@ of view while step 1 played.
 - The window is `role="img"` with the whole story as its label. A screen reader hears the story once, not the
   steps as they play.
 
+### 2026-09-27: Today says the customer was told, and the "$ price" blank is built (A-060, for review)
+**Founder:** *"lets focus"*, then *"and go"*, on building the two missing pieces of the approved TodayHoldingPhone
+(A-060).
+
+**1. "FollowUp told Sarah you're on it · 8:50 PM"**
+- It shows on the Today card under the customer's message, but only when the 30-minute holding message answered their
+  newest question.
+- The time is in the business's own timezone, worked out on the server like "Waiting 2 h".
+- Before this, the fact only appeared in the customer's history on their own page. An owner could think the customer
+  was still waiting in silence.
+
+**2. The "$ price" blank (the spec A-060 left open):**
+- **Drafting:** when the customer's newest message asks what something costs and the conversation doesn't state it,
+  the draft is written with `[PRICE]` where the figure goes: "The 3-month package is [PRICE]."
+  - Used once, in any language, and never a number, range or currency in its place.
+  - Before this, the draft said "I'll confirm the price" and the owner rewrote the sentence.
+- **Held, always:** the risk check returns "high, price" for any draft with the blank, without asking the model.
+  - The fully automatic tier, which skips review, is routed through review when the blank is there.
+  - So a price question always comes to the owner, and gets the 30-minute holding message on Automatic.
+- **Never sent unfilled:** `sendFollowUpToLead` refuses any message or subject that still has the blank, on every path,
+  before anything is queued or recorded. The error says "Add the price first".
+- **Today:** the blank is a dashed box inside the reply with the placeholder "$ price".
+  - "Approve & send" stays off until it's filled, with "Add the price, then send. FollowUp never guesses one."
+  - The box locks during the 10-second undo.
+- **Rewrites** (Shorter, Warmer, a language) keep the blank where it is.
+- **Counts:** filling the blank is not an edit, so "sent without changing a word" still counts a reply sent as
+  drafted with the price filled in.
+
+**Checked:**
+- Rendered locally on a held price question at 1280 and 390: Send off before the price, on after.
+- Tests pin the hold, the refusal, the drafting rule and the fill-is-not-an-edit rule.
+
+**Weak, named:**
+- The box is 32 px tall inside a line of text, under the 44 px touch target. Making it taller breaks the line.
+- On the customer's own page, Edit shows the literal "[PRICE]" in the text box. The send is refused until it's
+  replaced, but it isn't drawn as a box there yet.
+- Only price has a blank. A date question still gets "I'll confirm a time", because A-060 drew only the price.
+

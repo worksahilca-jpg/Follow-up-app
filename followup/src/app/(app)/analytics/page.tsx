@@ -1,127 +1,191 @@
 import Link from "next/link";
-import { Inbox } from "lucide-react";
-import StatCard from "@/components/StatCard";
-import { FactList } from "@/components/FactList";
-import { PageHeader } from "@/components/PageHeader";
-import AnalyticsCharts from "@/components/AnalyticsCharts";
 import TeamPerformanceSection from "@/components/TeamPerformanceSection";
-import EmptyState from "@/components/EmptyState";
+import { Eyebrow } from "@/components/app/canvasBits";
 import { getAnalytics } from "@/lib/analytics-data";
+import { getLeads } from "@/lib/leads-data";
+import { getSessionContext } from "@/lib/session";
+import { prisma } from "@/lib/db";
 import { formatCurrency } from "@/lib/demo-data";
+import { formatSpan } from "@/lib/activation";
+import { medianReplyMs } from "@/lib/waitingOn";
+import { getRescueReport } from "@/lib/rescued";
+import { countCustomersAnswered } from "@/lib/weeklyDigest";
+import { sentAsWritten } from "@/lib/showTheWork";
 
 export const dynamic = "force-dynamic";
 
-export default async function AnalyticsPage() {
-  const data = await getAnalytics();
+const DAY = 24 * 60 * 60 * 1000;
+const WEEKS = 8;
 
-  // No signed-out branch: (app)/layout.tsx redirects before this page is
-  // reached, so the bare "Sign in to view analytics." paragraph that used to
-  // live here was unreachable, unstyled dead code.
+/**
+ * Numbers, as drawn on the canvas (A-066). It reads like the Monday email
+ * (A-038): the week's reply speed in one sentence (A-050), then answered,
+ * came back and booked beside last week, then eight weeks of customers
+ * answered, then everything else as a quiet list. Customers, never
+ * messages. Only our own records; nothing estimated.
+ *
+ * Out of the menu since A-027; reached from Settings › Everything else.
+ */
+export default async function NumbersPage() {
+  const ctx = await getSessionContext();
+  if (!ctx) return null;
+  const now = new Date();
+  const weekStart = new Date(now.getTime() - 7 * DAY);
+  const lastWeekStart = new Date(now.getTime() - 14 * DAY);
+
+  const [data, leads, business, report, lastReport, written] = await Promise.all([
+    getAnalytics(),
+    getLeads(),
+    prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } }),
+    getRescueReport(ctx.businessId, 7, now),
+    getRescueReport(ctx.businessId, 7, weekStart),
+    sentAsWritten(ctx.businessId, weekStart),
+  ]);
   if (!data) return null;
+  const timeZone = business?.timezone ?? "America/New_York";
+
+  // Eight weeks of customers answered, oldest first; the last is this week.
+  const weeks = await Promise.all(
+    Array.from({ length: WEEKS }, (_, i) => {
+      const end = new Date(now.getTime() - (WEEKS - 1 - i) * 7 * DAY);
+      const start = new Date(end.getTime() - 7 * DAY);
+      return countCustomersAnswered(ctx.businessId, start, end).then((n) => ({ start, n }));
+    })
+  );
+  const answered = weeks[WEEKS - 1].n;
+  const answeredLast = weeks[WEEKS - 2].n;
+
+  const heardBack = medianReplyMs(leads, weekStart, now);
+  const heardBackLast = medianReplyMs(leads, lastWeekStart, weekStart);
+
+  const fmtDay = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone });
+  const three = [
+    { label: "Answered", value: answered, last: answeredLast },
+    { label: "Came back", value: report.rescued, last: lastReport.rescued },
+    { label: "Booked", value: report.booked, last: lastReport.booked },
+  ];
+  const max = Math.max(1, ...weeks.map((w) => w.n));
+  const rest: [string, string][] = [
+    ["Customers", String(data.totalLeads)],
+    ["On a follow-up plan", String(data.sequenceHealth.enrolledCount)],
+    ["Sent as written this week", written.total > 0 ? `${written.asWritten} of ${written.total}` : "—"],
+    ["Plans finished (30 days)", String(data.sequenceHealth.completedLast30Days)],
+    ["Won", data.wonCount > 0 ? `${data.wonCount} · ${formatCurrency(data.totalRevenue)}` : "0"],
+    ["Replied after a follow-up", data.followUpsSentTotal > 0 ? `${data.repliedCount} of ${data.followUpsSentTotal}` : "—"],
+  ];
 
   return (
     <div>
-      <PageHeader title="Analytics" subtitle="How your pipeline is performing." />
+      <Link href="/settings" className="text-[13px] text-ink-faint hover:text-ink">
+        ← Settings
+      </Link>
+      <div className="mt-3.5">
+        <Eyebrow>
+          This week · {fmtDay(weekStart)} to {fmtDay(now)}
+        </Eyebrow>
+      </div>
+      <h1 className="mt-2 text-[28px] leading-[1.12] lg:text-[34px]">
+        {heardBack != null ? `Customers heard back in ${formatSpan(heardBack)}.` : "Nobody wrote in this week yet."}
+      </h1>
+      <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-ink-soft">
+        {heardBack != null ? (
+          <>
+            <span className="hidden lg:inline">
+              The middle time from a customer writing to their first reply, from your own records.{" "}
+            </span>
+            {heardBackLast != null ? `Last week it was ${formatSpan(heardBackLast)}.` : "Nothing to compare with last week."}
+          </>
+        ) : (
+          "Once someone writes and gets an answer, how fast they heard back shows here."
+        )}
+      </p>
 
-      {data.totalLeads === 0 ? (
-        // Same "connect Gmail to get started" treatment as Leads and
-        // Pipeline's empty states, instead of 12 silent zero-value tiles
-        // and empty charts — there's nothing to analyze until leads exist.
-        <div className="mt-6">
-          <EmptyState
-            icon={Inbox}
-            title="No data yet"
-            /* Third copy of the Gmail-only sentence, fixed with the other
-               two on 2026-09-22 — see leads/LeadsPageClient.tsx. */
-            description="Connect where your customers write to you in Settings — your inbox, website form, DMs or CRM — or add one by hand. Your stats show up here once there's activity to measure."
-            action={
-              <Link
-                href="/settings"
-                className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium"
-                style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-              >
-                Go to Settings
-              </Link>
-            }
-          />
-        </div>
-      ) : (
-        <>
-          {/* This was twelve StatCards in one flat 4-column grid. Twelve equal
-              things is no hierarchy at all, and six of the twelve were
-              reply-rate variants. Worse: median reply time — described in this
-              file's own comment as "the core how-fast-do-we-get-leads-to-
-              respond number behind the product's whole pitch" — was tile eight
-              of twelve, rendered the same size as "Avg. deal value".
+      {data.totalLeads === 0 && (
+        <p className="mt-6 text-[15px] text-ink-soft">
+          No customers yet. Connect where customers write to you in{" "}
+          <Link href="/settings" className="underline underline-offset-[3px]">
+            Settings
+          </Link>
+          : your inbox, website form, DMs or CRM. Your numbers fill in from there.
+        </p>
+      )}
 
-              Three tiers now. The headline the owner would repeat to someone
-              else; then the money; then everything else as a reference table
-              they glance at rather than read. */}
+      {/* The week's three numbers, beside last week (A-038). */}
+      <div className="mt-6 overflow-hidden rounded-[18px] border border-line bg-card lg:grid lg:grid-cols-3">
+        {three.map((t, i) => (
           <div
-            className="relative mt-6 overflow-hidden box p-5"
+            key={t.label}
+            className={
+              "flex items-center justify-between px-[18px] py-4 lg:flex-col lg:items-start lg:justify-start lg:px-6 lg:py-5 " +
+              (i ? "border-t border-line-2 lg:border-l lg:border-t-0" : "")
+            }
           >
-            {data.medianReplyHours !== null && (
-              <span
-                aria-hidden="true"
-                className="absolute inset-y-0 left-0 w-[3px]"
-                style={{ backgroundColor: "var(--sage)" }}
-              />
-            )}
-            <p className="text-sm text-ink-soft">Median reply time</p>
-            <p className="font-display text-5xl mt-1 tabular-nums">
-              {data.medianReplyHours !== null ? `${data.medianReplyHours}h` : "—"}
-            </p>
-            {/* This sentence used to be a 12px grey line under the grid, and
-                it was already the clearest writing on the page. */}
-            <p className="mt-2 text-sm text-ink-soft">
-              {data.followUpsSentTotal > 0
-                ? `${data.repliedCount} of ${data.followUpsSentTotal} sent follow-ups have gotten a reply so far.`
-                : "Nothing sent yet — this fills in once FollowUp has sent its first follow-ups."}
-            </p>
+            <div>
+              <div className="text-base lg:text-sm lg:text-ink-soft">{t.label}</div>
+              <div className="mt-0.5 text-[13px] text-ink-faint lg:hidden">Last week: {t.last}</div>
+            </div>
+            <div className="text-[34px] font-light leading-none tracking-[-0.03em] tabular-nums lg:mt-1.5 lg:text-[44px]">
+              {t.value}
+            </div>
+            <div className="mt-2 hidden text-[13px] text-ink-faint lg:block">Last week: {t.last}</div>
           </div>
+        ))}
+      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-            <StatCard label="Revenue won" value={formatCurrency(data.totalRevenue)} />
-            <StatCard label="Avg. deal value" value={formatCurrency(data.avgDealValue)} />
-            <StatCard label="Conversion rate" value={`${data.conversionRate}%`} />
-          </div>
-
-          <div className="mt-8">
-            <p
-              className="font-mono text-xs uppercase tracking-wider text-ink-soft mb-1"
-              style={{ letterSpacing: "0.08em" }}
+      <div className="mt-7 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start">
+        {/* Eight weeks, as bars. Hidden on the phone (R-015). */}
+        <section className="hidden lg:block">
+          <h2 className="text-[15px]">Customers answered, by week</h2>
+          <figure className="mt-3.5 rounded-[18px] border border-line bg-card px-5 pb-3.5 pt-4">
+            <div
+              role="img"
+              aria-label={`Customers answered each week for eight weeks: ${weeks.map((w) => `${fmtDay(w.start)} ${w.n}`).join(", ")}.`}
+              className="grid grid-cols-8 gap-2"
             >
-              Everything else
-            </p>
-            <FactList
-              facts={[
-                { label: "Customers", value: String(data.totalLeads) },
-                { label: "Active", value: String(data.activeCount) },
-                { label: "Won", value: String(data.wonCount) },
-                { label: "Reply rate", value: data.followUpsSentTotal > 0 ? `${data.replyRate}%` : "—" },
-                { label: "Reply rate — automated", value: data.automatedReplyRate !== null ? `${data.automatedReplyRate}%` : "—" },
-                { label: "Reply rate — manual", value: data.manualReplyRate !== null ? `${data.manualReplyRate}%` : "—" },
-                { label: "Drafts sent as written", value: data.draftsSentAsWritten !== null ? `${data.draftsSentAsWritten}%` : "—" },
-                { label: "On a follow-up plan", value: String(data.sequenceHealth.enrolledCount) },
-                { label: "Plans finished (30 days)", value: String(data.sequenceHealth.completedLast30Days) },
-              ]}
-            />
-          </div>
+              {weeks.map((w, i) => {
+                const current = i === WEEKS - 1;
+                return (
+                  <div key={i} className="flex min-w-0 flex-col items-center gap-2">
+                    <div className="flex h-[150px] w-full flex-col items-center justify-end gap-1.5">
+                      <span className={"text-[12.5px] tabular-nums " + (current ? "font-semibold text-ink" : "text-ink-faint")}>{w.n}</span>
+                      <span
+                        className="block w-9 rounded-t-[6px] rounded-b-[2px]"
+                        style={{
+                          height: `${Math.round((w.n / max) * 120)}px`,
+                          minHeight: w.n > 0 ? 3 : 0,
+                          background: current ? "var(--ink)" : "var(--line)",
+                        }}
+                      />
+                    </div>
+                    <span className="whitespace-nowrap text-xs text-ink-faint">{fmtDay(w.start)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </figure>
+        </section>
 
-          <div className="mt-10">
-            <AnalyticsCharts data={data} />
-          </div>
-
-          {data.teamBreakdown.length > 1 && (
-            <section className="mt-10">
-              <h2 className="font-display text-xl">Team performance</h2>
-              <p className="text-sm text-ink-soft mt-1">Who&apos;s carrying what, and how much of it has gone quiet.</p>
-              <div className="mt-4">
-                <TeamPerformanceSection members={data.teamBreakdown} />
+        <section>
+          <h2 className="text-[15px]">Everything else</h2>
+          <dl className="mt-1.5">
+            {rest.map(([k, v]) => (
+              <div key={k} className="flex justify-between border-b border-line-2 py-[11px] text-sm">
+                <dt className="text-ink-soft">{k}</dt>
+                <dd className="tabular-nums">{v}</dd>
               </div>
-            </section>
-          )}
-        </>
+            ))}
+          </dl>
+        </section>
+      </div>
+
+      {data.teamBreakdown.length > 1 && (
+        <section className="mt-10">
+          <h2 className="text-[15px]">Your team</h2>
+          <p className="mt-1 text-sm text-ink-soft">Who&apos;s carrying what, and how much of it has gone quiet.</p>
+          <div className="mt-4">
+            <TeamPerformanceSection members={data.teamBreakdown} />
+          </div>
+        </section>
       )}
     </div>
   );

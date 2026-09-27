@@ -1291,3 +1291,21 @@ BookedPhone, FormOnSite, FormPhone, FormErrorPhone, FormSentPhone).
 - The business name shows twice when the form sits on their own site.
 - The calendar buttons are a small new feature.
 
+
+## A-066 — The rest of the app, as drawn (canvas v78, "The rest of the app") ^A-066
+
+**Approved:** 2026-09-27, founder: *"yes build all six too"*, after the drawings of Pipeline, Numbers, What FollowUp
+did, Coming up (desktop) and Follow-up plans (phone). Waiting on customers was already drawn and approved (A-050).
+**What specifically:**
+- **Pipeline:** the stages as quiet columns with each customer's value and a total per stage, and one line for won and
+  lost this month. The first stage reads "New", not "New Lead". There are no score badges and no per-card stage
+  dropdown: moving is by drag or from the person's page. "Only mine" replaces "My leads only". On the phone, one
+  stage is open at a time.
+- **Numbers:** one sentence with this week's reply speed and last week's; then answered, came back and booked, each
+  with last week; eight weeks of "customers answered" as bars; then "Everything else". The phone drops the bars.
+- **What FollowUp did:** grouped by day, one sentence per action with the customer's name, then channel and state.
+  Tabs filter by kind.
+- **Coming up (desktop):** grouped by day. Each row shows who, what, when, "unless … writes first", and whether it
+  sends on its own or waits for an OK.
+- **Follow-up plans (phone):** the three plans as one list, one opened, and "Use this plan" as its button.
+- They all stay out of the menu (A-027).

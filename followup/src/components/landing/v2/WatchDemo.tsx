@@ -275,6 +275,10 @@ export default function WatchDemo() {
           <br />
           except the price.
         </h2>
+        {/* The "that's simple" step of the founder's strategy, since How it works folded into this demo (A-063). */}
+        <p className={styles.lede} style={{ marginTop: 14 }}>
+          Connect your inbox in 2 minutes. It finds who’s waiting and follows up.
+        </p>
       </div>
 
       <ol className={d.caps}>

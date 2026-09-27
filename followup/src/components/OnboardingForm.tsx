@@ -654,7 +654,8 @@ function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
         className="w-full mt-6 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
         style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
       >
-        {saving ? "Saving…" : "Continue"}
+        {/* A-053's curiosity action: the next screen is the list of who never got a reply. */}
+        {saving ? "Saving…" : "Find who needs a reply"}
         {!saving && <ArrowRight className="h-4 w-4" />}
       </button>
     </div>

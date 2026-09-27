@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { MOTION, OPEN_IN_PLACE } from "@/lib/motion";
 import { useRouter } from "next/navigation";
 import { fillPriceSlot, hasPriceSlot, splitAtPriceSlot } from "@/lib/priceSlot";
 import { Eyebrow } from "./canvasBits";
@@ -128,7 +130,13 @@ export default function ReplyCard({
 
   if (done) {
     return (
-      <div className="rounded-[20px] border border-line bg-card p-5" role="status">
+      // The card folds into what happened (A-048), once, without fanfare.
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
+        className="rounded-[20px] border border-line bg-card p-5"
+        role="status"
+      >
         {done.kind === "skipped" ? (
           <p className="text-[15px]">Not sent. Nothing went to {first}.</p>
         ) : done.template ? (
@@ -142,7 +150,7 @@ export default function ReplyCard({
         ) : (
           <p className="text-[15px]">Sent to {first}, from your own address.</p>
         )}
-      </div>
+      </motion.div>
     );
   }
 
@@ -152,8 +160,9 @@ export default function ReplyCard({
     <div className="relative overflow-hidden rounded-[20px] p-5" style={WARM_CARD}>
       <Eyebrow>{label}</Eyebrow>
 
+      <AnimatePresence initial={false} mode="wait">
       {editing ? (
-        <div className="mt-3 space-y-2">
+        <motion.div key="edit" {...OPEN_IN_PLACE} className="mt-3 space-y-2">
           {isEmail && (
             <input
               id="reply-subject"
@@ -197,9 +206,9 @@ export default function ReplyCard({
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
       ) : (
-        <p className="mt-2.5 whitespace-pre-wrap text-base leading-relaxed">
+        <p key="read" className="mt-2.5 whitespace-pre-wrap text-base leading-relaxed">
           {needsPrice
             ? splitAtPriceSlot(text).map((part, i) =>
                 i === 0 ? (
@@ -227,6 +236,7 @@ export default function ReplyCard({
             : text}
         </p>
       )}
+      </AnimatePresence>
 
       {needsPrice && <p className="mt-2 text-[13px] text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
       {basis && !edited && !editing && <p className="mt-2 text-[13px] text-ink-soft">{basis}</p>}

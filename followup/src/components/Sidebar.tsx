@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Sun, Inbox, Users, Settings, Search, LogOut } from "lucide-react";
+import { Sun, Inbox, Users, Settings, LogOut } from "lucide-react";
+import SidebarSearch from "@/components/app/SidebarSearch";
 import NotificationBell from "./NotificationBell";
 import FeedbackDialog from "./FeedbackDialog";
 import LogoMark from "@/components/LogoMark";
@@ -94,13 +95,7 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
           <NotificationBell />
         </div>
 
-        <Link
-          href="/leads?focus=search"
-          className="mt-3 flex h-8 items-center gap-2 rounded-lg border border-line bg-card px-2.5 text-[13.5px] text-ink-faint hover:text-ink-soft"
-        >
-          <Search className="h-3.5 w-3.5" strokeWidth={2} />
-          Search customers
-        </Link>
+        <SidebarSearch />
 
         <nav aria-label="Main" className="mt-4 flex flex-col gap-0.5">
           {places.map(({ href, label, icon: Icon, count }) => {

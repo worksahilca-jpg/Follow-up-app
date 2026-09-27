@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Lead } from "@/lib/types";
@@ -154,6 +154,11 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
   const { data: session } = useSession();
   const [filter, setFilter] = useState<FilterId>("all");
   const [query, setQuery] = useState("");
+  // The sidebar's "Search customers" box lands here with ?focus=search.
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("focus") === "search") searchRef.current?.focus();
+  }, []);
   const [showAddLead, setShowAddLead] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showLogCall, setShowLogCall] = useState(false);
@@ -372,6 +377,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
         <div className="relative">
           <Search className="h-4 w-4 absolute left-3 top-2.5 text-ink-soft" />
           <input
+            ref={searchRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search customers…"

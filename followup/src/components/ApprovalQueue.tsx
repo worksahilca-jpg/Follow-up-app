@@ -537,6 +537,7 @@ export default function ApprovalQueue({
   laterToday = true,
   setAside = 0,
   waitingOn = 0,
+  holdAll = false,
 }: {
   items: ApprovalItem[];
   /** Only admins send, and this person isn't one (A-041). */
@@ -551,6 +552,12 @@ export default function ApprovalQueue({
   setAside?: number;
   /** Customers we answered who haven't answered back (A-050). */
   waitingOn?: number;
+  /**
+   * Business.holdAllForApproval: every reply waits for the owner. The
+   * empty state must not then say only unsure ones do (strategy audit
+   * 2026-09-27).
+   */
+  holdAll?: boolean;
 }) {
   const [resolved, setResolved] = useState<Set<string>>(new Set());
   // A card that is done says what happened for a moment, then leaves and
@@ -635,7 +642,9 @@ export default function ApprovalQueue({
           <p className="mt-1 text-sm text-ink-soft">
             {done
               ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
-              : "Anything FollowUp isn't sure about will show up here before it sends."}
+              : holdAll
+                ? "Every reply FollowUp writes shows up here first. Nothing goes out until you send it."
+                : "Anything FollowUp isn't sure about will show up here before it sends."}
             {answeredForYou > 0 &&
               ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}
           </p>

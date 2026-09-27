@@ -59,7 +59,7 @@ describe("a lead that is due right now", () => {
     // Both halves matter. "A draft is coming" alone reads as busywork;
     // "it waits for you" alone doesn't say anything is happening.
     expect(`${label} ${detail}`).toMatch(/draft|writing/i);
-    expect(detail, "the owner is not told the draft needs them").toMatch(/approv/i);
+    expect(detail, "the owner is not told the draft needs them").toMatch(/until you send/i);
   });
 
   it("still describes the lead as due, not as stopped", () => {

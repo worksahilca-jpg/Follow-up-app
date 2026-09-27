@@ -8243,3 +8243,25 @@ Four boards on the canvas (v80): SettingsAll, SettingsAllPhone, SettingsChannel 
   back.
 - **Weak, named:** a 25-person cap on the onboarding list means a busy inbox leaves the rest for Today. That is
   deliberate, since nobody gets a message the owner never saw, but it's one more step for them.
+
+## 2026-09-27 — Wording that promised more than the product does (founder: "fix the wording")
+
+From the 2026-09-27 strategy audit, item 4, after checking each claim against the code:
+- **"Approvals" is now "Today"** in the six places that sent owners to a page that no longer exists: Settings, Today's
+  empty state, follow-up plans, the badge on a customer, and the stale and burst notices.
+- **Today's empty state on a holding account** now says every reply shows up here first. It used to say only the
+  unsure ones would.
+- **Plus: "Answer in any language" is now "Replies in the language they wrote in".** It's the same capability, without
+  the claim that every language is checked. No native-speaker pass has been done yet.
+- **Clean up:**
+  - The magic-wand icon is gone (S-13), and so are "the AI" and "leads".
+  - The false "Can't be undone" now says removed customers can be put back from Settings → Email, under
+    "Filtered out" (they can: `archiveLeadThreadsAsFiltered`).
+  - "Filtered out" no longer says "the AI" or "lead".
+- **Checked and left alone:**
+  - The hero and onboarding example, "Happy to quote that… send a photo", sent on its own, is accurate. It is the
+    instant first reply, which by design goes out on its own on Automatic even for a price question (acknowledge.ts).
+    Only the price itself waits for the owner, which is exactly what the hero's third card says.
+  - The 14-day trial on upgrade isn't the "no free trial" the plan rules out. That rule is about public sign-up.
+- **Left for the founder:** Settings' plan lines say Free is "assisted only", but the code lets any plan choose
+  Automatic. Which one is right is a pricing decision, not wording.

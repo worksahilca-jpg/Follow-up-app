@@ -154,7 +154,7 @@ export async function flushHoldNotices(
 ): Promise<FlushResult> {
   if (notices.length === 0) return { rows: 0, leads: 0 };
   const summaryFor =
-    options.summary ?? ((count: number) => `${count} leads are ${HOLD_SUMMARY_MARKER}. Open Approvals to read them.`);
+    options.summary ?? ((count: number) => `${count} leads are ${HOLD_SUMMARY_MARKER}. Open Today to read them.`);
 
   // Fan each notice out to its recipients first — the assignee where there
   // is one, every admin otherwise. The same fallback notifyNeglect and

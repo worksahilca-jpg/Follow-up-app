@@ -83,7 +83,7 @@ describe("the burst a fresh inbox connect creates", () => {
     // collapsing, and callers want the second.
     expect(written).toEqual({ rows: 1, leads: HOLD_BURST_THRESHOLD + 1 });
     expect(messagesFor("owner1")).toEqual([
-      `${HOLD_BURST_THRESHOLD + 1} leads are ${HOLD_SUMMARY_MARKER}. Open Approvals to read them.`,
+      `${HOLD_BURST_THRESHOLD + 1} leads are ${HOLD_SUMMARY_MARKER}. Open Today to read them.`,
     ]);
   });
 
@@ -101,7 +101,7 @@ describe("the burst a fresh inbox connect creates", () => {
     const notices = Array.from({ length: 10 }, (_, i) => notice(i + 1));
     await flushHoldNotices(notices);
     expect(notificationCreate.mock.calls[0][0].data.leadId).toBeNull();
-    expect(notificationCreate.mock.calls[0][0].data.message).toContain("Open Approvals");
+    expect(notificationCreate.mock.calls[0][0].data.message).toContain("Open Today");
   });
 });
 
@@ -114,7 +114,7 @@ describe("who gets which form", () => {
       notice(99, "quiet"),
     ];
     await flushHoldNotices(notices);
-    expect(messagesFor("busy")).toEqual([`10 leads are ${HOLD_SUMMARY_MARKER}. Open Approvals to read them.`]);
+    expect(messagesFor("busy")).toEqual([`10 leads are ${HOLD_SUMMARY_MARKER}. Open Today to read them.`]);
     expect(messagesFor("quiet")).toEqual(["Lead 99 — a follow-up is written and waiting for your approval."]);
   });
 
@@ -128,8 +128,8 @@ describe("who gets which form", () => {
     userFindMany.mockResolvedValue([{ id: "a1" }, { id: "a2" }]);
     const notices = Array.from({ length: 20 }, (_, i) => notice(i + 1, null));
     await flushHoldNotices(notices);
-    expect(messagesFor("a1")).toEqual([`20 leads are ${HOLD_SUMMARY_MARKER}. Open Approvals to read them.`]);
-    expect(messagesFor("a2")).toEqual([`20 leads are ${HOLD_SUMMARY_MARKER}. Open Approvals to read them.`]);
+    expect(messagesFor("a1")).toEqual([`20 leads are ${HOLD_SUMMARY_MARKER}. Open Today to read them.`]);
+    expect(messagesFor("a2")).toEqual([`20 leads are ${HOLD_SUMMARY_MARKER}. Open Today to read them.`]);
   });
 
   it("looks the admins up once, however many unassigned leads there are", async () => {

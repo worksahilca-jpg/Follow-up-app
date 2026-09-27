@@ -569,7 +569,7 @@ function SettingsPageInner() {
     // an exception to carve out — every rule above produces a draft that
     // waits. This sentence said the opposite for exactly one day.
     if (!holdAllForApproval) return sentence;
-    return `${sentence} Nothing above sends on its own — every one of those is written for you and waits in Approvals until you press send.`;
+    return `${sentence} Nothing above sends on its own — every one of those is written for you and waits in Today until you press send.`;
   }
 
   const anyAutomationOn = automationOn || instantAckOn || unansweredOn || deadLeadOn;
@@ -1243,7 +1243,7 @@ function SettingsPageInner() {
               </p>
               <p className="text-[13px] text-ink-soft mt-1">
                 {holdAllForApproval
-                  ? "Every follow-up it writes waits in Approvals until you send it. Nothing reaches a customer without you."
+                  ? "Every follow-up it writes waits in Today until you send it. Nothing reaches a customer without you."
                   : "Simple, low-risk follow-ups go out on their own. Anything about price, or anything sensitive, still waits for you — and it stops the moment a customer replies."}
               </p>
               {/* Stopping for good stays one press, as it always was; it

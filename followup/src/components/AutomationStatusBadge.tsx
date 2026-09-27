@@ -175,7 +175,7 @@ export function describeAutomationStatus(
         return {
           icon: PenLine,
           label: "Writing a reply for you to approve",
-          detail: `Next automation check drafts this — ${REASON_LABEL[status.reason]}. It waits in your approvals until you send it.`,
+          detail: `Next automation check drafts this — ${REASON_LABEL[status.reason]}. It waits in Today until you send it.`,
           bg: "var(--rust-soft)",
           fg: "var(--rust)",
           pulse: true,

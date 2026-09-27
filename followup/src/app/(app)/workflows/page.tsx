@@ -251,7 +251,7 @@ export default function WorkflowsPage() {
           </p>
           <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--slate)" }}>
             Your account holds every follow-up for your approval, so FollowUp writes the first message of the plan,
-            puts it in Approvals, and stops there — it won&apos;t run the later steps on its own. The plan you build
+            puts it in Today, and stops there — it won&apos;t run the later steps on its own. The plan you build
             here is what runs once holding is lifted.
           </p>
         </div>

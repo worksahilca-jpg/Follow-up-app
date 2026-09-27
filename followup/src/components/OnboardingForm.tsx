@@ -574,14 +574,15 @@ function HowItWorks({ onContinue, onSkip }: { onContinue: () => void; onSkip: ()
  *
  * Automatic is marked recommended: an owner with more customers than time
  * is who FollowUp is for, and a queue they must approve by hand is the
- * thing they couldn't keep up with in the first place. But neither option
- * starts chosen, and the button waits until one is: sending is asked for,
- * never assumed (2026-09-22). An owner who pressed the only button on the
- * screen had switched on automatic sending without reading the choice
- * (strategy audit 2026-09-27).
+ * thing they couldn't keep up with in the first place. But Assisted is the
+ * default, on every plan (founder, 2026-09-27: "Assisted should be the
+ * default but we will be asking them on onboarding what they prefer and
+ * they can change it anytime"), so it starts chosen: sending on its own is
+ * asked for, never assumed (2026-09-22). Pressing the only button on the
+ * screen can no longer switch automatic sending on unread.
  */
 function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
-  const [mode, setMode] = useState<"automatic" | "assisted" | null>(null);
+  const [mode, setMode] = useState<"automatic" | "assisted" | null>("assisted");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

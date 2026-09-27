@@ -13,7 +13,9 @@ import { getSessionContext } from "@/lib/session";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { isSafeToSendInBulk } from "@/lib/approvalGroups";
 
-const PREVIEW = 3;
+// Everyone the onboarding list can send to, so each can be opened and
+// skipped. Anyone past this waits in Today and is never in that batch.
+const PREVIEW = 25;
 const PREVIEW_CHARS = 220;
 
 export async function GET() {

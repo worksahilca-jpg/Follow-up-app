@@ -13,6 +13,8 @@ import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
 import OnboardingSources, { WebsiteFormPanel, type OnboardingSource } from "@/components/OnboardingSources";
 import { useWhatsAppSignup } from "@/lib/useWhatsAppSignup";
 import { WARM_CARD } from "@/components/app/ReplyCard";
+import { useUndoableSend } from "@/components/useUndoableSend";
+import UndoLine from "@/components/UndoLine";
 
 /** The one full-width black button at the foot of each setup step (OnbConnect, OnbChoose, OnbOldCustomers). */
 const PRIMARY =
@@ -572,16 +574,20 @@ function HowItWorks({ onContinue, onSkip }: { onContinue: () => void; onSkip: ()
  *
  * Automatic is marked recommended: an owner with more customers than time
  * is who FollowUp is for, and a queue they must approve by hand is the
- * thing they couldn't keep up with in the first place. It is NOT
- * preselected by the server; the owner presses the button either way.
+ * thing they couldn't keep up with in the first place. But neither option
+ * starts chosen, and the button waits until one is: sending is asked for,
+ * never assumed (2026-09-22). An owner who pressed the only button on the
+ * screen had switched on automatic sending without reading the choice
+ * (strategy audit 2026-09-27).
  */
 function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
-  const [mode, setMode] = useState<"automatic" | "assisted">("automatic");
+  const [mode, setMode] = useState<"automatic" | "assisted" | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function choose() {
     setError(null);
+    if (!mode) return;
     if (mode === "assisted") {
       onChosen();
       return;
@@ -675,7 +681,8 @@ function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
       )}
 
       <div className="mt-auto pb-7 pt-6">
-      <button onClick={choose} disabled={saving} className={PRIMARY} style={PRIMARY_STYLE}>
+      {!mode && <p className="mb-2.5 text-center text-[13.5px] text-ink-faint">Choose one to continue.</p>}
+      <button onClick={choose} disabled={saving || !mode} className={PRIMARY + " disabled:opacity-50"} style={PRIMARY_STYLE}>
         {/* A-053's curiosity action: the next screen is the list of who never got a reply. */}
         {saving ? "Saving…" : "Find who needs a reply"}
         {!saving && <ArrowRight className="h-4 w-4" />}
@@ -698,9 +705,15 @@ type WaitingSummary = {
  * Nothing here is sent on its own, on either choice: FollowUp writes a
  * reply for each and the owner sends the routine ones with one tap. The
  * list and the button both come from the approval queue, with the same
- * definition of "routine" (isSafeToSendInBulk), so "Send all 10" sends
- * exactly the 10 counted. A price or a date among them is never in the
- * batch; it waits in Today with its reply written.
+ * definition of "routine" (isSafeToSendInBulk). A price or a date among
+ * them is never in the batch; it waits in Today with its reply written.
+ *
+ * Every person the button will write to is on screen: each opens to show
+ * its reply and can be skipped, and the button sends exactly the people
+ * shown and not skipped (`only`), after the same 10-second undo Today
+ * gives (PRODUCT_DIRECTION: "the owner can also open and skip any of
+ * them"; strategy audit 2026-09-27). Anyone past the list waits in Today
+ * and is never sent unseen.
  *
  * The replies are written on arrival here (one run of the automation for
  * this business), rather than on the next hourly tick — the founder's
@@ -709,10 +722,35 @@ type WaitingSummary = {
  * nobody should be stuck at the end of setup.
  */
 function WaitingCustomers({ onDone, finishing }: { onDone: () => void; finishing: boolean }) {
-  const [state, setState] = useState<"loading" | "ready" | "sending">("loading");
+  const [state, setState] = useState<"loading" | "ready">("loading");
   const [summary, setSummary] = useState<WaitingSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [skipped, setSkipped] = useState<Set<string>>(() => new Set());
+  const [openId, setOpenId] = useState<string | null>(null);
   const started = useRef(false);
+
+  const chosen = (summary?.preview ?? []).map((p) => p.leadId).filter((id) => !skipped.has(id));
+  const send = useUndoableSend({
+    url: "/api/approvals/send-safe",
+    body: JSON.stringify({ only: chosen }),
+    onResponse: async (res) => {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setError(typeof data.message === "string" ? data.message : "Couldn't send them. They're waiting in Today.");
+        return;
+      }
+      // Nothing went out at all (commonly: the inbox they came from isn't
+      // connected any more). Say so here rather than moving on as though
+      // they had been sent; a partial send moves on, and Today shows the rest.
+      const refused: Array<{ reason: string }> = Array.isArray(data.skipped) ? data.skipped : [];
+      if (data.sent === 0 && refused.length > 0) {
+        setError(`None of them went out: ${refused[0].reason} They're waiting in Today.`);
+        return;
+      }
+      onDone();
+    },
+    onNetworkError: () => setError("Couldn't reach FollowUp. They're waiting in Today."),
+  });
 
   useEffect(() => {
     if (started.current) return;
@@ -724,38 +762,17 @@ function WaitingCustomers({ onDone, finishing }: { onDone: () => void; finishing
       try {
         const res = await fetch("/api/approvals/summary");
         const data = await res.json();
-        if (res.ok && data.success) setSummary({ safe: data.safe, needsYou: data.needsYou, preview: data.preview ?? [] });
+        if (res.ok && data.success) {
+        const preview: WaitingSummary["preview"] = data.preview ?? [];
+        setSummary({ safe: data.safe, needsYou: data.needsYou, preview });
+        setOpenId(preview[0]?.leadId ?? null);
+      }
       } catch {
         // Falls through to the empty state.
       }
       setState("ready");
     })();
   }, []);
-
-  async function sendAll() {
-    setError(null);
-    setState("sending");
-    try {
-      const res = await fetch("/api/approvals/send-safe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't send them. They're waiting in Today.");
-      // Nothing went out at all (commonly: the inbox they came from isn't
-      // connected any more). Say so here rather than moving on as though
-      // they had been sent; a partial send moves on, and Today shows the rest.
-      const skipped: Array<{ reason: string }> = Array.isArray(data.skipped) ? data.skipped : [];
-      if (data.sent === 0 && skipped.length > 0) {
-        throw new Error(`None of them went out: ${skipped[0].reason} They're waiting in Today.`);
-      }
-      onDone();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't send them. They're waiting in Today.");
-      setState("ready");
-    }
-  }
 
   if (state === "loading") {
     return (
@@ -790,42 +807,69 @@ function WaitingCustomers({ onDone, finishing }: { onDone: () => void; finishing
     );
   }
 
-  // As OnbOldCustomers: everyone who never got a reply, the first one with
-  // its written reply in the warm card, the rest as rows; the price
-  // questions named once; "Send all N" sends only the routine ones.
+  // As OnbOldCustomers: everyone who never got a reply, each with its
+  // written reply a tap away (the first open), and a Skip on each. The
+  // price questions are named once; they are never in this batch.
   const total = safe + needsYou;
   const preview = summary?.preview ?? [];
-  const [first, ...rest] = preview;
+  const hidden = safe - preview.length;
+  const count = chosen.length;
 
   return (
     <div className="flex flex-1 flex-col">
       <h1 className={H1}>
         {total} {total === 1 ? "person" : "people"} never got a reply.
       </h1>
-      <p className={LEDE}>From the last 90 days. A reply is written for each. Nothing has been sent.</p>
+      <p className={LEDE}>From the last 90 days. A reply is written for each. Nothing has been sent. Open any to read it, or skip it.</p>
 
       <div className="mt-[18px] overflow-hidden rounded-[20px] border border-line bg-card">
         <p className="px-4 pb-2.5 pt-3.5 font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-ink-faint">
-          Ready to send · {safe}
+          Ready to send · {count}
         </p>
-        {first && (
-          <div className="px-4 pb-3.5">
-            <p className="text-[15px] font-medium">{first.leadName}</p>
-            {first.theirMessage && <p className="mt-0.5 line-clamp-1 text-[13.5px] text-ink-soft">“{first.theirMessage}”</p>}
-            <p className="mt-2.5 rounded-[14px] px-3.5 py-3 text-sm leading-snug line-clamp-4" style={WARM_CARD}>
-              {first.draftMessage}
-            </p>
-          </div>
-        )}
-        {rest.map((p) => (
-          <div key={p.leadId} className="border-t border-line-2 px-4 py-3">
-            <p className="text-[15px] font-medium">{p.leadName}</p>
-            {p.theirMessage && <p className="mt-0.5 line-clamp-1 text-[13.5px] text-ink-soft">“{p.theirMessage}”</p>}
-          </div>
-        ))}
-        {safe > preview.length && (
+        {preview.map((p, i) => {
+          const isSkipped = skipped.has(p.leadId);
+          const isOpen = openId === p.leadId && !isSkipped;
+          return (
+            <div key={p.leadId} className={(i ? "border-t border-line-2 " : "") + "px-4 py-3"}>
+              <div className="flex items-start gap-3">
+                <button
+                  type="button"
+                  onClick={() => setOpenId(isOpen ? null : p.leadId)}
+                  disabled={isSkipped || send.pending}
+                  aria-expanded={isOpen}
+                  className="min-w-0 flex-1 text-left disabled:cursor-default"
+                >
+                  <span className={"block text-[15px] font-medium " + (isSkipped ? "text-ink-faint line-through" : "")}>{p.leadName}</span>
+                  {p.theirMessage && <span className="mt-0.5 block line-clamp-1 text-[13.5px] text-ink-soft">“{p.theirMessage}”</span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSkipped((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(p.leadId)) next.delete(p.leadId);
+                      else next.add(p.leadId);
+                      return next;
+                    })
+                  }
+                  disabled={send.pending}
+                  className="min-h-11 shrink-0 px-1 text-[14px] text-ink-soft underline underline-offset-2 hover:text-ink disabled:opacity-50"
+                >
+                  {isSkipped ? "Undo skip" : "Skip"}
+                </button>
+              </div>
+              {isOpen && (
+                <p className="mt-2 whitespace-pre-wrap rounded-[14px] px-3.5 py-3 text-sm leading-snug" style={WARM_CARD}>
+                  {p.draftMessage}
+                </p>
+              )}
+              {isSkipped && <p className="mt-0.5 text-[13px] text-ink-faint">Not sent. It waits in Today.</p>}
+            </div>
+          );
+        })}
+        {hidden > 0 && (
           <p className="border-t border-line-2 px-4 py-3 text-sm text-ink-soft">
-            and {safe - preview.length} more, all in Today
+            {hidden} more {hidden === 1 ? "waits" : "wait"} in Today. {hidden === 1 ? "It isn't" : "They aren't"} in this send.
           </p>
         )}
       </div>
@@ -849,16 +893,47 @@ function WaitingCustomers({ onDone, finishing }: { onDone: () => void; finishing
       )}
 
       <div className="mt-auto pb-6 pt-6">
-        <button onClick={sendAll} disabled={state === "sending" || finishing} className={PRIMARY} style={PRIMARY_STYLE}>
-          {state === "sending" ? "Sending…" : `Send all ${safe}`}
-        </button>
-        <button
-          onClick={onDone}
-          disabled={state === "sending" || finishing}
-          className="mt-1 inline-flex min-h-11 w-full items-center justify-center text-[15px] text-ink-soft transition-colors hover:text-ink"
-        >
-          Not now, keep them in Today
-        </button>
+        {send.pending ? (
+          // The same 10 seconds Today gives (A-048): the button becomes the
+          // way to take the press back, and the line drains.
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[15px]">
+                Sending to {count} in {send.secs}s
+              </p>
+              <button type="button" onClick={send.undo} className="h-11 rounded-full border border-line bg-card px-5 text-[15px] font-medium">
+                Undo
+              </button>
+            </div>
+            {send.endsAt !== null && (
+              <div className="mt-2.5">
+                <UndoLine endsAt={send.endsAt} />
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {send.cancelled && <p className="mb-2 text-center text-[13.5px] text-ink-soft">Stopped. Nothing was sent.</p>}
+            <button
+              onClick={() => {
+                setError(null);
+                send.start();
+              }}
+              disabled={send.busy || finishing || count === 0}
+              className={PRIMARY + " disabled:opacity-50"}
+              style={PRIMARY_STYLE}
+            >
+              {send.busy ? "Sending…" : count === 0 ? "Nothing to send" : `Send ${count === 1 ? "it" : `all ${count}`}`}
+            </button>
+            <button
+              onClick={onDone}
+              disabled={send.busy || finishing}
+              className="mt-1 inline-flex min-h-11 w-full items-center justify-center text-[15px] text-ink-soft transition-colors hover:text-ink"
+            >
+              Not now, keep them in Today
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

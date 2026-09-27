@@ -6,6 +6,8 @@ import { MOTION, OPEN_IN_PLACE } from "@/lib/motion";
 import { useRouter } from "next/navigation";
 import { fillPriceSlot, hasPriceSlot, splitAtPriceSlot } from "@/lib/priceSlot";
 import { Eyebrow } from "./canvasBits";
+import { useUndoableSend } from "@/components/useUndoableSend";
+import UndoLine from "@/components/UndoLine";
 
 /**
  * The reply, as drawn on the canvas thread boards (Inbox, InboxAI,
@@ -14,7 +16,11 @@ import { Eyebrow } from "./canvasBits";
  * themselves, and three actions: Send, Edit, Don't send.
  *
  * It sends through the same POST /api/leads/[id]/send the old composer
- * used, so nothing about sending changes. "Don't send" is the same
+ * used, after the same 10-second undo Today gives (useUndoableSend,
+ * A-048): Send starts the clock, Undo stops it, and leaving the page
+ * sends. Before this, Inbox and the customer page sent on the press, the
+ * one place an owner couldn't take a message back (strategy audit
+ * 2026-09-27). "Don't send" is the same
  * dismiss-hold the Today card uses. A "$ price" blank (A-060) is filled
  * in place, and Send waits for it.
  *
@@ -66,7 +72,7 @@ export default function ReplyCard({
   const [text, setText] = useState(draft);
   const [subject, setSubject] = useState(draftSubject ?? "");
   const [price, setPrice] = useState("");
-  const [busy, setBusy] = useState<null | "send" | "skip" | Rewrite>(null);
+  const [busy, setBusy] = useState<null | "skip" | Rewrite>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<null | { kind: "sent"; template: string | null } | { kind: "skipped" }>(null);
   const [edited, setEdited] = useState(false);
@@ -75,24 +81,25 @@ export default function ReplyCard({
   const message = needsPrice ? fillPriceSlot(text, price.trim()) : text;
   const canSend = message.trim().length > 0 && !(needsPrice && !price.trim());
 
-  async function send() {
-    setBusy("send");
-    setError(null);
-    try {
-      const res = await fetch(`/api/leads/${leadId}/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, ...(isEmail && subject.trim() ? { subject: subject.trim() } : {}), ...(seenInboundAt ? { seenInboundAt } : {}) }),
-      });
+  const undoable = useUndoableSend({
+    url: `/api/leads/${leadId}/send`,
+    body: JSON.stringify({ message, ...(isEmail && subject.trim() ? { subject: subject.trim() } : {}), ...(seenInboundAt ? { seenInboundAt } : {}) }),
+    onResponse: async (res) => {
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't send. Try again.");
+      if (!res.ok || !data.success) {
+        setError(typeof data.message === "string" ? data.message : "Couldn't send. Try again.");
+        return;
+      }
       setDone({ kind: "sent", template: typeof data.sentTemplate === "string" ? data.sentTemplate : null });
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't send. Try again.");
-    } finally {
-      setBusy(null);
-    }
+    },
+    onNetworkError: () => setError("Couldn't reach FollowUp. Check your connection and try again."),
+  });
+
+  function send() {
+    setError(null);
+    setEditing(false);
+    undoable.start();
   }
 
   async function skip() {
@@ -250,19 +257,43 @@ export default function ReplyCard({
       )}
       {sendLocked && <p className="mt-2 text-[13px] text-ink-soft">Only admins send on this account. An admin will see this reply waiting.</p>}
 
+      {/* The grace period replaces the buttons: while the clock runs, the
+          only thing to press is the one that stops it (A-048). */}
+      {undoable.pending ? (
+        <div className={"mt-4 flex flex-wrap items-center gap-3" + (dense ? " lg:mt-3.5" : "")}>
+          <p className={dense ? "text-[15px] lg:text-[14px]" : "text-[15px]"}>
+            Sending to {first} in {undoable.secs}s
+          </p>
+          <button
+            type="button"
+            onClick={undoable.undo}
+            className="h-9 rounded-full border px-4 text-sm font-medium"
+            style={{ borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" }}
+          >
+            Undo
+          </button>
+          {undoable.endsAt !== null && (
+            <div className="basis-full">
+              <UndoLine endsAt={undoable.endsAt} />
+            </div>
+          )}
+        </div>
+      ) : (
+      <>
+      {undoable.cancelled && <p className="mt-3 text-[13px] text-ink-soft">Stopped. Nothing went to {first}.</p>}
       <div className={"mt-4 flex gap-2.5" + (dense ? " lg:mt-3.5 lg:items-center lg:gap-2" : "")}>
         {!sendLocked && (
           <button
             type="button"
             onClick={send}
-            disabled={busy !== null || !canSend}
+            disabled={busy !== null || undoable.busy || !canSend}
             className={
               "h-[52px] flex-1 rounded-full text-base font-semibold disabled:opacity-60 sm:flex-none sm:px-8" +
               (dense ? " lg:h-[38px] lg:px-4 lg:text-[14px]" : "")
             }
             style={{ background: "var(--accent)", color: "var(--on-accent)" }}
           >
-            {busy === "send" ? "Sending…" : "Send"}
+            {undoable.busy ? "Sending…" : "Send"}
           </button>
         )}
         {!editing && (
@@ -287,6 +318,8 @@ export default function ReplyCard({
           </button>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

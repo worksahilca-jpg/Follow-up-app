@@ -8226,3 +8226,20 @@ Four boards on the canvas (v80): SettingsAll, SettingsAllPhone, SettingsChannel 
     until the filter exists.
   - The drawing's Meta reply-window note belongs on this line only near the end of the window (A-028). It isn't wired
     here yet.
+
+## 2026-09-27 — Three trust fixes from the strategy audit (founder: "fix 1-3")
+
+- **Onboarding's first send:**
+  - Every customer the button will write to is listed, up to 25. Each can be opened to read its reply, or skipped.
+  - The button sends exactly the people shown and not skipped (the new `only` list on send-safe, which can narrow the
+    safe pile but never add to it).
+  - The send gets the same 10-second undo Today has. Anyone past 25 waits in Today, never sent unseen.
+  - This follows PRODUCT_DIRECTION: "the owner can also open and skip any of them".
+- **How FollowUp should work:** neither Automatic nor Assisted starts chosen, and the button waits until the owner
+  picks. This follows the 2026-09-22 decision: sending is asked for, never assumed. Automatic keeps its
+  "Recommended" label.
+- **Inbox and the customer page:** Send now has the 10-second undo ("Sending to Grace in 9s · Undo"), the same hook
+  as Today, and leaving the page still sends. Before this, these were the only places a message couldn't be taken
+  back.
+- **Weak, named:** a 25-person cap on the onboarding list means a busy inbox leaves the rest for Today. That is
+  deliberate, since nobody gets a message the owner never saw, but it's one more step for them.

@@ -21,6 +21,8 @@
  *  - go out on an account that holds everything ("Assisted"), or is
  *    paused, or has no active billing. A holding message that waits for
  *    the owner's OK defeats itself.
+ *  - go out once the owner has switched automatic follow-up, or "Reply
+ *    for me when I haven't", off.
  *  - go twice for the same message. Lead.holdingSentFor is the claim.
  *  - go if anything at all was sent after the customer's message — the
  *    instant "got your message" to a brand-new customer already did this
@@ -79,6 +81,30 @@ export function isHoldingTopic(topic: string | null | undefined): topic is Holdi
 export type HoldingResult = { checked: number; sent: number; skipped: string[] };
 
 /**
+ * Are the owner's own switches for answering customers on?
+ *
+ * The held price or date draft this message stands in for can only come
+ * from the automation's answering pass, which runs only while the master
+ * switch ("auto_send") and "Reply for me when I haven't"
+ * ("unanswered_reply") are both on (automation.ts). Settings' "turn off
+ * every automated follow-up" flips those rows, and says "Nothing will go
+ * out on its own until you turn this back on". Without this check a draft
+ * held at 10:02 still sent "let me check" at 10:32 to an owner who had
+ * switched everything off at 10:10. Same defaults as automation.ts: no
+ * master row is off, no unanswered row is on. Literal action names, as the
+ * settings route uses, so this file does not pull in automation.ts.
+ */
+async function automaticRepliesOn(businessId: string): Promise<boolean> {
+  const rules = await prisma.automation.findMany({
+    where: { businessId, action: { in: ["auto_send", "unanswered_reply"] } },
+    select: { action: true, enabled: true },
+  });
+  const master = rules.find((r) => r.action === "auto_send");
+  const unanswered = rules.find((r) => r.action === "unanswered_reply");
+  return (master?.enabled ?? false) && (unanswered?.enabled ?? true);
+}
+
+/**
  * One business's due holding messages. Everything that decides WHETHER a
  * lead gets one is in here, so the cron route stays a thin door.
  */
@@ -92,6 +118,7 @@ export async function runHoldingMessagesForBusiness(businessId: string, now: Dat
   // Automatic only: not holding, not paused, and sending was turned on at a
   // known moment (the "from now on" line every automated path respects).
   if (!business || business.holdAllForApproval || business.sendingPausedAt || !business.autoSendAllowedAt) return result;
+  if (!(await automaticRepliesOn(businessId))) return result;
   if (!(await requireActiveBilling(businessId))) return result;
 
   const newestAllowed = new Date(now.getTime() - HOLDING_DELAY_MS);

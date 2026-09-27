@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/db", () => ({
   prisma: {
     business: { findUnique: vi.fn() },
+    automation: { findMany: vi.fn() },
     lead: { findMany: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
     message: { findFirst: vi.fn() },
   },
@@ -57,6 +58,10 @@ function lead(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   p.business.findUnique.mockResolvedValue({ holdAllForApproval: false, sendingPausedAt: null, autoSendAllowedAt: minsAgo(24 * 60 * 3) });
+  p.automation.findMany.mockResolvedValue([
+    { action: "auto_send", enabled: true },
+    { action: "unanswered_reply", enabled: true },
+  ]);
   p.lead.findMany.mockResolvedValue([lead()]);
   p.lead.findUnique.mockResolvedValue({ businessId: "biz1" });
   p.lead.updateMany.mockResolvedValue({ count: 1 });
@@ -115,6 +120,34 @@ describe("the holding message does NOT go out", () => {
 
   it("while sending is paused", async () => {
     p.business.findUnique.mockResolvedValue({ holdAllForApproval: false, sendingPausedAt: minsAgo(5), autoSendAllowedAt: minsAgo(9999) });
+    await runHoldingMessagesForBusiness("biz1", NOW);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  // Settings' "turn off every automated follow-up" says nothing goes out on
+  // its own afterwards. A price draft held minutes before the switch was
+  // still sent "let me check" 30 minutes later.
+  it("once the owner has turned automatic follow-up off", async () => {
+    p.automation.findMany.mockResolvedValue([
+      { action: "auto_send", enabled: false },
+      { action: "unanswered_reply", enabled: true },
+    ]);
+    await runHoldingMessagesForBusiness("biz1", NOW);
+    expect(send).not.toHaveBeenCalled();
+    expect(p.lead.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("once the owner has turned \"Reply for me when I haven't\" off", async () => {
+    p.automation.findMany.mockResolvedValue([
+      { action: "auto_send", enabled: true },
+      { action: "unanswered_reply", enabled: false },
+    ]);
+    await runHoldingMessagesForBusiness("biz1", NOW);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("when the account has no automatic follow-up rule at all (the same default as the automation)", async () => {
+    p.automation.findMany.mockResolvedValue([]);
     await runHoldingMessagesForBusiness("biz1", NOW);
     expect(send).not.toHaveBeenCalled();
   });

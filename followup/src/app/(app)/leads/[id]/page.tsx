@@ -23,7 +23,7 @@ import { languageName } from "@/lib/leadLanguage";
 import Link from "next/link";
 import ReplyCard from "@/components/app/ReplyCard";
 import Thread from "@/components/app/Thread";
-import { Initials, waitingFor } from "@/components/app/canvasBits";
+import { Initials, StatePill, waitingFor } from "@/components/app/canvasBits";
 import { getSessionContext } from "@/lib/session";
 import { getPendingApprovals, type PendingApproval } from "@/lib/pendingApprovals";
 import { prisma } from "@/lib/db";
@@ -121,9 +121,30 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
+      {/* The side column as the PersonSide board draws it (A-069): the facts
+          in one card, three actions, the state in one calm line, and the
+          rest as quiet rows that open in place. How FollowUp handles this
+          customer is open by default: the trust research says the setting
+          must be legible at a glance, per customer, not buried. */}
       <aside className="mt-10 min-w-0 lg:mt-0">
-        <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-2.5 rounded-2xl border border-line bg-card p-5 text-[14px]">
+        <dl className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-x-4 gap-y-2.5 rounded-[18px] border border-line bg-card px-5 py-4 text-[14.5px]">
           <Details lead={lead} approval={approval} now={now} />
+          <dt className="text-ink-faint">Came from</dt>
+          <dd>{lead.source}</dd>
+          <dt className="text-ink-faint">Stage</dt>
+          <dd>
+            <StageSelector leadId={lead.id} stage={lead.stage} />
+          </dd>
+          <dt className="self-start pt-1 text-ink-faint">Assigned to</dt>
+          <dd>
+            <LeadAssignmentSelect leadId={lead.id} initialAssignedToId={lead.assignedToId} initialAssignedToName={lead.assignedTo} />
+          </dd>
+          {lead.dealValue > 0 && (
+            <>
+              <dt className="text-ink-faint">Worth</dt>
+              <dd>{formatCurrency(lead.dealValue)}</dd>
+            </>
+          )}
         </dl>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -132,7 +153,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           )}
           <CopyBookingLinkButton leadId={lead.id} />
           {lead.phone && !isSocialLeadId(lead.phone) && (
-            <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-sm font-medium">
+            <a href={`tel:${lead.phone}`} className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-line bg-card px-3.5 text-sm font-medium">
               <Phone className="h-3.5 w-3.5" /> Call
             </a>
           )}
@@ -143,61 +164,50 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           )}
         </div>
 
-        <div className="mt-6 space-y-2">
-          <CollapsibleSection title={`More about ${firstName}`}>
-            <div className="space-y-4 text-sm">
-              <AutomationStatusBadge status={lead.automationStatus} />
-              <div className="flex flex-wrap items-center gap-3">
+        <div className="mt-4">
+          <AutomationStatusBadge status={lead.automationStatus} />
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-[18px] border border-line bg-card">
+          <CollapsibleSection row defaultOpen title={`How it handles ${firstName}`} status={TIER_WORDS[lead.automationTier] ?? undefined}>
+            <LeadAutomationToggle
+              leadId={lead.id}
+              initialTier={lead.automationTier}
+              autonomousAllowed={autonomousAllowed}
+              holdAllForApproval={freeTierStatus?.holdAllForApproval ?? false}
+            />
+          </CollapsibleSection>
+          <CollapsibleSection row title="What FollowUp did, and why it may write" status={auditTrail.totalCount ? `${auditTrail.totalCount} ${auditTrail.totalCount === 1 ? "step" : "steps"}` : undefined}>
+            <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
+          </CollapsibleSection>
+          <CollapsibleSection row title="Follow-up plan" status={lead.nextFollowUp ? `Next ${formatDate(lead.nextFollowUp)}` : "None"}>
+            <LeadWorkflowEnrollment leadId={lead.id} />
+          </CollapsibleSection>
+          <CollapsibleSection row title={`About ${firstName}`}>
+            <div className="space-y-3 text-[14px]">
+              <div className="flex flex-wrap items-center gap-2">
                 <PriorityPill priority={lead.priority} reviewed={lead.reviewed} />
-                <StageSelector leadId={lead.id} stage={lead.stage} />
-                <span className="font-medium">{formatCurrency(lead.dealValue)} potential</span>
               </div>
-              <dl className="space-y-2">
-                <div className="flex justify-between gap-3">
-                  <dt className="text-ink-soft">Came from</dt>
-                  <dd>{lead.source}</dd>
-                </div>
-                <div className="flex justify-between items-start gap-3">
-                  <dt className="text-ink-soft shrink-0">Assigned to</dt>
-                  <dd>
-                    <LeadAssignmentSelect leadId={lead.id} initialAssignedToId={lead.assignedToId} initialAssignedToName={lead.assignedTo} />
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-ink-soft">Last contacted</dt>
-                  <dd>{formatDate(lead.lastContacted)}</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-ink-soft">Next follow-up</dt>
-                  <dd>{lead.nextFollowUp ? formatDate(lead.nextFollowUp) : "—"}</dd>
-                </div>
-              </dl>
+              <p className="flex justify-between gap-3">
+                <span className="text-ink-faint">Last contacted</span>
+                <span>{formatDate(lead.lastContacted)}</span>
+              </p>
               <p className="leading-relaxed text-ink-soft">{lead.scoreReason || "FollowUp hasn't reviewed this customer yet."}</p>
               {lead.notes && <p className="leading-relaxed text-ink-soft">{lead.notes}</p>}
             </div>
           </CollapsibleSection>
-          <CollapsibleSection title="What FollowUp did">
-            <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
-          </CollapsibleSection>
-          <CollapsibleSection title="Follow-up plan">
-            <div className="space-y-3">
-              <LeadAutomationToggle
-                leadId={lead.id}
-                initialTier={lead.automationTier}
-                autonomousAllowed={autonomousAllowed}
-                holdAllForApproval={freeTierStatus?.holdAllForApproval ?? false}
-              />
-              <LeadWorkflowEnrollment leadId={lead.id} />
-            </div>
-          </CollapsibleSection>
-          <div className="pt-4">
-            <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
-          </div>
+        </div>
+
+        <div className="mt-5">
+          <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
         </div>
       </aside>
     </div>
   );
 }
+
+/** The per-customer setting in the same words as the control itself. */
+const TIER_WORDS: Record<string, string> = { off: "You do it", assisted: "Ask if risky", autonomous: "Handle it all" };
 
 /** State / Why it's here / Waiting / Language, as the canvas App board lists them. */
 function Details({ lead, approval, now }: { lead: Lead; approval: PendingApproval | null; now: Date }) {
@@ -217,7 +227,9 @@ function Details({ lead, approval, now }: { lead: Lead; approval: PendingApprova
   return (
     <>
       <dt className="text-ink-faint">State</dt>
-      <dd>{state}</dd>
+      <dd>
+        <StatePill state={approval ? "needs" : kind === "closed" ? "done" : kind === "talked" ? "checked" : state.startsWith("Waiting") ? "waiting" : "done"} label={state} />
+      </dd>
       {why && (
         <>
           <dt className="text-ink-faint">Why it&apos;s here</dt>

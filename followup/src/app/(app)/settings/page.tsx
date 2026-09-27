@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SettingsOverview from "@/components/app/SettingsOverview";
+import SettingsList from "@/components/app/SettingsList";
 import { quietReminderDays, SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
 import Switch from "@/components/Switch";
 import TeamSection from "@/components/TeamSection";
@@ -49,41 +50,37 @@ export default function SettingsPage() {
 // visit only ever shows the one thing you came for. Every section keeps its
 // existing id so links pointing at #billing etc. (see getIncompleteSetupSteps)
 // keep working — this map is just which tab a given id lives under.
-type SettingsTab = "connect" | "channels" | "team" | "billing" | "advanced";
-const TAB_LABEL: Record<SettingsTab, string> = {
-  connect: "Connect",
-  channels: "Channels",
-  team: "Team",
-  billing: "Billing",
-  advanced: "Advanced",
+/**
+ * Settings, as one list (A-069, the SettingsAll board): every setting opens
+ * its own page. A page shows one or more of the sections below by their
+ * existing ids, so every old link (/settings#billing, #security in the
+ * sign-in email, #alerts in every alert email) still lands on the right
+ * page.
+ */
+type SettingsPage = { title: string; lede?: string; sections: string[] };
+const PAGES: Record<string, SettingsPage> = {
+  email: { title: "Email", lede: "Connect Gmail or Outlook. FollowUp reads new customers’ emails and replies from your own address.", sections: ["integrations"] },
+  website: { title: "Website form", lede: "A contact form for your own site. What people send lands in Today.", sections: ["website-widget"] },
+  social: { title: "Instagram and Facebook", lede: "Customers who message your Instagram or Facebook Page show up in Today.", sections: ["social"] },
+  whatsapp: { title: "WhatsApp", lede: "Your own WhatsApp Business number. Keep using the app on your phone as before.", sections: ["whatsapp"] },
+  phone: { title: "Phone and text", sections: ["phone"] },
+  replies: { title: "Replies and check-ins", lede: "What FollowUp writes on its own, and when. Anything about a price or a date still comes to you.", sections: ["automation", "alerts"] },
+  business: { title: "Name and trade", sections: ["business"] },
+  team: { title: "Team", lede: "Admins can invite teammates, change roles and remove people.", sections: ["team"] },
+  billing: { title: "Your plan", sections: ["billing"] },
+  security: { title: "Sign-ins and security", sections: ["security"] },
+  data: { title: "Your data", lede: "Download everything, or permanently delete this business.", sections: ["data"] },
+  feedback: { title: "Tell us something", lede: "Not a support ticket. A place to tell us what’s working or what isn’t.", sections: ["feedback"] },
+  crm: { title: "Your CRM", sections: ["crm"] },
+  tools: { title: "Other tools", lede: "Zapier, Make, or any tool that can send or receive a webhook.", sections: ["lead-webhook", "outbound-webhook"] },
+  routing: { title: "New customers, by where they wrote", sections: ["lead-routing"] },
 };
-const SECTION_TAB: Record<string, SettingsTab> = {
-  integrations: "connect",
-  crm: "connect",
-  "website-widget": "channels",
-  "lead-webhook": "channels",
-  "outbound-webhook": "channels",
-  phone: "channels",
-  // Every other <section id> in this file has a row here; WhatsApp's was
-  // missed when it moved out of the Twilio panel into its own section.
-  // Without it /settings#whatsapp opens on whatever tab was last used and
-  // the browser's anchor scroll finds nothing, because the section is
-  // inside a hidden tab.
-  whatsapp: "channels",
-  social: "channels",
-  business: "team",
-  "lead-routing": "team",
-  team: "team",
-  billing: "billing",
-  automation: "advanced",
-  // Linked from the footer of every alert email ("turn them off in
-  // Settings"), so it has to open on the right tab.
-  alerts: "advanced",
-  feedback: "advanced",
-  // Linked from the new-sign-in email ("Not you? Sign out everywhere").
-  security: "advanced",
-  data: "advanced",
-};
+/** Old section id (or a page id) → the page that shows it. */
+function pageFor(id: string): string | null {
+  if (PAGES[id]) return id;
+  for (const [page, def] of Object.entries(PAGES)) if (def.sections.includes(id)) return page;
+  return null;
+}
 
 function SettingsPageInner() {
   const searchParams = useSearchParams();
@@ -117,8 +114,7 @@ function SettingsPageInner() {
    * So the first client render now matches the server byte for byte,
    * and the effect below moves the tab once hydration is safely done.
    */
-  const [activeTab, setActiveTab] = useState<SettingsTab>("connect");
-  const scrolledRef = useRef(false);
+  const [openPage, setOpenPage] = useState<string | null>(null);
 
   // Reading the URL is the entire job of this effect, and the URL is a
   // browser-only thing that must not be touched until hydration is over
@@ -126,21 +122,28 @@ function SettingsPageInner() {
   // general case and exactly why this is the right place here. One
   // setState, once, on mount.
   useEffect(() => {
-    if (scrolledRef.current) return;
-    scrolledRef.current = true;
 
     // An OAuth callback comes back with a query string and no hash, and
-    // the panel its failure belongs to is not "connect" — Instagram's
-    // lives under Channels. Landing the owner on the tab they just
-    // acted on is the difference between seeing the error and not.
-    const params = new URLSearchParams(window.location.search);
-    const id = window.location.hash.slice(1);
-    const target = SECTION_TAB[id] ?? (params.get("instagram") ? "channels" : null);
-    if (!target) return;
-
+    // the page its failure belongs to is not the list: land the owner on
+    // the page they just acted on, where the error is.
+    const read = () => {
+      const params = new URLSearchParams(window.location.search);
+      const id = window.location.hash.slice(1);
+      return pageFor(id) ?? (params.get("instagram") ? "social" : params.get("gmail") || params.get("outlook") ? "email" : params.get("billing") ? "billing" : null);
+    };
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setActiveTab(target);
-    if (SECTION_TAB[id]) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView());
+    setOpenPage(read());
+    // Back and forward move between the list and a page.
+    const onPop = () => {
+      setOpenPage(read());
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("popstate", onPop);
+    window.addEventListener("hashchange", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      window.removeEventListener("hashchange", onPop);
+    };
   }, []);
 
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -449,11 +452,13 @@ function SettingsPageInner() {
    * Pause all sending, or resume it (A-041). Same no-optimistic-flip rule
    * as the permission above: the screen moves when the server has.
    */
-  /** From the overview cards to a section of "More settings". */
-  function openMore(section: string) {
-    const tab = SECTION_TAB[section];
-    if (tab) setActiveTab(tab);
-    requestAnimationFrame(() => document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  /** Open one setting's page (or go back to the list with null). */
+  function openMore(section: string | null) {
+    const page = section ? pageFor(section) : null;
+    const first = page ? PAGES[page].sections[0] : "";
+    window.history.pushState(null, "", window.location.pathname + (first ? `#${first}` : ""));
+    setOpenPage(page);
+    window.scrollTo(0, 0);
   }
 
   async function savePause(paused: boolean) {
@@ -886,63 +891,65 @@ function SettingsPageInner() {
     }
   }
 
+  const page = openPage ? PAGES[openPage] : null;
+  const visible = (id: string) => Boolean(page?.sections.includes(id));
+  // A page with one section: its title is the h1, so the section's own
+  // label would say it twice.
+  const sectionLabel = page && page.sections.length > 1 ? SECTION_LABEL : "sr-only";
+  const planStatus =
+    billingTier === "free"
+      ? billingLoaded
+        ? `Free · ${leadsUsedThisMonth} of ${FREE_TIER_LEAD_CAP} this month`
+        : "Free"
+      : TIER_INFO[billingTier].label;
+
   return (
-    <div className="space-y-10">
-      {/* PageHeader, like every other screen. This was the sixth header
-          shape in an app whose PageHeader component exists specifically to
-          end the other five — see its own doc comment. Hand-rolling it here
-          meant Settings drifted on title size, subtitle colour and spacing
-          the moment any of those changed anywhere else. */}
-      <div>
-        <h1 className="text-[32px] leading-[1.1]">Settings</h1>
-        <div className="mt-6">
-          <SettingsOverview
-            gmail={{ connected: gmailConnected, email: gmailEmail }}
-            outlook={{ connected: outlookConnected, email: outlookEmail }}
-            checkInDays={quietReminderDays(autoAfterDays)}
-            instantAck={instantAckOn}
-            holdAll={holdAllForApproval}
-            paused={sendingPaused}
-            pauseSaving={pauseSaving}
-            onPause={savePause}
-            isAdmin={isAdmin}
-            onOpenMore={openMore}
-          />
+    <div>
+      {!page ? (
+        // The list (A-069): the plan and Pause on the left, as the overview
+        // already had them, and everything you can change beside it.
+        <div className="lg:grid lg:grid-cols-[minmax(0,520px)_minmax(0,560px)] lg:items-start lg:gap-14">
+          <div>
+            <h1 className="text-[32px] leading-[1.1]">Settings</h1>
+            <div className="mt-6">
+              <SettingsOverview
+                checkInDays={quietReminderDays(autoAfterDays)}
+                instantAck={instantAckOn}
+                holdAll={holdAllForApproval}
+                paused={sendingPaused}
+                pauseSaving={pauseSaving}
+                onPause={savePause}
+                isAdmin={isAdmin}
+              />
+            </div>
+          </div>
+          <div className="mt-10 lg:mt-0">
+            <SettingsList
+              gmail={{ connected: gmailConnected, email: gmailEmail }}
+              outlook={{ connected: outlookConnected, email: outlookEmail }}
+              carrierAvailable={CARRIER_CHANNELS_AVAILABLE}
+              holdAll={holdAllForApproval}
+              onlyAdminsSend={onlyAdminsSend}
+              planStatus={planStatus}
+              onOpen={openMore}
+            />
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="max-w-[640px]">
+          <button type="button" onClick={() => openMore(null)} className="text-[13px] text-ink-faint hover:text-ink">
+            ← Settings
+          </button>
+          <h1 className="mt-2 text-[30px] leading-[1.12] lg:text-[34px]">{page.title}</h1>
+          {page.lede && <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{page.lede}</p>}
+        </div>
+      )}
 
-      {/* "More settings": every connection's own controls, the team,
-          billing and data, as before. */}
-      <h2 id="more-settings" className="scroll-mt-20 text-[22px] leading-tight">More settings</h2>
-
-      {/* Below lg a fixed top bar (Sidebar.tsx) covers the top of the viewport,
-          so `top-0` parked this tab row underneath it and the tabs vanished as
-          soon as the page scrolled. Offset by the bar's own height; at lg the
-          bar doesn't render, so it goes back to 0. overflow-x-auto because the
-          tabs don't all fit across a 390px phone. */}
-      <nav
-        className="sticky top-[var(--app-header-h)] z-10 -mt-4 flex max-w-[640px] gap-5 overflow-x-auto border-b border-line bg-paper/95 pt-2 backdrop-blur-sm lg:top-0"
-        aria-label="Settings sections"
-      >
-        {(Object.keys(TAB_LABEL) as SettingsTab[]).map((tab) => {
-          const on = activeTab === tab;
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              aria-pressed={on}
-              className="-mb-px whitespace-nowrap border-b-2 pb-2.5 text-[14.5px] transition-colors"
-              style={{ borderColor: on ? "var(--ink)" : "transparent", color: on ? "var(--ink)" : "var(--ink-soft)", fontWeight: on ? 500 : 400 }}
-            >
-              {TAB_LABEL[tab]}
-            </button>
-          );
-        })}
-      </nav>
-
-      <div hidden={activeTab !== "connect"} className="max-w-[640px] space-y-8">
-      <section id="integrations" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Integrations</h2>
+      {/* One setting's own page. Every section stays mounted, so each
+          panel keeps its state while the owner moves around. */}
+      <div hidden={!page} className="mt-7 max-w-[640px] space-y-8">
+      <section id="integrations" hidden={!visible("integrations")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Integrations</h2>
         <div className="mt-4 space-y-3">
           <IntegrationRow
             icon={<Mail className="h-4 w-4" />}
@@ -1095,17 +1102,15 @@ function SettingsPageInner() {
       {/* Was buried inside the "Instagram" section under the wrong name —
           it's a CRM sync, unrelated to social DMs. Grouped with Connect
           since it's about where leads/contacts come from, not a channel. */}
-      <section id="crm" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>CRM sync</h2>
+      <section id="crm" hidden={!visible("crm")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>CRM sync</h2>
         <div className="mt-4">
           <CrmConfig />
         </div>
       </section>
-      </div>
 
-      <div hidden={activeTab !== "channels"} className="max-w-[640px] space-y-8">
-      <section id="website-widget" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Website widget</h2>
+      <section id="website-widget" hidden={!visible("website-widget")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Website widget</h2>
         <div className="mt-4">
           <CopyEmbedSnippet />
           {/* Only appears if the owner told Today they have no website. */}
@@ -1116,15 +1121,15 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section id="lead-webhook" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Lead webhook</h2>
+      <section id="lead-webhook" hidden={!visible("lead-webhook")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Lead webhook</h2>
         <div className="mt-4">
           <CopyWebhookUrl />
         </div>
       </section>
 
-      <section id="outbound-webhook" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Outbound webhook</h2>
+      <section id="outbound-webhook" hidden={!visible("outbound-webhook")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Outbound webhook</h2>
         <div className="mt-4">
           <OutboundWebhookConfig />
         </div>
@@ -1143,8 +1148,8 @@ function SettingsPageInner() {
           flag says; that is what src/lib/__tests__/channelAvailability.test.ts
           asserts. */}
       {CARRIER_CHANNELS_AVAILABLE && (
-        <section id="phone" className="scroll-mt-16">
-          <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Phone (SMS + calls)</h2>
+        <section id="phone" hidden={!visible("phone")} className="scroll-mt-16">
+          <h2 className={sectionLabel} style={SECTION_STYLE}>Phone (SMS + calls)</h2>
           <div className="mt-4">
             <TwilioConfig />
           </div>
@@ -1153,15 +1158,15 @@ function SettingsPageInner() {
 
       {/* The three Meta channels sit together, in the order a business is
           most likely to already have them. */}
-      <section id="whatsapp" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>WhatsApp</h2>
+      <section id="whatsapp" hidden={!visible("whatsapp")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>WhatsApp</h2>
         <div className="mt-4">
           <WhatsAppConfig />
         </div>
       </section>
 
-      <section id="social" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Instagram &amp; Facebook</h2>
+      <section id="social" hidden={!visible("social")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Instagram &amp; Facebook</h2>
         {instagramError && (
           <p className="text-[13px]" style={{ color: "var(--coral)" }}>
             {instagramError}
@@ -1172,11 +1177,9 @@ function SettingsPageInner() {
           <FacebookConfig />
         </div>
       </section>
-      </div>
 
-      <div hidden={activeTab !== "advanced"} className="max-w-[640px] space-y-8">
-      <section id="automation" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Automation</h2>
+      <section id="automation" hidden={!visible("automation")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Automation</h2>
 
         {/* Permission to send, above the rules it governs — because it
             decides what all of them DO, and reading the timings first
@@ -1703,25 +1706,25 @@ function SettingsPageInner() {
           for the owner, and this is how the owner hears one is waiting.
           Renders nothing until the server has at least one alert channel
           set up — see the component. */}
-      <AlertsSection />
+      <div hidden={!visible("alerts")}>
+        <AlertsSection />
       </div>
 
-      <div hidden={activeTab !== "team"} className="max-w-[640px] space-y-8">
       {/* Who this business IS, above who works in it. Until 2026-09-20
           there was nowhere at all to change the business's own name or
           trade — they were asked once in the onboarding wizard and then
           unreachable, which is how four real people received "Thank you
           for contacting My Business". This tab is the account-identity
           tab, so it belongs here and it belongs first. */}
-      <section id="business" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Your business</h2>
+      <section id="business" hidden={!visible("business")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Your business</h2>
         <div className="mt-4">
           <BusinessProfileSection />
         </div>
       </section>
 
-      <section id="team" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Team</h2>
+      <section id="team" hidden={!visible("team")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Team</h2>
         <p className="mt-1 text-[14.5px] leading-relaxed text-ink-soft">
           Admins can invite teammates, change roles, and remove people. Everyone can see who&apos;s on the team.
         </p>
@@ -1731,8 +1734,8 @@ function SettingsPageInner() {
         <OnlyAdminsSendSetting onChange={setOnlyAdminsSend} />
       </section>
 
-      <section id="lead-routing" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Lead routing</h2>
+      <section id="lead-routing" hidden={!visible("lead-routing")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Lead routing</h2>
         {/* No subhead here — SourceRoutingSection's own intro line already
             says what this does ("what happens automatically... before
             anyone looks at it"); a second sentence saying the same thing
@@ -1741,11 +1744,9 @@ function SettingsPageInner() {
           <SourceRoutingSection />
         </div>
       </section>
-      </div>
 
-      <div hidden={activeTab !== "billing"} className="max-w-[640px] space-y-8">
-      <section id="billing" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Billing</h2>
+      <section id="billing" hidden={!visible("billing")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Billing</h2>
         {billingRedirect === "success" && (
           <p className="mt-2 text-sm" style={{ color: "var(--sage)" }}>
             Subscription active — thanks! It may take a few seconds to reflect below.
@@ -1885,11 +1886,9 @@ function SettingsPageInner() {
           </div>
         )}
       </section>
-      </div>
 
-      <div hidden={activeTab !== "advanced"} className="max-w-[640px] space-y-8">
-      <section id="feedback" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>
+      <section id="feedback" hidden={!visible("feedback")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>
           Something we should know?
         </h2>
         <p className="mt-1 text-[14.5px] leading-relaxed text-ink-soft">
@@ -1931,13 +1930,13 @@ function SettingsPageInner() {
         </div>
       </section>
 
-      <section id="security" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>Sign-ins and security</h2>
+      <section id="security" hidden={!visible("security")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Sign-ins and security</h2>
         <SignInsSection />
       </section>
 
-      <section id="data" className="scroll-mt-16">
-        <h2 className={SECTION_LABEL} style={SECTION_STYLE}>
+      <section id="data" hidden={!visible("data")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>
           Your data
         </h2>
         <p className="mt-1 text-[14.5px] leading-relaxed text-ink-soft">Export everything, or permanently delete this business.</p>

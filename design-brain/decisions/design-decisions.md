@@ -7768,3 +7768,24 @@ known at a glance**. He did not pick the colours or the letter-plus-word style.
 **Weak, named:**
 - W1's weave is a sketch; the join where the lower band passes back over shows a hairline seam at large sizes.
 - Two linked rounded shapes also suggest a chain link.
+
+### 2026-09-27: logo, "just use the one we have?", an honest user read of the leaves
+**Founder:** *"i think we just need to use the one that we have already do you think it conveys something look at it
+as a user and tell me"*.
+
+**User read of the current two-leaf mark:**
+- **Large:** two blades leaning forward. It reads as a fast, italic F, or a leaf or feather.
+- **App icon and tab:** a sharp, clean F that stands out.
+- **With the name:** the F of FollowUp.
+- **What it conveys:** forward movement, lightness, calm, premium.
+- **What it doesn't:** messages or replies. Without the name, some would read nature or wellness.
+
+**Recommendation: keep it.**
+- The name ("FollowUp") and the tagline ("So no customer gets forgotten") already say the message. The reference study
+  showed the strongest marks rarely explain the product (Stripe, Notion, Linear).
+- It is built and shipped everywhere, it matches the thin, light type (R-023), and it reads at 16 px.
+- Six rounds today did not beat it.
+- **Optional, invisible to users:** option A, one wide-gap drawing at every size.
+
+**Pending the founder's yes.** If he confirms: a new approval keeps the leaves, A-061 (H) is superseded, and the logo
+boards on the canvas become history.

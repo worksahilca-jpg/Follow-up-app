@@ -68,7 +68,7 @@ export default function ReplyCard({
 
   const needsPrice = !editing && hasPriceSlot(text);
   const message = needsPrice ? fillPriceSlot(text, price.trim()) : text;
-  const canSend = message.trim().length > 0 && !(needsPrice && !price.trim()) && (!isEmail || subject.trim().length > 0);
+  const canSend = message.trim().length > 0 && !(needsPrice && !price.trim());
 
   async function send() {
     setBusy("send");
@@ -77,7 +77,7 @@ export default function ReplyCard({
       const res = await fetch(`/api/leads/${leadId}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, ...(isEmail ? { subject } : {}), ...(seenInboundAt ? { seenInboundAt } : {}) }),
+        body: JSON.stringify({ message, ...(isEmail && subject.trim() ? { subject: subject.trim() } : {}), ...(seenInboundAt ? { seenInboundAt } : {}) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't send. Try again.");
@@ -159,7 +159,7 @@ export default function ReplyCard({
               id="reply-subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Subject"
+              placeholder="Subject (optional)"
               aria-label="Subject"
               className="w-full rounded-xl border border-line bg-card/80 px-3 py-2 text-[15px] focus:outline-none"
             />
@@ -230,7 +230,6 @@ export default function ReplyCard({
 
       {needsPrice && <p className="mt-2 text-[13px] text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
       {basis && !edited && !editing && <p className="mt-2 text-[13px] text-ink-soft">{basis}</p>}
-      {isEmail && editing && !subject.trim() && <p className="mt-2 text-[13px] text-ink-soft">Add a subject line to send this.</p>}
       {error && (
         <p className="mt-2 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
           {error}

@@ -23,8 +23,8 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
   return (
     <div className="space-y-8">
       <ChartCard
-        title="Leads & follow-ups over time"
-        description="New leads captured and follow-ups sent, last 8 weeks."
+        title="Customers & follow-ups over time"
+        description="New customers and follow-ups sent, last 8 weeks."
         hasData={hasLeads}
         height={300}
       >
@@ -35,7 +35,7 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
             <YAxis tick={{ fontSize: 12, fill: chart.axis }} allowDecimals={false} />
             <Tooltip contentStyle={chart.tooltip} />
             <Legend wrapperStyle={{ fontSize: 13 }} />
-            <Line type="monotone" dataKey="leads" name="New leads" stroke={chart.secondary} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="leads" name="New customers" stroke={chart.secondary} strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="followUps" name="Follow-ups sent" stroke={chart.money} strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>
@@ -50,7 +50,7 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
         same shape as the trend chart above.
       */}
       <div className="grid gap-8 lg:grid-cols-2">
-        <ChartCard title="Pipeline funnel" description="Where your leads are sitting right now." hasData={hasLeads}>
+        <ChartCard title="Pipeline funnel" description="Where your customers are sitting right now." hasData={hasLeads}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.stageCounts} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
@@ -62,7 +62,7 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Lead sources" description="Where your leads are coming from." hasData={hasLeads}>
+        <ChartCard title="Where customers come from" description="Which channels bring your customers in." hasData={hasLeads}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.sourceCounts} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} horizontal={false} />
@@ -125,7 +125,7 @@ function EmptyChart() {
   return (
     <div className="h-full flex flex-col items-center justify-center gap-2 text-sm text-ink-soft">
       <BarChart3 className="h-5 w-5 opacity-40" />
-      No leads yet — nothing to chart.
+      No customers yet — nothing to chart.
     </div>
   );
 }

@@ -464,7 +464,7 @@ export default function TwilioConfig() {
 
               <div className="pt-3 border-t border-line">
                 <p className="text-xs font-medium flex items-center gap-1.5">
-                  <PhoneCall className="h-3.5 w-3.5" /> Live AI voice agent
+                  <PhoneCall className="h-3.5 w-3.5" /> Answers your calls
                   <span
                     className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
                     style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}

@@ -66,19 +66,6 @@ export interface AccessRequestRow {
 }
 
 /**
- * The beta goal as a funnel: ten testers, each of whom has to get through
- * three doors before they are testing anything. Counts are of approved
- * testers only; a removed one drops out of every step.
- */
-export interface TesterFunnel {
-  goal: number;
-  added: number;
-  signedIn: number;
-  inboxConnected: number;
-  firstLead: number;
-}
-
-/**
  * One edited draft from the last week: what FollowUp wrote against what
  * the owner really sent, de-identified through src/lib/deidentify.ts
  * before it leaves the data layer. Only from businesses that turned on
@@ -94,7 +81,6 @@ export interface DraftChange {
   sent: string;
 }
 
-export const TESTER_GOAL = 10;
 const DRAFT_CHANGES_DAYS = 7;
 const DRAFT_CHANGES_LIMIT = 30;
 
@@ -118,7 +104,6 @@ export interface PlatformAdminData {
   recentSignups: RecentSignup[];
   // The beta list: every email the founder added, active first, newest first.
   accessRequests: AccessRequestRow[];
-  testerFunnel: TesterFunnel;
   draftChanges: DraftChange[];
 }
 
@@ -302,15 +287,6 @@ export async function getPlatformAdminData(): Promise<PlatformAdminData> {
     })
     .sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9) || b.createdAt.getTime() - a.createdAt.getTime());
 
-  const approvedTesters = accessRequests.filter((r) => r.status === "approved");
-  const testerFunnel: TesterFunnel = {
-    goal: TESTER_GOAL,
-    added: approvedTesters.length,
-    signedIn: approvedTesters.filter((r) => r.signedIn).length,
-    inboxConnected: approvedTesters.filter((r) => r.inboxConnected).length,
-    firstLead: approvedTesters.filter((r) => r.leadCount > 0).length,
-  };
-
   // --- What testers changed this week ---
   // Only rows with a stored draft exist for opted-in businesses, so the
   // consent check is the column itself; the de-identification boundary is
@@ -375,7 +351,6 @@ export async function getPlatformAdminData(): Promise<PlatformAdminData> {
     dormantBusinessCount,
     recentSignups,
     accessRequests,
-    testerFunnel,
     draftChanges,
   };
 }

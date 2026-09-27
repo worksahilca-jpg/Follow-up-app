@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
+import SiteAnalytics from "@/components/SiteAnalytics";
 import { publicSans, ibmPlexMono } from "@/lib/fonts";
 
 // metadataBase makes every relative URL below (the OG image, icons) resolve
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <MotionConfig reducedMotion="user">
           <AuthProvider>{children}</AuthProvider>
         </MotionConfig>
+        <SiteAnalytics />
       </body>
     </html>
   );

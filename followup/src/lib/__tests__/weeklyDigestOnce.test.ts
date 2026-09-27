@@ -50,11 +50,10 @@ vi.mock("@/lib/db", () => {
 });
 vi.mock("@/lib/cronAuth", () => ({ requireCronSecret: vi.fn(() => null) }));
 vi.mock("@/lib/integrations/gmail", () => ({ sendEmail }));
-vi.mock("@/lib/rescued", () => ({
-  getRescueReport: vi.fn(async () => ({ rescued: 2, answeredForYou: 3 })),
-  renderRescueDigest: vi.fn(() => "<p>digest</p>"),
+vi.mock("@/lib/weeklyDigest", () => ({
+  gatherWeeklyDigest: vi.fn(async () => ({})),
+  renderWeeklyDigest: vi.fn(() => ({ subject: "FollowUp this week", text: "digest", html: "<p>digest</p>" })),
 }));
-vi.mock("@/lib/pendingApprovals", () => ({ getPendingApprovals: vi.fn(async () => []) }));
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 
 import { GET } from "@/app/api/cron/weekly-digest/route";

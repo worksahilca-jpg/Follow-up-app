@@ -391,6 +391,19 @@ timed from when the lead wrote it (`eventSentAt` in `src/lib/inbound/meta.ts`), 
 start is spent by the time a late message is found, and the conversation timeline reads in
 the order things were actually said.
 
+## FollowUp's first value moment (CEO decision, 2026-09-26)
+
+One definition, used by every screen, report and study (design brain A-047, from the Amplitude study):
+
+- **First value:** a customer got a reply that FollowUp wrote. That is the first message a rule or a FollowUp draft
+  produced that actually went out, whether the owner approved it or it sent by itself. The instant "got your
+  message" acknowledgement doesn't count: it's the same line for everyone, not a reply.
+- **Activated:** first value within 7 days of first signing in.
+- **Proof:** that customer wrote back. Shown when it happens, not needed to count as activated.
+
+In code this is `FIRST_VALUE_SEND` in `src/lib/firstValue.ts`. /admin measures who reaches it from FollowUp's own
+records (no analytics SDK), and Today says it to the owner once, on the day it happens.
+
 ## First replies are written right after connecting (CEO decision, 2026-09-26)
 
 Asked "When someone connects their email, write the replies for customers who never got an answer right away,

@@ -21,7 +21,7 @@ import FeedbackDialog from "./FeedbackDialog";
 
 const nav = [
   { href: "/dashboard", label: "Today", icon: LayoutDashboard },
-  { href: "/leads", label: "Leads", icon: Users },
+  { href: "/leads", label: "Customers", icon: Users },
   { href: "/pipeline", label: "Pipeline", icon: GitBranch },
   { href: "/workflows", label: "Follow-up plans", icon: Workflow },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },

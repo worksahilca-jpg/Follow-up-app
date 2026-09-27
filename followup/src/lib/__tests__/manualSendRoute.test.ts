@@ -21,6 +21,9 @@ vi.mock("@/lib/sending", () => ({ sendFollowUpToLead }));
 vi.mock("@/lib/audit", () => ({ recordAudit }));
 vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true), billingLockedMessage: vi.fn(async () => "") }));
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: vi.fn(async () => false) }));
+// "Only admins send" (A-041): null means this person may send.
+const { sendRefusal } = vi.hoisted(() => ({ sendRefusal: vi.fn(async (): Promise<string | null> => null) }));
+vi.mock("@/lib/sendingControl", () => ({ sendRefusal }));
 const { messageFindFirst } = vi.hoisted(() => ({ messageFindFirst: vi.fn(async (): Promise<{ sentAt: Date } | null> => null) }));
 vi.mock("@/lib/db", () => ({
   prisma: {
@@ -42,6 +45,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   sendFollowUpToLead.mockResolvedValue({ success: true });
   messageFindFirst.mockResolvedValue(null);
+  sendRefusal.mockResolvedValue(null);
 });
 
 describe("the manual send route", () => {
@@ -110,5 +114,27 @@ describe("a send against a conversation that has moved on", () => {
     const res = await post({ message: "Tuesday at 3 works.", seenInboundAt: "yesterday" });
     expect(res.status).toBe(400);
     expect(sendFollowUpToLead).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * "Only admins send" (design brain A-041). This route is the one place a
+ * person sends, so it is where a teammate is refused.
+ */
+describe("only admins send", () => {
+  it("refuses a teammate with a 403 and sends nothing", async () => {
+    sendRefusal.mockResolvedValue("Only admins send on this account. An admin will see this reply waiting.");
+    const res = await post({ message: "Tuesday at 3 works." });
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual(expect.objectContaining({ success: false, adminOnly: true }));
+    expect(sendFollowUpToLead).not.toHaveBeenCalled();
+    expect(recordAudit).not.toHaveBeenCalled();
+    expect(sendRefusal).toHaveBeenCalledWith("biz1", "user1");
+  });
+
+  it("lets the send through when the person may send", async () => {
+    const res = await post({ message: "Tuesday at 3 works." });
+    expect(res.status).toBe(200);
+    expect(sendFollowUpToLead).toHaveBeenCalledTimes(1);
   });
 });

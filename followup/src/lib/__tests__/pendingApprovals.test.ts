@@ -90,7 +90,7 @@ describe("getPendingApprovals — a lead already answered leaves the queue", () 
     p.lead.findMany.mockResolvedValue([lead()]);
     await getPendingApprovals("biz1");
     const asked = p.auditEvent.findMany.mock.calls[0][0].where.action.in as string[];
-    for (const noise of ["lead.dm_answer", "lead.opt_in", "ai.quiet_outcome_classified", "lead.classification_overridden"]) {
+    for (const noise of ["lead.dm_answer", "lead.opt_in", "ai.quiet_outcome_classified", "lead.classification_overridden", "lead.talked", "lead.talked_undone"]) {
       expect(asked, `${noise} can hide a held draft again`).not.toContain(noise);
     }
   });
@@ -159,6 +159,7 @@ describe("getPendingApprovals", () => {
         leadLastMessage: null,
         leadLastMessageChannel: null,
         leadLastMessageAt: null,
+        laterUntil: null,
       },
     ]);
   });
@@ -277,5 +278,25 @@ describe("dismissHold", () => {
     const result = await dismissHold("lead1", "biz1", "user1");
     expect(result).toEqual({ success: false, message: "Lead not found." });
     expect(audit).not.toHaveBeenCalled();
+  });
+});
+
+describe("getPendingApprovals — 'We talked' (design brain A-039)", () => {
+  it("drops a held reply once the owner says they talked to the customer", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([lead({ talkedAt: new Date("2026-09-10T12:30:00Z") })]);
+    expect(await getPendingApprovals("biz1")).toEqual([]);
+  });
+
+  it("brings the held reply straight back on Undo, which clears the time", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([lead({ talkedAt: null })]);
+    expect(await getPendingApprovals("biz1")).toHaveLength(1);
+  });
+
+  it("keeps a reply held after an older talk: the customer wrote again since", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([lead({ talkedAt: new Date("2026-09-09T12:00:00Z") })]);
+    expect(await getPendingApprovals("biz1")).toHaveLength(1);
   });
 });

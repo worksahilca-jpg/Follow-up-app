@@ -25,6 +25,9 @@ const ACTION_COPY: Record<string, (meta: Record<string, unknown> | null) => { la
     label: "FollowUp drafted a reply and held it for review",
     detail: (meta?.reason as string) || describeTrigger(meta, "held"),
   }),
+  // "We talked" (src/lib/talked.ts, design brain A-039).
+  "lead.talked": () => ({ label: "You talked with them", detail: "Check-ins stopped until they write again" }),
+  "lead.talked_undone": () => ({ label: "You undid \"We talked\"", detail: "Check-ins are back on" }),
 };
 
 /**
@@ -66,9 +69,9 @@ function describeTrigger(meta: Record<string, unknown> | null, verb: "sent" | "h
   const trigger = meta?.trigger as string | undefined;
   const channel = meta?.channel as string | undefined;
   const map: Record<string, string> = {
-    instant_ack: "the instant acknowledgement sent to every new lead",
-    unanswered: "this lead replied and nobody followed up",
-    silence: "this lead had gone quiet",
+    instant_ack: "the instant acknowledgement sent to every new customer",
+    unanswered: "this customer replied and nobody followed up",
+    silence: "this customer had gone quiet",
     sequence: "a scheduled workflow step",
     manual: "a manual trigger",
   };
@@ -156,7 +159,7 @@ export default function LeadTrustPanel({
       <div className="mt-4 pt-3 border-t border-line">
         <h4
           className="text-xs uppercase tracking-wide text-ink-soft flex items-center gap-1.5"
-          title="FollowUp matches whatever language and tone the lead's most recent message is in — every reply, every time."
+          title="FollowUp matches whatever language and tone the customer's most recent message is in — every reply, every time."
         >
           <Languages className="h-3.5 w-3.5" />
           How they write
@@ -178,13 +181,13 @@ export default function LeadTrustPanel({
       <div className="mt-4 pt-3 border-t border-line">
         <h4
           className="text-xs uppercase tracking-wide text-ink-soft flex items-center gap-1.5"
-          title="Every message FollowUp sent or held for your approval on this lead."
+          title="Every message FollowUp sent or held for your approval for this customer."
         >
           <History className="h-3.5 w-3.5" />
           What FollowUp did here
         </h4>
         {events.length === 0 ? (
-          <p className="text-sm text-ink-soft mt-2">Nothing sent or held for this lead yet.</p>
+          <p className="text-sm text-ink-soft mt-2">Nothing sent or held for this customer yet.</p>
         ) : (
           <>
             <ul className="mt-2 space-y-2.5">

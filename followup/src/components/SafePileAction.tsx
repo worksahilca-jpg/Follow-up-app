@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUndoableSend } from "@/components/useUndoableSend";
+import UndoLine from "@/components/UndoLine";
 
 /**
  * The routine pile, offered as one action instead of forty things to read.
@@ -139,6 +140,12 @@ export default function SafePileAction({
         >
           Undo
         </button>
+        {/* The ten seconds, drawn (A-048). */}
+        {send.endsAt !== null && (
+          <div className="basis-full">
+            <UndoLine endsAt={send.endsAt} />
+          </div>
+        )}
       </div>
     );
   }

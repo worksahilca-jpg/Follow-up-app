@@ -13,7 +13,6 @@ import SmartViewForm from "@/components/SmartViewForm";
 import EmptyState from "@/components/EmptyState";
 import CleanupLeadsButton from "@/components/CleanupLeadsButton";
 import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, MoreHorizontal } from "lucide-react";
-import FadeIn from "@/components/motion/FadeIn";
 import { PageHeader } from "@/components/PageHeader";
 import { ItemBox, ItemBoxList, type ItemTone } from "@/components/ItemBox";
 
@@ -258,7 +257,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           which is also the honest hierarchy — adding a lead is the thing
           someone came here to do, cleaning up is not. */}
       <PageHeader
-        title="Leads"
+        title="Customers"
         subtitle={`${leads.length} total, sorted by follow-up priority.`}
         actions={
           <LeadsMoreMenu
@@ -273,7 +272,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
             style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
             <Plus className="h-4 w-4" />
-            Add lead
+            Add customer
           </button>
         }
       />
@@ -375,7 +374,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search leads…"
+            placeholder="Search customers…"
             className="pl-9 pr-3 py-2 rounded-lg border border-line bg-card text-sm w-full sm:w-56"
           />
         </div>
@@ -398,7 +397,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
           the box, which the one-hue-per-box cap (S-05) doesn't allow, and its
           number never carried a unit anyone could read. The score still leads
           the sort, and the detail page still explains it. */}
-      <FadeIn className="mt-6">
+      <div className="mt-6">
         <ItemBoxList>
           {filtered.map((lead) => (
             <ItemBox
@@ -414,27 +413,27 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
 
         {filtered.length === 0 && leads.length > 0 && (
           <p className="py-8 text-center text-sm text-ink-soft">
-            No leads match <span className="text-ink font-medium">{activeFilterLabel}</span>.{" "}
+            No customers match <span className="text-ink font-medium">{activeFilterLabel}</span>.{" "}
             <button
               onClick={() => selectQuickFilter("all")}
               className="underline underline-offset-2"
               style={{ color: "var(--accent)" }}
             >
-              Show all leads
+              Show all customers
             </button>
           </p>
         )}
         {leads.length === 0 && (
           <EmptyState
             icon={Inbox}
-            title="No leads yet"
+            title="No customers yet"
             /* Named one source out of eight until 2026-09-22. A business
                running on Instagram DMs, WhatsApp or a website form opened
                this screen and was told to connect an inbox it does not use
                — the same dead end the founder had already called out in
                onboarding ("we will help them to connect the sources"), on
                a screen nobody went back and checked. */
-            description="Connect a lead source in Settings — your inbox, website form, DMs or CRM — or add one by hand."
+            description="Connect where your customers write to you in Settings — your inbox, website form, DMs or CRM — or add one by hand."
             action={
               <div className="flex items-center justify-center gap-2">
                 <button
@@ -442,7 +441,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
                   className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium"
                   style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                 >
-                  Add a lead
+                  Add a customer
                 </button>
                 <Link
                   href="/settings"
@@ -454,7 +453,7 @@ export default function LeadsPageClient({ leads }: { leads: Lead[] }) {
             }
           />
         )}
-      </FadeIn>
+      </div>
     </div>
   );
 }

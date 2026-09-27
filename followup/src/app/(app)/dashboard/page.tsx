@@ -1,13 +1,24 @@
 import Link from "next/link";
-import StatCard from "@/components/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import ApprovalQueue, { type ApprovalItem } from "@/components/ApprovalQueue";
 import SetupStrip from "@/components/SetupStrip";
+import SendingPausedBanner from "@/components/SendingPausedBanner";
+import CantSendNotice from "@/components/CantSendNotice";
+import { hasAnySendChannel } from "@/lib/sendChannels";
 import TestLeadButton from "@/components/TestLeadButton";
 import { getLeads, getStats, getUpcomingBookings } from "@/lib/leads-data";
 import { formatCurrency, getGreeting } from "@/lib/demo-data";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { describeTrigger, getRescueReport } from "@/lib/rescued";
+import { countCustomersAnswered } from "@/lib/weeklyDigest";
+import { withBasis, sentAsWritten } from "@/lib/showTheWork";
+import { weekLine } from "@/lib/weekLine";
+import { describeWait, describeWaitClause, startOfLocalDay } from "@/lib/calmToday";
+import { countHandledToday } from "@/lib/handledToday";
+import { laterTodayAvailable } from "@/lib/later";
+import { loadComingUp } from "@/lib/comingUpData";
+import { isWaitingOnCustomer, medianReplyMs } from "@/lib/waitingOn";
+import { ComingUpList, ComingUpLine } from "@/components/ComingUp";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
@@ -16,9 +27,8 @@ import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
 import { ArrowRight } from "lucide-react";
 import { ItemBox, ItemBoxList, type ItemTone } from "@/components/ItemBox";
-import FadeIn from "@/components/motion/FadeIn";
-import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
-import CountUp from "@/components/motion/CountUp";
+import FirstValueNote from "@/components/FirstValueNote";
+import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
 // no seconds) since this is a status line, not a live clock.
@@ -79,29 +89,87 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const leads = await getLeads();
   const stats = getStats(leads);
-  const atRisk = getAtRiskLeads(leads).slice(0, 8);
   const upcomingBookings = await getUpcomingBookings();
   const ctx = await getSessionContext();
   const rescue = ctx ? await getRescueReport(ctx.businessId, 7) : null;
+  // "This week" (design brain A-042, the Ramp study): customers, not
+  // messages, the same count the Monday email uses.
+  const weekEnd = new Date();
+  const answeredThisWeek = ctx
+    ? await countCustomersAnswered(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000), weekEnd)
+    : 0;
   const approvals = ctx ? await getPendingApprovals(ctx.businessId) : [];
+  // Each person once on Today (A-046): anyone already waiting for the
+  // owner's OK is left out of "About to be lost".
+  const awaitingOk = new Set(approvals.map((a) => a.leadId));
+  const atRisk = getAtRiskLeads(leads)
+    .filter((l) => !awaitingOk.has(l.id))
+    .slice(0, 8);
   // Passed straight through. This used to be re-mapped field by field,
   // which dropped whatever the mapping had not been told about — see
   // ApprovalItem's own note.
-  const approvalItems: ApprovalItem[] = approvals;
   const setupSteps = ctx ? await getIncompleteSetupSteps(ctx.businessId) : [];
   // The owner's own wall clock, for the greeting. This is a server
   // component, so without it "Good morning" came from the server's
   // clock — UTC on Vercel — and greeted a Toronto owner at 8pm with it.
   const business = ctx
-    ? await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true } })
+    ? await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true } })
     : null;
   const timezone = business?.timezone ?? "America/New_York";
+  // "Based on" under each waiting reply, and "sent as written" (A-043).
+  // "Waiting 5 h" on each card and in the "Start with" line (A-046), worked
+  // out here so the server and the browser show the same words.
+  const now = new Date();
+  // Set aside with "Later" (A-046): off Today until it comes back.
+  const setAside = approvals.filter((a) => a.laterUntil).length;
+  const approvalItems: ApprovalItem[] = (await withBasis(approvals.filter((a) => !a.laterUntil), timezone)).map((a) => ({
+    ...a,
+    wait: describeWait(a, now),
+    waitClause: describeWaitClause(a, now),
+  }));
+  const handledToday = ctx ? await countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0;
+  // "Your first reply went out through FollowUp" (A-047): only on the day
+  // the business's first value happened, so it is said once with nothing stored.
+  const firstSend = ctx
+    ? await prisma.followUp.findFirst({
+        where: { ...FIRST_VALUE_SEND, lead: { businessId: ctx.businessId } },
+        orderBy: { sentAt: "asc" },
+        select: { sentAt: true, channel: true, repliedAt: true, lead: { select: { name: true } } },
+      })
+    : null;
+  const firstValue = firstValueNote(
+    firstSend?.sentAt ? { sentAt: firstSend.sentAt, channel: firstSend.channel, repliedAt: firstSend.repliedAt, leadName: firstSend.lead.name } : null,
+    now,
+    timezone
+  );
+  // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
+  const comingUp = ctx && leads.length > 0 ? await loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null;
+  const written = ctx ? await sentAsWritten(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000)) : { asWritten: 0, total: 0 };
+  // The middle of the three places (A-050): answered, not answered back.
+  const waitingOn = leads.filter((l) => !awaitingOk.has(l.id) && isWaitingOnCustomer(l)).length;
+  const thisWeek = weekLine({
+    heardBackMs: medianReplyMs(leads, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000), weekEnd),
+    answered: answeredThisWeek,
+    cameBack: rescue?.rescued ?? 0,
+    booked: rescue?.booked ?? 0,
+    asWritten: written.asWritten,
+    sent: written.total,
+  });
   // Business.holdAllForApproval — as of 2026-09-20 this stops every
   // automated message including the instant reply, so it changes what
   // this screen can honestly promise.
   const holdAll = business?.holdAllForApproval ?? false;
+  // Pause all sending, and Only admins send (A-041). The role is read here
+  // rather than trusted from the session, which doesn't carry it.
+  const me = ctx ? await prisma.user.findUnique({ where: { id: ctx.userId }, select: { role: true } }) : null;
+  const isAdmin = me?.role === "ADMIN";
+  const sendingPaused = Boolean(business?.sendingPausedAt);
+  const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const gmail = ctx ? await getGmailStatus(ctx.businessId) : { connected: false };
   const outlook = ctx ? await getOutlookStatus(ctx.businessId) : { connected: false };
+  // Nothing to send from: every rule still reads "on" in Settings, and none
+  // of them can do anything (A-044). Only asked once there are people.
+  const cantSend = ctx && leads.length > 0 ? !(await hasAnySendChannel(ctx.businessId)) : false;
   // An inbox is connected if EITHER provider is. Checking only Gmail is what
   // made the empty state claim "FollowUp is watching your inbox" to a business
   // that had connected Outlook and never got the confirmation line, and to a
@@ -143,7 +211,7 @@ export default async function DashboardPage() {
       parts.push(`${approvalItems.length} draft${approvalItems.length === 1 ? "" : "s"} need${approvalItems.length === 1 ? "s" : ""} your OK`);
     }
     if (stats.atRisk > 0) {
-      parts.push(`${stats.atRisk} lead${stats.atRisk === 1 ? "" : "s"} going quiet`);
+      parts.push(`${stats.atRisk} customer${stats.atRisk === 1 ? "" : "s"} going quiet`);
     }
     if (parts.length > 0) return parts.join(" · ");
 
@@ -171,7 +239,7 @@ export default async function DashboardPage() {
      * below owns that explanation and has three properly-reasoned
      * branches for it; this line only has to stop claiming calm.
      */
-    if (leads.length === 0) return "No leads yet.";
+    if (leads.length === 0) return "No customers yet.";
 
     return "Nothing needs your OK right now.";
   }
@@ -186,10 +254,15 @@ export default async function DashboardPage() {
           not need a hero. */}
       <PageHeader title={getGreeting(timezone)} subtitle={headline()} />
 
-      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} />
+      {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
+      {cantSend && (
+        <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
+      )}
+      {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
+      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} waitingOn={waitingOn} />
 
       {leads.length === 0 ? (
-        <FadeIn className="mt-10">
+        <div className="mt-10">
           {/* research/product/2026-09-10-ux-simplification.md §3/§7.1: the
               old empty state was four zeroed stat tiles and a generic
               "No leads yet" box — a worse first impression than one
@@ -221,10 +294,10 @@ export default async function DashboardPage() {
                     reply started waiting for approval too. */}
                 <p className="text-lg leading-relaxed">
                   {holdAll
-                    ? "FollowUp is watching your inbox. When a lead writes, it writes the reply and puts it in Approvals for you — nothing goes out until you send it."
+                    ? "FollowUp is watching your inbox. When a customer writes, FollowUp writes the reply and puts it in Approvals for you — nothing goes out until you send it."
                     : inbox.instant
-                      ? "FollowUp is watching your inbox. The moment a lead writes, it replies within a minute and shows you here."
-                      : "FollowUp is watching your inbox. It checks for new leads every ten minutes, then replies and shows you here."}
+                      ? "FollowUp is watching your inbox. The moment a customer writes, it replies within a minute and shows you here."
+                      : "FollowUp is watching your inbox. It checks for new customers every ten minutes, then replies and shows you here."}
                 </p>
                 <p className="text-sm text-ink-soft mt-3 flex items-center justify-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--sage)" }} />
@@ -298,46 +371,17 @@ export default async function DashboardPage() {
               step. SetupStrip returns null when there is nothing left, so
               it is safe in both branches. */}
           <SetupStrip steps={setupSteps} />
-        </FadeIn>
+        </div>
       ) : (
         <>
-          {/* Same on-mount stagger as the landing page's hero (RevealGroup
-              on="mount"). 13 tiles cut to 3 — the ones that answer a real
-              question an owner asks ("is anyone about to fall through the
-              cracks," "is this thing earning its keep") rather than every
-              number the app happens to be able to compute. */}
-          {/* Three across at every width, not stacked below sm. These three
-              values are single- or double-digit counts, and StatCard already
-              reserves two lines for a wrapping label — so three-up fits at
-              390px, where one-per-row spent ~370px of the first screen on
-              three numbers and pushed "About to be lost", the thing the page
-              is for, below the fold. */}
-          <RevealGroup on="mount" className="grid grid-cols-3 gap-3 mt-6">
-            <RevealItem>
-              <StatCard
-                label="At risk right now"
-                value={<CountUp to={stats.atRisk} />}
-                accent="var(--coral)"
-              />
-            </RevealItem>
-            <RevealItem>
-              <StatCard
-                label="Answered for you"
-                value={<CountUp to={rescue?.answeredForYou ?? 0} />}
-                accent="var(--slate)"
-              />
-            </RevealItem>
-            <RevealItem>
-              <StatCard
-                label="Came back"
-                value={<CountUp to={rescue?.rescued ?? 0} />}
-                accent="var(--sage)"
-              />
-            </RevealItem>
-          </RevealGroup>
+          {/* Today's numbers, in one quiet line (A-045). This was three
+              "This week" tiles (A-042) and a separate "sent as written"
+              sentence (A-043); the founder folded them into one line, as
+              A-027 first planned. Desktop only: the phone gets less (R-015). */}
+          {thisWeek && <p className="mt-6 hidden sm:block text-sm text-ink-soft tabular-nums">{thisWeek}</p>}
 
           {atRisk.length > 0 && (
-            <FadeIn className="mt-10">
+            <div className="mt-10">
               <h2 className="font-display text-xl">About to be lost</h2>
               <p className="text-sm text-ink-soft mt-1">
                 Automation is already working these — the ones at the top need you.
@@ -367,7 +411,22 @@ export default async function DashboardPage() {
                   />
                 ))}
               </ItemBoxList>
-            </FadeIn>
+            </div>
+          )}
+
+          {/* Coming up (A-046): the full list on desktop, one line on the
+              phone that opens it (R-015). Hidden when nothing is planned. */}
+          {comingUp && comingUp.total > 0 && (
+            <>
+              <div className="mt-10 hidden sm:block">
+                <h2 className="font-display text-xl">Coming up</h2>
+                <ComingUpList groups={comingUp.groups} holdAll={comingUp.holdAll} />
+              </div>
+              <ComingUpLine
+                first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }}
+                total={comingUp.total}
+              />
+            </>
           )}
 
           {/* Configuration sits below the two work sections, not between them.
@@ -391,7 +450,7 @@ export default async function DashboardPage() {
           )}
 
           {rescue && rescue.leads.length > 0 && (
-            <FadeIn className="mt-10">
+            <div className="mt-10">
               <h2 className="font-display text-xl">What FollowUp did for you this week</h2>
               {/* This sentence stays exactly as written. It is a trust claim —
                   it tells the owner the number below is not padded with their
@@ -416,11 +475,11 @@ export default async function DashboardPage() {
                   />
                 ))}
               </ItemBoxList>
-            </FadeIn>
+            </div>
           )}
 
           {upcomingBookings.length > 0 && (
-            <FadeIn className="mt-10">
+            <div className="mt-10">
               <h2 className="font-display text-xl">Upcoming calls</h2>
               <ItemBoxList className="mt-4">
                 {upcomingBookings.map((b) => (
@@ -438,15 +497,15 @@ export default async function DashboardPage() {
                   />
                 ))}
               </ItemBoxList>
-            </FadeIn>
+            </div>
           )}
 
-          <FadeIn className="mt-10 mb-6">
+          <div className="mt-10 mb-6">
             <Link href="/analytics" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline">
               See all numbers
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-          </FadeIn>
+          </div>
         </>
       )}
     </div>

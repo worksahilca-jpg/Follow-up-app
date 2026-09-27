@@ -5,7 +5,7 @@
  * `authenticated` roles; RLS with no policies is what shuts that door
  * (docs/least-privilege-db-role.md). Twelve tables created after the
  * 2026-09-08 sweep never got it, until the blanket migration
- * 20260926090000_enable_rls_all_public_tables. That migration only covers
+ * 20260927000000_enable_rls_all_public_tables. That migration only covers
  * tables that exist when it runs — so a table created by any LATER
  * migration must enable RLS itself, and this test fails CI when one
  * doesn't.
@@ -15,7 +15,7 @@ import { readFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
 
 const migrationsDir = join(__dirname, "..", "..", "..", "prisma", "migrations");
-const BLANKET = "20260926090000_enable_rls_all_public_tables";
+const BLANKET = "20260927000000_enable_rls_all_public_tables";
 
 const migrations = readdirSync(migrationsDir)
   .filter((d) => /^\d{14}_/.test(d) && existsSync(join(migrationsDir, d, "migration.sql")))

@@ -49,6 +49,10 @@ export const DECISION_EVENTS = [
   "lead.dm_exit",
 ];
 
+// "We talked" and its Undo (lead.talked, lead.talked_undone) are not in the
+// list either: the talk is read from Lead.talkedAt below, so Undo brings the
+// held draft straight back.
+
 /**
  * The acknowledgement is recorded as an ordinary "ai.send" whose meta
  * says `trigger: "instant_ack"` (acknowledge.ts merges it there). It can go
@@ -119,6 +123,14 @@ export type PendingApproval = {
    * answered (daily-path audit 2026-09-25 F7).
    */
   leadLastMessageAt: string | null;
+  /**
+   * Set aside with "Later" (A-046) until this time, or null when it isn't.
+   * Already null once the time has passed or the customer has written
+   * since, so callers only ever see a deferral that is still in force.
+   * Today and the "still waiting" reminders hide these; every count keeps
+   * them.
+   */
+  laterUntil: Date | null;
 };
 
 /**
@@ -133,7 +145,7 @@ export function compareApprovals(a: { reason: string; heldAt: Date }, b: { reaso
   return b.heldAt.getTime() - a.heldAt.getTime();
 }
 
-export async function getPendingApprovals(businessId: string): Promise<PendingApproval[]> {
+export async function getPendingApprovals(businessId: string, now: Date = new Date()): Promise<PendingApproval[]> {
   // One row per lead — the most recent AuditEvent naming that lead —
   // scoped to a bounded recent window so a business with years of audit
   // history doesn't force a full-table distinct scan on every dashboard
@@ -167,6 +179,9 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
       id: true,
       name: true,
       source: true,
+      talkedAt: true,
+      laterUntil: true,
+      laterSetAt: true,
       score: true,
       suggestedSubject: true,
       suggestedMessage: true,
@@ -234,6 +249,9 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
     // send from another screen, or the owner replying from their own inbox.
     const sentAfter = lastSentByLead.get(lead.id);
     if (sentAfter && sentAfter > event.createdAt) continue;
+    // Or answered where FollowUp cannot see it: "We talked"
+    // (src/lib/talked.ts). Undo clears the stamp, and the draft is back.
+    if (lead.talkedAt && lead.talkedAt > event.createdAt) continue;
     const meta = (event.meta ?? {}) as Record<string, unknown>;
 
     let lastInbound: { body: string; channel: string; sentAt: Date } | null = null;
@@ -242,7 +260,13 @@ export async function getPendingApprovals(businessId: string): Promise<PendingAp
       if (m && (!lastInbound || m.sentAt > lastInbound.sentAt)) lastInbound = { body: m.body, channel: c.channel, sentAt: m.sentAt };
     }
 
+    const later =
+      lead.laterUntil && lead.laterUntil > now && !(lastInbound && lead.laterSetAt && lastInbound.sentAt > lead.laterSetAt)
+        ? lead.laterUntil
+        : null;
+
     approvals.push({
+      laterUntil: later,
       leadId: lead.id,
       leadName: lead.name,
       source: lead.source,

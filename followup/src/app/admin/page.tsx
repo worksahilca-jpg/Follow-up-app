@@ -4,6 +4,10 @@ import StatCard from "@/components/StatCard";
 import AccessRequestList from "@/components/AccessRequestList";
 import AdminCharts from "@/components/AdminCharts";
 import { getPlatformAdminData } from "@/lib/admin-data";
+import { getProductUsage } from "@/lib/admin-usage";
+import ProductUsageSection from "@/components/ProductUsageSection";
+import ActivationSection from "@/components/ActivationSection";
+import { getActivation } from "@/lib/activation-data";
 import { formatCurrency } from "@/lib/demo-data";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +28,7 @@ function channelLabel(provider: string): string {
 const SIGNUP_GRID = "grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1.5fr)_auto]";
 
 export default async function AdminPage() {
-  const data = await getPlatformAdminData();
+  const [data, usage, activation] = await Promise.all([getPlatformAdminData(), getProductUsage(), getActivation()]);
 
   return (
     <div>
@@ -54,6 +58,10 @@ export default async function AdminPage() {
         paid-tier businesses with a currently active or trialing subscription, times that tier&apos;s list price.
       </p>
 
+      <ActivationSection activation={activation} />
+
+      <ProductUsageSection usage={usage} />
+
       <div className="mt-10">
         <AdminCharts
           signupsPerWeek={data.signupsPerWeek}
@@ -68,38 +76,6 @@ export default async function AdminPage() {
           The only way in. Add a Google email and that person can sign in on their next try — no settings change, no
           redeploy. Nobody can ask from the site.
         </p>
-        {/* The goal as a funnel, not a count: ten added means nothing until
-            ten have an inbox connected and a lead on the board. Four numbers
-            in one box, the step that is lagging obvious by eye. */}
-        <div className="mt-4 box p-5">
-          <div className="flex items-baseline justify-between gap-4">
-            <p className="text-sm font-medium">
-              {data.testerFunnel.firstLead} of {data.testerFunnel.goal} testers are testing
-            </p>
-            <p className="text-xs text-ink-soft">a tester counts once they have a lead on the board</p>
-          </div>
-          <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--line)" }}>
-            <div
-              className="h-full rounded-full"
-              style={{ width: `${Math.min(100, (data.testerFunnel.firstLead / data.testerFunnel.goal) * 100)}%`, backgroundColor: "var(--rust)" }}
-            />
-          </div>
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {(
-              [
-                ["Added", data.testerFunnel.added],
-                ["Signed in", data.testerFunnel.signedIn],
-                ["Inbox connected", data.testerFunnel.inboxConnected],
-                ["First lead", data.testerFunnel.firstLead],
-              ] as const
-            ).map(([label, value]) => (
-              <div key={label}>
-                <p className="font-display text-2xl tabular-nums">{value}</p>
-                <p className="text-xs text-ink-soft">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
         <div className="mt-4">
           <AccessRequestList requests={data.accessRequests} />
         </div>

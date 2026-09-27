@@ -27,6 +27,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { settledByTalk, lastInboundTime } from "@/lib/talked";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { sendFollowUpToLead, detectNonEmailChannel, metaWindowFor } from "@/lib/sending";
@@ -562,6 +563,26 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
       }
       return { kind: "paused" as const, note: `${lead.name}: replied — sequence stopped` };
+    }
+
+    // "We talked" (src/lib/talked.ts) ends a plan the way a reply does:
+    // the owner answered them somewhere FollowUp cannot see. Only a talk
+    // after the step was scheduled — a lead enrolled AFTER the owner spoke
+    // to them was enrolled on purpose. No notification: the owner is the
+    // one who just said so.
+    const talkedSinceScheduled =
+      settledByTalk(lead.talkedAt, lastInboundTime(allMessages)) &&
+      (lead.sequenceStepScheduledAt == null || (lead.talkedAt != null && lead.talkedAt > lead.sequenceStepScheduledAt));
+    if (talkedSinceScheduled) {
+      try {
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+        });
+      } catch (err) {
+        return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
+      }
+      return { kind: "paused" as const, note: `${lead.name}: you talked — sequence stopped` };
     }
 
     try {

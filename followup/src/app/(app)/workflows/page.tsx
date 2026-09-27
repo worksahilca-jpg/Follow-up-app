@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Plus, Trash2, ChevronUp, ChevronDown, Mail, ArrowRightLeft, Workflow as WorkflowIcon } from "lucide-react";
 import { CARRIER_CHANNELS_AVAILABLE } from "@/lib/pricing";
+import { READY_PLANS, toStepDelays, dayLabel, type ReadyPlan } from "@/lib/readyPlans";
 
 type SequenceAction = "EMAIL" | "CHANGE_STAGE";
 
@@ -81,56 +82,12 @@ function blankStep(): StepDraft {
   return { delayHours: 72, action: "EMAIL", stageTo: null, messageHint: "" };
 }
 
-// A real bounded, escalating cadence rather than a blank sheet to fill in
-// — cumulative days 3 / 7 / 14 / 30 from enrollment (stored below as the
-// gap-from-previous-step delayHours sequences.ts actually runs on: 72, 96,
-// 168, 384), matching research/product/2026-09-09-followup-cadence-best-
-// practices.md's escalating-then-widening shape — the same pattern every
-// competitor surveyed there (Follow Up Boss, kvCORE, BoomTown) already
-// uses instead of one flat repeating interval. Loaded into the editor
-// for review/editing, never saved automatically — a business should see
-// exactly what it's agreeing to send before it goes near a real lead.
-const RECOMMENDED_CADENCE: { name: string; steps: StepDraft[] } = {
-  name: "Recommended follow-up plan",
-  steps: [
-    {
-      delayHours: 72, // day 3
-      action: "EMAIL",
-      stageTo: null,
-      messageHint: "A light, low-pressure check-in — just making sure this didn't get buried, nothing pushy.",
-    },
-    {
-      delayHours: 96, // day 7 cumulative
-      action: "EMAIL",
-      stageTo: null,
-      messageHint: "More direct — ask plainly if they're still interested and what would help them decide.",
-    },
-    {
-      delayHours: 168, // day 14 cumulative
-      action: "EMAIL",
-      stageTo: null,
-      messageHint: "Offer something of real value — answer a likely objection or suggest a concrete next step, not another check-in.",
-    },
-    {
-      delayHours: 384, // day 30 cumulative
-      action: "EMAIL",
-      stageTo: null,
-      messageHint:
-        "A final message for a lead that's gone genuinely quiet for a month — name the actual elapsed time " +
-        "(e.g. \"it's been about a month since...\") rather than a vague \"just checking in,\" and lead with " +
-        "something concrete and useful (a real update, a real reason this is still worth their time) instead " +
-        "of only asking again. No pressure either way.",
-    },
-  ],
-};
-
 export default function WorkflowsPage() {
   const [sequences, setSequences] = useState<SequenceSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [creating, setCreating] = useState(false);
-  // Set only when "Use recommended cadence" started the editor — a plain
-  // "New workflow" click leaves this null and the editor opens blank.
-  const [template, setTemplate] = useState<{ name: string; steps: StepDraft[] } | null>(null);
+  // A ready plan being set up (A-044): pick one, change a day, save.
+  const [picked, setPicked] = useState<ReadyPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Business.holdAllForApproval — true for every beta account.
@@ -176,37 +133,58 @@ export default function WorkflowsPage() {
           "load a template", so it was pure decoration) and the word
           "cadence" — which is jargon this page's own h1, button and empty
           state all avoid by saying "plan". */}
+      {/* Ready plans first (A-044, the Zapier study): pick one, change a
+          day. The blank builder is a quiet link, not the main button. */}
       <PageHeader
         title="Follow-up plans"
-        subtitle="Build a multi-step follow-up plan once, then put leads on it from their own page."
-        actions={
-          !creating && (
-            <button
-              onClick={() => {
-                setTemplate(RECOMMENDED_CADENCE);
-                setCreating(true);
-              }}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium border border-line sm:w-auto"
-            >
-              Use our recommended plan
-            </button>
-          )
-        }
-        primary={
-          !creating && (
-            <button
-              onClick={() => {
-                setTemplate(null);
-                setCreating(true);
-              }}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
-              style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-            >
-              <Plus className="h-4 w-4" /> New plan
-            </button>
-          )
-        }
+        subtitle="Pick a plan, change a day if you want. Put someone on it from their page."
       />
+
+      {!creating && !picked && (
+        <div className="mt-6">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {READY_PLANS.map((plan) => (
+              <div key={plan.id} className="box p-5 flex flex-col">
+                <p className="font-medium">{plan.name}</p>
+                <p className="text-xs text-ink-soft mt-0.5">{plan.who}</p>
+                <ul className="mt-3 flex-1 divide-y divide-line">
+                  {plan.steps.map((st) => (
+                    <li key={st.day} className="flex gap-3 py-2 text-sm">
+                      <span className="w-20 shrink-0 whitespace-nowrap font-medium tabular-nums">{dayLabel(st.day)}</span>
+                      <span className="text-ink-soft">{st.label}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => setPicked(plan)}
+                  className="mt-3 rounded-lg border border-line px-3 py-2 text-sm font-medium hover:bg-paper"
+                >
+                  Use this plan
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setCreating(true)}
+            className="mt-3 text-xs font-medium underline underline-offset-2 text-ink-soft"
+          >
+            Start from scratch instead
+          </button>
+        </div>
+      )}
+
+      {picked && (
+        <ReadyPlanEditor
+          plan={picked}
+          holdAll={holdAllForApproval}
+          onCancel={() => setPicked(null)}
+          onSaved={(seq) => {
+            setSequences((prev) => [...prev, seq]);
+            setPicked(null);
+          }}
+          onError={setError}
+        />
+      )}
 
       {/* The guarantee, stated once, where it's relevant, as its own object
           rather than as the tail of a paragraph. */}
@@ -249,21 +227,11 @@ export default function WorkflowsPage() {
 
       {creating && (
         <div className="mt-6">
-          {template && (
-            <p className="text-xs text-ink-soft mb-2">
-              Starting from our recommended 4-step plan (days 3, 7, 14 and 30) — edit anything below before saving.
-            </p>
-          )}
           <WorkflowEditor
-            template={template ?? undefined}
-            onCancel={() => {
-              setCreating(false);
-              setTemplate(null);
-            }}
+            onCancel={() => setCreating(false)}
             onSaved={(seq) => {
               setSequences((prev) => [...prev, seq]);
               setCreating(false);
-              setTemplate(null);
             }}
             onError={setError}
           />
@@ -271,11 +239,11 @@ export default function WorkflowsPage() {
       )}
 
       <div className="mt-6 space-y-4">
-        {loaded && sequences.length === 0 && !creating && (
+        {loaded && sequences.length === 0 && !creating && !picked && (
           <div className="box p-8 text-center">
             <WorkflowIcon className="h-6 w-6 mx-auto text-ink-soft" />
             <p className="text-sm text-ink-soft mt-3">
-              No follow-up plans yet — try &quot;Use our recommended plan&quot; above, or build your own from scratch.
+              No plans yet. Pick one above.
             </p>
           </div>
         )}
@@ -532,7 +500,7 @@ function WorkflowEditor({
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder={'Workflow name, e.g. "New lead nurture"'}
+        placeholder={'Plan name, e.g. "New customer"'}
         className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm font-medium"
       />
 
@@ -662,7 +630,106 @@ function WorkflowEditor({
           className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60"
           style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
         >
-          {saving ? "Saving…" : "Save workflow"}
+          {saving ? "Saving…" : "Save plan"}
+        </button>
+        <button onClick={onCancel} disabled={saving} className="rounded-lg border border-line px-4 py-2 text-sm font-medium disabled:opacity-60">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A ready plan, set up in days (A-044): each step is "Day N — FollowUp
+ * writes: …", with the day editable and nothing else to decide. Saved as
+ * an ordinary plan (email steps whose messageHint is the step's angle),
+ * so it runs exactly like one built by hand.
+ */
+function ReadyPlanEditor({
+  plan,
+  holdAll,
+  onCancel,
+  onSaved,
+  onError,
+}: {
+  plan: ReadyPlan;
+  holdAll: boolean;
+  onCancel: () => void;
+  onSaved: (s: SequenceSummary) => void;
+  onError: (msg: string | null) => void;
+}) {
+  const [name, setName] = useState(plan.name);
+  const [days, setDays] = useState<number[]>(plan.steps.map((s) => s.day));
+  const [saving, setSaving] = useState(false);
+  const inOrder = days.every((d, i) => i === 0 || d > days[i - 1]);
+
+  async function save() {
+    onError(null);
+    setSaving(true);
+    try {
+      const delays = toStepDelays(days);
+      const res = await fetch("/api/sequences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          steps: plan.steps.map((st, i) => ({ delayHours: delays[i], action: "EMAIL", stageTo: null, messageHint: st.hint })),
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message ?? "Couldn't save. Try again.");
+      onSaved(data.sequence);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Couldn't save. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-6 box p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          aria-label="Plan name"
+          className="rounded-lg border border-line bg-paper px-3 py-1.5 text-sm font-medium"
+        />
+        <p className="text-xs text-ink-soft">
+          {holdAll ? "Every message waits for your OK." : "It stops the moment they answer."}
+        </p>
+      </div>
+      <ul className="mt-4 divide-y divide-line">
+        {plan.steps.map((st, i) => (
+          <li key={i} className="grid gap-3 py-3 sm:grid-cols-[150px_1fr] items-baseline">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              {i === 0 && days[0] === 0 ? "Same day" : "Day"}
+              {!(i === 0 && days[0] === 0) && (
+                <input
+                  type="number"
+                  min={0}
+                  max={90}
+                  value={days[i]}
+                  aria-label={`Day for step ${i + 1}`}
+                  onChange={(e) => setDays((prev) => prev.map((d, j) => (j === i ? Number(e.target.value) : d)))}
+                  className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
+                />
+              )}
+            </label>
+            <p className="text-sm">FollowUp writes: {st.label.charAt(0).toLowerCase() + st.label.slice(1)}.</p>
+          </li>
+        ))}
+      </ul>
+      {!inOrder && <p className="mt-2 text-xs" style={{ color: "var(--coral)" }}>Each step needs a later day than the one before.</p>}
+      <div className="mt-4 pt-4 border-t border-line flex flex-wrap items-center gap-2">
+        <button
+          onClick={save}
+          disabled={saving || !name.trim() || !inOrder}
+          className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60"
+          style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+        >
+          {saving ? "Saving…" : "Save plan"}
         </button>
         <button onClick={onCancel} disabled={saving} className="rounded-lg border border-line px-4 py-2 text-sm font-medium disabled:opacity-60">
           Cancel

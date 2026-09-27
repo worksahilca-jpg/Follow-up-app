@@ -98,6 +98,9 @@ export interface Lead {
   // (not present on demo-data.ts's static leads) since it's undefined,
   // never a lie, for a lead that was never opted out.
   optedOutAt?: string | null;
+  // "We talked" (Lead.talkedAt, src/lib/talked.ts): when the owner said
+  // they spoke with this customer outside FollowUp. ISO, or null.
+  talkedAt?: string | null;
   // What FollowUp is actually doing with this lead right now (see
   // src/lib/automationStatus.ts) — computed server-side in leads-data.ts,
   // not present on demo-data.ts's static leads (no real automation runs

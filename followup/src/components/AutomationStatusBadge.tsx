@@ -39,6 +39,16 @@ export function describeAutomationStatus(
   status: Exclude<AutomationStatus, { kind: "closed" }>
 ): { icon: typeof Zap; label: string; detail?: string; bg: string; fg: string; pulse?: boolean; emphasis?: boolean } {
   switch (status.kind) {
+    // Calm, not coral: nothing went wrong. The owner answered them where
+    // FollowUp cannot see (src/lib/talked.ts) and said so.
+    case "talked":
+      return {
+        icon: CheckCircle2,
+        label: "You talked with them",
+        detail: `On ${new Date(status.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}. FollowUp won't check in until they write again.`,
+        bg: "var(--line)",
+        fg: "var(--ink-soft)",
+      };
     case "workflow":
       return {
         icon: Workflow,
@@ -50,7 +60,7 @@ export function describeAutomationStatus(
     case "workflow_paused":
       return { icon: PauseCircle, label: "Follow-up plan paused", detail: status.sequenceName, bg: "var(--line)", fg: "var(--ink-soft)" };
     case "off":
-      return { icon: Ban, label: "Automation off", detail: "This lead is opted out of automated follow-up", bg: "var(--line)", fg: "var(--ink-soft)" };
+      return { icon: Ban, label: "Automation off", detail: "This customer is opted out of automated follow-up", bg: "var(--line)", fg: "var(--ink-soft)" };
     // Three coral states in a row — no_send_channel, ai_paused,
     // account_paused — and that is deliberate, not an oversight. To the
     // owner they are one family: nothing is happening, and only they can
@@ -124,7 +134,7 @@ export function describeAutomationStatus(
         // makes no claim about where the explanation sits — an earlier
         // draft said "see why below", which is only true on the detail
         // page and false in FollowUpCard.
-        label: "Paused on this lead",
+        label: "Paused for this customer",
         detail: status.reason,
         bg: "var(--coral-soft)",
         fg: "var(--coral)",

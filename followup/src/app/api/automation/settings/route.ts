@@ -53,6 +53,8 @@ const settingsSchema = z.object({
   autoSendPermission: z.boolean().optional(),
   // Business.autonomousAllowed — may any lead skip the risk check?
   autonomousAllowed: z.boolean().optional(),
+  // Business.onlyAdminsSend (A-041). Saved on its own, like the two above.
+  onlyAdminsSend: z.boolean().optional(),
   unansweredReply: z
     .object({
       enabled: z.boolean().optional(),
@@ -96,7 +98,7 @@ export async function GET() {
   // fact, so it is the one place that has to know.
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { holdAllForApproval: true, autonomousAllowed: true },
+    select: { holdAllForApproval: true, autonomousAllowed: true, sendingPausedAt: true, onlyAdminsSend: true },
   });
   return NextResponse.json({
     enabled: automation?.enabled ?? true,
@@ -109,6 +111,9 @@ export async function GET() {
     // `!` itself. See settingsSchema's header for why that matters.
     autoSendPermission: !(business?.holdAllForApproval ?? true),
     autonomousAllowed: business?.autonomousAllowed ?? false,
+    sendingPaused: Boolean(business?.sendingPausedAt),
+    onlyAdminsSend: business?.onlyAdminsSend ?? false,
+    isAdmin: await requireAdmin(ctx),
   });
 }
 
@@ -147,6 +152,9 @@ export async function POST(request: NextRequest) {
         // moment, so what was already waiting stays waiting until the
         // owner releases it deliberately.
         autoSendAllowedAt: granted ? new Date() : null,
+        // An explicit decision either way replaces a pause: granting is a
+        // resume by another door, and withdrawing makes it permanent.
+        sendingPausedAt: null,
       },
     });
     // Named for what happened rather than for the field, so the trail
@@ -184,6 +192,13 @@ export async function POST(request: NextRequest) {
     });
     void recordAudit(ctx, granted ? "automation.autonomous.granted" : "automation.autonomous.revoked");
     return NextResponse.json({ success: true, autonomousAllowed: granted });
+  }
+
+  if (typeof body.onlyAdminsSend === "boolean") {
+    const on = body.onlyAdminsSend;
+    await prisma.business.update({ where: { id: ctx.businessId }, data: { onlyAdminsSend: on } });
+    void recordAudit(ctx, on ? "team.only_admins_send.on" : "team.only_admins_send.off");
+    return NextResponse.json({ success: true, onlyAdminsSend: on });
   }
 
   // The unanswered-reply rule is saved on its own (see src/lib/automation.ts).

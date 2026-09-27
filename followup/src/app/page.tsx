@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Check, X, Inbox, Eye, Languages, Send, MessageCircle, Users, Mail, ListChecks, PenLine, BellOff } from "lucide-react";
+import { ArrowRight, Check, X, Inbox, Eye, Languages, Send, MessageCircle, Users, Mail, PenLine, BellOff } from "lucide-react";
 import styles from "./landing-dark.module.css";
+import { realProof } from "@/lib/proof";
 import NavDark from "@/components/landing/dark/NavDark";
 import HeroFlow from "@/components/landing/dark/HeroFlow";
 import FaqDark from "@/components/landing/dark/FaqDark";
@@ -21,6 +22,7 @@ import { TIER_INFO, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 // testimonials, a fake logo strip, "book a demo" as the only action, annual
 // pricing. See design-brain/decisions/design-decisions.md, 2026-09-18.
 export default function LandingPage() {
+  const proof = realProof();
   return (
     <div className={`${styles.root} ${publicSans.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable}`}>
       <NavDark />
@@ -44,6 +46,13 @@ export default function LandingPage() {
               <Link href="/signin" className={styles.btn}>
                 Start free <ArrowRight className="h-4 w-4" />
               </Link>
+              {/* The lower-commitment step (A-049, founder's reference
+                  strategy): for someone not ready to sign in, a look at
+                  the product instead of leaving. Quiet, so "Start free"
+                  stays the one main action. */}
+              <a href="#product" className={styles.btnGhost}>
+                See how it works
+              </a>
             </div>
             {/* The beta caveat, founder's call 2026-09-22. Six places on
                 this page sell replies going out on their own, and
@@ -125,22 +134,24 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---------- How it works ---------- */}
+      {/* ---------- What changes (design brain A-040, the Notion study): the
+          outcomes for the owner, not what the machine does. id="how" stays so
+          the nav link still lands here. ---------- */}
       <section id="how" className={styles.section} style={{ paddingTop: 0 }}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
+          <span className={styles.badge}>What changes</span>
           <h2 className={styles.h2}>
-            How it <span className={styles.em}>works.</span>
+            Two minutes to connect. <span className={styles.em}>Then this changes.</span>
           </h2>
         </RevealLight>
-        <div className={styles.grid4}>
+        <div className={styles.grid3}>
           {[
-            [<Mail key="a" className="h-5 w-5" />, "Connect your inbox", "Gmail, Outlook, Instagram, Messenger, WhatsApp, your website. Two minutes."],
-            [<Eye key="b" className="h-5 w-5" />, "It spots who is going quiet", "It reads every conversation and notices who has not heard back."],
-            [<ListChecks key="c" className="h-5 w-5" />, "You get a short list each day", "Who needs you today, and why. Not a whole system to dig through."],
-            [<Send key="d" className="h-5 w-5" />, "It writes the reply", "Send it, change it, or let simple ones go out on their own. Your choice, for each customer."],
+            [<Mail key="a" className="h-5 w-5" />, "Every message gets a reply", "Connect your inbox, Instagram, WhatsApp or website. FollowUp writes a reply for every customer who writes in."],
+            [<Eye key="b" className="h-5 w-5" />, "You see who's slipping away", "A short list each day: who has gone quiet, and why. Nobody falls through."],
+            [<Send key="c" className="h-5 w-5" />, "You step in only when it matters", "Anything about price waits for your OK. Simple replies can go on their own. Your choice."],
           ].map(([icon, t, b], i) => (
             <RevealLight key={t as string} delay={i * 0.07}>
-              <div className={styles.card}>
+              <div className={styles.card} style={{ height: "100%" }}>
                 <span className={styles.iconChip}>{icon}</span>
                 <h3 className={styles.cardTitle} style={{ fontSize: 17 }}>
                   {t as string}
@@ -156,6 +167,40 @@ export default function LandingPage() {
           </Link>
           <p className={styles.heroNote} style={{ marginTop: 12 }}>Free while in beta. Two minutes to connect.</p>
         </RevealLight>
+      </section>
+
+      {/* ---------- How a normal week goes (A-040): three made-up examples,
+          labelled as such twice. Replaced by real tester stories once testers
+          agree (A-023); never passed off as customers. ---------- */}
+      <section id="stories" className={styles.section} style={{ paddingTop: 0 }}>
+        <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
+          <span className={styles.badge}>Examples</span>
+          <h2 className={styles.h2}>
+            How a normal week <span className={styles.em}>goes.</span>
+          </h2>
+          <p className={styles.lede}>Made-up names, real situations.</p>
+        </RevealLight>
+        <div className={styles.grid3}>
+          {[
+            ["Dan, plumber", "7:40 PM, under a sink", "Instagram", "How much would a full bathroom redo be?", "FollowUp wrote the reply. It named a price, so it waited for Dan's OK.", "Dan sent it at 8:05. Visit booked for Thursday."],
+            ["Maya, realtor", "At a showing, phone on silent", "WhatsApp", "Is the house on Elm St still available?", "FollowUp wrote the reply. When Tom went quiet, it wrote a check-in on day 3.", "Tom answered the check-in. Showing booked for Saturday."],
+            ["Ana, salon owner", "Mid-cut, hands busy", "Instagram", "¿Tienen cita el sábado por la mañana?", "FollowUp wrote the reply in Spanish, ready for when the cut was done.", "Ana sent it after the cut. Booked Saturday at 10."],
+          ].map(([who, when, channel, said, did, outcome], i) => (
+            <RevealLight key={who} delay={i * 0.07}>
+              <div className={styles.story} style={{ marginBottom: 0, height: "100%" }}>
+                <p className={styles.cardTitle} style={{ fontSize: 16, marginTop: 0 }}>{who}</p>
+                <p className={styles.storyBy} style={{ marginTop: 2 }}>{when}</p>
+                <p className={styles.storyBy} style={{ marginTop: 16 }}>A customer on {channel}:</p>
+                <p className={styles.storyQuote} style={{ marginTop: 4 }}>&ldquo;{said}&rdquo;</p>
+                <p className={styles.cardBody} style={{ marginTop: 14 }}>{did}</p>
+                <p className={styles.storyQuote} style={{ marginTop: 14, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <Check className="h-4 w-4 shrink-0" style={{ marginTop: 4 }} aria-hidden="true" />
+                  <span>{outcome}</span>
+                </p>
+              </div>
+            </RevealLight>
+          ))}
+        </div>
       </section>
 
       {/* ---------- Why not just a reminder ---------- */}
@@ -299,14 +344,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---------- Stories grid, with our rules instead of invented customers ---------- */}
-      <section className={styles.section} style={{ paddingTop: 0 }}>
+      {/* ---------- Your control: the four promises, then what it can see and
+          what stays in the owner's hands (design brain A-041, the Mercury
+          study). Every line is true of the product as shipped; the controls
+          named here are in Settings. ---------- */}
+      <section id="control" className={styles.section} style={{ paddingTop: 0 }}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
-          <span className={styles.badge}>Our promises</span>
+          <span className={styles.badge}>Your control</span>
           <h2 className={styles.h2}>
             What it will <span className={styles.em}>and won&apos;t do.</span>
           </h2>
-          <p className={styles.lede}>Four promises. Each one is built into the product, not just written here.</p>
+          <p className={styles.lede}>Four promises built into the product, and the switches that stay in your hands.</p>
         </RevealLight>
         <div className={styles.grid4}>
           {[
@@ -335,6 +383,51 @@ export default function LandingPage() {
             </RevealLight>
           ))}
         </div>
+        <RevealLight>
+          <div className={styles.controlLists}>
+            {(
+              [
+                [
+                  "What it can see",
+                  "It asks Google for four things. Nothing more.",
+                  [
+                    ["Read your email", "To find the customers writing to you."],
+                    ["Send email as you", "Replies go out from your own address."],
+                    ["Add events to your calendar", "Only when a customer books a time."],
+                    ["See your email address", "To know which account is yours."],
+                  ],
+                ],
+                [
+                  "What stays in your hands",
+                  "Switches you can use any time, without asking us.",
+                  [
+                    ["Every reply waits for your OK", "Until you choose to let the simple ones go by themselves."],
+                    ["Pause all sending", "One tap holds everything. Your settings stay as they are."],
+                    ["Only admins send", "Your team writes and edits replies. An admin sends them."],
+                    ["Recent sign-ins", "See where your account was signed in, and sign out everywhere."],
+                  ],
+                ],
+              ] as [string, string, [string, string][]][]
+            ).map(([label, intro, rows]) => (
+              <div key={label}>
+                <p className={styles.controlLabel}>{label}</p>
+                <p className={styles.controlIntro}>{intro}</p>
+                <ul>
+                  {rows.map(([t, sub]) => (
+                    <li key={t} className={styles.controlRow}>
+                      <span className={styles.controlRowTitle}>{t}</span>
+                      <span className={styles.controlRowSub}>{sub}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className={styles.controlFoot}>
+            <p>It can&apos;t see anything you haven&apos;t connected. And we say plainly what we haven&apos;t done yet.</p>
+            <Link href="/security">How we keep your data safe</Link>
+          </div>
+        </RevealLight>
       </section>
 
       {/* ---------- Integrations ---------- */}
@@ -387,6 +480,45 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ---------- Proof (A-050) ----------
+          A tester's own before and after, in their numbers and words. The
+          section is not rendered at all until a story is complete and agreed
+          (src/lib/proof.ts): no placeholder, no fake quote (A-023). */}
+      {proof.length > 0 && (
+        <section id="proof" className={styles.section} style={{ paddingTop: 0 }}>
+          <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
+            <span className={styles.badge}>Proof</span>
+            <h2 className={styles.h2}>
+              From the first owners <span className={styles.em}>using it.</span>
+            </h2>
+            <p className={styles.lede}>Their own numbers and their own words.</p>
+          </RevealLight>
+          <div className={styles.grid2}>
+            {proof.map((p, i) => (
+              <RevealLight key={p.firstName + p.business} delay={i * 0.07}>
+                <figure className={styles.card} style={{ height: "100%", margin: 0 }}>
+                  <p className={styles.cardBody} style={{ marginTop: 0 }}>
+                    <s>{p.before}</s> →{" "}
+                    <span className={styles.cardTitle} style={{ display: "inline", fontSize: 28, letterSpacing: "-0.03em" }}>
+                      {p.after}
+                    </span>
+                  </p>
+                  <p className={styles.cardBody} style={{ fontSize: 13 }}>
+                    for a customer to hear back, from their own FollowUp records
+                  </p>
+                  <blockquote className={styles.cardTitle} style={{ fontSize: 18, margin: "14px 0 0" }}>
+                    <span className={styles.em}>&ldquo;{p.quote}&rdquo;</span>
+                  </blockquote>
+                  <figcaption className={styles.cardBody}>
+                    <strong>{p.firstName}</strong> · {p.business}
+                  </figcaption>
+                </figure>
+              </RevealLight>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ---------- Real-time ---------- */}
       <section className={styles.section} style={{ paddingTop: 0 }}>
         <div className={`${styles.split} ${styles.splitReverse}`}>
@@ -429,20 +561,22 @@ export default function LandingPage() {
       <section id="features" className={styles.section} style={{ paddingTop: 0 }}>
         <RevealLight className={`${styles.headCenter} ${styles.sectionGlow}`}>
           <h2 className={styles.h2} style={{ fontSize: "clamp(28px, 3.4vw, 40px)" }}>
-            Everything you need, <span className={styles.em}>nothing you don&apos;t.</span>
+            Less chasing. <span className={styles.em}>More booking.</span>
           </h2>
         </RevealLight>
         <div className={styles.grid3}>
           {[
-            [<Inbox key="i" className="h-5 w-5" />, "Every customer in one place", "Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form. One list."],
-            [<Eye key="e" className="h-5 w-5" />, "Know who is slipping", "FollowUp tells you which customers are going quiet, and why."],
-            [<Languages key="l" className="h-5 w-5" />, "Speaks their language", "They write in Spanish, they get answered in Spanish. Any language."],
-            [<Send key="s" className="h-5 w-5" />, "Follows up for you", "Simple replies go out on their own. Anything about money waits for you."],
-            [<MessageCircle key="m" className="h-5 w-5" />, "Made for Instagram and WhatsApp", "Short messages with buttons, so a customer can answer with one tap."],
-            [<Users key="u" className="h-5 w-5" />, "Works for a team", "New customers are shared out evenly. Everyone sees what is waiting."],
+            // Outcome first, the feature as the small print (design brain A-042,
+            // the Ramp study). Every number here is true by construction.
+            [<Inbox key="i" className="h-5 w-5" />, "No message missed", "Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form, in one list."],
+            [<Eye key="e" className="h-5 w-5" />, "Catch them before they go cold", "A short list of who has gone quiet, and why."],
+            [<Languages key="l" className="h-5 w-5" />, "Answer in any language", "They write in Spanish, they get Spanish back."],
+            [<Send key="s" className="h-5 w-5" />, "Check-ins you'd forget", "Day 3, 7, 14 and 30. It stops the moment they answer."],
+            [<MessageCircle key="m" className="h-5 w-5" />, "Customers answer with one tap", "On Instagram and Messenger: short messages with buttons."],
+            [<Users key="u" className="h-5 w-5" />, "Nobody's customers get dropped", "New customers are shared out evenly. Everyone sees what's waiting."],
           ].map(([icon, t, b], i) => (
             <RevealLight key={t as string} delay={(i % 3) * 0.07}>
-              <div className={styles.card}>
+              <div className={styles.card} style={{ height: "100%" }}>
                 <span className={styles.iconChip}>{icon}</span>
                 <h3 className={styles.cardTitle} style={{ fontSize: 17 }}>
                   {t as string}
@@ -477,7 +611,7 @@ export default function LandingPage() {
               <p className={styles.priceNote}>No credit card required.</p>
               <p className={styles.priceListLabel}>Including:</p>
               <ul className={styles.priceList}>
-                {["Gmail or Outlook, plus your website form", `Up to ${FREE_TIER_LEAD_CAP} customers a month`, "See who is slipping, and why", "You approve every reply before it goes out"].map((f) => (
+                {["No email or form enquiry missed", `Up to ${FREE_TIER_LEAD_CAP} customers a month`, "Catch customers before they go cold", "Nothing sends without your OK"].map((f) => (
                   <li key={f}>
                     <span className={styles.check}>
                       <Check className="h-3 w-3" />
@@ -501,7 +635,7 @@ export default function LandingPage() {
               <p className={styles.priceNote}>No credit card required to start.</p>
               <p className={styles.priceListLabel}>Free plus:</p>
               <ul className={styles.priceList}>
-                {["Instagram, Messenger and WhatsApp", "FollowUp replies for you", "Replies in your customer's language", "Bring in contacts from HubSpot or Follow Up Boss", "A weekly report of what it did for you"].map((f) => (
+                {["No DM missed on Instagram, Messenger or WhatsApp", "Simple replies send themselves, if you want", "Answer in any language", "Your CRM contacts, followed up too", "Every Monday: who came back, who booked"].map((f) => (
                   <li key={f}>
                     <span className={styles.check}>
                       <Check className="h-3 w-3" />
@@ -527,7 +661,7 @@ export default function LandingPage() {
               <ul className={styles.priceList}>
                 {/* The paid version of the same overclaim — worst of the
                     four, because someone is being charged for it. */}
-                {["See who on your team is behind, and where", "New customers shared out evenly across your team", "No limit on customers", "Priority support"].map((f) => (
+                {["Know which teammate is falling behind", "Every new customer gets an owner", "No limit on customers", "Priority support"].map((f) => (
                   <li key={f}>
                     <span className={styles.check}>
                       <Check className="h-3 w-3" />
@@ -618,6 +752,7 @@ export default function LandingPage() {
           <div className={styles.footerLinks}>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
+            <Link href="/security">Security</Link>
             <a href="mailto:contact@followupbase.io">Contact</a>
             <Link href="/signin">Sign in</Link>
           </div>

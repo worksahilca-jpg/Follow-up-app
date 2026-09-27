@@ -12,12 +12,17 @@ import DeleteLeadButton from "@/components/DeleteLeadButton";
 import CopyBookingLinkButton from "@/components/CopyBookingLinkButton";
 import LeadTrustPanel from "@/components/LeadTrustPanel";
 import AutomationStatusBadge from "@/components/AutomationStatusBadge";
+import WeTalkedButton from "@/components/WeTalkedButton";
 import CollapsibleSection from "@/components/CollapsibleSection";
 import ConversationThread from "@/components/ConversationThread";
 import { PageHeader } from "@/components/PageHeader";
 import { Mail, Phone, MessageSquare } from "lucide-react";
 import { isInstagramLeadId, isSocialLeadId } from "@/lib/instagramId";
 import type { LeadLanguage } from "@/lib/leadLanguage";
+import { sendLockedForSession } from "@/lib/sendingControl";
+import CatchUp from "@/components/CatchUp";
+import { describeBasis } from "@/lib/basedOn";
+import { languageName } from "@/lib/leadLanguage";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +30,17 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const lead = await getLeadById(id);
   if (!lead) notFound();
-  const [auditTrail, freeTierStatus] = await Promise.all([getLeadAuditTrail(id), getFreeTierStatus()]);
+  const [auditTrail, freeTierStatus, sendLocked] = await Promise.all([getLeadAuditTrail(id), getFreeTierStatus(), sendLockedForSession()]);
   const autonomousAllowed = freeTierStatus?.tier !== "free";
+  // "Based on" and the "In <language>" rewrite (A-043).
+  const basis = lead.suggestedMessage
+    ? describeBasis({
+        draft: lead.suggestedMessage,
+        leadFirstName: lead.name.split(" ")[0] ?? "",
+        messages: lead.conversation.map((m) => ({ direction: m.direction === "inbound" ? "inbound" : "outbound", body: m.body, sentAt: new Date(m.date), source: m.source ?? null, channel: m.channel })),
+      })
+    : null;
+  const replyLanguage = lead.languageRead && lead.languageRead.language !== "en" ? languageName(lead.languageRead.language) : null;
 
   return (
     <div>
@@ -104,8 +118,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           up front since it's already computed to answer the one question
           that actually varies by lead state: what's FollowUp doing here,
           and is anything waiting on you. See automationStatus.ts. */}
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap items-start gap-x-4 gap-y-2">
         <AutomationStatusBadge status={lead.automationStatus} />
+        {/* "We talked" (design brain A-039) sits with the status because it
+            changes the status: after a call or a visit, FollowUp stops
+            checking in until they write again. Not on a closed lead,
+            where nothing is checking in anyway. */}
+        {lead.automationStatus?.kind !== "closed" && (
+          <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} />
+        )}
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 mt-8">
@@ -127,9 +148,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             leadName={lead.name}
             leadEmail={lead.email || undefined}
             seenInboundAt={newestInboundAt(lead.conversation)}
+            sendLocked={sendLocked}
+            basis={basis}
+            languageName={replyLanguage}
           />
 
-          <ConversationThread messages={lead.conversation} leadName={lead.name} />
+          <CatchUp leadId={lead.id} />
+          <div id="conversation" className="scroll-mt-16">
+            <ConversationThread messages={lead.conversation} leadName={lead.name} />
+          </div>
 
           {lead.scoreFactors.length > 0 && (
             <CollapsibleSection title="See the factors behind the score">
@@ -192,7 +219,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </div>
 
           <div>
-            <CollapsibleSection title="Consent & AI activity">
+            <CollapsibleSection title="What FollowUp did">
               <LeadTrustPanel source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
             </CollapsibleSection>
           </div>

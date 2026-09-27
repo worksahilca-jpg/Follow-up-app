@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock } from "lucide-react";
 
 /** Copies this lead's public booking link (/book/[leadId]) to the clipboard. */
 export default function CopyBookingLinkButton({ leadId }: { leadId: string }) {
@@ -22,11 +21,11 @@ export default function CopyBookingLinkButton({ leadId }: { leadId: string }) {
 
   return (
     <button
+      type="button"
       onClick={copy}
-      className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-medium"
+      className="inline-flex h-[38px] items-center rounded-full border border-line bg-card px-3.5 text-[14px] font-medium hover:bg-card-2 disabled:opacity-60"
     >
-      <CalendarClock className="h-3.5 w-3.5" />
-      {copied ? "Copied!" : "Copy booking link"}
+      {copied ? "Copied" : "Copy booking link"}
     </button>
   );
 }

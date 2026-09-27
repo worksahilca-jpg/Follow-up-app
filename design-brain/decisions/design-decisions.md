@@ -8185,3 +8185,23 @@ Four boards on the canvas (v80): SettingsAll, SettingsAllPhone, SettingsChannel 
   from the owner's inbox as a customer called "FollowUp". They are now never a customer.
 - **Weak, named:** above about 1,700px there is still open space either side of the conversation column. That is
   deliberate (line length), but it can read as empty.
+
+## 2026-09-27 — Customer side column brought to its drawing (A-067 side-by-side)
+
+- **Compared** the live side column against PersonSide. Six gaps, all fixed to the drawing:
+  - Stage and Assigned to read as quiet text with a caret ("New ▾", "Nobody · Take it"), not boxed dropdowns.
+  - Three matching pills: We talked, Copy booking link, and Call. Call becomes Email for a customer with no number.
+  - "Can't send" is one calm line with a dot ("Replies can't go out yet… Connect in Settings"), not a card.
+  - "How it handles" fits on one line ("I'll do it / Ask if risky / Handle it all"), with ink selection and one sentence.
+  - "Why it may write to {name}" and "What FollowUp did" are two rows again, with status text ("Emailed you first",
+    "Held a reply · today").
+  - Delete is a quiet link, "Delete this customer".
+- **Column width:** 380px, as drawn. At 320px the pills and row titles wrapped.
+- **Settings compared too:** it matches SettingsAll. The "Everything else" links stay; they are the only route to
+  Pipeline, Numbers and Activity from a three-item navigation.
+- **Weak, named:**
+  - The "silence clock resets when they reply" paragraph was dropped from the handling control to keep one sentence.
+    The behaviour is unchanged, but it is no longer explained on this page.
+  - Rows still open in place (down chevrons), where the drawing shows right chevrons.
+  - The reply card on this page says "Based on…" where the drawing shows the hold reason. The reason is in the
+    facts card above.

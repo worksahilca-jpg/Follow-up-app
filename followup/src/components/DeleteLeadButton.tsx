@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
 
 export default function DeleteLeadButton({ leadId, leadName }: { leadId: string; leadName: string }) {
   const router = useRouter();
@@ -56,10 +55,11 @@ export default function DeleteLeadButton({ leadId, leadName }: { leadId: string;
   return (
     <div>
       <button
+        type="button"
         onClick={() => setConfirming(true)}
-        className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:text-ink"
+        className="text-[14px] text-ink-faint underline underline-offset-2 hover:text-ink-soft"
       >
-        <Trash2 className="h-3.5 w-3.5" /> Delete lead
+        Delete this customer
       </button>
       {error && (
         <p className="text-[13px] mt-2" style={{ color: "var(--coral)" }}>

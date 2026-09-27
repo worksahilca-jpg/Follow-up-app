@@ -40,9 +40,9 @@ export default function WeTalkedButton({ leadId, leadName, talked }: { leadId: s
           type="button"
           onClick={() => save(true)}
           disabled={busy}
-          className="min-h-[44px] px-1 font-medium underline underline-offset-2 disabled:opacity-60"
+          className="inline-flex h-[38px] items-center rounded-full border border-line bg-card px-3.5 text-[14px] font-medium hover:bg-card-2 disabled:opacity-60"
         >
-          {busy ? "…" : "Undo"}
+          {busy ? "…" : "Undo “We talked”"}
         </button>
       ) : (
         <button
@@ -50,7 +50,7 @@ export default function WeTalkedButton({ leadId, leadName, talked }: { leadId: s
           onClick={() => save(false)}
           disabled={busy}
           title={`You spoke with ${first} on a call or in person. FollowUp stops checking in until ${first} writes again.`}
-          className="min-h-[44px] px-1 text-ink-soft underline underline-offset-2 hover:text-ink disabled:opacity-60"
+          className="inline-flex h-[38px] items-center rounded-full border border-line bg-card px-3.5 text-[14px] font-medium hover:bg-card-2 disabled:opacity-60"
         >
           {busy ? "…" : "We talked"}
         </button>

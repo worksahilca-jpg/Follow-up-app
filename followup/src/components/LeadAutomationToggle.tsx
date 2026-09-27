@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Lock } from "lucide-react";
 import type { AutomationTier } from "@/lib/types";
 
 // research/product/2026-09-10-ux-simplification.md §4: plain-language
@@ -9,19 +8,16 @@ import type { AutomationTier } from "@/lib/types";
 // product — "Off"/"Assisted"/"Autonomous") lives in the fuller sentence
 // below instead of being the first thing an owner has to learn.
 const TIERS: { value: AutomationTier; label: string }[] = [
-  { value: "off", label: "I'll do it myself" },
+  { value: "off", label: "I’ll do it" },
   { value: "assisted", label: "Ask if risky" },
   { value: "autonomous", label: "Handle it all" },
 ];
 
+// One sentence each, as the PersonSide board writes it (A-069).
 const DESCRIPTIONS: Record<AutomationTier, string> = {
-  off: "I'll handle this one myself — FollowUp won't message this person at all. Nothing sends without you writing it.",
-  assisted:
-    "Ask me first if it's risky — FollowUp replies for you on the easy stuff, and asks your OK before " +
-    "anything about price, terms, or a tense conversation.",
-  autonomous:
-    "Handle it all, don't ask — every reply sends automatically with no review, including price and tense " +
-    "conversations. Only for leads you're comfortable letting go.",
+  off: "FollowUp won’t write to them. Every reply is yours.",
+  assisted: "It answers the easy things and asks you before anything about a price, a date or a tense moment.",
+  autonomous: "It answers everything without asking, prices and dates included. Only for customers you’re happy to hand over.",
 };
 
 // What each tier means on an account that holds everything (see the
@@ -31,13 +27,9 @@ const DESCRIPTIONS: Record<AutomationTier, string> = {
 // holding is lifted. So the tier is worth choosing — it just never sends
 // by itself today, and saying otherwise was a lie in three places.
 const HELD_DESCRIPTIONS: Record<AutomationTier, string> = {
-  off: "I'll handle this one myself — FollowUp won't write or send anything for this person.",
-  assisted:
-    "FollowUp writes the follow-up and puts it in your approval queue. Nothing reaches this person until you " +
-    "read it and press send.",
-  autonomous:
-    "FollowUp writes every follow-up, including price and tense conversations, and puts each one in your " +
-    "approval queue. Nothing reaches this person until you press send.",
+  off: "FollowUp won’t write to them. Every reply is yours.",
+  assisted: "It writes the replies and holds them for you. Nothing reaches them until you press Send.",
+  autonomous: "It writes every reply, prices and dates included, and holds each one. Nothing reaches them until you press Send.",
 };
 
 /**
@@ -124,7 +116,7 @@ export default function LeadAutomationToggle({
     // already names it: no box or heading of its own (S-09, card soup).
     <div>
       <h3 className="sr-only">Automation</h3>
-      <div className="flex rounded-[12px] border border-line overflow-hidden">
+      <div className="flex overflow-hidden rounded-[12px] border border-line">
         {TIERS.map((t) => {
           const locked = t.value === "autonomous" && !autonomousAllowed;
           return (
@@ -132,42 +124,29 @@ export default function LeadAutomationToggle({
               key={t.value}
               onClick={() => select(t.value)}
               disabled={saving || locked}
-              title={locked ? "Handle it all needs Plus or Pro" : undefined}
-              className="flex-1 px-2 py-1.5 text-[13px] font-medium disabled:opacity-60 inline-flex items-center justify-center gap-1"
+              title={locked ? "Handle it all comes with Plus or Pro" : undefined}
+              aria-pressed={tier === t.value}
+              className="flex-1 whitespace-nowrap px-1.5 py-2.5 text-center text-[14px] disabled:cursor-not-allowed"
               style={{
-                backgroundColor: tier === t.value ? "var(--rust)" : "transparent",
-                color: tier === t.value ? "white" : "var(--ink-soft)",
+                backgroundColor: tier === t.value ? "var(--ink)" : "transparent",
+                color: tier === t.value ? "var(--paper)" : locked ? "var(--ink-faint)" : "var(--ink-soft)",
+                fontWeight: tier === t.value ? 500 : 400,
               }}
             >
-              {locked && <Lock className="h-3 w-3" />}
               {t.label}
             </button>
           );
         })}
       </div>
+      {/* One sentence, as drawn. On a holding account the sentence itself
+          says nothing sends without the owner, so the old separate "beta
+          plan holds everything" paragraph is folded in rather than
+          repeated. The plan limit is one short line, and only when the
+          locked option is the reason it can't be picked. */}
+      <p className="mt-2.5 text-[14px] leading-normal text-ink-soft">{holdAllForApproval ? HELD_DESCRIPTIONS[tier] : DESCRIPTIONS[tier]}</p>
       {!autonomousAllowed && tier !== "autonomous" && (
-        <p className="text-[13px] mt-2 text-ink-soft">
-          &quot;Handle it all&quot; needs Plus or Pro — see Billing in Settings.
-        </p>
-      )}
-      <p className="text-[13px] mt-2 text-ink-soft leading-relaxed">
-        {holdAllForApproval ? HELD_DESCRIPTIONS[tier] : DESCRIPTIONS[tier]}
-      </p>
-      {/* Said once, under the control it changes the meaning of, rather
-          than folded into each tier's sentence — it is a fact about the
-          account, not about this lead, and repeating it three times would
-          read as the product arguing with itself. */}
-      {holdAllForApproval && (
-        <p className="text-[13px] mt-2 leading-relaxed" style={{ color: "var(--slate)" }}>
-          While you&apos;re on the beta plan, your account holds every follow-up for your approval — so whichever
-          you pick here, you see it before your lead does.
-        </p>
-      )}
-      {tier !== "off" && (
-        <p className="text-[13px] mt-2 text-ink-soft leading-relaxed">
-          The moment this lead replies, the silence clock resets — FollowUp won&apos;t{" "}
-          {holdAllForApproval ? "write another follow-up" : "auto-send again"} until they&apos;ve gone quiet for the
-          full window once more.
+        <p className="mt-1.5 text-[13px] text-ink-faint">
+          Handle it all comes with Plus or Pro. <a href="/settings#billing" className="underline underline-offset-2">See plans</a>
         </p>
       )}
 

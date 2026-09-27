@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Zap, Clock, PauseCircle, Ban, CheckCircle2, Workflow, PlugZap, PenLine } from "lucide-react";
 import type { AutomationStatus } from "@/lib/automationStatus";
 
@@ -218,9 +219,39 @@ export function describeAutomationStatus(
  * exactly the "why is nothing happening" answer a business owner opens the
  * lead to find.
  */
-export default function AutomationStatusBadge({ status, compact = false }: { status: AutomationStatus | undefined; compact?: boolean }) {
+export default function AutomationStatusBadge({
+  status,
+  compact = false,
+  line = false,
+}: {
+  status: AutomationStatus | undefined;
+  compact?: boolean;
+  /** One calm line with a dot, no card (A-069, the customer page's side column). */
+  line?: boolean;
+}) {
   if (!status || status.kind === "closed") return null;
   const { icon: Icon, label, detail, fg, pulse, emphasis } = describeAutomationStatus(status);
+
+  if (line) {
+    return (
+      <p className="flex items-start gap-2.5 text-[14px] leading-normal text-ink-soft">
+        <span className={"mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full" + (pulse ? " animate-pulse" : "")} style={{ backgroundColor: fg }} aria-hidden />
+        {status.kind === "no_send_channel" ? (
+          <span>
+            Replies can&rsquo;t go out yet: nothing is connected to send with.{" "}
+            <Link href="/settings#email" className="text-ink underline underline-offset-2">
+              Connect in Settings
+            </Link>
+          </span>
+        ) : (
+          <span>
+            <span className="text-ink">{label}.</span>
+            {detail ? ` ${detail}` : ""}
+          </span>
+        )}
+      </p>
+    );
+  }
 
   // Calm, as the rest of the app draws state (A-029): a white surface, the
   // words in ink, and the tone only as one small dot beside the label. A

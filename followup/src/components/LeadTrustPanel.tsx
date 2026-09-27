@@ -70,6 +70,7 @@ function describeTrigger(meta: Record<string, unknown> | null, verb: "sent" | "h
   const channel = meta?.channel as string | undefined;
   const map: Record<string, string> = {
     instant_ack: "the instant acknowledgement sent to every new customer",
+    holding: "a price or date waited 30 minutes for you, so the customer was told you’d get back to them",
     unanswered: "this customer replied and nobody followed up",
     silence: "this customer had gone quiet",
     sequence: "a scheduled workflow step",

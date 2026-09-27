@@ -29,10 +29,11 @@
  * every business that has automation enabled.
  */
 
+import { isNotAnAnswer } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
 import { byTranscriptOrder } from "@/lib/transcript";
 import { settledByTalk, lastInboundTime } from "@/lib/talked";
-import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
+import { generateFollowUpMessage, assessSendRisk, type RiskTopic } from "@/lib/integrations/openai";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
 import { conversationText } from "@/lib/dmDrafts";
 import { ungroundedSpecifics } from "@/lib/grounding";
@@ -238,7 +239,7 @@ export type TimelineMessage = {
 };
 
 function isAckMessage(m: { direction: string; trigger?: string | null }): boolean {
-  return m.direction === "outbound" && m.trigger === "instant_ack";
+  return m.direction === "outbound" && isNotAnAnswer(m.trigger);
 }
 
 /**
@@ -652,7 +653,7 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
     // if the lead wrote a SECOND time (audit 2026-09-16, F2). The old
     // FollowUp-row exclusion sat below the direction check that had
     // already thrown the lead out, so it never got the chance to help.
-    const isAck = (m: { direction: string; trigger: string | null }) => m.direction === "outbound" && m.trigger === "instant_ack";
+    const isAck = (m: { direction: string; trigger: string | null }) => m.direction === "outbound" && isNotAnAnswer(m.trigger);
     const judged = all.filter((m) => !isAck(m));
     if (judged.length === 0) return false;
     const last = judged.reduce((latest, m) => (m.sentAt > latest.sentAt ? m : latest));
@@ -1268,7 +1269,7 @@ export async function runAutomationForBusiness(
       const reminderStep = reminderStepById.get(lead.id);
       const daysQuiet = Math.floor((nowMs - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000);
       const theyWroteLast = (() => {
-        const judged = conversation.filter((m) => !(m.direction === "outbound" && m.trigger === "instant_ack"));
+        const judged = conversation.filter((m) => !(m.direction === "outbound" && isNotAnAnswer(m.trigger)));
         const newest = judged.reduce<Message | null>((a, m) => (!a || m.date > a.date ? m : a), null);
         return newest?.direction === "inbound";
       })();
@@ -1353,7 +1354,7 @@ export async function runAutomationForBusiness(
         if (regenerated) {
           await prisma.lead.update({
             where: { id: lead.id },
-            data: { suggestedMessage: message, suggestedSubject: null, suggestedQuickReplies: { question: "shape_failed", buttons: [] }, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null },
+            data: { suggestedMessage: message, suggestedSubject: null, suggestedQuickReplies: { question: "shape_failed", buttons: [] }, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null, suggestedRiskTopic: null },
           });
         }
         const reason = `FollowUp couldn't write a short enough DM for ${lead.name.split(" ")[0]} (${dmShapeFailed}) — this one needs your eye before it goes`;
@@ -1378,7 +1379,7 @@ export async function runAutomationForBusiness(
         if (regenerated) {
           await prisma.lead.update({
             where: { id: lead.id },
-            data: { suggestedMessage: message, suggestedSubject: subject ?? null, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null },
+            data: { suggestedMessage: message, suggestedSubject: subject ?? null, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null, suggestedRiskTopic: null },
           });
         }
         const reason = UNGROUNDED_DRAFT_REASONS[emailShapeFailed] ?? UNGROUNDED_DRAFT_REASONS.digits;
@@ -1459,7 +1460,7 @@ export async function runAutomationForBusiness(
       // A verdict this pass paid for on a draft that is then NOT held — kept
       // so that a send the window defers (below) does not throw it away and
       // buy the same answer again next hour.
-      let verdictToKeep: { riskLevel: "low" | "medium" | "high"; reason: string } | null = null;
+      let verdictToKeep: { riskLevel: "low" | "medium" | "high"; reason: string; topic?: RiskTopic } | null = null;
       if (holdAll || isUntouched || phoneNeverWrote || effectiveTier !== "AUTONOMOUS" || tier === "free") {
         /**
          * Every draft that reaches here gets a verdict, including ones
@@ -1485,7 +1486,7 @@ export async function runAutomationForBusiness(
          * it (Lead.suggestedRiskLevel), not re-paid on every hourly pass
          * for a conversation that has not changed.
          */
-        let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
+        let risk: { riskLevel: "low" | "medium" | "high"; reason: string; topic?: RiskTopic };
         // Whether this pass PAID for the verdict below, which is what
         // decides if it has to be written down. Not the same as
         // `regenerated`: a draft written before this column existed is
@@ -1514,6 +1515,7 @@ export async function runAutomationForBusiness(
           risk = {
             riskLevel: lead.suggestedRiskLevel as "low" | "medium" | "high",
             reason: lead.suggestedRiskReason ?? "",
+            topic: (lead.suggestedRiskTopic as RiskTopic | null) ?? undefined,
           };
         } else if (process.env.OPENAI_API_KEY) {
           riskAssessed = true;
@@ -1606,6 +1608,7 @@ export async function runAutomationForBusiness(
                 // different draft would be worse than none.
                 suggestedRiskLevel: risk.riskLevel,
                 suggestedRiskReason: risk.reason || null,
+                suggestedRiskTopic: risk.topic ?? null,
               },
             });
           }
@@ -1773,6 +1776,7 @@ export async function runAutomationForBusiness(
                 : {}),
               suggestedRiskLevel: verdictToKeep?.riskLevel ?? null,
               suggestedRiskReason: verdictToKeep?.reason || null,
+              suggestedRiskTopic: verdictToKeep?.topic ?? null,
             },
           });
         }
@@ -1979,7 +1983,7 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
           suggestedDraftedFor: new Date(inbound.date),
           suggestedDraftKind: null,
           suggestedRiskLevel: null,
-          suggestedRiskReason: null,
+          suggestedRiskReason: null, suggestedRiskTopic: null,
         },
       });
       const platform = channel === "instagram" ? "Instagram" : "Messenger";

@@ -17,6 +17,7 @@
  * person can answer in a word, and offers those words as chips.
  */
 
+import { isNotAnAnswer } from "@/lib/notAnAnswer";
 import type { Message } from "@/lib/types";
 import { ungroundedCalendarWords } from "@/lib/grounding";
 import { DM_MAX_BUTTONS, QUICK_REPLY_TITLE_MAX_CHARS, type DmButton } from "@/lib/quickReplies";
@@ -63,7 +64,7 @@ const CURRENCY_RE = /[$€£₹¥]\s?\d|\d\s?(USD|EUR|GBP|INR|CAD|MXN|AUD|Rs\.?|
 const SLOT_RE = /\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\s?(am|pm)\b|\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?\s+\d{1,2}(am|pm|:)/i;
 
 function isAck(m: Message): boolean {
-  return m.direction === "outbound" && m.trigger === "instant_ack";
+  return m.direction === "outbound" && isNotAnAnswer(m.trigger);
 }
 
 /**

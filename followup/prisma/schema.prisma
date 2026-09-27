@@ -679,6 +679,23 @@ model Lead {
   // routine, and an owner facing 600 of them had to read all 600.
   suggestedRiskLevel  String?
   suggestedRiskReason String?
+  // WHAT KIND of decision the risk check found, when it held the draft:
+  // "price", "date", "tense" or "other" ("none" when it found nothing).
+  // Stored beside the verdict it came with, and cleared with it.
+  //
+  // It exists for one rule (founder, 2026-09-26): on an account that sends
+  // by itself, a customer whose price or date question has waited 30
+  // minutes for the owner gets one short "let me check" message that
+  // promises nothing (src/lib/holdingMessage.ts). A tense conversation
+  // never does — an automatic "I'm looking into it" can make an upset
+  // person angrier — and the reason text alone cannot tell the two apart
+  // reliably, so the classifier says which it is.
+  suggestedRiskTopic  String?
+  // The inbound message a holding message already answered (its sentAt).
+  // Written BEFORE the send as the claim, so two ticks racing on the same
+  // lead cannot both send, and compared against the newest inbound so a
+  // customer who writes again later can be covered again, once.
+  holdingSentFor      DateTime?
   // WHAT the cached draft above was written as, when FollowUp wrote it on
   // purpose for something other than a plain reply: "reminder_1" to
   // "reminder_4" (the quiet-lead cadence, src/lib/automation.ts),

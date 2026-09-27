@@ -186,7 +186,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       // let the automation send it without a check (audit 2026-09-25 F2).
       // Null is "not judged", which is both true and never "safe".
       suggestedRiskLevel: null,
-      suggestedRiskReason: null,
+      suggestedRiskReason: null, suggestedRiskTopic: null,
       // Stamp what this draft was written against, so the automation pass
       // can tell a still-current draft from a stale one instead of
       // rebuilding it every 20 hours (see schema.prisma).

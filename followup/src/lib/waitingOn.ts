@@ -1,3 +1,4 @@
+import { isNotAnAnswer } from "@/lib/notAnAnswer";
 import type { BusinessAutomationRules } from "@/lib/automationStatus";
 import { dayLabel, nextFor } from "@/lib/comingUp";
 import type { Lead } from "@/lib/types";
@@ -25,7 +26,7 @@ export function isWaitingOnCustomer(lead: Lead): boolean {
   if (lead.stage === "won" || lead.stage === "lost") return false;
   const last = newest(lead);
   if (!last || last.direction !== "outbound") return false;
-  return last.trigger !== "instant_ack";
+  return !isNotAnAnswer(last.trigger);
 }
 
 /** When our last message went out, looking back: "Today", "Yesterday", "3 days ago", then a date. */
@@ -101,7 +102,7 @@ export function medianReplyMs(leads: Lead[], since: Date, until: Date = new Date
         if (turnStart === null) turnStart = t;
         continue;
       }
-      if (m.trigger === "instant_ack") continue;
+      if (isNotAnAnswer(m.trigger)) continue;
       if (turnStart !== null && turnStart >= since.getTime() && turnStart <= until.getTime()) spans.push(t - turnStart);
       turnStart = null;
     }

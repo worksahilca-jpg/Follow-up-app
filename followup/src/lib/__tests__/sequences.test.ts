@@ -543,6 +543,7 @@ describe("risk-gated hold (a workflow step's draft isn't automatically safe)", (
         // under hold-all it is a placeholder; unjudged is the true state.
         suggestedRiskLevel: null,
         suggestedRiskReason: null,
+        suggestedRiskTopic: null,
       },
     });
   });

@@ -5,6 +5,7 @@
  * already writes. Bounded by the tester list (at most 100), never by leads.
  */
 
+import { NOT_AN_ANSWER_TRIGGERS } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import { FIRST_VALUE_SEND, ACTIVATION_WINDOW_MS } from "@/lib/firstValue";
@@ -78,7 +79,7 @@ export async function getActivation(now: Date = new Date()): Promise<Activation>
             select: { repliedAt: true },
           }),
           prisma.followUp.findFirst({
-            where: { automated: true, lead: { businessId }, OR: [{ trigger: null }, { trigger: { not: "instant_ack" } }] },
+            where: { automated: true, lead: { businessId }, OR: [{ trigger: null }, { trigger: { notIn: [...NOT_AN_ANSWER_TRIGGERS] } }] },
             orderBy: { createdAt: "asc" },
             select: { createdAt: true },
           }),

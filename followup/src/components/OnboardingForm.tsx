@@ -14,7 +14,9 @@ import OnboardingSources, { WebsiteFormPanel, type OnboardingSource } from "@/co
 import { useWhatsAppSignup } from "@/lib/useWhatsAppSignup";
 
 /**
- * Three steps: who you are, how this works, where your leads come from.
+ * Five steps: who you are, how this works, where your leads come from,
+ * how FollowUp should work (Automatic or Assisted), and the customers who
+ * were already waiting.
  *
  * ## What this replaces, and why
  *
@@ -76,7 +78,7 @@ export default function OnboardingForm(props: OnboardingFormProps) {
   );
 }
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 function OnboardingFormInner({
   initialName,
@@ -318,7 +320,7 @@ function OnboardingFormInner({
             moment belongs to its primary button (A-006), and three coloured
             marks above it would take that away. */}
         <div className="flex items-center justify-center gap-1.5 mt-4">
-          {([1, 2, 3] as const).map((n) => (
+          {([1, 2, 3, 4] as const).map((n) => (
             <span
               key={n}
               className="h-1.5 w-6 rounded-full"
@@ -403,7 +405,7 @@ function OnboardingFormInner({
 
         {step === 3 && (
           <>
-            <OnboardingSources sources={sourceList} onDone={finishOnboarding} finishing={finishing} />
+            <OnboardingSources sources={sourceList} onDone={() => setStep(4)} finishing={false} />
 
             {inboxConnected && (
               <>
@@ -430,6 +432,10 @@ function OnboardingFormInner({
             )}
           </>
         )}
+
+        {step === 4 && <HowItShouldWork onChosen={() => setStep(5)} />}
+
+        {step === 5 && <WaitingCustomers onDone={finishOnboarding} finishing={finishing} />}
       </div>
     </div>
   );
@@ -486,8 +492,11 @@ function HowItWorks({ onContinue, onSkip }: { onContinue: () => void; onSkip: ()
       //
       // Now states today's truth, names the choice, and keeps the
       // guarantee that survives either way.
-      title: "Nothing goes out behind your back",
-      body: "Every message it writes waits for your OK. When you're ready, you can let it send the simple ones itself — anything about price still waits for you. It stops the moment they reply.",
+      // Made true again for the step that follows (founder, 2026-09-26):
+      // the owner now chooses, next, whether FollowUp sends on its own or
+      // asks first. Either way prices and dates wait for them.
+      title: "You choose how much it does",
+      body: "Next, you pick: it follows up on its own, or every reply waits for your OK. Either way, prices and dates come to you, and it stops the moment they reply.",
     },
   ];
 
@@ -528,6 +537,287 @@ function HowItWorks({ onContinue, onSkip }: { onContinue: () => void; onSkip: ()
         className="w-full mt-2 inline-flex min-h-11 items-center justify-center text-sm text-ink-soft hover:text-ink transition-colors"
       >
         Skip
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Step 4 — how FollowUp should work (founder, 2026-09-26: "in onboarding,
+ * it will be asking the user whether they want the follow-up to follow up
+ * automatically or they want the assisted ones").
+ *
+ * Automatic grants the same permission as Settings → Automation
+ * (`autoSendPermission: true` on /api/automation/settings), which stamps
+ * autoSendAllowedAt: everything already waiting stays waiting, and only
+ * conversations from now on go out by themselves. Assisted changes nothing
+ * — every account already holds by default — so choosing it writes nothing
+ * and can never fail.
+ *
+ * Automatic is marked recommended: an owner with more customers than time
+ * is who FollowUp is for, and a queue they must approve by hand is the
+ * thing they couldn't keep up with in the first place. It is NOT
+ * preselected by the server; the owner presses the button either way.
+ */
+function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
+  const [mode, setMode] = useState<"automatic" | "assisted">("automatic");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function choose() {
+    setError(null);
+    if (mode === "assisted") {
+      onChosen();
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/automation/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoSendPermission: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't turn Automatic on. Try again, or choose Assisted for now.");
+      onChosen();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't turn Automatic on. Try again, or choose Assisted for now.");
+      setSaving(false);
+    }
+  }
+
+  const options = [
+    {
+      id: "automatic" as const,
+      title: "Automatic",
+      badge: "Recommended",
+      body: "It answers and follows up on its own. Prices, dates and tricky moments come to you.",
+    },
+    {
+      id: "assisted" as const,
+      title: "Assisted",
+      badge: null,
+      body: "Every reply waits for you. Nothing goes out until you tap Send.",
+    },
+  ];
+
+  return (
+    <div className="mt-8">
+      <h2 className="font-display text-xl text-center">How should FollowUp work?</h2>
+      <p className="text-sm text-ink-soft text-center mt-2">You can change this any time in Settings.</p>
+
+      <div role="radiogroup" aria-label="How FollowUp works" className="mt-6 space-y-3">
+        {options.map((o) => {
+          const on = mode === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => setMode(o.id)}
+              className="box w-full text-left px-4 py-4 transition-colors"
+              // The ring is a border plus a 1px inset shadow rather than a
+              // 2px border, so choosing a card never shifts its contents.
+              style={on ? { borderColor: "var(--ink)", boxShadow: "inset 0 0 0 1px var(--ink)" } : undefined}
+            >
+              <span className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="h-5 w-5 shrink-0 rounded-full flex items-center justify-center"
+                  style={{ border: `${on ? 2 : 1.5}px solid ${on ? "var(--ink)" : "var(--line)"}` }}
+                >
+                  {on && <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--ink)" }} />}
+                </span>
+                <span className="text-base font-medium">{o.title}</span>
+                {o.badge && <span className="ml-auto text-xs text-ink-soft">{o.badge}</span>}
+              </span>
+              <span className="block text-sm text-ink-soft mt-2 pl-8 leading-relaxed">{o.body}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-ink-soft mt-4 leading-relaxed">
+        Either way, it stops the moment a customer replies, and every message goes from your own address.
+      </p>
+
+      {error && (
+        <p role="alert" className="text-sm mt-3" style={{ color: "var(--coral)" }}>
+          {error}
+        </p>
+      )}
+
+      <button
+        onClick={choose}
+        disabled={saving}
+        className="w-full mt-6 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+        style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+      >
+        {saving ? "Saving…" : "Continue"}
+        {!saving && <ArrowRight className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
+
+type WaitingSummary = {
+  safe: number;
+  needsYou: number;
+  preview: Array<{ leadId: string; leadName: string; theirMessage: string | null; draftMessage: string }>;
+};
+
+/**
+ * Step 5 — the customers who were already waiting (founder, 2026-09-26:
+ * "new ones automatic, old ones ask with one tap").
+ *
+ * Nothing here is sent on its own, on either choice: FollowUp writes a
+ * reply for each and the owner sends the routine ones with one tap. The
+ * list and the button both come from the approval queue, with the same
+ * definition of "routine" (isSafeToSendInBulk), so "Send all 10" sends
+ * exactly the 10 counted. A price or a date among them is never in the
+ * batch; it waits in Today with its reply written.
+ *
+ * The replies are written on arrival here (one run of the automation for
+ * this business), rather than on the next hourly tick — the founder's
+ * "first replies are written right after connecting" decision. On a quiet
+ * account, or if writing them fails, the screen says so and moves on:
+ * nobody should be stuck at the end of setup.
+ */
+function WaitingCustomers({ onDone, finishing }: { onDone: () => void; finishing: boolean }) {
+  const [state, setState] = useState<"loading" | "ready" | "sending">("loading");
+  const [summary, setSummary] = useState<WaitingSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    (async () => {
+      // Best effort: a failed or slow run leaves whatever is already
+      // queued, which the summary below reports truthfully.
+      await fetch("/api/automation/run", { method: "POST" }).catch(() => undefined);
+      try {
+        const res = await fetch("/api/approvals/summary");
+        const data = await res.json();
+        if (res.ok && data.success) setSummary({ safe: data.safe, needsYou: data.needsYou, preview: data.preview ?? [] });
+      } catch {
+        // Falls through to the empty state.
+      }
+      setState("ready");
+    })();
+  }, []);
+
+  async function sendAll() {
+    setError(null);
+    setState("sending");
+    try {
+      const res = await fetch("/api/approvals/send-safe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't send them. They're waiting in Today.");
+      // Nothing went out at all (commonly: the inbox they came from isn't
+      // connected any more). Say so here rather than moving on as though
+      // they had been sent; a partial send moves on, and Today shows the rest.
+      const skipped: Array<{ reason: string }> = Array.isArray(data.skipped) ? data.skipped : [];
+      if (data.sent === 0 && skipped.length > 0) {
+        throw new Error(`None of them went out: ${skipped[0].reason} They're waiting in Today.`);
+      }
+      onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't send them. They're waiting in Today.");
+      setState("ready");
+    }
+  }
+
+  if (state === "loading") {
+    return (
+      <div className="mt-10 text-center">
+        <Loader2 className="h-5 w-5 animate-spin mx-auto text-ink-soft" />
+        <p className="text-sm text-ink-soft mt-3">Finding who&apos;s waiting on a reply…</p>
+      </div>
+    );
+  }
+
+  const safe = summary?.safe ?? 0;
+  const needsYou = summary?.needsYou ?? 0;
+
+  if (safe === 0) {
+    return (
+      <div className="mt-8">
+        <h2 className="font-display text-xl text-center">{needsYou > 0 ? "A few people need you." : "No one is waiting."}</h2>
+        <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
+          {needsYou > 0
+            ? `${needsYou} ${needsYou === 1 ? "customer asks" : "customers ask"} about a price, a date or something that needs your eye. ${needsYou === 1 ? "It waits" : "They wait"} for you in Today, with the reply written.`
+            : "Anyone who writes from now on gets an answer. You'll see everything in Today."}
+        </p>
+        <button
+          onClick={onDone}
+          disabled={finishing}
+          className="w-full mt-7 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+          style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+        >
+          {finishing ? "Taking you there…" : "Go to Today"}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8">
+      <h2 className="font-display text-xl text-center">
+        {safe} {safe === 1 ? "person is" : "people are"} waiting on a reply.
+      </h2>
+      <p className="text-sm text-ink-soft text-center mt-2 leading-relaxed">
+        From the last 90 days. A reply is written for each. Nothing has been sent.
+      </p>
+
+      <ul className="box mt-5 divide-y" style={{ borderColor: "var(--line)" }}>
+        {summary?.preview.map((p) => (
+          <li key={p.leadId} className="px-4 py-3">
+            <p className="text-sm font-medium">{p.leadName}</p>
+            {p.theirMessage && <p className="text-xs text-ink-soft mt-0.5 line-clamp-1">“{p.theirMessage}”</p>}
+            <p className="text-sm mt-2 leading-relaxed line-clamp-3">{p.draftMessage}</p>
+          </li>
+        ))}
+        {safe > (summary?.preview.length ?? 0) && (
+          <li className="px-4 py-2.5 text-xs text-ink-soft">and {safe - (summary?.preview.length ?? 0)} more, all in Today</li>
+        )}
+      </ul>
+
+      {needsYou > 0 && (
+        <p className="text-sm mt-3 leading-relaxed flex gap-2">
+          <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: "var(--coral)" }} />
+          <span>
+            <span className="font-medium">{needsYou} {needsYou === 1 ? "needs" : "need"} you</span>
+            <span className="text-ink-soft"> — a price, a date or something tricky. {needsYou === 1 ? "It waits" : "They wait"} in Today, reply written.</span>
+          </span>
+        </p>
+      )}
+
+      {error && (
+        <p role="alert" className="text-sm mt-3" style={{ color: "var(--coral)" }}>
+          {error}
+        </p>
+      )}
+
+      <button
+        onClick={sendAll}
+        disabled={state === "sending" || finishing}
+        className="w-full mt-6 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+        style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+      >
+        {state === "sending" ? "Sending…" : `Send all ${safe}`}
+      </button>
+      <button
+        onClick={onDone}
+        disabled={state === "sending" || finishing}
+        className="w-full mt-2 inline-flex min-h-11 items-center justify-center text-sm text-ink-soft hover:text-ink transition-colors"
+      >
+        Not now, keep them in Today
       </button>
     </div>
   );

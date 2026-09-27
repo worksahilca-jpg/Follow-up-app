@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { OPEN_IN_PLACE } from "@/lib/motion";
 import { Initials } from "./canvasBits";
 
 type Result = { id: string; name: string; detail: string | null };
@@ -93,8 +95,11 @@ export default function SidebarSearch() {
           style={{ outline: "none" }}
         />
       </label>
+      <AnimatePresence>
       {open && q.trim() && (
-        <div
+        <motion.div
+          key="results"
+          {...OPEN_IN_PLACE}
           id="sidebar-search-results"
           role="listbox"
           className="absolute left-0 right-0 top-9 z-40 overflow-hidden rounded-xl border border-line bg-card p-1"
@@ -122,8 +127,9 @@ export default function SidebarSearch() {
               </button>
             ))
           )}
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }

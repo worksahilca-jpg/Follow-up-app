@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Lead } from "@/lib/types";
@@ -12,6 +12,8 @@ import LogCallForm from "@/components/LogCallForm";
 import SmartViewForm from "@/components/SmartViewForm";
 import EmptyState from "@/components/EmptyState";
 import CleanupLeadsButton from "@/components/CleanupLeadsButton";
+import { motion } from "framer-motion";
+import { MOTION } from "@/lib/motion";
 import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, MoreHorizontal } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { type ItemTone } from "@/components/ItemBox";
@@ -154,11 +156,6 @@ export default function LeadsPageClient({
     return m;
   }, [places]);
   const [query, setQuery] = useState("");
-  // The sidebar's "Search customers" box lands here with ?focus=search.
-  const searchRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("focus") === "search") searchRef.current?.focus();
-  }, []);
   const [showAddLead, setShowAddLead] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showLogCall, setShowLogCall] = useState(false);
@@ -348,7 +345,19 @@ export default function LeadsPageClient({
         </button>
       </div>
 
-      <div hidden={!showFilters} className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+      {/* Opens under the Filter button and folds back into it (A-048).
+          Kept mounted, so the filters keep their state while closed. */}
+      <motion.div
+        initial={false}
+        animate={
+          showFilters
+            ? { opacity: 1, y: 0, display: "flex", transition: { duration: MOTION.move, ease: MOTION.easeOut } }
+            : { opacity: 0, y: -4, transition: { duration: MOTION.exit, ease: MOTION.easeIn }, transitionEnd: { display: "none" } }
+        }
+        style={{ display: "none" }}
+        aria-hidden={!showFilters}
+        className="mt-4 flex-col sm:flex-row gap-3 sm:items-center sm:justify-between"
+      >
         {/* One scrolling line rather than flex-wrap: at 390px thirteen chips
             wrapped to three rows and pushed the list down again. */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 -mb-1 sm:flex-wrap sm:overflow-visible sm:pb-0 sm:mb-0">
@@ -416,14 +425,13 @@ export default function LeadsPageClient({
         <div className="relative">
           <Search className="h-4 w-4 absolute left-3 top-2.5 text-ink-soft" />
           <input
-            ref={searchRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search customers…"
             className="pl-9 pr-3 py-2 rounded-lg border border-line bg-card text-sm w-full sm:w-56"
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* One fade for the whole list rather than a per-row stagger — at list
           length (a dozen rows, a hundred) a per-child delay just makes

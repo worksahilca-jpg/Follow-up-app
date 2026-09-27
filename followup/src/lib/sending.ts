@@ -351,7 +351,7 @@ export async function sendFollowUpToLead(
     emailThreadId?: string;
     emailInReplyTo?: string;
     // Attribution for the rescued-leads report (see FollowUp.trigger).
-    trigger?: "instant_ack" | "unanswered" | "silence" | "sequence" | "manual" | "dead_lead_reactivation";
+    trigger?: "instant_ack" | "holding" | "unanswered" | "silence" | "sequence" | "manual" | "dead_lead_reactivation";
     // Extra fields merged into this send's own "ai.send" audit event —
     // e.g. the instant ack's generated-vs-fallback decision (see
     // src/lib/acknowledge.ts). Never message text; same contract as
@@ -958,7 +958,7 @@ export async function sendFollowUpToLead(
       where: { id: lead.id },
       data: {
         lastContacted: new Date(),
-        ...(draftSpent ? { suggestedMessage: null, suggestedRiskLevel: null, suggestedRiskReason: null } : {}),
+        ...(draftSpent ? { suggestedMessage: null, suggestedRiskLevel: null, suggestedRiskReason: null, suggestedRiskTopic: null } : {}),
       },
     });
 

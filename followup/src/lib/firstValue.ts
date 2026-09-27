@@ -1,3 +1,4 @@
+import { NOT_AN_ANSWER_TRIGGERS } from "@/lib/notAnAnswer";
 import type { Prisma } from "@prisma/client";
 import { startOfLocalDay } from "@/lib/calmToday";
 
@@ -18,7 +19,7 @@ export const FIRST_VALUE_SEND: Prisma.FollowUpWhereInput = {
   sentAt: { not: null },
   AND: [
     // `not` alone would also drop rows whose trigger is null (SQL NULL).
-    { OR: [{ trigger: null }, { trigger: { not: "instant_ack" } }] },
+    { OR: [{ trigger: null }, { trigger: { notIn: [...NOT_AN_ANSWER_TRIGGERS] } }] },
     { OR: [{ automated: true }, { draftEdited: { not: null } }] },
   ],
 };

@@ -1,3 +1,4 @@
+import { NOT_AN_ANSWER_TRIGGERS } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { formatMoney, getRescueReport, type RescueReport, type RescuedLead } from "@/lib/rescued";
@@ -125,7 +126,7 @@ export async function countCustomersAnswered(businessId: string, from: Date, to:
     where: {
       direction: "outbound",
       sentAt: { gte: from, lt: to },
-      OR: [{ trigger: null }, { trigger: { not: "instant_ack" } }],
+      OR: [{ trigger: null }, { trigger: { notIn: [...NOT_AN_ANSWER_TRIGGERS] } }],
       conversation: { lead: { businessId } },
     },
     select: { conversation: { select: { leadId: true } } },
@@ -317,6 +318,8 @@ function howItHappened(l: RescuedLead): string {
       return `${first}’s message was waiting on you. FollowUp answered, and ${later}.`;
     case "instant_ack":
       return `FollowUp sent ${first} a quick “got your message”, and ${later}.`;
+    case "holding":
+      return `FollowUp told ${first} you’d get back to them while you decided, and ${later}.`;
     default:
       return `FollowUp followed up, and ${later}.`;
   }

@@ -841,7 +841,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
               suggestedDraftKind: null,
               // A new draft is unjudged (audit 2026-09-25 F2).
               suggestedRiskLevel: null,
-              suggestedRiskReason: null,
+              suggestedRiskReason: null, suggestedRiskTopic: null,
             },
           });
           // Awaited, and tried twice: this row is the queue entry, not a

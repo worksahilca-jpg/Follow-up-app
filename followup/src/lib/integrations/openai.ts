@@ -859,11 +859,26 @@ const SEND_RISK_SCHEMA = {
           "(unless it is a name), and do not end with a period. Good: \"the lead asked what it costs and the " +
           "draft quotes a price\". Bad: \"Pricing mentioned.\"",
       },
+      topic: {
+        type: "string",
+        enum: ["none", "price", "date", "tense", "other"],
+        description:
+          "What kind of decision this is, when riskLevel is not 'low'. 'price' when the customer asked what " +
+          "something costs, or the draft names or implies a price, discount or quote. 'date' when it is about " +
+          "booking, availability, a day or a time, or any deadline or commitment to one. 'tense' when the " +
+          "customer reads upset, frustrated, complaining or pushing back, or the moment is sensitive — this " +
+          "outranks 'price' and 'date' whenever both apply. 'other' for any other reason it isn't low. 'none' " +
+          "when riskLevel is 'low'.",
+      },
     },
-    required: ["riskLevel", "reason"],
+    required: ["riskLevel", "reason", "topic"],
     additionalProperties: false,
   },
 } as const;
+
+/** What kind of decision a held draft is. See SEND_RISK_SCHEMA and Lead.suggestedRiskTopic. */
+export type RiskTopic = "none" | "price" | "date" | "tense" | "other";
+const RISK_TOPICS: readonly RiskTopic[] = ["none", "price", "date", "tense", "other"];
 
 /**
  * Trust-tiered execution gate: "safe enough to send with no human in the
@@ -875,7 +890,7 @@ const SEND_RISK_SCHEMA = {
 export async function assessSendRisk(
   lead: Pick<Lead, "conversation">,
   draftMessage: string
-): Promise<{ riskLevel: "low" | "medium" | "high"; reason: string }> {
+): Promise<{ riskLevel: "low" | "medium" | "high"; reason: string; topic: RiskTopic }> {
   const client = getClient();
 
   const completion = await client.chat.completions.create({
@@ -922,7 +937,12 @@ export async function assessSendRisk(
   const raw = completion.choices[0]?.message?.content;
   if (!raw) throw new Error("OpenAI returned no content for assessSendRisk.");
 
-  return JSON.parse(raw) as { riskLevel: "low" | "medium" | "high"; reason: string };
+  const parsed = JSON.parse(raw) as { riskLevel: "low" | "medium" | "high"; reason: string; topic?: unknown };
+  // The topic only ever unlocks something (the holding message, and only
+  // for price and date), so anything unexpected reads as "other", which
+  // unlocks nothing.
+  const topic = RISK_TOPICS.includes(parsed.topic as RiskTopic) ? (parsed.topic as RiskTopic) : "other";
+  return { riskLevel: parsed.riskLevel, reason: parsed.reason, topic };
 }
 
 const FOLLOW_UP_JSON_SCHEMA = {

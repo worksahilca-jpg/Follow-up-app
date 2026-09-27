@@ -1,3 +1,4 @@
+import { NOT_AN_ANSWER_TRIGGERS, isNotAnAnswer } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
@@ -61,7 +62,12 @@ export const DECISION_EVENTS = [
  * "ai.instant_ack" action no code writes, so it never matched.
  */
 function isAcknowledgement(e: { action: string; meta: unknown }): boolean {
-  return e.action === "ai.send" && (e.meta as Record<string, unknown> | null)?.trigger === "instant_ack";
+  // The holding message ("let me check and I'll send you the price soon",
+  // src/lib/holdingMessage.ts) is the same kind of placeholder, and it is
+  // sent precisely BECAUSE this lead is held: counting it as the decision
+  // would take the held price out of the queue the moment it went.
+  const trigger = (e.meta as Record<string, unknown> | null)?.trigger;
+  return e.action === "ai.send" && isNotAnAnswer(typeof trigger === "string" ? trigger : null);
 }
 
 // How much of the lead's own message to carry into the queue — this is a
@@ -226,7 +232,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       // The acknowledgement is not an answer (isAcknowledgement above). A
       // bare `not` would also drop null triggers — an owner's reply synced
       // from their inbox — so both are spelled out, as in ownerAlerts.ts.
-      OR: [{ trigger: null }, { trigger: { not: "instant_ack" } }],
+      OR: [{ trigger: null }, { trigger: { notIn: [...NOT_AN_ANSWER_TRIGGERS] } }],
       sentAt: { gt: oldestHold },
       conversation: { leadId: { in: heldIds }, lead: { businessId } },
     },

@@ -22,6 +22,7 @@
  * is never called from it, so nothing here can affect what actually sends.
  */
 
+import { isNotAnAnswer } from "@/lib/notAnAnswer";
 import {
   UNANSWERED_ACTION,
   UNANSWERED_DEFAULT_HOURS,
@@ -242,7 +243,7 @@ function describeMetaWindow(conversation: Message[], now: Date): AutomationStatu
  * who wrote once and got the boilerplate has still not been replied to.
  */
 function describeMetaWindowClosing(conversation: Message[], now: Date, heldForApproval: boolean): AutomationStatus | null {
-  const judged = conversation.filter((m) => !(m.direction === "outbound" && m.trigger === "instant_ack"));
+  const judged = conversation.filter((m) => !(m.direction === "outbound" && isNotAnAnswer(m.trigger)));
   const newest = mostRecentMessage(judged);
   if (!newest || newest.direction !== "inbound") return null;
   if (newest.channel !== "instagram" && newest.channel !== "messenger") return null;
@@ -333,7 +334,7 @@ export function computeAutomationStatus(
   // a lead who wrote once and got the ack read "sent" on their own page
   // while the engine (which had the same bug) never picked them up either
   // — see Message.trigger in schema.prisma.
-  const isAck = (m: Message) => m.direction === "outbound" && m.trigger === "instant_ack";
+  const isAck = (m: Message) => m.direction === "outbound" && isNotAnAnswer(m.trigger);
   const judged = lead.conversation.filter((m) => !isAck(m));
   const last = mostRecentMessage(judged);
   // A tap on the honest-no chip ends the automatic follow-ups (the same

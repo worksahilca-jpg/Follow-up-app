@@ -105,6 +105,17 @@ describe("getPendingApprovals — a lead already answered leaves the queue", () 
     expect(await getPendingApprovals("biz1")).toHaveLength(1);
   });
 
+  it("keeps a hold when the only newer event is the holding message", async () => {
+    // "Let me check and I'll send you the price soon" is sent BECAUSE the
+    // price is held; it must not read as the decision (holdingMessage.ts).
+    p.auditEvent.findMany.mockResolvedValue([
+      event({ id: "hold-msg", action: "ai.send", meta: { trigger: "holding", topic: "price" }, createdAt: new Date("2026-09-10T12:31:00Z") }),
+      event(),
+    ]);
+    p.lead.findMany.mockResolvedValue([lead()]);
+    expect(await getPendingApprovals("biz1")).toHaveLength(1);
+  });
+
   it("drops a hold when a real send is newer", async () => {
     p.auditEvent.findMany.mockResolvedValue([
       event({ id: "sent", action: "ai.send", meta: { trigger: "silence" }, createdAt: new Date("2026-09-10T12:10:00Z") }),
@@ -127,7 +138,7 @@ describe("getPendingApprovals — a lead already answered leaves the queue", () 
     p.auditEvent.findMany.mockResolvedValue([event()]);
     p.lead.findMany.mockResolvedValue([lead()]);
     await getPendingApprovals("biz1");
-    expect(p.message.findMany.mock.calls[0][0].where.OR).toEqual([{ trigger: null }, { trigger: { not: "instant_ack" } }]);
+    expect(p.message.findMany.mock.calls[0][0].where.OR).toEqual([{ trigger: null }, { trigger: { notIn: ["instant_ack", "holding"] } }]);
   });
 
   it("only asks about this business's leads, and only outbound messages after the oldest hold", async () => {

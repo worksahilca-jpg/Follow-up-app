@@ -101,6 +101,8 @@ export async function detectReplies(businessId: string): Promise<number> {
         const how =
           followUp.trigger === "instant_ack"
             ? "the instant reply"
+            : followUp.trigger === "holding"
+              ? "the \u201clet me check\u201d message FollowUp sent while you decided"
             : followUp.trigger === "unanswered"
               ? "the reply FollowUp sent when you hadn't"
               : followUp.trigger === "sequence"

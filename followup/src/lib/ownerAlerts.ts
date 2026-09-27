@@ -1,3 +1,4 @@
+import { NOT_AN_ANSWER_TRIGGERS } from "@/lib/notAnAnswer";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
@@ -133,7 +134,7 @@ const REPLY_WHERE: Prisma.MessageWhereInput = {
   // `not` alone would drop rows whose trigger is null — an owner's reply
   // synced from Gmail, the commonest answer of all — because SQL's
   // `trigger <> 'instant_ack'` is NULL for them, not true.
-  OR: [{ trigger: null }, { trigger: { not: "instant_ack" } }],
+  OR: [{ trigger: null }, { trigger: { notIn: [...NOT_AN_ANSWER_TRIGGERS] } }],
 };
 
 async function waitingCustomersFor(businessId: string, now: Date): Promise<WaitingCustomer[]> {

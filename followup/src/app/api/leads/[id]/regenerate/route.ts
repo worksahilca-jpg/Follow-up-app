@@ -114,7 +114,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         suggestedQuickReplies: newQuickReplies,
         // The old verdict judged the old words (audit 2026-09-25 F2).
         suggestedRiskLevel: null,
-        suggestedRiskReason: null,
+        suggestedRiskReason: null, suggestedRiskTopic: null,
         // Stamp what this draft was written against, the same as every
         // other writer of suggestedMessage. Without it a hand-regenerated
         // draft reads as provenance-unknown, and the next automation pass

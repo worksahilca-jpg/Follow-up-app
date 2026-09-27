@@ -204,7 +204,7 @@ describe("the counts behind it", () => {
     expect(where).toMatchObject({ direction: "outbound", sentAt: { gte: from, lt: NOW }, conversation: { lead: { businessId: "biz1" } } });
     // Both spelled out: a bare `not` would also drop an owner's own reply
     // synced from their inbox, whose trigger is null.
-    expect(where.OR).toEqual([{ trigger: null }, { trigger: { not: "instant_ack" } }]);
+    expect(where.OR).toEqual([{ trigger: null }, { trigger: { notIn: ["instant_ack", "holding"] } }]);
   });
 
   it("counts customers per channel and finds the busiest three hours in the business's time", async () => {

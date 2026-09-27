@@ -128,6 +128,8 @@ export function describeTrigger(trigger: string): string {
   switch (trigger) {
     case "instant_ack":
       return "instant reply";
+    case "holding":
+      return "\u201clet me check\u201d while you decided";
     case "unanswered":
       return "replied when you hadn't";
     case "sequence":

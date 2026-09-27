@@ -12,6 +12,7 @@ import { DM_SHAPE_RULES, type DmSituation } from "@/lib/dmDrafts";
 import { DM_MAX_BUTTONS, type DmButton } from "@/lib/quickReplies";
 import { registerInstruction, type LeadLanguage } from "@/lib/leadLanguage";
 import { hasPriceSlot, PRICE_SLOT, PRICE_SLOT_REASON } from "@/lib/priceSlot";
+import { ungroundedSpecifics } from "@/lib/grounding";
 // The client and model name live in their own leaf module so this file
 // and leadLanguage.ts don't import each other — see openaiClient.ts.
 import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
@@ -1507,11 +1508,32 @@ export async function localizeFixedText(
       console.warn(`localizeFixedText: output ${out.length} chars vs template ${text.length}, treating as not-a-translation and sending untranslated`);
       return text;
     }
+    // The deterministic net under the prompt's injection notice (audit
+    // 2026-09-27). This output goes to a customer with no review — the
+    // instant ack, the 30-minute holding message, the email greeting and
+    // sign-off, the ack subject — and the length guard above still lets a
+    // sentence of similar length through, e.g. one that names a price or
+    // carries a link. A translation of a fixed line can't contain a number,
+    // a currency, a link or an address the line didn't, so one that does
+    // came from somewhere else (the customer's own text, or the lead's
+    // name, which sits inside the line). Same fallback as above.
+    const invented = ungroundedSpecifics(out, text);
+    if (invented === "digits" || invented === "currency" || newLinkOrAddress(out, text)) {
+      console.warn(`localizeFixedText: output carries a ${invented ?? "link"} the template doesn't, sending untranslated`);
+      return text;
+    }
     return out;
   } catch (err) {
     console.error("localizeFixedText failed, sending untranslated:", err);
     return text;
   }
+}
+
+/** A URL, a bare www. host, or an email address in `out` that `template` does not contain. */
+function newLinkOrAddress(out: string, template: string): boolean {
+  const lowerTemplate = template.toLowerCase();
+  const found = out.toLowerCase().match(/[a-z][a-z0-9+.-]*:\/\/\S+|www\.\S+|\S+@\S+/g) ?? [];
+  return found.some((token) => !lowerTemplate.includes(token));
 }
 
 const INSTANT_REPLY_SCHEMA = {

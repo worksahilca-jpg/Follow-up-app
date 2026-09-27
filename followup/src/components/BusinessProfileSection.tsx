@@ -85,14 +85,14 @@ export default function BusinessProfileSection() {
     <div className="box p-5">
       <div className="flex items-start gap-3">
         <div
-          className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+          className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0"
           style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
         >
           <Building2 className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Your business</p>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-[13px] text-ink-soft mt-1">
             The name customers see when FollowUp writes to them, and the trade it judges your leads against.
           </p>
 
@@ -100,7 +100,7 @@ export default function BusinessProfileSection() {
               lost. It is a fact the owner cannot otherwise discover — the
               name only appears in mail they never receive. */}
           {namePlaceholder && (
-            <p className="mt-3 rounded-lg p-3 text-xs leading-relaxed" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
+            <p className="mt-3 rounded-[12px] p-3 text-[13px] leading-relaxed" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
               Your business doesn&apos;t have a name yet, so FollowUp leaves it out of messages rather than using a
               stand-in. Add it and it goes in the greeting and the subject line.
             </p>
@@ -108,7 +108,7 @@ export default function BusinessProfileSection() {
 
           <div className="mt-3 space-y-3">
             <div>
-              <label htmlFor="business-name" className="text-xs font-medium block mb-1.5">
+              <label htmlFor="business-name" className="text-[13px] font-medium block mb-1.5">
                 Business name
               </label>
               <input
@@ -121,12 +121,12 @@ export default function BusinessProfileSection() {
                 disabled={!isAdmin}
                 maxLength={120}
                 placeholder="e.g. MJ Homes"
-                className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm disabled:opacity-60"
+                className="w-full rounded-[12px] border border-line bg-paper px-3 py-2 text-sm disabled:opacity-60"
               />
             </div>
 
             <div>
-              <label htmlFor="business-industry" className="text-xs font-medium block mb-1.5">
+              <label htmlFor="business-industry" className="text-[13px] font-medium block mb-1.5">
                 What kind of business?
               </label>
               <select
@@ -137,7 +137,7 @@ export default function BusinessProfileSection() {
                   setSaved(false);
                 }}
                 disabled={!isAdmin}
-                className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm disabled:opacity-60"
+                className="w-full rounded-[12px] border border-line bg-paper px-3 py-2 text-sm disabled:opacity-60"
               >
                 <option value="">Not set</option>
                 {INDUSTRIES.map((i) => (
@@ -149,7 +149,7 @@ export default function BusinessProfileSection() {
               {/* Says what the setting DOES, which is the only reason to
                   spend a line on it. Without this it reads as filing
                   paperwork; with it, it reads as something worth doing. */}
-              <p className="mt-1.5 text-xs text-ink-soft leading-relaxed">
+              <p className="mt-1.5 text-[13px] text-ink-soft leading-relaxed">
                 FollowUp uses this to tell a real customer from a supplier or a sales pitch. With it blank, it has to
                 guess.
               </p>
@@ -161,23 +161,23 @@ export default function BusinessProfileSection() {
               <button
                 onClick={save}
                 disabled={saving}
-                className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
                 style={{ backgroundColor: "var(--ink)" }}
               >
                 {saving ? "Saving…" : "Save"}
               </button>
               {saved && (
-                <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--sage)" }}>
+                <span className="inline-flex items-center gap-1 text-[13px]" style={{ color: "var(--sage)" }}>
                   <Check className="h-3.5 w-3.5" /> Saved
                 </span>
               )}
             </div>
           ) : (
-            <p className="mt-3 text-xs text-ink-soft">Only an admin can change these.</p>
+            <p className="mt-3 text-[13px] text-ink-soft">Only an admin can change these.</p>
           )}
 
           {error && (
-            <p className="mt-2 text-xs" style={{ color: "var(--coral)" }}>
+            <p className="mt-2 text-[13px]" style={{ color: "var(--coral)" }}>
               {error}
             </p>
           )}

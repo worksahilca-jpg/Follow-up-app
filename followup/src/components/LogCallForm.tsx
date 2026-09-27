@@ -131,7 +131,7 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
             <X className="h-5 w-5" />
           </button>
         </div>
-        <p className="text-xs text-ink-soft -mt-2 mb-4">
+        <p className="text-[13px] text-ink-soft -mt-2 mb-4">
           For leads that called instead of emailed — this doesn&apos;t get synced automatically, so log it
           here right after you hang up, or keep it open during the call.
         </p>
@@ -158,7 +158,7 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
               placeholder={micSupported ? "Type, or use Dictate below" : "e.g. asked about the 4br on Maple St, wants a showing Saturday"}
             />
             {recording && (
-              <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: "var(--rust)" }}>
+              <p className="text-[13px] mt-1 flex items-center gap-1.5" style={{ color: "var(--rust)" }}>
                 <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: "var(--rust)" }} />
                 Listening…
               </p>
@@ -166,8 +166,8 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
           </div>
 
           {micSupported && (
-            <div className="rounded-lg border border-line p-3" style={{ backgroundColor: "var(--paper)" }}>
-              <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
+            <div className="rounded-[12px] border border-line p-3" style={{ backgroundColor: "var(--paper)" }}>
+              <label className="flex items-start gap-2 text-[13px] text-ink-soft cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hasConsent}
@@ -189,7 +189,7 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
                 type="button"
                 onClick={toggleRecording}
                 disabled={!hasConsent && !recording}
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium rounded-full px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: recording ? "var(--rust)" : "var(--slate-soft)",
                   color: recording ? "white" : "var(--slate)",
@@ -211,14 +211,14 @@ export default function LogCallForm({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium border border-line"
+              className="flex-1 rounded-full px-4 py-2.5 text-sm font-medium border border-line"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+              className="flex-1 rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-60"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
               {saving ? "Saving…" : "Log call"}

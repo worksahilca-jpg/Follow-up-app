@@ -72,21 +72,21 @@ export default function DataPrivacySection() {
       <div className="mt-4 box p-5">
         <div className="flex items-center gap-4">
           <div
-            className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+            className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0"
             style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
           >
             <Download className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium">Export everything</p>
-            <p className="text-xs text-ink-soft mt-0.5">
+            <p className="text-[13px] text-ink-soft mt-0.5">
               Every lead, conversation, deal, and setting tied to your business, as one JSON file. Credentials and
               tokens are never included.
             </p>
           </div>
           <a
             href="/api/business/export"
-            className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2"
+            className="shrink-0 text-sm font-medium rounded-full px-3.5 py-2"
             style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
             Download
@@ -97,14 +97,14 @@ export default function DataPrivacySection() {
       <div className="mt-4 rounded-[var(--radius-box)] border p-5" style={{ borderColor: "var(--coral)" }}>
         <div className="flex items-center gap-4">
           <div
-            className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+            className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0"
             style={{ backgroundColor: "var(--coral-soft)", color: "var(--coral)" }}
           >
             <TriangleAlert className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium">Delete this business</p>
-            <p className="text-xs text-ink-soft mt-0.5">
+            <p className="text-[13px] text-ink-soft mt-0.5">
               Permanently erases every lead, conversation, message, deal, and team member — and cancels your
               subscription. This cannot be undone.
             </p>
@@ -112,7 +112,7 @@ export default function DataPrivacySection() {
           {!confirmOpen && (
             <button
               onClick={() => setConfirmOpen(true)}
-              className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2"
+              className="shrink-0 text-sm font-medium rounded-full px-3.5 py-2"
               style={{ backgroundColor: "var(--coral-fill)", color: "var(--on-coral)" }}
             >
               Delete…
@@ -122,7 +122,7 @@ export default function DataPrivacySection() {
 
         {confirmOpen && (
           <div className="mt-4 pt-4 border-t border-line">
-            <p className="text-xs text-ink-soft">
+            <p className="text-[13px] text-ink-soft">
               Type <span className="font-semibold text-ink">{businessName}</span> to confirm — everything goes,
               immediately, for good.
             </p>
@@ -132,12 +132,12 @@ export default function DataPrivacySection() {
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 placeholder={businessName ?? ""}
-                className="flex-1 rounded-lg border border-line bg-paper px-3 py-2 text-sm"
+                className="flex-1 rounded-[12px] border border-line bg-paper px-3 py-2 text-sm"
               />
               <button
                 onClick={handleDelete}
                 disabled={deleting || confirmText.trim().toLowerCase() !== (businessName ?? "").trim().toLowerCase()}
-                className="shrink-0 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-40"
+                className="shrink-0 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-40"
                 style={{ backgroundColor: "var(--coral-fill)", color: "var(--on-coral)" }}
               >
                 {deleting ? "Deleting…" : "Permanently delete"}
@@ -155,7 +155,7 @@ export default function DataPrivacySection() {
               </button>
             </div>
             {error && (
-              <p className="mt-2 text-xs" style={{ color: "var(--coral)" }}>
+              <p className="mt-2 text-[13px]" style={{ color: "var(--coral)" }}>
                 {error}
               </p>
             )}

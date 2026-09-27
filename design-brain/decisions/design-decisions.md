@@ -8106,3 +8106,24 @@ Each built screen was rendered next to its board, as A-067 requires.
   - The board's "Asked about" row isn't built, because nothing records it reliably.
   - The list is capped by the app's 1152px frame, so "Last message" is narrower than drawn.
   - With nothing ready to send, the old-customers step is a title and a button over empty space.
+
+### 2026-09-27: The rest of the app put in the new look
+**Founder:** *"keep going until we changed the whole app i want the new design"*.
+Nothing new was designed here. The screens that were still in the old style got the approved system: tokens,
+the Settings overview's card and label, the underline tabs, pill buttons, and no text under 13px.
+- **Settings › More settings** (Connect, Channels, Team, Billing, Advanced):
+  - the section headings are now the overview's quiet grey labels;
+  - one 640px column;
+  - underline tabs in place of black pills;
+  - pill buttons;
+  - 12px text raised to 13px;
+  - lead routing as hairline rows, not boxes inside a box (S-09).
+- **The person page's side column and the dialogs:** the same text and shape pass. The "Nothing is connected to send
+  with" box was a pink-tinted alarm. It's now a white card with ink words and one small coral dot, which is how the
+  app draws state (A-029).
+- **The 404 and error pages** left the old dark-landing type (bold headline, italic serif). They now use the app's
+  thin title, a quiet line and one black button. The error page lost its alarm icon.
+- **Weak, named:**
+  - More settings is still long and dense. It's restyled, not redesigned. A drawn version (fewer sections, plainer
+    words) would do more, and is Sahil's call.
+  - The person page's side column still stacks a lot: consent, automation and plan. It needs a drawing too.

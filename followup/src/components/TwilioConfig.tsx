@@ -213,25 +213,25 @@ export default function TwilioConfig() {
   return (
     <div className="box p-5">
       <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
+        <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
           <Phone className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Catch texts and calls</p>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-[13px] text-ink-soft mt-1">
             Needs a Twilio account and phone number (paid, ~$1/mo + per message/call — not required to use the
             rest of FollowUp). Set the URLs up now, connect the Twilio side whenever you&apos;re ready.
           </p>
 
           <button
             onClick={() => setShowExamples((v) => !v)}
-            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+            className="mt-2 inline-flex items-center gap-1 text-[13px] font-medium text-ink-soft"
           >
             <ChevronDown className={`h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
             How does this work?
           </button>
           {showExamples && (
-            <div className="mt-2 rounded-lg bg-paper border border-line p-3 text-xs text-ink-soft space-y-1.5">
+            <div className="mt-2 rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-1.5">
               <p>
                 Buy a phone number in the{" "}
                 <a href="https://console.twilio.com/us1/develop/phone-numbers/manage/incoming" target="_blank" rel="noopener" className="underline">
@@ -252,7 +252,7 @@ export default function TwilioConfig() {
             <button
               onClick={generate}
               disabled={saving}
-              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium rounded-lg px-3.5 py-2 disabled:opacity-60"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
               {saving ? "Generating…" : "Generate URLs"}
@@ -262,21 +262,21 @@ export default function TwilioConfig() {
           {smsUrl && voiceUrl && (
             <div className="mt-3 space-y-3">
               <div>
-                <p className="text-xs font-medium text-ink-soft mb-1">SMS URL — &quot;A message comes in&quot;</p>
-                <pre className="rounded-lg bg-paper border border-line p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all">
+                <p className="text-[13px] font-medium text-ink-soft mb-1">SMS URL — &quot;A message comes in&quot;</p>
+                <pre className="rounded-[12px] bg-paper border border-line p-3 text-[13px] overflow-x-auto whitespace-pre-wrap break-all">
                   {smsUrl}
                 </pre>
-                <button onClick={() => copy("sms", smsUrl)} className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line">
+                <button onClick={() => copy("sms", smsUrl)} className="mt-1.5 inline-flex items-center gap-1.5 text-[13px] font-medium rounded-full px-2.5 py-1 border border-line">
                   {copied === "sms" ? <Check className="h-3 w-3" /> : null}
                   {copied === "sms" ? "Copied!" : "Copy"}
                 </button>
               </div>
               <div>
-                <p className="text-xs font-medium text-ink-soft mb-1">Voice URL — &quot;A call comes in&quot;</p>
-                <pre className="rounded-lg bg-paper border border-line p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all">
+                <p className="text-[13px] font-medium text-ink-soft mb-1">Voice URL — &quot;A call comes in&quot;</p>
+                <pre className="rounded-[12px] bg-paper border border-line p-3 text-[13px] overflow-x-auto whitespace-pre-wrap break-all">
                   {voiceUrl}
                 </pre>
-                <button onClick={() => copy("voice", voiceUrl)} className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line">
+                <button onClick={() => copy("voice", voiceUrl)} className="mt-1.5 inline-flex items-center gap-1.5 text-[13px] font-medium rounded-full px-2.5 py-1 border border-line">
                   {copied === "voice" ? <Check className="h-3 w-3" /> : null}
                   {copied === "voice" ? "Copied!" : "Copy"}
                 </button>
@@ -284,13 +284,13 @@ export default function TwilioConfig() {
 
               <div className="pt-1 border-t border-line">
                 {hasAuthToken ? (
-                  <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }}>
+                  <p className="text-[13px] flex items-center gap-1" style={{ color: "var(--sage)" }}>
                     <Check className="h-3.5 w-3.5" /> Auth Token saved — requests are verified as really coming
                     from Twilio.
                   </p>
                 ) : (
                   <>
-                    <p className="text-xs text-ink-soft mt-2">
+                    <p className="text-[13px] text-ink-soft mt-2">
                       Optional but recommended: paste your Twilio{" "}
                       <a href="https://console.twilio.com" target="_blank" rel="noopener" className="underline">
                         Auth Token
@@ -304,12 +304,12 @@ export default function TwilioConfig() {
                         value={authTokenDraft}
                         onChange={(e) => setAuthTokenDraft(e.target.value)}
                         placeholder="Twilio Auth Token"
-                        className="flex-1 rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                        className="flex-1 rounded-[12px] border border-line bg-paper px-3 py-1.5 text-[13px]"
                       />
                       <button
                         onClick={saveAuthToken}
                         disabled={saving || !authTokenDraft.trim()}
-                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                        className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
                         style={{ backgroundColor: "var(--ink)" }}
                       >
                         {saving ? "Saving…" : "Save"}
@@ -320,9 +320,9 @@ export default function TwilioConfig() {
               </div>
 
               <div className="pt-3 border-t border-line">
-                <p className="text-xs font-medium">Send text replies</p>
-                <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
-                  <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
+                <p className="text-[13px] font-medium">Send text replies</p>
+                <div className="mt-2 rounded-[12px] border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
+                  <p className="text-[13px] flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
                     <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
                     <span>
                       <strong className="font-medium">Know your consent obligations.</strong> Automated texts
@@ -334,8 +334,8 @@ export default function TwilioConfig() {
                     </span>
                   </p>
                 </div>
-                <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
-                  <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
+                <div className="mt-2 rounded-[12px] border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
+                  <p className="text-[13px] flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
                     <span>
                       <strong className="font-medium">Register your number for A2P 10DLC.</strong> This is
@@ -359,13 +359,13 @@ export default function TwilioConfig() {
                   </p>
                 </div>
                 {accountSid && phoneNumber ? (
-                  <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "var(--sage)" }}>
+                  <p className="text-[13px] mt-1 flex items-center gap-1" style={{ color: "var(--sage)" }}>
                     <Check className="h-3.5 w-3.5" /> Connected — replying to a text/call lead now sends a real SMS
                     from {phoneNumber}.
                   </p>
                 ) : (
                   <>
-                    <p className="text-xs text-ink-soft mt-1">
+                    <p className="text-[13px] text-ink-soft mt-1">
                       So &quot;Send now&quot; can actually text back a lead that only has a phone number, not just
                       email. Both values are shown openly on your{" "}
                       <a href="https://console.twilio.com" target="_blank" rel="noopener" className="underline">
@@ -378,18 +378,18 @@ export default function TwilioConfig() {
                         value={accountSidDraft}
                         onChange={(e) => setAccountSidDraft(e.target.value)}
                         placeholder="Account SID (starts with AC...)"
-                        className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                        className="w-full rounded-[12px] border border-line bg-paper px-3 py-1.5 text-[13px]"
                       />
                       <input
                         value={phoneNumberDraft}
                         onChange={(e) => setPhoneNumberDraft(e.target.value)}
                         placeholder="Your Twilio number, e.g. +18609358202"
-                        className="w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                        className="w-full rounded-[12px] border border-line bg-paper px-3 py-1.5 text-[13px]"
                       />
                       <button
                         onClick={saveOutbound}
                         disabled={savingOutbound || !accountSidDraft.trim() || !phoneNumberDraft.trim()}
-                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                        className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
                         style={{ backgroundColor: "var(--ink)" }}
                       >
                         {savingOutbound ? "Saving…" : "Save"}
@@ -401,29 +401,29 @@ export default function TwilioConfig() {
 
               {accountSid && phoneNumber && (
                 <div className="pt-3 border-t border-line">
-                  <p className="text-xs font-medium">Point your number at FollowUp</p>
-                  <p className="text-xs text-ink-soft mt-1">
+                  <p className="text-[13px] font-medium">Point your number at FollowUp</p>
+                  <p className="text-[13px] text-ink-soft mt-1">
                     Skip pasting URLs into the Twilio Console — FollowUp can set your number&apos;s &quot;A call comes
                     in&quot; and &quot;A message comes in&quot; webhooks itself, using the Account SID and Auth Token
                     you already saved.
                   </p>
                   {numberLoading && !numberStatus ? (
-                    <p className="text-xs text-ink-soft mt-2">Checking with Twilio…</p>
+                    <p className="text-[13px] text-ink-soft mt-2">Checking with Twilio…</p>
                   ) : numberStatus ? (
                     <div className="mt-2 space-y-1.5">
                       {numberStatus.config ? (
                         <>
-                          <p className="text-xs flex items-center gap-1" style={{ color: numberStatus.voiceMatches ? "var(--sage)" : "var(--coral)" }}>
+                          <p className="text-[13px] flex items-center gap-1" style={{ color: numberStatus.voiceMatches ? "var(--sage)" : "var(--coral)" }}>
                             {numberStatus.voiceMatches ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
                             Calls {numberStatus.voiceMatches ? "reach FollowUp" : numberStatus.config.voiceUrl ? "go somewhere else" : "aren't configured"}
                           </p>
-                          <p className="text-xs flex items-center gap-1" style={{ color: numberStatus.smsMatches ? "var(--sage)" : "var(--coral)" }}>
+                          <p className="text-[13px] flex items-center gap-1" style={{ color: numberStatus.smsMatches ? "var(--sage)" : "var(--coral)" }}>
                             {numberStatus.smsMatches ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
                             Texts {numberStatus.smsMatches ? "reach FollowUp" : numberStatus.config.smsUrl ? "go somewhere else" : "aren't configured"}
                           </p>
                         </>
                       ) : (
-                        <p className="text-xs flex items-center gap-1" style={{ color: "var(--coral)" }}>
+                        <p className="text-[13px] flex items-center gap-1" style={{ color: "var(--coral)" }}>
                           <X className="h-3.5 w-3.5" /> {phoneNumber} isn&apos;t in this Twilio account — check the number and Account SID above.
                         </p>
                       )}
@@ -431,7 +431,7 @@ export default function TwilioConfig() {
                         <button
                           onClick={configureNumber}
                           disabled={configuringNumber}
-                          className="mt-1 inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium disabled:opacity-60"
+                          className="mt-1 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium disabled:opacity-60"
                           style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                         >
                           {configuringNumber ? "Setting up…" : "Set up my number automatically"}
@@ -442,7 +442,7 @@ export default function TwilioConfig() {
                           <p className="text-[11px] font-medium uppercase tracking-wide text-ink-soft mb-1">Recent calls to your number</p>
                           <ul className="space-y-1">
                             {numberStatus.calls.map((c) => (
-                              <li key={c.sid} className="text-xs rounded-lg border border-line bg-paper px-2.5 py-1.5">
+                              <li key={c.sid} className="text-[13px] rounded-[12px] border border-line bg-paper px-2.5 py-1.5">
                                 <span className="font-medium">{c.from || "unknown"}</span>
                                 <span className="text-ink-soft"> · {c.status}{c.durationSeconds ? ` · ${c.durationSeconds}s` : ""}{c.startTime ? ` · ${new Date(c.startTime).toLocaleString()}` : ""}</span>
                                 {c.error && <div className="mt-0.5" style={{ color: "var(--coral)" }}>{c.error}</div>}
@@ -451,19 +451,19 @@ export default function TwilioConfig() {
                           </ul>
                         </div>
                       )}
-                      <button onClick={loadNumberStatus} disabled={numberLoading} className="text-xs underline text-ink-soft disabled:opacity-60">
+                      <button onClick={loadNumberStatus} disabled={numberLoading} className="text-[13px] underline text-ink-soft disabled:opacity-60">
                         {numberLoading ? "Refreshing…" : "Refresh"}
                       </button>
                     </div>
                   ) : null}
                   {numberError && (
-                    <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>{numberError}</p>
+                    <p className="text-[13px] mt-2" style={{ color: "var(--coral)" }}>{numberError}</p>
                   )}
                 </div>
               )}
 
               <div className="pt-3 border-t border-line">
-                <p className="text-xs font-medium flex items-center gap-1.5">
+                <p className="text-[13px] font-medium flex items-center gap-1.5">
                   <PhoneCall className="h-3.5 w-3.5" /> Answers your calls
                   <span
                     className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
@@ -472,13 +472,13 @@ export default function TwilioConfig() {
                     Beta
                   </span>
                 </p>
-                <p className="text-xs text-ink-soft mt-1">
+                <p className="text-[13px] text-ink-soft mt-1">
                   Off by default. On, a call is answered live by an AI that actually talks with the caller —
                   no more &quot;leave a message after the tone.&quot; It speaks the caller&apos;s own language,
                   not just English. Off, calls work exactly as they do today (a recorded voicemail).
                 </p>
-                <div className="mt-2 rounded-lg border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
-                  <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
+                <div className="mt-2 rounded-[12px] border border-line p-2.5" style={{ backgroundColor: "var(--gold-soft)" }}>
+                  <p className="text-[13px] flex items-start gap-1.5" style={{ color: "var(--ink)" }}>
                     <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
                     <span>
                       <strong className="font-medium">Real per-minute cost, and a compliance step that&apos;s
@@ -492,7 +492,7 @@ export default function TwilioConfig() {
                   </p>
                 </div>
                 {!voiceAgentEnabled && !voiceAddonEnabled && (
-                  <p className="mt-2 text-xs flex items-center gap-1.5 text-ink-soft">
+                  <p className="mt-2 text-[13px] flex items-center gap-1.5 text-ink-soft">
                     <Lock className="h-3 w-3 shrink-0" />
                     Needs the Voice add-on — <a href="#billing" className="underline">add it in Billing</a> first.
                   </p>
@@ -500,7 +500,7 @@ export default function TwilioConfig() {
                 <button
                   onClick={() => toggleVoiceAgent(!voiceAgentEnabled)}
                   disabled={savingVoiceAgent || (!voiceAgentEnabled && !voiceAddonEnabled)}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium disabled:opacity-60"
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium disabled:opacity-60"
                   style={
                     voiceAgentEnabled
                       ? { backgroundColor: "var(--sage-soft)", color: "var(--sage)" }
@@ -511,7 +511,7 @@ export default function TwilioConfig() {
                   {savingVoiceAgent ? "Saving…" : voiceAgentEnabled ? "On — calls are answered live" : "Turn on"}
                 </button>
                 {voiceAgentError && (
-                  <p className="mt-2 text-xs" style={{ color: "var(--coral)" }}>
+                  <p className="mt-2 text-[13px]" style={{ color: "var(--coral)" }}>
                     {voiceAgentError}
                   </p>
                 )}

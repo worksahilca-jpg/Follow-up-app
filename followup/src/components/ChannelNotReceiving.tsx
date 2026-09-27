@@ -90,14 +90,14 @@ export default function ChannelNotReceiving({
     : { bg: "var(--coral-soft)", fg: "var(--coral)", Icon: AlertTriangle };
 
   return (
-    <div className="rounded-lg p-3" style={{ backgroundColor: tone.bg }}>
+    <div className="rounded-[12px] p-3" style={{ backgroundColor: tone.bg }}>
       <p className="text-sm font-semibold flex items-center gap-1.5" style={{ color: tone.fg }}>
         <tone.Icon className="h-4 w-4 shrink-0" />
         {stillWorks
           ? `${platform} messages arrive every few minutes, not instantly`
           : `${platform} isn't sending messages through yet`}
       </p>
-      <p className="mt-1 text-xs leading-relaxed" style={{ color: tone.fg }}>
+      <p className="mt-1 text-[13px] leading-relaxed" style={{ color: tone.fg }}>
         {stillWorks ? (
           <>
             {subject} is linked and working — {stillWorks} So nothing is missed; it just isn&apos;t instant.{" "}
@@ -111,14 +111,14 @@ export default function ChannelNotReceiving({
         )}
       </p>
       {error && (
-        <p className="mt-2 text-xs leading-relaxed" style={{ color: tone.fg }}>
+        <p className="mt-2 text-[13px] leading-relaxed" style={{ color: tone.fg }}>
           {platform} said: {error}
         </p>
       )}
       <button
         onClick={retry}
         disabled={retrying}
-        className="mt-2 rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+        className="mt-2 rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
         style={{ backgroundColor: "var(--ink)" }}
       >
         {retrying ? "Checking…" : stillWorks ? "Try for instant delivery" : "Try again"}

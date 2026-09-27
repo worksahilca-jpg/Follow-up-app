@@ -64,17 +64,17 @@ export default function BookingCalendarConfig() {
   return (
     <div className="box p-5">
       <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
+        <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
           <Calendar className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Where should FollowUp book meetings?</p>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-[13px] text-ink-soft mt-1">
             This decides what a lead sees as open on their booking link, and where a confirmed booking actually goes.
           </p>
 
           {saveError && (
-            <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>
+            <p className="text-[13px] mt-2" style={{ color: "var(--coral)" }}>
               {saveError}
             </p>
           )}
@@ -83,7 +83,7 @@ export default function BookingCalendarConfig() {
             <button
               onClick={() => choose("followup")}
               disabled={saving}
-              className="w-full text-left rounded-lg border px-3 py-2.5 text-xs disabled:opacity-60"
+              className="w-full text-left rounded-[12px] border px-3 py-2.5 text-[13px] disabled:opacity-60"
               style={{ borderColor: source === "followup" ? "var(--rust)" : "var(--line)", backgroundColor: source === "followup" ? "var(--rust-soft)" : "transparent" }}
             >
               <span className="font-medium flex items-center gap-1.5">
@@ -96,7 +96,7 @@ export default function BookingCalendarConfig() {
             <button
               onClick={() => choose("google")}
               disabled={saving}
-              className="w-full text-left rounded-lg border px-3 py-2.5 text-xs disabled:opacity-60"
+              className="w-full text-left rounded-[12px] border px-3 py-2.5 text-[13px] disabled:opacity-60"
               style={{ borderColor: source === "google" ? "var(--rust)" : "var(--line)", backgroundColor: source === "google" ? "var(--rust-soft)" : "transparent" }}
             >
               <span className="font-medium flex items-center gap-1.5">

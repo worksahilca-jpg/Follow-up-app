@@ -56,7 +56,7 @@ export default function SignInsSection() {
     <div className="mt-4 space-y-4">
       <div className="box p-5">
         <p className="font-medium text-sm">Recent sign-ins</p>
-        <p className="text-xs text-ink-soft mt-1">When and from where your account was signed in, over the last 90 days.</p>
+        <p className="text-[13px] text-ink-soft mt-1">When and from where your account was signed in, over the last 90 days.</p>
         {rows === null ? (
           <p className="mt-3 text-sm text-ink-soft">Loading…</p>
         ) : rows.length === 0 ? (
@@ -69,13 +69,13 @@ export default function SignInsSection() {
                   {r.device}
                   {r.place && <span className="text-ink-soft"> · {r.place}</span>}
                 </span>
-                <span className="text-xs text-ink-soft tabular-nums">{when(r.at)}</span>
+                <span className="text-[13px] text-ink-soft tabular-nums">{when(r.at)}</span>
               </li>
             ))}
           </ul>
         )}
         {error && (
-          <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+          <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
             {error}
           </p>
         )}
@@ -83,12 +83,12 @@ export default function SignInsSection() {
           <button
             onClick={signOutEverywhere}
             disabled={busy}
-            className="rounded-lg px-3.5 py-1.5 text-sm font-medium border disabled:opacity-60"
+            className="rounded-full px-3.5 py-1.5 text-sm font-medium border disabled:opacity-60"
             style={{ borderColor: "var(--line)", color: "var(--ink)" }}
           >
             {busy ? "Signing out…" : "Sign out everywhere"}
           </button>
-          <p className="text-xs text-ink-soft">Every device, this one too, is signed out within 5 minutes.</p>
+          <p className="text-[13px] text-ink-soft">Every device, this one too, is signed out within 5 minutes.</p>
         </div>
       </div>
       <div className="box p-5 text-sm space-y-2">

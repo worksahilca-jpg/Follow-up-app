@@ -130,7 +130,7 @@ export default function MessageComposer({
           /* Not a success message. What went out was the template; these
              words did not reach anyone, and the one useful thing to say is
              exactly that, plus what would let them through. */
-          <div className="mt-3 rounded-lg border border-line p-4 text-sm" style={{ backgroundColor: "var(--coral-soft)", color: "var(--coral)" }}>
+          <div className="mt-3 rounded-[12px] border border-line p-4 text-sm" style={{ backgroundColor: "var(--coral-soft)", color: "var(--coral)" }}>
             <p className="font-semibold">Your message didn&apos;t go — WhatsApp wouldn&apos;t allow it</p>
             <p className="mt-1 leading-relaxed">
               WhatsApp only lets you write freely within 24 hours of {leadName}&apos;s last message, and that window has
@@ -139,7 +139,7 @@ export default function MessageComposer({
             </p>
           </div>
         ) : (
-          <div className="mt-3 rounded-lg border border-line p-4 text-sm" style={{ backgroundColor: "var(--sage-soft)", color: "var(--sage)" }}>
+          <div className="mt-3 rounded-[12px] border border-line p-4 text-sm" style={{ backgroundColor: "var(--sage-soft)", color: "var(--sage)" }}>
             Sent to {leadName}{isEmail ? ` <${leadEmail}>` : ""}, for real.
           </div>
         )}
@@ -155,9 +155,9 @@ export default function MessageComposer({
           without approval, which is the part that earns trust. The icon was
           decoration standing in for an explanation that's already there. */}
       <h2 className="font-display text-xl">Your reply, ready</h2>
-      <p className="text-xs text-ink-soft mt-1">Written from your conversation. Nothing sends until you do.</p>
+      <p className="text-[13px] text-ink-soft mt-1">Written from your conversation. Nothing sends until you do.</p>
 
-      <div className="mt-3 rounded-lg border border-line bg-card overflow-hidden">
+      <div className="mt-3 rounded-[12px] border border-line bg-card overflow-hidden">
         {isEmail && (
           <>
             <div className="flex items-center gap-2 px-3 py-2 border-b border-line text-sm">
@@ -194,10 +194,10 @@ export default function MessageComposer({
         />
       </div>
 
-      {basis && !edited && <p className="mt-2 text-xs text-ink-soft">{basis}</p>}
+      {basis && !edited && <p className="mt-2 text-[13px] text-ink-soft">{basis}</p>}
       {/* Rewrite (A-043, the Intercom study): verbs on the reply itself. */}
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-ink-soft mr-1">Rewrite it:</span>
+        <span className="text-[13px] text-ink-soft mr-1">Rewrite it:</span>
         {(
           [
             ["shorter", "Shorter"],
@@ -211,29 +211,29 @@ export default function MessageComposer({
             type="button"
             onClick={() => rewrite(style)}
             disabled={rewriting !== null || sending || regenerating || !message.trim()}
-            className="min-h-9 sm:min-h-0 rounded-full border border-line px-3 py-1 text-xs font-medium disabled:opacity-60"
+            className="min-h-9 sm:min-h-0 rounded-full border border-line px-3 py-1 text-[13px] font-medium disabled:opacity-60"
           >
             {rewriting === style ? "Rewriting…" : label}
           </button>
         ))}
       </div>
       {isEmail && !subject.trim() && (
-        <p className="mt-1.5 text-xs text-ink-soft">A subject line is required before this can send.</p>
+        <p className="mt-1.5 text-[13px] text-ink-soft">A subject line is required before this can send.</p>
       )}
       {error && (
-        <p className="mt-2 text-xs" style={{ color: "var(--coral)" }}>
+        <p className="mt-2 text-[13px]" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}
       {sendLocked && (
-        <p className="mt-2 text-xs text-ink-soft">Only admins send on this account. An admin will see this reply waiting.</p>
+        <p className="mt-2 text-[13px] text-ink-soft">Only admins send on this account. An admin will see this reply waiting.</p>
       )}
       <div className="mt-3 flex flex-wrap gap-2">
         {!sendLocked && (
         <button
           onClick={send}
           disabled={sending || regenerating || !canSend}
-          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium disabled:opacity-60"
           style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
         >
           <Send className="h-3.5 w-3.5" /> {sending ? "Sending…" : "Send now"}
@@ -242,7 +242,7 @@ export default function MessageComposer({
         <button
           onClick={regenerate}
           disabled={sending || regenerating}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-60"
         >
           <RotateCcw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
           {regenerating ? "Regenerating…" : "Regenerate"}

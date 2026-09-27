@@ -48,7 +48,7 @@ export default function SafePilePeek({ items }: { items: PendingApproval[] }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="text-xs font-medium underline underline-offset-2 text-ink-soft"
+        className="text-[13px] font-medium underline underline-offset-2 text-ink-soft"
       >
         Read a few first
       </button>
@@ -59,8 +59,8 @@ export default function SafePilePeek({ items }: { items: PendingApproval[] }) {
     // Opens where "Read a few first" was (A-048).
     <motion.div initial={OPEN_IN_PLACE.initial} animate={OPEN_IN_PLACE.animate} className="w-full">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-ink-soft">{caption}</p>
-        <button onClick={() => setOpen(false)} className="text-xs font-medium underline underline-offset-2 text-ink-soft">
+        <p className="text-[13px] text-ink-soft">{caption}</p>
+        <button onClick={() => setOpen(false)} className="text-[13px] font-medium underline underline-offset-2 text-ink-soft">
           Hide
         </button>
       </div>
@@ -70,16 +70,16 @@ export default function SafePilePeek({ items }: { items: PendingApproval[] }) {
           // --card-2, the documented inset surface. Not a `box`: these sit
           // INSIDE the pile's own box, and a box in a box is the
           // card-in-card soup (S-09) this queue has been fixed for before.
-          <li key={item.leadId} className="rounded-lg p-3" style={{ backgroundColor: "var(--card-2)" }}>
+          <li key={item.leadId} className="rounded-[12px] p-3" style={{ backgroundColor: "var(--card-2)" }}>
             <a href={`/leads/${item.leadId}`} className="text-sm font-medium underline underline-offset-2">
               {item.leadName}
             </a>
             {item.leadLastMessage && (
-              <p className="mt-1 text-xs text-ink-soft line-clamp-2">
+              <p className="mt-1 text-[13px] text-ink-soft line-clamp-2">
                 They said: {item.leadLastMessage}
               </p>
             )}
-            <p className="mt-1 text-xs line-clamp-2">{item.draftMessage}</p>
+            <p className="mt-1 text-[13px] line-clamp-2">{item.draftMessage}</p>
           </li>
         ))}
       </ul>

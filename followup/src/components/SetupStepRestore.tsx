@@ -65,7 +65,7 @@ export default function SetupStepRestore({ id, note }: { id: string; note: strin
   }
 
   return (
-    <div className="mt-3 text-xs text-ink-soft">
+    <div className="mt-3 text-[13px] text-ink-soft">
       <p>
         {note}{" "}
         <button

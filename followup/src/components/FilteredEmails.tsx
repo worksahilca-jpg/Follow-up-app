@@ -56,19 +56,19 @@ export default function FilteredEmails() {
 
   return (
     <div className="mt-3 pt-3 border-t border-line">
-      <p className="text-xs font-medium flex items-center gap-1.5">
+      <p className="text-[13px] font-medium flex items-center gap-1.5">
         <EyeOff className="h-3.5 w-3.5" /> Filtered out as not leads
       </p>
-      <p className="text-xs text-ink-soft mt-1">
+      <p className="text-[13px] text-ink-soft mt-1">
         Emails the AI decided weren&apos;t sales inquiries — personal mail, recruiters, vendors, notifications.
         Every call it made is listed here with its reason. If it got one wrong, one click makes it a lead.
       </p>
       {items.length === 0 ? (
-        <p className="text-xs text-ink-soft mt-2">Nothing filtered out recently.</p>
+        <p className="text-[13px] text-ink-soft mt-2">Nothing filtered out recently.</p>
       ) : (
         <ul className="mt-2 space-y-1.5">
           {items.map((item) => (
-            <li key={item.id} className="text-xs rounded-lg border border-line bg-paper px-2.5 py-2">
+            <li key={item.id} className="text-[13px] rounded-[12px] border border-line bg-paper px-2.5 py-2">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   {/* A WhatsApp row has a number where a mailbox row has
@@ -84,14 +84,14 @@ export default function FilteredEmails() {
                   <div className="text-ink-soft mt-0.5">{new Date(item.lastMessageAt).toLocaleString()}</div>
                 </div>
                 {restored[item.id] ? (
-                  <a href={`/leads/${restored[item.id]}`} className="shrink-0 inline-flex items-center gap-1 text-xs font-medium underline" style={{ color: "var(--sage)" }}>
+                  <a href={`/leads/${restored[item.id]}`} className="shrink-0 inline-flex items-center gap-1 text-[13px] font-medium underline" style={{ color: "var(--sage)" }}>
                     <Check className="h-3 w-3" /> Now a lead
                   </a>
                 ) : (
                   <button
                     onClick={() => restore(item)}
                     disabled={restoring === item.id}
-                    className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium border border-line disabled:opacity-60"
+                    className="shrink-0 rounded-full px-2.5 py-1 text-[13px] font-medium border border-line disabled:opacity-60"
                   >
                     {restoring === item.id ? "Importing…" : "This was a lead"}
                   </button>
@@ -101,7 +101,7 @@ export default function FilteredEmails() {
           ))}
         </ul>
       )}
-      {error && <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>{error}</p>}
+      {error && <p className="text-[13px] mt-2" style={{ color: "var(--coral)" }}>{error}</p>}
     </div>
   );
 }

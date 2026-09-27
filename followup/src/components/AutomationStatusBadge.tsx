@@ -220,32 +220,35 @@ export function describeAutomationStatus(
  */
 export default function AutomationStatusBadge({ status, compact = false }: { status: AutomationStatus | undefined; compact?: boolean }) {
   if (!status || status.kind === "closed") return null;
-  const { icon: Icon, label, detail, bg, fg, pulse, emphasis } = describeAutomationStatus(status);
+  const { icon: Icon, label, detail, fg, pulse, emphasis } = describeAutomationStatus(status);
+
+  // Calm, as the rest of the app draws state (A-029): a white surface, the
+  // words in ink, and the tone only as one small dot beside the label. A
+  // whole box tinted coral read as an alarm for something the owner fixes
+  // in Settings at their own pace.
+  const dot = pulse ? (
+    <span className="h-2 w-2 shrink-0 rounded-full animate-pulse" style={{ backgroundColor: fg }} />
+  ) : (
+    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: fg }} aria-hidden />
+  );
 
   if (compact) {
     return (
-      <span
-        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
-        style={{ backgroundColor: bg, color: fg }}
-        title={detail ?? label}
-      >
-        {pulse ? <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: fg }} /> : <Icon className="h-3 w-3" />}
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-2.5 py-0.5 text-[12.5px] font-medium text-ink" title={detail ?? label}>
+        {dot}
         {label}
       </span>
     );
   }
 
   return (
-    <div className="rounded-lg px-3 py-2.5" style={{ backgroundColor: bg }}>
-      <div className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: fg }}>
-        {pulse ? <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: fg }} /> : <Icon className="h-4 w-4" />}
+    <div className="rounded-[14px] border border-line bg-card px-4 py-3">
+      <div className="flex items-center gap-2 text-[14.5px] font-medium text-ink">
+        {dot}
+        <Icon className="h-4 w-4 text-ink-faint" aria-hidden />
         {label}
       </div>
-      {detail && (
-        <p className={`mt-1 leading-relaxed ${emphasis ? "text-sm" : "text-xs"}`} style={{ color: fg }}>
-          {detail}
-        </p>
-      )}
+      {detail && <p className={`mt-1 leading-relaxed text-ink-soft ${emphasis ? "text-[14.5px]" : "text-[13.5px]"}`}>{detail}</p>}
     </div>
   );
 }

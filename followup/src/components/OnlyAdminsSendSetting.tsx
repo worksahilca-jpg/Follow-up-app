@@ -58,7 +58,7 @@ export default function OnlyAdminsSendSetting({ onChange, bare = false }: { onCh
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className={bare ? "text-base" : "font-medium text-sm"}>Only admins send</p>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-[13px] text-ink-soft mt-1">
             Teammates can write and edit replies. An admin sends them.
             {loaded && !isAdmin && " Only an admin can change this."}
           </p>
@@ -66,7 +66,7 @@ export default function OnlyAdminsSendSetting({ onChange, bare = false }: { onCh
         <Switch checked={on} onChange={() => save(!on)} disabled={!loaded || !isAdmin || busy} label="Only admins send" />
       </div>
       {error && (
-        <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+        <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

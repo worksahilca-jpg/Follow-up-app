@@ -245,11 +245,11 @@ export default function WorkflowsPage() {
           is a fact about how far a plan runs on this account, said before
           the owner builds one rather than in a notification afterwards. */}
       {holdAllForApproval && (
-        <div className="mt-3 rounded-lg p-3" style={{ backgroundColor: "var(--slate-soft)" }}>
+        <div className="mt-3 rounded-[12px] p-3" style={{ backgroundColor: "var(--slate-soft)" }}>
           <p className="text-sm font-medium" style={{ color: "var(--slate)" }}>
             On the beta plan, a plan runs one step at a time.
           </p>
-          <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--slate)" }}>
+          <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--slate)" }}>
             Your account holds every follow-up for your approval, so FollowUp writes the first message of the plan,
             puts it in Approvals, and stops there — it won&apos;t run the later steps on its own. The plan you build
             here is what runs once holding is lifted.
@@ -374,7 +374,7 @@ function WorkflowCard({
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-display text-lg">{sequence.name}</h3>
             <span
-              className="text-xs font-medium rounded-full px-2 py-0.5"
+              className="text-[13px] font-medium rounded-full px-2 py-0.5"
               style={{
                 backgroundColor: sequence.active ? "var(--sage-soft)" : "var(--line)",
                 color: sequence.active ? "var(--sage)" : "var(--ink-soft)",
@@ -383,7 +383,7 @@ function WorkflowCard({
               {sequence.active ? "Active" : "Paused"}
             </span>
           </div>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-[13px] text-ink-soft mt-1">
             {sequence.steps.length} step{sequence.steps.length === 1 ? "" : "s"} · {sequence.enrolledCount} lead
             {sequence.enrolledCount === 1 ? "" : "s"} enrolled
           </p>
@@ -392,14 +392,14 @@ function WorkflowCard({
           <button
             onClick={toggleActive}
             disabled={busy}
-            className="text-xs font-medium rounded-lg px-2.5 py-1.5 border border-line disabled:opacity-60"
+            className="text-[13px] font-medium rounded-full px-2.5 py-1.5 border border-line disabled:opacity-60"
           >
             {sequence.active ? "Pause" : "Activate"}
           </button>
           <button
             onClick={() => setEditing(true)}
             disabled={busy}
-            className="text-xs font-medium rounded-lg px-2.5 py-1.5 border border-line disabled:opacity-60"
+            className="text-[13px] font-medium rounded-full px-2.5 py-1.5 border border-line disabled:opacity-60"
           >
             Edit
           </button>
@@ -409,7 +409,7 @@ function WorkflowCard({
             onClick={remove}
             disabled={busy}
             aria-label={`Delete ${sequence.name}`}
-            className="text-xs font-medium rounded-lg px-2.5 py-1.5 disabled:opacity-60"
+            className="text-[13px] font-medium rounded-full px-2.5 py-1.5 disabled:opacity-60"
             style={{ color: "var(--coral)" }}
           >
             <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
@@ -436,7 +436,7 @@ function WorkflowCard({
           return (
             <li key={step.id} className="flex items-start gap-2.5 text-sm">
               <span
-                className="mt-0.5 shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-xs font-semibold"
+                className="mt-0.5 shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-[13px] font-semibold"
                 style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
               >
                 {i + 1}
@@ -458,7 +458,7 @@ function WorkflowCard({
       </ol>
 
       {sequence.steps.some((s) => s.action === "EMAIL") && (
-        <p className="mt-3 text-xs text-ink-soft">
+        <p className="mt-3 text-[13px] text-ink-soft">
           Email steps switch to {FALLBACK_CHANNELS} instead if the lead has no email address, or hasn&apos;t replied
           to an earlier email step.
         </p>
@@ -539,14 +539,14 @@ function WorkflowEditor({
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder={'Plan name, e.g. "New customer"'}
-        className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm font-medium"
+        className="w-full rounded-full border border-line bg-paper px-3 py-2 text-sm font-medium"
       />
 
       <div className="mt-4 space-y-3">
         {steps.map((step, i) => (
-          <div key={i} className="rounded-lg border border-line p-3">
+          <div key={i} className="rounded-[12px] border border-line p-3">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-xs text-ink-soft">
+              <div className="flex items-center gap-2 text-[13px] text-ink-soft">
                 <span
                   className="h-5 w-5 rounded-full flex items-center justify-center text-[11px] font-semibold"
                   style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}
@@ -560,7 +560,7 @@ function WorkflowEditor({
                   max={2160}
                   value={step.delayHours}
                   onChange={(e) => updateStep(i, { delayHours: Number(e.target.value) })}
-                  className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
+                  className="w-16 rounded-[12px] border border-line bg-paper px-2 py-1 text-center"
                 />
                 {/* The same number in the unit most people actually plan in,
                     so "72" is never a sum they have to do in their head. */}
@@ -600,10 +600,10 @@ function WorkflowEditor({
               </div>
             </div>
 
-            <div className="mt-2.5 flex rounded-lg border border-line overflow-hidden w-fit">
+            <div className="mt-2.5 flex rounded-[12px] border border-line overflow-hidden w-fit">
               <button
                 onClick={() => updateStep(i, { action: "EMAIL" })}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium"
                 style={{
                   backgroundColor: step.action === "EMAIL" ? "var(--rust)" : "transparent",
                   color: step.action === "EMAIL" ? "white" : "var(--ink-soft)",
@@ -613,7 +613,7 @@ function WorkflowEditor({
               </button>
               <button
                 onClick={() => updateStep(i, { action: "CHANGE_STAGE", stageTo: step.stageTo ?? "CONTACTED" })}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium"
                 style={{
                   backgroundColor: step.action === "CHANGE_STAGE" ? "var(--rust)" : "transparent",
                   color: step.action === "CHANGE_STAGE" ? "white" : "var(--ink-soft)",
@@ -629,7 +629,7 @@ function WorkflowEditor({
                   value={step.messageHint}
                   onChange={(e) => updateStep(i, { messageHint: e.target.value })}
                   placeholder={'Optional — steer what this draft focuses on, e.g. "mention our case studies"'}
-                  className="mt-2.5 w-full rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                  className="mt-2.5 w-full rounded-[12px] border border-line bg-paper px-3 py-1.5 text-[13px]"
                 />
                 <p className="mt-1.5 text-[11px] text-ink-soft">
                   Switches to {FALLBACK_CHANNELS} if this lead has no email on file, or hasn&apos;t replied by this
@@ -640,7 +640,7 @@ function WorkflowEditor({
               <select
                 value={step.stageTo ?? ""}
                 onChange={(e) => updateStep(i, { stageTo: e.target.value })}
-                className="mt-2.5 rounded-lg border border-line bg-paper px-2 py-1.5 text-xs"
+                className="mt-2.5 rounded-[12px] border border-line bg-paper px-2 py-1.5 text-[13px]"
               >
                 {STAGE_OPTIONS.map((s) => (
                   <option key={s.value} value={s.value}>
@@ -665,12 +665,12 @@ function WorkflowEditor({
         <button
           onClick={save}
           disabled={saving || !name.trim()}
-          className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60"
+          className="rounded-full px-4 py-2 text-sm font-medium disabled:opacity-60"
           style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
         >
           {saving ? "Saving…" : "Save plan"}
         </button>
-        <button onClick={onCancel} disabled={saving} className="rounded-lg border border-line px-4 py-2 text-sm font-medium disabled:opacity-60">
+        <button onClick={onCancel} disabled={saving} className="rounded-full border border-line px-4 py-2 text-sm font-medium disabled:opacity-60">
           Cancel
         </button>
       </div>
@@ -732,9 +732,9 @@ function ReadyPlanEditor({
           value={name}
           onChange={(e) => setName(e.target.value)}
           aria-label="Plan name"
-          className="rounded-lg border border-line bg-paper px-3 py-1.5 text-sm font-medium"
+          className="rounded-full border border-line bg-paper px-3 py-1.5 text-sm font-medium"
         />
-        <p className="text-xs text-ink-soft">
+        <p className="text-[13px] text-ink-soft">
           {holdAll ? "Every message waits for your OK." : "It stops the moment they answer."}
         </p>
       </div>
@@ -751,7 +751,7 @@ function ReadyPlanEditor({
                   value={days[i]}
                   aria-label={`Day for step ${i + 1}`}
                   onChange={(e) => setDays((prev) => prev.map((d, j) => (j === i ? Number(e.target.value) : d)))}
-                  className="w-16 rounded-lg border border-line bg-paper px-2 py-1 text-center"
+                  className="w-16 rounded-[12px] border border-line bg-paper px-2 py-1 text-center"
                 />
               )}
             </label>
@@ -759,17 +759,17 @@ function ReadyPlanEditor({
           </li>
         ))}
       </ul>
-      {!inOrder && <p className="mt-2 text-xs" style={{ color: "var(--coral)" }}>Each step needs a later day than the one before.</p>}
+      {!inOrder && <p className="mt-2 text-[13px]" style={{ color: "var(--coral)" }}>Each step needs a later day than the one before.</p>}
       <div className="mt-4 pt-4 border-t border-line flex flex-wrap items-center gap-2">
         <button
           onClick={save}
           disabled={saving || !name.trim() || !inOrder}
-          className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60"
+          className="rounded-full px-4 py-2 text-sm font-medium disabled:opacity-60"
           style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
         >
           {saving ? "Saving…" : "Save plan"}
         </button>
-        <button onClick={onCancel} disabled={saving} className="rounded-lg border border-line px-4 py-2 text-sm font-medium disabled:opacity-60">
+        <button onClick={onCancel} disabled={saving} className="rounded-full border border-line px-4 py-2 text-sm font-medium disabled:opacity-60">
           Cancel
         </button>
       </div>

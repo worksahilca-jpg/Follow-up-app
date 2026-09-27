@@ -88,21 +88,21 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
       {enrollment?.enrolled ? (
         <div className="mt-2">
           <p className="text-sm">{enrollment.sequenceName}</p>
-          <p className="text-xs text-ink-soft mt-0.5">
+          <p className="text-[13px] text-ink-soft mt-0.5">
             Step {(enrollment.stepIndex ?? 0) + 1} of {enrollment.totalSteps}
             {enrollment.dueAt && ` — next on ${new Date(enrollment.dueAt).toLocaleDateString()}`}
           </p>
           <button
             onClick={unenroll}
             disabled={saving}
-            className="mt-2 text-xs font-medium disabled:opacity-60"
+            className="mt-2 text-[13px] font-medium disabled:opacity-60"
             style={{ color: "var(--coral)" }}
           >
             Take off this plan
           </button>
         </div>
       ) : sequences.length === 0 ? (
-        <p className="text-xs text-ink-soft mt-2">
+        <p className="text-[13px] text-ink-soft mt-2">
           No active follow-up plans yet —{" "}
           <Link href="/workflows" className="underline">
             build one
@@ -114,7 +114,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
           <select
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
-            className="flex-1 rounded-lg border border-line bg-paper px-2 py-1.5 text-xs"
+            className="flex-1 rounded-[12px] border border-line bg-paper px-2 py-1.5 text-[13px]"
           >
             <option value="">Put on…</option>
             {sequences.map((s) => (
@@ -126,7 +126,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
           <button
             onClick={enroll}
             disabled={saving || !selected}
-            className="text-xs font-medium rounded-lg px-2.5 py-1.5 text-paper disabled:opacity-60"
+            className="text-[13px] font-medium rounded-full px-2.5 py-1.5 text-paper disabled:opacity-60"
             style={{ backgroundColor: "var(--ink)" }}
           >
             Put on plan
@@ -135,7 +135,7 @@ export default function LeadWorkflowEnrollment({ leadId }: { leadId: string }) {
       )}
 
       {error && (
-        <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>
+        <p className="text-[13px] mt-2" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

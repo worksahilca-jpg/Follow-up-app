@@ -67,7 +67,7 @@ export default function ImportLeadsForm({ onClose }: { onClose: () => void }) {
             </p>
 
             <label
-              className="mt-4 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-line py-8 cursor-pointer hover:bg-paper transition-colors"
+              className="mt-4 flex flex-col items-center justify-center gap-2 rounded-[12px] border-2 border-dashed border-line py-8 cursor-pointer hover:bg-paper transition-colors"
             >
               <Upload className="h-6 w-6 text-ink-soft" />
               <span className="text-sm text-ink-soft">
@@ -103,7 +103,7 @@ export default function ImportLeadsForm({ onClose }: { onClose: () => void }) {
               .
             </p>
             {result.skippedSamples.length > 0 && (
-              <div className="rounded-lg bg-paper border border-line p-3 text-xs text-ink-soft space-y-1">
+              <div className="rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-1">
                 {result.skippedSamples.map((s, i) => (
                   <p key={i}>{s}</p>
                 ))}
@@ -114,7 +114,7 @@ export default function ImportLeadsForm({ onClose }: { onClose: () => void }) {
             )}
             <button
               onClick={onClose}
-              className="w-full rounded-lg px-4 py-2.5 text-sm font-medium"
+              className="w-full rounded-full px-4 py-2.5 text-sm font-medium"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
               Done

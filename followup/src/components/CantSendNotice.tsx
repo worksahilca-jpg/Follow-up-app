@@ -16,7 +16,7 @@ export default function CantSendNotice({ reconnectEmail }: { reconnectEmail: str
     <div role="status" className="mt-6 box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
         <p className="text-sm font-medium">Replies and check-ins can&apos;t go out</p>
-        <p className="text-xs text-ink-soft mt-0.5">
+        <p className="text-[13px] text-ink-soft mt-0.5">
           {reconnectEmail
             ? `FollowUp lost access to ${reconnectEmail}, so it can't write to anyone. In the beta, Google ends this access every seven days. Reconnecting takes a few seconds.`
             : "Nothing is connected to send from, so FollowUp can't write to anyone."}
@@ -24,7 +24,7 @@ export default function CantSendNotice({ reconnectEmail }: { reconnectEmail: str
       </div>
       <Link
         href="/settings#integrations"
-        className="shrink-0 rounded-lg px-3.5 py-1.5 text-sm font-medium"
+        className="shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium"
         style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
       >
         {reconnectEmail ? "Reconnect Gmail" : "Connect an inbox"}

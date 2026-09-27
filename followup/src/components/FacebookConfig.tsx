@@ -154,27 +154,27 @@ export default function FacebookConfig() {
   return (
     <div className="box p-5">
       <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
+        <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
           <MessageSquare className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Catch Facebook Messenger DMs and Lead Ads</p>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-[13px] text-ink-soft mt-1">
             Anyone who messages your Facebook Page, or fills in one of your Facebook or Instagram lead-ad forms,
             becomes a lead and gets the instant reply.
           </p>
 
           {statusMessage && (
-            <p className="mt-2 text-xs" style={{ color: statusMessage.kind === "success" ? "var(--sage)" : "var(--coral)" }}>
+            <p className="mt-2 text-[13px]" style={{ color: statusMessage.kind === "success" ? "var(--sage)" : "var(--coral)" }}>
               {statusMessage.text}
             </p>
           )}
 
           {pendingPages && (
-            <div className="mt-3 rounded-lg border border-line bg-paper p-3">
-              <p className="text-xs font-medium">Which Page should FollowUp watch?</p>
+            <div className="mt-3 rounded-[12px] border border-line bg-paper p-3">
+              <p className="text-[13px] font-medium">Which Page should FollowUp watch?</p>
               {saveError && (
-                <p className="mt-1 text-xs" style={{ color: "var(--coral)" }}>
+                <p className="mt-1 text-[13px]" style={{ color: "var(--coral)" }}>
                   {saveError}
                 </p>
               )}
@@ -184,7 +184,7 @@ export default function FacebookConfig() {
                     key={p.id}
                     onClick={() => choosePage(p.id)}
                     disabled={saving}
-                    className="block w-full text-left rounded-lg border border-line bg-card px-3 py-1.5 text-xs font-medium disabled:opacity-60"
+                    className="block w-full text-left rounded-full border border-line bg-card px-3 py-1.5 text-[13px] font-medium disabled:opacity-60"
                   >
                     {p.name}
                   </button>
@@ -196,7 +196,7 @@ export default function FacebookConfig() {
           {!pendingPages && (connected ? (
             <div className="mt-3">
               {receiving ? (
-                <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }}>
+                <p className="text-[13px] flex items-center gap-1" style={{ color: "var(--sage)" }}>
                   <Check className="h-3.5 w-3.5" /> Connected — {pageName ?? "Page"} ({pageId}). Messenger DMs and lead-form
                   submissions become leads automatically.
                 </p>
@@ -214,7 +214,7 @@ export default function FacebookConfig() {
                   onReceiving={() => setReceiving(true)}
                 />
               )}
-              <button onClick={disconnect} disabled={saving} className="mt-2 text-xs font-medium" style={{ color: "var(--coral)" }}>
+              <button onClick={disconnect} disabled={saving} className="mt-2 text-[13px] font-medium" style={{ color: "var(--coral)" }}>
                 Disconnect
               </button>
             </div>
@@ -224,13 +224,13 @@ export default function FacebookConfig() {
                 <div>
                   <a
                     href="/api/facebook/oauth/start"
-                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-paper"
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-paper"
                     style={{ backgroundColor: "var(--ink)" }}
                   >
                     Connect with Facebook
                   </a>
                   {/* Same sentence as the Instagram panel, same reason. */}
-                  <p className="mt-2 text-xs text-ink-soft">
+                  <p className="mt-2 text-[13px] text-ink-soft">
                     While FollowUp is in beta, Meta only lets accounts Sahil added as testers connect. If Meta refuses,
                     ask him to add you.
                   </p>
@@ -240,7 +240,7 @@ export default function FacebookConfig() {
               <div>
                 <button
                   onClick={() => setShowManual((v) => !v)}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+                  className="inline-flex items-center gap-1 text-[13px] font-medium text-ink-soft"
                 >
                   <ChevronDown className={`h-3 w-3 transition-transform ${showManual ? "rotate-180" : ""}`} />
                   {oauthAvailable ? "Have a Page access token instead?" : "Paste a Page access token"}
@@ -248,7 +248,7 @@ export default function FacebookConfig() {
                 {(showManual || !oauthAvailable) && (
                   <div className="mt-2">
                     {saveError && (
-                      <p className="mb-1.5 text-xs" style={{ color: "var(--coral)" }}>
+                      <p className="mb-1.5 text-[13px]" style={{ color: "var(--coral)" }}>
                         {saveError}
                       </p>
                     )}
@@ -258,12 +258,12 @@ export default function FacebookConfig() {
                         value={tokenDraft}
                         onChange={(e) => setTokenDraft(e.target.value)}
                         placeholder="Facebook Page access token"
-                        className="flex-1 rounded-lg border border-line bg-paper px-3 py-1.5 text-xs"
+                        className="flex-1 rounded-[12px] border border-line bg-paper px-3 py-1.5 text-[13px]"
                       />
                       <button
                         onClick={saveToken}
                         disabled={saving || !tokenDraft.trim()}
-                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                        className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
                         style={{ backgroundColor: "var(--ink)" }}
                       >
                         {saving ? "Connecting…" : "Connect"}
@@ -275,18 +275,18 @@ export default function FacebookConfig() {
             </div>
           ))}
 
-          <button onClick={() => setShowHelp((v) => !v)} className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-ink-soft">
+          <button onClick={() => setShowHelp((v) => !v)} className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-ink-soft">
             <ChevronDown className={`h-3 w-3 transition-transform ${showHelp ? "rotate-180" : ""}`} />
             Meta console reference
           </button>
           {showHelp && (
-            <div className="mt-2 rounded-lg bg-paper border border-line p-3 text-xs text-ink-soft space-y-2">
+            <div className="mt-2 rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-2">
               <p>
                 Webhook (set up once, not per business): subscribed to <strong>messages</strong> and{" "}
                 <strong>leadgen</strong> for Pages. Lead Ads also need the <strong>leads_retrieval</strong> permission.
               </p>
-              <pre className="rounded-lg bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{webhookUrl}</pre>
-              <pre className="rounded-lg bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{verifyToken}</pre>
+              <pre className="rounded-[12px] bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{webhookUrl}</pre>
+              <pre className="rounded-[12px] bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{verifyToken}</pre>
             </div>
           )}
         </div>

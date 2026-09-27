@@ -60,7 +60,7 @@ export default function ProductUsageSection({ usage }: { usage: ProductUsage }) 
       </div>
 
       <div className="mt-4 box overflow-hidden overflow-x-auto">
-        <div className="grid grid-cols-[minmax(0,2fr)_auto_auto_auto] gap-4 px-5 py-3 border-b border-line text-xs font-medium text-ink-soft">
+        <div className="grid grid-cols-[minmax(0,2fr)_auto_auto_auto] gap-4 px-5 py-3 border-b border-line text-[13px] font-medium text-ink-soft">
           <span>What happened</span>
           <span className="text-right w-20">This week</span>
           <span className="text-right w-20">Last week</span>
@@ -73,11 +73,11 @@ export default function ProductUsageSection({ usage }: { usage: ProductUsage }) 
           >
             <span className="min-w-0">
               <span className="block text-sm font-medium">{r.label}</span>
-              <span className="block text-xs text-ink-soft">{r.note}</span>
+              <span className="block text-[13px] text-ink-soft">{r.note}</span>
             </span>
             <span className="text-right w-20 font-display text-xl tabular-nums">{usage.thisWeek[r.key]}</span>
             <span className="text-right w-20 text-sm text-ink-soft tabular-nums">{usage.lastWeek[r.key]}</span>
-            <span className="text-right w-16 text-xs text-ink-soft tabular-nums">
+            <span className="text-right w-16 text-[13px] text-ink-soft tabular-nums">
               {change(usage.thisWeek[r.key], usage.lastWeek[r.key])}
             </span>
           </div>
@@ -87,7 +87,7 @@ export default function ProductUsageSection({ usage }: { usage: ProductUsage }) 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <div className="box p-5">
           <p className="text-sm font-medium">Which parts get used</p>
-          <p className="text-xs text-ink-soft mt-1">Accounts that have ever done this, out of {usage.totalAccounts}.</p>
+          <p className="text-[13px] text-ink-soft mt-1">Accounts that have ever done this, out of {usage.totalAccounts}.</p>
           <div className="mt-3 flex flex-col">
             {usage.features.map((f) => (
               <div key={f.label} className="flex items-center justify-between gap-4 py-2 border-b border-line last:border-0">
@@ -111,7 +111,7 @@ export default function ProductUsageSection({ usage }: { usage: ProductUsage }) 
             How many people open the site, which pages they read, and how many reach sign-in. No cookies, no personal
             data, and your own visits to this admin page aren&apos;t counted.
           </p>
-          <p className="mt-3 rounded-lg px-3 py-2 text-sm text-ink-soft" style={{ backgroundColor: "var(--line)" }}>
+          <p className="mt-3 rounded-[12px] px-3 py-2 text-sm text-ink-soft" style={{ backgroundColor: "var(--line)" }}>
             Starts counting once Analytics is switched on in Vercel.
           </p>
           <a

@@ -101,7 +101,7 @@ export default function LeadAssignmentSelect({
         value={current}
         onChange={(e) => change(e.target.value)}
         disabled={saving}
-        className="rounded-lg border border-line bg-paper px-1.5 py-0.5 text-sm text-right disabled:opacity-60"
+        className="rounded-[12px] border border-line bg-paper px-1.5 py-0.5 text-sm text-right disabled:opacity-60"
       >
         <option value="">Unassigned</option>
         {members.map((m) => (
@@ -114,14 +114,14 @@ export default function LeadAssignmentSelect({
         <button
           onClick={claim}
           disabled={saving}
-          className="text-xs mt-1 underline disabled:opacity-60"
+          className="text-[13px] mt-1 underline disabled:opacity-60"
           style={{ color: "var(--coral)" }}
         >
           Claim it
         </button>
       )}
       {error && (
-        <span className="text-xs mt-1" style={{ color: "var(--coral)" }}>
+        <span className="text-[13px] mt-1" style={{ color: "var(--coral)" }}>
           {error}
         </span>
       )}

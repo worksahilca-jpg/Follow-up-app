@@ -110,22 +110,22 @@ export default function SourceRoutingSection() {
 
   return (
     <div className="box p-5">
-      <p className="text-xs text-ink-soft mb-4">
+      <p className="text-[13px] text-ink-soft mb-4">
         What happens automatically the moment a new lead comes in from each source — before anyone looks at it.
       </p>
       {error && (
-        <p className="text-xs mb-3" style={{ color: "var(--coral)" }}>
+        <p className="text-[13px] mb-3" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}
-      <div className="space-y-2">
+      <div>
         {rules.map((rule) => {
           // Saved while the permission was on, and the permission later
           // revoked. The rule still says Autonomous; every lead it makes
           // starts on Assisted. Until now the two never met on screen.
           const stranded = rule.automationTierDefault === "AUTONOMOUS" && !autonomousAllowed;
           return (
-            <div key={rule.source} className="rounded-lg border border-line px-3 py-2.5">
+            <div key={rule.source} className="border-t border-line-2 py-3 first:border-t-0">
               <div className="flex items-center justify-between gap-3">
                 {/* The source name holds its width; the dropdown gives way.
                     Reversed until now, and it put the control off the edge
@@ -143,7 +143,7 @@ export default function SourceRoutingSection() {
                     value={encodeValue(rule)}
                     onChange={(e) => handleChange(rule.source, e.target.value)}
                     disabled={savingSource === rule.source}
-                    className="min-w-0 max-w-full truncate rounded-lg border border-line bg-paper px-2.5 py-1.5 text-sm disabled:opacity-60"
+                    className="min-w-0 max-w-full truncate rounded-[12px] border border-line bg-paper px-2.5 py-1.5 text-sm disabled:opacity-60"
                   >
                     <option value="">No special handling</option>
                     <option value="pool">Leave unclaimed — first to grab it gets it</option>
@@ -174,7 +174,7 @@ export default function SourceRoutingSection() {
                 </div>
               </div>
               {stranded && (
-                <p className="mt-1.5 text-xs text-ink-soft leading-relaxed">
+                <p className="mt-1.5 text-[13px] text-ink-soft leading-relaxed">
                   {/* What is true, in the order it is useful: what the
                       rule is doing right now, then why, then where to
                       change it. Not "invalid rule" — the rule is fine,
@@ -190,7 +190,7 @@ export default function SourceRoutingSection() {
         })}
       </div>
       {activeSequences.length === 0 && (
-        <p className="text-xs text-ink-soft mt-3">
+        <p className="text-[13px] text-ink-soft mt-3">
           Build a workflow on the Workflows page to also offer &quot;enroll automatically&quot; here.
         </p>
       )}
@@ -251,12 +251,12 @@ function ApplyToExistingLeads() {
     <div className="mt-5 pt-4" style={{ borderTop: "1px solid var(--line)" }}>
       {/* States the limitation first. An owner who reads only this line
           has still learned the thing the rules above do not say. */}
-      <p className="text-xs text-ink-soft">
+      <p className="text-[13px] text-ink-soft">
         These rules apply to new leads only — leads already in FollowUp keep whatever they are on now.
       </p>
 
       {!open && (
-        <button onClick={() => setOpen(true)} className="mt-2 text-xs font-medium underline underline-offset-2 text-ink-soft">
+        <button onClick={() => setOpen(true)} className="mt-2 text-[13px] font-medium underline underline-offset-2 text-ink-soft">
           Change the leads I already have
         </button>
       )}
@@ -267,7 +267,7 @@ function ApplyToExistingLeads() {
             value={tier}
             onChange={(e) => setTier(e.target.value as typeof tier)}
             disabled={saving}
-            className="rounded-lg border border-line bg-paper px-2.5 py-1.5 text-sm disabled:opacity-60"
+            className="rounded-[12px] border border-line bg-paper px-2.5 py-1.5 text-sm disabled:opacity-60"
           >
             <option value="OFF">Off</option>
             <option value="ASSISTED">Assisted</option>
@@ -276,7 +276,7 @@ function ApplyToExistingLeads() {
           <button
             onClick={apply}
             disabled={saving}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-60"
+            className="rounded-full px-3 py-1.5 text-[13px] font-medium disabled:opacity-60"
             style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
             {saving ? "Changing…" : "Apply to every lead"}
@@ -288,7 +288,7 @@ function ApplyToExistingLeads() {
         /* Says what happened to ALL of them, including the ones it left
            alone. A bulk action that quietly does less than asked is how
            this kind of control loses trust. */
-        <p className="mt-3 text-xs" style={{ color: "var(--ink)" }}>
+        <p className="mt-3 text-[13px]" style={{ color: "var(--ink)" }}>
           {result.updated === 0
             ? "Nothing to change — they were all on that already."
             : `Changed ${result.updated} ${result.updated === 1 ? "lead" : "leads"}.`}
@@ -300,7 +300,7 @@ function ApplyToExistingLeads() {
       )}
 
       {failed && (
-        <p className="mt-3 text-xs" style={{ color: "var(--coral)" }}>
+        <p className="mt-3 text-[13px]" style={{ color: "var(--coral)" }}>
           {failed}
         </p>
       )}

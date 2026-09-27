@@ -172,24 +172,24 @@ export default function WhatsAppConfig() {
   return (
     <div className="box p-5">
       <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
+        <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
           <MessageSquare className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Catch WhatsApp messages</p>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-[13px] text-ink-soft mt-1">
             Your own WhatsApp number — the one already in the WhatsApp Business app on your phone. Anyone who
             messages it becomes a lead here, and replies go back from the same number. You keep using the app
             on your phone as before; what you send from there shows up here too.
           </p>
 
           {(justConnected || signup.justConnected) && (
-            <p className="mt-2 text-xs" style={{ color: "var(--sage)" }} aria-live="polite">
+            <p className="mt-2 text-[13px]" style={{ color: "var(--sage)" }} aria-live="polite">
               WhatsApp connected — new messages will become leads automatically.
             </p>
           )}
           {(connectError ?? signup.error) && (
-            <p className="mt-2 text-xs" style={{ color: "var(--coral)" }} aria-live="polite">
+            <p className="mt-2 text-[13px]" style={{ color: "var(--coral)" }} aria-live="polite">
               {connectError ?? signup.error}
             </p>
           )}
@@ -197,7 +197,7 @@ export default function WhatsAppConfig() {
           {config.connected ? (
             <div className="mt-3 space-y-3">
               <div>
-                <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--sage)" }}>
+                <p className="text-[13px] flex items-start gap-1.5" style={{ color: "var(--sage)" }}>
                   <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                   <span>
                     Connected — {config.displayNumber ?? "your WhatsApp number"}.
@@ -209,19 +209,19 @@ export default function WhatsAppConfig() {
                   </span>
                 </p>
                 {config.connectMode === "coexistence" && (
-                  <p className="mt-1.5 text-xs text-ink-soft">
+                  <p className="mt-1.5 text-[13px] text-ink-soft">
                     Keep opening the WhatsApp Business app on that phone at least once every 13 days, or Meta
                     pauses the connection.
                   </p>
                 )}
-                <button onClick={disconnect} disabled={connecting} className="mt-2 text-xs font-medium" style={{ color: "var(--coral)" }}>
+                <button onClick={disconnect} disabled={connecting} className="mt-2 text-[13px] font-medium" style={{ color: "var(--coral)" }}>
                   Disconnect
                 </button>
               </div>
 
               <div className="pt-3 border-t border-line space-y-2">
-                <p className="text-xs font-medium">Following up after 24 hours</p>
-                <p className="text-xs text-ink-soft">
+                <p className="text-[13px] font-medium">Following up after 24 hours</p>
+                <p className="text-[13px] text-ink-soft">
                   WhatsApp lets a business reply freely for 24 hours after the customer&apos;s last message. After
                   that, only a message Meta approved in advance can go out — which is exactly FollowUp&apos;s
                   &quot;still interested?&quot; follow-up. Create one in{" "}
@@ -234,14 +234,14 @@ export default function WhatsAppConfig() {
                   isn&apos;t sent, and FollowUp tells you so.
                 </p>
                 {config.templateName && (
-                  <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--sage)" }}>
+                  <p className="text-[13px] flex items-start gap-1.5" style={{ color: "var(--sage)" }}>
                     <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" /> Set up — a follow-up past 24 hours sends
                     &quot;{config.templateBody || config.templateName}&quot;.
                   </p>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2">
                   <div>
-                    <label htmlFor="wa-template-name" className="block text-xs font-medium text-ink-soft mb-1">
+                    <label htmlFor="wa-template-name" className="block text-[13px] font-medium text-ink-soft mb-1">
                       Template name
                     </label>
                     <input
@@ -253,7 +253,7 @@ export default function WhatsAppConfig() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="wa-template-language" className="block text-xs font-medium text-ink-soft mb-1">
+                    <label htmlFor="wa-template-language" className="block text-[13px] font-medium text-ink-soft mb-1">
                       Language
                     </label>
                     <input
@@ -266,7 +266,7 @@ export default function WhatsAppConfig() {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="wa-template-body" className="block text-xs font-medium text-ink-soft mb-1">
+                  <label htmlFor="wa-template-body" className="block text-[13px] font-medium text-ink-soft mb-1">
                     The approved wording, for your reference
                   </label>
                   <input
@@ -280,18 +280,18 @@ export default function WhatsAppConfig() {
                 <button
                   onClick={saveTemplate}
                   disabled={savingTemplate}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                  className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
                   style={{ backgroundColor: "var(--ink)" }}
                 >
                   {savingTemplate ? "Saving…" : config.templateName ? "Update" : "Save"}
                 </button>
                 {templateSaved && (
-                  <p className="text-xs flex items-center gap-1" style={{ color: "var(--sage)" }} aria-live="polite">
+                  <p className="text-[13px] flex items-center gap-1" style={{ color: "var(--sage)" }} aria-live="polite">
                     <Check className="h-3.5 w-3.5" /> Saved
                   </p>
                 )}
                 {templateError && (
-                  <p className="text-xs" style={{ color: "var(--coral)" }} aria-live="polite">
+                  <p className="text-[13px]" style={{ color: "var(--coral)" }} aria-live="polite">
                     {templateError}
                   </p>
                 )}
@@ -300,7 +300,7 @@ export default function WhatsAppConfig() {
           ) : (
             <div className="mt-3 space-y-3">
               {config.twilioLegacy && (
-                <p className="text-xs text-ink-soft">
+                <p className="text-[13px] text-ink-soft">
                   WhatsApp is still connected the earlier way, through your Twilio sender, and keeps working.
                   Connect your own number below to move over.
                 </p>
@@ -316,7 +316,7 @@ export default function WhatsAppConfig() {
                   >
                     {signup.connecting ? "Finishing in Meta's window…" : "Connect WhatsApp"}
                   </button>
-                  <p className="mt-2 text-xs text-ink-soft">
+                  <p className="mt-2 text-[13px] text-ink-soft">
                     Meta opens a window. Have the phone with your WhatsApp Business app ready — you&apos;ll scan a
                     code with it, and the number stays on that phone. While FollowUp is in beta, Meta only lets
                     accounts Sahil added as testers connect.
@@ -327,7 +327,7 @@ export default function WhatsAppConfig() {
                    the customer as if it were something they could open.
                    Nothing they can act on belongs here — this is ours to
                    finish, so the sentence says who it is waiting on. */
-                <p className="text-xs text-ink-soft">
+                <p className="text-[13px] text-ink-soft">
                   One-click connect isn&apos;t switched on yet — it&apos;s waiting on FollowUp&apos;s setup with Meta,
                   not on anything at your end. Use an access token below in the meantime.
                 </p>
@@ -336,14 +336,14 @@ export default function WhatsAppConfig() {
               <div>
                 <button
                   onClick={() => setShowManual((v) => !v)}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+                  className="inline-flex items-center gap-1 text-[13px] font-medium text-ink-soft"
                 >
                   <ChevronDown className={`h-3 w-3 transition-transform ${showManual ? "rotate-180" : ""}`} />
                   {config.signupAvailable ? "Have an access token instead?" : "Connect with an access token"}
                 </button>
                 {(showManual || !config.signupAvailable) && (
                   <div className="mt-2 space-y-2">
-                    <p className="text-xs text-ink-soft">
+                    <p className="text-[13px] text-ink-soft">
                       From WhatsApp Manager: a System User access token with the WhatsApp permissions, the phone
                       number ID, and the WhatsApp Business Account ID.
                     </p>
@@ -376,7 +376,7 @@ export default function WhatsAppConfig() {
                     <button
                       onClick={connectByToken}
                       disabled={connecting || !tokenDraft.trim() || !numberIdDraft.trim() || !wabaIdDraft.trim()}
-                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                      className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
                       style={{ backgroundColor: "var(--ink)" }}
                     >
                       {connecting ? "Connecting…" : "Connect"}
@@ -389,29 +389,29 @@ export default function WhatsAppConfig() {
 
           <button
             onClick={() => setShowReference((v) => !v)}
-            className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+            className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-ink-soft"
           >
             <ChevronDown className={`h-3 w-3 transition-transform ${showReference ? "rotate-180" : ""}`} />
             Meta console reference
           </button>
           {showReference && (
-            <div className="mt-2 rounded-lg bg-paper border border-line p-3 text-xs text-ink-soft space-y-2">
+            <div className="mt-2 rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-2">
               <p>
                 Webhook (set up once, not per business) — subscribed to messages, smb_message_echoes, history and
                 smb_app_state_sync for WhatsApp.
               </p>
               <div>
                 <p className="font-medium text-ink">Callback URL</p>
-                <pre className="mt-1 rounded-lg bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{config.webhookUrl}</pre>
-                <button onClick={() => copy("url", config.webhookUrl)} className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line">
+                <pre className="mt-1 rounded-[12px] bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{config.webhookUrl}</pre>
+                <button onClick={() => copy("url", config.webhookUrl)} className="mt-1 inline-flex items-center gap-1.5 text-[13px] font-medium rounded-full px-2.5 py-1 border border-line">
                   {copied === "url" ? <Check className="h-3 w-3" /> : null}
                   {copied === "url" ? "Copied!" : "Copy"}
                 </button>
               </div>
               <div>
                 <p className="font-medium text-ink">Verify token</p>
-                <pre className="mt-1 rounded-lg bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{config.verifyToken}</pre>
-                <button onClick={() => copy("token", config.verifyToken)} className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1 border border-line">
+                <pre className="mt-1 rounded-[12px] bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{config.verifyToken}</pre>
+                <button onClick={() => copy("token", config.verifyToken)} className="mt-1 inline-flex items-center gap-1.5 text-[13px] font-medium rounded-full px-2.5 py-1 border border-line">
                   {copied === "token" ? <Check className="h-3 w-3" /> : null}
                   {copied === "token" ? "Copied!" : "Copy"}
                 </button>

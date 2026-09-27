@@ -36,7 +36,7 @@ export default function DeleteLeadButton({ leadId, leadName }: { leadId: string;
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-on-coral disabled:opacity-60"
+            className="rounded-full px-3 py-1.5 text-sm font-medium text-on-coral disabled:opacity-60"
             style={{ backgroundColor: "var(--coral-fill)" }}
           >
             {deleting ? "Deleting…" : "Yes, delete"}
@@ -44,7 +44,7 @@ export default function DeleteLeadButton({ leadId, leadName }: { leadId: string;
           <button
             onClick={() => setConfirming(false)}
             disabled={deleting}
-            className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium"
+            className="rounded-full border border-line px-3 py-1.5 text-sm font-medium"
           >
             Cancel
           </button>
@@ -57,12 +57,12 @@ export default function DeleteLeadButton({ leadId, leadName }: { leadId: string;
     <div>
       <button
         onClick={() => setConfirming(true)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:text-ink"
+        className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:text-ink"
       >
         <Trash2 className="h-3.5 w-3.5" /> Delete lead
       </button>
       {error && (
-        <p className="text-xs mt-2" style={{ color: "var(--coral)" }}>
+        <p className="text-[13px] mt-2" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

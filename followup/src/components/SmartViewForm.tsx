@@ -104,14 +104,14 @@ export default function SmartViewForm({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <p className="text-xs text-ink-soft -mt-2 mb-4">
+        <p className="text-[13px] text-ink-soft -mt-2 mb-4">
           Combine as many of these as you need — e.g. Instagram leads over $2,000 with no contact in 10 days.
         </p>
 
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-ink-soft">Source</label>
+              <label className="text-[13px] text-ink-soft">Source</label>
               <select value={source} onChange={(e) => setSource(e.target.value)} className={inputClass}>
                 <option value="">Any source</option>
                 {sources.map((s) => (
@@ -122,7 +122,7 @@ export default function SmartViewForm({
               </select>
             </div>
             <div>
-              <label className="text-xs text-ink-soft">Stage</label>
+              <label className="text-[13px] text-ink-soft">Stage</label>
               <select
                 value={stage}
                 onChange={(e) => setStage(e.target.value as Lead["stage"] | "")}
@@ -139,7 +139,7 @@ export default function SmartViewForm({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-ink-soft">Priority</label>
+              <label className="text-[13px] text-ink-soft">Priority</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as Lead["priority"] | "")}
@@ -154,7 +154,7 @@ export default function SmartViewForm({
               </select>
             </div>
             <div>
-              <label className="text-xs text-ink-soft">Min. deal value</label>
+              <label className="text-[13px] text-ink-soft">Min. deal value</label>
               <input
                 type="number"
                 min="0"
@@ -166,7 +166,7 @@ export default function SmartViewForm({
             </div>
           </div>
           <div>
-            <label className="text-xs text-ink-soft">No contact in at least (days)</label>
+            <label className="text-[13px] text-ink-soft">No contact in at least (days)</label>
             <input
               type="number"
               min="0"
@@ -180,7 +180,7 @@ export default function SmartViewForm({
 
         <div className="mt-5 pt-4 border-t border-line space-y-3">
           <div>
-            <label className="text-xs text-ink-soft">Save as a Smart View (optional)</label>
+            <label className="text-[13px] text-ink-soft">Save as a Smart View (optional)</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -205,7 +205,7 @@ export default function SmartViewForm({
             type="button"
             onClick={handleApply}
             disabled={!hasCriteria}
-            className="flex-1 rounded-lg px-4 py-2 text-sm font-medium border border-line disabled:opacity-50"
+            className="flex-1 rounded-full px-4 py-2 text-sm font-medium border border-line disabled:opacity-50"
           >
             Apply without saving
           </button>
@@ -213,7 +213,7 @@ export default function SmartViewForm({
             type="button"
             onClick={handleSave}
             disabled={!hasCriteria || saving}
-            className="flex-1 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+            className="flex-1 rounded-full px-4 py-2 text-sm font-medium disabled:opacity-50"
             style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
             {saving ? "Saving…" : "Save & apply"}

@@ -90,12 +90,12 @@ export default function OutboundWebhookConfig() {
   return (
     <div className="box p-5">
       <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
+        <div className="h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--slate-soft)", color: "var(--slate)" }}>
           <Send className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Send lead events out</p>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-[13px] text-ink-soft mt-1">
             The other direction: paste a webhook URL from your real CRM, a Zapier/Make step, or a Slack incoming
             webhook, and FollowUp will POST every new lead and every pipeline stage change there — the same
             events, live, wherever you actually run your business.
@@ -103,13 +103,13 @@ export default function OutboundWebhookConfig() {
 
           <button
             onClick={() => setShowExamples((v) => !v)}
-            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-ink-soft"
+            className="mt-2 flex items-center gap-1 text-[13px] font-medium text-ink-soft"
           >
             <ChevronDown className={`h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
             What can I connect this to?
           </button>
           {showExamples && (
-            <div className="mt-2 rounded-lg bg-paper border border-line p-3 text-xs text-ink-soft space-y-1.5">
+            <div className="mt-2 rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-1.5">
               <p>
                 Already use a real CRM (HubSpot, Pipedrive, GoHighLevel, etc.)? Most of them have their own
                 &quot;inbound webhook&quot; or accept a Zapier trigger — paste that URL here and every FollowUp
@@ -130,7 +130,7 @@ export default function OutboundWebhookConfig() {
                 setDraft("");
                 setSaveError(null);
               }}
-              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium rounded-lg px-3.5 py-2"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2"
               style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
             >
               Add a webhook URL
@@ -144,11 +144,11 @@ export default function OutboundWebhookConfig() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="https://hooks.zapier.com/..."
-                className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm"
+                className="w-full rounded-[12px] border border-line bg-paper px-3 py-2 text-sm"
                 autoFocus
               />
               {saveError && (
-                <p className="mt-1.5 text-xs" style={{ color: "var(--coral)" }}>
+                <p className="mt-1.5 text-[13px]" style={{ color: "var(--coral)" }}>
                   {saveError}
                 </p>
               )}
@@ -156,7 +156,7 @@ export default function OutboundWebhookConfig() {
                 <button
                   onClick={save}
                   disabled={saving || !draft.trim()}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-60"
+                  className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
                   style={{ backgroundColor: "var(--ink)" }}
                 >
                   {saving ? "Saving…" : "Save"}
@@ -167,7 +167,7 @@ export default function OutboundWebhookConfig() {
                     setSaveError(null);
                   }}
                   disabled={saving}
-                  className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium"
+                  className="rounded-full border border-line px-3 py-1.5 text-[13px] font-medium"
                 >
                   Cancel
                 </button>
@@ -177,14 +177,14 @@ export default function OutboundWebhookConfig() {
 
           {url && !editing && (
             <>
-              <pre className="mt-3 rounded-lg bg-paper border border-line p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all">
+              <pre className="mt-3 rounded-[12px] bg-paper border border-line p-3 text-[13px] overflow-x-auto whitespace-pre-wrap break-all">
                 {url}
               </pre>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <button
                   onClick={sendTest}
                   disabled={testing}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium rounded-lg px-3 py-1.5 border border-line disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3 py-1.5 border border-line disabled:opacity-60"
                 >
                   {testing ? "Sending…" : "Send test event"}
                 </button>
@@ -194,21 +194,21 @@ export default function OutboundWebhookConfig() {
                     setDraft(url);
                     setSaveError(null);
                   }}
-                  className="text-xs font-medium text-ink-soft"
+                  className="text-[13px] font-medium text-ink-soft"
                 >
                   Change
                 </button>
-                <button onClick={remove} disabled={saving} className="text-xs font-medium" style={{ color: "var(--coral)" }}>
+                <button onClick={remove} disabled={saving} className="text-[13px] font-medium" style={{ color: "var(--coral)" }}>
                   Remove
                 </button>
               </div>
               {testResult === "ok" && (
-                <p className="mt-2 text-xs flex items-center gap-1" style={{ color: "var(--sage)" }}>
+                <p className="mt-2 text-[13px] flex items-center gap-1" style={{ color: "var(--sage)" }}>
                   <Check className="h-3.5 w-3.5" /> Delivered — check the other end for a test event.
                 </p>
               )}
               {testResult === "fail" && (
-                <p className="mt-2 text-xs flex items-center gap-1" style={{ color: "var(--coral)" }}>
+                <p className="mt-2 text-[13px] flex items-center gap-1" style={{ color: "var(--coral)" }}>
                   <X className="h-3.5 w-3.5" /> Couldn&apos;t deliver — double check the URL is right and reachable.
                 </p>
               )}

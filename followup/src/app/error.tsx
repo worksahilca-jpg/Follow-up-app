@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, RotateCw } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import * as Sentry from "@sentry/nextjs";
 
 // Root app/error.tsx — the fallback for an unexpected runtime error
@@ -22,25 +22,26 @@ export default function Error({
     Sentry.captureException(error);
   }, [error]);
 
+  // Calm, in the app's own type: no alarm icon, one black button, the way
+  // back beside it (brand-principles: calm, never alarming).
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
-      <AlertTriangle className="h-9 w-9" style={{ color: "var(--coral)" }} />
-      <h1 className="font-display text-3xl mt-5">Something went wrong</h1>
-      <p className="mt-2 text-ink-soft max-w-sm">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-paper px-6 text-center">
+      <h1 className="max-w-[520px] text-[34px] leading-[1.12]">Something went wrong</h1>
+      <p className="mt-3 max-w-[400px] text-[15.5px] leading-relaxed text-ink-soft">
         That&apos;s on us, not you. Try again — if it keeps happening, the dashboard is still there.
       </p>
-      <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <button
           onClick={() => retry()}
-          className="inline-flex items-center gap-1.5 rounded-full px-5 py-3 text-sm font-medium transition-transform hover:scale-[1.03]"
-          style={{ backgroundColor: "var(--rust)", color: "var(--on-accent)" }}
+          className="inline-flex min-h-[48px] items-center gap-2 rounded-full px-6 text-[15px] font-medium"
+          style={{ backgroundColor: "var(--ink)", color: "var(--on-accent)" }}
         >
-          <RotateCw className="h-3.5 w-3.5" /> Try again
+          <RotateCw className="h-4 w-4" /> Try again
         </button>
-        <Link href="/dashboard" className="rounded-full border border-line px-5 py-3 text-sm font-medium transition-colors hover:bg-card">
+        <Link href="/dashboard" className="inline-flex min-h-[48px] items-center rounded-full border border-line bg-card px-6 text-[15px] font-medium hover:bg-card-2">
           Go to dashboard
         </Link>
       </div>
-    </div>
+    </main>
   );
 }

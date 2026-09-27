@@ -101,18 +101,18 @@ export default function SafePileAction({
         </p>
         {outcome.skipped.length > 0 && (
           <div className="mt-2">
-            <p className="text-xs font-medium text-ink-soft">
+            <p className="text-[13px] font-medium text-ink-soft">
               {outcome.skipped.length === 1 ? "One is still waiting for you:" : `${outcome.skipped.length} are still waiting for you:`}
             </p>
             <ul className="mt-1 space-y-1">
               {outcome.skipped.slice(0, 5).map((s) => (
-                <li key={s.leadId} className="text-xs text-ink-soft leading-relaxed">
+                <li key={s.leadId} className="text-[13px] text-ink-soft leading-relaxed">
                   <span className="font-medium text-ink">{s.leadName}</span> — {s.reason}
                 </li>
               ))}
             </ul>
             {outcome.skipped.length > 5 && (
-              <p className="mt-1 text-xs text-ink-soft">and {outcome.skipped.length - 5} more.</p>
+              <p className="mt-1 text-[13px] text-ink-soft">and {outcome.skipped.length - 5} more.</p>
             )}
           </div>
         )}
@@ -135,7 +135,7 @@ export default function SafePileAction({
         </p>
         <button
           onClick={send.undo}
-          className="rounded-lg px-3 py-1.5 text-sm font-medium border"
+          className="rounded-full px-3 py-1.5 text-sm font-medium border"
           style={{ borderColor: "var(--line)", color: "var(--ink)" }}
         >
           Undo
@@ -155,7 +155,7 @@ export default function SafePileAction({
       <button
         onClick={startCountdown}
         disabled={send.busy || count === 0}
-        className={`rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60 ${accent ? "btn-shine" : ""}`}
+        className={`rounded-full px-3.5 py-1.5 text-sm font-medium disabled:opacity-60 ${accent ? "btn-shine" : ""}`}
         // `--ink`, not `--rust`, and deliberately. A-006's sixth axis
         // ("accent held back — spent once") assumed the navy-era blue
         // accent; in the current system `--rust` resolves through
@@ -178,10 +178,10 @@ export default function SafePileAction({
         // Says what IS true (nothing left) rather than "Cancelled",
         // which describes the press instead of the outcome. An owner who
         // pressed Undo wants to know the customers were not written to.
-        <p className="mt-1.5 text-xs text-ink-soft">Stopped — nothing was sent.</p>
+        <p className="mt-1.5 text-[13px] text-ink-soft">Stopped — nothing was sent.</p>
       )}
       {error && (
-        <p className="mt-1.5 text-xs" style={{ color: "var(--coral)" }}>
+        <p className="mt-1.5 text-[13px]" style={{ color: "var(--coral)" }}>
           {error}
         </p>
       )}

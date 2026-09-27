@@ -7828,3 +7828,11 @@ reaching left past the stem. That is where a lowercase f's crossbar sits.
 - **S3. One wave.** If "two curves" meant a single wavy stroke through the stem. Softer, more playful.
 
 **Open:** whether "two curves" meant S1's two leaves or S3's wave. The board shows both.
+
+### 2026-09-27: logo decided, keep the two leaves (A-062)
+**Founder:** *"let just keep what we have"*, after the small-f round (LogoSmallF).
+- **Approved:** A-062. A-061 (H) is superseded. No code changes.
+- **The logo boards on the canvas are history.** A note on the canvas says so.
+- **Cost of the day, named:** ten boards and several dozen marks. The useful output is the principles: R-022, R-023,
+  the one-second message, and the reference-logo study. Next time a logo change comes up, start from A-062 and those,
+  and ask for the one-second message first.

@@ -281,8 +281,8 @@ render of the page with the dark hero, the light middle and the dark close.
 - The logo: two leaves as drawn in #69 (favicon) and #71 (horizontal lockup) of the exploration
   sheet. Supersedes the F-with-a-stem build from the brief's text the same day. Geometry and
   ratios in `followup/public/brand/README.md`; decision entry in `[[design-decisions]]`.
-  **Logo direction SUPERSEDED (2026-09-27)** by [[approved#^A-061|A-061]] (two messages). The leaves stay in
-  production until the refined drawing is approved.
+  **Logo direction briefly superseded by [[approved#^A-061|A-061]], then reconfirmed by [[approved#^A-062|A-062]] (2026-09-27):
+  the leaves stay.**
 
 **Not covered:** the accent colour (still the placeholder indigo, unchosen); the app's restyle.
 
@@ -1148,6 +1148,8 @@ headline's weight. That's inferred from this answer, and marked inferred.
 
 ## A-061 — Logo direction: two messages (option H) ^A-061
 
+**SUPERSEDED (2026-09-27, same day)** by [[approved#^A-062|A-062]]: the founder kept the two leaves.
+
 **Approved:** 2026-09-27, founder, on the six-more board (LogoOptions2): *"h souds my vibe"*.
 
 **What was chosen:** a direction, not a final drawing.
@@ -1170,3 +1172,28 @@ The founder also asked, in the same breath, to study the reference companies' lo
 the refinement.
 
 **Weak, named when it was proposed:** "looks like any chat app". The refinement has to make it ownable.
+
+## A-062 — Keep the two-leaf logo ^A-062
+
+**Approved:** 2026-09-27, founder: *"let just keep what we have"*.
+
+**Came after a day of rounds on the canvas** (LogoOptions, LogoOptions2, LogoH, LogoIdeas, LogoF, LogoReply, LogoLight,
+LogoSoft, LogoMoreF, LogoSmallF), and after an honest user read of the current mark (design-decisions,
+2026-09-27):
+- it reads as a fast, leaning F, calm and premium;
+- it doesn't say "messages" by itself;
+- the name and tagline carry the message.
+
+**What is kept:** the mark exactly as shipped. Geometry and usage are in `followup/public/brand/README.md`, drawn in
+`src/components/LogoMark.tsx`, with the small-size drawing below 24 px. Nothing changes in code.
+
+**Not taken:**
+- option A, one wide-gap drawing at every size;
+- the stem and small-f variants (F1, S1).
+
+They stay on the canvas as history. Any future logo change starts from this entry.
+
+**Principles learned on the way, still standing:**
+- R-022: no letter whose meaning hides in a small detail.
+- R-023: no heavy or chunky marks.
+- The logo's one-second message, if it ever changes, is "every message gets a reply".

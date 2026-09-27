@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Globe, Mail, MessageCircle, Phone } from "lucide-react";
+import { WARM_CARD } from "@/components/app/ReplyCard";
 import { groupApprovalsBySource, isSafeToSendInBulk, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
 import { Eyebrow, Initials } from "@/components/app/canvasBits";
 import { QUEUE_PAGE_SIZE, nextStep, visibleCount } from "@/lib/queuePaging";
@@ -86,13 +87,52 @@ const CHANNEL_LABEL: Record<string, string> = {
   instagram: "Instagram",
 };
 
+/**
+ * True on a phone-width screen. The server has no screen, so it says false
+ * and the phone opens the first card right after hydrating (TodayCalmPhone:
+ * the first customer is open, with the reply in front of the owner).
+ */
+const PHONE_QUERY = "(max-width: 639px)";
+function usePhone(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mq = window.matchMedia(PHONE_QUERY);
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(PHONE_QUERY).matches,
+    () => false
+  );
+}
+
+/** The small channel glyph after a name, as the canvas rows draw it. */
+function ChannelGlyph({ channel }: { channel: string | null | undefined }) {
+  const cls = "h-3.5 w-3.5 shrink-0 text-ink-faint";
+  if (channel === "email") return <Mail className={cls} strokeWidth={1.8} aria-label="Email" />;
+  if (channel === "call" || channel === "text") return <Phone className={cls} strokeWidth={1.8} aria-label={channel === "call" ? "Phone" : "Text"} />;
+  if (channel === "web") return <Globe className={cls} strokeWidth={1.8} aria-label="Website form" />;
+  if (channel === "instagram")
+    return (
+      <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-label="Instagram" role="img">
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+      </svg>
+    );
+  if (channel === "whatsapp" || channel === "messenger")
+    return <MessageCircle className={cls} strokeWidth={1.8} aria-label={channel === "whatsapp" ? "WhatsApp" : "Messenger"} />;
+  return null;
+}
+
 function ApprovalCard({
   item,
   onResolved,
   sendLocked = false,
   laterToday = true,
+  featured = false,
 }: {
   item: ApprovalItem;
+  /** The first customer on Today: opens by itself on a phone (TodayCalmPhone). */
+  featured?: boolean;
   /** Done with this card. `result` is what happened, said for a moment before it leaves (A-048). */
   onResolved: (leadId: string, result: string | null, sent?: boolean) => void;
   /** Only admins send, and this person isn't one (A-041). */
@@ -104,7 +144,10 @@ function ApprovalCard({
   const firstName = item.leadName.split(" ")[0] || item.leadName;
   // The canvas Today (TodayCalm): each person is one quiet row; Review
   // opens the reply in place.
-  const [open, setOpen] = useState(false);
+  const phone = usePhone();
+  // null until the owner opens or closes it; the featured card starts open on a phone.
+  const [openChoice, setOpen] = useState<boolean | null>(null);
+  const open = openChoice ?? (featured && phone);
   const routine = isSafeToSendInBulk(item) && !hasPriceSlot(item.draftMessage);
   // "Later" (A-046): set aside until a time, back by itself or as soon as
   // the customer writes. Not "handled", so it never counts toward the day.
@@ -255,12 +298,13 @@ function ApprovalCard({
     );
   }
 
-  const channel = CHANNEL_NAME[item.leadLastMessageChannel ?? ""] ?? item.source ?? null;
   const why = routine
     ? `“${item.draftMessage.replace(/\s+/g, " ").slice(0, 90)}${item.draftMessage.length > 90 ? "…" : ""}”`
-    : item.reason
-      ? `Held because ${item.reason.replace(/\.\s*$/, "")}.`
-      : "A reply is written for you.";
+    : item.leadLastMessage
+      ? `“${item.leadLastMessage.replace(/\s+/g, " ").slice(0, 80)}${item.leadLastMessage.length > 80 ? "…" : ""}”${item.reason ? ` Held because ${item.reason.replace(/\.\s*$/, "")}.` : ""}`
+      : item.reason
+        ? `Held because ${item.reason.replace(/\.\s*$/, "")}.`
+        : "A reply is written for you.";
 
   return (
     <div>
@@ -271,9 +315,14 @@ function ApprovalCard({
             <Link href={`/leads/${item.leadId}`} className="hover:underline">
               {item.leadName}
             </Link>
-            {channel && <span className="hidden text-[12.5px] font-normal text-ink-faint sm:inline">· {channel}</span>}
+            <ChannelGlyph channel={item.leadLastMessageChannel} />
           </div>
           {!open && <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft line-clamp-2">{why}</p>}
+          {open && (
+            <p className="mt-0.5 text-[13.5px] text-ink-faint">
+              {[CHANNEL_NAME[item.leadLastMessageChannel ?? ""] ?? item.source, item.wait?.toLowerCase()].filter(Boolean).join(" · ")}
+            </p>
+          )}
         </div>
         {item.wait && (
           <span className="hidden shrink-0 text-right text-[12.5px] text-ink-faint tabular-nums sm:block sm:w-[104px]">{item.wait}</span>
@@ -296,7 +345,8 @@ function ApprovalCard({
                 setOpen(true);
                 if (routine && !sendLocked) send.start();
               }}
-              className="h-8 shrink-0 rounded-full border border-line bg-card px-3.5 text-[13px] font-medium"
+              className="h-8 shrink-0 rounded-full px-3.5 text-[13px] font-medium"
+              style={{ background: "var(--accent)", color: "var(--on-accent)" }}
             >
               {routine && !sendLocked ? "Send" : "Review"}
             </button>
@@ -307,12 +357,7 @@ function ApprovalCard({
       {open && (
       // Opens from the row it came from (A-048: open in place).
       <motion.div key="open" {...OPEN_IN_PLACE} className="px-[18px] pb-4 sm:pl-[60px]">
-      {item.wait && <p className="text-[12.5px] text-ink-faint sm:hidden">{item.wait}</p>}
-      {item.reason && (
-        <p className="mt-1 text-xs text-ink-soft">
-          Held because {item.reason.replace(/\.\s*$/, "")}.
-        </p>
-      )}
+
       {/* What they actually said, before what we're about to reply with —
           approving a draft with no visible context for what it's replying
           to meant trusting the AI's summary of the situation ("reason")
@@ -324,11 +369,11 @@ function ApprovalCard({
           between the two keeps the same "what they said, then what we'll
           say" distinction without stacking boxes inside boxes. */}
       {item.leadLastMessage && (
-        <div className="mt-3 text-sm leading-relaxed">
-          <p className="text-xs font-medium text-ink-soft">
-            {item.leadName.split(" ")[0]} said, over {CHANNEL_LABEL[item.leadLastMessageChannel ?? ""] ?? "message"}:
+        <div className="mt-1 leading-relaxed sm:mt-3">
+          <p className="sr-only">
+            {item.leadName.split(" ")[0]} wrote, over {CHANNEL_LABEL[item.leadLastMessageChannel ?? ""] ?? "message"}:
           </p>
-          <p className="text-ink whitespace-pre-wrap mt-1">{item.leadLastMessage}</p>
+          <p className="whitespace-pre-wrap text-[17px] leading-[1.45] text-ink sm:text-[15px]">{item.leadLastMessage}</p>
           {/* The 30-minute holding message went (A-060): the customer is not
               waiting in silence, and the owner should know that before
               deciding how fast this one has to be. */}
@@ -348,11 +393,13 @@ function ApprovalCard({
           )}
         </div>
       )}
-      <div className="mt-3 pt-3 border-t border-line text-sm leading-relaxed">
-        <p className="text-xs font-medium text-ink-soft">The draft reply:</p>
-        {item.draftSubject && <p className="font-medium mt-1">{item.draftSubject}</p>}
+      {/* The reply in the warm card, as the canvas draws it (TodayCalm,
+          TodayCalmPhone): what it is, the words, then Send and Edit. */}
+      <div className="mt-3.5 rounded-[20px] p-4 sm:p-5" style={WARM_CARD}>
+        <Eyebrow>{sendLocked ? "Your reply · an admin sends it" : "Your reply · waits for your OK"}</Eyebrow>
+        {item.draftSubject && <p className="mt-2 text-[15px] font-medium">{item.draftSubject}</p>}
         {needsPrice ? (
-          <p className="text-ink-soft whitespace-pre-wrap mt-1">
+          <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">
             {splitAtPriceSlot(item.draftMessage).map((part, i) =>
               i === 0 ? (
                 <span key={i}>{part}</span>
@@ -367,11 +414,11 @@ function ApprovalCard({
                       placeholder="$ price"
                       aria-label={`The price for ${firstName}`}
                       autoComplete="off"
-                      className="mx-0.5 inline-block h-8 w-28 rounded-md border border-dashed bg-paper px-2 align-baseline text-ink disabled:opacity-60"
+                      className="mx-0.5 inline-block h-8 w-28 rounded-md border border-dashed bg-card px-2 align-baseline text-ink disabled:opacity-60"
                       style={{ borderColor: price.trim() ? "var(--line)" : "var(--ink-soft)" }}
                     />
                   ) : (
-                    <span className="text-ink">{price.trim() || "$ price"}</span>
+                    <span>{price.trim() || "$ price"}</span>
                   )}
                   {part}
                 </span>
@@ -379,92 +426,89 @@ function ApprovalCard({
             )}
           </p>
         ) : (
-          <p className="text-ink-soft whitespace-pre-wrap mt-1">{item.draftMessage}</p>
+          <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{item.draftMessage}</p>
         )}
-        {priceMissing && <p className="mt-1.5 text-xs text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
-        {item.basis && <p className="mt-1.5 text-xs text-ink-soft">{item.basis}</p>}
-      </div>
-      {error && (
-        <p className="text-xs mt-1.5" style={{ color: "var(--coral)" }}>
-          {error}
-        </p>
-      )}
-      {/* The grace period replaces the whole button row, rather than
-          sitting beside it. Same decision as the routine pile: one
-          control at a time, and while the clock is running the only
-          thing to press is the one that stops it. Leaving Edit and
-          Don't-send alive here would offer two more ways to act on a
-          draft that is already on its way out. */}
-      {send.pending ? (
-        <div className="flex flex-wrap items-center gap-3 mt-3">
-          <p className="text-sm">
-            {/* Present tense, and the lead's own first name — this row
-                can be one of three on screen, and "Sending in 7s" with
-                no name does not say which draft is leaving. */}
-            Sending to {item.leadName.split(" ")[0]} in {send.secs}s
+        {priceMissing && <p className="mt-2 text-[13px] text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
+        {item.reason && !priceMissing && (
+          <p className="mt-2 text-[13px] text-ink-soft">Held because {item.reason.replace(/\.\s*$/, "")}.</p>
+        )}
+        {item.basis && <p className="mt-2 hidden text-[13px] text-ink-soft sm:block">{item.basis}</p>}
+        {error && (
+          <p className="mt-2 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
+            {error}
           </p>
-          <button
-            onClick={send.undo}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium border"
-            style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-          >
-            Undo
-          </button>
-          {/* The ten seconds, drawn (A-048). */}
-          {send.endsAt !== null && (
-            <div className="basis-full">
-              <UndoLine endsAt={send.endsAt} />
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex flex-wrap items-center gap-2 mt-3">
-          {/* Only admins send (A-041): a teammate keeps Edit, We talked and
-              Don't send, and is told who sends instead of seeing a button
-              the server would refuse. */}
-          {sendLocked ? (
-            <span className="text-sm text-ink-soft mr-1">An admin sends this one.</span>
-          ) : (
+        )}
+        {/* The grace period replaces the buttons: while the clock runs,
+            the only thing to press is the one that stops it (A-048). */}
+        {send.pending ? (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <p className="text-[15px]">
+              Sending to {firstName} in {send.secs}s
+            </p>
             <button
-              onClick={send.start}
-              disabled={busy !== null || send.busy || priceMissing}
-              className="h-9 rounded-full px-4 text-sm font-semibold disabled:opacity-60"
-              style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
+              onClick={send.undo}
+              className="h-9 rounded-full border px-4 text-sm font-medium"
+              style={{ borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" }}
             >
-              {send.busy ? "Sending…" : "Approve & send"}
+              Undo
             </button>
-          )}
-          <Link
-            href={`/leads/${item.leadId}`}
-            className="inline-flex h-9 items-center rounded-full px-4 text-sm font-medium border border-line bg-card"
-          >
-            Edit
-          </Link>
-          <button
-            onClick={() => weTalked(false)}
-            disabled={busy !== null || send.busy}
-            title={`You spoke with ${firstName} on a call or in person. FollowUp stops checking in until they write again.`}
-            className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-ink-soft hover:bg-paper disabled:opacity-60"
-          >
-            {busy === "talked" ? "…" : "We talked"}
-          </button>
-          <button
-            onClick={() => setLaterOpen((v) => !v)}
-            disabled={busy !== null || send.busy}
-            aria-expanded={laterOpen}
-            className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-ink-soft hover:bg-paper disabled:opacity-60"
-          >
-            Later
-          </button>
-          <button
-            onClick={dontSend}
-            disabled={busy !== null || send.busy}
-            className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-ink-soft hover:bg-paper disabled:opacity-60"
-          >
-            {busy === "dismiss" ? "…" : "Don't send"}
-          </button>
-        </div>
-      )}
+            {send.endsAt !== null && (
+              <div className="basis-full">
+                <UndoLine endsAt={send.endsAt} />
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="mt-4 flex gap-2.5">
+              {/* Only admins send (A-041): a teammate keeps Edit, Later
+                  and Don't send, and is told who sends. */}
+              {!sendLocked && (
+                <button
+                  onClick={send.start}
+                  disabled={busy !== null || send.busy || priceMissing}
+                  className="h-[52px] flex-1 rounded-full text-base font-semibold disabled:opacity-60 sm:h-11 sm:flex-none sm:px-7"
+                  style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
+                >
+                  {send.busy ? "Sending…" : "Send"}
+                </button>
+              )}
+              <Link
+                href={`/leads/${item.leadId}`}
+                className="inline-flex h-[52px] w-24 items-center justify-center rounded-full border text-base font-medium sm:h-11"
+                style={{ borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" }}
+              >
+                Edit
+              </Link>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-x-6 sm:justify-start sm:gap-x-4">
+              <button
+                onClick={() => setLaterOpen((v) => !v)}
+                disabled={busy !== null || send.busy}
+                aria-expanded={laterOpen}
+                className="flex min-h-11 items-center text-sm text-ink-soft disabled:opacity-60"
+              >
+                Later
+              </button>
+              <button
+                onClick={dontSend}
+                disabled={busy !== null || send.busy}
+                className="flex min-h-11 items-center text-sm text-ink-soft disabled:opacity-60"
+              >
+                {busy === "dismiss" ? "…" : "Don't send"}
+              </button>
+              <button
+                onClick={() => weTalked(false)}
+                disabled={busy !== null || send.busy}
+                title={`You spoke with ${firstName} on a call or in person. FollowUp stops checking in until they write again.`}
+                className="flex min-h-11 items-center text-sm text-ink-soft disabled:opacity-60"
+              >
+                {busy === "talked" ? "…" : "We talked"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
       <AnimatePresence initial={false}>
       {laterOpen && !send.pending && (
         // Opens from the Later it came from, and closes the same way (A-048).
@@ -637,6 +681,8 @@ export default function ApprovalQueue({
   const groupsWithRoutine = groups.filter((g) => g.safeToSend.length > 0).length;
   const focusWait = summary.focusOn ? active.find((i) => i.leadId === summary.focusOn?.leadId)?.waitClause ?? null : null;
   const total = handled + active.length;
+  // The first customer on screen, opened by itself on a phone (TodayCalmPhone).
+  const firstNeedsYou = groups.flatMap((g) => g.needsYou).find((i) => !leaving[i.leadId])?.leadId ?? null;
 
   return (
     <div className="mt-2">
@@ -714,7 +760,7 @@ export default function ApprovalQueue({
         </div>
       )}
 
-      <div className="mt-7 mb-2.5 flex items-center justify-between">
+      <div className="mt-7 mb-2.5 hidden items-center justify-between sm:flex">
         <Eyebrow>Needs you · {summary.needsYou}</Eyebrow>
         <span className="text-[12.5px] text-ink-faint">Longest waiting first</span>
       </div>
@@ -758,7 +804,7 @@ export default function ApprovalQueue({
                         {leaving[item.leadId]}
                       </div>
                     ) : (
-                      <ApprovalCard item={item} onResolved={resolve} sendLocked={sendLocked} laterToday={laterToday} />
+                      <ApprovalCard item={item} onResolved={resolve} sendLocked={sendLocked} laterToday={laterToday} featured={item.leadId === firstNeedsYou} />
                     )}
                   </motion.div>
                 ))}
@@ -840,7 +886,7 @@ function PlacesLine({ needsYou, waitingOn, handled }: { needsYou: number; waitin
         <span aria-hidden="true"> · </span>
         Handled today <span className="text-ink font-medium">{handled}</span>
       </p>
-      <p className="mt-3 sm:hidden text-sm text-ink-soft tabular-nums">
+      <p className="mt-3 hidden text-sm text-ink-soft tabular-nums">
         <Link href="/waiting" className="underline-offset-4 hover:underline">
           {waitingOn} waiting on customers
         </Link>

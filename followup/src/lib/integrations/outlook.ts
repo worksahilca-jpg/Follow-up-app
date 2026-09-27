@@ -36,7 +36,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { isFollowUpSender } from "@/lib/ownSenders";
+import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
 
 const AUTHORITY = "https://login.microsoftonline.com/common/oauth2/v2.0";
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -272,10 +272,6 @@ export async function disconnectOutlook(businessId: string): Promise<void> {
   });
 }
 
-function isAutomatedOrSelf(email: string, selfEmail: string): boolean {
-  return email === selfEmail || isAutomatedSender(email);
-}
-
 type GraphMessage = {
   id: string;
   conversationId: string;
@@ -348,10 +344,14 @@ async function processConversations(
   let classifications = 0;
   let truncated = false;
 
-  const businessContext = await prisma.business.findUnique({
+  const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { name: true, industry: true },
+    select: { name: true, industry: true, users: { select: { email: true } } },
   });
+  const businessContext = business ? { name: business.name, industry: business.industry } : null;
+  // The business itself: this mailbox and everyone on the team (see
+  // ownAddressSet). Their mail is ours, never a customer's.
+  const own = ownAddressSet(selfEmail, (business?.users ?? []).map((u) => u.email));
 
   const results = await mapWithConcurrency(conversationIds, 5, async (conversationId): Promise<SyncedLead | null> => {
     try {
@@ -382,14 +382,14 @@ async function processConversations(
       return {
         id: m.id,
         from: { name: fromName, email: fromEmail },
-        direction: (fromEmail === selfEmail ? "outbound" : "inbound") as "outbound" | "inbound",
+        direction: (own.has(fromEmail) ? "outbound" : "inbound") as "outbound" | "inbound",
         body: messageText(m),
         sentAt,
         subject: m.subject,
       };
     });
 
-    const counterpart = parsedMessages.find((m) => m.from.email && !isAutomatedOrSelf(m.from.email, selfEmail))?.from;
+    const counterpart = parsedMessages.find((m) => m.from.email && !own.has(m.from.email) && !isAutomatedSender(m.from.email))?.from;
     if (!counterpart) return null;
 
     const known = await prisma.conversation.findUnique({

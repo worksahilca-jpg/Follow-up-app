@@ -26,3 +26,21 @@ export function followUpSendingAddresses(): string[] {
 export function isFollowUpSender(email: string): boolean {
   return followUpSendingAddresses().includes(bareAddress(email));
 }
+
+/**
+ * Every address that is the business itself in a synced mailbox: the
+ * connected inbox, plus the sign-in address of everyone on the team.
+ *
+ * The mail sync used to know only the connected inbox. An owner who signs
+ * in as sam.smith@gmail.com and connects info@samsplumbing.ca, then
+ * forwards a customer's email from his phone to info@ (or answers the
+ * weekly email FollowUp sends him from info@), was filed as a new customer
+ * called "Sam Smith": scored, drafted for, acknowledged, and followed up
+ * on. A teammate writing to the shared inbox the same way. Mail from these
+ * addresses is the business talking, never a customer.
+ */
+export function ownAddressSet(connectedInbox: string, teamEmails: ReadonlyArray<string | null | undefined>): Set<string> {
+  const out = new Set<string>([connectedInbox.trim().toLowerCase()]);
+  for (const email of teamEmails) if (email && email.includes("@")) out.add(bareAddress(email));
+  return out;
+}

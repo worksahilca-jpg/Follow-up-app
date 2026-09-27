@@ -38,7 +38,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { isFollowUpSender } from "@/lib/ownSenders";
+import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -562,10 +562,14 @@ async function processThreadRefs(
   // Who this inbox belongs to and what they do — the classifier's most
   // important input (see classifyAsProspect). Fetched once per run, not
   // per thread.
-  const businessContext = await prisma.business.findUnique({
+  const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { name: true, industry: true },
+    select: { name: true, industry: true, users: { select: { email: true } } },
   });
+  const businessContext = business ? { name: business.name, industry: business.industry } : null;
+  // The business itself: this inbox and everyone on the team (see
+  // ownAddressSet). Their mail is ours, never a customer's.
+  const own = ownAddressSet(selfEmail, (business?.users ?? []).map((u) => u.email));
 
   // Threads are independent of each other (each maps to at most one lead
   // by counterpart email), so process several in parallel instead of one
@@ -609,7 +613,7 @@ async function processThreadRefs(
         return {
           id: m.id,
           from,
-          direction: (from.email === selfEmail ? "outbound" : "inbound") as "outbound" | "inbound",
+          direction: (own.has(from.email) ? "outbound" : "inbound") as "outbound" | "inbound",
           body: extractPlainTextBody(m.payload).slice(0, 5000),
           sentAt: gmailMessageTime(m.internalDate, getHeader(m.payload?.headers, "Date")),
           messageIdHeader: getHeader(m.payload?.headers, "Message-ID") || undefined,
@@ -618,9 +622,10 @@ async function processThreadRefs(
     if (parsedMessages.length === 0) return null;
 
     // Find the external counterpart: the first sender in the thread who
-    // isn't the connected account and isn't automated.
+    // isn't the business (the connected account or a teammate) and isn't
+    // automated.
     const counterpart = parsedMessages.find(
-      (m) => m.from.email !== selfEmail && !isAutomatedSender(m.from.email)
+      (m) => !own.has(m.from.email) && !isAutomatedSender(m.from.email)
     )?.from;
     if (!counterpart) return null;
 

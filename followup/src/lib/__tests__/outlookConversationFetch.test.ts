@@ -131,3 +131,19 @@ describe("fetching one Outlook conversation", () => {
     expect(stored.map((m: { direction: string }) => m.direction)).toEqual(["inbound", "outbound", "inbound"]);
   });
 });
+
+describe("the Outlook sync and the business's own people", () => {
+  it("the owner writing from his sign-in address is not a new customer", async () => {
+    prismaMock.business.findUnique.mockResolvedValue({ name: "Sam's Plumbing", industry: "Plumbing", users: [{ email: "sam.smith@gmail.com" }] });
+    vi.mocked(global.fetch).mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ value: [graphMessage("m1", "sam.smith@gmail.com", opener, "Fwd: can you quote a kitchen reno?")] }), {
+          status: 200,
+        })
+    );
+    const lead = await importOutlookConversation("biz1", CONVERSATION_ID);
+    expect(lead).toBeNull();
+    expect(prismaMock.lead.create).not.toHaveBeenCalled();
+    expect(acknowledgeNewLead).not.toHaveBeenCalled();
+  });
+});

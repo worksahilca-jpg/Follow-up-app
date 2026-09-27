@@ -7658,3 +7658,34 @@ unsaved edits, so it was not published over them.
 - At 16 px, H2 reads as two short dashes. The sharp corners only show from about 24 px.
 - Two-bubble chat marks are a common family. Distinct inside this reference set, not in the whole world. Needs a
   trademark search before registering.
+
+### 2026-09-27: my own logo ideas (LogoIdeas), and /security with less to read (SecurityLean, SecurityLeanPhone)
+**Founder:** *"so dont just refine that give me your ideas too"* and *"keep designing all the pages too bro"*.
+Canvas v68, all proposed.
+
+**LogoIdeas (K–N).** Four original ideas, each from something FollowUp does. None is used by the reference set.
+- **K. Folded corner.** A message with its corner dog-eared, the way you mark a page you mustn't forget. It is the
+  tagline "So no customer gets forgotten" as a picture. **Recommended.**
+- **L. Completed message.** One speech bubble split in two; the piece with the tail is the follow-up that completes
+  it. H's idea as one ownable shape.
+- **M. Out of the pile.** A message lifted out of an inbox tray. Busier at 16 px.
+- **N. Held.** A message between two corners. Close to a camera-focus icon.
+
+**Weak, named:**
+- In K, the fold reads from 24 px up. At 16 px it's a bubble with a clipped corner.
+- In K, the folded corner is also the usual "document" icon; the bubble tail is what separates it.
+
+**SecurityLean.** The same facts as the approved /security page, shown instead of listed:
+- a flow picture: inbox → FollowUp → your customer, "from your own address";
+- the permission names as chips;
+- six "kept" facts with icons;
+- the switches as a picture of Settings;
+- the companies as a 3-column table;
+- the honest "not done yet" block, kept.
+
+**Measured:**
+- Desktop 428 words and 3,242 px, against 624 and 4,262.
+- Phone 4,143 px, against 4,504. The vertical flow picture costs height on the phone.
+
+**Wording that depends on PR 1:** the first switch says "Or choose Automatic". That is true once onboarding offers the
+choice. The live page's "only if you turn that on" stays true either way.

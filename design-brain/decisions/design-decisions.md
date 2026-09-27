@@ -7515,3 +7515,39 @@ shows one. Rendered locally at 1440 and 390 with no sideways scroll, and checked
 longer used by the page. They are removed in a separate cleanup so this diff stays about the new page.
 
 **Ships only with or after the onboarding change** (Automatic/Assisted), because the FAQ names that choice.
+
+### 2026-09-27: "too much information" — the built landing page measured against the reference strategy
+**Founder, on MainV2/PhoneV2:** *"I think this is too much information no? compare and do the research according to
+that pdf if we can add more visuals rather than letting them read everything they will watch."* A question, not yet a
+decision. Nothing changed on the page.
+
+**Measured** (built page, local, visible text only):
+- **Desktop:** 1,204 words, 8.9 screens tall.
+- **Phone:** 857 words, 9.5 screens tall.
+- **Heaviest sections:** pricing 214, How it works 167, Your control 167, One customer 143, See it working 111.
+- **Repeats:** "a price or date comes to you" appears 6 times. "It stops when they reply" appears 5 times.
+
+**Against the PDF** (`FollowUp_UI_UX_Reference_Strategy.pdf`):
+- **Key rule:** "if removing it does not make understanding worse, remove it". The repeats fail it.
+- **Journey has one demo** ("Demo: now I understand it"). The page tells the same one-customer story three times: How
+  it works, One customer and See it working.
+- **Motion (Framer):** "transitions that explain state changes". Only the hero moves.
+
+**Outside evidence:**
+- NN/g: users read at most 28% of the words on a page, 20% is more likely.
+- NN/g: people decide in 10–20 seconds.
+- WCAG 2.2.2: anything that moves by itself for more than 5 seconds needs pause.
+
+**Proposed, not approved:**
+1. One watchable demo replaces those three sections: the real Today screen playing one customer in five beats, a
+   short caption each, with pause and replay. Reduced motion shows the beats as still frames.
+2. Your control: the four promises as one line each, plus one picture of the pause switch.
+3. Say each promise once.
+4. Target about 600 words and about 6 screens.
+
+The demo stays below the hero (R-007: a named-person chat playing out in the hero read as theatre).
+
+**Conflicts to resolve with the founder:**
+- It reverses A-053 (See it working tabs) and the One customer story in A-060.
+- It supersedes principle 4's "on a phone keep every word … cut the pictures", which R-021 already strains.
+- Neither is superseded until the founder says yes.

@@ -117,6 +117,16 @@ describe("workflow stop-on-reply", () => {
     );
   });
 
+  it("tells every admin when the customer who replied is not assigned to anyone", async () => {
+    p.lead.findMany.mockResolvedValue([{ ...enrolled("inbound"), assignedToId: null }]);
+    const r = await runSequencesForBusiness("biz1");
+    expect(r.pausedForReply).toBe(1);
+    expect(p.user.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { businessId: "biz1", role: "ADMIN" } }));
+    expect(p.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userId: "admin1", leadId: "lead1" }) })
+    );
+  });
+
   it("does not stop when the last message was ours (no reply yet)", async () => {
     p.lead.findMany.mockResolvedValue([enrolled("outbound")]);
     const r = await runSequencesForBusiness("biz1");

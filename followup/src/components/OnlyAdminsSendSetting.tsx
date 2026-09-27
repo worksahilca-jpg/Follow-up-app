@@ -12,7 +12,7 @@ import Switch from "@/components/Switch";
  * No optimistic flip: the screen shows what the server agreed to, since
  * the send route acts on the server's answer.
  */
-export default function OnlyAdminsSendSetting({ onChange }: { onChange?: (on: boolean) => void } = {}) {
+export default function OnlyAdminsSendSetting({ onChange, bare = false }: { onChange?: (on: boolean) => void; /** Inside a canvas card: no box of its own. */ bare?: boolean } = {}) {
   const [loaded, setLoaded] = useState(false);
   const [on, setOn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -54,10 +54,10 @@ export default function OnlyAdminsSendSetting({ onChange }: { onChange?: (on: bo
   }
 
   return (
-    <div className="mt-4 box p-5">
+    <div className={bare ? "py-2" : "mt-4 box p-5"}>
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="font-medium text-sm">Only admins send</p>
+          <p className={bare ? "text-base" : "font-medium text-sm"}>Only admins send</p>
           <p className="text-xs text-ink-soft mt-1">
             Teammates can write and edit replies. An admin sends them.
             {loaded && !isAdmin && " Only an admin can change this."}

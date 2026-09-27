@@ -1,157 +1,157 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import {
-  LayoutDashboard,
-  Users,
-  GitBranch,
-  Workflow,
-  BarChart3,
-  Activity,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
+import { Sun, Inbox, Users, Settings, Search, LogOut } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 import FeedbackDialog from "./FeedbackDialog";
-
-const nav = [
-  { href: "/dashboard", label: "Today", icon: LayoutDashboard },
-  { href: "/leads", label: "Customers", icon: Users },
-  { href: "/pipeline", label: "Pipeline", icon: GitBranch },
-  { href: "/workflows", label: "Follow-up plans", icon: Workflow },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/activity", label: "Activity", icon: Activity },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
-
 import LogoMark from "@/components/LogoMark";
 
-export default function Sidebar() {
+/**
+ * The app frame, as drawn on the canvas App, Today and TodayCalm boards
+ * (design-decisions 2026-09-27).
+ *
+ * Desktop: a warm grey column. The business is the header, its first
+ * letter in a black square. A search box, then three places: Today, Inbox,
+ * Customers. Settings sits at the foot. The current page is a white row
+ * with a hairline edge.
+ *
+ * Phone: three tabs at the bottom (Today, Inbox, Settings), as on every
+ * canvas phone board. Customers and the rest are reached from Settings
+ * ("Everything else") and from search.
+ *
+ * Pipeline, Follow-up plans, Analytics and Activity are no longer in the
+ * menu. The pages still exist and are linked from Settings.
+ */
+type Counts = { today?: number; customers?: number };
+
+const places = [
+  { href: "/dashboard", label: "Today", icon: Sun, count: "today" as const },
+  { href: "/inbox", label: "Inbox", icon: Inbox, count: null },
+  { href: "/leads", label: "Customers", icon: Users, count: "customers" as const },
+];
+
+function isActive(pathname: string | null, href: string): boolean {
+  if (!pathname) return false;
+  if (href === "/leads") return pathname === "/leads";
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
+export default function Sidebar({ businessName = "", counts = {} }: { businessName?: string; counts?: Counts }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  // Below the lg breakpoint the sidebar itself becomes an off-canvas
-  // drawer (see the `fixed ... lg:sticky` combo below) instead of a
-  // permanent 240px column — there was previously no mobile treatment at
-  // all here, which is why the whole authenticated app rendered like a
-  // squeezed desktop layout on a phone rather than adapting.
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const initial = (businessName.trim()[0] ?? "F").toUpperCase();
+  const settingsActive = isActive(pathname, "/settings");
 
   return (
     <>
-      {/* Mobile-only top bar — the sidebar itself is off-screen below lg,
-          so this is what actually gets you to it and to notifications. */}
-      <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-card px-4 py-3">
+      {/* Phone: a quiet top bar (brand and notifications) … */}
+      <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-line bg-paper px-4 py-3">
         <Link href="/dashboard" className="flex items-center gap-2">
           <LogoMark height={20} />
-          <span className="font-display text-lg">FollowUp</span>
+          <span className="text-base font-semibold">FollowUp</span>
         </Link>
-        <div className="flex items-center gap-1">
-          <NotificationBell align="right" />
-          <button
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
-            className="h-8 w-8 rounded-lg flex items-center justify-center text-ink-soft hover:bg-paper transition-colors"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-        </div>
+        <NotificationBell align="right" />
       </header>
 
-      {/* Backdrop, mobile only, closes the drawer on tap-outside. */}
-      {mobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-40"
-          style={{ backgroundColor: "color-mix(in srgb, var(--ink) 40%, transparent)" }}
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      <aside
-        className={
-          "w-60 shrink-0 border-r border-line bg-card flex flex-col h-screen fixed lg:sticky top-0 inset-y-0 left-0 z-50 transition-transform duration-200 " +
-          (mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0")
-        }
+      {/* … and three tabs at the bottom, in thumb reach. */}
+      <nav
+        aria-label="Main"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-3 border-t border-line bg-paper px-6 pt-1.5"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
       >
-      <div className="px-5 pt-6 pb-5">
-        <div className="flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <LogoMark height={20} />
-            <span className="font-display text-lg" style={{ color: "var(--ink)" }}>
-              FollowUp
-            </span>
-            {/* Testers should never wonder whether a rough edge is on them.
-                It is on us, and this says so. */}
-            <span className="font-mono text-[10px] uppercase tracking-wider rounded-full px-1.5 py-0.5 text-ink-soft" style={{ background: "var(--accent-soft)" }}>
-              Beta
-            </span>
-          </Link>
-          <div className="flex items-center gap-1">
-            <div className="hidden lg:block">
-              <NotificationBell />
-            </div>
-            <button
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close menu"
-              className="lg:hidden h-8 w-8 rounded-lg flex items-center justify-center text-ink-soft hover:bg-paper transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-        <p className="text-xs text-ink-soft mt-1 truncate">{session?.user?.email ?? ""}</p>
-      </div>
-      <nav className="flex-1 px-3 space-y-0.5">
-        {nav.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname?.startsWith(href + "/");
+        {[places[0], places[1], { href: "/settings", label: "Settings", icon: Settings }].map(({ href, label, icon: Icon }) => {
+          const active = isActive(pathname, href);
           return (
             <Link
               key={href}
               href={href}
-              onClick={() => setMobileOpen(false)}
-              className="relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors"
-              style={{
-                backgroundColor: active ? "var(--rust-soft)" : "transparent",
-                color: active ? "var(--rust)" : "var(--ink-soft)",
-                fontWeight: active ? 600 : 500,
-              }}
+              aria-current={active ? "page" : undefined}
+              className="flex min-h-12 flex-col items-center justify-center gap-1 text-[11.5px]"
+              style={{ color: active ? "var(--ink)" : "#a8a29e", fontWeight: active ? 600 : 500 }}
             >
-              {/* A thin accent bar instead of relying on the tint alone to
-                  say "you are here" — reads at a glance even for someone
-                  scanning quickly, not just on close inspection. */}
-              {active && (
-                <span
-                  className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full"
-                  style={{ backgroundColor: "var(--rust)" }}
-                  aria-hidden
-                />
-              )}
-              <Icon className="h-4 w-4" />
+              <Icon className="h-6 w-6" strokeWidth={1.8} />
               {label}
             </Link>
           );
         })}
       </nav>
-      {/* research/product/2026-09-10-ux-simplification.md §2/§7.1: these
-          two nag cards ("Not subscribed", "Gmail not connected") used to
-          live here permanently, on every page — proportionally enormous
-          in a slim sidebar, and only ever covered two of the several
-          things a business might still need to finish setting up. That
-          same signal now shows once, on Today, as SetupStrip — one
-          unfinished step at a time instead of a growing stack of
-          banners everywhere. */}
-      <FeedbackDialog />
-      <button
-        onClick={() => signOut({ callbackUrl: "/" })}
-        className="flex items-center gap-2.5 rounded-lg px-3 py-2 mx-3 mb-4 text-sm text-ink-soft hover:bg-paper transition-colors"
-      >
-        <LogOut className="h-4 w-4" />
-        Sign out
-      </button>
+
+      {/* Desktop column. */}
+      <aside className="hidden lg:flex w-[232px] shrink-0 flex-col h-screen sticky top-0 border-r border-line bg-sidebar px-3 py-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <Link href="/dashboard" className="flex min-w-0 items-center gap-2.5 h-9 px-1.5">
+            <span
+              aria-hidden
+              className="h-6 w-6 shrink-0 rounded-[7px] inline-flex items-center justify-center text-xs font-semibold"
+              style={{ background: "var(--accent)", color: "var(--on-accent)" }}
+            >
+              {initial}
+            </span>
+            <span className="truncate text-sm font-semibold text-ink">{businessName || "FollowUp"}</span>
+          </Link>
+          <NotificationBell />
+        </div>
+
+        <Link
+          href="/leads?focus=search"
+          className="mt-3 flex h-8 items-center gap-2 rounded-lg border border-line bg-card px-2.5 text-[13.5px] text-ink-faint hover:text-ink-soft"
+        >
+          <Search className="h-3.5 w-3.5" strokeWidth={2} />
+          Search customers
+        </Link>
+
+        <nav aria-label="Main" className="mt-4 flex flex-col gap-0.5">
+          {places.map(({ href, label, icon: Icon, count }) => {
+            const active = isActive(pathname, href);
+            const n = count ? counts[count] : undefined;
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className="flex h-8 items-center gap-2.5 rounded-lg border px-2.5 text-sm"
+                style={{
+                  backgroundColor: active ? "var(--card)" : "transparent",
+                  borderColor: active ? "var(--line)" : "transparent",
+                  color: active ? "var(--ink)" : "var(--ink-soft)",
+                  fontWeight: active ? 500 : 400,
+                }}
+              >
+                <Icon className="h-4 w-4" strokeWidth={1.8} />
+                <span className="flex-1">{label}</span>
+                {typeof n === "number" && n > 0 && <span className="text-[12.5px] text-ink-faint tabular-nums">{n}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="mt-auto flex flex-col gap-0.5">
+          <Link
+            href="/settings"
+            aria-current={settingsActive ? "page" : undefined}
+            className="flex h-8 items-center gap-2.5 rounded-lg border px-2.5 text-sm"
+            style={{
+              backgroundColor: settingsActive ? "var(--card)" : "transparent",
+              borderColor: settingsActive ? "var(--line)" : "transparent",
+              color: settingsActive ? "var(--ink)" : "var(--ink-soft)",
+              fontWeight: settingsActive ? 500 : 400,
+            }}
+          >
+            <Settings className="h-4 w-4" strokeWidth={1.8} />
+            Settings
+          </Link>
+          <FeedbackDialog />
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-sm text-ink-soft hover:bg-card-2"
+            title={session?.user?.email ?? undefined}
+          >
+            <LogOut className="h-4 w-4" strokeWidth={1.8} />
+            Sign out
+          </button>
+        </div>
       </aside>
     </>
   );

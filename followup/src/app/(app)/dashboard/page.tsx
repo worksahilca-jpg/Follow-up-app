@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { PageHeader } from "@/components/PageHeader";
 import ApprovalQueue, { type ApprovalItem } from "@/components/ApprovalQueue";
 import SetupStrip from "@/components/SetupStrip";
 import SendingPausedBanner from "@/components/SendingPausedBanner";
@@ -7,7 +6,7 @@ import CantSendNotice from "@/components/CantSendNotice";
 import { hasAnySendChannel } from "@/lib/sendChannels";
 import TestLeadButton from "@/components/TestLeadButton";
 import { getLeads, getStats, getUpcomingBookings } from "@/lib/leads-data";
-import { formatCurrency, getGreeting } from "@/lib/demo-data";
+import { formatCurrency } from "@/lib/demo-data";
 import { getAtRiskLeads } from "@/lib/rescue";
 import { describeTrigger, getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
@@ -257,13 +256,24 @@ export default async function DashboardPage() {
           the app, retired with the move to the monochrome system
           (2026-09-19). A working tool people open twenty times a day does
           not need a hero. */}
-      <PageHeader title={getGreeting(timezone)} subtitle={headline()} />
+      {/* The canvas Today header (TodayCalm): the date, then one sentence
+          that says how many people are waiting on the owner. */}
+      <div className="text-[13px] text-ink-faint">
+        {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
+      </div>
+      <h1 className="mt-1.5 text-[30px] sm:text-[34px] leading-[1.1]">
+        {approvalItems.length > 0
+          ? `${approvalItems.length} ${approvalItems.length === 1 ? "customer is" : "customers are"} waiting on you.`
+          : headline()}
+      </h1>
 
       {sendingPaused && <SendingPausedBanner canResume={isAdmin} />}
       {cantSend && (
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
+      <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-7">
+      <div className="min-w-0">
       <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} waitingOn={waitingOn} />
 
       {leads.length === 0 ? (
@@ -379,61 +389,6 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <>
-          {/* Today's numbers, in one quiet line (A-045). This was three
-              "This week" tiles (A-042) and a separate "sent as written"
-              sentence (A-043); the founder folded them into one line, as
-              A-027 first planned. Desktop only: the phone gets less (R-015). */}
-          {thisWeek && <p className="mt-6 hidden sm:block text-sm text-ink-soft tabular-nums">{thisWeek}</p>}
-
-          {atRisk.length > 0 && (
-            <div className="mt-10">
-              <h2 className="font-display text-xl">About to be lost</h2>
-              <p className="text-sm text-ink-soft mt-1">
-                Automation is already working these — the ones at the top need you.
-              </p>
-              {/* Each row used to end in a coral 0–100 pill whose meaning lived
-                  in a `title` tooltip ("Rescue score, 0–100"). A number nobody
-                  can interpret without hovering — which a phone cannot do at
-                  all — fails the design brain's own test: if it needed a
-                  tooltip to be understood, redesign it rather than add the
-                  tooltip. The concrete fact underneath the score ("wrote 26h
-                  ago and is still waiting") is what the owner can actually act
-                  on, and the rescue model already computes it. The score stays
-                  on the lead page, where its full reasoning lives. */}
-              <ItemBoxList className="mt-4">
-                {atRisk.map((lead) => (
-                  <ItemBox
-                    key={lead.id}
-                    href={`/leads/${lead.id}`}
-                    title={lead.name}
-                    figure={
-                      lead.dealValue > 0 ? (
-                        <span className="text-ink font-medium">{formatCurrency(lead.dealValue)}</span>
-                      ) : undefined
-                    }
-                    status={atRiskStatus(lead.rescue)}
-                    fact={lead.rescue.reason}
-                  />
-                ))}
-              </ItemBoxList>
-            </div>
-          )}
-
-          {/* Coming up (A-046): the full list on desktop, one line on the
-              phone that opens it (R-015). Hidden when nothing is planned. */}
-          {comingUp && comingUp.total > 0 && (
-            <>
-              <div className="mt-10 hidden sm:block">
-                <h2 className="font-display text-xl">Coming up</h2>
-                <ComingUpList groups={comingUp.groups} holdAll={comingUp.holdAll} />
-              </div>
-              <ComingUpLine
-                first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }}
-                total={comingUp.total}
-              />
-            </>
-          )}
-
           {/* Configuration sits below the two work sections, not between them.
               It used to interrupt the approval queue and the at-risk list —
               an incomplete-setup nag cutting the page's two actual jobs in
@@ -513,6 +468,67 @@ export default async function DashboardPage() {
           </div>
         </>
       )}
+      </div>
+      {leads.length > 0 && (
+        <aside className="mt-10 min-w-0 lg:mt-0">
+          {/* Today's numbers, in one quiet line (A-045). This was three
+              "This week" tiles (A-042) and a separate "sent as written"
+              sentence (A-043); the founder folded them into one line, as
+              A-027 first planned. Desktop only: the phone gets less (R-015). */}
+          {thisWeek && <p className="mt-6 hidden sm:block text-sm text-ink-soft tabular-nums">{thisWeek}</p>}
+
+          {atRisk.length > 0 && (
+            <div className="mt-8 first:mt-0">
+              <h2 className="font-display text-xl">About to be lost</h2>
+              <p className="text-sm text-ink-soft mt-1">
+                Automation is already working these — the ones at the top need you.
+              </p>
+              {/* Each row used to end in a coral 0–100 pill whose meaning lived
+                  in a `title` tooltip ("Rescue score, 0–100"). A number nobody
+                  can interpret without hovering — which a phone cannot do at
+                  all — fails the design brain's own test: if it needed a
+                  tooltip to be understood, redesign it rather than add the
+                  tooltip. The concrete fact underneath the score ("wrote 26h
+                  ago and is still waiting") is what the owner can actually act
+                  on, and the rescue model already computes it. The score stays
+                  on the lead page, where its full reasoning lives. */}
+              <ItemBoxList className="mt-4">
+                {atRisk.map((lead) => (
+                  <ItemBox
+                    key={lead.id}
+                    href={`/leads/${lead.id}`}
+                    title={lead.name}
+                    figure={
+                      lead.dealValue > 0 ? (
+                        <span className="text-ink font-medium">{formatCurrency(lead.dealValue)}</span>
+                      ) : undefined
+                    }
+                    status={atRiskStatus(lead.rescue)}
+                    fact={lead.rescue.reason}
+                  />
+                ))}
+              </ItemBoxList>
+            </div>
+          )}
+
+          {/* Coming up (A-046): the full list on desktop, one line on the
+              phone that opens it (R-015). Hidden when nothing is planned. */}
+          {comingUp && comingUp.total > 0 && (
+            <>
+              <div className="mt-8 hidden sm:block">
+                <h2 className="font-display text-xl">Coming up</h2>
+                <ComingUpList groups={comingUp.groups} holdAll={comingUp.holdAll} />
+              </div>
+              <ComingUpLine
+                first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }}
+                total={comingUp.total}
+              />
+            </>
+          )}
+
+        </aside>
+      )}
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import Sidebar from "@/components/Sidebar";
+import { getPendingApprovals } from "@/lib/pendingApprovals";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getSessionContext();
@@ -9,18 +10,27 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { onboarded: true },
+    select: { onboarded: true, name: true },
   });
   if (!business?.onboarded) redirect("/onboarding");
 
+  // The two counts the canvas sidebar shows: who needs you today, and how
+  // many customers there are. Best effort: a failed count hides the number,
+  // never the page.
+  const [today, customers] = await Promise.all([
+    getPendingApprovals(ctx.businessId)
+      .then((a) => a.length)
+      .catch(() => undefined),
+    prisma.lead.count({ where: { businessId: ctx.businessId } }).catch(() => undefined),
+  ]);
+
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
+      <Sidebar businessName={business.name ?? ""} counts={{ today, customers }} />
       <main className="flex-1 min-w-0">
-        {/* pt-20 clears the fixed mobile top bar (see Sidebar) below lg;
-            at lg and up that bar doesn't render, so padding goes back to
-            matching py-10 like every other side. */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 lg:pt-10 pb-10">{children}</div>
+        {/* Below lg: pt-20 clears the fixed top bar and pb-28 the three
+            bottom tabs (see Sidebar). The canvas pages sit at 36px/56px. */}
+        <div className="max-w-[1152px] mx-auto px-5 sm:px-8 lg:px-14 pt-20 lg:pt-9 pb-28 lg:pb-12">{children}</div>
       </main>
     </div>
   );

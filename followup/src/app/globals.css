@@ -1,151 +1,78 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   FollowUp app-wide tokens: the charcoal monochrome system.
+   FollowUp app-wide tokens: the sketched canvas system.
 
-   2026-09-19. The founder approved the landing page's black-and-white
-   system (design-brain/decisions/approved.md A-011, A-012, A-015) and
-   then said "let's change the whole app" — so the authenticated app moves
-   onto the same tokens the landing page ships in landing-dark.module.css.
-   This supersedes A-002's navy/blue baseline (#0b1f33 / #2a5cdb). The
-   token NAMES are unchanged (--paper, --ink, --ink-soft, --line, --card,
-   --rust/--accent, --on-accent, the four status tones, --radius-box, the
-   three box shadows) so the several hundred call sites keep working; only
-   the values move. New code should use --accent, never --rust.
+   2026-09-27. The founder: "just the landing page is live … lets
+   redesign". The landing page, /security, the booking page and the
+   website form already moved onto the canvas system (warm near-white
+   ground, hairline-bordered white cards, Public Sans with a thin display
+   weight, IBM Plex Mono labels). The app now moves onto the same values,
+   drawn on the canvas boards App, Today, TodayCalm and the Settings
+   phone boards. It is always light, like every canvas board: the dark
+   default of 2026-09-19 goes with the old system.
 
-   Two tones, chosen by the device, exactly like the landing page: dark
-   (charcoal ground, white accent) is the default below; light (white
-   ground, black accent) is the block under `prefers-color-scheme: light`.
-   No ramp, no toggle in the app, no third state.
+   The token NAMES are unchanged (--paper, --ink, --ink-soft, --line,
+   --card, --accent, the four status tones, --radius-box, the box
+   shadows) so the several hundred call sites keep working; only the
+   values move. New code should use --accent, never --rust.
 
-   The one place colour still lives is the four status tones (slate, sage,
-   gold, coral). A-006 axis 3 — "colour-coded, status colour does the
-   work" — still stands, and its hard rule travels with it: a hue never
-   appears without its word. The brand accent is now white (dark) or black
-   (light), so "accent held back" (A-006 axis 6) is automatic: there is no
-   brand hue left to overspend.
-
-   Every text pairing below was checked against the surface it renders on
-   at 12px, the smallest size this app uses (WCAG normal-text floor 4.5:1).
+   Status tones keep A-001's measured shades (each clears 4.5:1 at 12px on
+   white), and a hue still never appears without its word.
    ------------------------------------------------------------------ */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* Ground and surfaces. --paper is the page, --card is a box on it,
-     --card-2 a second step for an inset surface (a code block, a quoted
-     message). Same values as landing-dark's --bg / --card / --card-2. */
-  --paper: #1e1e20;
-  --card: #27272a;
-  --card-2: #2e2e31;
+  /* Ground and surfaces (canvas: #fdfcfc page, #fff card, #f5f3f1 fill,
+     #f9f8f6 the sidebar). */
+  --paper: #fdfcfc;
+  --card: #ffffff;
+  --card-2: #f5f3f1;
+  --sidebar: #f9f8f6;
 
-  /* Text. --ink is the text colour (white here), --ink-soft the secondary
-     text (#9ca3af on #27272a measures 7.6:1; on #1e1e20 8.5:1),
-     --ink-faint for the quietest meta text (#6b7280: 4.6:1 on --card —
-     use it only at 13px and up). */
-  --ink: #ffffff;
-  --ink-soft: #9ca3af;
-  --ink-faint: #6b7280;
-  --line: rgba(255, 255, 255, 0.1);
-  --line-strong: rgba(255, 255, 255, 0.18);
+  /* Text. --ink-soft is the canvas's secondary grey (7.4:1 on white),
+     --ink-faint its quiet meta grey (5.0:1 on white). */
+  --ink: #0a0a0a;
+  --ink-soft: #57534e;
+  --ink-faint: #736e68;
+  --line: #e7e5e2;
+  --line-2: #f0eeeb;
+  --line-strong: rgba(10, 10, 10, 0.18);
 
-  /* The accent: white on the dark ground, black on the light one. Buttons,
-     links, active nav, focus rings, selected states. --accent-deep is the
-     hover step, --accent-soft the translucent tint behind an active nav
-     item or a selected option, --on-accent the text that sits on a filled
-     accent button. */
-  --accent: #ffffff;
-  --accent-deep: #e4e4e7;
-  --accent-soft: rgba(255, 255, 255, 0.12);
-  --on-accent: #0a0a0a;
-  /* Historical alias — it was a rust/amber, then the navy-era blue, and
-     is now the monochrome accent. Same value as --accent, never a second
-     hue. Kept because it ships at many call sites. */
+  /* The accent is black: buttons, links, the active nav item, focus. */
+  --accent: #0a0a0a;
+  --accent-deep: #27272a;
+  --accent-soft: #f1eeea;
+  --on-accent: #ffffff;
+  /* Historical alias, same value as --accent, never a second hue. */
   --rust: var(--accent);
   --rust-soft: var(--accent-soft);
 
-  /* Status tones. The saturated shade is text and the 3px rail; the -soft
-     shade is a pill background behind that text. Tuned per theme, since a
-     shade that reads on white is invisible on charcoal.
-     On --card (#27272a): slate 5.9:1 · sage 7.4:1 · gold 7.0:1 · coral 6.1:1. */
-  --slate: #a1a1aa;
-  --slate-soft: rgba(255, 255, 255, 0.08);
+  --slate: #57534e;
+  --slate-soft: #f5f3f1;
 
-  --sage: #5fcf8a;
-  --sage-soft: rgba(95, 207, 138, 0.14);
+  --sage: #0d6e3c;
+  --sage-soft: #dcf5e5;
 
-  --gold: #e0a53a;
-  --gold-soft: rgba(224, 165, 58, 0.14);
+  --gold: #a35904;
+  --gold-soft: #fef3c7;
 
-  --coral: #f4899a;
-  --coral-soft: rgba(244, 137, 154, 0.14);
-  /* A destructive button's fill, with white text on it. --coral itself is
-     too light for that job in the dark theme (white on #f4899a is 1.9:1),
-     so the fill role gets its own value: white on #c2364f measures 5.8:1.
-     In the light theme both roles share one value, as A-001 measured. */
-  --coral-fill: #c2364f;
+  --coral: #b32a44;
+  --coral-soft: #fbe1e6;
+  --coral-fill: #b32a44;
   --on-coral: #ffffff;
 
-  /* Box surface — the app's one container treatment (A-006: soft corners,
-     each item in its own box, a real shadow rather than a crisp border).
-     A drop shadow barely reads on charcoal, so here the box is lifted by
-     a hairline *inside* the shadow (never a `border`) plus a deep, soft
-     shadow underneath. */
-  --radius-box: 12px;
-  --shadow-box: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 20px -14px rgba(0, 0, 0, 0.6);
-  --shadow-box-hover: 0 0 0 1px rgba(255, 255, 255, 0.11), 0 14px 28px -16px rgba(0, 0, 0, 0.7);
-  --shadow-box-lift: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 30px 60px -28px rgba(0, 0, 0, 0.8);
+  /* The box: a white card with a hairline edge and no drop shadow, as on
+     every canvas board. Lifted surfaces (a dialog, a menu) keep a soft
+     shadow, because they float above the page. */
+  --radius-box: 16px;
+  --shadow-box: 0 0 0 1px var(--line);
+  --shadow-box-hover: 0 0 0 1px var(--line-strong);
+  --shadow-box-lift: 0 0 0 1px var(--line), 0 24px 48px -24px rgba(10, 10, 10, 0.22);
 
-  /* Height of the fixed mobile top bar in components/Sidebar.tsx
-     (py-3 + a 32px control row + the 1px bottom border). It exists as a
-     token because two unrelated places need to agree with it: the app
-     shell's top padding, and anything `sticky` that would otherwise slide
-     underneath the bar. */
+  /* Height of the fixed mobile top bar in components/Sidebar.tsx. */
   --app-header-h: 57px;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-
-    --paper: #ffffff;
-    --card: #ffffff;
-    --card-2: #f4f4f5;
-
-    --ink: #0a0a0a;
-    --ink-soft: #52525b; /* 7.6:1 on white */
-    --ink-faint: #71717a; /* 4.8:1 on white */
-    --line: rgba(0, 0, 0, 0.09);
-    --line-strong: rgba(0, 0, 0, 0.16);
-
-    --accent: #0a0a0a;
-    --accent-deep: #27272a;
-    --accent-soft: rgba(0, 0, 0, 0.07);
-    --on-accent: #ffffff;
-
-    /* The light-theme status shades are the ones A-001 measured at 12px:
-       slate 5.4 · sage 6.0 · gold 5.0 · coral 5.9 on white. Slate drops
-       its navy tint for a neutral grey so nothing on the page is blue. */
-    --slate: #52525b;
-    --slate-soft: #f4f4f5;
-
-    --sage: #0d6e3c;
-    --sage-soft: #dcf5e5;
-
-    --gold: #a35904;
-    --gold-soft: #fef3c7;
-
-    --coral: #b32a44;
-    --coral-soft: #fbe1e6;
-    --coral-fill: #b32a44;
-    --on-coral: #ffffff;
-
-    /* White boxes on a white page: the hairline inside the shadow is what
-       gives each box an edge; the shadow gives it lift. */
-    --shadow-box: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 20px -14px rgba(0, 0, 0, 0.18);
-    --shadow-box-hover: 0 0 0 1px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06), 0 14px 28px -16px rgba(0, 0, 0, 0.24);
-    --shadow-box-lift: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 30px 60px -28px rgba(0, 0, 0, 0.28);
-  }
 }
 
 @theme inline {
@@ -173,6 +100,8 @@
   --color-on-coral: var(--on-coral);
   --color-card: var(--card);
   --color-card-2: var(--card-2);
+  --color-sidebar: var(--sidebar);
+  --color-line-2: var(--line-2);
   /* One typeface for headings and body, as on the landing page: Public
      Sans, headings set tighter and heavier. IBM Plex Mono stays for the
      small uppercase labels. Bricolage Grotesque (the navy era's display
@@ -188,10 +117,16 @@ body {
   font-family: var(--font-body);
 }
 
+/* Canvas type: page titles thin and large, section and card titles a
+   quiet medium. */
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.025em;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+h1 {
+  font-weight: 300;
+  letter-spacing: -0.03em;
 }
 
 /* Mono treatment for the small uppercase labels this app already had a
@@ -280,9 +215,7 @@ textarea:focus-visible, [tabindex]:focus-visible {
   outline-offset: 2px;
 }
 
-/* Form controls: the browser default is a white field with black text
-   regardless of theme. Tokens instead, so a field on the dark ground is a
-   dark field. */
+/* Form controls on the tokens. */
 input, select, textarea {
   background-color: var(--card);
   color: var(--ink);

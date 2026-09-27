@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, ShieldCheck } from "lucide-react";
-import { groupApprovalsBySource, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
+import { Check } from "lucide-react";
+import { groupApprovalsBySource, isSafeToSendInBulk, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
+import { Eyebrow, Initials } from "@/components/app/canvasBits";
 import { QUEUE_PAGE_SIZE, nextStep, visibleCount } from "@/lib/queuePaging";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import type { PendingApproval } from "@/lib/pendingApprovals";
@@ -67,6 +68,16 @@ export type ApprovalItem = PendingApproval & {
   toldAt?: string | null;
 };
 
+const CHANNEL_NAME: Record<string, string> = {
+  email: "Email",
+  call: "Phone",
+  text: "Text",
+  whatsapp: "WhatsApp",
+  instagram: "Instagram",
+  messenger: "Messenger",
+  web: "Website form",
+};
+
 const CHANNEL_LABEL: Record<string, string> = {
   email: "email",
   call: "a call",
@@ -91,6 +102,10 @@ function ApprovalCard({
 }) {
   const [busy, setBusy] = useState<"send" | "dismiss" | "talked" | "later" | null>(null);
   const firstName = item.leadName.split(" ")[0] || item.leadName;
+  // The canvas Today (TodayCalm): each person is one quiet row; Review
+  // opens the reply in place.
+  const [open, setOpen] = useState(false);
+  const routine = isSafeToSendInBulk(item) && !hasPriceSlot(item.draftMessage);
   // "Later" (A-046): set aside until a time, back by itself or as soon as
   // the customer writes. Not "handled", so it never counts toward the day.
   const [laterOpen, setLaterOpen] = useState(false);
@@ -224,7 +239,7 @@ function ApprovalCard({
   }
   if (talked) {
     return (
-      <div className="box px-4 py-4 flex flex-wrap items-center justify-between gap-3" role="status">
+      <div className="px-[18px] py-3.5 flex flex-wrap items-center justify-between gap-3" role="status">
         <p className="text-sm">
           Check-ins stopped for {firstName}. FollowUp won&apos;t write to them until they write again.
         </p>
@@ -240,25 +255,57 @@ function ApprovalCard({
     );
   }
 
-  return (
-    <div className="box px-4 py-4">
-      <div className="flex items-baseline justify-between gap-3">
-        <Link href={`/leads/${item.leadId}`} className="font-medium hover:underline">
-          {item.leadName}
-        </Link>
-        {/* How long they've waited, as a fact about the customer (A-046). */}
-        {item.wait && <span className="shrink-0 text-xs text-ink-soft tabular-nums">{item.wait}</span>}
-      </div>
-      {/* The reason moves directly under the name, above everything else. It
-          used to render last, at 12px, after the draft — but the reason is
-          what tells you what to check the draft FOR. Reading it afterwards
-          means re-reading the draft, or approving without having done the one
-          piece of judgement you were asked for.
+  const channel = CHANNEL_NAME[item.leadLastMessageChannel ?? ""] ?? item.source ?? null;
+  const why = routine
+    ? `“${item.draftMessage.replace(/\s+/g, " ").slice(0, 90)}${item.draftMessage.length > 90 ? "…" : ""}”`
+    : item.reason
+      ? `Held because ${item.reason.replace(/\.\s*$/, "")}.`
+      : "A reply is written for you.";
 
-          Also no longer lowercased mid-sentence: `.toLowerCase()` on the most
-          trust-critical string in the product mangled names and acronyms, and
-          paired with a trailing period after a reason that already ended in
-          one, it produced "Held because the lead asked about pricing.." */}
+  return (
+    <div>
+      <div className="flex items-center gap-3 px-[18px] py-3.5">
+        <Initials name={item.leadName} size={30} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 text-[14.5px] font-medium">
+            <Link href={`/leads/${item.leadId}`} className="hover:underline">
+              {item.leadName}
+            </Link>
+            {channel && <span className="hidden text-[12.5px] font-normal text-ink-faint sm:inline">· {channel}</span>}
+          </div>
+          {!open && <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft line-clamp-2">{why}</p>}
+        </div>
+        {item.wait && (
+          <span className="hidden shrink-0 text-right text-[12.5px] text-ink-faint tabular-nums sm:block sm:w-[104px]">{item.wait}</span>
+        )}
+        {!open && (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(true);
+                setLaterOpen(true);
+              }}
+              className="hidden h-8 shrink-0 px-2 text-[13px] text-ink-soft sm:block"
+            >
+              Later
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(true);
+                if (routine && !sendLocked) send.start();
+              }}
+              className="h-8 shrink-0 rounded-full border border-line bg-card px-3.5 text-[13px] font-medium"
+            >
+              {routine && !sendLocked ? "Send" : "Review"}
+            </button>
+          </>
+        )}
+      </div>
+      {open && (
+      <div className="px-[18px] pb-4 sm:pl-[60px]">
+      {item.wait && <p className="text-[12.5px] text-ink-faint sm:hidden">{item.wait}</p>}
       {item.reason && (
         <p className="mt-1 text-xs text-ink-soft">
           Held because {item.reason.replace(/\.\s*$/, "")}.
@@ -379,15 +426,15 @@ function ApprovalCard({
             <button
               onClick={send.start}
               disabled={busy !== null || send.busy || priceMissing}
-              className="rounded-lg px-3.5 py-1.5 text-sm font-medium disabled:opacity-60"
-              style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+              className="h-9 rounded-full px-4 text-sm font-semibold disabled:opacity-60"
+              style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
             >
               {send.busy ? "Sending…" : "Approve & send"}
             </button>
           )}
           <Link
             href={`/leads/${item.leadId}`}
-            className="rounded-lg px-3.5 py-1.5 text-sm font-medium border border-line hover:bg-paper"
+            className="inline-flex h-9 items-center rounded-full px-4 text-sm font-medium border border-line bg-card"
           >
             Edit
           </Link>
@@ -443,6 +490,11 @@ function ApprovalCard({
       {/* Says what IS true (nothing left) rather than "Cancelled", which
           describes the press instead of the outcome. */}
       {send.cancelled && <p className="mt-1.5 text-xs text-ink-soft">Stopped — nothing was sent.</p>}
+      <button type="button" onClick={() => { setOpen(false); setLaterOpen(false); }} className="mt-3 text-[13px] text-ink-faint hover:text-ink-soft">
+        Close
+      </button>
+      </div>
+      )}
     </div>
   );
 }
@@ -584,41 +636,29 @@ export default function ApprovalQueue({
   const total = handled + active.length;
 
   return (
-    <div className="mt-6">
-      <PlacesLine needsYou={active.length} waitingOn={waitingOn + sentHere} handled={handled} />
-      <h2 className="font-display text-xl flex items-center gap-2">
-        <ShieldCheck className="h-4 w-4" style={{ color: "var(--ink)" }} />
-        Needs your OK ({summary.needsYou})
-      </h2>
-
-      {/* The answer to "whom do I focus on", said in words rather than
-          left for the reader to infer from the order. Derived from the
-          ordered groups, so it can never name a lead the list does not
-          show first. */}
+    <div className="mt-2">
+      {/* The canvas Today: who to start with, how far through the day,
+          then the three places (A-046, A-050). */}
       {summary.focusOn ? (
-        <p className="text-sm text-ink-soft mt-1">
-          {/* The person and a fact about them, never a bare score (A-046). */}
+        <p className="text-base leading-relaxed">
           Start with{" "}
-          <Link href={`/leads/${summary.focusOn.leadId}`} className="font-medium text-ink hover:underline">
-            {summary.focusOn.leadName}
+          <Link href={`/leads/${summary.focusOn.leadId}`} className="font-semibold hover:underline">
+            {summary.focusOn.leadName.split(" ")[0]}
           </Link>
           {focusWait ? `, ${focusWait}.` : ` on ${summary.focusOn.source}.`}
         </p>
       ) : (
-        <p className="text-sm text-ink-soft mt-1">
-          Nothing here needs a decision — the rest are routine.
-        </p>
+        <p className="text-base text-ink-soft">Nothing here needs a decision. The rest are routine.</p>
       )}
-
       {/* Today has an end (A-031, A-046). Desktop only: the phone gets less (R-015). */}
-      <div className="mt-3 hidden sm:block max-w-xl">
-        <div className="h-[3px] rounded-full" style={{ backgroundColor: "var(--line)" }}>
+      <div className="mt-[18px] hidden sm:block max-w-[520px]">
+        <div className="h-[3px] rounded-full" style={{ backgroundColor: "var(--line-2)" }}>
           <div
             className="h-[3px] rounded-full"
             style={{ width: `${total > 0 ? Math.round((100 * handled) / total) : 0}%`, backgroundColor: "var(--ink)" }}
           />
         </div>
-        <p className="mt-1.5 text-xs text-ink-soft tabular-nums">
+        <p className="mt-2 text-[13px] text-ink-faint tabular-nums">
           <span className="text-ink font-medium">
             {handled} of {total}
           </span>{" "}
@@ -626,6 +666,7 @@ export default function ApprovalQueue({
           {setAside > 0 && ` ${setAside} set aside for later.`}
         </p>
       </div>
+      <PlacesLine needsYou={active.length} waitingOn={waitingOn + sentHere} handled={handled} />
 
       {/* Said once, above everything, rather than 48 times on 48 cards.
           The cards still carry their own sentence — this is the line that
@@ -670,8 +711,12 @@ export default function ApprovalQueue({
         </div>
       )}
 
+      <div className="mt-7 mb-2.5 flex items-center justify-between">
+        <Eyebrow>Needs you · {summary.needsYou}</Eyebrow>
+        <span className="text-[12.5px] text-ink-faint">Longest waiting first</span>
+      </div>
       <LayoutGroup>
-      <div className="mt-6 flex flex-col gap-6 relative">
+      <div className="flex flex-col gap-6 relative">
         {groups.map((group) => {
           const shownHere = visibleCount(group.needsYou.length, expanded[group.source] ?? QUEUE_PAGE_SIZE);
           const hiddenHere = group.needsYou.length - shownHere;
@@ -680,7 +725,7 @@ export default function ApprovalQueue({
           return (
           <motion.section key={group.source} layout="position" transition={{ layout: MOTION.layout }}>
             {/* Dense heading, not a box — see the note above. */}
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div className={(groups.length > 1 ? "flex" : "hidden") + " mb-2 flex-wrap items-baseline justify-between gap-2"}>
               <h3 className="text-sm font-medium">{group.source}</h3>
               <p className="text-xs text-ink-soft tabular-nums">
                 {needHere > 0 && `${needHere} need${needHere === 1 ? "s" : ""} you`}
@@ -689,7 +734,7 @@ export default function ApprovalQueue({
               </p>
             </div>
 
-            <div className="mt-2 flex flex-col gap-2 relative">
+            <div className="relative flex flex-col overflow-hidden rounded-2xl border border-line bg-card divide-y divide-[var(--line-2)]">
               {/* A-048: a finished card folds into what happened, then
                   leaves, and the cards below slide up into its place
                   rather than jumping. Position only, so nothing is
@@ -705,7 +750,7 @@ export default function ApprovalQueue({
                     transition={{ layout: MOTION.layout }}
                   >
                     {leaving[item.leadId] ? (
-                      <div className="box px-4 py-3 flex items-center gap-2 text-sm text-ink-soft" role="status">
+                      <div className="px-[18px] py-3.5 flex items-center gap-2 text-sm text-ink-soft" role="status">
                         <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {leaving[item.leadId]}
                       </div>
@@ -725,7 +770,7 @@ export default function ApprovalQueue({
                   so nothing here hides how much is waiting; it only
                   declines to draw it. */}
               {hiddenHere > 0 && (
-                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="px-[18px] py-3 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm text-ink-soft">
                     {hiddenHere} more {hiddenHere === 1 ? "needs" : "need"} your OK
                     {group.needsYou[shownHere] && (
@@ -748,7 +793,7 @@ export default function ApprovalQueue({
               )}
 
               {group.safeToSend.length > 0 && (
-                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="px-[18px] py-3 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm text-ink-soft">
                     {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"}
                     {group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
@@ -783,7 +828,7 @@ function PlacesLine({ needsYou, waitingOn, handled }: { needsYou: number; waitin
   if (needsYou + waitingOn + handled === 0) return null;
   return (
     <>
-      <p className="mt-6 mb-4 hidden sm:block text-sm text-ink-soft tabular-nums">
+      <p className="mt-5 hidden sm:block border-y border-line-2 py-3 max-w-[760px] text-sm text-ink-soft tabular-nums">
         Needs you <span className="text-ink font-medium">{needsYou}</span>
         <span aria-hidden="true"> · </span>
         <Link href="/waiting" className="hover:underline underline-offset-4">
@@ -792,7 +837,7 @@ function PlacesLine({ needsYou, waitingOn, handled }: { needsYou: number; waitin
         <span aria-hidden="true"> · </span>
         Handled today <span className="text-ink font-medium">{handled}</span>
       </p>
-      <p className="mt-4 mb-4 sm:hidden text-sm text-ink-soft tabular-nums">
+      <p className="mt-3 sm:hidden text-sm text-ink-soft tabular-nums">
         <Link href="/waiting" className="underline-offset-4 hover:underline">
           {waitingOn} waiting on customers
         </Link>

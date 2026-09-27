@@ -7958,3 +7958,45 @@ of view while step 1 played.
 - **"That's simple":** the demo's heading now has one line under it: "Connect your inbox in 2 minutes. It finds
   who's waiting and follows up." It stands in for How it works, which A-063 folded into the demo.
 - **Weak:** "2 minutes" is the founder's own claim from the earlier page, not a measured number.
+
+### 2026-09-27: the app moves onto the canvas system (part A: tokens, frame, sign-in)
+**Founder:** *"bro just the landing page is live"*, then *"it should be organised okay lets redesign"*.
+- **What changed:** the app's shared styles now use the canvas values: warm near-white ground `#fdfcfc`, white
+  cards with a `#e7e5e2` hairline and no drop shadow, 16px corners, thin (300) page titles, and medium section
+  titles. The sidebar is warm grey, names the business beside its first letter in a black square, and marks the
+  current page as a white row with a hairline edge (canvas App and Today boards). Sign-in follows the SignIn board.
+- **Always light.** The app used to follow the device (dark by default since 2026-09-19). Every canvas board is
+  light, and the landing, /security, booking and form already are. It supersedes the app half of the 2026-09-19
+  device-theme rule.
+- **Kept on purpose:** the live navigation items (Today, Customers, Pipeline, Follow-up plans, Analytics, Activity,
+  Settings), not the canvas's Today / Inbox / People, and the phone's drawer menu, not the canvas's bottom tabs.
+  Those are information-architecture changes waiting on the Pipeline/Analytics decision.
+- **Copy changed from the board:** sign-in's second promise says "Prices and dates always come to you" instead of
+  "Nothing sends without your OK", which stopped being true once Automatic existed (A-056).
+- **Weak:** Settings keeps its long structure (tabs, many sections). Only its look moved. The canvas's four short
+  cards are a bigger change, shown to the founder separately.
+
+### 2026-09-27: the whole app, as drawn on the canvas (part A continued)
+**Founder:** *"bro i want the same strategic design not the old one"*, *"same to same as we decided in designing"*,
+*"and how it will work too we have decided in the designing i want same"*, *"if we didnt designed anything or planed
+let keep building those too"*, *"i want the whole app to be changed as we designed"*.
+- **What this settles:** the recolour alone (earlier today) was rejected as "the old one". The app now follows the
+  canvas boards in layout and behaviour, not only in colour. Screens the canvas never drew are built in the same
+  system.
+- **Menu:** Today, Inbox, Customers (with counts), a search box, Settings at the foot. On the phone: three bottom tabs
+  (Today, Inbox, Settings). Pipeline, Follow-up plans, Analytics and Activity leave the menu. They're linked from
+  Settings → "Everything else", and the pages stay.
+- **Today (TodayCalm, ThreePlaces):** the date, "N customers are waiting on you.", the start line, the day's progress,
+  the three places, then one card of rows. Review opens the reply in place, and a routine row has Send, with the
+  same ten-second undo. The right column holds About to be lost, This week and Coming up.
+- **Inbox (new):** Needs you, then Earlier, newest first. A row opens the conversation.
+- **Conversation (Inbox, InboxAI, ThreadPhone, App):** who and why, bubbles by day saying which messages FollowUp sent,
+  the warm reply card (Send, Edit, Don't send, the "$ price" blank, the rewrite buttons), the details panel, and
+  everything else under "More about".
+- **Settings (SettingsPhone, SettingsControlPhone):** four short cards and a sign-ins row, then "More settings" with
+  every existing control.
+- **Customers (App board, People):** one table.
+- **Weak, named:**
+  - Desktop Inbox is a list, not the canvas's two-pane list + thread.
+  - The Customers filter chips are the existing ones, not the canvas's four.
+  - The sidebar's "Search customers" opens Customers with the search box focused. It isn't search-in-place.

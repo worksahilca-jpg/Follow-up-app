@@ -13,6 +13,11 @@ import { Initials, Eyebrow } from "./canvasBits";
  * reply. "Open person" goes to the full customer page, where everything
  * else about them lives.
  */
+// On a wide screen this pane can be well over 1,000px. The conversation and
+// the reply stay in one centred reading column instead of clinging to the
+// left of an empty pane.
+const COLUMN = "mx-auto w-full max-w-[820px]";
+
 const CHANNEL: Record<string, string> = {
   email: "Email",
   text: "Text",
@@ -57,42 +62,48 @@ export default function ConversationPane({
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="flex items-center gap-3 border-b border-line px-1 py-4 lg:px-6">
-        <Initials name={lead.name} size={36} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-base font-semibold">{lead.name}</span>
-            {approval && <span className="hidden sm:inline rounded-full border border-line bg-paper px-2 py-0.5 text-[12px] font-medium">Needs you</span>}
+      <div className="border-b border-line px-1 py-4 lg:px-6">
+        <div className={`flex items-center gap-3 ${COLUMN}`}>
+          <Initials name={lead.name} size={36} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-base font-semibold">{lead.name}</span>
+              {approval && <span className="hidden sm:inline rounded-full border border-line bg-paper px-2 py-0.5 text-[12px] font-medium">Needs you</span>}
+            </div>
+            <div className="text-[13px] text-ink-faint">{[channel, since ? `first message ${since}` : null].filter(Boolean).join(" · ")}</div>
           </div>
-          <div className="text-[13px] text-ink-faint">{[channel, since ? `first message ${since}` : null].filter(Boolean).join(" · ")}</div>
+          <Link href={`/leads/${lead.id}`} className="shrink-0 rounded-full border border-line bg-card px-3.5 py-1.5 text-[13px] font-medium">
+            Open person
+          </Link>
         </div>
-        <Link href={`/leads/${lead.id}`} className="shrink-0 rounded-full border border-line bg-card px-3.5 py-1.5 text-[13px] font-medium">
-          Open person
-        </Link>
       </div>
       <div className="flex-1 px-1 py-6 lg:px-6">
-        <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} />
+        <div className={COLUMN}>
+          <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} />
+        </div>
       </div>
       {/* Pinned under the thread on desktop; on the phone it follows the thread, clear of the tab bar. */}
       <div className="bg-paper px-1 pb-6 pt-2 lg:sticky lg:bottom-0 lg:px-6">
-        {approval && (
-          <div className="mb-2">
-            <Eyebrow>Held because {approval.reason.replace(/\.\s*$/, "")}</Eyebrow>
-          </div>
-        )}
-        <ReplyCard
-          key={lead.id}
-          leadId={lead.id}
-          leadName={lead.name}
-          leadEmail={lead.email || undefined}
-          draft={lead.suggestedMessage}
-          draftSubject={lead.suggestedSubject}
-          waiting={Boolean(approval)}
-          seenInboundAt={lastIn?.date}
-          sendLocked={sendLocked}
-          basis={basis}
-          languageName={replyLanguage}
-        />
+        <div className={COLUMN}>
+          {approval && (
+            <div className="mb-2">
+              <Eyebrow>Held because {approval.reason.replace(/\.\s*$/, "")}</Eyebrow>
+            </div>
+          )}
+          <ReplyCard
+            key={lead.id}
+            leadId={lead.id}
+            leadName={lead.name}
+            leadEmail={lead.email || undefined}
+            draft={lead.suggestedMessage}
+            draftSubject={lead.suggestedSubject}
+            waiting={Boolean(approval)}
+            seenInboundAt={lastIn?.date}
+            sendLocked={sendLocked}
+            basis={basis}
+            languageName={replyLanguage}
+          />
+        </div>
       </div>
     </div>
   );

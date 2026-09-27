@@ -49,7 +49,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   const timeZone = business?.timezone ?? "America/New_York";
 
   return (
-    <div className="lg:-mx-14 lg:-mt-9 lg:-mb-12 lg:grid lg:h-[calc(100vh)] lg:grid-cols-[360px_minmax(0,1fr)]">
+    <div className="app-bleed lg:grid lg:h-screen lg:grid-cols-[360px_minmax(0,1fr)]">
     <div className={(c ? "hidden lg:block " : "") + "lg:overflow-y-auto lg:border-r lg:border-line lg:px-5 lg:pt-8"}>
       <h1 className="text-[32px] leading-[1.1]">Inbox</h1>
 

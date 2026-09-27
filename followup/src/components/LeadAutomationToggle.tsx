@@ -120,11 +120,11 @@ export default function LeadAutomationToggle({
   }
 
   return (
-    <div className="rounded-[var(--radius-box)] p-4" style={{ backgroundColor: "var(--slate-soft)" }}>
-      <h3 className="text-sm font-semibold" style={{ color: "var(--slate)" }}>
-        Automation
-      </h3>
-      <div className="mt-3 flex rounded-[12px] border border-line overflow-hidden">
+    // Sits inside the side column's "How it handles …" row (A-069), which
+    // already names it: no box or heading of its own (S-09, card soup).
+    <div>
+      <h3 className="sr-only">Automation</h3>
+      <div className="flex rounded-[12px] border border-line overflow-hidden">
         {TIERS.map((t) => {
           const locked = t.value === "autonomous" && !autonomousAllowed;
           return (

@@ -8127,3 +8127,61 @@ the Settings overview's card and label, the underline tabs, pill buttons, and no
   - More settings is still long and dense. It's restyled, not redesigned. A drawn version (fewer sections, plainer
     words) would do more, and is Sahil's call.
   - The person page's side column still stacks a lot: consent, automation and plan. It needs a drawing too.
+
+### 2026-09-27: Settings as one list, and the customer's side column, drawn (proposed)
+**Founder:** *"Sure start 4"*: draw More settings and the customer page's side column before building.
+Four boards on the canvas (v80): SettingsAll, SettingsAllPhone, SettingsChannel and PersonSide.
+- **Settings:**
+  - The five More-settings tabs become one list, "Everything you can change", in plain words.
+  - Each row gives its state on the right (Connected · Gmail, Not set up, 2 people, Free · 9 of 20) and opens its
+    own page.
+  - The two webhooks become one row, "Other tools (Zapier, Make, a webhook)".
+  - Lead routing is renamed "New customers, by where they wrote".
+  - The overview keeps the plan card and Pause. Where customers write moves into the list.
+- **One place opened (Instagram):**
+  - a state card that says who it's waiting on;
+  - the one button;
+  - "Set it up by hand instead" for the access-token paste;
+  - four plain facts, including Meta's 24-hour rule.
+- **The customer's side column:**
+  - one facts card (State, Why, Waiting, Language, Came from, Stage, Assigned);
+  - three pill actions;
+  - one calm dotted line when nothing can send;
+  - "How it handles her", "Why it may write to her", "What FollowUp did" and "Follow-up plan" as quiet rows that open
+    in place;
+  - Delete as a quiet link.
+- **Principle (inferred):** fewer boxes, plainer words, one decision visible at a time. Nothing is removed, only moved.
+- **Weak, named:**
+  - Each setting on its own page means more clicks for someone changing several things.
+  - On a wide screen the list sits beside the overview, not under it.
+- **Checked against the research the same day** (founder: *"are you drawing according to the research… i want all
+  of this to be strategic"*). Two gaps were found and fixed on the canvas (v81):
+  - **Stripe study, Layer 3; Calendly study, "say no on the first screens":** the CRM, Zapier/webhooks and routing rows
+    moved into a last group, "For advanced setups: most businesses never need these". Before, they carried the same
+    weight as Email.
+  - **Zapier study, "a rule that can't run finds out one lead at a time":** anything that stopped working now rises to
+    the top as "One thing needs you". The example is a Facebook Page that stopped sending messages, and it says what's
+    paused and how to fix it.
+  - **Kept, because the research supports it:**
+    - one scannable list, never a hidden drawer (Calendly study, the menu-hiding finding);
+    - plan and Pause first (Mercury, Stripe Layer 1–2);
+    - the customer's side column as a record panel (Attio), with how FollowUp handles this person visible at a glance
+      (the 2026-09-12 trust study).
+- **Principle, from the founder:** every drawing names the research it follows, checked before it's shown, not after.
+
+## 2026-09-27 — Inbox and an open customer fill the width on wide screens
+
+- **Founder feedback** (screenshot on a ~2000px window): *"the design the chatbox is totally on left"*.
+- **What was wrong:** every page sat in the 1152px reading column, centred. Inbox and an open customer broke out of it
+  by only the page padding. On a wide window the list-and-conversation split floated in the middle, with a band of
+  nothing between it and the sidebar.
+- **Decision:**
+  - Working surfaces (Inbox, Customers with a person open) mark their root `.app-bleed` and take the whole width
+    beside the sidebar.
+  - Reading pages (Today, the Customers list, Settings) keep the centred 1152px column.
+  - Inside the conversation pane, the header, thread and reply sit in one centred 820px column. They don't stretch to
+    the edges or cling to the left of an empty pane.
+- **Also fixed with it:** FollowUp's own alert emails (alerts@followupbase.io, or `ALERT_FROM_EMAIL`) were read back in
+  from the owner's inbox as a customer called "FollowUp". They are now never a customer.
+- **Weak, named:** above about 1,700px there is still open space either side of the conversation column. That is
+  deliberate (line length), but it can read as empty.

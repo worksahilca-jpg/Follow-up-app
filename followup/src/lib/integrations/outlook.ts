@@ -36,6 +36,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
+import { isFollowUpSender } from "@/lib/ownSenders";
 
 const AUTHORITY = "https://login.microsoftonline.com/common/oauth2/v2.0";
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -53,7 +54,7 @@ const AUTOMATED_SENDER_PATTERNS = [
 ];
 
 function isAutomatedSender(email: string): boolean {
-  return AUTOMATED_SENDER_PATTERNS.some((p) => p.test(email));
+  return AUTOMATED_SENDER_PATTERNS.some((p) => p.test(email)) || isFollowUpSender(email);
 }
 
 function credentials(): { clientId: string; clientSecret: string; redirectUri: string } | null {

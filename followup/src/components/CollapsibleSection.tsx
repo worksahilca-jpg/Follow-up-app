@@ -21,14 +21,32 @@ import { ChevronDown } from "lucide-react";
  */
 export default function CollapsibleSection({
   title,
+  status,
   defaultOpen = false,
+  row = false,
   children,
 }: {
   title: string;
+  /** Row form only: the current state on the right ("Ask if risky"). */
+  status?: string;
   defaultOpen?: boolean;
+  /** The side column's quiet row (A-069, PersonSide): label, state, chevron, a hairline between rows. */
+  row?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+
+  if (row)
+    return (
+      <div className="border-t border-line-2 first:border-t-0">
+        <button onClick={() => setOpen((v) => !v)} className="flex min-h-[52px] w-full items-center gap-3 px-[18px] text-left hover:bg-card-2" aria-expanded={open}>
+          <span className="min-w-0 flex-1 text-[15px]">{title}</span>
+          {status && <span className="truncate text-[14px] text-ink-faint">{status}</span>}
+          <ChevronDown className={`h-4 w-4 shrink-0 text-ink-faint transition-transform ${open ? "rotate-180 text-ink" : ""}`} />
+        </button>
+        {open && <div className="px-[18px] pb-4">{children}</div>}
+      </div>
+    );
 
   return (
     <div>

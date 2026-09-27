@@ -38,6 +38,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
+import { isFollowUpSender } from "@/lib/ownSenders";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -498,7 +499,7 @@ function parseFromHeader(raw: string): { name: string; email: string } {
 }
 
 function isAutomatedSender(email: string): boolean {
-  return AUTOMATED_SENDER_PATTERNS.some((p) => p.test(email));
+  return AUTOMATED_SENDER_PATTERNS.some((p) => p.test(email)) || isFollowUpSender(email);
 }
 
 /** Prisma's unique-constraint violation — the loser of a create race. */

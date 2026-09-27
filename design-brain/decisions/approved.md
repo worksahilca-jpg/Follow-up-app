@@ -1324,3 +1324,42 @@ followed *"i dont see the design on live that i built on canvas"*.
   you this week" and "See all numbers" are gone.
 **Rule this sets:** a screen isn't done until it has been compared side by side with its board. Structural likeness
 is not enough.
+
+## A-068 — The side-by-side fixes and the rest of the app in the new look ^A-068
+**Approved:** 2026-09-27, founder: *"merge"* (PR #368). This came after seeing the drawing-vs-app images and the More
+settings before/after, and followed *"keep going until we changed the whole app i want the new design"*.
+**What specifically:**
+- Onboarding as OnbConnect, OnbChoose and OnbOldCustomers.
+- Customers:
+  - the A-029 state dots;
+  - channel icons;
+  - a customer opening beside the list (A-025), with the details, the timeline and the reply card when one waits.
+- The conversation page on the phone with ThreadPhone's header.
+- Settings › More settings in the overview's look:
+  - quiet grey section labels;
+  - one column;
+  - underline tabs;
+  - pill buttons;
+  - nothing under 13px.
+- Automation state drawn calm: a white card, ink words and one small dot, never a tinted alarm box.
+- The 404 and error pages in the app's own type.
+**Still open:** More settings and the person page's side column are restyled, not redesigned. They would each need a
+drawing first.
+
+## A-069 — Settings as one list, and the customer's side column ^A-069
+**Approved:** 2026-09-27, founder: *"yes build them"*. This came after the drawings were checked against the research
+(canvas v81: SettingsAll, SettingsAllPhone, SettingsChannel, PersonSide).
+**What specifically:**
+- **Settings:**
+  - the plan and Pause first;
+  - "Everything you can change" as one list in plain words, each row showing its state and opening its own page;
+  - anything that stopped working shows first as "needs you";
+  - "For advanced setups" last: CRM, other tools (Zapier, Make, webhooks) and routing.
+  - The five tabs are gone.
+- **The customer's side column:**
+  - the facts in one card (State pill, Why, Waiting, Language, Came from, Stage, Assigned to);
+  - three actions;
+  - the state in one calm line;
+  - the rest as quiet rows that open in place, with "How it handles …" open by default.
+**Research behind it:** Stripe's three layers, Zapier's "a rule that can't run says so at the top", Calendly and NN/g
+on hidden menus, Mercury's plain control, Attio's record panel, and the 2026-09-12 trust study.

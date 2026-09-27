@@ -7728,3 +7728,23 @@ R1 is also shown in use: header, tab, phone home screen, email, dark footer.
   example the reply bubble's proportions or corners.
 - An open outline next to a solid shape departs from the old mark's "never outline it" rule. That rule was written for
   the leaves. A new mark sets its own.
+
+### 2026-09-27: logo, drawn light (LogoLight)
+**Founder:** the reply marks "look lil wiered". Asked why: **too heavy / chunky** (R-023). Same idea, redrawn with fine,
+even lines and room around them, to sit with the thin headline (A-059). Canvas v71, proposed.
+
+**The four:**
+- **L1. Two fine lines.** Their message and the reply, each a fine outline. A sharp corner points at who spoke.
+  **Recommended.** Shown in use.
+- **L2. One line.** One unbroken outline around both messages. The overlap shows as a faint line. The most
+  distinctive, and a little abstract.
+- **L3. Open and solid, slim.** R1 without the weight.
+- **L4. Two slim messages.** H2 thinned. It can read as two dashes at 16 px.
+
+**How the line is set:**
+- 4.5 units of 100 when large, 6.5 at header size, 7.5 at 16 px, so it survives in a browser tab.
+- The name next to it is Public Sans 500 instead of 600, to match.
+
+**Weak, named:**
+- L1 still sits near generic chat icons.
+- L2's faint inner line is a tint, a first for the mark.

@@ -7933,3 +7933,18 @@ of view while step 1 played.
   replaced, but it isn't drawn as a box there yet.
 - Only price has a blank. A date question still gets "I'll confirm a time", because A-060 drew only the price.
 
+### 2026-09-27: the booking page and website form, drawn and approved (A-065)
+**Founder:** *"lets do the booking page and website form"*, then *"yes build it, edits can go"*.
+- **Before:** the booking page still led with FollowUp's own logo, which A-017 had ruled out for any customer-facing
+  surface. It listed every open time for 10 days in one long page.
+- **Facts drawn to** (`src/lib/booking.ts`): 30-minute calls, weekdays 9–5 in the business's time, the next 10 days,
+  at least an hour's notice. There's no reschedule or cancel, so the page promises none.
+- **Canvas v77:** 8 boards, desktop and phone, including booked, sent and a missing-field state.
+- **Fixed before showing:** at phone width, side-by-side Email and Phone cut off the address and split the error,
+  so they stack on a phone.
+- **Built** in the PR that follows this entry.
+- **Found while building:** the new form is 600px tall at 420px wide, and the embed code set the frame to 540px,
+  so it would have scrolled inside the frame. The embed code now sets 660px, which fits with both errors showing.
+  Weak spot: on a narrow phone, where Email and Phone stack, the form is about 740px and still scrolls a little
+  inside the frame. Businesses that already pasted the old code keep a 540px frame until they paste it again.
+

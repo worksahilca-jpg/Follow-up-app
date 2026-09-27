@@ -1261,3 +1261,33 @@ They stay on the canvas as history. Any future logo change starts from this entr
 **Depends on PR 1:** the first switch says "Or choose Automatic". Ship it only once onboarding offers that choice;
 until then keep the live wording "only if you turn that on".
 
+## A-065 — The booking page and the website form, redrawn for the business's customers ^A-065
+
+**Approved:** 2026-09-27, founder: *"yes build it, edits can go"* (canvas v77: BookingDesk, BookingPhone, BookedDesk,
+BookedPhone, FormOnSite, FormPhone, FormErrorPhone, FormSentPhone).
+
+**What specifically:**
+- **Both pages belong to the business (A-017, now applied to booking too).** The business's name is the header.
+  FollowUp is a quiet "Powered by FollowUp" at the foot, nowhere else.
+- **Booking:**
+  - One day at a time: a row of the next weekdays, each with how many times are open ("full" when none), then that
+    day's times split into Morning and Afternoon.
+  - "Times in your time zone · Toronto".
+  - A summary before anything is booked: day, time range "your time", and one button, "Book this time". On desktop
+    it's a card beside the times; on a phone it's a bar that appears at the bottom once a time is picked.
+  - No reschedule or cancel is promised, because none exists: "Need a different time? Reply to the message this link
+    came in."
+  - Booked: "You're booked.", the time, and **Add to Google Calendar** and **Add to Apple / Outlook**. These two
+    buttons are new; they work from the browser alone and change nothing on the business's side.
+- **Website form:**
+  - "Tell us what you need."
+  - A visible label on every field. Email and Phone sit side by side on a desktop and stacked on a phone.
+  - The one rule (an email or a phone) is said under the pair: "Add an email or a phone number, so they can reply."
+  - Sent: "Sent. Thanks, Sarah.", who has it and where the reply will go, and their own words said back.
+- **Always light,** on every device, because both pages sit inside or beside someone else's website. The dark app
+  theme doesn't reach them.
+
+**Weak, named when proposed:**
+- The business name shows twice when the form sits on their own site.
+- The calendar buttons are a small new feature.
+

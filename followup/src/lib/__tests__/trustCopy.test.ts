@@ -192,9 +192,22 @@ describe("the summary sentence on a holding account", () => {
  * sold. Flagged as gap 7 of the 2026-09-13 landing-page research, verified
  * against the live code and fixed 2026-09-22.
  */
+/**
+ * The landing page's words live in page.tsx and the three client pieces it
+ * renders (src/components/landing/v2, A-053 → A-060), so the copy checks
+ * read all four together.
+ */
+const LANDING_FILES = [
+  ["app", "page.tsx"],
+  ["components", "landing", "v2", "SeeItWorking.tsx"],
+  ["components", "landing", "v2", "Pricing.tsx"],
+  ["components", "landing", "v2", "Questions.tsx"],
+];
+const landingSource = () => LANDING_FILES.map((parts) => readFileSync(join(__dirname, "..", "..", ...parts), "utf8")).join("\n");
+
 describe("what the landing page promises about team routing", () => {
   const landing = () =>
-    readFileSync(join(__dirname, "..", "..", "app", "page.tsx"), "utf8")
+    landingSource()
       .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/^\s*\/\/.*$/gm, "")
@@ -228,43 +241,30 @@ describe("what the landing page promises about team routing", () => {
     // The Pro list is the copy a customer would quote back. Asserted
     // separately because a page-wide match could pass on the other three
     // being fixed while this one lingers.
-    const pro = landing().slice(landing().indexOf("Plus plus:"));
+    const pro = landing().slice(landing().indexOf("Everything in Plus, plus:"));
     expect(pro, "the Pro tier still sells routing to the right person").not.toMatch(/right person/i);
     expect(pro, "the Pro tier no longer says what team assignment does").toMatch(/shared out evenly/i);
   });
 });
 
 /**
- * The page sold sending; the product sends nothing.
+ * What the landing page says about sending, now that the owner chooses.
  *
- * Six places promised replies going out on their own — "FollowUp replies
- * for you" as the $39 tier's headline benefit, "Simple replies go out on
- * their own" in the features grid, and, sharpest, "You approve every
- * reply before it goes out" listed as a FREE tier feature, which tells a
- * reader that paying removes the approval step.
+ * Until 2026-09-26 every account held every message, and this block pinned
+ * the page to saying so ("nothing sends without your OK"). The founder then
+ * set the direction (PRODUCT_DIRECTION, "The auto follow-up direction,
+ * complete"): FollowUp follows up on its own, only decisions come to the
+ * owner, and onboarding ASKS — Automatic or Assisted. The schema default
+ * did not flip: an account still holds until its owner chooses Automatic.
  *
- * `Business.holdAllForApproval` is `@default(true)` in the schema, the
- * settings route reads it but never writes it, and it short-circuits
- * ahead of a lead's own tier in all three send paths (automation.ts,
- * acknowledge.ts, sequences.ts). So no account can turn it off, a lead
- * set to fully autonomous is still held, and nothing sends for anyone.
- * Production agreed: zero outbound messages in 24h across 8 businesses.
- *
- * Founder's call 2026-09-22, choosing between four options: keep the
- * pitch, state the current truth in one line. These pin that line and the
- * FAQ answer that has to agree with it — the pairing matters, because a
- * page that says "nothing sends" in the hero and "replies go out on their
- * own" in the FAQ is the #301 self-contradiction rebuilt.
- *
- * WHEN THE HOLD IS LIFTED: flip the schema default, then delete this
- * block and the two pieces of copy it guards. The failure will be these
- * tests passing while the page understates what ships — the opposite
- * error, and the reason the skip below is deliberately absent.
+ * So the page may say "follows up on its own" only because the same page
+ * says it is a choice, and it must never drop the guarantee that prices,
+ * dates and anything tense come to the owner either way. These pin both
+ * halves, and the default that makes the page honest on day one.
  */
-describe("what the landing page says about sending, while the hold is on", () => {
-  const landingRaw = () => readFileSync(join(__dirname, "..", "..", "app", "page.tsx"), "utf8");
+describe("what the landing page says about sending", () => {
   const landingCopy = () =>
-    landingRaw()
+    landingSource()
       .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/^\s*\/\/.*$/gm, "")
@@ -272,57 +272,31 @@ describe("what the landing page says about sending, while the hold is on", () =>
 
   const schema = () => readFileSync(join(__dirname, "..", "..", "..", "prisma", "schema.prisma"), "utf8");
 
-  it("new accounts still hold by default — the whole page depends on it", () => {
-    // The hero's "nothing sends without your OK" is true because a fresh
-    // account holds until its owner grants permission in Settings
-    // (src/app/api/automation/settings/route.ts). Flip this default and
-    // the line becomes a lie for every new signup on day one, which is
-    // the exact failure this file exists to catch.
-    expect(
-      schema(),
-      "holdAllForApproval is no longer default-true — a new account now sends before anyone asked it to, and the landing page still promises the opposite"
-    ).toMatch(/holdAllForApproval\s+Boolean\s+@default\(true\)/);
-  });
-
-  it("says plainly in the hero that nothing sends without approval", () => {
-    // Founder's framing: the pitch stays ("it follows up for you"), the
-    // supervision is the trust line beside it. Both halves are asserted,
-    // because dropping the first is how the honest version of this line
-    // threw the whole product away in its first draft.
-    expect(landingCopy(), "the hero lost the pitch while stating the hold").toMatch(/It follows up for you/i);
-    expect(
-      landingCopy(),
-      "the hero lost the beta sending caveat while the hold is still on"
-    ).toMatch(/nothing sends without your OK/i);
-  });
-
-  it("the FAQ agrees with the hero rather than contradicting it", () => {
-    const faq = landingCopy().slice(landingCopy().indexOf("Will it send things I did not approve?"));
-    expect(faq, "the FAQ answer no longer states the hold").toMatch(/nothing goes out on its own until you allow it/i);
-    expect(faq, "the FAQ does not say where permission is granted").toMatch(/turn that on in Settings/i);
-    expect(faq, "the FAQ lost the on-your-behalf framing the hero leads with").toMatch(/on your behalf, under your eye/i);
-  });
-
-  it("the FAQ no longer claims a lead can be switched to fully automatic", () => {
-    // holdAll wins over Lead.automationTier, so "turn it fully on for any
-    // customer" was false in exactly the place a cautious buyer checks.
-    const faq = landingCopy().slice(landingCopy().indexOf("Will it send things I did not approve?"));
-    expect(faq, "the FAQ promises a per-customer fully-on switch the hold overrides").not.toMatch(
-      /turn it fully on/i
+  it("new accounts still hold until their owner chooses Automatic", () => {
+    // The page's "on its own" is true once the owner picks Automatic in
+    // onboarding. A default that sent before anyone chose would make the
+    // FAQ's "if you choose Automatic" a lie on day one.
+    expect(schema(), "holdAllForApproval is no longer default-true — accounts now send before their owner chose to").toMatch(
+      /holdAllForApproval\s+Boolean\s+@default\(true\)/
     );
   });
 
-  it("still describes what automatic sending will be, rather than deleting the idea", () => {
-    // The founder chose "keep the pitch, add the caveat". An answer that
-    // only said "nothing sends" would have thrown away the product's
-    // actual design along with the false claim.
-    const faq = landingCopy().slice(landingCopy().indexOf("Will it send things I did not approve?"));
-    // Matches the guarantee, not the adverb — this pinned "always" and
-    // failed on a reword to "still", which is the test being about
-    // phrasing when it is supposed to be about the promise.
-    expect(faq, "the FAQ dropped the money/sensitive guarantee entirely").toMatch(
-      /anything about price[^.]*waits for you/i
-    );
+  it("the FAQ names the choice, both ways", () => {
+    const faq = landingCopy().slice(landingCopy().indexOf("Will it send things on its own?"));
+    expect(faq, "the FAQ no longer says sending on its own is the owner's choice").toMatch(/If you choose Automatic when you set up/i);
+    expect(faq, "the FAQ no longer offers the way to check everything").toMatch(/Choose Assisted/i);
+  });
+
+  it("never drops the decisions guarantee", () => {
+    const faq = landingCopy().slice(landingCopy().indexOf("Will it send things on its own?"));
+    expect(faq, "the FAQ lost the price/date/tense guarantee").toMatch(/A price, a date or anything tense comes to you first/i);
+    expect(landingCopy(), "the hero trust line lost the guarantee").toMatch(/Prices and dates always come to you/i);
+  });
+
+  it("does not promise a per-customer fully-automatic mode", () => {
+    // AUTONOMOUS (no risk check) stays behind its own permission and is
+    // not what Automatic means (PRODUCT_DIRECTION correction, 2026-09-27).
+    expect(landingCopy(), "the page promises a mode that skips the decisions").not.toMatch(/turn it fully on|without any checks/i);
   });
 });
 

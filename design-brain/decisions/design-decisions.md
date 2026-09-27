@@ -7486,3 +7486,32 @@ He is making the logo himself. No logo options are drawn or proposed until he br
 Still standing from before:
 - the brief: an abstract F in forward-moving forms, monochrome, no literal arrows;
 - R-013: no F/U monogram.
+
+### 2026-09-27: the approved landing page built (A-053 → A-060), for review
+MainV2 and PhoneV2 are built as one page:
+- `src/app/page.tsx`;
+- `src/components/landing/v2/` (a CSS module, plus three client pieces: See it working, Pricing, Questions).
+
+The phone layout takes over below 760px. Where the phone design differs in content, both shapes are rendered and CSS
+shows one. Rendered locally at 1440 and 390 with no sideways scroll, and checked against the canvas.
+
+**Changed from the canvas, each for truth:**
+- **Pro:** "Every new customer gets an owner" → "New customers shared out evenly". A business can route new
+  customers to a shared list nobody owns yet, so "every … gets an owner" is not always true.
+- **FAQ "Is it for a team":** adds "or land in a shared list anyone can pick up" (the pool).
+- **FAQ "Can it answer my phone":** adds "so nothing on your phone line is picked up today".
+- **Footer:** the Follow column is not rendered at all until the accounts exist (A-057's rule), rather than shown
+  dashed.
+
+**Kept as approved, named:**
+- The desktop hero picture has two cards (message, then sent on its own). The phone has three (plus "Needs you ·
+  the price"). The desktop never shows the decision in the hero. Worth adding if the founder wants the two to match.
+
+**Not designed, derived:**
+- Between 760 and 1080px the desktop sections stack into one column.
+- The promises go to two columns and Underneath to three.
+
+**Left in place:** the old dark landing components (`components/landing/dark`, `landing-dark.module.css`) are no
+longer used by the page. They are removed in a separate cleanup so this diff stays about the new page.
+
+**Ships only with or after the onboarding change** (Automatic/Assisted), because the FAQ names that choice.

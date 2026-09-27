@@ -13,7 +13,9 @@ import { Public_Sans, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
 export const publicSans = Public_Sans({
   subsets: ["latin"],
   variable: "--font-public-sans",
-  weight: ["400", "500", "600", "700"],
+  // 300 for the landing page's headings (the canvas system, R-019 / A-022:
+  // "plain thin headline"). Same family, one more weight.
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const ibmPlexMono = IBM_Plex_Mono({

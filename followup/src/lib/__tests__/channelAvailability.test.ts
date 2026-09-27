@@ -103,6 +103,11 @@ describe("the landing page's components make the same promises as the page", () 
     "../src/components/landing/dark/NavDark.tsx",
     "../src/components/landing/dark/FaqDark.tsx",
     "../src/components/landing/dark/StickyCta.tsx",
+    // The page rebuilt from the canvas (A-053 → A-060).
+    "../src/app/page.tsx",
+    "../src/components/landing/v2/SeeItWorking.tsx",
+    "../src/components/landing/v2/Pricing.tsx",
+    "../src/components/landing/v2/Questions.tsx",
   ];
   const visible = (p: string) =>
     read(p)
@@ -157,7 +162,8 @@ describe("the landing page's components make the same promises as the page", () 
    */
   it("answers what 'Soon' means where a visitor will look", () => {
     if (CARRIER_CHANNELS_AVAILABLE) return;
-    const faq = read("app/page.tsx").slice(read("app/page.tsx").indexOf("<FaqDark"));
+    // The FAQ moved into its own component with the rebuilt page (A-060).
+    const faq = read("components/landing/v2/Questions.tsx");
     expect(faq, "the FAQ does not mention the phone at all").toMatch(/phone/i);
     expect(faq, "the FAQ does not say the phone line is not picked up yet").toMatch(
       /nothing on your phone line is picked up/i

@@ -7478,6 +7478,8 @@ phone 390, to the right of PhoneV2.
 Asked what bothers him about the current two-leaf mark, the founder chose "Not sure, show me". Then, before any
 options were drawn: *"keep working other pending stuff at the background till i will make a logo."*
 
+**SUPERSEDED (2026-09-27, later the same day)** by "logo options drawn" below: the founder asked for options on the canvas.
+
 He is making the logo himself. No logo options are drawn or proposed until he brings one. When he does:
 - build every asset from it (`followup/public/brand/`, `LogoMark.tsx`, `src/app/icon.tsx`) following
   `public/brand/README.md`'s structure;
@@ -7486,3 +7488,410 @@ He is making the logo himself. No logo options are drawn or proposed until he br
 Still standing from before:
 - the brief: an abstract F in forward-moving forms, monochrome, no literal arrows;
 - R-013: no F/U monogram.
+
+### 2026-09-27: the approved landing page built (A-053 → A-060), for review
+MainV2 and PhoneV2 are built as one page:
+- `src/app/page.tsx`;
+- `src/components/landing/v2/` (a CSS module, plus three client pieces: See it working, Pricing, Questions).
+
+The phone layout takes over below 760px. Where the phone design differs in content, both shapes are rendered and CSS
+shows one. Rendered locally at 1440 and 390 with no sideways scroll, and checked against the canvas.
+
+**Changed from the canvas, each for truth:**
+- **Pro:** "Every new customer gets an owner" → "New customers shared out evenly". A business can route new
+  customers to a shared list nobody owns yet, so "every … gets an owner" is not always true.
+- **FAQ "Is it for a team":** adds "or land in a shared list anyone can pick up" (the pool).
+- **FAQ "Can it answer my phone":** adds "so nothing on your phone line is picked up today".
+- **Footer:** the Follow column is not rendered at all until the accounts exist (A-057's rule), rather than shown
+  dashed.
+
+**Kept as approved, named:**
+- The desktop hero picture has two cards (message, then sent on its own). The phone has three (plus "Needs you ·
+  the price"). The desktop never shows the decision in the hero. Worth adding if the founder wants the two to match.
+
+**Not designed, derived:**
+- Between 760 and 1080px the desktop sections stack into one column.
+- The promises go to two columns and Underneath to three.
+
+**Left in place:** the old dark landing components (`components/landing/dark`, `landing-dark.module.css`) are no
+longer used by the page. They are removed in a separate cleanup so this diff stays about the new page.
+
+**Ships only with or after the onboarding change** (Automatic/Assisted), because the FAQ names that choice.
+
+### 2026-09-27: "too much information" — the built landing page measured against the reference strategy
+**Founder, on MainV2/PhoneV2:** *"I think this is too much information no? compare and do the research according to
+that pdf if we can add more visuals rather than letting them read everything they will watch."* A question, not yet a
+decision. Nothing changed on the page.
+
+**Measured** (built page, local, visible text only):
+- **Desktop:** 1,204 words, 8.9 screens tall.
+- **Phone:** 857 words, 9.5 screens tall.
+- **Heaviest sections:** pricing 214, How it works 167, Your control 167, One customer 143, See it working 111.
+- **Repeats:** "a price or date comes to you" appears 6 times. "It stops when they reply" appears 5 times.
+
+**Against the PDF** (`FollowUp_UI_UX_Reference_Strategy.pdf`):
+- **Key rule:** "if removing it does not make understanding worse, remove it". The repeats fail it.
+- **Journey has one demo** ("Demo: now I understand it"). The page tells the same one-customer story three times: How
+  it works, One customer and See it working.
+- **Motion (Framer):** "transitions that explain state changes". Only the hero moves.
+
+**Outside evidence:**
+- NN/g: users read at most 28% of the words on a page, 20% is more likely.
+- NN/g: people decide in 10–20 seconds.
+- WCAG 2.2.2: anything that moves by itself for more than 5 seconds needs pause.
+
+**Proposed, not approved:**
+1. One watchable demo replaces those three sections: the real Today screen playing one customer in five beats, a
+   short caption each, with pause and replay. Reduced motion shows the beats as still frames.
+2. Your control: the four promises as one line each, plus one picture of the pause switch.
+3. Say each promise once.
+4. Target about 600 words and about 6 screens.
+
+The demo stays below the hero (R-007: a named-person chat playing out in the hero read as theatre).
+
+**Conflicts to resolve with the founder:**
+- It reverses A-053 (See it working tabs) and the One customer story in A-060.
+- It supersedes principle 4's "on a phone keep every word … cut the pictures", which R-021 already strains.
+- Neither is superseded until the founder says yes.
+
+### 2026-09-27: less to read, drawn (MainLean, PhoneLean), and logo options drawn (LogoOptions)
+**Founder:** *"yes draw it for both"* (the less-to-read proposal above), then *"bro lets draw the logo on canavas"*.
+Canvas v60, all proposed.
+
+**MainLean (desktop 1440) and PhoneLean (phone 390).** They sit beside MainV2 and PhoneV2 so the two can be compared.
+- **One demo** replaces How it works, One customer and See it working. It is the real Today screen playing Sarah's
+  story in 5 steps over 24 seconds:
+  1. she asks the price;
+  2. it comes to you with the reply written and a "$ price" slot;
+  3. after 30 minutes the holding line goes out, word for word from `holdingMessage.ts`;
+  4. you add $1,200 and send;
+  5. on Friday it checks in, she replies, and the check-ins stop.
+- **Captions** are 5 short lines, numbered because they are a sequence.
+  - Desktop: all 5 show, the current one darkens and a line fills under it.
+  - Phone: one at a time, with 5 progress segments.
+- **Controls:** Pause and Replay.
+- **Reduced motion** shows the end state, which is the whole thread (still frames).
+- **Label:** "An example, not a real customer".
+- **Motion** only adds or changes what is on screen (A-048): arrivals, the slot filling, the button press, the
+  pill and the count changing to "You're caught up".
+- **Your control:** four one-line promises and one picture, the Pause all sending switch. The four other switches move
+  to /security.
+- **Each promise said once:**
+  - Hero: the second trust line goes.
+  - Pricing: Free loses "Prices and dates always come to you".
+  - Final call: one reassurance.
+  - Underneath: shorter lines.
+  - The desktop money answers move into Questions, as on the phone.
+- **Truth fixes carried from the build:** Pro "New customers shared out evenly"; the FAQ's pool and phone lines.
+- **Measured locally:**
+  - Desktop about 700 words and 5,500 px, against 1,204 words and 7,966 px.
+  - Phone about 5,400 px, against 8,016 px.
+- **Nav:** "Try it" goes, because the paste-a-message box went with the tabs.
+
+**Weak, named:**
+- The demo loop is 24 seconds. Someone who scrolls past in 5 seconds sees only step 1.
+- The first frame is a single message, so it doesn't say much on its own.
+- The desktop window is 800 px tall, the biggest object on the page.
+
+**LogoOptions (1440).** Today on the left, then four options, each shown large, as a dark and a light app icon, in a
+browser tab at real size, and in the header lockup:
+- **A. Sharper leaves.** The wide-gap drawing at every size, and the name tracked tighter.
+- **B. Straight edges.** The same two parallelograms with the rounding removed. The lower one moves 3 units along the
+  channel's normal so the gap survives at 16 px.
+- **C. Two strokes.** Two round strokes at the leaves' angle, the shorter one following.
+- **D. Name only.** The app icon and tab use the F.
+
+**Kept from before:** no arrow, no F/U monogram (R-013), nothing hand-drawn (R-020), no colour.
+
+**Weak, named:**
+- A differs from today only at small sizes.
+- B reads heavier.
+- C can read as an equals sign.
+- None is trademark-searched.
+
+### 2026-09-27: logo, six more ideas (E–J), with a recommendation
+**Founder:** *"i dont know give me more suggestions bro"*, then *"give me reason why should i chose that"*.
+
+**Board:** LogoOptions2 (drawn, and sent in chat). It goes on the canvas once the founder saves; his canvas had
+unsaved edits, so it was not published over them.
+
+**The six:**
+- **E. Flag.** The email "flag for follow-up", and it's an F.
+- **F. Message F.** An F cut out of a speech bubble.
+- **G. Small f.** A lowercase f with a long forward crossbar.
+- **H. Two messages.**
+- **I. Dash and dot.**
+- **J. Three leaves.** Today's two leaves plus a third. It also reads as a quill.
+
+**Recommended: E.**
+- Owners already know the flag from their inbox as "follow up on this".
+- It reads at 16 px.
+- It is also an F.
+
+**Risks, named:**
+- A flag is a common shape, so it can't be owned alone. It needs the lean and the notch, and a trademark search.
+- In English, "red flag" means trouble. It stays black.
+
+**Runner-up: A (sharper leaves).** Nothing to relearn. It fixes the small sizes.
+
+**Advised against: F and G.** A letter f in a dark rounded square reads as Facebook's app icon.
+
+### 2026-09-27: logo, the reference study and H refined (LogoH)
+**Founder:** *"h souds my vibe"* (A-061), then *"lets study the logos of the companies also that we took refrence"*.
+
+**Study** (`references/design-systems/2026-09-27-reference-company-logos.md`):
+- 11 of the 14 reference marks looked at. Mercury, Ramp and Close weren't available here.
+- **Finding for H:** Attio, a CRM, uses a big and a small leaning rounded form. H as first drawn sat close to it.
+- **Finding for the old direction:** the current leaves and option B sit near Framer's abstract F.
+- **Open ground:** none of the eleven shows two people, a message and its answer.
+
+**LogoH (canvas v67):**
+- **Four versions:**
+  - **H1:** plain pills.
+  - **H2:** each message keeps one sharp corner pointing at who spoke. Recommended.
+  - **H3:** H2 heavier.
+  - **H4:** leaning, as first drawn, marked "closest to Attio, not recommended".
+- **H2 shown in use:** the site header, a browser tab at real size, a phone home screen among plain icons, a
+  notification email, and a dark footer.
+
+**Weak, named:**
+- At 16 px, H2 reads as two short dashes. The sharp corners only show from about 24 px.
+- Two-bubble chat marks are a common family. Distinct inside this reference set, not in the whole world. Needs a
+  trademark search before registering.
+
+### 2026-09-27: my own logo ideas (LogoIdeas), and /security with less to read (SecurityLean, SecurityLeanPhone)
+**Founder:** *"so dont just refine that give me your ideas too"* and *"keep designing all the pages too bro"*.
+Canvas v68, all proposed.
+
+**LogoIdeas (K–N).** Four original ideas, each from something FollowUp does. None is used by the reference set.
+- **K. Folded corner.** A message with its corner dog-eared, the way you mark a page you mustn't forget. It is the
+  tagline "So no customer gets forgotten" as a picture. **Recommended.**
+- **L. Completed message.** One speech bubble split in two; the piece with the tail is the follow-up that completes
+  it. H's idea as one ownable shape.
+- **M. Out of the pile.** A message lifted out of an inbox tray. Busier at 16 px.
+- **N. Held.** A message between two corners. Close to a camera-focus icon.
+
+**Weak, named:**
+- In K, the fold reads from 24 px up. At 16 px it's a bubble with a clipped corner.
+- In K, the folded corner is also the usual "document" icon; the bubble tail is what separates it.
+
+**SecurityLean.** The same facts as the approved /security page, shown instead of listed:
+- a flow picture: inbox → FollowUp → your customer, "from your own address";
+- the permission names as chips;
+- six "kept" facts with icons;
+- the switches as a picture of Settings;
+- the companies as a 3-column table;
+- the honest "not done yet" block, kept.
+
+**Measured:**
+- Desktop 428 words and 3,242 px, against 624 and 4,262.
+- Phone 4,143 px, against 4,504. The vertical flow picture costs height on the phone.
+
+**Wording that depends on PR 1:** the first switch says "Or choose Automatic". That is true once onboarding offers the
+choice. The live page's "only if you turn that on" stays true either way.
+
+### 2026-09-27: logo, a small f five ways (LogoF)
+**Founder:** *"can we do folded f or something like a small f has a like in between show some creativiy"*. Read as:
+a folded f, or a small f with something in between. Both readings were drawn. Canvas v69, all proposed.
+
+**The five:** each is a lowercase f leaning forward, with one detail.
+- **F1. Dog-eared f.** The f's head is a page with its corner folded down. His "folded f", joined with idea K.
+- **F2. Folded ribbon.** One strip of paper; the crossbar folds down at its end. The small fold turns to noise at 16 px.
+- **F3. f with a pause.** The stem breaks just under the crossbar, then carries on. The gap is the wait FollowUp
+  covers. **Recommended.** It holds at 16 px.
+- **F4. f carrying a message.** The crossbar is a small speech bubble. The tail is unreadable below 32 px.
+- **F5. f and its follow-up.** The crossbar runs forward and a dot follows it. The simplest.
+
+**Risk, named:** a plain white f on a dark rounded square reads as Facebook's app icon (G, earlier). On this board the
+app icon leads on white. The dark version is shown only to compare. Each f carries a detail (fold, gap, dot) that a
+plain f doesn't.
+
+**Not chosen yet.** The founder's H (A-061) still stands as the approved direction until he picks otherwise.
+
+### 2026-09-27: logo, every message gets a reply (LogoReply)
+**Founder:** after R-022 (the small f's "not conveying the message"), asked what the logo should say in one second.
+Chose *"Every message gets a reply"*. This is the brief for the mark from now on. It supports A-061 (H, two
+messages).
+
+**LogoReply (canvas v70).** Five marks that tell that story with no letter and no hidden detail:
+- **R1. Message and reply.** Their message drawn open, the reply drawn solid: they wrote, and the answer came back.
+  **Recommended.** It reads in one look.
+- **R2. Two-way message.** One bubble with a tail at each end. The second tail can read as a fin.
+- **R3. Answered.** A bubble with a tick. The clearest and the most common.
+- **R4. Reply on the corner.** Close to many chat-app icons.
+- **H2.** The refined H, to compare.
+
+R1 is also shown in use: header, tab, phone home screen, email, dark footer.
+
+**Weak, named:**
+- R1 is close to stock "chat" icons in common icon sets. Before it can be owned it needs a shape of its own, for
+  example the reply bubble's proportions or corners.
+- An open outline next to a solid shape departs from the old mark's "never outline it" rule. That rule was written for
+  the leaves. A new mark sets its own.
+
+### 2026-09-27: logo, drawn light (LogoLight)
+**Founder:** the reply marks "look lil wiered". Asked why: **too heavy / chunky** (R-023). Same idea, redrawn with fine,
+even lines and room around them, to sit with the thin headline (A-059). Canvas v71, proposed.
+
+**The four:**
+- **L1. Two fine lines.** Their message and the reply, each a fine outline. A sharp corner points at who spoke.
+  **Recommended.** Shown in use.
+- **L2. One line.** One unbroken outline around both messages. The overlap shows as a faint line. The most
+  distinctive, and a little abstract.
+- **L3. Open and solid, slim.** R1 without the weight.
+- **L4. Two slim messages.** H2 thinned. It can read as two dashes at 16 px.
+
+**How the line is set:**
+- 4.5 units of 100 when large, 6.5 at header size, 7.5 at 16 px, so it survives in a browser tab.
+- The name next to it is Public Sans 500 instead of 600, to match.
+
+**Weak, named:**
+- L1 still sits near generic chat icons.
+- L2's faint inner line is a tint, a first for the mark.
+
+### 2026-09-27: logo, soft rounded bands (LogoSoft), after "can we make like google pay"
+**Founder:** *"can we make like google pay ??"*. Asked what he likes about it: **soft rounded shapes** and **simple,
+known at a glance**. He did not pick the colours or the letter-plus-word style.
+- The mark stays black and white. Nothing of Google's colours or its G, which are their trademark.
+- It is still "every message gets a reply".
+- The weight sits between R (too heavy, R-023) and L (fine lines).
+
+**LogoSoft (canvas v72), proposed:**
+- **W1. Woven pair.** Two soft round-cornered message outlines that pass over and under each other, each with a short
+  round tail. **Recommended.** Shown in use.
+- **W2.** The same, with thinner bands.
+- **W3. Soft pills.** The calmest, the least distinctive.
+- **W4. Message and a dot.** Reads a bit like a notification.
+- **W5. Soft overlap.** The reply sits on the open message, solid. The reply's tail was removed because it read as a
+  magnifying glass.
+
+**Weak, named:**
+- W1's weave is a sketch; the join where the lower band passes back over shows a hairline seam at large sizes.
+- Two linked rounded shapes also suggest a chain link.
+
+### 2026-09-27: logo, "just use the one we have?", an honest user read of the leaves
+**Founder:** *"i think we just need to use the one that we have already do you think it conveys something look at it
+as a user and tell me"*.
+
+**User read of the current two-leaf mark:**
+- **Large:** two blades leaning forward. It reads as a fast, italic F, or a leaf or feather.
+- **App icon and tab:** a sharp, clean F that stands out.
+- **With the name:** the F of FollowUp.
+- **What it conveys:** forward movement, lightness, calm, premium.
+- **What it doesn't:** messages or replies. Without the name, some would read nature or wellness.
+
+**Recommendation: keep it.**
+- The name ("FollowUp") and the tagline ("So no customer gets forgotten") already say the message. The reference study
+  showed the strongest marks rarely explain the product (Stripe, Notion, Linear).
+- It is built and shipped everywhere, it matches the thin, light type (R-023), and it reads at 16 px.
+- Six rounds today did not beat it.
+- **Optional, invisible to users:** option A, one wide-gap drawing at every size.
+
+**Pending the founder's yes.** If he confirms: a new approval keeps the leaves, A-061 (H) is superseded, and the logo
+boards on the canvas become history.
+
+### 2026-09-27: logo, today's leaves made more like an F (LogoMoreF)
+**Founder:** after the honest read of the current mark, *"mke it more like f"*. Read as: keep the leaves, and make the
+F obvious. The leaves are an F's two arms with no stem. Canvas v73, proposed.
+
+**The versions:**
+- **NOW.** Today's leaves, for reference.
+- **F1. Leaf into stem.** The lower leaf carries on down into a stem, leaning with the leaves and ending in the same
+  chisel angle. Top arm, middle arm, spine; the leaves and the gap stay. **Recommended.** Shown in use.
+- **F2. Full stem.** Joined to both leaves. The most obvious F, a little heavier, with rough joins in this drawing.
+- **F3. Three pieces.** A slim separate stem. Clear, but closer to Framer's F built from pieces.
+
+**Weak, named:**
+- The mark is taller now (about 158:88 instead of 120:78), so it sits narrower beside the name.
+- F1's stem-to-leaf join needs a clean single outline before it ships. In this drawing it is three shapes overlapping.
+
+**Note:** the rejected F-with-a-stem of 2026-09-18 was a different drawing, built from the brief's words before the
+leaves existed. This keeps the founder's leaves and adds only the spine he asked for.
+
+### 2026-09-27: logo, a small f from the leaves, "two curves where I circled" (LogoSmallF)
+**Founder:** drew a circle with the canvas pen on LogoMoreF (F1). It was saved inside the F1 preview box. Then:
+*"make it sound like small f and where i circled make it two curves"*.
+
+**Where he circled** (mapped from the saved stroke onto F1's drawing): around the lower leaf and the start of the stem,
+reaching left past the stem. That is where a lowercase f's crossbar sits.
+
+**Read as:** a lowercase f.
+- The top leaf stays and becomes the f's hook.
+- The stem leans with it.
+- The middle becomes a crossbar of two curves.
+
+**LogoSmallF (canvas v74), proposed.** His circle is redrawn on F1 on the board, so the reading can be checked.
+- **S1. Two curves, joined.** Two small leaves, one each side of the stem, on one rising line. **Recommended.**
+  Shown in use.
+- **S2.** The same with the brand's thin gap around the stem. The gap also cuts a hairline where the stem meets the
+  hook: a flaw in this drawing.
+- **S3. One wave.** If "two curves" meant a single wavy stroke through the stem. Softer, more playful.
+
+**Open:** whether "two curves" meant S1's two leaves or S3's wave. The board shows both.
+
+### 2026-09-27: logo decided, keep the two leaves (A-062)
+**Founder:** *"let just keep what we have"*, after the small-f round (LogoSmallF).
+- **Approved:** A-062. A-061 (H) is superseded. No code changes.
+- **The logo boards on the canvas are history.** A note on the canvas says so.
+- **Cost of the day, named:** ten boards and several dozen marks. The useful output is the principles: R-022, R-023,
+  the one-second message, and the reference-logo study. Next time a logo change comes up, start from A-062 and those,
+  and ask for the one-second message first.
+
+### 2026-09-27: less to read approved for the landing page and /security (A-063, A-064)
+**Founder:** *"yes to all three"*: merge #358, the lean landing page (MainLean, PhoneLean), and the lean /security
+(SecurityLean, SecurityLeanPhone).
+- #358 was squash-merged the same turn.
+- A-053, A-055 and A-060 are superseded in part, and the phone rule in brand-principles is superseded in part. Each
+  carries a pointer to A-063.
+- **Build order:** PR 1 (auto follow-up: Automatic/Assisted, old customers, holding message, default check-ins) goes
+  first, because the page and /security describe it. The landing and /security build follows in PR 2, on top of the
+  MainV2 build already on the landing branch.
+
+### 2026-09-27: the less-to-read landing page and /security built (A-063, A-064), for review
+**Founder:** *"merge #359 when it's green and are we ready to do the magic ??"* #359 (auto follow-up) was merged
+green. This entry is the build of the two pages he approved.
+
+**Landing page (`src/app/page.tsx`):**
+- **One demo** (`WatchDemo.tsx`, `demo.module.css`) replaces How it works, One customer and See it working. It uses
+  the same thread, timings and captions as MainLean/PhoneLean.
+  - It starts from step 1 the first time it comes into view.
+  - Pause and Replay are real buttons. Replay restarts in place, so keyboard focus stays on it.
+  - Reduced motion shows the end of the story, still, with no controls.
+  - The window is one piece of markup for both widths: the phone hides the Today bar and the list.
+- **Your control:** the four one-line promises and the Pause card; the link goes to /security.
+- **Each promise said once:**
+  - the hero's second trust line is gone;
+  - Free no longer says "Prices and dates always come to you";
+  - the final call keeps one reassurance;
+  - Underneath has the shorter lines;
+  - the money answers are in Questions at every width.
+- **Nav:** "How it works" goes to the demo. "Try it" is gone, and `SeeItWorking.tsx` is deleted.
+- **Tests:** the copy test now pins the hero's "like a price or a date, it hands it to you" and the demo's
+  "It comes to you, reply written" in place of the removed trust line.
+
+**/security (`src/app/security/page.tsx`, `security.module.css`):**
+- It is SecurityLean on the landing page's system: header, tokens and type.
+- The flow picture, permission chips, six kept facts, the Settings picture, the company table and "not done yet"
+  are all as drawn.
+- It keeps the live page's one condition: "New sign-in emails" shows only when alert email is configured; otherwise
+  the row is "Recent sign-ins".
+
+**One change from the drawing, deliberate:** between phone and desktop (761–1080 px), the captions show one at a
+time right above the window, the phone's pattern. Stacked above the window, the five captions pushed the screen out
+of view while step 1 played.
+
+**Measured locally:**
+- Desktop home: 5,997 px, 778 visible words (the drawing: 5,497 and 703).
+- Phone home: 6,545 px.
+- /security desktop: 3,351 px.
+- No sideways scroll at 375, 390, 768, 1024 or 1440.
+
+**Review against design-review.md, weak spots named:**
+- The demo's timestamps and the Settings picture's eyebrow are 10.5–11 px mono. They are inside pictures, and they
+  follow the approved eyebrow style, but they are below the 12 px line.
+- The desktop page is about 500 px taller than the drawing. The FAQ's open first answer and the real plan cards
+  account for most of it.
+- Still true from the proposal: the loop is 24 s, so a fast scroller sees step 1 only.
+- The window is `role="img"` with the whole story as its label. A screen reader hears the story once, not the
+  steps as they play.
+

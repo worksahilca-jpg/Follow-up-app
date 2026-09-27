@@ -514,3 +514,43 @@ describe it. Stacking the desktop's text column above the picture pushes the pro
 **Open:** "bold, full letters" could mean the thin headline, or the wall of text. Both versions are drawn
 (PhoneHeroA thin, PhoneHeroB bold) for the founder to pick.
 **Do not propose again:** a phone hero where the picture starts below the first screen.
+
+## R-022 — The small-f logos (F1–F5): a letter with a clever detail ^R-022
+
+**Rejected:** 2026-09-27, founder, on LogoF (canvas v69): *"it is not conveying the message bro"*.
+
+**What was rejected:** all five lowercase-f marks:
+- F1, dog-eared f;
+- F2, folded ribbon;
+- F3, f with a pause (my pick);
+- F4, f carrying a message;
+- F5, f and a dot.
+
+The founder asked for the f himself. The rejection is of what these f's say, not of asking.
+
+**Stated reason:** they don't convey the message.
+
+**Inferred principle (marked inferred):**
+- The mark has to say what FollowUp does at a glance.
+- A letter plus a small hidden detail (a gap, a fold, a dot) needs explaining, so it fails.
+- The detail was carrying the meaning, and at a glance nobody sees the detail.
+
+**Answered the same day:** *"Every message gets a reply"*. That's what the logo has to say in one second. See
+`[[design-decisions]]` 2026-09-27, "logo, every message gets a reply".
+
+**Do not propose again:** a letter (f or F) whose meaning lives in a small detail.
+
+## R-023 — The reply marks drawn heavy (LogoReply R1–R4) ^R-023
+
+**Rejected:** 2026-09-27, founder, on LogoReply (canvas v70): *"looks lil wiered"*. Asked what was weird, he picked
+**"Too heavy / chunky"**: the shapes feel thick and blunt, not premium or refined.
+
+**What was rejected:** the weight, not the idea. "Every message gets a reply" still stands. R1–R4 were drawn as solid
+blobs or thick 8-unit outlines, with fat tails.
+
+**Principle (from his answer):**
+- The mark has to feel light and refined.
+- It should match the page's thin Public Sans 300 headline (A-059), not a chunky app icon. That part is inferred.
+- Thin, even lines and room around them.
+
+**Do not propose again:** heavy solid chat blobs or thick outlines as the mark.

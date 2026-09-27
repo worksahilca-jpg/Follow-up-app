@@ -1,0 +1,107 @@
+/*
+  /security, less to read (design brain A-064): the same facts as before,
+  shown instead of listed. It sits on the landing page's system — tokens,
+  type, header and gutters come from landing.module.css; this sheet holds
+  only what the page adds.
+*/
+
+.hero { padding-top: 88px; }
+.h1 { margin: 16px 0 0; font-size: 64px; line-height: 1.04; letter-spacing: -0.035em; font-weight: 300; }
+.lede { margin: 16px 0 0; max-width: 600px; font-size: 19px; line-height: 1.55; color: var(--soft); }
+.updated { margin: 10px 0 0; font-size: 14px; color: var(--dim); }
+.jump { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px; }
+.jump a { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 14px; text-decoration: none; }
+.jump a:hover { border-color: var(--ink); }
+
+.sec { margin-top: 96px; scroll-margin-top: 24px; }
+.h2 { margin: 12px 0 0; font-size: 44px; line-height: 1.08; letter-spacing: -0.03em; font-weight: 300; text-wrap: balance; }
+.secLede { margin: 12px 0 0; max-width: 560px; font-size: 16.5px; line-height: 1.55; color: var(--soft); }
+.inner { margin-top: 32px; }
+.note { margin: 16px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--soft); }
+.note a { text-underline-offset: 3px; }
+
+/* what it can see: the flow */
+.flow { display: flex; align-items: center; }
+.box { flex: 1; min-width: 0; box-sizing: border-box; padding: 20px 22px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; }
+.chans { margin: 14px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px 12px; }
+.chans li { display: inline-flex; align-items: center; gap: 8px; font-size: 14.5px; }
+.hub { flex-shrink: 0; width: 200px; box-sizing: border-box; padding: 20px; background: var(--ink); color: #fff; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.hubName { font-size: 16px; font-weight: 600; }
+.hubLine { font-size: 13.5px; line-height: 1.4; color: #c9c5c0; }
+.link { flex-shrink: 0; width: 132px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; line-height: 1.3; color: var(--soft); text-align: center; }
+.linkDown { display: none; }
+.reply { margin-top: 14px; padding: 11px 14px; background: var(--fill); border-radius: 16px 16px 4px 16px; font-size: 14.5px; line-height: 1.45; }
+.scopes { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; }
+.scope { display: inline-flex; align-items: center; gap: 10px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 14.5px; }
+.scope code { font-family: var(--font-plex-mono), ui-monospace, monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; color: var(--dim); }
+
+/* how it's kept */
+.kept { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 40px; }
+.kept li { display: flex; gap: 14px; align-items: flex-start; padding: 20px 0; border-top: 1px solid var(--line); }
+.icon { width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px; background: var(--fill); display: flex; align-items: center; justify-content: center; }
+.factName { font-size: 17px; font-weight: 500; }
+.factBody { margin-top: 3px; font-size: 14.5px; line-height: 1.45; color: var(--soft); }
+
+/* what you control: a picture of Settings */
+.control { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 64px; align-items: start; }
+.panel { box-sizing: border-box; padding: 22px 26px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 30px 60px -36px rgba(26, 20, 15, 0.2); }
+.panelTop { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 12px; }
+.panelTitle { font-size: 16px; font-weight: 600; }
+.setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 0; border-top: 1px solid var(--line-2); }
+.settingName { font-size: 16px; font-weight: 500; }
+.settingBody { margin-top: 2px; font-size: 14px; line-height: 1.4; color: var(--soft); }
+.toggle { flex-shrink: 0; width: 44px; height: 26px; box-sizing: border-box; border-radius: 999px; background: var(--line); padding: 3px; display: flex; }
+.toggleOn { background: var(--ink); justify-content: flex-end; }
+.toggle > span { width: 20px; height: 20px; border-radius: 999px; background: var(--card); box-shadow: 0 1px 3px rgba(10, 10, 10, 0.2); }
+.pills { flex-shrink: 0; display: flex; gap: 8px; }
+.pillBtn { display: inline-flex; align-items: center; height: 32px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 13.5px; font-weight: 500; white-space: nowrap; }
+.danger { color: #9f2f12; }
+
+/* who else handles it */
+.companies { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 40px; }
+.companies > div { padding: 12px 0; border-top: 1px solid var(--line); }
+.companies dt { font-size: 16px; font-weight: 500; }
+.companies dd { margin: 2px 0 0; font-size: 14.5px; line-height: 1.4; color: var(--soft); }
+
+/* not done yet */
+.notYet { margin: 0; padding: 6px 26px; list-style: none; background: #faf8f6; border-radius: 20px; }
+.notYet li { padding: 14px 0; }
+.notYet li + li { border-top: 1px solid var(--line); }
+.notYetName { font-size: 16.5px; font-weight: 500; }
+.notYetBody { margin-top: 3px; font-size: 15px; line-height: 1.5; color: var(--soft); }
+
+.tell { margin: 96px 0 104px; padding-top: 28px; border-top: 1px solid var(--line); font-size: 19px; line-height: 1.5; }
+.tell a { text-underline-offset: 3px; }
+
+.foot { border-top: 1px solid var(--line); }
+.footInner { min-height: 84px; display: flex; align-items: center; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; padding-block: 20px; font-size: 14px; color: var(--soft); }
+.footBrand { display: flex; align-items: center; gap: 10px; }
+.footLinks { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.footLinks a { color: var(--soft); text-decoration: none; }
+.footLinks a:hover { color: var(--ink); }
+
+@media (max-width: 1080px) {
+  .flow { flex-direction: column; align-items: stretch; }
+  .box, .hub { width: 100%; flex: none; }
+  .link { width: auto; flex-direction: row; justify-content: flex-start; padding: 8px 0 8px 22px; gap: 10px; font-size: 13.5px; text-align: left; }
+  .linkRight { display: none; }
+  .linkDown { display: block; }
+  .kept { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .control { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+}
+
+@media (max-width: 760px) {
+  .hero { padding-top: 36px; }
+  .h1 { margin-top: 12px; font-size: 40px; }
+  .lede { font-size: 17px; }
+  .sec { margin-top: 56px; }
+  .h2 { font-size: 30px; }
+  .inner { margin-top: 20px; }
+  .kept { grid-template-columns: minmax(0, 1fr); }
+  .kept li { padding: 14px 0; }
+  .panel { padding: 18px 18px 6px; }
+  .companies { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+  .notYet { padding: 6px 18px; }
+  .tell { margin: 56px 0; font-size: 17px; }
+  .footInner { flex-direction: column; align-items: flex-start; }
+}

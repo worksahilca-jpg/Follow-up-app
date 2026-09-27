@@ -1,5 +1,3 @@
-import { startOfLocalDay } from "@/lib/calmToday";
-
 /**
  * "Later" (design brain A-046): the two times an owner can set a waiting
  * reply aside until, in their own time zone. Later today is 2pm, offered
@@ -10,9 +8,42 @@ export type LaterChoice = "later_today" | "tomorrow_morning";
 
 const HOUR = 3_600_000;
 
+/** The wall-clock reading of `instant` in `timeZone`, as if that reading were UTC. */
+function wallClockAsUtc(instant: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(instant));
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  return Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+}
+
+/**
+ * The instant it is `hour`:00 on the local calendar day `daysAhead` after
+ * today's, in `timeZone`.
+ *
+ * Found by the zone's own offset at that moment, not by counting hours
+ * from local midnight. Counting was an hour out on the days the clocks
+ * change: the Sunday in March has 23 hours, so midnight + 14h is 3pm, and
+ * "tomorrow 9am" set on the Saturday was 10am (8am in November).
+ */
+function localTimeOn(now: Date, daysAhead: number, hour: number, timeZone: string): Date {
+  const today = new Date(wallClockAsUtc(now.getTime(), timeZone));
+  const target = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + daysAhead, hour);
+  // Offset of the zone near the target, then again at the first guess, so
+  // a guess that lands on the other side of a clock change corrects itself.
+  const first = target - (wallClockAsUtc(target, timeZone) - target);
+  return new Date(target - (wallClockAsUtc(first, timeZone) - first));
+}
+
 export function laterTime(choice: LaterChoice, now: Date, timeZone: string): Date {
-  const midnight = startOfLocalDay(now, timeZone).getTime();
-  return choice === "later_today" ? new Date(midnight + 14 * HOUR) : new Date(midnight + 24 * HOUR + 9 * HOUR);
+  return choice === "later_today" ? localTimeOn(now, 0, 14, timeZone) : localTimeOn(now, 1, 9, timeZone);
 }
 
 /** Whether "Later today" still makes sense: at least half an hour before 2pm. */

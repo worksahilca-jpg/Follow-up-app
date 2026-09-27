@@ -7473,3 +7473,16 @@ phone 390, to the right of PhoneV2.
   empty) before it's built.
 - The old-customer list shows only 3 of 10 on the phone, so the owner sends 7 unseen. They're one tap from "See
   all", and the risk gate has already cleared them. Revisit if testers are uneasy.
+
+### 2026-09-27: logo, the founder makes it himself
+Asked what bothers him about the current two-leaf mark, the founder chose "Not sure, show me". Then, before any
+options were drawn: *"keep working other pending stuff at the background till i will make a logo."*
+
+He is making the logo himself. No logo options are drawn or proposed until he brings one. When he does:
+- build every asset from it (`followup/public/brand/`, `LogoMark.tsx`, `src/app/icon.tsx`) following
+  `public/brand/README.md`'s structure;
+- record the new mark in `approved.md`, superseding A-009's geometry.
+
+Still standing from before:
+- the brief: an abstract F in forward-moving forms, monochrome, no literal arrows;
+- R-013: no F/U monogram.

@@ -7478,6 +7478,8 @@ phone 390, to the right of PhoneV2.
 Asked what bothers him about the current two-leaf mark, the founder chose "Not sure, show me". Then, before any
 options were drawn: *"keep working other pending stuff at the background till i will make a logo."*
 
+**SUPERSEDED (2026-09-27, later the same day)** by "logo options drawn" below: the founder asked for options on the canvas.
+
 He is making the logo himself. No logo options are drawn or proposed until he brings one. When he does:
 - build every asset from it (`followup/public/brand/`, `LogoMark.tsx`, `src/app/icon.tsx`) following
   `public/brand/README.md`'s structure;
@@ -7551,3 +7553,58 @@ The demo stays below the hero (R-007: a named-person chat playing out in the her
 - It reverses A-053 (See it working tabs) and the One customer story in A-060.
 - It supersedes principle 4's "on a phone keep every word … cut the pictures", which R-021 already strains.
 - Neither is superseded until the founder says yes.
+
+### 2026-09-27: less to read, drawn (MainLean, PhoneLean), and logo options drawn (LogoOptions)
+**Founder:** *"yes draw it for both"* (the less-to-read proposal above), then *"bro lets draw the logo on canavas"*.
+Canvas v60, all proposed.
+
+**MainLean (desktop 1440) and PhoneLean (phone 390).** They sit beside MainV2 and PhoneV2 so the two can be compared.
+- **One demo** replaces How it works, One customer and See it working. It is the real Today screen playing Sarah's
+  story in 5 steps over 24 seconds:
+  1. she asks the price;
+  2. it comes to you with the reply written and a "$ price" slot;
+  3. after 30 minutes the holding line goes out, word for word from `holdingMessage.ts`;
+  4. you add $1,200 and send;
+  5. on Friday it checks in, she replies, and the check-ins stop.
+- **Captions** are 5 short lines, numbered because they are a sequence.
+  - Desktop: all 5 show, the current one darkens and a line fills under it.
+  - Phone: one at a time, with 5 progress segments.
+- **Controls:** Pause and Replay.
+- **Reduced motion** shows the end state, which is the whole thread (still frames).
+- **Label:** "An example, not a real customer".
+- **Motion** only adds or changes what is on screen (A-048): arrivals, the slot filling, the button press, the
+  pill and the count changing to "You're caught up".
+- **Your control:** four one-line promises and one picture, the Pause all sending switch. The four other switches move
+  to /security.
+- **Each promise said once:**
+  - Hero: the second trust line goes.
+  - Pricing: Free loses "Prices and dates always come to you".
+  - Final call: one reassurance.
+  - Underneath: shorter lines.
+  - The desktop money answers move into Questions, as on the phone.
+- **Truth fixes carried from the build:** Pro "New customers shared out evenly"; the FAQ's pool and phone lines.
+- **Measured locally:**
+  - Desktop about 700 words and 5,500 px, against 1,204 words and 7,966 px.
+  - Phone about 5,400 px, against 8,016 px.
+- **Nav:** "Try it" goes, because the paste-a-message box went with the tabs.
+
+**Weak, named:**
+- The demo loop is 24 seconds. Someone who scrolls past in 5 seconds sees only step 1.
+- The first frame is a single message, so it doesn't say much on its own.
+- The desktop window is 800 px tall, the biggest object on the page.
+
+**LogoOptions (1440).** Today on the left, then four options, each shown large, as a dark and a light app icon, in a
+browser tab at real size, and in the header lockup:
+- **A. Sharper leaves.** The wide-gap drawing at every size, and the name tracked tighter.
+- **B. Straight edges.** The same two parallelograms with the rounding removed. The lower one moves 3 units along the
+  channel's normal so the gap survives at 16 px.
+- **C. Two strokes.** Two round strokes at the leaves' angle, the shorter one following.
+- **D. Name only.** The app icon and tab use the F.
+
+**Kept from before:** no arrow, no F/U monogram (R-013), nothing hand-drawn (R-020), no colour.
+
+**Weak, named:**
+- A differs from today only at small sizes.
+- B reads heavier.
+- C can read as an equals sign.
+- None is trademark-searched.

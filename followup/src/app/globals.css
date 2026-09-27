@@ -347,6 +347,17 @@ input::placeholder, textarea::placeholder {
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+/* Working surfaces (Inbox, an open customer) take the whole width beside
+   the sidebar. Every other page reads in the 1152px column; on a wide
+   screen a list-and-conversation split capped at that width floated in the
+   middle, leaving a band of nothing between it and the sidebar. */
+@media (min-width: 64rem) {
+  .app-frame:has(> .app-bleed) {
+    max-width: none;
+    padding: 0;
+  }
+}
+
 /* Someone who asked the OS for less movement gets the state change and
    none of the theatre. */
 @media (prefers-reduced-motion: reduce) {

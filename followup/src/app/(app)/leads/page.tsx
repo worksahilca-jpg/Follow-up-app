@@ -61,7 +61,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   return (
     // Desktop: full height, the list on the left and the customer docked on
     // the right edge, the Inbox's frame (A-025). Phone: the customer alone.
-    <div className="lg:-mx-14 lg:-mb-12 lg:-mt-9 lg:grid lg:h-screen lg:grid-cols-[minmax(0,1fr)_400px]">
+    <div className="app-bleed lg:grid lg:h-screen lg:grid-cols-[minmax(0,1fr)_400px]">
       <div className="hidden min-w-0 lg:block lg:overflow-y-auto lg:px-7 lg:pb-12 lg:pt-9">
         <LeadsPageClient leads={leads} places={places} openId={open.id} />
       </div>

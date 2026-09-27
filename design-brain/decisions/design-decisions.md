@@ -8168,3 +8168,20 @@ Four boards on the canvas (v80): SettingsAll, SettingsAllPhone, SettingsChannel 
     - the customer's side column as a record panel (Attio), with how FollowUp handles this person visible at a glance
       (the 2026-09-12 trust study).
 - **Principle, from the founder:** every drawing names the research it follows, checked before it's shown, not after.
+
+## 2026-09-27 — Inbox and an open customer fill the width on wide screens
+
+- **Founder feedback** (screenshot on a ~2000px window): *"the design the chatbox is totally on left"*.
+- **What was wrong:** every page sat in the 1152px reading column, centred. Inbox and an open customer broke out of it
+  by only the page padding. On a wide window the list-and-conversation split floated in the middle, with a band of
+  nothing between it and the sidebar.
+- **Decision:**
+  - Working surfaces (Inbox, Customers with a person open) mark their root `.app-bleed` and take the whole width
+    beside the sidebar.
+  - Reading pages (Today, the Customers list, Settings) keep the centred 1152px column.
+  - Inside the conversation pane, the header, thread and reply sit in one centred 820px column. They don't stretch to
+    the edges or cling to the left of an empty pane.
+- **Also fixed with it:** FollowUp's own alert emails (alerts@followupbase.io, or `ALERT_FROM_EMAIL`) were read back in
+  from the owner's inbox as a customer called "FollowUp". They are now never a customer.
+- **Weak, named:** above about 1,700px there is still open space either side of the conversation column. That is
+  deliberate (line length), but it can read as empty.

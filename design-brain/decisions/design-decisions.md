@@ -7748,3 +7748,23 @@ even lines and room around them, to sit with the thin headline (A-059). Canvas v
 **Weak, named:**
 - L1 still sits near generic chat icons.
 - L2's faint inner line is a tint, a first for the mark.
+
+### 2026-09-27: logo, soft rounded bands (LogoSoft), after "can we make like google pay"
+**Founder:** *"can we make like google pay ??"*. Asked what he likes about it: **soft rounded shapes** and **simple,
+known at a glance**. He did not pick the colours or the letter-plus-word style.
+- The mark stays black and white. Nothing of Google's colours or its G, which are their trademark.
+- It is still "every message gets a reply".
+- The weight sits between R (too heavy, R-023) and L (fine lines).
+
+**LogoSoft (canvas v72), proposed:**
+- **W1. Woven pair.** Two soft round-cornered message outlines that pass over and under each other, each with a short
+  round tail. **Recommended.** Shown in use.
+- **W2.** The same, with thinner bands.
+- **W3. Soft pills.** The calmest, the least distinctive.
+- **W4. Message and a dot.** Reads a bit like a notification.
+- **W5. Soft overlap.** The reply sits on the open message, solid. The reply's tail was removed because it read as a
+  magnifying glass.
+
+**Weak, named:**
+- W1's weave is a sketch; the join where the lower band passes back over shows a hairline seam at large sizes.
+- Two linked rounded shapes also suggest a chain link.

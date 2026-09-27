@@ -38,6 +38,11 @@ unused primitives so they aren't reached for later. Marketing pages are a separa
 question with more latitude. **This is the founder's decision to make** — flagged here
 rather than acted on.
 
+**UPDATE (2026-09-27):** the eight retired primitives (`CountUp`, `FadeIn`, `HoverLift`, `KineticHeadline`,
+`ParallaxDots`, `Reveal`, `RiseIn`, `ScoreRing`) are deleted from `src/components/motion/`; nothing imported them.
+The app's motion now lives in `src/lib/motion.ts` and the `open-in-place` CSS for `<details>`. Overlays (the bell,
+the sidebar search results, the Customers filter row) open in place with the same 220/120 ms.
+
 ## Rules
 
 1. **Duration: short.** 120–200ms for most UI transitions. 200–300ms for something

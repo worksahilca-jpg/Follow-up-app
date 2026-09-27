@@ -10,6 +10,8 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { OPEN_IN_PLACE } from "@/lib/motion";
 import Link from "next/link";
 import { Bell } from "lucide-react";
 
@@ -105,8 +107,12 @@ export default function NotificationBell({ align = "left" }: { align?: "left" | 
         )}
       </button>
 
+      {/* Opens from the bell and closes back into it (A-048). */}
+      <AnimatePresence>
       {open && (
-        <div
+        <motion.div
+          key="panel"
+          {...OPEN_IN_PLACE}
           className={
             "absolute top-10 z-50 w-80 max-w-[calc(100vw-2rem)] box-lift overflow-hidden " +
             (align === "right" ? "right-0" : "left-0")
@@ -145,8 +151,9 @@ export default function NotificationBell({ align = "left" }: { align?: "left" | 
               );
             })}
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }

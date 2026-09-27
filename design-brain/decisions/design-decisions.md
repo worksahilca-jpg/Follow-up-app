@@ -8020,3 +8020,31 @@ that we decided and motions"*.
 - **Weak, named:** Inbox rows don't show the channel. The "Earlier" list stops at 40. Pages the canvas never drew
   (Pipeline, Follow-up plans, Numbers, Activity, Waiting, Coming up) use the new colours and type but keep their old
   layouts.
+
+### 2026-09-27: the rest of the app drawn, and the last motion gaps closed
+**Founder:** *"lets draw the six pages on canvas and lso build all the motions and animations and effectes that was
+decided in the design"*.
+- **Drawn (canvas v78, "The rest of the app", proposed, not built):**
+  - Pipeline, desktop and phone. Stages as quiet columns with a value per customer and per stage. "New", not "New
+    Lead" (A-050). No score and no per-card stage dropdown. One line for won and lost.
+  - Numbers, desktop and phone. It leads with the week's reply speed in one sentence (A-050), then answered, came back
+    and booked with last week (A-038), then eight weeks as bars and "Everything else". The phone drops the bars
+    (R-015).
+  - What FollowUp did (Activity), desktop and phone. Grouped by day, one sentence each, with tabs for Sent, Stopped
+    and Held for you.
+  - Coming up on desktop (the phone was already drawn). Each row says when, "unless … writes first", and whether it
+    sends on its own or waits for an OK.
+  - Follow-up plans on the phone (the desktop is A-044).
+  - Waiting on customers was already drawn on both, so it wasn't redrawn.
+  - All of them stay out of the menu and open from Settings › Everything else (A-027).
+- **Motion (A-048), audited after the canvas rebuild:** fold into the result, list closing up, the undo line
+  draining, and open in place for Later, See an example, Read a few first and Every step were all still there. What
+  was missing, now built:
+  - the notification panel;
+  - the sidebar's search results;
+  - the Customers filter row.
+  All three open in place (220 ms in, 120 ms out). The eight retired motion primitives are deleted.
+- **Weak, named:**
+  - The live Follow-up plans page still has a left-border note ("A plan stops the moment…"). It goes when the page is
+    built from the drawing.
+  - Pipeline on the phone shows one stage open at a time, which hides the others' customers.

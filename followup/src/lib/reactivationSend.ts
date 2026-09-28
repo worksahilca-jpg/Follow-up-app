@@ -44,7 +44,9 @@ import { recordAudit } from "@/lib/audit";
 import { getVoiceSamples } from "@/lib/voice";
 import { DEAD_LEAD_DEFAULT_DAYS, DEAD_LEAD_ACTION, deadLeadMessageHint } from "@/lib/automation";
 import type { Message } from "@/lib/types";
-import type { PipelineStage } from "@prisma/client";
+import { Prisma, type PipelineStage } from "@prisma/client";
+import { emailBodyOf, inventedSpecific } from "@/lib/dmDrafts";
+import { UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
 const OWNER_CONCLUDED_STAGES: PipelineStage[] = ["WON", "LOST"];
 
@@ -351,12 +353,43 @@ export async function runReactivationSend(
           body: m.body,
           date: m.sentAt.toISOString(),
           opened: m.opened,
+          trigger: m.trigger ?? undefined,
         }))
       )
       .sort((a, b) => a.date.localeCompare(b.date));
 
     try {
       const draft = await draftReactivation(lead, conversation, voiceSamples);
+
+      // The owner approved this batch having read three drafts, not this
+      // one. A draft that invents a figure, a day, or a claim only the owner
+      // can make ("it's still available", "estimates are free") is held for
+      // them instead of sent (audit 2026-09-28). The claim above is kept:
+      // the lead is not batch-messaged later, and the draft waits in
+      // Approvals with the reason.
+      const invented = inventedSpecific(`${draft.subject}\n${emailBodyOf(draft.body)}`, conversation, undefined);
+      if (invented) {
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: {
+            suggestedMessage: draft.body,
+            suggestedSubject: draft.subject,
+            suggestedQuickReplies: Prisma.JsonNull,
+            suggestedDraftKind: "reactivation",
+            suggestedRiskLevel: null,
+            suggestedRiskReason: null,
+            suggestedRiskTopic: null,
+          },
+        });
+        await recordAudit({ businessId, userId: null }, "ai.hold", {
+          targetType: "lead",
+          targetId: lead.id,
+          meta: { riskLevel: "shape", reason: UNGROUNDED_DRAFT_REASONS[invented] ?? UNGROUNDED_DRAFT_REASONS.digits, trigger: "dead_lead_reactivation", reactivationRunId: runId },
+        });
+        skipped += 1;
+        await prisma.reactivationRun.update({ where: { id: runId }, data: { sent, failed, skipped } });
+        continue;
+      }
 
       const result = await sendFollowUpToLead(lead.id, draft.body, {
         automated: true,

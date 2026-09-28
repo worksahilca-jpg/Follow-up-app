@@ -36,8 +36,7 @@ import { settledByTalk, lastInboundTime } from "@/lib/talked";
 import { generateFollowUpMessage, assessSendRisk, type RiskTopic } from "@/lib/integrations/openai";
 import { hasPriceSlot, PRICE_SLOT_REASON } from "@/lib/priceSlot";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
-import { businessText, conversationText } from "@/lib/dmDrafts";
-import { unconfirmedAvailability, ungroundedSpecifics } from "@/lib/grounding";
+import { businessText, checkDmDraftShape, conversationText, emailBodyOf, inventedSpecific } from "@/lib/dmDrafts";
 import { isExitPayload, toQuickReplies, type StoredQuickReplies } from "@/lib/quickReplies";
 import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
@@ -1330,10 +1329,7 @@ export async function runAutomationForBusiness(
           // On 2026-09-20 a lead asked what a consultation costs and this
           // path answered "El costo será de $100" in the owner's name.
           // Nobody had said $100.
-          emailShapeFailed =
-            ungroundedSpecifics(`${draft.subject ?? ""}\n${draft.body}`, conversationText(conversation), leadLanguageOf(lead)?.language) ??
-            // Availability is only the owner's to state (src/lib/grounding.ts).
-            (unconfirmedAvailability(`${draft.subject ?? ""}\n${draft.body}`, businessText(conversation)) ? "availability" : null);
+          emailShapeFailed = inventedSpecific(`${draft.subject ?? ""}\n${draft.body}`, conversation, leadLanguageOf(lead)?.language);
           message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
             languageSample: latestInboundText(conversation),
             leadLanguage: leadLanguageOf(lead),
@@ -1362,9 +1358,26 @@ export async function runAutomationForBusiness(
       // let the risk judge call it low, and offer it in "Send it" with the
       // routine drafts: "Yes, it is available" went into the one-tap group
       // on 2026-09-27 though nobody at the business had said so.
-      if (!dmShapeFailed && !emailShapeFailed && message && unconfirmedAvailability(`${subject ?? ""}\n${message}`, businessText(conversation))) {
-        if (isDm) dmShapeFailed = "availability";
-        else emailShapeFailed = "availability";
+      //
+      // Not just availability: EVERY deterministic rule runs on the draft
+      // about to be used (audit 2026-09-28). A reused draft is the common
+      // case — the five-minute reply and the unanswered rule both reuse
+      // scoring's draft, which never ran the email grounding check, and
+      // scoring keeps a DM that failed its shape check twice with only the
+      // buttons stripped. So "El costo será de $100" (2026-09-20) could
+      // still go out on the reuse path, on AUTONOMOUS with no check at all.
+      if (!dmShapeFailed && !emailShapeFailed && message) {
+        if (isDm) {
+          const shape = checkDmDraftShape(
+            { body: message, buttons: quickReplies?.buttons ?? [] },
+            conversationText(conversation),
+            leadLanguageOf(lead)?.language,
+            businessText(conversation)
+          );
+          if (!shape.ok) dmShapeFailed = shape.rule;
+        } else {
+          emailShapeFailed = inventedSpecific(`${subject ?? ""}\n${emailBodyOf(message)}`, conversation, leadLanguageOf(lead)?.language);
+        }
       }
 
       if (dmShapeFailed) {
@@ -1374,7 +1387,11 @@ export async function runAutomationForBusiness(
             data: { suggestedMessage: message, suggestedSubject: null, suggestedQuickReplies: { question: "shape_failed", buttons: [] }, suggestedDraftedFor: newestMessageAt, suggestedDraftKind: draftKind, suggestedRiskLevel: null, suggestedRiskReason: null, suggestedRiskTopic: null },
           });
         }
-        const reason = `FollowUp couldn't write a short enough DM for ${lead.name.split(" ")[0]} (${dmShapeFailed}) — this one needs your eye before it goes`;
+        // A grounding failure says which part to distrust; only a real shape
+        // failure (two questions, too long) is "couldn't write a short DM".
+        const reason =
+          UNGROUNDED_DRAFT_REASONS[dmShapeFailed] ??
+          `FollowUp couldn't write a short enough DM for ${lead.name.split(" ")[0]} (${dmShapeFailed}) — this one needs your eye before it goes`;
         if (!(await recordHold(lead, { riskLevel: "shape", reason: UNGROUNDED_DRAFT_REASONS[dmShapeFailed] ?? dmShapeFailed, trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence" }))) {
           return { kind: "skipped", note: `${lead.name}: ${HOLD_NOT_RECORDED}` };
         }

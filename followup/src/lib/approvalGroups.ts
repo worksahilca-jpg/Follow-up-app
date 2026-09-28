@@ -40,6 +40,7 @@
 import { isHeldOnlyByApprovalSetting, BACKLOG_BEFORE_PERMISSION_REASON } from "@/lib/holdReasons";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import { byLongestWaiting } from "@/lib/calmToday";
+import { unconfirmedClaim } from "@/lib/grounding";
 
 /**
  * What a group is called when the lead carries no source at all — a lead
@@ -79,9 +80,20 @@ export type ApprovalGroup = {
  * the pile, and the send endpoint must re-check it per draft rather than
  * trusting a list of ids posted by a browser.
  */
-export function isSafeToSendInBulk(approval: Pick<PendingApproval, "reason" | "draftRiskLevel">): boolean {
+export function isSafeToSendInBulk(
+  approval: Pick<PendingApproval, "reason" | "draftRiskLevel"> & { draftMessage?: string }
+): boolean {
   // Held for a reason of its own → needs a human, whatever the verdict.
   if (!isHeldOnlyByApprovalSetting(approval.reason)) return false;
+  // A draft that tells the customer something only the owner knows — it
+  // is available, they're booked, it's free, we're open, a price — is
+  // never routine, grounded or not (audit 2026-09-28). The risk judge
+  // passed "Yes, it is available" as low on 2026-09-27, and a stored
+  // verdict can predate every deterministic rule added since, so the pile
+  // re-reads the words themselves. Availability also goes stale: true on
+  // Monday is not a fact on Friday.
+  const draft = approval.draftMessage ?? "";
+  if (unconfirmedClaim(draft, "") !== null || /[$€£₹¥]/u.test(draft)) return false;
   // Judged, and judged low. `null` is unjudged and fails here, which is
   // the whole point — see the header.
   return approval.draftRiskLevel === "low";

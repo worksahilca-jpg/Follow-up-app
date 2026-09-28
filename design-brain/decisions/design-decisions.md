@@ -8313,3 +8313,24 @@ Found by the launch audits. Each one said something that wasn't true, so each no
 - **Left for the founder:** the landing demo's "Stopped · she replied" is a line the app never writes, and it uses a
   pronoun. It's part of the approved landing drawing (A-063), so it isn't changed without a yes.
 Rule, unchanged: every message states only what FollowUp knows to be true.
+
+## 2026-09-28 — A reply never states what only the owner knows (reply-truth audit)
+
+The audit found that every automated path could still send a customer a fact the business never gave. The five-minute
+reply reused a draft that had skipped the price/number check. Workflow steps and the reactivation batch had no rule at
+all. The new availability check could be beaten by a comma. Now every draft about to go out is read sentence by
+sentence, on every path. A draft that states one of these, when no person at the business has said it in the thread,
+waits for the owner:
+- availability (including "sold", "rented", "still on the market")
+- a booking ("you're booked for Saturday")
+- something already done ("I've sent you the details")
+- a policy ("estimates are free")
+- opening hours
+- what the business covers or accepts
+
+Each hold says which one it is, in the owner's words, e.g. "the draft says when you're open, and only you know that".
+Such a draft is never in the one-tap "Send it" group. FollowUp's own automated messages no longer count as the
+business having said something. Kept routine on purpose: "the email I sent last week" once a message has really gone
+out, and "hope to see you soon".
+Known gaps: invented staff or place names; Hindi, Punjabi and Gujarati wording.
+Rule: a reply states only what the thread shows a person at the business said.

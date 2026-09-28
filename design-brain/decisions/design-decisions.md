@@ -8282,3 +8282,11 @@ From the 2026-09-27 strategy audit, item 4, after checking each claim against th
    every five minutes, since each retry was a paid translation call.
 4. **Held first replies:** a customer already waiting for the owner doesn't get a second hold, or a second "a reply
    is waiting" alert, for each new DM.
+
+## 2026-09-28 — A held DM never says "automatic" unless it was
+
+The DM-handoff hold read "{name} didn't reply to the automatic follow-ups on Instagram". It appeared whenever we
+wrote last, including when the last message was one a person approved and sent, which is the default. Seen on the
+Meta reviewer account while preparing App Review, where it contradicted "nothing sends without a human". It now reads
+"{name} hasn't answered on Instagram since the last message, and Meta now only lets a person send the next one".
+Rule: a hold reason states only what FollowUp knows to be true.

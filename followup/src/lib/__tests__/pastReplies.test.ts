@@ -110,6 +110,30 @@ describe("deidentifyReply", () => {
     // A first name is replaced on word boundaries only.
     expect(out).toContain("Sample attached.");
   });
+
+  const noNames = { recipientName: "", recipientEmail: "sam@example.com", ownerName: null, ownerEmail: "dave@davesdecks.ca" };
+
+  it("takes the name out of the greeting when the To line carried only an address", () => {
+    expect(deidentifyReply("Hi Sam,\n\nThursday works.", noNames)).toBe("Hi [LEAD_NAME],\n\nThursday works.");
+    expect(deidentifyReply("Dear Mr. Patel,\nThanks for the photos.", noNames)).toBe("Dear Mr. [LEAD_NAME],\nThanks for the photos.");
+    expect(deidentifyReply("Good morning Anne Marie!\nSee you then.", noNames)).toBe("Good morning [LEAD_NAME]!\nSee you then.");
+  });
+
+  it("leaves a greeting to a group or to nobody alone", () => {
+    expect(deidentifyReply("Hi all,\nUpdate below.", noNames)).toBe("Hi all,\nUpdate below.");
+    expect(deidentifyReply("Hi there, thanks for asking.", noNames)).toBe("Hi there, thanks for asking.");
+    expect(deidentifyReply("Hi Team,\nUpdate below.", noNames)).toBe("Hi Team,\nUpdate below.");
+  });
+
+  it("replaces accented names and every part of a 'Last, First' name, as whole words", () => {
+    const out = deidentifyReply("Zoë, thanks. Émile will call. Priya and Shah both fine. Zoëtrope stays.", {
+      recipientName: "Shah, Priya",
+      recipientEmail: "priya@example.com",
+      ownerName: "Émile Zoë",
+      ownerEmail: "e@x.ca",
+    });
+    expect(out).toBe("[OWNER_NAME], thanks. [OWNER_NAME] will call. [LEAD_NAME] and [LEAD_NAME] both fine. Zoëtrope stays.");
+  });
 });
 
 describe("parseAddressList / recipientKey", () => {

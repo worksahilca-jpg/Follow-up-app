@@ -160,8 +160,8 @@ export default function InstagramConfig() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Catch Instagram DMs</p>
           <p className="text-[13px] text-ink-soft mt-1">
-            Anyone who messages your Instagram Business account becomes a lead and gets the instant reply,
-            automatically.
+            Anyone who messages your Instagram Business account becomes a lead in FollowUp. Replies wait for
+            your OK unless you choose Automatic.
           </p>
 
           {statusMessage && (

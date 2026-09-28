@@ -37,13 +37,15 @@ export async function GET(request: NextRequest) {
   // the start route would have refused (audit 2026-09-16, auth M-1).
   if (!(await requireAdmin(ctx))) return fail("Only an admin can connect an inbox.");
 
-  // While the Google app is in Testing mode, anyone not on its test-user
-  // list is bounced with a bare "access_denied" — a beta tester the founder
-  // forgot to add on the Google side would otherwise read that as FollowUp
-  // being broken. Say what it is and who fixes it (docs/tester-onboarding-checklist.md).
+  // Google sends a bare "access_denied" for two different things: the
+  // owner pressed Cancel, or (in Testing mode) the address isn't on the
+  // test-user list. This used to assume the second, so an owner who only
+  // hesitated was told they weren't on the list and emailed to be added
+  // to a list they were already on (first-run hunt 2026-09-25, §2.4).
+  // Cover both, and say that a Cancel shared nothing.
   if (oauthError === "access_denied") {
     return fail(
-      "Google didn't allow the connection. While FollowUp is in beta, Google only lets accounts Sahil added as test users connect — email contact@followupbase.io with this address and try again once it's added."
+      "Google didn't finish connecting. If you pressed Cancel, nothing was shared, so press Connect when you're ready. If Google said FollowUp is blocked or still in testing, your address isn't on the beta list yet: email contact@followupbase.io and we'll add it."
     );
   }
   if (oauthError) return fail(oauthError);

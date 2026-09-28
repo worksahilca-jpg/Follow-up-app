@@ -53,6 +53,12 @@ describe("what the owner is shown", () => {
     expect(ownerFacingMetaError("human_agent tag is not permitted", FALLBACK)).toContain("24-hour");
   });
 
+  it("points a Messenger owner to Messenger, not Instagram", () => {
+    const shown = ownerFacingMetaError(HUMAN_AGENT_ERROR, FALLBACK, "Messenger");
+    expect(shown).toContain("reply from Messenger");
+    expect(shown).not.toContain("Instagram");
+  });
+
   it("falls back rather than passing through an unrecognised message", () => {
     // The important half: anything not yet understood must not reach the
     // owner as Meta wrote it. The log line keeps the real text.

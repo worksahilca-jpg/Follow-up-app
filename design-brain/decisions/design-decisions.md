@@ -8290,3 +8290,26 @@ wrote last, including when the last message was one a person approved and sent, 
 Meta reviewer account while preparing App Review, where it contradicted "nothing sends without a human". It now reads
 "{name} hasn't answered on Instagram since the last message, and Meta now only lets a person send the next one".
 Rule: a hold reason states only what FollowUp knows to be true.
+
+## 2026-09-28 — Messages that said something untrue (founder: "just fix whatever you can")
+
+Found by the launch audits. Each one said something that wasn't true, so each now says only what happened.
+
+- **Test-lead button.** On a new account the reply waits for approval, which is the default. The button still said
+  "the reply didn't go out (check that Gmail is connected)". It now names each outcome: waiting for approval on
+  Today, going out in a minute or two, already answered, or the instant reply switched off. The Gmail hint is
+  kept only for a real failure.
+- **Google Cancel.** An owner who pressed Cancel on Google's screen was told their address wasn't on the beta list.
+  The message now covers both causes: a Cancel shared nothing, so press Connect again; a "blocked" screen means the
+  address needs adding.
+- **Refused sign-in.** An uninvited Google account landed on NextAuth's plain "Access Denied" page. It now reaches
+  the sign-in page, which already explains it (`pages.error`).
+- **Meta refusals on Messenger** said "reply from Instagram directly". They now name Messenger.
+- **Sent line on a DM** said "from your own address", which only email does. A DM now reads "Sent to {name}."
+- **Instagram and Facebook cards** promised "gets the instant reply, automatically". Replies are held by default, so
+  both now say "Replies wait for your OK unless you choose Automatic."
+- **/security** said "Google is still verifying FollowUp", but no review has been submitted. It now reads "Google
+  hasn't verified FollowUp yet".
+- **Left for the founder:** the landing demo's "Stopped · she replied" is a line the app never writes, and it uses a
+  pronoun. It's part of the approved landing drawing (A-063), so it isn't changed without a yes.
+Rule, unchanged: every message states only what FollowUp knows to be true.

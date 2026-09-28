@@ -81,7 +81,7 @@ export async function sendMessengerMessage(
     // business owner looking at a drafted message, not someone
     // connecting a channel. Codes and the raw text stay on the
     // result and in the log for anyone debugging.
-    return { ...failure, message: ownerFacingMetaError(failure.message ?? "", "Facebook rejected this message.") };
+    return { ...failure, message: ownerFacingMetaError(failure.message ?? "", "Facebook rejected this message.", "Messenger") };
   }
   // Meta's id for this message, the same as sendInstagramMessage keeps: the
   // Page's echo of this send (message_echoes, see
@@ -187,15 +187,32 @@ export async function unsubscribeFacebookPageWebhooks(pageId: string, pageAccess
   }).catch(() => {});
 }
 
-/** Best-effort display name for a PSID; Meta only allows this after the person has messaged the Page. */
+/**
+ * Best-effort display name for a PSID; Meta only allows this after the person has messaged the Page.
+ *
+ * Before App Review this is refused and every Messenger lead is called
+ * "Facebook Messenger". Meta's reason used to be thrown away, so nobody
+ * could tell a missing permission from a missing feature; it is now
+ * logged (codes and Meta's words, never the token). `name` is asked for
+ * alongside the two halves because some setups return only the full name
+ * (Facebook review pack, 2026-09-28).
+ */
 async function lookupSenderName(businessId: string, psid: string): Promise<string | null> {
   const pt = await pageToken(businessId);
   if (!pt) return null;
-  const res = await fetch(`${GRAPH}/${encodeURIComponent(psid)}?fields=first_name,last_name&access_token=${encodeURIComponent(pt.token)}`).catch(() => null);
-  if (!res?.ok) return null;
+  const res = await fetch(`${GRAPH}/${encodeURIComponent(psid)}?fields=name,first_name,last_name&access_token=${encodeURIComponent(pt.token)}`).catch(() => null);
+  if (!res) return null;
   const data = await res.json().catch(() => null);
-  const name = [data?.first_name, data?.last_name].filter(Boolean).join(" ").trim();
-  return name || null;
+  if (!res.ok) {
+    const error = data?.error ?? {};
+    console.warn(
+      `Messenger sender name refused for business ${businessId}: HTTP ${res.status}, code ${error.code ?? "?"}, subcode ${error.error_subcode ?? "?"}: ${typeof error.message === "string" ? error.message.slice(0, 200) : ""}`
+    );
+    return null;
+  }
+  const halves = [data?.first_name, data?.last_name].filter((v) => typeof v === "string" && v.trim()).join(" ").trim();
+  const full = typeof data?.name === "string" ? data.name.trim() : "";
+  return halves || full || null;
 }
 
 export async function findOrCreateLeadByMessenger(businessId: string, psid: string): Promise<Lead> {

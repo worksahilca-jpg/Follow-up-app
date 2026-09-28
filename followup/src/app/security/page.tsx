@@ -106,7 +106,10 @@ const COMPANIES: [name: string, what: string][] = [
 const NOT_YET: [name: string, body: string][] = [
   ["No outside security audit yet", "Larger companies show a SOC 2 report. We don’t have one yet. When we do, it goes here."],
   ["No outside penetration test yet", "No outside firm has tried to break in yet. It’s on our list."],
-  ["Google is still verifying FollowUp", "Until it has, only people we add can sign in."],
+  // Was "Google is still verifying FollowUp", which said a review was under
+  // way. None has been submitted yet (STATUS.md), so it now says only what
+  // is true (open-items check, 2026-09-28).
+  ["Google hasn’t verified FollowUp yet", "Until it does, only people we add can sign in."],
 ];
 
 function Toggle({ on }: { on?: boolean }) {

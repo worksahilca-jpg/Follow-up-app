@@ -161,6 +161,10 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_SECONDS },
   pages: {
     signIn: "/signin",
+    // Without this, a refused sign-in (not on the invite list) landed on
+    // NextAuth's bare "Access Denied" page, and the explanation SignInClient
+    // already has for error=AccessDenied never showed.
+    error: "/signin",
   },
   callbacks: {
     async signIn({ user, account, profile }) {

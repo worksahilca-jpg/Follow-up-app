@@ -16,6 +16,32 @@ const TEST_LEAD_MESSAGE =
   "Hi, I saw your listing online and I'm interested. Do you have availability this week, and what would it cost?";
 
 /**
+ * What the button says afterwards. It used to say "the reply didn't go
+ * out (check that Gmail is connected)" for every result but a send, so on
+ * a new account, where replies wait for approval by default, it reported
+ * the product working as intended as a failure (first-run hunt,
+ * 2026-09-25). Each outcome now says what actually happened.
+ */
+function outcomeMessage(result: { sent: boolean; reason?: string }, email: string, reused: boolean): string {
+  if (result.sent) return `Sent. Check ${email} for the reply.`;
+  switch (result.reason) {
+    case "held for approval":
+    case "already held for approval":
+      return "The test lead's reply is waiting for your approval on Today.";
+    case "waiting out the grace period":
+      return `The reply goes out in a minute or two. Check ${email}.`;
+    case "already acknowledged":
+      return "You already got a reply from your last test lead. Open it to see it again.";
+    case "switched off":
+      return "Created the test lead. The instant reply is switched off in Settings, so nothing went out.";
+    default:
+      return reused
+        ? "Used your existing test lead, but the reply didn't go out. Check that Gmail is connected in Settings."
+        : "Created the test lead, but the reply didn't go out. Check that Gmail is connected in Settings.";
+  }
+}
+
+/**
  * POST /api/leads/test-lead — "Send a test lead to myself"
  * (research/product/2026-09-10-ux-simplification.md §3, implementation
  * plan item #4). The one way to demonstrate the core promise — an
@@ -69,9 +95,7 @@ export async function POST() {
       success: true,
       leadId: lead.id,
       sent: result.sent,
-      message: result.sent
-        ? `Sent — check ${user.email} for the reply.`
-        : "Created the test lead, but the reply didn't go out (check that Gmail is connected in Settings).",
+      message: outcomeMessage(result, user.email, false),
     });
   } catch (err) {
     // Re-running this button when a prior test lead is still on file (same
@@ -83,11 +107,7 @@ export async function POST() {
       const existing = await prisma.lead.findUnique({ where: { businessId_email: { businessId: ctx.businessId, email: user.email } } });
       if (existing) {
         const result = await seedMessage(existing.id);
-        let message: string;
-        if (result.sent) message = `Sent — check ${user.email} for the reply.`;
-        else if (result.reason === "already acknowledged") message = "You already got a reply from your last test lead — open it to see it again.";
-        else message = "Used your existing test lead, but the reply didn't go out (check that Gmail is connected in Settings).";
-        return NextResponse.json({ success: true, leadId: existing.id, sent: result.sent, message });
+        return NextResponse.json({ success: true, leadId: existing.id, sent: result.sent, message: outcomeMessage(result, user.email, true) });
       }
     }
     throw err;

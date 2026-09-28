@@ -161,7 +161,7 @@ export default function FacebookConfig() {
           <p className="text-sm font-medium">Catch Facebook Messenger DMs and Lead Ads</p>
           <p className="text-[13px] text-ink-soft mt-1">
             Anyone who messages your Facebook Page, or fills in one of your Facebook or Instagram lead-ad forms,
-            becomes a lead and gets the instant reply.
+            becomes a lead in FollowUp. Replies wait for your OK unless you choose Automatic.
           </p>
 
           {statusMessage && (

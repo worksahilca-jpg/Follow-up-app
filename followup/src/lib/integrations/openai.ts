@@ -1438,10 +1438,36 @@ export async function localizeFixedText(
   // behaviour.
   leadLanguage?: Partial<LeadLanguage> | null
 ): Promise<string> {
-  if (!process.env.OPENAI_API_KEY || !sampleOfLeadMessage.trim()) return text;
+  // An English lead needs no translation, so no call at all.
+  if (leadLanguage?.language === "en") return text;
+  const decided = registerInstruction(leadLanguage);
+  if (!process.env.OPENAI_API_KEY || (!decided && !sampleOfLeadMessage.trim())) return text;
   try {
     const client = getClient();
-    const decided = registerInstruction(leadLanguage);
+    // Once the language is decided the customer's words have nothing left
+    // to contribute, so they are not sent at all (security audit
+    // 2026-09-27, residual): the guards below catch an injected number or
+    // link, but not a plain sentence like "your refund is approved", and
+    // the only complete defence is that the model never sees that text.
+    if (decided) {
+      const completion = await client.chat.completions.create({
+        model: MODEL,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You translate a short fixed message for a customer. " +
+              decided +
+              " Return only the translation: same meaning, same length, nothing added, removed, or explained. " +
+              "Keep names unchanged. Output the message text only.",
+          },
+          { role: "user", content: `Message to translate:\n${text}` },
+        ],
+        max_tokens: 200,
+        temperature: 0,
+      });
+      return checkedTranslation(completion.choices[0]?.message?.content?.trim(), text);
+    }
     const completion = await client.chat.completions.create({
       model: MODEL,
       messages: [
@@ -1455,19 +1481,10 @@ export async function localizeFixedText(
             "of a language (e.g. Hindi or Punjabi typed in English letters), translate into that same romanized " +
             "style, not the language's native script, unless the customer used the native script themselves. " +
             "Keep names unchanged. Output the message text only." +
-            // Appended last so it outranks "if you cannot tell, return it
-            // unchanged": when FollowUp has already decided this lead's
-            // language, "cannot tell" is not one of the available answers.
-            // Without this, a fixed line could go out in English to a
-            // Spanish lead purely because that particular sample was too
-            // short to judge — the exact task-#63 failure, arriving by a
-            // different route.
-            (decided
-              ? " FollowUp has already decided how this customer writes, and that decision wins over your own " +
-                "reading of the sample: " +
-                decided +
-                " Translate into that, and keep that register even if the sample below is too short to show it."
-              : "") +
+            // (A lead whose language is already decided never reaches this
+            // prompt: the branch above translates without the sample, so
+            // "if you cannot tell" can't override a stored decision.)
+            //
             // The user turn below carries two strings of very different
             // authority: the customer's own words (untrusted, theirs) and
             // the fixed line to translate (ours). Nothing separated them,
@@ -1494,39 +1511,43 @@ export async function localizeFixedText(
       max_tokens: 200,
       temperature: 0,
     });
-    const out = completion.choices[0]?.message?.content?.trim();
-    // Guard against the model "helping": anything wildly longer than the
-    // template is not a translation, so fall back to the original. Logged
-    // when it trips — task #63's live test shipped untranslated English
-    // to Spanish leads with nothing in the logs saying which step bailed;
-    // lengths only, never the text itself.
-    if (!out) {
-      console.warn(`localizeFixedText: empty model output, sending untranslated (template ${text.length} chars)`);
-      return text;
-    }
-    if (out.length > text.length * 2.5 + 40) {
-      console.warn(`localizeFixedText: output ${out.length} chars vs template ${text.length}, treating as not-a-translation and sending untranslated`);
-      return text;
-    }
-    // The deterministic net under the prompt's injection notice (audit
-    // 2026-09-27). This output goes to a customer with no review — the
-    // instant ack, the 30-minute holding message, the email greeting and
-    // sign-off, the ack subject — and the length guard above still lets a
-    // sentence of similar length through, e.g. one that names a price or
-    // carries a link. A translation of a fixed line can't contain a number,
-    // a currency, a link or an address the line didn't, so one that does
-    // came from somewhere else (the customer's own text, or the lead's
-    // name, which sits inside the line). Same fallback as above.
-    const invented = ungroundedSpecifics(out, text);
-    if (invented === "digits" || invented === "currency" || newLinkOrAddress(out, text)) {
-      console.warn(`localizeFixedText: output carries a ${invented ?? "link"} the template doesn't, sending untranslated`);
-      return text;
-    }
-    return out;
+    return checkedTranslation(completion.choices[0]?.message?.content?.trim(), text);
   } catch (err) {
     console.error("localizeFixedText failed, sending untranslated:", err);
     return text;
   }
+}
+
+/** The model's translation if it passes every guard, else the untranslated line. */
+function checkedTranslation(out: string | undefined, text: string): string {
+  // Guard against the model "helping": anything wildly longer than the
+  // template is not a translation, so fall back to the original. Logged
+  // when it trips — task #63's live test shipped untranslated English
+  // to Spanish leads with nothing in the logs saying which step bailed;
+  // lengths only, never the text itself.
+  if (!out) {
+    console.warn(`localizeFixedText: empty model output, sending untranslated (template ${text.length} chars)`);
+    return text;
+  }
+  if (out.length > text.length * 2.5 + 40) {
+    console.warn(`localizeFixedText: output ${out.length} chars vs template ${text.length}, treating as not-a-translation and sending untranslated`);
+    return text;
+  }
+  // The deterministic net under the prompt's injection notice (audit
+  // 2026-09-27). This output goes to a customer with no review — the
+  // instant ack, the 30-minute holding message, the email greeting and
+  // sign-off, the ack subject — and the length guard above still lets a
+  // sentence of similar length through, e.g. one that names a price or
+  // carries a link. A translation of a fixed line can't contain a number,
+  // a currency, a link or an address the line didn't, so one that does
+  // came from somewhere else (the customer's own text, or the lead's
+  // name, which sits inside the line). Same fallback as above.
+  const invented = ungroundedSpecifics(out, text);
+  if (invented === "digits" || invented === "currency" || newLinkOrAddress(out, text)) {
+    console.warn(`localizeFixedText: output carries a ${invented ?? "link"} the template doesn't, sending untranslated`);
+    return text;
+  }
+  return out;
 }
 
 /** A URL, a bare www. host, or an email address in `out` that `template` does not contain. */

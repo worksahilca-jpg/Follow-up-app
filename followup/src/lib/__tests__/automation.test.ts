@@ -448,7 +448,12 @@ describe("silence automation risk gate", () => {
     risk.mockResolvedValue({ riskLevel: "high", reason: "quotes a price" });
     await runAutomationForBusiness("biz1");
     expect(p.lead.updateMany).toHaveBeenCalledWith({
-      where: { id: "lead1", OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: expect.any(Date) } }] },
+      where: {
+        id: "lead1",
+        automationTier: { not: "OFF" },
+        sequenceId: null,
+        OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: expect.any(Date) } }],
+      },
       data: { lastAutomationCheckedAt: expect.any(Date) },
     });
   });

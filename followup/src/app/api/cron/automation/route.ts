@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
+import { reportCronFailure } from "@/lib/monitoring";
 import { runAutomationForAllBusinesses } from "@/lib/automation";
 import { runSequencesForAllBusinesses } from "@/lib/sequences";
 import { pruneInboundWebhookEvents, pruneSetAsideThreads } from "@/lib/inboundEvents";
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
   const errors: string[] = [];
   const failed = (label: string) => (err: unknown) => {
     const message = err instanceof Error ? err.message : "unknown error";
-    console.error(`[cron] ${label} failed:`, err);
+    reportCronFailure("automation", err, label);
     errors.push(`${label}: ${message}`);
     return null;
   };
@@ -117,13 +118,15 @@ export async function GET(request: NextRequest) {
      * A partial failure returns 200 with `errors` populated and whatever
      * ran reported honestly. That is deliberate: reporting a 500 for a run
      * that sent real messages would make the response a worse record than
-     * no response at all, and the console.error above is what carries the
-     * failure to Sentry either way.
+     * no response at all, and reportCronFailure in `failed` is what carries
+     * the failure to Sentry either way. (This used to say console.error
+     * did; it never did, as the server config has no console integration.)
      */
     const body = { success: errors.length === 0, automation, sequences, staleApprovals, pruned, prunedSetAside, prunedRateLimitHits, errors };
     const nothingRan = automation === null && sequences === null;
     return NextResponse.json(body, { status: nothingRan ? 500 : 200 });
   } catch (err) {
+    reportCronFailure("automation", err);
     const message = err instanceof Error ? err.message : "Automation run failed.";
     return NextResponse.json({ success: false, message, errors }, { status: 500 });
   }

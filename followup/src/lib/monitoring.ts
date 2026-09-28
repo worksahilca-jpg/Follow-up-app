@@ -48,9 +48,9 @@ export type AuthFailureKind =
  * few seconds.
  */
 const ALERT_WINDOW_MS = 10 * 60_000;
-const lastReported = new Map<AuthFailureKind, { at: number; suppressed: number }>();
+const lastReported = new Map<string, { at: number; suppressed: number }>();
 
-function throttle(kind: AuthFailureKind): { report: boolean; suppressed: number } {
+function throttle(kind: string): { report: boolean; suppressed: number } {
   const now = Date.now();
   const prev = lastReported.get(kind);
   if (prev && now - prev.at < ALERT_WINDOW_MS) {
@@ -77,5 +77,33 @@ export function recordAuthFailure(kind: AuthFailureKind, context: Record<string,
     });
   } catch (err) {
     console.error("Failed to report auth failure to Sentry:", err);
+  }
+}
+
+/**
+ * Reports a background job that failed. Every /api/cron/* route used to
+ * catch its own errors and answer 500, or console.error and carry on, and
+ * neither reaches Sentry: only an error that escapes a route does
+ * (src/instrumentation.ts), and the server config has no console
+ * integration. So a job could fail every minute for a day with the Slack
+ * alert channel silent (launch check, 2026-09-28).
+ *
+ * Throttled per job and step, the same way auth failures are: three of
+ * these jobs run every minute, and an outage must arrive as one alert with
+ * a count, not sixty.
+ */
+export function reportCronFailure(route: string, err: unknown, step?: string): void {
+  const where = step ? `${route}: ${step}` : route;
+  console.error(`[cron] ${where} failed:`, err);
+  const { report, suppressed } = throttle(`cron:${where}`);
+  if (!report) return;
+  try {
+    Sentry.captureException(err instanceof Error ? err : new Error(`${where} failed`), {
+      tags: { cron: route, ...(step ? { cron_step: step } : {}) },
+      fingerprint: ["cron-failure", route, step ?? "run"],
+      extra: suppressed > 0 ? { suppressedSinceLastReport: String(suppressed) } : undefined,
+    });
+  } catch (reportErr) {
+    console.error("Failed to report cron failure to Sentry:", reportErr);
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
+import { reportCronFailure } from "@/lib/monitoring";
 import { runDueInstantAcks } from "@/lib/acknowledge";
 
 // The worker budgets itself by wall clock (see runDueInstantAcks) and hands
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest) {
     const result = await runDueInstantAcks();
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
+    reportCronFailure("instant-ack", err);
     const message = err instanceof Error ? err.message : "Instant acknowledgement run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });
   }

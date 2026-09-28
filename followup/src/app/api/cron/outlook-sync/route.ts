@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
+import { reportCronFailure } from "@/lib/monitoring";
 import { syncOutlookForAllBusinesses } from "@/lib/outlookSync";
 
 // Every business with a connected Outlook, pulling only what's new via
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest) {
     const result = await syncOutlookForAllBusinesses();
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
+    reportCronFailure("outlook-sync", err);
     const message = err instanceof Error ? err.message : "Outlook sync run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });
   }

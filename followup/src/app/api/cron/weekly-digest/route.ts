@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
+import { reportCronFailure } from "@/lib/monitoring";
 import { prisma } from "@/lib/db";
 import { hasActiveAccess } from "@/lib/billing";
 import { sendEmail } from "@/lib/integrations/gmail";
@@ -112,7 +113,7 @@ export async function GET(request: NextRequest) {
       }
     } catch (err) {
       skipped += 1;
-      console.error(`Weekly digest failed for business ${b.id}:`, err);
+      reportCronFailure("weekly-digest", err, `business ${b.id}`);
     }
   });
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
+import { reportCronFailure } from "@/lib/monitoring";
 import { runOutboundRetries } from "@/lib/sending";
 
 // The worker budgets itself by wall clock (see runOutboundRetries) and hands
@@ -33,6 +34,7 @@ export async function GET(request: NextRequest) {
     const result = await runOutboundRetries();
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
+    reportCronFailure("outbound-retry", err);
     const message = err instanceof Error ? err.message : "Outbound retry run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });
   }

@@ -5,13 +5,15 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { captureMessage } = vi.hoisted(() => ({ captureMessage: vi.fn() }));
-vi.mock("@sentry/nextjs", () => ({ captureMessage }));
+const { captureMessage, captureException } = vi.hoisted(() => ({ captureMessage: vi.fn(), captureException: vi.fn() }));
+vi.mock("@sentry/nextjs", () => ({ captureMessage, captureException }));
 
-import { recordAuthFailure } from "@/lib/monitoring";
+import { recordAuthFailure, reportCronFailure } from "@/lib/monitoring";
 
 beforeEach(() => {
   captureMessage.mockReset();
+  captureException.mockReset();
+  vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
 describe("recordAuthFailure", () => {
@@ -39,5 +41,30 @@ describe("recordAuthFailure", () => {
       throw new Error("Sentry down");
     });
     expect(() => recordAuthFailure("cron_secret", { route: "automation" })).not.toThrow();
+  });
+});
+
+describe("reportCronFailure", () => {
+  it("sends a failed background job to Sentry, grouped by job and step", () => {
+    const err = new Error("connection reset");
+    reportCronFailure("instant-ack", err);
+    expect(captureException).toHaveBeenCalledWith(
+      err,
+      expect.objectContaining({ tags: { cron: "instant-ack" }, fingerprint: ["cron-failure", "instant-ack", "run"] })
+    );
+  });
+
+  it("reports a job failing every minute once per window, with the count kept for the next report", () => {
+    reportCronFailure("owner-alerts", new Error("down"), "reminders");
+    reportCronFailure("owner-alerts", new Error("down"), "reminders");
+    reportCronFailure("owner-alerts", new Error("down"), "reminders");
+    expect(captureException).toHaveBeenCalledTimes(1);
+  });
+
+  it("never throws, even if Sentry does", () => {
+    captureException.mockImplementation(() => {
+      throw new Error("Sentry down");
+    });
+    expect(() => reportCronFailure("office", new Error("x"))).not.toThrow();
   });
 });

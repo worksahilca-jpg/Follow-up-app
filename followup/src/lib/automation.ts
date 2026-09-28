@@ -1025,6 +1025,12 @@ export async function runAutomationForBusiness(
       const claim = await prisma.lead.updateMany({
         where: {
           id: lead.id,
+          // The two things that made the lead eligible, checked again at
+          // the claim: an owner who turned it off, or put it in a follow-up
+          // plan, in the seconds since the SELECT above must not still get
+          // this message and then the plan's first one as well.
+          automationTier: { not: "OFF" },
+          sequenceId: null,
           OR: freshInboundAt
             ? [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: freshInboundAt } }]
             : [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],

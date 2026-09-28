@@ -87,18 +87,20 @@ already present) → Settings.
    - `FACEBOOK_APP_ID`
    - `FACEBOOK_APP_SECRET`
 4. Dashboard webhook for Pages (set up once, not per business): subscribe
-   the **`messages`**, **`message_echoes`** and **`leadgen`** fields.
-   `message_echoes` is what lets FollowUp see a reply the owner sent from
-   the Page inbox (#370); without it those replies are invisible and a
-   customer the owner already answered still looks unanswered. `leadgen`
-   is Lead Ads. A Page connected before a field was ticked keeps its old
-   subscription until one Disconnect → Connect.
+   the **`messages`** and **`message_echoes`** fields. `message_echoes` is
+   what lets FollowUp see a reply the owner sent from the Page inbox (#370);
+   without it those replies are invisible and a customer the owner already
+   answered still looks unanswered. A Page connected before a field was
+   ticked keeps its old subscription until one Disconnect → Connect.
 5. Permissions requested: `pages_show_list`, `pages_messaging`,
-   `pages_manage_metadata`, `pages_read_engagement`, `leads_retrieval`. Up to
-   25 testers (added under App Roles → Roles, as a Tester or Admin on the
-   app — they must accept the invite) can connect their own Page without
-   App Review; beyond that, submit for review with a screencast showing a
-   Page owner connecting and a lead's message becoming a FollowUp lead.
+   `pages_manage_metadata` — only what Messenger needs (founder, 2026-09-28).
+   Lead Ads (`leads_retrieval` and the `leadgen` field) is left out until it
+   gets its own review round; the webhook route still handles `leadgen`, so
+   turning it on later is the scope, the field, and the review. Up to 25
+   testers (App Roles → Roles, as a Tester or Admin; they must accept the
+   invite) can connect their own Page without App Review; beyond that,
+   submit for review with a screencast showing a Page owner connecting and
+   a customer's message becoming a FollowUp lead.
 
 ## 3. WhatsApp — the owner's own number (Embedded Signup with Coexistence)
 

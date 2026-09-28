@@ -158,10 +158,10 @@ export default function FacebookConfig() {
           <MessageSquare className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">Catch Facebook Messenger DMs and Lead Ads</p>
+          <p className="text-sm font-medium">Catch Facebook Messenger DMs</p>
           <p className="text-[13px] text-ink-soft mt-1">
-            Anyone who messages your Facebook Page, or fills in one of your Facebook or Instagram lead-ad forms,
-            becomes a lead in FollowUp. Replies wait for your OK unless you choose Automatic.
+            Anyone who messages your Facebook Page becomes a lead in FollowUp. Replies wait for your OK unless you
+            choose Automatic.
           </p>
 
           {statusMessage && (
@@ -283,7 +283,7 @@ export default function FacebookConfig() {
             <div className="mt-2 rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-2">
               <p>
                 Webhook (set up once, not per business): subscribed to <strong>messages</strong> and{" "}
-                <strong>leadgen</strong> for Pages. Lead Ads also need the <strong>leads_retrieval</strong> permission.
+                <strong>message_echoes</strong> for Pages.
               </p>
               <pre className="rounded-[12px] bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{webhookUrl}</pre>
               <pre className="rounded-[12px] bg-card border border-line p-2 overflow-x-auto whitespace-pre-wrap break-all">{verifyToken}</pre>

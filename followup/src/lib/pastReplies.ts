@@ -152,33 +152,55 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+const HONORIFICS = new Set(["mr", "mrs", "ms", "miss", "dr", "jr", "sr"]);
+
+/** "Shah, Priya" or "Dr. Zoë O'Neil" → the words that name the person: ["Shah", "Priya"], ["Zoë", "O'Neil"]. */
+function nameParts(name: string): string[] {
+  return name
+    .split(/[\s,]+/)
+    .map((w) => w.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, ""))
+    .filter((w) => w.length >= 2 && !HONORIFICS.has(w.toLowerCase()));
+}
+
+/**
+ * A name right after an opening greeting ("Hi Sam,", "Dear Mr. Patel,")
+ * is the person written to, even when the To line carried only an address
+ * and so no name to look for. Capitalised words only, so "Hi there," stays;
+ * a group ("Hi all," "Hi team,") isn't a person and stays too.
+ */
+const GREETING_NAME =
+  /^(\s*(?:[Hh]i|[Hh]ey|[Hh]ello|[Dd]ear|[Gg]ood (?:[Mm]orning|[Aa]fternoon|[Ee]vening))[ \t]+(?:(?:Mr|Mrs|Ms|Miss|Dr)\.?[ \t]+)?)(\p{Lu}[\p{L}'’-]*(?:[ \t]+\p{Lu}[\p{L}'’-]*)?)(?=[ \t]*(?:[,!.:;]|\n|$))/u;
+const NOT_A_PERSON = new Set(["all", "everyone", "team", "folks", "guys", "there", "sir", "madam", "friends"]);
+
 /**
  * Names, then deidentifyText. A first name on its own ("Hi Sam,") is the
  * commonest way a name appears in a reply, and deidentifyText matches a
- * whole stored value as a substring, so first names are replaced here,
- * on word boundaries, where "Sam" can't eat the "Sam" in "Sample".
+ * whole stored value as a substring, so each word of a name is replaced
+ * here as a whole word, where "Sam" can't eat the "Sam" in "Sample". Word
+ * edges are letters in any alphabet (\b only knows ASCII, so it missed
+ * "Zoë" and "Émile").
  */
 export function deidentifyReply(
   body: string,
   people: { recipientName: string; recipientEmail: string; ownerName: string | null; ownerEmail: string }
 ): string {
-  let text = body;
-  const firstNames: [string, string][] = [];
-  const recipientFirst = people.recipientName.split(/\s+/)[0] ?? "";
-  const ownerFirst = (people.ownerName ?? "").split(/\s+/)[0] ?? "";
-  if (recipientFirst.length >= 2) firstNames.push([recipientFirst, "[LEAD_NAME]"]);
-  if (ownerFirst.length >= 2) firstNames.push([ownerFirst, "[OWNER_NAME]"]);
   const ids: KnownIdentifier[] = [];
   if (people.recipientName.trim()) ids.push({ value: people.recipientName.trim(), placeholder: "[LEAD_NAME]" });
   ids.push({ value: people.recipientEmail, placeholder: "[LEAD_EMAIL]" });
   if (people.ownerName?.trim()) ids.push({ value: people.ownerName.trim(), placeholder: "[OWNER_NAME]" });
   ids.push({ value: people.ownerEmail, placeholder: "[OWNER_EMAIL]" });
   // Whole names first, so "Sarah Lee" becomes one placeholder, not two.
-  text = deidentifyText(text, ids);
-  for (const [name, placeholder] of firstNames) {
-    text = text.replace(new RegExp(`\\b${escapeRegExp(name)}\\b`, "gi"), placeholder);
+  let text = deidentifyText(body, ids);
+  const words: [string, string][] = [
+    ...nameParts(people.recipientName).map((w): [string, string] => [w, "[LEAD_NAME]"]),
+    ...nameParts(people.ownerName ?? "").map((w): [string, string] => [w, "[OWNER_NAME]"]),
+  ];
+  for (const [word, placeholder] of words) {
+    text = text.replace(new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(word)}(?![\\p{L}\\p{N}_])`, "giu"), placeholder);
   }
-  return text;
+  return text.replace(GREETING_NAME, (whole, opening: string, name: string) =>
+    NOT_A_PERSON.has(name.toLowerCase()) ? whole : `${opening}[LEAD_NAME]`
+  );
 }
 
 type PageResult = { status: "reading" | "done" | "failed" | "skipped"; kept: number; scanned: number };

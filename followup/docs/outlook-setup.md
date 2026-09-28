@@ -21,9 +21,12 @@ whichever mailbox actually holds that lead's thread).
    account connect (the OAuth flow always uses the `common` tenant
    endpoint, matching this choice).
 4. **Redirect URI**: platform "Web", value
-   `https://followupbase.io/api/integrations/outlook/callback` (and
+   `https://followupbase.io/api/integrations/outlook/callback`. After
+   registering, add `https://www.followupbase.io/api/integrations/outlook/callback`
+   as a second Web redirect URI too (and
    `http://localhost:3000/api/integrations/outlook/callback` for local
-   dev).
+   dev). Only the one in `MICROSOFT_REDIRECT_URI` is ever sent; having
+   both registered removes the chance of an apex/www mismatch.
 5. Click **Register**.
 
 ## 2. Create a client secret
@@ -31,14 +34,28 @@ whichever mailbox actually holds that lead's thread).
 **Certificates & secrets → New client secret**. Copy the secret's
 **Value** immediately — Azure only shows it once.
 
+The secret has an expiry date (24 months at most). Put it in the calendar.
+When it lapses, every Outlook connection stops syncing at once. Each
+business's admins get one bell notice to reconnect, which only works once
+a new secret is in Vercel.
+
 ## 3. Grant API permissions
 
 **API permissions → Add a permission → Microsoft Graph → Delegated
 permissions**, add: `Mail.Read`, `Mail.Send`, `User.Read`,
-`offline_access`, `openid`, `email`. These are all standard/low-privilege
-permissions that don't require admin consent for a personal or single-org
-connection — a business owner can consent for their own mailbox directly
-on the Microsoft sign-in screen FollowUp sends them to.
+`offline_access`, `openid`, `email`. None of these is an admin-only
+permission.
+
+**What owners will see [UNVERIFIED — general knowledge, not checked
+against Microsoft's docs from here]:**
+- A personal outlook.com / hotmail.com account can consent for itself,
+  with FollowUp labelled an "unverified" publisher.
+- A work or school (Microsoft 365) account may instead get "Need admin
+  approval": many organisations only let staff consent to apps from
+  verified publishers. Their IT admin has to approve FollowUp once.
+  Worth one line in the tester welcome text.
+- Publisher verification needs a Microsoft Cloud Partner Program account
+  for a verified business.
 
 ## 4. Add the credentials to Vercel
 
@@ -51,7 +68,7 @@ Project `follow-up-app`, Production environment:
   must exactly match what's registered in step 1.
 
 Redeploy. `GET /api/integrations/outlook/status` reports
-`oauthAvailable: true` once both are set, which is what makes Settings
+`oauthAvailable: true` once all three are set, which is what makes Settings
 show the real "Connect" button.
 
 ## What this does NOT change
@@ -60,12 +77,15 @@ show the real "Connect" button.
   sees no difference at all.
 - There's no Outlook webhook/push yet (Microsoft Graph subscriptions exist
   but need their own renewal loop and a validated public endpoint) — new
-  Outlook mail is picked up by the same every-ten-minute poll pattern
-  Gmail used before push was added (`/api/cron/outlook-sync`). A push
-  path is a reasonable follow-up once real usage shows the ten-minute
-  delay matters.
+  Outlook mail is picked up by a poll every two minutes
+  (`/api/cron/outlook-sync`, see `vercel.json`).
 - Access tokens are refreshed by hand on an as-needed basis
   (`src/lib/integrations/outlook.ts`, `getValidAccessToken`) since Graph
-  has no equivalent of `googleapis`' auto-refreshing OAuth2 client — this
-  is invisible to the business, just worth knowing if tokens ever seem to
-  need reconnecting more than Gmail's do.
+  has no equivalent of `googleapis`' auto-refreshing OAuth2 client.
+- When Microsoft refuses the refresh for good (`invalid_grant`: the owner
+  revoked access, changed their password, or the secret expired), the
+  connection is marked as needing a reconnect, the sync records why, and
+  the business's admins get one bell notice to reconnect.
+  Before 2026-09-28 it kept showing "connected, synced just now" while
+  reading nothing. Any other refresh failure is recorded as an error and
+  retried on the next run.

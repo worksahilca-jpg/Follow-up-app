@@ -17,12 +17,12 @@
     "@types/papaparse": "^5.5.2",
     "@vercel/analytics": "^2.0.1",
     "clsx": "^2.1.1",
-    "framer-motion": "^13.4.0",
+    "framer-motion": "^13.4.4",
     "googleapis": "^178.0.0",
-    "lucide-react": "^1.47.0",
-    "next": "16.3.5",
+    "lucide-react": "^1.48.0",
+    "next": "16.3.6",
     "next-auth": "^4.24.15",
-    "openai": "^7.18.0",
+    "openai": "^7.23.0",
     "papaparse": "^5.7.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -33,16 +33,16 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^26.6.1",
+    "@types/node": "^26.6.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/web-push": "3.6.4",
     "eslint": "^9",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.3.6",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vite": "^8.3.0",
-    "vitest": "^5.0.1"
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
   }
 }

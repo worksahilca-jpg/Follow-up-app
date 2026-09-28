@@ -3,7 +3,17 @@ import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { formatMoney, getRescueReport, type RescueReport, type RescuedLead } from "@/lib/rescued";
 import { renderWeeklyEmailHtml, type WeeklyEmailView } from "@/lib/weeklyDigestHtml";
-import { LOGO, LOGO_DARK, type InlineImage } from "@/lib/emailAssets";
+import {
+  ICON_CALENDAR,
+  ICON_GLOBE,
+  ICON_INSTAGRAM,
+  ICON_MAIL,
+  ICON_MESSAGE,
+  ICON_PHONE,
+  LOGO,
+  LOGO_DARK,
+  type InlineImage,
+} from "@/lib/emailAssets";
 
 /**
  * The Monday email (design brain A-034, A-037, A-038): what the week was,
@@ -40,6 +50,17 @@ const CHANNEL_NAME: Record<string, string> = {
   whatsapp: "WhatsApp",
   instagram: "Instagram",
   messenger: "Messenger",
+};
+
+// The icon before each channel, as the app's ChannelIcon picks it.
+const CHANNEL_ICON: Record<string, InlineImage> = {
+  email: ICON_MAIL,
+  text: ICON_PHONE,
+  call: ICON_PHONE,
+  web: ICON_GLOBE,
+  whatsapp: ICON_MESSAGE,
+  messenger: ICON_MESSAGE,
+  instagram: ICON_INSTAGRAM,
 };
 
 export interface WeekNumbers {
@@ -205,14 +226,25 @@ export function renderWeeklyDigest(d: WeeklyDigestInput): { subject: string; tex
         : win.stage === "WON" && win.dealValue > 0
           ? `Deal closed: ${formatMoney(win.dealValue)}`
           : null,
+      chipIcon: win.bookedFor ? `cid:${ICON_CALENDAR.cid}` : null,
     };
   } else if (n > 0) {
     subject = `FollowUp this week: ${waitingCount}`;
-    highlight = { label: "This week", title: `${waitingCount}.`, body: "Nobody has come back yet. Nothing goes out until you send it.", chip: null };
+    highlight = { label: "This week", title: `${waitingCount}.`, body: "Nobody has come back yet. Nothing goes out until you send it.", chip: null, chipIcon: null };
   } else {
     subject = "FollowUp this week: a quiet week";
-    highlight = { label: "This week", title: "A quiet week.", body: "Nobody has come back yet, and nothing is waiting for you.", chip: null };
+    highlight = { label: "This week", title: "A quiet week.", body: "Nobody has come back yet, and nothing is waiting for you.", chip: null, chipIcon: null };
   }
+
+  // Only the pictures this email shows travel with it.
+  const icons = new Set<InlineImage>();
+  if (win?.bookedFor) icons.add(ICON_CALENDAR);
+  const channelIcon = (channel: string): string | null => {
+    const icon = CHANNEL_ICON[channel];
+    if (!icon) return null;
+    icons.add(icon);
+    return `cid:${icon.cid}`;
+  };
 
   const view: WeeklyEmailView = {
     title: subject,
@@ -233,8 +265,8 @@ export function renderWeeklyDigest(d: WeeklyDigestInput): { subject: string; tex
       waited: w.lastMessageAt ? waitedFor(w.lastMessageAt, d.weekEnd) : null,
     })),
     waitingMore: Math.max(0, n - MAX_WAITING_NAMED),
-    channels: d.channels.map((c) => ({ label: channelName(c.channel), customers: c.customers })),
-    busiest: d.busiest ? `Most messages came in ${formatHours(d.busiest.from, d.busiest.to)}.` : null,
+    channels: d.channels.map((c) => ({ label: channelName(c.channel), customers: c.customers, icon: channelIcon(c.channel) })),
+    busiest: d.busiest ? `most messages came in ${formatHours(d.busiest.from, d.busiest.to)}.` : null,
     links: {
       app: `${d.appUrl}/dashboard`,
       website: d.appUrl,
@@ -253,7 +285,7 @@ export function renderWeeklyDigest(d: WeeklyDigestInput): { subject: string; tex
     },
   };
 
-  return { subject, text: renderText(d, win, waitingCount), html: renderWeeklyEmailHtml(view), inlineImages: [LOGO, LOGO_DARK] };
+  return { subject, text: renderText(d, win, waitingCount), html: renderWeeklyEmailHtml(view), inlineImages: [LOGO, LOGO_DARK, ...icons] };
 }
 
 /**

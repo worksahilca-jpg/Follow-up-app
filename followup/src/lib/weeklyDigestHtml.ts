@@ -10,8 +10,17 @@
  * inline, no SVG (Gmail drops it), no CSS gradients (Gmail and Outlook
  * render them unevenly). The landing wash is a hosted image instead,
  * with its base colour as the fallback. The design's win card overlapped
- * the header; negative margins are stripped by Gmail, so the card sits on
- * the wash inside the header instead.
+ * the header; negative margins are stripped by Gmail, and the header's
+ * words cannot sit on the wash (below), so the card follows the greeting
+ * on the sheet.
+ *
+ * Two sizes, as the canvas draws them (founder, 2026-09-28: "what I'm
+ * receiving is not the same"): the desktop mail version (a 600px sheet in
+ * a framed page, 40px margins, the larger type) is the default, and one
+ * media query turns it into the phone version (edge to edge, 24px margins,
+ * the smaller type). A mail app that ignores the query shows the desktop
+ * sizes at full width, which still reads. Icons are carried pictures, as
+ * the logo is (src/lib/emailAssets.ts).
  *
  * Every value that came from a customer or the owner is escaped: a lead
  * can name themselves anything, and this lands in the owner's inbox.
@@ -39,12 +48,14 @@ export interface WeeklyEmailView {
   preheader: string;
   businessName: string;
   dateRange: string;
-  highlight: { label: string; title: string; body: string; chip: string | null };
+  /** chipIcon: the calendar picture's src when the chip is a booking. */
+  highlight: { label: string; title: string; body: string; chip: string | null; chipIcon: string | null };
   numbers: { label: string; value: number; lastWeek: number }[];
   waitingTitle: string;
   waiting: { initials: string; name: string; channel: string | null; waited: string | null }[];
   waitingMore: number;
-  channels: { label: string; customers: number }[];
+  /** icon: the channel picture's src, or null for a channel without one. */
+  channels: { label: string; customers: number; icon: string | null }[];
   busiest: string | null;
   links: {
     app: string;
@@ -165,6 +176,31 @@ function darkStyles(l: WeeklyEmailView["links"]): string {
 </style>`;
 }
 
+/**
+ * The phone version, as one media query over the desktop defaults. Its own
+ * <style> block, apart from the dark-mode one: Gmail throws away a whole
+ * block it cannot read, and the dark block carries selectors it may not.
+ * Before the dark block, so a phone in dark mode still gets dark colours.
+ */
+function phoneStyles(): string {
+  return `<style>
+  @media only screen and (max-width: 480px) {
+    .fu-outer { padding:0 !important; }
+    .fu-page { background:#ffffff !important; }
+    .fu-sheet { border:0 !important; border-radius:0 !important; }
+    .fu-px { padding-left:24px !important; padding-right:24px !important; }
+    .fu-px-card { padding-left:16px !important; padding-right:16px !important; }
+    .fu-wash-pad { padding:24px 24px 40px !important; }
+    .fu-foot-pad { padding:24px 24px !important; }
+    .fu-h1 { font-size:34px !important; }
+    .fu-win-pad { padding:22px 20px 24px !important; }
+    .fu-win-title { font-size:26px !important; }
+    .fu-num { font-size:30px !important; }
+    .fu-box-pad { padding:22px 18px !important; }
+  }
+</style>`;
+}
+
 export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
   const l = v.links;
 
@@ -174,37 +210,43 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
   // (founder's phone, 2026-09-28). The date, the greeting and the win sit
   // on the plain sheet, which every mail app darkens along with its text.
   const header = `
-<tr><td class="fu-wash-top" background="${e(l.headerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.headerImage)}');background-size:cover;background-position:center;padding:26px 28px 56px;">
-  <a href="${e(l.website)}" style="text-decoration:none;">${lockup(l, 80, 30)}</a>
+<tr><td class="fu-wash-top fu-wash-pad" background="${e(l.headerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.headerImage)}');background-size:cover;background-position:center;padding:40px 40px 56px;">
+  <a href="${e(l.website)}" style="text-decoration:none;">${lockup(l, 59, 22)}</a>
 </td></tr>
-<tr><td style="padding:30px 28px 0;">
+<tr><td class="fu-px" style="padding:32px 40px 0;">
   <div class="fu-dim" style="font-size:13px;color:${DIM};">${e(v.dateRange)}</div>
-  <h1 class="fu-ink" style="margin:8px 0 0;font-size:34px;line-height:1.08;letter-spacing:-0.03em;font-weight:300;color:${INK};">Your week,<br>${e(v.businessName)}</h1>
+  <h1 class="fu-ink fu-h1" style="margin:8px 0 0;font-size:44px;line-height:1.05;letter-spacing:-0.03em;font-weight:300;color:${INK};">Your week,<br>${e(v.businessName)}</h1>
+</td></tr>
+<tr><td class="fu-px-card" style="padding:26px 40px 0;">
   ${table(
-    `<tr><td style="padding:22px 22px 24px;">
+    `<tr><td class="fu-win-pad" style="padding:22px 28px 24px;">
       ${label(v.highlight.label)}
-      <p class="fu-ink" style="margin:10px 0 0;font-size:26px;line-height:1.18;letter-spacing:-0.02em;font-weight:400;color:${INK};">${e(v.highlight.title)}</p>
+      <p class="fu-ink fu-win-title" style="margin:10px 0 0;font-size:30px;line-height:1.15;letter-spacing:-0.02em;font-weight:400;color:${INK};">${e(v.highlight.title)}</p>
       <p class="fu-soft" style="margin:10px 0 0;font-size:15.5px;line-height:1.5;color:${SOFT};">${e(v.highlight.body)}</p>
       ${
         v.highlight.chip
-          ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;border-collapse:separate;"><tr><td class="fu-chip fu-ink" style="background:${SAND};border-radius:999px;padding:8px 14px;font-size:14px;color:${INK};">${e(v.highlight.chip)}</td></tr></table>`
+          ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;border-collapse:separate;"><tr><td class="fu-chip fu-ink" style="background:${SAND};border-radius:999px;padding:8px 14px;font-size:14px;line-height:18px;color:${INK};">${
+              v.highlight.chipIcon
+                ? `<img src="${e(v.highlight.chipIcon)}" width="15" height="15" alt="" style="display:inline-block;vertical-align:-2px;margin-right:8px;border:0;">`
+                : ""
+            }${e(v.highlight.chip)}</td></tr></table>`
           : ""
       }
     </td></tr>`,
-    `margin-top:24px;background:#ffffff;border:1px solid ${LINE};border-radius:20px;`,
+    `background:#ffffff;border:1px solid ${LINE};border-radius:20px;`,
     "fu-card"
   )}
 </td></tr>`;
 
   const numbers = `
-<tr><td style="padding:34px 28px 0;">
+<tr><td class="fu-px" style="padding:36px 40px 0;">
   ${label("The week in customers")}
   ${table(
     `<tr>${v.numbers
       .map(
-        (n) => `<td width="33%" style="vertical-align:top;padding-top:14px;">
-      <div class="fu-ink" style="font-size:34px;line-height:1;letter-spacing:-0.03em;font-weight:300;color:${INK};">${n.value}</div>
-      <div class="fu-ink" style="margin-top:8px;font-size:14px;color:${INK};">${e(n.label)}</div>
+        (n, i) => `<td width="33%" style="vertical-align:top;padding-top:16px;${i > 0 ? "padding-left:16px;" : ""}">
+      <div class="fu-ink fu-num" style="font-size:38px;line-height:1;letter-spacing:-0.03em;font-weight:300;color:${INK};">${n.value}</div>
+      <div class="fu-ink" style="margin-top:8px;font-size:14px;line-height:1.3;color:${INK};">${e(n.label)}</div>
       <div class="fu-dim" style="margin-top:2px;font-size:13px;color:${DIM};">Last week: ${n.lastWeek}</div>
     </td>`
       )
@@ -216,7 +258,7 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
     .map(
       (w, i) => `<tr><td class="${i === 0 ? "" : "fu-rule"}" style="padding:12px 0;${i === 0 ? "" : `border-top:1px solid ${RULE};`}">
     ${table(`<tr>
-      <td width="34" style="vertical-align:middle;"><div class="fu-avatar fu-soft" style="width:34px;height:34px;line-height:34px;border-radius:999px;background:#f1eeea;border:1px solid ${LINE};text-align:center;font-size:12px;font-weight:600;color:${SOFT};">${e(w.initials)}</div></td>
+      <td width="34" style="vertical-align:middle;"><div class="fu-avatar fu-soft" style="width:34px;height:34px;line-height:34px;border-radius:999px;background:#f1eeea;border:1px solid ${LINE};text-align:center;font-size:14px;font-weight:600;color:${SOFT};">${e(w.initials)}</div></td>
       <td style="vertical-align:middle;padding-left:12px;">
         <div class="fu-ink" style="font-size:15.5px;font-weight:500;color:${INK};">${e(w.name)}</div>
         ${w.channel ? `<div class="fu-dim" style="font-size:13.5px;color:${DIM};">${e(w.channel)}</div>` : ""}
@@ -229,9 +271,9 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
   const more = v.waitingMore > 0 ? `<tr><td class="fu-rule fu-soft" style="padding:10px 0 0;border-top:1px solid ${RULE};font-size:14px;color:${SOFT};">and ${v.waitingMore} more</td></tr>` : "";
 
   const waiting = `
-<tr><td style="padding:34px 28px 0;">
+<tr><td class="fu-px" style="padding:36px 40px 0;">
   ${table(
-    `<tr><td style="padding:22px 22px;">
+    `<tr><td class="fu-box-pad" style="padding:22px 26px;">
       ${label("Waiting for your OK")}
       <p class="fu-ink" style="margin:8px 0 6px;font-size:20px;line-height:1.25;letter-spacing:-0.01em;color:${INK};">${e(v.waitingTitle)}</p>
       ${rows || more ? table(rows + more) : ""}
@@ -252,20 +294,23 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
     .map((c) => {
       const pct = Math.max(4, Math.round((c.customers / top) * 100));
       return `<tr>
-      <td class="fu-ink" width="96" style="padding-top:12px;font-size:14.5px;color:${INK};">${e(c.label)}</td>
+      <td width="18" style="padding-top:12px;vertical-align:middle;line-height:0;">${
+        c.icon ? `<img src="${e(c.icon)}" width="18" height="18" alt="" style="display:block;border:0;">` : ""
+      }</td>
+      <td class="fu-ink" width="96" style="padding:12px 0 0 12px;vertical-align:middle;font-size:14.5px;color:${INK};">${e(c.label)}</td>
       <td style="padding-top:12px;vertical-align:middle;">${table(
         `<tr><td class="fu-bar" width="${pct}%" bgcolor="${INK}" style="background:${INK};height:6px;line-height:6px;font-size:0;border-radius:999px;">&nbsp;</td>${pct < 100 ? `<td class="fu-track" bgcolor="${RULE}" style="background:${RULE};height:6px;line-height:6px;font-size:0;">&nbsp;</td>` : ""}</tr>`,
         `background:${RULE};border-radius:999px;`,
         "fu-track"
       )}</td>
-      <td class="fu-soft" width="28" align="right" style="padding-top:12px;font-size:14px;color:${SOFT};">${c.customers}</td>
+      <td class="fu-soft" width="30" align="right" style="padding-top:12px;vertical-align:middle;font-size:14px;color:${SOFT};">${c.customers}</td>
     </tr>`;
     })
     .join("");
   const where =
     v.channels.length > 0 || v.busiest
       ? `
-<tr><td style="padding:34px 28px 0;">
+<tr><td class="fu-px" style="padding:36px 40px 0;">
   ${v.channels.length > 0 ? label("Where customers wrote from") + table(channelRows) : ""}
   ${
     v.busiest
@@ -276,20 +321,18 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
       : "";
 
   const link = (href: string, text: string) => `<a class="fu-soft" href="${e(href)}" style="color:${SOFT};text-decoration:none;">${text}</a>`;
-  // Text first, on the sheet; the wash band last, holding only the logo
-  // (the same reason as the header).
+  // The design's order, logo first: the wash band holds only the logo (the
+  // same reason as the header), and the words follow on the sheet.
   const footer = `
-<tr><td style="padding:40px 28px 0;">
-  <div class="fu-rule" style="border-top:1px solid ${RULE};padding-top:26px;">
-    <p class="fu-soft" style="margin:0;font-size:15px;color:${SOFT};">So no customer gets forgotten.</p>
-    <p style="margin:14px 0 0;font-size:14px;">${[link(l.website, "Website"), link(l.privacy, "Privacy"), link(l.terms, "Terms"), link(l.contact, "Contact")].join(`&nbsp;&nbsp;&nbsp;&nbsp;`)}</p>
-    <p class="fu-soft" style="margin:16px 0 0;font-size:14px;line-height:1.5;color:${SOFT};">Questions or ideas? <a class="fu-ink" href="${e(l.writeToSahil)}" style="color:${INK};text-decoration:underline;">Write to Sahil</a>, who builds FollowUp.</p>
-    <p class="fu-dim" style="margin:14px 0 0;font-size:12.5px;line-height:1.5;color:${DIM};">FollowUp sent this from your own Gmail to you, an admin of ${e(v.businessName)}. It comes every Monday.</p>
-  </div>
+<tr><td style="padding-top:40px;"></td></tr>
+<tr><td class="fu-wash-bottom fu-foot-pad" background="${e(l.footerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.footerImage)}');background-size:cover;background-position:center;padding:28px 40px;">
+  ${lockup(l, 54, 20)}
 </td></tr>
-<tr><td style="padding-top:32px;"></td></tr>
-<tr><td class="fu-wash-bottom" background="${e(l.footerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.footerImage)}');background-size:cover;background-position:center;padding:22px 28px;">
-  ${lockup(l, 60, 22)}
+<tr><td class="fu-px" style="padding:24px 40px 36px;">
+  <p class="fu-soft" style="margin:0;font-size:15px;color:${SOFT};">So no customer gets forgotten.</p>
+  <p style="margin:16px 0 0;font-size:14px;">${[link(l.website, "Website"), link(l.privacy, "Privacy"), link(l.terms, "Terms"), link(l.contact, "Contact")].join(`&nbsp;&nbsp;&nbsp;&nbsp;`)}</p>
+  <p class="fu-soft" style="margin:18px 0 0;font-size:14px;line-height:1.5;color:${SOFT};">Questions or ideas? <a class="fu-ink" href="${e(l.writeToSahil)}" style="color:${INK};text-decoration:underline;">Write to Sahil</a>, who builds FollowUp.</p>
+  <p class="fu-dim" style="margin:16px 0 0;font-size:12.5px;line-height:1.5;color:${DIM};">FollowUp sent this from your own Gmail to you, an admin of ${e(v.businessName)}. It comes every Monday.</p>
 </td></tr>`;
 
   return `<!doctype html>
@@ -300,12 +343,13 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
 <meta name="color-scheme" content="light dark">
 <meta name="supported-color-schemes" content="light dark">
 <title>${e(v.title)}</title>
+${phoneStyles()}
 ${darkStyles(l)}
 </head>
 <body class="body fu-page" style="margin:0;padding:0;background:#f1eeea;">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${e(v.preheader)}</div>
 <table class="fu-page" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1eeea;">
-<tr><td align="center" style="padding:24px 12px;">
+<tr><td class="fu-outer" align="center" style="padding:40px 12px;">
 <table class="fu-sheet" role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid ${LINE};border-radius:12px;overflow:hidden;font-family:${FONT};color:${INK};">
 ${header}
 ${numbers}

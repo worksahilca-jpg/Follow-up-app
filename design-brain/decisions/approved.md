@@ -1375,3 +1375,20 @@ prefer and they can change it anytime."*
 - **Any plan, Free included,** may choose Automatic in setup or in Settings, and change it any time.
 - Only the per-customer "Handle it all" (no risk check at all) is a Plus feature.
 **Supersedes the plan lines** that said Free is "assisted only".
+
+## A-071 — The Monday email as drawn, except words on the wash ^A-071
+
+**Approved:** 2026-09-28, founder: *"okay go with A"*, after *"what I'm receiving is not the same"* as the canvas
+("Weekly email · designed", phone 390, and "desktop mail 760").
+**What specifically:**
+- **Two sizes, as drawn:** desktop mail is a 600px sheet in a framed page with 40px margins and the larger type
+  (greeting 44, win 30, numbers 38); the phone is edge to edge with 24px margins and the smaller type (34, 26, 30).
+- **The icons are kept:** one before each channel in "Where customers wrote from", and a calendar on the booking chip.
+  They are carried pictures in the email's dim grey, so they show in Gmail and read in light and dark.
+- **Logo at the drawn size** (59×22 top, 54×20 bottom). The footer follows the drawing's order: logo band first, then
+  the words.
+- **The one exception: no words on the wash.** The date, "Your week, …", the win card and the footer lines sit on the
+  plain sheet below the wash, because Gmail's dark mode makes words on the wash unreadable. The founder chose this
+  (option A) over matching the drawing exactly (option B).
+- **Kept against the drawing:** the waiting box's mid-tone outline (EDGE). Without it the box disappears in Gmail's
+  dark mode. The button's arrow is a text arrow, not a drawn one.

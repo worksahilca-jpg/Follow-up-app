@@ -184,10 +184,45 @@ describe("the designed email", () => {
     const withMix = renderWeeklyDigest(input({ channels: [{ channel: "instagram", customers: 5 }, { channel: "email", customers: 4 }], busiest: { from: 18, to: 21 } })).html;
     expect(withMix).toContain("Where customers wrote from");
     expect(withMix).toContain("Instagram");
-    expect(withMix).toContain("Most messages came in between 6 and 9 PM.");
+    expect(withMix).toContain("most messages came in between 6 and 9 PM.");
     const without = renderWeeklyDigest(input()).html;
     expect(without).not.toContain("Where customers wrote from");
     expect(without).not.toContain("Busiest time");
+  });
+
+  it("puts an icon before each channel and on a booking, and carries only the icons it shows", () => {
+    const booked = lead({ bookedFor: new Date("2026-10-01T14:00:00Z") });
+    const { html, inlineImages } = renderWeeklyDigest(
+      input({
+        report: { ...EMPTY_REPORT, rescued: 1, booked: 1, leads: [booked] },
+        channels: [
+          { channel: "whatsapp", customers: 3 },
+          { channel: "messenger", customers: 2 },
+          { channel: "fax", customers: 1 },
+        ],
+      })
+    );
+    expect(html).toContain('src="cid:fu-icon-message@followupbase.io"');
+    expect(html).toContain('src="cid:fu-icon-calendar@followupbase.io"');
+    // WhatsApp and Messenger share one picture, carried once; a channel without an icon gets none.
+    expect(inlineImages.map((i) => i.cid)).toEqual([
+      "fu-logo@followupbase.io",
+      "fu-logo-dark@followupbase.io",
+      "fu-icon-calendar@followupbase.io",
+      "fu-icon-message@followupbase.io",
+    ]);
+    for (const img of inlineImages) expect(Buffer.from(img.base64, "base64").subarray(1, 4).toString()).toBe("PNG");
+    // No booking, no calendar.
+    expect(renderWeeklyDigest(input()).html).not.toContain("fu-icon-calendar");
+  });
+
+  it("has a phone version: edge to edge, smaller margins and type, in its own style block", () => {
+    const { html } = renderWeeklyDigest(input());
+    const blocks = html.match(/<style>[\s\S]*?<\/style>/g) ?? [];
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0]).toContain("@media only screen and (max-width: 480px)");
+    expect(blocks[0]).not.toContain("data-ogsc");
+    expect(blocks[1]).toContain("prefers-color-scheme: dark");
   });
 
   it("dates the week in the business's time zone", () => {

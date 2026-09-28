@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { syncRoles } from "@/lib/office/roles";
 import { runShift } from "@/lib/office/runner";
 import { requireCronSecret } from "@/lib/cronAuth";
+import { reportCronFailure } from "@/lib/monitoring";
 
 // Desks run one after another rather than in parallel — a handful of live
 // desks is not worth the concurrency, and serial runs keep the spend
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, desks: live.length, results });
   } catch (err) {
+    reportCronFailure("office", err);
     const message = err instanceof Error ? err.message : "The office run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });
   }

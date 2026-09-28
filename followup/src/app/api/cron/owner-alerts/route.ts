@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
+import { reportCronFailure } from "@/lib/monitoring";
 import { runOwnerAlerts } from "@/lib/ownerAlerts";
 
 // Runs every minute; an invocation still going a minute later would be
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
     const result = await runOwnerAlerts();
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
+    reportCronFailure("owner-alerts", err);
     const message = err instanceof Error ? err.message : "Owner alert run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });
   }

@@ -158,7 +158,9 @@ export default function ReplyCard({
             </p>
           </>
         ) : (
-          <p className="text-[15px]">Sent to {first}, from your own address.</p>
+          // "From your own address" is only true of email. A DM goes from the
+          // business's Page or account, so it just says it was sent.
+          <p className="text-[15px]">{isEmail ? `Sent to ${first}, from your own address.` : `Sent to ${first}.`}</p>
         )}
       </motion.div>
     );

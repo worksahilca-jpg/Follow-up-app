@@ -86,7 +86,14 @@ already present) → Settings.
 3. Add to Vercel (Production):
    - `FACEBOOK_APP_ID`
    - `FACEBOOK_APP_SECRET`
-4. Permissions requested: `pages_show_list`, `pages_messaging`,
+4. Dashboard webhook for Pages (set up once, not per business): subscribe
+   the **`messages`**, **`message_echoes`** and **`leadgen`** fields.
+   `message_echoes` is what lets FollowUp see a reply the owner sent from
+   the Page inbox (#370); without it those replies are invisible and a
+   customer the owner already answered still looks unanswered. `leadgen`
+   is Lead Ads. A Page connected before a field was ticked keeps its old
+   subscription until one Disconnect → Connect.
+5. Permissions requested: `pages_show_list`, `pages_messaging`,
    `pages_manage_metadata`, `pages_read_engagement`, `leads_retrieval`. Up to
    25 testers (added under App Roles → Roles, as a Tester or Admin on the
    app — they must accept the invite) can connect their own Page without
@@ -182,7 +189,11 @@ Settings show the one-click button instead of only the manual-paste field.
   `Business.instagramAccessToken` / `facebookPageAccessToken`.
 - The manual paste-a-token path stays working forever, for a Meta reviewer or
   a business whose token came from elsewhere.
-- Instagram Login tokens last 60 days and are refreshable
-  (`https://graph.instagram.com/refresh_access_token`) — not yet automated;
-  today a business reconnects when Instagram capture silently stops working.
-  A refresh cron is a reasonable follow-up once real usage shows this matters.
+- Instagram Login tokens last 60 days. Since 2026-09-28 every connected
+  account's token is renewed once a day, by the daily setup-health job
+  (`src/lib/instagramTokenRefresh.ts`, `graph.instagram.com/refresh_access_token`).
+  Meta only renews a token that is at least a day old and not yet expired,
+  so a brand-new connection is skipped on its first day, and one that has
+  already expired still needs a reconnect. Refusals are logged per business
+  as "Instagram token not renewed", with Meta's reason and never the token.
+  Not yet seen working against Meta: the first real renewal is the check.

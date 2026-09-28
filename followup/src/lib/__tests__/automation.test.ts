@@ -448,7 +448,12 @@ describe("silence automation risk gate", () => {
     risk.mockResolvedValue({ riskLevel: "high", reason: "quotes a price" });
     await runAutomationForBusiness("biz1");
     expect(p.lead.updateMany).toHaveBeenCalledWith({
-      where: { id: "lead1", OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: expect.any(Date) } }] },
+      where: {
+        id: "lead1",
+        automationTier: { not: "OFF" },
+        sequenceId: null,
+        OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: expect.any(Date) } }],
+      },
       data: { lastAutomationCheckedAt: expect.any(Date) },
     });
   });
@@ -1774,7 +1779,9 @@ describe("an email draft that names a figure nobody wrote", () => {
         }),
       ])
       .mockResolvedValueOnce([]);
-    draftMessage.mockResolvedValue({ subject: "Your consultation", body: "We have availability. The cost will be $100." });
+    // No availability claim in it: that is only the owner's to state, and
+    // would hold this draft for a different reason (src/lib/grounding.ts).
+    draftMessage.mockResolvedValue({ subject: "Your consultation", body: "Happy to help with that. The cost will be $100." });
 
     const r = await runAutomationForBusiness("biz1");
 
@@ -1784,7 +1791,7 @@ describe("an email draft that names a figure nobody wrote", () => {
 
   it("leaves an ordinary draft with no figures in it alone", async () => {
     p.lead.findMany.mockResolvedValueOnce([leadWhoAsked({ automationTier: "AUTONOMOUS" })]).mockResolvedValueOnce([]);
-    draftMessage.mockResolvedValue({ subject: "Your consultation", body: "We do have availability — shall I send the details over?" });
+    draftMessage.mockResolvedValue({ subject: "Your consultation", body: "Happy to help — shall I send the details over?" });
 
     const r = await runAutomationForBusiness("biz1");
 

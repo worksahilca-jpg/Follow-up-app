@@ -42,7 +42,8 @@ import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import type { Prisma, SequenceAction, PipelineStage } from "@prisma/client";
 import type { Message } from "@/lib/types";
-import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON } from "@/lib/holdReasons";
+import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
+import { inventedSpecific } from "@/lib/dmDrafts";
 
 export interface SequenceStepInput {
   /** Hours after the previous step (or enrollment). Preferred. */
@@ -684,6 +685,9 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
             body: m.body,
             date: m.sentAt.toISOString(),
             opened: m.opened,
+            // Who wrote each outbound: the grounding check below counts only
+            // what a person at the business said (businessText, dmDrafts.ts).
+            trigger: m.trigger ?? undefined,
           }))
         );
         // Never an automatic text or WhatsApp to someone who has not
@@ -796,7 +800,15 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // failed check: sending something that shouldn't have gone out is
         // worse than an unnecessary manual review.
         let risk: { riskLevel: "low" | "medium" | "high"; reason: string };
-        if (holdAll) {
+        // The deterministic net every other drafting path has, which this
+        // one never did (audit 2026-09-28): a figure, a day or a claim only
+        // the owner can make, that neither the thread nor the owner's own
+        // step note contains. Checked before the hold-everything branch so
+        // the owner is told WHICH part to distrust.
+        const invented = inventedSpecific(`${draft.subject ?? ""}\n${draft.body}`, conversation, leadLanguageOf(lead)?.language, step.messageHint);
+        if (invented) {
+          risk = { riskLevel: "high", reason: UNGROUNDED_DRAFT_REASONS[invented] ?? UNGROUNDED_DRAFT_REASONS.digits };
+        } else if (holdAll) {
           // The classifier decides whether something is safe to send
           // WITHOUT review. On an account where nothing sends without
           // review, it has nothing to decide, so its cost is not worth
@@ -860,7 +872,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
             leadId: lead.id,
             businessId,
             assignedToId: lead.assignedToId,
-            message: holdAll
+            message: holdAll && !invented
               ? `"${sequence.name}" drafted a reply for ${lead.name}. Your account holds every follow-up for approval, so it's waiting for you — the workflow stopped here.`
               : `"${sequence.name}" drafted a reply for ${lead.name} that needs your OK before it goes out — the workflow stopped here so you can review it.`,
           });

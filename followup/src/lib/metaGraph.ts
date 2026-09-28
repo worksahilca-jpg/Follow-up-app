@@ -59,18 +59,25 @@ export type MetaSendResult = {
  * earns its branch the first time it is actually seen — the log line
  * below is what makes that possible.
  */
-export function ownerFacingMetaError(message: string, fallback: string): string {
+export function ownerFacingMetaError(
+  message: string,
+  fallback: string,
+  // Where the owner can still answer by hand. The human_agent refusal
+  // said "reply from Instagram directly" on Messenger too, which sends the
+  // owner to the wrong app (Facebook review pack, 2026-09-28).
+  replyFrom: "Instagram" | "Messenger" = "Instagram"
+): string {
   if (/human[ _]agent/i.test(message)) {
     return (
       "This conversation is past Meta's 24-hour reply window. Sending now needs Meta's " +
       "approval for your app, which hasn't come through yet — so FollowUp can't send it " +
-      "for you. You can still reply from Instagram directly."
+      `for you. You can still reply from ${replyFrom} directly.`
     );
   }
   if (/outside of allowed window|outside the allowed window/i.test(message)) {
     return (
       "Meta's 24-hour reply window has closed for this conversation, so FollowUp can't send " +
-      "this on its own. You can still reply from Instagram or Messenger yourself."
+      `this on its own. You can still reply from ${replyFrom} yourself.`
     );
   }
   // Anything unrecognised: say plainly that it was refused, and do not

@@ -77,8 +77,12 @@ const NUMBER_RE = /\p{Nd}(?:[\p{Nd},.]*\p{Nd})?/gu;
  * first and a `time` branch would be unreachable code pretending to be a
  * safeguard. checkAckShape (src/lib/acknowledge.ts) carries one for the
  * same historical reason; it is equally unreachable there.
+ *
+ * Currency WORDS too (audit 2026-09-28): "It's fifty dollars for the
+ * visit" and "Son cien pesos" have no digit and no symbol, and passed.
  */
-const CURRENCY_RE = /[$€£₹¥]|%|\b(USD|EUR|GBP|INR|CAD|MXN|AUD|Rs\.?)\b/gi;
+const CURRENCY_RE =
+  /[$€£₹¥]|%|\b(USD|EUR|GBP|INR|CAD|MXN|AUD|Rs\.?|dollars?|bucks|euros?|pounds|quid|rupees?|rupaye|rupay|pesos?|dólares|dolares|reais|francs?|dirhams?|centavos)\b/gi;
 
 /**
  * Every specific in `draft` that `source` never contained — the whole
@@ -120,6 +124,192 @@ export function ungroundedSpecifics(draft: string, source: string, locale?: stri
   return null;
 }
 
+/**
+ * A draft that tells the customer something is (or isn't) available, when
+ * the business itself never said so anywhere in the thread.
+ *
+ * On 2026-09-27, recording the Meta App Review video, the same thread got
+ * two drafts in a row: "The 2 bedroom condo is still available. Would you
+ * like to schedule a visit?" and "Yes, it is available. Do you want to
+ * schedule it?". Nobody at the business had said anything about it. The
+ * risk judge passed both as routine, so they sat in the one-tap "Send it"
+ * group. Only the owner's hand edit stopped a false promise going out.
+ *
+ * Availability is the one fact every lead asks about and only the owner
+ * knows. So the rule is simple: a sentence that states availability, either
+ * way, needs the business to have raised availability first. A question
+ * ("Is it still available?") states nothing, and neither does a sentence
+ * that says it is being checked ("I'll check if it's still available").
+ *
+ * `businessText` is only what the business sent, never the lead's words:
+ * the lead ASKING "is it available?" is exactly the case that must not
+ * ground an answer.
+ *
+ * Like the calendar list above, this is a list, and only as multilingual as
+ * the languages below. A failure costs one redraft, then the draft waits
+ * for the owner instead of going out, so a false positive is cheap and a
+ * false negative is the thing to avoid.
+ */
+export function unconfirmedAvailability(draft: string, businessText: string): boolean {
+  return unconfirmedClaimOf(CLAIMS[0], draft, businessText);
+}
+
+/**
+ * The same rule as unconfirmedAvailability, for every other kind of fact
+ * only the business can state (audit 2026-09-28, "reply truth"). Each one
+ * was a real or reproduced draft that passed every deterministic guard:
+ *
+ *   booking       "Perfect, you're booked for Saturday. See you then!"
+ *   done          "I've sent you the details by email."
+ *   policy        "Estimates are free, no obligation."
+ *   hours         "Yes, we're open now until late."
+ *
+ * None contains a digit, and the day in the first one is the LEAD's own
+ * word (they tapped "Saturday"), so the calendar rule grounds it. What is
+ * invented is the assertion, and an assertion of these kinds is the
+ * owner's to make. Same shape as availability: a sentence that is a
+ * question, or that says it is being found out, states nothing; a
+ * statement of the kind needs the business to have made one first.
+ *
+ * `businessText` must be what a PERSON at the business sent (businessText
+ * in src/lib/dmDrafts.ts), never FollowUp's own automated sends — or one
+ * invented claim that got out grounds every later one.
+ *
+ * Lists, like the availability words: English, Spanish, French and
+ * Portuguese, and only as multilingual as that. A false positive costs one
+ * redraft and then a draft that waits for the owner.
+ */
+export type ClaimKind = "availability" | "booking" | "done" | "policy" | "hours" | "service";
+
+export function unconfirmedClaim(
+  draft: string,
+  businessText: string,
+  // A real message has already gone to this customer (anything but the
+  // instant acknowledgement). "The email I sent last week" is then simply
+  // true, and a follow-up says it all the time; only claiming to have SENT
+  // something is grounded by it, never a call, a booking or an attachment.
+  opts: { sentBefore?: boolean } = {}
+): ClaimKind | null {
+  for (const claim of CLAIMS) {
+    const text = claim.kind === "done" && opts.sentBefore ? draft.replace(MESSAGE_SENT_RE, "") : draft;
+    if (unconfirmedClaimOf(claim, text, businessText)) return claim.kind;
+  }
+  return null;
+}
+
+// "I sent", "I emailed", "I reached out", in the four languages the claim
+// lists cover. Removed from a draft before the "done" check once a real
+// message has gone out, so what is left is judged on its own.
+const MESSAGE_SENT_RE =
+  /\b(i'?ve|i have|we'?ve|we have|i|we) (just |already )?(sent|emailed|e-mailed|texted|messaged|mailed|wrote|written|reached out)\b|\bte (envié|mandé|escribí)\b|\bhe (enviado|mandado|escrito)\b|\bj['’]ai (envoy\p{L}*|écrit)|\bje (vous |t['’])\s?ai (envoy\p{L}*|écrit)|\b(te |lhe )?(enviei|mandei|escrevi)\b/giu;
+
+/** `polar`: yes and no are different facts ("still available" vs "no longer available"). */
+type Claim = { kind: ClaimKind; statement: RegExp; hedge: RegExp; polar?: boolean };
+
+function unconfirmedClaimOf(claim: Claim, draft: string, businessText: string): boolean {
+  // Grounded only by a business sentence that STATES it, unhedged. The
+  // bare word was enough before, so "Let me check if it's still
+  // available" in an earlier send grounded "It's available" forever after.
+  // For a polar kind the business must have said it the same way round:
+  // "Sorry, it's no longer available" does not ground "It's available".
+  const said = claimStatements(claim, businessText);
+  return claimStatements(claim, draft).some((s) =>
+    claim.polar ? !said.some((b) => NEGATED_RE.test(b) === NEGATED_RE.test(s)) : said.length === 0
+  );
+}
+
+function claimStatements(claim: Claim, text: string): string[] {
+  return text
+    // Sentences, and also clauses joined by a dash or semicolon: "We do
+    // have availability — shall I send the details?" ends in a question
+    // mark but still states availability in its first half.
+    .split(/(?<=[.!?¡¿？。\n;])|\s[—–]\s/u)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    // A question states nothing — except in the clauses before it: "Yes,
+    // it's still available, want to book a viewing?" is one sentence that
+    // ends in a question mark, and the DM shape (one sentence, one
+    // question, last) invites exactly that. Only the final clause of a
+    // question is the question.
+    .flatMap((sentence) => (/[?？؟]\s*$/u.test(sentence) ? sentence.split(/,\s+/u).slice(0, -1) : [sentence]))
+    .filter((sentence) => {
+      if (!claim.statement.test(sentence)) return false;
+      return !claim.hedge.test(sentence);
+    });
+}
+
+const NEGATED_RE =
+  /\b(no longer|not|isn'?t|aren'?t|wasn'?t|don'?t|doesn'?t|never|sold|rented|leased|taken|closed|out of stock|ya no|no (est|hay|tenemos|queda)|agotad|vendid|cerrad|plus|pas|não|fechad|esgotad)\b/iu;
+
+// Words that turn a sentence into "I'm finding out" rather than "it is".
+const AVAILABILITY_HEDGE_RE =
+  /\b(check|checking|confirm|confirming|see if|see whether|find out|look into|looking into|let (me|you) know|get back|whether|if (it|the|this|that|there|we|they)|verif|revis|comprob|confirmar|averigu|ver si|si (est|sigue|hay|tenemos)|vérifi|vou verificar|se (est|ainda))/iu;
+
+// The same idea for the other kinds, plus "details"/"info": "I'll send you
+// the warranty details" promises information, it does not state a policy.
+// "if" only in the finding-out sense ("if it's included"): "it's fully
+// refundable if you cancel" is a policy with a condition, not a hedge.
+const FIND_OUT_HEDGE_RE =
+  /\b(check|checking|see if|see whether|find out|look into|looking into|let (me|you) know|get back|whether|if (it|the|this|that|there|we|they|our)|details|info|information|options)\b|confirm(ing)? (if|whether|with)|(i'?ll|i will|we'?ll|we will|to|let me|going to) confirm|verif|revis|comprob|averigu|ver si|\bsi\b|detalles|informaci[oó]n|confirmar|vérifi|détails|confirmer|informations|detalhes|informações/iu;
+
+// Booking has its own hedge because "confirmed" IS the claim: only a
+// future or conditional confirm ("I'll confirm", "once it's booked") hedges.
+const BOOKING_HEDGE_RE =
+  /\b(hope|hoping|looking forward|love|like|glad|happy|can'?t wait) to see(ing)? you\b|\b(i'?ll|i will|we'?ll|we will|to|let me|going to|can|could|would|once|before|as soon as)\s+(\w+\s+){0,2}?(confirm|book|schedule|reserve|check)|\bif\b|\bwhether\b|\bcheck|\bsee if\b|\bfind out\b|voy a (confirmar|reservar|agendar|revisar)|vamos a|para (confirmar|reservar|agendar)|je vais|pour (confirmer|réserver)|vou (verificar|confirmar|marcar|agendar)|\bsi\b/iu;
+
+// A past action the business supposedly took. "Not yet"/"haven't" is the
+// honest version and is allowed.
+const DONE_HEDGE_RE = /\b(if|whether|not yet|haven'?t|hasn'?t|didn'?t)\b|aún no|todavía no|no (he|hemos) |pas encore|ainda não/iu;
+
+const CLAIMS: Claim[] = [
+  {
+    kind: "availability",
+    // "available", "availability", "disponible(s)", "disponibilidad",
+    // "disponibilité", "disponível", "opening(s)" in the booking sense, and
+    // the words people actually use for it on a listing or a job: in
+    // stock, sold, rented, still on the market, we can fit you in, libre.
+    statement:
+      /availab|disponib|dispon[ií]vel|\bopenings?\b|\bin stock\b|\bout of stock\b|\bsold( out)?\b|\b(been|already|is|was|got) (rented|leased|taken|booked up)\b|\bhasn'?t been (rented|leased|taken|sold)\b|\bon the market\b|\bstill (for (sale|rent|lease)|up|listed|free|there|going|open)\b|\bfit you in\b|\b(have|got) (space|room|a spot|spots|a slot|slots|an opening|capacity)\b|\bvacan|agotad|\bvendid[oa]s?\b|alquilad|rentad|\b(sigue|está|esta|todavía|todavia|aún|aun) (libre|en venta|en renta)\b|\ben stock\b|épuis|\bvendu|\blou[ée]\b|encore libre|esgotad|alugad|\b(ainda|está) (livre|à venda)|\b(only|just) (a few|one|two|a couple|a handful) (left|remaining)\b|\blast one\b|\bquedan? (pocos|pocas|unos|unas|solo)|\bsolo queda\b|\bil en reste\b|\brestam (poucos|poucas)\b/iu,
+    hedge: AVAILABILITY_HEDGE_RE,
+    polar: true,
+  },
+  {
+    kind: "booking",
+    statement:
+      /\b(you'?re|you are|we'?re|we are|that'?s|it'?s|all) (all )?(booked|confirmed|scheduled|reserved|set|locked in|pencil+ed in)\b|\bbooked (you|it) in\b|\b(i'?ve|we'?ve|i have|we have) (booked|scheduled|reserved|confirmed)\b|\bput you (down|in)\b|\bsee you (then|there|on|at|tomorrow|today|soon|next|this|mon|tue|wed|thu|fri|sat|sun)|\bconfirmed for\b|\b(appointment|booking|visit|viewing|call) is (confirmed|set|booked|scheduled)|te esperamos|nos vemos|\b(queda|quedó|está|esta|ya est[aá]) (agendad|reservad|confirmad|apartad)|cita (confirmada|agendada)|c['’]est (noté|réservé|confirmé)|\bà (samedi|dimanche|lundi|mardi|mercredi|jeudi|vendredi|demain)\b|rendez-vous (est )?(confirmé|réservé|noté)|\b(está|fica|ficou) (agendad|marcad|confirmad|reservad)|\baté (amanhã|sábado|domingo|segunda|terça|quarta|quinta|sexta)/iu,
+    hedge: BOOKING_HEDGE_RE,
+  },
+  {
+    kind: "done",
+    statement:
+      /\b(i'?ve|i have|we'?ve|we have|i|we) (just |already )?(sent|emailed|e-mailed|texted|messaged|attached|forwarded|shared|booked|scheduled|reserved|called|phoned|rang|spoke|talked|arranged|mailed|passed (this|it|your)|left you)\b|\b(i'?ve|we'?ve) (spoken|talked|been in touch)\b|\b(attached|enclosed) (is|are|you'?ll find)\b|\bplease find (attached|enclosed)\b|\bas (we )?(discussed|agreed|promised)\b|\bfollowing (our|your) (call|conversation|chat|visit)\b|\bya te (\p{L}+ )?(envi|mand|pas|compart|reserv|agend|llam)|\bte (envié|mandé|compartí|llamé|reservé|agendé|escribí)\b|\bhe (enviado|mandado|reservado|agendado|confirmado|llamado|hablado|compartido)\b|\bte adjunto\b|\bcomo (lo )?(hablamos|acordamos|conversamos|prometí)\b|\bje (vous |t['’])?\s?ai (envoy|transmis|réserv|confirm|appel|partag)|\bj['’]ai (envoy|transmis|réserv|confirm|appel|partag|parlé)|\bnous avons (envoy|réserv|confirm|appel)|\bci-joint\b|\bcomme (convenu|promis|discuté)\b|\b(te |lhe )?(enviei|mandei|reservei|agendei|confirmei|liguei|compartilhei)\b|\bem anexo\b|\bcomo (combinado|conversamos|prometido)\b/iu,
+    hedge: DONE_HEDGE_RE,
+  },
+  {
+    kind: "policy",
+    statement:
+      /(?<!(feel|you'?re|you are|are you|i'?m|we'?re|if you'?re) )\bfree\b|\bno (charge|cost|obligation|fee)|\bat no (extra )?cost\b|\bcomplimentary\b|\bincluded\b|\bincludes\b|\brefund|\bmoney[- ]back\b|\breturn policy\b|\bwarrant|\bguarantee|\bdeposit\b|\bcancel+ation\b|\binsured\b|\blicensed\b|\bcertified\b|\bfinancing\b|\bdiscount|\bgratis\b|\bsin (costo|cargo|compromiso)|incluid|\bincluye|reembols|devoluci|garant|\bdep[oó]sito\b|\banticipo\b|descuento|gratuit|\bsans frais\b|\binclus\b|rembours|\bacompte\b|\bremise\b|grátis|\bsem (custo|compromisso)\b|\binclu[ií]d|devolução|desconto/iu,
+    hedge: FIND_OUT_HEDGE_RE,
+  },
+  {
+    kind: "hours",
+    statement:
+      /\b(we'?re|we are|i'?m|i am|shop is|office is|store is|still) (open|closed)\b(?!\s+to\b)|\bopen (now|today|tonight|until|till|til|late|24|all day|every day|daily|on (week|mon|tue|wed|thu|fri|sat|sun))|\bclosed (on|today|tomorrow|for)\b|\b24\/7\b|\bround the clock\b|\b(estamos|está|esta|seguimos) (abiert|cerrad)|\babiert[oa]s? (hoy|ahora|hasta|los|todos)|\b(nous sommes|on est|c['’]est) (ouvert|fermé)|\bouverts? (aujourd|jusqu|le |tous)|\b(estamos|está) (abert|fechad)|\baberto (hoje|até|aos|todos)/iu,
+    hedge: FIND_OUT_HEDGE_RE,
+    polar: true,
+  },
+  {
+    // What the business does, covers or accepts: "yes, we cover Brampton",
+    // "we offer financing", "we take e-transfer". The first-reply judge
+    // lists this ("that the business does or doesn't offer, cover, or
+    // serve something"); the follow-up judge never did.
+    kind: "service",
+    statement:
+      /\bwe (do |also |definitely )?(cover|serve|service|come out to|travel to|deliver|ship|work in|offer|provide|accept|take (cash|cards?|credit|debit|e-?transfers?|payments?))\b|\b(cubrimos|atendemos|llegamos a|enviamos a|ofrecemos|aceptamos|trabajamos en)\b|\bnous (couvrons|desservons|livrons|offrons|proposons|acceptons|intervenons)\b|\b(atendemos|cobrimos|entregamos|oferecemos|aceitamos)\b/iu,
+    hedge: FIND_OUT_HEDGE_RE,
+  },
+];
+
 /** Weekday and month names for a locale, lowercased. */
 function calendarWords(locale: string): string[] {
   const out: string[] = [];
@@ -137,6 +327,14 @@ function calendarWords(locale: string): string[] {
       const d = new Date(Date.UTC(2024, m, 15));
       out.push(month.format(d), monthShort.format(d));
     }
+    // "today" and "tomorrow" — the words a callback promise is made of
+    // ("I'll call you tomorrow"), and Intl knows them in every locale:
+    // "mañana", "demain", "amanhã", "ਭਲਕੇ", "આવતીકાલે" (audit 2026-09-28).
+    // Not weeks: "this week or later?" is the ordinary how-soon question the
+    // DM sets ask for. (Hindi "आज"/"कल" are two characters and fall to the
+    // length filter below — a known gap.)
+    const relative = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+    out.push(relative.format(0, "day"), relative.format(1, "day"));
   } catch {
     // An unknown or malformed locale tag. Nothing to add; the English
     // pass below still runs, and a check that throws would block a send.
@@ -186,6 +384,15 @@ const UNDERIVABLE = [
   "week-end", "week-ends", "jour ouvrable", "jours ouvrables", "quinzaine",
   // Portuguese
   "fim de semana", "fins de semana", "dia útil", "dias úteis", "quinzena",
+  // A time of day or a turnaround with no digits in it — "I'll call you in
+  // an hour", "our tech can be there tonight" (audit 2026-09-28). "Soon"
+  // and "shortly" are deliberately absent: they are the one timeframe the
+  // drafters are allowed to give.
+  "tonight", "this morning", "this afternoon", "this evening", "an hour", "half an hour", "within the hour",
+  "end of day", "end of the day", "first thing",
+  "esta noche", "esta tarde", "una hora", "media hora", "hoy mismo",
+  "ce soir", "cet après-midi", "une heure", "une demi-heure", "dans la journée",
+  "esta noite", "hoje à noite", "uma hora", "meia hora",
 ];
 
 /**
@@ -210,11 +417,17 @@ export function ungroundedCalendarWords(draft: string, source: string, locale?: 
 
   for (const word of vocabulary) {
     if (!hasWord(draft.toLowerCase(), word)) continue;
+    // "You may want to bring photos" is not the month (audit 2026-09-28:
+    // every draft with "may", "sat" or "march" in it failed as an invented
+    // day). These count only written as a name, capitalised: "in May".
+    if (ENGLISH_WORDS_THAT_ARE_ALSO_DATES.has(word) && !hasWord(draft, word[0].toUpperCase() + word.slice(1))) continue;
     if (hasWord(lowerSource, word)) continue;
     found.add(word);
   }
   return [...found];
 }
+
+const ENGLISH_WORDS_THAT_ARE_ALSO_DATES = new Set(["may", "sun", "sat", "march", "mar", "wed"]);
 
 /**
  * Whole-word containment that does not assume spaces.

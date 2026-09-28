@@ -8290,3 +8290,47 @@ wrote last, including when the last message was one a person approved and sent, 
 Meta reviewer account while preparing App Review, where it contradicted "nothing sends without a human". It now reads
 "{name} hasn't answered on Instagram since the last message, and Meta now only lets a person send the next one".
 Rule: a hold reason states only what FollowUp knows to be true.
+
+## 2026-09-28 — Messages that said something untrue (founder: "just fix whatever you can")
+
+Found by the launch audits. Each one said something that wasn't true, so each now says only what happened.
+
+- **Test-lead button.** On a new account the reply waits for approval, which is the default. The button still said
+  "the reply didn't go out (check that Gmail is connected)". It now names each outcome: waiting for approval on
+  Today, going out in a minute or two, already answered, or the instant reply switched off. The Gmail hint is
+  kept only for a real failure.
+- **Google Cancel.** An owner who pressed Cancel on Google's screen was told their address wasn't on the beta list.
+  The message now covers both causes: a Cancel shared nothing, so press Connect again; a "blocked" screen means the
+  address needs adding.
+- **Refused sign-in.** An uninvited Google account landed on NextAuth's plain "Access Denied" page. It now reaches
+  the sign-in page, which already explains it (`pages.error`).
+- **Meta refusals on Messenger** said "reply from Instagram directly". They now name Messenger.
+- **Sent line on a DM** said "from your own address", which only email does. A DM now reads "Sent to {name}."
+- **Instagram and Facebook cards** promised "gets the instant reply, automatically". Replies are held by default, so
+  both now say "Replies wait for your OK unless you choose Automatic."
+- **/security** said "Google is still verifying FollowUp", but no review has been submitted. It now reads "Google
+  hasn't verified FollowUp yet".
+- **Left for the founder:** the landing demo's "Stopped · she replied" is a line the app never writes, and it uses a
+  pronoun. It's part of the approved landing drawing (A-063), so it isn't changed without a yes.
+Rule, unchanged: every message states only what FollowUp knows to be true.
+
+## 2026-09-28 — A reply never states what only the owner knows (reply-truth audit)
+
+The audit found that every automated path could still send a customer a fact the business never gave. The five-minute
+reply reused a draft that had skipped the price/number check. Workflow steps and the reactivation batch had no rule at
+all. The new availability check could be beaten by a comma. Now every draft about to go out is read sentence by
+sentence, on every path. A draft that states one of these, when no person at the business has said it in the thread,
+waits for the owner:
+- availability (including "sold", "rented", "still on the market")
+- a booking ("you're booked for Saturday")
+- something already done ("I've sent you the details")
+- a policy ("estimates are free")
+- opening hours
+- what the business covers or accepts
+
+Each hold says which one it is, in the owner's words, e.g. "the draft says when you're open, and only you know that".
+Such a draft is never in the one-tap "Send it" group. FollowUp's own automated messages no longer count as the
+business having said something. Kept routine on purpose: "the email I sent last week" once a message has really gone
+out, and "hope to see you soon".
+Known gaps: invented staff or place names; Hindi, Punjabi and Gujarati wording.
+Rule: a reply states only what the thread shows a person at the business said.

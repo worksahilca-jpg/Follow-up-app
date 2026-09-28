@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { ungroundedCalendarWords } from "@/lib/grounding";
+import { ungroundedCalendarWords, unconfirmedClaim } from "@/lib/grounding";
 import { generateInstantReply, assessAckRisk, localizeFixedText } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, getSenderFirstName } from "@/lib/sender";
 import { sendFollowUpToLead } from "@/lib/sending";
@@ -203,6 +203,17 @@ export function checkAckShape(
   // Intl rather than a list of English day names.
   if (ungroundedCalendarWords(trimmed, inboundText, locale).length > 0) return fail("calendar");
 
+  // "Yes, it's still available", "you're booked for Saturday", "estimates
+  // are free", "we're open now": a first reply knows nothing about the
+  // business, so any of these is invented (audit 2026-09-28). Sentence-
+  // level, so naming the topic ("I'll check availability") is still fine —
+  // the concern the header raises about word lists is a concern about
+  // matching WORDS, and this matches statements. An AUTONOMOUS lead skips
+  // assessAckRisk, so without this nothing stopped them at all. Nothing
+  // from the business exists yet, hence the empty grounding text.
+  const claim = unconfirmedClaim(trimmed, "");
+  if (claim) return fail(claim);
+
   if (/^\s*(hi|hello|hey|dear|hola|buenos|buenas|namaste|namaskar|bonjour|olá|ola|ciao|hallo|salut)\b/i.test(trimmed)) {
     return fail("greeting");
   }
@@ -301,6 +312,7 @@ async function buildAckLine(input: {
   automationTier: string;
   inboundText: string;
   channel: AckChannel;
+  locale?: string | null;
 }): Promise<AckLine> {
   const fallback = genericAckLine(input.businessName);
   if (!input.inboundText.trim()) return { line: fallback, source: "fallback", reason: "no inbound text" }; // nothing specific to respond to
@@ -317,7 +329,9 @@ async function buildAckLine(input: {
     return { line: fallback, source: "fallback", reason: "generation failed" };
   }
 
-  const shape = checkAckShape(reply, input.inboundText, input.ownerFirstName);
+  // The lead's language when it is already known, so "sábado" or "mañana"
+  // is checked in Spanish, not only against English day names.
+  const shape = checkAckShape(reply, input.inboundText, input.ownerFirstName, input.locale);
   if (!shape.ok) return { line: fallback, source: "fallback", reason: `shape: ${shape.rule}` };
 
   if (input.automationTier === "AUTONOMOUS") return { line: reply, source: "generated", reason: "autonomous, shape ok" }; // same skip every other autonomous send path takes
@@ -411,6 +425,8 @@ export async function acknowledgeNewLead(
         // Who to tell when the reply is held rather than sent: the
         // assignee, or every admin when nobody is assigned (notifyAckHeld).
         assignedToId: true,
+        // For the calendar rule in checkAckShape, when already detected.
+        language: true,
       },
     });
     if (!lead) return { sent: false, reason: "no lead" };
@@ -580,6 +596,7 @@ export async function acknowledgeNewLead(
       automationTier: lead.automationTier,
       inboundText: input.inboundText ?? "",
       channel: input.channel,
+      locale: lead.language,
     });
 
     // The lead's own message decides the language of everything that

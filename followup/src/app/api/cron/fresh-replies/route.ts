@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
+import { reportCronFailure } from "@/lib/monitoring";
 import { runFreshRepliesForAllBusinesses } from "@/lib/automation";
 
 // Every minute, like /api/cron/instant-ack, and for the same reason the
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
     const result = await runFreshRepliesForAllBusinesses();
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
+    reportCronFailure("fresh-replies", err);
     const message = err instanceof Error ? err.message : "Fresh-reply run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });
   }

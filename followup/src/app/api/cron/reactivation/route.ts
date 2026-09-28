@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
+import { reportCronFailure } from "@/lib/monitoring";
 import { prisma } from "@/lib/db";
 import { hasActiveAccess } from "@/lib/billing";
 import { classifyQuietLeads } from "@/lib/reactivation";
@@ -120,7 +121,7 @@ export async function GET(request: NextRequest) {
         // for everyone else.
         budget += limit;
         skipped += 1;
-        console.error(`Quiet-lead classification failed for business ${b.id}:`, err);
+        reportCronFailure("reactivation", err, "quiet-lead classification");
       }
     });
 
@@ -139,6 +140,7 @@ export async function GET(request: NextRequest) {
       remaining,
     });
   } catch (err) {
+    reportCronFailure("reactivation", err);
     const message = err instanceof Error ? err.message : "Reactivation classification run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });
   }

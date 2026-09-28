@@ -226,3 +226,51 @@ describe("both shape checks actually apply it", () => {
     expect(shape.ok).toBe(true);
   });
 });
+
+// 2026-09-27, recording the Meta App Review video: two drafts in a row told
+// a real enquiry the condo was available. Nobody at the business had said so.
+describe("unconfirmedAvailability", () => {
+  it("refuses the exact drafts that went into the routine group", async () => {
+    const { unconfirmedAvailability } = await import("@/lib/grounding");
+    expect(unconfirmedAvailability("The 2 bedroom condo is still available. Would you like to schedule a visit?", "")).toBe(true);
+    expect(unconfirmedAvailability("Yes, it is available. Do you want to schedule it?", "")).toBe(true);
+  });
+
+  it("refuses saying it is NOT available too — that is just as much the owner's call", async () => {
+    const { unconfirmedAvailability } = await import("@/lib/grounding");
+    expect(unconfirmedAvailability("Sorry, that one is no longer available. Want me to suggest others?", "")).toBe(true);
+  });
+
+  it("allows a question and a sentence that says it is being checked", async () => {
+    const { unconfirmedAvailability } = await import("@/lib/grounding");
+    expect(unconfirmedAvailability("Is it still available for you this week?", "")).toBe(false);
+    expect(unconfirmedAvailability("I'll check if it's still available and get back to you. When would you like to see it?", "")).toBe(false);
+    expect(unconfirmedAvailability("Let me confirm availability. Is this for you or someone else?", "")).toBe(false);
+  });
+
+  it("allows it once the business itself has said so", async () => {
+    const { unconfirmedAvailability } = await import("@/lib/grounding");
+    expect(unconfirmedAvailability("Yes, it is still available. Want to book a visit?", "Hi! It's available from October.")).toBe(false);
+  });
+
+  it("catches Spanish, and leaves a draft that never mentions it alone", async () => {
+    const { unconfirmedAvailability } = await import("@/lib/grounding");
+    expect(unconfirmedAvailability("Sí, el departamento sigue disponible. ¿Quieres verlo?", "")).toBe(true);
+    expect(unconfirmedAvailability("Voy a revisar si sigue disponible. ¿Quieres verlo?", "")).toBe(false);
+    expect(unconfirmedAvailability("Thanks for reaching out. Is this for you or a family member?", "")).toBe(false);
+  });
+});
+
+describe("unconfirmedAvailability — a claim hidden in front of a question", () => {
+  it("catches 'We do have availability — shall I send the details?'", async () => {
+    const { unconfirmedAvailability } = await import("@/lib/grounding");
+    expect(unconfirmedAvailability("We do have availability — shall I send the details over?", "")).toBe(true);
+  });
+});
+
+describe("an automated draft that claims availability", () => {
+  it("is held with a reason the owner can read", async () => {
+    const { UNGROUNDED_DRAFT_REASONS } = await import("@/lib/holdReasons");
+    expect(UNGROUNDED_DRAFT_REASONS.availability).toMatch(/only you know/);
+  });
+});

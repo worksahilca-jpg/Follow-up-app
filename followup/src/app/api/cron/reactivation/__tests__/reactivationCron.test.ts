@@ -10,8 +10,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { recordAuthFailure } = vi.hoisted(() => ({ recordAuthFailure: vi.fn() }));
-vi.mock("@/lib/monitoring", () => ({ recordAuthFailure }));
+const { recordAuthFailure, reportCronFailure } = vi.hoisted(() => ({ recordAuthFailure: vi.fn(), reportCronFailure: vi.fn() }));
+vi.mock("@/lib/monitoring", () => ({ recordAuthFailure, reportCronFailure }));
 
 const { businessFindMany } = vi.hoisted(() => ({ businessFindMany: vi.fn() }));
 vi.mock("@/lib/db", () => ({ prisma: { business: { findMany: businessFindMany } } }));
@@ -169,6 +169,8 @@ describe("GET /api/cron/reactivation — failure isolation", () => {
     expect(body.processed).toBe(2);
     expect(body.skipped).toBe(1);
     expect(body.classified).toBe(8);
+    // And the failure reaches Sentry, not just the log (launch check 2026-09-28).
+    expect(reportCronFailure).toHaveBeenCalledWith("reactivation", expect.any(Error), "quiet-lead classification");
     errorLog.mockRestore();
   });
 
@@ -177,5 +179,6 @@ describe("GET /api/cron/reactivation — failure isolation", () => {
     const res = await GET(cronRequest());
     expect(res.status).toBe(500);
     expect((await res.json()).success).toBe(false);
+    expect(reportCronFailure).toHaveBeenCalledWith("reactivation", expect.any(Error));
   });
 });

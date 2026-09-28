@@ -12,7 +12,7 @@ import { DM_SHAPE_RULES, type DmSituation } from "@/lib/dmDrafts";
 import { DM_MAX_BUTTONS, type DmButton } from "@/lib/quickReplies";
 import { registerInstruction, type LeadLanguage } from "@/lib/leadLanguage";
 import { hasPriceSlot, PRICE_SLOT, PRICE_SLOT_REASON } from "@/lib/priceSlot";
-import { ungroundedSpecifics } from "@/lib/grounding";
+import { ungroundedSpecifics, unconfirmedClaim } from "@/lib/grounding";
 // The client and model name live in their own leaf module so this file
 // and leadLanguage.ts don't import each other — see openaiClient.ts.
 import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
@@ -1863,6 +1863,16 @@ export async function rewriteReply(
   // A rewrite that comes back empty or balloons is refused rather than
   // shown: the owner keeps what they had.
   if (!out || out.length > Math.max(400, text.length * 3)) return text;
+  // The prompt says "never add a fact"; this is the check (audit
+  // 2026-09-28). It matters most for "language": an owner who asked for
+  // Gujarati usually cannot read what came back, so for them this IS an
+  // unreviewed send. A figure, price or link neither the reply nor the
+  // thread contains, or a claim only the owner makes that their own reply
+  // did not, and the owner keeps what they had. Days are not checked: a
+  // translated weekday is a different word by design.
+  const source = `${text}\n${conversation.map((m) => m.body).join("\n")}`;
+  const invented = ungroundedSpecifics(out, source);
+  if (invented === "digits" || invented === "currency" || newLinkOrAddress(out, source) || unconfirmedClaim(out, text)) return text;
   return out;
 }
 

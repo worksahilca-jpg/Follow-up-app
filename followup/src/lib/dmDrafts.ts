@@ -19,7 +19,7 @@
 
 import { isNotAnAnswer } from "@/lib/notAnAnswer";
 import type { Message } from "@/lib/types";
-import { ungroundedCalendarWords } from "@/lib/grounding";
+import { ungroundedCalendarWords, ungroundedSpecifics, unconfirmedClaim } from "@/lib/grounding";
 import { DM_MAX_BUTTONS, QUICK_REPLY_TITLE_MAX_CHARS, type DmButton } from "@/lib/quickReplies";
 
 export const DM_CHANNELS: ReadonlySet<string> = new Set(["instagram", "messenger"]);
@@ -94,6 +94,14 @@ export function pickDmSituation(conversation: Message[], touch: DmTouch): DmSitu
     .map((m) => m.body)
     .join("\n");
   const replied = ownerHasReplied(conversation);
+  // The lead wrote again after the business's last word (the instant ack
+  // doesn't count as a word). Then nobody is "quiet": they asked something
+  // new and it is unanswered. Without this, a returning lead's fresh
+  // question got the "they went quiet" sets, which never say "don't
+  // confirm availability", and the drafter told a real enquiry the condo
+  // was "still available" (2026-09-27).
+  const spoken = conversation.filter((m) => !isAck(m));
+  const leadWroteLast = spoken[spoken.length - 1]?.direction === "inbound";
   const priceGiven = replied && CURRENCY_RE.test(outboundText);
   const slotsNamed = replied && SLOT_RE.test(outboundText);
   const asksPrice = PRICE_RE.test(lastText);
@@ -156,7 +164,7 @@ export function pickDmSituation(conversation: Message[], touch: DmTouch): DmSitu
     };
   }
 
-  if (replied) {
+  if (replied && !leadWroteLast) {
     // Sets 4, 6, 8 — a real exchange happened and the lead went quiet.
     if (priceGiven) {
       return {
@@ -187,7 +195,7 @@ export function pickDmSituation(conversation: Message[], touch: DmTouch): DmSitu
   }
 
   // Sets 2 and the availability/general variants — the owner hasn't
-  // replied yet, ~3 hours in. Nothing is late yet, so no apology; add the
+  // replied yet (or hasn't answered the lead's newest question), ~3 hours in. Nothing is late yet, so no apology; add the
   // one fact the business would need, asked about THEIR situation.
   if (asksPrice) {
     return {
@@ -248,7 +256,10 @@ export function checkDmDraftShape(
   // The lead's own language tag, so the calendar rule below checks the
   // draft in the language it was actually written in. Optional: absent
   // falls back to English, which is what the rule did before it existed.
-  locale?: string | null
+  locale?: string | null,
+  // Only what the business itself sent. When given, the draft may not state
+  // availability unless the business already did (src/lib/grounding.ts).
+  businessText?: string
 ): { ok: true } | { ok: false; rule: string } {
   const fail = (rule: string) => ({ ok: false as const, rule });
   const body = draft.body.trim();
@@ -277,8 +288,12 @@ export function checkDmDraftShape(
   if (BANNED_CLOSER_RE.test(body)) return fail("banned_closer");
   if (/https?:\/\//i.test(body) || /www\./i.test(body) || /\S+@\S+\.\S+/.test(body)) return fail("contact");
 
+  // The chips are customer-facing words too: "Sat 10am" under a question
+  // is an offered slot, however plain the body is (audit 2026-09-28). The
+  // grounding rules below read the body and every button title together.
+  const spoken = [body, ...draft.buttons.map((b) => b.title)].join("\n");
   const known = new Set(conversationText.match(NUMBER_RE) ?? []);
-  if ((body.match(NUMBER_RE) ?? []).some((n) => !known.has(n))) return fail("digits");
+  if ((spoken.match(NUMBER_RE) ?? []).some((n) => !known.has(n))) return fail("digits");
 
   // The same invariant as the digits rule above, for a specific with no
   // digits in it. "Will this be for a weekday or weekend?" went out to a
@@ -288,7 +303,13 @@ export function checkDmDraftShape(
   //
   // draftDm regenerates once on any shape failure before giving up, so
   // this usually costs one extra call rather than a lost draft.
-  if (ungroundedCalendarWords(body, conversationText, locale).length > 0) return fail("calendar");
+  if (ungroundedCalendarWords(spoken, conversationText, locale).length > 0) return fail("calendar");
+  if (businessText !== undefined) {
+    // Availability, a booking, a past action, a policy, opening hours: only
+    // the owner states these (src/lib/grounding.ts).
+    const claim = unconfirmedClaim(spoken, businessText);
+    if (claim) return fail(claim);
+  }
 
   if (draft.buttons.length > DM_MAX_BUTTONS) return fail("too_many_buttons");
   const seen = new Set<string>();
@@ -312,6 +333,54 @@ export function checkDmDraftShape(
 /** The whole thread as one string, for the digits rule above. */
 export function conversationText(conversation: Message[]): string {
   return conversation.map((m) => m.body).join("\n");
+}
+
+/**
+ * Every grounding rule, for any draft about to leave on an automated path
+ * that is not a DM (a DM gets checkDmDraftShape, which includes these):
+ * a number, price, day or time nobody wrote (ungroundedSpecifics), or a
+ * claim only the owner can make (unconfirmedClaim). Returns the rule that
+ * failed, keyed like UNGROUNDED_DRAFT_REASONS, or null.
+ *
+ * `ownerHint` is text the owner typed to steer this draft — a workflow
+ * step's note — and grounds a figure or a day the way the thread does. It
+ * does not ground a claim: the ready plans' own hints say things like "no
+ * discount", which must not make "10% discount" look grounded.
+ */
+export function inventedSpecific(text: string, conversation: Message[], locale?: string | null, ownerHint?: string | null): string | null {
+  const source = ownerHint ? `${conversationText(conversation)}\n${ownerHint}` : conversationText(conversation);
+  const sentBefore = conversation.some((m) => m.direction === "outbound" && !isAck(m));
+  return ungroundedSpecifics(text, source, locale) ?? unconfirmedClaim(text, businessText(conversation), { sentBefore });
+}
+
+/**
+ * The model's own words out of a composed email: composeFollowUpEmail
+ * wraps them as "<greeting>\n\n<body>\n\n<sign-off>", and the frame is
+ * FollowUp's text (the owner's name, which may carry digits when it falls
+ * back to an email local part) with nothing to ground against.
+ */
+export function emailBodyOf(composed: string): string {
+  const parts = composed.split("\n\n");
+  return parts.length >= 3 ? parts.slice(1, -1).join("\n\n") : composed;
+}
+
+/**
+ * What a PERSON at the business has said in the thread: a manual send, a
+ * reply synced from the owner's own inbox, a Meta echo of one typed in the
+ * native app (no trigger, or "manual" — the same test as ownerHasReplied).
+ *
+ * Not FollowUp's own automated sends, and not the live phone assistant's
+ * speech: both are model output nobody reviewed, and counting them let one
+ * invented claim that got out ground every later draft that repeated it
+ * (audit 2026-09-28). The instant acknowledgement and the holding message
+ * were already excluded as fixed templates.
+ */
+export function businessText(conversation: Message[]): string {
+  return conversation
+    // "voice-agent" is a stored channel the UI Message type doesn't name.
+    .filter((m) => m.direction === "outbound" && (m.trigger ?? "manual") === "manual" && (m.channel as string) !== "voice-agent")
+    .map((m) => m.body)
+    .join("\n");
 }
 
 /** Which channel the lead last wrote on, if it is one that takes DM-shaped drafts. */

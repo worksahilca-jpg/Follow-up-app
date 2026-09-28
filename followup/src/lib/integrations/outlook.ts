@@ -72,8 +72,13 @@ export function outlookOAuthAvailable(): boolean {
 
 export interface OutlookConnectionStatus {
   connected: boolean;
+  /** Connected once, but Microsoft stopped honouring the token (see getValidAccessToken). */
+  needsReconnect?: boolean;
   email?: string;
 }
+
+/** What the owner is told when Microsoft stops honouring the connection. */
+export const OUTLOOK_RECONNECT_MESSAGE = "Outlook stopped letting FollowUp read this inbox. Reconnect it in Settings.";
 
 // The business's Outlook connection — scoped by business, never a global
 // findFirst, so one tenant's inbox can never leak into another's.
@@ -86,7 +91,17 @@ async function getOutlookIntegration(businessId: string) {
 
 export async function getOutlookStatus(businessId: string): Promise<OutlookConnectionStatus> {
   const integration = await getOutlookIntegration(businessId);
-  if (!integration) return { connected: false };
+  if (!integration) {
+    // Same as Gmail: a revoked connection is parked at "needs_reconnect",
+    // so the lookup above misses it, but the business did connect an inbox
+    // and must be told it stopped, not shown the never-connected state.
+    const revoked = await prisma.integration.findFirst({
+      where: { provider: "outlook", status: "needs_reconnect", user: { businessId } },
+      select: { accountEmail: true, user: { select: { email: true } } },
+    });
+    if (revoked) return { connected: false, needsReconnect: true, email: revoked.accountEmail ?? revoked.user.email };
+    return { connected: false };
+  }
   return { connected: true, email: integration.accountEmail ?? integration.user.email };
 }
 
@@ -227,6 +242,29 @@ async function getValidAccessToken(businessId: string): Promise<{ accessToken: s
   const tokens: TokenResponse = await res.json();
   if (!res.ok || !tokens.access_token) {
     console.error(`Outlook token refresh failed for business ${businessId}:`, tokens.error_description ?? tokens.error);
+    // invalid_grant is Microsoft's "this refresh token is dead": revoked,
+    // expired, password changed, or the app's secret rotated. It never
+    // recovers on its own. Before this, the sync still stamped the
+    // connection "checked just now" with no error, so a dead Outlook looked
+    // healthy forever while no new customer arrived (launch check
+    // 2026-09-28). Anything else (a Microsoft outage) is left connected and
+    // just recorded, so the next tick can succeed.
+    const dead = tokens.error === "invalid_grant";
+    if (!dead) {
+      await prisma.integration.update({
+        where: { id: integration.id },
+        data: { lastSyncError: "Outlook didn't answer. FollowUp will try again in a few minutes." },
+      });
+      return null;
+    }
+    // Only from "connected", so exactly one caller parks it and tells the
+    // admins, once per death, the same as Gmail (gmailSyncNotices.ts).
+    // The dead tokens go too: holding them buys nothing.
+    const { count } = await prisma.integration.updateMany({
+      where: { id: integration.id, status: "connected" },
+      data: { status: "needs_reconnect", lastSyncError: OUTLOOK_RECONNECT_MESSAGE, accessToken: null, refreshToken: null },
+    });
+    if (count > 0) await notifyOutlookAccessLost(businessId, integration.accountEmail ?? integration.user?.email ?? null);
     return null;
   }
 
@@ -240,6 +278,19 @@ async function getValidAccessToken(businessId: string): Promise<{ accessToken: s
   });
 
   return { accessToken: tokens.access_token, integration: { ...integration, accessToken: tokens.access_token, refreshToken, tokenExpiresAt: newExpiresAt } };
+}
+
+/** One bell row per admin. Best-effort: a failed notice never changes what the sync records. */
+async function notifyOutlookAccessLost(businessId: string, email: string | null): Promise<void> {
+  try {
+    const admins = await prisma.user.findMany({ where: { businessId, role: "ADMIN" }, select: { id: true } });
+    const message =
+      `FollowUp lost access to ${email ?? "your Outlook inbox"}, so new emails there aren't being picked up. ` +
+      `Reconnect Outlook in Settings to keep catching leads.`;
+    for (const a of admins) await prisma.notification.create({ data: { userId: a.id, leadId: null, message } });
+  } catch (err) {
+    console.error(`Could not tell business ${businessId} that Outlook needs reconnecting:`, err);
+  }
 }
 
 async function graphFetch(businessId: string, path: string, init: RequestInit = {}): Promise<Response | null> {
@@ -647,7 +698,19 @@ export async function fetchOutlookConversations(
   options: Pick<OutlookSyncOptions, "maxClassifications" | "onResult"> = {}
 ): Promise<SyncedLead[]> {
   const authed = await getValidAccessToken(businessId);
-  if (!authed) return [];
+  if (!authed) {
+    // A refresh that just failed left its reason on the row. Surface it as a
+    // failed sync instead of an empty one, so the sync never stamps the
+    // connection "checked just now" when it could not read anything.
+    const row = await prisma.integration.findFirst({
+      where: { provider: "outlook", status: { in: ["connected", "needs_reconnect"] }, user: { businessId } },
+      select: { lastSyncError: true },
+    });
+    // The cron prefixes each recorded error with its time; drop those so a
+    // repeat failure doesn't grow a chain of timestamps.
+    if (row?.lastSyncError) throw new Error(row.lastSyncError.replace(/^(\d{4}-\d\d-\d\dT[\d:.]+Z\s+)+/, ""));
+    return [];
+  }
   const selfEmail = (authed.integration.accountEmail ?? authed.integration.user.email).toLowerCase();
 
   let nextUrl: string;

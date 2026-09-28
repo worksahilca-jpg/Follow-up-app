@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cronAuth";
+import { reportCronFailure } from "@/lib/monitoring";
 import { runDueHoldingMessages } from "@/lib/holdingMessage";
 
 // Every five minutes (see vercel.json), so "30 minutes" is 30 to 35 in
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
     const result = await runDueHoldingMessages();
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
+    reportCronFailure("holding-messages", err);
     const message = err instanceof Error ? err.message : "Holding-message run failed.";
     return NextResponse.json({ success: false, message }, { status: 500 });
   }

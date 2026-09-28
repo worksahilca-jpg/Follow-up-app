@@ -26,10 +26,12 @@
  *    dark cards, the button inverted. Every colour is a class with the
  *    light value inline, so a client that drops <style> still gets light.
  *  - Outlook.com's own inversion is steered through [data-ogsc]/[data-ogsb].
- *  - Gmail's app: text that sits on the wash image is wrapped in the
- *    screen/difference blend pair (targeted by Gmail's "u + .body"
- *    wrapper), which cancels Gmail's text flip exactly where the image
- *    stays light. Solid cards flip as a whole and stay readable.
+ *  - Gmail's app: it lightens text but never recolours a picture, so no
+ *    text sits on the wash. The wash is a band holding only the logo, and
+ *    everything written sits on the plain sheet and cards, which Gmail
+ *    darkens together with their text. (A screen/difference blend trick
+ *    meant to hold the text dark on the wash was tried first; on the
+ *    founder's phone it did nothing, 2026-09-28.)
  */
 
 export interface WeeklyEmailView {
@@ -110,25 +112,10 @@ function table(inner: string, style = "", className = ""): string {
 }
 
 /**
- * Text that sits on the wash image. In Gmail's app dark mode the image
- * stays light while Gmail lightens the text, so this pair of blend layers
- * (active only under Gmail's "u + .body" wrapper, see darkStyles) turns
- * the text back. Everywhere else the two spans are inert.
- */
-function onWash(html: string): string {
-  return `<span class="fu-gmail-screen"><span class="fu-gmail-diff">${html}</span></span>`;
-}
-
-/**
  * The lockup, twice: black for light, near-white for dark. The dark one is
  * hidden inline, so a client that drops <style> shows only the black one.
- *
- * Each sits on its own chip, drawn into the image. Gmail's app in dark
- * mode never shows the dark one (it ignores the styles that swap them) and
- * darkens the header around the black one, which left a black logo on a
- * near-black header: invisible, on the founder's phone, twice. It never
- * recolours an image, so a white chip inside the image keeps the black
- * logo readable there, and reads as a plain white label everywhere else.
+ * It only ever sits on the wash picture, which no mail app recolours, so
+ * the black mark stays readable in Gmail's dark mode too.
  */
 function lockup(l: WeeklyEmailView["links"], width: number, height: number): string {
   return (
@@ -175,21 +162,24 @@ function darkStyles(l: WeeklyEmailView["links"]): string {
   [data-ogsb] .fu-card { background:${d.card} !important; }
   [data-ogsb] .fu-sand { background:${d.sand} !important; }
   [data-ogsb] .fu-chip { background:${d.chip} !important; }
-  u + .body .fu-gmail-screen { background:#000; mix-blend-mode:screen; }
-  u + .body .fu-gmail-diff { background:#000; mix-blend-mode:difference; }
 </style>`;
 }
 
 export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
   const l = v.links;
 
+  // The wash is a picture band holding only the logo. No text sits on it:
+  // Gmail's app, in dark mode, lightens text but leaves pictures alone, so
+  // anything written on the light wash turned light-on-light there
+  // (founder's phone, 2026-09-28). The date, the greeting and the win sit
+  // on the plain sheet, which every mail app darkens along with its text.
   const header = `
-<tr><td class="fu-wash-top" background="${e(l.headerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.headerImage)}');background-size:cover;background-position:center;padding:28px 28px 28px;">
-  ${table(`<tr>
-    <td style="vertical-align:middle;"><a href="${e(l.website)}" style="text-decoration:none;">${lockup(l, 88, 34)}</a></td>
-    <td align="right" style="vertical-align:middle;font-size:13px;">${onWash(`<span class="fu-soft" style="color:${SOFT};">${e(v.dateRange)}</span>`)}</td>
-  </tr>`)}
-  <h1 class="fu-ink" style="margin:40px 0 0;font-size:34px;line-height:1.08;letter-spacing:-0.03em;font-weight:300;color:${INK};">${onWash(`Your week,<br>${e(v.businessName)}`)}</h1>
+<tr><td class="fu-wash-top" background="${e(l.headerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.headerImage)}');background-size:cover;background-position:center;padding:26px 28px 56px;">
+  <a href="${e(l.website)}" style="text-decoration:none;">${lockup(l, 80, 30)}</a>
+</td></tr>
+<tr><td style="padding:30px 28px 0;">
+  <div class="fu-dim" style="font-size:13px;color:${DIM};">${e(v.dateRange)}</div>
+  <h1 class="fu-ink" style="margin:8px 0 0;font-size:34px;line-height:1.08;letter-spacing:-0.03em;font-weight:300;color:${INK};">Your week,<br>${e(v.businessName)}</h1>
   ${table(
     `<tr><td style="padding:22px 22px 24px;">
       ${label(v.highlight.label)}
@@ -201,7 +191,7 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
           : ""
       }
     </td></tr>`,
-    `margin-top:28px;background:#ffffff;border:1px solid ${LINE};border-radius:20px;`,
+    `margin-top:24px;background:#ffffff;border:1px solid ${LINE};border-radius:20px;`,
     "fu-card"
   )}
 </td></tr>`;
@@ -286,14 +276,20 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
       : "";
 
   const link = (href: string, text: string) => `<a class="fu-soft" href="${e(href)}" style="color:${SOFT};text-decoration:none;">${text}</a>`;
+  // Text first, on the sheet; the wash band last, holding only the logo
+  // (the same reason as the header).
   const footer = `
-<tr><td style="padding-top:40px;"></td></tr>
-<tr><td class="fu-wash-bottom" background="${e(l.footerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.footerImage)}');background-size:cover;background-position:center;padding:30px 28px 28px;">
-  ${lockup(l, 78, 30)}
-  <p class="fu-soft" style="margin:10px 0 0;font-size:15px;color:${SOFT};">${onWash("So no customer gets forgotten.")}</p>
-  <p style="margin:16px 0 0;font-size:14px;">${onWash([link(l.website, "Website"), link(l.privacy, "Privacy"), link(l.terms, "Terms"), link(l.contact, "Contact")].join(`&nbsp;&nbsp;&nbsp;&nbsp;`))}</p>
-  <p class="fu-soft" style="margin:18px 0 0;font-size:14px;line-height:1.5;color:${SOFT};">${onWash(`Questions or ideas? <a class="fu-ink" href="${e(l.writeToSahil)}" style="color:${INK};text-decoration:underline;">Write to Sahil</a>, who builds FollowUp.`)}</p>
-  <p class="fu-dim" style="margin:16px 0 0;font-size:12.5px;line-height:1.5;color:${DIM};">${onWash(`FollowUp sent this from your own Gmail to you, an admin of ${e(v.businessName)}. It comes every Monday.`)}</p>
+<tr><td style="padding:40px 28px 0;">
+  <div class="fu-rule" style="border-top:1px solid ${RULE};padding-top:26px;">
+    <p class="fu-soft" style="margin:0;font-size:15px;color:${SOFT};">So no customer gets forgotten.</p>
+    <p style="margin:14px 0 0;font-size:14px;">${[link(l.website, "Website"), link(l.privacy, "Privacy"), link(l.terms, "Terms"), link(l.contact, "Contact")].join(`&nbsp;&nbsp;&nbsp;&nbsp;`)}</p>
+    <p class="fu-soft" style="margin:16px 0 0;font-size:14px;line-height:1.5;color:${SOFT};">Questions or ideas? <a class="fu-ink" href="${e(l.writeToSahil)}" style="color:${INK};text-decoration:underline;">Write to Sahil</a>, who builds FollowUp.</p>
+    <p class="fu-dim" style="margin:14px 0 0;font-size:12.5px;line-height:1.5;color:${DIM};">FollowUp sent this from your own Gmail to you, an admin of ${e(v.businessName)}. It comes every Monday.</p>
+  </div>
+</td></tr>
+<tr><td style="padding-top:32px;"></td></tr>
+<tr><td class="fu-wash-bottom" background="${e(l.footerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.footerImage)}');background-size:cover;background-position:center;padding:22px 28px;">
+  ${lockup(l, 60, 22)}
 </td></tr>`;
 
   return `<!doctype html>

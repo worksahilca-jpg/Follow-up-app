@@ -8390,3 +8390,14 @@ footer wash went light on light, and the black lockup sank into dark areas. Now:
   - **The samples sent through the Gmail tool could never show the logo** — that tool strips `cid:` pictures — so the
     real check is the new founder-only link, `/api/admin/weekly-email-preview`, which sends this week's actual email
     through FollowUp's own send path.
+- **Real email, founder's phone (via the preview link): the wash picture DOES load; the logo showed, on a white badge
+  the founder rejected (R-024), and the text on the wash was light-on-light.** The earlier "no pictures load" came from
+  the samples being sent through a Gmail tool, not from Gmail itself. Gmail's app lightens text but never recolours a
+  picture, so anything written on the wash can't be read there. Changed:
+  - **The wash is now a band holding only the plain black logo** (80×30 top, 60×22 bottom). The picture stays light
+    in Gmail's dark mode, so the black mark is always readable, with no badge.
+  - **All text moved onto the plain sheet:** the date, "Your week, …", the win card (now a bordered card on the sheet,
+    not on the wash), and the footer lines (above a rule, with the wash band below them).
+  - **The screen/difference blend trick is removed.** It never worked on the founder's phone.
+  - This changes A-038's header (win card on the wash). Shown to the founder before merge.
+  - Checked on a Gmail-dark simulation that keeps pictures and inverts colours; the founder's phone is the real check.

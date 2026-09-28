@@ -554,3 +554,16 @@ blobs or thick 8-unit outlines, with fat tails.
 - Thin, even lines and room around them.
 
 **Do not propose again:** heavy solid chat blobs or thick outlines as the mark.
+
+## R-024 — A white badge behind the logo in the weekly email ^R-024
+
+**Rejected:** 2026-09-28, founder, on the real weekly email in Gmail (dark mode): *"I dont want white background behind
+the logo"*.
+
+**What was rejected:** the lockup on a white pill (`followup-lockup-chip.png`), added in #382 so the black mark stayed
+visible when Gmail darkened the header around it.
+
+**Principle (inferred):** the logo sits on the page's own surface, never on a sticker that exists only to work around a
+mail app. If the mark needs help to be seen, change what sits behind it, not the mark.
+
+**Do not propose again:** a white (or any contrasting) chip, pill or badge behind the FollowUp lockup in email.

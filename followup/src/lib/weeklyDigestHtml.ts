@@ -66,6 +66,12 @@ const SOFT = "#57534e";
 const DIM = "#736e68";
 const LINE = "#e7e5e2";
 const RULE = "#f0eeeb";
+// The waiting box's edge. Darker than RULE on purpose: Gmail's app, in dark
+// mode, ignores the dark styles below and darkens every light colour
+// itself, and a near-white edge came out the same black as the sheet, so
+// the box vanished into it on the founder's phone (2026-09-28, twice). A
+// mid-tone edge survives that darkening as a visible line.
+const EDGE = "#d9d3cb";
 const SAND = "#faf8f6";
 const WASH = "#f3efea";
 // Dark twins of the tokens above, used only inside the dark-mode styles.
@@ -116,6 +122,13 @@ function onWash(html: string): string {
 /**
  * The lockup, twice: black for light, near-white for dark. The dark one is
  * hidden inline, so a client that drops <style> shows only the black one.
+ *
+ * Each sits on its own chip, drawn into the image. Gmail's app in dark
+ * mode never shows the dark one (it ignores the styles that swap them) and
+ * darkens the header around the black one, which left a black logo on a
+ * near-black header: invisible, on the founder's phone, twice. It never
+ * recolours an image, so a white chip inside the image keeps the black
+ * logo readable there, and reads as a plain white label everywhere else.
  */
 function lockup(l: WeeklyEmailView["links"], width: number, height: number): string {
   return (
@@ -173,7 +186,7 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
   const header = `
 <tr><td class="fu-wash-top" background="${e(l.headerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.headerImage)}');background-size:cover;background-position:center;padding:28px 28px 28px;">
   ${table(`<tr>
-    <td style="vertical-align:middle;"><a href="${e(l.website)}" style="text-decoration:none;">${lockup(l, 60, 23)}</a></td>
+    <td style="vertical-align:middle;"><a href="${e(l.website)}" style="text-decoration:none;">${lockup(l, 88, 34)}</a></td>
     <td align="right" style="vertical-align:middle;font-size:13px;">${onWash(`<span class="fu-soft" style="color:${SOFT};">${e(v.dateRange)}</span>`)}</td>
   </tr>`)}
   <h1 class="fu-ink" style="margin:40px 0 0;font-size:34px;line-height:1.08;letter-spacing:-0.03em;font-weight:300;color:${INK};">${onWash(`Your week,<br>${e(v.businessName)}`)}</h1>
@@ -238,8 +251,8 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
       )}
       <p class="fu-dim" style="margin:12px 0 0;text-align:center;font-size:13.5px;color:${DIM};">Nothing goes out until you send it.</p>
     </td></tr>`,
-    // The edge keeps the box distinct when Gmail darkens it to the sheet's colour.
-    `background:${SAND};border:1px solid ${RULE};border-radius:20px;`,
+    // The edge keeps the box distinct when Gmail darkens it to the sheet's colour (see EDGE).
+    `background:${SAND};border:1px solid ${EDGE};border-radius:20px;`,
     "fu-sand fu-rule"
   )}
 </td></tr>`;
@@ -276,7 +289,7 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
   const footer = `
 <tr><td style="padding-top:40px;"></td></tr>
 <tr><td class="fu-wash-bottom" background="${e(l.footerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.footerImage)}');background-size:cover;background-position:center;padding:30px 28px 28px;">
-  ${lockup(l, 54, 21)}
+  ${lockup(l, 78, 30)}
   <p class="fu-soft" style="margin:10px 0 0;font-size:15px;color:${SOFT};">${onWash("So no customer gets forgotten.")}</p>
   <p style="margin:16px 0 0;font-size:14px;">${onWash([link(l.website, "Website"), link(l.privacy, "Privacy"), link(l.terms, "Terms"), link(l.contact, "Contact")].join(`&nbsp;&nbsp;&nbsp;&nbsp;`))}</p>
   <p class="fu-soft" style="margin:18px 0 0;font-size:14px;line-height:1.5;color:${SOFT};">${onWash(`Questions or ideas? <a class="fu-ink" href="${e(l.writeToSahil)}" style="color:${INK};text-decoration:underline;">Write to Sahil</a>, who builds FollowUp.`)}</p>

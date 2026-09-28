@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { formatMoney, getRescueReport, type RescueReport, type RescuedLead } from "@/lib/rescued";
 import { renderWeeklyEmailHtml, type WeeklyEmailView } from "@/lib/weeklyDigestHtml";
-import { LOGO_CHIP, LOGO_CHIP_DARK, type InlineImage } from "@/lib/emailAssets";
+import { LOGO, LOGO_DARK, type InlineImage } from "@/lib/emailAssets";
 
 /**
  * The Monday email (design brain A-034, A-037, A-038): what the week was,
@@ -244,19 +244,16 @@ export function renderWeeklyDigest(d: WeeklyDigestInput): { subject: string; tex
       writeToSahil: `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("About FollowUp")}`,
       headerImage: `${d.appUrl}/email/week-header.jpg`,
       footerImage: `${d.appUrl}/email/week-footer.jpg`,
-      // The lockup on a white chip drawn into the image: Gmail's app darkens
-      // the header in dark mode but never recolours an image, so the black
-      // mark stays readable there (founder's phone, 2026-09-28). Carried
-      // inside the message (cid:, see src/lib/emailAssets.ts) because the
-      // hosted copy never loaded on that phone at all.
-      logo: `cid:${LOGO_CHIP.cid}`,
+      // Carried inside the message (cid:, see src/lib/emailAssets.ts), so
+      // it shows even where a mail app holds back hosted pictures.
+      logo: `cid:${LOGO.cid}`,
       headerImageDark: `${d.appUrl}/email/week-header-dark.jpg`,
       footerImageDark: `${d.appUrl}/email/week-footer-dark.jpg`,
-      logoDark: `cid:${LOGO_CHIP_DARK.cid}`,
+      logoDark: `cid:${LOGO_DARK.cid}`,
     },
   };
 
-  return { subject, text: renderText(d, win, waitingCount), html: renderWeeklyEmailHtml(view), inlineImages: [LOGO_CHIP, LOGO_CHIP_DARK] };
+  return { subject, text: renderText(d, win, waitingCount), html: renderWeeklyEmailHtml(view), inlineImages: [LOGO, LOGO_DARK] };
 }
 
 /**

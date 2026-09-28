@@ -8334,3 +8334,12 @@ business having said something. Kept routine on purpose: "the email I sent last 
 out, and "hope to see you soon".
 Known gaps: invented staff or place names; Hindi, Punjabi and Gujarati wording.
 Rule: a reply states only what the thread shows a person at the business said.
+
+## 2026-09-28 — Founder calls: the owner's setting sticks, and a plan ending restores it
+
+- **Automatic/Assisted sticks.** The choice made in setup or Settings holds on every sign-in and on any device. The
+  beta plan used to turn "ask first" back on at each tester sign-in. Founder: "if they choose auto it should be auto,
+  if assisted it should be assisted, every time they log in in any device."
+- **A plan ending restores the customer.** Every way out of a follow-up plan used to leave the customer switched
+  off: finished, replied, stopped by hand, or held. Now they go back to the setting they had before the plan
+  (`Lead.tierBeforeSequence`). Customers enrolled before this change go back to Assisted. Founder: "yes".

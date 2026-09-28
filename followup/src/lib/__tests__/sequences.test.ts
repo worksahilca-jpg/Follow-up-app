@@ -110,7 +110,7 @@ describe("workflow stop-on-reply", () => {
     expect(send).not.toHaveBeenCalled();
     expect(p.lead.update).toHaveBeenCalledWith({
       where: { id: "lead1" },
-      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null, automationTier: "ASSISTED", tierBeforeSequence: null },
     });
     expect(p.notification.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ userId: "user1", leadId: "lead1" }) })
@@ -203,7 +203,7 @@ describe("EMAIL step channel handling (task #86)", () => {
     await runSequencesForBusiness("biz1");
     expect(p.lead.update).toHaveBeenCalledWith({
       where: { id: "lead1" },
-      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null, automationTier: "ASSISTED", tierBeforeSequence: null },
     });
   });
 
@@ -335,7 +335,7 @@ describe("channel-switching within a workflow (research rec #4)", () => {
     expect(draftMessage).not.toHaveBeenCalled();
     expect(p.lead.update).toHaveBeenCalledWith({
       where: { id: "lead1" },
-      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null, automationTier: "ASSISTED", tierBeforeSequence: null },
     });
   });
 
@@ -543,6 +543,8 @@ describe("risk-gated hold (a workflow step's draft isn't automatically safe)", (
         sequenceStepIndex: 0,
         sequenceStepDueAt: null,
         sequenceStepScheduledAt: null,
+        automationTier: "ASSISTED",
+        tierBeforeSequence: null,
         suggestedMessage: "draft",
         suggestedSubject: "Following up",
         // A workflow step's draft, never mistaken for one of FollowUp's own
@@ -968,5 +970,44 @@ describe("stop-on-reply only counts a reply since the step was scheduled", () =>
     const enrol = p.lead.update.mock.calls[0][0].data;
     expect(enrol.sequenceStepScheduledAt).toBeInstanceOf(Date);
     expect(Math.abs(enrol.sequenceStepScheduledAt.getTime() - Date.now())).toBeLessThan(5_000);
+  });
+});
+
+// Founder, 2026-09-28: when a plan ends, by any route, the customer goes
+// back to how they were before it. Every exit used to leave them OFF, so a
+// reply weeks later was answered by nothing automatic (audit F10).
+describe("a plan ending puts the customer back how they were", () => {
+  const sequenceWithSteps = {
+    id: "seq1",
+    businessId: "biz1",
+    steps: [{ id: "s1", order: 0, delayDays: 1, action: "EMAIL", messageHint: null, stageTo: null }],
+  };
+
+  beforeEach(() => {
+    p.sequence.findUnique.mockResolvedValue(sequenceWithSteps);
+    p.business.findUnique.mockResolvedValue({ tier: "plus" });
+  });
+
+  it("remembers the setting at enrollment", async () => {
+    p.lead.findUnique.mockResolvedValue({ id: "lead1", businessId: "biz1", automationTier: "AUTONOMOUS", sequenceId: null, tierBeforeSequence: null });
+    await enrollLead("lead1", "biz1", "seq1");
+    expect(p.lead.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ automationTier: "OFF", tierBeforeSequence: "AUTONOMOUS" }) })
+    );
+  });
+
+  it("keeps the original setting when moved from one plan to another", async () => {
+    p.lead.findUnique.mockResolvedValue({ id: "lead1", businessId: "biz1", automationTier: "OFF", sequenceId: "seq0", tierBeforeSequence: "ASSISTED" });
+    await enrollLead("lead1", "biz1", "seq1");
+    expect(p.lead.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ tierBeforeSequence: "ASSISTED" }) }));
+  });
+
+  it("puts it back when the plan is stopped by hand", async () => {
+    const { unenrollLead } = await import("@/lib/sequences");
+    p.lead.findUnique.mockResolvedValue({ id: "lead1", businessId: "biz1", automationTier: "OFF", sequenceId: "seq1", tierBeforeSequence: "AUTONOMOUS" });
+    await unenrollLead("lead1", "biz1");
+    expect(p.lead.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ sequenceId: null, automationTier: "AUTONOMOUS", tierBeforeSequence: null }) })
+    );
   });
 });

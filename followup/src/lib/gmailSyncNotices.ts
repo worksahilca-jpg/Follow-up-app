@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { gmailSelfAddress } from "@/lib/integrations/gmail";
+import { sendAlertEmail } from "@/lib/alertEmail";
+import { appUrl } from "@/lib/stripe";
 
 /**
  * Telling the owner when their inbox stops feeding FollowUp.
@@ -98,9 +100,12 @@ export async function readGmailSyncSnapshot(businessId: string): Promise<GmailSy
 }
 
 /** Every admin on the business — the owner, on a solo account. The same recipients notifyNeglect falls back to. */
+async function adminsOf(businessId: string): Promise<{ id: string; email: string }[]> {
+  return prisma.user.findMany({ where: { businessId, role: "ADMIN" }, select: { id: true, email: true } });
+}
+
 async function adminIdsOf(businessId: string): Promise<string[]> {
-  const admins = await prisma.user.findMany({ where: { businessId, role: "ADMIN" }, select: { id: true } });
-  return admins.map((a) => a.id);
+  return (await adminsOf(businessId)).map((a) => a.id);
 }
 
 async function notifyEach(userIds: string[], message: string): Promise<void> {
@@ -129,11 +134,79 @@ export async function notifyGmailAccessLost(businessId: string, snapshot: GmailS
     `FollowUp lost access to ${inboxLabel(snapshot)}, so new emails there aren't being picked up. ` +
     `Reconnect Gmail in Settings to keep catching leads. ` +
     `While FollowUp is in beta, Google asks for this every 7 days.`;
+  let admins: { id: string; email: string }[];
   try {
-    await notifyEach(await adminIdsOf(businessId), message);
+    admins = await adminsOf(businessId);
+  } catch (err) {
+    console.error(`Could not tell business ${businessId} that Gmail needs reconnecting:`, err);
+    return;
+  }
+  try {
+    await notifyEach(
+      admins.map((a) => a.id),
+      message
+    );
   } catch (err) {
     console.error(`Could not tell business ${businessId} that Gmail needs reconnecting:`, err);
   }
+  await emailGmailAccessLost(businessId, admins, snapshot);
+}
+
+/**
+ * The bell alone reaches only an owner who opens FollowUp, and an owner
+ * whose inbox stopped feeding it has least reason to (founder, 2026-09-28,
+ * after seeing a teammate's Gmail dead since Sep 15 with nobody told). So
+ * each admin also gets one email, from FollowUp's own address (the dead
+ * inbox can't send it), with a button that starts the reconnect.
+ *
+ * Once per death, like the bell: the caller runs only on the tick that
+ * parked the connection, and the idempotency key (the business and when
+ * this connection was made) stops a retried tick from sending it twice.
+ * Separate from the bell's try, so a failed notification row never costs
+ * the email, and the other way round.
+ */
+async function emailGmailAccessLost(
+  businessId: string,
+  admins: { id: string; email: string }[],
+  snapshot: GmailSyncSnapshot | null
+): Promise<void> {
+  const content = gmailReconnectEmail({ inbox: inboxLabel(snapshot), base: appUrl() });
+  const connection = snapshot?.connectedAt?.getTime() ?? "unknown";
+  for (const admin of admins) {
+    if (!admin.email) continue;
+    try {
+      await sendAlertEmail({ to: admin.email, ...content, idempotencyKey: `gmail-lost-${businessId}-${connection}-${admin.id}` });
+    } catch (err) {
+      console.error(`Could not email business ${businessId} that Gmail needs reconnecting:`, err);
+    }
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
+}
+
+/** The reconnect email. Same shape and type as the sign-in alert (src/lib/signIns.ts). */
+export function gmailReconnectEmail(p: { inbox: string; base: string }): { subject: string; text: string; html: string } {
+  const url = `${p.base}/api/integrations/gmail/connect`;
+  const title = "Reconnect Gmail to keep catching customers";
+  const what = `FollowUp can't read ${p.inbox} right now, so new customer emails there aren't being picked up.`;
+  const how = "Reconnecting takes a few seconds: press the button and choose the same Google account.";
+  const why = "While FollowUp is in beta, Google asks for this every 7 days. That's Google's rule for apps still being verified, not something you did.";
+  const once = "FollowUp sends this once, only when the connection stops.";
+  return {
+    subject: title,
+    text: [title, "", what, "", how, `Reconnect Gmail: ${url}`, "", why, "", once].join("\n"),
+    html:
+      `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#0a0a0a;max-width:520px">` +
+      `<p style="margin:0 0 8px;font-size:20px;line-height:1.3">${escapeHtml(title)}</p>` +
+      `<p style="margin:0 0 16px;color:#57534e">${escapeHtml(what)}</p>` +
+      `<p style="margin:0 0 20px">${escapeHtml(how)}</p>` +
+      `<p style="margin:0 0 20px"><a href="${escapeHtml(url)}" style="display:inline-block;background:#0a0a0a;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:999px">Reconnect Gmail</a></p>` +
+      `<p style="margin:0 0 24px;color:#736e68;font-size:13.5px">${escapeHtml(why)}</p>` +
+      `<p style="margin:0;color:#736e68;font-size:13px">${escapeHtml(once)}</p>` +
+      `</div>`,
+  };
 }
 
 /**

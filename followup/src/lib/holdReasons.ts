@@ -112,6 +112,7 @@ export const UNGROUNDED_DRAFT_REASONS: Record<string, string> = {
   currency: "the draft quotes a price nobody in this conversation mentioned — check it before it goes",
   time: "the draft names a time nobody in this conversation gave — check it before it goes",
   calendar: "the draft names a day nobody in this conversation mentioned — check it before it goes",
+  availability: "the draft says whether it's available, and only you know that — check it before it goes",
 };
 
 /** Exactly what ApprovalQueue.tsx builds, so tests can check the seam. */

@@ -120,6 +120,56 @@ export function ungroundedSpecifics(draft: string, source: string, locale?: stri
   return null;
 }
 
+/**
+ * A draft that tells the customer something is (or isn't) available, when
+ * the business itself never said so anywhere in the thread.
+ *
+ * On 2026-09-27, recording the Meta App Review video, the same thread got
+ * two drafts in a row: "The 2 bedroom condo is still available. Would you
+ * like to schedule a visit?" and "Yes, it is available. Do you want to
+ * schedule it?". Nobody at the business had said anything about it. The
+ * risk judge passed both as routine, so they sat in the one-tap "Send it"
+ * group. Only the owner's hand edit stopped a false promise going out.
+ *
+ * Availability is the one fact every lead asks about and only the owner
+ * knows. So the rule is simple: a sentence that states availability, either
+ * way, needs the business to have raised availability first. A question
+ * ("Is it still available?") states nothing, and neither does a sentence
+ * that says it is being checked ("I'll check if it's still available").
+ *
+ * `businessText` is only what the business sent, never the lead's words:
+ * the lead ASKING "is it available?" is exactly the case that must not
+ * ground an answer.
+ *
+ * Like the calendar list above, this is a list, and only as multilingual as
+ * the languages below. A failure costs one redraft, then the draft waits
+ * for the owner instead of going out, so a false positive is cheap and a
+ * false negative is the thing to avoid.
+ */
+export function unconfirmedAvailability(draft: string, businessText: string): boolean {
+  if (AVAILABILITY_WORD_RE.test(businessText)) return false;
+  return draft
+    // Sentences, and also clauses joined by a dash or semicolon: "We do
+    // have availability — shall I send the details?" ends in a question
+    // mark but still states availability in its first half.
+    .split(/(?<=[.!?¡¿？。\n;])|\s[—–]\s/u)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .some((sentence) => {
+      if (/[?？؟]\s*$/u.test(sentence)) return false;
+      if (!AVAILABILITY_WORD_RE.test(sentence)) return false;
+      return !AVAILABILITY_HEDGE_RE.test(sentence);
+    });
+}
+
+// "available", "availability", "disponible(s)", "disponibilidad",
+// "disponibilité", "disponível", plus "opening(s)" in the booking sense.
+const AVAILABILITY_WORD_RE = /availab|disponib|dispon[ií]vel|\bopenings?\b/iu;
+
+// Words that turn a sentence into "I'm finding out" rather than "it is".
+const AVAILABILITY_HEDGE_RE =
+  /\b(check|checking|confirm|confirming|see if|see whether|find out|look into|looking into|let (me|you) know|get back|whether|if (it|the|this|that|there|we|they)|verif|revis|comprob|confirmar|averigu|ver si|si (est|sigue|hay|tenemos)|vérifi|vou verificar|se (est|ainda))/iu;
+
 /** Weekday and month names for a locale, lowercased. */
 function calendarWords(locale: string): string[] {
   const out: string[] = [];

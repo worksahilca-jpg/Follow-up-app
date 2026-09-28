@@ -19,7 +19,7 @@
 
 import { isNotAnAnswer } from "@/lib/notAnAnswer";
 import type { Message } from "@/lib/types";
-import { ungroundedCalendarWords } from "@/lib/grounding";
+import { ungroundedCalendarWords, unconfirmedAvailability } from "@/lib/grounding";
 import { DM_MAX_BUTTONS, QUICK_REPLY_TITLE_MAX_CHARS, type DmButton } from "@/lib/quickReplies";
 
 export const DM_CHANNELS: ReadonlySet<string> = new Set(["instagram", "messenger"]);
@@ -94,6 +94,14 @@ export function pickDmSituation(conversation: Message[], touch: DmTouch): DmSitu
     .map((m) => m.body)
     .join("\n");
   const replied = ownerHasReplied(conversation);
+  // The lead wrote again after the business's last word (the instant ack
+  // doesn't count as a word). Then nobody is "quiet": they asked something
+  // new and it is unanswered. Without this, a returning lead's fresh
+  // question got the "they went quiet" sets, which never say "don't
+  // confirm availability", and the drafter told a real enquiry the condo
+  // was "still available" (2026-09-27).
+  const spoken = conversation.filter((m) => !isAck(m));
+  const leadWroteLast = spoken[spoken.length - 1]?.direction === "inbound";
   const priceGiven = replied && CURRENCY_RE.test(outboundText);
   const slotsNamed = replied && SLOT_RE.test(outboundText);
   const asksPrice = PRICE_RE.test(lastText);
@@ -156,7 +164,7 @@ export function pickDmSituation(conversation: Message[], touch: DmTouch): DmSitu
     };
   }
 
-  if (replied) {
+  if (replied && !leadWroteLast) {
     // Sets 4, 6, 8 — a real exchange happened and the lead went quiet.
     if (priceGiven) {
       return {
@@ -187,7 +195,7 @@ export function pickDmSituation(conversation: Message[], touch: DmTouch): DmSitu
   }
 
   // Sets 2 and the availability/general variants — the owner hasn't
-  // replied yet, ~3 hours in. Nothing is late yet, so no apology; add the
+  // replied yet (or hasn't answered the lead's newest question), ~3 hours in. Nothing is late yet, so no apology; add the
   // one fact the business would need, asked about THEIR situation.
   if (asksPrice) {
     return {
@@ -248,7 +256,10 @@ export function checkDmDraftShape(
   // The lead's own language tag, so the calendar rule below checks the
   // draft in the language it was actually written in. Optional: absent
   // falls back to English, which is what the rule did before it existed.
-  locale?: string | null
+  locale?: string | null,
+  // Only what the business itself sent. When given, the draft may not state
+  // availability unless the business already did (src/lib/grounding.ts).
+  businessText?: string
 ): { ok: true } | { ok: false; rule: string } {
   const fail = (rule: string) => ({ ok: false as const, rule });
   const body = draft.body.trim();
@@ -289,6 +300,7 @@ export function checkDmDraftShape(
   // draftDm regenerates once on any shape failure before giving up, so
   // this usually costs one extra call rather than a lost draft.
   if (ungroundedCalendarWords(body, conversationText, locale).length > 0) return fail("calendar");
+  if (businessText !== undefined && unconfirmedAvailability(body, businessText)) return fail("availability");
 
   if (draft.buttons.length > DM_MAX_BUTTONS) return fail("too_many_buttons");
   const seen = new Set<string>();
@@ -312,6 +324,18 @@ export function checkDmDraftShape(
 /** The whole thread as one string, for the digits rule above. */
 export function conversationText(conversation: Message[]): string {
   return conversation.map((m) => m.body).join("\n");
+}
+
+/**
+ * What the business itself has said in the thread: every outbound except
+ * the instant acknowledgement, which is FollowUp's fixed template and states
+ * nothing about the business.
+ */
+export function businessText(conversation: Message[]): string {
+  return conversation
+    .filter((m) => m.direction === "outbound" && !isAck(m))
+    .map((m) => m.body)
+    .join("\n");
 }
 
 /** Which channel the lead last wrote on, if it is one that takes DM-shaped drafts. */

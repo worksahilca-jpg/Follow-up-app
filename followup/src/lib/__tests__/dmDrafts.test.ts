@@ -193,3 +193,33 @@ describe("the day-2–7 owner draft (handoff)", () => {
     expect(s.id).toBe("after_tap");
   });
 });
+
+describe("a lead who writes again after the business replied (2026-09-27)", () => {
+  it("gets the 'unanswered' set for their new question, not 'they went quiet'", () => {
+    const s = pickDmSituation(
+      [
+        msg("inbound", "Hi is this 2 bedroom condo available?"),
+        msg("outbound", "Will get back to you shortly. Thank you", { trigger: "manual" }),
+        msg("inbound", "Hi, is it still available, and can I come see it this week?"),
+      ],
+      "reply"
+    );
+    expect(s.id).toBe("availability_unanswered");
+    expect(s.hint).toMatch(/Do not confirm or deny/);
+  });
+
+  it("still uses the quiet sets when the business spoke last", () => {
+    const s = pickDmSituation([msg("inbound", "Can you help with a fence?"), msg("outbound", "Yes, I can come and look.")], "reply");
+    expect(s.id).toBe("replied_quiet");
+  });
+
+  it("refuses a DM that says it is available when only the lead raised it", () => {
+    const shape = checkDmDraftShape(
+      { body: "Yes, the 2 bedroom condo is still available. Would you like to see it this week?", buttons: [] },
+      "Hi, is the 2 bedroom condo still available this week?",
+      "en",
+      "Will get back to you shortly. Thank you"
+    );
+    expect(shape).toEqual({ ok: false, rule: "availability" });
+  });
+});

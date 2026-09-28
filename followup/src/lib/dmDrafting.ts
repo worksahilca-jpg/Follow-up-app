@@ -8,7 +8,7 @@
 
 import { generateFollowUpMessage } from "@/lib/integrations/openai";
 import type { LeadLanguage } from "@/lib/leadLanguage";
-import { checkDmDraftShape, conversationText, pickDmSituation, type DmTouch } from "@/lib/dmDrafts";
+import { businessText, checkDmDraftShape, conversationText, pickDmSituation, type DmTouch } from "@/lib/dmDrafts";
 import type { StoredQuickReplies } from "@/lib/quickReplies";
 import type { Message } from "@/lib/types";
 
@@ -43,6 +43,7 @@ export async function draftDm(
 ): Promise<{ body: string; quickReplies: StoredQuickReplies; shapeFailed: string | null }> {
   const situation = pickDmSituation(conversation, touch);
   const text = conversationText(conversation);
+  const saidByBusiness = businessText(conversation);
   let lastRule: string | null = null;
   for (let attempt = 0; attempt < 2; attempt++) {
     const draft = await generateFollowUpMessage({ name: leadName, conversation }, voiceSamples, messageHint, situation, leadLanguage);
@@ -50,7 +51,7 @@ export async function draftDm(
     // The draft is written in the lead's language, so the calendar rule
     // has to read it in that language — an English-only day list would be
     // the exact shortcut the founder rejected on the WhatsApp filter.
-    const shape = checkDmDraftShape({ body: draft.body, buttons }, text, leadLanguage?.language);
+    const shape = checkDmDraftShape({ body: draft.body, buttons }, text, leadLanguage?.language, saidByBusiness);
     if (shape.ok) return { body: draft.body, quickReplies: { question: situation.id, buttons }, shapeFailed: null };
     lastRule = shape.rule;
     if (attempt === 1) return { body: draft.body, quickReplies: { question: situation.id, buttons: [] }, shapeFailed: lastRule };

@@ -36,8 +36,8 @@ import { settledByTalk, lastInboundTime } from "@/lib/talked";
 import { generateFollowUpMessage, assessSendRisk, type RiskTopic } from "@/lib/integrations/openai";
 import { hasPriceSlot, PRICE_SLOT_REASON } from "@/lib/priceSlot";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
-import { conversationText } from "@/lib/dmDrafts";
-import { ungroundedSpecifics } from "@/lib/grounding";
+import { businessText, conversationText } from "@/lib/dmDrafts";
+import { unconfirmedAvailability, ungroundedSpecifics } from "@/lib/grounding";
 import { isExitPayload, toQuickReplies, type StoredQuickReplies } from "@/lib/quickReplies";
 import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
@@ -1324,11 +1324,10 @@ export async function runAutomationForBusiness(
           // On 2026-09-20 a lead asked what a consultation costs and this
           // path answered "El costo será de $100" in the owner's name.
           // Nobody had said $100.
-          emailShapeFailed = ungroundedSpecifics(
-            `${draft.subject ?? ""}\n${draft.body}`,
-            conversationText(conversation),
-            leadLanguageOf(lead)?.language
-          );
+          emailShapeFailed =
+            ungroundedSpecifics(`${draft.subject ?? ""}\n${draft.body}`, conversationText(conversation), leadLanguageOf(lead)?.language) ??
+            // Availability is only the owner's to state (src/lib/grounding.ts).
+            (unconfirmedAvailability(`${draft.subject ?? ""}\n${draft.body}`, businessText(conversation)) ? "availability" : null);
           message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
             languageSample: latestInboundText(conversation),
             leadLanguage: leadLanguageOf(lead),
@@ -1351,6 +1350,17 @@ export async function runAutomationForBusiness(
       // skips the model risk gate below. The check is free and
       // model-free, so there is no reason to let any tier bypass it: the
       // whole point of a DM here is its shape.
+      // The availability rule runs on whatever draft is about to be used,
+      // freshly written or reused from scoring. Scoring stores a DM that
+      // failed its check (buttons stripped) and this pass used to reuse it,
+      // let the risk judge call it low, and offer it in "Send it" with the
+      // routine drafts: "Yes, it is available" went into the one-tap group
+      // on 2026-09-27 though nobody at the business had said so.
+      if (!dmShapeFailed && !emailShapeFailed && message && unconfirmedAvailability(`${subject ?? ""}\n${message}`, businessText(conversation))) {
+        if (isDm) dmShapeFailed = "availability";
+        else emailShapeFailed = "availability";
+      }
+
       if (dmShapeFailed) {
         if (regenerated) {
           await prisma.lead.update({
@@ -1359,7 +1369,7 @@ export async function runAutomationForBusiness(
           });
         }
         const reason = `FollowUp couldn't write a short enough DM for ${lead.name.split(" ")[0]} (${dmShapeFailed}) — this one needs your eye before it goes`;
-        if (!(await recordHold(lead, { riskLevel: "shape", reason: dmShapeFailed, trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence" }))) {
+        if (!(await recordHold(lead, { riskLevel: "shape", reason: UNGROUNDED_DRAFT_REASONS[dmShapeFailed] ?? dmShapeFailed, trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence" }))) {
           return { kind: "skipped", note: `${lead.name}: ${HOLD_NOT_RECORDED}` };
         }
         if (unansweredIds.has(lead.id)) await notifyNeglect(lead, conversation, "held");

@@ -8346,3 +8346,6 @@ Rule: a reply states only what the thread shows a person at the business said.
 - **Landing demo (A-063) wording.** "Stopped · she replied" became "Stopped · replied". It was a line the app never
   writes, and it used a pronoun. "Sent · waiting on her" became "Sent · waiting on Sarah", which is the app's own
   "Waiting on {name}". Founder: "yes".
+- **Time zone.** Every business stays on New York time for launch. Testers are Ontario-only (founder, 2026-09-28:
+  "the testers will be off ontario only"). A per-business time-zone setting is needed before inviting anyone outside
+  Eastern time.

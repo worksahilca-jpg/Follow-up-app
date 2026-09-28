@@ -270,7 +270,7 @@ describe("Facebook one-click connect", () => {
     vi.stubEnv("FACEBOOK_APP_ID", "456");
     const url = new URL(buildFacebookAuthUrl("https://followupbase.io/api/facebook/oauth/callback", "nonce2"));
     expect(url.hostname).toBe("www.facebook.com");
-    expect(url.searchParams.get("scope")).toBe("pages_show_list,pages_messaging,pages_manage_metadata,pages_read_engagement,leads_retrieval");
+    expect(url.searchParams.get("scope")).toBe("pages_show_list,pages_messaging,pages_manage_metadata");
     expect(url.searchParams.get("state")).toBe("nonce2");
   });
 
@@ -288,7 +288,7 @@ describe("Facebook one-click connect", () => {
    * no Messenger DM, no Lead Ad, and a green tick in Settings saying
    * otherwise.
    */
-  it("subscribes the Page to messages, the Page's own echoes, and leadgen with the Page's own token", async () => {
+  it("subscribes the Page to messages and the Page's own echoes (no leadgen until Lead Ads) with the Page's own token", async () => {
     const fetchSpy = vi
       .spyOn(global, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
@@ -304,7 +304,7 @@ describe("Facebook one-click connect", () => {
     // FollowUp at all: Messenger, unlike Instagram, never puts echoes in
     // `messages`, so without it that reply was invisible and FollowUp
     // answered the customer on top of it.
-    expect(body.get("subscribed_fields")).toBe("messages,message_echoes,leadgen");
+    expect(body.get("subscribed_fields")).toBe("messages,message_echoes");
     expect(body.get("access_token")).toBe("EAAG-page-tok");
   });
 

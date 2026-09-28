@@ -878,6 +878,11 @@ model Lead {
   // (audit 2026-09-16, F4). Null on rows from before the column: those keep
   // the old rule, which errs towards stopping.
   sequenceStepScheduledAt DateTime?
+  // What automationTier was before enrollLead set it OFF, put back when the
+  // plan ends by any route (founder, 2026-09-28: a customer is never left
+  // switched off just because their plan finished). Null outside a plan,
+  // and on rows enrolled before this column: those go back to ASSISTED.
+  tierBeforeSequence  AutomationTier?
   // Set once, in runSequencesForBusiness()'s "finished the last step"
   // branch — the only sequence exit path that gets a persisted timestamp.
   // Deliberately NOT set on early unenroll (manual, sequence deleted, or

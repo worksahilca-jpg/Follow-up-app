@@ -8334,3 +8334,33 @@ business having said something. Kept routine on purpose: "the email I sent last 
 out, and "hope to see you soon".
 Known gaps: invented staff or place names; Hindi, Punjabi and Gujarati wording.
 Rule: a reply states only what the thread shows a person at the business said.
+
+## 2026-09-28 — Founder calls: the owner's setting sticks, and a plan ending restores it
+
+- **Automatic/Assisted sticks.** The choice made in setup or Settings holds on every sign-in and on any device. The
+  beta plan used to turn "ask first" back on at each tester sign-in. Founder: "if they choose auto it should be auto,
+  if assisted it should be assisted, every time they log in in any device."
+- **A plan ending restores the customer.** Every way out of a follow-up plan used to leave the customer switched
+  off: finished, replied, stopped by hand, or held. Now they go back to the setting they had before the plan
+  (`Lead.tierBeforeSequence`). Customers enrolled before this change go back to Assisted. Founder: "yes".
+- **Landing demo (A-063) wording.** "Stopped · she replied" became "Stopped · replied". It was a line the app never
+  writes, and it used a pronoun. "Sent · waiting on her" became "Sent · waiting on Sarah", which is the app's own
+  "Waiting on {name}". Founder: "yes".
+- **Time zone.** Every business stays on New York time for launch. Testers are Ontario-only (founder, 2026-09-28:
+  "the testers will be off ontario only"). A per-business time-zone setting is needed before inviting anyone outside
+  Eastern time.
+
+## 2026-09-28 — The weekly email in dark mode (founder: "looking very weird … fix this for dark mode and light mode")
+
+The email declared itself light-only. Gmail's app flips colours anyway, but not images, so text on the header and
+footer wash went light on light, and the black lockup sank into dark areas. Now:
+- **Dark version.** Apple Mail and Outlook for iOS/Mac get a designed dark version:
+  - a dark wash made from the same image (warm and cool glow kept);
+  - a near-white lockup;
+  - dark cards: page #0f0e0d, sheet #171514, card #201d1b, text #f5f3f0;
+  - the Open FollowUp button inverted (light on dark).
+- **Gmail's app.** Text on the wash is wrapped in the screen/difference blend pair, so it stays dark on the light
+  image.
+- **Light version.** Unchanged (A-038).
+- **Checked.** Chromium renders of both themes. Gmail's app can't be emulated here. A real Gmail dark-mode send is
+  the check.

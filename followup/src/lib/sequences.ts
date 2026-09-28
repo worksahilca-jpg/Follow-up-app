@@ -40,7 +40,7 @@ import { flushHoldNotices, type HoldNotice } from "@/lib/holdNotices";
 import { getVoiceSamples } from "@/lib/voice";
 import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
-import type { Prisma, SequenceAction, PipelineStage } from "@prisma/client";
+import type { AutomationTier, Prisma, SequenceAction, PipelineStage } from "@prisma/client";
 import type { Message } from "@/lib/types";
 import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 import { inventedSpecific } from "@/lib/dmDrafts";
@@ -226,6 +226,9 @@ export async function deleteSequence(id: string, businessId: string): Promise<{ 
   // clear their step-tracking fields too so a stale sequenceStepDueAt
   // doesn't linger with nothing to act on it.
   await prisma.$transaction([
+    // Each enrolled lead goes back to its own pre-plan setting, which
+    // updateMany can't express per row.
+    prisma.$executeRaw`UPDATE "Lead" SET "automationTier" = COALESCE("tierBeforeSequence", 'ASSISTED'::"AutomationTier"), "tierBeforeSequence" = NULL WHERE "sequenceId" = ${id}`,
     prisma.lead.updateMany({
       where: { sequenceId: id },
       data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
@@ -233,6 +236,26 @@ export async function deleteSequence(id: string, businessId: string): Promise<{ 
     prisma.sequence.delete({ where: { id } }),
   ]);
   return { success: true };
+}
+
+/**
+ * The fields that take a lead out of its plan, whatever the reason: done,
+ * replied, talked, stopped by hand, no way to reach them, or held for the
+ * owner. Every exit used to leave the lead OFF, so a customer who wrote back
+ * weeks after a plan finished was answered by nothing automatic (audit
+ * 2026-09-16 F10). Founder, 2026-09-28: they go back to how they were.
+ */
+function leaveSequence(lead: { tierBeforeSequence: AutomationTier | null }) {
+  return {
+    sequenceId: null,
+    sequenceStepIndex: 0,
+    sequenceStepDueAt: null,
+    sequenceStepScheduledAt: null,
+    // Rows enrolled before the column existed have nothing on file; the
+    // product default is the honest guess.
+    automationTier: lead.tierBeforeSequence ?? ("ASSISTED" as AutomationTier),
+    tierBeforeSequence: null,
+  };
 }
 
 export async function enrollLead(
@@ -282,8 +305,11 @@ export async function enrollLead(
       sequenceStepScheduledAt: new Date(),
       // A lead can't be run by both the silence-based automation and a
       // workflow at once — enrolling turns the former off for this lead so
-      // the workflow's own cadence is the only thing steering it.
+      // the workflow's own cadence is the only thing steering it. What it
+      // was is kept, and put back when the plan ends (leaveSequence). A
+      // lead moved from one plan to another keeps its original setting.
       automationTier: "OFF",
+      tierBeforeSequence: lead.sequenceId ? (lead.tierBeforeSequence ?? "ASSISTED") : lead.automationTier,
     },
   });
   return { success: true };
@@ -328,7 +354,7 @@ export async function unenrollLead(leadId: string, businessId: string): Promise<
   if (!lead || lead.businessId !== businessId) return { success: false };
   await prisma.lead.update({
     where: { id: leadId },
-    data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+    data: leaveSequence(lead),
   });
   return { success: true };
 }
@@ -512,7 +538,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       try {
         await prisma.lead.update({
           where: { id: lead.id },
-          data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+          data: leaveSequence(lead),
         });
       } catch (err) {
         return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
@@ -549,7 +575,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       try {
         await prisma.lead.update({
           where: { id: lead.id },
-          data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+          data: leaveSequence(lead),
         });
         // Every admin when nobody is assigned, like every other workflow
         // notice (notifySequenceIssue). Assignee-only, a reply from an
@@ -574,7 +600,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       try {
         await prisma.lead.update({
           where: { id: lead.id },
-          data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+          data: leaveSequence(lead),
         });
       } catch (err) {
         return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
@@ -660,7 +686,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           try {
             await prisma.lead.update({
               where: { id: lead.id },
-              data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+              data: leaveSequence(lead),
             });
           } catch (err) {
             return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
@@ -699,7 +725,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           try {
             await prisma.lead.update({
               where: { id: lead.id },
-              data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+              data: leaveSequence(lead),
             });
           } catch (err) {
             return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
@@ -734,7 +760,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
             try {
               await prisma.lead.update({
                 where: { id: lead.id },
-                data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+                data: leaveSequence(lead),
               });
             } catch (err) {
               return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
@@ -841,9 +867,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           await prisma.lead.update({
             where: { id: lead.id },
             data: {
-              sequenceId: null,
-              sequenceStepIndex: 0,
-              sequenceStepDueAt: null, sequenceStepScheduledAt: null,
+              ...leaveSequence(lead),
               suggestedMessage: message,
               suggestedSubject: draft.subject,
               suggestedDraftKind: null,
@@ -927,9 +951,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
               // real completions instead of conflating them with early
               // unenroll (manual, sequence deleted, or the stop-on-reply
               // pause above, none of which set this).
-              sequenceId: null,
-              sequenceStepIndex: 0,
-              sequenceStepDueAt: null, sequenceStepScheduledAt: null,
+              ...leaveSequence(lead),
               sequenceCompletedAt: new Date(),
             },
       });

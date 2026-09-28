@@ -106,9 +106,12 @@ export async function sendMessengerMessage(
  * in whatsappCloud.ts). Facebook was the one of the three that never got
  * it: both of its connect paths saved the token and stopped there.
  *
- * `messages` carries Messenger DMs, `leadgen` carries Lead Ad
- * submissions — the two things handlePageEvents() in the Meta webhook
- * route reads, and both of what this channel promises.
+ * `messages` carries Messenger DMs, the thing this channel promises.
+ * `leadgen` (Lead Ads) is left out for now: founder, 2026-09-28, the
+ * Facebook review asks only for what Messenger needs, and Meta refuses
+ * the whole subscription when `leadgen` is asked for without the
+ * leads_retrieval permission. handlePageEvents() still reads leadgen, so
+ * adding it back here and to the scopes is all Lead Ads needs later.
  *
  * `message_echoes` carries what the Page itself sent: the owner answering
  * from the Page inbox or Meta Business Suite, and Meta's own Business AI.
@@ -132,7 +135,7 @@ export async function subscribeFacebookPageWebhooks(
   const res = await fetch(`${GRAPH}/${encodeURIComponent(pageId)}/subscribed_apps`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ subscribed_fields: "messages,message_echoes,leadgen", access_token: pageAccessToken }),
+    body: new URLSearchParams({ subscribed_fields: "messages,message_echoes", access_token: pageAccessToken }),
   });
   if (res.ok) return { ok: true };
   const failure = await readMetaError(res, "Facebook refused the webhook subscription.", "Facebook subscribed_apps");
@@ -329,9 +332,11 @@ export async function upsertLeadFromLeadgen(
 // Facebook Login for Business: separate app identity from Instagram
 // Login above — this is the MAIN Meta app's own App ID/Secret. See
 // docs/meta-oauth-setup.md for the console steps and exact permissions
-// to request in App Review (pages_show_list, pages_messaging,
-// pages_manage_metadata, pages_read_engagement, leads_retrieval).
-const FACEBOOK_OAUTH_SCOPES = "pages_show_list,pages_messaging,pages_manage_metadata,pages_read_engagement,leads_retrieval";
+// to request in App Review. Only what Messenger needs (founder,
+// 2026-09-28): asking for a permission the review video can't show in use
+// is a common rejection. pages_read_engagement had no code using it;
+// leads_retrieval waits for Lead Ads.
+const FACEBOOK_OAUTH_SCOPES = "pages_show_list,pages_messaging,pages_manage_metadata";
 
 export function facebookOAuthAvailable(): boolean {
   return !!process.env.FACEBOOK_APP_ID && !!process.env.FACEBOOK_APP_SECRET;

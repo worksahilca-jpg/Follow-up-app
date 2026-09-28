@@ -143,7 +143,7 @@ describe("an Instagram echo lead in a workflow", () => {
     expect(stillEnrolled()).toBe(false);
     expect(p.lead.update).toHaveBeenCalledWith({
       where: { id: "lead1" },
-      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null },
+      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null, automationTier: "ASSISTED", tierBeforeSequence: null },
     });
     expect(notes()).toHaveLength(1);
     expect(notes()[0]).toMatch(/"Instagram day one" stopped for Priya/);

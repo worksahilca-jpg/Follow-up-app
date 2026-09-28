@@ -331,11 +331,16 @@ new number or a port. Scope and what is still unverified:
 > will personally be adding all the emails." Anyone not on the list is told it is invite-only
 > and given contact@followupbase.io.
 
-No public sign-up and no free trial until the CEO says otherwise. A person gets in because
+No public sign-up until the CEO says otherwise. A person gets in because
 Sahil added them or an existing business invited them to its team. What "in" means
 technically is Dipesh's lane (`src/lib/auth.ts`, the `ALLOWED_EMAILS` gate, and Google's
 own OAuth testing-mode user list, which already limits sign-in today); what it means for
 the product is that the Free tier exists for invited businesses, not as a public funnel.
+
+> **The 14-day trial stays (CEO decision, 2026-09-28).** An invited business that upgrades to
+> a paid plan gets 14 days free before the first charge (`TRIAL_PERIOD_DAYS`,
+> `src/lib/billing.ts`). This line used to say "no free trial", which contradicted the code;
+> Sahil: "keep the trial". Sign-up is still invite-only: the trial is on upgrading, not a way in.
 
 > **Beta testers get Pro, free (CEO decision, 2026-09-19).** Free's 20-lead cap and its
 > email/website-only channel rule would have left a tester's Instagram and WhatsApp leads

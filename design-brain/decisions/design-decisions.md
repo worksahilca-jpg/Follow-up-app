@@ -8349,3 +8349,18 @@ Rule: a reply states only what the thread shows a person at the business said.
 - **Time zone.** Every business stays on New York time for launch. Testers are Ontario-only (founder, 2026-09-28:
   "the testers will be off ontario only"). A per-business time-zone setting is needed before inviting anyone outside
   Eastern time.
+
+## 2026-09-28 — The weekly email in dark mode (founder: "looking very weird … fix this for dark mode and light mode")
+
+The email declared itself light-only. Gmail's app flips colours anyway, but not images, so text on the header and
+footer wash went light on light, and the black lockup sank into dark areas. Now:
+- **Dark version.** Apple Mail and Outlook for iOS/Mac get a designed dark version:
+  - a dark wash made from the same image (warm and cool glow kept);
+  - a near-white lockup;
+  - dark cards: page #0f0e0d, sheet #171514, card #201d1b, text #f5f3f0;
+  - the Open FollowUp button inverted (light on dark).
+- **Gmail's app.** Text on the wash is wrapped in the screen/difference blend pair, so it stays dark on the light
+  image.
+- **Light version.** Unchanged (A-038).
+- **Checked.** Chromium renders of both themes. Gmail's app can't be emulated here. A real Gmail dark-mode send is
+  the check.

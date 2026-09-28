@@ -244,6 +244,9 @@ export function renderWeeklyDigest(d: WeeklyDigestInput): { subject: string; tex
       headerImage: `${d.appUrl}/email/week-header.jpg`,
       footerImage: `${d.appUrl}/email/week-footer.jpg`,
       logo: `${d.appUrl}/email/followup-lockup.png`,
+      headerImageDark: `${d.appUrl}/email/week-header-dark.jpg`,
+      footerImageDark: `${d.appUrl}/email/week-footer-dark.jpg`,
+      logoDark: `${d.appUrl}/email/followup-lockup-dark.png`,
     },
   };
 

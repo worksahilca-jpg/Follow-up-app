@@ -36,8 +36,11 @@ const state = vi.hoisted(() => ({
   notes: [] as Note[],
 }));
 
-const { prismaMock, fetchSalesConversations } = vi.hoisted(() => ({
+const { prismaMock, fetchSalesConversations, sendAlertEmail } = vi.hoisted(() => ({
   fetchSalesConversations: vi.fn(),
+  sendAlertEmail: vi.fn<(email: { to: string; subject: string; text: string; html: string; idempotencyKey?: string }) => Promise<{ sent: boolean }>>(
+    async () => ({ sent: true })
+  ),
   prismaMock: {
     integration: {
       // The cron's own list: only rows still "connected".
@@ -70,7 +73,12 @@ const { prismaMock, fetchSalesConversations } = vi.hoisted(() => ({
         return { count: 1 };
       }),
     },
-    user: { findMany: vi.fn(async () => [{ id: "owner" }, { id: "partner" }]) },
+    user: {
+      findMany: vi.fn(async () => [
+        { id: "owner", email: "sam@samsplumbing.ca" },
+        { id: "partner", email: "jo@samsplumbing.ca" },
+      ]),
+    },
     notification: {
       create: vi.fn(async ({ data }: { data: Omit<Note, "createdAt"> }) => {
         state.notes.push({ ...data, createdAt: new Date() });
@@ -101,9 +109,11 @@ vi.mock("@/lib/integrations/gmail", () => ({
 vi.mock("@/lib/scoring", () => ({ scoreAndDraftForLead: vi.fn(async () => false) }));
 vi.mock("@/lib/outcomes", () => ({ detectReplies: vi.fn(async () => 0) }));
 vi.mock("@/lib/billing", () => ({ hasActiveAccess: () => true }));
+vi.mock("@/lib/alertEmail", () => ({ sendAlertEmail }));
+vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://www.followupbase.io" }));
 
 import { syncGmailForAllBusinesses } from "@/lib/gmailSync";
-import { SYNC_FAILING_MARKER, SYNC_FAILING_NOTICE_AFTER_MS } from "@/lib/gmailSyncNotices";
+import { SYNC_FAILING_MARKER, SYNC_FAILING_NOTICE_AFTER_MS, gmailReconnectEmail } from "@/lib/gmailSyncNotices";
 
 const T0 = new Date("2026-09-25T09:00:00Z");
 const MIN = 60_000;
@@ -223,6 +233,73 @@ describe("the day the token dies", () => {
     expect(result.failed).toBe(1);
     expect(state.integration.status).toBe("needs_reconnect");
     expect(state.integration.lastSyncError).toContain("invalid_grant");
+  });
+});
+
+describe("the reconnect email (founder, 2026-09-28)", () => {
+  const sentTo = () => sendAlertEmail.mock.calls.map(([e]) => e.to).sort();
+
+  it("emails every admin once, from FollowUp, with a button that starts the reconnect", async () => {
+    tokenDied();
+    await syncGmailForAllBusinesses();
+    expect(sentTo()).toEqual(["jo@samsplumbing.ca", "sam@samsplumbing.ca"]);
+    const [email] = sendAlertEmail.mock.calls[0];
+    expect(email.subject).toBe("Reconnect Gmail to keep catching customers");
+    expect(email.text).toContain("info@samsplumbing.ca");
+    expect(email.text).toContain("https://www.followupbase.io/api/integrations/gmail/connect");
+    expect(email.html).toContain('href="https://www.followupbase.io/api/integrations/gmail/connect"');
+    expect(email.text).toContain("every 7 days");
+    // One key per admin per connection, so a retried tick can't send it twice.
+    const keys = sendAlertEmail.mock.calls.map(([e]) => e.idempotencyKey);
+    expect(new Set(keys).size).toBe(2);
+    expect(keys[0]).toContain(String(state.integration.connectedAt!.getTime()));
+  });
+
+  it("is not sent again on the ticks after, nor when two ticks race", async () => {
+    tokenDied();
+    await Promise.all([syncGmailForAllBusinesses(), syncGmailForAllBusinesses()]);
+    for (let tick = 1; tick <= 3; tick++) {
+      at(tick * 10 * MIN);
+      await syncGmailForAllBusinesses();
+    }
+    expect(sendAlertEmail).toHaveBeenCalledTimes(2);
+  });
+
+  it("is sent again after a reconnect and a second death, with a new key", async () => {
+    tokenDied();
+    await syncGmailForAllBusinesses();
+    at(7 * 24 * HOUR);
+    Object.assign(state.integration, { status: "connected", connectedAt: new Date(), accessToken: "a2", refreshToken: "r2" });
+    syncWorks();
+    await syncGmailForAllBusinesses();
+    at(14 * 24 * HOUR);
+    tokenDied();
+    await syncGmailForAllBusinesses();
+    expect(sendAlertEmail).toHaveBeenCalledTimes(4);
+    expect(new Set(sendAlertEmail.mock.calls.map(([e]) => e.idempotencyKey)).size).toBe(4);
+  });
+
+  it("still goes out when the bell row can't be written", async () => {
+    prismaMock.notification.create.mockRejectedValueOnce(new Error("db blip"));
+    tokenDied();
+    await syncGmailForAllBusinesses();
+    expect(sendAlertEmail).toHaveBeenCalledTimes(2);
+  });
+
+  it("is never sent for a sync that keeps failing for another reason", async () => {
+    googleHiccup();
+    for (let t = 0; t <= SYNC_FAILING_NOTICE_AFTER_MS; t += 10 * MIN) {
+      at(t);
+      await syncGmailForAllBusinesses();
+    }
+    expect(keepsFailing()).toHaveLength(2);
+    expect(sendAlertEmail).not.toHaveBeenCalled();
+  });
+
+  it("escapes the inbox name in the HTML", () => {
+    const { html } = gmailReconnectEmail({ inbox: "<b>x</b>@y.ca", base: "https://www.followupbase.io" });
+    expect(html).not.toContain("<b>x</b>");
+    expect(html).toContain("&lt;b&gt;x&lt;/b&gt;@y.ca");
   });
 });
 

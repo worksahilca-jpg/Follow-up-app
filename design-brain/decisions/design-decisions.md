@@ -8432,3 +8432,18 @@ their own drafts.
   many it learned from, none found, or why it stopped. Nothing celebratory; a count, not a badge.
 - **Disabled until Gmail is connected**, with "Connect Gmail first." as the line.
 - Off by default and never asked in onboarding for now; the founder can ask testers to turn it on.
+
+## 2026-09-28 — An email when Gmail stops (founder: "yes build the reconnect email")
+
+A read of the 10 live accounts found both outside testers without a working inbox, and a teammate's Gmail dead since
+Sep 15 with nobody told. While Google sign-in is in Testing mode, Gmail access ends every 7 days. The bell was the
+only notice, and an owner whose inbox stopped feeding FollowUp has least reason to open it.
+- **One email per admin, once per expiry**, from FollowUp's own address (alerts@followupbase.io via Resend), because
+  the dead inbox can't send it. It goes out alongside the bell, never instead of it.
+- **Copy says what stopped, what it costs and the one fix:** "FollowUp can't read {inbox} right now, so new customer
+  emails there aren't being picked up." One black pill button, "Reconnect Gmail", which starts Google's reconnect
+  directly. Then the 7-day rule, said as Google's rule and "not something you did", so it isn't read as blame or a
+  FollowUp bug.
+- **Same look as the sign-in alert:** system type, one pill button, grey small print. It is a utility email, so it
+  doesn't use the Monday email's design.
+- **Not sent** for a sync that is only failing for a while (that stays a bell note, since it may clear itself).

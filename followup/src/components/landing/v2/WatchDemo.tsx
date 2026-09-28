@@ -118,9 +118,9 @@ function Window() {
             <Status k="kPNeed" tone="var(--decision)">
               <b style={{ fontWeight: 600, color: "var(--ink)" }}>Needs you</b> · a price
             </Status>
-            <Status k="kPSent" tone="var(--sage)">Sent · waiting on her</Status>
+            <Status k="kPSent" tone="var(--sage)">Sent · waiting on Sarah</Status>
             <Status k="kPStop" tone="var(--stone)" rest>
-              Stopped · she replied
+              Stopped · replied
             </Status>
           </Row>
           <Row init="GK" name="Grace Kim">
@@ -135,7 +135,7 @@ function Window() {
           </Row>
           <Row init="PS" name="Priya Shah">
             <Status k="" tone="var(--stone)" rest>
-              Stopped · she replied
+              Stopped · replied
             </Status>
           </Row>
         </div>

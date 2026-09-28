@@ -8343,3 +8343,6 @@ Rule: a reply states only what the thread shows a person at the business said.
 - **A plan ending restores the customer.** Every way out of a follow-up plan used to leave the customer switched
   off: finished, replied, stopped by hand, or held. Now they go back to the setting they had before the plan
   (`Lead.tierBeforeSequence`). Customers enrolled before this change go back to Assisted. Founder: "yes".
+- **Landing demo (A-063) wording.** "Stopped · she replied" became "Stopped · replied". It was a line the app never
+  writes, and it used a pronoun. "Sent · waiting on her" became "Sent · waiting on Sarah", which is the app's own
+  "Waiting on {name}". Founder: "yes".

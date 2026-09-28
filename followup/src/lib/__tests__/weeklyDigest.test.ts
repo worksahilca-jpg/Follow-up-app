@@ -172,8 +172,8 @@ describe("the designed email", () => {
   it("uses hosted images and no SVG or CSS gradient, which mail apps drop", () => {
     const { html } = renderWeeklyDigest(input({ waiting: WAITING }));
     expect(html).toContain("https://followupbase.io/email/week-header.jpg");
-    expect(html).toContain("https://followupbase.io/email/followup-lockup-outlined.png");
-    expect(html).toContain("https://followupbase.io/email/followup-lockup-dark.png");
+    expect(html).toContain("https://followupbase.io/email/followup-lockup-chip.png");
+    expect(html).toContain("https://followupbase.io/email/followup-lockup-chip-dark.png");
     expect(html).not.toMatch(/<svg|gradient\(/);
   });
 

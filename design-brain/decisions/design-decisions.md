@@ -8370,3 +8370,12 @@ footer wash went light on light, and the black lockup sank into dark areas. Now:
     (`followup-lockup-outlined.png`): a thin light edge that shows on dark and disappears on the light wash.
   - **Waiting box merged into the sheet.** It gets a 1px rule so it stays a box.
   - **Wash glow shows as a flat colour.** That's Gmail's limit and can't be forced; the rest reads correctly.
+- **Second phone test, same result (founder, 2026-09-28: "there is no difference in sample 2 … its the same").**
+  The outline was too thin to show at 60px, and a near-white rule darkens to the same black as the sheet. Replaced:
+  - **Logo on a chip.** The lockup now sits on its own white pill, drawn into the image
+    (`followup-lockup-chip.png`, 88×34; footer 78×30). Gmail never recolours an image, so the black mark stays
+    readable in its dark mode. In light mode it reads as a small white label, the same white as the win card.
+    Apple Mail's dark version gets a dark chip with the light mark (`followup-lockup-chip-dark.png`).
+  - **Waiting box edge #d9d3cb** (was #f0eeeb). A mid-tone survives Gmail's darkening as a visible line.
+  - **Checked** against a rough Gmail-dark simulation (colours inverted, images kept, background images dropped).
+    That is an approximation; the founder's phone is still the real check.

@@ -8379,3 +8379,14 @@ footer wash went light on light, and the black lockup sank into dark areas. Now:
   - **Waiting box edge #d9d3cb** (was #f0eeeb). A mid-tone survives Gmail's darkening as a visible line.
   - **Checked** against a rough Gmail-dark simulation (colours inverted, images kept, background images dropped).
     That is an approximation; the founder's phone is still the real check.
+- **Third phone test: no logo in light mode either (founder, 2026-09-28, sample 3 + "no" to "does light mode show
+  the logo and the peach wash?").** Gmail on that phone loaded none of the email's hosted pictures, in either mode, so
+  every earlier logo fix was invisible for a reason that had nothing to do with dark mode. The cause couldn't be seen
+  from here (site logs and the site itself are out of reach), so the logo no longer depends on it:
+  - **The logo travels inside the email** (`cid:` inline image, `src/lib/emailAssets.ts`), the way a signature logo
+    does. Gmail shows it without fetching anything. Both chips were re-saved with a small palette (8 KB → 2 KB each),
+    visually identical.
+  - **The wash stays hosted.** Where hosted pictures don't load it falls back to its base colour, which reads fine.
+  - **The samples sent through the Gmail tool could never show the logo** — that tool strips `cid:` pictures — so the
+    real check is the new founder-only link, `/api/admin/weekly-email-preview`, which sends this week's actual email
+    through FollowUp's own send path.

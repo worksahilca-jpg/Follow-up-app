@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { AutomationTier } from "@/lib/types";
 
 // research/product/2026-09-10-ux-simplification.md §4: plain-language
@@ -70,6 +71,7 @@ export default function LeadAutomationToggle({
   const [confirmingAutonomous, setConfirmingAutonomous] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   async function save(next: AutomationTier) {
     const previous = tier;
@@ -85,6 +87,10 @@ export default function LeadAutomationToggle({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't save — try again.");
+      // The row this sits in shows the tier in its header ("How it handles
+      // Jane · Ask if risky"), rendered on the server. Without a refresh it
+      // kept the old word until the page was reloaded.
+      router.refresh();
     } catch (err) {
       setTier(previous); // revert on failure
       setError(err instanceof Error ? err.message : "Couldn't save — try again.");

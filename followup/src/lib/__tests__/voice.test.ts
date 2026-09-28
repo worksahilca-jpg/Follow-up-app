@@ -19,6 +19,7 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     message: { findMany: vi.fn() },
     followUp: { findMany: vi.fn() },
+    pastReply: { findMany: vi.fn() },
   },
 }));
 
@@ -70,6 +71,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   p.message.findMany.mockResolvedValue([]);
   p.followUp.findMany.mockResolvedValue([]);
+  p.pastReply.findMany.mockResolvedValue([]);
 });
 
 describe("getVoiceSamples — the corpus is human-written", () => {
@@ -250,5 +252,47 @@ describe("getVoiceSamples — degrading and sample shape", () => {
     // stripping it and losing the signal.
     servePages([{ id: "m1", body: HUMAN_A, sentAt: new Date(2026, 8, 14), leadId: "lead1" }]);
     expect(await getVoiceSamples("biz1")).toEqual([HUMAN_A]);
+  });
+});
+
+describe("getVoiceSamples — Write like me (past Gmail replies)", () => {
+  const PAST = "Hi [LEAD_NAME], yes that works for us. We can come by Thursday after 3 and have a look at the deck.";
+
+  it("fills the gap with the owner's own past replies, after the lead conversations", async () => {
+    servePages([{ id: "m1", body: HUMAN_A, sentAt: new Date(2026, 8, 14), leadId: "lead1" }]);
+    p.pastReply.findMany.mockResolvedValue([
+      { recipientKey: "k1", body: PAST },
+      { recipientKey: "k2", body: PAST + " Thanks." },
+    ]);
+    const samples = await getVoiceSamples("biz1");
+    expect(samples[0]).toBe(HUMAN_A);
+    expect(samples).toContain(PAST);
+    expect(p.pastReply.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { businessId: "biz1" } }));
+  });
+
+  it("doesn't read past replies when the lead conversations already give enough samples", async () => {
+    servePages(
+      Array.from({ length: 5 }, (_, i) => ({
+        id: `m${i}`,
+        body: HUMAN_B + ` (${i})`,
+        sentAt: new Date(2026, 8, 20 - i),
+        leadId: `lead${i}`,
+      }))
+    );
+    expect(await getVoiceSamples("biz1")).toHaveLength(5);
+    expect(p.pastReply.findMany).not.toHaveBeenCalled();
+  });
+
+  it("takes no more than two past replies to the same person", async () => {
+    p.pastReply.findMany.mockResolvedValue([
+      { recipientKey: "same", body: PAST + " 1" },
+      { recipientKey: "same", body: PAST + " 2" },
+      { recipientKey: "same", body: PAST + " 3" },
+      { recipientKey: "other", body: PAST + " 4" },
+    ]);
+    const samples = await getVoiceSamples("biz1");
+    // Two from "same" and one from "other" come first; the third from
+    // "same" is only used because nothing else is left.
+    expect(samples.slice(0, 3)).toEqual([PAST + " 1", PAST + " 2", PAST + " 4"]);
   });
 });

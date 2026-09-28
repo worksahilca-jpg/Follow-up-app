@@ -140,6 +140,18 @@ allowed only under these rules, enforced in code as they are built:
    built yet — there's no training job for it to feed. `buildDeidentifiedTrainingSet()`
    is the boundary this will read through once one exists; it isn't wired
    into anything itself.
+   **"Write like me" is not training (2026-09-28).** With the owner's own
+   yes (Settings → Your data, `POST /api/business/past-replies`, audited),
+   FollowUp reads the replies they sent from Gmail in the last 12 months and
+   keeps up to 300, de-identified before they are written
+   (`src/lib/pastReplies.ts`, `PastReply`), as style samples for that
+   business's own drafts only (`src/lib/voice.ts`). Nothing crosses
+   businesses and nothing trains a model: Google's Workspace API user data
+   policy forbids using Gmail data to develop, improve or train generalized
+   AI/ML models, and the privacy policy now says so in its Limited Use
+   section. The founder's first idea — one model trained on every tester's
+   mail — was dropped for exactly that reason. Turning the switch off
+   deletes every row; so does deleting the business.
 4. **No third-party training by default.** The OpenAI API does not train on API
    traffic; keep it that way (no opt-in to data sharing) and say so in the
    privacy policy.

@@ -1211,7 +1211,9 @@ export async function generateFollowUpMessage(
         "different language than the lead's most recent message, follow the LEAD for language and formality, and " +
         "take only the writing habits from the samples. Never reuse a sample's sentences, subject lines, prices, " +
         "names or any other specific detail — only the manner. Some samples may include a greeting line or a " +
-        "sign-off; those are added separately by the system and must never appear in what you write:\n" +
+        "sign-off; those are added separately by the system and must never appear in what you write. In the samples, " +
+        "bracketed words such as [LEAD_NAME], [OWNER_NAME] or [PHONE] mark details removed from them for privacy; they " +
+        "are not part of how this person writes, so never copy one into your reply:\n" +
         voiceSamples.map((s, i) => `--- sample ${i + 1} ---\n${s}`).join("\n")
       : "\n\nHOW THIS BUSINESS WRITES. You have no samples of this business's own writing, so default to plain and " +
         "direct: the register of a competent tradesperson answering an email between jobs, not a marketing " +

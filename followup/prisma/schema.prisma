@@ -252,6 +252,33 @@ model Business {
   // (docs/security-roadmap.md, "Training on customer data").
   allowModelTraining Boolean @default(false)
 
+  // "Write like me" (Settings → Your data): may FollowUp read the replies
+  // this owner sent from Gmail in the last 12 months, to learn how they
+  // write? When they were used, only for THIS business's own drafts
+  // (src/lib/voice.ts), never mixed with another business and never used to
+  // train any shared model — Google's Workspace API user data policy allows
+  // Gmail data in a personalised feature for the same user and forbids it in
+  // a generalised model (founder's decision 2026-09-28, after that rule was
+  // found). Separate from allowModelTraining above: that switch keeps drafts
+  // beside what was sent so the founder can read edits; this one reads a
+  // year of sent mail, a different and larger ask, so it gets its own yes.
+  //
+  // When it was turned on; null while off. Turning it off deletes every
+  // PastReply row and clears the import state below.
+  pastRepliesAllowedAt DateTime?
+  // null (never started / off) | "reading" | "done" | "failed" — see
+  // src/lib/pastReplies.ts, which moves it one Gmail page per cron tick.
+  pastRepliesStatus    String?
+  // Gmail's nextPageToken for the sent-mail listing, so each tick carries
+  // on where the last one stopped instead of starting over.
+  pastRepliesPageToken String?
+  // Sent messages looked at so far (kept or not) — the import stops at a
+  // ceiling so an account with years of mail stays a bounded job.
+  pastRepliesScanned   Int       @default(0)
+  // Why the import stopped early, in words the owner can act on.
+  pastRepliesError     String?
+  pastReplies          PastReply[]
+
   // Live AI voice agent (src/app/api/twilio/voice/[secret]/route.ts +
   // the separate always-on audio-bridge service — see
   // research/integrations/2026-09-06-voice-ai-and-multilingual-scoping.md).
@@ -574,6 +601,39 @@ model Suppression {
   // asked before every automated email — so the lookup is the unique index.
   @@unique([businessId, channel, address])
   @@index([businessId, channel])
+}
+
+/**
+ * One reply this business's owner sent from Gmail in the last 12 months,
+ * kept only as a sample of how they write ("Write like me", Settings → Your
+ * data; Business.pastRepliesAllowedAt). Read by src/lib/voice.ts into this
+ * same business's drafts and nowhere else: never another business, never a
+ * shared model (Google's Workspace API user data policy allows Gmail data
+ * in a personalised feature for the same user, and forbids it in a
+ * generalised one).
+ *
+ * Stored already cleaned and de-identified (src/lib/pastReplies.ts): quoted
+ * history and signature cut off, the recipient's and the owner's names and
+ * addresses replaced with placeholders, any other email, phone number or
+ * street address replaced too. The raw message is never written anywhere.
+ * Deleted, every row, the moment the owner turns the switch off.
+ */
+model PastReply {
+  id             String   @id @default(cuid())
+  business       Business @relation(fields: [businessId], references: [id])
+  businessId     String
+  // Gmail's id for the sent message, so a re-run never stores it twice.
+  gmailMessageId String
+  // A short one-way hash of the recipient's address. Only used to keep any
+  // one person from supplying most of the samples; never shown, and it
+  // can't be turned back into the address.
+  recipientKey   String
+  body           String
+  sentAt         DateTime
+  createdAt      DateTime @default(now())
+
+  @@unique([businessId, gmailMessageId])
+  @@index([businessId, sentAt])
 }
 
 enum QuietOutcome {

@@ -1358,7 +1358,7 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
       expect.objectContaining({ targetId: "leadHandoff", meta: expect.objectContaining({ trigger: "dm_handoff", riskLevel: "window", daysLeft: 5 }) })
     );
     expect(p.notification.create).toHaveBeenCalledWith({
-      data: { userId: "user1", leadId: "leadHandoff", message: expect.stringMatching(/Aanya didn't reply to the automatic follow-ups on Instagram.*you have 5 days/) },
+      data: { userId: "user1", leadId: "leadHandoff", message: expect.stringMatching(/Aanya hasn't answered on Instagram since the last message.*you have 5 days/) },
     });
     expect(send).not.toHaveBeenCalled();
   });

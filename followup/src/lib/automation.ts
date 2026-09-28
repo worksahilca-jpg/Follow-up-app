@@ -2002,7 +2002,11 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
       const platform = channel === "instagram" ? "Instagram" : "Messenger";
       const daysLeft = Math.max(1, Math.floor((META_HUMAN_AGENT_MAX_HOURS - hours) / 24));
       const firstName = lead.name.split(" ")[0];
-      const reason = `${firstName} didn't reply to the automatic follow-ups on ${platform}, and Meta now only lets a person send the next one — you have ${daysLeft} day${daysLeft === 1 ? "" : "s"}. This draft is yours to send, or leave.`;
+      // Says only what is known: we wrote last and they went quiet. It used
+      // to say "the automatic follow-ups", which was false whenever the last
+      // message was one a person approved and sent (the default: every reply
+      // waits for approval), and read as a contradiction of that promise.
+      const reason = `${firstName} hasn't answered on ${platform} since the last message, and Meta now only lets a person send the next one — you have ${daysLeft} day${daysLeft === 1 ? "" : "s"}. This draft is yours to send, or leave.`;
       if (!(await recordHold(lead, { riskLevel: "window", reason, trigger: "dm_handoff", channel, daysLeft }))) {
         // The draft above is stamped as answering this message, which is
         // what stops the next run redrafting it. Without the hold it is in

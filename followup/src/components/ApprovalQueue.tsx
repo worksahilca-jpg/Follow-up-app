@@ -86,6 +86,8 @@ const CHANNEL_LABEL: Record<string, string> = {
   text: "text",
   whatsapp: "WhatsApp",
   instagram: "Instagram",
+  messenger: "Messenger",
+  web: "your website form",
 };
 
 /**

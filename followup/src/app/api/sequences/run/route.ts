@@ -4,6 +4,7 @@ import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { runSequencesForBusiness } from "@/lib/sequences";
 import { publicErrorMessage } from "@/lib/publicError";
 import { tooManyRecentActions } from "@/lib/rateLimit";
+import { sendRefusal } from "@/lib/sendingControl";
 
 // POST /api/sequences/run — manually runs due workflow steps for the
 // signed-in user's own business. Same per-lead AI-draft + send work as
@@ -14,6 +15,12 @@ export const maxDuration = 120;
 export async function POST() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  // Adding a customer to a plan starts sending, so it follows "Only admins
+  // send" (A-041) exactly like the Send button (audit 2026-09-27).
+  const refusal = await sendRefusal(ctx.businessId, ctx.userId);
+  if (refusal) {
+    return NextResponse.json({ success: false, message: "Only admins send on this account, so only an admin can do this." }, { status: 403 });
+  }
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }

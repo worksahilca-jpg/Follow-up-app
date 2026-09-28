@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, requireAdmin } from "@/lib/session";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { getSequenceById, updateSequence, deleteSequence } from "@/lib/sequences";
 import { parseJsonBody, sequenceStepSchema } from "@/lib/validation";
@@ -27,6 +27,13 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  // Follow-up plans are a business-wide decision about what reaches
+  // customers, so only an admin creates, changes or deletes one (founder,
+  // 2026-09-27). Before this a teammate could write a plan and enrol
+  // customers in it, which sidestepped "Only admins send" (A-041).
+  if (!(await requireAdmin(ctx))) {
+    return NextResponse.json({ success: false, message: "Only an admin can change follow-up plans." }, { status: 403 });
+  }
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }
@@ -45,6 +52,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  // Follow-up plans are a business-wide decision about what reaches
+  // customers, so only an admin creates, changes or deletes one (founder,
+  // 2026-09-27). Before this a teammate could write a plan and enrol
+  // customers in it, which sidestepped "Only admins send" (A-041).
+  if (!(await requireAdmin(ctx))) {
+    return NextResponse.json({ success: false, message: "Only an admin can change follow-up plans." }, { status: 403 });
+  }
 
   const { id } = await params;
   const result = await deleteSequence(id, ctx.businessId);

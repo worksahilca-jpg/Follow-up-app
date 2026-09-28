@@ -28,6 +28,7 @@ import { getSessionContext } from "@/lib/session";
 import { getPendingApprovals, type PendingApproval } from "@/lib/pendingApprovals";
 import { prisma } from "@/lib/db";
 import type { Lead, Message } from "@/lib/types";
+import { isWaitingOnCustomer } from "@/lib/waitingOn";
 
 export const dynamic = "force-dynamic";
 
@@ -228,9 +229,9 @@ function Details({ lead, approval, now }: { lead: Lead; approval: PendingApprova
       ? "Closed"
       : kind === "talked"
         ? "You talked"
-        : kind === "waiting" || kind === "sent" || kind === "due_soon" || kind === "workflow"
+        : isWaitingOnCustomer(lead)
           ? `Waiting on ${first}`
-          : "Handled";
+          : "Up to date";
   const why = approval ? sentenceCase(approval.reason) + "." : null;
   return (
     <>

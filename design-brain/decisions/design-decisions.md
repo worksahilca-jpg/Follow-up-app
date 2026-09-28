@@ -8271,3 +8271,14 @@ From the 2026-09-27 strategy audit, item 4, after checking each claim against th
 - Setup's "How should FollowUp work?" now starts on Assisted. This morning's fix had left it on nothing chosen.
 - Settings' plan lines no longer say Free is "assisted only" or that Plus adds "autonomous send". Plus now names what
   is actually Plus-only: "Handle it all" for customers you choose. The lines also say "customers", not "leads".
+
+## 2026-09-27 — Four small calls from the audits (founder: "yes to all")
+
+1. **Follow-up plans:** only an admin creates, changes or deletes one. Adding a customer to a plan, or running plans by
+   hand, follows "Only admins send" like the Send button. This closes the audit's workaround.
+2. **Customer page state:** it says "Waiting on {name}" only when we wrote last (`isWaitingOnCustomer`). Otherwise it
+   says "Up to date". It used to say "Waiting on Jane" when Jane was waiting on the owner.
+3. **"Let me check" message:** a send that can never succeed (no channel, opted out, refused) is no longer retried
+   every five minutes, since each retry was a paid translation call.
+4. **Held first replies:** a customer already waiting for the owner doesn't get a second hold, or a second "a reply
+   is waiting" alert, for each new DM.

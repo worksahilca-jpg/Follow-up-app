@@ -46,6 +46,8 @@ vi.mock("@/lib/billing", () => ({
 }));
 vi.mock("@/lib/automation", () => ({ runAutomationForBusiness: h.runAutomationForBusiness }));
 vi.mock("@/lib/sequences", () => ({ runSequencesForBusiness: h.runSequencesForBusiness }));
+// Running plans by hand now follows "Only admins send" (2026-09-27); anyone may send here.
+vi.mock("@/lib/sendingControl", () => ({ sendRefusal: vi.fn(async () => null) }));
 vi.mock("@/lib/team", () => ({ inviteMember: h.inviteMember }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => undefined) }));
 vi.mock("@/lib/booking", () => ({

@@ -4,6 +4,7 @@ import { getSessionContext } from "@/lib/session";
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { enrollLead, unenrollLead, getLeadEnrollment } from "@/lib/sequences";
 import { parseJsonBody } from "@/lib/validation";
+import { sendRefusal } from "@/lib/sendingControl";
 
 const enrollSchema = z.object({ sequenceId: z.string().min(1, "sequenceId is required.") });
 
@@ -23,6 +24,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  // Adding a customer to a plan starts sending, so it follows "Only admins
+  // send" (A-041) exactly like the Send button (audit 2026-09-27).
+  const refusal = await sendRefusal(ctx.businessId, ctx.userId);
+  if (refusal) {
+    return NextResponse.json({ success: false, message: "Only admins send on this account, so only an admin can do this." }, { status: 403 });
+  }
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }

@@ -8364,3 +8364,9 @@ footer wash went light on light, and the black lockup sank into dark areas. Now:
 - **Light version.** Unchanged (A-038).
 - **Checked.** Chromium renders of both themes. Gmail's app can't be emulated here. A real Gmail dark-mode send is
   the check.
+- **Follow-up after the founder's phone test (Gmail app, dark).** Gmail's app ignores the dark styles, flips colours
+  itself and drops background images. What that left:
+  - **Black lockup vanished on the darkened header.** It is now the outlined lockup
+    (`followup-lockup-outlined.png`): a thin light edge that shows on dark and disappears on the light wash.
+  - **Waiting box merged into the sheet.** It gets a 1px rule so it stays a box.
+  - **Wash glow shows as a flat colour.** That's Gmail's limit and can't be forced; the rest reads correctly.

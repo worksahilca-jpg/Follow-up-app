@@ -173,7 +173,7 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
   const header = `
 <tr><td class="fu-wash-top" background="${e(l.headerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.headerImage)}');background-size:cover;background-position:center;padding:28px 28px 28px;">
   ${table(`<tr>
-    <td style="vertical-align:middle;"><a href="${e(l.website)}" style="text-decoration:none;">${lockup(l, 59, 22)}</a></td>
+    <td style="vertical-align:middle;"><a href="${e(l.website)}" style="text-decoration:none;">${lockup(l, 60, 23)}</a></td>
     <td align="right" style="vertical-align:middle;font-size:13px;">${onWash(`<span class="fu-soft" style="color:${SOFT};">${e(v.dateRange)}</span>`)}</td>
   </tr>`)}
   <h1 class="fu-ink" style="margin:40px 0 0;font-size:34px;line-height:1.08;letter-spacing:-0.03em;font-weight:300;color:${INK};">${onWash(`Your week,<br>${e(v.businessName)}`)}</h1>
@@ -238,8 +238,9 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
       )}
       <p class="fu-dim" style="margin:12px 0 0;text-align:center;font-size:13.5px;color:${DIM};">Nothing goes out until you send it.</p>
     </td></tr>`,
-    `background:${SAND};border-radius:20px;`,
-    "fu-sand"
+    // The edge keeps the box distinct when Gmail darkens it to the sheet's colour.
+    `background:${SAND};border:1px solid ${RULE};border-radius:20px;`,
+    "fu-sand fu-rule"
   )}
 </td></tr>`;
 
@@ -275,7 +276,7 @@ export function renderWeeklyEmailHtml(v: WeeklyEmailView): string {
   const footer = `
 <tr><td style="padding-top:40px;"></td></tr>
 <tr><td class="fu-wash-bottom" background="${e(l.footerImage)}" bgcolor="${WASH}" style="background-color:${WASH};background-image:url('${e(l.footerImage)}');background-size:cover;background-position:center;padding:30px 28px 28px;">
-  ${lockup(l, 53, 20)}
+  ${lockup(l, 54, 21)}
   <p class="fu-soft" style="margin:10px 0 0;font-size:15px;color:${SOFT};">${onWash("So no customer gets forgotten.")}</p>
   <p style="margin:16px 0 0;font-size:14px;">${onWash([link(l.website, "Website"), link(l.privacy, "Privacy"), link(l.terms, "Terms"), link(l.contact, "Contact")].join(`&nbsp;&nbsp;&nbsp;&nbsp;`))}</p>
   <p class="fu-soft" style="margin:18px 0 0;font-size:14px;line-height:1.5;color:${SOFT};">${onWash(`Questions or ideas? <a class="fu-ink" href="${e(l.writeToSahil)}" style="color:${INK};text-decoration:underline;">Write to Sahil</a>, who builds FollowUp.`)}</p>

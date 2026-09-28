@@ -1392,6 +1392,7 @@ prefer and they can change it anytime."*
   (option A) over matching the drawing exactly (option B).
 - **Kept against the drawing:** the waiting box's mid-tone outline (EDGE). Without it the box disappears in Gmail's
   dark mode. The button's arrow is a text arrow, not a drawn one.
+**Confirmed on the founder's phone,** 2026-09-28, from the real email sent by the preview link: *"email is good now"*.
 
 ## A-072 — "Write like me", the card in Settings → Your data ^A-072
 

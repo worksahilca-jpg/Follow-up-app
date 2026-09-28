@@ -75,3 +75,102 @@ export const LOGO_DARK: InlineImage = {
     "46dh/6uAp/HhUrCoy7jp0Y77r4YdG9WJ8fD/3nXuAU3w312cbx6Mm3AK/436hJP899z7/LbMgrr8AXq7Gum6kYZ+AAAAAElFTkSu" +
     "QmCC",
 };
+
+/**
+ * The small icons from the designed email (canvas "Weekly email · designed"):
+ * one before each channel in "Where customers wrote from", and a calendar on
+ * the booking chip. Gmail drops SVG, so they are pictures carried like the
+ * logo. The same shapes the app's ChannelIcon draws (lucide, Instagram drawn
+ * by hand), rendered at three times their size with transparent corners, in
+ * the email's dim grey (#736e68): dark enough on the white sheet and light
+ * enough on the black one Gmail's dark mode paints, which never recolours a
+ * picture. One colour for both, so no dark twins.
+ */
+
+export const ICON_MAIL: InlineImage = {
+  cid: "fu-icon-mail@followupbase.io",
+  filename: "icon-mail.png",
+  contentType: "image/png",
+  base64:
+    "iVBORw0KGgoAAAANSUhEUgAAADYAAAA2CAMAAAC7m5rvAAAAYFBMVEUAAABybWdybWdybWdybWdybGZuaWhybWdybGdxcWZwcGgA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABj41dcAAAAIHRSTlMA" +
+    "/oiyzy8QdU0SIAAAAAAAAAAAAAAAAAAAAAAAAAAAAIFd16oAAAEHSURBVHja7ZbZEsMgCEUNKGD+/4MbHbcYHWn60HYmPDGtx4sX" +
+    "lxjzxC8E46YK5AYiu6nDUqb89lb4hOF7GKQSQ867xoKdq5yEirXeBRckZlCF1xEGc8lQi2HRiI5Yp4Fc7BS2RrJiU6SelyI1gs6e" +
+    "OgC1I34OeegaFy1Jv8iMkrwpTxj4BCKNIMr/ejhjdT6ZS0nb5JwR5Cm7VSUpIDPCqlc8cD35PMIMcd+LMhOZOXYMw3bYdZoJVtYf" +
+    "Rg6KnmLFGmsbK9bYIdjcLVYuB2eGFcFOaoXlZV139wI7QBE3Pt1w71J4sP/EuJ4ULVZvGxe3rO4yj4d4v/Us4meP8M0n/+4HxhPf" +
+    "ixcuVwZnqylZ4wAAAABJRU5ErkJggg==",
+};
+
+export const ICON_PHONE: InlineImage = {
+  cid: "fu-icon-phone@followupbase.io",
+  filename: "icon-phone.png",
+  contentType: "image/png",
+  base64:
+    "iVBORw0KGgoAAAANSUhEUgAAADYAAAA2CAMAAAC7m5rvAAAAYFBMVEUAAABybWdybWdybWdybGdxbWdybWdybWdvaWdwcGRxcGiA" +
+    "gIB0dF2AYGCAgFUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1kAEiAAAAIHRSTlMA" +
+    "/YfMSzCucBETJQMLCAYAAAAAAAAAAAAAAAAAAAAAAKt7KT8AAAF6SURBVHjaxZbblsMgCEWNCKiZ9v8/dxq8RRtbzMMML21cbo8C" +
+    "CzDmPwzZirFDPeS2k0FUUnbrza1riXkF5WUnpbdZkg8Fxv35TinH/fH7gaEOs6dv0DllUNNix2NgHcN7mATgJuaXMXMTgz5QxylB" +
+    "gR35xF1egzaVS+Ae6pxMPvlpyqrc6pzgFih5DrWHacsC1oCz1h/V51gPYC1G9ZakrQlVROSC2v9FBFqJcCtysnk/orHFFbm9hc4v" +
+    "yHErtvBcqMzYvAlBhYkLwV8nZkAnhhO55HoP51YQLLQyT+Ml0l575mQPwue+4s+ruQlx8lVneOXNssq52eWfZOn/dcfKXGyXsxdZ" +
+    "+M65oe+NlZ4nfbWsB7sNbUU22Emz2+hRJwFGo8DyzaY5MsOKx/m5hpkAH+aFOWY85WDhEvZ6YBakuISZnctIZHGf94uLF7bRiLiK" +
+    "xu9FO1I3iRHlWae0iznIsL2bpvp6poGyyqLmHS1PfwWNr2rCY4L+lf0ChqAHpUvdBGwAAAAASUVORK5CYII=",
+};
+
+export const ICON_GLOBE: InlineImage = {
+  cid: "fu-icon-globe@followupbase.io",
+  filename: "icon-globe.png",
+  contentType: "image/png",
+  base64:
+    "iVBORw0KGgoAAAANSUhEUgAAADYAAAA2CAMAAAC7m5rvAAAAYFBMVEUAAABybWdybWdybWdybWdybWdybWdxbWdtamdwcGmAYGCA" +
+    "gIBwcGmAgFV0dF1VVVVwcGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPCxOQAAAAIHRSTlMA" +
+    "/dBPr5EwbxAPCAMkBgsDUAAAAAAAAAAAAAAAAAAAAL0Z3HMAAAHZSURBVHjazVbbcsQgCI2gosl2t///tW0wKnhJsu10pjwRCLej" +
+    "AsvyDyh6TwDkfbxtsqIDUwgcrjeMHtZ0ZP2FUXBmSC6cGD0nRjvRtMoIuZzP+jtmVzAJ+DjUuCxcHxHXtSyY3MFjZOWLUWLtYb3D" +
+    "cRgOkAkik/0n+Ib9yQxrk11X3wfL7bbzWDxzWGQ9R4atMWOpSzykFLMYEutMFWciISNRBpZwGacODli7YEeZx6WDFhZ2FAQ2RYmt" +
+    "xjbBUPwIVdeqRDgr/7QVm4yESrl8ROlRuc8RRilrDSf80VwDP/LpZFrUng5I2GUFKi2nS0sCGqQcZcL6rxzeKRhCqQYUqtiaWZWy" +
+    "L4G1XJnhxCuZN4nqzXqH7G/MfpgkTqAaQlIRuziAmdegjtueHncQjej6crnRezi/ynZ2lfsndevhqGe63X6mnGXpnCdNYTNKF2QH" +
+    "PGlBpIIdHdcLH6jSWkW/kChzdfDsOqrqVWm4hPZwslo28K6ZO70dQDM6oGPZM7TjLQ2qqENULtrxII5pLMYcYy8imKuxWEY3DYbw" +
+    "ejxJf7Io1JGfcUIjMunplduDFQ+estC9pvsMwqwRAJ4uT5PGQtvVSjhYoNyd9TC2i+H9nZLXUPvWGvqH9AUNyQszmXG/4wAAAABJ" +
+    "RU5ErkJggg==",
+};
+
+export const ICON_INSTAGRAM: InlineImage = {
+  cid: "fu-icon-instagram@followupbase.io",
+  filename: "icon-instagram.png",
+  contentType: "image/png",
+  base64:
+    "iVBORw0KGgoAAAANSUhEUgAAADYAAAA2CAMAAAC7m5rvAAAAYFBMVEUAAABybWdybWdybGdxa2ZybGZybWdybWdybWdxcWZwcGlV" +
+    "VVWAgIB0dF2AYGCAgFUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABng5suAAAAIHRSTlMA" +
+    "/cdFFS20c4sSJAMCCwgGAAAAAAAAAAAAAAAAAAAAAPGbcmUAAAFPSURBVHja5VbBdgMhCMwCgm7S5v//tq27aQVFaV57CrfEHRlg" +
+    "AC+XFzJK2FmiOUR4c4ylOKB32aYm9xEqwbYwSD0Kvw8H9jjDztfxf8Zh9IT5ODf+yGVhYtC31gzmeWmqQ+4owqqkYGnWi/YVbLeU" +
+    "wLofG2tO11rNNazqwYSWjMw+GQALdSko+mdzXPKPNHIL1Nej5kxKZkA6B+jAyGqRIrDTl2ApKMbfBHaI4fySWCXZhxUjIW5p+jDR" +
+    "ST4ilSWMraZz492Hdd2ITVHnsNRJIwSjroP/iyTbZoilxBagxArwZLkPd78W10PK+UvKOS7lJxsn3qbJTEl3KICSkBkt7ggirTwa" +
+    "bIWRVcFctfPgnAQ7zN+Wa91OYdoi05y77sjRRaW/KRBbi1CGS1huY9DtfEXsf7PyG5xvOGTPcxB7keMEyDjL8uChVh9rL/RY/QCy" +
+    "OAiwED6r1QAAAABJRU5ErkJggg==",
+};
+
+export const ICON_MESSAGE: InlineImage = {
+  cid: "fu-icon-message@followupbase.io",
+  filename: "icon-message.png",
+  contentType: "image/png",
+  base64:
+    "iVBORw0KGgoAAAANSUhEUgAAADYAAAA2CAMAAAC7m5rvAAAAYFBMVEUAAABybWdybWdybWdybWdybWdybWdybWdwamZycmZycGaA" +
+    "YGBVVVV0dF0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABo2aDjAAAAIHRSTlMA" +
+    "/Y6u0DBwThEQKAgDCwAAAAAAAAAAAAAAAAAAAAAAABSC6XkAAAFySURBVHjazVZLFoMwCGz5Rm3vf93mRc0/EV2VXasThgHMvF5/" +
+    "EE5VfCg7M2RToHcK0K8BtOK7CeQHoJByRnaB+B4hAgBipCvbCMWRlKbD+SyU3BRFWj/QA8gTlPSe6RCnUyaO+rg9Fw4Fc9g9NZwG" +
+    "s97suPI/Cbnm80ZN6UugeDF/O87VBPRq7rii5C4Ly9TmsjLLclCRbtjmbrol/2Hbx1wDvBQ/BmSvmmRsWAYdPzbYJ2nJVh1PLTUm" +
+    "RisMo+hi63XSRKoDjDCoDrgNe0BSnkmi7dZaGsD5fF5dKdn43hwu6synoTTIl325vThZnZYF2F53WVLRYusOhGRrSdndTWbNBtXp" +
+    "ttqg/pqaPnjhY0pZn1ZD3xw014SBI3euRbrieKQqURyzs6B3FlK1wsnhBbiplbzLykyJpEr5NDjQkYga90PeziAl88UD9zAN+A4u" +
+    "88PNMUODIZlcyiQc/VKRaGzvvOcs2+1YvE8D70P/wRT/AOWPB10R61R8AAAAAElFTkSuQmCC",
+};
+
+export const ICON_CALENDAR: InlineImage = {
+  cid: "fu-icon-calendar@followupbase.io",
+  filename: "icon-calendar.png",
+  contentType: "image/png",
+  base64:
+    "iVBORw0KGgoAAAANSUhEUgAAAC0AAAAtCAMAAAANxBKoAAAAYFBMVEUAAABybWdzbGZybWd1aWlwcGBybWdxbGdybWdzbWcAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB3SqeUAAAAIHRSTlMA" +
+    "/kmDDxDKMa1jAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF6nm/sAAACbSURBVHja7ZXtCsMwCEV71al9/xdeCvswDZoNtjJGz68Kh2Bu" +
+    "iS7LUZiq5eUeBjgv9zjgeRkQIyIFlJ7cSpOhYVT07a+YsYaTMcfibcCU9k0tm3Bd3JPKMtn0Rxztm8q8qRky2Nm/3OzLYGf8rj3n" +
+    "KNu5wv8k79M+7c/YEuagl3Z7O9rNWC0emnbHvTe/X9C7VSJcLR5l+f6uvgIKtgYAknyv4AAAAABJRU5ErkJggg==",
+};

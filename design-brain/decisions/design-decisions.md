@@ -8401,3 +8401,19 @@ footer wash went light on light, and the black lockup sank into dark areas. Now:
   - **The screen/difference blend trick is removed.** It never worked on the founder's phone.
   - This changes A-038's header (win card on the wash). Shown to the founder before merge.
   - Checked on a Gmail-dark simulation that keeps pictures and inverts colours; the founder's phone is the real check.
+
+## 2026-09-28 — The Monday email matched to its drawing (A-071; founder: "okay go with A")
+
+The founder compared the email he gets with the canvas and said they were not the same. They differed in four ways:
+words on the wash, the frame, the icons, and small spacing. Matching the words-on-wash exactly would break Gmail's
+dark mode again, so he was offered A (match everything else) or B (match exactly), and chose A.
+- **Desktop by default, phone by one media query**, in its own `<style>` block ahead of the dark-mode one (Gmail
+  drops a whole block it cannot read). A mail app that ignores it shows desktop sizes at full width.
+- **Icons as carried PNGs** (`ICON_*` in `emailAssets.ts`), the same shapes as the app's ChannelIcon. They use one
+  colour, DIM #736e68, which has at least 3:1 contrast on both the white sheet and Gmail's black. So there are no
+  dark twins. Only the icons an email shows travel with it.
+- **Busiest time now reads "most messages came in …"**, lower case, as drawn.
+- **Weak spots, named:**
+  - The header is still visibly not the drawing: the wash is a band with only the logo, and the greeting sits below it.
+  - On Gmail's dark simulation the channel bars (black on black) nearly vanish. This was true before this change too.
+  - Checked on renders and a simulation; the founder's phone is the real check.

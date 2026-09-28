@@ -243,7 +243,10 @@ export function renderWeeklyDigest(d: WeeklyDigestInput): { subject: string; tex
       writeToSahil: `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("About FollowUp")}`,
       headerImage: `${d.appUrl}/email/week-header.jpg`,
       footerImage: `${d.appUrl}/email/week-footer.jpg`,
-      logo: `${d.appUrl}/email/followup-lockup.png`,
+      // The outlined lockup: a thin light edge keeps the black mark visible
+      // when Gmail's app darkens the header behind it (founder's phone,
+      // 2026-09-28). Invisible on the light wash.
+      logo: `${d.appUrl}/email/followup-lockup-outlined.png`,
       headerImageDark: `${d.appUrl}/email/week-header-dark.jpg`,
       footerImageDark: `${d.appUrl}/email/week-footer-dark.jpg`,
       logoDark: `${d.appUrl}/email/followup-lockup-dark.png`,

@@ -38,10 +38,22 @@ describe("the beta plan", () => {
   it("is granted to any business with no real Stripe subscription, whatever the status column says", async () => {
     await grantBetaPlan("biz1");
     expect(updateMany).toHaveBeenCalledWith({
-      where: { id: "biz1", stripeSubscriptionId: null },
-      // holdAllForApproval: a tester gets Pro's reach and none of its
-      // unreviewed sending (founder, 2026-09-19).
+      where: { id: "biz1", stripeSubscriptionId: null, OR: [{ subscriptionStatus: null }, { subscriptionStatus: { not: "beta" } }] },
+      // holdAllForApproval on the FIRST grant: the safe start, before the
+      // owner chooses in setup (founder, 2026-09-19).
       data: { subscriptionStatus: "beta", tier: "pro", holdAllForApproval: true },
+    });
+  });
+
+  // Founder, 2026-09-28: the owner's Automatic/Assisted choice sticks on
+  // every sign-in, on any device. A tester already on the plan keeps it
+  // and keeps their hold setting.
+  it("never resets an existing tester's Automatic/Assisted choice at sign-in", async () => {
+    updateMany.mockResolvedValueOnce({ count: 0 }).mockResolvedValueOnce({ count: 1 });
+    expect(await grantBetaPlan("biz1")).toBe(true);
+    expect(updateMany).toHaveBeenLastCalledWith({
+      where: { id: "biz1", stripeSubscriptionId: null },
+      data: { subscriptionStatus: "beta", tier: "pro" },
     });
   });
 
@@ -49,7 +61,7 @@ describe("the beta plan", () => {
     // updateMany matches nothing when a stripeSubscriptionId is present,
     // which is the whole guarantee — expressed here as the count Prisma
     // would return for a non-matching where clause.
-    updateMany.mockResolvedValueOnce({ count: 0 });
+    updateMany.mockResolvedValueOnce({ count: 0 }).mockResolvedValueOnce({ count: 0 });
     expect(await grantBetaPlan("paying-biz")).toBe(false);
     expect(updateMany.mock.calls[0][0].where).toHaveProperty("stripeSubscriptionId", null);
   });
@@ -76,7 +88,7 @@ describe("the beta plan", () => {
     userFindUnique.mockResolvedValueOnce({ businessId: "biz9" });
     await setBetaPlanForEmail("Owner@Example.com", true);
     expect(userFindUnique).toHaveBeenCalledWith({ where: { email: "owner@example.com" }, select: { businessId: true } });
-    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "biz9", stripeSubscriptionId: null } }));
+    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ id: "biz9", stripeSubscriptionId: null }) }));
 
     updateMany.mockClear();
     userFindUnique.mockResolvedValueOnce(null);

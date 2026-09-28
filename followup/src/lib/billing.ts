@@ -35,15 +35,28 @@ export const BETA_SUBSCRIPTION_STATUS = "beta";
 const ACTIVE_STATUSES = new Set(["active", "trialing", BETA_SUBSCRIPTION_STATUS]);
 
 export async function grantBetaPlan(businessId: string): Promise<boolean> {
-  const { count } = await prisma.business.updateMany({
-    where: { id: businessId, stripeSubscriptionId: null },
-    // holdAllForApproval: a tester gets Pro's reach and none of its
-    // unreviewed sending. Founder, 2026-09-19: "I can't hand them the
-    // full automated thing, I want them to keep an eye." See the column's
-    // own comment in schema.prisma for what it does and does not cover.
+  // First grant only: the plan, and the hold on. The hold is the safe
+  // start; the owner then chooses Automatic or Assisted in setup.
+  // Founder, 2026-09-19: "I want them to keep an eye."
+  const first = await prisma.business.updateMany({
+    where: {
+      id: businessId,
+      stripeSubscriptionId: null,
+      OR: [{ subscriptionStatus: null }, { subscriptionStatus: { not: BETA_SUBSCRIPTION_STATUS } }],
+    },
     data: { subscriptionStatus: BETA_SUBSCRIPTION_STATUS, tier: "pro", holdAllForApproval: true },
   });
-  return count > 0;
+  if (first.count > 0) return true;
+  // Already a tester: this runs on every sign-in, and it used to switch the
+  // hold back on each time, so an owner who chose Automatic was quietly
+  // back on Assisted within a week. Founder, 2026-09-28: "if they choose
+  // auto it should be auto, if assisted it should be assisted, every time
+  // they log in on any device." The plan is kept; the hold is theirs.
+  const again = await prisma.business.updateMany({
+    where: { id: businessId, stripeSubscriptionId: null },
+    data: { subscriptionStatus: BETA_SUBSCRIPTION_STATUS, tier: "pro" },
+  });
+  return again.count > 0;
 }
 
 /**

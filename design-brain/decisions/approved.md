@@ -1392,3 +1392,20 @@ prefer and they can change it anytime."*
   (option A) over matching the drawing exactly (option B).
 - **Kept against the drawing:** the waiting box's mid-tone outline (EDGE). Without it the box disappears in Gmail's
   dark mode. The button's arrow is a text arrow, not a drawn one.
+
+## A-072 — "Write like me", the card in Settings → Your data ^A-072
+
+**Approved:** 2026-09-28, founder: *"yes open the PR"*, after seeing the card on a phone.
+**What specifically:**
+- **The card:** a second card under "Help improve FollowUp", in the same pattern: icon tile (a reply arrow, never a
+  sparkle), title, one paragraph, and a switch.
+- **The copy** says four things in one paragraph:
+  - what it reads: replies sent from Gmail in the last year;
+  - what for: drafts that sound like you;
+  - who it's for: only your own drafts;
+  - how to undo it: turn it off and they're all deleted.
+  - It also says names, emails and phone numbers are taken out first.
+- **Behaviour:** off by default, and it can't be turned on until Gmail is connected.
+- **Status:** one plain status line when it's on (a running count, never a badge).
+- **Same PR:** the repeated lede on the Your data page ("Export everything, …" under "Download everything, …") is
+  removed.

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { formatMoney, getRescueReport, type RescueReport, type RescuedLead } from "@/lib/rescued";
 import { renderWeeklyEmailHtml, type WeeklyEmailView } from "@/lib/weeklyDigestHtml";
+import { LOGO_CHIP, LOGO_CHIP_DARK, type InlineImage } from "@/lib/emailAssets";
 
 /**
  * The Monday email (design brain A-034, A-037, A-038): what the week was,
@@ -185,7 +186,7 @@ export async function getInboundMix(
 }
 
 /** The subject, the plain text and the designed HTML, from one set of facts. */
-export function renderWeeklyDigest(d: WeeklyDigestInput): { subject: string; text: string; html: string } {
+export function renderWeeklyDigest(d: WeeklyDigestInput): { subject: string; text: string; html: string; inlineImages: InlineImage[] } {
   const win = pickWin(d.report.leads);
   const n = d.waiting.length;
   const waitingCount = `${n} ${n === 1 ? "reply is" : "replies are"} waiting for your OK`;
@@ -245,16 +246,17 @@ export function renderWeeklyDigest(d: WeeklyDigestInput): { subject: string; tex
       footerImage: `${d.appUrl}/email/week-footer.jpg`,
       // The lockup on a white chip drawn into the image: Gmail's app darkens
       // the header in dark mode but never recolours an image, so the black
-      // mark stays readable there (founder's phone, 2026-09-28). A thin
-      // outline was tried first and was still invisible.
-      logo: `${d.appUrl}/email/followup-lockup-chip.png`,
+      // mark stays readable there (founder's phone, 2026-09-28). Carried
+      // inside the message (cid:, see src/lib/emailAssets.ts) because the
+      // hosted copy never loaded on that phone at all.
+      logo: `cid:${LOGO_CHIP.cid}`,
       headerImageDark: `${d.appUrl}/email/week-header-dark.jpg`,
       footerImageDark: `${d.appUrl}/email/week-footer-dark.jpg`,
-      logoDark: `${d.appUrl}/email/followup-lockup-chip-dark.png`,
+      logoDark: `cid:${LOGO_CHIP_DARK.cid}`,
     },
   };
 
-  return { subject, text: renderText(d, win, waitingCount), html: renderWeeklyEmailHtml(view) };
+  return { subject, text: renderText(d, win, waitingCount), html: renderWeeklyEmailHtml(view), inlineImages: [LOGO_CHIP, LOGO_CHIP_DARK] };
 }
 
 /**

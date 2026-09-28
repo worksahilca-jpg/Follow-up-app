@@ -39,6 +39,7 @@ import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
+import type { InlineImage } from "@/lib/emailAssets";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -1086,11 +1087,15 @@ export function sanitizeHeaderValue(value: string): string {
  * can show it). Both parts are base64 in 76-character lines, so a long
  * HTML line can never break the 998-character limit on a message line.
  */
-export function mimeBody(text: string, html?: string, boundary = `fu-${randomUUID()}`): string[] {
+export function mimeBody(
+  text: string,
+  html?: string,
+  boundary = `fu-${randomUUID()}`,
+  inlineImages: ReadonlyArray<InlineImage> = []
+): string[] {
   if (html === undefined) return ["Content-Type: text/plain; charset=utf-8", "", text];
   const b64 = (s: string) => Buffer.from(s, "utf-8").toString("base64").replace(/.{76}(?=.)/g, "$&\r\n");
-  return [
-    "MIME-Version: 1.0",
+  const alternative = [
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
     "",
     `--${boundary}`,
@@ -1104,6 +1109,30 @@ export function mimeBody(text: string, html?: string, boundary = `fu-${randomUUI
     "",
     b64(html),
     `--${boundary}--`,
+    "",
+  ];
+  if (inlineImages.length === 0) return ["MIME-Version: 1.0", ...alternative];
+  // Pictures carried inside the message (see src/lib/emailAssets.ts): the
+  // text/HTML pair goes first inside multipart/related, then one part per
+  // image, which the HTML names as cid:<Content-ID>.
+  const related = `${boundary}-rel`;
+  const safe = (v: string) => v.replace(/[^A-Za-z0-9@._-]/g, "");
+  return [
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/related; boundary="${related}"; type="multipart/alternative"`,
+    "",
+    `--${related}`,
+    ...alternative,
+    ...inlineImages.flatMap((img) => [
+      `--${related}`,
+      `Content-Type: ${/^image\/(png|jpeg|gif)$/.test(img.contentType) ? img.contentType : "application/octet-stream"}; name="${safe(img.filename)}"`,
+      "Content-Transfer-Encoding: base64",
+      `Content-ID: <${safe(img.cid)}>`,
+      `Content-Disposition: inline; filename="${safe(img.filename)}"`,
+      "",
+      img.base64.replace(/.{76}(?=.)/g, "$&\r\n"),
+    ]),
+    `--${related}--`,
     "",
   ];
 }
@@ -1164,6 +1193,8 @@ export async function sendEmail(
      * plain text.
      */
     html?: string;
+    /** Pictures the HTML shows as cid:… — only with `html`. */
+    inlineImages?: ReadonlyArray<InlineImage>;
   }
 ): Promise<{ success: boolean; messageId?: string; message?: string }> {
   const authed = await getAuthedGmailClient(businessId);
@@ -1189,7 +1220,7 @@ export async function sendEmail(
     // Sanitised the same way every other header value is: a header line
     // carrying a CR or LF would let its content inject further headers.
     ...(params.extraHeaders ?? []).map((h: string) => sanitizeHeaderValue(h)),
-    ...mimeBody(params.body, params.html),
+    ...mimeBody(params.body, params.html, undefined, params.inlineImages),
   ].join("\r\n");
 
   const encoded = Buffer.from(raw)

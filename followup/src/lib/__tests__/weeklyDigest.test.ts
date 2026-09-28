@@ -169,11 +169,14 @@ describe("the designed email", () => {
     expect(html).toContain("Acme &lt;b&gt;");
   });
 
-  it("uses hosted images and no SVG or CSS gradient, which mail apps drop", () => {
-    const { html } = renderWeeklyDigest(input({ waiting: WAITING }));
+  it("carries the logo inside the message, hosts the wash, and uses no SVG or CSS gradient", () => {
+    const { html, inlineImages } = renderWeeklyDigest(input({ waiting: WAITING }));
     expect(html).toContain("https://followupbase.io/email/week-header.jpg");
-    expect(html).toContain("https://followupbase.io/email/followup-lockup-chip.png");
-    expect(html).toContain("https://followupbase.io/email/followup-lockup-chip-dark.png");
+    expect(html).toContain('src="cid:fu-logo@followupbase.io"');
+    expect(html).toContain('src="cid:fu-logo-dark@followupbase.io"');
+    expect(inlineImages.map((i) => i.cid)).toEqual(["fu-logo@followupbase.io", "fu-logo-dark@followupbase.io"]);
+    // Real PNGs, not empty strings.
+    for (const img of inlineImages) expect(Buffer.from(img.base64, "base64").subarray(1, 4).toString()).toBe("PNG");
     expect(html).not.toMatch(/<svg|gradient\(/);
   });
 
@@ -260,5 +263,19 @@ describe("sending it", () => {
     expect(Math.max(...raw.split("\r\n").map((l) => l.length))).toBeLessThanOrEqual(76 + 2);
     const htmlPart = raw.split("--b1")[2].split("\r\n\r\n")[1];
     expect(Buffer.from(htmlPart.replace(/\r\n/g, ""), "base64").toString("utf-8")).toBe("<p>" + "x".repeat(3000) + "</p>");
+  });
+
+  it("carries pictures inside the message, after the text and HTML, named by Content-ID", () => {
+    const img = { cid: "fu-logo@followupbase.io", filename: "followup-logo.png", contentType: "image/png", base64: "A".repeat(500) };
+    const raw = mimeBody("plain", "<img src=\"cid:fu-logo@followupbase.io\">", "b2", [img]).join("\r\n");
+    expect(raw).toContain('Content-Type: multipart/related; boundary="b2-rel"; type="multipart/alternative"');
+    expect(raw).toContain('Content-Type: multipart/alternative; boundary="b2"');
+    expect(raw).toContain("Content-ID: <fu-logo@followupbase.io>");
+    expect(raw).toContain('Content-Disposition: inline; filename="followup-logo.png"');
+    expect(raw.indexOf("text/html")).toBeLessThan(raw.indexOf("image/png"));
+    expect(raw.trimEnd().endsWith("--b2-rel--")).toBe(true);
+    expect(Math.max(...raw.split("\r\n").map((l) => l.length))).toBeLessThanOrEqual(100);
+    // One MIME-Version header, at the top.
+    expect(raw.match(/MIME-Version/g)).toHaveLength(1);
   });
 });

@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       // subject leads with the win, else with what needs them: on a
       // holding account — the default since 2026-09-21 — "0 came back, 0
       // answered for you" would be a useless subject over a full queue.
-      const { subject, text, html } = renderWeeklyDigest(await gatherWeeklyDigest(b, appUrl()));
+      const { subject, text, html, inlineImages } = renderWeeklyDigest(await gatherWeeklyDigest(b, appUrl()));
       for (const u of b.users) {
         // The claim, one per admin per week, taken right before the send.
         // It is the same atomic check-and-record the rate limits use
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
           alreadySent += 1;
           continue;
         }
-        const r = await sendEmail(b.id, { to: u.email, subject, body: text, html });
+        const r = await sendEmail(b.id, { to: u.email, subject, body: text, html, inlineImages });
         if (r.success) sent += 1;
       }
     } catch (err) {

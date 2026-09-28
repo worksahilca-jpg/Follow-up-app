@@ -8417,3 +8417,18 @@ dark mode again, so he was offered A (match everything else) or B (match exactly
   - The header is still visibly not the drawing: the wash is a band with only the logo, and the greeting sits below it.
   - On Gmail's dark simulation the channel bars (black on black) nearly vanish. This was true before this change too.
   - Checked on renders and a simulation; the founder's phone is the real check.
+## 2026-09-28 — "Write like me" (founder: "we need the 2nd one … it should be totally human, should not sound AI"; "yes build it")
+
+The founder first asked to train one model on every tester's past replies. That is not allowed with Gmail data: Google's
+Workspace API user data policy forbids using it to develop, improve or train a generalized AI model, and FollowUp's
+own privacy page promised as much. The allowed version, which he chose: each owner's own past replies shape only
+their own drafts.
+- **A second switch in Settings → Your data**, under "Help improve FollowUp": "Write like me". Same card pattern as the
+  switch above it (icon tile, title, one paragraph, Switch). The icon is a reply arrow, never a sparkle (S-13).
+- **Copy says the four things an owner needs before saying yes:** what it reads (replies sent from Gmail in the last
+  year), what for (drafts that sound like you), who it's for (only your drafts), and how to undo it (off deletes them
+  all). Plus that names, emails and phone numbers are taken out first.
+- **One status line under the paragraph** says what's happening in plain words: reading (with a running count), how
+  many it learned from, none found, or why it stopped. Nothing celebratory; a count, not a badge.
+- **Disabled until Gmail is connected**, with "Connect Gmail first." as the line.
+- Off by default and never asked in onboarding for now; the founder can ask testers to turn it on.

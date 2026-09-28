@@ -1939,7 +1939,6 @@ function SettingsPageInner() {
         <h2 className={sectionLabel} style={SECTION_STYLE}>
           Your data
         </h2>
-        <p className="mt-1 text-[14.5px] leading-relaxed text-ink-soft">Export everything, or permanently delete this business.</p>
         <div className="mt-4">
           <DataPrivacySection />
         </div>

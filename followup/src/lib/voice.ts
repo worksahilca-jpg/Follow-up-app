@@ -84,7 +84,7 @@ type Candidate = { leadId: string; body: string };
  * structurally, from the send record, rather than by judging the prose.
  * The timestamps cover the re-ingested-copy case above.
  */
-async function machineSentIndex(leadIds: string[]) {
+export async function machineSentIndex(leadIds: string[]) {
   const sends = await prisma.followUp.findMany({
     where: { leadId: { in: leadIds } },
     select: { leadId: true, message: true, sentAt: true },
@@ -104,7 +104,7 @@ async function machineSentIndex(leadIds: string[]) {
   return index;
 }
 
-function isMachineSent(
+export function isMachineSent(
   index: Map<string, { bodies: Set<string>; times: number[] }>,
   leadId: string,
   body: string,
@@ -198,5 +198,23 @@ export async function getVoiceSamples(businessId: string): Promise<string[]> {
     if (page.length < SCAN_PAGE_SIZE) break;
   }
 
-  return pickSamples(candidates);
+  if (pickSamples(candidates).length >= MAX_SAMPLES) return pickSamples(candidates);
+
+  // "Write like me" (src/lib/pastReplies.ts): replies this owner sent from
+  // Gmail over the last year, kept de-identified with their yes. Only this
+  // business's own, and only after its lead conversations, which are the
+  // closest match to a reply FollowUp is about to draft. Empty unless the
+  // owner turned it on; deleted when they turn it off.
+  const past = await prisma.pastReply.findMany({
+    where: { businessId },
+    orderBy: { sentAt: "desc" },
+    take: 60,
+    select: { recipientKey: true, body: true },
+  });
+  return pickSamples([
+    ...candidates,
+    // Keyed apart from any lead id, so the one-person cap still spreads
+    // the samples across different people.
+    ...past.map((p) => ({ leadId: `past:${p.recipientKey}`, body: p.body.slice(0, MAX_SAMPLE_LENGTH) })),
+  ]);
 }

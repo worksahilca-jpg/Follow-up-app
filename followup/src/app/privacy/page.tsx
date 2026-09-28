@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: September 26, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: September 28, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -72,6 +72,13 @@ export default function PrivacyPage() {
                 By default, FollowUp never sends anything until you approve it. If you choose to turn on
                 sending without asking (in Settings, or for a specific lead), FollowUp sends only simple,
                 low-risk follow-ups for you; anything about price or anything sensitive still waits for you.
+              </li>
+              <li>
+                <strong className="text-ink">Your past Gmail replies (only if you turn on &quot;Write like me&quot;)</strong>
+                {" "}— we read the replies you sent from Gmail in the last 12 months and keep up to 300 of them, with names,
+                email addresses, phone numbers and street addresses removed first, so your drafts sound like you. They are
+                used only for your own drafts, never for anyone else and never to train an AI model. Turning it off
+                deletes them all.
               </li>
               <li>
                 <strong className="text-ink">Instagram and Facebook data</strong> — with your explicit permission
@@ -126,6 +133,7 @@ export default function PrivacyPage() {
             <ul className="mt-2 space-y-2 list-disc pl-5">
               <li>We only access the Gmail and Google Calendar scopes needed to identify sales conversations, send follow-ups on your behalf, and create a calendar event when a lead asks to schedule a call.</li>
               <li>We never use Gmail or Calendar data for advertising.</li>
+              <li>We never use Gmail or Calendar data to develop, improve or train generalized AI or machine-learning models. When you turn on &quot;Write like me&quot;, your past replies are used only to shape your own drafts.</li>
               <li>We never allow humans to read Gmail or Calendar data except: (a) with your explicit consent, (b) to investigate abuse or a security issue, or (c) to comply with the law.</li>
               <li>We never transfer Gmail or Calendar data to third parties except our AI processing provider (to draft/score follow-ups on your behalf), or as required by law.</li>
             </ul>

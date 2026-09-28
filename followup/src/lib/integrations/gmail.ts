@@ -1025,6 +1025,71 @@ export async function importGmailThread(businessId: string, threadId: string): P
   return lead ?? null;
 }
 
+/** One reply the owner sent, as "Write like me" reads it (src/lib/pastReplies.ts). */
+export interface SentReply {
+  id: string;
+  /** The To header, raw. */
+  to: string;
+  cc: string;
+  subject: string;
+  /** Set when the message answers another one (RFC 2822 In-Reply-To). */
+  inReplyTo: string;
+  sentAt: Date;
+  /** Plain-text body as sent, quoted history still attached. */
+  body: string;
+}
+
+/**
+ * One page of the owner's sent mail from the last 12 months, newest first,
+ * for "Write like me" (src/lib/pastReplies.ts, which decides what to keep).
+ * Read with the gmail.readonly scope FollowUp already holds; nothing is
+ * stored here. Null when no Gmail is connected.
+ *
+ * Throws what Gmail throws, so the caller can tell a revoked grant
+ * (isAuthRevoked) from a passing failure.
+ */
+export async function listSentReplies(
+  businessId: string,
+  pageToken?: string | null,
+  pageSize = 100
+): Promise<{ replies: SentReply[]; nextPageToken: string | null; selfEmail: string; ownerName: string | null } | null> {
+  const authed = await getAuthedGmailClient(businessId);
+  if (!authed) return null;
+  const { gmail, integration } = authed;
+  const { data } = await gmail.users.messages.list({
+    userId: "me",
+    q: "in:sent newer_than:365d -in:chats",
+    maxResults: pageSize,
+    ...(pageToken ? { pageToken } : {}),
+  });
+  const ids = (data.messages ?? []).map((m) => m.id).filter((id): id is string => !!id);
+  const fetched = await mapWithConcurrency(ids, 5, async (id) => {
+    try {
+      const { data: msg } = await gmail.users.messages.get({ userId: "me", id, format: "full" });
+      const headers = msg.payload?.headers;
+      return {
+        id,
+        to: getHeader(headers, "To"),
+        cc: getHeader(headers, "Cc"),
+        subject: getHeader(headers, "Subject"),
+        inReplyTo: getHeader(headers, "In-Reply-To"),
+        sentAt: gmailMessageTime(msg.internalDate, getHeader(headers, "Date")),
+        body: extractPlainTextBody(msg.payload),
+      } satisfies SentReply;
+    } catch (err) {
+      // A revoked grant fails every message the same way: let it stop the page.
+      if (isAuthRevoked(err)) throw err;
+      return null;
+    }
+  });
+  return {
+    replies: fetched.filter((r): r is SentReply => r !== null),
+    nextPageToken: data.nextPageToken ?? null,
+    selfEmail: gmailSelfAddress(integration),
+    ownerName: integration.user.name ?? null,
+  };
+}
+
 /**
  * The spam-folder counterpart to fetchSalesConversations() — a legitimate
  * lead's first message can land in spam by mistake (an unfamiliar sender,

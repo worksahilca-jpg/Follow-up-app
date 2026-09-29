@@ -32,6 +32,7 @@ import type { gmail_v1 } from "googleapis";
 import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
 import { classifyWithSecondLook } from "@/lib/integrations/openai";
+import { OWNER_SAID_NOT_CUSTOMER, ownerSaidNotCustomer, recentCorrections } from "@/lib/senderVerdicts";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -567,7 +568,11 @@ async function processThreadRefs(
     where: { id: businessId },
     select: { name: true, industry: true, users: { select: { email: true } } },
   });
-  const businessContext = business ? { name: business.name, industry: business.industry } : null;
+  // With the owner's own recent corrections, so the classifier judges the
+  // way this owner does (src/lib/senderVerdicts.ts).
+  const businessContext = business
+    ? { name: business.name, industry: business.industry, corrections: await recentCorrections(businessId) }
+    : null;
   // The business itself: this inbox and everyone on the team (see
   // ownAddressSet). Their mail is ours, never a customer's.
   const own = ownAddressSet(selfEmail, (business?.users ?? []).map((u) => u.email));
@@ -678,6 +683,26 @@ async function processThreadRefs(
         select: { lastMessageAt: true },
       });
       if (priorVerdict && priorVerdict.lastMessageAt >= newestMessageAt) return null;
+
+      // The owner already said this sender isn't a customer: their call,
+      // not the model's. Set aside where they can see it and take it back.
+      if (await ownerSaidNotCustomer(businessId, counterpart.email)) {
+        await prisma.filteredEmail.upsert({
+          where: { businessId_threadId: { businessId, threadId: thread.id! } },
+          update: { reason: OWNER_SAID_NOT_CUSTOMER, lastMessageAt: newestMessageAt },
+          create: {
+            businessId,
+            threadId: thread.id!,
+            provider: "gmail",
+            senderName: counterpart.name,
+            senderEmail: counterpart.email,
+            subject: getHeader(gmailMessages[0]?.payload?.headers, "Subject") || null,
+            reason: OWNER_SAID_NOT_CUSTOMER,
+            lastMessageAt: newestMessageAt,
+          },
+        });
+        return null;
+      }
 
       if (options.maxClassifications !== undefined && classifications >= options.maxClassifications) {
         truncated = true;

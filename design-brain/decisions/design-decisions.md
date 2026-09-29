@@ -8484,3 +8484,20 @@ and each tester failed two of the five tester-score checks every week.
 - **Same email as the reconnect email** (same shape, type and pill button; one shared template now), so the two read
   as one thread: the warning, then, only if nothing was done, the notice that it stopped.
 - **Switches off in one place:** `GMAIL_GRANT_LIFETIME_MS` goes to null the day Google verifies FollowUp.
+
+## 2026-09-29 — "Not a customer", and FollowUp learns from it (founder: "yes build 2")
+
+The founder asked for FollowUp to learn who counts as a customer. Training a model on inboxes is off the table
+(rejected earlier: Google's rules and our privacy page). What it does instead is remember each owner's own corrections,
+for that business only.
+- **Person page, under the details:** two quiet text links, "Not a customer" (ink-soft) and "Delete this customer"
+  (faint, as before). "Not a customer" only shows when there's an email address to remember.
+- **"Not a customer" confirms in a neutral card, not the red one:** "Not a customer? FollowUp removes {name} and sets
+  aside future emails from {email}." Small print: "You can bring them back any time from Settings, under Filtered
+  out." Black pill "Yes, not a customer" and "Cancel". Neutral because it can be undone, unlike Delete, which keeps
+  its red card.
+- **What it does:** it remembers the sender, puts their email threads in Filtered out with the reason "You marked
+  this sender as not a customer.", and removes the person. Their future mail is set aside without asking the AI.
+  "This was a lead" in Filtered out reverses it.
+- **What the AI sees:** the owner's last 8 calls (sender and subject line only, never a message body), as examples
+  of what this owner counts as a customer. It still judges each email on what it says.

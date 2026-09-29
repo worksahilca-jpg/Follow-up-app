@@ -30,6 +30,7 @@
 import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
 import { classifyWithSecondLook } from "@/lib/integrations/openai";
+import { OWNER_SAID_NOT_CUSTOMER, ownerSaidNotCustomer, recentCorrections } from "@/lib/senderVerdicts";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -399,7 +400,10 @@ async function processConversations(
     where: { id: businessId },
     select: { name: true, industry: true, users: { select: { email: true } } },
   });
-  const businessContext = business ? { name: business.name, industry: business.industry } : null;
+  // With the owner's own recent corrections, as in gmail.ts.
+  const businessContext = business
+    ? { name: business.name, industry: business.industry, corrections: await recentCorrections(businessId) }
+    : null;
   // The business itself: this mailbox and everyone on the team (see
   // ownAddressSet). Their mail is ours, never a customer's.
   const own = ownAddressSet(selfEmail, (business?.users ?? []).map((u) => u.email));
@@ -477,6 +481,25 @@ async function processConversations(
         select: { lastMessageAt: true },
       });
       if (priorVerdict && priorVerdict.lastMessageAt >= newestMessageAt) return null;
+
+      // The owner's own call on this sender, as in gmail.ts.
+      if (await ownerSaidNotCustomer(businessId, counterpart.email)) {
+        await prisma.filteredEmail.upsert({
+          where: { businessId_threadId: { businessId, threadId: conversationId } },
+          update: { reason: OWNER_SAID_NOT_CUSTOMER, lastMessageAt: newestMessageAt },
+          create: {
+            businessId,
+            threadId: conversationId,
+            provider: "outlook",
+            senderName: counterpart.name,
+            senderEmail: counterpart.email,
+            subject: parsedMessages[0]?.subject ?? null,
+            reason: OWNER_SAID_NOT_CUSTOMER,
+            lastMessageAt: newestMessageAt,
+          },
+        });
+        return null;
+      }
 
       if (options.maxClassifications !== undefined && classifications >= options.maxClassifications) {
         truncated = true;

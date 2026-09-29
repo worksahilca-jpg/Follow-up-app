@@ -205,7 +205,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         <div className="mt-4">
-          <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
+          <DeleteLeadButton leadId={lead.id} leadName={lead.name} leadEmail={lead.email} />
         </div>
       </aside>
     </div>

@@ -50,6 +50,7 @@ export interface BusinessExport {
   aiInsights: Record<string, unknown>[];
   reactivationRuns: Record<string, unknown>[];
   pastReplies: Record<string, unknown>[];
+  senderVerdicts: Record<string, unknown>[];
 }
 
 /**
@@ -89,6 +90,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     aiInsights,
     reactivationRuns,
     pastReplies,
+    senderVerdicts,
   ] = await Promise.all([
     prisma.user.findMany({
       where: { businessId },
@@ -120,6 +122,8 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     prisma.reactivationRun.findMany({ where: { businessId } }),
     // "Write like me" samples: already de-identified, but theirs.
     prisma.pastReply.findMany({ where: { businessId }, select: { body: true, sentAt: true, createdAt: true } }),
+    // The owner's own "customer" / "not a customer" calls (src/lib/senderVerdicts.ts).
+    prisma.senderVerdict.findMany({ where: { businessId }, select: { sender: true, verdict: true, subject: true, updatedAt: true } }),
   ]);
 
   // Picked explicitly (rather than destructuring-and-omitting the secret
@@ -176,6 +180,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     aiInsights,
     reactivationRuns,
     pastReplies,
+    senderVerdicts,
   };
 }
 
@@ -268,6 +273,8 @@ export async function deleteBusinessData(
     // "Write like me" samples (src/lib/pastReplies.ts): de-identified, but
     // still the owner's own words, and RESTRICT on Business like the two above.
     prisma.pastReply.deleteMany({ where: { businessId } }),
+    // The owner's corrections (src/lib/senderVerdicts.ts): senders' addresses, RESTRICT on Business.
+    prisma.senderVerdict.deleteMany({ where: { businessId } }),
     // Raw inbound payloads (phone numbers, message text, names) — not a
     // relation to Business on purpose (see schema.prisma), so it has to be
     // cleared explicitly here or a deleted business's inbound messages

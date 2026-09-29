@@ -31,10 +31,17 @@ npx prisma migrate deploy >/dev/null
 # NEXT_PUBLIC_* values are baked in when a page compiles, so a dev cache from
 # a run with different settings would keep the old ones. Start clean.
 rm -rf .next/dev
-npx next dev -p "$PORT" >"${ROBOT_LOG:-/tmp/robot-dev.log}" 2>&1 &
+# Something else already on the port would be tested instead of this copy,
+# with whatever settings it started with. Refuse rather than guess.
+if curl -s -o /dev/null "$ROBOT_BASE_URL"; then
+  echo "refusing: something is already running on port $PORT" >&2
+  exit 1
+fi
+# Own process group, so the whole server tree stops when the run ends.
+setsid npx next dev -p "$PORT" >"${ROBOT_LOG:-/tmp/robot-dev.log}" 2>&1 &
 SERVER=$!
 # next dev rewrites next-env.d.ts; put it back so a run leaves no changes.
-trap 'kill $SERVER 2>/dev/null || true; git checkout -- next-env.d.ts 2>/dev/null || true' EXIT
+trap 'kill -- -$SERVER 2>/dev/null || true; git checkout -- next-env.d.ts 2>/dev/null || true' EXIT
 for _ in $(seq 1 120); do
   curl -s -o /dev/null "$ROBOT_BASE_URL/signin" && break
   sleep 2

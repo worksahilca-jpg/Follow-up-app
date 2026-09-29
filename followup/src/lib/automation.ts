@@ -79,7 +79,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -1619,7 +1619,11 @@ export async function runAutomationForBusiness(
         // `isCold`, so this only ever holds MORE than before, never less.
         // `isBackfilled` joins `isCold` for the same reason and with the
         // same shape: it only ever holds MORE than before, never less.
-        if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote) {
+        // A customer who is also in the CRM: the CRM may be following up too,
+        // and FollowUp can't see it, so FollowUp never sends to them on its
+        // own (founder, 2026-09-29). Same queue, same draft.
+        const inCrm = !!lead.crmProvider && !!lead.crmId;
+        if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || inCrm) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
           // it with the message it was written against, which is what lets
@@ -1704,6 +1708,8 @@ export async function runAutomationForBusiness(
                 ? UNTOUCHED_LEAD_REASON
               : phoneNeverWrote
                 ? NEVER_WROTE_REASON
+              : inCrm
+                ? IN_CRM_REASON
               : holdAll
                 ? HOLD_ALL_AUTOMATION_REASON
               : // Below holdAll on purpose. While the hold is on, THAT is

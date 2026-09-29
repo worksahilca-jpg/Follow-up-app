@@ -114,6 +114,11 @@ export default function CrmConfig() {
             works alongside it, watching for leads it&apos;s neglecting. When FollowUp sends a follow-up, a note goes
             back to the same contact in your CRM, so nothing is only in one place.
           </p>
+          <p className="text-[13px] text-ink-soft mt-2">
+            Someone in both places is one customer here. Your CRM may send its own follow-ups, so FollowUp never writes
+            to customers who are in your CRM on its own: every reply to them waits for your OK, and nobody gets two
+            check-ins.
+          </p>
 
           {connected ? (
             <div className="mt-3">

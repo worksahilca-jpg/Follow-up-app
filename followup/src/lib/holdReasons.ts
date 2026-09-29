@@ -90,6 +90,15 @@ export const NEVER_WROTE_REASON =
   "they have never messaged you, so FollowUp won't text or WhatsApp them on its own — the first message is yours to send";
 
 /**
+ * A customer who is also in the business's CRM (Follow Up Boss, HubSpot).
+ * Those CRMs often run their own follow-ups, which FollowUp can't see, so
+ * FollowUp never follows up with them on its own: the customer could get
+ * two check-ins. Founder, 2026-09-29.
+ */
+export const IN_CRM_REASON =
+  "they're also in your CRM, which may send its own follow-ups, so FollowUp waits for you rather than risk a second message";
+
+/**
  * assessSendRisk threw. Held rather than sent, in both schedulers: an
  * unchecked message going out is worse than a review nobody needed.
  */

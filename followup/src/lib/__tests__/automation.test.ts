@@ -410,6 +410,22 @@ describe("silence automation risk gate", () => {
     );
   });
 
+  // Founder, 2026-09-29: a customer who is also in the CRM may be getting
+  // the CRM's own follow-ups, which FollowUp can't see. Never send to them
+  // on FollowUp's own; the draft waits for the owner with the reason.
+  it("holds a low-risk lead who is also in the CRM, and says why", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ crmProvider: "followupboss", crmId: "c1" })]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(send).not.toHaveBeenCalled();
+    expect(audit).toHaveBeenCalledWith(
+      expect.anything(),
+      "ai.hold",
+      expect.objectContaining({ targetId: "lead1", meta: expect.objectContaining({ reason: expect.stringContaining("also in your CRM") }) })
+    );
+  });
+
   it("fails closed: a risk check that throws holds the lead", async () => {
     p.lead.findMany.mockResolvedValueOnce([lead()]).mockResolvedValueOnce([]);
     risk.mockRejectedValue(new Error("OpenAI down"));

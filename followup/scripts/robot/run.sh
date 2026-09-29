@@ -25,6 +25,8 @@ done
 
 PORT="${ROBOT_PORT:-3111}"
 export ROBOT_BASE_URL="http://localhost:$PORT"
+# The site's own address is not a secret, and pages build URLs from it.
+export NEXT_PUBLIC_SITE_URL="$ROBOT_BASE_URL"
 npx prisma migrate deploy >/dev/null
 npx next dev -p "$PORT" >"${ROBOT_LOG:-/tmp/robot-dev.log}" 2>&1 &
 SERVER=$!

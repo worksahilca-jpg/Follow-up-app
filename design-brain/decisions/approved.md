@@ -1410,3 +1410,27 @@ prefer and they can change it anytime."*
 - **Status:** one plain status line when it's on (a running count, never a badge).
 - **Same PR:** the repeated lede on the Your data page ("Export everything, …" under "Download everything, …") is
   removed.
+
+## A-073 — FollowUp asks the owner what a new employee would ask ("What FollowUp knows") ^A-073
+
+**Approved:** 2026-09-29, founder: *"cool designes are good"*, after the six-screen board
+(`prototypes/2026-09-29-owner-questions.html`, https://claude.ai/artifact/1TXxjPo7dUx8eCCvcLukyC). His idea: ask owners
+about their business "like a new hired employee asks their manager", without annoying them.
+**What specifically:**
+- **The daily question (phone):** only in the "You're done for today" state, as one card: a mono label "One quick
+  question · 3 of 7", the question, a one-tap answer (choices from the trade) or a short field, one line on why it's
+  asked, a black "Save" and a quiet "Skip for now".
+- **The daily question (desktop):** in the side column under Coming up, never above a customer.
+- **In the moment:** when a held reply needs a fact FollowUp doesn't have (a price), the question sits inside the warm
+  reply card. "Add to reply" fills the gap and remembers the answer.
+- **From corrections:** after the third "Not a customer" of one kind, a bottom sheet asks "Set these aside from now
+  on?" with "Yes, always" and "Just this one".
+- **Settings → What FollowUp knows:** every answer in plain words, grouped (What you offer · Where and when · Who isn't
+  a customer · Always check with me first), each editable, plus the on/off switch "Ask me a question now and then".
+- **Rules:** at most one question a day. Never a notification, email or badge. A skip comes back once, a week later.
+  After the first seven questions, it only asks when a real message needs the answer. No "AI" wording, no sparkles.
+- **Trust:** answers are for this business only. They're used to sort messages and write replies, and they never
+  train a model. Prices still wait for the owner's OK (A-070). Included in the data download and removed with the
+  business.
+**Left open on the board, accepted as drawn:** the desktop side-column placement. If it proves distracting in use,
+desktop waits for an empty list too.

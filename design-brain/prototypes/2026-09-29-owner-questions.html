@@ -1,0 +1,383 @@
+<title>Owner Questions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* A design board for FollowUp's app. It depicts the light product, so it commits to one light world on purpose. */
+:root {
+  --paper: #fdfcfc; --card: #ffffff; --card-2: #f5f3f1; --board: #f1efec;
+  --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68;
+  --line: #e7e5e2; --line-2: #f0eeeb; --needs: #b4532a; --sent: #4f7a5a;
+  --font: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--board); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.page { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 36px; }
+.intro { max-width: 760px; display: grid; gap: 10px; }
+.intro h1 { font-size: 30px; font-weight: 500; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; color: var(--ink-soft); }
+.label { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.board-row { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.frame { display: grid; gap: 10px; }
+.frame-title { display: flex; gap: 10px; align-items: baseline; }
+.frame-title b { font-weight: 600; font-size: 14px; }
+.frame-note { font-size: 13px; color: var(--ink-soft); max-width: 390px; }
+.frame-note.wide { max-width: 760px; }
+
+/* Phone */
+.phone { width: 390px; max-width: 100%; background: var(--paper); border: 1px solid var(--line); border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 24px 48px -30px rgba(10,10,10,.25); }
+.ph-top { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 16px; }
+.ph-body { padding: 18px 20px 22px; display: grid; gap: 16px; }
+.ph-nav { display: flex; justify-content: space-around; border-top: 1px solid var(--line); padding: 10px 0 14px; font-size: 11px; color: var(--ink-faint); }
+.ph-nav span.on { color: var(--ink); font-weight: 600; }
+.date { font-size: 13px; color: var(--ink-faint); }
+.h1 { font-size: 28px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin: 0; }
+.soft { color: var(--ink-soft); }
+.faint { color: var(--ink-faint); }
+.small { font-size: 13px; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px; display: grid; gap: 12px; }
+.q-title { font-size: 17px; font-weight: 500; line-height: 1.35; text-wrap: balance; }
+.why { font-size: 13px; color: var(--ink-soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; font-size: 14px; background: var(--card); }
+.chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.field { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--paper); font-size: 15px; }
+.field .pre { color: var(--ink-faint); }
+.field .val { flex: 1; }
+.caret { display: inline-block; width: 1.5px; height: 18px; background: var(--ink); vertical-align: -3px; margin-left: 1px; }
+.row { display: flex; gap: 10px; align-items: center; }
+.btn { border-radius: 999px; padding: 10px 18px; font-size: 15px; font-weight: 600; border: 1px solid var(--ink); background: var(--ink); color: #fff; white-space: nowrap; }
+.btn.big { flex: 1; text-align: center; padding: 14px 18px; font-size: 16px; }
+.btn.ghost { background: var(--card); color: var(--ink); border-color: var(--line); font-weight: 500; }
+.link { font-size: 14px; color: var(--ink-soft); }
+.hr { height: 1px; background: var(--line); }
+
+/* The warm reply card, as on Today */
+.reply { border-radius: 20px; padding: 16px; border: 1px solid var(--line); display: grid; gap: 12px;
+  background: radial-gradient(120% 90% at 0% 0%, #fbe3d3 0%, rgba(251,227,211,0) 55%), radial-gradient(90% 80% at 100% 100%, #dfe6f1 0%, rgba(223,230,241,0) 60%), #fbf8f5; }
+.reply .label { color: var(--ink-soft); }
+.reply .text { font-size: 17px; line-height: 1.4; }
+.fill { background: #fff3c4; border-radius: 4px; padding: 0 3px; }
+.ask { border-top: 1px solid rgba(10,10,10,.08); padding-top: 12px; display: grid; gap: 10px; }
+
+.person { display: flex; gap: 12px; align-items: center; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--card-2); display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--ink-soft); flex: none; }
+.said { font-size: 18px; line-height: 1.4; }
+
+.sheet { background: var(--card); border-top-left-radius: 22px; border-top-right-radius: 22px; border: 1px solid var(--line); padding: 18px 20px 22px; display: grid; gap: 12px; box-shadow: 0 -16px 40px -24px rgba(10,10,10,.3); }
+.grab { width: 40px; height: 4px; border-radius: 4px; background: var(--line); margin: 0 auto 4px; }
+.dim { position: relative; }
+.dim::after { content: ""; position: absolute; inset: 0; background: rgba(10,10,10,.28); }
+.toast { display: flex; gap: 10px; align-items: center; font-size: 14px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sent); flex: none; }
+
+/* Desktop */
+.desk { width: 1180px; max-width: 100%; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: grid; grid-template-columns: 220px 1fr; box-shadow: 0 24px 48px -30px rgba(10,10,10,.25); }
+.side { background: #f9f8f6; border-right: 1px solid var(--line); padding: 16px 12px; display: grid; gap: 6px; align-content: start; font-size: 14px; }
+.side .biz { font-weight: 600; padding: 4px 8px 12px; }
+.side .it { padding: 7px 10px; border-radius: 10px; color: var(--ink-soft); display: flex; justify-content: space-between; }
+.side .it.on { background: var(--card); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+.main { padding: 28px 44px 36px; display: grid; gap: 18px; align-content: start; min-width: 0; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
+.list { border: 1px solid var(--line); border-radius: 16px; background: var(--card); overflow: hidden; }
+.li { display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-top: 1px solid var(--line-2); }
+.li:first-child { border-top: 0; }
+.li .grow { flex: 1; min-width: 0; }
+.li .name { font-weight: 500; }
+.li .q { font-size: 14px; color: var(--ink-soft); }
+.meta { font-size: 13px; color: var(--ink-faint); white-space: nowrap; }
+.btn.sm { padding: 7px 14px; font-size: 14px; }
+.stack { display: grid; gap: 16px; }
+
+/* Settings page */
+.set-head { display: grid; gap: 6px; }
+.set-group { border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+.set-group h3 { margin: 0; font-size: 14px; font-weight: 600; padding: 14px 18px 4px; }
+.fact { display: flex; gap: 16px; align-items: baseline; padding: 11px 18px; border-top: 1px solid var(--line-2); font-size: 15px; }
+.fact:first-of-type { border-top: 0; }
+.fact .k { width: 190px; flex: none; color: var(--ink-soft); font-size: 14px; }
+.fact .v { flex: 1; min-width: 0; }
+.fact .e { font-size: 13px; color: var(--ink-soft); text-decoration: underline; text-underline-offset: 2px; }
+.fact.empty .v { color: var(--ink-faint); }
+.switch { width: 40px; height: 24px; border-radius: 999px; background: var(--ink); position: relative; flex: none; }
+.switch::after { content: ""; position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Notes below the frames */
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.note { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 8px; align-content: start; }
+.note h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.note ol, .note ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--ink-soft); font-size: 14px; }
+.note p { margin: 0; font-size: 14px; color: var(--ink-soft); }
+.scroll-x { overflow-x: auto; max-width: 100%; }
+.scroll-x .desk { max-width: none; }
+.full { flex: 1 1 100%; min-width: 0; }
+.grid2 .fact .k { width: 120px; }
+@media (max-width: 700px) {
+  .intro h1 { font-size: 24px; }
+  .cols { grid-template-columns: 1fr; }
+  .grid2 { grid-template-columns: 1fr; }
+  .desk { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .main { padding: 20px; }
+  .fact { flex-wrap: wrap; }
+  .fact .k { width: 100%; }
+}
+</style>
+
+<div class="page">
+  <div class="intro">
+    <span class="label">Design · for review · not built</span>
+    <h1>FollowUp asks the owner what a new employee would ask</h1>
+    <p>Today FollowUp only knows a business's name and trade. So it can't tell a customer the price of a cleaning, it doesn't know which areas the owner covers, and it has to guess who isn't a customer. This design fills that gap with short questions: at most one a day, and one tap to answer or skip. Answers are kept for this business only and used every time FollowUp sorts a message or writes a reply. Nothing trains a model.</p>
+    <p class="small faint">Example business: Brightwater Dental. All names and prices are made up.</p>
+  </div>
+
+  <!-- ROW 1: the daily question -->
+  <div class="board-row">
+    <div class="frame">
+      <div class="frame-title"><span class="label">1 · Phone</span><b>The daily question, only when the list is done</b></div>
+      <div class="phone">
+        <div class="ph-top"><span>FollowUp</span><span class="faint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></span></div>
+        <div class="ph-body">
+          <div class="date">Tuesday, September 29</div>
+          <p class="h1">You're done for today.</p>
+          <p class="soft" style="margin:0">FollowUp keeps watching. It will tell you when someone writes.</p>
+          <div class="card">
+            <span class="label">One quick question · 3 of 7</span>
+            <div class="q-title">Roughly what do you charge for a cleaning?</div>
+            <div class="field"><span class="pre">$</span><span class="val">120–180<span class="caret"></span></span></div>
+            <div class="why">So replies can answer when a customer asks. FollowUp still checks with you before quoting.</div>
+            <div class="row"><span class="btn">Save</span><span class="link">Skip for now</span></div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="ph-nav"><span class="on">Today</span><span>Inbox</span><span>Settings</span></div>
+      </div>
+      <div class="frame-note">On the phone it shows only when nobody needs the owner (R-015: one decision per screen). "Skip for now" asks again in a week, once. After that it waits until a customer's message needs the answer (frame 3).</div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-title"><span class="label">2 · Phone</span><b>Most questions are one tap</b></div>
+      <div class="phone">
+        <div class="ph-top"><span>FollowUp</span><span class="faint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></span></div>
+        <div class="ph-body">
+          <div class="date">Wednesday, September 30</div>
+          <p class="h1">You're done for today.</p>
+          <div class="card">
+            <span class="label">One quick question · 4 of 7</span>
+            <div class="q-title">Who writes to you that isn't a customer?</div>
+            <div class="chips">
+              <span class="chip on">Marketing and ads</span>
+              <span class="chip on">Suppliers</span>
+              <span class="chip">Job seekers</span>
+              <span class="chip on">Insurance and loans</span>
+              <span class="chip">Other clinics</span>
+              <span class="chip">+ Add</span>
+            </div>
+            <div class="why">FollowUp sets these aside and never writes to them. You can still see them in Filtered out.</div>
+            <div class="row"><span class="btn">Save</span><span class="link">Skip for now</span></div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="ph-nav"><span class="on">Today</span><span>Inbox</span><span>Settings</span></div>
+      </div>
+      <div class="frame-note">Choices come from the business's trade, so a dentist sees "Other clinics" and a plumber sees "Other contractors". Typing is only for prices, areas and the odd "+ Add".</div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-title"><span class="label">3 · Phone</span><b>Asked in the moment it matters</b></div>
+      <div class="phone">
+        <div class="ph-top"><span>FollowUp</span><span class="faint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></span></div>
+        <div class="ph-body">
+          <div class="date">Thursday, October 1</div>
+          <p class="h1">1 customer needs you.</p>
+          <div class="person"><span class="avatar">OA</span><div><div style="font-weight:500">Omar Aziz</div><div class="small faint">Email · waiting 2 h</div></div></div>
+          <div class="said">How much is teeth whitening? Could I come in next week?</div>
+          <div class="reply">
+            <span class="label">Your reply · waits for your OK</span>
+            <div class="text">Hi Omar, whitening is <span class="fill">$___</span>. We have Tuesday and Thursday afternoons open next week. Which suits you?</div>
+            <div class="ask">
+              <div style="font-weight:500">FollowUp doesn't know your whitening price yet.</div>
+              <div class="field"><span class="pre">$</span><span class="val">from 350<span class="caret"></span></span></div>
+              <div class="row"><span class="btn">Add to reply</span><span class="link">Leave it out</span></div>
+              <div class="why">Saved for next time, in Settings → What FollowUp knows.</div>
+            </div>
+          </div>
+        </div>
+        <div class="ph-nav"><span class="on">Today</span><span>Inbox</span><span>Settings</span></div>
+      </div>
+      <div class="frame-note">This is where the questions earn their keep: a price, an area or an opening time that a real customer is asking about, on the card the owner is already looking at. Answering fills in the reply and remembers the answer.</div>
+    </div>
+  </div>
+
+  <!-- ROW 2: learning from corrections + desktop Today -->
+  <div class="board-row">
+    <div class="frame">
+      <div class="frame-title"><span class="label">4 · Phone</span><b>After the third "Not a customer"</b></div>
+      <div class="phone">
+        <div class="ph-top"><span>FollowUp</span><span class="faint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></span></div>
+        <div class="dim" style="padding:18px 20px; display:grid; gap:14px">
+          <div class="date">Customers</div>
+          <div class="list">
+            <div class="li"><span class="avatar">GL</span><div class="grow"><div class="name">Grace Lee</div><div class="q">Cleaning on Friday?</div></div></div>
+            <div class="li"><span class="avatar">OA</span><div class="grow"><div class="name">Omar Aziz</div><div class="q">Whitening price</div></div></div>
+            <div class="li"><span class="avatar">MB</span><div class="grow"><div class="name">Mei Brown</div><div class="q">First visit for my son</div></div></div>
+          </div>
+        </div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="toast"><span class="dot"></span><span>Removed Kira, Pixel Studio.</span></div>
+          <div class="hr"></div>
+          <div class="q-title">That's the third web or marketing pitch this month. Set these aside from now on?</div>
+          <div class="why">You can always find them in Filtered out, and bring any back.</div>
+          <div class="row"><span class="btn big">Yes, always</span><span class="btn ghost big">Just this one</span></div>
+        </div>
+      </div>
+      <div class="frame-note">A pattern in the owner's own taps becomes a question, not a silent rule. It counts toward the one-a-day limit.</div>
+    </div>
+
+    <div class="frame full">
+      <div class="frame-title"><span class="label">5 · Desktop</span><b>Today, with the question in the side column</b></div>
+      <div class="scroll-x">
+        <div class="desk">
+          <div class="side">
+            <div class="biz">Brightwater Dental</div>
+            <div class="it on"><span>Today</span><span>2</span></div>
+            <div class="it"><span>Inbox</span></div>
+            <div class="it"><span>Customers</span><span>14</span></div>
+          </div>
+          <div class="main">
+            <div class="date">Tuesday, September 29</div>
+            <p class="h1" style="font-size:32px">2 customers are waiting on you.</p>
+            <div>Start with <b>Grace</b>, who has waited 4 hours.</div>
+            <div class="cols">
+              <div class="stack">
+                <div class="label">Needs you · 2</div>
+                <div class="list">
+                  <div class="li"><span class="avatar">GL</span><div class="grow"><div class="name">Grace Lee</div><div class="q">"Could I book a cleaning on Friday?" Held because it names a day.</div></div><span class="meta">Waiting 4 h</span><span class="btn sm">Review</span></div>
+                  <div class="li"><span class="avatar">OA</span><div class="grow"><div class="name">Omar Aziz</div><div class="q">"How much is teeth whitening?" Held because it asks a price.</div></div><span class="meta">Waiting 2 h</span><span class="btn sm">Review</span></div>
+                </div>
+              </div>
+              <div class="stack">
+                <div class="card" style="border-radius:16px">
+                  <span class="label">Coming up</span>
+                  <div class="small soft">Thursday: check in with Mei Brown.</div>
+                </div>
+                <div class="card" style="border-radius:16px">
+                  <span class="label">One quick question · 3 of 7</span>
+                  <div style="font-weight:500">Which areas do you take patients from?</div>
+                  <div class="chips"><span class="chip on">Brampton</span><span class="chip on">Mississauga</span><span class="chip">+ Add</span></div>
+                  <div class="row"><span class="btn sm">Save</span><span class="link">Skip</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="frame-note wide">On desktop there's room beside the list, so the question sits under Coming up, below it and never above a customer. It takes one line of the owner's attention, and only when they look over.</div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Settings page -->
+  <div class="board-row">
+    <div class="frame full">
+      <div class="frame-title"><span class="label">6 · Desktop</span><b>Settings → What FollowUp knows</b></div>
+      <div class="scroll-x">
+        <div class="desk">
+          <div class="side">
+            <div class="biz">Brightwater Dental</div>
+            <div class="it"><span>Today</span></div>
+            <div class="it"><span>Inbox</span></div>
+            <div class="it"><span>Customers</span></div>
+            <div class="it on"><span>Settings</span></div>
+          </div>
+          <div class="main" style="max-width: 860px">
+            <div class="set-head">
+              <p class="h1" style="font-size:28px">What FollowUp knows</p>
+              <div class="soft">Used to sort your messages and write your replies. Only for Brightwater Dental. Change anything, any time.</div>
+            </div>
+            <div class="card" style="border-radius:16px; grid-template-columns: 1fr auto; align-items:center">
+              <div><div style="font-weight:500">Ask me a question now and then</div><div class="small soft">At most one a day, and only when nobody's waiting on you. 4 of 7 answered.</div></div>
+              <span class="switch"></span>
+            </div>
+            <div class="set-group">
+              <h3>What you offer</h3>
+              <div class="fact"><span class="k">Cleaning</span><span class="v">$120–180</span><span class="e">Edit</span></div>
+              <div class="fact"><span class="k">Teeth whitening</span><span class="v">from $350</span><span class="e">Edit</span></div>
+              <div class="fact"><span class="k">New patients</span><span class="v">Yes, kids from age 3</span><span class="e">Edit</span></div>
+            </div>
+            <div class="grid2">
+              <div class="set-group">
+                <h3>Where and when</h3>
+                <div class="fact"><span class="k">Areas</span><span class="v">Brampton, Mississauga</span><span class="e">Edit</span></div>
+                <div class="fact empty"><span class="k">Hours</span><span class="v">Not answered yet</span><span class="e">Add</span></div>
+              </div>
+              <div class="set-group">
+                <h3>Who isn't a customer</h3>
+                <div class="fact"><span class="k">Set aside</span><span class="v">Marketing and ads, suppliers, insurance and loans</span><span class="e">Edit</span></div>
+                <div class="fact"><span class="k">Senders you marked</span><span class="v">3</span><span class="e">See</span></div>
+              </div>
+            </div>
+            <div class="set-group">
+              <h3>Always check with me first</h3>
+              <div class="fact"><span class="k">Before promising</span><span class="v">Discounts, same-day appointments</span><span class="e">Edit</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="frame-note wide">Everything FollowUp has been told is in one place, in plain words, and each item is one tap to change. It sits in Settings next to "Write like me" and follows the same promise: your business only, and you can remove it.</div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="notes">
+    <div class="note">
+      <span class="label">The first seven questions</span>
+      <h2>In this order, one a day at most</h2>
+      <ol>
+        <li>What do people ask you for most? (choices from the trade)</li>
+        <li>Roughly what does that cost?</li>
+        <li>Which areas do you cover?</li>
+        <li>Who writes to you that isn't a customer?</li>
+        <li>When are you open, or when do you work?</li>
+        <li>What should FollowUp always check with you first? (discounts, same-day, refunds…)</li>
+        <li>How do customers usually book: a call, a link, or a reply?</li>
+      </ol>
+      <p>After these, there's no daily question. FollowUp only asks when a real message needs something it doesn't know (frame 3), or when the owner's taps show a pattern (frame 4).</p>
+    </div>
+    <div class="note">
+      <span class="label">Not annoying</span>
+      <h2>The rules</h2>
+      <ul>
+        <li>Never a notification, email or badge for a question. It waits on the screen.</li>
+        <li>Never above a customer who needs the owner.</li>
+        <li>Phone: only when the list is done. Desktop: the side column.</li>
+        <li>At most one a day. A skip comes back once, a week later.</li>
+        <li>Off with one switch in Settings.</li>
+        <li>Written as a colleague would ask: plain words, no "AI", no sparkles.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <span class="label">Trust</span>
+      <h2>What happens to the answers</h2>
+      <ul>
+        <li>Kept for this business only, and shown in full in Settings.</li>
+        <li>Used when FollowUp sorts a message and writes a reply. Prices still wait for the owner's OK (A-070 stays).</li>
+        <li>Never used to train a model, and never shared.</li>
+        <li>Included in "Download everything" and removed with the business.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <span class="label">Weak spots, honestly</span>
+      <h2>What I'm unsure of</h2>
+      <ul>
+        <li>Desktop question beside a busy list might still pull attention. If so, desktop could also wait until the list is done.</li>
+        <li>Prices change. The answer is dated, and after 90 days FollowUp asks "Still $120–180?"</li>
+        <li>Seven questions may be too many for some trades. The first three do most of the work.</li>
+      </ul>
+    </div>
+  </div>
+</div>

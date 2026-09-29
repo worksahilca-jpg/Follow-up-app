@@ -51,7 +51,9 @@ const { prismaMock, fetchSalesConversations, sendAlertEmail } = vi.hoisted(() =>
                 lastSyncedAt: state.integration.lastSyncedAt,
                 deepSyncedAt: state.integration.deepSyncedAt,
                 connectedAt: state.integration.connectedAt,
-                user: { businessId: "biz1", business: { subscriptionStatus: "active", tier: "plus" } },
+                lastSyncError: state.integration.lastSyncError,
+                accountEmail: state.integration.accountEmail,
+                user: { businessId: "biz1", email: "sam.smith@gmail.com", business: { subscriptionStatus: "active", tier: "plus" } },
               },
             ]
           : []
@@ -115,6 +117,7 @@ vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://www.followupbase.io" }))
 
 import { syncGmailForAllBusinesses } from "@/lib/gmailSync";
 import {
+  warnGmailAccessEndingSoon,
   GMAIL_ENDING_MARKER,
   SYNC_FAILING_MARKER,
   SYNC_FAILING_NOTICE_AFTER_MS,
@@ -470,5 +473,15 @@ describe("the day-6 warning (founder, 2026-09-28: warn before it stops)", () => 
     const { html } = gmailEndingSoonEmail({ inbox: "<b>x</b>@y.ca", base: "https://www.followupbase.io" });
     expect(html).not.toContain("<b>x</b>");
     expect(html).toContain("&lt;b&gt;x&lt;/b&gt;@y.ca");
+  });
+
+  it("warns about the inbox that is ending when a business has two Gmails on different clocks (audit 2026-09-29)", async () => {
+    prismaMock.integration.findMany.mockResolvedValueOnce([
+      { connectedAt: new Date(T0.getTime() - 2 * DAY), accountEmail: "jo@samsplumbing.ca", lastSyncError: null, lastSyncedAt: null, user: { email: "jo@samsplumbing.ca" } },
+      { connectedAt: new Date(T0.getTime() - 6 * DAY - HOUR), accountEmail: "info@samsplumbing.ca", lastSyncError: null, lastSyncedAt: null, user: { email: "sam@samsplumbing.ca" } },
+    ] as never);
+    await warnGmailAccessEndingSoon("biz1", T0);
+    expect(endingSoon().map((n) => n.message.includes("info@samsplumbing.ca"))).toEqual([true, true]);
+    expect(endingSoon().some((n) => n.message.includes("jo@samsplumbing.ca"))).toBe(false);
   });
 });

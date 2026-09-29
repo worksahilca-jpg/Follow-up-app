@@ -32,10 +32,16 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       id: true,
       name: true,
       email: true,
+      stage: true,
       conversations: {
-        where: { channel: "email", externalId: { not: null } },
-        select: { externalId: true, emailProvider: true, messages: { orderBy: { sentAt: "desc" }, take: 1, select: { sentAt: true } } },
+        select: {
+          channel: true,
+          externalId: true,
+          emailProvider: true,
+          messages: { orderBy: { sentAt: "desc" }, take: 1, select: { sentAt: true } },
+        },
       },
+      _count: { select: { deals: true, bookings: true, followUps: { where: { status: "sent" } } } },
     },
   });
   if (!lead) return NextResponse.json({ success: false, message: "Customer not found." }, { status: 404 });
@@ -46,9 +52,29 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     );
   }
 
+  // The confirm box promises the owner can bring this person back from
+  // Filtered out. That's only true of email threads: a booking, a deal, a
+  // stage, replies already sent and any DM conversation would be deleted
+  // for good (audit 2026-09-29). So this is for someone who only ever
+  // emailed and never did business here — the same line the clean-up pass
+  // (POST /api/leads/cleanup) refuses to cross.
+  const emailThreads = lead.conversations.filter((c) => c.channel === "email" && c.externalId);
+  const kept: string[] = [];
+  if (lead._count.bookings > 0) kept.push("a booking");
+  if (lead._count.deals > 0 || lead.stage !== "NEW") kept.push("a stage or deal");
+  if (lead._count.followUps > 0) kept.push("replies you sent");
+  if (lead.conversations.some((c) => c.channel !== "email")) kept.push("messages outside email");
+  if (kept.length > 0 || emailThreads.length === 0) {
+    const why =
+      kept.length > 0
+        ? `${lead.name} has ${kept.join(", ")}, which couldn't be brought back.`
+        : `There's no email from ${lead.name} to set aside, so nothing could be brought back.`;
+    return NextResponse.json({ success: false, message: `${why} Use Delete if you're sure.` }, { status: 409 });
+  }
+
   try {
     await recordSenderVerdict(ctx.businessId, lead.email, "not_customer", null);
-    for (const c of lead.conversations) {
+    for (const c of emailThreads) {
       const threadId = c.externalId!;
       const lastMessageAt = c.messages[0]?.sentAt ?? new Date();
       await prisma.filteredEmail.upsert({
@@ -77,7 +103,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   void recordAudit(ctx, "lead.not_customer", {
     targetType: "lead",
     targetId: lead.id,
-    meta: { threads: lead.conversations.length },
+    meta: { threads: emailThreads.length },
   });
   return NextResponse.json({ success: true });
 }

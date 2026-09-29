@@ -8501,3 +8501,24 @@ for that business only.
   "This was a lead" in Filtered out reverses it.
 - **What the AI sees:** the owner's last 8 calls (sender and subject line only, never a message body), as examples
   of what this owner counts as a customer. It still judges each email on what it says.
+
+## 2026-09-29 — Owner questions, approved as drawn (A-073)
+
+The founder's idea: FollowUp should ask each owner about their business, "like a new hired employee asks their
+manager", to sort leads and write replies better without being annoying. Designed as a six-screen board and approved
+("cool designes are good"). Recorded in [[approved#^A-073|A-073]]. It is not training: the answers are this business's
+own facts, given to FollowUp every time it sorts or writes. It fills the biggest gap found today: FollowUp knew only a
+business's name and trade.
+
+## 2026-09-29 — Fixes from the audit of today's work
+
+A QA pass over today's merges found three real problems. All fixed, none change a screen's look:
+- **"Not a customer" only where it can be undone.** It refuses (and says why, pointing to Delete) when the person has a
+  booking, a deal, a stage past New, replies already sent, a non-email conversation, or no email thread at all. Its
+  confirm box promises "bring them back from Filtered out", and only an email thread can keep that promise.
+- **Write like me no longer garbles replies.** Names are matched as written and as whole words, so "Tim" no longer
+  eats "estimate" and an owner called Will doesn't turn every "will" into a placeholder. More greetings are caught:
+  "Hi Sam and Jo,", "hi sam,", and a reply opening with "Sam,".
+- **The owner's corrections are data, not rules.** They moved out of the classifier's instructions into the message
+  itself, stripped of quotes and brackets, and only real email addresses are remembered.
+- Also: the day-6 warning covers every connected Gmail, and deleting a customer forgets FollowUp's note about them.

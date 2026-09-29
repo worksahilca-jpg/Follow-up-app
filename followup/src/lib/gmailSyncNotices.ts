@@ -182,18 +182,138 @@ async function emailGmailAccessLost(
   }
 }
 
+/**
+ * How long Google lets a Gmail grant live while the Google app is in
+ * Testing mode (research/integrations/2026-09-06-gmail-oauth-
+ * verification.md). Set this to null the day Google verifies the app and
+ * it is published: grants stop expiring, and the warning below goes quiet.
+ */
+export const GMAIL_GRANT_LIFETIME_MS: number | null = 7 * 24 * 60 * 60_000;
+
+/** How far ahead of the end the owner is warned: a day, so there is time to see it. */
+export const GMAIL_ENDING_WARNING_MS = 24 * 60 * 60_000;
+
+/**
+ * Marks the warning in the bell so it is said once per connection. The
+ * same load-bearing-text trade as SYNC_FAILING_MARKER: rewording it makes
+ * every inbox in its last day eligible for one more warning.
+ */
+export const GMAIL_ENDING_MARKER = "ends within a day";
+
+/**
+ * True in the last day of a Testing-mode grant (founder, 2026-09-28: warn
+ * before it stops, not after). The grant's clock starts at the connect —
+ * every connect asks Google for fresh consent (src/lib/integrations/
+ * gmail.ts), so a reconnect restarts it.
+ */
+export function gmailAccessEndingSoon(connectedAt: Date | null | undefined, now: Date): boolean {
+  if (GMAIL_GRANT_LIFETIME_MS === null || !connectedAt) return false;
+  const endsAt = connectedAt.getTime() + GMAIL_GRANT_LIFETIME_MS;
+  return now.getTime() >= endsAt - GMAIL_ENDING_WARNING_MS && now.getTime() < endsAt;
+}
+
+/**
+ * The day-6 warning: one bell row and one email per admin, a day before
+ * Google ends the grant, with the same one-press reconnect as the email
+ * sent after it ends. Reconnecting now leaves no gap in which a
+ * customer's email goes unseen, and restarts the seven days.
+ *
+ * Once per connection: a warning already in the bell since this connect
+ * stops the next tick, and the email's key (business, connect time, admin)
+ * stops a retried one. Never throws: it runs inside a sync that already
+ * succeeded, and a warning that can't be written must not undo that.
+ */
+export async function warnGmailAccessEndingSoon(businessId: string, now: Date = new Date()): Promise<void> {
+  const snapshot = await readGmailSyncSnapshot(businessId);
+  const connectedAt = snapshot?.connectedAt;
+  if (!snapshot || !connectedAt || !gmailAccessEndingSoon(connectedAt, now)) return;
+
+  let admins: { id: string; email: string }[];
+  try {
+    admins = await adminsOf(businessId);
+    if (admins.length === 0) return;
+    const already = await prisma.notification.count({
+      where: {
+        userId: { in: admins.map((a) => a.id) },
+        leadId: null,
+        message: { contains: GMAIL_ENDING_MARKER },
+        createdAt: { gte: connectedAt },
+      },
+    });
+    if (already > 0) return;
+  } catch (err) {
+    console.error(`Could not check whether business ${businessId} was warned that Gmail access ends soon:`, err);
+    return;
+  }
+
+  const inbox = inboxLabel(snapshot);
+  const message =
+    `FollowUp's access to ${inbox} ${GMAIL_ENDING_MARKER}. ` +
+    `Reconnect Gmail in Settings now so new emails keep being picked up without a gap. ` +
+    `While FollowUp is in beta, Google asks for this every 7 days.`;
+  try {
+    await notifyEach(
+      admins.map((a) => a.id),
+      message
+    );
+  } catch (err) {
+    console.error(`Could not warn business ${businessId} that Gmail access ends soon:`, err);
+  }
+
+  const content = gmailEndingSoonEmail({ inbox, base: appUrl() });
+  for (const admin of admins) {
+    if (!admin.email) continue;
+    try {
+      await sendAlertEmail({ to: admin.email, ...content, idempotencyKey: `gmail-ending-${businessId}-${connectedAt.getTime()}-${admin.id}` });
+    } catch (err) {
+      console.error(`Could not email business ${businessId} that Gmail access ends soon:`, err);
+    }
+  }
+}
+
+/** The day-6 email. The reconnect email's shape, said a day earlier. */
+export function gmailEndingSoonEmail(p: { inbox: string; base: string }): { subject: string; text: string; html: string } {
+  return reconnectEmail({
+    url: `${p.base}/api/integrations/gmail/connect`,
+    title: "Reconnect Gmail today to keep catching customers",
+    what: `FollowUp's access to ${p.inbox} ends within a day. Reconnect now and new customer emails keep coming in without a gap.`,
+    how: "Reconnecting takes a few seconds: press the button and choose the same Google account.",
+    why: "While FollowUp is in beta, Google asks for this every 7 days. That's Google's rule for apps still being verified, not something you did.",
+    once: "FollowUp sends this once, a day before the connection ends.",
+  });
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
 }
 
 /** The reconnect email. Same shape and type as the sign-in alert (src/lib/signIns.ts). */
 export function gmailReconnectEmail(p: { inbox: string; base: string }): { subject: string; text: string; html: string } {
-  const url = `${p.base}/api/integrations/gmail/connect`;
-  const title = "Reconnect Gmail to keep catching customers";
-  const what = `FollowUp can't read ${p.inbox} right now, so new customer emails there aren't being picked up.`;
-  const how = "Reconnecting takes a few seconds: press the button and choose the same Google account.";
-  const why = "While FollowUp is in beta, Google asks for this every 7 days. That's Google's rule for apps still being verified, not something you did.";
-  const once = "FollowUp sends this once, only when the connection stops.";
+  return reconnectEmail({
+    url: `${p.base}/api/integrations/gmail/connect`,
+    title: "Reconnect Gmail to keep catching customers",
+    what: `FollowUp can't read ${p.inbox} right now, so new customer emails there aren't being picked up.`,
+    how: "Reconnecting takes a few seconds: press the button and choose the same Google account.",
+    why: "While FollowUp is in beta, Google asks for this every 7 days. That's Google's rule for apps still being verified, not something you did.",
+    once: "FollowUp sends this once, only when the connection stops.",
+  });
+}
+
+function reconnectEmail({
+  url,
+  title,
+  what,
+  how,
+  why,
+  once,
+}: {
+  url: string;
+  title: string;
+  what: string;
+  how: string;
+  why: string;
+  once: string;
+}): { subject: string; text: string; html: string } {
   return {
     subject: title,
     text: [title, "", what, "", how, `Reconnect Gmail: ${url}`, "", why, "", once].join("\n"),

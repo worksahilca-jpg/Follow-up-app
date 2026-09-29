@@ -4,7 +4,13 @@ import { ensureGmailWatch, fetchSalesConversations, isAuthRevoked } from "@/lib/
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { detectReplies } from "@/lib/outcomes";
 import { mapWithConcurrency } from "@/lib/concurrency";
-import { notifyGmailAccessLost, notifyIfGmailSyncKeepsFailing, readGmailSyncSnapshot } from "@/lib/gmailSyncNotices";
+import {
+  gmailAccessEndingSoon,
+  notifyGmailAccessLost,
+  notifyIfGmailSyncKeepsFailing,
+  readGmailSyncSnapshot,
+  warnGmailAccessEndingSoon,
+} from "@/lib/gmailSyncNotices";
 import type { Lead } from "@/lib/types";
 
 // The automatic sync asks Gmail for threads newer than the last completed
@@ -135,13 +141,14 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
     select: {
       lastSyncedAt: true,
       deepSyncedAt: true,
+      connectedAt: true,
       user: { select: { businessId: true, business: { select: { subscriptionStatus: true, tier: true } } } },
     },
   });
 
   // One entry per business (a business could have more than one connected
   // user); the earliest timestamps win so nothing is skipped.
-  const byBusiness = new Map<string, { lastSyncedAt: Date | null; deepSyncedAt: Date | null }>();
+  const byBusiness = new Map<string, { lastSyncedAt: Date | null; deepSyncedAt: Date | null; connectedAt: Date | null }>();
   for (const i of integrations) {
     const businessId = i.user.businessId;
     // Gmail is one of Free tier's allowed channels (@/lib/billing's
@@ -154,13 +161,14 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
     byBusiness.set(businessId, {
       lastSyncedAt: prev ? earlier(prev.lastSyncedAt, i.lastSyncedAt) : i.lastSyncedAt,
       deepSyncedAt: prev ? earlier(prev.deepSyncedAt, i.deepSyncedAt) : i.deepSyncedAt,
+      connectedAt: prev ? earlier(prev.connectedAt, i.connectedAt ?? null) : (i.connectedAt ?? null),
     });
   }
 
   let synced = 0;
   let newLeads = 0;
   let failed = 0;
-  await mapWithConcurrency([...byBusiness.entries()], 3, async ([businessId, { lastSyncedAt, deepSyncedAt }]) => {
+  await mapWithConcurrency([...byBusiness.entries()], 3, async ([businessId, { lastSyncedAt, deepSyncedAt, connectedAt }]) => {
     // Deep pass (no `since`) when this business has never had one or its
     // last one is a day old; otherwise the cheap incremental tick.
     const deepDue = !deepSyncedAt || Date.now() - deepSyncedAt.getTime() > DEEP_SYNC_INTERVAL_MS;
@@ -172,6 +180,13 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
       // Keep the push watch alive (7-day max) — the poll above is the
       // fallback; push is what makes "seen in seconds" true.
       await ensureGmailWatch(businessId).catch((e) => console.error(`Gmail watch renewal failed for ${businessId}:`, e));
+      // A day before Google ends a Testing-mode grant, say so, so the
+      // reconnect happens before the gap rather than after it. Checked
+      // against the cron's own row first: outside that last day this costs
+      // no query.
+      if (gmailAccessEndingSoon(connectedAt, new Date())) {
+        await warnGmailAccessEndingSoon(businessId).catch((e) => console.error(`Gmail ending warning failed for ${businessId}:`, e));
+      }
     } catch (err) {
       failed += 1;
       console.error(`Automatic Gmail sync failed for business ${businessId}:`, err);

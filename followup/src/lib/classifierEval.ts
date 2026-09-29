@@ -57,6 +57,109 @@ export const EVAL_CASES: EvalCase[] = [
   { name: "booking system notification", business: dental, sender: { name: "Calendly", email: "notifications@calendly.example" }, messages: ["New event scheduled: 30 minute meeting, Tue 3:00pm. (Automated message.)"], expectLead: false },
   { name: "recruiter offering the owner a job", business: other, sender: { name: "Alex, TalentBridge", email: "alex@talentbridge.example" }, messages: ["Your background is a great fit for a senior role we're hiring for. Salary 120k, remote. Interested in chatting?"], expectLead: false },
   { name: "personal family message", business: plumber, sender: { name: "Mom", email: "mom@example.com" }, messages: ["Are you still coming for dinner Sunday? Bring the kids, dad's making biryani."], expectLead: false },
+
+  // =========================================================================
+  // 2026-09-29: grown to ~100 (founder: "start the test emails"), for the
+  // kinds of businesses joining the test. Still every case invented.
+  // =========================================================================
+
+  // ---- customers, by trade -----------------------------------------------
+  // Real estate
+  { name: "realtor: first-time buyer, pre-approved", business: realtor, sender: { name: "Nadia Rahman", email: "nadia.r@example.com" }, messages: ["Hi, my partner and I are pre-approved up to 650k and looking for a townhouse in the east end. Could you help us? Weekends work best."], expectLead: true },
+  { name: "realtor: seller wants a valuation", business: realtor, sender: { name: "George P.", email: "georgep@example.com" }, messages: ["Thinking of selling our 3-bed on Willow Cres in the spring. What would you charge, and could you tell us what it might be worth?"], expectLead: true },
+  { name: "realtor: mortgage broker brings a client", business: realtor, sender: { name: "Tanya, Clearpath Mortgages", email: "tanya@clearpath.example" }, messages: ["Hi — my client is approved and wants to see the two condos you have on Queen St this week. Can you set up showings? She's cc'd."], expectLead: true },
+  { name: "realtor: tenant asks about a rental listing", business: realtor, sender: { name: "Jordan", email: "jordan.k@example.com" }, messages: ["Is the 1-bed at 220 King still available for Nov 1? I can send references and proof of income."], expectLead: true },
+  { name: "realtor: client asks about closing date", business: realtor, sender: { name: "Mark Chen", email: "mark@example.com" }, messages: ["Quick one — our lawyer asked if the closing can move to the 15th. Is that okay with the sellers?"], expectLead: true },
+  // Trades and home services
+  { name: "plumber: water heater quote vs competitor", business: plumber, sender: { name: "Lisa", email: "lisa.m@example.com" }, messages: ["I got a quote of $1,900 to replace my 40 gal water heater. Can you beat that? Available any day next week."], expectLead: true },
+  { name: "plumber: property manager, three units", business: plumber, sender: { name: "Sunrise Property Mgmt", email: "ops@sunrisepm.example" }, messages: ["We manage 3 rental units on Elm with slow drains. Can you quote all three and give us a date? Invoice to the company please."], expectLead: true },
+  { name: "plumber: complaint about last week's job", business: plumber, sender: { name: "Dave", email: "dave@example.com" }, messages: ["The tap you fixed last Tuesday is dripping again. Can someone come back and look at it?"], expectLead: true },
+  { name: "plumber: reschedule an appointment", business: plumber, sender: { name: "Ana", email: "ana.s@example.com" }, messages: ["Something came up — can we move Thursday's 10am visit to Friday?"], expectLead: true },
+  { name: "hvac: dental office AC broken", business: { name: "CoolAir HVAC", industry: "HVAC" }, sender: { name: "Priya, Maple Dental", email: "office@mapledental.example" }, messages: ["Our clinic's AC stopped working this morning and it's 29° inside. Can you send someone today? We're a dental office on Main."], expectLead: true },
+  { name: "landscaper: spring cleanup, referred", business: { name: "GreenEdge Landscaping", industry: "Landscaping" }, sender: { name: "Rob", email: "rob.t@example.com" }, messages: ["My neighbour Sue said you did her yard. Can you give me a price for a spring cleanup and weekly mowing?"], expectLead: true },
+  { name: "cleaner: move-out clean", business: { name: "Sparkle Cleaning", industry: "Home services (contractor, cleaning, etc.)" }, sender: { name: "Emily", email: "emily.w@example.com" }, messages: ["Need a move-out clean for a 2-bed apartment on the 30th. How much and do you bring supplies?"], expectLead: true },
+  { name: "auto repair: brake noise", business: { name: "Kings Auto Repair", industry: "Auto repair" }, sender: { name: "Harj", email: "harj.s@example.com" }, messages: ["My 2017 Civic is grinding when I brake. Can I bring it in tomorrow and roughly what would pads and rotors cost?"], expectLead: true },
+  { name: "auto glass: insurance claim customer", business: glass, sender: { name: "Carla", email: "carla.d@example.com" }, messages: ["Rock cracked my windshield. My insurance covers glass — can you bill them directly and do it this week?"], expectLead: true },
+  // Clinics and health
+  { name: "dental: child's first visit", business: dental, sender: { name: "Mei", email: "mei.l@example.com" }, messages: ["My son is 4 and has never been to a dentist. Do you see kids and is there anything Saturday?"], expectLead: true },
+  { name: "dental: existing patient asks about a bill", business: dental, sender: { name: "Omar", email: "omar@example.com" }, messages: ["I got a bill for $120 but I thought my insurance covered the cleaning. Can you check?"], expectLead: true },
+  { name: "physio: after a sports injury", business: { name: "Core Physio", industry: "Physiotherapy" }, sender: { name: "Kyle", email: "kyle.b@example.com" }, messages: ["Rolled my ankle playing soccer. Do I need a referral or can I just book? What's the cost per session?"], expectLead: true },
+  // Beauty, fitness, food
+  { name: "salon: balayage with emojis", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "jess 🌸", email: "jess.h@example.com" }, messages: ["hiii 😍 how much for balayage on shoulder length hair?? any spots this sat 🙏"], expectLead: true },
+  { name: "salon: bridal party of six", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "Amrit", email: "amrit.k@example.com" }, messages: ["Getting married June 14! Looking for hair and makeup for me + 5 bridesmaids. Do you travel and what's the package price?"], expectLead: true },
+  { name: "trainer: personal training package", business: { name: "Lift with Leo", industry: "Personal training" }, sender: { name: "Sam", email: "sam.r@example.com" }, messages: ["Want to start training 2x a week before summer. What do your packages cost?"], expectLead: true },
+  { name: "caterer: office lunch for 80", business: { name: "Spice Route Catering", industry: "Catering" }, sender: { name: "Events, Northwind Corp", email: "events@northwind.example" }, messages: ["We're planning a team lunch for about 80 people on Oct 20. Can you send a menu and pricing? Some vegetarian and halal needed."], expectLead: true },
+  // Professional and education
+  { name: "bookkeeper: café owner asks the price", business: { name: "Ledger & Co", industry: "Bookkeeping" }, sender: { name: "Maria, Bean There Café", email: "maria@beanthere.example" }, messages: ["I run a small café and I'm behind on my books. What would you charge monthly for bookkeeping and HST filing?"], expectLead: true },
+  { name: "tutor: parent for grade 11 math", business: { name: "Bright Minds Tutoring", industry: "Tutoring" }, sender: { name: "Rekha", email: "rekha.p@example.com" }, messages: ["My daughter is in grade 11 and struggling with functions. Do you have evening sessions and what's the hourly rate?"], expectLead: true },
+  { name: "photographer: wedding enquiry", business: { name: "Lumen Photography", industry: "Photography" }, sender: { name: "Chris & Dana", email: "chrisanddana@example.com" }, messages: ["We're getting married Aug 2 at the Grange. Are you available and could you send your wedding packages?"], expectLead: true },
+  // Short, vague, or unusual but real
+  { name: "one line: open Sunday?", business: { name: "Kings Auto Repair", industry: "Auto repair" }, sender: { name: "Tom", email: "tom.g@example.com" }, messages: ["Are you open Sunday?"], expectLead: true },
+  { name: "follow-up after no answer", business: plumber, sender: { name: "Jenna", email: "jenna@example.com" }, messages: ["Hi, I asked last week about the bathroom plumbing.", "Just following up — still keen to get a quote when you have a minute."], expectLead: true },
+  { name: "customer who is also a business owner", business: { name: "Sparkle Cleaning", industry: "Home services (contractor, cleaning, etc.)" }, sender: { name: "Ben, Ben's Barbershop", email: "ben@bensbarbers.example" }, messages: ["I own the barbershop on 5th. Could you quote a weekly clean of the shop after closing?"], expectLead: true },
+  { name: "gift card purchase", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "Paul", email: "paul.n@example.com" }, messages: ["Do you sell gift cards? Want to get one for my wife's birthday, $150."], expectLead: true },
+  // Other languages
+  { name: "French booking question", business: dental, sender: { name: "Élodie", email: "elodie@example.com" }, messages: ["Bonjour, avez-vous des disponibilités pour un nettoyage la semaine prochaine? Merci!"], expectLead: true },
+  { name: "Punjabi (romanized) roof leak", business: { name: "TopRoof Contractors", industry: "Roofing" }, sender: { name: "Gurpreet", email: "gurpreet.s@example.com" }, messages: ["Sat sri akal ji, saadi chhat ton paani leak ho reha hai. Kado aa sakde ho te kinna kharcha hovega?"], expectLead: true },
+  { name: "Hindi (Devanagari) tutoring", business: { name: "Bright Minds Tutoring", industry: "Tutoring" }, sender: { name: "Sunita", email: "sunita.v@example.com" }, messages: ["नमस्ते, मेरे बेटे को 9वीं कक्षा की साइंस के लिए ट्यूशन चाहिए। फीस कितनी है?"], expectLead: true },
+  { name: "Portuguese salon question", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "Beatriz", email: "beatriz@example.com" }, messages: ["Olá! Quanto custa uma escova progressiva? Vocês têm horário na sexta?"], expectLead: true },
+  { name: "Arabic catering question", business: { name: "Spice Route Catering", industry: "Catering" }, sender: { name: "Yousef", email: "yousef@example.com" }, messages: ["مرحبا، أحتاج طعام لحفلة ٥٠ شخص يوم السبت. كم السعر؟"], expectLead: true },
+  { name: "Tagalog-English mix", business: { name: "Sparkle Cleaning", industry: "Home services (contractor, cleaning, etc.)" }, sender: { name: "Joy", email: "joy.c@example.com" }, messages: ["Hi po! Magkano po ang deep clean for 3 bedroom house? Available po ba kayo sa Saturday?"], expectLead: true },
+  // A lead the owner's own corrections should not talk the model out of
+  { name: "customer from a sender domain the owner once rejected", business: { ...plumber, corrections: [{ sender: "sales@rankfast.example", subject: "Page 1 on Google", verdict: "not_customer" }] }, sender: { name: "Grace", email: "grace@gmail.example" }, messages: ["Hi, my toilet keeps running. Could you come look this week? How much is a visit?"], expectLead: true },
+
+  // More real customers, to round out the trades
+  { name: "realtor: investor wants a multiplex", business: realtor, sender: { name: "Victor", email: "victor.i@example.com" }, messages: ["Looking to buy a 4-plex for rental income, budget around 1.4M. Can you send anything off-market too?"], expectLead: true },
+  { name: "salon: men's cut, three words", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "Dev", email: "dev.p@example.com" }, messages: ["mens cut price?"], expectLead: true },
+  { name: "trainer: team wellness for a company", business: { name: "Lift with Leo", industry: "Personal training" }, sender: { name: "HR, Brightline Tech", email: "people@brightline.example" }, messages: ["We'd like weekly group sessions for about 12 staff at our office. Is that something you offer, and at what rate?"], expectLead: true },
+  { name: "photographer: newborn session", business: { name: "Lumen Photography", industry: "Photography" }, sender: { name: "Hannah", email: "hannah.b@example.com" }, messages: ["Due in November! Do you do newborn shoots at home, and how far ahead should I book?"], expectLead: true },
+  { name: "auto repair: accident, needs a tow", business: { name: "Kings Auto Repair", industry: "Auto repair" }, sender: { name: "Mandeep", email: "mandeep.g@example.com" }, messages: ["Got rear-ended, car isn't drivable. Can you arrange a tow to your shop and give me an estimate for insurance?"], expectLead: true },
+  { name: "cleaner: Airbnb host, recurring turnovers", business: { name: "Sparkle Cleaning", industry: "Home services (contractor, cleaning, etc.)" }, sender: { name: "Oliver", email: "oliver.host@example.com" }, messages: ["I host two Airbnbs downtown and need turnovers 3-4 times a week. Could we set up something regular? What's your per-clean rate?"], expectLead: true },
+  { name: "dental: toothache emergency", business: dental, sender: { name: "Liam", email: "liam.o@example.com" }, messages: ["Really bad toothache since last night, face is a bit swollen. Can you see me today?"], expectLead: true },
+  { name: "tutor: adult learner for English", business: { name: "Bright Minds Tutoring", industry: "Tutoring" }, sender: { name: "Wei", email: "wei.z@example.com" }, messages: ["I need help with English speaking for my job interviews. Do you teach adults? How much for 10 classes?"], expectLead: true },
+
+  // ---- not customers ------------------------------------------------------
+  // A few more that look like mail a business gets every day
+  { name: "AI chatbot vendor 'quick question'", business: { name: "Core Physio", industry: "Physiotherapy" }, sender: { name: "Ryan", email: "ryan@chatdesk.example" }, messages: ["Quick question — who handles patient enquiries at Core Physio? Our AI receptionist books 30% more appointments."], expectLead: false },
+  { name: "industry association newsletter", business: { name: "TopRoof Contractors", industry: "Roofing" }, sender: { name: "Roofing Association", email: "news@roofers-assoc.example" }, messages: ["October update: new safety rules, the annual conference, and member discounts on shingles."], expectLead: false },
+  { name: "software onboarding meeting invite", business: { name: "Ledger & Co", industry: "Bookkeeping" }, sender: { name: "Onboarding", email: "onboarding@saasbooks.example" }, messages: ["Your onboarding call with our success team is confirmed for Tue 2pm. (Automated message.)"], expectLead: false },
+  { name: "supplier chasing an unpaid invoice", business: { name: "Spice Route Catering", industry: "Catering" }, sender: { name: "Fresh Farms Produce", email: "accounts@freshfarms.example" }, messages: ["Our records show invoice #9912 for $860 is 15 days overdue. Please arrange payment."], expectLead: false },
+  { name: "wedding directory selling a listing", business: { name: "Lumen Photography", industry: "Photography" }, sender: { name: "WedFinder", email: "vendors@wedfinder.example" }, messages: ["Couples in your area are searching for photographers! Get a featured listing for $49/month."], expectLead: false },
+  { name: "student asking for an internship", business: realtor, sender: { name: "Aisha M.", email: "aisha.m@student.example" }, messages: ["Hi, I'm a college student interested in real estate. Do you take interns? I'd love to shadow you."], expectLead: false },
+  { name: "ads rep: 'customers are searching for you'", business: { name: "GreenEdge Landscaping", industry: "Landscaping" }, sender: { name: "Mike, LocalAds", email: "mike@localads.example" }, messages: ["Hi! 240 people searched 'landscaper near me' in your area last month. Want to show up first? Plans from $300/mo."], expectLead: false },
+  { name: "order shipped confirmation", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "Beauty Supply Co", email: "orders@beautysupply.example" }, messages: ["Your order #55120 has shipped and will arrive Thursday. Track it here."], expectLead: false },
+
+  // Selling to the business, in many disguises
+  { name: "freelancer 'would love to work with you'", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "Tara, Social by Tara", email: "tara@socialbytara.example" }, messages: ["Hi! I'd love to work with you — I manage Instagram for salons and grew one to 20k followers in 3 months. Can I send you my rates?"], expectLead: false },
+  { name: "influencer wants free service for posts", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "Kayla", email: "kayla.collabs@example.com" }, messages: ["Hey babe! I have 45k followers and would love to feature your salon in exchange for a complimentary colour. Let me know! 💕"], expectLead: false },
+  { name: "google listing 'verification' sales call", business: { name: "Kings Auto Repair", industry: "Auto repair" }, sender: { name: "Local Listings Team", email: "verify@locallistings.example" }, messages: ["Your Google Business Profile is at risk of being unverified. Book a 10-min call so we can secure it for $199/yr."], expectLead: false },
+  { name: "business loan offer", business: plumber, sender: { name: "Capital Quick", email: "funding@capitalquick.example" }, messages: ["You're pre-qualified for up to $150,000 in working capital. No credit check. Reply YES to see your offer."], expectLead: false },
+  { name: "equipment dealer", business: { name: "Core Physio", industry: "Physiotherapy" }, sender: { name: "Medline Supply", email: "sales@medsupply.example" }, messages: ["New shockwave therapy units in stock — 15% off for clinics this month. Want a demo?"], expectLead: false },
+  { name: "parts supplier sends an invoice", business: { name: "Kings Auto Repair", industry: "Auto repair" }, sender: { name: "AutoParts Wholesale", email: "billing@apwholesale.example" }, messages: ["Invoice #44821 for brake pads and rotors ($1,240.00) is attached. Payment due in 30 days."], expectLead: false },
+  { name: "wholesale product rep", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "Lena, Luxe Pro Hair", email: "lena@luxeprohair.example" }, messages: ["Our new bond-repair line is launching in Canada. Can I drop off samples and a wholesale price list this week?"], expectLead: false },
+  { name: "competitor offers overflow work", business: { name: "Sparkle Cleaning", industry: "Home services (contractor, cleaning, etc.)" }, sender: { name: "Maya, Fresh Start Cleaners", email: "maya@freshstart.example" }, messages: ["We're a cleaning crew with extra capacity on weekdays. Happy to take any jobs you can't fit, at a split. Interested?"], expectLead: false },
+  { name: "photographer pitching a clinic", business: dental, sender: { name: "Leo, Frame Studio", email: "leo@framestudio.example" }, messages: ["Your team page photos look a bit dated! I do headshots for clinics — I'm free next week and my portfolio is framestudio.example."], expectLead: false },
+  { name: "reviews platform upsell", business: { name: "Spice Route Catering", industry: "Catering" }, sender: { name: "ReviewBoost", email: "hello@reviewboost.example" }, messages: ["Businesses like yours get 3x more reviews with ReviewBoost. Start a free trial today."], expectLead: false },
+  // Jobs, charities, research
+  { name: "job applicant", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "Nina", email: "nina.stylist@example.com" }, messages: ["Hi, I'm a licensed stylist with 5 years' experience. Are you hiring? My resume is attached."], expectLead: false },
+  { name: "charity donation request", business: { name: "Spice Route Catering", industry: "Catering" }, sender: { name: "Hope Food Bank", email: "donate@hopefoodbank.example" }, messages: ["Would your business donate to our fall food drive? Every $50 feeds a family for a week."], expectLead: false },
+  { name: "student research survey", business: { name: "Bright Minds Tutoring", industry: "Tutoring" }, sender: { name: "Arjun (UofT)", email: "arjun.m@student.example" }, messages: ["I'm a student researching small tutoring businesses. Would you fill out a 5-minute survey?"], expectLead: false },
+  { name: "podcast guest invite", business: realtor, sender: { name: "The Home Show Podcast", email: "booking@homeshowpod.example" }, messages: ["We'd love to have you on our real estate podcast as a guest. Guest spots are $299 for promotion."], expectLead: false },
+  // Automated and account mail
+  { name: "new review notification", business: dental, sender: { name: "Reviews", email: "no-reply@reviews.example" }, messages: ["You received a new 5-star review: 'Great cleaning, friendly staff.' Reply to the review on your dashboard."], expectLead: false },
+  { name: "payment received receipt", business: { name: "Lift with Leo", industry: "Personal training" }, sender: { name: "Payments", email: "receipts@payments.example" }, messages: ["You received a payment of $240.00 from Sam R. Funds will arrive in 2 business days."], expectLead: false },
+  { name: "domain renewal notice", business: { name: "Lumen Photography", industry: "Photography" }, sender: { name: "Domains", email: "renewals@domains.example" }, messages: ["Your domain lumenphoto.example expires in 14 days. Renew now to keep your website online."], expectLead: false },
+  { name: "bank statement ready", business: plumber, sender: { name: "Northern Bank", email: "alerts@northernbank.example" }, messages: ["Your business account statement for September is ready to view in online banking."], expectLead: false },
+  { name: "phishing: account suspended", business: { name: "Ledger & Co", industry: "Bookkeeping" }, sender: { name: "Security Team", email: "security@acc0unt-verify.example" }, messages: ["Your mailbox will be suspended in 24 hours. Click here to verify your password."], expectLead: false },
+  { name: "listing alert from the MLS", business: realtor, sender: { name: "Listing Alerts", email: "alerts@mls.example" }, messages: ["3 new listings match your saved search 'East End 2-bed under 700k'. View them now."], expectLead: false },
+  { name: "tax office notice", business: { name: "Ledger & Co", industry: "Bookkeeping" }, sender: { name: "Revenue Agency", email: "notices@revenue.example" }, messages: ["A new notice of assessment is available in your business account. Sign in to view it."], expectLead: false },
+  // Personal and landlord
+  { name: "friend asking to hang out", business: { name: "Kings Auto Repair", industry: "Auto repair" }, sender: { name: "Vik", email: "vik.99@example.com" }, messages: ["Bro you free Friday? Game night at mine, bring snacks."], expectLead: false },
+  { name: "shop landlord about rent", business: { name: "Glow Studio", industry: "Hair salon" }, sender: { name: "Harbour Properties", email: "leasing@harbourprops.example" }, messages: ["Reminder that October rent for Unit 4 is due on the 1st. The new lease renewal is attached for signature."], expectLead: false },
+  { name: "owner's accountant asks for receipts", business: { name: "TopRoof Contractors", industry: "Roofing" }, sender: { name: "Priya, PK Accounting", email: "priya@pkaccounting.example" }, messages: ["Hi — for your year-end I still need the fuel receipts and the truck lease statement. Can you send them by Friday?"], expectLead: false },
+  // Tricky pitches in other languages
+  { name: "Hindi SEO pitch", business: { name: "Bright Minds Tutoring", industry: "Tutoring" }, sender: { name: "Rank Pro", email: "team@rankpro.example" }, messages: ["नमस्ते, हम आपकी वेबसाइट को गूगल पर पहले पेज पर ला सकते हैं। सिर्फ ₹5000 प्रति माह।"], expectLead: false },
+  { name: "Spanish marketing agency pitch", business: dental, sender: { name: "Agencia Crece", email: "hola@agenciacrece.example" }, messages: ["Hola, ayudamos a clínicas dentales a conseguir 50 pacientes nuevos al mes con anuncios. ¿Hablamos?"], expectLead: false },
 ];
 
 export type EvalResult = {
@@ -64,6 +167,8 @@ export type EvalResult = {
   failed: number;
   errors: number;
   failures: { name: string; expected: string; got: string; reason: string }[];
+  /** Right answers per kind of business, so a weak trade shows up before a tester in it does. */
+  byTrade: Record<string, { passed: number; total: number }>;
 };
 
 type Judge = typeof classifyWithSecondLook;
@@ -81,17 +186,22 @@ function toTranscript(bodies: string[]): Message[] {
 }
 
 export async function runClassifierEval(judge: Judge = classifyWithSecondLook, cases = EVAL_CASES): Promise<EvalResult> {
-  const result: EvalResult = { passed: 0, failed: 0, errors: 0, failures: [] };
+  const result: EvalResult = { passed: 0, failed: 0, errors: 0, failures: [], byTrade: {} };
   const label = (lead: boolean) => (lead ? "lead" : "set aside");
-  // A few at a time: fast enough to finish inside one request, gentle on
-  // the model's rate limit.
-  for (let i = 0; i < cases.length; i += 4) {
+  // A few at a time: fast enough to finish ~100 cases inside one request
+  // (the route allows five minutes), gentle on the model's rate limit.
+  const AT_ONCE = 6;
+  for (let i = 0; i < cases.length; i += AT_ONCE) {
     await Promise.all(
-      cases.slice(i, i + 4).map(async (c) => {
+      cases.slice(i, i + AT_ONCE).map(async (c) => {
+        const trade = (result.byTrade[c.business.industry || "Unknown"] ??= { passed: 0, total: 0 });
+        trade.total += 1;
         try {
           const v = await judge(toTranscript(c.messages), c.sender, c.business);
-          if (v.isProspect === c.expectLead) result.passed += 1;
-          else {
+          if (v.isProspect === c.expectLead) {
+            result.passed += 1;
+            trade.passed += 1;
+          } else {
             result.failed += 1;
             result.failures.push({ name: c.name, expected: label(c.expectLead), got: label(v.isProspect), reason: v.reason });
           }

@@ -33,7 +33,8 @@ npx prisma migrate deploy >/dev/null
 rm -rf .next/dev
 npx next dev -p "$PORT" >"${ROBOT_LOG:-/tmp/robot-dev.log}" 2>&1 &
 SERVER=$!
-trap 'kill $SERVER 2>/dev/null || true' EXIT
+# next dev rewrites next-env.d.ts; put it back so a run leaves no changes.
+trap 'kill $SERVER 2>/dev/null || true; git checkout -- next-env.d.ts 2>/dev/null || true' EXIT
 for _ in $(seq 1 120); do
   curl -s -o /dev/null "$ROBOT_BASE_URL/signin" && break
   sleep 2

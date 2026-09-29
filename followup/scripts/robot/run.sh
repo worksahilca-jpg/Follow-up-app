@@ -28,6 +28,9 @@ export ROBOT_BASE_URL="http://localhost:$PORT"
 # The site's own address is not a secret, and pages build URLs from it.
 export NEXT_PUBLIC_SITE_URL="$ROBOT_BASE_URL"
 npx prisma migrate deploy >/dev/null
+# NEXT_PUBLIC_* values are baked in when a page compiles, so a dev cache from
+# a run with different settings would keep the old ones. Start clean.
+rm -rf .next/dev
 npx next dev -p "$PORT" >"${ROBOT_LOG:-/tmp/robot-dev.log}" 2>&1 &
 SERVER=$!
 trap 'kill $SERVER 2>/dev/null || true' EXIT

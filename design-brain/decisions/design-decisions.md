@@ -8534,3 +8534,12 @@ The founder asked whether customers from a connected CRM and from the owner's ow
   to a customer who is also in the CRM on its own. The draft waits with the reason "they're also in your CRM, which may
   send its own follow-ups…". Settings → Your CRM says so in one line. A customer the owner has set to "Handle it all"
   on their own page is still the owner's explicit choice.
+
+## 2026-09-29 — Settings wording decided (A-074)
+
+Three decisions from the Settings Pages board, taken one at a time: "Name and trade" becomes "Your business"; the
+"Sales" role becomes "Can reply"; and testers see a "Founding tester" plan card instead of a Pro price they can't act
+on. The founder chose the softer price line ("founding testers get a special price") over a lifetime lower price, and
+kept the 30-day notice. Built as wording only: the page structure changes on the board (What FollowUp knows inside
+Your business, the new team rows) are not approved yet. One edge to watch: when "only admins can send" is switched on,
+a "Can reply" member can't send; the label describes the role, not that setting.

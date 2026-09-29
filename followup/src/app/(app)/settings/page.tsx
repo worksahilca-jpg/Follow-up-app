@@ -65,7 +65,7 @@ const PAGES: Record<string, SettingsPage> = {
   whatsapp: { title: "WhatsApp", lede: "Your own WhatsApp Business number. Keep using the app on your phone as before.", sections: ["whatsapp"] },
   phone: { title: "Phone and text", sections: ["phone"] },
   replies: { title: "Replies and check-ins", lede: "What FollowUp writes on its own, and when. Anything about a price or a date still comes to you.", sections: ["automation", "alerts"] },
-  business: { title: "Name and trade", sections: ["business"] },
+  business: { title: "Your business", sections: ["business"] },
   team: { title: "Team", lede: "Admins can invite teammates, change roles and remove people.", sections: ["team"] },
   billing: { title: "Your plan", sections: ["billing"] },
   security: { title: "Sign-ins and security", sections: ["security"] },
@@ -897,7 +897,9 @@ function SettingsPageInner() {
   // label would say it twice.
   const sectionLabel = page && page.sections.length > 1 ? SECTION_LABEL : "sr-only";
   const planStatus =
-    billingTier === "free"
+    billingStatus === "beta"
+      ? "Founding tester"
+      : billingTier === "free"
       ? billingLoaded
         ? `Free · ${leadsUsedThisMonth} of ${FREE_TIER_LEAD_CAP} this month`
         : "Free"
@@ -1771,12 +1773,20 @@ function SettingsPageInner() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">
-                  FollowUp {TIER_INFO[billingTier].label} — {TIER_INFO[billingTier].priceLabel}
-                  {voiceAddonEnabled && ` + Voice (${VOICE_ADDON_INFO.priceLabel})`}
+                  {billingStatus === "beta" ? (
+                    // Founding-tester card (founder, 2026-09-29): no price a
+                    // tester can't act on, and no promise beyond these two.
+                    "Founding tester"
+                  ) : (
+                    <>
+                      FollowUp {TIER_INFO[billingTier].label} — {TIER_INFO[billingTier].priceLabel}
+                      {voiceAddonEnabled && ` + Voice (${VOICE_ADDON_INFO.priceLabel})`}
+                    </>
+                  )}
                 </p>
                 <p className="text-[13px] text-ink-soft mt-0.5">
                   {billingStatus === "beta"
-                    ? "Beta — every Pro feature, free while you test. Nothing to pay and nothing to manage."
+                    ? "Everything is free while we test. You have every feature. When paid plans start, founding testers get a special price."
                     : billingStatus === "trialing"
                     ? billingPeriodEnd
                       ? `Free trial — first charge on ${new Date(billingPeriodEnd).toLocaleDateString()}.`
@@ -1789,6 +1799,11 @@ function SettingsPageInner() {
                     ? "Payment failed — update your card to keep your account active."
                     : "Subscription canceled — resubscribe to unlock leads, sync, and sending again."}
                 </p>
+                {billingStatus === "beta" && (
+                  <p className="text-[13px] text-ink-soft mt-2">
+                    We&apos;ll email you at least 30 days before anything changes. Nothing is charged without you choosing a plan.
+                  </p>
+                )}
               </div>
               {/* No Stripe customer exists behind the beta plan, so the
                   portal would 400 — there is nothing to manage. */}

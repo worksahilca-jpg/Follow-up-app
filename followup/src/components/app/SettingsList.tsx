@@ -94,7 +94,7 @@ export default function SettingsList({
     {
       title: "Your business",
       rows: [
-        { page: "business", name: "Name and trade" },
+        { page: "business", name: "Your business" },
         { page: "team", name: "Team", status: onlyAdminsSend ? "Only admins send" : "Anyone can send" },
       ],
     },

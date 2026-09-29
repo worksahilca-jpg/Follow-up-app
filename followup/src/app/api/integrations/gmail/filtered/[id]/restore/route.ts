@@ -8,6 +8,7 @@ import { restoreWhatsAppHistoryThread } from "@/lib/inbound/whatsappCloud";
 import { parseStoredThread } from "@/lib/inbound/whatsappHistoryFilter";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { recordAudit } from "@/lib/audit";
+import { recordSenderVerdict } from "@/lib/senderVerdicts";
 import { publicErrorMessage } from "@/lib/publicError";
 
 // POST /api/integrations/gmail/filtered/[id]/restore — "this was a lead":
@@ -76,6 +77,15 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       where: { id: lead.id, businessId: ctx.businessId },
       data: { classificationOverriddenAt: new Date() },
     });
+    // Remember the call for this sender, in this business only, so the
+    // latest word wins over any earlier "not a customer" and the
+    // classifier sees it as one of this owner's examples
+    // (src/lib/senderVerdicts.ts). Best-effort: the lead is already back.
+    if (row.senderEmail) {
+      await recordSenderVerdict(ctx.businessId, row.senderEmail, "customer", row.subject).catch((err) =>
+        console.error(`Could not remember sender verdict for business ${ctx.businessId}:`, err)
+      );
+    }
     void recordAudit(ctx, "lead.classification_overridden", {
       targetType: "lead",
       targetId: lead.id,

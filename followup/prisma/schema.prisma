@@ -278,6 +278,7 @@ model Business {
   // Why the import stopped early, in words the owner can act on.
   pastRepliesError     String?
   pastReplies          PastReply[]
+  senderVerdicts       SenderVerdict[]
 
   // Live AI voice agent (src/app/api/twilio/voice/[secret]/route.ts +
   // the separate always-on audio-bridge service — see
@@ -634,6 +635,36 @@ model PastReply {
 
   @@unique([businessId, gmailMessageId])
   @@index([businessId, sentAt])
+}
+
+// The owner's own call on a sender, remembered for this business only
+// (founder, 2026-09-29: "learn from corrections"). Written when the owner
+// taps "this was a customer" on a set-aside email, or "Not a customer" on a
+// customer. From then on:
+//  - "not_customer": new mail from this sender is set aside without asking
+//    the model, and stays visible in Settings → filtered emails, where one
+//    tap reverses it;
+//  - "customer": already covered by the lead itself (a known customer is
+//    never re-judged); kept here too so the latest word wins either way;
+//  - the most recent few, sender and subject line only, are shown to the
+//    classifier as this owner's examples (src/lib/senderVerdicts.ts).
+// Never shared with another business and never used to train a model.
+model SenderVerdict {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id])
+  businessId String
+  // Lowercased email address.
+  sender     String
+  // customer | not_customer
+  verdict    String
+  // The subject line the owner was looking at, for the classifier's
+  // examples. Never a message body.
+  subject    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([businessId, sender])
+  @@index([businessId, updatedAt])
 }
 
 enum QuietOutcome {

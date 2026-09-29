@@ -8501,3 +8501,11 @@ for that business only.
   "This was a lead" in Filtered out reverses it.
 - **What the AI sees:** the owner's last 8 calls (sender and subject line only, never a message body), as examples
   of what this owner counts as a customer. It still judges each email on what it says.
+
+## 2026-09-29 — Owner questions, approved as drawn (A-073)
+
+The founder's idea: FollowUp should ask each owner about their business, "like a new hired employee asks their
+manager", to sort leads and write replies better without being annoying. Designed as a six-screen board and approved
+("cool designes are good"). Recorded in [[approved#^A-073|A-073]]. It is not training: the answers are this business's
+own facts, given to FollowUp every time it sorts or writes. It fills the biggest gap found today: FollowUp knew only a
+business's name and trade.

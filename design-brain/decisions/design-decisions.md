@@ -8447,3 +8447,26 @@ only notice, and an owner whose inbox stopped feeding FollowUp has least reason 
 - **Same look as the sign-in alert:** system type, one pill button, grey small print. It is a utility email, so it
   doesn't use the Monday email's design.
 - **Not sent** for a sync that is only failing for a while (that stays a bell note, since it may clear itself).
+
+## 2026-09-28 — "Is it working for them?" on /admin (founder: "yes build the score first")
+
+The founder moved the test plan from "grow to 100" to "make it work for a handful first": email and Meta connected,
+follow-up working, and learning each owner's writing. This section makes that checkpoint a count.
+- **Five checks per tester, from rows FollowUp already writes:**
+  - email and Meta connected;
+  - inbox checked within 30 minutes;
+  - at least half of the drafts sent as written, counted once 3 have been sent;
+  - Write like me on;
+  - a customer won back in the last 30 days.
+- **A score out of 5** per tester, least working first, and one sentence naming the most common gap.
+- **Sits under "Who reaches first value" (A-047)** and reuses its box, type and rhythm. It doesn't replace it:
+  first value is the activation moment, and this is whether it keeps working.
+- **State dots in the approved state colours (A-029):** sage for passing, rust for needs you, grey for not yet. What
+  needs the founder is bold; everything else is soft.
+- **Phone:** the score and the one thing to help with next (R-015), not the full grid.
+- **Honest about limits:** "Inbox checked" proves FollowUp is looking, not that nothing was ever missed, and the page
+  says so. With too few drafts sent, the drafts check reads "not yet", never a pass or a fail.
+- **Weak spots:**
+  - The 30-minute and 50% thresholds are my choice, not learned from data.
+  - "Won back" needs automatic sends. A tester who approves every reply by hand in Assisted mode still counts,
+    because approved sends are FollowUp's own messages, but a tester who writes every reply themselves won't show any.

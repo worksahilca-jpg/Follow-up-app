@@ -28,19 +28,21 @@ export ROBOT_BASE_URL="http://localhost:$PORT"
 # The site's own address is not a secret, and pages build URLs from it.
 export NEXT_PUBLIC_SITE_URL="$ROBOT_BASE_URL"
 npx prisma migrate deploy >/dev/null
-# NEXT_PUBLIC_* values are baked in when a page compiles, so a dev cache from
-# a run with different settings would keep the old ones. Start clean.
-rm -rf .next/dev
 # Something else already on the port would be tested instead of this copy,
 # with whatever settings it started with. Refuse rather than guess.
 if curl -s -o /dev/null "$ROBOT_BASE_URL"; then
   echo "refusing: something is already running on port $PORT" >&2
   exit 1
 fi
+# A production build, not `next dev`: dev compiles every page on demand and
+# ran out of memory (~13 GB) partway through a run. NEXT_PUBLIC_* values are
+# baked in here, from the settings above. The build rewrites next-env.d.ts;
+# it's put back when the run ends so a run leaves no changes.
+trap 'git checkout -- next-env.d.ts 2>/dev/null || true' EXIT
+npx next build >"${ROBOT_LOG:-/tmp/robot-dev.log}" 2>&1
 # Own process group, so the whole server tree stops when the run ends.
-setsid npx next dev -p "$PORT" >"${ROBOT_LOG:-/tmp/robot-dev.log}" 2>&1 &
+setsid npx next start -p "$PORT" >>"${ROBOT_LOG:-/tmp/robot-dev.log}" 2>&1 &
 SERVER=$!
-# next dev rewrites next-env.d.ts; put it back so a run leaves no changes.
 trap 'kill -- -$SERVER 2>/dev/null || true; git checkout -- next-env.d.ts 2>/dev/null || true' EXIT
 for _ in $(seq 1 120); do
   curl -s -o /dev/null "$ROBOT_BASE_URL/signin" && break

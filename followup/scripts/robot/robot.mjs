@@ -92,7 +92,9 @@ for (const [label, width] of [["desktop", 1280], ["phone", 390]]) {
       if (overflow > 2) errors.push(`page scrolls sideways by ${overflow}px`);
       const text = await page.evaluate(() => document.body.innerText);
       if (/Application error|Unhandled Runtime Error|Something went wrong/i.test(text)) errors.push("error screen shown");
-      if (name === "Today" && lead && !text.includes("Maya")) errors.push("the new customer isn't on Today");
+      // Today lists a new customer once a reply is drafted, and the robot runs
+      // with AI keys blank, so the Customers list is where they must show up.
+      if (name === "Customers" && lead && !text.includes("Maya")) errors.push("the new customer isn't in Customers");
       if (name === "Settings: Your business" && !text.includes("Your business")) errors.push('"Your business" title missing');
       if (name === "Settings: Your plan" && !text.includes("Founding tester")) errors.push('"Founding tester" card missing');
     } catch (err) {

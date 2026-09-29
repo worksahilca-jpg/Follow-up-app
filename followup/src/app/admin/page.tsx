@@ -8,6 +8,8 @@ import { getProductUsage } from "@/lib/admin-usage";
 import ProductUsageSection from "@/components/ProductUsageSection";
 import ActivationSection from "@/components/ActivationSection";
 import { getActivation } from "@/lib/activation-data";
+import TesterHealthSection from "@/components/TesterHealthSection";
+import { getTesterHealth } from "@/lib/testerHealth";
 import { formatCurrency } from "@/lib/demo-data";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +30,7 @@ function channelLabel(provider: string): string {
 const SIGNUP_GRID = "grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1.5fr)_auto]";
 
 export default async function AdminPage() {
-  const [data, usage, activation] = await Promise.all([getPlatformAdminData(), getProductUsage(), getActivation()]);
+  const [data, usage, activation, health] = await Promise.all([getPlatformAdminData(), getProductUsage(), getActivation(), getTesterHealth()]);
 
   return (
     <div>
@@ -59,6 +61,8 @@ export default async function AdminPage() {
       </p>
 
       <ActivationSection activation={activation} />
+
+      <TesterHealthSection report={health} />
 
       <ProductUsageSection usage={usage} />
 

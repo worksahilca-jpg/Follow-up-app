@@ -50,6 +50,7 @@ const { prismaMock, fetchSalesConversations, sendAlertEmail } = vi.hoisted(() =>
               {
                 lastSyncedAt: state.integration.lastSyncedAt,
                 deepSyncedAt: state.integration.deepSyncedAt,
+                connectedAt: state.integration.connectedAt,
                 user: { businessId: "biz1", business: { subscriptionStatus: "active", tier: "plus" } },
               },
             ]
@@ -113,7 +114,13 @@ vi.mock("@/lib/alertEmail", () => ({ sendAlertEmail }));
 vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://www.followupbase.io" }));
 
 import { syncGmailForAllBusinesses } from "@/lib/gmailSync";
-import { SYNC_FAILING_MARKER, SYNC_FAILING_NOTICE_AFTER_MS, gmailReconnectEmail } from "@/lib/gmailSyncNotices";
+import {
+  GMAIL_ENDING_MARKER,
+  SYNC_FAILING_MARKER,
+  SYNC_FAILING_NOTICE_AFTER_MS,
+  gmailEndingSoonEmail,
+  gmailReconnectEmail,
+} from "@/lib/gmailSyncNotices";
 
 const T0 = new Date("2026-09-25T09:00:00Z");
 const MIN = 60_000;
@@ -127,6 +134,8 @@ const googleHiccup = () => fetchSalesConversations.mockRejectedValue(new Error("
 const syncWorks = () => fetchSalesConversations.mockResolvedValue([]);
 const lostAccess = () => state.notes.filter((n) => n.message.includes("lost access to"));
 const keepsFailing = () => state.notes.filter((n) => n.message.includes(SYNC_FAILING_MARKER));
+const endingSoon = () => state.notes.filter((n) => n.message.includes(GMAIL_ENDING_MARKER));
+const DAY = 24 * 60 * 60_000;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -376,5 +385,90 @@ describe("a sync that keeps failing for another reason", () => {
     googleHiccup();
     await syncGmailForAllBusinesses();
     expect(keepsFailing()).toHaveLength(0);
+  });
+});
+
+describe("the day-6 warning (founder, 2026-09-28: warn before it stops)", () => {
+  const warningEmails = () => sendAlertEmail.mock.calls.map(([e]) => e).filter((e) => e.idempotencyKey?.startsWith("gmail-ending-"));
+
+  it("warns every admin once, in the bell and by email, in the grant's last day", async () => {
+    // The fixture connected exactly six days before T0.
+    syncWorks();
+    await syncGmailForAllBusinesses();
+
+    expect(endingSoon().map((n) => n.userId).sort()).toEqual(["owner", "partner"]);
+    for (const note of endingSoon()) {
+      expect(note.leadId).toBeNull();
+      expect(note.message).toContain("info@samsplumbing.ca");
+      expect(note.message).toContain("Reconnect Gmail in Settings");
+      expect(note.message).toContain("every 7 days");
+    }
+    const emails = warningEmails();
+    expect(emails.map((e) => e.to).sort()).toEqual(["jo@samsplumbing.ca", "sam@samsplumbing.ca"]);
+    expect(emails[0].subject).toBe("Reconnect Gmail today to keep catching customers");
+    expect(emails[0].html).toContain('href="https://www.followupbase.io/api/integrations/gmail/connect"');
+    expect(emails[0].idempotencyKey).toContain(String(state.integration.connectedAt!.getTime()));
+    // The connection itself is untouched: it still works until Google ends it.
+    expect(state.integration.status).toBe("connected");
+  });
+
+  it("says nothing before the last day", async () => {
+    state.integration.connectedAt = new Date(T0.getTime() - 5 * DAY - 23 * HOUR);
+    syncWorks();
+    await syncGmailForAllBusinesses();
+    expect(endingSoon()).toHaveLength(0);
+    expect(sendAlertEmail).not.toHaveBeenCalled();
+  });
+
+  it("says it once, however many ticks run in that day", async () => {
+    syncWorks();
+    for (let t = 0; t < 23 * HOUR; t += 2 * HOUR) {
+      at(t);
+      await syncGmailForAllBusinesses();
+    }
+    expect(endingSoon()).toHaveLength(2);
+    expect(warningEmails()).toHaveLength(2);
+  });
+
+  it("goes quiet after a reconnect, and warns again six days after it", async () => {
+    syncWorks();
+    await syncGmailForAllBusinesses();
+    expect(endingSoon()).toHaveLength(2);
+
+    at(2 * HOUR);
+    Object.assign(state.integration, { connectedAt: new Date(), accessToken: "a2", refreshToken: "r2" });
+    await syncGmailForAllBusinesses();
+    expect(endingSoon()).toHaveLength(2);
+
+    at(2 * HOUR + 6 * DAY + HOUR);
+    await syncGmailForAllBusinesses();
+    expect(endingSoon()).toHaveLength(4);
+    expect(new Set(warningEmails().map((e) => e.idempotencyKey)).size).toBe(4);
+  });
+
+  it("is followed by the reconnect email if the owner doesn't act", async () => {
+    syncWorks();
+    await syncGmailForAllBusinesses();
+    at(DAY);
+    tokenDied();
+    await syncGmailForAllBusinesses();
+    expect(endingSoon()).toHaveLength(2);
+    expect(lostAccess()).toHaveLength(2);
+  });
+
+  it("never turns a good sync into a failed one", async () => {
+    prismaMock.notification.create.mockRejectedValueOnce(new Error("db blip"));
+    syncWorks();
+    const result = await syncGmailForAllBusinesses();
+    expect(result).toMatchObject({ synced: 1, failed: 0 });
+    expect(state.integration.lastSyncError).toBeNull();
+    // The email still goes out when the bell row can't be written.
+    expect(warningEmails()).toHaveLength(2);
+  });
+
+  it("escapes the inbox name in the HTML", () => {
+    const { html } = gmailEndingSoonEmail({ inbox: "<b>x</b>@y.ca", base: "https://www.followupbase.io" });
+    expect(html).not.toContain("<b>x</b>");
+    expect(html).toContain("&lt;b&gt;x&lt;/b&gt;@y.ca");
   });
 });

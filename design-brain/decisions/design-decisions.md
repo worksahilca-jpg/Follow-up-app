@@ -8470,3 +8470,17 @@ follow-up working, and learning each owner's writing. This section makes that ch
   - The 30-minute and 50% thresholds are my choice, not learned from data.
   - "Won back" needs automatic sends. A tester who approves every reply by hand in Assisted mode still counts,
     because approved sends are FollowUp's own messages, but a tester who writes every reply themselves won't show any.
+
+## 2026-09-29 — A warning a day before Gmail stops (founder: "yes build it")
+
+While Google sign-in is in Testing mode, every tester's Gmail access ends 7 days after they connect. The reconnect
+email (2026-09-28) only goes out after it has stopped, so there was always a gap in which customer emails went unseen,
+and each tester failed two of the five tester-score checks every week.
+- **A day before it ends:** one bell note and one email per admin, once per connection. Reconnecting restarts the
+  7 days, so the next warning comes six days after that.
+- **Copy says when, what it saves, and the one fix:** "FollowUp's access to {inbox} ends within a day. Reconnect now
+  and new customer emails keep coming in without a gap." Subject "Reconnect Gmail today to keep catching customers".
+  Same 7-day line as the reconnect email: Google's rule, "not something you did".
+- **Same email as the reconnect email** (same shape, type and pill button; one shared template now), so the two read
+  as one thread: the warning, then, only if nothing was done, the notice that it stopped.
+- **Switches off in one place:** `GMAIL_GRANT_LIFETIME_MS` goes to null the day Google verifies FollowUp.

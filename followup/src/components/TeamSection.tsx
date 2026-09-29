@@ -196,14 +196,14 @@ export default function TeamSection() {
                   className="rounded-[12px] border border-line bg-paper px-2 py-1 text-[13px]"
                 >
                   <option value="ADMIN">Admin</option>
-                  <option value="SALES">Sales</option>
+                  <option value="SALES">Can reply</option>
                 </select>
                 <button onClick={() => remove(m.id, m.name)} className="text-[13px]" style={{ color: "var(--coral)" }}>
                   Remove
                 </button>
               </div>
             ) : (
-              <span className="text-[13px] text-ink-soft shrink-0 w-14 text-right">{m.role === "ADMIN" ? "Admin" : "Sales"}</span>
+              <span className="text-[13px] text-ink-soft shrink-0 w-16 text-right">{m.role === "ADMIN" ? "Admin" : "Can reply"}</span>
             )}
           </div>
         ))}
@@ -216,7 +216,7 @@ export default function TeamSection() {
             {invites.map((inv) => (
               <div key={inv.id} className="flex items-center justify-between gap-3 px-5 py-2.5 text-sm">
                 <span className="text-ink-soft min-w-0 truncate">
-                  {inv.email} · <span className="text-[13px]">{inv.role === "ADMIN" ? "Admin" : "Sales"}</span>
+                  {inv.email} · <span className="text-[13px]">{inv.role === "ADMIN" ? "Admin" : "Can reply"}</span>
                 </span>
                 <div className="flex items-center gap-3 shrink-0">
                   {inv.link && (
@@ -248,7 +248,7 @@ export default function TeamSection() {
             onChange={(e) => setInviteRole(e.target.value as TeamRole)}
             className="rounded-[12px] border border-line bg-paper px-2 py-2 text-sm"
           >
-            <option value="SALES">Sales</option>
+            <option value="SALES">Can reply</option>
             <option value="ADMIN">Admin</option>
           </select>
           <button

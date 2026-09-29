@@ -1434,3 +1434,20 @@ about their business "like a new hired employee asks their manager", without ann
   business.
 **Left open on the board, accepted as drawn:** the desktop side-column placement. If it proves distracting in use,
 desktop waits for an empty list too.
+
+## A-074 — Settings wording: "Your business", "Can reply", and the founding-tester plan card ^A-074
+**Date:** 2026-09-29 · **Source:** founder, one decision at a time, from the Settings Pages board
+(https://claude.ai/artifact/AQEyWpThMtAUSKwBVBYe85).
+**What specifically:**
+- **"Your business"** replaces "Name and trade" as the Settings row and page title. "Trade" reads oddly to a realtor
+  or a clinic.
+- **"Can reply"** replaces "Sales" as the name of the non-admin team role, everywhere it shows. It says what the role
+  does; "Sales" reads like a report or a team name.
+- **Your plan, during the test:** the card is titled "Founding tester" (the Settings row says the same), and reads:
+  "Everything is free while we test. You have every feature. When paid plans start, founding testers get a special
+  price." and "We'll email you at least 30 days before anything changes. Nothing is charged without you choosing a plan."
+**Why the softer price line:** the founder chose "a special price" over "a lower price for as long as you stay". It
+still rewards testers, without locking a price in forever before costs are known. The 30-day notice and "nothing is
+charged without you choosing a plan" are real promises and must stay true.
+**Not approved yet (still only on the board):** merging "What FollowUp knows" into Your business, and the reworked
+team rows. Only the wording above was decided.

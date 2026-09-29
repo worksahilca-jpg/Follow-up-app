@@ -35,6 +35,23 @@ export function normalizeSender(email: string): string {
   return email.trim().toLowerCase();
 }
 
+/** A plain email address, and nothing else. */
+const SENDER_ADDRESS = /^[a-z0-9._%+'-]{1,64}@[a-z0-9-]+(\.[a-z0-9-]+)+$/;
+
+/**
+ * A customer who is deleted outright takes the owner's earlier call on
+ * them along, so their address stops going to the classifier as an example
+ * (audit 2026-09-29). Best-effort.
+ */
+export async function forgetSender(businessId: string, sender: string | null): Promise<void> {
+  if (!sender) return;
+  try {
+    await prisma.senderVerdict.deleteMany({ where: { businessId, sender: normalizeSender(sender) } });
+  } catch (err) {
+    console.error(`Could not forget a sender for business ${businessId}:`, err);
+  }
+}
+
 export async function recordSenderVerdict(
   businessId: string,
   sender: string,
@@ -42,7 +59,10 @@ export async function recordSenderVerdict(
   subject: string | null
 ): Promise<void> {
   const key = normalizeSender(sender);
-  if (!key) return;
+  // An address, never free text: a From header with no angle brackets
+  // parses whole as "the email", and "unknown" stands in for a missing one.
+  // Neither is a sender to remember, and both would reach the classifier.
+  if (!SENDER_ADDRESS.test(key)) return;
   const trimmed = subject?.trim().slice(0, 200) || null;
   await prisma.senderVerdict.upsert({
     where: { businessId_sender: { businessId, sender: key } },

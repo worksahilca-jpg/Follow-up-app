@@ -224,49 +224,71 @@ export function gmailAccessEndingSoon(connectedAt: Date | null | undefined, now:
  * succeeded, and a warning that can't be written must not undo that.
  */
 export async function warnGmailAccessEndingSoon(businessId: string, now: Date = new Date()): Promise<void> {
-  const snapshot = await readGmailSyncSnapshot(businessId);
-  const connectedAt = snapshot?.connectedAt;
-  if (!snapshot || !connectedAt || !gmailAccessEndingSoon(connectedAt, now)) return;
+  // Every connected Gmail in the business, not just one: two admins can each
+  // connect their own, a week apart, and an unordered read of "the" inbox
+  // could pick the one that isn't ending and stay silent about the one that
+  // is (audit 2026-09-29).
+  let inboxes: GmailSyncSnapshot[];
+  try {
+    inboxes = await prisma.integration.findMany({
+      where: { provider: "gmail", status: "connected", user: { businessId } },
+      select: { lastSyncError: true, lastSyncedAt: true, connectedAt: true, accountEmail: true, user: { select: { email: true } } },
+    });
+  } catch (err) {
+    console.error(`Could not read Gmail connections for business ${businessId}:`, err);
+    return;
+  }
+  const ending = inboxes.filter((i) => gmailAccessEndingSoon(i.connectedAt, now));
+  if (ending.length === 0) return;
 
   let admins: { id: string; email: string }[];
   try {
     admins = await adminsOf(businessId);
-    if (admins.length === 0) return;
-    const already = await prisma.notification.count({
-      where: {
-        userId: { in: admins.map((a) => a.id) },
-        leadId: null,
-        message: { contains: GMAIL_ENDING_MARKER },
-        createdAt: { gte: connectedAt },
-      },
-    });
-    if (already > 0) return;
-  } catch (err) {
-    console.error(`Could not check whether business ${businessId} was warned that Gmail access ends soon:`, err);
-    return;
-  }
-
-  const inbox = inboxLabel(snapshot);
-  const message =
-    `FollowUp's access to ${inbox} ${GMAIL_ENDING_MARKER}. ` +
-    `Reconnect Gmail in Settings now so new emails keep being picked up without a gap. ` +
-    `While FollowUp is in beta, Google asks for this every 7 days.`;
-  try {
-    await notifyEach(
-      admins.map((a) => a.id),
-      message
-    );
   } catch (err) {
     console.error(`Could not warn business ${businessId} that Gmail access ends soon:`, err);
+    return;
   }
+  if (admins.length === 0) return;
 
-  const content = gmailEndingSoonEmail({ inbox, base: appUrl() });
-  for (const admin of admins) {
-    if (!admin.email) continue;
+  for (const snapshot of ending) {
+    const connectedAt = snapshot.connectedAt!;
+    const inbox = inboxLabel(snapshot);
     try {
-      await sendAlertEmail({ to: admin.email, ...content, idempotencyKey: `gmail-ending-${businessId}-${connectedAt.getTime()}-${admin.id}` });
+      const already = await prisma.notification.count({
+        where: {
+          userId: { in: admins.map((a) => a.id) },
+          leadId: null,
+          message: { contains: `${inbox} ${GMAIL_ENDING_MARKER}` },
+          createdAt: { gte: connectedAt },
+        },
+      });
+      if (already > 0) continue;
     } catch (err) {
-      console.error(`Could not email business ${businessId} that Gmail access ends soon:`, err);
+      console.error(`Could not check whether business ${businessId} was warned that Gmail access ends soon:`, err);
+      continue;
+    }
+
+    const message =
+      `FollowUp's access to ${inbox} ${GMAIL_ENDING_MARKER}. ` +
+      `Reconnect Gmail in Settings now so new emails keep being picked up without a gap. ` +
+      `While FollowUp is in beta, Google asks for this every 7 days.`;
+    try {
+      await notifyEach(
+        admins.map((a) => a.id),
+        message
+      );
+    } catch (err) {
+      console.error(`Could not warn business ${businessId} that Gmail access ends soon:`, err);
+    }
+
+    const content = gmailEndingSoonEmail({ inbox, base: appUrl() });
+    for (const admin of admins) {
+      if (!admin.email) continue;
+      try {
+        await sendAlertEmail({ to: admin.email, ...content, idempotencyKey: `gmail-ending-${businessId}-${connectedAt.getTime()}-${admin.id}` });
+      } catch (err) {
+        console.error(`Could not email business ${businessId} that Gmail access ends soon:`, err);
+      }
     }
   }
 }

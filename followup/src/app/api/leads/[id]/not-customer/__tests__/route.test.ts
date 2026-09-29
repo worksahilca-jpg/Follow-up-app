@@ -28,18 +28,26 @@ const params = Promise.resolve({ id: "lead1" });
 const call = () => POST(new Request("http://localhost/api/leads/lead1/not-customer", { method: "POST" }), { params });
 const last = new Date("2026-09-20T10:00:00Z");
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  getSessionContext.mockResolvedValue({ businessId: "biz1", userId: "u1" });
-  prismaMock.lead.findFirst.mockResolvedValue({
+/** Someone who only ever emailed, and never did business here. */
+function pitch(overrides: Record<string, unknown> = {}) {
+  return {
     id: "lead1",
     name: "Kira, Pixel Studio",
     email: "Kira@PixelStudio.example",
+    stage: "NEW",
     conversations: [
-      { externalId: "thread-1", emailProvider: "gmail", messages: [{ sentAt: last }] },
-      { externalId: "conv-2", emailProvider: "outlook", messages: [] },
+      { channel: "email", externalId: "thread-1", emailProvider: "gmail", messages: [{ sentAt: last }] },
+      { channel: "email", externalId: "conv-2", emailProvider: "outlook", messages: [] },
     ],
-  });
+    _count: { deals: 0, bookings: 0, followUps: 0 },
+    ...overrides,
+  };
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  getSessionContext.mockResolvedValue({ businessId: "biz1", userId: "u1" });
+  prismaMock.lead.findFirst.mockResolvedValue(pitch());
 });
 
 describe("POST /api/leads/[id]/not-customer", () => {
@@ -77,7 +85,7 @@ describe("POST /api/leads/[id]/not-customer", () => {
   });
 
   it("refuses when there is no email address to remember, and removes nothing", async () => {
-    prismaMock.lead.findFirst.mockResolvedValue({ id: "lead1", name: "DM only", email: null, conversations: [] });
+    prismaMock.lead.findFirst.mockResolvedValue(pitch({ name: "DM only", email: null, conversations: [] }));
     const res = await call();
     expect(res.status).toBe(400);
     expect(deleteLeadCascade).not.toHaveBeenCalled();
@@ -94,5 +102,29 @@ describe("POST /api/leads/[id]/not-customer", () => {
   it("needs a signed-in user", async () => {
     getSessionContext.mockResolvedValue(null);
     expect((await call()).status).toBe(401);
+  });
+
+  // Audit 2026-09-29: the confirm box promises "bring them back from Filtered
+  // out", which only email threads can keep. Anything else would be lost.
+  describe("refuses when it couldn't be undone", () => {
+    const cases: [string, Record<string, unknown>][] = [
+      ["a booking", { _count: { deals: 0, bookings: 1, followUps: 0 } }],
+      ["a deal", { _count: { deals: 1, bookings: 0, followUps: 0 } }],
+      ["a stage past New", { stage: "QUALIFIED" }],
+      ["replies already sent", { _count: { deals: 0, bookings: 0, followUps: 2 } }],
+      ["an Instagram conversation", { conversations: [{ channel: "instagram", externalId: null, emailProvider: null, messages: [] }, ...pitch().conversations] }],
+      ["no email thread at all", { conversations: [] }],
+    ];
+    for (const [what, overrides] of cases) {
+      it(`with ${what}: 409, and nothing is removed or remembered`, async () => {
+        prismaMock.lead.findFirst.mockResolvedValue(pitch(overrides));
+        const res = await call();
+        expect(res.status).toBe(409);
+        expect((await res.json()).message).toMatch(/Use Delete if you're sure/);
+        expect(deleteLeadCascade).not.toHaveBeenCalled();
+        expect(prismaMock.senderVerdict.upsert).not.toHaveBeenCalled();
+        expect(prismaMock.filteredEmail.upsert).not.toHaveBeenCalled();
+      });
+    }
   });
 });

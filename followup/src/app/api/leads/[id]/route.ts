@@ -3,6 +3,7 @@ import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { deleteLeadCascade } from "@/lib/leads-admin";
 import { recordAudit } from "@/lib/audit";
+import { forgetSender } from "@/lib/senderVerdicts";
 
 // DELETE /api/leads/[id] — permanently removes a lead and everything under
 // it (conversations, messages, deals, follow-ups, tasks, AI insights).
@@ -24,6 +25,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   // the guard that still holds if the check above is ever refactored away
   // (audits 2026-09-16 L-2, 2026-09-26).
   await deleteLeadCascade(id, ctx.businessId);
+  await forgetSender(ctx.businessId, lead.email);
   void recordAudit(ctx, "lead.delete", { targetType: "lead", targetId: id });
 
   return NextResponse.json({ success: true });

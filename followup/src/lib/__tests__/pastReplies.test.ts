@@ -134,6 +134,53 @@ describe("deidentifyReply", () => {
     });
     expect(out).toBe("[OWNER_NAME], thanks. [OWNER_NAME] will call. [LEAD_NAME] and [LEAD_NAME] both fine. Zoëtrope stays.");
   });
+
+  // Audit 2026-09-29: names went through the substring matcher, so they ate ordinary words.
+  describe("never eats ordinary words (audit 2026-09-29)", () => {
+    it("keeps words that contain a name", () => {
+      const out = deidentifyReply("Here's the estimate for the time we discussed. A sample of the tile. Samples ship Monday.", {
+        recipientName: "Tim",
+        recipientEmail: "tim@example.com",
+        ownerName: "Sam",
+        ownerEmail: "sam@x.ca",
+      });
+      expect(out).toBe("Here's the estimate for the time we discussed. A sample of the tile. Samples ship Monday.");
+    });
+
+    it("leaves an owner named Will Don's everyday words alone, and still catches the full name", () => {
+      const out = deidentifyReply("I will send it over, and I don't mind. Thanks, Will Don", {
+        recipientName: "Mark Ed",
+        recipientEmail: "mark@example.com",
+        ownerName: "Will Don",
+        ownerEmail: "will@x.ca",
+      });
+      expect(out).toBe("I will send it over, and I don't mind. Thanks, [OWNER_NAME]");
+    });
+
+    it("only matches a name as it's written, capitalised", () => {
+      const out = deidentifyReply("I asked about the parts you wanted. Ed will call.", {
+        recipientName: "Ed",
+        recipientEmail: "ed@example.com",
+        ownerName: "Art",
+        ownerEmail: "a@x.ca",
+      });
+      expect(out).toBe("I asked about the parts you wanted. [LEAD_NAME] will call.");
+    });
+  });
+
+  describe("catches the name in more greetings (audit 2026-09-29)", () => {
+    it("two people, lowercase greetings and a bare name opener", () => {
+      expect(deidentifyReply("Hi Sam and Jo,\nSee you Friday.", noNames)).toBe("Hi [LEAD_NAME],\nSee you Friday.");
+      expect(deidentifyReply("hi sam,\nsee you friday", noNames)).toBe("hi [LEAD_NAME],\nsee you friday");
+      expect(deidentifyReply("Sam,\n\nThanks for the photos.", noNames)).toBe("[LEAD_NAME],\n\nThanks for the photos.");
+    });
+
+    it("leaves ordinary openers alone", () => {
+      expect(deidentifyReply("Thanks,\n\nSee you then.", noNames)).toBe("Thanks,\n\nSee you then.");
+      expect(deidentifyReply("hi there, thanks", noNames)).toBe("hi there, thanks");
+      expect(deidentifyReply("Great,\nbooked.", noNames)).toBe("Great,\nbooked.");
+    });
+  });
 });
 
 describe("parseAddressList / recipientKey", () => {

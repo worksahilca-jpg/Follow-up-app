@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
 import { runClassifierEval } from "@/lib/classifierEval";
 
-// Two dozen cases, each one or two model calls, four at a time.
+// About a hundred cases (src/lib/classifierEval.ts), each one or two model calls, six at a time.
 export const maxDuration = 300;
 
 // GET /api/admin/classifier-eval — run the lead check against the real
@@ -13,7 +13,7 @@ export const maxDuration = 300;
 //
 // Open it in the browser while signed in as a platform admin. Gated by
 // PLATFORM_ADMIN_EMAILS like /api/office/run; anyone else gets a 404, so
-// the route doesn't confirm it exists. Costs roughly 25–50 small model
+// the route doesn't confirm it exists. Costs roughly 100–200 small model
 // calls per run.
 export async function GET() {
   const session = await getServerSession(authOptions);

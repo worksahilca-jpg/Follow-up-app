@@ -8522,3 +8522,15 @@ A QA pass over today's merges found three real problems. All fixed, none change 
 - **The owner's corrections are data, not rules.** They moved out of the classifier's instructions into the message
   itself, stripped of quotes and brackets, and only real email addresses are remembered.
 - Also: the day-6 warning covers every connected Gmail, and deleting a customer forgets FollowUp's note about them.
+
+## 2026-09-29 — One customer across the CRM and the inbox (founder: "yes fix both")
+
+The founder asked whether customers from a connected CRM and from the owner's own inbox would clash. They could:
+- **Duplicates:** a CRM storing "John@Example.com" or "(416) 555-0199" created a second customer beside the inbox's
+  "john@example.com" or the text line's "+14165550199", so one person could get two check-ins. CRM emails are now
+  lowercased and phones put in +1 form, and a customer already here from the inbox is linked to their CRM record
+  instead of being skipped (which also means FollowUp's replies now reach the CRM as notes).
+- **Two systems following up:** CRMs often run their own follow-ups, which FollowUp can't see. So FollowUp never sends
+  to a customer who is also in the CRM on its own. The draft waits with the reason "they're also in your CRM, which may
+  send its own follow-ups…". Settings → Your CRM says so in one line. A customer the owner has set to "Handle it all"
+  on their own page is still the owner's explicit choice.

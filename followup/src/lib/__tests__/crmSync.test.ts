@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/db", () => ({
   prisma: {
     crmConnection: { findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
-    lead: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
+    lead: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn(), create: vi.fn() },
     business: { findUnique: vi.fn() },
   },
 }));
@@ -26,7 +26,7 @@ vi.mock("@/lib/crm", () => ({
 }));
 
 import { prisma } from "@/lib/db";
-import { syncCrmForBusiness } from "@/lib/crmSync";
+import { normalizeCrmEmail, normalizeCrmPhone, syncCrmForBusiness } from "@/lib/crmSync";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -40,6 +40,7 @@ beforeEach(() => {
   p.crmConnection.findUnique.mockResolvedValue({ businessId: "biz1", provider: "followupboss", apiKey: "key", lastSyncedAt: null, syncCursor: null });
   p.crmConnection.update.mockResolvedValue({});
   p.lead.findUnique.mockResolvedValue(null);
+  p.lead.findFirst.mockResolvedValue(null);
   p.lead.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: "new-lead", ...data }));
   p.lead.update.mockResolvedValue({});
 });
@@ -150,5 +151,58 @@ describe("CRM sync", () => {
     const r = await syncCrmForBusiness("biz1");
     expect(r).toEqual({ imported: 0, touched: 0, truncated: false });
     expect(fetchPage).not.toHaveBeenCalled();
+  });
+});
+
+// Founder, 2026-09-29: "they will clash and make confusion". The same
+// person in the CRM and the inbox must be one customer.
+describe("one person, one customer, across the CRM and the inbox", () => {
+  it("brings CRM emails and phone numbers to the form the other channels use", () => {
+    expect(normalizeCrmEmail("  John@Example.COM ")).toBe("john@example.com");
+    expect(normalizeCrmEmail("   ")).toBeNull();
+    expect(normalizeCrmPhone("(416) 555-0199")).toBe("+14165550199");
+    expect(normalizeCrmPhone("1-416-555-0199")).toBe("+14165550199");
+    expect(normalizeCrmPhone("+44 20 7946 0958")).toBe("+442079460958");
+    expect(normalizeCrmPhone("ext 12")).toBeNull();
+  });
+
+  it("links an existing inbox customer to their CRM record instead of creating a second one", async () => {
+    p.lead.findFirst.mockResolvedValue({ id: "gmail-lead", crmProvider: null, crmId: null, email: "john@example.com", phone: null });
+    fetchPage.mockResolvedValueOnce({
+      people: [person("201", { email: "John@Example.com", phone: "(416) 555-0199" })],
+      nextCursor: null,
+      hasMore: false,
+    });
+    const r = await syncCrmForBusiness("biz1");
+    expect(p.lead.create).not.toHaveBeenCalled();
+    expect(r).toMatchObject({ imported: 0, touched: 1 });
+    expect(p.lead.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          businessId: "biz1",
+          OR: [{ email: { equals: "john@example.com", mode: "insensitive" } }, { phone: "+14165550199" }],
+        },
+      })
+    );
+    expect(p.lead.update).toHaveBeenCalledWith({
+      where: { id: "gmail-lead" },
+      data: { crmProvider: "followupboss", crmId: "201", phone: "+14165550199" },
+    });
+  });
+
+  it("leaves a customer already tied to a different CRM record alone", async () => {
+    p.lead.findFirst.mockResolvedValue({ id: "l1", crmProvider: "followupboss", crmId: "999", email: "a@example.com", phone: null });
+    fetchPage.mockResolvedValueOnce({ people: [person("201", { email: "a@example.com" })], nextCursor: null, hasMore: false });
+    await syncCrmForBusiness("biz1");
+    expect(p.lead.update).not.toHaveBeenCalled();
+    expect(p.lead.create).not.toHaveBeenCalled();
+  });
+
+  it("creates new CRM customers with the normalized email and phone", async () => {
+    fetchPage.mockResolvedValueOnce({ people: [person("301", { email: "New@Example.com", phone: "416.555.0100" })], nextCursor: null, hasMore: false });
+    await syncCrmForBusiness("biz1");
+    expect(p.lead.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ email: "new@example.com", phone: "+14165550100" }) })
+    );
   });
 });

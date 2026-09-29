@@ -105,7 +105,38 @@ export async function syncCrmForBusiness(businessId: string): Promise<CrmSyncRes
   return { imported, touched, truncated };
 }
 
-async function upsertCrmLead(businessId: string, provider: string, person: CrmPerson): Promise<"imported" | "touched" | "skipped"> {
+/**
+ * The same person in the CRM and in the inbox must be one customer, not
+ * two — two means two check-ins to one person (founder, 2026-09-29: "they
+ * will clash and make confusion"). Lead's unique keys are exact, so a CRM
+ * that stores "John@Example.com" or "(416) 555-0199" used to create a
+ * second lead beside the Gmail one ("john@example.com") or the text one
+ * ("+14165550199"). Both are brought to the form the other channels use.
+ */
+export function normalizeCrmEmail(email: string | null): string | null {
+  const e = email?.trim().toLowerCase();
+  return e ? e : null;
+}
+
+/**
+ * Digits in E.164, the form Twilio and WhatsApp numbers arrive in. Ten
+ * digits are read as North American (+1), the only market FollowUp serves
+ * today; anything already starting with + keeps its country code. A number
+ * too short to be real is dropped rather than guessed at.
+ */
+export function normalizeCrmPhone(phone: string | null): string | null {
+  if (!phone) return null;
+  const hasPlus = phone.trim().startsWith("+");
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 7) return null;
+  if (hasPlus) return `+${digits}`;
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return `+${digits}`;
+}
+
+async function upsertCrmLead(businessId: string, provider: string, raw: CrmPerson): Promise<"imported" | "touched" | "skipped"> {
+  const person: CrmPerson = { ...raw, email: normalizeCrmEmail(raw.email), phone: normalizeCrmPhone(raw.phone) };
   if (!person.email && !person.phone) return "skipped"; // nothing to reach them on
   const existing = await prisma.lead.findUnique({
     where: { businessId_crmProvider_crmId: { businessId, crmProvider: provider, crmId: person.externalId } },
@@ -114,6 +145,38 @@ async function upsertCrmLead(businessId: string, provider: string, person: CrmPe
     if (existing.lastContacted && existing.lastContacted >= person.createdAt) return "skipped";
     await prisma.lead.update({ where: { id: existing.id }, data: { lastContacted: person.createdAt } });
     await scoreAndDraftForLead(existing.id).catch((err) => console.error(`CRM lead re-score failed ${existing.id}:`, err));
+    return "touched";
+  }
+
+  // Already a customer here from the inbox, a DM or a form: link them to
+  // their CRM record instead of skipping them. Skipping left the lead with
+  // no CRM identity, so FollowUp's replies never reached the CRM as notes,
+  // and the "also in your CRM" hold (src/lib/automation.ts) never applied.
+  // Matched case-insensitively on email, then on the normalized phone.
+  const match = await prisma.lead.findFirst({
+    where: {
+      businessId,
+      OR: [
+        ...(person.email ? [{ email: { equals: person.email, mode: "insensitive" as const } }] : []),
+        ...(person.phone ? [{ phone: person.phone }] : []),
+      ],
+    },
+    select: { id: true, crmProvider: true, crmId: true, email: true, phone: true },
+  });
+  if (match) {
+    // Already tied to a different CRM record: leave it. Two CRM contacts
+    // for one person is the CRM's duplicate to resolve, not ours to pick.
+    if (match.crmId) return "skipped";
+    await prisma.lead.update({
+      where: { id: match.id },
+      data: {
+        crmProvider: provider,
+        crmId: person.externalId,
+        // Fill a gap, never overwrite what the customer told us directly.
+        ...(match.email ? {} : person.email ? { email: person.email } : {}),
+        ...(match.phone ? {} : person.phone ? { phone: person.phone } : {}),
+      },
+    });
     return "touched";
   }
 
@@ -137,9 +200,8 @@ async function upsertCrmLead(businessId: string, provider: string, person: CrmPe
     await scoreAndDraftForLead(lead.id).catch((err) => console.error(`CRM lead score failed ${lead.id}:`, err));
     return "imported";
   } catch (err) {
-    // Two identities landing on the same email/phone (e.g. also a Gmail
-    // lead) — Lead's (businessId, email) / (businessId, phone) unique
-    // constraints win; not treated as a failure, just not a NEW lead.
+    // A lead created between the match above and this insert (a sync
+    // racing this one): the unique keys win, and the next tick links it.
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") return "skipped";
     throw err;
   }

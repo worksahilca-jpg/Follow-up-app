@@ -93,7 +93,10 @@ already present) → Settings.
    answered still looks unanswered. A Page connected before a field was
    ticked keeps its old subscription until one Disconnect → Connect.
 5. Permissions requested: `pages_show_list`, `pages_messaging`,
-   `pages_manage_metadata` — only what Messenger needs (founder, 2026-09-28).
+   `pages_manage_metadata` — only what Messenger needs (founder, 2026-09-28) —
+   plus `business_management` (founder, 2026-09-29): without it Facebook
+   leaves a Page owned by a business portfolio out of the Page list, and
+   the connect fails with "doesn't manage any Pages".
    Lead Ads (`leads_retrieval` and the `leadgen` field) is left out until it
    gets its own review round; the webhook route still handles `leadgen`, so
    turning it on later is the scope, the field, and the review. Up to 25

@@ -61,6 +61,7 @@ permissions, seven short videos, each starting on the public landing page:
 | `instagram_business_basic` | Connect with Instagram, the consent screen with this permission visible, the account name appearing in Settings |
 | `instagram_business_manage_messages` | A second account (added as a Tester) DMs the business; the DM appears on Leads; a reply is approved in FollowUp; the reply arrives in Instagram |
 | `pages_show_list` | Connect with Facebook, the list of Pages, picking one |
+| `business_management` | The same connect flow with a Page owned by a business portfolio: the portfolio's Page appears in FollowUp as connected (without this permission Facebook hides that Page) |
 | `pages_messaging` | Same as Instagram, on Messenger |
 | `pages_manage_metadata` | The Page being connected (this is the webhook subscription) |
 | `pages_read_engagement` | The Page's messages showing in FollowUp |

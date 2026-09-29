@@ -336,7 +336,15 @@ export async function upsertLeadFromLeadgen(
 // 2026-09-28): asking for a permission the review video can't show in use
 // is a common rejection. pages_read_engagement had no code using it;
 // leads_retrieval waits for Lead Ads.
-const FACEBOOK_OAUTH_SCOPES = "pages_show_list,pages_messaging,pages_manage_metadata";
+//
+// business_management (founder, 2026-09-29): since Graph API v17,
+// /me/accounts leaves out a Page owned by a business portfolio unless the
+// app also holds this permission, even when the person has full control of
+// that Page. Without it, connecting the founder's own portfolio Page said
+// "That Facebook account doesn't manage any Pages". Most businesses keep
+// their Page in a portfolio, so every one of them would have hit the same
+// wall.
+const FACEBOOK_OAUTH_SCOPES = "pages_show_list,pages_messaging,pages_manage_metadata,business_management";
 
 export function facebookOAuthAvailable(): boolean {
   return !!process.env.FACEBOOK_APP_ID && !!process.env.FACEBOOK_APP_SECRET;

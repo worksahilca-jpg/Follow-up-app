@@ -416,17 +416,18 @@ describe("the fallback, when the inbox can't be known, is the oldest connection 
 describe("Sync now, push and the push watch read the same inbox every time", () => {
   it("Sync now reads the oldest connection", async () => {
     await syncGmailForBusiness("biz1");
-    expect(state.lists.map((l) => l.token)).toEqual(["rt-A"]);
+    // Two searches (the inbox, and lead sites under Updates — b017), both in A.
+    expect(state.lists.map((l) => l.token)).toEqual(["rt-A", "rt-A"]);
   });
 
   it("a push sync reads the oldest connection, from that inbox's own sync clock", async () => {
     await syncGmailForBusinessFromPush("biz1");
-    expect(state.lists).toHaveLength(1);
-    expect(state.lists[0].token).toBe("rt-A");
+    expect(state.lists).toHaveLength(2);
+    expect(state.lists.map((l) => l.token)).toEqual(["rt-A", "rt-A"]);
     // A's lastSyncedAt minus the 15-minute overlap — not B's, which an
     // unordered read of the same rows would have returned.
     const sinceA = Math.floor((A.lastSyncedAt!.getTime() - 15 * 60_000) / 1000);
-    expect(state.lists[0].q).toContain(`after:${sinceA}`);
+    for (const l of state.lists) expect(l.q).toContain(`after:${sinceA}`);
   });
 
   it("the push watch is set on the oldest connection", async () => {

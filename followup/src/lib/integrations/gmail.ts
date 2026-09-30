@@ -40,7 +40,7 @@ import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
-import { isAutomatedAddress, threadCustomer } from "@/lib/sharedSenders";
+import { isAutomatedAddress, leadMarketplaceFromQuery, threadCustomer } from "@/lib/sharedSenders";
 import type { InlineImage } from "@/lib/emailAssets";
 import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
 
@@ -1073,13 +1073,33 @@ export async function fetchSalesConversations(
   // The automatic tick only looks at what's new, where 30 threads is plenty.
   // Known and previously-rejected threads skip the classifier, so depth
   // costs Gmail reads, not OpenAI calls, on every run after the first.
-  const { data: listData } = await gmail.users.threads.list({
-    userId: "me",
-    q: `-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d${sinceClause}`,
-    maxResults: options.since ? 30 : 100,
+  //
+  // The Updates tab stays skipped (receipts, shipping, account mail), with
+  // one exception: Gmail often files lead-site notices ("New lead from
+  // Priya" from Thumbtack) there, so a second, narrow search reads Updates
+  // for those senders only (backlog b017, founder said yes 2026-09-30).
+  // The marketplace gate in threadCustomer and the classifier still decide
+  // which of them are leads.
+  const [{ data: listData }, { data: updatesData }] = await Promise.all([
+    gmail.users.threads.list({
+      userId: "me",
+      q: `-category:promotions -category:social -category:updates -category:forums -in:chats newer_than:90d${sinceClause}`,
+      maxResults: options.since ? 30 : 100,
+    }),
+    gmail.users.threads.list({
+      userId: "me",
+      q: `category:updates ${leadMarketplaceFromQuery()} newer_than:90d${sinceClause}`,
+      maxResults: options.since ? 10 : 50,
+    }),
+  ]);
+  const seen = new Set<string>();
+  const threadRefs = [...(listData?.threads ?? []), ...(updatesData?.threads ?? [])].filter((t) => {
+    if (!t.id || seen.has(t.id)) return false;
+    seen.add(t.id);
+    return true;
   });
 
-  return processThreadRefs(businessId, gmail, selfEmail, listData.threads ?? [], "Gmail", {
+  return processThreadRefs(businessId, gmail, selfEmail, threadRefs, "Gmail", {
     maxClassifications: options.maxClassifications,
     onResult: options.onResult,
   });

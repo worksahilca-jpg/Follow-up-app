@@ -112,6 +112,8 @@ export function mapDbLeadToUiLead(dbLead: DbLead, rules: BusinessAutomationRules
     automationTier,
     optedOutAt: dbLead.optedOutAt ? dbLead.optedOutAt.toISOString() : null,
     talkedAt: dbLead.talkedAt ? dbLead.talkedAt.toISOString() : null,
+    viaSite: dbLead.viaSite,
+    viaSiteUrl: dbLead.viaSiteUrl,
     automationStatus: computeAutomationStatus(
       {
         stage,

@@ -172,6 +172,7 @@ describe("getPendingApprovals", () => {
         leadLastMessageAt: null,
         laterUntil: null,
         customerToldAt: null,
+        site: null,
       },
     ]);
   });

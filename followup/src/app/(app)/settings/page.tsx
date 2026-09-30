@@ -1731,7 +1731,7 @@ function SettingsPageInner() {
           Admins can invite teammates, change roles, and remove people. Everyone can see who&apos;s on the team.
         </p>
         <div className="mt-4">
-          <TeamSection />
+          <TeamSection onlyAdminsSend={onlyAdminsSend} />
         </div>
         <OnlyAdminsSendSetting onChange={setOnlyAdminsSend} />
       </section>

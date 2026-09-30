@@ -1451,3 +1451,24 @@ still rewards testers, without locking a price in forever before costs are known
 charged without you choosing a plan" are real promises and must stay true.
 **Not approved yet (still only on the board):** merging "What FollowUp knows" into Your business, and the reworked
 team rows. Only the wording above was decided.
+
+## A-075 — "Reply on {site}" for lead-site customers, and the Team page's "drafts only" note ^A-075
+**Date:** 2026-09-30 · **Source:** founder, "approve the drawing", on the Lead-Site Replies board
+(https://claude.ai/artifact/Gc9LEGNVZ9WsStBWoMfyw3). Backlog b018 and b009.
+**What specifically:**
+- **When a customer came through a lead site that hides their contact** (Thumbtack, Angi, HomeStars, Kijiji…) and
+  FollowUp has no email to write to, the warm reply card becomes **"Reply on {site}"**: one line saying the site keeps
+  the email private, FollowUp's written reply (still with the "$ price" blank), and **Open {site} ↗**, **Copy reply**,
+  and two quiet links, **I replied · Don't reply**. Every other customer keeps the normal card.
+- **On the phone, one button does both:** "Copy & open {site}", with the two quiet links under it (A-026, R-015).
+- **If the site shared a phone number,** "Call {number}" is the first button and "Copy & open {site}" the second.
+- **"I replied"** works like "We talked" (A-039): one tap, no pop-up, a toast with Undo, a history line "You replied
+  to {name} on {site} · {time}", and FollowUp stops reminding. A new message from them through the site shows up again.
+- **"Open {site}"** opens the customer's own page when the site's email carries a link to it, else the site itself.
+- **Team page, while "Only admins send" is on:** under each "Can reply" role, "Drafts only · only admins send"; on the
+  phone it sits on the role line. Under the list, for admins: "'Only admins send' is on. People who can reply can edit
+  drafts, and an admin sends them. Change". None of it shows when the setting is off.
+**Why:** FollowUp can't press Send inside a lead site, even on Automatic (no connection to it), so the one step it
+can't reach comes to the owner, with the words already written. A "Can reply" label that's untrue while only admins
+send confuses teammates.
+**Wording:** "I replied" stays (the founder approved as drawn; "Done on Thumbtack" was the alternative offered).

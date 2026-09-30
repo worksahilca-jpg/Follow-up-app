@@ -37,7 +37,10 @@ function formatWindowLeft(hours: number): string {
 }
 
 export function describeAutomationStatus(
-  status: Exclude<AutomationStatus, { kind: "closed" }>
+  status: Exclude<AutomationStatus, { kind: "closed" }>,
+  // A lead-site customer (b018, A-075): their "talked" is usually "I
+  // replied" on the site, so it's said as answered, not as a conversation.
+  opts: { onSite?: boolean } = {}
 ): { icon: typeof Zap; label: string; detail?: string; bg: string; fg: string; pulse?: boolean; emphasis?: boolean } {
   switch (status.kind) {
     // Calm, not coral: nothing went wrong. The owner answered them where
@@ -45,8 +48,8 @@ export function describeAutomationStatus(
     case "talked":
       return {
         icon: CheckCircle2,
-        label: "You talked with them",
-        detail: `On ${new Date(status.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}. FollowUp won't check in until they write again.`,
+        label: opts.onSite ? "You answered them" : "You talked with them",
+        detail: `On ${new Date(status.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}. FollowUp won't ${opts.onSite ? "remind you" : "check in"} until they write again.`,
         bg: "var(--line)",
         fg: "var(--ink-soft)",
       };
@@ -223,14 +226,17 @@ export default function AutomationStatusBadge({
   status,
   compact = false,
   line = false,
+  onSite = false,
 }: {
   status: AutomationStatus | undefined;
   compact?: boolean;
+  /** A lead-site customer: "talked" reads as answered (b018). */
+  onSite?: boolean;
   /** One calm line with a dot, no card (A-069, the customer page's side column). */
   line?: boolean;
 }) {
   if (!status || status.kind === "closed") return null;
-  const { icon: Icon, label, detail, fg, pulse, emphasis } = describeAutomationStatus(status);
+  const { icon: Icon, label, detail, fg, pulse, emphasis } = describeAutomationStatus(status, { onSite });
 
   if (line) {
     return (

@@ -39,7 +39,12 @@ function formatCurrency(n: number): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
-export default function TeamSection() {
+/**
+ * `onlyAdminsSend`: while "Only admins send" (A-041) is on, "Can reply"
+ * says it means drafts only (b009, A-075), so a teammate isn't told they
+ * can do something the account won't let them.
+ */
+export default function TeamSection({ onlyAdminsSend = false }: { onlyAdminsSend?: boolean } = {}) {
   const { data: session } = useSession();
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -179,6 +184,10 @@ export default function TeamSection() {
                 {m.id === selfId && <span className="text-ink-soft font-normal"> (you)</span>}
               </p>
               <p className="text-[13px] text-ink-soft truncate">{m.email}</p>
+              {/* On the phone the note sits on this line; there's no room beside the role. */}
+              {onlyAdminsSend && m.role === "SALES" && (
+                <p className="text-[12.5px] text-ink-faint sm:hidden">Can reply · drafts only while only admins send</p>
+              )}
             </div>
             <div className="hidden sm:flex gap-6 text-[13px] text-ink-soft shrink-0">
               <span>{m.assignedLeads} leads</span>
@@ -189,7 +198,8 @@ export default function TeamSection() {
               {formatCurrency(m.revenueGenerated)}
             </span>
             {isAdmin && m.id !== selfId ? (
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="shrink-0 text-right">
+              <div className="flex items-center gap-2">
                 <select
                   value={m.role}
                   onChange={(e) => changeRole(m.id, e.target.value as TeamRole)}
@@ -202,12 +212,29 @@ export default function TeamSection() {
                   Remove
                 </button>
               </div>
+              {onlyAdminsSend && m.role === "SALES" && (
+                <span className="mt-0.5 hidden text-[12.5px] text-ink-faint sm:block">Drafts only · only admins send</span>
+              )}
+              </div>
             ) : (
-              <span className="text-[13px] text-ink-soft shrink-0 w-16 text-right">{m.role === "ADMIN" ? "Admin" : "Can reply"}</span>
+              <span className="text-[13px] text-ink-soft shrink-0 min-w-16 text-right">
+                {m.role === "ADMIN" ? "Admin" : "Can reply"}
+                {onlyAdminsSend && m.role === "SALES" && (
+                  <span className="mt-0.5 hidden text-[12.5px] text-ink-faint sm:block">Drafts only · only admins send</span>
+                )}
+              </span>
             )}
           </div>
         ))}
       </div>
+      {isAdmin && onlyAdminsSend && members.some((m) => m.role === "SALES") && (
+        <p className="mt-3 text-[13px] text-ink-soft">
+          &ldquo;Only admins send&rdquo; is on. People who can reply can edit drafts, and an admin sends them.{" "}
+          <a href="#only-admins-send" className="text-ink underline underline-offset-2">
+            Change
+          </a>
+        </p>
+      )}
 
       {isAdmin && invites.length > 0 && (
         <div className="mt-4">

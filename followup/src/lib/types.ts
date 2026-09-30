@@ -101,6 +101,11 @@ export interface Lead {
   // "We talked" (Lead.talkedAt, src/lib/talked.ts): when the owner said
   // they spoke with this customer outside FollowUp. ISO, or null.
   talkedAt?: string | null;
+  // The lead site that passed this customer on when it keeps their contact
+  // private (Lead.viaSite, b018): the owner answers there. See
+  // src/lib/siteReply.ts.
+  viaSite?: string | null;
+  viaSiteUrl?: string | null;
   // What FollowUp is actually doing with this lead right now (see
   // src/lib/automationStatus.ts) — computed server-side in leads-data.ts,
   // not present on demo-data.ts's static leads (no real automation runs

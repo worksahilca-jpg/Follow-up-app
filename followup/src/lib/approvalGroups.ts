@@ -81,8 +81,11 @@ export type ApprovalGroup = {
  * trusting a list of ids posted by a browser.
  */
 export function isSafeToSendInBulk(
-  approval: Pick<PendingApproval, "reason" | "draftRiskLevel"> & { draftMessage?: string }
+  approval: Pick<PendingApproval, "reason" | "draftRiskLevel" | "site"> & { draftMessage?: string }
 ): boolean {
+  // Answered on a lead site, not by email (b018, A-075): FollowUp can't
+  // send it at all, so it is never in a "Send all".
+  if (approval.site) return false;
   // Held for a reason of its own → needs a human, whatever the verdict.
   if (!isHeldOnlyByApprovalSetting(approval.reason)) return false;
   // A draft that tells the customer something only the owner knows — it

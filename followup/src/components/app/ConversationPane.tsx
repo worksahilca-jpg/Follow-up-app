@@ -3,6 +3,8 @@ import type { Lead, Message } from "@/lib/types";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import { describeBasis } from "@/lib/basedOn";
 import { languageName } from "@/lib/leadLanguage";
+import SiteReplyCard from "@/components/app/SiteReplyCard";
+import { siteReplyFor } from "@/lib/siteReply";
 import ReplyCard from "./ReplyCard";
 import Thread from "./Thread";
 import { Initials, StatePill } from "./canvasBits";
@@ -45,6 +47,8 @@ export default function ConversationPane({
   const first = lead.conversation[0];
   const lastIn = [...lead.conversation].reverse().find((m: Message) => m.direction === "inbound");
   const channel = CHANNEL[(lastIn ?? first)?.channel ?? ""] ?? lead.source;
+  // A lead site that keeps the contact private: answered there (b018, A-075).
+  const siteReply = siteReplyFor(lead);
   const basis = lead.suggestedMessage
     ? describeBasis({
         draft: lead.suggestedMessage,
@@ -110,20 +114,24 @@ export default function ConversationPane({
               Held because {approval.reason.replace(/\.\s*$/, "")}.
             </p>
           )}
-          <ReplyCard
-            key={lead.id}
-            leadId={lead.id}
-            leadName={lead.name}
-            leadEmail={lead.email || undefined}
-            draft={lead.suggestedMessage}
-            draftSubject={lead.suggestedSubject}
-            waiting={Boolean(approval)}
-            seenInboundAt={lastIn?.date}
-            sendLocked={sendLocked}
-            basis={basis}
-            languageName={replyLanguage}
-            dense
-          />
+          {siteReply ? (
+            <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={Boolean(approval)} dense />
+          ) : (
+            <ReplyCard
+              key={lead.id}
+              leadId={lead.id}
+              leadName={lead.name}
+              leadEmail={lead.email || undefined}
+              draft={lead.suggestedMessage}
+              draftSubject={lead.suggestedSubject}
+              waiting={Boolean(approval)}
+              seenInboundAt={lastIn?.date}
+              sendLocked={sendLocked}
+              basis={basis}
+              languageName={replyLanguage}
+              dense
+            />
+          )}
         </div>
       </div>
     </div>

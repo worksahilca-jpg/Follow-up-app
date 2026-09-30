@@ -54,7 +54,7 @@ export default function OnlyAdminsSendSetting({ onChange, bare = false }: { onCh
   }
 
   return (
-    <div className={bare ? "py-2" : "mt-4 box p-5"}>
+    <div id="only-admins-send" className={(bare ? "py-2" : "mt-4 box p-5") + " scroll-mt-16"}>
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className={bare ? "text-base" : "font-medium text-sm"}>Only admins send</p>

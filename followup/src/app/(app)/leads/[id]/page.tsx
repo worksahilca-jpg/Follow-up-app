@@ -21,6 +21,8 @@ import CatchUp from "@/components/CatchUp";
 import { describeBasis } from "@/lib/basedOn";
 import { languageName } from "@/lib/leadLanguage";
 import Link from "next/link";
+import SiteReplyCard from "@/components/app/SiteReplyCard";
+import { siteReplyFor } from "@/lib/siteReply";
 import ReplyCard from "@/components/app/ReplyCard";
 import Thread from "@/components/app/Thread";
 import { Initials, StatePill, waitingFor } from "@/components/app/canvasBits";
@@ -39,6 +41,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const [auditTrail, freeTierStatus, sendLocked] = await Promise.all([getLeadAuditTrail(id), getFreeTierStatus(), sendLockedForSession()]);
   const autonomousAllowed = freeTierStatus?.tier !== "free";
   // "Based on" and the "In <language>" rewrite (A-043).
+  // A lead site that keeps the contact private: answered there (b018, A-075).
+  const siteReply = siteReplyFor(lead);
   const basis = lead.suggestedMessage
     ? describeBasis({
         draft: lead.suggestedMessage,
@@ -104,18 +108,22 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         <div className="mt-6">
-          <ReplyCard
-            leadId={lead.id}
-            leadName={lead.name}
-            leadEmail={lead.email || undefined}
-            draft={lead.suggestedMessage}
-            draftSubject={lead.suggestedSubject}
-            waiting={Boolean(approval)}
-            seenInboundAt={newestInboundAt(lead.conversation)}
-            sendLocked={sendLocked}
-            basis={basis}
-            languageName={replyLanguage}
-          />
+          {siteReply ? (
+            <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={Boolean(approval)} />
+          ) : (
+            <ReplyCard
+              leadId={lead.id}
+              leadName={lead.name}
+              leadEmail={lead.email || undefined}
+              draft={lead.suggestedMessage}
+              draftSubject={lead.suggestedSubject}
+              waiting={Boolean(approval)}
+              seenInboundAt={newestInboundAt(lead.conversation)}
+              sendLocked={sendLocked}
+              basis={basis}
+              languageName={replyLanguage}
+            />
+          )}
         </div>
         <div className="mt-4">
           <CatchUp leadId={lead.id} />
@@ -153,7 +161,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             an email-only customer still has a way to reach them directly. */}
         <div className="mt-3.5 flex flex-wrap items-center gap-2">
           {lead.automationStatus?.kind !== "closed" && (
-            <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} />
+            <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} onSite={Boolean(siteReply)} />
           )}
           <CopyBookingLinkButton leadId={lead.id} />
           {lead.phone && !isSocialLeadId(lead.phone) ? (
@@ -168,7 +176,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         <div className="mt-3.5">
-          <AutomationStatusBadge status={lead.automationStatus} line />
+          <AutomationStatusBadge status={lead.automationStatus} line onSite={Boolean(siteReply)} />
         </div>
 
         <div className="mt-4 overflow-hidden rounded-[18px] border border-line bg-card">
@@ -228,7 +236,9 @@ function Details({ lead, approval, now }: { lead: Lead; approval: PendingApprova
     : kind === "closed"
       ? "Closed"
       : kind === "talked"
-        ? "You talked"
+        ? lead.viaSite && !lead.email
+          ? "Answered"
+          : "You talked"
         : isWaitingOnCustomer(lead)
           ? `Waiting on ${first}`
           : "Up to date";

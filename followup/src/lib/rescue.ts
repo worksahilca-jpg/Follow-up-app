@@ -126,3 +126,22 @@ export function getAtRiskLeads(leads: Lead[], now: Date = new Date()): Array<Lea
     .filter((l) => l.rescue.atRisk)
     .sort((a, b) => b.rescue.score - a.rescue.score);
 }
+
+/** How many "About to be lost" rows Today draws. */
+export const ABOUT_TO_BE_LOST_SHOWN = 8;
+
+/**
+ * Today's "About to be lost": everyone at risk except the people already
+ * waiting for the owner's OK (A-046, once each), with the most urgent few
+ * to draw. `total` is the whole count, for the headline and the section's
+ * own label, so neither can disagree with the other; before this the
+ * headline counted every at-risk lead and the label counted the rows drawn.
+ */
+export function aboutToBeLost(
+  leads: Lead[],
+  leaveOut: ReadonlySet<string>,
+  now: Date = new Date()
+): { total: number; shown: Array<Lead & { rescue: RescueAssessment }> } {
+  const all = getAtRiskLeads(leads, now).filter((l) => !leaveOut.has(l.id));
+  return { total: all.length, shown: all.slice(0, ABOUT_TO_BE_LOST_SHOWN) };
+}

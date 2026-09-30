@@ -3,6 +3,7 @@ import { getSessionContext } from "@/lib/session";
 import { getLeadById } from "@/lib/leads-data";
 import { prisma } from "@/lib/db";
 import { summarizeConversation } from "@/lib/integrations/openai";
+import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 
 /** Below this many messages the thread is short enough to just read. */
 const CATCH_UP_MIN_MESSAGES = 7;
@@ -13,6 +14,9 @@ const CATCH_UP_MIN_MESSAGES = 7;
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false }, { status: 401 });
+  if (!(await requireActiveBilling(ctx.businessId))) {
+    return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
+  }
   const { id } = await params;
   const lead = await getLeadById(id);
   if (!lead) return NextResponse.json({ success: false }, { status: 404 });

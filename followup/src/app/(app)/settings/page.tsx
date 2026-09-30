@@ -356,6 +356,10 @@ function SettingsPageInner() {
       } else if (typeof data.triggerDays === "number") {
         setAutoAfterDays(data.triggerDays);
       }
+    } catch {
+      // Offline: nothing was saved, so the switch must not look saved.
+      setAutomationOn(revertTo);
+      setAutomationError("Couldn't reach the server — try again.");
     } finally {
       setAutomationSaving(false);
     }
@@ -377,6 +381,9 @@ function SettingsPageInner() {
       } else if (typeof data.unansweredReply?.hours === "number") {
         setUnansweredHours(data.unansweredReply.hours);
       }
+    } catch {
+      setUnansweredOn(revertTo);
+      setUnansweredError("Couldn't reach the server — try again.");
     } finally {
       setUnansweredSaving(false);
     }
@@ -398,6 +405,9 @@ function SettingsPageInner() {
       } else if (typeof data.deadLeadReactivation?.days === "number") {
         setDeadLeadDays(data.deadLeadReactivation.days);
       }
+    } catch {
+      setDeadLeadOn(revertTo);
+      setDeadLeadError("Couldn't reach the server — try again.");
     } finally {
       setDeadLeadSaving(false);
     }
@@ -417,6 +427,9 @@ function SettingsPageInner() {
         setInstantAckOn(!next);
         setInstantAckError(data.message ?? "Couldn't save — try again.");
       }
+    } catch {
+      setInstantAckOn(!next);
+      setInstantAckError("Couldn't reach the server — try again.");
     } finally {
       setInstantAckSaving(false);
     }

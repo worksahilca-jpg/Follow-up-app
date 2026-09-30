@@ -82,6 +82,29 @@ describe("catching up", () => {
     expect((await (await catchUpRoute(new Request("https://f.io"), params)).json()).text).toBe("New.");
     expect(leadUpdate).toHaveBeenCalledWith({ where: { id: "l1" }, data: { catchUpText: "New.", catchUpCount: 10 } });
   });
+  it("refuses a locked business with the billing message, without a model call (b014)", async () => {
+    billing.mockResolvedValue(false);
+    getLead.mockResolvedValue({ id: "l1", name: "Priya", conversation: msgs(10), languageRead: null });
+    leadFind.mockResolvedValue({ catchUpText: "Old.", catchUpCount: 9 });
+    summarize.mockResolvedValue("New.");
+    const res = await catchUpRoute(new Request("https://f.io"), params);
+    expect(res.status).toBe(402);
+    expect(await res.json()).toEqual({ success: false, message: "Billing is locked." });
+    expect(billing).toHaveBeenCalledWith("b");
+    expect(summarize).not.toHaveBeenCalled();
+    expect(leadUpdate).not.toHaveBeenCalled();
+  });
+  it("still summarizes for an active business", async () => {
+    billing.mockResolvedValue(true);
+    getLead.mockResolvedValue({ id: "l1", name: "Priya", conversation: msgs(10), languageRead: null });
+    leadFind.mockResolvedValue(null);
+    summarize.mockResolvedValue("Fresh.");
+    const res = await catchUpRoute(new Request("https://f.io"), params);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ success: true, text: "Fresh.", count: 10 });
+    expect(billing).toHaveBeenCalledWith("b");
+    expect(summarize).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("sentAsWritten", () => {

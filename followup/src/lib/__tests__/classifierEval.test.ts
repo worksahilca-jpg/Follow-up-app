@@ -37,6 +37,27 @@ describe("EVAL_CASES, grown for the test businesses (2026-09-29)", () => {
   });
 });
 
+describe("EVAL_CASES, lead marketplaces (b007, 2026-09-30)", () => {
+  const marketplace = EVAL_CASES.filter((c) => c.name.startsWith("marketplace:"));
+
+  it("has 10-15 marketplace customers and 3-4 of the marketplaces' own mail", () => {
+    const leads = marketplace.filter((c) => c.expectLead).length;
+    expect(leads).toBeGreaterThanOrEqual(10);
+    expect(leads).toBeLessThanOrEqual(15);
+    expect(marketplace.length - leads).toBeGreaterThanOrEqual(3);
+    expect(marketplace.length - leads).toBeLessThanOrEqual(4);
+  });
+
+  it("comes from the platform, not the person, and uses only invented addresses", () => {
+    for (const c of marketplace) {
+      expect(c.sender.email).toMatch(/@(?:thumbtack|angi|homeadvisor|zillow|realtor|yelp|houzz|bark|porch)\.example$/);
+    }
+    const bodies = marketplace.flatMap((c) => c.messages).join("\n");
+    for (const email of bodies.match(/[^\s"]+@[^\s"]+/g) ?? []) expect(email).toMatch(/@example\.com$/);
+    for (const phone of bodies.match(/\(?\d{3}\)?[ -]\d{3}-\d{4}/g) ?? []) expect(phone).toMatch(/555\)? 010-/);
+  });
+});
+
 describe("runClassifierEval", () => {
   const two = EVAL_CASES.filter((c) => c.name.startsWith("price of a coat") || c.name === "newsletter");
 

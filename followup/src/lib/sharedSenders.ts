@@ -48,6 +48,10 @@ const LEAD_MARKETPLACE_DOMAINS = [
   "bark.com",
   "porch.com",
   "networx.com",
+  // Canada (founder, 2026-09-30: most FollowUp businesses are Canadian)
+  "homestars.com",
+  "kijiji.ca",
+  "realtor.ca",
 ];
 
 /**
@@ -151,6 +155,10 @@ const MARKETPLACE_LEAD_SIGNALS = [
   /\b(?:sent|messaged|contacted) you\b/i,
   /\bis (?:interested in|looking for)\b/i,
   /\bmatched (?:you )?with (?:a |an )?(?:customer|homeowner|client|buyer)\b/i,
+  // Kijiji: "New message about your ad", "Someone replied to your ad"
+  /\b(?:about|replied to|reply to|responded to) your (?:ad|listing|post)\b/i,
+  // REALTOR.ca: "Inquiry about 88 Queen St E"
+  /\b(?:inquiry|enquiry) (?:about|for|regarding|on)\b/i,
 ];
 
 function hasLeadSignal(text: string): boolean {

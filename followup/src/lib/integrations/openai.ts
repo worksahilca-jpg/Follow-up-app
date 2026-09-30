@@ -521,9 +521,10 @@ const UNKNOWN_TRADE_RULE =
  */
 const LEAD_MARKETPLACE_RULE =
   "One kind of platform notification IS customer business: a LEAD MARKETPLACE (Thumbtack, Angi, HomeAdvisor, " +
-  "Houzz, Yelp, Bark, Porch, Networx, Zillow, Trulia, Realtor.com and similar) passing on ONE specific person's " +
-  "request to this business — 'you have a new lead', a new quote, job or project request, 'a customer sent you a " +
-  "message', 'Jane D. wants a quote', a buyer or renter asking about a listing. That person wants to buy: answer " +
+  "Houzz, Yelp, Bark, Porch, Networx, Zillow, Trulia, Realtor.com, and in Canada HomeStars, Kijiji and " +
+  "REALTOR.ca, and similar) passing on ONE specific person's request to this business — 'you have a new lead', a " +
+  "new quote, job or project request, 'a customer sent you a message', 'Jane D. wants a quote', a message about " +
+  "the business's own ad, a buyer or renter asking about a listing. That person wants to buy: answer " +
   "true, with whoIsSelling \"sender wants to buy from this business\", even though the email comes from the " +
   "platform's own no-reply address and the person's contact details may be hidden behind it. The platform's OWN " +
   "mail stays false: receipts, invoices and billing for leads or ads, profile-view and performance reports, " +

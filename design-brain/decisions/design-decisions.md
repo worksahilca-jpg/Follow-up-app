@@ -8585,3 +8585,12 @@ into customers, but their contact is usually hidden, so FollowUp was drafting an
 - **Later, not now:** Thumbtack has an official partner program with two-way messaging
   (developers.thumbtack.com). Joining it would let FollowUp reply inside Thumbtack on Automatic; worth it once there
   are US customers.
+
+## 2026-09-30 — Webhook links are for admins only
+
+Founder: "If it's a team the admin should handle it, but if a solo owner is using it, it should be for them only."
+A solo owner is their account's admin, so one rule covers both. Applied to both links in Settings (leads in, lead
+events out): a teammate sees only "Set up by an admin. Only admins can see or change this link." or "Only an admin
+can set this up.", and the server never sends them the link.
+- **Weak spot, named:** the teammate view wasn't rendered, only tested. It's one muted line in the card's existing
+  style.

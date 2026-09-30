@@ -37,7 +37,7 @@ vi.mock("@/lib/ssrf", () => ({
   UnsafeWebhookUrlError: class extends Error {},
 }));
 
-import { POST, PUT } from "@/app/api/webhooks/outbound/route";
+import { GET, POST, PUT } from "@/app/api/webhooks/outbound/route";
 
 function postRequest(body: unknown) {
   return new Request("https://followupbase.io/api/webhooks/outbound", {
@@ -116,5 +116,27 @@ describe("PUT /api/webhooks/outbound — test-fire is gated the same way", () =>
     // otherwise a reachability oracle for whatever is saved.
     expect(businessFindUnique).not.toHaveBeenCalled();
     expect(assertSafeWebhookUrl).not.toHaveBeenCalled();
+  });
+});
+
+// Founder, 2026-09-30: the link is for admins only. A solo owner is their
+// account's admin, so it stays theirs; a teammate only learns it's set.
+describe("GET /api/webhooks/outbound — admins only", () => {
+  it("shows an admin the saved link", async () => {
+    const body = await (await GET()).json();
+    expect(body).toEqual({ success: true, url: "https://hooks.zapier.com/abc" });
+  });
+
+  it("never shows a teammate the link, only that one is set", async () => {
+    requireAdmin.mockResolvedValue(false);
+    const body = await (await GET()).json();
+    expect(body).toEqual({ success: true, url: null, set: true, adminOnly: true });
+    expect(JSON.stringify(body)).not.toContain("zapier");
+  });
+
+  it("tells a teammate when nothing is set up", async () => {
+    requireAdmin.mockResolvedValue(false);
+    businessFindUnique.mockResolvedValue({ outboundWebhookUrl: null });
+    expect(await (await GET()).json()).toEqual({ success: true, url: null, set: false, adminOnly: true });
   });
 });

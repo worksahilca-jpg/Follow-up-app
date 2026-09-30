@@ -21,12 +21,15 @@ export default function OutboundWebhookConfig() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<"ok" | "fail" | null>(null);
   const [showExamples, setShowExamples] = useState(false);
+  // A teammate, not an admin: the link stays with admins (founder, 2026-09-30).
+  const [adminOnly, setAdminOnly] = useState<null | { set: boolean }>(null);
 
   useEffect(() => {
     fetch("/api/webhooks/outbound")
       .then((r) => r.json())
-      .then((data: { success: boolean; url?: string | null }) => {
+      .then((data: { success: boolean; url?: string | null; adminOnly?: boolean; set?: boolean }) => {
         if (data.success) setUrl(data.url ?? null);
+        if (data.adminOnly) setAdminOnly({ set: !!data.set });
       })
       .finally(() => setLoading(false));
   }, []);
@@ -101,116 +104,122 @@ export default function OutboundWebhookConfig() {
             events, live, wherever you actually run your business.
           </p>
 
-          <button
-            onClick={() => setShowExamples((v) => !v)}
-            className="mt-2 flex items-center gap-1 text-[13px] font-medium text-ink-soft"
-          >
-            <ChevronDown className={`h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
-            What can I connect this to?
-          </button>
-          {showExamples && (
-            <div className="mt-2 rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-1.5">
-              <p>
-                Already use a real CRM (HubSpot, Pipedrive, GoHighLevel, etc.)? Most of them have their own
-                &quot;inbound webhook&quot; or accept a Zapier trigger — paste that URL here and every FollowUp
-                lead gets pushed straight into it too, automatically.
-              </p>
-              <p>
-                No CRM yet? A free <a href="https://webhook.site" target="_blank" rel="noopener" className="underline">webhook.site</a> URL
-                or a Slack &quot;Incoming Webhook&quot; both work here for testing — or point it at a Zapier step
-                that adds a row to a Google Sheet, so every lead lands in a spreadsheet automatically.
-              </p>
-            </div>
-          )}
-
-          {!url && !editing && (
-            <button
-              onClick={() => {
-                setEditing(true);
-                setDraft("");
-                setSaveError(null);
-              }}
-              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2"
-              style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-            >
-              Add a webhook URL
-            </button>
-          )}
-
-          {editing && (
-            <div className="mt-3">
-              <input
-                type="url"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="https://hooks.zapier.com/..."
-                className="w-full rounded-[12px] border border-line bg-paper px-3 py-2 text-sm"
-                autoFocus
-              />
-              {saveError && (
-                <p className="mt-1.5 text-[13px]" style={{ color: "var(--coral)" }}>
-                  {saveError}
-                </p>
-              )}
-              <div className="mt-2 flex gap-2">
-                <button
-                  onClick={save}
-                  disabled={saving || !draft.trim()}
-                  className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
-                  style={{ backgroundColor: "var(--ink)" }}
-                >
-                  {saving ? "Saving…" : "Save"}
-                </button>
-                <button
-                  onClick={() => {
-                    setEditing(false);
-                    setSaveError(null);
-                  }}
-                  disabled={saving}
-                  className="rounded-full border border-line px-3 py-1.5 text-[13px] font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {url && !editing && (
+          {adminOnly ? (
+            <p className="mt-3 text-[13px] text-ink-soft">{adminOnly.set ? "Set up by an admin. Only admins can see or change this link." : "Only an admin can set this up."}</p>
+          ) : (
             <>
-              <pre className="mt-3 rounded-[12px] bg-paper border border-line p-3 text-[13px] overflow-x-auto whitespace-pre-wrap break-all">
-                {url}
-              </pre>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <button
-                  onClick={sendTest}
-                  disabled={testing}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3 py-1.5 border border-line disabled:opacity-60"
-                >
-                  {testing ? "Sending…" : "Send test event"}
-                </button>
+              <button
+                onClick={() => setShowExamples((v) => !v)}
+                className="mt-2 flex items-center gap-1 text-[13px] font-medium text-ink-soft"
+              >
+                <ChevronDown className={`h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
+                What can I connect this to?
+              </button>
+              {showExamples && (
+                <div className="mt-2 rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-1.5">
+                  <p>
+                    Already use a real CRM (HubSpot, Pipedrive, GoHighLevel, etc.)? Most of them have their own
+                    &quot;inbound webhook&quot; or accept a Zapier trigger — paste that URL here and every FollowUp
+                    lead gets pushed straight into it too, automatically.
+                  </p>
+                  <p>
+                    No CRM yet? A free <a href="https://webhook.site" target="_blank" rel="noopener" className="underline">webhook.site</a> URL
+                    or a Slack &quot;Incoming Webhook&quot; both work here for testing — or point it at a Zapier step
+                    that adds a row to a Google Sheet, so every lead lands in a spreadsheet automatically.
+                  </p>
+                </div>
+              )}
+
+              {!url && !editing && (
                 <button
                   onClick={() => {
                     setEditing(true);
-                    setDraft(url);
+                    setDraft("");
                     setSaveError(null);
                   }}
-                  className="text-[13px] font-medium text-ink-soft"
+                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2"
+                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
                 >
-                  Change
+                  Add a webhook URL
                 </button>
-                <button onClick={remove} disabled={saving} className="text-[13px] font-medium" style={{ color: "var(--coral)" }}>
-                  Remove
-                </button>
-              </div>
-              {testResult === "ok" && (
-                <p className="mt-2 text-[13px] flex items-center gap-1" style={{ color: "var(--sage)" }}>
-                  <Check className="h-3.5 w-3.5" /> Delivered — check the other end for a test event.
-                </p>
               )}
-              {testResult === "fail" && (
-                <p className="mt-2 text-[13px] flex items-center gap-1" style={{ color: "var(--coral)" }}>
-                  <X className="h-3.5 w-3.5" /> Couldn&apos;t deliver — double check the URL is right and reachable.
-                </p>
+
+              {editing && (
+                <div className="mt-3">
+                  <input
+                    type="url"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder="https://hooks.zapier.com/..."
+                    className="w-full rounded-[12px] border border-line bg-paper px-3 py-2 text-sm"
+                    autoFocus
+                  />
+                  {saveError && (
+                    <p className="mt-1.5 text-[13px]" style={{ color: "var(--coral)" }}>
+                      {saveError}
+                    </p>
+                  )}
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={save}
+                      disabled={saving || !draft.trim()}
+                      className="rounded-full px-3 py-1.5 text-[13px] font-medium text-paper disabled:opacity-60"
+                      style={{ backgroundColor: "var(--ink)" }}
+                    >
+                      {saving ? "Saving…" : "Save"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditing(false);
+                        setSaveError(null);
+                      }}
+                      disabled={saving}
+                      className="rounded-full border border-line px-3 py-1.5 text-[13px] font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {url && !editing && (
+                <>
+                  <pre className="mt-3 rounded-[12px] bg-paper border border-line p-3 text-[13px] overflow-x-auto whitespace-pre-wrap break-all">
+                    {url}
+                  </pre>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={sendTest}
+                      disabled={testing}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3 py-1.5 border border-line disabled:opacity-60"
+                    >
+                      {testing ? "Sending…" : "Send test event"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditing(true);
+                        setDraft(url);
+                        setSaveError(null);
+                      }}
+                      className="text-[13px] font-medium text-ink-soft"
+                    >
+                      Change
+                    </button>
+                    <button onClick={remove} disabled={saving} className="text-[13px] font-medium" style={{ color: "var(--coral)" }}>
+                      Remove
+                    </button>
+                  </div>
+                  {testResult === "ok" && (
+                    <p className="mt-2 text-[13px] flex items-center gap-1" style={{ color: "var(--sage)" }}>
+                      <Check className="h-3.5 w-3.5" /> Delivered — check the other end for a test event.
+                    </p>
+                  )}
+                  {testResult === "fail" && (
+                    <p className="mt-2 text-[13px] flex items-center gap-1" style={{ color: "var(--coral)" }}>
+                      <X className="h-3.5 w-3.5" /> Couldn&apos;t deliver — double check the URL is right and reachable.
+                    </p>
+                  )}
+                </>
               )}
             </>
           )}

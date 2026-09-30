@@ -19,12 +19,15 @@ export default function CopyWebhookUrl() {
   const [confirming, setConfirming] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
+  // A teammate, not an admin: the link stays with admins (founder, 2026-09-30).
+  const [adminOnly, setAdminOnly] = useState<null | { set: boolean }>(null);
 
   useEffect(() => {
     fetch("/api/webhooks/config")
       .then((r) => r.json())
-      .then((data: { success: boolean; webhookUrl?: string | null }) => {
+      .then((data: { success: boolean; webhookUrl?: string | null; adminOnly?: boolean; set?: boolean }) => {
         if (data.success) setWebhookUrl(data.webhookUrl ?? null);
+        if (data.adminOnly) setAdminOnly({ set: !!data.set });
       })
       .finally(() => setLoading(false));
   }, []);
@@ -75,82 +78,88 @@ export default function CopyWebhookUrl() {
             (one required), <code className="text-[11px]">message</code> (optional).
           </p>
 
-          <button
-            onClick={() => setShowExamples((v) => !v)}
-            className="mt-2 flex items-center gap-1 text-[13px] font-medium text-ink-soft"
-          >
-            <ChevronDown className={`h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
-            What can I connect this to?
-          </button>
-          {showExamples && (
-            <div className="mt-2 rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-1.5">
-              <p>
-                FollowUp doesn&apos;t talk to Instagram, WhatsApp, or Google Forms directly — <strong>Zapier or
-                Make</strong> already do, for free, and this URL is the address you give them to forward things to.
-              </p>
-              <p>
-                <strong>Example:</strong> in Zapier, pick &quot;New Instagram DM&quot; (or &quot;New Google Forms
-                response,&quot; or &quot;New Facebook Lead Ad&quot;) as the trigger, then &quot;Webhook&quot; as the
-                action, and paste this URL. From then on, every DM/form/lead shows up here automatically — scored,
-                with a reply drafted — no code, no manual entry.
-              </p>
-            </div>
-          )}
-
-          {!webhookUrl && (
-            <button
-              onClick={generate}
-              disabled={generating}
-              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
-              style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
-            >
-              {generating ? "Generating…" : "Generate webhook URL"}
-            </button>
-          )}
-
-          {webhookUrl && (
+          {adminOnly ? (
+            <p className="mt-3 text-[13px] text-ink-soft">{adminOnly.set ? "Set up by an admin. Only admins can see or change this link." : "Only an admin can set this up."}</p>
+          ) : (
             <>
-              <pre className="mt-3 rounded-[12px] bg-paper border border-line p-3 text-[13px] overflow-x-auto whitespace-pre-wrap break-all">
-                {webhookUrl}
-              </pre>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <button
-                  onClick={copy}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3 py-1.5 border border-line"
-                >
-                  {copied ? <Check className="h-3.5 w-3.5" /> : null}
-                  {copied ? "Copied!" : "Copy URL"}
-                </button>
-                {!confirming && (
-                  <button onClick={() => setConfirming(true)} className="text-[13px] font-medium" style={{ color: "var(--coral)" }}>
-                    Regenerate
-                  </button>
-                )}
-              </div>
-              {confirming && (
-                <div className="mt-2 rounded-[12px] p-3" style={{ backgroundColor: "var(--coral-soft)" }}>
-                  <p className="text-[13px]" style={{ color: "var(--coral)" }}>
-                    Anything still pointed at the current URL (an existing Zapier step, etc.) will stop working
-                    the moment you do this.
+              <button
+                onClick={() => setShowExamples((v) => !v)}
+                className="mt-2 flex items-center gap-1 text-[13px] font-medium text-ink-soft"
+              >
+                <ChevronDown className={`h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
+                What can I connect this to?
+              </button>
+              {showExamples && (
+                <div className="mt-2 rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-1.5">
+                  <p>
+                    FollowUp doesn&apos;t talk to Instagram, WhatsApp, or Google Forms directly — <strong>Zapier or
+                    Make</strong> already do, for free, and this URL is the address you give them to forward things to.
                   </p>
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      onClick={generate}
-                      disabled={generating}
-                      className="rounded-full px-2.5 py-1 text-[13px] font-medium text-on-coral disabled:opacity-60"
-                      style={{ backgroundColor: "var(--coral-fill)" }}
-                    >
-                      {generating ? "Regenerating…" : "Yes, regenerate"}
-                    </button>
-                    <button
-                      onClick={() => setConfirming(false)}
-                      disabled={generating}
-                      className="rounded-full border border-line px-2.5 py-1 text-[13px] font-medium"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                  <p>
+                    <strong>Example:</strong> in Zapier, pick &quot;New Instagram DM&quot; (or &quot;New Google Forms
+                    response,&quot; or &quot;New Facebook Lead Ad&quot;) as the trigger, then &quot;Webhook&quot; as the
+                    action, and paste this URL. From then on, every DM/form/lead shows up here automatically — scored,
+                    with a reply drafted — no code, no manual entry.
+                  </p>
                 </div>
+              )}
+
+              {!webhookUrl && (
+                <button
+                  onClick={generate}
+                  disabled={generating}
+                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
+                  style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+                >
+                  {generating ? "Generating…" : "Generate webhook URL"}
+                </button>
+              )}
+
+              {webhookUrl && (
+                <>
+                  <pre className="mt-3 rounded-[12px] bg-paper border border-line p-3 text-[13px] overflow-x-auto whitespace-pre-wrap break-all">
+                    {webhookUrl}
+                  </pre>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={copy}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium rounded-full px-3 py-1.5 border border-line"
+                    >
+                      {copied ? <Check className="h-3.5 w-3.5" /> : null}
+                      {copied ? "Copied!" : "Copy URL"}
+                    </button>
+                    {!confirming && (
+                      <button onClick={() => setConfirming(true)} className="text-[13px] font-medium" style={{ color: "var(--coral)" }}>
+                        Regenerate
+                      </button>
+                    )}
+                  </div>
+                  {confirming && (
+                    <div className="mt-2 rounded-[12px] p-3" style={{ backgroundColor: "var(--coral-soft)" }}>
+                      <p className="text-[13px]" style={{ color: "var(--coral)" }}>
+                        Anything still pointed at the current URL (an existing Zapier step, etc.) will stop working
+                        the moment you do this.
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          onClick={generate}
+                          disabled={generating}
+                          className="rounded-full px-2.5 py-1 text-[13px] font-medium text-on-coral disabled:opacity-60"
+                          style={{ backgroundColor: "var(--coral-fill)" }}
+                        >
+                          {generating ? "Regenerating…" : "Yes, regenerate"}
+                        </button>
+                        <button
+                          onClick={() => setConfirming(false)}
+                          disabled={generating}
+                          className="rounded-full border border-line px-2.5 py-1 text-[13px] font-medium"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

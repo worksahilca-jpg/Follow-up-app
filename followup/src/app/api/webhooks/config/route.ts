@@ -26,6 +26,12 @@ export async function GET() {
     select: { webhookSecret: true },
   });
 
+  // Admins only (founder, 2026-09-30): anyone holding this link can add
+  // leads to the account, so a teammate who leaves must not keep it. A solo
+  // owner is their account's admin. Teammates only learn whether it's set.
+  if (!(await requireAdmin(ctx))) {
+    return NextResponse.json({ success: true, webhookUrl: null, set: !!business?.webhookSecret, adminOnly: true });
+  }
   return NextResponse.json({
     success: true,
     webhookUrl: business?.webhookSecret ? webhookUrl(business.webhookSecret) : null,

@@ -362,6 +362,7 @@ type GraphMessage = {
   toRecipients?: { emailAddress?: { address?: string } }[];
   receivedDateTime?: string;
   sentDateTime?: string;
+  isDraft?: boolean;
 };
 
 function stripHtml(html: string): string {
@@ -459,7 +460,7 @@ function graphMessageTime(m: GraphMessage): number {
  */
 export function conversationMessagesPath(conversationId: string): string {
   const filter = encodeURIComponent(`conversationId eq '${conversationId.replace(/'/g, "''")}'`);
-  return `/me/messages?$filter=${filter}&$select=id,conversationId,subject,bodyPreview,body,from,replyTo,toRecipients,receivedDateTime,sentDateTime&$top=50`;
+  return `/me/messages?$filter=${filter}&$select=id,conversationId,subject,bodyPreview,body,from,replyTo,toRecipients,receivedDateTime,sentDateTime,isDraft&$top=50`;
 }
 
 export type OutlookSyncOptions = {
@@ -521,7 +522,14 @@ async function processConversations(
     // Oldest first, sorted here: Graph refuses to sort this query itself
     // (see conversationMessagesPath). Everything below reads the first
     // message as the thread's opener and the last as its newest.
-    const graphMessages = [...(data.value ?? [])].sort((a, b) => graphMessageTime(a) - graphMessageTime(b));
+    //
+    // Never an unsent draft: the fetch reads every folder, Drafts included,
+    // and a reply the owner started and never sent was stored as the
+    // business answering (the customer then read as answered, and FollowUp
+    // stopped nudging) or, with no sender yet, as the customer writing it.
+    const graphMessages = [...(data.value ?? [])]
+      .filter((m) => !m.isDraft)
+      .sort((a, b) => graphMessageTime(a) - graphMessageTime(b));
     if (graphMessages.length === 0) return null;
 
     const parsedMessages = graphMessages.map((m) => {

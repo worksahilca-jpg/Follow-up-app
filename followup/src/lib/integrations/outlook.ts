@@ -894,11 +894,19 @@ export async function sendOutlookEmail(
       body: JSON.stringify({ comment: params.body }),
     });
     if (!res) return notConnected;
-    if (!res.ok) return { success: false, status: res.status };
-    // Graph's /reply returns 202 Accepted with no body and no new
-    // message id — there's nothing else to key off here, so the sent
-    // copy is picked up on the next sync like any other outbound mail.
-    return { success: true };
+    // 404: that message is no longer at this id. Graph's default ids change
+    // when a message moves folder (Archive, a rule, the owner filing it:
+    // learn.microsoft.com/graph/outlook-immutable-id), so the stored id goes
+    // stale once the customer's email is filed. Every reply to them then
+    // failed. A fresh email goes instead, as Gmail's reply does when the
+    // customer's message can't be read (getGmailReplyHeaders).
+    if (res.status !== 404) {
+      if (!res.ok) return { success: false, status: res.status };
+      // Graph's /reply returns 202 Accepted with no body and no new
+      // message id — there's nothing else to key off here, so the sent
+      // copy is picked up on the next sync like any other outbound mail.
+      return { success: true };
+    }
   }
 
   const res = await graphFetch(businessId, "/me/sendMail", {

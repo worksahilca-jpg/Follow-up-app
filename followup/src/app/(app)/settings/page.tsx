@@ -331,7 +331,16 @@ function SettingsPageInner() {
       .finally(() => setAutomationLoaded(true));
   }, []);
 
-  async function saveAutomationSettings(enabled: boolean, triggerDays: number) {
+  /**
+   * The three rule savers below take `revertTo`: what the rule's switch
+   * goes back to if the save fails. A switch press flipped it first, so it
+   * goes back; saving the rule's NUMBER never touched the switch, and used
+   * to flip it anyway — a rejected "3 days" showed the whole rule as off
+   * while the server still had it on. On success the number is taken from
+   * the server's answer, which clamps it: typing 5 into the welcome-back
+   * days saved 30, and the page went on saying 5.
+   */
+  async function saveAutomationSettings(enabled: boolean, triggerDays: number, revertTo: boolean = !enabled) {
     setAutomationSaving(true);
     setAutomationError(null);
     try {
@@ -342,15 +351,17 @@ function SettingsPageInner() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
-        setAutomationOn(!enabled); // revert the optimistic flip
+        setAutomationOn(revertTo); // revert the optimistic flip, if there was one
         setAutomationError(data.message ?? "Couldn't save — try again.");
+      } else if (typeof data.triggerDays === "number") {
+        setAutoAfterDays(data.triggerDays);
       }
     } finally {
       setAutomationSaving(false);
     }
   }
 
-  async function saveUnanswered(enabled: boolean, hours: number) {
+  async function saveUnanswered(enabled: boolean, hours: number, revertTo: boolean = !enabled) {
     setUnansweredSaving(true);
     setUnansweredError(null);
     try {
@@ -361,15 +372,17 @@ function SettingsPageInner() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
-        setUnansweredOn(!enabled);
+        setUnansweredOn(revertTo);
         setUnansweredError(data.message ?? "Couldn't save — try again.");
+      } else if (typeof data.unansweredReply?.hours === "number") {
+        setUnansweredHours(data.unansweredReply.hours);
       }
     } finally {
       setUnansweredSaving(false);
     }
   }
 
-  async function saveDeadLead(enabled: boolean, days: number) {
+  async function saveDeadLead(enabled: boolean, days: number, revertTo: boolean = !enabled) {
     setDeadLeadSaving(true);
     setDeadLeadError(null);
     try {
@@ -380,8 +393,10 @@ function SettingsPageInner() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
-        setDeadLeadOn(!enabled);
+        setDeadLeadOn(revertTo);
         setDeadLeadError(data.message ?? "Couldn't save — try again.");
+      } else if (typeof data.deadLeadReactivation?.days === "number") {
+        setDeadLeadDays(data.deadLeadReactivation.days);
       }
     } finally {
       setDeadLeadSaving(false);
@@ -1589,7 +1604,7 @@ function SettingsPageInner() {
                   min={1}
                   max={168}
                   onChange={setUnansweredHours}
-                  onCommit={() => saveUnanswered(unansweredOn, unansweredHours)}
+                  onCommit={() => saveUnanswered(unansweredOn, unansweredHours, unansweredOn)}
                   label="Hours before checking again"
                   disabled={unansweredSaving}
                 />{" "}
@@ -1618,7 +1633,7 @@ function SettingsPageInner() {
                   min={1}
                   max={30}
                   onChange={setAutoAfterDays}
-                  onCommit={() => saveAutomationSettings(automationOn, autoAfterDays)}
+                  onCommit={() => saveAutomationSettings(automationOn, autoAfterDays, automationOn)}
                   label="Day of the first check-in"
                   disabled={!automationOn || automationSaving}
                 />
@@ -1661,7 +1676,7 @@ function SettingsPageInner() {
                   min={30}
                   max={180}
                   onChange={setDeadLeadDays}
-                  onCommit={() => saveDeadLead(deadLeadOn, deadLeadDays)}
+                  onCommit={() => saveDeadLead(deadLeadOn, deadLeadDays, deadLeadOn)}
                   label="Days of silence before a welcome-back"
                   disabled={!deadLeadOn || deadLeadSaving}
                 />{" "}

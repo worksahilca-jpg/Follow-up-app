@@ -39,7 +39,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
+import { isFollowUpSender, ownAddressSet, TEAM_ADDRESS_SELECT, teamAddresses } from "@/lib/ownSenders";
 import { isAutomatedAddress, leadMarketplaceFromQuery, threadCustomer } from "@/lib/sharedSenders";
 import type { InlineImage } from "@/lib/emailAssets";
 import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
@@ -593,7 +593,7 @@ async function processThreadRefs(
   // per thread.
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { name: true, industry: true, users: { select: { email: true } } },
+    select: { name: true, industry: true, users: { select: TEAM_ADDRESS_SELECT } },
   });
   // With the owner's own recent corrections, so the classifier judges the
   // way this owner does (src/lib/senderVerdicts.ts).
@@ -602,7 +602,7 @@ async function processThreadRefs(
     : null;
   // The business itself: this inbox and everyone on the team (see
   // ownAddressSet). Their mail is ours, never a customer's.
-  const own = ownAddressSet(selfEmail, (business?.users ?? []).map((u) => u.email));
+  const own = ownAddressSet(selfEmail, teamAddresses(business?.users ?? []));
 
   // Threads are independent of each other (each maps to at most one lead
   // by counterpart email), so process several in parallel instead of one

@@ -38,7 +38,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
+import { isFollowUpSender, ownAddressSet, TEAM_ADDRESS_SELECT, teamAddresses } from "@/lib/ownSenders";
 
 const AUTHORITY = "https://login.microsoftonline.com/common/oauth2/v2.0";
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -465,7 +465,7 @@ async function processConversations(
 
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { name: true, industry: true, users: { select: { email: true } } },
+    select: { name: true, industry: true, users: { select: TEAM_ADDRESS_SELECT } },
   });
   // With the owner's own recent corrections, as in gmail.ts.
   const businessContext = business
@@ -473,7 +473,7 @@ async function processConversations(
     : null;
   // The business itself: this mailbox and everyone on the team (see
   // ownAddressSet). Their mail is ours, never a customer's.
-  const own = ownAddressSet(selfEmail, (business?.users ?? []).map((u) => u.email));
+  const own = ownAddressSet(selfEmail, teamAddresses(business?.users ?? []));
 
   const results = await mapWithConcurrency(conversationIds, 5, async (conversationId): Promise<SyncedLead | null> => {
     try {

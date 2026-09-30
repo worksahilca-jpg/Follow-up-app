@@ -158,6 +158,55 @@ describe("the Gmail sync and the business's own people", () => {
   });
 });
 
+/**
+ * The business's OTHER connected inboxes are the business too.
+ *
+ * Each admin can connect their own inbox, and it need not be the address
+ * they sign in with: Jo signs in as jo@samsplumbing.ca and connected
+ * jo.bookings@gmail.com. Read through info@, mail from Jo's inbox was a
+ * stranger's: her reply on a customer's thread was stored as the customer
+ * writing again (so the thread read as waiting on the business, and a
+ * reply was drafted to Jo's own words), and a lead she forwarded to info@
+ * became a customer called Jo, acknowledged and followed up on.
+ */
+describe("the Gmail sync and the business's other connected inboxes", () => {
+  beforeEach(() => {
+    prismaMock.business.findUnique.mockResolvedValue({
+      name: "Sam's Plumbing",
+      industry: "Plumbing",
+      users: [
+        { email: "sam.smith@gmail.com", integrations: [{ accountEmail: "info@samsplumbing.ca" }] },
+        { email: "jo@samsplumbing.ca", integrations: [{ accountEmail: "Jo.Bookings@gmail.com" }, { accountEmail: null }] },
+      ],
+    });
+  });
+
+  it("a teammate's reply from her own connected inbox is the business answering", async () => {
+    threadsGet.mockResolvedValue({
+      data: {
+        id: "thread-1",
+        messages: [
+          gmailMessage("m1", "Jane Doe <jane@example.com>", t0, "Could you quote a kitchen reno?"),
+          gmailMessage("m2", "Jo <jo.bookings@gmail.com>", t1, "Hi Jane, I'll come by Thursday to measure."),
+        ],
+      },
+    });
+    await fetchSalesConversations("biz1");
+    const stored = prismaMock.message.upsert.mock.calls.map((c) => c[0].create);
+    expect(stored.map((m: { direction: string }) => m.direction)).toEqual(["inbound", "outbound"]);
+    expect(acknowledgeNewLead).toHaveBeenCalledWith("lead1", expect.objectContaining({ hasHumanReply: true }));
+  });
+
+  it("a lead forwarded from a teammate's connected inbox is not a customer called Jo", async () => {
+    threadsGet.mockResolvedValue({
+      data: { id: "thread-1", messages: [gmailMessage("m1", "Jo <jo.bookings@gmail.com>", t0, "Fwd: quote request for a bathroom")] },
+    });
+    await fetchSalesConversations("biz1");
+    expect(prismaMock.lead.create).not.toHaveBeenCalled();
+    expect(acknowledgeNewLead).not.toHaveBeenCalled();
+  });
+});
+
 describe("ownAddressSet", () => {
   it("holds the inbox and every team address, lower-cased, and skips blanks", () => {
     const own = ownAddressSet("Info@SamsPlumbing.ca", ["Sam.Smith@gmail.com", null, "", "Dana <dana@samsplumbing.ca>"]);

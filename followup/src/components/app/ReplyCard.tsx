@@ -232,10 +232,13 @@ export default function ReplyCard({
                         id="reply-price"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
+                        // Fixed once Send is pressed, as on the Today card:
+                        // the countdown sends what was here at the press.
+                        disabled={undoable.pending || undoable.busy}
                         placeholder="$ price"
                         aria-label={`The price for ${first}`}
                         autoComplete="off"
-                        className="mx-0.5 inline-block h-8 w-28 rounded-md border border-dashed bg-card px-2 align-baseline"
+                        className="mx-0.5 inline-block h-8 w-28 rounded-md border border-dashed bg-card px-2 align-baseline disabled:opacity-60"
                         style={{ borderColor: price.trim() ? "var(--line)" : "var(--ink-soft)" }}
                       />
                     ) : (

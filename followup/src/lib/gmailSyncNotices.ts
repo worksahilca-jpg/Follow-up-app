@@ -224,7 +224,8 @@ export function gmailAccessEndingSoon(connectedAt: Date | null | undefined, now:
  *
  * Once per connection: a warning already in the bell since this connect
  * stops the next tick, and the email's key (business, connect time, admin)
- * stops a retried one. Never throws: it runs inside a sync that already
+ * stops a retried one. Two ticks at the same moment are serialized by a
+ * lock around the check and the write (backlog b003). Never throws: it runs inside a sync that already
  * succeeded, and a warning that can't be written must not undo that.
  */
 export async function warnGmailAccessEndingSoon(businessId: string, now: Date = new Date()): Promise<void> {
@@ -257,32 +258,45 @@ export async function warnGmailAccessEndingSoon(businessId: string, now: Date = 
   for (const snapshot of ending) {
     const connectedAt = snapshot.connectedAt!;
     const inbox = inboxLabel(snapshot);
-    try {
-      const already = await prisma.notification.count({
-        where: {
-          userId: { in: admins.map((a) => a.id) },
-          leadId: null,
-          message: { contains: `${inbox} ${GMAIL_ENDING_MARKER}` },
-          createdAt: { gte: connectedAt },
-        },
-      });
-      if (already > 0) continue;
-    } catch (err) {
-      console.error(`Could not check whether business ${businessId} was warned that Gmail access ends soon:`, err);
-      continue;
-    }
-
     const message =
       `FollowUp's access to ${inbox} ${GMAIL_ENDING_MARKER}. ` +
       `Reconnect Gmail in Settings now so new emails keep being picked up without a gap. ` +
       `While FollowUp is in beta, Google asks for this every 7 days.`;
+
+    // The "already warned?" check and the write happen under one
+    // transaction-scoped advisory lock (the pattern in src/lib/rateLimit.ts
+    // and src/lib/booking.ts). Without it, two syncs that overlap (a push
+    // sync and the cron tick, or a doubled cron delivery) could both count
+    // zero and both write, and the bell showed the warning twice (backlog
+    // b003). The lock is held for a count and a few inserts, never across
+    // the email sends below.
+    let checked = false;
     try {
-      await notifyEach(
-        admins.map((a) => a.id),
-        message
-      );
+      const warned = await prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`gmail-ending:${businessId}`}))`;
+        const already = await tx.notification.count({
+          where: {
+            userId: { in: admins.map((a) => a.id) },
+            leadId: null,
+            message: { contains: `${inbox} ${GMAIL_ENDING_MARKER}` },
+            createdAt: { gte: connectedAt },
+          },
+        });
+        checked = true;
+        if (already > 0) return false;
+        for (const admin of admins) {
+          await tx.notification.create({ data: { userId: admin.id, leadId: null, message } });
+        }
+        return true;
+      });
+      // Another run already warned: it sends the email too.
+      if (!warned) continue;
     } catch (err) {
       console.error(`Could not warn business ${businessId} that Gmail access ends soon:`, err);
+      // Unsure whether anyone was warned: say nothing rather than risk
+      // saying it twice. Sure nobody was, only the bell failed: the email
+      // still goes, and its key stops a retried tick sending it again.
+      if (!checked) continue;
     }
 
     const content = gmailEndingSoonEmail({ inbox, base: appUrl() });

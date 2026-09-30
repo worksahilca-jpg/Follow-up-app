@@ -75,6 +75,15 @@ describe("POST /api/leads/[id]/not-customer", () => {
     expect(recordAudit).toHaveBeenCalledWith(expect.anything(), "lead.not_customer", expect.objectContaining({ targetId: "lead1" }));
   });
 
+  it("on a lead from a shared form sender, sets the threads aside but never remembers the address (b002)", async () => {
+    prismaMock.lead.findFirst.mockResolvedValue(pitch({ name: "Website form", email: "form-submission@squarespace.info" }));
+    const res = await call();
+    expect(await res.json()).toEqual({ success: true });
+    expect(prismaMock.senderVerdict.upsert).not.toHaveBeenCalled();
+    expect(prismaMock.filteredEmail.upsert).toHaveBeenCalledTimes(2);
+    expect(deleteLeadCascade).toHaveBeenCalledWith("lead1", "biz1");
+  });
+
   it("looks the lead up inside the signed-in business only", async () => {
     prismaMock.lead.findFirst.mockResolvedValue(null);
     const res = await call();

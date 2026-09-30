@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { isSharedSender } from "@/lib/sharedSenders";
 
 /**
  * Learning from the owner's corrections, one business at a time (founder,
@@ -19,6 +20,14 @@ import { prisma } from "@/lib/db";
  *
  * No other business's corrections are ever read, no message body is kept,
  * and nothing trains a model: the privacy page's promise stands.
+ *
+ * "Not a customer" is never remembered for a shared sender (backlog b002):
+ * a website form's notifier or a lead site like Thumbtack sends every
+ * enquiry from one address, so a rule about the address would set aside
+ * the whole source. The owner's call still covers that message's own
+ * threads (the not-customer route sets them aside); it just goes no
+ * further. Checked on read as well as write, so a row stored before this
+ * rule suppresses nothing either.
  */
 
 export type SenderVerdictKind = "customer" | "not_customer";
@@ -63,6 +72,8 @@ export async function recordSenderVerdict(
   // parses whole as "the email", and "unknown" stands in for a missing one.
   // Neither is a sender to remember, and both would reach the classifier.
   if (!SENDER_ADDRESS.test(key)) return;
+  // One person's "not a customer" is not the next person's (see header).
+  if (verdict === "not_customer" && isSharedSender(key)) return;
   const trimmed = subject?.trim().slice(0, 200) || null;
   await prisma.senderVerdict.upsert({
     where: { businessId_sender: { businessId, sender: key } },
@@ -74,9 +85,11 @@ export async function recordSenderVerdict(
 /**
  * True when the owner has said this sender is not a customer, and hasn't
  * said otherwise since. A failed read answers false: the thread is then
- * judged as it would have been before this existed, never dropped.
+ * judged as it would have been before this existed, never dropped. Always
+ * false for a shared sender, whatever is stored (see header).
  */
 export async function ownerSaidNotCustomer(businessId: string, sender: string): Promise<boolean> {
+  if (isSharedSender(sender)) return false;
   try {
     const row = await prisma.senderVerdict.findUnique({
       where: { businessId_sender: { businessId, sender: normalizeSender(sender) } },
@@ -104,6 +117,9 @@ export async function recentCorrections(businessId: string): Promise<OwnerCorrec
     });
     return rows
       .filter((r): r is OwnerCorrection => r.verdict === "customer" || r.verdict === "not_customer")
+      // A stored "not a customer" on a shared sender would teach the
+      // classifier the same over-broad rule (see header).
+      .filter((r) => !(r.verdict === "not_customer" && isSharedSender(r.sender)))
       .map((r) => ({ sender: r.sender, subject: r.subject, verdict: r.verdict }));
   } catch (err) {
     console.error(`Could not read owner corrections for business ${businessId}:`, err);

@@ -31,6 +31,7 @@ import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
 import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { OWNER_SAID_NOT_CUSTOMER, ownerSaidNotCustomer, recentCorrections } from "@/lib/senderVerdicts";
+import { isAutomatedAddress } from "@/lib/sharedSenders";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -46,16 +47,8 @@ const GRAPH = "https://graph.microsoft.com/v1.0";
 // minimum Mail scopes for reading the inbox and sending/replying.
 const SCOPES = ["offline_access", "openid", "email", "Mail.Read", "Mail.Send", "User.Read"];
 
-const AUTOMATED_SENDER_PATTERNS = [
-  /no-?reply/i,
-  /do-?not-?reply/i,
-  /notifications?@/i,
-  /mailer-daemon/i,
-  /postmaster@/i,
-];
-
 function isAutomatedSender(email: string): boolean {
-  return AUTOMATED_SENDER_PATTERNS.some((p) => p.test(email)) || isFollowUpSender(email);
+  return isAutomatedAddress(email) || isFollowUpSender(email);
 }
 
 function credentials(): { clientId: string; clientSecret: string; redirectUri: string } | null {

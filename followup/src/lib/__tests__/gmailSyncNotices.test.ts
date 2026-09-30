@@ -100,8 +100,36 @@ const { prismaMock, fetchSalesConversations, sendAlertEmail } = vi.hoisted(() =>
       ),
     },
     lead: { findMany: vi.fn(async () => []) },
+    // An interactive transaction whose `pg_advisory_xact_lock` really
+    // waits: a second holder of the same key queues until the first
+    // transaction ends, as Postgres does. Without it, the fake could not
+    // tell a lock from no lock.
+    $transaction: vi.fn(async <T,>(fn: (tx: unknown) => Promise<T>): Promise<T> => {
+      const held: string[] = [];
+      const tx = {
+        notification: prismaMock.notification,
+        $executeRaw: async (_sql: TemplateStringsArray, key: string) => {
+          while (locks.has(key)) await locks.get(key);
+          let release!: () => void;
+          locks.set(key, new Promise<void>((r) => (release = r)));
+          releases.set(key, release);
+          held.push(key);
+          return 1;
+        },
+      };
+      try {
+        return await fn(tx);
+      } finally {
+        for (const key of held) {
+          locks.delete(key);
+          releases.get(key)!();
+        }
+      }
+    }),
   },
 }));
+const locks = new Map<string, Promise<void>>();
+const releases = new Map<string, () => void>();
 
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
 vi.mock("@/lib/integrations/gmail", () => ({
@@ -432,6 +460,19 @@ describe("the day-6 warning (founder, 2026-09-28: warn before it stops)", () => 
     }
     expect(endingSoon()).toHaveLength(2);
     expect(warningEmails()).toHaveLength(2);
+  });
+
+  it("says it once even when two syncs overlap (backlog b003)", async () => {
+    // A push-triggered sync and the cron tick, or a doubled cron delivery:
+    // both reach the check before either has written the bell row.
+    syncWorks();
+    await Promise.all([syncGmailForAllBusinesses(), syncGmailForAllBusinesses()]);
+    expect(endingSoon()).toHaveLength(2); // one per admin
+  });
+
+  it("says it once when the warning itself is called twice at the same moment (backlog b003)", async () => {
+    await Promise.all([warnGmailAccessEndingSoon("biz1", T0), warnGmailAccessEndingSoon("biz1", T0), warnGmailAccessEndingSoon("biz1", T0)]);
+    expect(endingSoon().map((n) => n.userId).sort()).toEqual(["owner", "partner"]);
   });
 
   it("goes quiet after a reconnect, and warns again six days after it", async () => {

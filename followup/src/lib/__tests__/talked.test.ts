@@ -12,7 +12,7 @@ vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => true) }));
 
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
-import { settledByTalk, lastInboundTime } from "@/lib/talked";
+import { settledByTalk, settledByDecline, lastInboundTime, lastMessageTime } from "@/lib/talked";
 import { markTalked } from "@/lib/markTalked";
 import { computeAutomationStatus, type AutomationStatusLead, type BusinessAutomationRules } from "@/lib/automationStatus";
 import { assessRescue } from "@/lib/rescue";
@@ -40,6 +40,20 @@ describe("settledByTalk", () => {
     expect(lastInboundTime([{ direction: "inbound", sentAt: hoursAgo(3) }, { direction: "outbound", sentAt: hoursAgo(1) }])).toBe(hoursAgo(3).getTime());
     expect(lastInboundTime([{ direction: "inbound", date: hoursAgo(2).toISOString() }, { direction: "inbound", at: hoursAgo(4).getTime() }])).toBe(hoursAgo(2).getTime());
     expect(lastInboundTime([{ direction: "outbound", sentAt: hoursAgo(1) }])).toBeNull();
+  });
+});
+
+describe("settledByDecline (\"Don't send\", founder 2026-09-30)", () => {
+  it("is settled until a message from either side is newer than the decline", () => {
+    expect(settledByDecline(hoursAgo(1), hoursAgo(5).getTime())).toBe(true);
+    expect(settledByDecline(hoursAgo(1), null)).toBe(true);
+    expect(settledByDecline(hoursAgo(5), hoursAgo(1))).toBe(false);
+    expect(settledByDecline(null, hoursAgo(1))).toBe(false);
+  });
+  it("finds the newest message in either direction", () => {
+    expect(lastMessageTime([{ sentAt: hoursAgo(3) }, { sentAt: hoursAgo(1) }])).toBe(hoursAgo(1).getTime());
+    expect(lastMessageTime([{ date: hoursAgo(2).toISOString() }, { at: hoursAgo(4).getTime() }])).toBe(hoursAgo(2).getTime());
+    expect(lastMessageTime([])).toBeNull();
   });
 });
 

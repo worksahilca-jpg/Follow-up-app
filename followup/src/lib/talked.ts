@@ -31,6 +31,30 @@ export function settledByTalk(talkedAt: Date | null | undefined, lastInboundAt: 
   return talkedAt.getTime() >= inboundMs;
 }
 
+/**
+ * "Don't send" (founder, 2026-09-30): the owner declined the reply FollowUp
+ * held. Before this, the same customer was held again about 20 hours later,
+ * every day. Now nothing automatic follows until the conversation moves: a
+ * message from EITHER side newer than the decline (they write again, or the
+ * owner writes to them) and everything resumes on its own.
+ */
+export function settledByDecline(declinedAt: Date | null | undefined, lastMessageAt: Date | number | null | undefined): boolean {
+  if (!declinedAt) return false;
+  if (lastMessageAt == null) return true;
+  const ms = typeof lastMessageAt === "number" ? lastMessageAt : lastMessageAt.getTime();
+  return declinedAt.getTime() >= ms;
+}
+
+/** The newest message time in either direction. */
+export function lastMessageTime(messages: { sentAt?: Date; at?: number; date?: string }[]): number | null {
+  let newest: number | null = null;
+  for (const m of messages) {
+    const t = m.sentAt ? m.sentAt.getTime() : m.at ?? (m.date ? new Date(m.date).getTime() : null);
+    if (t != null && (newest == null || t > newest)) newest = t;
+  }
+  return newest;
+}
+
 /** The newest inbound time in a list of messages, whatever shape they come in. */
 export function lastInboundTime(messages: { direction: string; sentAt?: Date; at?: number; date?: string }[]): number | null {
   let newest: number | null = null;

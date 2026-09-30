@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/db", () => ({
   prisma: {
     auditEvent: { findMany: vi.fn() },
-    lead: { findMany: vi.fn(), findFirst: vi.fn() },
+    lead: { findMany: vi.fn(), findFirst: vi.fn(), update: vi.fn(async () => ({})) },
     message: { findMany: vi.fn() },
   },
 }));
@@ -279,6 +279,9 @@ describe("dismissHold", () => {
     p.lead.findFirst.mockResolvedValue({ id: "lead1" });
     const result = await dismissHold("lead1", "biz1", "user1");
     expect(result).toEqual({ success: true });
+    // Remembered on the lead, so the same hold doesn't come back tomorrow.
+    expect(p.lead.update.mock.calls[0][0]).toMatchObject({ where: { id: "lead1" } });
+    expect(p.lead.update.mock.calls[0][0].data.holdDismissedAt).toBeInstanceOf(Date);
     expect(audit).toHaveBeenCalledWith(
       { businessId: "biz1", userId: "user1" },
       "ai.hold_dismissed",

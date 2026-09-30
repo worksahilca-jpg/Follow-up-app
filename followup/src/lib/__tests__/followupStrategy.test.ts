@@ -617,3 +617,45 @@ describe("after the owner says 'We talked'", () => {
     expect(freshInboundToAnswer({ ...base, talkedAt: ago(D) } as Parameters<typeof freshInboundToAnswer>[0], Date.now())).toEqual(m.sentAt);
   });
 });
+
+/* ------------------------------------------------------------------ *
+ * "Don't send" (founder, 2026-09-30): the owner declined the reply
+ * FollowUp held. Nothing automatic follows until the conversation moves:
+ * they write again, or the owner writes to them.
+ * ------------------------------------------------------------------ */
+
+describe("after the owner says 'Don't send'", () => {
+  it("does not hold the same check-in again the next day", async () => {
+    hourly({ silence: [aLead([row("inbound", 20 * D), row("outbound", 12 * D), row("outbound", 9 * D)], { holdDismissedAt: ago(1 * D) })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(draft).not.toHaveBeenCalled();
+  });
+
+  it("does not hold a reply to the message the owner already declined", async () => {
+    hourly({ unanswered: [aLead([row("outbound", 40 * H), row("inbound", 25 * H)], { holdDismissedAt: ago(2 * H) })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(draft).not.toHaveBeenCalled();
+  });
+
+  it("picks up again once the customer writes after it", async () => {
+    hourly({ unanswered: [aLead([row("outbound", 40 * H), row("inbound", 25 * H)], { holdDismissedAt: ago(30 * H) })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(1);
+  });
+
+  it("picks up again once the owner writes to them after it", async () => {
+    hourly({ silence: [aLead([row("inbound", 20 * D), row("outbound", 12 * D), row("outbound", 9 * D)], { holdDismissedAt: ago(10 * D) })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(draft).toHaveBeenCalled();
+    expect(r.sent + r.held).toBeGreaterThan(0);
+  });
+
+  it("leaves a fresh message alone only when the decline came after it", () => {
+    const m = row("inbound", 70_000);
+    const base = { suggestedDraftedFor: m.sentAt, lastAutomationCheckedAt: null, conversations: [{ channel: "email", messages: [m] }] };
+    expect(freshInboundToAnswer({ ...base, holdDismissedAt: new Date() } as Parameters<typeof freshInboundToAnswer>[0], Date.now())).toBeNull();
+    expect(freshInboundToAnswer({ ...base, holdDismissedAt: ago(D) } as Parameters<typeof freshInboundToAnswer>[0], Date.now())).toEqual(m.sentAt);
+  });
+});

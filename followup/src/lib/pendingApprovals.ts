@@ -385,6 +385,9 @@ export async function dismissHold(
 ): Promise<{ success: boolean; message?: string }> {
   const lead = await prisma.lead.findFirst({ where: { id: leadId, businessId }, select: { id: true } });
   if (!lead) return { success: false, message: "Lead not found." };
+  // Remembered on the lead so the automatic paths leave this customer alone
+  // until the conversation moves (settledByDecline, founder 2026-09-30).
+  await prisma.lead.update({ where: { id: leadId }, data: { holdDismissedAt: new Date() } });
   await recordAudit({ businessId, userId }, "ai.hold_dismissed", { targetType: "lead", targetId: leadId });
   return { success: true };
 }

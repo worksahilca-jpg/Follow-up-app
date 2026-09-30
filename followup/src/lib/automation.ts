@@ -54,6 +54,7 @@ import { isTransientError } from "@/lib/transientError";
 import { greetingFirstName } from "@/lib/leadName";
 import { isOptOutMessage, isOptInMessage } from "@/lib/optOutKeywords";
 import { ackGracePeriodMs } from "@/lib/acknowledge";
+import { heldSince } from "@/lib/pendingApprovals";
 import type { Message } from "@/lib/types";
 
 export const UNANSWERED_ACTION = "unanswered_reply";
@@ -207,6 +208,27 @@ async function recordHold(lead: { id: string; businessId: string }, meta: Record
     .updateMany({ where: { id: lead.id }, data: { lastAutomationCheckedAt: null } })
     .catch((e) => console.error(`Failed to release automation claim for lead ${lead.id}:`, e));
   return false;
+}
+
+/**
+ * The same draft, about the same conversation, already waiting for the
+ * owner — so there is nothing to hold again and nothing new to tell them.
+ *
+ * A held lead sends nothing, so it is looked at again every ~20 hours for
+ * as long as it waits. Each of those passes used to write a fresh
+ * "ai.hold" and a fresh "waiting for your approval" notification: a new
+ * bell item per waiting lead per day, and a hold time that never aged, so
+ * the one "still waiting" reminder a day later (staleApprovals.ts) never
+ * came due. Only an unchanged draft counts (the caller passes
+ * `!regenerated`), and only a hold newer than the newest message. A lookup
+ * that fails answers no: one repeated notice, never a missed hold.
+ */
+async function stillWaitingOnOwner(lead: { id: string; businessId: string }, newestMessageAt: Date | null): Promise<boolean> {
+  try {
+    return await heldSince(lead.businessId, lead.id, newestMessageAt ?? new Date(0));
+  } catch {
+    return false;
+  }
 }
 export const DEAD_LEAD_NAME = "Reactivate cold leads";
 // research/product/2026-09-09-followup-cadence-best-practices.md, §3: a
@@ -1407,6 +1429,7 @@ export async function runAutomationForBusiness(
         const reason =
           UNGROUNDED_DRAFT_REASONS[dmShapeFailed] ??
           `FollowUp couldn't write a short enough DM for ${lead.name.split(" ")[0]} (${dmShapeFailed}) — this one needs your eye before it goes`;
+        if (!regenerated && (await stillWaitingOnOwner(lead, newestMessageAt))) return { kind: "held", note: `${lead.name}: ${reason}` };
         if (!(await recordHold(lead, { riskLevel: "shape", reason: UNGROUNDED_DRAFT_REASONS[dmShapeFailed] ?? dmShapeFailed, trigger: unansweredIds.has(lead.id) ? "unanswered" : isDeadLead ? DEAD_LEAD_ACTION : "silence" }))) {
           return { kind: "skipped", note: `${lead.name}: ${HOLD_NOT_RECORDED}` };
         }
@@ -1432,6 +1455,7 @@ export async function runAutomationForBusiness(
           });
         }
         const reason = UNGROUNDED_DRAFT_REASONS[emailShapeFailed] ?? UNGROUNDED_DRAFT_REASONS.digits;
+        if (!regenerated && (await stillWaitingOnOwner(lead, newestMessageAt))) return { kind: "held", note: `${lead.name}: ${reason}` };
         if (
           !(await recordHold(lead, {
             riskLevel: "shape",
@@ -1769,6 +1793,7 @@ export async function runAutomationForBusiness(
           // the owner a draft is waiting would point at nothing — so the
           // lead is handed back to the next tick instead, which reuses the
           // saved draft and tries again.
+          if (!regenerated && (await stillWaitingOnOwner(lead, newestMessageAt))) return { kind: "held", note: `${lead.name}: ${holdReason}` };
           if (
             !(await recordHold(lead, {
               riskLevel: risk.riskLevel,

@@ -27,6 +27,9 @@ vi.mock("@/lib/integrations/gmail", () => ({
   getGmailStatus: vi.fn(async () => ({ connected: true })),
   sendEmail: vi.fn(),
   getGmailReplyHeaders: vi.fn(),
+  // The inbox holding the customer's thread (bug b015) — covered on its own
+  // in gmailReplyFromRightInbox.test.ts.
+  resolveGmailInbox: vi.fn(async () => "inbox1"),
 }));
 vi.mock("@/lib/integrations/outlook", () => ({ getOutlookStatus: vi.fn(async () => ({ connected: false })), sendOutlookEmail: vi.fn() }));
 vi.mock("@/lib/twilio", () => ({ sendSms: vi.fn(), sendWhatsApp: vi.fn() }));
@@ -90,11 +93,12 @@ describe("Approve & send on an email lead", () => {
   it("replies in the customer's own thread, under their subject", async () => {
     const result = await sendFollowUpToLead("lead1", "Happy to quote — Tuesday at 3?", { trigger: "manual", subject: "Quick question about your kitchen project" });
     expect(result.success).toBe(true);
-    expect(readHeaders).toHaveBeenCalledWith("biz1", GMAIL_MSG);
+    expect(readHeaders).toHaveBeenCalledWith("biz1", GMAIL_MSG, "inbox1");
     expect(sent()).toEqual(expect.objectContaining({
       threadId: THREAD,
       inReplyTo: RFC_ID,
       subject: "Re: Kitchen reno quote?",
+      integrationId: "inbox1",
     }));
   });
 

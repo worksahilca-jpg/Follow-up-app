@@ -15,7 +15,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { threadsGet, prismaMock } = vi.hoisted(() => ({
   threadsGet: vi.fn(),
   prismaMock: {
-    integration: { findFirst: vi.fn() },
+    // One connected inbox: importGmailThread asks which inbox holds the
+    // thread (bug b015), and with one the answer is that one, no Gmail call.
+    integration: { findFirst: vi.fn(), findMany: vi.fn(async () => [{ id: "int1" }]) },
     business: { findUnique: vi.fn() },
     filteredEmail: { deleteMany: vi.fn() },
     lead: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },

@@ -4,6 +4,7 @@ import { ensureGmailWatch, fetchSalesConversations, isAuthRevoked } from "@/lib/
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { detectReplies } from "@/lib/outcomes";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
 import {
   gmailAccessEndingSoon,
   notifyGmailAccessLost,
@@ -74,7 +75,8 @@ async function scoreUnscoredLeads(businessId: string, limit: number): Promise<nu
  *
  * `integrationId` (the cron) reads and stamps that one inbox only, so each
  * of a business's Gmails is synced, and can fail, on its own. Without it
- * (the "Sync now" button, push) it is the business's inbox, as before.
+ * (the "Sync now" button, push) it is the business's inbox, as before —
+ * the oldest connection (GMAIL_INBOX_ORDER), the same one on every call.
  */
 export async function syncGmailForBusiness(
   businessId: string,
@@ -310,8 +312,12 @@ export async function syncGmailForBusinessFromPush(businessId: string): Promise<
   try {
     const business = await prisma.business.findUnique({ where: { id: businessId }, select: { subscriptionStatus: true, tier: true } });
     if (!hasActiveAccess(business?.subscriptionStatus, business?.tier)) return null;
+    // The same inbox, in the same order, that syncGmailForBusiness below
+    // reads without an integrationId — so `since` is that inbox's own clock,
+    // not whichever row an unordered read returned (bug b015).
     const integration = await prisma.integration.findFirst({
       where: { provider: "gmail", status: "connected", user: { businessId } },
+      orderBy: GMAIL_INBOX_ORDER,
       select: { lastSyncedAt: true },
     });
     const since = new Date((integration?.lastSyncedAt ?? now).getTime() - SYNC_OVERLAP_MS);

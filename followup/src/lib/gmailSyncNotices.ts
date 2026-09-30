@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { gmailSelfAddress } from "@/lib/integrations/gmail";
+import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
 import { sendAlertEmail } from "@/lib/alertEmail";
 import { appUrl } from "@/lib/stripe";
 
@@ -87,6 +88,8 @@ export async function readGmailSyncSnapshot(businessId: string, integrationId?: 
   try {
     return await prisma.integration.findFirst({
       where: { provider: "gmail", status: "connected", user: { businessId }, ...(integrationId ? { id: integrationId } : {}) },
+      // Without an integrationId, the oldest connection, every time (b015).
+      orderBy: GMAIL_INBOX_ORDER,
       // Selected column by column, never the whole row: src/lib/db.ts
       // decrypts token columns on read (audit F12).
       select: {

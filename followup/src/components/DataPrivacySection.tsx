@@ -131,7 +131,7 @@ export default function DataPrivacySection() {
               Type <span className="font-semibold text-ink">{businessName}</span> to confirm — everything goes,
               immediately, for good.
             </p>
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <input
                 type="text"
                 value={confirmText}

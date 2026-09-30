@@ -966,7 +966,7 @@ function SettingsPageInner() {
             href={gmailConnected ? undefined : "/api/integrations/gmail/connect"}
           />
           {gmailConnected && (
-            <div className="sm:ml-[52px] flex items-center gap-3">
+            <div className="sm:ml-[52px] flex flex-wrap sm:flex-nowrap items-center gap-3">
               <button
                 onClick={handleGmailSync}
                 disabled={syncing}
@@ -2002,7 +2002,7 @@ function IntegrationRow({
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">{name}</p>
-        <p className="text-[13px] text-ink-soft mt-0.5">{description}</p>
+        <p className="text-[13px] text-ink-soft mt-0.5 wrap-break-word">{description}</p>
       </div>
       {!connected && href ? (
         <a href={href} className="text-sm font-medium rounded-full px-3 py-1.5 shrink-0" style={buttonStyle}>

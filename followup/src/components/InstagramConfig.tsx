@@ -276,7 +276,7 @@ export default function InstagramConfig() {
                         value={tokenDraft}
                         onChange={(e) => setTokenDraft(e.target.value)}
                         placeholder="Instagram access token"
-                        className="flex-1 rounded-[12px] border border-line bg-paper px-3 py-1.5 text-[13px]"
+                        className="flex-1 min-w-0 rounded-[12px] border border-line bg-paper px-3 py-1.5 text-[13px]"
                       />
                       <button
                         onClick={saveToken}

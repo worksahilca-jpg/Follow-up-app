@@ -8543,3 +8543,22 @@ on. The founder chose the softer price line ("founding testers get a special pri
 kept the 30-day notice. Built as wording only: the page structure changes on the board (What FollowUp knows inside
 Your business, the new team rows) are not approved yet. One edge to watch: when "only admins can send" is switched on,
 a "Can reply" member can't send; the label describes the role, not that setting.
+
+## 2026-09-30 — Settings no longer slides sideways on a phone (robot b008)
+
+A layout fix, not a design change: no wording, tokens or desktop pixels moved (every 1280px before/after pair was
+byte-identical in the harness). The robot found Settings → Team 27px wider than a 390px screen. The cause was the
+invite form's email box: a flex-1 input without `min-w-0` won't shrink below its built-in width (about 197px). With
+the "Can reply" dropdown and Invite button beside it the row needed 377px of the 350px available. It already
+overflowed by 7px with "Sales"; the longer label from A-074 pushed it to 27px. The same check found:
+- **Your data:** the delete confirm (input, "Permanently delete", Cancel) was 81px too wide once opened. It now wraps,
+  with the buttons on a second line, rather than squeezing the name box to 75px, because you need to see the name
+  you're typing.
+- **Email:** with a sync result showing, the Gmail button row was 40px too wide. It wraps below 640px only
+  (`flex-wrap sm:flex-nowrap`); plain `flex-wrap` would have dropped the result onto its own line on desktop too.
+- **Email, Filtered out, Instagram, Facebook:** text or a button ran under a neighbour instead of off the page. Long
+  addresses in "Connected as …" and in Filtered-out rows now break (`wrap-break-word`). The Instagram and Facebook
+  token boxes got `min-w-0` so "Connecting…" stays inside the card.
+
+Two rules for next time. A flex-1 `<input>` in a row needs `min-w-0`. For a sentence that contains an email, use
+`wrap-break-word`, not `break-all`: `break-all` also splits ordinary words and changes the desktop line breaks.

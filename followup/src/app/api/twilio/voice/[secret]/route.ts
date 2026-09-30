@@ -128,7 +128,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const from = formParams.From;
   if (from) {
     const lead = await findOrCreateLeadByPhone(business.id, from, "Phone call");
-    if (!business.voiceAgentEnabled && (await claimMissedCallTextBack(lead.id, MISSED_CALL_TEXT_COOLDOWN_MINUTES))) {
+    // The text-back is an automatic message to a stranger, so it obeys the
+    // same hold as every other automated send: on by default ("every reply
+    // waits for your OK") and what "Pause all sending" turns on
+    // (src/lib/sendingControl.ts, acknowledge.ts). It used to go out
+    // regardless (security hunt 2026-09-30). Checked before the claim, so a
+    // held call isn't marked as texted. Unknown reads as held.
+    const hold = await prisma.business.findUnique({ where: { id: business.id }, select: { holdAllForApproval: true } });
+    const held = hold?.holdAllForApproval ?? true;
+    if (!business.voiceAgentEnabled && !held && (await claimMissedCallTextBack(lead.id, MISSED_CALL_TEXT_COOLDOWN_MINUTES))) {
       try {
         const result = await sendSms(
           business.id,

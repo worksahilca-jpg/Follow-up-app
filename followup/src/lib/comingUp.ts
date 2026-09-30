@@ -45,14 +45,17 @@ export function nextFor(lead: Lead, rules: BusinessAutomationRules, now: Date): 
     case "workflow":
       return { at: new Date(now.getTime() + status.dueInDays * DAY), what: `Next step of “${status.sequenceName}”`, unless: true };
     case "waiting":
+      // The reply, the check-ins and the welcome back all run inside
+      // runAutomationForBusiness, which does nothing while the master
+      // switch is off. A workflow (above) does not sit behind it.
+      if (!rules.masterEnabled) return null;
       return status.etaHours !== null ? { at: new Date(now.getTime() + status.etaHours * 3_600_000), what: "A reply to their message", unless: false } : null;
     case "sent": {
+      if (!rules.masterEnabled) return null;
       const t = timeline(lead);
       const lastContacted = new Date(lead.lastContacted).getTime();
-      if (rules.masterEnabled) {
-        const plan = quietReminderPlan(t, lastContacted, rules.silenceTriggerDays, rules.deadLeadDays);
-        if (plan?.dueAt) return { at: plan.dueAt, what: `${ORDINAL[Math.min(plan.step, ORDINAL.length - 1)]} check-in`, unless: true };
-      }
+      const plan = quietReminderPlan(t, lastContacted, rules.silenceTriggerDays, rules.deadLeadDays);
+      if (plan?.dueAt) return { at: plan.dueAt, what: `${ORDINAL[Math.min(plan.step, ORDINAL.length - 1)]} check-in`, unless: true };
       if (rules.deadLeadEnabled && !reactivationAlreadySent(t, rules.deadLeadDays)) {
         return { at: new Date(lastContacted + rules.deadLeadDays * DAY), what: `Welcome back, after ${rules.deadLeadDays} quiet days`, unless: true };
       }

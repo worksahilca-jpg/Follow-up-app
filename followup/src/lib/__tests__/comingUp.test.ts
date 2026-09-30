@@ -46,6 +46,28 @@ describe("getComingUp", () => {
     expect(getComingUp([plan], { ...rules, canSend: false }, NOW, new Set())).toEqual([]);
   });
 
+  // With "Auto follow-up on silence" off, runAutomationForBusiness returns
+  // before looking at a single lead: no check-in, no welcome back, no reply.
+  // Coming up and "Waiting on" still dated all three.
+  it("promises nothing the engine won't do while auto follow-up is switched off", () => {
+    const paused = { ...rules, masterEnabled: false };
+    // All four check-ins went out; the welcome back would be due tomorrow.
+    const cold = lead("Cold", {
+      conversation: [out(74), out(71), out(67), out(60), out(44)] as Lead["conversation"],
+      lastContacted: new Date(NOW.getTime() - 44 * DAY).toISOString(),
+    });
+    expect(getComingUp([cold], rules, NOW, new Set()).map((i) => i.what)).toEqual(["Welcome back, after 45 quiet days"]);
+    expect(getComingUp([cold], paused, NOW, new Set())).toEqual([]);
+
+    const owed = lead("Owed", { automationStatus: { kind: "waiting", etaHours: 3, heldForApproval: true } });
+    expect(getComingUp([owed], rules, NOW, new Set())).toHaveLength(1);
+    expect(getComingUp([owed], paused, NOW, new Set())).toEqual([]);
+
+    // A workflow is not behind that switch (runSequencesForAllBusinesses).
+    const plan = lead("Plan", { automationStatus: { kind: "workflow", sequenceName: "P", dueInDays: 1 } });
+    expect(getComingUp([plan], paused, NOW, new Set())).toHaveLength(1);
+  });
+
   it("only looks a week ahead, soonest first", () => {
     const a = lead("Later", { automationStatus: { kind: "workflow", sequenceName: "P", dueInDays: 5 } });
     const b = lead("Sooner", { automationStatus: { kind: "workflow", sequenceName: "P", dueInDays: 1 } });

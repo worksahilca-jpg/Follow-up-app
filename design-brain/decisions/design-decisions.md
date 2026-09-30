@@ -8562,3 +8562,13 @@ overflowed by 7px with "Sales"; the longer label from A-074 pushed it to 27px. T
 
 Two rules for next time. A flex-1 `<input>` in a row needs `min-w-0`. For a sentence that contains an email, use
 `wrap-break-word`, not `break-all`: `break-all` also splits ordinary words and changes the desktop line breaks.
+
+## 2026-09-29 — A link the owner didn't write waits for them (founder approved)
+
+An email that would go out unreviewed is held if it has a link, a `www.` or bare web address, or an email address that
+didn't come from the business: the owner's own messages in the thread, their note on a workflow step, their sending
+addresses, or FollowUp's booking page. The lead's own words never count. The approval queue says:
+"Held because the draft has a link or email address you didn't write — check it before it goes." The first draft of the
+wording was "It has a link or email address you didn't write."; it was reworded to finish the "Held because…" line
+like every other hold reason. Instant replies and DMs are unchanged; they already refuse every link. The same check also
+covers automatic texts, WhatsApp messages and workflow steps, so those are held for a foreign link too.

@@ -310,6 +310,121 @@ const CLAIMS: Claim[] = [
   },
 ];
 
+/**
+ * A link or an address in a message, reduced to what decides where it goes.
+ *
+ * A URL is its host (lowercased, `www.` and trailing dots dropped) and its
+ * path (lowercased, trailing slash dropped); the scheme, query and fragment
+ * do not change whose site it is. An address is the address, lowercased.
+ */
+export type LinkToken = { kind: "url"; host: string; path: string } | { kind: "email"; address: string };
+
+// The same three shapes the DM `contact` rule (src/lib/dmDrafts.ts) and
+// the first reply's (src/lib/acknowledge.ts) refuse, and the scheme form
+// localizeFixedText's newLinkOrAddress looks for — written here to extract
+// rather than test, because an unreviewed email is allowed the business's
+// own links and so has to know WHICH link it is holding.
+const SCHEME_URL_RE = /[a-z][a-z0-9+.-]*:\/\/\S+/giu;
+const EMAIL_RE = /\S+@\S+\.\S+/gu;
+const WWW_RE = /www\.\S+/giu;
+// What those rules never needed: a bare host with no scheme and no www.,
+// "evil-portal.com/login". They refuse every link outright; this has to
+// find one to compare it. Labels are letters or digits in any script (a
+// look-alike host is still a host), the last one letters only, so "3.5"
+// and "2.5km" are not hosts.
+const HOST_LABEL = "[\\p{L}\\p{N}](?:[\\p{L}\\p{N}-]*[\\p{L}\\p{N}])?";
+const BARE_HOST_RE = new RegExp(
+  `(?<![\\p{L}\\p{N}@._%+/-])(?:${HOST_LABEL}\\.)+\\p{L}{2,24}(?![\\p{L}\\p{N}-])(?:[/:?#]\\S*)?`,
+  "giu"
+);
+// An address typed as numbers: the digits rule would pass "1.2.3.4/login"
+// once the lead had written it, which is exactly the case this is for.
+const IPV4_RE = /(?<![\p{Nd}.])\p{Nd}{1,3}(?:\.\p{Nd}{1,3}){3}(?!\p{Nd})(?:[/:?#]\S*)?/gu;
+
+const LEADING_PUNCT_RE = /^[\s"'“”‘’«»(<[{]+/u;
+const TRAILING_PUNCT_RE = /[\s"'“”‘’«»)>\]}.,;:!?…]+$/u;
+const ADDRESS_RE = /([\p{L}\p{N}._%+-]+)@([\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+)/u;
+
+function trimEdges(raw: string): string {
+  return raw.replace(LEADING_PUNCT_RE, "").replace(TRAILING_PUNCT_RE, "");
+}
+
+function urlToken(raw: string, hasScheme: boolean): LinkToken {
+  const trimmed = trimEdges(raw);
+  try {
+    // The platform's parser, not a regex: "https://acme.com@evil.example/"
+    // goes to evil.example, and only a real parser says so.
+    const url = new URL(hasScheme ? trimmed : `http://${trimmed}`);
+    return {
+      kind: "url",
+      host: url.hostname.toLowerCase().replace(/\.+$/, "").replace(/^www\./, ""),
+      path: url.pathname.toLowerCase().replace(/\/+$/, ""),
+    };
+  } catch {
+    // Unparseable: kept as its own text, which nothing allowed will equal.
+    return { kind: "url", host: trimmed.toLowerCase(), path: "" };
+  }
+}
+
+function emailToken(raw: string): LinkToken {
+  const trimmed = trimEdges(raw).replace(/^mailto:/i, "");
+  const m = trimmed.match(ADDRESS_RE);
+  return { kind: "email", address: (m ? `${m[1]}@${m[2]}` : trimmed).toLowerCase() };
+}
+
+/**
+ * Every link and address in `text`, and the text with them blanked out —
+ * so the digits and calendar rules judge the words, not a path or a
+ * booking id inside a link that is allowed to be there.
+ *
+ * Order matters: a scheme URL first ("https://acme.com@evil.example" is a
+ * link, not an address), then addresses (whose domain is not a separate
+ * link), then www. and bare hosts in what is left.
+ */
+export function scanLinks(text: string): { links: LinkToken[]; rest: string } {
+  const links: LinkToken[] = [];
+  let rest = text;
+  const take = (re: RegExp, toToken: (raw: string) => LinkToken | null) => {
+    rest = rest.replace(re, (raw) => {
+      const token = toToken(raw);
+      if (!token) return raw;
+      links.push(token);
+      return " ";
+    });
+  };
+  take(SCHEME_URL_RE, (raw) => urlToken(raw, true));
+  take(EMAIL_RE, emailToken);
+  take(WWW_RE, (raw) => urlToken(raw, false));
+  take(IPV4_RE, (raw) => urlToken(raw, false));
+  take(BARE_HOST_RE, (raw) => {
+    // "p.ej.", "EE.UU.", "a.m.": all one- and two-letter parts and nothing
+    // after them reads as an abbreviation, not a site. A path makes it a
+    // link whatever the host looks like ("t.co/x" is caught).
+    const hasPath = /[/:?#]/.test(trimEdges(raw));
+    const labels = trimEdges(raw).split(".");
+    if (!hasPath && labels.every((l) => l.length <= 2)) return null;
+    return urlToken(raw, false);
+  });
+  return { links, rest };
+}
+
+/**
+ * Whether `allowed` covers `link`. An address must match exactly. A URL
+ * must be on the same host and, when the allowed one has a path, at or
+ * under that path: the business's "calendly.com/acme" is not permission
+ * for "calendly.com/someone-else", on a host anyone can have a page on.
+ */
+export function linkCovered(link: LinkToken, allowed: readonly LinkToken[]): boolean {
+  if (link.kind === "email") return allowed.some((a) => a.kind === "email" && a.address === link.address);
+  if (!link.host) return false;
+  return allowed.some(
+    (a) =>
+      a.kind === "url" &&
+      a.host === link.host &&
+      (a.path === "" || link.path === a.path || link.path.startsWith(`${a.path}/`))
+  );
+}
+
 /** Weekday and month names for a locale, lowercased. */
 function calendarWords(locale: string): string[] {
   const out: string[] = [];

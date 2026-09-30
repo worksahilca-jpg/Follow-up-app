@@ -45,7 +45,8 @@ import { getVoiceSamples } from "@/lib/voice";
 import { DEAD_LEAD_DEFAULT_DAYS, DEAD_LEAD_ACTION, deadLeadMessageHint } from "@/lib/automation";
 import type { Message } from "@/lib/types";
 import { Prisma, type PipelineStage } from "@prisma/client";
-import { emailBodyOf, inventedSpecific } from "@/lib/dmDrafts";
+import { emailBodyOf, emailGreetingOf } from "@/lib/dmDrafts";
+import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
 import { UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
 const OWNER_CONCLUDED_STAGES: PipelineStage[] = ["WON", "LOST"];
@@ -367,7 +368,13 @@ export async function runReactivationSend(
       // them instead of sent (audit 2026-09-28). The claim above is kept:
       // the lead is not batch-messaged later, and the draft waits in
       // Approvals with the reason.
-      const invented = inventedSpecific(`${draft.subject}\n${emailBodyOf(draft.body)}`, conversation, undefined);
+      const invented = await checkUnreviewedDraft({
+        text: `${draft.subject}\n${emailBodyOf(draft.body)}`,
+        conversation,
+        businessId,
+        leadId: lead.id,
+        greeting: emailGreetingOf(draft.body),
+      });
       if (invented) {
         await prisma.lead.update({
           where: { id: lead.id },

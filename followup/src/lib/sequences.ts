@@ -43,7 +43,8 @@ import { isWithinSendWindow } from "@/lib/sendWindow";
 import type { AutomationTier, Prisma, SequenceAction, PipelineStage } from "@prisma/client";
 import type { Message } from "@/lib/types";
 import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
-import { inventedSpecific } from "@/lib/dmDrafts";
+import { emailGreetingOf } from "@/lib/dmDrafts";
+import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
 
 export interface SequenceStepInput {
   /** Hours after the previous step (or enrollment). Preferred. */
@@ -831,7 +832,17 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // the owner can make, that neither the thread nor the owner's own
         // step note contains. Checked before the hold-everything branch so
         // the owner is told WHICH part to distrust.
-        const invented = inventedSpecific(`${draft.subject ?? ""}\n${draft.body}`, conversation, leadLanguageOf(lead)?.language, step.messageHint);
+        // A link or address too, in the body or the greeting (founder
+        // 2026-09-29): unless it came from the business, it is held.
+        const invented = await checkUnreviewedDraft({
+          text: `${draft.subject ?? ""}\n${draft.body}`,
+          conversation,
+          businessId,
+          leadId: lead.id,
+          locale: leadLanguageOf(lead)?.language,
+          ownerHint: step.messageHint,
+          greeting: channel === "email" ? emailGreetingOf(message) : undefined,
+        });
         if (invented) {
           risk = { riskLevel: "high", reason: UNGROUNDED_DRAFT_REASONS[invented] ?? UNGROUNDED_DRAFT_REASONS.digits };
         } else if (holdAll) {

@@ -48,6 +48,7 @@ const { prismaMock, fetchSalesConversations, sendAlertEmail } = vi.hoisted(() =>
         state.integration.status === where.status
           ? [
               {
+                id: "gmail-1",
                 lastSyncedAt: state.integration.lastSyncedAt,
                 deepSyncedAt: state.integration.deepSyncedAt,
                 connectedAt: state.integration.connectedAt,

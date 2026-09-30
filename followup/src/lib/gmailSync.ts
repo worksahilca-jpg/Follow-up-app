@@ -71,8 +71,15 @@ async function scoreUnscoredLeads(businessId: string, limit: number): Promise<nu
  * what's new (see fetchSalesConversations). Records lastSyncedAt on the
  * Gmail Integration when it completes, so the next automatic tick knows
  * where to start.
+ *
+ * `integrationId` (the cron) reads and stamps that one inbox only, so each
+ * of a business's Gmails is synced, and can fail, on its own. Without it
+ * (the "Sync now" button, push) it is the business's inbox, as before.
  */
-export async function syncGmailForBusiness(businessId: string, options: { since?: Date } = {}): Promise<GmailSyncResult> {
+export async function syncGmailForBusiness(
+  businessId: string,
+  options: { since?: Date; integrationId?: string } = {}
+): Promise<GmailSyncResult> {
   const startedAt = new Date();
   const isDeep = !options.since;
 
@@ -82,6 +89,7 @@ export async function syncGmailForBusiness(businessId: string, options: { since?
   let truncated = false;
   const leads = await fetchSalesConversations(businessId, {
     since: options.since,
+    ...(options.integrationId ? { integrationId: options.integrationId } : {}),
     maxClassifications: MAX_CLASSIFICATIONS_PER_RUN,
     onResult: (info) => {
       truncated = info.truncated;
@@ -116,7 +124,7 @@ export async function syncGmailForBusiness(businessId: string, options: { since?
   // budget; a truncated one runs again next tick and picks up where the
   // known-thread skipping leaves off.
   await prisma.integration.updateMany({
-    where: { provider: "gmail", status: "connected", user: { businessId } },
+    where: { provider: "gmail", status: "connected", user: { businessId }, ...(options.integrationId ? { id: options.integrationId } : {}) },
     data: {
       lastSyncedAt: startedAt,
       lastSyncError: null,
@@ -134,11 +142,19 @@ export async function syncGmailForBusiness(businessId: string, options: { since?
  * the actual promise (PRODUCT_DIRECTION.md: no lead goes cold, no human
  * doing this job). Businesses are processed a few at a time; one failing
  * never stops the rest.
+ *
+ * Within a business, each connected Gmail (each admin can connect their
+ * own) is synced on its own, and a failure is recorded on the inbox that
+ * failed and nowhere else. Treating the business as one connection meant
+ * one inbox's dead token parked every inbox the business had, and the
+ * healthy one stopped being read along with it (bug b001). `synced` and
+ * `failed` count inboxes; on a one-inbox business that is the business.
  */
 export async function syncGmailForAllBusinesses(): Promise<{ businesses: number; synced: number; newLeads: number; failed: number }> {
   const integrations = await prisma.integration.findMany({
     where: { provider: "gmail", status: "connected" },
     select: {
+      id: true,
       lastSyncedAt: true,
       deepSyncedAt: true,
       connectedAt: true,
@@ -146,9 +162,10 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
     },
   });
 
-  // One entry per business (a business could have more than one connected
-  // user); the earliest timestamps win so nothing is skipped.
-  const byBusiness = new Map<string, { lastSyncedAt: Date | null; deepSyncedAt: Date | null; connectedAts: Date[] }>();
+  // Grouped by business, each inbox keeping its own row: its own sync
+  // clock, and its own grant, which ends on its own clock.
+  type Inbox = { id: string; lastSyncedAt: Date | null; deepSyncedAt: Date | null; connectedAt: Date | null };
+  const byBusiness = new Map<string, Inbox[]>();
   for (const i of integrations) {
     const businessId = i.user.businessId;
     // Gmail is one of Free tier's allowed channels (@/lib/billing's
@@ -156,102 +173,112 @@ export async function syncGmailForAllBusinesses(): Promise<{ businesses: number;
     // business's inbox still gets synced, not just Plus/Pro's. Without
     // this, Free tier's promised Gmail detection never runs at all.
     if (!businessId || !hasActiveAccess(i.user.business?.subscriptionStatus, i.user.business?.tier)) continue;
-    const prev = byBusiness.get(businessId);
-    const earlier = (a: Date | null, b: Date | null) => (!a || !b ? null : a < b ? a : b);
-    byBusiness.set(businessId, {
-      lastSyncedAt: prev ? earlier(prev.lastSyncedAt, i.lastSyncedAt) : i.lastSyncedAt,
-      deepSyncedAt: prev ? earlier(prev.deepSyncedAt, i.deepSyncedAt) : i.deepSyncedAt,
-      // Every inbox's own connect time: each Gmail's grant ends on its own clock.
-      connectedAts: [...(prev?.connectedAts ?? []), ...(i.connectedAt ? [i.connectedAt] : [])],
-    });
+    const inbox = { id: i.id, lastSyncedAt: i.lastSyncedAt, deepSyncedAt: i.deepSyncedAt, connectedAt: i.connectedAt };
+    byBusiness.set(businessId, [...(byBusiness.get(businessId) ?? []), inbox]);
   }
 
   let synced = 0;
   let newLeads = 0;
   let failed = 0;
-  await mapWithConcurrency([...byBusiness.entries()], 3, async ([businessId, { lastSyncedAt, deepSyncedAt, connectedAts }]) => {
-    // Deep pass (no `since`) when this business has never had one or its
-    // last one is a day old; otherwise the cheap incremental tick.
-    const deepDue = !deepSyncedAt || Date.now() - deepSyncedAt.getTime() > DEEP_SYNC_INTERVAL_MS;
-    const since = deepDue ? undefined : new Date((lastSyncedAt ?? new Date()).getTime() - SYNC_OVERLAP_MS);
-    try {
-      const result = await syncGmailForBusiness(businessId, since ? { since } : {});
-      synced += 1;
-      newLeads += result.count;
-      // Keep the push watch alive (7-day max) — the poll above is the
-      // fallback; push is what makes "seen in seconds" true.
-      await ensureGmailWatch(businessId).catch((e) => console.error(`Gmail watch renewal failed for ${businessId}:`, e));
-      // A day before Google ends a Testing-mode grant, say so, so the
-      // reconnect happens before the gap rather than after it. Checked
-      // against the cron's own row first: outside that last day this costs
-      // no query.
-      if (connectedAts.some((d) => gmailAccessEndingSoon(d, new Date()))) {
-        await warnGmailAccessEndingSoon(businessId).catch((e) => console.error(`Gmail ending warning failed for ${businessId}:`, e));
+  await mapWithConcurrency([...byBusiness.entries()], 3, async ([businessId, inboxes]) => {
+    // One inbox at a time: they write to the same business's leads.
+    let anySynced = false;
+    for (const inbox of inboxes) {
+      // Deep pass (no `since`) when this inbox has never had one or its
+      // last one is a day old; otherwise the cheap incremental tick.
+      const deepDue = !inbox.deepSyncedAt || Date.now() - inbox.deepSyncedAt.getTime() > DEEP_SYNC_INTERVAL_MS;
+      const since = deepDue ? undefined : new Date((inbox.lastSyncedAt ?? new Date()).getTime() - SYNC_OVERLAP_MS);
+      try {
+        const result = await syncGmailForBusiness(businessId, { ...(since ? { since } : {}), integrationId: inbox.id });
+        synced += 1;
+        newLeads += result.count;
+        anySynced = true;
+      } catch (err) {
+        failed += 1;
+        await recordGmailSyncFailure(businessId, inbox.id, err);
       }
-    } catch (err) {
-      failed += 1;
-      console.error(`Automatic Gmail sync failed for business ${businessId}:`, err);
-      // A failing sync must be visible somewhere other than a log nobody
-      // reads — record what went wrong on the connection itself.
-      const message = err instanceof Error ? err.message : String(err);
-
-      // `invalid_grant` is different in kind from every other sync failure.
-      // A rate limit or a timeout is worth retrying next tick; a revoked
-      // refresh token never recovers — only the owner reconnecting fixes it.
-      //
-      // Left as "connected" (which is what happened before this), the
-      // connection kept reporting healthy while capturing nothing: Settings
-      // said Connected, the dashboard said "watching your inbox", and the
-      // cron quietly re-failed every ten minutes indefinitely. That is the
-      // worst shape a failure can take in this product — the owner believes
-      // leads are being caught while they are being missed.
-      //
-      // Parking it at "needs_reconnect" makes every "is Gmail connected?"
-      // lookup in the app fall through to false, stops the pointless retry
-      // loop, and gives getGmailStatus a state it can put a sentence to.
-      const revoked = isAuthRevoked(err);
-      // Read before the write below replaces lastSyncError: whether the
-      // previous tick failed too is part of the "keeps failing" threshold.
-      const before = await readGmailSyncSnapshot(businessId);
-      const recorded = await prisma.integration
-        .updateMany({
-          where: { provider: "gmail", status: "connected", user: { businessId } },
-          data: {
-            lastSyncError: `${new Date().toISOString()} ${message}`.slice(0, 1000),
-            ...(revoked
-              ? {
-                  status: "needs_reconnect",
-                  // The tokens are dead at Google. Holding copies of dead
-                  // credentials buys nothing and is one more thing to leak.
-                  accessToken: null,
-                  refreshToken: null,
-                  // The push watch is gone with the grant.
-                  watchExpiration: null,
-                  watchHistoryId: null,
-                }
-              : {}),
-          },
-        })
-        .catch((e) => {
-          console.error(`Failed to record sync error for business ${businessId}:`, e);
-          return null;
-        });
-
-      // Parking alone told nobody: the owner of an account with leads found
-      // out from one line at the bottom of Today, on day 7 of every beta
-      // (daily-path audit 2026-09-25 F6). Tell the admins in the bell —
-      // once. The update above only matches a row still "connected", so
-      // exactly one tick per death gets a count here: a concurrent tick
-      // that lost the race gets 0, and later ticks never select the parked
-      // row at all. Only a reconnect makes the next death count again.
-      if (recorded && recorded.count > 0) {
-        if (revoked) await notifyGmailAccessLost(businessId, before);
-        else await notifyIfGmailSyncKeepsFailing(businessId, before);
-      }
+    }
+    if (!anySynced) return;
+    // Keep the push watch alive (7-day max) — the poll above is the
+    // fallback; push is what makes "seen in seconds" true.
+    await ensureGmailWatch(businessId).catch((e) => console.error(`Gmail watch renewal failed for ${businessId}:`, e));
+    // A day before Google ends a Testing-mode grant, say so, so the
+    // reconnect happens before the gap rather than after it. Checked
+    // against the cron's own rows first: outside that last day this costs
+    // no query.
+    if (inboxes.some((i) => gmailAccessEndingSoon(i.connectedAt, new Date()))) {
+      await warnGmailAccessEndingSoon(businessId).catch((e) => console.error(`Gmail ending warning failed for ${businessId}:`, e));
     }
   });
 
   return { businesses: byBusiness.size, synced, newLeads, failed };
+}
+
+/**
+ * Records one inbox's failed sync on that inbox's own row, and tells the
+ * admins when it warrants it. Scoped to `integrationId` throughout: another
+ * connected Gmail in the same business is untouched (bug b001).
+ */
+async function recordGmailSyncFailure(businessId: string, integrationId: string, err: unknown): Promise<void> {
+  console.error(`Automatic Gmail sync failed for business ${businessId} (inbox ${integrationId}):`, err);
+  // A failing sync must be visible somewhere other than a log nobody
+  // reads — record what went wrong on the connection itself.
+  const message = err instanceof Error ? err.message : String(err);
+
+  // `invalid_grant` is different in kind from every other sync failure.
+  // A rate limit or a timeout is worth retrying next tick; a revoked
+  // refresh token never recovers — only the owner reconnecting fixes it.
+  //
+  // Left as "connected" (which is what happened before this), the
+  // connection kept reporting healthy while capturing nothing: Settings
+  // said Connected, the dashboard said "watching your inbox", and the
+  // cron quietly re-failed every ten minutes indefinitely. That is the
+  // worst shape a failure can take in this product — the owner believes
+  // leads are being caught while they are being missed.
+  //
+  // Parking it at "needs_reconnect" makes every "is Gmail connected?"
+  // lookup in the app fall through to false, stops the pointless retry
+  // loop, and gives getGmailStatus a state it can put a sentence to.
+  const revoked = isAuthRevoked(err);
+  // Read before the write below replaces lastSyncError: whether the
+  // previous tick failed too is part of the "keeps failing" threshold.
+  const before = await readGmailSyncSnapshot(businessId, integrationId);
+  const recorded = await prisma.integration
+    .updateMany({
+      // This inbox only: the business's other Gmails did not fail.
+      where: { id: integrationId, provider: "gmail", status: "connected", user: { businessId } },
+      data: {
+        lastSyncError: `${new Date().toISOString()} ${message}`.slice(0, 1000),
+        ...(revoked
+          ? {
+              status: "needs_reconnect",
+              // The tokens are dead at Google. Holding copies of dead
+              // credentials buys nothing and is one more thing to leak.
+              accessToken: null,
+              refreshToken: null,
+              // The push watch is gone with the grant.
+              watchExpiration: null,
+              watchHistoryId: null,
+            }
+          : {}),
+      },
+    })
+    .catch((e) => {
+      console.error(`Failed to record sync error for business ${businessId}:`, e);
+      return null;
+    });
+
+  // Parking alone told nobody: the owner of an account with leads found
+  // out from one line at the bottom of Today, on day 7 of every beta
+  // (daily-path audit 2026-09-25 F6). Tell the admins in the bell —
+  // once. The update above only matches a row still "connected", so
+  // exactly one tick per death gets a count here: a concurrent tick
+  // that lost the race gets 0, and later ticks never select the parked
+  // row at all. Only a reconnect makes the next death count again.
+  if (recorded && recorded.count > 0) {
+    if (revoked) await notifyGmailAccessLost(businessId, before);
+    else await notifyIfGmailSyncKeepsFailing(businessId, before);
+  }
 }
 
 // How long a push-triggered sync may hold the per-business lock before

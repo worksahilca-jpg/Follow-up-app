@@ -78,11 +78,15 @@ export type GmailSyncSnapshot = {
  * The business's connected Gmail, as it stood before this tick's failure
  * was written. Must be read first: whether the PREVIOUS tick also failed
  * lives in `lastSyncError`, which the caller is about to overwrite.
+ *
+ * `integrationId` is the inbox that failed. A business can have more than
+ * one Gmail, and a notice must name the inbox that broke, not whichever
+ * connected row an unordered read returns.
  */
-export async function readGmailSyncSnapshot(businessId: string): Promise<GmailSyncSnapshot | null> {
+export async function readGmailSyncSnapshot(businessId: string, integrationId?: string): Promise<GmailSyncSnapshot | null> {
   try {
     return await prisma.integration.findFirst({
-      where: { provider: "gmail", status: "connected", user: { businessId } },
+      where: { provider: "gmail", status: "connected", user: { businessId }, ...(integrationId ? { id: integrationId } : {}) },
       // Selected column by column, never the whole row: src/lib/db.ts
       // decrypts token columns on read (audit F12).
       select: {

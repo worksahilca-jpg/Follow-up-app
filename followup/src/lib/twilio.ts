@@ -162,8 +162,38 @@ export function escapeXml(text: string): string {
  * offers) and authenticating with the business's own Account SID/Auth
  * Token (the same pair already used for outbound sendSms, not a new
  * credential) is required to actually fetch the bytes.
+ *
+ * Only a Twilio recording URL is fetched. RecordingUrl comes from a
+ * callback whose signature proves only that it was signed with this
+ * business's Auth Token — a value the business's own admin types into
+ * Settings, unchecked — so an admin could sign a callback naming any URL
+ * and have the server fetch it (security hunt 2026-09-30). Regional hosts
+ * (api.<edge>.<region>.twilio.com) are Twilio's too.
  */
+const TWILIO_API_HOST = /^api(\.[a-z0-9-]+)*\.twilio\.com$/;
+const TWILIO_RECORDING_PATH = /^\/2010-04-01\/Accounts\/AC[0-9a-fA-F]{32}\/Recordings\/RE[0-9a-fA-F]{32}$/;
+
+export function isTwilioRecordingUrl(recordingUrl: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(recordingUrl);
+  } catch {
+    return false;
+  }
+  return (
+    url.protocol === "https:" &&
+    !url.username &&
+    !url.password &&
+    !url.port &&
+    !url.search &&
+    !url.hash &&
+    TWILIO_API_HOST.test(url.hostname) &&
+    TWILIO_RECORDING_PATH.test(url.pathname)
+  );
+}
+
 export async function fetchTwilioRecording(recordingUrl: string, accountSid: string, authToken: string): Promise<Buffer> {
+  if (!isTwilioRecordingUrl(recordingUrl)) throw new Error("Not a Twilio recording URL.");
   const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
   const res = await fetch(`${recordingUrl}.mp3`, { headers: { Authorization: `Basic ${auth}` } });
   if (!res.ok) throw new Error(`Twilio recording fetch failed: ${res.status}`);

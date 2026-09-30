@@ -17,7 +17,7 @@ import { prisma } from "@/lib/db";
 import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
 import { checkSendCap } from "@/lib/sendCaps";
 import { claimSend, releaseSendClaim, SEND_CLAIM_WINDOW_MS } from "@/lib/sendClaim";
-import { getGmailReplyHeaders, getGmailStatus, sendEmail } from "@/lib/integrations/gmail";
+import { getGmailReplyHeaders, getGmailStatus, resolveGmailInbox, sendEmail } from "@/lib/integrations/gmail";
 import { getOutlookStatus, sendOutlookEmail } from "@/lib/integrations/outlook";
 import { sendSms, sendWhatsApp } from "@/lib/twilio";
 import { getWhatsAppCloudConnection, sendWhatsAppCloud } from "@/lib/whatsappCloud";
@@ -752,8 +752,17 @@ export async function sendFollowUpToLead(
         let threadId = options.emailThreadId;
         let inReplyTo = options.emailInReplyTo;
         let subject = fallbackSubject;
+        // The inbox the customer wrote to: with two Gmails connected, the
+        // one holding their thread, never whichever a lookup landed on
+        // (bug b015). Resolved once and used for both the header read and
+        // the send, so the reply goes out even when the headers can't be
+        // read, from the right inbox. A caller that passes its own thread
+        // (the instant ack, the retry queue) is resolved inside sendEmail.
+        let integrationId: string | undefined;
         if (target?.threadId) {
-          const headers = await getGmailReplyHeaders(lead.businessId, target.messageExternalId);
+          integrationId =
+            (await resolveGmailInbox(lead.businessId, { threadId: target.threadId, messageId: target.messageExternalId })) ?? undefined;
+          const headers = await getGmailReplyHeaders(lead.businessId, target.messageExternalId, integrationId);
           if (headers) {
             threadId = target.threadId;
             inReplyTo = headers.messageIdHeader;
@@ -769,6 +778,7 @@ export async function sendFollowUpToLead(
           body,
           threadId,
           inReplyTo,
+          ...(integrationId ? { integrationId } : {}),
         });
         if (!result.success) return providerFailure(result, "Gmail didn't confirm this message sent.");
         externalId = result.messageId ?? undefined;

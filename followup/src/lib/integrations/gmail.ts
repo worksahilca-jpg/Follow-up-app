@@ -42,6 +42,7 @@ import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
 import { isAutomatedAddress, threadCustomer } from "@/lib/sharedSenders";
 import type { InlineImage } from "@/lib/emailAssets";
+import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -107,10 +108,13 @@ export interface GmailConnectionStatus {
 // Scoped by business, not a global findFirst, so one tenant's inbox can
 // never leak into another's. `integrationId` picks one inbox when a
 // business has several (each admin can connect their own); it narrows the
-// business-scoped lookup, never replaces it.
+// business-scoped lookup, never replaces it. Without it, the oldest
+// connection (GMAIL_INBOX_ORDER), never whichever row Postgres returns first
+// (bug b015).
 async function getGmailIntegration(businessId: string, integrationId?: string) {
   return prisma.integration.findFirst({
     where: { provider: "gmail", status: "connected", user: { businessId }, ...(integrationId ? { id: integrationId } : {}) },
+    orderBy: GMAIL_INBOX_ORDER,
     include: { user: true },
   });
 }
@@ -123,6 +127,7 @@ export async function getGmailStatus(businessId: string): Promise<GmailConnectio
   // The token-using callers below keep the full row; they need it.
   const integration = await prisma.integration.findFirst({
     where: { provider: "gmail", status: "connected", user: { businessId } },
+    orderBy: GMAIL_INBOX_ORDER,
     select: { accountEmail: true, watchExpiration: true, lastSyncedAt: true, user: { select: { email: true } } },
   });
   if (!integration) {
@@ -132,6 +137,7 @@ export async function getGmailStatus(businessId: string): Promise<GmailConnectio
     // never-connected empty state.
     const revoked = await prisma.integration.findFirst({
       where: { provider: "gmail", status: "needs_reconnect", user: { businessId } },
+      orderBy: GMAIL_INBOX_ORDER,
       select: { accountEmail: true, user: { select: { email: true } } },
     });
     if (revoked) {
@@ -364,15 +370,21 @@ export async function ensureGmailWatch(businessId: string): Promise<{ active: bo
  */
 export async function findBusinessIdByGmailAddress(emailAddress: string): Promise<string | null> {
   const addr = emailAddress.trim().toLowerCase();
-  const integration = await prisma.integration.findFirst({
-    where: {
-      provider: "gmail",
-      status: "connected",
-      OR: [{ accountEmail: { equals: addr, mode: "insensitive" } }, { user: { email: { equals: addr, mode: "insensitive" } } }],
-    },
+  // Two ordered reads, not one unordered OR (bug b015): with the OR, a row
+  // matching only on its login email could win over the row that actually
+  // connected this address, depending on which Postgres returned first.
+  const byInbox = await prisma.integration.findFirst({
+    where: { provider: "gmail", status: "connected", accountEmail: { equals: addr, mode: "insensitive" } },
+    orderBy: GMAIL_INBOX_ORDER,
     select: { user: { select: { businessId: true } } },
   });
-  return integration?.user.businessId ?? null;
+  if (byInbox) return byInbox.user.businessId ?? null;
+  const byLogin = await prisma.integration.findFirst({
+    where: { provider: "gmail", status: "connected", user: { email: { equals: addr, mode: "insensitive" } } },
+    orderBy: GMAIL_INBOX_ORDER,
+    select: { user: { select: { businessId: true } } },
+  });
+  return byLogin?.user.businessId ?? null;
 }
 
 /**
@@ -1077,7 +1089,10 @@ export async function fetchSalesConversations(
  * counterpart (e.g. the owner deleted it).
  */
 export async function importGmailThread(businessId: string, threadId: string): Promise<Lead | null> {
-  const authed = await getAuthedGmailClient(businessId);
+  // The inbox the thread was set aside from: a Gmail thread id means
+  // nothing in any other mailbox (bug b015).
+  const inboxId = await resolveGmailInbox(businessId, { threadId });
+  const authed = await getAuthedGmailClient(businessId, inboxId ?? undefined);
   if (!authed) return null;
   const { gmail, integration } = authed;
   const selfEmail = gmailSelfAddress(integration);
@@ -1264,6 +1279,84 @@ export function mimeBody(
   ];
 }
 
+/** Gmail's answer to "no such thread/message in this mailbox" — a definite no, unlike a timeout. */
+function isNotInThisMailbox(err: unknown): boolean {
+  const e = err as { status?: unknown; code?: unknown; response?: { status?: unknown } } | null;
+  const status = Number(e?.status ?? e?.response?.status ?? e?.code);
+  return status === 404 || status === 400;
+}
+
+/** Every address named in these headers (Delivered-To, To, Cc), lowercased. */
+function addressesIn(headers: gmail_v1.Schema$MessagePartHeader[] | undefined): string[] {
+  return (headers ?? []).flatMap((h) => (h.value ?? "").match(/[^\s<>,;"']+@[^\s<>,;"']+/g) ?? []).map((a) => a.toLowerCase());
+}
+
+/**
+ * Which of the business's connected Gmail inboxes holds this thread (bug
+ * b015) — the one a reply to it has to go out from. Null when that can't
+ * be known; the caller then uses the oldest connection (GMAIL_INBOX_ORDER).
+ *
+ * Nothing in the database says which inbox a thread came from. What is
+ * recorded is the thread itself: Conversation.externalId is the Gmail
+ * thread id and Message.externalId the Gmail message id, and both only mean
+ * something inside the mailbox that holds them. So each inbox is asked,
+ * oldest first, whether it has them — a metadata read, no body. When more
+ * than one does (the lead wrote to both, and the ids collide, which Gmail
+ * does not promise against), the one the message was actually addressed to
+ * (Delivered-To/To/Cc) wins, then the oldest.
+ *
+ * - One inbox: it is that one, with no Gmail call at all — exactly the
+ *   behaviour before a business could connect a second.
+ * - Every inbox says "not here" (the thread was deleted): null.
+ * - No inbox could be asked (a timeout, a rate limit): the error is thrown.
+ *   Guessing would send the reply from an inbox the customer never wrote
+ *   to; a send that fails on a passing error is retried instead.
+ */
+export async function resolveGmailInbox(
+  businessId: string,
+  ref: { threadId?: string | null; messageId?: string | null }
+): Promise<string | null> {
+  if (!ref.threadId && !ref.messageId) return null;
+  const inboxes = await prisma.integration.findMany({
+    where: { provider: "gmail", status: "connected", user: { businessId } },
+    orderBy: GMAIL_INBOX_ORDER,
+    // Ids only: this list is read on every threaded send, and the token
+    // columns are decrypted on read (src/lib/db.ts). Only a business with
+    // more than one inbox goes on to load credentials below.
+    select: { id: true },
+  });
+  if (inboxes.length === 0) return null;
+  if (inboxes.length === 1) return inboxes[0].id;
+
+  const answers = await Promise.all(
+    inboxes.map(async ({ id }): Promise<{ id: string; owns: boolean; recipients: string[]; self: string; error?: unknown }> => {
+      try {
+        const authed = await getAuthedGmailClient(businessId, id);
+        if (!authed) return { id, owns: false, recipients: [], self: "" };
+        const self = gmailSelfAddress(authed.integration);
+        const metadataHeaders = ["Delivered-To", "To", "Cc"];
+        if (ref.messageId) {
+          const { data } = await authed.gmail.users.messages.get({ userId: "me", id: ref.messageId, format: "metadata", metadataHeaders });
+          // The message must sit in the thread the reply is filed under.
+          const owns = !ref.threadId || !data.threadId || data.threadId === ref.threadId;
+          return { id, owns, recipients: addressesIn(data.payload?.headers), self };
+        }
+        const { data } = await authed.gmail.users.threads.get({ userId: "me", id: ref.threadId!, format: "metadata", metadataHeaders });
+        return { id, owns: true, recipients: (data.messages ?? []).flatMap((m) => addressesIn(m.payload?.headers)), self };
+      } catch (err) {
+        if (isNotInThisMailbox(err)) return { id, owns: false, recipients: [], self: "" };
+        return { id, owns: false, recipients: [], self: "", error: err };
+      }
+    })
+  );
+
+  const owners = answers.filter((a) => a.owns);
+  if (owners.length > 0) return (owners.find((o) => o.recipients.includes(o.self)) ?? owners[0]).id;
+  const failed = answers.find((a) => a.error !== undefined);
+  if (failed) throw failed.error;
+  return null;
+}
+
 /**
  * The two headers a reply needs from the customer's own email: its
  * RFC 2822 `Message-ID` (for In-Reply-To/References) and its Subject.
@@ -1278,10 +1371,13 @@ export function mimeBody(
  */
 export async function getGmailReplyHeaders(
   businessId: string,
-  gmailMessageId: string
+  gmailMessageId: string,
+  // The inbox holding the message (resolveGmailInbox). A Gmail message id
+  // read through any other inbox is "not found" (bug b015).
+  integrationId?: string
 ): Promise<{ messageIdHeader: string; subject: string } | null> {
   try {
-    const authed = await getAuthedGmailClient(businessId);
+    const authed = await getAuthedGmailClient(businessId, integrationId);
     if (!authed) return null;
     const res = await authed.gmail.users.messages.get({
       userId: "me",
@@ -1322,9 +1418,18 @@ export async function sendEmail(
     html?: string;
     /** Pictures the HTML shows as cid:… — only with `html`. */
     inlineImages?: ReadonlyArray<InlineImage>;
+    /**
+     * The inbox to send from, when the caller already resolved it. Without
+     * it, a reply (`threadId`) goes out from the inbox that holds that
+     * thread (resolveGmailInbox), and anything else from the oldest
+     * connection. Never whichever inbox an unordered read returned: that
+     * sent a reply to a lead who wrote to inbox B from inbox A (bug b015).
+     */
+    integrationId?: string;
   }
 ): Promise<{ success: boolean; messageId?: string; message?: string }> {
-  const authed = await getAuthedGmailClient(businessId);
+  const inboxId = params.integrationId ?? (params.threadId ? await resolveGmailInbox(businessId, { threadId: params.threadId }) : null);
+  const authed = await getAuthedGmailClient(businessId, inboxId ?? undefined);
   // Distinguished from a plain send failure below so the caller
   // (src/lib/sending.ts) can tell "never connected Gmail" from "Gmail's
   // API rejected the send" instead of showing the same misleading

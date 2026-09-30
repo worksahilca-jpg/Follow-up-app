@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { send, prismaMock } = vi.hoisted(() => ({
-  send: vi.fn(async (_args: { requestBody: { raw: string } }) => ({ data: { id: "sent-1" } })),
+  send: vi.fn<(args: { requestBody: { raw: string } }) => Promise<{ data: { id: string } }>>(async () => ({ data: { id: "sent-1" } })),
   prismaMock: { integration: { findFirst: vi.fn(), findMany: vi.fn() } },
 }));
 

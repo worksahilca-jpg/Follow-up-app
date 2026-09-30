@@ -106,6 +106,8 @@ export type ClaimedSend = {
   auditMeta: unknown;
   attempts: number;
   maxAttempts: number;
+  /** When the first attempt failed and the message was parked. */
+  createdAt: Date;
 };
 
 /** Statuses that mean "this send has not finished happening yet". */
@@ -212,6 +214,7 @@ export async function claimNextDueSend(now = new Date()): Promise<ClaimedSend | 
         auditMeta: true,
         attempts: true,
         maxAttempts: true,
+        createdAt: true,
       },
     });
     if (row) return row;

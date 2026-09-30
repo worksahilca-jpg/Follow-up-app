@@ -109,6 +109,8 @@ function queuedRow(overrides: Record<string, unknown> = {}) {
     auditMeta: null,
     attempts: 2,
     maxAttempts: MAX_SEND_ATTEMPTS,
+    // When the first attempt failed and the message was parked.
+    createdAt: new Date(Date.now() - 10 * 60_000),
     ...overrides,
   };
 }
@@ -419,6 +421,59 @@ describe("the guards still win at retry time", () => {
   it("sends nothing on behalf of a business whose subscription lapsed", async () => {
     oneRowDue();
     billing.mockResolvedValue(false);
+
+    const result = await runOutboundRetries();
+
+    expect(sms).not.toHaveBeenCalled();
+    expect(result.canceled).toBe(1);
+  });
+
+  // A parked message is a snapshot of a conversation. The retry can land
+  // up to ~2h45m later, and "stop the moment they reply" has to hold across
+  // that gap exactly as it does for a fresh send: a reminder that failed at
+  // 10:00 must not arrive at 10:12 on top of the customer's 10:05 "we went
+  // with someone else", nor on top of the owner's own answer.
+  it("does not send a queued message once the conversation has moved on since it was parked", async () => {
+    oneRowDue();
+    p.message.findFirst.mockImplementation(async (args: { where?: { sentAt?: { gt?: Date } } }) =>
+      args?.where?.sentAt?.gt ? { id: "m-new" } : null
+    );
+
+    const result = await runOutboundRetries();
+
+    expect(sms).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
+    expect(result.canceled).toBe(1);
+    expect(p.outboundSend.updateMany.mock.calls.at(-1)![0].data.status).toBe("canceled");
+  });
+
+  // "Pause all sending" is built on holdAllForApproval (sendingControl.ts):
+  // every automated path holds while it is on. The retry was the one path
+  // that did not look, so a message parked five minutes before the owner
+  // pressed Pause still went out five minutes after.
+  it("does not send a queued message after the owner paused sending", async () => {
+    oneRowDue();
+    p.lead.findUnique.mockResolvedValue(lead({ business: { holdAllForApproval: true } }));
+
+    const result = await runOutboundRetries();
+
+    expect(sms).not.toHaveBeenCalled();
+    expect(result.canceled).toBe(1);
+  });
+
+  it("does not send a queued message after the owner tapped We talked", async () => {
+    oneRowDue();
+    p.lead.findUnique.mockResolvedValue(lead({ talkedAt: new Date() }));
+
+    const result = await runOutboundRetries();
+
+    expect(sms).not.toHaveBeenCalled();
+    expect(result.canceled).toBe(1);
+  });
+
+  it("does not send a queued message to a lead marked won or lost since", async () => {
+    oneRowDue();
+    p.lead.findUnique.mockResolvedValue(lead({ stage: "LOST" }));
 
     const result = await runOutboundRetries();
 

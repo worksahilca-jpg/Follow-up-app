@@ -1174,6 +1174,38 @@ async function notifyUndeliveredSend(leadId: string, message: string): Promise<v
   }
 }
 
+/**
+ * Why a parked message must not go out now, or null if it still should.
+ *
+ * The queue holds a snapshot: the words the caller decided on, against the
+ * conversation as it stood then. A retry can land up to ~2h45m later, and
+ * the funnel's own guards (opt-out, suppression, the fuse) say nothing
+ * about what every automated path checks BEFORE it calls the funnel:
+ *   - the conversation moved — the customer wrote back, or someone
+ *     answered them. "Stop the moment they reply" (automation.ts re-checks
+ *     exactly this in the seconds before its own send);
+ *   - the owner paused sending, or switched to holding every message
+ *     (holdAllForApproval — sendingControl.ts builds Pause on it);
+ *   - "We talked" since, or the lead was closed as won or lost.
+ * Only the one plain column off Business: it carries encrypted secrets.
+ */
+async function retryNoLongerWanted(row: { leadId: string; createdAt: Date }): Promise<string | null> {
+  const lead = await prisma.lead.findUnique({
+    where: { id: row.leadId },
+    select: { stage: true, talkedAt: true, business: { select: { holdAllForApproval: true } } },
+  });
+  if (!lead) return "The lead no longer exists, so nothing was sent.";
+  if (lead.business?.holdAllForApproval) return "Sending was paused before the retry, so nothing was sent.";
+  if (lead.stage === "WON" || lead.stage === "LOST") return "The lead was closed before the retry, so nothing was sent.";
+  if (lead.talkedAt && lead.talkedAt > row.createdAt) return "You talked with them before the retry, so nothing was sent.";
+  const moved = await prisma.message.findFirst({
+    where: { conversation: { leadId: row.leadId }, sentAt: { gt: row.createdAt } },
+    select: { id: true },
+  });
+  if (moved) return "The conversation moved on before the retry, so nothing was sent.";
+  return null;
+}
+
 export type OutboundRetryResult = {
   /** Rows claimed and attempted this invocation. */
   attempted: number;
@@ -1258,6 +1290,15 @@ export async function runOutboundRetries(
       if (!isSendableChannel(row.channel)) {
         await retireSend(row.id, "failed", `There's no way to send ${row.channel} messages.`);
         result.failed += 1;
+        continue;
+      }
+
+      // The world this message was written for may be gone. Terminal and
+      // quiet, like every other guard refusal below.
+      const stale = await retryNoLongerWanted(row);
+      if (stale) {
+        await retireSend(row.id, "canceled", stale);
+        result.canceled += 1;
         continue;
       }
 

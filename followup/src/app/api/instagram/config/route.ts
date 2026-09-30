@@ -128,6 +128,9 @@ export async function POST(request: NextRequest) {
         // Cleared, then set below only if Meta confirms — a new token is a
         // new subscription question, and the old answer does not carry over.
         instagramWebhookSubscribedAt: null,
+        // A different account is polled from scratch, never from the last
+        // account's cursor (instagramConnectGuard.ts, audit F6).
+        ...(plan.sameAccount ? {} : { instagramSyncedAt: null }),
       },
     });
   } catch (err) {
@@ -191,6 +194,9 @@ export async function DELETE() {
       instagramAccountId: null,
       instagramUsername: null,
       instagramWebhookSubscribedAt: null,
+      // The poll cursor belongs to the account being disconnected; the next
+      // one connected starts fresh (audit 2026-09-24 F6).
+      instagramSyncedAt: null,
     },
   });
   return NextResponse.json({ success: true });

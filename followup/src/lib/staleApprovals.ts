@@ -131,11 +131,19 @@ export async function remindStaleApprovals(
        * time would suppress the reminder that exists because it was
        * missed.
        */
+      /*
+       * A summary only speaks for the leads that were already stale when it
+       * was written, so it counts only from the moment THIS lead became
+       * stale. Counted from the hold, a summary written while this lead was
+       * still a few hours short of a day read as its reminder, and the one
+       * reminder it was owed never came.
+       */
+      const staleSince = new Date(approval.heldAt.getTime() + STALE_APPROVAL_AFTER_MS);
       const already = await prisma.notification.count({
         where: {
           message: { contains: STALE_APPROVAL_MARKER },
           createdAt: { gte: approval.heldAt },
-          OR: [{ leadId: approval.leadId }, { leadId: null, userId: { in: userIds } }],
+          OR: [{ leadId: approval.leadId }, { leadId: null, userId: { in: userIds }, createdAt: { gte: staleSince } }],
         },
       });
       if (already > 0) return;

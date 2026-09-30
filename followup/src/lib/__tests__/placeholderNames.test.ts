@@ -22,7 +22,7 @@
  * in one module: half a rule is how the other half gets forgotten.
  */
 import { describe, it, expect } from "vitest";
-import { greetingFirstName, businessDisplayName, isPlaceholderLeadName } from "@/lib/leadName";
+import { greetingFirstName, businessDisplayName, isPlaceholderLeadName, customerGreetingName } from "@/lib/leadName";
 
 describe("a business that has not named itself is not named at all", () => {
   it("refuses the literal default from auth.ts", () => {
@@ -117,22 +117,9 @@ describe("every label a channel writes for an unnamed lead is no name at all", (
     }
   });
 
-  it("refuses a phone number, which is what SMS and WhatsApp name an unnamed lead", () => {
-    for (const n of ["+14155551234", "+1 (415) 555-1234", "415.555.1234", "14155551234"]) {
-      expect(isPlaceholderLeadName(n)).toBe(true);
-      expect(greetingFirstName(n)).toBe("");
-    }
-  });
-
-  it("refuses an email address, which a Lead Ad with no name falls back to", () => {
-    expect(greetingFirstName("jane.doe@example.com")).toBe("");
-  });
-
-  it("still keeps real names that merely contain a channel word or a number", () => {
+  it("still keeps real names that merely contain a channel word", () => {
     expect(greetingFirstName("Messenger Smith")).toBe("Messenger");
     expect(greetingFirstName("Faceboo Kim")).toBe("Faceboo");
-    expect(greetingFirstName("Unit 4B")).toBe("Unit");
-    expect(isPlaceholderLeadName("Room 101")).toBe(false);
     expect(isPlaceholderLeadName("@sahildoes")).toBe(false);
     expect(greetingFirstName("Test Lead (Sahil)")).toBe("Test");
   });
@@ -142,5 +129,47 @@ describe("every label a channel writes for an unnamed lead is no name at all", (
     expect(isPlaceholderLeadName("   ")).toBe(true);
     expect(isPlaceholderLeadName(null)).toBe(true);
     expect(isPlaceholderLeadName(undefined)).toBe(true);
+  });
+});
+
+/**
+ * SMS and WhatsApp name a contact with no profile name by their phone
+ * number, and a Lead Ad can fall back to an email address. The owner
+ * reading an alert or a hold note should still see that number; a customer
+ * must never be greeted by it. Two functions, one per reader.
+ */
+describe("a phone number or email is shown to the owner, never used to greet the customer", () => {
+  const numbers = ["+14155551234", "+1 (415) 555-1234", "415.555.1234", "14155551234"];
+
+  it("owner-facing: greetingFirstName leaves them exactly as before", () => {
+    expect(greetingFirstName("+14155551234")).toBe("+14155551234");
+    expect(greetingFirstName("jane.doe@example.com")).toBe("jane.doe@example.com");
+    for (const n of numbers) expect(isPlaceholderLeadName(n)).toBe(false);
+    expect(isPlaceholderLeadName("jane.doe@example.com")).toBe(false);
+  });
+
+  it("customer-facing: refuses a phone number, whole or already split on spaces", () => {
+    for (const n of numbers) {
+      expect(customerGreetingName(n)).toBe("");
+      expect(customerGreetingName(n.split(" ")[0])).toBe("");
+    }
+  });
+
+  it("customer-facing: refuses an email address", () => {
+    expect(customerGreetingName("jane.doe@example.com")).toBe("");
+  });
+
+  it("customer-facing: refuses every channel label too", () => {
+    for (const label of ["Facebook Messenger", "Facebook", "Instagram User", "Instagram DM", "WhatsApp contact", "SMS lead", ""]) {
+      expect(customerGreetingName(label)).toBe("");
+    }
+  });
+
+  it("customer-facing: keeps real names and handles, including ones with a number in them", () => {
+    expect(customerGreetingName("Priya Raman")).toBe("Priya");
+    expect(customerGreetingName("@sahildoes")).toBe("sahildoes");
+    expect(customerGreetingName("Lucía")).toBe("Lucía");
+    expect(customerGreetingName("सुनीता")).toBe("सुनीता");
+    expect(customerGreetingName("Jo2 Smith")).toBe("Jo2");
   });
 });

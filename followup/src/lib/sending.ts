@@ -42,7 +42,7 @@ import {
   retireSend,
 } from "@/lib/sendQueue";
 import { hasPriceSlot, isFilledDraft, PRICE_SLOT } from "@/lib/priceSlot";
-import { greetingFirstName } from "@/lib/leadName";
+import { customerGreetingName } from "@/lib/leadName";
 
 /**
  * SMS and WhatsApp both live on Lead.phone (the same phone number
@@ -801,7 +801,7 @@ export async function sendFollowUpToLead(
           // The template's one placeholder is a greeting a customer reads.
           // A WhatsApp lead with no profile name is named by their own
           // phone number, so judge it: "" makes the sender use "there".
-          leadFirstName: greetingFirstName(lead.name),
+          leadFirstName: customerGreetingName(lead.name),
         });
         if (!result.success) return providerFailure(result, "WhatsApp didn't confirm this message sent.");
         externalId = result.sid;
@@ -813,7 +813,7 @@ export async function sendFollowUpToLead(
         // path still records the draft. Worth fixing next.
         sentTemplate = result.sentTemplate;
       } else {
-        const result = await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: greetingFirstName(lead.name) });
+        const result = await sendWhatsApp(lead.businessId, lead.phone!, body, { leadFirstName: customerGreetingName(lead.name) });
         if (!result.success) return providerFailure(result, "WhatsApp didn't confirm this message sent.");
         externalId = result.sid;
         // The legacy sender substitutes a template the same way the Cloud

@@ -8,7 +8,6 @@ import { recordAuthFailure } from "@/lib/monitoring";
 import { quickRepliesForGraph, validateQuickReplies, type QuickReply } from "@/lib/quickReplies";
 import { readMetaError, ownerFacingMetaError, type MetaSendResult } from "@/lib/metaGraph";
 import type { Lead } from "@prisma/client";
-import { isPlaceholderLeadName } from "@/lib/leadName";
 
 // Pinned, like src/lib/facebook.ts. An unversioned Graph call is "converted
 // to the oldest available version an app can access" (Meta's FAQ), so
@@ -446,7 +445,7 @@ export async function findOrCreateLeadByInstagram(
     // that placeholder is what the first real lead got greeted by. Only
     // ever fills a blank: a name the owner typed, or one already taken
     // from a handle, is never overwritten.
-    const shouldName = senderUsername && isPlaceholderLeadName(existing.name);
+    const shouldName = senderUsername && (!existing.name || existing.name === "Instagram DM");
     return prisma.lead.update({
       where: { id: existing.id },
       data: { lastContacted: new Date(), ...(shouldName ? { name: `@${senderUsername}` } : {}) },

@@ -52,8 +52,10 @@
  *
  * SMS and WhatsApp write the phone number itself as the name
  * (findOrCreateLeadByPhone in src/lib/twilio.ts), and a Lead Ad can fall
- * back to an email address; those are not a fixed string, so they are
- * matched by shape in isPlaceholderLeadName below.
+ * back to an email address. Those are NOT on this list on purpose: the
+ * owner reading an alert is better served by "+1415…" than by "A
+ * customer". Only customerGreetingName, below, refuses them — a number
+ * is useful to the owner and absurd in a greeting to the customer.
  */
 const PLACEHOLDER_LEAD_NAMES = new Set([
   "instagram dm",
@@ -77,21 +79,14 @@ const PLACEHOLDER_LEAD_NAMES = new Set([
   "lead",
 ]);
 
-/** Only digits and phone punctuation, with at least seven digits: a number, not a name. */
-const PHONE_SHAPED = /^\+?[\d\s().-]+$/;
-const EMAIL_SHAPED = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 /**
- * Is this a label FollowUp wrote because it did not know the person's
- * name? True for the list above in any casing, for a phone number, and
- * for an email address. False for a real name and for an "@handle".
+ * Is this one of the labels above (in any casing), or no name at all?
+ * False for a real name, an "@handle", a phone number and an email
+ * address — see customerGreetingName for the last two.
  */
 export function isPlaceholderLeadName(name: string | null | undefined): boolean {
   const trimmed = (name ?? "").trim();
-  if (!trimmed) return true;
-  if (PLACEHOLDER_LEAD_NAMES.has(trimmed.toLowerCase())) return true;
-  if (PHONE_SHAPED.test(trimmed) && trimmed.replace(/\D/g, "").length >= 7) return true;
-  return EMAIL_SHAPED.test(trimmed);
+  return !trimmed || PLACEHOLDER_LEAD_NAMES.has(trimmed.toLowerCase());
 }
 
 /**
@@ -107,11 +102,37 @@ export function isPlaceholderLeadName(name: string | null | undefined): boolean 
  * Safe to call on a first name that was already split off a full name
  * (the "Facebook" of "Facebook Messenger" is itself on the list), so a
  * caller handed only a first name can still ask.
+ *
+ * Owner-facing text (alerts, hold notes) uses this one, so a lead named
+ * by their phone number still shows the owner that number. Anything a
+ * CUSTOMER reads uses customerGreetingName instead.
  */
 export function greetingFirstName(name: string | null | undefined): string {
   if (isPlaceholderLeadName(name)) return "";
   const first = (name ?? "").trim().split(/\s+/)[0];
   return first.startsWith("@") ? first.slice(1) : first;
+}
+
+const EMAIL_SHAPED = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * The name to put in a greeting a CUSTOMER reads — the drafting and
+ * instant-reply prompts' first-name line, the email "Hi …," and the
+ * WhatsApp template's name slot — or "" for none.
+ *
+ * greetingFirstName, plus two stand-ins that are not labels: the phone
+ * number SMS and WhatsApp use as the name of a contact with no profile
+ * name, and the email address a Lead Ad falls back to. "Hi +14155551234,"
+ * is the same failure as "Hi Facebook,". A first word with no letters in
+ * it at all (a number, "+1") is never a name, which also catches a number
+ * a caller already split on spaces.
+ */
+export function customerGreetingName(name: string | null | undefined): string {
+  const trimmed = (name ?? "").trim();
+  if (EMAIL_SHAPED.test(trimmed)) return "";
+  const first = greetingFirstName(trimmed);
+  if (!first || EMAIL_SHAPED.test(first) || !/\p{L}/u.test(first)) return "";
+  return first;
 }
 
 /**

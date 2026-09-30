@@ -453,6 +453,15 @@ describe("what the owner reads", () => {
     expect(emails()[0].subject).toBe("A customer is waiting for your reply");
   });
 
+  // Backlog b010 widened what a CUSTOMER is never greeted by (a phone
+  // number among it). The owner is a different reader: an SMS lead with
+  // no name is still shown to them by number, exactly as before.
+  it("still shows the owner a lead named only by their phone number", async () => {
+    addCustomer(1, { name: "+14155551234" });
+    await runOwnerAlerts(NOW);
+    expect(emails()[0].subject).toBe("+14155551234 is waiting for your reply");
+  });
+
   it("escapes what the customer wrote in the HTML email", async () => {
     addCustomer(1, { message: '<img src=x onerror="alert(1)">' });
     await runOwnerAlerts(NOW);

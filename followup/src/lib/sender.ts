@@ -19,7 +19,7 @@
 
 import { prisma } from "@/lib/db";
 import { localizeFixedText } from "@/lib/integrations/openai";
-import { greetingFirstName } from "@/lib/leadName";
+import { customerGreetingName } from "@/lib/leadName";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import type { Message } from "@/lib/types";
 
@@ -79,7 +79,7 @@ async function localizedFrame(
   // "Facebook" (backlog b010), and the ones that already judged it pass ""
   // — which used to come out as "Hi ,". Either way the greeting simply
   // has no name in it.
-  const name = greetingFirstName(leadFirstName);
+  const name = customerGreetingName(leadFirstName);
   const greeting = name ? `Hi ${name},` : "Hi,";
   const signOff = `Best,\n${senderName}`;
   if (!languageSample?.trim()) return { greeting, signOff };

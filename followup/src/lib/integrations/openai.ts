@@ -16,7 +16,7 @@ import { ungroundedSpecifics, unconfirmedClaim } from "@/lib/grounding";
 // The client and model name live in their own leaf module so this file
 // and leadLanguage.ts don't import each other — see openaiClient.ts.
 import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
-import { greetingFirstName } from "@/lib/leadName";
+import { customerGreetingName } from "@/lib/leadName";
 
 /**
  * What a prompt says in place of a lead's first name when FollowUp does
@@ -27,9 +27,13 @@ import { greetingFirstName } from "@/lib/leadName";
  */
 const UNKNOWN_FIRST_NAME = "(not known — greet them without using a name)";
 
-/** The value for a prompt's "Lead's first name:" line. */
+/**
+ * The value for a prompt's "Lead's first name:" line. The customer reads
+ * whatever greeting comes of it, so it is judged as a customer greeting:
+ * no channel label, phone number or email address.
+ */
 function promptFirstName(name: string | null | undefined): string {
-  return greetingFirstName(name) || UNKNOWN_FIRST_NAME;
+  return customerGreetingName(name) || UNKNOWN_FIRST_NAME;
 }
 
 /**
@@ -1967,7 +1971,7 @@ export async function summarizeConversation(conversation: Message[], leadFirstNa
       {
         role: "system",
         content:
-          `Summarise this conversation between a small business and a customer called ${greetingFirstName(leadFirstName) || "the customer"}, ` +
+          `Summarise this conversation between a small business and a customer called ${leadFirstName || "the customer"}, ` +
           "for the business owner who is about to reply. Two or three short sentences in English: what they asked " +
           "for, what the business said or quoted (with the date if it matters), and where it stands now. Say " +
           "\"you\" for the business. Only state what the conversation says; never guess, add or recommend anything. " +

@@ -339,6 +339,33 @@ describe("channel-switching within a workflow (research rec #4)", () => {
     });
   });
 
+  // A lead who texted STOP before the plan reached them (enrolled by hand,
+  // or by a source rule the moment their first text arrived) is past
+  // stop-on-reply, which only looks at messages after the step was
+  // scheduled. The send funnel refuses the text, but the refusal came after
+  // a draft and a risk check and left the lead on the same step: two OpenAI
+  // calls and a "couldn't send" notification every hour, for as long as
+  // they stayed opted out. Structural, like never-wrote above: once, told.
+  it("stops, once and told, instead of drafting a text to someone who texted STOP", async () => {
+    nonEmailChannel.mockResolvedValue("text");
+    p.lead.findMany.mockResolvedValue([enrolledOnStep(0, { email: null, phone: "+15551234567", optedOutAt: new Date(Date.now() - 86_400_000) })]);
+    await runSequencesForBusiness("biz1");
+    expect(draftMessage).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+    expect(p.lead.update).toHaveBeenCalledWith({
+      where: { id: "lead1" },
+      data: { sequenceId: null, sequenceStepIndex: 0, sequenceStepDueAt: null, sequenceStepScheduledAt: null, automationTier: "ASSISTED", tierBeforeSequence: null },
+    });
+    expect(p.notification.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays on email instead of escalating to text for a lead who texted STOP", async () => {
+    nonEmailChannel.mockResolvedValue("text");
+    p.lead.findMany.mockResolvedValue([enrolledOnStep(1, { phone: "+15551234567", optedOutAt: new Date(Date.now() - 86_400_000) })]);
+    await runSequencesForBusiness("biz1");
+    expect(send).toHaveBeenCalledWith("lead1", expect.any(String), expect.objectContaining({ channel: "email" }));
+  });
+
   it("tells the AI it's drafting a text, not an email, when escalating", async () => {
     nonEmailChannel.mockResolvedValue("text");
     p.lead.findMany.mockResolvedValue([enrolledOnStep(1, { phone: "+15551234567" })]);

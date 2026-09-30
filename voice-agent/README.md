@@ -77,6 +77,14 @@ every other channel already uses.
    to simulate an actual phone call from a dev environment, so a real call
    is the only way to verify this end to end.
 
+## Tests
+
+`npm test` runs `test/stream.test.js` with Node's built-in runner. It
+fakes both ends locally — the main app's auth check, and OpenAI's
+Realtime socket via `OPENAI_REALTIME_URL` (a test-only override; never
+set it in a deployment) — so it spends nothing and needs no keys. It
+covers the call-setup handshake, not the audio conversation itself.
+
 ## What's deliberately NOT built yet (Phase 1 scope)
 
 - **No fallback voice/provider selection** — one voice (`alloy`), one

@@ -1258,6 +1258,33 @@ export function sanitizeHeaderValue(value: string): string {
 }
 
 /**
+ * A header value a mail app reads as written: plain ASCII unchanged, and
+ * anything else as RFC 2047 encoded-words (=?UTF-8?B?…?=), each within the
+ * 75-character limit, folded onto continuation lines.
+ *
+ * Headers are ASCII (RFC 5322). A Subject sent as bare UTF-8 reached
+ * recipients as mojibake ("rÃ©novation") in the clients that assume so:
+ * the "Re: <their subject>" to a French-speaking customer, and the instant
+ * acknowledgement's localized subject. Takes an already-sanitized value;
+ * the encoded form holds no CR or LF other than the folds it adds.
+ */
+export function encodeHeaderText(value: string): string {
+  if (/^[\x20-\x7e]*$/.test(value)) return value;
+  // 45 bytes of UTF-8 is 60 of base64: with "=?UTF-8?B?" and "?=", 72.
+  const words: string[] = [];
+  let chunk = "";
+  for (const ch of value) {
+    if (Buffer.byteLength(chunk + ch, "utf-8") > 45) {
+      words.push(chunk);
+      chunk = "";
+    }
+    chunk += ch;
+  }
+  if (chunk) words.push(chunk);
+  return words.map((w) => `=?UTF-8?B?${Buffer.from(w, "utf-8").toString("base64")}?=`).join("\r\n ");
+}
+
+/**
  * The body lines of a raw message, after the headers. Plain text alone is
  * exactly what sendEmail always sent. With `html`, a multipart/alternative
  * body: plain text first, HTML last (the part a mail app prefers when it
@@ -1482,7 +1509,7 @@ export async function sendEmail(
   const raw = [
     `From: ${gmailSelfAddress(integration)}`,
     `To: ${to}`,
-    `Subject: ${subject}`,
+    `Subject: ${encodeHeaderText(subject)}`,
     ...(inReplyTo ? [`In-Reply-To: ${inReplyTo}`, `References: ${inReplyTo}`] : []),
     // Sanitised the same way every other header value is: a header line
     // carrying a CR or LF would let its content inject further headers.

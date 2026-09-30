@@ -51,6 +51,11 @@ function isAutomatedSender(email: string): boolean {
   return isAutomatedAddress(email) || isFollowUpSender(email);
 }
 
+/** Prisma's unique-constraint violation — the loser of a create race. */
+function isUniqueViolation(err: unknown): boolean {
+  return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
+}
+
 function credentials(): { clientId: string; clientSecret: string; redirectUri: string } | null {
   const clientId = process.env.MICROSOFT_CLIENT_ID;
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
@@ -629,7 +634,7 @@ async function processConversations(
         });
         isNewLead = true;
       } catch (err) {
-        const unique = !!err && typeof err === "object" && "code" in err && err.code === "P2002";
+        const unique = isUniqueViolation(err);
         if (counterpart.shared && unique) {
           // Lost the race for this thread: it and its lead are the winner's.
           const winner = await prisma.conversation.findUnique({ where: { externalId: conversationId }, select: { lead: true } });
@@ -654,11 +659,22 @@ async function processConversations(
       await applySourceRouting(businessId, lead.id, sourceLabel);
     }
 
+    // The same race as the lead above, one step later (F9 in gmail.ts):
+    // two overlapping syncs (the two-minute cron, "Sync now") both create
+    // this conversation, and the loser can be the one that won the lead,
+    // the only one that acknowledges it. The winner's row is this
+    // conversation's, so re-read it and carry on.
     let conversation = await prisma.conversation.findUnique({ where: { externalId: conversationId } });
     if (!conversation) {
-      conversation = await prisma.conversation.create({
-        data: { leadId: lead.id, channel: "email", externalId: conversationId, emailProvider: "outlook" },
-      });
+      try {
+        conversation = await prisma.conversation.create({
+          data: { leadId: lead.id, channel: "email", externalId: conversationId, emailProvider: "outlook" },
+        });
+      } catch (err) {
+        if (!isUniqueViolation(err)) throw err;
+        conversation = await prisma.conversation.findUnique({ where: { externalId: conversationId } });
+        if (!conversation) throw err;
+      }
     }
     // Re-checked on the row actually resolved (see the Gmail import).
     if (conversation.leadId !== lead.id) {
@@ -670,11 +686,17 @@ async function processConversations(
     }
 
     for (const m of parsedMessages) {
-      await prisma.message.upsert({
-        where: { externalId: m.id },
-        update: {},
-        create: { conversationId: conversation.id, direction: m.direction, body: m.body, sentAt: m.sentAt, externalId: m.id },
-      });
+      try {
+        await prisma.message.upsert({
+          where: { externalId: m.id },
+          update: {},
+          create: { conversationId: conversation.id, direction: m.direction, body: m.body, sentAt: m.sentAt, externalId: m.id },
+        });
+      } catch (err) {
+        // The racing sync wrote it between this upsert's read and insert.
+        // It exists, which is all `update: {}` asks for.
+        if (!isUniqueViolation(err)) throw err;
+      }
     }
     await checkRapidEngagement(lead.id);
 

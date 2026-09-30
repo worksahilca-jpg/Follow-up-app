@@ -113,10 +113,12 @@ export interface GmailConnectionStatus {
 
 // The business's Gmail connection — whichever of its users connected one.
 // Scoped by business, not a global findFirst, so one tenant's inbox can
-// never leak into another's.
-async function getGmailIntegration(businessId: string) {
+// never leak into another's. `integrationId` picks one inbox when a
+// business has several (each admin can connect their own); it narrows the
+// business-scoped lookup, never replaces it.
+async function getGmailIntegration(businessId: string, integrationId?: string) {
   return prisma.integration.findFirst({
-    where: { provider: "gmail", status: "connected", user: { businessId } },
+    where: { provider: "gmail", status: "connected", user: { businessId }, ...(integrationId ? { id: integrationId } : {}) },
     include: { user: true },
   });
 }
@@ -265,8 +267,8 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
 
 // Shared by both the Gmail and Calendar clients — same stored refresh
 // token, same connected Integration row.
-async function getAuthedOAuthClient(businessId: string) {
-  const integration = await getGmailIntegration(businessId);
+async function getAuthedOAuthClient(businessId: string, integrationId?: string) {
+  const integration = await getGmailIntegration(businessId, integrationId);
   if (!integration || !integration.refreshToken) return null;
 
   const oauth2Client = getOAuthClient();
@@ -274,8 +276,8 @@ async function getAuthedOAuthClient(businessId: string) {
   return { oauth2Client, integration };
 }
 
-async function getAuthedGmailClient(businessId: string) {
-  const authed = await getAuthedOAuthClient(businessId);
+async function getAuthedGmailClient(businessId: string, integrationId?: string) {
+  const authed = await getAuthedOAuthClient(businessId, integrationId);
   if (!authed) return null;
   const gmail = google.gmail({ version: "v1", auth: authed.oauth2Client });
   return { gmail, integration: authed.integration };
@@ -987,9 +989,11 @@ export function gmailSelfAddress(integration: { accountEmail?: string | null; us
 
 export async function fetchSalesConversations(
   businessId: string,
-  options: { since?: Date } & Pick<SyncOptions, "maxClassifications" | "onResult"> = {}
+  // `integrationId`: read this one connected inbox (the cron syncs each of
+  // a business's inboxes separately). Without it, the business's inbox.
+  options: { since?: Date; integrationId?: string } & Pick<SyncOptions, "maxClassifications" | "onResult"> = {}
 ): Promise<SyncedLead[]> {
-  const authed = await getAuthedGmailClient(businessId);
+  const authed = await getAuthedGmailClient(businessId, options.integrationId);
   if (!authed) return [];
   const { gmail, integration } = authed;
   const selfEmail = gmailSelfAddress(integration);

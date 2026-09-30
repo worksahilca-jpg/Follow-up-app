@@ -4,7 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
 import { runClassifierEval } from "@/lib/classifierEval";
 
-// About a hundred cases (src/lib/classifierEval.ts), each one or two model calls, six at a time.
+// About a hundred cases (src/lib/classifierEval.ts), each one or two model calls,
+// three at a time, with rate-limit refusals waited out and retried.
 export const maxDuration = 300;
 
 /**

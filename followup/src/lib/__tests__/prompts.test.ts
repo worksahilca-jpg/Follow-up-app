@@ -921,3 +921,43 @@ describe("the lead check keeps an existing client's admin (b005, 2026-09-29)", (
     );
   });
 });
+
+/**
+ * Backlog b010: a Messenger lead Meta would not name is stored as
+ * "Facebook Messenger", and this prompt used to send the model its first
+ * word — so the draft opened "Hi Facebook,". An unknown name now reaches
+ * the model as the same explicit no-name line generateInstantReply uses.
+ */
+describe("the draft's first-name line never carries a placeholder", () => {
+  const draft = { choices: [{ message: { content: JSON.stringify({ subject: "Your question", body: "Happy to help." }) } }] };
+  const userLine = () => (create.mock.calls[0][0].messages[1].content as string).split("\n")[0];
+
+  it.each(["Facebook Messenger", "Instagram User", "Instagram DM", "WhatsApp contact", "SMS lead", "+14155551234"])(
+    "%s reaches the model as 'not known', with no channel word in it",
+    async (placeholder) => {
+      create.mockResolvedValue(draft);
+      await generateFollowUpMessage({ name: placeholder, conversation });
+      expect(userLine()).toBe("Lead's first name: (not known — greet them without using a name)");
+    }
+  );
+
+  it("says it exactly as the instant reply does, so both greet an unknown lead the same way", async () => {
+    create.mockResolvedValue(draft);
+    await generateFollowUpMessage({ name: "Facebook Messenger", conversation });
+    const draftLine = userLine();
+    create.mockReset();
+    create.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ reply: "Thanks — someone will be in touch." }) } }] });
+    await generateInstantReply({ leadFirstName: "Facebook", ownerFirstName: "Manoj", inboundText: "Is this available?" });
+    expect(userLine()).toBe(draftLine);
+  });
+
+  it("still sends a real first name, and a handle without its @", async () => {
+    create.mockResolvedValue(draft);
+    await generateFollowUpMessage({ name: "Priya Raman", conversation });
+    expect(userLine()).toBe("Lead's first name: Priya");
+    create.mockReset();
+    create.mockResolvedValue(draft);
+    await generateFollowUpMessage({ name: "@sahildoes", conversation });
+    expect(userLine()).toBe("Lead's first name: sahildoes");
+  });
+});

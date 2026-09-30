@@ -647,7 +647,8 @@ export async function sendWhatsApp(
         To: `whatsapp:${to}`,
         From: `whatsapp:${business.whatsappPhoneNumber}`,
         ContentSid: business.whatsappTemplateSid,
-        ContentVariables: JSON.stringify({ "1": options.leadFirstName ?? "there" }),
+        // `||`, not `??`: "" means the caller judged the name a placeholder.
+        ContentVariables: JSON.stringify({ "1": options.leadFirstName || "there" }),
       })
     );
     const templateData = await templateRes.json().catch(() => ({}));

@@ -22,7 +22,7 @@
  * in one module: half a rule is how the other half gets forgotten.
  */
 import { describe, it, expect } from "vitest";
-import { greetingFirstName, businessDisplayName } from "@/lib/leadName";
+import { greetingFirstName, businessDisplayName, isPlaceholderLeadName } from "@/lib/leadName";
 
 describe("a business that has not named itself is not named at all", () => {
   it("refuses the literal default from auth.ts", () => {
@@ -90,5 +90,57 @@ describe("the lead half, still holding", () => {
 
   it("still keeps a real first name", () => {
     expect(greetingFirstName("Priya Raman")).toBe("Priya");
+  });
+});
+
+/**
+ * Backlog b010: when Meta refuses the name lookup, findOrCreateLeadByMessenger
+ * names the lead "Facebook Messenger". That label was not on the list, and
+ * the drafting prompt took its first word, so drafts opened "Hi Facebook,".
+ */
+describe("every label a channel writes for an unnamed lead is no name at all", () => {
+  // Each one is written by a real creation site — see the list's comment
+  // in src/lib/leadName.ts for which.
+  const createdByTheCode = ["Facebook Messenger", "Instagram DM", "Facebook lead", "WhatsApp contact"];
+  const sameLabelOtherWords = ["Instagram User", "Messenger User", "Facebook User", "WhatsApp User", "WhatsApp lead", "SMS lead", "Messenger DM"];
+
+  it.each([...createdByTheCode, ...sameLabelOtherWords])("%s", (label) => {
+    expect(isPlaceholderLeadName(label)).toBe(true);
+    expect(greetingFirstName(label)).toBe("");
+    expect(greetingFirstName(label.toUpperCase())).toBe("");
+    expect(greetingFirstName(`  ${label}  `)).toBe("");
+  });
+
+  it("refuses the first word of each label too, for callers that split before asking", () => {
+    for (const label of [...createdByTheCode, ...sameLabelOtherWords]) {
+      expect(greetingFirstName(label.split(" ")[0])).toBe("");
+    }
+  });
+
+  it("refuses a phone number, which is what SMS and WhatsApp name an unnamed lead", () => {
+    for (const n of ["+14155551234", "+1 (415) 555-1234", "415.555.1234", "14155551234"]) {
+      expect(isPlaceholderLeadName(n)).toBe(true);
+      expect(greetingFirstName(n)).toBe("");
+    }
+  });
+
+  it("refuses an email address, which a Lead Ad with no name falls back to", () => {
+    expect(greetingFirstName("jane.doe@example.com")).toBe("");
+  });
+
+  it("still keeps real names that merely contain a channel word or a number", () => {
+    expect(greetingFirstName("Messenger Smith")).toBe("Messenger");
+    expect(greetingFirstName("Faceboo Kim")).toBe("Faceboo");
+    expect(greetingFirstName("Unit 4B")).toBe("Unit");
+    expect(isPlaceholderLeadName("Room 101")).toBe(false);
+    expect(isPlaceholderLeadName("@sahildoes")).toBe(false);
+    expect(greetingFirstName("Test Lead (Sahil)")).toBe("Test");
+  });
+
+  it("treats no name at all as a placeholder", () => {
+    expect(isPlaceholderLeadName("")).toBe(true);
+    expect(isPlaceholderLeadName("   ")).toBe(true);
+    expect(isPlaceholderLeadName(null)).toBe(true);
+    expect(isPlaceholderLeadName(undefined)).toBe(true);
   });
 });

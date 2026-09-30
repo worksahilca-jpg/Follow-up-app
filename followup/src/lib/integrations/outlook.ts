@@ -416,6 +416,9 @@ async function processConversations(
 
   async function processOneConversation(conversationId: string): Promise<SyncedLead | null> {
     const res = await graphFetch(businessId, conversationMessagesPath(conversationId));
+    // Throttled or a Graph outage: this conversation is owed another look,
+    // so the run is not finished (see the cursor in fetchOutlookConversations).
+    if (res && (res.status === 429 || res.status >= 500)) truncated = true;
     if (!res || !res.ok) return null;
     const data: { value?: GraphMessage[] } = await res.json();
     // Oldest first, sorted here: Graph refuses to sort this query itself
@@ -802,14 +805,30 @@ export async function fetchOutlookConversations(
     pages += 1;
   }
 
-  if (deltaLink) {
+  // The cursor moves only once every conversation it listed has been dealt
+  // with. Saved before processing, it skipped whatever the run left for
+  // later (past the classification budget, or throttled): the next tick
+  // asked only for what changed since, and a customer waiting on an answer
+  // changes nothing, so they were never read again. Held back, the next
+  // tick re-lists them; known conversations skip the classifier, as in
+  // Gmail's pass.
+  let unfinished = false;
+  const leads = await processConversations(businessId, selfEmail, [...conversationIds], "Outlook", {
+    ...options,
+    onResult: (info) => {
+      unfinished = info.truncated;
+      options.onResult?.(info);
+    },
+  });
+
+  if (deltaLink && !unfinished) {
     await prisma.integration.updateMany({
       where: { provider: "outlook", status: "connected", user: { businessId } },
       data: { deltaLink },
     });
   }
 
-  return processConversations(businessId, selfEmail, [...conversationIds], "Outlook", options);
+  return leads;
 }
 
 /** The owner's override for a filtered-out conversation, mirroring importGmailThread(). */

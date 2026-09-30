@@ -4,6 +4,7 @@ import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { runAutomationForBusiness } from "@/lib/automation";
 import { publicErrorMessage } from "@/lib/publicError";
 import { tooManyRecentActions } from "@/lib/rateLimit";
+import { sendRefusal } from "@/lib/sendingControl";
 
 // Same per-lead AI drafting + Gmail send work as the cron route, just
 // scoped to one business — can still take a while with a large opted-in
@@ -18,6 +19,13 @@ export const maxDuration = 120;
 export async function POST() {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
+  // Running the check now sends whatever is due, so it follows "Only admins
+  // send" (A-041) like /api/sequences/run (security audit 2026-09-29,
+  // founder chose this on 2026-09-30).
+  const refusal = await sendRefusal(ctx.businessId, ctx.userId);
+  if (refusal) {
+    return NextResponse.json({ success: false, message: "Only admins send on this account, so only an admin can do this." }, { status: 403 });
+  }
   if (!(await requireActiveBilling(ctx.businessId))) {
     return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
   }

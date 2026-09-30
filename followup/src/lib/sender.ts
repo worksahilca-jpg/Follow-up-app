@@ -19,6 +19,7 @@
 
 import { prisma } from "@/lib/db";
 import { localizeFixedText } from "@/lib/integrations/openai";
+import { customerGreetingName } from "@/lib/leadName";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import type { Message } from "@/lib/types";
 
@@ -73,7 +74,13 @@ async function localizedFrame(
   // not drift between the first message and the fifth.
   leadLanguage?: Partial<LeadLanguage> | null
 ): Promise<{ greeting: string; signOff: string }> {
-  const greeting = `Hi ${leadFirstName},`;
+  // Judged here, once, for every caller: several still pass
+  // lead.name.split(" ")[0], which for an unnamed Messenger lead is
+  // "Facebook" (backlog b010), and the ones that already judged it pass ""
+  // — which used to come out as "Hi ,". Either way the greeting simply
+  // has no name in it.
+  const name = customerGreetingName(leadFirstName);
+  const greeting = name ? `Hi ${name},` : "Hi,";
   const signOff = `Best,\n${senderName}`;
   if (!languageSample?.trim()) return { greeting, signOff };
 

@@ -16,6 +16,25 @@ import { ungroundedSpecifics, unconfirmedClaim } from "@/lib/grounding";
 // The client and model name live in their own leaf module so this file
 // and leadLanguage.ts don't import each other — see openaiClient.ts.
 import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
+import { customerGreetingName } from "@/lib/leadName";
+
+/**
+ * What a prompt says in place of a lead's first name when FollowUp does
+ * not know it. Said explicitly, so the model writes an unaddressed
+ * greeting instead of filling the gap with whatever the field happens to
+ * contain. Shared by every prompt that carries a "Lead's first name:"
+ * line, so an unknown lead is greeted the same way whichever one drafts.
+ */
+const UNKNOWN_FIRST_NAME = "(not known — greet them without using a name)";
+
+/**
+ * The value for a prompt's "Lead's first name:" line. The customer reads
+ * whatever greeting comes of it, so it is judged as a customer greeting:
+ * no channel label, phone number or email address.
+ */
+function promptFirstName(name: string | null | undefined): string {
+  return customerGreetingName(name) || UNKNOWN_FIRST_NAME;
+}
 
 /**
  * Multilingual voicemail transcription — replaces Twilio's own built-in
@@ -1450,7 +1469,10 @@ export async function generateFollowUpMessage(
       {
         role: "user",
         content:
-          `Lead's first name: ${lead.name.split(" ")[0]}\n\n` +
+          // Judged, not just split: a Messenger lead Meta would not name
+          // is "Facebook Messenger", and the first word of that opened
+          // real drafts "Hi Facebook," (backlog b010).
+          `Lead's first name: ${promptFirstName(lead.name)}\n\n` +
           `Conversation so far:\n${formatTranscript(lead.conversation)}`,
       },
     ],
@@ -1748,8 +1770,8 @@ export async function generateInstantReply(input: {
           // the gap with whatever the field happens to contain — the
           // 2026-09-19 "Hi! Instagram," was a placeholder reaching this
           // line as though it were a person. See greetingFirstName in
-          // src/lib/acknowledge.ts.
-          `Lead's first name: ${input.leadFirstName || "(not known — greet them without using a name)"}\n\n` +
+          // src/lib/leadName.ts.
+          `Lead's first name: ${promptFirstName(input.leadFirstName)}\n\n` +
           `<lead_conversation>\n[inbound] ${input.inboundText.slice(0, MAX_TRANSCRIPT_CHARS)}\n</lead_conversation>`,
       },
     ],

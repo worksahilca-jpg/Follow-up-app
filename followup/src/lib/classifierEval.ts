@@ -1,4 +1,6 @@
 import { classifyWithSecondLook, type ClassifierBusinessContext } from "@/lib/integrations/openai";
+import { mapWithConcurrency } from "@/lib/concurrency";
+import { withRateLimitRetry, type RateLimitRetryOptions } from "@/lib/rateLimitRetry";
 import type { Message } from "@/lib/types";
 
 /**
@@ -9,8 +11,8 @@ import type { Message } from "@/lib/types";
  * one afternoon, and every unit test was green throughout — the tests mock
  * the model, so they prove what we tell it, never what it decides. This is
  * the check on what it decides. Run it after any change to the classifier
- * prompt or schema, before merging (GET /api/admin/classifier-eval, signed
- * in as a platform admin).
+ * prompt or schema, before merging (POST /api/admin/classifier-eval, signed
+ * in as a platform admin — see that route for how to run it).
  *
  * Every case is invented. No real customer's mail is stored here.
  * The first case is today's live miss, word for word in spirit.
@@ -185,32 +187,48 @@ function toTranscript(bodies: string[]): Message[] {
   }));
 }
 
-export async function runClassifierEval(judge: Judge = classifyWithSecondLook, cases = EVAL_CASES): Promise<EvalResult> {
+/**
+ * How many cases are in flight at once. It was six, in fixed batches, and
+ * a run lost 20 of ~100 cases (backlog b006) to "429 rate limit reached":
+ * each case is up to two model calls (classifyWithSecondLook), so six
+ * cases was up to twelve requests landing together, and a batch started
+ * the moment the slowest of the last one finished. Three, in a rolling
+ * pool, still finishes well inside the route's five minutes.
+ */
+export const EVAL_CONCURRENCY = 3;
+
+export type EvalRunOptions = {
+  concurrency?: number;
+  /** How a case that hit the rate limit is retried. See src/lib/rateLimitRetry.ts. */
+  retry?: RateLimitRetryOptions;
+};
+
+export async function runClassifierEval(
+  judge: Judge = classifyWithSecondLook,
+  cases = EVAL_CASES,
+  options: EvalRunOptions = {}
+): Promise<EvalResult> {
   const result: EvalResult = { passed: 0, failed: 0, errors: 0, failures: [], byTrade: {} };
   const label = (lead: boolean) => (lead ? "lead" : "set aside");
-  // A few at a time: fast enough to finish ~100 cases inside one request
-  // (the route allows five minutes), gentle on the model's rate limit.
-  const AT_ONCE = 6;
-  for (let i = 0; i < cases.length; i += AT_ONCE) {
-    await Promise.all(
-      cases.slice(i, i + AT_ONCE).map(async (c) => {
-        const trade = (result.byTrade[c.business.industry || "Unknown"] ??= { passed: 0, total: 0 });
-        trade.total += 1;
-        try {
-          const v = await judge(toTranscript(c.messages), c.sender, c.business);
-          if (v.isProspect === c.expectLead) {
-            result.passed += 1;
-            trade.passed += 1;
-          } else {
-            result.failed += 1;
-            result.failures.push({ name: c.name, expected: label(c.expectLead), got: label(v.isProspect), reason: v.reason });
-          }
-        } catch (err) {
-          result.errors += 1;
-          result.failures.push({ name: c.name, expected: label(c.expectLead), got: "error", reason: err instanceof Error ? err.message : "unknown" });
-        }
-      })
-    );
-  }
+  await mapWithConcurrency(cases, options.concurrency ?? EVAL_CONCURRENCY, async (c) => {
+    const trade = (result.byTrade[c.business.industry || "Unknown"] ??= { passed: 0, total: 0 });
+    trade.total += 1;
+    try {
+      // A 429 is the provider saying "not yet", not the classifier saying
+      // anything — so it is waited out and tried again, and only a case
+      // whose retries all ran out is counted as an error.
+      const v = await withRateLimitRetry(() => judge(toTranscript(c.messages), c.sender, c.business), options.retry);
+      if (v.isProspect === c.expectLead) {
+        result.passed += 1;
+        trade.passed += 1;
+      } else {
+        result.failed += 1;
+        result.failures.push({ name: c.name, expected: label(c.expectLead), got: label(v.isProspect), reason: v.reason });
+      }
+    } catch (err) {
+      result.errors += 1;
+      result.failures.push({ name: c.name, expected: label(c.expectLead), got: "error", reason: err instanceof Error ? err.message : "unknown" });
+    }
+  });
   return result;
 }

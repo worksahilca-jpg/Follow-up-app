@@ -147,6 +147,79 @@ describe("the owner's corrections guide the judge", () => {
   });
 });
 
+// Backlog b002: one address can carry every lead from a source — a website
+// form's notifier, or a lead site relaying enquiries. "Not a customer" on
+// one of those leads is about that person, never the address, or every
+// future lead from the source would be set aside.
+describe("a shared form or lead-site sender", () => {
+  function formThread(from: string) {
+    threadsGet.mockResolvedValue({
+      data: {
+        id: "thread-F",
+        messages: [
+          {
+            id: "msg-F1",
+            payload: {
+              mimeType: "text/plain",
+              headers: [
+                { name: "From", value: from },
+                { name: "Date", value: new Date().toUTCString() },
+                { name: "Subject", value: "New form submission" },
+                { name: "Message-ID", value: "<f1@forms.example>" },
+              ],
+              body: { data: Buffer.from("Name: Omar\nMessage: Can I book a cleaning next week?").toString("base64") },
+            },
+          },
+        ],
+      },
+    });
+  }
+
+  it("is still judged even if a 'not a customer' was stored for it before", async () => {
+    formThread("Squarespace <form-submission@squarespace.info>");
+    prismaMock.senderVerdict.findUnique.mockResolvedValue({ verdict: "not_customer" });
+    classifyWithSecondLook.mockResolvedValue({ isProspect: false, reason: "a pitch" });
+    await fetchSalesConversations("biz1");
+
+    expect(classifyWithSecondLook).toHaveBeenCalledTimes(1);
+    const reasons = prismaMock.filteredEmail.upsert.mock.calls.map(([a]) => a.create.reason);
+    expect(reasons).not.toContain(OWNER_SAID_NOT_CUSTOMER);
+  });
+
+  it("the business's own site form notifier is judged too", async () => {
+    formThread("Brightwater Website <wordpress@brightwaterdental.example>");
+    prismaMock.senderVerdict.findUnique.mockResolvedValue({ verdict: "not_customer" });
+    classifyWithSecondLook.mockResolvedValue({ isProspect: true, reason: "asks to book" });
+    await fetchSalesConversations("biz1");
+    expect(classifyWithSecondLook).toHaveBeenCalledTimes(1);
+  });
+
+  it("a 'not a customer' on it is never remembered", async () => {
+    const { recordSenderVerdict } = await import("@/lib/senderVerdicts");
+    const upsert = vi.fn(async () => ({}));
+    (prismaMock as unknown as { senderVerdict: { upsert: typeof upsert } }).senderVerdict.upsert = upsert;
+    await recordSenderVerdict("biz1", "form-submission@squarespace.info", "not_customer", null);
+    await recordSenderVerdict("biz1", "leads@mail.thumbtack.com", "not_customer", null);
+    await recordSenderVerdict("biz1", "Website@BrightwaterDental.example", "not_customer", null);
+    expect(upsert).not.toHaveBeenCalled();
+    // A real person's address still is.
+    await recordSenderVerdict("biz1", "kira@pixelstudio.example", "not_customer", null);
+    expect(upsert).toHaveBeenCalledTimes(1);
+  });
+
+  it("an old 'not a customer' on it is not shown to the classifier as an example", async () => {
+    prismaMock.senderVerdict.findMany.mockResolvedValue([
+      { sender: "no-reply@zillow.com", subject: null, verdict: "not_customer" },
+      { sender: "sales@leadflow.example", subject: "50 leads for you", verdict: "not_customer" },
+    ]);
+    classifyWithSecondLook.mockResolvedValue({ isProspect: false, reason: "a pitch" });
+    await fetchSalesConversations("biz1");
+    expect(classifyWithSecondLook.mock.calls[0][2].corrections).toEqual([
+      { sender: "sales@leadflow.example", subject: "50 leads for you", verdict: "not_customer" },
+    ]);
+  });
+});
+
 describe("only real addresses are remembered (audit 2026-09-29)", () => {
   it("skips free text and the 'unknown' placeholder", async () => {
     const { recordSenderVerdict } = await import("@/lib/senderVerdicts");

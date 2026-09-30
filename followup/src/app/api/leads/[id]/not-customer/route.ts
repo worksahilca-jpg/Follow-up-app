@@ -16,7 +16,10 @@ import { publicErrorMessage } from "@/lib/publicError";
 // the next email from them was judged from scratch too. Now:
 //  1. the sender is remembered as not a customer, for this business only
 //     (src/lib/senderVerdicts.ts), so their new mail is set aside without
-//     asking the model;
+//     asking the model — unless the address is shared (a website form's
+//     notifier, a lead site's relay), where it would set aside every
+//     future lead from that source (backlog b002). Step 2 still applies;
+//     recordSenderVerdict simply keeps no rule;
 //  2. each of their email threads is set aside where the owner can see it
 //     (Settings → filtered emails), one tap from coming back — which also
 //     keeps the sync from re-judging those threads;

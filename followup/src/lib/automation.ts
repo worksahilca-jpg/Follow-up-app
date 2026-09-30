@@ -36,7 +36,8 @@ import { settledByTalk, lastInboundTime } from "@/lib/talked";
 import { generateFollowUpMessage, assessSendRisk, type RiskTopic } from "@/lib/integrations/openai";
 import { hasPriceSlot, PRICE_SLOT_REASON } from "@/lib/priceSlot";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
-import { businessText, checkDmDraftShape, conversationText, emailBodyOf, inventedSpecific } from "@/lib/dmDrafts";
+import { businessText, checkDmDraftShape, conversationText, emailBodyOf, emailGreetingOf } from "@/lib/dmDrafts";
+import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
 import { isExitPayload, toQuickReplies, type StoredQuickReplies } from "@/lib/quickReplies";
 import { Prisma } from "@prisma/client";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
@@ -1329,7 +1330,13 @@ export async function runAutomationForBusiness(
           // On 2026-09-20 a lead asked what a consultation costs and this
           // path answered "El costo será de $100" in the owner's name.
           // Nobody had said $100.
-          emailShapeFailed = inventedSpecific(`${draft.subject ?? ""}\n${draft.body}`, conversation, leadLanguageOf(lead)?.language);
+          emailShapeFailed = await checkUnreviewedDraft({
+            text: `${draft.subject ?? ""}\n${draft.body}`,
+            conversation,
+            businessId,
+            leadId: lead.id,
+            locale: leadLanguageOf(lead)?.language,
+          });
           message = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
             languageSample: latestInboundText(conversation),
             leadLanguage: leadLanguageOf(lead),
@@ -1376,7 +1383,15 @@ export async function runAutomationForBusiness(
           );
           if (!shape.ok) dmShapeFailed = shape.rule;
         } else {
-          emailShapeFailed = inventedSpecific(`${subject ?? ""}\n${emailBodyOf(message)}`, conversation, leadLanguageOf(lead)?.language);
+          // The greeting too, for links only: it is the lead's own name.
+          emailShapeFailed = await checkUnreviewedDraft({
+            text: `${subject ?? ""}\n${emailBodyOf(message)}`,
+            conversation,
+            businessId,
+            leadId: lead.id,
+            locale: leadLanguageOf(lead)?.language,
+            greeting: emailGreetingOf(message),
+          });
         }
       }
 

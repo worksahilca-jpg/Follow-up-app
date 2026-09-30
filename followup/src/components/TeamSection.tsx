@@ -241,7 +241,7 @@ export default function TeamSection() {
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="teammate@company.com"
-            className="flex-1 rounded-[12px] border border-line bg-paper px-3 py-2 text-sm"
+            className="flex-1 min-w-0 rounded-[12px] border border-line bg-paper px-3 py-2 text-sm"
           />
           <select
             value={inviteRole}

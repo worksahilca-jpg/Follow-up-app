@@ -27,19 +27,67 @@
 /**
  * The names a lead is given when nobody knows who they are yet — labels
  * for a row, never a person's name. Lowercased for comparison.
+ *
+ * The one list. Anywhere FollowUp creates a lead without a real name, the
+ * label it writes belongs here, and anywhere it decides whether a lead
+ * HAS a name it asks greetingFirstName / isPlaceholderLeadName rather than
+ * keeping its own check. Where each one comes from:
+ *
+ *   "Instagram DM"         findOrCreateLeadByInstagram, before a handle is
+ *                          known (src/lib/instagram.ts)
+ *   "Facebook Messenger"   findOrCreateLeadByMessenger, whenever Meta
+ *                          refuses the name lookup — every Messenger lead
+ *                          before App Review (src/lib/facebook.ts). Missing
+ *                          from this list until backlog b010, so drafts
+ *                          opened "Hi Facebook,".
+ *   "Facebook lead"        upsertLeadFromLeadgen, a Lead Ad with no name,
+ *                          email or phone (src/lib/facebook.ts)
+ *   "WhatsApp contact"     the WhatsApp history importer's stand-in for a
+ *                          contact with no profile name (inbound/whatsappCloud.ts)
+ *
+ * The rest are the same labels in other words ("Instagram User", "SMS
+ * lead"), and the bare channel names, which are also what the FIRST WORD
+ * of each label above comes to — the prompt that produced "Hi Facebook,"
+ * was reading lead.name.split(" ")[0].
+ *
+ * SMS and WhatsApp write the phone number itself as the name
+ * (findOrCreateLeadByPhone in src/lib/twilio.ts), and a Lead Ad can fall
+ * back to an email address. Those are NOT on this list on purpose: the
+ * owner reading an alert is better served by "+1415…" than by "A
+ * customer". Only customerGreetingName, below, refuses them — a number
+ * is useful to the owner and absurd in a greeting to the customer.
  */
 const PLACEHOLDER_LEAD_NAMES = new Set([
   "instagram dm",
+  "instagram user",
   "instagram",
   "messenger dm",
+  "messenger user",
   "messenger",
+  "facebook messenger",
+  "facebook messenger user",
+  "facebook user",
+  "facebook lead",
   "facebook",
-  "whatsapp",
+  "whatsapp contact",
+  "whatsapp user",
   "whatsapp lead",
+  "whatsapp",
   "sms lead",
+  "sms",
   "unknown",
   "lead",
 ]);
+
+/**
+ * Is this one of the labels above (in any casing), or no name at all?
+ * False for a real name, an "@handle", a phone number and an email
+ * address — see customerGreetingName for the last two.
+ */
+export function isPlaceholderLeadName(name: string | null | undefined): boolean {
+  const trimmed = (name ?? "").trim();
+  return !trimmed || PLACEHOLDER_LEAD_NAMES.has(trimmed.toLowerCase());
+}
 
 /**
  * The name to greet this lead by, or "" when there isn't one. Callers
@@ -50,12 +98,41 @@ const PLACEHOLDER_LEAD_NAMES = new Set([
  * An Instagram or Messenger handle ("@sahildoes") IS a real way to
  * address someone on those channels, so the "@" is dropped and the
  * handle kept.
+ *
+ * Safe to call on a first name that was already split off a full name
+ * (the "Facebook" of "Facebook Messenger" is itself on the list), so a
+ * caller handed only a first name can still ask.
+ *
+ * Owner-facing text (alerts, hold notes) uses this one, so a lead named
+ * by their phone number still shows the owner that number. Anything a
+ * CUSTOMER reads uses customerGreetingName instead.
  */
 export function greetingFirstName(name: string | null | undefined): string {
-  const trimmed = (name ?? "").trim();
-  if (!trimmed || PLACEHOLDER_LEAD_NAMES.has(trimmed.toLowerCase())) return "";
-  const first = trimmed.split(/\s+/)[0];
+  if (isPlaceholderLeadName(name)) return "";
+  const first = (name ?? "").trim().split(/\s+/)[0];
   return first.startsWith("@") ? first.slice(1) : first;
+}
+
+const EMAIL_SHAPED = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * The name to put in a greeting a CUSTOMER reads — the drafting and
+ * instant-reply prompts' first-name line, the email "Hi …," and the
+ * WhatsApp template's name slot — or "" for none.
+ *
+ * greetingFirstName, plus two stand-ins that are not labels: the phone
+ * number SMS and WhatsApp use as the name of a contact with no profile
+ * name, and the email address a Lead Ad falls back to. "Hi +14155551234,"
+ * is the same failure as "Hi Facebook,". A first word with no letters in
+ * it at all (a number, "+1") is never a name, which also catches a number
+ * a caller already split on spaces.
+ */
+export function customerGreetingName(name: string | null | undefined): string {
+  const trimmed = (name ?? "").trim();
+  if (EMAIL_SHAPED.test(trimmed)) return "";
+  const first = greetingFirstName(trimmed);
+  if (!first || EMAIL_SHAPED.test(first) || !/\p{L}/u.test(first)) return "";
+  return first;
 }
 
 /**

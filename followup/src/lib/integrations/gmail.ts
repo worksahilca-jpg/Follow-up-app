@@ -40,6 +40,7 @@ import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
+import { isAutomatedAddress } from "@/lib/sharedSenders";
 import type { InlineImage } from "@/lib/emailAssets";
 
 const SCOPES = [
@@ -47,15 +48,6 @@ const SCOPES = [
   "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/calendar.events",
   "https://www.googleapis.com/auth/userinfo.email",
-];
-
-// Senders that are never sales conversations, even if they land in the inbox.
-const AUTOMATED_SENDER_PATTERNS = [
-  /no-?reply/i,
-  /do-?not-?reply/i,
-  /notifications?@/i,
-  /mailer-daemon/i,
-  /postmaster@/i,
 ];
 
 function getOAuthClient() {
@@ -502,8 +494,9 @@ function parseFromHeader(raw: string): { name: string; email: string } {
   return { name: email.split("@")[0] || email, email };
 }
 
+// Senders that are never sales conversations, even if they land in the inbox.
 function isAutomatedSender(email: string): boolean {
-  return AUTOMATED_SENDER_PATTERNS.some((p) => p.test(email)) || isFollowUpSender(email);
+  return isAutomatedAddress(email) || isFollowUpSender(email);
 }
 
 /** Prisma's unique-constraint violation — the loser of a create race. */

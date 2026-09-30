@@ -127,6 +127,10 @@ export const UNGROUNDED_DRAFT_REASONS: Record<string, string> = {
   policy: "the draft states what's free, included, refundable or guaranteed, and you haven't said that here — check it before it goes",
   hours: "the draft says when you're open, and only you know that — check it before it goes",
   service: "the draft says what you cover, offer or accept, and you haven't said that here — check it before it goes",
+  // Founder, 2026-09-29: a link or address that didn't come from the
+  // business (inventedSpecific in src/lib/dmDrafts.ts). Usually the lead's
+  // own, which is exactly the one that must not go out in the owner's name.
+  link: "the draft has a link or email address you didn't write — check it before it goes",
 };
 
 /** Exactly what ApprovalQueue.tsx builds, so tests can check the seam. */

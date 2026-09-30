@@ -63,6 +63,25 @@ describe("composeFollowUpEmail", () => {
     expect(out).toBe("Hi Lucía,\n\nBody.\n\nBest,\nSahil");
   });
 
+  // Backlog b010: callers that pass lead.name.split(" ")[0] handed an
+  // unnamed Messenger lead's "Facebook" straight into the greeting.
+  it("greets a placeholder first name with no name, never 'Hi Facebook,'", async () => {
+    for (const first of ["Facebook", "Instagram", "WhatsApp", "+14155551234"]) {
+      const out = await composeFollowUpEmail(first, "biz1", "Body.");
+      expect(out).toBe("Hi,\n\nBody.\n\nBest,\nSahil");
+    }
+  });
+
+  it("greets an already-judged empty name as 'Hi,', not 'Hi ,'", async () => {
+    const out = await composeFollowUpEmail("", "biz1", "Body.");
+    expect(out).toBe("Hi,\n\nBody.\n\nBest,\nSahil");
+    expect(out).not.toMatch(/Hi ,/);
+  });
+
+  it("keeps an Instagram handle as the name, without the @", async () => {
+    expect(await composeFollowUpEmail("@sahildoes", "biz1", "Body.")).toBe("Hi sahildoes,\n\nBody.\n\nBest,\nSahil");
+  });
+
   it("treats a blank sample as no sample", async () => {
     await composeFollowUpEmail("Lucía", "biz1", "Body.", { languageSample: "   " });
     expect(localize).not.toHaveBeenCalled();

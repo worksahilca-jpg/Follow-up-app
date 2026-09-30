@@ -176,6 +176,10 @@ export async function exchangeOutlookAuthCode(code: string, userId: string): Pro
   });
   const refreshToken = tokens.refresh_token ?? existing?.refreshToken ?? null;
   const expiresAt = new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000);
+  // A reconnect to a DIFFERENT mailbox starts it fresh: the old mailbox's
+  // delta cursor would skip this one's 90-day first pass entirely (see
+  // gmail.ts's exchangeCodeForTokens). The same mailbox keeps its cursor.
+  const otherMailbox = !!existing?.accountEmail && existing.accountEmail.toLowerCase() !== email.toLowerCase();
 
   await prisma.integration.upsert({
     where: { userId_provider: { userId, provider: "outlook" } },
@@ -187,6 +191,7 @@ export async function exchangeOutlookAuthCode(code: string, userId: string): Pro
       connectedAt: new Date(),
       accountEmail: email,
       lastSyncError: null,
+      ...(otherMailbox ? { deltaLink: null, lastSyncedAt: null } : {}),
     },
     create: {
       userId,

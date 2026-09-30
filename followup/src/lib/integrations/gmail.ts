@@ -240,6 +240,13 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
   // but keep the old one as a fallback just in case).
   const refreshToken = tokens.refresh_token ?? existing?.refreshToken ?? null;
 
+  // A reconnect to a DIFFERENT inbox is a new inbox on the same row. The
+  // old one's sync clocks and push watch would say this one was already
+  // read and watched: no first deep pass for up to a day (the customers
+  // already waiting in it came in too late for the instant reply) and no
+  // push until the old watch ran out. The same inbox keeps them.
+  const otherInbox = !!existing?.accountEmail && existing.accountEmail.toLowerCase() !== email.toLowerCase();
+
   await prisma.integration.upsert({
     where: { userId_provider: { userId, provider: "gmail" } },
     update: {
@@ -248,6 +255,7 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
       refreshToken,
       connectedAt: new Date(),
       accountEmail: email,
+      ...(otherInbox ? { lastSyncedAt: null, deepSyncedAt: null, watchExpiration: null, watchHistoryId: null } : {}),
     },
     create: {
       userId,

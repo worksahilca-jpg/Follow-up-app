@@ -634,7 +634,11 @@ async function processThreadRefs(
       id: ref.id,
       format: "full",
     });
-    const gmailMessages = thread.messages ?? [];
+    // Never an unsent draft. threads.get returns a thread's drafts among its
+    // messages, and Gmail saves one seconds after the owner starts typing:
+    // stored, it was the business answering, and the customer read as
+    // answered on exactly the lead the owner had started on and left.
+    const gmailMessages = (thread.messages ?? []).filter((m) => !m.labelIds?.includes("DRAFT"));
     if (gmailMessages.length === 0) return null;
 
     // Parse every message once — reused below both for the prospect check

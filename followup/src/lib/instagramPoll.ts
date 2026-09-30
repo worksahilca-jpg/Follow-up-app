@@ -154,7 +154,9 @@ function toMessagingEvent(message: GraphMessage, igUserId: string, ownIds: Reado
  * Reads one business's conversations and returns the events newer than
  * `since`, oldest first so a thread replays in the order it happened.
  *
- * `ok` is false when Meta refused the conversation list itself. That
+ * `ok` is false when Meta refused the conversation list itself, or any
+ * one changed conversation's messages (events from the rest still come
+ * back). That
  * distinction is what stops a rate-limited or expired-token tick from
  * looking like "nothing new" and quietly carrying the cursor past a
  * window nobody ever read.
@@ -177,6 +179,13 @@ export async function fetchNewInstagramEvents(
   const conversations = Array.isArray(listed.data) ? listed.data : [];
 
   const events: { at: number; event: Record<string, unknown> }[] = [];
+  // A thread Meta refused to hand over is a window nobody read, the same
+  // as a refused list — so the tick reports not-ok and the cursor stays
+  // put. It used to count as "nothing new": the cursor moved past the
+  // thread and its DMs were never read by any later tick. What the other
+  // threads returned is still handed on; it is idempotent on the message
+  // id, so reading it again next tick costs nothing.
+  let complete = true;
   for (const conversation of conversations) {
     const conversationId = typeof conversation?.id === "string" ? conversation.id : null;
     if (!conversationId) continue;
@@ -190,7 +199,11 @@ export async function fetchNewInstagramEvents(
       `${encodeURIComponent(conversationId)}?fields=messages.limit(${MESSAGE_LIMIT}){id,created_time,from,to,message,attachments}`,
       accessToken
     )) as { messages?: { data?: GraphMessage[] } } | null;
-    const messages = Array.isArray(detail?.messages?.data) ? detail.messages.data : [];
+    if (!detail) {
+      complete = false;
+      continue;
+    }
+    const messages = Array.isArray(detail.messages?.data) ? detail.messages.data : [];
 
     for (const message of messages) {
       const sentAt = parseGraphTime(message?.created_time);
@@ -200,7 +213,7 @@ export async function fetchNewInstagramEvents(
     }
   }
 
-  return { ok: true, events: events.sort((a, b) => a.at - b.at).map((e) => e.event) };
+  return { ok: complete, events: events.sort((a, b) => a.at - b.at).map((e) => e.event) };
 }
 
 /**

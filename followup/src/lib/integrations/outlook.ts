@@ -350,6 +350,69 @@ function messageText(m: GraphMessage): string {
   return text.slice(0, 5000);
 }
 
+/** Letters and digits only, lowercased, entities decoded: the same words however Graph rendered them. */
+function sameWords(text: string): string {
+  return text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&amp;/gi, "&")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+// How far apart FollowUp's record of a send and Graph's copy of it can be.
+// The record is written the moment Graph accepts the send.
+const OWN_SEND_MATCH_MS = 15 * 60_000;
+
+/**
+ * The sync's read-back of a message FollowUp itself sent through Outlook.
+ *
+ * Gmail's send returns the new message's id and the sync's read-back lands
+ * on that row. Graph's /reply and /sendMail return no id, so FollowUp's row
+ * for an Outlook send had none, and the read-back was stored beside it as a
+ * second outbound with no trigger, which is exactly how an owner's own reply
+ * looks (Message.trigger). After the instant ack that made the customer
+ * read as answered, and the 3-hour first-reply rule never fired.
+ *
+ * So an outbound copy with no row of its own is matched to FollowUp's
+ * unclaimed row for this customer: sent within minutes of it, and carrying
+ * its words (Graph's copy is the comment plus the quoted original). The row
+ * takes the Graph id; nothing new is written. True when claimed.
+ */
+async function claimOwnSend(leadId: string, m: { id: string; body: string; sentAt: Date }): Promise<boolean> {
+  if (await prisma.message.findUnique({ where: { externalId: m.id }, select: { id: true } })) return false;
+  const candidates = await prisma.message.findMany({
+    where: {
+      direction: "outbound",
+      externalId: null,
+      // FollowUp's own send: a trigger, and no capture source.
+      source: null,
+      trigger: { not: null },
+      sentAt: { gte: new Date(m.sentAt.getTime() - OWN_SEND_MATCH_MS), lte: new Date(m.sentAt.getTime() + OWN_SEND_MATCH_MS) },
+      conversation: { leadId, channel: "email" },
+    },
+    orderBy: { sentAt: "asc" },
+    select: { id: true, body: true },
+  });
+  const copy = sameWords(m.body);
+  const mine = candidates.find((c) => {
+    const words = sameWords(c.body).slice(0, 200);
+    return words.length > 0 && copy.includes(words);
+  });
+  if (!mine) return false;
+  try {
+    const claimed = await prisma.message.updateMany({ where: { id: mine.id, externalId: null }, data: { externalId: m.id } });
+    return claimed.count > 0;
+  } catch (err) {
+    // A racing sync stored this copy a moment ago: it exists either way.
+    if (isUniqueViolation(err)) return true;
+    throw err;
+  }
+}
+
 function graphMessageTime(m: GraphMessage): number {
   const t = new Date(m.receivedDateTime ?? m.sentDateTime ?? 0).getTime();
   return Number.isFinite(t) ? t : 0;
@@ -691,6 +754,7 @@ async function processConversations(
     }
 
     for (const m of parsedMessages) {
+      if (m.direction === "outbound" && (await claimOwnSend(conversation.leadId, m))) continue;
       try {
         await prisma.message.upsert({
           where: { externalId: m.id },

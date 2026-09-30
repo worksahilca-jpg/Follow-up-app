@@ -19,7 +19,8 @@ const { prismaMock, acknowledgeNewLead } = vi.hoisted(() => ({
     filteredEmail: { deleteMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn() },
     lead: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },
     conversation: { findUnique: vi.fn(), create: vi.fn() },
-    message: { upsert: vi.fn() },
+    // No FollowUp-sent row to claim: the owner's reply below is their own.
+    message: { upsert: vi.fn(), findUnique: vi.fn(async () => null), findMany: vi.fn(async () => []) },
   },
 }));
 

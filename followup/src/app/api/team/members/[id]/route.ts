@@ -36,9 +36,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getSessionContext();
   if (!ctx) return NextResponse.json({ success: false, message: "Not signed in." }, { status: 401 });
-  if (!(await requireActiveBilling(ctx.businessId))) {
-    return NextResponse.json({ success: false, message: await billingLockedMessage(ctx.businessId) }, { status: 402 });
-  }
+  // Deliberately NOT billing-gated: removing someone takes access away, and
+  // their reads never were gated. Behind requireActiveBilling, a paid
+  // account whose card failed couldn't remove anyone while that person kept
+  // reading every customer (security hunt 2026-09-30). Same stance as
+  // pause, export and erasure. removeMember still checks the caller is an
+  // admin of this business.
 
   const { id } = await params;
   const result = await removeMember(id, ctx.businessId, ctx.userId);

@@ -22,6 +22,8 @@ const { getSessionContext } = vi.hoisted(() => ({
 }));
 const { requireAdmin } = vi.hoisted(() => ({ requireAdmin: vi.fn(async () => true) }));
 vi.mock("@/lib/session", () => ({ getSessionContext, requireAdmin }));
+// "Only admins send" is off here; leadAutomationOnlyAdmins.test.ts covers it on.
+vi.mock("@/lib/sendingControl", () => ({ sendRefusal: vi.fn(async () => null) }));
 
 // The account-level permission (2026-09-23). Granted in the default
 // fixture so the tier tests below stay about the TIER; the permission has

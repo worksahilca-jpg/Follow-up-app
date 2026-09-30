@@ -40,17 +40,18 @@ describe("EVAL_CASES, grown for the test businesses (2026-09-29)", () => {
 describe("EVAL_CASES, lead marketplaces (b007, 2026-09-30)", () => {
   const marketplace = EVAL_CASES.filter((c) => c.name.startsWith("marketplace:"));
 
-  it("has 10-15 marketplace customers and 3-4 of the marketplaces' own mail", () => {
+  // Canadian sites added 2026-09-30 (HomeStars, Kijiji, REALTOR.ca).
+  it("has 10-15 marketplace customers and 3-6 of the marketplaces' own mail", () => {
     const leads = marketplace.filter((c) => c.expectLead).length;
     expect(leads).toBeGreaterThanOrEqual(10);
     expect(leads).toBeLessThanOrEqual(15);
     expect(marketplace.length - leads).toBeGreaterThanOrEqual(3);
-    expect(marketplace.length - leads).toBeLessThanOrEqual(4);
+    expect(marketplace.length - leads).toBeLessThanOrEqual(6);
   });
 
   it("comes from the platform, not the person, and uses only invented addresses", () => {
     for (const c of marketplace) {
-      expect(c.sender.email).toMatch(/@(?:thumbtack|angi|homeadvisor|zillow|realtor|yelp|houzz|bark|porch)\.example$/);
+      expect(c.sender.email).toMatch(/@(?:thumbtack|angi|homeadvisor|zillow|realtor|yelp|houzz|bark|porch|homestars|kijiji\.ca|realtor\.ca)\.example$/);
     }
     const bodies = marketplace.flatMap((c) => c.messages).join("\n");
     for (const email of bodies.match(/[^\s"]+@[^\s"]+/g) ?? []) expect(email).toMatch(/@example\.com$/);

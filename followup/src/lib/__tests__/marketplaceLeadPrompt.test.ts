@@ -51,7 +51,7 @@ describe("first read", () => {
   it("names the marketplaces and the shapes a lead arrives in, as customer business", async () => {
     const { system } = await prompt();
     expect(system).toMatch(/One kind of platform notification IS customer business: a LEAD MARKETPLACE/);
-    for (const site of ["Thumbtack", "Angi", "HomeAdvisor", "Houzz", "Yelp", "Bark", "Porch", "Zillow", "Realtor.com"]) {
+    for (const site of ["Thumbtack", "Angi", "HomeAdvisor", "Houzz", "Yelp", "Bark", "Porch", "Zillow", "Realtor.com", "HomeStars", "Kijiji", "REALTOR.ca"]) {
       expect(system).toContain(site);
     }
     expect(system).toMatch(/'you have a new lead', a new quote, job or project request, 'a customer sent you a message'/);

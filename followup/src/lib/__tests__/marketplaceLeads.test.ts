@@ -73,6 +73,10 @@ describe("isLeadMarketplaceAddress", () => {
     "no-reply@houzz.com",
     "team@bark.com",
     "noreply@porch.com",
+    "no-reply@homestars.com",
+    "noreply@kijiji.ca",
+    "reply-3f9a@users.kijiji.ca",
+    "no-reply@realtor.ca",
   ])("knows %s", (email) => expect(isLeadMarketplaceAddress(email)).toBe(true));
 
   it.each(["notifications@github.com", "no-reply@northernbank.com", "noreply@thumbtack.com.evil.example", "jane@example.com", "craigslist.org"])(
@@ -95,6 +99,10 @@ describe("isMarketplaceLeadNotice: the no-reply gate", () => {
     ["no-reply@houzz.com", "You have a new message from a homeowner"],
     ["team@bark.com", "Olivia Grant is looking for a bookkeeper"],
     ["noreply@porch.com", "New project request"],
+    ["no-reply@homestars.com", "You have a new lead!"],
+    ["noreply@kijiji.ca", "New message about your ad: Two movers + truck, GTA"],
+    ["noreply@kijiji.ca", "Someone replied to your ad"],
+    ["no-reply@realtor.ca", "Inquiry about 88 Queen St E, Unit 1204"],
   ])("lets a lead notice from %s through: %s", (email, subject) => {
     expect(isMarketplaceLeadNotice(notice(email, subject))).toBe(true);
   });
@@ -110,6 +118,9 @@ describe("isMarketplaceLeadNotice: the no-reply gate", () => {
     ["no-reply@thumbtack.com", "5 tips to win more jobs"],
     ["team@bark.com", "Customers are looking for bookkeepers near you"],
     ["no-reply@thumbtack.com", "Reset your password"],
+    ["no-reply@homestars.com", "You have a new review"],
+    ["noreply@kijiji.ca", "Your ad expires in 3 days"],
+    ["no-reply@realtor.ca", "Your monthly listing report"],
   ])("keeps the marketplace's own mail out, from %s: %s", (email, subject) => {
     expect(isMarketplaceLeadNotice(notice(email, subject))).toBe(false);
   });
@@ -137,7 +148,7 @@ describe("isMarketplaceLeadNotice: the no-reply gate", () => {
     const cases = EVAL_CASES.filter((c) => c.name.startsWith("marketplace:"));
     expect(cases.length).toBeGreaterThanOrEqual(13);
     for (const c of cases) {
-      const email = c.sender.email.replace(/\.example$/, ".com");
+      const email = c.sender.email.replace(/\.ca\.example$/, ".ca").replace(/\.example$/, ".com");
       const verdict = isMarketplaceLeadNotice({ from: { email }, subject: "", body: c.messages[0] });
       expect({ name: c.name, verdict }).toEqual({ name: c.name, verdict: c.expectLead });
     }

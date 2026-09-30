@@ -639,6 +639,9 @@ async function processThreadRefs(
           id: m.id,
           from,
           replyTo: parseReplyToHeader(getHeader(m.payload?.headers, "Reply-To")),
+          // Read by threadCustomer: a marketplace's no-reply lead notice is
+          // told from its receipts and promotions by its subject (b007).
+          subject: getHeader(m.payload?.headers, "Subject"),
           direction: (own.has(from.email) ? "outbound" : "inbound") as "outbound" | "inbound",
           body: extractPlainTextBody(m.payload).slice(0, 5000),
           sentAt: gmailMessageTime(m.internalDate, getHeader(m.payload?.headers, "Date")),
@@ -651,7 +654,8 @@ async function processThreadRefs(
     // isn't the business (the connected account or a teammate) and isn't
     // automated. A website form's notifier stands for its Reply-To person,
     // or, with none, is `shared`: its threads are never matched to a lead
-    // by that address (b011, see threadCustomer).
+    // by that address (b011, see threadCustomer). A lead marketplace's
+    // no-reply notice of a new lead is not skipped as automated (b007).
     const counterpart = threadCustomer(parsedMessages, (email) => own.has(email) || isAutomatedSender(email));
     if (!counterpart) return null;
 

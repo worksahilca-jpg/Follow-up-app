@@ -345,7 +345,8 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
           "of THEIRS, and this business would pay them. \"sender wants to buy from this business\" — the sender is " +
           "asking about, requesting, pricing, negotiating, or already engaged in work or products that THIS " +
           "business provides, and would pay this business — an existing client sending paperwork or a deposit, " +
-          "or moving an appointment, counts. \"neither\" — no commercial direction at all (personal " +
+          "or moving an appointment, counts, and so does a person whose request a lead marketplace passes on " +
+          "('new lead', 'quote request'). \"neither\" — no commercial direction at all (personal " +
           "mail, an automated notification, a newsletter, a recruiter). Judge by who would send the invoice at the " +
           "end, not by who sounds keener.",
       },
@@ -510,6 +511,25 @@ const UNKNOWN_TRADE_RULE =
   "is lost.";
 
 /**
+ * Backlog b007: many trades get their customers through a lead
+ * marketplace, whose email is a platform notification from a no-reply
+ * address — exactly what the rules around this one call false. The person
+ * inside the notice is the buyer, so the notice is customer business; the
+ * same platform's receipts, reports and promotions stay out. The sync only
+ * lets a marketplace's no-reply mail reach this classifier when it reads
+ * like a lead (isMarketplaceLeadNotice in src/lib/sharedSenders.ts).
+ */
+const LEAD_MARKETPLACE_RULE =
+  "One kind of platform notification IS customer business: a LEAD MARKETPLACE (Thumbtack, Angi, HomeAdvisor, " +
+  "Houzz, Yelp, Bark, Porch, Networx, Zillow, Trulia, Realtor.com and similar) passing on ONE specific person's " +
+  "request to this business — 'you have a new lead', a new quote, job or project request, 'a customer sent you a " +
+  "message', 'Jane D. wants a quote', a buyer or renter asking about a listing. That person wants to buy: answer " +
+  "true, with whoIsSelling \"sender wants to buy from this business\", even though the email comes from the " +
+  "platform's own no-reply address and the person's contact details may be hidden behind it. The platform's OWN " +
+  "mail stays false: receipts, invoices and billing for leads or ads, profile-view and performance reports, " +
+  "tips, promotions, offers to buy more leads or upgrade, and review notifications.";
+
+/**
  * Whose work would be paid for in this thread — the question the verdict
  * turns on. See PROSPECT_CLASSIFICATION_SCHEMA for why it is answered
  * first and enforced in code afterwards.
@@ -558,9 +578,11 @@ export async function classifyAsProspect(
       "again for ANY sign the sender wants to buy from or hire this business: a price, a quote, availability, " +
       "a booking, an order, a question about what the business offers — or that they are ALREADY its client " +
       "handling their own job: paperwork, a deposit, a signature, rescheduling, an invoice from this business, " +
-      "'following up on our job'. If you find one — or if that earlier reason itself describes the sender as " +
+      "'following up on our job'. A lead marketplace passing on one person's request (a new lead, a quote " +
+      "request, a customer who messaged through the platform) is that person asking: it counts. If you find " +
+      "one — or if that earlier reason itself describes the sender as " +
       "a customer or buyer — answer true. Answer false only if the thread is clearly a seller pitching this " +
-      "business, a notification, a newsletter, a recruiter, or personal."
+      "business, a notification that carries no person's request, a newsletter, a recruiter, or personal."
     : "";
 
   const forClassification = conversation
@@ -625,8 +647,10 @@ export async function classifyAsProspect(
           "personally it's worded, and even if the topic sounds adjacent to the business's own trade (e.g. an " +
           "insurer asking a glass-repair business about their own glass coverage is soliciting insurance, not " +
           "requesting glass work). Only answer true when the business's OWN service is what the thread is about. " +
-          "The sender's identity is a strong signal: a brand, platform, or no-reply style address weighs toward " +
-          "false; a named person writing in their own words weighs toward true — but a solicitation from a named " +
+          LEAD_MARKETPLACE_RULE +
+          " The sender's identity is a strong signal: a brand, platform, or no-reply style address weighs toward " +
+          "false (except a lead marketplace passing on a person's request, above); a named person writing in their " +
+          "own words weighs toward true — but a solicitation from a named " +
           "person is still a solicitation. Documents like deposits, IDs, work permits, or signed agreements are " +
           "NOT job signals when they belong to a client's transaction — they are only employment signals when the " +
           "thread is about the owner's own job." +

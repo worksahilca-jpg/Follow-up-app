@@ -444,7 +444,8 @@ async function processConversations(
 
     // A website form's notifier stands for its Reply-To person, or, with
     // none, is `shared`: never matched to a lead by that address (b011,
-    // see threadCustomer). As in gmail.ts.
+    // see threadCustomer). As in gmail.ts, a lead marketplace's no-reply
+    // notice of a new lead is not skipped as automated (b007).
     const counterpart = threadCustomer(parsedMessages, (email) => own.has(email) || isAutomatedSender(email));
     if (!counterpart) return null;
 

@@ -24,6 +24,24 @@ describe("isOptOutMessage / isOptInMessage", () => {
     expect(isOptOutMessage("can you stop by the office?")).toBe(false);
   });
 
+  // Founder, 2026-09-30: punctuation around the word still means stop.
+  it("matches STOP with punctuation, quotes or an emoji around it", () => {
+    for (const word of ["Stop.", "STOP!", "stop!!", "\"stop\"", "Stop 🙏", "...unsubscribe", "Cancel."]) {
+      expect(isOptOutMessage(word)).toBe(true);
+    }
+  });
+
+  it("still needs the whole message to be the word", () => {
+    for (const body of ["Please stop.", "stop by?", "Don't stop!", "stop it now", "st.op", "stopped."]) {
+      expect(isOptOutMessage(body)).toBe(false);
+    }
+  });
+
+  it("keeps opt-in exact: punctuation doesn't clear an opt-out", () => {
+    expect(isOptInMessage("START")).toBe(true);
+    expect(isOptInMessage("start!")).toBe(false);
+  });
+
   it("matches START/UNSTOP for opt-in but not a bare YES", () => {
     expect(isOptInMessage("start")).toBe(true);
     expect(isOptInMessage("UNSTOP")).toBe(true);

@@ -40,7 +40,7 @@ import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
-import { isAutomatedAddress } from "@/lib/sharedSenders";
+import { isAutomatedAddress, threadCustomer } from "@/lib/sharedSenders";
 import type { InlineImage } from "@/lib/emailAssets";
 
 const SCOPES = [
@@ -494,6 +494,18 @@ function parseFromHeader(raw: string): { name: string; email: string } {
   return { name: email.split("@")[0] || email, email };
 }
 
+/**
+ * A Reply-To header naming exactly one address, else null. A list of
+ * several is not one customer, so it is not read as one.
+ */
+function parseReplyToHeader(raw: string): { name: string; email: string } | null {
+  const found = new Set((raw.match(/[^\s<>",;]+@[^\s<>",;]+/g) ?? []).map((a) => a.toLowerCase()));
+  if (found.size !== 1) return null;
+  const [email] = found;
+  const parsed = parseFromHeader(raw);
+  return parsed.email === email ? parsed : { name: email.split("@")[0], email };
+}
+
 // Senders that are never sales conversations, even if they land in the inbox.
 function isAutomatedSender(email: string): boolean {
   return isAutomatedAddress(email) || isFollowUpSender(email);
@@ -614,6 +626,7 @@ async function processThreadRefs(
         return {
           id: m.id,
           from,
+          replyTo: parseReplyToHeader(getHeader(m.payload?.headers, "Reply-To")),
           direction: (own.has(from.email) ? "outbound" : "inbound") as "outbound" | "inbound",
           body: extractPlainTextBody(m.payload).slice(0, 5000),
           sentAt: gmailMessageTime(m.internalDate, getHeader(m.payload?.headers, "Date")),
@@ -624,10 +637,10 @@ async function processThreadRefs(
 
     // Find the external counterpart: the first sender in the thread who
     // isn't the business (the connected account or a teammate) and isn't
-    // automated.
-    const counterpart = parsedMessages.find(
-      (m) => !own.has(m.from.email) && !isAutomatedSender(m.from.email)
-    )?.from;
+    // automated. A website form's notifier stands for its Reply-To person,
+    // or, with none, is `shared`: its threads are never matched to a lead
+    // by that address (b011, see threadCustomer).
+    const counterpart = threadCustomer(parsedMessages, (email) => own.has(email) || isAutomatedSender(email));
     if (!counterpart) return null;
 
     // A thread already stored as a Conversation passed the prospect gate
@@ -637,7 +650,7 @@ async function processThreadRefs(
     // new messages below.
     const known = await prisma.conversation.findUnique({
       where: { externalId: thread.id! },
-      select: { id: true, lead: { select: { businessId: true } } },
+      select: { id: true, leadId: true, lead: { select: { businessId: true } } },
     });
     // Conversation.externalId is unique across ALL businesses, and every
     // lookup below is by that id alone. A thread id already held by
@@ -662,8 +675,10 @@ async function processThreadRefs(
     // was judged from scratch and could be set aside — never reaching the
     // lead, never drafted for, never alerted (daily-path sweep 2026-09-25
     // #3). WhatsApp already never second-guesses a number it knows.
+    // Never for a shared notifier: its last enquiry was someone else's.
     const knownCustomer =
       !alreadyKnown &&
+      !counterpart.shared &&
       !!(await prisma.lead.findUnique({
         where: { businessId_email: { businessId, email: counterpart.email } },
         select: { id: true },
@@ -761,10 +776,18 @@ async function processThreadRefs(
     // (a real POST to the business's own Zapier/webhook URL) and
     // applySourceRouting (which can enroll the lead in a sequence) twice
     // for one lead.
-    const existingLead = await prisma.lead.findUnique({
-      where: { businessId_email: { businessId, email: counterpart.email } },
-      select: { id: true, lastContacted: true },
-    });
+    //
+    // A shared notifier's thread is matched by the thread alone: to the
+    // lead it already has, or to none (b011). Its address belongs to every
+    // enquiry the form sends.
+    const existingLead = counterpart.shared
+      ? known
+        ? await prisma.lead.findUnique({ where: { id: known.leadId }, select: { id: true, lastContacted: true } })
+        : null
+      : await prisma.lead.findUnique({
+          where: { businessId_email: { businessId, email: counterpart.email } },
+          select: { id: true, lastContacted: true },
+        });
     const touched = !existingLead || !existingLead.lastContacted || newestMessageAt > existingLead.lastContacted;
 
     // Prisma's own Lead model shape, not the richer app-level `Lead` type
@@ -808,16 +831,33 @@ async function processThreadRefs(
           data: {
             businessId,
             name: counterpart.name,
-            email: counterpart.email,
+            // A shared notifier's address is not this person's, and a reply
+            // to it reaches the form, not them: their lead has no email.
+            email: counterpart.shared ? null : counterpart.email,
             source: sourceLabel,
             stage: "NEW",
             lastContacted,
             assignedToId: await pickAssignee(businessId),
+            // Nothing else ties such a lead to its thread, so the thread is
+            // created with it, in one write: a racing sync's duplicate lead
+            // is rolled back by the thread's unique id, not left empty.
+            ...(counterpart.shared
+              ? { conversations: { create: { channel: "email", externalId: thread.id!, emailProvider: "gmail" } } }
+              : {}),
           },
         });
         isNewLead = true;
       } catch (err) {
-        if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+        if (counterpart.shared && isUniqueViolation(err)) {
+          // Lost that race: the thread and its lead are the winner's.
+          const winner = await prisma.conversation.findUnique({ where: { externalId: thread.id! }, select: { lead: true } });
+          if (!winner) throw err;
+          if (winner.lead.businessId !== businessId) {
+            console.warn(`Gmail thread ${thread.id} for business ${businessId} resolved to another business's conversation — skipped.`);
+            return null;
+          }
+          lead = winner.lead;
+        } else if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
           // Lost the race to a concurrent sync (push notification and the
           // cron tick overlapping) that created this lead a moment
           // earlier — update it and skip the once-only side effects

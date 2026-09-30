@@ -83,3 +83,35 @@ export function isSharedSender(email: string): boolean {
   if (FORM_LOCAL_PARTS.some((p) => p.test(local))) return true;
   return RELAY_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`));
 }
+
+type Party = { name: string; email: string };
+
+/**
+ * Who a mail thread is with, and whether that address can be matched to a
+ * lead (backlog b011).
+ *
+ * Leads are matched by email. A website form's notifier ("website@",
+ * "wordpress@", "form-submission@squarespace.info") sends every visitor's
+ * enquiry from the same address, so matching on it merged different people
+ * into one lead. Such notifiers usually set Reply-To to the visitor, so
+ * that address is the customer when it is a person's. When there is no
+ * such Reply-To the thread's party is `shared`: the caller must give the
+ * thread a lead of its own and never match the address to an existing one.
+ *
+ * The first message not from `isNotCustomer` (the business itself, machine
+ * senders) decides, as it always has. A normal sender is returned exactly
+ * as before.
+ */
+export function threadCustomer(
+  messages: { from: Party; replyTo?: Party | null }[],
+  isNotCustomer: (email: string) => boolean
+): (Party & { shared: boolean }) | null {
+  const first = messages.find((m) => m.from.email && !isNotCustomer(m.from.email));
+  if (!first) return null;
+  if (!isSharedSender(first.from.email)) return { ...first.from, shared: false };
+  const replyTo = first.replyTo;
+  if (replyTo?.email && !isNotCustomer(replyTo.email) && !isSharedSender(replyTo.email)) {
+    return { ...replyTo, shared: false };
+  }
+  return { ...first.from, shared: true };
+}

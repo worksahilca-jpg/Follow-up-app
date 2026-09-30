@@ -31,7 +31,7 @@ import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
 import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { OWNER_SAID_NOT_CUSTOMER, ownerSaidNotCustomer, recentCorrections } from "@/lib/senderVerdicts";
-import { isAutomatedAddress } from "@/lib/sharedSenders";
+import { isAutomatedAddress, threadCustomer } from "@/lib/sharedSenders";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -324,6 +324,7 @@ type GraphMessage = {
   bodyPreview?: string;
   body?: { contentType?: string; content?: string };
   from?: { emailAddress?: { name?: string; address?: string } };
+  replyTo?: { emailAddress?: { name?: string; address?: string } }[];
   toRecipients?: { emailAddress?: { address?: string } }[];
   receivedDateTime?: string;
   sentDateTime?: string;
@@ -361,7 +362,7 @@ function graphMessageTime(m: GraphMessage): number {
  */
 export function conversationMessagesPath(conversationId: string): string {
   const filter = encodeURIComponent(`conversationId eq '${conversationId.replace(/'/g, "''")}'`);
-  return `/me/messages?$filter=${filter}&$select=id,conversationId,subject,bodyPreview,body,from,toRecipients,receivedDateTime,sentDateTime&$top=50`;
+  return `/me/messages?$filter=${filter}&$select=id,conversationId,subject,bodyPreview,body,from,replyTo,toRecipients,receivedDateTime,sentDateTime&$top=50`;
 }
 
 export type OutlookSyncOptions = {
@@ -427,9 +428,13 @@ async function processConversations(
       const fromEmail = (m.from?.emailAddress?.address ?? "").toLowerCase();
       const fromName = m.from?.emailAddress?.name || fromEmail.split("@")[0] || fromEmail;
       const sentAt = new Date(m.receivedDateTime ?? m.sentDateTime ?? Date.now());
+      // Exactly one Reply-To address, or none: several are not one customer.
+      const replyTo = m.replyTo?.length === 1 ? m.replyTo[0].emailAddress : undefined;
+      const replyToEmail = (replyTo?.address ?? "").toLowerCase();
       return {
         id: m.id,
         from: { name: fromName, email: fromEmail },
+        replyTo: replyToEmail ? { name: replyTo?.name || replyToEmail.split("@")[0], email: replyToEmail } : null,
         direction: (own.has(fromEmail) ? "outbound" : "inbound") as "outbound" | "inbound",
         body: messageText(m),
         sentAt,
@@ -437,12 +442,15 @@ async function processConversations(
       };
     });
 
-    const counterpart = parsedMessages.find((m) => m.from.email && !own.has(m.from.email) && !isAutomatedSender(m.from.email))?.from;
+    // A website form's notifier stands for its Reply-To person, or, with
+    // none, is `shared`: never matched to a lead by that address (b011,
+    // see threadCustomer). As in gmail.ts.
+    const counterpart = threadCustomer(parsedMessages, (email) => own.has(email) || isAutomatedSender(email));
     if (!counterpart) return null;
 
     const known = await prisma.conversation.findUnique({
       where: { externalId: conversationId },
-      select: { id: true, lead: { select: { businessId: true } } },
+      select: { id: true, leadId: true, lead: { select: { businessId: true } } },
     });
     // Conversation.externalId is unique across ALL businesses. An id held
     // by another business's conversation is never "ours" — the writes
@@ -461,8 +469,10 @@ async function processConversations(
     // was judged from scratch and could be set aside — never reaching the
     // lead, never drafted for, never alerted (daily-path sweep 2026-09-25
     // #3). WhatsApp already never second-guesses a number it knows.
+    // Never for a shared notifier: its last enquiry was someone else's.
     const knownCustomer =
       !alreadyKnown &&
+      !counterpart.shared &&
       !!(await prisma.lead.findUnique({
         where: { businessId_email: { businessId, email: counterpart.email } },
         select: { id: true },
@@ -544,10 +554,17 @@ async function processConversations(
     // genuinely succeeds, not from this early read, or notifyLeadEvent
     // (a real POST to the business's own webhook URL) and
     // applySourceRouting fire twice for one lead.
-    const existingLead = await prisma.lead.findUnique({
-      where: { businessId_email: { businessId, email: counterpart.email } },
-      select: { id: true, lastContacted: true },
-    });
+    //
+    // A shared notifier's thread is matched by the thread alone (b011), as
+    // in gmail.ts.
+    const existingLead = counterpart.shared
+      ? known
+        ? await prisma.lead.findUnique({ where: { id: known.leadId }, select: { id: true, lastContacted: true } })
+        : null
+      : await prisma.lead.findUnique({
+          where: { businessId_email: { businessId, email: counterpart.email } },
+          select: { id: true, lastContacted: true },
+        });
     const touched = !existingLead || !existingLead.lastContacted || newestMessageAt > existingLead.lastContacted;
 
     // Prisma's own Lead model shape, not the richer app-level `Lead` type
@@ -591,16 +608,31 @@ async function processConversations(
           data: {
             businessId,
             name: counterpart.name,
-            email: counterpart.email,
+            // No email for a shared notifier's lead, and its thread created
+            // in the same write (see gmail.ts).
+            email: counterpart.shared ? null : counterpart.email,
             source: sourceLabel,
             stage: "NEW",
             lastContacted,
             assignedToId: await pickAssignee(businessId),
+            ...(counterpart.shared
+              ? { conversations: { create: { channel: "email", externalId: conversationId, emailProvider: "outlook" } } }
+              : {}),
           },
         });
         isNewLead = true;
       } catch (err) {
-        if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+        const unique = !!err && typeof err === "object" && "code" in err && err.code === "P2002";
+        if (counterpart.shared && unique) {
+          // Lost the race for this thread: it and its lead are the winner's.
+          const winner = await prisma.conversation.findUnique({ where: { externalId: conversationId }, select: { lead: true } });
+          if (!winner) throw err;
+          if (winner.lead.businessId !== businessId) {
+            console.warn(`Outlook conversation ${conversationId} for business ${businessId} resolved to another business's conversation — skipped.`);
+            return null;
+          }
+          lead = winner.lead;
+        } else if (unique) {
           lead = await prisma.lead.update({
             where: { businessId_email: { businessId, email: counterpart.email } },
             data: { lastContacted },

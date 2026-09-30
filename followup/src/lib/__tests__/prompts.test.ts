@@ -856,3 +856,68 @@ describe("the owner's corrections in the lead check (2026-09-29)", () => {
     expect(user).not.toMatch(/owner_corrections/);
   });
 });
+
+// Lead-check eval, 2026-09-29 (b005): the only two misses in 80 were real
+// customers set aside — a realtor's client sending deposit paperwork, and a
+// plumbing customer moving Thursday's visit. Neither asks a price or books
+// anything new, and the second look only hunted for buying signals, so it
+// agreed with the first read. Both reads now name an existing client's admin
+// as customer business, without loosening anything on the non-customer side.
+describe("the lead check keeps an existing client's admin (b005, 2026-09-29)", () => {
+  const verdict = { choices: [{ message: { content: JSON.stringify({ whoIsSelling: "neither", reason: "r", isProspect: false }) } }] };
+  const paperwork = [
+    {
+      id: "m1",
+      direction: "inbound" as const,
+      channel: "email" as const,
+      body: "Attached is the deposit receipt and my ID for the offer on Elm St. Let me know what else you need to sign.",
+      date: new Date().toISOString(),
+      opened: false,
+    },
+  ];
+  const mark = { name: "Mark Chen", email: "mark@example.com" };
+  const realtor = { name: "Maple Key Realty", industry: "Real estate" };
+
+  it("first read: paperwork, deposits, rescheduling and the business's own invoices count, with nothing new to buy", async () => {
+    create.mockResolvedValue(verdict);
+    await classifyAsProspect(paperwork, mark, realtor);
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/EXISTING client in an active engagement or transaction, even with nothing new to buy/);
+    expect(system).toMatch(/paperwork, deposits/);
+    expect(system).toMatch(/rescheduling or cancelling a visit/);
+    expect(system).toMatch(/an invoice FROM this business/);
+    expect(system).toMatch(/'following up on our job'/);
+  });
+
+  it("first read: a supplier's invoice to the business is still selling, and the non-customer rules are untouched", async () => {
+    create.mockResolvedValue(verdict);
+    await classifyAsProspect(paperwork, mark, realtor);
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/a supplier's invoice TO this business is still selling/);
+    expect(system).toMatch(/newsletters and marketing/);
+    expect(system).toMatch(/a solicitation from a named person is still a solicitation/);
+    expect(system).toMatch(/verdict false, always/);
+  });
+
+  it("second look: searches for an existing client handling their own job, not only buying signals", async () => {
+    create.mockResolvedValue(verdict);
+    await classifyAsProspect(paperwork, mark, realtor, { secondLook: { priorReason: "administrative documents, not an inquiry" } });
+    const system = create.mock.calls[0][0].messages[0].content as string;
+    expect(system).toMatch(/SECOND LOOK/);
+    expect(system).toMatch(/ALREADY its client handling their own job: paperwork, a deposit, a signature, rescheduling/);
+    expect(system).toMatch(/an invoice from this business/);
+    // Still ends on the same short list of what is allowed to stay out.
+    expect(system).toMatch(/Answer false only if the thread is clearly a seller pitching this business/);
+  });
+
+  it("the schema's 'wants to buy' label covers a client mid-job, so the code-side rule keeps them", async () => {
+    create.mockResolvedValue(verdict);
+    await classifyAsProspect(paperwork, mark, realtor);
+    const schema = create.mock.calls[0][0].response_format.json_schema.schema as {
+      properties: { whoIsSelling: { description: string } };
+    };
+    expect(schema.properties.whoIsSelling.description).toMatch(
+      /an existing client sending paperwork or a deposit, or moving an appointment, counts/
+    );
+  });
+});

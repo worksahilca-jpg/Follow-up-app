@@ -2055,8 +2055,12 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
     // They must have gone quiet on US: if their message is the newest thing
     // in the thread, the unanswered rule owns them (and the window is
     // shut for it too — that lead is the owner's to answer, and the
-    // approval queue already says so via the unanswered hold).
-    const newest = conversation[conversation.length - 1];
+    // approval queue already says so via the unanswered hold). The instant
+    // ack and the holding message are not answers (notAnAnswer.ts): a
+    // customer who got only one of those is still waiting on us, and a
+    // handoff here would overwrite the reply they are owed with a nudge.
+    const judged = conversation.filter((m) => !isAckMessage(m));
+    const newest = judged[judged.length - 1];
     if (!newest || newest.direction !== "outbound") continue;
     if (isExitPayload(inbound.quickReplyPayload)) continue;
     if (settledByTalk(lead.talkedAt, new Date(inbound.date))) continue;

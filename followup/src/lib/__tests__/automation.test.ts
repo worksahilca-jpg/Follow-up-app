@@ -1448,6 +1448,23 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
     expect((await runAutomationForBusiness("biz1")).handedOff).toBe(0);
   });
 
+  // The instant "got your message" and the 30-minute "let me check and I'll
+  // send you the price" are not answers (notAnAnswer.ts). A customer whose
+  // question got only one of those is still waiting on the business — the
+  // held reply to their question is in Today — and must not be treated as
+  // having gone quiet: the handoff overwrote that reply with a "still
+  // interested?" nudge and told the owner the customer hadn't answered.
+  it.each([["instant_ack"], ["holding"]])("leaves a customer who only got the %s placeholder to the reply they are owed", async (trigger) => {
+    const l = quietDmLead(30);
+    (l.conversations as Array<{ messages: Record<string, unknown>[] }>)[0].messages = [
+      { id: "q", direction: "inbound", body: "How much for a two-bed clean?", sentAt: new Date(Date.now() - 30 * H), opened: false },
+      { id: "p", direction: "outbound", body: "Thanks! Let me check and I'll send you the price soon.", sentAt: new Date(Date.now() - 29 * H), opened: false, trigger },
+    ];
+    queueHandoff(l);
+    expect((await runAutomationForBusiness("biz1")).handedOff).toBe(0);
+    expect(draftMessage).not.toHaveBeenCalled();
+  });
+
   it("only scans DM leads that are not in a workflow", async () => {
     queueHandoff();
     await runAutomationForBusiness("biz1");

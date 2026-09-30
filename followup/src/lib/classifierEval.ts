@@ -9,8 +9,8 @@ import type { Message } from "@/lib/types";
  * one afternoon, and every unit test was green throughout — the tests mock
  * the model, so they prove what we tell it, never what it decides. This is
  * the check on what it decides. Run it after any change to the classifier
- * prompt or schema, before merging (GET /api/admin/classifier-eval, signed
- * in as a platform admin).
+ * prompt or schema, before merging (POST /api/admin/classifier-eval, signed
+ * in as a platform admin — see that route for how to run it).
  *
  * Every case is invented. No real customer's mail is stored here.
  * The first case is today's live miss, word for word in spirit.

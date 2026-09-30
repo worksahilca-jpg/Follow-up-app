@@ -85,13 +85,27 @@ export async function syncGmailForBusiness(
   const startedAt = new Date();
   const isDeep = !options.since;
 
+  // The one inbox this run reads, named up front so the stamp at the end
+  // lands on it alone. Stamping every connected inbox let "Sync now" and
+  // each push, which read only the oldest, clear another inbox's error
+  // and move its clock past mail it had never read.
+  const integrationId =
+    options.integrationId ??
+    (
+      await prisma.integration.findFirst({
+        where: { provider: "gmail", status: "connected", user: { businessId } },
+        orderBy: GMAIL_INBOX_ORDER,
+        select: { id: true },
+      })
+    )?.id;
+
   // Leftovers first: anything a previous cut-short run left unscored.
   let scored = await scoreUnscoredLeads(businessId, MAX_SCORES_PER_RUN);
 
   let truncated = false;
   const leads = await fetchSalesConversations(businessId, {
     since: options.since,
-    ...(options.integrationId ? { integrationId: options.integrationId } : {}),
+    ...(integrationId ? { integrationId } : {}),
     maxClassifications: MAX_CLASSIFICATIONS_PER_RUN,
     onResult: (info) => {
       truncated = info.truncated;
@@ -126,7 +140,7 @@ export async function syncGmailForBusiness(
   // budget; a truncated one runs again next tick and picks up where the
   // known-thread skipping leaves off.
   await prisma.integration.updateMany({
-    where: { provider: "gmail", status: "connected", user: { businessId }, ...(options.integrationId ? { id: options.integrationId } : {}) },
+    where: { provider: "gmail", status: "connected", user: { businessId }, ...(integrationId ? { id: integrationId } : {}) },
     data: {
       lastSyncedAt: startedAt,
       lastSyncError: null,

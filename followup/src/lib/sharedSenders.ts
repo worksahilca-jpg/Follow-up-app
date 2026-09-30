@@ -96,6 +96,14 @@ function onDomain(domain: string, list: string[]): boolean {
   return list.some((d) => domain === d || domain.endsWith(`.${d}`));
 }
 
+/**
+ * Gmail search terms for mail from any lead marketplace. Gmail's `from:`
+ * with a bare domain also matches its subdomains (mail.thumbtack.com).
+ */
+export function leadMarketplaceFromQuery(): string {
+  return `from:(${LEAD_MARKETPLACE_DOMAINS.join(" OR ")})`;
+}
+
 /** True for an address on a lead marketplace's domain or a subdomain of it. */
 export function isLeadMarketplaceAddress(email: string): boolean {
   const address = email.trim().toLowerCase();

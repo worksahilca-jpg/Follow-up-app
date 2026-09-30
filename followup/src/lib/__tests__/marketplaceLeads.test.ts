@@ -339,6 +339,60 @@ describe("Gmail: a marketplace lead from a no-reply address", () => {
   });
 });
 
+// Backlog b017 (founder said yes 2026-09-30): Gmail often files lead-site
+// notices under Updates, which the main search skips.
+describe("Gmail: lead-site notices in the Updates tab", () => {
+  const queries = () => threadsList.mock.calls.map(([args]) => args.q as string);
+
+  it("reads Updates for lead sites only, and still skips the rest of Updates", async () => {
+    threadsList.mockResolvedValue({ data: { threads: [] } });
+
+    await fetchSalesConversations("biz1");
+
+    expect(threadsList).toHaveBeenCalledTimes(2);
+    const [main, updates] = queries();
+    expect(main).toContain("-category:updates");
+    expect(updates).toMatch(/^category:updates from:\(/);
+    for (const domain of ["thumbtack.com", "angi.com", "homeadvisor.com", "zillow.com", "realtor.com", "yelp.com", "houzz.com", "bark.com", "porch.com"]) {
+      expect(updates).toContain(domain);
+    }
+    expect(updates).not.toMatch(/github|bank|google/);
+    expect(updates).toContain("newer_than:90d");
+  });
+
+  it("turns a Thumbtack lead found only in Updates into a lead", async () => {
+    threadsList.mockImplementation(async ({ q }) => ({
+      data: { threads: String(q).startsWith("category:updates") ? [{ id: "u1" }] : [] },
+    }));
+    threadsGet.mockResolvedValue(gmailThread("u1", "Thumbtack <no-reply@thumbtack.com>", "Dana W. wants a quote for House Cleaning", LEAD_BODY));
+
+    const leads = await fetchSalesConversations("biz1");
+
+    expect(threadsGet).toHaveBeenCalledWith(expect.objectContaining({ id: "u1" }));
+    expect(prismaMock.lead.create.mock.calls[0][0].data).toMatchObject({ name: "Dana Whitfield", email: null });
+    expect(leads).toHaveLength(1);
+  });
+
+  it("reads a thread once when both searches find it", async () => {
+    threadsList.mockResolvedValue({ data: { threads: [{ id: "t1" }] } });
+    threadsGet.mockResolvedValue(gmailThread("t1", "Thumbtack <no-reply@thumbtack.com>", "Dana W. wants a quote for House Cleaning", LEAD_BODY));
+
+    await fetchSalesConversations("biz1");
+
+    expect(threadsGet).toHaveBeenCalledTimes(1);
+    expect(prismaMock.lead.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the automatic sync's time window on the Updates search", async () => {
+    threadsList.mockResolvedValue({ data: { threads: [] } });
+    const since = new Date("2026-09-30T12:00:00Z");
+
+    await fetchSalesConversations("biz1", { since });
+
+    for (const q of queries()) expect(q).toContain(`after:${Math.floor(since.getTime() / 1000)}`);
+  });
+});
+
 describe("Outlook: a marketplace lead from a no-reply address", () => {
   function graph(subject: string, fromAddress: string, body: string) {
     vi.spyOn(global, "fetch").mockImplementation(async (input) => {

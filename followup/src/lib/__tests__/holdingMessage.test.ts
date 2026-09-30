@@ -238,4 +238,22 @@ describe("a failed send", () => {
     await runHoldingMessagesForBusiness("biz1", NOW);
     expect(p.lead.updateMany).toHaveBeenCalledTimes(1);
   });
+
+  // A database blip after the claim (the channel lookup, the lead read in
+  // the funnel) used to throw out of the whole business's loop: the claim
+  // stayed stamped on this customer's message, so they never got their
+  // "let me check", and every customer after them in the list was skipped.
+  it("releases the claim and carries on with the next customer when one throws", async () => {
+    p.lead.findMany.mockResolvedValue([lead(), lead({ id: "lead2", name: "Priya Shah" })]);
+    pending.mockResolvedValue([{ leadId: "lead1" }, { leadId: "lead2" }]);
+    send.mockRejectedValueOnce(new Error("Timed out fetching a new connection from the connection pool"));
+
+    const r = await runHoldingMessagesForBusiness("biz1", NOW);
+
+    expect(r.sent).toBe(1);
+    expect(send.mock.calls.map((c) => c[0])).toEqual(["lead1", "lead2"]);
+    const release = p.lead.updateMany.mock.calls.find((c: [{ where: { id: string }; data: unknown }]) => c[0].where.id === "lead1" && c[0].data && (c[0].data as { holdingSentFor: unknown }).holdingSentFor === null);
+    expect(release).toBeDefined();
+    expect(r.skipped.some((s) => s.startsWith("Sarah Johnson"))).toBe(true);
+  });
 });

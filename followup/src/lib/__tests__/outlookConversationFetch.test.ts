@@ -19,7 +19,8 @@ const { prismaMock, acknowledgeNewLead } = vi.hoisted(() => ({
     filteredEmail: { deleteMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn() },
     lead: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },
     conversation: { findUnique: vi.fn(), create: vi.fn() },
-    message: { upsert: vi.fn() },
+    // No FollowUp-sent row to claim: the owner's reply below is their own.
+    message: { upsert: vi.fn(), findUnique: vi.fn(async () => null), findMany: vi.fn(async () => []) },
   },
 }));
 
@@ -145,5 +146,44 @@ describe("the Outlook sync and the business's own people", () => {
     expect(lead).toBeNull();
     expect(prismaMock.lead.create).not.toHaveBeenCalled();
     expect(acknowledgeNewLead).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * A reply the owner started in Outlook and never sent is not a message.
+ *
+ * The conversation fetch reads every folder, Drafts included. An unsent
+ * draft came back as a message: with the owner as sender it was stored as
+ * the business answering, so the customer read as answered and FollowUp
+ * stopped nudging, on exactly the lead the owner meant to get back to; with
+ * no sender yet it was stored as the CUSTOMER writing the owner's
+ * half-finished words.
+ */
+describe("an unsent Outlook draft in the conversation", () => {
+  const draftAt = new Date("2026-09-27T11:00:00Z");
+
+  it.each([
+    ["with the owner as sender", { from: { emailAddress: { name: "Sam", address: "info@samsplumbing.ca" } } }],
+    ["with no sender yet", { from: undefined }],
+  ])("is not stored, %s", async (_label, sender) => {
+    vi.mocked(global.fetch).mockImplementation(async () =>
+      Response.json({
+        value: [
+          graphMessage("m1", "jane@example.com", opener, "Could you quote a kitchen reno?"),
+          { ...graphMessage("draft-1", "info@samsplumbing.ca", draftAt, "Hi Jane, the quote is $"), ...sender, isDraft: true },
+        ],
+      })
+    );
+    const lead = await importOutlookConversation("biz1", CONVERSATION_ID);
+
+    expect(lead?.id).toBe("lead1");
+    const stored = prismaMock.message.upsert.mock.calls.map((c) => c[0].create);
+    expect(stored.map((m: { externalId: string }) => m.externalId)).toEqual(["m1"]);
+    // Nor does the draft move the customer's last contact.
+    expect(prismaMock.lead.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ lastContacted: opener }) }));
+  });
+
+  it("is asked for, so it can be told apart", () => {
+    expect(new URLSearchParams(conversationMessagesPath("c1").split("?")[1]).get("$select")?.split(",")).toContain("isDraft");
   });
 });

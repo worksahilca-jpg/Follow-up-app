@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client";
+
 /**
  * The addresses FollowUp itself sends from. Mail from these is never a
  * customer.
@@ -43,4 +45,29 @@ export function ownAddressSet(connectedInbox: string, teamEmails: ReadonlyArray<
   const out = new Set<string>([connectedInbox.trim().toLowerCase()]);
   for (const email of teamEmails) if (email && email.includes("@")) out.add(bareAddress(email));
   return out;
+}
+
+/**
+ * The prisma select for the team's addresses (see teamAddresses): each
+ * person's sign-in address and every mailbox they connected. Addresses only:
+ * no token column is read.
+ */
+export const TEAM_ADDRESS_SELECT = {
+  email: true,
+  integrations: { where: { provider: { in: ["gmail", "outlook"] } }, select: { accountEmail: true } },
+} satisfies Prisma.UserSelect;
+
+/**
+ * Everyone on the team, as addresses: their sign-in, and every inbox any
+ * of them connected. Each admin can connect their own inbox, and it need
+ * not be the address they sign in with (Jo signs in as jo@samsplumbing.ca
+ * and connected jo.bookings@gmail.com). Read through the business's other
+ * inbox, Jo's mail was a stranger's: her reply to a customer was stored as
+ * the customer writing again, and a lead she forwarded became a customer
+ * called Jo.
+ */
+export function teamAddresses(
+  users: ReadonlyArray<{ email: string | null; integrations?: ReadonlyArray<{ accountEmail: string | null }> }>
+): (string | null)[] {
+  return users.flatMap((u) => [u.email, ...(u.integrations ?? []).map((i) => i.accountEmail)]);
 }

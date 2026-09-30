@@ -183,7 +183,13 @@ export async function runHoldingMessagesForBusiness(businessId: string, now: Dat
     });
     if (claim.count === 0) continue;
 
-    const outcome = await sendHoldingMessage(lead, topic, newest.body);
+    // A throw after the claim (a database blip in the channel lookup or the
+    // funnel) is a temporary failure like any other: it used to escape this
+    // loop with the claim still stamped, so this customer never got their
+    // message and everyone after them was skipped.
+    const outcome: Awaited<ReturnType<typeof sendHoldingMessage>> = await sendHoldingMessage(lead, topic, newest.body).catch(
+      (err: unknown) => ({ sent: false, reason: err instanceof Error ? err.message : "send failed" })
+    );
     if (outcome.sent) {
       result.sent++;
     } else {

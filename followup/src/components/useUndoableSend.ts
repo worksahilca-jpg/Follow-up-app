@@ -42,12 +42,20 @@ import { UNDO_WINDOW_MS, secondsLeft, createSendGate } from "@/lib/undoWindow";
  *    because mobile browsers routinely never fire the latter, and the
  *    ICP is on a phone; `sendBeacon` because an ordinary fetch is
  *    abandoned when the document goes away.
- * 4. **One description of the request.** `url` and `body` are used by
- *    the timer path, the beacon path and the unmount path alike. An
- *    earlier shape let the caller pass its own `send` function for the
+ * 4. **One description of the request, taken at the press.** `url` and
+ *    `body` are captured when Send is pressed and that one snapshot is
+ *    what the timer path, the beacon path and the unmount path all send.
+ *    An earlier shape let the caller pass its own `send` function for the
  *    normal path while the hook kept url/body for the flush — two
  *    descriptions of the same request, free to drift into a beacon that
  *    sends something the button never would.
+ *
+ *    Captured rather than read live, because reading it live made the
+ *    request an effect dependency: the "leaving sends" cleanup then ran on
+ *    any re-render that changed the body, and a cleanup that sends is a
+ *    send. On the Inbox the "$ price" blank stayed editable during the
+ *    countdown, so correcting "$45" to "$450" sent "$45" on the keystroke
+ *    and left an Undo on screen that could no longer undo anything.
  */
 export type UndoableSend = {
   /** True while the grace period is running. */
@@ -82,6 +90,8 @@ export function useUndoableSend({
   const [cancelled, setCancelled] = useState(false);
   const [busy, setBusy] = useState(false);
   const gateRef = useRef<ReturnType<typeof createSendGate> | null>(null);
+  // The request as it stood when Send was pressed — see guarantee 4.
+  const requestRef = useRef<{ url: string; body: string } | null>(null);
 
   // The callbacks are rebuilt on every render of the caller. Held in a
   // ref so the effects below depend on the clock and the request, and
@@ -99,15 +109,16 @@ export function useUndoableSend({
   });
 
   const commit = useCallback(() => {
-    if (!gateRef.current?.claim()) return;
+    const request = requestRef.current;
+    if (!request || !gateRef.current?.claim()) return;
     setEndsAt(null);
     setBusy(true);
     void (async () => {
       try {
-        const res = await fetch(url, {
+        const res = await fetch(request.url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body,
+          body: request.body,
         });
         await handlers.current.onResponse(res);
       } catch {
@@ -116,7 +127,7 @@ export function useUndoableSend({
         setBusy(false);
       }
     })();
-  }, [url, body]);
+  }, []);
 
   // Tick the label, and fire when the clock runs out.
   useEffect(() => {
@@ -130,10 +141,11 @@ export function useUndoableSend({
 
   // Leaving sends — see guarantee 3 above.
   useEffect(() => {
-    if (endsAt === null) return;
+    const request = requestRef.current;
+    if (endsAt === null || !request) return;
     const flush = () => {
       if (!gateRef.current?.claim()) return;
-      navigator.sendBeacon?.(url, new Blob([body], { type: "application/json" }));
+      navigator.sendBeacon?.(request.url, new Blob([request.body], { type: "application/json" }));
     };
     window.addEventListener("pagehide", flush);
     return () => {
@@ -143,18 +155,21 @@ export function useUndoableSend({
       // The document is still alive here, so an ordinary keepalive
       // request works and nothing is lost.
       if (gateRef.current?.claim()) {
-        void fetch(url, {
+        void fetch(request.url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body,
+          body: request.body,
           keepalive: true,
         });
       }
     };
-  }, [endsAt, url, body]);
+    // Only the clock. A changed body mid-countdown is not the card going
+    // away, and must not be treated as one (guarantee 4).
+  }, [endsAt]);
 
   const start = useCallback(() => {
     setCancelled(false);
+    requestRef.current = { url, body };
     gateRef.current = createSendGate();
     const end = Date.now() + UNDO_WINDOW_MS;
     // Seeded here rather than in the effect, so the first paint of the
@@ -162,7 +177,7 @@ export function useUndoableSend({
     // renders one frame of whatever the previous press left behind.
     setSecs(secondsLeft(end, Date.now()));
     setEndsAt(end);
-  }, []);
+  }, [url, body]);
 
   const undo = useCallback(() => {
     // Loses to a timer that already fired. When that happens the send is

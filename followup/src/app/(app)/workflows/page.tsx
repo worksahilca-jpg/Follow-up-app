@@ -337,7 +337,9 @@ function WorkflowCard({
     try {
       const res = await fetch(`/api/sequences/${sequence.id}`, { method: "DELETE" });
       const data = await res.json();
-      if (!data.success) throw new Error("Couldn't delete — try again.");
+      // The server's reason, as Pause/Activate already shows: a teammate
+      // is told only an admin can do this, not to try again forever.
+      if (!data.success) throw new Error(data.message ?? "Couldn't delete — try again.");
       onDeleted(sequence.id);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Couldn't delete — try again.");

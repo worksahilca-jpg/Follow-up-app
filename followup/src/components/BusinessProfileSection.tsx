@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Building2, Check } from "lucide-react";
 import { INDUSTRIES } from "@/lib/industries";
 
@@ -29,6 +30,7 @@ import { INDUSTRIES } from "@/lib/industries";
  * Nothing new is invented here; the pattern is the approved one.
  */
 export default function BusinessProfileSection() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [industry, setIndustry] = useState("");
   const [namePlaceholder, setNamePlaceholder] = useState(false);
@@ -71,6 +73,10 @@ export default function BusinessProfileSection() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't save — try again.");
       setSaved(true);
+      // The sidebar shows this name, and it lives in the app layout, which
+      // does not re-render on navigation: without this the old name stayed
+      // there until a full reload.
+      router.refresh();
       setNamePlaceholder(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't save — try again.");

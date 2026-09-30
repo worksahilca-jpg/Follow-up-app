@@ -103,7 +103,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        <div className="mt-5 lg:mt-7">
+        {/* id: the target of CatchUp's "Show all N messages". */}
+        <div id="conversation" className="mt-5 lg:mt-7">
           <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} />
         </div>
 

@@ -38,7 +38,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
+import { isFollowUpSender, ownAddressSet, TEAM_ADDRESS_SELECT, teamAddresses } from "@/lib/ownSenders";
 
 const AUTHORITY = "https://login.microsoftonline.com/common/oauth2/v2.0";
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -49,6 +49,11 @@ const SCOPES = ["offline_access", "openid", "email", "Mail.Read", "Mail.Send", "
 
 function isAutomatedSender(email: string): boolean {
   return isAutomatedAddress(email) || isFollowUpSender(email);
+}
+
+/** Prisma's unique-constraint violation — the loser of a create race. */
+function isUniqueViolation(err: unknown): boolean {
+  return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
 }
 
 function credentials(): { clientId: string; clientSecret: string; redirectUri: string } | null {
@@ -166,11 +171,39 @@ export async function exchangeOutlookAuthCode(code: string, userId: string): Pro
   const email: string | undefined = profile.mail ?? profile.userPrincipalName;
   if (!email) throw new Error("Couldn't determine the connected Outlook address.");
 
+  // One mailbox, one business, as exchangeCodeForTokens in gmail.ts (daily-
+  // path audit F8). Two businesses reading one mailbox share its Graph
+  // conversation ids, which Conversation.externalId keys across the whole
+  // database: whichever sync reached a new customer first took the lead, and
+  // the other business skipped it. Only a live connection on ANOTHER
+  // business counts; refused before anything is stored.
+  const self = await prisma.user.findUnique({ where: { id: userId }, select: { businessId: true } });
+  if (self?.businessId) {
+    const takenElsewhere = await prisma.integration.findFirst({
+      where: {
+        provider: "outlook",
+        status: "connected",
+        accountEmail: { equals: email, mode: "insensitive" },
+        user: { businessId: { not: null }, NOT: { businessId: self.businessId } },
+      },
+      select: { id: true },
+    });
+    if (takenElsewhere) {
+      throw new Error(
+        "That Outlook inbox is already connected to another FollowUp account. Disconnect it there first, or connect a different inbox."
+      );
+    }
+  }
+
   const existing = await prisma.integration.findUnique({
     where: { userId_provider: { userId, provider: "outlook" } },
   });
   const refreshToken = tokens.refresh_token ?? existing?.refreshToken ?? null;
   const expiresAt = new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000);
+  // A reconnect to a DIFFERENT mailbox starts it fresh: the old mailbox's
+  // delta cursor would skip this one's 90-day first pass entirely (see
+  // gmail.ts's exchangeCodeForTokens). The same mailbox keeps its cursor.
+  const otherMailbox = !!existing?.accountEmail && existing.accountEmail.toLowerCase() !== email.toLowerCase();
 
   await prisma.integration.upsert({
     where: { userId_provider: { userId, provider: "outlook" } },
@@ -182,6 +215,7 @@ export async function exchangeOutlookAuthCode(code: string, userId: string): Pro
       connectedAt: new Date(),
       accountEmail: email,
       lastSyncError: null,
+      ...(otherMailbox ? { deltaLink: null, lastSyncedAt: null } : {}),
     },
     create: {
       userId,
@@ -328,6 +362,7 @@ type GraphMessage = {
   toRecipients?: { emailAddress?: { address?: string } }[];
   receivedDateTime?: string;
   sentDateTime?: string;
+  isDraft?: boolean;
 };
 
 function stripHtml(html: string): string {
@@ -338,6 +373,69 @@ function messageText(m: GraphMessage): string {
   const content = m.body?.content ?? m.bodyPreview ?? "";
   const text = m.body?.contentType === "html" ? stripHtml(content) : content;
   return text.slice(0, 5000);
+}
+
+/** Letters and digits only, lowercased, entities decoded: the same words however Graph rendered them. */
+function sameWords(text: string): string {
+  return text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&amp;/gi, "&")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+// How far apart FollowUp's record of a send and Graph's copy of it can be.
+// The record is written the moment Graph accepts the send.
+const OWN_SEND_MATCH_MS = 15 * 60_000;
+
+/**
+ * The sync's read-back of a message FollowUp itself sent through Outlook.
+ *
+ * Gmail's send returns the new message's id and the sync's read-back lands
+ * on that row. Graph's /reply and /sendMail return no id, so FollowUp's row
+ * for an Outlook send had none, and the read-back was stored beside it as a
+ * second outbound with no trigger, which is exactly how an owner's own reply
+ * looks (Message.trigger). After the instant ack that made the customer
+ * read as answered, and the 3-hour first-reply rule never fired.
+ *
+ * So an outbound copy with no row of its own is matched to FollowUp's
+ * unclaimed row for this customer: sent within minutes of it, and carrying
+ * its words (Graph's copy is the comment plus the quoted original). The row
+ * takes the Graph id; nothing new is written. True when claimed.
+ */
+async function claimOwnSend(leadId: string, m: { id: string; body: string; sentAt: Date }): Promise<boolean> {
+  if (await prisma.message.findUnique({ where: { externalId: m.id }, select: { id: true } })) return false;
+  const candidates = await prisma.message.findMany({
+    where: {
+      direction: "outbound",
+      externalId: null,
+      // FollowUp's own send: a trigger, and no capture source.
+      source: null,
+      trigger: { not: null },
+      sentAt: { gte: new Date(m.sentAt.getTime() - OWN_SEND_MATCH_MS), lte: new Date(m.sentAt.getTime() + OWN_SEND_MATCH_MS) },
+      conversation: { leadId, channel: "email" },
+    },
+    orderBy: { sentAt: "asc" },
+    select: { id: true, body: true },
+  });
+  const copy = sameWords(m.body);
+  const mine = candidates.find((c) => {
+    const words = sameWords(c.body).slice(0, 200);
+    return words.length > 0 && copy.includes(words);
+  });
+  if (!mine) return false;
+  try {
+    const claimed = await prisma.message.updateMany({ where: { id: mine.id, externalId: null }, data: { externalId: m.id } });
+    return claimed.count > 0;
+  } catch (err) {
+    // A racing sync stored this copy a moment ago: it exists either way.
+    if (isUniqueViolation(err)) return true;
+    throw err;
+  }
 }
 
 function graphMessageTime(m: GraphMessage): number {
@@ -362,7 +460,7 @@ function graphMessageTime(m: GraphMessage): number {
  */
 export function conversationMessagesPath(conversationId: string): string {
   const filter = encodeURIComponent(`conversationId eq '${conversationId.replace(/'/g, "''")}'`);
-  return `/me/messages?$filter=${filter}&$select=id,conversationId,subject,bodyPreview,body,from,replyTo,toRecipients,receivedDateTime,sentDateTime&$top=50`;
+  return `/me/messages?$filter=${filter}&$select=id,conversationId,subject,bodyPreview,body,from,replyTo,toRecipients,receivedDateTime,sentDateTime,isDraft&$top=50`;
 }
 
 export type OutlookSyncOptions = {
@@ -392,7 +490,7 @@ async function processConversations(
 
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { name: true, industry: true, users: { select: { email: true } } },
+    select: { name: true, industry: true, users: { select: TEAM_ADDRESS_SELECT } },
   });
   // With the owner's own recent corrections, as in gmail.ts.
   const businessContext = business
@@ -400,7 +498,7 @@ async function processConversations(
     : null;
   // The business itself: this mailbox and everyone on the team (see
   // ownAddressSet). Their mail is ours, never a customer's.
-  const own = ownAddressSet(selfEmail, (business?.users ?? []).map((u) => u.email));
+  const own = ownAddressSet(selfEmail, teamAddresses(business?.users ?? []));
 
   const results = await mapWithConcurrency(conversationIds, 5, async (conversationId): Promise<SyncedLead | null> => {
     try {
@@ -416,12 +514,22 @@ async function processConversations(
 
   async function processOneConversation(conversationId: string): Promise<SyncedLead | null> {
     const res = await graphFetch(businessId, conversationMessagesPath(conversationId));
+    // Throttled or a Graph outage: this conversation is owed another look,
+    // so the run is not finished (see the cursor in fetchOutlookConversations).
+    if (res && (res.status === 429 || res.status >= 500)) truncated = true;
     if (!res || !res.ok) return null;
     const data: { value?: GraphMessage[] } = await res.json();
     // Oldest first, sorted here: Graph refuses to sort this query itself
     // (see conversationMessagesPath). Everything below reads the first
     // message as the thread's opener and the last as its newest.
-    const graphMessages = [...(data.value ?? [])].sort((a, b) => graphMessageTime(a) - graphMessageTime(b));
+    //
+    // Never an unsent draft: the fetch reads every folder, Drafts included,
+    // and a reply the owner started and never sent was stored as the
+    // business answering (the customer then read as answered, and FollowUp
+    // stopped nudging) or, with no sender yet, as the customer writing it.
+    const graphMessages = [...(data.value ?? [])]
+      .filter((m) => !m.isDraft)
+      .sort((a, b) => graphMessageTime(a) - graphMessageTime(b));
     if (graphMessages.length === 0) return null;
 
     const parsedMessages = graphMessages.map((m) => {
@@ -626,7 +734,7 @@ async function processConversations(
         });
         isNewLead = true;
       } catch (err) {
-        const unique = !!err && typeof err === "object" && "code" in err && err.code === "P2002";
+        const unique = isUniqueViolation(err);
         if (counterpart.shared && unique) {
           // Lost the race for this thread: it and its lead are the winner's.
           const winner = await prisma.conversation.findUnique({ where: { externalId: conversationId }, select: { lead: true } });
@@ -651,11 +759,22 @@ async function processConversations(
       await applySourceRouting(businessId, lead.id, sourceLabel);
     }
 
+    // The same race as the lead above, one step later (F9 in gmail.ts):
+    // two overlapping syncs (the two-minute cron, "Sync now") both create
+    // this conversation, and the loser can be the one that won the lead,
+    // the only one that acknowledges it. The winner's row is this
+    // conversation's, so re-read it and carry on.
     let conversation = await prisma.conversation.findUnique({ where: { externalId: conversationId } });
     if (!conversation) {
-      conversation = await prisma.conversation.create({
-        data: { leadId: lead.id, channel: "email", externalId: conversationId, emailProvider: "outlook" },
-      });
+      try {
+        conversation = await prisma.conversation.create({
+          data: { leadId: lead.id, channel: "email", externalId: conversationId, emailProvider: "outlook" },
+        });
+      } catch (err) {
+        if (!isUniqueViolation(err)) throw err;
+        conversation = await prisma.conversation.findUnique({ where: { externalId: conversationId } });
+        if (!conversation) throw err;
+      }
     }
     // Re-checked on the row actually resolved (see the Gmail import).
     if (conversation.leadId !== lead.id) {
@@ -667,11 +786,18 @@ async function processConversations(
     }
 
     for (const m of parsedMessages) {
-      await prisma.message.upsert({
-        where: { externalId: m.id },
-        update: {},
-        create: { conversationId: conversation.id, direction: m.direction, body: m.body, sentAt: m.sentAt, externalId: m.id },
-      });
+      if (m.direction === "outbound" && (await claimOwnSend(conversation.leadId, m))) continue;
+      try {
+        await prisma.message.upsert({
+          where: { externalId: m.id },
+          update: {},
+          create: { conversationId: conversation.id, direction: m.direction, body: m.body, sentAt: m.sentAt, externalId: m.id },
+        });
+      } catch (err) {
+        // The racing sync wrote it between this upsert's read and insert.
+        // It exists, which is all `update: {}` asks for.
+        if (!isUniqueViolation(err)) throw err;
+      }
     }
     await checkRapidEngagement(lead.id);
 
@@ -802,14 +928,30 @@ export async function fetchOutlookConversations(
     pages += 1;
   }
 
-  if (deltaLink) {
+  // The cursor moves only once every conversation it listed has been dealt
+  // with. Saved before processing, it skipped whatever the run left for
+  // later (past the classification budget, or throttled): the next tick
+  // asked only for what changed since, and a customer waiting on an answer
+  // changes nothing, so they were never read again. Held back, the next
+  // tick re-lists them; known conversations skip the classifier, as in
+  // Gmail's pass.
+  let unfinished = false;
+  const leads = await processConversations(businessId, selfEmail, [...conversationIds], "Outlook", {
+    ...options,
+    onResult: (info) => {
+      unfinished = info.truncated;
+      options.onResult?.(info);
+    },
+  });
+
+  if (deltaLink && !unfinished) {
     await prisma.integration.updateMany({
       where: { provider: "outlook", status: "connected", user: { businessId } },
       data: { deltaLink },
     });
   }
 
-  return processConversations(businessId, selfEmail, [...conversationIds], "Outlook", options);
+  return leads;
 }
 
 /** The owner's override for a filtered-out conversation, mirroring importGmailThread(). */
@@ -853,11 +995,19 @@ export async function sendOutlookEmail(
       body: JSON.stringify({ comment: params.body }),
     });
     if (!res) return notConnected;
-    if (!res.ok) return { success: false, status: res.status };
-    // Graph's /reply returns 202 Accepted with no body and no new
-    // message id — there's nothing else to key off here, so the sent
-    // copy is picked up on the next sync like any other outbound mail.
-    return { success: true };
+    // 404: that message is no longer at this id. Graph's default ids change
+    // when a message moves folder (Archive, a rule, the owner filing it:
+    // learn.microsoft.com/graph/outlook-immutable-id), so the stored id goes
+    // stale once the customer's email is filed. Every reply to them then
+    // failed. A fresh email goes instead, as Gmail's reply does when the
+    // customer's message can't be read (getGmailReplyHeaders).
+    if (res.status !== 404) {
+      if (!res.ok) return { success: false, status: res.status };
+      // Graph's /reply returns 202 Accepted with no body and no new
+      // message id — there's nothing else to key off here, so the sent
+      // copy is picked up on the next sync like any other outbound mail.
+      return { success: true };
+    }
   }
 
   const res = await graphFetch(businessId, "/me/sendMail", {

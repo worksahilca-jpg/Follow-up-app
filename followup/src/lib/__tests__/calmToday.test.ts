@@ -81,4 +81,14 @@ describe("handled today", () => {
     expect(await countHandledToday("biz", new Date("2026-09-26T04:00:00Z"))).toBe(5);
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ distinct: ["targetId"] }));
   });
+
+  // "I replied" on a lead-site card (b018, A-075) takes the person off Today
+  // exactly like "We talked" does, and the count went up by one on screen —
+  // then dropped back on the next load, because the event it writes was not
+  // one this count read.
+  it("counts a lead-site customer the owner marked I replied", async () => {
+    findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    await countHandledToday("biz", new Date("2026-09-26T04:00:00Z"));
+    expect(findMany.mock.calls.at(-2)![0].where.action.in).toEqual(expect.arrayContaining(["lead.talked", "lead.replied_on_site"]));
+  });
 });

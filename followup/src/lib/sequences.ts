@@ -668,12 +668,34 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
         // enrolled lead reaching this point, since a reply unenrolls it
         // immediately rather than letting the sequence continue quietly.
         const triedEmailAlready = sequence.steps.slice(0, lead.sequenceStepIndex).some((s) => s.action === "EMAIL");
-        const nonEmailChannel = !lead.email || triedEmailAlready ? await detectNonEmailChannel(lead) : null;
+        const detected = !lead.email || triedEmailAlready ? await detectNonEmailChannel(lead) : null;
+        // A lead who texted STOP (Lead.optedOutAt) is not reachable by text
+        // or WhatsApp — sendFollowUpToLead refuses both. Picking one anyway
+        // drafted, risk-checked and failed the same step every hour, with a
+        // "couldn't send" notification each time, for as long as they stayed
+        // opted out. STOP is the text-message opt-out, so email still counts.
+        const nonEmailChannel = (detected === "text" || detected === "whatsapp") && lead.optedOutAt ? null : detected;
         // No non-email channel available (no phone/DM on file, or one
         // exists but nothing to fall back to) — stick with email if the
         // lead has one even on a later step, rather than skip a send
         // that email could still reach.
         const channel = nonEmailChannel ?? (lead.email ? "email" : null);
+        if (!channel && detected && lead.optedOutAt) {
+          // Structural, like the exits below: once, told.
+          try {
+            await prisma.lead.update({
+              where: { id: lead.id },
+              data: leaveSequence(lead),
+            });
+          } catch (err) {
+            return { kind: "skipped" as const, note: `${lead.name}: ${err instanceof Error ? err.message : "unknown error"}` };
+          }
+          await notifySequenceIssue(
+            lead,
+            `"${sequence.name}" stopped for ${lead.name} — they texted STOP, so SMS/WhatsApp sending is blocked until they text START to opt back in.`
+          );
+          return { kind: "skipped" as const, note: `${lead.name}: texted STOP, so no automatic text or WhatsApp` };
+        }
         if (!channel) {
           // Structural, not transient — no reachable channel at all isn't
           // going to fix itself by retrying next hour, indefinitely, with

@@ -39,7 +39,7 @@ import { notifyLeadEvent } from "@/lib/outboundWebhook";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
-import { isFollowUpSender, ownAddressSet } from "@/lib/ownSenders";
+import { isFollowUpSender, ownAddressSet, TEAM_ADDRESS_SELECT, teamAddresses } from "@/lib/ownSenders";
 import { isAutomatedAddress, leadMarketplaceFromQuery, threadCustomer } from "@/lib/sharedSenders";
 import type { InlineImage } from "@/lib/emailAssets";
 import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
@@ -240,6 +240,13 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
   // but keep the old one as a fallback just in case).
   const refreshToken = tokens.refresh_token ?? existing?.refreshToken ?? null;
 
+  // A reconnect to a DIFFERENT inbox is a new inbox on the same row. The
+  // old one's sync clocks and push watch would say this one was already
+  // read and watched: no first deep pass for up to a day (the customers
+  // already waiting in it came in too late for the instant reply) and no
+  // push until the old watch ran out. The same inbox keeps them.
+  const otherInbox = !!existing?.accountEmail && existing.accountEmail.toLowerCase() !== email.toLowerCase();
+
   await prisma.integration.upsert({
     where: { userId_provider: { userId, provider: "gmail" } },
     update: {
@@ -248,6 +255,7 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
       refreshToken,
       connectedAt: new Date(),
       accountEmail: email,
+      ...(otherInbox ? { lastSyncedAt: null, deepSyncedAt: null, watchExpiration: null, watchHistoryId: null } : {}),
     },
     create: {
       userId,
@@ -585,7 +593,7 @@ async function processThreadRefs(
   // per thread.
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { name: true, industry: true, users: { select: { email: true } } },
+    select: { name: true, industry: true, users: { select: TEAM_ADDRESS_SELECT } },
   });
   // With the owner's own recent corrections, so the classifier judges the
   // way this owner does (src/lib/senderVerdicts.ts).
@@ -594,7 +602,7 @@ async function processThreadRefs(
     : null;
   // The business itself: this inbox and everyone on the team (see
   // ownAddressSet). Their mail is ours, never a customer's.
-  const own = ownAddressSet(selfEmail, (business?.users ?? []).map((u) => u.email));
+  const own = ownAddressSet(selfEmail, teamAddresses(business?.users ?? []));
 
   // Threads are independent of each other (each maps to at most one lead
   // by counterpart email), so process several in parallel instead of one
@@ -626,7 +634,11 @@ async function processThreadRefs(
       id: ref.id,
       format: "full",
     });
-    const gmailMessages = thread.messages ?? [];
+    // Never an unsent draft. threads.get returns a thread's drafts among its
+    // messages, and Gmail saves one seconds after the owner starts typing:
+    // stored, it was the business answering, and the customer read as
+    // answered on exactly the lead the owner had started on and left.
+    const gmailMessages = (thread.messages ?? []).filter((m) => !m.labelIds?.includes("DRAFT"));
     if (gmailMessages.length === 0) return null;
 
     // Parse every message once — reused below both for the prospect check
@@ -1250,6 +1262,33 @@ export function sanitizeHeaderValue(value: string): string {
 }
 
 /**
+ * A header value a mail app reads as written: plain ASCII unchanged, and
+ * anything else as RFC 2047 encoded-words (=?UTF-8?B?…?=), each within the
+ * 75-character limit, folded onto continuation lines.
+ *
+ * Headers are ASCII (RFC 5322). A Subject sent as bare UTF-8 reached
+ * recipients as mojibake ("rÃ©novation") in the clients that assume so:
+ * the "Re: <their subject>" to a French-speaking customer, and the instant
+ * acknowledgement's localized subject. Takes an already-sanitized value;
+ * the encoded form holds no CR or LF other than the folds it adds.
+ */
+export function encodeHeaderText(value: string): string {
+  if (/^[\x20-\x7e]*$/.test(value)) return value;
+  // 45 bytes of UTF-8 is 60 of base64: with "=?UTF-8?B?" and "?=", 72.
+  const words: string[] = [];
+  let chunk = "";
+  for (const ch of value) {
+    if (Buffer.byteLength(chunk + ch, "utf-8") > 45) {
+      words.push(chunk);
+      chunk = "";
+    }
+    chunk += ch;
+  }
+  if (chunk) words.push(chunk);
+  return words.map((w) => `=?UTF-8?B?${Buffer.from(w, "utf-8").toString("base64")}?=`).join("\r\n ");
+}
+
+/**
  * The body lines of a raw message, after the headers. Plain text alone is
  * exactly what sendEmail always sent. With `html`, a multipart/alternative
  * body: plain text first, HTML last (the part a mail app prefers when it
@@ -1474,7 +1513,7 @@ export async function sendEmail(
   const raw = [
     `From: ${gmailSelfAddress(integration)}`,
     `To: ${to}`,
-    `Subject: ${subject}`,
+    `Subject: ${encodeHeaderText(subject)}`,
     ...(inReplyTo ? [`In-Reply-To: ${inReplyTo}`, `References: ${inReplyTo}`] : []),
     // Sanitised the same way every other header value is: a header line
     // carrying a CR or LF would let its content inject further headers.

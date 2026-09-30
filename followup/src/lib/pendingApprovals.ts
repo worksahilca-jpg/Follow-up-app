@@ -354,6 +354,24 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
 }
 
 /**
+ * Is this lead already waiting in the queue on a hold written at or after
+ * `since`? The same "latest decision is a hold" reading getPendingApprovals
+ * makes, for one lead. automation.ts asks it before holding a draft again
+ * on its ~20-hour re-examination, so an unchanged draft keeps its one hold
+ * (and its one notification) instead of gaining a new one every day.
+ */
+export async function heldSince(businessId: string, leadId: string, since: Date): Promise<boolean> {
+  const events = await prisma.auditEvent.findMany({
+    where: { businessId, targetType: "lead", targetId: leadId, action: { in: DECISION_EVENTS } },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: { action: true, meta: true, createdAt: true },
+  });
+  const latest = events.find((e) => !isAcknowledgement(e));
+  return latest?.action === "ai.hold" && latest.createdAt >= since;
+}
+
+/**
  * "Don't send" — explicitly declines a held draft. Never deletes the
  * original "ai.hold" event (the audit trail is append-only) and never
  * touches the lead's cached suggestedMessage; writing this newer event

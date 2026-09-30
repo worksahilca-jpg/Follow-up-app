@@ -28,11 +28,16 @@ import { prisma } from "@/lib/db";
  *   business holds either id in either column. The unique indexes remain
  *   the real guarantee (this read can be raced); this closes the gap they
  *   leave between columns.
+ *
+ * `sameAccount` also decides the poll cursor (audit 2026-09-24 F6): a
+ * different account must start with instagramSyncedAt null, or the poller
+ * reads it from the previous account's cursor — up to 24 hours back — and
+ * imports that day of DMs as brand-new leads. The same account keeps it.
  */
 export async function planInstagramIdWrite(
   businessId: string,
   resolved: { id: string; accountId?: string }
-): Promise<{ ok: true; instagramAccountId: string | null } | { ok: false }> {
+): Promise<{ ok: true; instagramAccountId: string | null; sameAccount: boolean } | { ok: false }> {
   const current = await prisma.business.findUnique({
     where: { id: businessId },
     select: { instagramUserId: true, instagramAccountId: true },
@@ -42,7 +47,7 @@ export async function planInstagramIdWrite(
 
   const ids = [resolved.id, ...(instagramAccountId ? [instagramAccountId] : [])];
   if (await instagramIdsHeldElsewhere(businessId, ids)) return { ok: false };
-  return { ok: true, instagramAccountId };
+  return { ok: true, instagramAccountId, sameAccount };
 }
 
 /** Does any OTHER business hold any of these ids, in either Instagram id column? */

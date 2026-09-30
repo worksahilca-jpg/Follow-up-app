@@ -192,6 +192,42 @@ describe("pollInstagramForBusiness", () => {
     expect(businessUpdate).not.toHaveBeenCalled();
   });
 
+  // The list answered but one thread did not (a rate limit, a Graph 500 on
+  // that conversation). The cursor used to move anyway, so the DMs in that
+  // thread fell behind it and were never read by any later tick. The
+  // threads that did answer are still handed on — they are idempotent on
+  // the message id, so re-reading them next tick costs nothing.
+  it("leaves the cursor alone when one conversation's messages could not be read", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(global, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes("/conversations?")) {
+        return new Response(
+          JSON.stringify({
+            data: [
+              { id: "ok-thread", updated_time: metaTime(10_000) },
+              { id: "refused-thread", updated_time: metaTime(10_000) },
+            ],
+          })
+        );
+      }
+      if (url.includes("refused-thread")) {
+        return new Response(JSON.stringify({ error: { message: "(#4) Application request limit reached" } }), { status: 403 });
+      }
+      return new Response(
+        JSON.stringify({ messages: { data: [{ id: "m-ok", created_time: metaTime(10_000), from: { id: LEAD }, message: "hi" }] } })
+      );
+    });
+
+    await pollInstagramForBusiness({ ...business, instagramSyncedAt: new Date(Date.now() - 300_000) });
+
+    expect(processMetaEnvelope).toHaveBeenCalledWith({
+      object: "instagram",
+      entry: [{ id: IG, messaging: [expect.objectContaining({ message: expect.objectContaining({ mid: "m-ok" }) })] }],
+    });
+    expect(businessUpdate).not.toHaveBeenCalled();
+  });
+
   // Connecting an account must not drag its history in and acknowledge
   // conversations that ended weeks ago.
   it("reads only a short window back on a never-polled account", async () => {

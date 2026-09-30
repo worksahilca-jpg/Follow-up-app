@@ -5,8 +5,8 @@ import SendingPausedBanner from "@/components/SendingPausedBanner";
 import CantSendNotice from "@/components/CantSendNotice";
 import { hasAnySendChannel } from "@/lib/sendChannels";
 import TestLeadButton from "@/components/TestLeadButton";
-import { getLeads, getStats, getUpcomingBookings } from "@/lib/leads-data";
-import { getAtRiskLeads } from "@/lib/rescue";
+import { getLeads, getUpcomingBookings } from "@/lib/leads-data";
+import { aboutToBeLost } from "@/lib/rescue";
 import { getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
 import { withBasis, sentAsWritten } from "@/lib/showTheWork";
@@ -60,7 +60,6 @@ export const dynamic = "force-dynamic";
  */
 export default async function DashboardPage() {
   const leads = await getLeads();
-  const stats = getStats(leads);
   const upcomingBookings = await getUpcomingBookings();
   const ctx = await getSessionContext();
   const rescue = ctx ? await getRescueReport(ctx.businessId, 7) : null;
@@ -74,9 +73,9 @@ export default async function DashboardPage() {
   // Each person once on Today (A-046): anyone already waiting for the
   // owner's OK is left out of "About to be lost".
   const awaitingOk = new Set(approvals.map((a) => a.leadId));
-  const atRisk = getAtRiskLeads(leads)
-    .filter((l) => !awaitingOk.has(l.id))
-    .slice(0, 8);
+  // One count for the headline and the section's label (aboutToBeLost).
+  const lost = aboutToBeLost(leads, awaitingOk);
+  const atRisk = lost.shown;
   // Passed straight through. This used to be re-mapped field by field,
   // which dropped whatever the mapping had not been told about — see
   // ApprovalItem's own note.
@@ -187,8 +186,8 @@ export default async function DashboardPage() {
     if (approvalItems.length > 0) {
       parts.push(`${approvalItems.length} draft${approvalItems.length === 1 ? "" : "s"} need${approvalItems.length === 1 ? "s" : ""} your OK`);
     }
-    if (stats.atRisk > 0) {
-      parts.push(`${stats.atRisk} customer${stats.atRisk === 1 ? "" : "s"} going quiet`);
+    if (lost.total > 0) {
+      parts.push(`${lost.total} customer${lost.total === 1 ? "" : "s"} going quiet`);
     }
     if (parts.length > 0) return parts.join(" · ");
 
@@ -389,7 +388,7 @@ export default async function DashboardPage() {
           {atRisk.length > 0 && (
             <section className="mt-7">
               <div className="mb-2.5">
-                <Eyebrow>About to be lost · {atRisk.length}</Eyebrow>
+                <Eyebrow>About to be lost · {lost.total}</Eyebrow>
               </div>
               <div className="overflow-hidden rounded-2xl border border-line bg-card divide-y divide-[var(--line-2)]">
                 {atRisk.map((lead) => (

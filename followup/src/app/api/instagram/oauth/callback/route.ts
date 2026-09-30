@@ -77,6 +77,9 @@ export async function GET(request: NextRequest) {
         instagramAccountId: plan.instagramAccountId,
         instagramUsername: resolved.username ?? null,
         instagramWebhookSubscribedAt: null,
+        // A different account is polled from scratch, never from the last
+        // account's cursor (instagramConnectGuard.ts, audit F6).
+        ...(plan.sameAccount ? {} : { instagramSyncedAt: null }),
       },
     });
   } catch (err) {

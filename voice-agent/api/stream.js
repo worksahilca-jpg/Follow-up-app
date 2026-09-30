@@ -50,6 +50,10 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const FOLLOWUP_APP_URL = process.env.FOLLOWUP_APP_URL;
 const VOICE_AGENT_CALLBACK_SECRET = process.env.VOICE_AGENT_CALLBACK_SECRET;
 const REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-mini";
+// OpenAI's Realtime endpoint. Overridable only so test/stream.test.js can
+// point the bridge at a local fake instead of the real, billed API; never
+// set in a deployment.
+const REALTIME_URL = process.env.OPENAI_REALTIME_URL || "wss://api.openai.com/v1/realtime";
 
 // How long to wait for OpenAI's Realtime socket to actually open before
 // giving up on this call. A caller must never sit on a silent line — if
@@ -101,14 +105,29 @@ wss.on("connection", (twilioWs, request) => {
     twilioWs.close(1008, "Missing secret");
     return;
   }
+  // Twilio sends "connected" and then "start" the instant this socket
+  // opens — well before authorizeCall() below has its answer. `ws` does
+  // not keep messages for a listener that isn't attached yet, so until
+  // 2026-09-30 "start" (the only event carrying the streamSid and the
+  // caller's number) was dropped on every call: the OpenAI leg never
+  // opened, the caller heard silence, and no transcript was ever posted.
+  // Everything that arrives during the check is held here and handed to
+  // handleCall in order. Nothing is acted on until the call is authorized.
+  const early = [];
+  const holdEarly = (raw) => early.push(raw);
+  twilioWs.on("message", holdEarly);
   authorizeCall(secret)
     .then((authorized) => {
+      twilioWs.off("message", holdEarly);
       if (!authorized) {
         console.error("[voice-agent] rejected connection: secret is not a real business with the voice agent enabled and active billing.");
         twilioWs.close(1008, "Unauthorized");
         return;
       }
-      handleCall(twilioWs, secret).catch((err) => {
+      // The caller hung up while the check ran. Replaying their "start"
+      // now would open a billed OpenAI session for a call that is over.
+      if (twilioWs.readyState !== WebSocket.OPEN) return;
+      handleCall(twilioWs, secret, early).catch((err) => {
         console.error("[voice-agent] handleCall crashed:", err);
         try {
           twilioWs.close();
@@ -160,7 +179,7 @@ async function authorizeCall(secret) {
  * env vars, since each call is its own independent WebSocket to Twilio
  * and its own independent WebSocket to OpenAI.
  */
-async function handleCall(twilioWs, secret) {
+async function handleCall(twilioWs, secret, earlyMessages = []) {
   let streamSid = null;
   let callerPhone = "";
   let businessName = "the business";
@@ -213,7 +232,7 @@ async function handleCall(twilioWs, secret) {
     }
   }
 
-  twilioWs.on("message", (raw) => {
+  function onTwilioMessage(raw) {
     let msg;
     try {
       msg = JSON.parse(raw.toString());
@@ -323,7 +342,12 @@ async function handleCall(twilioWs, secret) {
       closeOpenAi();
       reportAndClose();
     }
-  });
+  }
+
+  // What Twilio sent while the call was being authorized, in the order it
+  // arrived, then everything after it live.
+  for (const raw of earlyMessages) onTwilioMessage(raw);
+  twilioWs.on("message", onTwilioMessage);
 
   twilioWs.on("close", () => {
     clearIdleTimer();
@@ -338,7 +362,7 @@ async function handleCall(twilioWs, secret) {
 
 /** Opens the OpenAI Realtime connection and kicks off the session — the agent speaks first, since the caller just heard Twilio's own AI-disclosure greeting and expects to be greeted next, not silence. */
 function connectToOpenAi(businessName) {
-  const url = `wss://api.openai.com/v1/realtime?model=${encodeURIComponent(REALTIME_MODEL)}`;
+  const url = `${REALTIME_URL}?model=${encodeURIComponent(REALTIME_MODEL)}`;
   const ws = new WebSocket(url, {
     headers: {
       Authorization: `Bearer ${OPENAI_API_KEY}`,

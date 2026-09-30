@@ -8,7 +8,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "start": "node api/stream.js"
+    "start": "node api/stream.js",
+    "test": "node --test --test-force-exit"
   },
   "dependencies": {
     "express": "^5.2.1",

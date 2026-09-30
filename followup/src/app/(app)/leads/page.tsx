@@ -4,6 +4,7 @@ import { getPendingApprovals } from "@/lib/pendingApprovals";
 import { getBusinessAutomationRules } from "@/lib/automationStatus";
 import { getWaitingOn } from "@/lib/waitingOn";
 import { getAtRiskLeads } from "@/lib/rescue";
+import { customerPlaces } from "@/lib/customerPlaces";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 import LeadsPageClient from "./LeadsPageClient";
@@ -17,8 +18,10 @@ export const dynamic = "force-dynamic";
  * Customers (canvas App board, "People"): the table plus the canvas's four
  * places, All · Needs you · Going quiet · Waiting. Each place is worked out
  * here from the same sources Today uses, so the counts always agree:
- * Needs you is the approval queue, Waiting is the Waiting-on-customers
- * list, Going quiet is About to be lost (minus anyone already needing you).
+ * Needs you is the approval queue, Going quiet is About to be lost (minus
+ * anyone already needing you), Waiting is the Waiting-on-customers list
+ * minus anyone already going quiet. One place each (customerPlaces), so a
+ * tab's count is always the number of rows under it.
  */
 export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ p?: string }> }) {
   const { p } = await searchParams;
@@ -38,11 +41,14 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const waiting = rules
     ? getWaitingOn(leads, rules, now, timeZone, needs).map((w) => w.leadId)
     : [];
-  const quiet = getAtRiskLeads(leads, now)
-    .map((l) => l.id)
-    .filter((id) => !needs.has(id));
-
-  const places = { needs: [...needs], quiet, waiting };
+  // One place each (needs you, then going quiet, then waiting), so every
+  // tab's count is the number of rows it shows.
+  const places = customerPlaces(
+    needs,
+    getAtRiskLeads(leads, now).map((l) => l.id),
+    waiting
+  );
+  const { quiet } = places;
 
   // A customer opened beside the list (A-025, the canvas App board). Only
   // one of this business's own customers: getLeads is already scoped.

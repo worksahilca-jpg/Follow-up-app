@@ -225,7 +225,42 @@ describe("a queue big enough to collapse", () => {
     await remindStaleApprovals("biz1", NOW);
     const where = notificationCount.mock.calls[0][0].where;
     expect(where.OR, "the dedup lookup cannot see a collapsed summary").toBeTruthy();
-    expect(where.OR).toContainEqual({ leadId: null, userId: { in: ["admin1"] } });
+    expect(where.OR).toContainEqual(expect.objectContaining({ leadId: null, userId: { in: ["admin1"] } }));
+  });
+
+  // A summary covers the leads that were stale when it was written, and no
+  // others. A lead held 23 hours before it was not in it — but the dedup
+  // read any marker since the HOLD as "already reminded", so that lead's one
+  // reminder never came. On a holding account with a steady trickle of new
+  // leads that is everyone held in the day before each summary.
+  it("still reminds a lead that became stale after the last summary was written", async () => {
+    type Row = { userId: string; leadId: string | null; message: string; createdAt: Date };
+    const rows: Row[] = [
+      { userId: "admin1", leadId: null, message: `20 leads are ${STALE_APPROVAL_MARKER}. Open Today to read them.`, createdAt: new Date(NOW.getTime() - 60 * 60 * 1000) },
+    ];
+    type Range = { gte?: Date };
+    const inRange = (at: Date, r?: Range) => !r?.gte || at >= r.gte;
+    notificationCount.mockImplementation(
+      async ({ where }: { where: { message: { contains: string }; createdAt?: Range; OR: { leadId?: string | null; userId?: { in: string[] }; createdAt?: Range }[] } }) =>
+        rows.filter(
+          (r) =>
+            r.message.includes(where.message.contains) &&
+            inRange(r.createdAt, where.createdAt) &&
+            where.OR.some(
+              (o) =>
+                (o.leadId === undefined || o.leadId === r.leadId) &&
+                (!o.userId || o.userId.in.includes(r.userId)) &&
+                inRange(r.createdAt, o.createdAt)
+            )
+        ).length
+    );
+    // Held 24.5 hours ago: 23.5 hours old when the summary went, stale since.
+    pendingApprovals.mockResolvedValue([held(24.5, "late", "Maya Singh")]);
+
+    const result = await remindStaleApprovals("biz1", NOW);
+
+    expect(result.reminded).toBe(1);
+    expect(notificationCreate.mock.calls[0][0].data).toMatchObject({ leadId: "late" });
   });
 
   it("says nothing on the next run, having already sent the summary", async () => {

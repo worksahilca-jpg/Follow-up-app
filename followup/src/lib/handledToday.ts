@@ -5,11 +5,12 @@ import { prisma } from "@/lib/db";
  * owner dealt with since their own midnight.
  *
  * A person counts once, however they were handled: sent (lead.send),
- * declined (ai.hold_dismissed), or settled by "We talked" (lead.talked).
+ * declined (ai.hold_dismissed), or settled by "We talked" (lead.talked)
+ * or its lead-site form, "I replied" (lead.replied_on_site, markTalked.ts).
  * "Send all routine" writes one business-level row carrying how many went,
  * so that number is added on top.
  */
-const HANDLED = ["lead.send", "ai.hold_dismissed", "lead.talked"];
+const HANDLED = ["lead.send", "ai.hold_dismissed", "lead.talked", "lead.replied_on_site"];
 
 export async function countHandledToday(businessId: string, since: Date): Promise<number> {
   const [perLead, bulk] = await Promise.all([

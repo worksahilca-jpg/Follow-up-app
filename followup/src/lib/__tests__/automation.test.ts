@@ -13,6 +13,9 @@ vi.mock("@/lib/db", () => ({
     notification: { create: vi.fn() },
     business: { findUnique: vi.fn() },
     user: { findMany: vi.fn() },
+    // The decision events behind the approval queue (pendingApprovals.ts).
+    // Nothing is waiting in the queue unless a test says so.
+    auditEvent: { findMany: vi.fn(async () => []) },
   },
 }));
 vi.mock("@/lib/integrations/openai", () => ({
@@ -1445,6 +1448,23 @@ describe("the day-2–7 handoff on Instagram and Messenger", () => {
     expect((await runAutomationForBusiness("biz1")).handedOff).toBe(0);
   });
 
+  // The instant "got your message" and the 30-minute "let me check and I'll
+  // send you the price" are not answers (notAnAnswer.ts). A customer whose
+  // question got only one of those is still waiting on the business — the
+  // held reply to their question is in Today — and must not be treated as
+  // having gone quiet: the handoff overwrote that reply with a "still
+  // interested?" nudge and told the owner the customer hadn't answered.
+  it.each([["instant_ack"], ["holding"]])("leaves a customer who only got the %s placeholder to the reply they are owed", async (trigger) => {
+    const l = quietDmLead(30);
+    (l.conversations as Array<{ messages: Record<string, unknown>[] }>)[0].messages = [
+      { id: "q", direction: "inbound", body: "How much for a two-bed clean?", sentAt: new Date(Date.now() - 30 * H), opened: false },
+      { id: "p", direction: "outbound", body: "Thanks! Let me check and I'll send you the price soon.", sentAt: new Date(Date.now() - 29 * H), opened: false, trigger },
+    ];
+    queueHandoff(l);
+    expect((await runAutomationForBusiness("biz1")).handedOff).toBe(0);
+    expect(draftMessage).not.toHaveBeenCalled();
+  });
+
   it("only scans DM leads that are not in a workflow", async () => {
     queueHandoff();
     await runAutomationForBusiness("biz1");
@@ -1582,6 +1602,61 @@ describe("an account that holds every automated message", () => {
     // …and did NOT restamp the draft, which would claim it answers a
     // newer message than it actually does.
     expect(call[0].data.suggestedDraftedFor).toBeUndefined();
+  });
+
+  /**
+   * A held draft is re-examined every ~20 hours for as long as it waits
+   * (lastAutomationCheckedAt). Each pass used to write a fresh "ai.hold"
+   * and a fresh "waiting for your approval" notification for the same draft
+   * about the same conversation — a new bell item every day, forever — and,
+   * because the hold's time kept moving, the one "still waiting" reminder a
+   * day later (staleApprovals.ts) could never come due.
+   */
+  it("does not re-hold or re-announce a draft that is already waiting for the owner", async () => {
+    p.lead.findMany.mockReset();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          assignedToId: "user1",
+          suggestedMessage: "Already drafted and already judged.",
+          suggestedDraftedFor: new Date("2999-01-01"),
+          suggestedDraftKind: "reminder_1",
+          suggestedRiskLevel: "low",
+          suggestedRiskReason: null,
+        }),
+      ])
+      .mockResolvedValue([]);
+    // Held yesterday, after the newest message (six days old).
+    p.auditEvent.findMany.mockResolvedValue([{ action: "ai.hold", meta: {}, createdAt: new Date(Date.now() - 86_400_000) }]);
+
+    const result = await runAutomationForBusiness("biz1");
+
+    expect(result.held).toBe(1);
+    expect(send).not.toHaveBeenCalled();
+    expect(audit.mock.calls.filter((c) => c[1] === "ai.hold"), "a second hold for the same draft").toHaveLength(0);
+    expect(p.notification.create, "announced the same draft again").not.toHaveBeenCalled();
+  });
+
+  it("still holds and announces it once the owner has dismissed the last one, or it was never held", async () => {
+    p.lead.findMany.mockReset();
+    p.lead.findMany
+      .mockResolvedValueOnce([
+        lead({
+          assignedToId: "user1",
+          suggestedMessage: "Already drafted and already judged.",
+          suggestedDraftedFor: new Date("2999-01-01"),
+          suggestedDraftKind: "reminder_1",
+          suggestedRiskLevel: "low",
+          suggestedRiskReason: null,
+        }),
+      ])
+      .mockResolvedValue([]);
+    p.auditEvent.findMany.mockResolvedValue([{ action: "ai.hold_dismissed", meta: {}, createdAt: new Date(Date.now() - 86_400_000) }]);
+
+    await runAutomationForBusiness("biz1");
+
+    expect(audit.mock.calls.filter((c) => c[1] === "ai.hold")).toHaveLength(1);
+    expect(p.notification.create).toHaveBeenCalled();
   });
 
   // Holding is only useful if there is something to hold: the draft is

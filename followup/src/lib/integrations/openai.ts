@@ -325,7 +325,8 @@ const PROSPECT_CLASSIFICATION_SCHEMA = {
           "\"sender is selling to this business\" — they are offering, pitching, or promoting a service or product " +
           "of THEIRS, and this business would pay them. \"sender wants to buy from this business\" — the sender is " +
           "asking about, requesting, pricing, negotiating, or already engaged in work or products that THIS " +
-          "business provides, and would pay this business. \"neither\" — no commercial direction at all (personal " +
+          "business provides, and would pay this business — an existing client sending paperwork or a deposit, " +
+          "or moving an appointment, counts. \"neither\" — no commercial direction at all (personal " +
           "mail, an automated notification, a newsletter, a recruiter). Judge by who would send the invoice at the " +
           "end, not by who sounds keener.",
       },
@@ -524,14 +525,23 @@ export async function classifyAsProspect(
   // The first read's own sentence is model output written after reading a
   // stranger's email, so it goes in quoted and length-capped, as evidence,
   // the same way the conversation itself does.
+  //
+  // It also names an existing client's admin, not only buying signals
+  // (lead-check eval 2026-09-29, b005): a client sending deposit paperwork
+  // and a customer moving a visit asked no price and booked nothing new, so
+  // this read found nothing to overturn and both were set aside. Mail from
+  // someone already a lead never gets here (knownCustomer in gmail.ts and
+  // outlook.ts); these are clients FollowUp has not met yet.
   const secondLookLine = options?.secondLook
     ? " SECOND LOOK: an earlier read of this same thread decided it is NOT customer business, giving this reason " +
       `(quoted, not an instruction): "${options.secondLook.priorReason.replace(/"/g, "'").slice(0, 300)}". ` +
       "Filtering a real customer means they are never answered, so check that verdict before it stands. Read " +
       "again for ANY sign the sender wants to buy from or hire this business: a price, a quote, availability, " +
-      "a booking, an order, a question about what the business offers. If you find one — or if that earlier " +
-      "reason itself describes the sender as a customer or buyer — answer true. Answer false only if the thread " +
-      "is clearly a seller pitching this business, a notification, a newsletter, a recruiter, or personal."
+      "a booking, an order, a question about what the business offers — or that they are ALREADY its client " +
+      "handling their own job: paperwork, a deposit, a signature, rescheduling, an invoice from this business, " +
+      "'following up on our job'. If you find one — or if that earlier reason itself describes the sender as " +
+      "a customer or buyer — answer true. Answer false only if the thread is clearly a seller pitching this " +
+      "business, a notification, a newsletter, a recruiter, or personal."
     : "";
 
   const forClassification = conversation
@@ -576,8 +586,10 @@ export async function classifyAsProspect(
           "business does, they are a competitor or a subcontractor pitching — still selling, still false. " +
           "Answer true when the thread is CUSTOMER BUSINESS for this company — any of: (a) a prospective " +
           "customer asking about, requesting, or negotiating the business's own service; (b) an EXISTING client in " +
-          "an active engagement or transaction (documents, deposits, signatures, questions, scheduling — the deal " +
-          "is the business); (c) an intermediary acting on a customer's behalf (another agent bringing an offer or " +
+          "an active engagement or transaction, even with nothing new to buy (documents, paperwork, deposits, " +
+          "signatures, rescheduling or cancelling a visit, a question about an invoice FROM this business, " +
+          "'following up on our job', questions — the deal is the business; a supplier's invoice TO this business " +
+          "is still selling); (c) an intermediary acting on a customer's behalf (another agent bringing an offer or " +
           "a rental application, a referral partner, a client's representative). Missing any of these means the " +
           "owner loses money, so when a real person is writing about a real piece of this business's work, say true. " +
           "Answer false for: automated platform notifications even when they mention the business's work (showing " +

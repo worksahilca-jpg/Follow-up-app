@@ -171,6 +171,30 @@ export async function exchangeOutlookAuthCode(code: string, userId: string): Pro
   const email: string | undefined = profile.mail ?? profile.userPrincipalName;
   if (!email) throw new Error("Couldn't determine the connected Outlook address.");
 
+  // One mailbox, one business, as exchangeCodeForTokens in gmail.ts (daily-
+  // path audit F8). Two businesses reading one mailbox share its Graph
+  // conversation ids, which Conversation.externalId keys across the whole
+  // database: whichever sync reached a new customer first took the lead, and
+  // the other business skipped it. Only a live connection on ANOTHER
+  // business counts; refused before anything is stored.
+  const self = await prisma.user.findUnique({ where: { id: userId }, select: { businessId: true } });
+  if (self?.businessId) {
+    const takenElsewhere = await prisma.integration.findFirst({
+      where: {
+        provider: "outlook",
+        status: "connected",
+        accountEmail: { equals: email, mode: "insensitive" },
+        user: { businessId: { not: null }, NOT: { businessId: self.businessId } },
+      },
+      select: { id: true },
+    });
+    if (takenElsewhere) {
+      throw new Error(
+        "That Outlook inbox is already connected to another FollowUp account. Disconnect it there first, or connect a different inbox."
+      );
+    }
+  }
+
   const existing = await prisma.integration.findUnique({
     where: { userId_provider: { userId, provider: "outlook" } },
   });

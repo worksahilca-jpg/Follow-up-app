@@ -1,3 +1,4 @@
+import { siteReplyFrom, type SiteReply } from "@/lib/siteReply";
 import { HOLDING_TRIGGER, NOT_AN_ANSWER_TRIGGERS, isNotAnAnswer } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
@@ -145,6 +146,12 @@ export type PendingApproval = {
    * is not waiting in silence.
    */
   customerToldAt: string | null;
+  /**
+   * Set when this customer came through a lead site that keeps their
+   * contact private, so the reply goes on that site, not by email (b018,
+   * A-075). Null for everyone else.
+   */
+  site?: SiteReply | null;
 };
 
 /**
@@ -192,6 +199,9 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
     select: {
       id: true,
       name: true,
+      email: true,
+      viaSite: true,
+      viaSiteUrl: true,
       source: true,
       talkedAt: true,
       laterUntil: true,
@@ -318,6 +328,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       leadLastMessageChannel: lastInbound?.channel ?? null,
       leadLastMessageAt: lastInbound ? lastInbound.sentAt.toISOString() : null,
       customerToldAt,
+      site: siteReplyFrom(lead, lastInbound?.body),
     });
   }
   /*

@@ -850,6 +850,9 @@ async function processThreadRefs(
             // A shared notifier's address is not this person's, and a reply
             // to it reaches the form, not them: their lead has no email.
             email: counterpart.shared ? null : counterpart.email,
+            // A lead site that keeps the contact private: the owner answers
+            // there ("Reply on Thumbtack", b018, A-075).
+            ...(counterpart.site ? { viaSite: counterpart.site.name, viaSiteUrl: counterpart.site.url } : {}),
             source: sourceLabel,
             stage: "NEW",
             lastContacted,

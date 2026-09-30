@@ -895,6 +895,15 @@ model Lead {
   // src/lib/talked.ts. Undo sets it back to null.
   talkedAt DateTime?
 
+  // The lead site that passed this customer on (Thumbtack, HomeStars,
+  // Kijiji…) when it keeps their contact private, so the only way to answer
+  // is on that site (backlog b018, design brain A-075). Set when the lead is
+  // created from the site's notice; null for everyone else. viaSiteUrl is a
+  // link to this customer on that site, taken from the notice only when it
+  // points at the site's own domain (leadSiteLink in src/lib/sharedSenders.ts).
+  viaSite    String?
+  viaSiteUrl String?
+
   // "Later" (design brain A-046): the owner set a waiting reply aside until
   // this time. It comes back by itself then, or at once if the customer
   // writes after laterSetAt. The draft is untouched. Only Today and the

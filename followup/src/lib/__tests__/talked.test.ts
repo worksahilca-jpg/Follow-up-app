@@ -48,7 +48,7 @@ describe("markTalked", () => {
     p.lead.findFirst.mockResolvedValue({ id: "l1" });
     const r = await markTalked("l1", "biz1", "u1");
     expect(r.success).toBe(true);
-    expect(p.lead.findFirst).toHaveBeenCalledWith({ where: { id: "l1", businessId: "biz1" }, select: { id: true } });
+    expect(p.lead.findFirst).toHaveBeenCalledWith({ where: { id: "l1", businessId: "biz1" }, select: { id: true, viaSite: true } });
     expect(p.lead.update.mock.calls[0][0].data.talkedAt).toBeInstanceOf(Date);
     expect(recordAudit).toHaveBeenCalledWith({ businessId: "biz1", userId: "u1" }, "lead.talked", { targetType: "lead", targetId: "l1" });
   });
@@ -59,6 +59,31 @@ describe("markTalked", () => {
     expect(r).toEqual({ success: true, talkedAt: null });
     expect(p.lead.update).toHaveBeenCalledWith({ where: { id: "l1" }, data: { talkedAt: null } });
     expect(recordAudit).toHaveBeenCalledWith({ businessId: "biz1", userId: "u1" }, "lead.talked_undone", { targetType: "lead", targetId: "l1" });
+  });
+
+  // "I replied" on a lead site (b018, A-075): the same stop, recorded as a
+  // reply on that site so the history says what happened.
+  it("records \"I replied\" on a lead site as a reply there, with the site", async () => {
+    p.lead.findFirst.mockResolvedValue({ id: "l1", viaSite: "Thumbtack" });
+    const r = await markTalked("l1", "biz1", "u1", false, true);
+    expect(r.success).toBe(true);
+    expect(p.lead.update.mock.calls[0][0].data.talkedAt).toBeInstanceOf(Date);
+    expect(recordAudit).toHaveBeenCalledWith({ businessId: "biz1", userId: "u1" }, "lead.replied_on_site", {
+      targetType: "lead",
+      targetId: "l1",
+      meta: { site: "Thumbtack" },
+    });
+  });
+
+  it("undoes \"I replied\" the same way", async () => {
+    p.lead.findFirst.mockResolvedValue({ id: "l1", viaSite: "Thumbtack" });
+    await markTalked("l1", "biz1", "u1", true, true);
+    expect(p.lead.update).toHaveBeenCalledWith({ where: { id: "l1" }, data: { talkedAt: null } });
+    expect(recordAudit).toHaveBeenCalledWith({ businessId: "biz1", userId: "u1" }, "lead.replied_on_site_undone", {
+      targetType: "lead",
+      targetId: "l1",
+      meta: { site: "Thumbtack" },
+    });
   });
 
   it("refuses another business's lead and changes nothing", async () => {

@@ -249,7 +249,7 @@ type Party = { name: string; email: string };
 export function threadCustomer(
   messages: { from: Party; replyTo?: Party | null; subject?: string | null; body?: string | null }[],
   isNotCustomer: (email: string) => boolean
-): (Party & { shared: boolean }) | null {
+): (Party & { shared: boolean; site?: { name: string; url: string | null } }) | null {
   const first = messages.find((m) => m.from.email && (!isNotCustomer(m.from.email) || isMarketplaceLeadNotice(m)));
   if (!first) return null;
   if (!isSharedSender(first.from.email)) return { ...first.from, shared: false };
@@ -257,6 +257,89 @@ export function threadCustomer(
   if (replyTo?.email && !isNotCustomer(replyTo.email) && !isSharedSender(replyTo.email)) {
     return { ...replyTo, shared: false };
   }
-  const named = isLeadMarketplaceAddress(first.from.email) ? contactNameFromBody(first.body) : null;
-  return { ...first.from, name: named ?? first.from.name, shared: true };
+  const site = leadSiteOf(first.from.email);
+  const named = site ? contactNameFromBody(first.body) : null;
+  return {
+    ...first.from,
+    name: named ?? first.from.name,
+    shared: true,
+    ...(site ? { site: { name: site.name, url: leadSiteLink(first.body, site.domain) } } : {}),
+  };
+}
+
+/** How each lead site is named to the owner ("Reply on Thumbtack"). */
+const LEAD_SITE_NAMES: Record<string, string> = {
+  "zillow.com": "Zillow",
+  "trulia.com": "Trulia",
+  "realtor.com": "Realtor.com",
+  "thumbtack.com": "Thumbtack",
+  "angi.com": "Angi",
+  "angieslist.com": "Angi",
+  "homeadvisor.com": "HomeAdvisor",
+  "houzz.com": "Houzz",
+  "yelp.com": "Yelp",
+  "bark.com": "Bark",
+  "porch.com": "Porch",
+  "networx.com": "Networx",
+  "homestars.com": "HomeStars",
+  "kijiji.ca": "Kijiji",
+  "realtor.ca": "REALTOR.ca",
+};
+
+/** The site's own address, for "Open {site}" when its notice had no link to the customer. */
+export function leadSiteHome(name: string): string | null {
+  const domain = Object.keys(LEAD_SITE_NAMES).find((d) => LEAD_SITE_NAMES[d] === name);
+  return domain ? `https://www.${domain}/` : null;
+}
+
+/**
+ * The lead site an address belongs to, by its registered domain
+ * ("no-reply@mail.thumbtack.com" is Thumbtack). Null for anyone else.
+ */
+export function leadSiteOf(email: string): { name: string; domain: string } | null {
+  const address = email.trim().toLowerCase();
+  const at = address.lastIndexOf("@");
+  if (at <= 0) return null;
+  const host = address.slice(at + 1);
+  const domain = LEAD_MARKETPLACE_DOMAINS.find((d) => host === d || host.endsWith(`.${d}`));
+  return domain ? { name: LEAD_SITE_NAMES[domain] ?? domain, domain } : null;
+}
+
+/**
+ * The first https link in a lead site's notice that points at that same
+ * site ("View lead", "Reply on Thumbtack"), for the owner's "Open {site}"
+ * (backlog b018, A-075). A link to anywhere else is never returned: the
+ * body is the sender's words, and this becomes a link the owner clicks.
+ * Null when there is none, and the owner gets the site's own address.
+ */
+export function leadSiteLink(body: string | null | undefined, domain: string): string | null {
+  for (const raw of (body ?? "").slice(0, 20_000).match(/https:\/\/[^\s<>"')\]]+/gi) ?? []) {
+    const candidate = raw.replace(/[.,;:!?]+$/, "");
+    if (candidate.length > 1000) continue;
+    let url: URL;
+    try {
+      url = new URL(candidate);
+    } catch {
+      continue;
+    }
+    const host = url.hostname.toLowerCase();
+    if (url.protocol === "https:" && !url.username && !url.password && (host === domain || host.endsWith(`.${domain}`))) {
+      return url.toString();
+    }
+  }
+  return null;
+}
+
+/**
+ * A phone number a lead site's notice shows on a "Phone:" line, for the
+ * owner's Call button. Read when the page is drawn, never stored on the
+ * lead: putting it on the lead would let texts go to a number the site may
+ * have masked (see contactNameFromBody). Null when there isn't a clear one.
+ */
+export function contactPhoneFromBody(body: string | null | undefined): string | null {
+  const match = (body ?? "").slice(0, 5000).match(/^[ \t]*(?:phone|phone number|tel|telephone|mobile|cell)[ \t]*:[ \t]*(\+?[\d(][\d\s().+-]{6,}?)[ \t]*$/im);
+  if (!match) return null;
+  const phone = match[1].trim();
+  const digits = phone.replace(/\D/g, "");
+  return digits.length >= 7 && digits.length <= 15 ? phone : null;
 }

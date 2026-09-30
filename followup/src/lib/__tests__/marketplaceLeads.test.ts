@@ -52,9 +52,12 @@ import { fetchSalesConversations } from "@/lib/integrations/gmail";
 import { fetchOutlookConversations } from "@/lib/integrations/outlook";
 import {
   contactNameFromBody,
+  contactPhoneFromBody,
   isAutomatedAddress,
   isLeadMarketplaceAddress,
   isMarketplaceLeadNotice,
+  leadSiteLink,
+  leadSiteOf,
   threadCustomer,
 } from "@/lib/sharedSenders";
 import { EVAL_CASES } from "@/lib/classifierEval";
@@ -189,6 +192,7 @@ describe("threadCustomer with marketplace notices", () => {
       name: "Dana Whitfield",
       email: "no-reply@thumbtack.com",
       shared: true,
+      site: { name: "Thumbtack", url: null },
     });
   });
 
@@ -196,6 +200,7 @@ describe("threadCustomer with marketplace notices", () => {
     expect(threadCustomer([{ from, subject: "Marcus T. sent you a message", body: "Is your team free this week?" }], ours)).toEqual({
       ...from,
       shared: true,
+      site: { name: "Thumbtack", url: null },
     });
   });
 
@@ -309,11 +314,12 @@ describe("Gmail: a marketplace lead from a no-reply address", () => {
     const leads = await fetchSalesConversations("biz1");
 
     expect(classifyWithSecondLook).toHaveBeenCalledTimes(1);
-    expect(classifyWithSecondLook.mock.calls[0][1]).toEqual({ name: "Dana Whitfield", email: "no-reply@thumbtack.com", shared: true });
+    expect(classifyWithSecondLook.mock.calls[0][1]).toMatchObject({ name: "Dana Whitfield", email: "no-reply@thumbtack.com", shared: true });
     expect(prismaMock.lead.create).toHaveBeenCalledTimes(1);
     const { data } = prismaMock.lead.create.mock.calls[0][0];
     // No email: a reply to no-reply@ reaches nobody, so nothing is sent there.
-    expect(data).toMatchObject({ name: "Dana Whitfield", email: null });
+    // The site is remembered, so the owner is sent there instead (b018).
+    expect(data).toMatchObject({ name: "Dana Whitfield", email: null, viaSite: "Thumbtack", viaSiteUrl: null });
     expect(data.conversations.create).toMatchObject({ externalId: "t1", emailProvider: "gmail" });
     expect(leads.map((l) => l.id)).toEqual(["lead-new-1"]);
   });
@@ -439,7 +445,7 @@ describe("Outlook: a marketplace lead from a no-reply address", () => {
 
     expect(classifyWithSecondLook).toHaveBeenCalledTimes(1);
     const { data } = prismaMock.lead.create.mock.calls[0][0];
-    expect(data).toMatchObject({ name: "Priscilla Nguyen", email: null });
+    expect(data).toMatchObject({ name: "Priscilla Nguyen", email: null, viaSite: "Angi" });
     expect(data.conversations.create).toMatchObject({ externalId: "c1", emailProvider: "outlook" });
   });
 
@@ -450,5 +456,53 @@ describe("Outlook: a marketplace lead from a no-reply address", () => {
 
     expect(classifyWithSecondLook).not.toHaveBeenCalled();
     expect(prismaMock.lead.create).not.toHaveBeenCalled();
+  });
+});
+
+// Backlog b018 (A-075): which site to send the owner to, and how.
+describe("the lead site behind a customer", () => {
+  it("names the site from the sender's domain, subdomains included", () => {
+    expect(leadSiteOf("no-reply@mail.thumbtack.com")).toEqual({ name: "Thumbtack", domain: "thumbtack.com" });
+    expect(leadSiteOf("reply-3f9a@users.kijiji.ca")).toEqual({ name: "Kijiji", domain: "kijiji.ca" });
+    expect(leadSiteOf("no-reply@homestars.com")?.name).toBe("HomeStars");
+    expect(leadSiteOf("no-reply@realtor.ca")?.name).toBe("REALTOR.ca");
+    expect(leadSiteOf("jane@example.com")).toBeNull();
+    expect(leadSiteOf("no-reply@thumbtack.com.evil.example")).toBeNull();
+  });
+
+  it("takes the customer's link only when it points at that same site", () => {
+    const body = "New lead!\nTrack: https://evil.example/thumbtack.com\nView lead: https://www.thumbtack.com/pro-inbox/messages/123?x=1.\nhttps://www.thumbtack.com/other";
+    expect(leadSiteLink(body, "thumbtack.com")).toBe("https://www.thumbtack.com/pro-inbox/messages/123?x=1");
+    expect(leadSiteLink("Open https://thumbtack.com.evil.example/lead", "thumbtack.com")).toBeNull();
+    expect(leadSiteLink("http://www.thumbtack.com/lead (not https)", "thumbtack.com")).toBeNull();
+    expect(leadSiteLink("https://user:pw@www.thumbtack.com/lead", "thumbtack.com")).toBeNull();
+    expect(leadSiteLink(null, "thumbtack.com")).toBeNull();
+  });
+
+  it("reads a phone number from a clear Phone: line only, and never stores it", () => {
+    expect(contactPhoneFromBody("Name: Dana\nPhone: (555) 010-4471\nDetails: x")).toBe("(555) 010-4471");
+    expect(contactPhoneFromBody("Call me at 555 010 4471 anytime")).toBeNull();
+    expect(contactPhoneFromBody("Phone: call me")).toBeNull();
+    expect(contactPhoneFromBody(undefined)).toBeNull();
+  });
+
+  it("keeps the link on the lead Gmail creates", async () => {
+    threadsList.mockResolvedValue({ data: { threads: [{ id: "t1" }] } });
+    threadsGet.mockResolvedValue(
+      gmailThread("t1", "Thumbtack <no-reply@thumbtack.com>", "Dana W. wants a quote for House Cleaning", `${LEAD_BODY}\nReply: https://www.thumbtack.com/pro-inbox/messages/987`)
+    );
+
+    await fetchSalesConversations("biz1");
+
+    expect(prismaMock.lead.create.mock.calls[0][0].data).toMatchObject({ viaSite: "Thumbtack", viaSiteUrl: "https://www.thumbtack.com/pro-inbox/messages/987" });
+  });
+
+  it("leaves an ordinary customer without a site", async () => {
+    threadsList.mockResolvedValue({ data: { threads: [{ id: "t1" }] } });
+    threadsGet.mockResolvedValue(gmailThread("t1", "Jane Doe <jane@example.com>", "Quote for a deep clean?", "Hi, how much for a 3 bed?"));
+
+    await fetchSalesConversations("biz1");
+
+    expect(prismaMock.lead.create.mock.calls[0][0].data).not.toHaveProperty("viaSite");
   });
 });

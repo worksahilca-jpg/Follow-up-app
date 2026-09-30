@@ -8,7 +8,18 @@ import { useRouter } from "next/navigation";
  * Undo is the safety net, and it stays next to the status for as long as
  * the talk is what is holding FollowUp back. See src/lib/talked.ts.
  */
-export default function WeTalkedButton({ leadId, leadName, talked }: { leadId: string; leadName: string; talked: boolean }) {
+export default function WeTalkedButton({
+  leadId,
+  leadName,
+  talked,
+  onSite = false,
+}: {
+  leadId: string;
+  leadName: string;
+  talked: boolean;
+  /** A lead-site customer (b018): answered is usually "I replied" on the site. */
+  onSite?: boolean;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +53,7 @@ export default function WeTalkedButton({ leadId, leadName, talked }: { leadId: s
           disabled={busy}
           className="inline-flex h-[38px] items-center rounded-full border border-line bg-card px-3.5 text-[14px] font-medium hover:bg-card-2 disabled:opacity-60"
         >
-          {busy ? "…" : "Undo “We talked”"}
+          {busy ? "…" : onSite ? "Undo “Answered”" : "Undo “We talked”"}
         </button>
       ) : (
         <button

@@ -9,6 +9,7 @@ import { groupApprovalsBySource, isSafeToSendInBulk, summariseGroups, UNKNOWN_SO
 import { Eyebrow, Initials } from "@/components/app/canvasBits";
 import { QUEUE_PAGE_SIZE, nextStep, visibleCount } from "@/lib/queuePaging";
 import { useUndoableSend } from "@/components/useUndoableSend";
+import SiteReplyCard from "@/components/app/SiteReplyCard";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import SafePileAction from "@/components/SafePileAction";
 import SafePilePeek from "@/components/SafePilePeek";
@@ -380,6 +381,13 @@ function ApprovalCard({
       )}
       {/* The reply in the warm card, as the canvas draws it (TodayCalm,
           TodayCalmPhone): what it is, the words, then Send and Edit. */}
+      {/* A lead site that keeps the contact private: the reply goes on the
+          site, not by email (b018, A-075). */}
+      {item.site ? (
+        <div className="mt-3.5">
+          <SiteReplyCard leadId={item.leadId} leadName={item.leadName} site={item.site} draft={item.draftMessage} waiting />
+        </div>
+      ) : (
       <div className="mt-3.5 rounded-[20px] p-4 sm:p-5" style={WARM_CARD}>
         <Eyebrow>{sendLocked ? "Your reply · an admin sends it" : "Your reply · waits for your OK"}</Eyebrow>
         {item.draftSubject && <p className="mt-2 text-[15px] font-medium">{item.draftSubject}</p>}
@@ -494,6 +502,7 @@ function ApprovalCard({
           </>
         )}
       </div>
+      )}
       <AnimatePresence initial={false}>
       {laterOpen && !send.pending && (
         // Opens from the Later it came from, and closes the same way (A-048).

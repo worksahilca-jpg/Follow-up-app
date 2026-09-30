@@ -612,6 +612,9 @@ async function processConversations(
             // No email for a shared notifier's lead, and its thread created
             // in the same write (see gmail.ts).
             email: counterpart.shared ? null : counterpart.email,
+            // A lead site that keeps the contact private: the owner answers
+            // there ("Reply on Thumbtack", b018, A-075).
+            ...(counterpart.site ? { viaSite: counterpart.site.name, viaSiteUrl: counterpart.site.url } : {}),
             source: sourceLabel,
             stage: "NEW",
             lastContacted,

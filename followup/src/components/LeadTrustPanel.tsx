@@ -28,6 +28,12 @@ const ACTION_COPY: Record<string, (meta: Record<string, unknown> | null) => { la
   // "We talked" (src/lib/talked.ts, design brain A-039).
   "lead.talked": () => ({ label: "You talked with them", detail: "Check-ins stopped until they write again" }),
   "lead.talked_undone": () => ({ label: "You undid \"We talked\"", detail: "Check-ins are back on" }),
+  // "I replied" on a lead site (b018, A-075).
+  "lead.replied_on_site": (meta) => ({
+    label: typeof meta?.site === "string" ? `You replied on ${meta.site}` : "You replied on the lead site",
+    detail: "Reminders stopped until they write again",
+  }),
+  "lead.replied_on_site_undone": () => ({ label: "You undid \"I replied\"", detail: "Reminders are back on" }),
 };
 
 /**
@@ -90,6 +96,8 @@ const ACTION_SHORT: Record<string, string> = {
   "ai.hold": "Held a reply",
   "lead.talked": "You talked",
   "lead.talked_undone": "Check-ins back on",
+  "lead.replied_on_site": "You replied on the site",
+  "lead.replied_on_site_undone": "Reminders back on",
 };
 
 /** "Held a reply · today": the newest thing FollowUp did, for a row's status. */

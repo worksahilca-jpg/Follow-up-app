@@ -8572,3 +8572,16 @@ addresses, or FollowUp's booking page. The lead's own words never count. The app
 wording was "It has a link or email address you didn't write."; it was reworded to finish the "Held because…" line
 like every other hold reason. Instant replies and DMs are unchanged; they already refuse every link. The same check also
 covers automatic texts, WhatsApp messages and workflow steps, so those are held for a foreign link too.
+
+## 2026-09-30 — Lead-site customers get "Reply on {site}"; Team says "drafts only" (A-075)
+
+Founder approved the Lead-Site Replies board as drawn (https://claude.ai/artifact/Gc9LEGNVZ9WsStBWoMfyw3).
+Context: #402 and #404 made lead-site notices (Thumbtack, Angi, Zillow, and in #405 HomeStars, Kijiji, REALTOR.ca)
+into customers, but their contact is usually hidden, so FollowUp was drafting an email that had nowhere to go.
+- The card reuses the warm reply card and the "We talked" mechanics (A-039) rather than inventing a new pattern.
+- **Weak spots, named:** whether each site's email carries a deep link to the customer is unverified, so "Open
+  {site}" may land on the site's inbox instead; and which Canadian sites accept a reply by email (which would let
+  FollowUp send automatically, no button) is still to check with a real tester email.
+- **Later, not now:** Thumbtack has an official partner program with two-way messaging
+  (developers.thumbtack.com). Joining it would let FollowUp reply inside Thumbtack on Automatic; worth it once there
+  are US customers.

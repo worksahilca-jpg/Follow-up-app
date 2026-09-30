@@ -4,6 +4,8 @@ import type { Lead, Message } from "@/lib/types";
 import type { PendingApproval } from "@/lib/pendingApprovals";
 import { describeBasis } from "@/lib/basedOn";
 import { languageName } from "@/lib/leadLanguage";
+import SiteReplyCard from "@/components/app/SiteReplyCard";
+import { siteReplyFor } from "@/lib/siteReply";
 import ReplyCard from "./ReplyCard";
 import { ChannelIcon, channelFromSource } from "./ChannelIcon";
 import { Eyebrow, Initials, StatePill, waitingFor, type StateKey } from "./canvasBits";
@@ -60,6 +62,8 @@ export default function PersonPanel({
   const lastIn = lastInbound(lead.conversation);
   const channelKey = (lastIn ?? first)?.channel ?? channelFromSource(lead.source);
   const channel = CHANNEL[channelKey ?? ""] ?? lead.source;
+  // A lead site that keeps the contact private: answered there (b018, A-075).
+  const siteReply = siteReplyFor(lead);
   const basis = lead.suggestedMessage
     ? describeBasis({
         draft: lead.suggestedMessage,
@@ -181,19 +185,23 @@ export default function PersonPanel({
 
       {approval && (
         <div className="px-5 pb-5">
-          <ReplyCard
-            key={lead.id}
-            leadId={lead.id}
-            leadName={lead.name}
-            leadEmail={lead.email || undefined}
-            draft={lead.suggestedMessage}
-            draftSubject={lead.suggestedSubject}
-            waiting
-            seenInboundAt={lastIn?.date}
-            sendLocked={sendLocked}
-            basis={basis}
-            languageName={replyLanguage}
-          />
+          {siteReply ? (
+            <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={true} />
+          ) : (
+            <ReplyCard
+              key={lead.id}
+              leadId={lead.id}
+              leadName={lead.name}
+              leadEmail={lead.email || undefined}
+              draft={lead.suggestedMessage}
+              draftSubject={lead.suggestedSubject}
+              waiting
+              seenInboundAt={lastIn?.date}
+              sendLocked={sendLocked}
+              basis={basis}
+              languageName={replyLanguage}
+            />
+          )}
         </div>
       )}
     </div>

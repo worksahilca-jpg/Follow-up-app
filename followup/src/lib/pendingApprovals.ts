@@ -166,6 +166,15 @@ export function compareApprovals(a: { reason: string; heldAt: Date }, b: { reaso
   return b.heldAt.getTime() - a.heldAt.getTime();
 }
 
+/**
+ * What's on Today right now: everything waiting except what the owner set
+ * aside with "Later" (A-046) and isn't due back yet. Today and the sidebar's
+ * Today number both use this, so they can't disagree (founder, 2026-10-01).
+ */
+export function onTodayNow<T extends { laterUntil: Date | null }>(approvals: T[]): T[] {
+  return approvals.filter((a) => !a.laterUntil);
+}
+
 export async function getPendingApprovals(businessId: string, now: Date = new Date()): Promise<PendingApproval[]> {
   // One row per lead — the most recent AuditEvent naming that lead —
   // scoped to a bounded recent window so a business with years of audit

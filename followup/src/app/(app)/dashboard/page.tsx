@@ -19,7 +19,7 @@ import { isWaitingOnCustomer, medianReplyMs } from "@/lib/waitingOn";
 import { ComingUpList, ComingUpLine } from "@/components/ComingUp";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { getPendingApprovals } from "@/lib/pendingApprovals";
+import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
 import { getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
@@ -93,7 +93,7 @@ export default async function DashboardPage() {
   const now = new Date();
   // Set aside with "Later" (A-046): off Today until it comes back.
   const setAside = approvals.filter((a) => a.laterUntil).length;
-  const approvalItems: ApprovalItem[] = (await withBasis(approvals.filter((a) => !a.laterUntil), timezone)).map((a) => ({
+  const approvalItems: ApprovalItem[] = (await withBasis(onTodayNow(approvals), timezone)).map((a) => ({
     ...a,
     wait: describeWait(a, now),
     waitClause: describeWaitClause(a, now),

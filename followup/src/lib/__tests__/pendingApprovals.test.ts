@@ -19,7 +19,7 @@ vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
-import { getPendingApprovals, dismissHold } from "@/lib/pendingApprovals";
+import { getPendingApprovals, dismissHold, onTodayNow } from "@/lib/pendingApprovals";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const p = prisma as any;
@@ -364,3 +364,19 @@ describe("getPendingApprovals — the customer was told the owner is on it", () 
   });
 });
 
+
+// Founder, 2026-10-01: the sidebar's Today number counts what Today shows,
+// so a customer set aside with "Later" isn't counted until they're back.
+describe("onTodayNow — what Today and its sidebar number both count", () => {
+  it("leaves out what's set aside with Later, keeps everything else", () => {
+    const items = [{ id: "a", laterUntil: null }, { id: "b", laterUntil: new Date("2026-10-02T13:00:00Z") }, { id: "c", laterUntil: null }];
+    expect(onTodayNow(items).map((i) => i.id)).toEqual(["a", "c"]);
+  });
+
+  it("is what the sidebar counts", async () => {
+    const { readFileSync } = await import("fs");
+    const { join } = await import("path");
+    const layout = readFileSync(join(__dirname, "..", "..", "app", "(app)", "layout.tsx"), "utf8");
+    expect(layout).toMatch(/onTodayNow\(a\)\.length/);
+  });
+});

@@ -92,7 +92,8 @@ describe("the unanswered-rule promise", () => {
     // Brand principle 3: every automated behaviour must let the owner
     // answer "why did that happen" unaided. "Meta only lets a business
     // reply within a day" is the reason, with no platform jargon.
-    expect(settings()).toMatch(/Meta only lets a business reply within a day/i);
+    expect(settings()).toMatch(/Meta only lets a business reply freely within a day/i);
+    expect(settings()).toMatch(/On Instagram, Messenger and WhatsApp/);
   });
 
   it("imports the constant from the leaf module, never from automation.ts", () => {

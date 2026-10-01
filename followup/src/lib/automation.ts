@@ -78,7 +78,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 // file pulls in Prisma. Re-exported here so nothing that already imports
 // them from automation.ts has to move. The full reasoning is on the
 // constants themselves.
-import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
+import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_CEILING_CHANNELS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
 import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
@@ -103,7 +103,7 @@ export function effectiveUnansweredHours(
   // hours is already far inside any window and is never lengthened by the
   // ceiling below.
   const base = hasSubstantiveOutbound ? configuredHours : UNANSWERED_FIRST_REPLY_HOURS;
-  if (channel && META_DM_CHANNELS.has(channel)) return Math.min(base, UNANSWERED_META_DM_MAX_HOURS);
+  if (channel && UNANSWERED_CEILING_CHANNELS.has(channel)) return Math.min(base, UNANSWERED_META_DM_MAX_HOURS);
   return base;
 }
 

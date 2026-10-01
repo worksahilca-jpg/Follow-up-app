@@ -1020,9 +1020,11 @@ describe("Meta's 24-hour window ceiling on the unanswered rule", () => {
     expect((await runAutomationForBusiness("biz1")).unanswered).toBe(0);
   });
 
-  it("leaves WhatsApp alone — it has approved templates as a way through", async () => {
+  // Founder, 2026-10-01: WhatsApp too. The template retry is a paid, fixed
+  // message, not the reply the customer was waiting for.
+  it("applies to WhatsApp too, so the real reply goes out inside the window", async () => {
     queueUnanswered(dmLead(21, "whatsapp"));
-    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(0);
+    expect((await runAutomationForBusiness("biz1")).unanswered).toBe(1);
   });
 
   it("is a ceiling, not a default: it overrides a business that configured 72 hours", async () => {

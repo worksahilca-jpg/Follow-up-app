@@ -1629,9 +1629,8 @@ function SettingsPageInner() {
                 nothing is noise (brand principle 8). */}
             {unansweredOn && unansweredHours > UNANSWERED_META_DM_MAX_HOURS && (
               <p className="text-[13px] text-ink-soft mt-2">
-                On Instagram and Messenger, FollowUp steps in by {UNANSWERED_META_DM_MAX_HOURS} hours whatever you set
-                here. Meta only lets a business reply within a day of the lead&apos;s last message — after that,
-                nothing gets through.
+                On Instagram, Messenger and WhatsApp, FollowUp steps in by {UNANSWERED_META_DM_MAX_HOURS} hours whatever
+                you set here. Meta only lets a business reply freely within a day of the lead&apos;s last message.
               </p>
             )}
           </RuleCard>

@@ -8601,3 +8601,11 @@ Found in the whole-project bug hunt: with the account switch off, a customer not
 ~3h". Now it shows "Auto follow-up is off" (slate, not coral: nothing is wrong, it's a setting). Reuses the existing
 badge pill and PauseCircle icon; no new tokens.
 - **Weak spot, named:** tested, not rendered. It's the same pill as the countdown it replaces, with different words.
+
+## 2026-10-01 — WhatsApp gets the same 20-hour "reply for me" ceiling
+
+Founder said yes: on WhatsApp, FollowUp now steps in by 20 hours like Instagram and Messenger, so a reply that needs
+the owner's OK still has 4 hours inside the 24-hour window. Supersedes the 2026-09 choice to leave WhatsApp out
+because of its template fallback (a paid, fixed message, not the reply). Settings' note now reads "On Instagram,
+Messenger and WhatsApp, FollowUp steps in by 20 hours whatever you set here. Meta only lets a business reply freely
+within a day of the lead's last message."

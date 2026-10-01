@@ -8,7 +8,7 @@ import { isOptOutMessage } from "@/lib/optOutKeywords";
 import { dmSuppressionKey, isSuppressed } from "@/lib/suppression";
 import { greetingFirstName, businessDisplayName } from "@/lib/leadName";
 import { recordAudit } from "@/lib/audit";
-import { HOLD_ALL_FIRST_REPLY_REASON } from "@/lib/holdReasons";
+import { HOLD_ALL_FIRST_REPLY_REASON, SPAM_FOLDER_SOURCE } from "@/lib/holdReasons";
 
 /**
  * Instant acknowledgement — the first half of "no lead is lost to LATE
@@ -471,6 +471,13 @@ export async function acknowledgeNewLead(
     }
 
     if (!(await isInstantAckEnabled(lead.businessId))) return { sent: false, reason: "switched off" };
+
+    // Found in the spam folder: no instant reply (founder, 2026-10-01). Some
+    // of these really are spam or scams, and an automatic "thanks, got it"
+    // tells the sender the address is live. Checked before the claim, so
+    // the lead isn't marked as acknowledged; it waits in FollowUp with its
+    // draft until the owner writes to them.
+    if (lead.source === SPAM_FOLDER_SOURCE) return { sent: false, reason: "found in spam" };
 
     // The tier gate this path never had.
     //

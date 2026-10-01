@@ -6,7 +6,7 @@ import { getLeadById } from "@/lib/leads-data";
 import { rewriteReply } from "@/lib/integrations/openai";
 import type { LeadLanguage } from "@/lib/leadLanguage";
 import { tooManyRecentActions } from "@/lib/rateLimit";
-import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
+import { requireActiveBilling, billingLockedMessage, leadAiRefusal } from "@/lib/billing";
 
 const schema = z.object({
   text: z.string().trim().min(1, "There's nothing to rewrite.").max(2000),
@@ -29,6 +29,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
   const lead = await getLeadById(id);
   if (!lead) return NextResponse.json({ success: false, message: "Lead not found." }, { status: 404 });
+  // Counts towards the plan's monthly allowance like every other AI call.
+  const refusal = await leadAiRefusal(ctx.businessId, id);
+  if (refusal) return NextResponse.json({ success: false, message: refusal.ownerMessage }, { status: 402 });
   const parsed = await parseJsonBody(request, schema);
   if (!parsed.ok) return parsed.response;
   try {

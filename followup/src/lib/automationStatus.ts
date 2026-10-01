@@ -177,6 +177,10 @@ export type AutomationStatus =
   // it just waits in the approval queue instead of going out. Each of
   // these three sentences promised a send before this existed.
   | { kind: "account_paused"; reason: "unanswered" | "dead_lead" | "silence"; heldForApproval: boolean }
+  // Auto follow-up is switched off for the whole account and nothing is due
+  // yet. It used to read "Next check in ~3h", a countdown to a message the
+  // engine will never send (founder, 2026-10-01: the label must tell the truth).
+  | { kind: "account_off" }
   // Eligible now — the next hourly cron tick (or a manual "Run automation
   // check now") will pick this lead up.
   | { kind: "due_soon"; reason: "unanswered" | "dead_lead" | "silence"; heldForApproval: boolean }
@@ -417,6 +421,7 @@ export function computeAutomationStatus(
       : { kind: "account_paused", reason: due, heldForApproval };
   }
   if (!lastIsInbound) return { kind: "sent" };
+  if (!rules.masterEnabled) return { kind: "account_off" };
   return { kind: "waiting", etaHours: etaHours !== null ? Math.max(1, Math.ceil(etaHours)) : null, heldForApproval };
 }
 

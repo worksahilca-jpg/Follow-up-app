@@ -29,7 +29,7 @@ vi.mock("@/lib/stripe", () => ({ appUrl: () => "https://followupbase.io" }));
 vi.mock("@/lib/monitoring", () => ({ recordAuthFailure: vi.fn() }));
 vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn() }));
 vi.mock("@/lib/sourceRouting", () => ({ applySourceRouting: vi.fn() }));
-vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));
+vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true), leadAiRefusal: vi.fn(async () => null) }));
 vi.mock("@/lib/scoring", () => ({ scoreAndDraftForLead: vi.fn() }));
 vi.mock("@/lib/conversations", () => ({ findOrCreateConversation: vi.fn(async () => ({ id: "conv1" })) }));
 const { transcribeAudio } = vi.hoisted(() => ({ transcribeAudio: vi.fn(async () => "hello") }));

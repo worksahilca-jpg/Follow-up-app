@@ -23,6 +23,13 @@ export async function GET() {
     select: { outboundWebhookUrl: true },
   });
 
+  // Admins only (founder, 2026-09-30): the link routinely carries its own
+  // secret (Zapier and Make both put one in it), and a teammate who leaves
+  // shouldn't walk away with it. A solo owner is their account's admin, so
+  // it stays theirs alone. Teammates are told whether it's set, nothing more.
+  if (!(await requireAdmin(ctx))) {
+    return NextResponse.json({ success: true, url: null, set: !!business?.outboundWebhookUrl, adminOnly: true });
+  }
   return NextResponse.json({ success: true, url: business?.outboundWebhookUrl ?? null });
 }
 

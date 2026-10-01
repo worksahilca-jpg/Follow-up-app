@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import Sidebar from "@/components/Sidebar";
-import { getPendingApprovals } from "@/lib/pendingApprovals";
+import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getSessionContext();
@@ -18,8 +18,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // many customers there are. Best effort: a failed count hides the number,
   // never the page.
   const [today, customers] = await Promise.all([
+    // What Today shows, so the two numbers agree: not what was set aside with "Later".
     getPendingApprovals(ctx.businessId)
-      .then((a) => a.length)
+      .then((a) => onTodayNow(a).length)
       .catch(() => undefined),
     prisma.lead.count({ where: { businessId: ctx.businessId } }).catch(() => undefined),
   ]);

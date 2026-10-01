@@ -32,7 +32,7 @@
 import { isNotAnAnswer } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
 import { byTranscriptOrder } from "@/lib/transcript";
-import { settledByTalk, lastInboundTime } from "@/lib/talked";
+import { settledByTalk, settledByDecline, lastInboundTime, lastMessageTime } from "@/lib/talked";
 import { generateFollowUpMessage, assessSendRisk, type RiskTopic } from "@/lib/integrations/openai";
 import { hasPriceSlot, PRICE_SLOT_REASON } from "@/lib/priceSlot";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
@@ -78,10 +78,10 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 // file pulls in Prisma. Re-exported here so nothing that already imports
 // them from automation.ts has to move. The full reasoning is on the
 // constants themselves.
-import { META_DM_CHANNELS, META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
+import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_CEILING_CHANNELS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, SPAM_FOLDER_SOURCE, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -103,7 +103,7 @@ export function effectiveUnansweredHours(
   // hours is already far inside any window and is never lengthened by the
   // ceiling below.
   const base = hasSubstantiveOutbound ? configuredHours : UNANSWERED_FIRST_REPLY_HOURS;
-  if (channel && META_DM_CHANNELS.has(channel)) return Math.min(base, UNANSWERED_META_DM_MAX_HOURS);
+  if (channel && UNANSWERED_CEILING_CHANNELS.has(channel)) return Math.min(base, UNANSWERED_META_DM_MAX_HOURS);
   return base;
 }
 
@@ -477,6 +477,7 @@ export function freshInboundToAnswer(
     suggestedDraftedFor: Date | null;
     lastAutomationCheckedAt: Date | null;
     talkedAt?: Date | null;
+    holdDismissedAt?: Date | null;
     conversations: { channel: string; messages: { direction: string; sentAt: Date; trigger: string | null; body: string; quickReplyPayload: string | null }[] }[];
   },
   nowMs: number
@@ -488,6 +489,8 @@ export function freshInboundToAnswer(
   if (last.direction !== "inbound") return null;
   if (isExitPayload(last.quickReplyPayload) || isConsentKeyword(last.body)) return null;
   if (settledByTalk(lead.talkedAt, last.sentAt)) return null;
+  // "Don't send" on this message: the owner declined, leave it (founder 2026-09-30).
+  if (settledByDecline(lead.holdDismissedAt, last.sentAt)) return null;
   if (last.channel === "call") return null;
   const age = nowMs - last.sentAt.getTime();
   if (age > FRESH_REPLY_WINDOW_MS) return null;
@@ -695,6 +698,8 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
     // "We talked" (src/lib/talked.ts): the owner answered this message in
     // person or on a call, where FollowUp cannot see it.
     if (settledByTalk(lead.talkedAt, last.sentAt)) return false;
+    // "Don't send" since their last message: declined, not re-held daily.
+    if (settledByDecline(lead.holdDismissedAt, lastMessageTime(lead.conversations.flatMap((c) => c.messages)))) return false;
     // A lead with no substantive outbound reply yet gets the shorter
     // first-reply threshold; everyone already in a real back-and-forth
     // keeps the business's normal unanswered-reply window. "Substantive"
@@ -991,8 +996,12 @@ export async function runAutomationForBusiness(
   const reminderStepById = new Map<string, number>();
   // "We talked" finishes the check-ins until they write again, and the
   // welcome back with them (src/lib/talked.ts).
-  const talkedOut = (l: { talkedAt: Date | null; conversations: { messages: { direction: string; sentAt: Date }[] }[] }) =>
-    settledByTalk(l.talkedAt, lastInboundTime(l.conversations.flatMap((c) => c.messages)));
+  // "Don't send" does the same until either side writes again (founder
+  // 2026-09-30), instead of re-holding the check-in every ~20 hours.
+  const talkedOut = (l: { talkedAt: Date | null; holdDismissedAt: Date | null; conversations: { messages: { direction: string; sentAt: Date }[] }[] }) => {
+    const messages = l.conversations.flatMap((c) => c.messages);
+    return settledByTalk(l.talkedAt, lastInboundTime(messages)) || settledByDecline(l.holdDismissedAt, lastMessageTime(messages));
+  };
   const silent = quietCandidates.filter((l) => {
     if (talkedOut(l)) return false;
     const plan = quietReminderPlan(timelineOf(l), (l.lastContacted ?? l.createdAt ?? new Date(nowMs)).getTime(), triggerDays, deadLeadDays);
@@ -1240,6 +1249,10 @@ export async function runAutomationForBusiness(
       // owner told instead of a silent daily refusal.
       const phoneNeverWrote =
         (sendChannel === "text" || sendChannel === "whatsapp") && !conversation.some((m) => m.direction === "inbound");
+      // Found in the spam folder and never written to: held until the owner
+      // confirms it's a real customer by writing to them once (founder,
+      // 2026-10-01). An automatic reply would tell a spammer the address is live.
+      const unconfirmedSpam = lead.source === SPAM_FOLDER_SOURCE && !conversation.some((m) => m.direction === "outbound");
       // Past Meta's 24-hour window nothing automatic may go out on these
       // channels, and sendFollowUpToLead would refuse it anyway — so no
       // draft, no risk check, no OpenAI spend. The owner's own day-2–7
@@ -1539,7 +1552,7 @@ export async function runAutomationForBusiness(
       // blank has to send it through review here; otherwise the send layer
       // would refuse it and nobody would ever see it.
       const needsPrice = hasPriceSlot(message);
-      if (holdAll || isUntouched || phoneNeverWrote || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice) {
+      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice) {
         /**
          * Every draft that reaches here gets a verdict, including ones
          * that are going to be held no matter what it says.
@@ -1662,7 +1675,7 @@ export async function runAutomationForBusiness(
         // and FollowUp can't see it, so FollowUp never sends to them on its
         // own (founder, 2026-09-29). Same queue, same draft.
         const inCrm = !!lead.crmProvider && !!lead.crmId;
-        if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || inCrm) {
+        if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam || inCrm) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
           // it with the message it was written against, which is what lets
@@ -1747,6 +1760,8 @@ export async function runAutomationForBusiness(
                 ? UNTOUCHED_LEAD_REASON
               : phoneNeverWrote
                 ? NEVER_WROTE_REASON
+              : unconfirmedSpam
+                ? FOUND_IN_SPAM_REASON
               : inCrm
                 ? IN_CRM_REASON
               : holdAll
@@ -2064,6 +2079,7 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
     if (!newest || newest.direction !== "outbound") continue;
     if (isExitPayload(inbound.quickReplyPayload)) continue;
     if (settledByTalk(lead.talkedAt, new Date(inbound.date))) continue;
+    if (settledByDecline(lead.holdDismissedAt, new Date(newest.date))) continue;
     const already = readStoredQuickReplies(lead.suggestedQuickReplies);
     if (already?.question === DM_HANDOFF_QUESTION && lead.suggestedDraftedFor && lead.suggestedDraftedFor >= new Date(inbound.date)) continue;
     if (!(await checkAiEligibility(businessId, lead, tier)).ok) continue;

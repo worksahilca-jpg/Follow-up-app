@@ -39,8 +39,17 @@
 const STOP_KEYWORDS = new Set(["stop", "stopall", "unsubscribe", "cancel", "end", "quit"]);
 const START_KEYWORDS = new Set(["start", "unstop"]);
 
+/**
+ * Punctuation, quotes and emoji around the word don't change what it says:
+ * "Stop.", "STOP!" and "stop 🙏" are someone asking to stop (bug hunt
+ * 2026-09-30, founder: "Yes fix this"). Only the ends are stripped, so the
+ * whole-body rule above still holds: "please stop" and "stop by?" don't
+ * match. Opt-in keeps the exact match: clearing an opt-out on a looser
+ * reading is the wrong way to fail.
+ */
 export function isOptOutMessage(body: string): boolean {
-  return STOP_KEYWORDS.has(body.trim().toLowerCase());
+  const word = body.trim().toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+  return STOP_KEYWORDS.has(word);
 }
 
 export function isOptInMessage(body: string): boolean {

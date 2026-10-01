@@ -39,6 +39,11 @@
  * setting that silently means something else on two channels is the kind
  * of surprise brand principle 1 forbids.
  *
+ * SUPERSEDED (2026-10-01): now applied to WhatsApp too, by the founder's
+ * decision. The template retry below is a paid, fixed message, not the
+ * reply the customer was waiting for, so FollowUp now steps in by 20 hours
+ * there as well (UNANSWERED_CEILING_CHANNELS). The original reasoning:
+ *
  * NOT applied to WhatsApp, deliberately. It has the same 24-hour window
  * but does have approved templates as a sanctioned way through, and
  * sendWhatsApp already retries as a template on error 63016. Capping it
@@ -64,3 +69,11 @@ export const META_HUMAN_AGENT_MAX_HOURS = 7 * 24;
 
 /** The channels the ceiling applies to — those with no way through a shut window. */
 export const META_DM_CHANNELS: ReadonlySet<string> = new Set(["instagram", "messenger"]);
+
+/**
+ * The channels the 20-hour unanswered ceiling applies to: the two above,
+ * plus WhatsApp (founder, 2026-10-01). WhatsApp stays out of
+ * META_DM_CHANNELS, which also drives the human-agent 7-day rules that
+ * WhatsApp doesn't have.
+ */
+export const UNANSWERED_CEILING_CHANNELS: ReadonlySet<string> = new Set([...META_DM_CHANNELS, "whatsapp"]);

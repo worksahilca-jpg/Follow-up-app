@@ -20,7 +20,7 @@ vi.mock("@/lib/session", () => ({ getSessionContext: sessionCtx }));
 vi.mock("@/lib/leads-data", () => ({ getLeadById: getLead }));
 vi.mock("@/lib/integrations/openai", () => ({ rewriteReply: rewrite, summarizeConversation: summarize }));
 vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: limited }));
-vi.mock("@/lib/billing", () => ({ requireActiveBilling: billing, billingLockedMessage: async () => "Billing is locked." }));
+vi.mock("@/lib/billing", () => ({ requireActiveBilling: billing, billingLockedMessage: async () => "Billing is locked.", leadAiRefusal: async () => null }));
 vi.mock("@/lib/db", () => ({ prisma: { lead: { findUnique: leadFind, update: leadUpdate }, followUp: { groupBy } } }));
 
 import { POST as rewriteRoute } from "@/app/api/leads/[id]/rewrite/route";

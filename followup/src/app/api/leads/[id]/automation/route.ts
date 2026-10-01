@@ -5,6 +5,7 @@ import { isAutonomousAllowed, AUTONOMOUS_NOT_ALLOWED_MESSAGE } from "@/lib/auton
 import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
 import { prisma } from "@/lib/db";
 import { parseJsonBody } from "@/lib/validation";
+import { sendRefusal } from "@/lib/sendingControl";
 
 const automationTierSchema = z.object({
   tier: z.string().transform((v) => v.toUpperCase()).pipe(z.enum(["OFF", "ASSISTED", "AUTONOMOUS"])),
@@ -44,6 +45,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json(
       { success: false, message: "This lead is enrolled in a workflow — remove it from the workflow first, or it could get messaged twice." },
       { status: 409 }
+    );
+  }
+
+  // Turning a customer on lets the hourly check send to them by itself, so
+  // with "Only admins send" (A-041) on, a teammate can't do it: it was a way
+  // around the rule without ever pressing Send (bug hunt 2026-09-30,
+  // founder: "Yes fix it"). Turning a customer OFF is always allowed.
+  if (parsed.data.tier !== "OFF" && (await sendRefusal(ctx.businessId, ctx.userId))) {
+    return NextResponse.json(
+      { success: false, message: "Only admins send on this account, so only an admin can turn this on." },
+      { status: 403 }
     );
   }
 

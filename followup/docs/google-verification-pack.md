@@ -6,10 +6,27 @@ The research behind every line is in
 copy-paste texts are in `docs/channel-verification-submissions.md` (§1). This page is the short
 version: what to click, what to type, what it costs, what to record.
 
-> **Decision, 2026-09-28: not started yet.** Sahil: "I don't have money right now." CASA is
+> **Decision, 2026-10-01: start now, keeping inbox reading.** Sahil, after seeing the cost
+> (roughly US$540–1,800 a year for the lab check): "yes". Reason: the goal is 100 test users who
+> find FollowUp useful every day, and Testing mode caps that at exactly 100 and makes everyone
+> reconnect Gmail weekly. This supersedes the 2026-09-28 note below.
+>
+> **SUPERSEDED (2026-10-01) — Decision, 2026-09-28: not started yet.** Sahil: "I don't have money right now." CASA is
 > paid (roughly US$540–1,800 a year), so verification waits until there is budget. Until then
 > FollowUp launches invite-only in Testing mode: at most 100 users, and every tester reconnects
 > Gmail every 7 days. Revisit after launch, or as soon as the first paying customers cover it.
+
+## Which Google Cloud project (checked 2026-10-01)
+
+The live site signs in with **"My First Project"** (`stately-synapse-507306-b8`, project number
+761687143380). Sign-in and Gmail share that one client (`GOOGLE_CLIENT_ID`). That is the project
+to verify. The other project, "Follow up app" (`follow-up-app-507306`), is not used by the live
+site; leave it alone.
+
+What "My First Project" needed on 2026-10-01: a logo (none), `calendar.events` and
+`userinfo.email` added under Data Access (only `gmail.send` and `gmail.readonly` were listed), and
+`follow-up-app-two.vercel.app` removed from Authorized domains (a vercel.app address can't be
+verified as yours).
 
 ## Why this matters
 
@@ -61,7 +78,7 @@ Plan on **6 to 12 weeks** to fully verified if inbox reading stays in. Start now
    same thing as the site:
    - App name: `FollowUp`
    - Support email: `contact@followupbase.io`
-   - Logo: `followup/public/brand/followup-symbol.svg` exported as a 120×120 PNG on white
+   - Logo: `followup/public/brand/png/followup-google-oauth-logo-120.png` (120×120 PNG on white, made from the symbol)
    - Homepage: `https://followupbase.io`
    - Privacy policy: `https://followupbase.io/privacy`
    - Terms: `https://followupbase.io/terms`

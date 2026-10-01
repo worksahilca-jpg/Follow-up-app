@@ -109,7 +109,9 @@ export async function readGmailSyncSnapshot(businessId: string, integrationId?: 
 
 /** Every admin on the business — the owner, on a solo account. The same recipients notifyNeglect falls back to. */
 async function adminsOf(businessId: string): Promise<{ id: string; email: string }[]> {
-  return prisma.user.findMany({ where: { businessId, role: "ADMIN" }, select: { id: true, email: true } });
+  // The business's time zone rides along for the email's date; the
+  // Settings card sets it since A-078.
+  return prisma.user.findMany({ where: { businessId, role: "ADMIN" }, select: { id: true, email: true, business: { select: { timezone: true } } } });
 }
 
 async function adminIdsOf(businessId: string): Promise<string[]> {
@@ -142,7 +144,7 @@ export async function notifyGmailAccessLost(businessId: string, snapshot: GmailS
     `FollowUp lost access to ${inboxLabel(snapshot)}, so new emails there aren't being picked up. ` +
     `Reconnect Gmail in Settings to keep catching leads. ` +
     `While FollowUp is in beta, Google asks for this every 7 days.`;
-  let admins: { id: string; email: string }[];
+  let admins: { id: string; email: string; business?: { timezone: string } | null }[];
   try {
     admins = await adminsOf(businessId);
   } catch (err) {
@@ -175,10 +177,10 @@ export async function notifyGmailAccessLost(businessId: string, snapshot: GmailS
  */
 async function emailGmailAccessLost(
   businessId: string,
-  admins: { id: string; email: string }[],
+  admins: { id: string; email: string; business?: { timezone: string } | null }[],
   snapshot: GmailSyncSnapshot | null
 ): Promise<void> {
-  const content = gmailReconnectEmail({ inbox: inboxLabel(snapshot), base: appUrl() });
+  const content = gmailReconnectEmail({ inbox: inboxLabel(snapshot), base: appUrl(), timeZone: admins[0]?.business?.timezone });
   const connection = snapshot?.connectedAt?.getTime() ?? "unknown";
   for (const admin of admins) {
     if (!admin.email) continue;
@@ -250,7 +252,7 @@ export async function warnGmailAccessEndingSoon(businessId: string, now: Date = 
   const ending = inboxes.filter((i) => gmailAccessEndingSoon(i.connectedAt, now));
   if (ending.length === 0) return;
 
-  let admins: { id: string; email: string }[];
+  let admins: { id: string; email: string; business?: { timezone: string } | null }[];
   try {
     admins = await adminsOf(businessId);
   } catch (err) {
@@ -303,7 +305,7 @@ export async function warnGmailAccessEndingSoon(businessId: string, now: Date = 
       if (!checked) continue;
     }
 
-    const content = gmailEndingSoonEmail({ inbox, base: appUrl() });
+    const content = gmailEndingSoonEmail({ inbox, base: appUrl(), timeZone: admins[0]?.business?.timezone });
     for (const admin of admins) {
       if (!admin.email) continue;
       try {
@@ -316,8 +318,9 @@ export async function warnGmailAccessEndingSoon(businessId: string, now: Date = 
 }
 
 /** The day-6 email. The reconnect email's shape, said a day earlier. */
-export function gmailEndingSoonEmail(p: { inbox: string; base: string }): { subject: string; text: string; html: string } {
+export function gmailEndingSoonEmail(p: { inbox: string; base: string; timeZone?: string }): { subject: string; text: string; html: string } {
   return reconnectEmail({
+    timeZone: p.timeZone,
     url: `${p.base}/api/integrations/gmail/connect`,
     title: "Reconnect Gmail today to keep catching customers",
     what: `FollowUp's access to ${p.inbox} ends within a day. Reconnect now and new customer emails keep coming in without a gap.`,
@@ -328,8 +331,9 @@ export function gmailEndingSoonEmail(p: { inbox: string; base: string }): { subj
 }
 
 /** The reconnect email. Same shape and type as the sign-in alert (src/lib/signIns.ts). */
-export function gmailReconnectEmail(p: { inbox: string; base: string }): { subject: string; text: string; html: string } {
+export function gmailReconnectEmail(p: { inbox: string; base: string; timeZone?: string }): { subject: string; text: string; html: string } {
   return reconnectEmail({
+    timeZone: p.timeZone,
     url: `${p.base}/api/integrations/gmail/connect`,
     title: "Reconnect Gmail to keep catching customers",
     what: `FollowUp can't read ${p.inbox} right now, so new customer emails there aren't being picked up.`,
@@ -340,6 +344,7 @@ export function gmailReconnectEmail(p: { inbox: string; base: string }): { subje
 }
 
 function reconnectEmail({
+  timeZone,
   url,
   title,
   what,
@@ -347,6 +352,7 @@ function reconnectEmail({
   why,
   once,
 }: {
+  timeZone?: string;
   url: string;
   title: string;
   what: string;
@@ -363,7 +369,7 @@ function reconnectEmail({
       base: url.replace(/\/api\/integrations\/gmail\/connect$/, ""),
       label: "Gmail",
       title,
-      date: noticeDate(new Date(), "America/New_York"),
+      date: noticeDate(new Date(), timeZone ?? "America/New_York"),
       before: [what, how],
       button: { text: "Reconnect Gmail", href: url },
       why,

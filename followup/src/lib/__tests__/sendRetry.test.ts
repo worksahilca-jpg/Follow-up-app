@@ -461,6 +461,20 @@ describe("the guards still win at retry time", () => {
     expect(result.canceled).toBe(1);
   });
 
+  // The 30-minute "let me check" is the one message a holding account
+  // sends on its own (A-077). Its claim is stamped on the customer's
+  // message before the first attempt, so a retry cancelled for "holding"
+  // meant the customer never got it (code review, 2026-10-01).
+  it("still retries the holding message on an account that holds everything", async () => {
+    oneRowDue(queuedRow({ trigger: "holding", body: "Thanks for asking! Let me check and I'll send you the price soon." }));
+    p.lead.findUnique.mockResolvedValue(lead({ business: { holdAllForApproval: true } }));
+
+    const result = await runOutboundRetries();
+
+    expect(result.canceled).toBe(0);
+    expect(sms).toHaveBeenCalledTimes(1);
+  });
+
   it("does not send a queued message after the owner tapped We talked", async () => {
     oneRowDue();
     p.lead.findUnique.mockResolvedValue(lead({ talkedAt: new Date() }));

@@ -42,6 +42,11 @@ export default function BookingCalendarConfig() {
   const [hoursError, setHoursError] = useState<string | null>(null);
   const [savedTick, setSavedTick] = useState(false);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // What the server last confirmed. A refused save restores THIS, not the
+  // value a closure captured when the request started: two quick changes
+  // in flight would otherwise let the first one's failure undo the second
+  // one's success on screen (code review, 2026-10-01).
+  const confirmed = useRef<{ hours: BookingHours; timezone: string }>({ hours: DEFAULT_BOOKING_HOURS, timezone: "America/New_York" });
 
   useEffect(() => {
     Promise.all([
@@ -57,8 +62,10 @@ export default function BookingCalendarConfig() {
         .then((r) => r.json())
         .then((data: { success: boolean; timezone?: string; days?: number[]; startMinute?: number; endMinute?: number }) => {
           if (data.success && data.days && data.startMinute !== undefined && data.endMinute !== undefined) {
-            setHours({ days: data.days, startMinute: data.startMinute, endMinute: data.endMinute });
+            const loaded = { days: data.days, startMinute: data.startMinute, endMinute: data.endMinute };
+            setHours(loaded);
             if (data.timezone) setTimezone(data.timezone);
+            confirmed.current = { hours: loaded, timezone: data.timezone ?? confirmed.current.timezone };
           }
         }),
     ])
@@ -95,10 +102,11 @@ export default function BookingCalendarConfig() {
   }
 
   /**
-   * Shows the change at once and saves it; on a refusal the previous value
-   * comes back, so the card never shows hours the link isn't using. The
-   * same check the route makes runs first, so an impossible choice (no
-   * days, end before start) is explained without a round trip.
+   * Shows the change at once and saves it; on a refusal the last
+   * server-confirmed value comes back, so the card never shows hours the
+   * link isn't using. The same check the route makes runs first, so an
+   * impossible choice (no days, end before start) is explained without a
+   * round trip.
    */
   async function saveHours(nextHours: BookingHours, nextTimezone: string) {
     const problem = bookingHoursProblem(nextHours);
@@ -106,7 +114,6 @@ export default function BookingCalendarConfig() {
       setHoursError(problem);
       return;
     }
-    const previous = { hours, timezone };
     setHours(nextHours);
     setTimezone(nextTimezone);
     setHoursError(null);
@@ -118,12 +125,13 @@ export default function BookingCalendarConfig() {
       });
       const data: { success: boolean; message?: string } = await res.json();
       if (!data.success) throw new Error(data.message ?? "Couldn't save — try again.");
+      confirmed.current = { hours: nextHours, timezone: nextTimezone };
       setSavedTick(true);
       if (savedTimer.current) clearTimeout(savedTimer.current);
       savedTimer.current = setTimeout(() => setSavedTick(false), 2000);
     } catch (err) {
-      setHours(previous.hours);
-      setTimezone(previous.timezone);
+      setHours(confirmed.current.hours);
+      setTimezone(confirmed.current.timezone);
       setHoursError(err instanceof Error ? err.message : "Couldn't save — try again.");
     }
   }

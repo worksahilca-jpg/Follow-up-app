@@ -263,8 +263,11 @@ export function signOffName(body: string | null | undefined): string | null {
   const tail = lines.slice(-6);
   for (let i = tail.length - 1; i >= 0; i--) {
     const line = tail[i];
-    // "Thanks, Priya" / "Regards - Priya Sharma" on one line.
-    const oneLine = line.match(/^(.{2,30}?)[,\s-]+\s*([^,]{2,40})$/);
+    // "Thanks, Priya" / "Regards - Priya Sharma" on one line. The separator
+    // has to be punctuation: "Thanks Sahil" with only a space is the
+    // customer thanking the OWNER by name, and taking it would rename the
+    // lead after the person they wrote to.
+    const oneLine = line.match(/^(.{2,30}?)\s*[,:;\-–—]\s*([^,]{2,40})$/);
     if (oneLine && CLOSINGS.test(oneLine[1] + ",")) {
       const name = asPersonName(oneLine[2]);
       if (name) return name;

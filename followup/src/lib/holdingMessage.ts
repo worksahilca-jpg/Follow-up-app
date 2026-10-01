@@ -18,9 +18,12 @@
  *    into the customer's language and nothing else — never generated.
  *  - go to a tense conversation. The risk check's topic has to be "price"
  *    or "date"; "tense" and "other" get nothing automatic.
- *  - go out on an account that holds everything ("Assisted"), or is
- *    paused, or has no active billing. A holding message that waits for
- *    the owner's OK defeats itself.
+ *  - go out on an account that is paused, or has no active billing.
+ *    It DOES go out on an account that holds everything ("Assisted"):
+ *    founder, 2026-10-01 — the customer is not left waiting because the
+ *    owner chose to approve replies, and a fixed line that promises nothing
+ *    is the one exception to "nothing goes out without you", stated in
+ *    Settings and setup. Until then it was Automatic-only.
  *  - go out once the owner has switched automatic follow-up, or "Reply
  *    for me when I haven't", off.
  *  - go twice for the same message. Lead.holdingSentFor is the claim.
@@ -28,8 +31,11 @@
  *    instant "got your message" to a brand-new customer already did this
  *    job, and a second placeholder would just be noise.
  *  - reach back. The customer's message has to be newer than the moment
- *    the owner turned sending on, and no older than HOLDING_MAX_AGE_MS
- *    (inside Meta's 24-hour window, with room to spare).
+ *    the owner turned sending on (on Automatic), never older than
+ *    HOLDING_MAX_AGE_MS (inside Meta's 24-hour window, with room to
+ *    spare), and never on a thread FollowUp only inherited — the Gmail
+ *    import brings in conversations whose last message predates the lead
+ *    itself, and whatever the owner did about those is invisible here.
  *
  * It is recorded as an ordinary automated send with trigger "holding",
  * which src/lib/notAnAnswer.ts lists beside the instant ack as "not an
@@ -115,14 +121,17 @@ export async function runHoldingMessagesForBusiness(businessId: string, now: Dat
     where: { id: businessId },
     select: { holdAllForApproval: true, sendingPausedAt: true, autoSendAllowedAt: true },
   });
-  // Automatic only: not holding, not paused, and sending was turned on at a
-  // known moment (the "from now on" line every automated path respects).
-  if (!business || business.holdAllForApproval || business.sendingPausedAt || !business.autoSendAllowedAt) return result;
+  // Not paused. On Automatic, sending must have been turned on at a known
+  // moment (the "from now on" line every automated path respects); on a
+  // holding account there is no such moment, and the 20-hour ceiling plus
+  // the inherited-thread check below are what stop it reaching back.
+  if (!business || business.sendingPausedAt) return result;
+  if (!business.holdAllForApproval && !business.autoSendAllowedAt) return result;
   if (!(await automaticRepliesOn(businessId))) return result;
   if (!(await requireActiveBilling(businessId))) return result;
 
   const newestAllowed = new Date(now.getTime() - HOLDING_DELAY_MS);
-  const oldestAllowed = new Date(Math.max(now.getTime() - HOLDING_MAX_AGE_MS, business.autoSendAllowedAt.getTime()));
+  const oldestAllowed = new Date(Math.max(now.getTime() - HOLDING_MAX_AGE_MS, business.autoSendAllowedAt?.getTime() ?? 0));
   if (oldestAllowed >= newestAllowed) return result;
 
   const candidates = await prisma.lead.findMany({
@@ -145,6 +154,8 @@ export async function runHoldingMessagesForBusiness(businessId: string, now: Dat
       language: true,
       languageScript: true,
       languageRegister: true,
+      createdAt: true,
+      lastContacted: true,
     },
   });
   if (candidates.length === 0) return result;
@@ -159,6 +170,11 @@ export async function runHoldingMessagesForBusiness(businessId: string, now: Dat
     if (!pending.has(lead.id)) continue;
     const topic = lead.suggestedRiskTopic;
     if (!isHoldingTopic(topic)) continue;
+    // A thread that was already silent when FollowUp first saw it (the same
+    // test as automation.ts's isBackfilledThread, kept inline so this file
+    // does not pull in the engine): nothing here knows what the owner
+    // already did about it, so no "let me check" in their name.
+    if (lead.lastContacted && lead.lastContacted < lead.createdAt) continue;
 
     // The customer has to be the last one to have written, 30 minutes to
     // 20 hours ago, and nothing may have gone to them since — not even an
@@ -265,7 +281,7 @@ export async function runDueHoldingMessages(now: Date = new Date()): Promise<Hol
       suggestedRiskTopic: { in: [...HOLDING_TOPICS] },
       suggestedMessage: { not: null },
       lastContacted: { gte: new Date(now.getTime() - HOLDING_MAX_AGE_MS) },
-      business: { holdAllForApproval: false, sendingPausedAt: null },
+      business: { sendingPausedAt: null },
     },
     select: { businessId: true },
     distinct: ["businessId"],

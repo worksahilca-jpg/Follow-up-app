@@ -1480,3 +1480,13 @@ status label reads "Auto follow-up is off" in the calm slate colours, with the d
 them on its own. Turn it on in Settings." It used to say "Next check in ~3h" or "Draft ready in ~3h", a countdown to
 a message that would never be sent. Founder: "yes fix this". Principle: a label never promises something FollowUp
 won't do. Once something is due, the existing coral "Paused — your auto follow-up is switched off" still applies.
+
+## A-077 — The 30-minute "let me check" also goes out on Assisted ^A-077
+
+**Approved 2026-10-01.** Founder: "fix all", then "Yes, send it on holding accounts too". When a customer asks a
+price or a date and the owner hasn't answered in 30 minutes, the fixed holding line ("Thanks for asking! Let me check
+and I'll send you the price soon.", translated, never a number or a day) now goes out on an Assisted account as well
+as on Automatic. It is the one message an Assisted account sends without the owner's OK, so every place that makes
+the "nothing goes out without you" promise names the exception in the same breath: the Assisted card in setup, the
+Assisted line and the rules intro in Settings, and Today's empty state. Never on a thread FollowUp only inherited from
+the inbox import. Supersedes the Automatic-only line in A-060's build notes.

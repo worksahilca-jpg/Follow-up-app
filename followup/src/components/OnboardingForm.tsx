@@ -620,7 +620,7 @@ function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
       id: "assisted" as const,
       title: "Assisted",
       badge: null,
-      body: "Every reply waits for you. Nothing goes out until you tap Send.",
+      body: "Every reply waits for you. If a price question sits 30 minutes, the customer gets a short “let me check”; the answer still waits for you.",
     },
   ];
 

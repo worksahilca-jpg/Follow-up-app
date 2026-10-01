@@ -74,6 +74,44 @@ describe("getAvailableSlots — FollowUp's own calendar (default)", () => {
     expect(slots[0]).toBe("2026-09-14T13:30:00.000Z");
   });
 
+  // A-078: the grid is the business's own. The mock row above carries no
+  // booking columns, so it reads as the default — Mon–Sat 9am–7pm.
+  it("offers Saturday and the evening by default, never Sunday, and stops at 7pm", async () => {
+    p.lead.findUnique.mockResolvedValue({ businessId: "biz1" });
+    p.business.findUnique.mockResolvedValue({ timezone: "America/New_York", bookingCalendarSource: "followup" });
+
+    const slots = await getAvailableSlots("lead1");
+
+    expect(slots).toContain("2026-09-14T22:30:00.000Z"); // Mon 6:30pm ET, the last slot of the day
+    expect(slots).not.toContain("2026-09-14T23:00:00.000Z"); // Mon 7:00pm ET
+    expect(slots).toContain("2026-09-19T13:00:00.000Z"); // Sat 9:00am ET
+    expect(slots.some((s) => s.startsWith("2026-09-20T"))).toBe(false); // Sun
+  });
+
+  it("uses the hours the business saved", async () => {
+    p.lead.findUnique.mockResolvedValue({ businessId: "biz1" });
+    p.business.findUnique.mockResolvedValue({
+      timezone: "America/New_York",
+      bookingCalendarSource: "followup",
+      bookingDays: [0], // Sunday only
+      bookingStartMinute: 10 * 60,
+      bookingEndMinute: 12 * 60,
+    });
+
+    const slots = await getAvailableSlots("lead1");
+
+    expect(slots).toEqual(["2026-09-20T14:00:00.000Z", "2026-09-20T14:30:00.000Z", "2026-09-20T15:00:00.000Z", "2026-09-20T15:30:00.000Z"]);
+  });
+
+  it("reads the hours in the business's own time zone", async () => {
+    p.lead.findUnique.mockResolvedValue({ businessId: "biz1" });
+    p.business.findUnique.mockResolvedValue({ timezone: "America/Vancouver", bookingCalendarSource: "followup" });
+
+    const slots = await getAvailableSlots("lead1");
+
+    expect(slots[0]).toBe("2026-09-14T16:00:00.000Z"); // 9:00am PDT
+  });
+
   it("returns nothing for an unknown lead or business", async () => {
     p.lead.findUnique.mockResolvedValue(null);
     expect(await getAvailableSlots("ghost")).toEqual([]);
@@ -143,10 +181,17 @@ describe("createBooking", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects a time outside business hours", async () => {
+  it("rejects a time outside booking hours", async () => {
     p.lead.findUnique.mockResolvedValue(lead());
     const result = await createBooking("lead1", "2026-09-14T02:00:00.000Z"); // ~10pm ET the night before
     expect(result.success).toBe(false);
+  });
+
+  it("rejects a day the business doesn't take bookings on, even inside its hours", async () => {
+    p.lead.findUnique.mockResolvedValue({ ...lead(), business: { ...lead().business, bookingDays: [1, 2, 3, 4, 5], bookingStartMinute: 540, bookingEndMinute: 1140 } });
+    const result = await createBooking("lead1", "2026-09-19T14:00:00.000Z"); // Sat 10am ET
+    expect(result.success).toBe(false);
+    expect(p.booking.create).not.toHaveBeenCalled();
   });
 
   it("books a valid slot and creates a calendar event", async () => {

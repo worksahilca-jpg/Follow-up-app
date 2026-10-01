@@ -1490,3 +1490,15 @@ as on Automatic. It is the one message an Assisted account sends without the own
 the "nothing goes out without you" promise names the exception in the same breath: the Assisted card in setup, the
 Assisted line and the rules intro in Settings, and Today's empty state. Never on a thread FollowUp only inherited from
 the inbox import. Supersedes the Automatic-only line in A-060's build notes.
+
+## A-078 — Booking hours are the business's own: days, hours and time zone in Settings ^A-078
+
+**Approved 2026-10-01.** Founder: "fix all", chose "Let each business set its own days and hours in Settings",
+then "build it" on the mock (https://claude.ai/artifact/EptoXKiy8FkuAqU4rtkDhn). The booking card in Settings →
+Email keeps its two calendar options and gains one block under them: seven day chips (Mon–Sun, Monday first), From /
+To selects on the half hour, a time zone dropdown (Canada first, then the US), and one summary line, "People can
+book Mon–Sat, 9:00 am–7:00 pm, Toronto time", with a quiet "Saved" tick for two seconds after each change. No Save
+button: each change saves on its own, like the two options above it. **Default for everyone, existing accounts
+included: Mon–Sat, 9 am–7 pm.** It replaces a fixed Mon–Fri 9–5 that was never shown anywhere. The time zone was
+hidden and set to New York for every account; now it is the owner's, and it also governs the 8 am–8 pm sending
+window. The two calendar options lose the words "fixed business hours".

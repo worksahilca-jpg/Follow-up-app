@@ -6,7 +6,12 @@ The research behind every line is in
 copy-paste texts are in `docs/channel-verification-submissions.md` (§1). This page is the short
 version: what to click, what to type, what it costs, what to record.
 
-> **Decision, 2026-09-28: not started yet.** Sahil: "I don't have money right now." CASA is
+> **Decision, 2026-10-01: start now, keeping inbox reading.** Sahil, after seeing the cost
+> (roughly US$540–1,800 a year for the lab check): "yes". Reason: the goal is 100 test users who
+> find FollowUp useful every day, and Testing mode caps that at exactly 100 and makes everyone
+> reconnect Gmail weekly. This supersedes the 2026-09-28 note below.
+>
+> **SUPERSEDED (2026-10-01) — Decision, 2026-09-28: not started yet.** Sahil: "I don't have money right now." CASA is
 > paid (roughly US$540–1,800 a year), so verification waits until there is budget. Until then
 > FollowUp launches invite-only in Testing mode: at most 100 users, and every tester reconnects
 > Gmail every 7 days. Revisit after launch, or as soon as the first paying customers cover it.

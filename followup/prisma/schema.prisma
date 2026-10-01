@@ -123,11 +123,21 @@ model Business {
   primaryChannels       String[]
   onboarded             Boolean           @default(false)
   createdAt             DateTime          @default(now())
-  // IANA name, e.g. "America/New_York" — drives which wall-clock hours
-  // count as "business hours" when generating booking slots (see
-  // src/lib/booking.ts). Not yet exposed in Settings; defaults to a
-  // reasonable US timezone until it is.
+  // IANA name, e.g. "America/Toronto" — drives which wall-clock hours
+  // count as booking hours (src/lib/booking.ts) and the 8am–8pm sending
+  // window (src/lib/sendWindow.ts). Set in Settings → the booking card
+  // since 2026-10-01 (A-078); new accounts still start on New York until
+  // the owner picks theirs.
   timezone              String            @default("America/New_York")
+  // When a customer can book a call through their link, in the business's
+  // timezone (src/lib/bookingHours.ts). Days are JS weekday numbers, 0 =
+  // Sunday; the hours are minutes from midnight on a 30-minute grid. The
+  // default is Mon–Sat 9am–7pm (founder, 2026-10-01). Until then it was a
+  // fixed Mon–Fri 9–5, and realtors show homes in the evening and at
+  // the weekend.
+  bookingDays           Int[]             @default([1, 2, 3, 4, 5, 6])
+  bookingStartMinute    Int               @default(540)
+  bookingEndMinute      Int               @default(1140)
   // "followup" (default): availability is just the fixed business-hours
   // grid minus FollowUp's own Booking rows, as it always was. "google":
   // ALSO excludes real busy blocks from the connected Google Calendar

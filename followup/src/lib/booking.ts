@@ -2,22 +2,26 @@
  * Booking slot generation and creation — the logic behind a lead's public
  * booking link (/book/[leadId]).
  *
- * Business hours are fixed for now — Mon-Fri, 9am-5pm in the business's
- * timezone — computed with Intl.DateTimeFormat rather than a date library,
- * since all this needs is "what's the wall-clock hour/weekday for this UTC
- * instant in timezone X," which Intl handles correctly across DST without
- * an extra dependency.
+ * Booking hours are the business's own since A-078 (founder, 2026-10-01):
+ * days, start and end from Business.bookingDays / bookingStartMinute /
+ * bookingEndMinute (src/lib/bookingHours.ts), in the business's timezone.
+ * Before that they were a fixed Mon–Fri 9–5, which is not when a realtor
+ * shows homes. Wall-clock time is computed with Intl.DateTimeFormat rather
+ * than a date library, since all this needs is "what's the wall-clock
+ * hour/weekday for this UTC instant in timezone X," which Intl handles
+ * correctly across DST without an extra dependency.
  */
 
 import { prisma } from "@/lib/db";
 import { createCalendarEvent, getGoogleCalendarBusyTimes } from "@/lib/integrations/gmail";
+import { SLOT_MINUTES, bookingHoursOf, type BookingHours } from "@/lib/bookingHours";
 
-const SLOT_MINUTES = 30;
-const BUSINESS_HOURS = { start: 9, end: 17 }; // 9am–5pm, exclusive end
 const LOOKAHEAD_DAYS = 10;
 const MIN_NOTICE_MINUTES = 60; // don't offer a slot starting less than an hour out
 
-function wallClock(instant: Date, timeZone: string): { hour: number; minute: number; weekday: string } {
+const WEEKDAY_NUMBER: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+function wallClock(instant: Date, timeZone: string): { hour: number; minute: number; weekday: number } {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     hour: "numeric",
@@ -30,15 +34,17 @@ function wallClock(instant: Date, timeZone: string): { hour: number; minute: num
   return {
     hour: Number(get("hour")) % 24, // Intl can format midnight as "24" with hour12: false
     minute: Number(get("minute")),
-    weekday: get("weekday"),
+    weekday: WEEKDAY_NUMBER[get("weekday")] ?? -1,
   };
 }
 
-function isWithinBusinessHours(instant: Date, timeZone: string): boolean {
+/** Exported for the tests; the engine and the booking page both go through it. */
+export function isWithinBookingHours(instant: Date, timeZone: string, hours: BookingHours): boolean {
   const { hour, minute, weekday } = wallClock(instant, timeZone);
-  if (weekday === "Sat" || weekday === "Sun") return false;
-  if (hour < BUSINESS_HOURS.start || hour >= BUSINESS_HOURS.end) return false;
-  return minute === 0 || minute === 30; // slots are always on the grid; guards a stray instant
+  if (!hours.days.includes(weekday)) return false;
+  if (minute !== 0 && minute !== 30) return false; // slots are always on the grid; guards a stray instant
+  const minuteOfDay = hour * 60 + minute;
+  return minuteOfDay >= hours.startMinute && minuteOfDay < hours.endMinute;
 }
 
 function roundUpToSlot(ms: number): number {
@@ -87,9 +93,10 @@ export async function getAvailableSlots(leadId: string): Promise<string[]> {
 
   const business = await prisma.business.findUnique({
     where: { id: lead.businessId },
-    select: { timezone: true, bookingCalendarSource: true },
+    select: { timezone: true, bookingCalendarSource: true, bookingDays: true, bookingStartMinute: true, bookingEndMinute: true },
   });
   if (!business) return [];
+  const hours = bookingHoursOf(business);
 
   const booked = await prisma.booking.findMany({
     where: { businessId: lead.businessId, status: "confirmed", scheduledAt: { gte: new Date() } },
@@ -118,7 +125,7 @@ export async function getAvailableSlots(leadId: string): Promise<string[]> {
   for (let t = roundUpToSlot(now); t <= horizon; t += slotMs) {
     if (t < earliest || bookedTimes.has(t)) continue;
     const instant = new Date(t);
-    if (!isWithinBusinessHours(instant, business.timezone)) continue;
+    if (!isWithinBookingHours(instant, business.timezone, hours)) continue;
     if (googleBusy.length > 0 && overlapsBusy(t, t + slotMs, googleBusy)) continue;
     slots.push(instant.toISOString());
   }
@@ -138,7 +145,7 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
       name: true,
       email: true,
       businessId: true,
-      business: { select: { name: true, timezone: true } },
+      business: { select: { name: true, timezone: true, bookingDays: true, bookingStartMinute: true, bookingEndMinute: true } },
     },
   });
   if (!lead) return { success: false, message: "This booking link isn't valid." };
@@ -147,8 +154,8 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
   if (Number.isNaN(scheduledAt.getTime()) || scheduledAt.getTime() < Date.now()) {
     return { success: false, message: "That time isn't valid anymore — pick another." };
   }
-  if (!isWithinBusinessHours(scheduledAt, lead.business.timezone)) {
-    return { success: false, message: "That time is outside business hours — pick another." };
+  if (!isWithinBookingHours(scheduledAt, lead.business.timezone, bookingHoursOf(lead.business))) {
+    return { success: false, message: "That time is outside booking hours — pick another." };
   }
 
   // Only the create is inside the slot-taken try. It used to wrap all three

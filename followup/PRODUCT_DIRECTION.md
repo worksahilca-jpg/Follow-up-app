@@ -523,6 +523,14 @@ minutes, the founder chose **option 2**: FollowUp sends a short holding message.
 
 Status: BUILT (`src/lib/holdingMessage.ts`; Assisted since 2026-10-01).
 
+### Booking hours are the business's own (founder, 2026-10-01)
+
+The booking link offered a fixed Mon–Fri 9–5 in New York time, for everyone. Founder: per-business days, hours and
+time zone in Settings, default Mon–Sat 9am–7pm for everyone, existing accounts included (A-078). The time zone also
+governs the 8am–8pm sending window.
+
+Status: BUILT (`src/lib/bookingHours.ts`, `src/lib/booking.ts`, Settings → Email → the booking card).
+
 ### Default check-ins: days 3, 7, 14 and 30, then stop (founder, 2026-09-26)
 
 Asked how many times FollowUp should check in on a customer who went quiet, the founder said: **"keep it, owner can

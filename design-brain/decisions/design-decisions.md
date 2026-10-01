@@ -8621,3 +8621,14 @@ sentence each, no new surface.
 - **Weak spot, named:** the Assisted setup card is now two sentences where the Automatic card is one; it reads
   heavier. Not rendered, only typechecked and tested. The weekly digest's "Nothing goes out until you send it." was
   left as is: it describes the held replies, which still don't.
+
+## 2026-10-01 — Booking hours in Settings (A-078)
+
+Found while mapping the real process for the founder: the booking link offered Mon–Fri 9–5 only, hard-coded, and
+every account's time zone was New York. Realtors show homes evenings and weekends. Founder chose per-business
+hours over a wider fixed default, and approved the card as drawn. Built as one block inside the existing booking
+card, reusing the chip, select and summary-line patterns already in Settings; shared rules in
+`src/lib/bookingHours.ts` so the card and the engine (`booking.ts`) read the same days and the same words.
+- **Weak spots, named:** typechecked and tested (51 tests), not rendered — the Settings page needs a signed-in
+  session and a database. The time zone isn't auto-detected from the browser; an owner outside Eastern has to pick
+  theirs once, and nothing yet tells them to. Three selects in a row are the densest row on the page.

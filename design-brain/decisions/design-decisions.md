@@ -8594,3 +8594,10 @@ events out): a teammate sees only "Set up by an admin. Only admins can see or ch
 can set this up.", and the server never sends them the link.
 - **Weak spot, named:** the teammate view wasn't rendered, only tested. It's one muted line in the card's existing
   style.
+
+## 2026-10-01 — "Auto follow-up is off" replaces a false countdown (A-076)
+
+Found in the whole-project bug hunt: with the account switch off, a customer not yet due still showed "Next check in
+~3h". Now it shows "Auto follow-up is off" (slate, not coral: nothing is wrong, it's a setting). Reuses the existing
+badge pill and PauseCircle icon; no new tokens.
+- **Weak spot, named:** tested, not rendered. It's the same pill as the countdown it replaces, with different words.

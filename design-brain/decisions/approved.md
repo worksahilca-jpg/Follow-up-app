@@ -1472,3 +1472,11 @@ team rows. Only the wording above was decided.
 can't reach comes to the owner, with the words already written. A "Can reply" label that's untrue while only admins
 send confuses teammates.
 **Wording:** "I replied" stays (the founder approved as drawn; "Done on Thumbtack" was the alternative offered).
+
+## A-076 — The status label says "Auto follow-up is off" instead of counting down ^A-076
+
+**Approved 2026-10-01.** When auto follow-up is switched off for the whole account and nothing is due yet, a customer's
+status label reads "Auto follow-up is off" in the calm slate colours, with the detail "FollowUp won't check in with
+them on its own. Turn it on in Settings." It used to say "Next check in ~3h" or "Draft ready in ~3h", a countdown to
+a message that would never be sent. Founder: "yes fix this". Principle: a label never promises something FollowUp
+won't do. Once something is due, the existing coral "Paused — your auto follow-up is switched off" still applies.

@@ -192,6 +192,17 @@ export function describeAutomationStatus(
         fg: "var(--rust)",
         pulse: true,
       };
+    // Calm, not coral: nothing is wrong and nothing is due, the owner just
+    // has it switched off. Said plainly so the label never counts down to
+    // a message that won't be sent (founder, 2026-10-01).
+    case "account_off":
+      return {
+        icon: PauseCircle,
+        label: "Auto follow-up is off",
+        detail: "FollowUp won't check in with them on its own. Turn it on in Settings.",
+        bg: "var(--slate-soft)",
+        fg: "var(--slate)",
+      };
     case "waiting":
       // "Next check in ~3h" is literally true either way, but on a
       // holding account an owner reads it as "sending in 3h". Naming the

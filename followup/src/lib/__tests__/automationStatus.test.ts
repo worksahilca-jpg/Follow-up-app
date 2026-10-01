@@ -11,6 +11,7 @@
 import { describe, it, expect } from "vitest";
 import { computeAutomationStatus, type AutomationStatusLead, type BusinessAutomationRules } from "@/lib/automationStatus";
 import type { Message } from "@/lib/types";
+import { describeAutomationStatus } from "@/components/AutomationStatusBadge";
 
 const RULES: BusinessAutomationRules = {
   canSend: true,
@@ -199,6 +200,17 @@ describe("computeAutomationStatus", () => {
     const status = computeAutomationStatus(l, RULES, NOW);
     expect(status.kind).toBe("waiting");
     expect((status as { etaHours: number }).etaHours).toBe(1); // 3h first-reply threshold - 2h elapsed
+  });
+
+  // Founder, 2026-10-01: with auto follow-up switched off for the account,
+  // the label must not count down to a message the engine won't send.
+  it("says auto follow-up is off instead of counting down, when the account switch is off", () => {
+    const l = lead({ conversation: [msg("inbound", 2), { ...msg("outbound", 1.95), trigger: "instant_ack" }] });
+    expect(computeAutomationStatus(l, { ...RULES, masterEnabled: false }, NOW)).toEqual({ kind: "account_off" });
+    expect(computeAutomationStatus(l, { ...RULES, masterEnabled: false, holdAllForApproval: true }, NOW)).toEqual({ kind: "account_off" });
+    const badge = describeAutomationStatus({ kind: "account_off" });
+    expect(badge.label).toBe("Auto follow-up is off");
+    expect(badge.label).not.toMatch(/~\d+h/);
   });
 
   it("shows due_soon(dead_lead) once lastContacted crosses the dead-lead threshold", () => {

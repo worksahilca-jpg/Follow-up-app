@@ -6,6 +6,7 @@ import { groupByRecipient, HOLD_BURST_THRESHOLD } from "@/lib/holdNotices";
 import { greetingFirstName } from "@/lib/leadName";
 import { inboundBaseUrl } from "@/lib/siteUrl";
 import { isAlertEmailConfigured, sendAlertEmail } from "@/lib/alertEmail";
+import { renderNoticeEmailHtml, noticeDate } from "@/lib/noticeEmailHtml";
 import { isPushConfigured, sendPushToUser, type PushPayload } from "@/lib/webPush";
 
 /**
@@ -273,25 +274,31 @@ const CHANNEL_PHRASE: Record<string, string> = {
   messenger: "on Messenger",
 };
 
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
-}
-
 type EmailContent = { subject: string; text: string; html: string };
 
-function footer(base: string): { text: string; html: string } {
+const FOOTNOTE = "You're getting this because email alerts are on for you in FollowUp. To stop them,";
+
+function footer(base: string): { text: string; link: { text: string; href: string } } {
   const settings = `${base}/settings#alerts`;
   return {
     text: `You're getting this because email alerts are on for you in FollowUp. To stop them, turn them off in Settings: ${settings}`,
-    html: `<p style="color:#6b7280;font-size:13px;margin:32px 0 0">You're getting this because email alerts are on for you in FollowUp. To stop them, <a href="${escapeHtml(settings)}" style="color:#6b7280">turn them off in Settings</a>.</p>`,
+    link: { text: "turn them off in Settings", href: settings },
   };
 }
 
-function wrapHtml(inner: string): string {
-  return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#111312;max-width:520px">${inner}</div>`;
+/** The two capitals a person row shows for a name ("Jane Cooper" → "JC"; a number or a placeholder → "·"). */
+function initialsOf(name: string, first: string): string {
+  if (first === "A customer" || /^\+?\d/.test(name.trim())) return "·";
+  const parts = name.trim().replace(/^@/, "").split(/\s+/).filter(Boolean);
+  return parts
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join("");
 }
 
-export function customerEmail(c: WaitingCustomer, base: string): EmailContent {
+type EmailOptions = { timeZone?: string };
+
+export function customerEmail(c: WaitingCustomer, base: string, opts: EmailOptions = {}): EmailContent {
   const { first, full } = whoIs(c.leadName);
   const where = c.channel ? CHANNEL_PHRASE[c.channel] : undefined;
   const said = quote(c.lastMessage);
@@ -299,37 +306,48 @@ export function customerEmail(c: WaitingCustomer, base: string): EmailContent {
   const foot = footer(base);
   // A photo or a voice note has no text to quote; say they wrote, and stop.
   const wrote = `${full} wrote${where ? ` ${where}` : ""}${said ? ":" : "."}`;
+  const open = first === "A customer" ? "Open the conversation" : `Open ${first}'s conversation`;
   return {
     subject: `${first} is waiting for your reply`,
     text: [wrote, ...(said ? ["", `"${said}"`] : []), "", "FollowUp's reply is ready — open it to send.", url, "", foot.text].join("\n"),
-    html: wrapHtml(
-      `<p style="margin:0 0 ${said ? 8 : 20}px">${escapeHtml(wrote)}</p>` +
-        (said
-          ? `<p style="margin:0 0 20px;padding-left:12px;border-left:2px solid #d4d4d8;color:#3f3f46">${escapeHtml(said)}</p>`
-          : "") +
-        `<p style="margin:0 0 20px">FollowUp's reply is ready — open it to send.</p>` +
-        `<p style="margin:0"><a href="${escapeHtml(url)}" style="color:#111312;font-weight:600">Open ${escapeHtml(first === "A customer" ? "the conversation" : `${first}'s conversation`)}</a></p>` +
-        foot.html
-    ),
+    html: renderNoticeEmailHtml({
+      base,
+      label: "Waiting for your reply",
+      title: `${first} is waiting for your reply`,
+      date: noticeDate(new Date(), opts.timeZone ?? "America/New_York"),
+      before: [],
+      sub: { kind: "person", initials: initialsOf(full, first), name: full, channel: where ? `wrote ${where}` : "wrote", when: null, quote: said || null },
+      after: ["FollowUp's reply is ready. Open it to send."],
+      button: { text: open, href: url },
+      why: "Nothing goes out until you send it.",
+      footnote: FOOTNOTE,
+      footnoteLink: foot.link,
+    }),
   };
 }
 
-export function summaryEmail(count: number, base: string): EmailContent {
+export function summaryEmail(count: number, base: string, opts: EmailOptions = {}): EmailContent {
   const url = `${base}/dashboard`;
   const foot = footer(base);
   const line = `${count} customers wrote, and FollowUp's replies to them are ready. Open FollowUp to read them and send.`;
   return {
     subject: `${count} customers are waiting for your OK`,
     text: [line, url, "", foot.text].join("\n"),
-    html: wrapHtml(
-      `<p style="margin:0 0 20px">${escapeHtml(line)}</p>` +
-        `<p style="margin:0"><a href="${escapeHtml(url)}" style="color:#111312;font-weight:600">Open FollowUp</a></p>` +
-        foot.html
-    ),
+    html: renderNoticeEmailHtml({
+      base,
+      label: "Waiting for your OK",
+      title: `${count} customers are waiting for your OK`,
+      date: noticeDate(new Date(), opts.timeZone ?? "America/New_York"),
+      before: [line],
+      button: { text: "Open FollowUp", href: url },
+      why: "Nothing goes out until you send it.",
+      footnote: FOOTNOTE,
+      footnoteLink: foot.link,
+    }),
   };
 }
 
-export function moreWaitingEmail(base: string): EmailContent {
+export function moreWaitingEmail(base: string, opts: EmailOptions = {}): EmailContent {
   const url = `${base}/dashboard`;
   const foot = footer(base);
   const line =
@@ -338,11 +356,16 @@ export function moreWaitingEmail(base: string): EmailContent {
   return {
     subject: "More customers are waiting for your reply",
     text: [line, url, "", foot.text].join("\n"),
-    html: wrapHtml(
-      `<p style="margin:0 0 20px">${escapeHtml(line)}</p>` +
-        `<p style="margin:0"><a href="${escapeHtml(url)}" style="color:#111312;font-weight:600">Open FollowUp</a></p>` +
-        foot.html
-    ),
+    html: renderNoticeEmailHtml({
+      base,
+      label: "Waiting for your reply",
+      title: "More customers are waiting for your reply",
+      date: noticeDate(new Date(), opts.timeZone ?? "America/New_York"),
+      before: [line],
+      button: { text: "Open FollowUp", href: url },
+      footnote: FOOTNOTE,
+      footnoteLink: foot.link,
+    }),
   };
 }
 
@@ -469,7 +492,7 @@ async function alertOne(
         data: { userId: user.id, businessId: user.businessId as string, kind: "more_waiting" },
         select: { id: true },
       });
-      const sent = await sendAlertEmail({ to: user.email, ...moreWaitingEmail(base), idempotencyKey: note.id });
+      const sent = await sendAlertEmail({ to: user.email, ...moreWaitingEmail(base, { timeZone: user.business?.timezone }), idempotencyKey: note.id });
       if (sent.sent) {
         await prisma.ownerAlert.update({ where: { id: note.id }, data: { emailedAt: new Date() } });
         emailedToday += 1;
@@ -503,7 +526,7 @@ async function alertOne(
       select: { id: true },
     });
     attemptFailed = false;
-    const emailed = await email(summaryEmail(claimed.length, base), summary.id);
+    const emailed = await email(summaryEmail(claimed.length, base, { timeZone: user.business?.timezone }), summary.id);
     const pushed = await push(summaryPush(claimed.length));
     if (emailed || pushed) {
       await prisma.ownerAlert.update({
@@ -523,7 +546,7 @@ async function alertOne(
 
   for (const { customer, rowId } of claimed) {
     attemptFailed = false;
-    const emailed = await email(customerEmail(customer, base), rowId);
+    const emailed = await email(customerEmail(customer, base, { timeZone: user.business?.timezone }), rowId);
     const pushed = await push(customerPush(customer));
     if (emailed || pushed) {
       await prisma.ownerAlert.update({

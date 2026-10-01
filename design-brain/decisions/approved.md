@@ -1502,3 +1502,20 @@ button: each change saves on its own, like the two options above it. **Default f
 included: Mon–Sat, 9 am–7 pm.** It replaces a fixed Mon–Fri 9–5 that was never shown anywhere. The time zone was
 hidden and set to New York for every account; now it is the owner's, and it also governs the 8 am–8 pm sending
 window. The two calendar options lose the words "fixed business hours".
+
+## A-079 — The notice emails on the landing page's wash, one white card each ^A-079
+
+**Approved 2026-10-01**, founder: *"cool looks better"* on take 2 (https://claude.ai/artifact/PPQ5aL8kRGi9NjjC2NPFRM),
+after rejecting take 1 (R-025). The six emails FollowUp sends an owner outside the Monday digest (Reconnect Gmail,
+access ends tomorrow, "{Name} is waiting for your reply", "{N} customers are waiting for your OK", more waiting, new
+sign-in) share one shell:
+- **The whole email is the hero wash** from the landing page (`landing.module.css` `.washHero`: peach, blue and rose
+  radial gradients on cream #f3efea, with the grain), edge to edge, 600px sheet, 22px radius. In mail it is a picture,
+  because Gmail drops CSS gradients.
+- **The real lockup** top-left on the wash, the date top-right.
+- **One white card** (border rgba(10,10,10,.06), radius 22, padding 30) holds everything you read: a dim uppercase
+  label, the title in the light weight at 30px, soft body text, an optional sand sub-card (the weekly email's person
+  row + a quote, or a quiet key/value table), the black pill button, and the dim "why" line.
+- **Under the card, on the wash:** the four links and one line of small print saying who it went to and how often.
+- **Light only, like the landing page.** Words never sit on the wash (A-071's rule), so Gmail's dark mode can darken
+  the card and lighten the text without touching the picture.

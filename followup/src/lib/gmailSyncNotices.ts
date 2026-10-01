@@ -3,6 +3,7 @@ import { gmailSelfAddress } from "@/lib/integrations/gmail";
 import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
 import { sendAlertEmail } from "@/lib/alertEmail";
 import { appUrl } from "@/lib/stripe";
+import { renderNoticeEmailHtml, noticeDate } from "@/lib/noticeEmailHtml";
 
 /**
  * Telling the owner when their inbox stops feeding FollowUp.
@@ -326,10 +327,6 @@ export function gmailEndingSoonEmail(p: { inbox: string; base: string }): { subj
   });
 }
 
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
-}
-
 /** The reconnect email. Same shape and type as the sign-in alert (src/lib/signIns.ts). */
 export function gmailReconnectEmail(p: { inbox: string; base: string }): { subject: string; text: string; html: string } {
   return reconnectEmail({
@@ -360,15 +357,18 @@ function reconnectEmail({
   return {
     subject: title,
     text: [title, "", what, "", how, `Reconnect Gmail: ${url}`, "", why, "", once].join("\n"),
-    html:
-      `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#0a0a0a;max-width:520px">` +
-      `<p style="margin:0 0 8px;font-size:20px;line-height:1.3">${escapeHtml(title)}</p>` +
-      `<p style="margin:0 0 16px;color:#57534e">${escapeHtml(what)}</p>` +
-      `<p style="margin:0 0 20px">${escapeHtml(how)}</p>` +
-      `<p style="margin:0 0 20px"><a href="${escapeHtml(url)}" style="display:inline-block;background:#0a0a0a;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:999px">Reconnect Gmail</a></p>` +
-      `<p style="margin:0 0 24px;color:#736e68;font-size:13.5px">${escapeHtml(why)}</p>` +
-      `<p style="margin:0;color:#736e68;font-size:13px">${escapeHtml(once)}</p>` +
-      `</div>`,
+    // The shared notice shell (A-079). The base for the pictures and links
+    // is the app's URL, which is what `url` was built from.
+    html: renderNoticeEmailHtml({
+      base: url.replace(/\/api\/integrations\/gmail\/connect$/, ""),
+      label: "Gmail",
+      title,
+      date: noticeDate(new Date(), "America/New_York"),
+      before: [what, how],
+      button: { text: "Reconnect Gmail", href: url },
+      why,
+      footnote: once,
+    }),
   };
 }
 

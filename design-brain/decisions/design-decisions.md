@@ -8632,3 +8632,18 @@ card, reusing the chip, select and summary-line patterns already in Settings; sh
 - **Weak spots, named:** typechecked and tested (51 tests), not rendered — the Settings page needs a signed-in
   session and a database. The time zone isn't auto-detected from the browser; an owner outside Eastern has to pick
   theirs once, and nothing yet tells them to. Three selects in a row are the densest row on the page.
+
+## 2026-10-01 — The notice emails get one shell on the landing wash (A-079, after R-025)
+
+Founder got the plain reconnect email and asked for the theme. Take 1 (white sheet, thin wash band) was rejected:
+"use those gradients that we have in our theme", and "look at the logo" (a drawn stand-in). Take 2 approved: the
+whole email is the landing page's hero wash, rendered to `public/email/notice-wash.jpg` (600×1400, from
+`.washHero` plus the grain, with headless Chromium), the real lockup top-left, one white card with everything the
+owner reads, the four links and one line of small print under it. Built as `src/lib/noticeEmailHtml.ts`; the
+reconnect, access-ends-tomorrow, three waiting-customer emails and the sign-in alert now render through it. The
+plain-text versions are unchanged.
+- **Weak spots, named:** the pictures are hosted at the app's URL, not carried inside the message like the weekly
+  email's logo (these go through Resend, not the owner's Gmail), so a client that blocks remote images shows the
+  cream sheet with alt text. The reconnect emails don't know the business's time zone, so their date is Eastern.
+  Checked rendered at 600 wide in Chromium (headless Chromium won't lay out narrower than about 500, so the
+  phone media query was not exercised), not in a real mail app yet.

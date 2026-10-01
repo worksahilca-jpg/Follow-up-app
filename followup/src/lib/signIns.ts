@@ -15,6 +15,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import { sendAlertEmail } from "@/lib/alertEmail";
 import { appUrl } from "@/lib/stripe";
+import { renderNoticeEmailHtml, noticeDate } from "@/lib/noticeEmailHtml";
 
 export const SIGN_IN_KEEP_DAYS = 90;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -83,9 +84,6 @@ export function isNewSignIn(earlier: Seen[], now: Seen): boolean {
   return !earlier.some((s) => s.device === now.device && (s.place ?? null) === (now.place ?? null));
 }
 
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
-}
 
 function formatWhen(at: Date, timeZone: string): string {
   const opts: Intl.DateTimeFormatOptions = { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone };
@@ -124,24 +122,18 @@ export function signInAlertEmail(p: { email: string; device: string; place: stri
       "",
       why,
     ].join("\n"),
-    html:
-      `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#0a0a0a;max-width:520px">` +
-      `<p style="margin:0 0 8px;font-size:20px;line-height:1.3">Your account was signed in on a new device.</p>` +
-      `<p style="margin:0 0 16px;color:#57534e">${escapeHtml(intro)}</p>` +
-      `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px">` +
-      rows
-        .map(
-          ([k, v], i) =>
-            `<tr><td style="padding:8px 16px 8px 0;color:#736e68;font-size:14px;${i ? "border-top:1px solid #f0eeeb;" : ""}">${escapeHtml(k)}</td>` +
-            `<td style="padding:8px 0;${i ? "border-top:1px solid #f0eeeb;" : ""}">${escapeHtml(v)}</td></tr>`
-        )
-        .join("") +
-      `</table>` +
-      `<p style="margin:0 0 20px">${escapeHtml(ok)}</p>` +
-      `<p style="margin:0 0 12px"><a href="${escapeHtml(url)}" style="display:inline-block;background:#0a0a0a;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:999px">Not you? Sign out everywhere</a></p>` +
-      `<p style="margin:0 0 24px;color:#736e68;font-size:13.5px">${escapeHtml(google)}</p>` +
-      `<p style="margin:0;color:#736e68;font-size:13px">${escapeHtml(why)}</p>` +
-      `</div>`,
+    html: renderNoticeEmailHtml({
+      base: p.base,
+      label: "Security",
+      title: "Your account was signed in on a new device",
+      date: noticeDate(p.at, p.timeZone),
+      before: [[{ text: "Someone signed in as " }, { text: p.email, strong: true }, { text: " from a device we haven't seen before." }]],
+      sub: { kind: "rows", rows },
+      after: [ok],
+      button: { text: "Not you? Sign out everywhere", href: url },
+      why: google,
+      footnote: why,
+    }),
   };
 }
 

@@ -465,7 +465,10 @@ describe("what the owner reads", () => {
   it("escapes what the customer wrote in the HTML email", async () => {
     addCustomer(1, { message: '<img src=x onerror="alert(1)">' });
     await runOwnerAlerts(NOW);
-    expect(emails()[0].html).not.toContain("<img");
+    // The shell carries FollowUp's own logo picture; the customer's words
+    // arrive as text, never as markup.
+    expect(emails()[0].html).not.toContain("<img src=x");
+    expect(emails()[0].html).toContain("&lt;img src=x onerror=&quot;alert(1)&quot;&gt;");
   });
 
   it("quote() never exceeds the limit and flattens line breaks", () => {

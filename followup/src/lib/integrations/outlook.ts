@@ -321,12 +321,22 @@ async function notifyOutlookAccessLost(businessId: string, email: string | null)
   }
 }
 
+/**
+ * Every Graph call asks for immutable ids (b029, 2026-10-01). Graph's
+ * default message id changes when a message moves folder — the owner
+ * archives it, a rule files it — so the sync read the same email back
+ * under a second id and stored it twice. With this header the id stays
+ * the same for the life of the message. Graph accepts both forms on
+ * requests, so ids stored before this keep working for replies.
+ */
+const GRAPH_PREFER_IMMUTABLE_IDS = 'IdType="ImmutableId"';
+
 async function graphFetch(businessId: string, path: string, init: RequestInit = {}): Promise<Response | null> {
   const authed = await getValidAccessToken(businessId);
   if (!authed) return null;
   return fetch(`${GRAPH}${path}`, {
     ...init,
-    headers: { ...init.headers, Authorization: `Bearer ${authed.accessToken}` },
+    headers: { ...init.headers, Authorization: `Bearer ${authed.accessToken}`, Prefer: GRAPH_PREFER_IMMUTABLE_IDS },
   });
 }
 
@@ -436,6 +446,30 @@ async function claimOwnSend(leadId: string, m: { id: string; body: string; sentA
     if (isUniqueViolation(err)) return true;
     throw err;
   }
+}
+
+/**
+ * Is this message already stored under another Graph id? (b029)
+ *
+ * Graph's default ids change when a message moves folder, and every row
+ * written before the immutable-id header carries the old form, so the
+ * same email can come back under a second id. What never changes is
+ * matched instead: the conversation, the direction, the moment it was
+ * sent and its words. A match means the row exists and nothing is
+ * written; the stored id is left as it is, since replies accept both.
+ */
+async function sameMessageStored(conversationId: string, m: { id: string; direction: string; body: string; sentAt: Date }): Promise<boolean> {
+  const twin = await prisma.message.findFirst({
+    where: {
+      conversationId,
+      direction: m.direction,
+      sentAt: m.sentAt,
+      body: m.body,
+      externalId: { not: m.id },
+    },
+    select: { id: true },
+  });
+  return twin !== null;
 }
 
 function graphMessageTime(m: GraphMessage): number {
@@ -787,6 +821,12 @@ async function processConversations(
 
     for (const m of parsedMessages) {
       if (m.direction === "outbound" && (await claimOwnSend(conversation.leadId, m))) continue;
+      // The same email under another id (b029): Graph's ids changed on a
+      // folder move before the immutable-id header above, and every message
+      // stored before that header still carries its old id. Matched on what
+      // never changes — the conversation, the direction, the moment it was
+      // sent and its words — so the switch never writes a second copy.
+      if (await sameMessageStored(conversation.id, m)) continue;
       try {
         await prisma.message.upsert({
           where: { externalId: m.id },
@@ -892,8 +932,9 @@ export async function fetchOutlookConversations(
   const selfEmail = (authed.integration.accountEmail ?? authed.integration.user.email).toLowerCase();
 
   let nextUrl: string;
-  if (authed.integration.deltaLink) {
-    nextUrl = authed.integration.deltaLink;
+  const storedDeltaLink = authed.integration.deltaLink;
+  if (storedDeltaLink) {
+    nextUrl = storedDeltaLink;
   } else {
     const since = new Date(Date.now() - 90 * 24 * 60 * 60_000).toISOString();
     nextUrl = `${GRAPH}/me/mailFolders/inbox/messages/delta?$select=${INITIAL_SELECT}&$filter=receivedDateTime ge ${since}`;
@@ -905,11 +946,16 @@ export async function fetchOutlookConversations(
   const MAX_PAGES = 10; // budget: a page is 999 messages by default — plenty for a per-tick pull
 
   while (nextUrl && pages < MAX_PAGES) {
+    const requestedUrl = nextUrl;
     const res = await graphFetch(businessId, nextUrl.replace(GRAPH, ""));
     if (!res) return [];
-    if (res.status === 410) {
-      // Delta token expired/invalidated — drop it and let the next tick
-      // start a fresh full pass instead of erroring forever.
+    // 410: the delta token expired or was invalidated. 400 on a STORED
+    // cursor: Graph refuses a delta link minted under one id preference
+    // and continued under another (the immutable-id header, b029), and a
+    // cursor from before that header is exactly that. Either way the
+    // cursor is dropped and the next tick starts a fresh full pass instead
+    // of erroring forever; a 400 on a fresh pass is still a real failure.
+    if (res.status === 410 || (res.status === 400 && requestedUrl === storedDeltaLink)) {
       await prisma.integration.updateMany({
         where: { provider: "outlook", status: "connected", user: { businessId } },
         data: { deltaLink: null },

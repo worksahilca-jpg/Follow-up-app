@@ -567,3 +567,13 @@ visible when Gmail darkened the header around it.
 mail app. If the mark needs help to be seen, change what sits behind it, not the mark.
 
 **Do not propose again:** a white (or any contrasting) chip, pill or badge behind the FollowUp lockup in email.
+
+## R-025 — Notice emails as a plain white sheet with a thin wash band ^R-025
+
+**Rejected:** 2026-10-01, founder, on the first mock of the six notice emails (reconnect, customer waiting, new
+sign-in…): *"this design doesn't look good, use those gradients that we have in our theme."* Also: *"look at the
+logo"* — the mock had a drawn stand-in instead of the real lockup. Never again: a mock carries the real brand assets.
+**Principle (founder's words, not inferred):** the brand's warmth is the landing page's wash — the peach, blue and
+rose gradient on cream with the grain (`landing.module.css` `.washHero`). A notice email that is a white sheet with
+the wash as a 2cm band reads as a generic transactional template. The wash is the ground, the words sit on a card.
+**What replaced it:** take 2, the whole email on the hero wash with one white card.

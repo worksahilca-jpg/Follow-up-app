@@ -29,7 +29,7 @@ const { threadsGet, prismaMock, acknowledgeNewLead } = vi.hoisted(() => ({
     filteredEmail: { deleteMany: vi.fn() },
     lead: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },
     conversation: { findUnique: vi.fn(), create: vi.fn() },
-    message: { upsert: vi.fn() },
+    message: { upsert: vi.fn(), findFirst: vi.fn(async () => null) },
   },
 }));
 

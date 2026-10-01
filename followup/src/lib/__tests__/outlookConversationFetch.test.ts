@@ -20,7 +20,7 @@ const { prismaMock, acknowledgeNewLead } = vi.hoisted(() => ({
     lead: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },
     conversation: { findUnique: vi.fn(), create: vi.fn() },
     // No FollowUp-sent row to claim: the owner's reply below is their own.
-    message: { upsert: vi.fn(), findUnique: vi.fn(async () => null), findMany: vi.fn(async () => []) },
+    message: { upsert: vi.fn(), findUnique: vi.fn(async () => null), findMany: vi.fn(async () => []), findFirst: vi.fn(async (_args: unknown): Promise<{ id: string } | null> => null) },
   },
 }));
 
@@ -185,5 +185,38 @@ describe("an unsent Outlook draft in the conversation", () => {
 
   it("is asked for, so it can be told apart", () => {
     expect(new URLSearchParams(conversationMessagesPath("c1").split("?")[1]).get("$select")?.split(",")).toContain("isDraft");
+  });
+});
+
+describe("the same email under two Graph ids (b029)", () => {
+  it("asks Graph for immutable ids on every call", async () => {
+    await importOutlookConversation("biz1", CONVERSATION_ID);
+    const init = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
+    expect((init.headers as Record<string, string>).Prefer).toBe('IdType="ImmutableId"');
+  });
+
+  it("is not stored twice when a message already sits in the conversation under its old id", async () => {
+    // Graph moved m1 to another folder and now calls it m1-moved; the row
+    // written before the immutable-id header still says m1.
+    (prismaMock.message.findFirst as unknown as ReturnType<typeof vi.fn>).mockImplementation(async ({ where }: { where: { externalId: { not: string }; body: string } }) =>
+      where.body === "Could you quote a kitchen reno?" && where.externalId.not === "m1-moved" ? { id: "row-m1" } : null
+    );
+    vi.spyOn(global, "fetch").mockImplementation(async () =>
+      Response.json({
+        value: [
+          graphMessage("m3", "jane@example.com", followUp, "Any update on the quote?"),
+          graphMessage("m2", "info@samsplumbing.ca", reply, "Thanks Jane, I'll send it today."),
+          graphMessage("m1-moved", "jane@example.com", opener, "Could you quote a kitchen reno?"),
+        ],
+      })
+    );
+
+    await importOutlookConversation("biz1", CONVERSATION_ID);
+
+    const stored = prismaMock.message.upsert.mock.calls.map((c) => c[0].create.externalId);
+    expect(stored).toEqual(["m2", "m3"]);
+    expect(prismaMock.message.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ conversationId: "conv1", direction: "inbound", sentAt: opener, externalId: { not: "m1-moved" } }) })
+    );
   });
 });

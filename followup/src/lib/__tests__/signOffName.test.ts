@@ -36,6 +36,15 @@ describe("signOffName", () => {
     expect(signOffName("Thanks,\nRegards")).toBeNull();
     expect(signOffName("Thanks,\nAdmin")).toBeNull();
   });
+
+  // Code review, 2026-10-01: "Thanks Sahil" with only a space is the
+  // customer thanking the owner by name, not signing. Only punctuation
+  // between the closing and the name counts on one line.
+  it("does not take the owner's name from 'Thanks Sahil' with no comma", () => {
+    expect(signOffName("Is the house still available?\n\nThanks Sahil")).toBeNull();
+    expect(signOffName("Thanks so much Sahil!")).toBeNull();
+    expect(customerDisplayName("Priya", "Is it available?\n\nThanks Sahil")).toBe("Priya");
+  });
 });
 
 describe("customerDisplayName", () => {

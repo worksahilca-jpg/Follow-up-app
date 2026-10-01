@@ -222,6 +222,89 @@ export function contactNameFromBody(body: string | null | undefined): string | n
 type Party = { name: string; email: string };
 
 /**
+ * The name a person signed their message with, or null (backlog b033,
+ * founder 2026-10-01: "do it").
+ *
+ * A lead is named from the sender's account name. When a couple shares
+ * one address, or someone writes from a partner's account, that name is
+ * the wrong person's: the card shows it and the reply greets them by it.
+ * Found on the founder's own demo, where "Priya" wrote from his inbox and
+ * became a lead called "Sahil".
+ *
+ * Read from what the person wrote, before any quoted history or phone
+ * footer: the last lines, where a closing ("Thanks," "Best regards,"
+ * "Cheers") is followed by a name, on the same line or the next. Only a
+ * name-shaped thing counts — one to three capitalised words, letters
+ * only, no digits, no "@", not a placeholder — and anything unclear is
+ * null, so the account name stays. A closing with no name after it
+ * ("Thanks!") says nothing.
+ */
+const CLOSINGS =
+  /^(?:thanks?(?: you)?(?: so much| a lot| again| in advance)?|many thanks|thx|ty|cheers|best|all the best|best regards|kind regards|warm regards|warmest regards|regards|rgds|sincerely|yours(?: truly| sincerely| faithfully)?|talk soon|take care|much appreciated|appreciate it|with thanks|gracias|merci)[\s!.,-]*$/i;
+
+export function signOffName(body: string | null | undefined): string | null {
+  const text = (body ?? "").slice(0, 8000).replace(/\r\n/g, "\n");
+  // Same cuts as pastReplies.cleanReplyBody, kept inline: this module has no
+  // server imports and that one pulls in Prisma.
+  const markers = [/^On .{0,200}wrote:\s*$/im, /On [^\n]{0,200}? wrote:/i, /^>/m, /^-{2,}\s*Original Message\s*-{2,}/im, /^_{8,}\s*$/m, /^From:\s.+\n(?:.*\n){0,3}?(?:Sent|Date):\s/im, /^--\s*$/m, /^Sent from my /im, /^Get Outlook for /im];
+  let cut = text.length;
+  for (const re of markers) {
+    const m = re.exec(text);
+    if (m && m.index < cut) cut = m.index;
+  }
+  const lines = text
+    .slice(0, cut)
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  // The closing and the name are within the last few lines; a signature
+  // block (title, phone, address) can follow the name, so look back up to
+  // five lines from the end.
+  const tail = lines.slice(-6);
+  for (let i = tail.length - 1; i >= 0; i--) {
+    const line = tail[i];
+    // "Thanks, Priya" / "Regards - Priya Sharma" on one line.
+    const oneLine = line.match(/^(.{2,30}?)[,\s-]+\s*([^,]{2,40})$/);
+    if (oneLine && CLOSINGS.test(oneLine[1] + ",")) {
+      const name = asPersonName(oneLine[2]);
+      if (name) return name;
+    }
+    // "Thanks," on its own line, the name on the next.
+    if (CLOSINGS.test(line) && i + 1 < tail.length) {
+      const name = asPersonName(tail[i + 1]);
+      if (name) return name;
+    }
+  }
+  return null;
+}
+
+/** "Priya", "Priya Sharma", "Jean-Luc Picard" — or null for anything that isn't plainly a person's name. */
+function asPersonName(raw: string): string | null {
+  const name = raw.replace(/[.,!]+$/, "").trim();
+  if (name.length < 2 || name.length > 40) return null;
+  if (/[\d@:/]/.test(name) || /https?|www\./i.test(name)) return null;
+  const words = name.split(/\s+/);
+  if (words.length > 3) return null;
+  if (!words.every((w) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w))) return null;
+  if (CLOSINGS.test(name) || /^(?:sent|me|team|the team|admin|support|sales|info|office|everyone|all)$/i.test(name)) return null;
+  return name;
+}
+
+/**
+ * The name to give a lead from this message: the one they signed with
+ * when it is clear and the account's name doesn't already carry it
+ * ("Priya Sharma" signing "Priya" keeps the fuller account name), else
+ * the account's name as before.
+ */
+export function customerDisplayName(accountName: string, body: string | null | undefined): string {
+  const signed = signOffName(body);
+  if (!signed) return accountName;
+  const first = signed.split(/\s+/)[0].toLowerCase();
+  if (accountName.toLowerCase().split(/[\s.<>"'()-]+/).includes(first)) return accountName;
+  return signed;
+}
+
+/**
  * Who a mail thread is with, and whether that address can be matched to a
  * lead (backlog b011).
  *
@@ -252,10 +335,10 @@ export function threadCustomer(
 ): (Party & { shared: boolean; site?: { name: string; url: string | null } }) | null {
   const first = messages.find((m) => m.from.email && (!isNotCustomer(m.from.email) || isMarketplaceLeadNotice(m)));
   if (!first) return null;
-  if (!isSharedSender(first.from.email)) return { ...first.from, shared: false };
+  if (!isSharedSender(first.from.email)) return { ...first.from, name: customerDisplayName(first.from.name, first.body), shared: false };
   const replyTo = first.replyTo;
   if (replyTo?.email && !isNotCustomer(replyTo.email) && !isSharedSender(replyTo.email)) {
-    return { ...replyTo, shared: false };
+    return { ...replyTo, name: customerDisplayName(replyTo.name, first.body), shared: false };
   }
   const site = leadSiteOf(first.from.email);
   const named = site ? contactNameFromBody(first.body) : null;

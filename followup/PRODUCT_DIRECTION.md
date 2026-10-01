@@ -523,6 +523,18 @@ minutes, the founder chose **option 2**: FollowUp sends a short holding message.
 
 Status: BUILT (`src/lib/holdingMessage.ts`; Assisted since 2026-10-01).
 
+### A customer is named by how they sign, not by the account they wrote from (founder, 2026-10-01)
+
+A lead took the sender's account name. When a couple shares an address, or someone writes from a partner's
+account, the card showed the wrong person and the reply greeted them by it (the founder's demo: "Priya" wrote
+from his inbox and became "Sahil"). Founder: "do it". Now, when the message ends with a clear closing and a
+name-shaped sign-off ("Thanks, Priya"), that name is used; when the account name already carries the signed first
+name ("Priya Sharma" signing "Priya"), the fuller account name stays; anything unclear leaves the account name
+as before. Applies to Gmail and Outlook on the first message of a thread (`signOffName` in
+`src/lib/sharedSenders.ts`).
+
+Status: BUILT.
+
 ### Booking hours are the business's own (founder, 2026-10-01)
 
 The booking link offered a fixed Mon–Fri 9–5 in New York time, for everyone. Founder: per-business days, hours and

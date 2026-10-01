@@ -6,6 +6,7 @@ import { scoreAndDraftForLead } from "@/lib/scoring";
 import { checkRapidEngagement } from "@/lib/engagement";
 import { findBusinessByTwilioSecret, findOrCreateLeadByPhone, validateVoiceAgentCallbackAuth } from "@/lib/twilio";
 import { findOrCreateConversation } from "@/lib/conversations";
+import { isHiddenCaller, findOrCreateHiddenCallerLead } from "@/lib/hiddenCaller";
 import { parseJsonBody } from "@/lib/validation";
 
 type VoiceAgentTurn = { role: "caller" | "agent"; text: string };
@@ -26,6 +27,7 @@ function isVoiceAgentTurn(value: unknown): value is VoiceAgentTurn {
 // a string, turns an array) needs to hold for that filtering to run at all.
 const voiceAgentCallbackSchema = z.object({
   from: z.string().optional(),
+  callSid: z.string().max(64).optional(),
   turns: z.array(z.unknown()).optional(),
 });
 
@@ -67,7 +69,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const turns: VoiceAgentTurn[] = (parsed.data.turns ?? []).filter(isVoiceAgentTurn);
   if (!from || turns.length === 0) return NextResponse.json({ success: true });
 
-  const lead = await findOrCreateLeadByPhone(business.id, from, "Phone call");
+  // A hidden caller is their own customer, one per call (src/lib/hiddenCaller.ts).
+  const lead = isHiddenCaller(from)
+    ? await findOrCreateHiddenCallerLead(business.id, parsed.data.callSid)
+    : await findOrCreateLeadByPhone(business.id, from, "Phone call");
 
   const conversation = await findOrCreateConversation(lead.id, "voice-agent");
 

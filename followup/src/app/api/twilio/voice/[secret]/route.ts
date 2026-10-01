@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireActiveBilling } from "@/lib/billing";
 import { inboundBaseUrl } from "@/lib/siteUrl";
+import { isHiddenCaller, findOrCreateHiddenCallerLead } from "@/lib/hiddenCaller";
 import {
   claimMissedCallTextBack,
   escapeXml,
@@ -126,7 +127,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const from = formParams.From;
-  if (from) {
+  // A caller who hid their number gets their own customer, and no text:
+  // there is no number to send it to (src/lib/hiddenCaller.ts). The call's
+  // id brings its voicemail or AI transcript back to this same card.
+  if (from && isHiddenCaller(from)) {
+    await findOrCreateHiddenCallerLead(business.id, formParams.CallSid);
+  } else if (from) {
     const lead = await findOrCreateLeadByPhone(business.id, from, "Phone call");
     // The text-back is an automatic message to a stranger, so it obeys the
     // same hold as every other automated send: on by default ("every reply

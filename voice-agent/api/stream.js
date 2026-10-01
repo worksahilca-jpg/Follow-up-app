@@ -182,6 +182,7 @@ async function authorizeCall(secret) {
 async function handleCall(twilioWs, secret, earlyMessages = []) {
   let streamSid = null;
   let callerPhone = "";
+  let callSid = "";
   let businessName = "the business";
   let openaiWs = null;
   let openaiReady = false;
@@ -194,7 +195,7 @@ async function handleCall(twilioWs, secret, earlyMessages = []) {
   function reportAndClose() {
     if (reported) return;
     reported = true;
-    postTranscript({ secret, from: callerPhone, turns }).catch((err) => {
+    postTranscript({ secret, from: callerPhone, callSid, turns }).catch((err) => {
       console.error("[voice-agent] postTranscript failed:", err);
     });
   }
@@ -248,6 +249,8 @@ async function handleCall(twilioWs, secret, earlyMessages = []) {
       streamSid = msg.start?.streamSid ?? null;
       const params = msg.start?.customParameters ?? {};
       callerPhone = params.from ?? "";
+      // Lets the app keep two hidden-number callers apart (founder, 2026-09-30).
+      callSid = msg.start?.callSid ?? "";
       businessName = params.businessName || businessName;
 
       openaiWs = connectToOpenAi(businessName);
@@ -458,7 +461,7 @@ function wireOpenAiEvents(ws, handlers) {
 }
 
 /** Hands the finished transcript to the main app — see followup/src/app/api/twilio/voice-agent-callback/[secret]/route.ts. Best-effort: a failure here loses the transcript but must never throw back into the call-handling path, which has already ended by the time this runs. */
-async function postTranscript({ secret, from, turns }) {
+async function postTranscript({ secret, from, callSid, turns }) {
   if (!FOLLOWUP_APP_URL || !VOICE_AGENT_CALLBACK_SECRET) {
     console.error("[voice-agent] Missing FOLLOWUP_APP_URL or VOICE_AGENT_CALLBACK_SECRET — transcript dropped.");
     return;
@@ -472,7 +475,7 @@ async function postTranscript({ secret, from, turns }) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${VOICE_AGENT_CALLBACK_SECRET}`,
     },
-    body: JSON.stringify({ from, turns }),
+    body: JSON.stringify({ from, callSid, turns }),
   });
   if (!res.ok) {
     console.error(`[voice-agent] voice-agent-callback rejected the transcript: ${res.status} ${await res.text().catch(() => "")}`);

@@ -4,6 +4,7 @@ import { requireActiveBilling } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { transcribeAudio } from "@/lib/integrations/openai";
 import { findOrCreateConversation } from "@/lib/conversations";
+import { isHiddenCaller, findOrCreateHiddenCallerLead } from "@/lib/hiddenCaller";
 import {
   fetchTwilioRecording,
   findBusinessByTwilioSecret,
@@ -73,7 +74,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
   if (!text) return NextResponse.json({ received: true });
 
-  const lead = await prisma.lead.findFirst({ where: { businessId: business.id, phone: from } });
+  // A hidden caller's voicemail goes on that call's own card
+  // (src/lib/hiddenCaller.ts); everyone else is found by their number.
+  const lead = isHiddenCaller(from)
+    ? await findOrCreateHiddenCallerLead(business.id, formParams.CallSid)
+    : await prisma.lead.findFirst({ where: { businessId: business.id, phone: from } });
   if (!lead) return NextResponse.json({ received: true });
 
   const conversation = await findOrCreateConversation(lead.id, "call");

@@ -901,6 +901,12 @@ model Lead {
   // side newer than this. See settledByDecline in src/lib/talked.ts.
   holdDismissedAt DateTime?
 
+  // A caller who hid their number (founder, 2026-09-30): each such call is
+  // its own customer, found again by Twilio's id for that call, so the
+  // voicemail lands on the right card. phone stays empty and nothing is
+  // ever texted. See src/lib/hiddenCaller.ts.
+  hiddenCallSid String? @unique
+
   // The lead site that passed this customer on (Thumbtack, HomeStars,
   // Kijiji…) when it keeps their contact private, so the only way to answer
   // is on that site (backlog b018, design brain A-075). Set when the lead is

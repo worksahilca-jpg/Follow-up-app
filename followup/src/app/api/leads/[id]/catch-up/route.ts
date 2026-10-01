@@ -3,7 +3,7 @@ import { getSessionContext } from "@/lib/session";
 import { getLeadById } from "@/lib/leads-data";
 import { prisma } from "@/lib/db";
 import { summarizeConversation } from "@/lib/integrations/openai";
-import { requireActiveBilling, billingLockedMessage } from "@/lib/billing";
+import { requireActiveBilling, billingLockedMessage, leadAiRefusal } from "@/lib/billing";
 
 /** Below this many messages the thread is short enough to just read. */
 const CATCH_UP_MIN_MESSAGES = 7;
@@ -27,6 +27,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (cached?.catchUpText && cached.catchUpCount === count) {
     return NextResponse.json({ success: true, text: cached.catchUpText, count });
   }
+  // A new summary counts towards the plan's monthly allowance; past it, the
+  // card simply doesn't show (a saved summary above still does).
+  if (await leadAiRefusal(ctx.businessId, id)) return NextResponse.json({ success: true, text: null, count });
   try {
     const text = await summarizeConversation(lead.conversation, lead.name.split(" ")[0] ?? "");
     if (text) await prisma.lead.update({ where: { id }, data: { catchUpText: text, catchUpCount: count } });

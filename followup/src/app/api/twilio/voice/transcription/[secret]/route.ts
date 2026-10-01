@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireActiveBilling } from "@/lib/billing";
+import { requireActiveBilling, leadAiRefusal } from "@/lib/billing";
 import { scoreAndDraftForLead } from "@/lib/scoring";
 import { transcribeAudio } from "@/lib/integrations/openai";
 import { findOrCreateConversation } from "@/lib/conversations";
@@ -57,6 +57,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ received: true });
   }
 
+  // A hidden caller's voicemail goes on that call's own card
+  // (src/lib/hiddenCaller.ts); everyone else is found by their number.
+  const lead = isHiddenCaller(from)
+    ? await findOrCreateHiddenCallerLead(business.id, formParams.CallSid)
+    : await prisma.lead.findFirst({ where: { businessId: business.id, phone: from } });
+  if (!lead) return NextResponse.json({ received: true });
+
+  // Turning the voicemail into text counts towards the plan's monthly
+  // allowance like every other AI call (founder, 2026-09-30). Past it, the
+  // voicemail is still noted on the customer, just not transcribed.
+  const refusal = await leadAiRefusal(business.id, lead.id);
+  if (refusal) {
+    const conversation = await findOrCreateConversation(lead.id, "call");
+    await prisma.message.create({
+      data: {
+        conversationId: conversation.id,
+        direction: "inbound",
+        body: "Left a voicemail. It wasn't turned into text because this month's plan limit is used up.",
+        sentAt: new Date(),
+      },
+    });
+    return NextResponse.json({ received: true });
+  }
+
   let text: string;
   try {
     if (!business.twilioAccountSid || !business.twilioAuthToken) {
@@ -73,13 +97,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ received: true });
   }
   if (!text) return NextResponse.json({ received: true });
-
-  // A hidden caller's voicemail goes on that call's own card
-  // (src/lib/hiddenCaller.ts); everyone else is found by their number.
-  const lead = isHiddenCaller(from)
-    ? await findOrCreateHiddenCallerLead(business.id, formParams.CallSid)
-    : await prisma.lead.findFirst({ where: { businessId: business.id, phone: from } });
-  if (!lead) return NextResponse.json({ received: true });
 
   const conversation = await findOrCreateConversation(lead.id, "call");
   await prisma.message.create({

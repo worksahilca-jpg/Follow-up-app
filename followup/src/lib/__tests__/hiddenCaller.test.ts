@@ -29,7 +29,7 @@ const { rows, prismaMock } = vi.hoisted(() => {
 });
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
 vi.mock("@/lib/assignment", () => ({ pickAssignee: vi.fn(async () => null) }));
-vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true) }));
+vi.mock("@/lib/billing", () => ({ requireActiveBilling: vi.fn(async () => true), leadAiRefusal: vi.fn(async () => null) }));
 vi.mock("@/lib/siteUrl", () => ({ inboundBaseUrl: () => "https://followupbase.io" }));
 vi.mock("@/lib/conversations", () => ({ findOrCreateConversation: vi.fn(async (leadId: string) => ({ id: `conv-${leadId}` })) }));
 vi.mock("@/lib/scoring", () => ({ scoreAndDraftForLead: vi.fn(async () => {}) }));

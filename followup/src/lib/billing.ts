@@ -434,6 +434,24 @@ export async function checkAiEligibility(
       };
 }
 
+/**
+ * checkAiEligibility for a lead the caller has only by id: the on-demand
+ * AI features (rewrite, "Catching up", voicemail transcription). They used
+ * to check billing only, so a Free business past its monthly allowance
+ * could keep using them (founder, 2026-09-30: they count like everything
+ * else). Null means go ahead; a lead that isn't this business's is refused.
+ */
+export async function leadAiRefusal(businessId: string, leadId: string): Promise<AiRefusal | null> {
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, businessId },
+    select: { id: true, createdAt: true, source: true, business: { select: { tier: true } } },
+  });
+  if (!lead) return { ok: false, reason: "lead not found", ownerMessage: "Lead not found." };
+  const tier = (lead.business.tier ?? "free") as "free" | "plus" | "pro";
+  const eligible = await checkAiEligibility(businessId, lead, tier);
+  return eligible.ok ? null : eligible;
+}
+
 export interface FreeTierStatus {
   tier: "free" | "plus" | "pro";
   voiceAddonEnabled: boolean;

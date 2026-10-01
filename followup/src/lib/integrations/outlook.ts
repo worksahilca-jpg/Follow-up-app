@@ -448,6 +448,21 @@ async function claimOwnSend(leadId: string, m: { id: string; body: string; sentA
   }
 }
 
+/** What a stored message is matched on when Graph renames it (b029). */
+type StoredMessage = { direction: string; sentAt: Date; body: string; externalId: string | null };
+
+/**
+ * Every message already in the conversation, read once per sync (b037):
+ * the twin check below used to ask the database once per message, which
+ * doubled a busy inbox's queries for a match that is rare.
+ */
+async function storedMessages(conversationId: string): Promise<StoredMessage[]> {
+  return prisma.message.findMany({
+    where: { conversationId },
+    select: { direction: true, sentAt: true, body: true, externalId: true },
+  });
+}
+
 /**
  * Is this message already stored under another Graph id? (b029)
  *
@@ -458,18 +473,9 @@ async function claimOwnSend(leadId: string, m: { id: string; body: string; sentA
  * sent and its words. A match means the row exists and nothing is
  * written; the stored id is left as it is, since replies accept both.
  */
-async function sameMessageStored(conversationId: string, m: { id: string; direction: string; body: string; sentAt: Date }): Promise<boolean> {
-  const twin = await prisma.message.findFirst({
-    where: {
-      conversationId,
-      direction: m.direction,
-      sentAt: m.sentAt,
-      body: m.body,
-      externalId: { not: m.id },
-    },
-    select: { id: true },
-  });
-  return twin !== null;
+export function sameMessageStored(stored: StoredMessage[], m: { id: string; direction: string; body: string; sentAt: Date }): boolean {
+  const at = m.sentAt.getTime();
+  return stored.some((s) => s.externalId !== m.id && s.direction === m.direction && s.sentAt.getTime() === at && s.body === m.body);
 }
 
 function graphMessageTime(m: GraphMessage): number {
@@ -819,6 +825,9 @@ async function processConversations(
       }
     }
 
+    // Read once, and kept current as the loop writes, so a message stored a
+    // moment ago in this same pass is seen by the next one.
+    const stored = await storedMessages(conversation.id);
     for (const m of parsedMessages) {
       if (m.direction === "outbound" && (await claimOwnSend(conversation.leadId, m))) continue;
       // The same email under another id (b029): Graph's ids changed on a
@@ -826,7 +835,7 @@ async function processConversations(
       // stored before that header still carries its old id. Matched on what
       // never changes — the conversation, the direction, the moment it was
       // sent and its words — so the switch never writes a second copy.
-      if (await sameMessageStored(conversation.id, m)) continue;
+      if (sameMessageStored(stored, m)) continue;
       try {
         await prisma.message.upsert({
           where: { externalId: m.id },
@@ -838,6 +847,7 @@ async function processConversations(
         // It exists, which is all `update: {}` asks for.
         if (!isUniqueViolation(err)) throw err;
       }
+      stored.push({ direction: m.direction, sentAt: m.sentAt, body: m.body, externalId: m.id });
     }
     await checkRapidEngagement(lead.id);
 

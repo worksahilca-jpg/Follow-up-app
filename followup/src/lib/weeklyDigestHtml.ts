@@ -74,18 +74,10 @@ export interface WeeklyEmailView {
   };
 }
 
-const INK = "#0a0a0a";
-const SOFT = "#57534e";
-const DIM = "#736e68";
-const LINE = "#e7e5e2";
-const RULE = "#f0eeeb";
-// The waiting box's edge. Darker than RULE on purpose: Gmail's app, in dark
-// mode, ignores the dark styles below and darkens every light colour
-// itself, and a near-white edge came out the same black as the sheet, so
-// the box vanished into it on the founder's phone (2026-09-28, twice). A
-// mid-tone edge survives that darkening as a visible line.
-const EDGE = "#d9d3cb";
-const SAND = "#faf8f6";
+import { INK, SOFT, DIM, LINE, RULE, EDGE, SAND, FONT, escapeHtml, table, darkModeStyle } from "@/lib/emailShell";
+
+export { escapeHtml } from "@/lib/emailShell";
+
 const WASH = "#f3efea";
 // Dark twins of the tokens above, used only inside the dark-mode styles.
 const DARK = {
@@ -101,25 +93,11 @@ const DARK = {
   page: "#0f0e0d",
   wash: "#1c1917",
 };
-const FONT = "'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
-
-export function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 const e = escapeHtml;
 
 function label(text: string): string {
   return `<div class="fu-dim" style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${DIM};">${e(text)}</div>`;
-}
-
-function table(inner: string, style = "", className = ""): string {
-  return `<table${className ? ` class="${className}"` : ""} role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;${style}">${inner}</table>`;
 }
 
 /**
@@ -153,27 +131,18 @@ function darkStyles(l: WeeklyEmailView["links"]): string {
   ${scope} .fu-button-text { color:#0a0a0a !important; }
   ${scope} .fu-bar { background:${d.ink} !important; }
   ${scope} .fu-track { background:${d.rule} !important; }`;
-  return `<style>
-  :root { color-scheme: light dark; supported-color-schemes: light dark; }
-  @media (prefers-color-scheme: dark) {
-    ${rules("")}
-    .fu-wash-top { background-color:${d.wash} !important; background-image:url('${e(l.headerImageDark)}') !important; }
+  return darkModeStyle({
+    rules,
+    alsoDark: `.fu-wash-top { background-color:${d.wash} !important; background-image:url('${e(l.headerImageDark)}') !important; }
     .fu-wash-bottom { background-color:${d.wash} !important; background-image:url('${e(l.footerImageDark)}') !important; }
     .fu-logo-light { display:none !important; }
-    .fu-logo-dark { display:block !important; max-height:none !important; overflow:visible !important; }
-  }
-  ${rules("[data-ogsc]")
-    .split("\n")
-    // Text colours only: Outlook.com paints its own dark backgrounds, and
-    // the button keeps its own light-on-dark pairing there.
-    .filter((line) => !/background|button/.test(line))
-    .join("\n")}
-  [data-ogsb] .fu-page { background:${d.page} !important; }
+    .fu-logo-dark { display:block !important; max-height:none !important; overflow:visible !important; }`,
+    outlookBackgrounds: `[data-ogsb] .fu-page { background:${d.page} !important; }
   [data-ogsb] .fu-sheet { background:${d.sheet} !important; }
   [data-ogsb] .fu-card { background:${d.card} !important; }
   [data-ogsb] .fu-sand { background:${d.sand} !important; }
-  [data-ogsb] .fu-chip { background:${d.chip} !important; }
-</style>`;
+  [data-ogsb] .fu-chip { background:${d.chip} !important; }`,
+  });
 }
 
 /**

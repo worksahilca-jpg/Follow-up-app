@@ -78,7 +78,7 @@ Plan on **6 to 12 weeks** to fully verified if inbox reading stays in. Start now
    same thing as the site:
    - App name: `FollowUp`
    - Support email: `contact@followupbase.io`
-   - Logo: `followup/public/brand/followup-symbol.svg` exported as a 120×120 PNG on white
+   - Logo: `followup/public/brand/png/followup-google-oauth-logo-120.png` (120×120 PNG on white, made from the symbol)
    - Homepage: `https://followupbase.io`
    - Privacy policy: `https://followupbase.io/privacy`
    - Terms: `https://followupbase.io/terms`

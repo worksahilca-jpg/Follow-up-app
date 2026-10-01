@@ -16,6 +16,18 @@ version: what to click, what to type, what it costs, what to record.
 > FollowUp launches invite-only in Testing mode: at most 100 users, and every tester reconnects
 > Gmail every 7 days. Revisit after launch, or as soon as the first paying customers cover it.
 
+## Which Google Cloud project (checked 2026-10-01)
+
+The live site signs in with **"My First Project"** (`stately-synapse-507306-b8`, project number
+761687143380). Sign-in and Gmail share that one client (`GOOGLE_CLIENT_ID`). That is the project
+to verify. The other project, "Follow up app" (`follow-up-app-507306`), is not used by the live
+site; leave it alone.
+
+What "My First Project" needed on 2026-10-01: a logo (none), `calendar.events` and
+`userinfo.email` added under Data Access (only `gmail.send` and `gmail.readonly` were listed), and
+`follow-up-app-two.vercel.app` removed from Authorized domains (a vercel.app address can't be
+verified as yours).
+
 ## Why this matters
 
 Today the Google app is in **Testing**. That means two things for a real customer:

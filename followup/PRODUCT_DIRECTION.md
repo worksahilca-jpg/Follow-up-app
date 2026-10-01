@@ -516,10 +516,12 @@ minutes, the founder chose **option 2**: FollowUp sends a short holding message.
   already written.
 - **Price and date decisions only.** A tense moment (a complaint, an angry customer) gets no automatic message. It goes
   to the owner only. (My recommendation, stated with the options and not objected to. Confirm when building.)
-- **Applies on Automatic.** On Assisted, the holding message would also need the owner's OK, which defeats it. Assumed
-  off on Assisted; confirm when building.
+- **Applies on Automatic and on Assisted** (founder, 2026-10-01: "fix all" — yes to sending it on holding accounts
+  too). It is the one message that goes out on an Assisted account without the owner's OK, and Settings, setup and
+  Today say so in the same breath as the promise. Never on a thread FollowUp only inherited from the inbox import.
+  Supersedes the 2026-09-26 assumption that it was Automatic-only.
 
-Status: NOT BUILT.
+Status: BUILT (`src/lib/holdingMessage.ts`; Assisted since 2026-10-01).
 
 ### Default check-ins: days 3, 7, 14 and 30, then stop (founder, 2026-09-26)
 

@@ -1273,7 +1273,7 @@ function SettingsPageInner() {
               </p>
               <p className="text-[13px] text-ink-soft mt-1">
                 {holdAllForApproval
-                  ? "Every follow-up it writes waits in Today until you send it. Nothing reaches a customer without you."
+                  ? "Every follow-up it writes waits in Today until you send it. One exception: if a customer asks a price or a date and 30 minutes pass, they get a short “let me check” so they aren’t left waiting. The answer still waits for you."
                   : "Simple, low-risk follow-ups go out on their own. Anything about price, or anything sensitive, still waits for you — and it stops the moment a customer replies."}
               </p>
               {/* Stopping for good stays one press, as it always was; it
@@ -1562,7 +1562,7 @@ function SettingsPageInner() {
             one number inside the sentence. Same settings, same saves. */}
         <p className="mt-6 text-sm text-ink-soft">
           {holdAllForApproval
-            ? "What FollowUp does on its own. Everything these write waits for your OK."
+            ? "What FollowUp does on its own. Everything these write waits for your OK, apart from the short “let me check” when a price or date question has waited 30 minutes."
             : "What FollowUp does on its own. Simple messages go by themselves; anything about price waits for you."}
         </p>
         <div className="mt-3 space-y-3">

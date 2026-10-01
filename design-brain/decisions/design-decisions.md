@@ -8609,3 +8609,15 @@ the owner's OK still has 4 hours inside the 24-hour window. Supersedes the 2026-
 because of its template fallback (a paid, fixed message, not the reply). Settings' note now reads "On Instagram,
 Messenger and WhatsApp, FollowUp steps in by 20 hours whatever you set here. Meta only lets a business reply freely
 within a day of the lead's last message."
+
+## 2026-10-01 — "Let me check" goes out on Assisted too (A-077)
+
+While writing the founder a branch-by-branch map of the real process, one row read: on the default account a
+customer who asks a price just waits. Founder: "fix all" → yes to sending the fixed holding line on Assisted. Code:
+`holdingMessage.ts` no longer gates on `holdAllForApproval`; an Assisted account has no `autoSendAllowedAt`, so the
+20-hour ceiling plus a new inherited-thread check (last message older than the lead row) are what stop it reaching
+back. Copy: the exception is stated next to the promise in setup, Settings (twice) and Today's empty state, in one
+sentence each, no new surface.
+- **Weak spot, named:** the Assisted setup card is now two sentences where the Automatic card is one; it reads
+  heavier. Not rendered, only typechecked and tested. The weekly digest's "Nothing goes out until you send it." was
+  left as is: it describes the held replies, which still don't.

@@ -85,7 +85,7 @@ const { prismaMock, classifyWithSecondLook } = vi.hoisted(() => ({
         return c;
       }),
     },
-    message: { upsert: vi.fn(async () => ({})) },
+    message: { upsert: vi.fn(async () => ({})), findFirst: vi.fn(async () => null) },
   },
 }));
 
@@ -188,5 +188,27 @@ describe("Graph throttles one conversation's fetch", () => {
     await fetchOutlookConversations("biz1", { maxClassifications: 50 });
     expect(capturedEmails()).toContain("customer7@example.com");
     expect(store.leads).toHaveLength(30);
+  });
+});
+
+describe("a saved cursor Graph refuses (b029: minted before the immutable-id header)", () => {
+  it("is dropped so the next tick starts a fresh pass, instead of failing every tick", async () => {
+    store.deltaLink = CURSOR_AFTER_FIRST_PASS;
+    vi.spyOn(global, "fetch").mockImplementation(async (input) => {
+      const url = decodeURIComponent(String(input));
+      if (url.includes("$deltatoken=")) return new Response(JSON.stringify({ error: { code: "BadRequest", message: "Preference changed" } }), { status: 400 });
+      return Response.json({ value: [] });
+    });
+
+    const leads = await fetchOutlookConversations("biz1");
+
+    expect(leads).toEqual([]);
+    expect(store.deltaLink).toBeNull();
+  });
+
+  it("a 400 on a fresh pass is still a real failure", async () => {
+    store.deltaLink = null;
+    vi.spyOn(global, "fetch").mockImplementation(async () => new Response("bad", { status: 400 }));
+    await expect(fetchOutlookConversations("biz1")).rejects.toThrow(/delta query failed/);
   });
 });

@@ -51,6 +51,7 @@ const { prismaMock } = vi.hoisted(() => ({
         return row;
       }),
       findUnique: vi.fn(async ({ where }: { where: { externalId: string } }) => store.messages.find((m) => m.externalId === where.externalId) ?? null),
+      findFirst: vi.fn(async () => null),
       findMany: vi.fn(
         async ({ where }: { where: { externalId: null; direction: string; source: null; sentAt: { gte: Date; lte: Date } } }) =>
           store.messages.filter(

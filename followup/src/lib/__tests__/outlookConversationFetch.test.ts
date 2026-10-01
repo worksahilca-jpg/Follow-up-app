@@ -20,7 +20,11 @@ const { prismaMock, acknowledgeNewLead } = vi.hoisted(() => ({
     lead: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUniqueOrThrow: vi.fn() },
     conversation: { findUnique: vi.fn(), create: vi.fn() },
     // No FollowUp-sent row to claim: the owner's reply below is their own.
-    message: { upsert: vi.fn(), findUnique: vi.fn(async () => null), findMany: vi.fn(async () => []), findFirst: vi.fn(async (_args: unknown): Promise<{ id: string } | null> => null) },
+    message: {
+      upsert: vi.fn(),
+      findUnique: vi.fn(async () => null),
+      findMany: vi.fn(async (_args: { where: { conversationId?: string } }): Promise<{ direction: string; sentAt: Date; body: string; externalId: string | null }[]> => []),
+    },
   },
 }));
 
@@ -32,7 +36,7 @@ vi.mock("@/lib/engagement", () => ({ checkRapidEngagement: vi.fn(async () => und
 vi.mock("@/lib/sourceRouting", () => ({ applySourceRouting: vi.fn(async () => undefined) }));
 vi.mock("@/lib/acknowledge", () => ({ acknowledgeNewLead }));
 
-import { conversationMessagesPath, importOutlookConversation } from "@/lib/integrations/outlook";
+import { conversationMessagesPath, importOutlookConversation, sameMessageStored } from "@/lib/integrations/outlook";
 
 const CONVERSATION_ID = "AAQkAGI2+abc/de==";
 const opener = new Date("2026-09-27T09:00:00Z");
@@ -197,9 +201,11 @@ describe("the same email under two Graph ids (b029)", () => {
 
   it("is not stored twice when a message already sits in the conversation under its old id", async () => {
     // Graph moved m1 to another folder and now calls it m1-moved; the row
-    // written before the immutable-id header still says m1.
-    (prismaMock.message.findFirst as unknown as ReturnType<typeof vi.fn>).mockImplementation(async ({ where }: { where: { externalId: { not: string }; body: string } }) =>
-      where.body === "Could you quote a kitchen reno?" && where.externalId.not === "m1-moved" ? { id: "row-m1" } : null
+    // written before the immutable-id header still says m1. The sync reads
+    // the conversation's rows once (b037); claimOwnSend's own findMany
+    // (no conversationId in its where) still finds nothing to claim.
+    prismaMock.message.findMany.mockImplementation(async ({ where }) =>
+      where.conversationId === "conv1" ? [{ direction: "inbound", sentAt: opener, body: "Could you quote a kitchen reno?", externalId: "m1" }] : []
     );
     vi.spyOn(global, "fetch").mockImplementation(async () =>
       Response.json({
@@ -215,8 +221,20 @@ describe("the same email under two Graph ids (b029)", () => {
 
     const stored = prismaMock.message.upsert.mock.calls.map((c) => c[0].create.externalId);
     expect(stored).toEqual(["m2", "m3"]);
-    expect(prismaMock.message.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ conversationId: "conv1", direction: "inbound", sentAt: opener, externalId: { not: "m1-moved" } }) })
-    );
+    // One read of the conversation for the whole pass, not one per message (b037).
+    const twinReads = prismaMock.message.findMany.mock.calls.filter(([args]) => args.where.conversationId === "conv1");
+    expect(twinReads).toHaveLength(1);
+  });
+
+  it("matches on the conversation, direction, moment and words, never on the id alone", () => {
+    const row = { direction: "inbound", sentAt: opener, body: "Could you quote a kitchen reno?", externalId: "m1" };
+    const moved = { id: "m1-moved", direction: "inbound", body: row.body, sentAt: new Date(opener) };
+    expect(sameMessageStored([row], moved)).toBe(true);
+    // The same row under its own id is the upsert's job, not a twin.
+    expect(sameMessageStored([row], { ...moved, id: "m1" })).toBe(false);
+    expect(sameMessageStored([row], { ...moved, direction: "outbound" })).toBe(false);
+    expect(sameMessageStored([row], { ...moved, sentAt: reply })).toBe(false);
+    expect(sameMessageStored([row], { ...moved, body: "Could you quote a bathroom reno?" })).toBe(false);
+    expect(sameMessageStored([], moved)).toBe(false);
   });
 });

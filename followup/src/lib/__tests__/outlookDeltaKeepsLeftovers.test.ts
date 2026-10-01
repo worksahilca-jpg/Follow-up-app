@@ -85,7 +85,7 @@ const { prismaMock, classifyWithSecondLook } = vi.hoisted(() => ({
         return c;
       }),
     },
-    message: { upsert: vi.fn(async () => ({})), findFirst: vi.fn(async () => null) },
+    message: { upsert: vi.fn(async () => ({})), findMany: vi.fn(async () => []) },
   },
 }));
 

@@ -3,7 +3,7 @@
  * reconnect emails, the "a customer is waiting" alerts and the new
  * sign-in alert. The Monday digest keeps its own renderer
  * (src/lib/weeklyDigestHtml.ts); the colours, the type and the dark-mode
- * rules here are its.
+ * block they share come from src/lib/emailShell.ts (b038).
  *
  * The whole email is the landing page's hero wash (public/email/
  * notice-wash.jpg, rendered from `.washHero` in landing.module.css —
@@ -17,22 +17,16 @@
  * inside the message; the weekly email already hosts its wash the same way.
  */
 
-const INK = "#0a0a0a";
-const SOFT = "#57534e";
-const DIM = "#736e68";
-const LINE = "#e7e5e2";
-const RULE = "#f0eeeb";
-const SAND = "#faf8f6";
-const EDGE = "#d9d3cb";
+import { INK, SOFT, DIM, LINE, RULE, SAND, EDGE, FONT, escapeHtml, table, darkModeStyle } from "@/lib/emailShell";
+
+export { escapeHtml } from "@/lib/emailShell";
+
 const CREAM = "#f3efea";
 const PAGE = "#eae6e0";
 const CARD_EDGE = "rgba(10,10,10,0.06)";
+// Dark twins of the shared tokens, used only inside the dark-mode styles.
 const DARK = { card: "#1b1917", sand: "#232120", ink: "#f4f2ef", soft: "#b8b1aa", dim: "#8f8880", line: "#2e2b28", rule: "#2a2724", edge: "#3a3632" };
-const FONT = "'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
 
-export function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
-}
 const e = escapeHtml;
 
 /** A line of body text; `strong` runs are rendered in the ink colour. */
@@ -71,10 +65,6 @@ function paragraph(t: NoticeText, first: boolean): string {
       ? e(t)
       : t.map((r) => (r.strong ? `<span class="fu-ink" style="color:${INK};font-weight:500;">${e(r.text)}</span>` : e(r.text))).join("");
   return `<p class="fu-soft" style="margin:${first ? 14 : 12}px 0 0;font-size:15.5px;line-height:1.55;color:${SOFT};">${inner}</p>`;
-}
-
-function table(inner: string, style = "", className = ""): string {
-  return `<table${className ? ` class="${className}"` : ""} role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;${style}">${inner}</table>`;
 }
 
 function subCard(sub: NonNullable<NoticeEmailView["sub"]>): string {
@@ -116,18 +106,11 @@ function darkStyles(): string {
   ${scope} .fu-quote { border-color:${d.edge} !important; }
   ${scope} .fu-button { background:${d.ink} !important; }
   ${scope} .fu-button-text { color:#0a0a0a !important; }`;
-  return `<style>
-  :root { color-scheme: light dark; supported-color-schemes: light dark; }
-  @media (prefers-color-scheme: dark) {
-    ${rules("")}
-  }
-  ${rules("[data-ogsc]")
-    .split("\n")
-    .filter((line) => !/background|button/.test(line))
-    .join("\n")}
-  [data-ogsb] .fu-card { background:${d.card} !important; }
-  [data-ogsb] .fu-sand { background:${d.sand} !important; }
-</style>`;
+  return darkModeStyle({
+    rules,
+    outlookBackgrounds: `[data-ogsb] .fu-card { background:${d.card} !important; }
+  [data-ogsb] .fu-sand { background:${d.sand} !important; }`,
+  });
 }
 
 function phoneStyles(): string {

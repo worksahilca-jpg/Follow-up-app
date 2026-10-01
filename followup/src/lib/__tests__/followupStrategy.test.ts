@@ -46,6 +46,7 @@ vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
 vi.mock("@/lib/sendWindow", () => ({ isWithinSendWindow: vi.fn(() => true) }));
 
 import { prisma } from "@/lib/db";
+import { recordAudit } from "@/lib/audit";
 import { generateFollowUpMessage, assessSendRisk } from "@/lib/integrations/openai";
 import { sendFollowUpToLead, detectAutomatedReplyChannel } from "@/lib/sending";
 import { isWithinSendWindow } from "@/lib/sendWindow";
@@ -657,5 +658,27 @@ describe("after the owner says 'Don't send'", () => {
     const base = { suggestedDraftedFor: m.sentAt, lastAutomationCheckedAt: null, conversations: [{ channel: "email", messages: [m] }] };
     expect(freshInboundToAnswer({ ...base, holdDismissedAt: new Date() } as Parameters<typeof freshInboundToAnswer>[0], Date.now())).toBeNull();
     expect(freshInboundToAnswer({ ...base, holdDismissedAt: ago(D) } as Parameters<typeof freshInboundToAnswer>[0], Date.now())).toEqual(m.sentAt);
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * Leads found in the spam folder (founder, 2026-10-01): nothing goes out
+ * on its own until the owner has written to them once.
+ * ------------------------------------------------------------------ */
+
+describe("a lead found in the spam folder", () => {
+  it("is held for the owner, never sent automatically, with the reason", async () => {
+    hourly({ unanswered: [aLead([row("inbound", 25 * H)], { source: "Gmail (spam)" })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(send).not.toHaveBeenCalled();
+    expect(r.held).toBe(1);
+    expect(JSON.stringify(vi.mocked(recordAudit).mock.calls)).toContain("spam folder");
+  });
+
+  it("is followed up normally once the owner has written to them", async () => {
+    hourly({ unanswered: [aLead([row("inbound", 40 * H), row("outbound", 39 * H), row("inbound", 25 * H)], { source: "Gmail (spam)" })] });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(1);
   });
 });

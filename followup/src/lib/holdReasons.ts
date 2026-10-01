@@ -90,6 +90,18 @@ export const NEVER_WROTE_REASON =
   "they have never messaged you, so FollowUp won't text or WhatsApp them on its own — the first message is yours to send";
 
 /**
+ * A lead FollowUp found in the Gmail spam folder (founder, 2026-10-01).
+ * Some of those really are spam or scams, and an automatic reply tells a
+ * spammer the address is live, so nothing goes out until the owner has
+ * written to them once, which is how they confirm it's a real customer.
+ */
+export const FOUND_IN_SPAM_REASON =
+  "this email was in your spam folder, so FollowUp waits for you to confirm it's a real customer before anything goes out";
+
+/** The source a lead found in the Gmail spam folder is filed under. */
+export const SPAM_FOLDER_SOURCE = "Gmail (spam)";
+
+/**
  * A customer who is also in the business's CRM (Follow Up Boss, HubSpot).
  * Those CRMs often run their own follow-ups, which FollowUp can't see, so
  * FollowUp never follows up with them on its own: the customer could get

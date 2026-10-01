@@ -81,7 +81,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_CEILING_CHANNELS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, SPAM_FOLDER_SOURCE, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -1249,6 +1249,10 @@ export async function runAutomationForBusiness(
       // owner told instead of a silent daily refusal.
       const phoneNeverWrote =
         (sendChannel === "text" || sendChannel === "whatsapp") && !conversation.some((m) => m.direction === "inbound");
+      // Found in the spam folder and never written to: held until the owner
+      // confirms it's a real customer by writing to them once (founder,
+      // 2026-10-01). An automatic reply would tell a spammer the address is live.
+      const unconfirmedSpam = lead.source === SPAM_FOLDER_SOURCE && !conversation.some((m) => m.direction === "outbound");
       // Past Meta's 24-hour window nothing automatic may go out on these
       // channels, and sendFollowUpToLead would refuse it anyway — so no
       // draft, no risk check, no OpenAI spend. The owner's own day-2–7
@@ -1548,7 +1552,7 @@ export async function runAutomationForBusiness(
       // blank has to send it through review here; otherwise the send layer
       // would refuse it and nobody would ever see it.
       const needsPrice = hasPriceSlot(message);
-      if (holdAll || isUntouched || phoneNeverWrote || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice) {
+      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice) {
         /**
          * Every draft that reaches here gets a verdict, including ones
          * that are going to be held no matter what it says.
@@ -1671,7 +1675,7 @@ export async function runAutomationForBusiness(
         // and FollowUp can't see it, so FollowUp never sends to them on its
         // own (founder, 2026-09-29). Same queue, same draft.
         const inCrm = !!lead.crmProvider && !!lead.crmId;
-        if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || inCrm) {
+        if (holdAll || autonomousBacklog || autoSendBacklog || risk.riskLevel !== "low" || isCold || isBackfilled || isUntouched || phoneNeverWrote || unconfirmedSpam || inCrm) {
           // Persist whatever was just written, so the stale draft doesn't
           // linger as what the owner sees waiting for approval — and stamp
           // it with the message it was written against, which is what lets
@@ -1756,6 +1760,8 @@ export async function runAutomationForBusiness(
                 ? UNTOUCHED_LEAD_REASON
               : phoneNeverWrote
                 ? NEVER_WROTE_REASON
+              : unconfirmedSpam
+                ? FOUND_IN_SPAM_REASON
               : inCrm
                 ? IN_CRM_REASON
               : holdAll

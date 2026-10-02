@@ -299,3 +299,46 @@ describe("scoreAndDraftForLead — reading how a lead writes, every message", ()
     );
   });
 });
+
+// Bug hunt, 2026-10-02: a bare STOP or START ran the whole pass on every
+// channel — a scoring call and a draft written against the word "STOP",
+// shown on the lead's page as the suggested reply. Consent is recorded by
+// the capture path; there is nothing here to score or answer.
+describe("scoreAndDraftForLead — a consent keyword", () => {
+  it.each(["STOP", "Stop.", "unsubscribe", "START"])("spends nothing and writes nothing on %s", async (word) => {
+    findUnique.mockResolvedValue(
+      leadRow({
+        conversations: [
+          {
+            channel: "text",
+            messages: [
+              { id: "m1", direction: "inbound", body: "What's the price?", sentAt: new Date("2026-10-01T10:00:00Z"), opened: false },
+              { id: "m2", direction: "inbound", body: word, sentAt: new Date("2026-10-01T11:00:00Z"), opened: false },
+            ],
+          },
+        ],
+      })
+    );
+    expect(await scoreAndDraftForLead("lead1")).toBe(false);
+    expect(generateFollowUpMessage).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("still scores when the consent word is not the newest message", async () => {
+    findUnique.mockResolvedValue(
+      leadRow({
+        conversations: [
+          {
+            channel: "text",
+            messages: [
+              { id: "m1", direction: "inbound", body: "STOP", sentAt: new Date("2026-10-01T10:00:00Z"), opened: false },
+              { id: "m2", direction: "inbound", body: "Actually, is the house still available?", sentAt: new Date("2026-10-01T11:00:00Z"), opened: false },
+            ],
+          },
+        ],
+      })
+    );
+    expect(await scoreAndDraftForLead("lead1")).toBe(true);
+    expect(update).toHaveBeenCalled();
+  });
+});

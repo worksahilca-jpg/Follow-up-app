@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { resolveInstagramUserId } from "@/lib/instagram";
+import { isUniqueViolation } from "@/lib/uniqueViolation";
 
 /**
  * Fills Business.instagramAccountId for accounts connected before the
@@ -49,10 +50,6 @@ export type BackfillResult = {
   accountId?: string;
   detail?: string;
 };
-
-function isUniqueViolation(err: unknown): boolean {
-  return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
-}
 
 export async function backfillInstagramAccountIds(options: {
   apply: boolean;

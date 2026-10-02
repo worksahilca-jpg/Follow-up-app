@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { prisma } from "@/lib/db";
+import { isUniqueViolation } from "@/lib/uniqueViolation";
 
 /**
  * One caller owns one send.
@@ -125,8 +126,4 @@ export async function releaseSendClaim(leadId: string, bodyHash: string): Promis
   } catch {
     // Intentionally swallowed — see above.
   }
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  return typeof err === "object" && err !== null && (err as { code?: string }).code === "P2002";
 }

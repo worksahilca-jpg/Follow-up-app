@@ -650,13 +650,19 @@ describe("send-window gate (src/lib/sendWindow.ts)", () => {
 // than a longer version of the same silence trigger.
 describe("dead-lead reactivation (DEAD_LEAD_ACTION)", () => {
   function coldLead(daysAgo: number, overrides: Record<string, unknown> = {}) {
+    // One instant for both. Two separate Date.now() calls could land a
+    // millisecond apart, making createdAt later than lastContacted, and
+    // isBackfilledThread then read the lead as inherited history: a
+    // different hold reason, and a test that failed only when the clock
+    // ticked between the two lines (CI, 2026-10-02).
+    const at = new Date(Date.now() - daysAgo * 86_400_000);
     return lead({
       id: "lead4",
       name: "Marcus",
       suggestedMessage: "A stale cached draft from before this lead went cold",
       suggestedSubject: "Old subject",
-      lastContacted: new Date(Date.now() - daysAgo * 86_400_000),
-      createdAt: new Date(Date.now() - daysAgo * 86_400_000),
+      lastContacted: at,
+      createdAt: at,
       ...overrides,
     });
   }

@@ -207,11 +207,61 @@ describe("createBooking", () => {
 
   it("reports the slot as taken when two leads race for it (unique constraint)", async () => {
     p.lead.findUnique.mockResolvedValue(lead());
-    p.booking.create.mockRejectedValue(new Error("Unique constraint failed"));
+    p.booking.create.mockRejectedValue(Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
 
     const result = await createBooking("lead1", "2026-09-14T13:00:00.000Z");
 
     expect(result.success).toBe(false);
+    if (!result.success) expect(result.message).toMatch(/just booked by someone else/);
+  });
+
+  // Bug hunt, 2026-10-02: every write failure used to be reported as "someone
+  // else took it", and the customer picked another time that was never the
+  // problem.
+  it("does not blame another customer when the database itself fails", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    p.booking.create.mockRejectedValue(new Error("connection reset"));
+
+    const result = await createBooking("lead1", "2026-09-14T13:00:00.000Z");
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.message).not.toMatch(/someone else/);
+  });
+
+  // Bug hunt, 2026-10-02: the confirm step re-checked the hours but not the
+  // calendar, so a meeting added after the page loaded could be booked over.
+  it("refuses a slot that now overlaps the owner's Google Calendar, and books nothing", async () => {
+    p.lead.findUnique.mockResolvedValue({ ...lead(), business: { ...lead().business, bookingCalendarSource: "google" } });
+    googleBusy.mockResolvedValue([{ start: "2026-09-14T13:00:00.000Z", end: "2026-09-14T14:00:00.000Z" }]);
+
+    const result = await createBooking("lead1", "2026-09-14T13:30:00.000Z");
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.message).toMatch(/just taken on the calendar/);
+    expect(googleBusy).toHaveBeenCalledWith("biz1", "2026-09-14T13:30:00.000Z", "2026-09-14T14:00:00.000Z");
+    expect(p.booking.create).not.toHaveBeenCalled();
+  });
+
+  it("books the slot when the calendar is free at that moment, and never asks Google on FollowUp's own calendar", async () => {
+    p.lead.findUnique.mockResolvedValue({ ...lead(), business: { ...lead().business, bookingCalendarSource: "google" } });
+    googleBusy.mockResolvedValue([{ start: "2026-09-14T15:00:00.000Z", end: "2026-09-14T16:00:00.000Z" }]);
+    p.booking.create.mockResolvedValue({ scheduledAt: new Date("2026-09-14T13:30:00.000Z") });
+    p.lead.update.mockResolvedValue({});
+    expect((await createBooking("lead1", "2026-09-14T13:30:00.000Z")).success).toBe(true);
+
+    googleBusy.mockClear();
+    p.lead.findUnique.mockResolvedValue(lead());
+    expect((await createBooking("lead1", "2026-09-14T14:00:00.000Z")).success).toBe(true);
+    expect(googleBusy).not.toHaveBeenCalled();
+  });
+
+  it("refuses a time the page could never have offered: under an hour out, or past the ten-day window", async () => {
+    p.lead.findUnique.mockResolvedValue(lead());
+    // 12:30 UTC is 8:30am ET, half an hour from "now" — inside hours, too soon.
+    expect((await createBooking("lead1", "2026-09-14T12:30:00.000Z")).success).toBe(false);
+    // A Monday 9am ET three weeks out.
+    expect((await createBooking("lead1", "2026-10-05T13:00:00.000Z")).success).toBe(false);
+    expect(p.booking.create).not.toHaveBeenCalled();
   });
 
   // Audits 2026-09-16 M-2 / 2026-09-26 A-11: one unauthenticated link
@@ -249,7 +299,12 @@ describe("getBookingContext — what an unauthenticated link holder learns", () 
   it("gives the first name only, never the full name", async () => {
     p.lead.findUnique.mockResolvedValue({ name: "Priya  Ramaswamy-Shah", business: { name: "Acme Plumbing" } });
     const ctx = await getBookingContext("lead1");
-    expect(ctx).toEqual({ leadName: "Priya", businessName: "Acme Plumbing", durationMinutes: 30 });
+    expect(ctx).toEqual({ leadName: "Priya", businessName: "Acme Plumbing", durationMinutes: 30, bookingDays: [1, 2, 3, 4, 5, 6] });
+  });
+
+  it("tells the page which days the business books on, so a closed day is not shown as full", async () => {
+    p.lead.findUnique.mockResolvedValue({ name: "Priya", business: { name: "Acme", bookingDays: [1, 3, 5] } });
+    expect((await getBookingContext("lead1"))?.bookingDays).toEqual([1, 3, 5]);
   });
 
   it("is null for an unknown id", async () => {

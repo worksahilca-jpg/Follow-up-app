@@ -21,6 +21,11 @@ const MIN_NOTICE_MINUTES = 60; // don't offer a slot starting less than an hour 
 
 const WEEKDAY_NUMBER: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
+/** Prisma's "unique constraint failed" — the (businessId, scheduledAt) guard on Booking. */
+function isUniqueViolation(err: unknown): boolean {
+  return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
+}
+
 function wallClock(instant: Date, timeZone: string): { hour: number; minute: number; weekday: number } {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -61,10 +66,22 @@ function overlapsBusy(slotStartMs: number, slotEndMs: number, busy: { start: str
   });
 }
 
+/**
+ * Is a slot starting at `t` one the link offers at all: at least the
+ * minimum notice out, and inside the lookahead window? The slot list and
+ * the confirm step ask the same question, so a posted time the page could
+ * never have shown (five minutes from now, or next month) is refused.
+ */
+function isOfferableAt(t: number, now: number): boolean {
+  return t >= now + MIN_NOTICE_MINUTES * 60 * 1000 && t <= now + LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000;
+}
+
 export interface BookingContext {
   leadName: string;
   businessName: string;
   durationMinutes: number;
+  /** The weekdays this business takes bookings on (0 = Sunday), so the page can tell a closed day from a full one. */
+  bookingDays: number[];
 }
 
 /**
@@ -79,11 +96,11 @@ export interface BookingContext {
 export async function getBookingContext(leadId: string): Promise<BookingContext | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { name: true, business: { select: { name: true } } },
+    select: { name: true, business: { select: { name: true, bookingDays: true } } },
   });
   if (!lead) return null;
   const firstName = lead.name.trim().split(/\s+/)[0] ?? "";
-  return { leadName: firstName, businessName: lead.business.name, durationMinutes: SLOT_MINUTES };
+  return { leadName: firstName, businessName: lead.business.name, durationMinutes: SLOT_MINUTES, bookingDays: bookingHoursOf(lead.business).days };
 }
 
 /** Open slots for this lead's business over the next LOOKAHEAD_DAYS, as ISO strings. */
@@ -105,7 +122,6 @@ export async function getAvailableSlots(leadId: string): Promise<string[]> {
   const bookedTimes = new Set(booked.map((b) => b.scheduledAt.getTime()));
 
   const now = Date.now();
-  const earliest = now + MIN_NOTICE_MINUTES * 60 * 1000;
   const horizon = now + LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000;
   const slotMs = SLOT_MINUTES * 60 * 1000;
 
@@ -123,7 +139,7 @@ export async function getAvailableSlots(leadId: string): Promise<string[]> {
 
   const slots: string[] = [];
   for (let t = roundUpToSlot(now); t <= horizon; t += slotMs) {
-    if (t < earliest || bookedTimes.has(t)) continue;
+    if (!isOfferableAt(t, now) || bookedTimes.has(t)) continue;
     const instant = new Date(t);
     if (!isWithinBookingHours(instant, business.timezone, hours)) continue;
     if (googleBusy.length > 0 && overlapsBusy(t, t + slotMs, googleBusy)) continue;
@@ -145,17 +161,29 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
       name: true,
       email: true,
       businessId: true,
-      business: { select: { name: true, timezone: true, bookingDays: true, bookingStartMinute: true, bookingEndMinute: true } },
+      business: { select: { name: true, timezone: true, bookingCalendarSource: true, bookingDays: true, bookingStartMinute: true, bookingEndMinute: true } },
     },
   });
   if (!lead) return { success: false, message: "This booking link isn't valid." };
 
   const scheduledAt = new Date(scheduledAtIso);
-  if (Number.isNaN(scheduledAt.getTime()) || scheduledAt.getTime() < Date.now()) {
+  if (Number.isNaN(scheduledAt.getTime()) || !isOfferableAt(scheduledAt.getTime(), Date.now())) {
     return { success: false, message: "That time isn't valid anymore — pick another." };
   }
   if (!isWithinBookingHours(scheduledAt, lead.business.timezone, bookingHoursOf(lead.business))) {
     return { success: false, message: "That time is outside booking hours — pick another." };
+  }
+  // The same calendar check the slot list made, asked again for this one
+  // slot at the moment of confirming (bug hunt, 2026-10-02): the owner can
+  // put a meeting on their calendar between the page loading and the
+  // customer pressing Book, and the page's list is minutes old by then.
+  // Best-effort like the list: a read that fails returns nothing busy.
+  if (lead.business.bookingCalendarSource === "google") {
+    const slotEnd = new Date(scheduledAt.getTime() + SLOT_MINUTES * 60 * 1000);
+    const busy = await getGoogleCalendarBusyTimes(lead.businessId, scheduledAt.toISOString(), slotEnd.toISOString());
+    if (overlapsBusy(scheduledAt.getTime(), slotEnd.getTime(), busy)) {
+      return { success: false, message: "That time was just taken on the calendar — pick another." };
+    }
   }
 
   // Only the create is inside the slot-taken try. It used to wrap all three
@@ -198,9 +226,16 @@ export async function createBooking(leadId: string, scheduledAtIso: string): Pro
       };
     }
     booking = outcome.booking;
-  } catch {
+  } catch (err) {
     // Unique constraint on (businessId, scheduledAt) — this one really is
-    // "someone else got there first", and nothing has been committed.
+    // "someone else got there first", and nothing has been committed. Any
+    // other failure (the database itself) is not, and used to be reported
+    // in the same words; the customer then picked another time that was
+    // never the problem. Logged, and told honestly.
+    if (!isUniqueViolation(err)) {
+      console.error(`Booking for lead ${lead.id} could not be written:`, err);
+      return { success: false, message: "Something went wrong on our side — please try again in a moment." };
+    }
     return { success: false, message: "That time was just booked by someone else — pick another." };
   }
 

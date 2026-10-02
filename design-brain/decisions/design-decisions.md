@@ -8647,3 +8647,13 @@ plain-text versions are unchanged.
   cream sheet with alt text. The reconnect emails don't know the business's time zone, so their date is Eastern.
   Checked rendered at 600 wide in Chromium (headless Chromium won't lay out narrower than about 500, so the
   phone media query was not exercised), not in a real mail app yet.
+
+## 2026-10-02 — The booking page stops calling a closed day "full"
+
+Bug hunt. With per-business booking days (A-078) a day the business never books on sat between two open days on
+the customer's page labelled "full", which is untrue. The API now tells the page which weekdays the business
+offers, and a day outside them is left out, the way weekends were when the hours were fixed. No new surface; a
+full day still reads "full". In the same change the confirm step re-checks the owner's Google Calendar for the one
+slot being booked, and a database failure on booking is no longer reported as "someone else took it".
+- **Weak spots, named:** the closed-day test uses the customer's local weekday, which can differ from the
+  business's across a midnight; cosmetic only. Not rendered, tests and typecheck only.

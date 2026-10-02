@@ -16,7 +16,7 @@ import { googleCalendarUrl, icsFile } from "@/lib/calendarLinks";
  * It promises only what exists: there is no reschedule or cancel, so a
  * change is "reply to the message this link came in".
  */
-type BookingData = { leadName: string; businessName: string; durationMinutes: number; slots: string[] };
+type BookingData = { leadName: string; businessName: string; durationMinutes: number; bookingDays?: number[]; slots: string[] };
 type Day = { key: string; date: Date; slots: string[] };
 
 const CHANGE_LINE = "Need a different time? Reply to the message this link came in.";
@@ -25,8 +25,13 @@ function dayKey(d: Date): string {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-/** The open days in order, with the weekdays between them that are full, so a gap reads as full rather than missing. */
-function toDays(slots: string[]): Day[] {
+/**
+ * The open days in order, with the days between them that are full, so a
+ * gap reads as full rather than missing. A day the business never books
+ * on (its booking days, A-078) is left out, as weekends were when the
+ * hours were fixed: calling a closed Wednesday "full" would be untrue.
+ */
+function toDays(slots: string[], bookingDays: number[] = [1, 2, 3, 4, 5]): Day[] {
   if (slots.length === 0) return [];
   const byKey = new Map<string, string[]>();
   for (const iso of slots) {
@@ -41,8 +46,8 @@ function toDays(slots: string[]): Day[] {
   while (cursor <= end) {
     const k = dayKey(cursor);
     const open = byKey.get(k) ?? [];
-    const weekday = cursor.getDay() !== 0 && cursor.getDay() !== 6;
-    if (open.length > 0 || weekday) days.push({ key: k, date: new Date(cursor), slots: open });
+    const offered = bookingDays.includes(cursor.getDay());
+    if (open.length > 0 || offered) days.push({ key: k, date: new Date(cursor), slots: open });
     cursor.setDate(cursor.getDate() + 1);
   }
   return days;
@@ -89,7 +94,7 @@ export default function BookingClient({ leadId }: { leadId: string }) {
     load();
   }, [load]);
 
-  const days = useMemo(() => toDays(data?.slots ?? []), [data]);
+  const days = useMemo(() => toDays(data?.slots ?? [], data?.bookingDays), [data]);
   const day = days.find((d) => d.key === dayKeyPicked) ?? days.find((d) => d.slots.length > 0) ?? null;
   const morning = day ? day.slots.filter((iso) => new Date(iso).getHours() < 12) : [];
   const afternoon = day ? day.slots.filter((iso) => new Date(iso).getHours() >= 12) : [];

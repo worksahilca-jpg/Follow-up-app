@@ -15,16 +15,12 @@
 import { prisma } from "@/lib/db";
 import { createCalendarEvent, getGoogleCalendarBusyTimes } from "@/lib/integrations/gmail";
 import { SLOT_MINUTES, bookingHoursOf, type BookingHours } from "@/lib/bookingHours";
+import { isUniqueViolation } from "@/lib/uniqueViolation";
 
 const LOOKAHEAD_DAYS = 10;
 const MIN_NOTICE_MINUTES = 60; // don't offer a slot starting less than an hour out
 
 const WEEKDAY_NUMBER: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-
-/** Prisma's "unique constraint failed" — the (businessId, scheduledAt) guard on Booking. */
-function isUniqueViolation(err: unknown): boolean {
-  return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
-}
 
 function wallClock(instant: Date, timeZone: string): { hour: number; minute: number; weekday: number } {
   const parts = new Intl.DateTimeFormat("en-US", {

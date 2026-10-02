@@ -43,6 +43,7 @@ import { isFollowUpSender, ownAddressSet, TEAM_ADDRESS_SELECT, teamAddresses } f
 import { isAutomatedAddress, leadMarketplaceFromQuery, threadCustomer } from "@/lib/sharedSenders";
 import type { InlineImage } from "@/lib/emailAssets";
 import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
+import { isUniqueViolation } from "@/lib/uniqueViolation";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -529,11 +530,6 @@ function parseReplyToHeader(raw: string): { name: string; email: string } | null
 // Senders that are never sales conversations, even if they land in the inbox.
 function isAutomatedSender(email: string): boolean {
   return isAutomatedAddress(email) || isFollowUpSender(email);
-}
-
-/** Prisma's unique-constraint violation — the loser of a create race. */
-function isUniqueViolation(err: unknown): boolean {
-  return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
 }
 
 /**

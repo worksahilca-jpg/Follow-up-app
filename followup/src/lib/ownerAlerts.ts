@@ -8,6 +8,7 @@ import { inboundBaseUrl } from "@/lib/siteUrl";
 import { isAlertEmailConfigured, sendAlertEmail } from "@/lib/alertEmail";
 import { renderNoticeEmailHtml, noticeDate } from "@/lib/noticeEmailHtml";
 import { isPushConfigured, sendPushToUser, type PushPayload } from "@/lib/webPush";
+import { isUniqueViolation } from "@/lib/uniqueViolation";
 
 /**
  * Telling the owner, outside the app, that a customer is waiting.
@@ -405,10 +406,6 @@ export function startOfLocalDay(now: Date, timeZone: string): Date {
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
   const elapsed = ((get("hour") % 24) * 60 + get("minute")) * 60 + get("second");
   return new Date(now.getTime() - elapsed * 1000 - now.getMilliseconds());
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
 }
 
 export type AlertRunResult = {

@@ -39,6 +39,7 @@ import { checkRapidEngagement } from "@/lib/engagement";
 import { applySourceRouting } from "@/lib/sourceRouting";
 import { acknowledgeNewLead } from "@/lib/acknowledge";
 import { isFollowUpSender, ownAddressSet, TEAM_ADDRESS_SELECT, teamAddresses } from "@/lib/ownSenders";
+import { isUniqueViolation } from "@/lib/uniqueViolation";
 
 const AUTHORITY = "https://login.microsoftonline.com/common/oauth2/v2.0";
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -49,11 +50,6 @@ const SCOPES = ["offline_access", "openid", "email", "Mail.Read", "Mail.Send", "
 
 function isAutomatedSender(email: string): boolean {
   return isAutomatedAddress(email) || isFollowUpSender(email);
-}
-
-/** Prisma's unique-constraint violation — the loser of a create race. */
-function isUniqueViolation(err: unknown): boolean {
-  return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
 }
 
 function credentials(): { clientId: string; clientSecret: string; redirectUri: string } | null {

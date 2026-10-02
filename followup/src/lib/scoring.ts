@@ -17,6 +17,7 @@ import { checkAiEligibility } from "@/lib/billing";
 import { detectLeadLanguage, leadLanguageOf } from "@/lib/leadLanguage";
 import { SCORE_HIGH, SCORE_MEDIUM } from "@/lib/scoreThresholds";
 import { escapeSlackText, notifySlack } from "@/lib/slack";
+import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import type { Message } from "@/lib/types";
 import { Prisma, type Priority as DbPriority } from "@prisma/client";
 
@@ -89,6 +90,16 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     }))
   ).sort(byTranscriptOrder);
   if (conversation.length === 0) return false;
+
+  // A bare STOP or START is consent, recorded by the capture path before
+  // this runs. There is nothing in it to score and nothing to answer: the
+  // automation never drafts a reply to one (isConsentKeyword in
+  // automation.ts), and the capture paths skip the acknowledgement. This
+  // used to run anyway, on every channel — one scoring call and one draft
+  // written against the word "STOP", shown on the lead's page as the
+  // suggested reply (bug hunt, 2026-10-02). The last draft stays as it was.
+  const newest = conversation[conversation.length - 1];
+  if (newest.direction === "inbound" && (isOptOutMessage(newest.body) || isOptInMessage(newest.body))) return false;
 
   // How this lead writes, read from their NEWEST message, every time.
   //

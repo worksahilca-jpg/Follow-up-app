@@ -829,11 +829,14 @@ function SettingsPageInner() {
       const res = await fetch("/api/integrations/gmail/sync", { method: "POST" });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Sync failed");
+      // A big inbox is read in budgeted passes; the automatic sync picks up
+      // where this one stopped within a couple of minutes.
+      const moreNote = data.truncated ? " Still reading the rest — more will appear on their own." : "";
       if (data.count === 0) {
-        setSyncResult("Synced — no new sales conversations found in your recent inbox.");
+        setSyncResult(`Synced — no new sales conversations found in your recent inbox.${moreNote}`);
       } else {
         const scoredNote = data.scored > 0 ? `, ${data.scored} sorted by how likely they are to book` : "";
-        setSyncResult(`Synced ${data.count} lead${data.count === 1 ? "" : "s"} from your inbox${scoredNote}.`);
+        setSyncResult(`Synced ${data.count} lead${data.count === 1 ? "" : "s"} from your inbox${scoredNote}.${moreNote}`);
       }
     } catch (err) {
       setSyncResult(err instanceof Error ? err.message : "Sync failed.");

@@ -24,8 +24,9 @@ export default function CantSendNotice({ reconnectEmail }: { reconnectEmail: str
       </div>
       <Link
         href="/settings#integrations"
-        className="shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium"
-        style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+        // Outline, not black: Send is the one black thing on Today (A-080).
+        className="shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium"
+        style={{ borderColor: "var(--line-strong)", backgroundColor: "var(--card)", color: "var(--ink)" }}
       >
         {reconnectEmail ? "Reconnect Gmail" : "Connect an inbox"}
       </Link>

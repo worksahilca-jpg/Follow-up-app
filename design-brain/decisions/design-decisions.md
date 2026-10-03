@@ -8701,3 +8701,22 @@ with headless Chromium and sent to the founder beside today's screens, as A-067 
 - **Weak spots, named:** the board's sidebar icons are placeholder squares; the Settings board cuts the Account
   group at 900px (it scrolls); the "This week" foot line is sample copy. On a one-customer account the list has
   one row and the page is mostly the open person, which is the point.
+
+## 2026-10-03 — Today built to the A-080 board (desk)
+
+Built the same evening the board was approved. `ApprovalQueue` grew a pane mode: on the desk the list on the left
+is plain rows (person, their own words, their wait; the chosen one is the only box) and the pane on the right is
+the open person with the warm reply card and Send; the phone keeps its in-place open (R-015, A-067). Gone from
+the desk: the Start-with line, the progress bar, the counts line, the "Needs you · N / Longest waiting first"
+row, the Coming up card and its "Nothing planned" label. A booked call is one line under the list; automated
+check-ins stay on the Coming up page, and the phone keeps its one-line link to it. "N of M handled" returns at
+the foot only once the day has five or more people. The can't-send notice's button became an outline so Send is
+the one black element on the screen (checked in the browser: exactly one). Compared side by side with the board
+on a local production build with three waiting customers and one booking; the first render showed two
+differences (every row bordered, because the global `* { border-color }` rule beats `border-transparent`; the
+customer's words not in a card), both fixed and re-rendered.
+- **Weak spots, named:** a person set aside with Later leaves the list but stays in the pane until the owner
+  picks someone else, so Undo is in reach; it is a little odd to look at. With one customer the left column is
+  one row and a lot of cream. The "This week" foot line didn't render locally (no data) so it was not seen in
+  this layout. The routine-pile box (two or more sources with routine drafts) sits above the list unchanged and
+  has not been seen in the new layout. Not tested with a group heading (two sources) in the pane layout.

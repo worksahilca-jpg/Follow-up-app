@@ -115,6 +115,10 @@ function ApprovalCard({
   sendLocked = false,
   laterToday = true,
   featured = false,
+  mode = "row",
+  selected = false,
+  onSelect,
+  onSetAside,
 }: {
   item: ApprovalItem;
   /** The first customer on Today: opens by itself on a phone (TodayCalmPhone). */
@@ -125,6 +129,19 @@ function ApprovalCard({
   sendLocked?: boolean;
   /** Whether "Later today" (2pm) is still ahead in the owner's day (A-046). */
   laterToday?: boolean;
+  /**
+   * A-080, one decision per screen. On the desk the list on the left is
+   * plain rows ("row" with `onSelect`), and the one person the owner is
+   * looking at is open on the right ("pane": always open, no row header,
+   * no Close). On a phone a row opens in place, as before (R-015).
+   */
+  mode?: "row" | "pane";
+  /** This row is the one open in the pane. */
+  selected?: boolean;
+  /** The desk row's only job: become the one in the pane. */
+  onSelect?: () => void;
+  /** Set aside with Later (or back with Undo), so the list can drop or restore the row. */
+  onSetAside?: (leadId: string, until: string | null) => void;
 }) {
   const [busy, setBusy] = useState<"send" | "dismiss" | "talked" | "later" | null>(null);
   const firstName = item.leadName.split(" ")[0] || item.leadName;
@@ -133,7 +150,7 @@ function ApprovalCard({
   const phone = usePhone();
   // null until the owner opens or closes it; the featured card starts open on a phone.
   const [openChoice, setOpen] = useState<boolean | null>(null);
-  const open = openChoice ?? (featured && phone);
+  const open = mode === "pane" ? true : (openChoice ?? (featured && phone));
   const routine = isSafeToSendInBulk(item) && !hasPriceSlot(item.draftMessage);
   // "Later" (A-046): set aside until a time, back by itself or as soon as
   // the customer writes. Not "handled", so it never counts toward the day.
@@ -239,6 +256,7 @@ function ApprovalCard({
       if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't save that.");
       setLaterUntil(data.until ?? null);
       setLaterOpen(false);
+      onSetAside?.(item.leadId, data.until ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't save that.");
     } finally {
@@ -291,9 +309,51 @@ function ApprovalCard({
       : item.reason
         ? `Held because ${item.reason.replace(/\.\s*$/, "")}.`
         : "A reply is written for you.";
+  const channelAndWait = [CHANNEL_NAME[item.leadLastMessageChannel ?? ""] ?? item.source, item.wait?.toLowerCase()].filter(Boolean).join(" · ");
+
+  // The desk row (A-080): the person, their own words, how long they have
+  // waited. Nothing to press but the row itself; Send lives in the pane,
+  // so it is the one black thing on the screen.
+  if (mode === "row" && !phone && onSelect) {
+    const said = item.leadLastMessage
+      ? `“${item.leadLastMessage.replace(/\s+/g, " ").slice(0, 110)}${item.leadLastMessage.length > 110 ? "…" : ""}”`
+      : why;
+    return (
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-current={selected ? "true" : undefined}
+        className={
+          "flex w-full items-start gap-3 rounded-xl border px-[14px] py-3.5 text-left " +
+          (selected ? "border-line bg-card" : "hover:bg-card")
+        }
+        // Inline: globals.css gives every element the line colour, and that
+        // unlayered rule beats the border-transparent utility.
+        style={selected ? undefined : { borderColor: "transparent" }}
+      >
+        <Initials name={item.leadName} size={36} />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5 text-[15px] font-semibold">
+            {item.leadName}
+            <ChannelIcon channel={item.leadLastMessageChannel} />
+          </span>
+          <span className="mt-0.5 block text-[14px] leading-snug text-ink-soft line-clamp-2">{said}</span>
+        </span>
+        {item.wait && <span className="shrink-0 pt-0.5 text-[13px] text-ink-faint tabular-nums">{item.wait.replace(/^Waiting /, "")}</span>}
+      </button>
+    );
+  }
 
   return (
     <div>
+      {mode === "pane" ? (
+        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+          <Link href={`/leads/${item.leadId}`} className="text-[20px] font-semibold hover:underline">
+            {item.leadName}
+          </Link>
+          <span className="text-[13px] text-ink-faint">{channelAndWait}</span>
+        </div>
+      ) : (
       <div className="flex items-center gap-3 px-[18px] py-3.5">
         <Initials name={item.leadName} size={30} />
         <div className="min-w-0 flex-1">
@@ -304,11 +364,7 @@ function ApprovalCard({
             <ChannelIcon channel={item.leadLastMessageChannel} />
           </div>
           {!open && <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft line-clamp-2">{why}</p>}
-          {open && (
-            <p className="mt-0.5 text-[13.5px] text-ink-faint">
-              {[CHANNEL_NAME[item.leadLastMessageChannel ?? ""] ?? item.source, item.wait?.toLowerCase()].filter(Boolean).join(" · ")}
-            </p>
-          )}
+          {open && <p className="mt-0.5 text-[13.5px] text-ink-faint">{channelAndWait}</p>}
         </div>
         {item.wait && (
           <span className="hidden shrink-0 text-right text-[12.5px] text-ink-faint tabular-nums sm:block sm:w-[104px]">{item.wait}</span>
@@ -339,10 +395,11 @@ function ApprovalCard({
           </>
         )}
       </div>
+      )}
       <AnimatePresence initial={false}>
       {open && (
       // Opens from the row it came from (A-048: open in place).
-      <motion.div key="open" {...OPEN_IN_PLACE} className="px-[18px] pb-4 sm:pl-[60px]">
+      <motion.div key="open" {...OPEN_IN_PLACE} className={mode === "pane" ? "mt-3" : "px-[18px] pb-4 sm:pl-[60px]"}>
 
       {/* What they actually said, before what we're about to reply with —
           approving a draft with no visible context for what it's replying
@@ -355,11 +412,13 @@ function ApprovalCard({
           between the two keeps the same "what they said, then what we'll
           say" distinction without stacking boxes inside boxes. */}
       {item.leadLastMessage && (
-        <div className="mt-1 leading-relaxed sm:mt-3">
+        // In the pane their words sit in a white card, as the board draws
+        // them (A-080), so the message and the reply read as two things.
+        <div className={mode === "pane" ? "rounded-[16px] border border-line bg-card px-[18px] py-4 leading-relaxed" : "mt-1 leading-relaxed sm:mt-3"}>
           <p className="sr-only">
             {item.leadName.split(" ")[0]} wrote, over {CHANNEL_LABEL[item.leadLastMessageChannel ?? ""] ?? "message"}:
           </p>
-          <p className="whitespace-pre-wrap text-[17px] leading-[1.45] text-ink sm:text-[15px]">{item.leadLastMessage}</p>
+          <p className={"whitespace-pre-wrap leading-[1.45] text-ink " + (mode === "pane" ? "text-[16px]" : "text-[17px] sm:text-[15px]")}>{item.leadLastMessage}</p>
           {/* The 30-minute holding message went (A-060): the customer is not
               waiting in silence, and the owner should know that before
               deciding how fast this one has to be. */}
@@ -530,9 +589,11 @@ function ApprovalCard({
       {/* Says what IS true (nothing left) rather than "Cancelled", which
           describes the press instead of the outcome. */}
       {send.cancelled && <p className="mt-1.5 text-xs text-ink-soft">Stopped — nothing was sent.</p>}
-      <button type="button" onClick={() => { setOpen(false); setLaterOpen(false); }} className="mt-3 text-[13px] text-ink-faint hover:text-ink-soft">
-        Close
-      </button>
+      {mode !== "pane" && (
+        <button type="button" onClick={() => { setOpen(false); setLaterOpen(false); }} className="mt-3 text-[13px] text-ink-faint hover:text-ink-soft">
+          Close
+        </button>
+      )}
       </motion.div>
       )}
       </AnimatePresence>
@@ -547,7 +608,6 @@ export default function ApprovalQueue({
   handledToday = 0,
   laterToday = true,
   setAside = 0,
-  waitingOn = 0,
   holdAll = false,
 }: {
   items: ApprovalItem[];
@@ -561,8 +621,6 @@ export default function ApprovalQueue({
   laterToday?: boolean;
   /** Cards set aside with Later, hidden until they come back. */
   setAside?: number;
-  /** Customers we answered who haven't answered back (A-050). */
-  waitingOn?: number;
   /**
    * Business.holdAllForApproval: every reply waits for the owner. The
    * empty state must not then say only unsure ones do (strategy audit
@@ -580,10 +638,7 @@ export default function ApprovalQueue({
     return () => pending.forEach(clearTimeout);
   }, []);
   // Stable, so a card's own timers (We talked) aren't restarted by every re-render.
-  // Sent from this list: those customers are now waiting on themselves (A-050).
-  const [sentHere, setSentHere] = useState(0);
-  const resolve = useCallback((leadId: string, result: string | null, sent?: boolean) => {
-    if (sent) setSentHere((n) => n + 1);
+  const resolve = useCallback((leadId: string, result: string | null) => {
     if (!result) {
       setResolved((prev) => new Set(prev).add(leadId));
       return;
@@ -617,6 +672,20 @@ export default function ApprovalQueue({
    * list. A set of "revealed ids" would leave a hole instead.
    */
   const [expanded, setExpanded] = useState<Record<string, number>>({});
+  // A-080: on the desk the owner looks at one person at a time, in the
+  // pane on the right. Null means "the first one who needs you".
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Set aside with Later from the pane: the row leaves the list, the pane
+  // keeps showing the set-aside note with its Undo, which brings the row back.
+  const [setAsideIds, setSetAsideIds] = useState<Set<string>>(new Set());
+  const setAsideFromPane = useCallback((leadId: string, until: string | null) => {
+    setSetAsideIds((prev) => {
+      const next = new Set(prev);
+      if (until) next.add(leadId);
+      else next.delete(leadId);
+      return next;
+    });
+  }, []);
 
   // An empty queue used to `return null`, so a good day rendered as a greeting,
   // three tiles and a link — and the screen read as broken rather than as calm.
@@ -635,7 +704,6 @@ export default function ApprovalQueue({
     // Today on load simply is (no motion without a change of state).
     return (
       <>
-      <PlacesLine needsYou={0} waitingOn={waitingOn + sentHere} handled={handled} />
       <motion.div
         initial={items.length > 0 ? { opacity: 0 } : false}
         animate={{ opacity: 1, transition: { duration: MOTION.move, ease: MOTION.easeOut } }}
@@ -682,50 +750,27 @@ export default function ApprovalQueue({
   // counting groups would keep the whole-queue box on screen beside a
   // single routine row and reintroduce the twin buttons.
   const groupsWithRoutine = groups.filter((g) => g.safeToSend.length > 0).length;
-  const focusWait = summary.focusOn ? active.find((i) => i.leadId === summary.focusOn?.leadId)?.waitClause ?? null : null;
   const total = handled + active.length;
-  // The first customer on screen, opened by itself on a phone (TodayCalmPhone).
+  // The first customer on screen: open in the pane on the desk (A-080),
+  // opened by itself on a phone (TodayCalmPhone).
   const firstNeedsYou = groups.flatMap((g) => g.needsYou).find((i) => !leaving[i.leadId])?.leadId ?? null;
+  // The one in the pane: the owner's pick while it is still on the list,
+  // else the first who needs them. A set-aside person stays in the pane
+  // until the owner moves on, so Undo is still in reach.
+  const selected =
+    (selectedId && visible.find((i) => i.leadId === selectedId)) ||
+    (firstNeedsYou && visible.find((i) => i.leadId === firstNeedsYou)) ||
+    null;
 
   return (
-    <div className="mt-2">
-      {/* The canvas Today: who to start with, how far through the day,
-          then the three places (A-046, A-050). */}
-      {summary.focusOn ? (
-        <p className="text-base leading-relaxed">
-          Start with{" "}
-          <Link href={`/leads/${summary.focusOn.leadId}`} className="font-semibold hover:underline">
-            {summary.focusOn.leadName.split(" ")[0]}
-          </Link>
-          {focusWait ? `, ${focusWait}.` : ` on ${summary.focusOn.source}.`}
-        </p>
-      ) : (
-        <p className="text-base text-ink-soft">Nothing here needs a decision. The rest are routine.</p>
-      )}
-      {/* Today has an end (A-031, A-046). Desktop only: the phone gets less (R-015). */}
-      <div className="mt-[18px] hidden sm:block max-w-[520px]">
-        <div className="h-[3px] rounded-full" style={{ backgroundColor: "var(--line-2)" }}>
-          <div
-            className="h-[3px] rounded-full"
-            style={{ width: `${total > 0 ? Math.round((100 * handled) / total) : 0}%`, backgroundColor: "var(--ink)" }}
-          />
-        </div>
-        <p className="mt-2 text-[13px] text-ink-faint tabular-nums">
-          <span className="text-ink font-medium">
-            {handled} of {total}
-          </span>{" "}
-          handled today · When the list is empty, you&apos;re done for today.
-          {setAside > 0 && ` ${setAside} set aside for later.`}
-        </p>
-      </div>
-      <PlacesLine needsYou={active.length} waitingOn={waitingOn + sentHere} handled={handled} />
-
+    <div className="mt-6 sm:grid sm:grid-cols-[minmax(280px,400px)_minmax(0,1fr)] sm:items-start sm:gap-10 lg:gap-12">
+      <div className="min-w-0">
       {/* Said once, above everything, rather than 48 times on 48 cards.
           The cards still carry their own sentence — this is the line that
           stops an owner concluding the product is repeating itself before
           they have read the second one. */}
       {summary.fromBeforePermission > 0 && (
-        <p className="mt-2 text-xs text-ink-soft leading-relaxed">
+        <p className="mb-4 text-xs text-ink-soft leading-relaxed">
           {/* "of the drafts below", not "of these". This line sits under
               the "Needs your OK (N)" heading and counts BOTH piles, so
               "2 of these" under a heading reading (1) read as the screen
@@ -736,21 +781,10 @@ export default function ApprovalQueue({
         </p>
       )}
 
-      {/* The one accented control on the screen (A-006: the accent is
-          spent once, on the single thing to act on). Whole-queue rather
-          than per-source, because an owner facing hundreds wants the
-          routine ones gone so they can see what is left — the per-source
-          buttons below are for when they do care which channel.
-
-          Suppressed when every routine draft came from ONE source,
-          because then this box and that source's row are the same
-          button, one above the other, both reading "Send all 12". Two
-          identical controls is not a choice, it is a question about
-          whether they differ — and the answer is that they don't.
-          Caught by rendering a single-source queue; the counts were
-          right and the screen asked the owner to pick between twins. */}
+      {/* Whole-queue "send the routine ones" (A-006): only when more than
+          one source has routine drafts, otherwise it twins the row below. */}
       {summary.safeToSend > 0 && groupsWithRoutine > 1 && (
-        <div className="mt-4 box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-5 box px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm">
             <p className="font-medium">
               {summary.safeToSend} {summary.safeToSend === 1 ? "draft is" : "drafts are"} routine.
@@ -759,21 +793,19 @@ export default function ApprovalQueue({
               FollowUp checked each one and found nothing that needs a decision. Nothing goes out until you press.
             </p>
           </div>
-          {!sendLocked && <SafePileAction count={summary.safeToSend} source={null} accent />}
+          {!sendLocked && <SafePileAction count={summary.safeToSend} source={null} />}
         </div>
       )}
 
-      <div className="mt-7 mb-2.5 hidden items-center justify-between sm:flex">
-        <Eyebrow>Needs you · {summary.needsYou}</Eyebrow>
-        <span className="text-[12.5px] text-ink-faint">Longest waiting first</span>
-      </div>
       <LayoutGroup>
       <div className="flex flex-col gap-6 relative">
         {groups.map((group) => {
-          const shownHere = visibleCount(group.needsYou.length, expanded[group.source] ?? QUEUE_PAGE_SIZE);
-          const hiddenHere = group.needsYou.length - shownHere;
+          // Rows set aside from the pane are off the list until Undo.
+          const rows = group.needsYou.filter((i) => !setAsideIds.has(i.leadId));
+          const shownHere = visibleCount(rows.length, expanded[group.source] ?? QUEUE_PAGE_SIZE);
+          const hiddenHere = rows.length - shownHere;
           // Not counting a card that is saying "Sent to Priya" on its way out.
-          const needHere = group.needsYou.filter((i) => !leaving[i.leadId]).length;
+          const needHere = rows.filter((i) => !leaving[i.leadId]).length;
           return (
           <motion.section key={group.source} layout="position" transition={{ layout: MOTION.layout }}>
             {/* Dense heading, not a box — see the note above. */}
@@ -786,13 +818,15 @@ export default function ApprovalQueue({
               </p>
             </div>
 
-            <div className="relative flex flex-col overflow-hidden rounded-2xl border border-line bg-card divide-y divide-[var(--line-2)]">
+            {/* A box on the phone (rows open in place inside it); on the
+                desk the rows are plain and the chosen one is the box (A-080). */}
+            <div className="relative flex flex-col overflow-hidden rounded-2xl border border-line bg-card divide-y divide-[var(--line-2)] sm:overflow-visible sm:rounded-none sm:border-0 sm:bg-transparent sm:divide-y-0">
               {/* A-048: a finished card folds into what happened, then
                   leaves, and the cards below slide up into its place
                   rather than jumping. Position only, so nothing is
                   stretched; reduced motion skips all of it. */}
               <AnimatePresence initial={false} mode="popLayout">
-                {group.needsYou.slice(0, shownHere).map((item) => (
+                {rows.slice(0, shownHere).map((item) => (
                   <motion.div
                     key={item.leadId}
                     layout="position"
@@ -802,12 +836,20 @@ export default function ApprovalQueue({
                     transition={{ layout: MOTION.layout }}
                   >
                     {leaving[item.leadId] ? (
-                      <div className="px-[18px] py-3.5 flex items-center gap-2 text-sm text-ink-soft" role="status">
+                      <div className="px-[18px] py-3.5 flex items-center gap-2 text-sm text-ink-soft sm:px-[14px]" role="status">
                         <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {leaving[item.leadId]}
                       </div>
                     ) : (
-                      <ApprovalCard item={item} onResolved={resolve} sendLocked={sendLocked} laterToday={laterToday} featured={item.leadId === firstNeedsYou} />
+                      <ApprovalCard
+                        item={item}
+                        onResolved={resolve}
+                        sendLocked={sendLocked}
+                        laterToday={laterToday}
+                        featured={item.leadId === firstNeedsYou}
+                        selected={selected?.leadId === item.leadId}
+                        onSelect={() => setSelectedId(item.leadId)}
+                      />
                     )}
                   </motion.div>
                 ))}
@@ -816,17 +858,13 @@ export default function ApprovalQueue({
               {/* The folded tail. Same row shape as the routine pile
                   below it — a sentence, the best name in it, and one
                   control — because they are the same kind of thing: a
-                  count standing in for cards nobody needs on screen yet.
-
-                  The section heading above still reports the true total,
-                  so nothing here hides how much is waiting; it only
-                  declines to draw it. */}
+                  count standing in for cards nobody needs on screen yet. */}
               {hiddenHere > 0 && (
-                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="px-[18px] py-3 flex flex-wrap items-center justify-between gap-3">
+                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="px-[18px] py-3 flex flex-wrap items-center justify-between gap-3 sm:px-[14px]">
                   <p className="text-sm text-ink-soft">
                     {hiddenHere} more {hiddenHere === 1 ? "needs" : "need"} your OK
-                    {group.needsYou[shownHere] && (
-                      <span className="text-ink"> — next is {group.needsYou[shownHere].leadName}</span>
+                    {rows[shownHere] && (
+                      <span className="text-ink"> — next is {rows[shownHere].leadName}</span>
                     )}
                   </p>
                   <button
@@ -839,13 +877,13 @@ export default function ApprovalQueue({
                         one press often reveals more than the page size,
                         and a button that overstates what it will do is
                         the kind of small lie this product cannot afford. */}
-                    Show {nextStep(group.needsYou.length, shownHere)} more
+                    Show {nextStep(rows.length, shownHere)} more
                   </button>
                 </motion.div>
               )}
 
               {group.safeToSend.length > 0 && (
-                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="px-[18px] py-3 flex flex-wrap items-center justify-between gap-3">
+                <motion.div layout="position" transition={{ layout: MOTION.layout }} className="px-[18px] py-3 flex flex-wrap items-center justify-between gap-3 sm:px-[14px]">
                   <p className="text-sm text-ink-soft">
                     {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"}
                     {group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
@@ -865,37 +903,41 @@ export default function ApprovalQueue({
         })}
       </div>
       </LayoutGroup>
-    </div>
-  );
-}
 
-/**
- * The three places a conversation can be (A-050, the Close study): needs
- * you, waiting on the customer, handled. Every customer is in exactly one.
- * Live, so it moves as the owner works. The phone gets the short form
- * (R-015): the queue below already says what needs them.
- */
-function PlacesLine({ needsYou, waitingOn, handled }: { needsYou: number; waitingOn: number; handled: number }) {
-  // A new account has nothing in any place yet: say nothing rather than three zeros.
-  if (needsYou + waitingOn + handled === 0) return null;
-  return (
-    <>
-      <p className="mt-5 hidden sm:block border-y border-line-2 py-3 max-w-[760px] text-sm text-ink-soft tabular-nums">
-        Needs you <span className="text-ink font-medium">{needsYou}</span>
-        <span aria-hidden="true"> · </span>
-        <Link href="/waiting" className="hover:underline underline-offset-4">
-          Waiting on customers <span className="text-ink font-medium">{waitingOn}</span>
-        </Link>
-        <span aria-hidden="true"> · </span>
-        Handled today <span className="text-ink font-medium">{handled}</span>
-      </p>
-      <p className="mt-3 hidden text-sm text-ink-soft tabular-nums">
-        <Link href="/waiting" className="underline-offset-4 hover:underline">
-          {waitingOn} waiting on customers
-        </Link>
-        {" · "}
-        {handled} handled today
-      </p>
-    </>
+      {/* Progress only when there is progress (A-080, the goal-gradient
+          rule): "3 of 7 handled" at the foot, desk only, and only once
+          the day has five or more people in it. Below that the list
+          itself is the progress. */}
+      {total >= 5 && (
+        <p className="mt-5 hidden text-[13px] text-ink-faint tabular-nums sm:block">
+          {handled} of {total} handled today
+          {setAside > 0 && ` · ${setAside} set aside for later`}
+        </p>
+      )}
+      </div>
+
+      {/* The pane (A-080): the one person the owner is looking at, their
+          words, the reply, Send. Desk only; on a phone the row opens in
+          place (R-015). Keyed by person so Later, We talked and the price
+          blank start fresh each time. */}
+      <div className="hidden min-w-0 sm:block">
+        {selected && (leaving[selected.leadId] ? (
+          <p className="flex items-center gap-2 text-sm text-ink-soft" role="status">
+            <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {leaving[selected.leadId]}
+          </p>
+        ) : (
+          <ApprovalCard
+            key={selected.leadId}
+            item={selected}
+            mode="pane"
+            onResolved={resolve}
+            sendLocked={sendLocked}
+            laterToday={laterToday}
+            onSetAside={setAsideFromPane}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

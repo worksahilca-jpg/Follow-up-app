@@ -198,17 +198,21 @@ function OnboardingFormInner({
    * permanently. So anything the setup strip on Today would otherwise nag
    * about is marked as not applicable on the way out.
    *
-   * Only two of the strip's steps are sources at all (`gmail` and
-   * `widget`); the rest — billing, business details — are not skippable by
-   * design and are not touched here. The dismissals are best-effort: if one
-   * fails, the owner still finishes onboarding and the worst case is the
-   * old behaviour, a step on Today they can dismiss themselves.
+   * Only the website form is skippable here. The inbox is not: without one
+   * FollowUp cannot read or answer anyone, so the strip on Today keeps
+   * asking for it, and the server refuses to mark it skipped
+   * (DISMISSIBLE_SETUP_STEPS in src/lib/setupStatus.ts). This used to post
+   * that refusal anyway, one failed request per onboarding (local
+   * run-through, 2026-10-02). Billing and business details are not
+   * skippable by design either and are not touched here. The dismissal is
+   * best-effort: if it fails, the owner still finishes onboarding and the
+   * worst case is the old behaviour, a step on Today they can dismiss
+   * themselves.
    */
   async function finishOnboarding() {
     setFinishing(true);
 
     const skipped: string[] = [];
-    if (!inboxConnected) skipped.push("gmail");
     if (!websiteFormTouched.current) skipped.push("widget");
 
     await Promise.all(

@@ -8669,3 +8669,11 @@ surface. And "Sync now" on a big inbox stops at its per-run budget without sayin
 the job within a couple of minutes and the owner should not press the button again.
 - **Weak spots, named:** both are copy-only and checked by tests and typecheck, not rendered. The import box lists
   at most ten skipped rows and ten notes; a file with more of each says "…and N more" for rows only.
+
+## 2026-10-03 — The home page names Google Calendar (founder: "yes")
+
+Google's verification review checks that the home page says what the app does with Google data. The
+Questions answer "Is my data safe? Can I leave?" said FollowUp reads the inboxes you connect and replies from
+your own address, but never mentioned Calendar, which the consent screen asks for. One sentence added to that
+answer, in its voice: "If a customer books a call through your link, it puts that call on your Google
+Calendar." No new surface. Founder approved the sentence before it went in.

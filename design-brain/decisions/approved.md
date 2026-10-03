@@ -1519,3 +1519,27 @@ sign-in) share one shell:
 - **Under the card, on the wash:** the four links and one line of small print saying who it went to and how often.
 - **Light only, like the landing page.** Words never sit on the wash (A-071's rule), so Gmail's dark mode can darken
   the card and lighten the text without touching the picture.
+
+## A-080 — One decision per screen on the desk: Today, the customer page, Settings ^A-080
+
+**Approved:** 2026-10-03, founder: *"yes to all, build today first"*, on the boards in
+`prototypes/2026-10-03-one-decision-desk.html` shown beside today's screens. This follows R-026 ("all of it,
+too much stuff") and the Laws of UX pass (`research/ux-patterns/2026-10-03-laws-of-ux-applied.md`), whose ten
+rules this approval adopts.
+**What specifically:**
+- **Today (desk):** the headline is the only count. The first person who needs the owner opens on the right
+  (their words, the warm reply card, Send, Edit, Later, Don't send, We talked); everyone else is a plain list on
+  the left, longest waiting first, each with their words and their wait. A booked call is one line under the
+  list, only when one exists. The week line stays at the foot. Send is the one black element.
+- **Customer page:** the thread and the reply card are unchanged. The side column is three facts (why it's
+  here, waiting, came from), the three outline actions (We talked, Copy booking link, Email) and one "Details"
+  row that opens the rest: how it handles this person, why it may write, what it did, the plan, stage, about,
+  not a customer, delete.
+- **Settings:** one column, five groups, the follow-up plan on top; the one broken thing first when there is
+  one. No link grid, no status card that repeats a row.
+- **Order:** Today first, then the customer page, then Settings. One PR each, compared with its board before
+  merge (A-067).
+**Supersedes, in part:** A-031 (the handled line leaves Today; "N of M handled" may return at the foot only when
+M ≥ 5), A-045 (the numbers line leaves Today), A-046's "Start with" line (the order already says it) and its
+"Coming up" card (a booked call becomes one line; automated check-ins stay on the Coming up page), A-069's side
+column as drawn (now three facts, three actions, one Details). Everything else in those entries stands.

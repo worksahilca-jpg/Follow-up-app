@@ -8677,3 +8677,27 @@ Questions answer "Is my data safe? Can I leave?" said FollowUp reads the inboxes
 your own address, but never mentioned Calendar, which the consent screen asks for. One sentence added to that
 answer, in its voice: "If a customer books a call through your link, it puts that call on your Google
 Calendar." No new surface. Founder approved the sentence before it went in.
+
+## 2026-10-03 — Founder: "our product looks way too complicated" (research to follow)
+
+Said unprompted at the end of the Google-submission day, after seeing the app through the demo recording
+and the realtor's account. Asked which screen and whether density or words: **"all of it, too much stuff"**
+(2026-10-03). So: density, every screen, desktop included. Recorded as R-026. Inferred reason, marked inferred: a day spent watching the product through a reviewer's
+eyes (two demo videos, caption writing) exposed how much a first-time owner is asked to read on Today and
+the customer page. Next: a research pass per `design-brain/workflows/research-workflow.md` with the
+question "what is the least a realtor needs on screen to trust the held reply and press Send", checked
+against `decisions/rejected.md` before proposing anything. The Monday realtor meeting is the first user
+observation for it.
+
+## 2026-10-03 — "One decision" boards drawn for the desk (proposed, not yet approved)
+
+After R-026 and the Laws of UX pass, three desktop screens were drawn to the ten rules in
+`research/ux-patterns/2026-10-03-laws-of-ux-applied.md`, as a static board with the app's real tokens and fonts:
+`prototypes/2026-10-03-one-decision-desk.html` (Today; the customer page closed and with Details open; Settings).
+What the boards show: Today with the first person open beside a plain list, the headline as the only count, Send
+as the one black; the customer page with the thread and reply unchanged and a side column of three facts, three
+outline actions and one Details row; Settings as one column of five groups with the follow-up plan on top. Rendered
+with headless Chromium and sent to the founder beside today's screens, as A-067 requires. Awaiting his pick.
+- **Weak spots, named:** the board's sidebar icons are placeholder squares; the Settings board cuts the Account
+  group at 900px (it scrolls); the "This week" foot line is sample copy. On a one-customer account the list has
+  one row and the page is mostly the open person, which is the point.

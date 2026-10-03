@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Decision Boards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Design boards for FollowUp's desktop app after R-026 ("all of it, too much stuff") and the Laws of UX
+   pass (research/ux-patterns/2026-10-03-laws-of-ux-applied.md). Three screens, each drawn at 1280×900 with
+   the app's real tokens (followup/src/app/globals.css). Light only: it depicts the light product. */
+:root {
+  --paper: #fdfcfc; --card: #ffffff; --card-2: #f5f3f1; --sidebar: #f9f8f6; --board: #ecebe8;
+  --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68;
+  --line: #e7e5e2; --line-2: #f0eeeb; --line-strong: rgba(10,10,10,.18);
+  --state-needs: #b4532a; --state-waiting: #7a8699; --sage: #0d6e3c;
+  --font: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--board); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.boards { display: grid; gap: 48px; padding: 32px 16px 64px; justify-items: center; }
+.board-title { font-size: 13px; color: var(--ink-soft); width: 1280px; max-width: 100%; }
+.board-title b { color: var(--ink); font-weight: 600; }
+
+/* ---- Desktop shell, as it ships ---- */
+.screen { width: 1280px; height: 900px; max-width: 100%; background: var(--paper); display: grid; grid-template-columns: 232px 1fr; overflow: hidden; border: 1px solid var(--line); }
+.side { background: var(--sidebar); border-right: 1px solid var(--line); padding: 18px 12px; display: flex; flex-direction: column; gap: 10px; }
+.biz { display: flex; align-items: center; gap: 10px; padding: 0 4px 6px; font-weight: 600; font-size: 15px; }
+.biz .m { width: 26px; height: 26px; border-radius: 7px; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 13px; }
+.biz .bell { margin-left: auto; color: var(--ink-faint); font-size: 14px; }
+.search { border: 1px solid var(--line); background: var(--card); border-radius: 9px; padding: 8px 12px; color: var(--ink-faint); font-size: 14px; }
+.nav { display: grid; gap: 2px; margin-top: 6px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 9px; color: var(--ink); text-decoration: none; font-size: 15px; }
+.nav a.on { background: var(--card); border: 1px solid var(--line); font-weight: 600; }
+.nav a .n { margin-left: auto; color: var(--ink-faint); font-size: 13px; }
+.nav .ic { width: 16px; height: 16px; border: 1.5px solid var(--ink-soft); border-radius: 4px; opacity: .8; }
+.side .foot { margin-top: auto; display: grid; gap: 2px; }
+.side .foot a { display: flex; gap: 10px; align-items: center; padding: 8px 12px; color: var(--ink); text-decoration: none; font-size: 15px; }
+.side .foot a.sub { color: var(--ink-soft); padding-left: 24px; }
+.main { padding: 36px 56px; overflow: hidden; }
+
+.date { font-size: 13px; color: var(--ink-faint); margin: 0 0 4px; }
+h1 { font-size: 32px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin: 0; }
+.faint { color: var(--ink-faint); } .soft { color: var(--ink-soft); } .small { font-size: 13px; }
+.mono { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); font-weight: 500; }
+
+/* Buttons: one black per screen */
+.btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 11px 22px; font-size: 15px; font-weight: 600; border: 1px solid var(--ink); background: var(--ink); color: #fff; white-space: nowrap; }
+.btn.big { padding: 14px 28px; font-size: 16px; }
+.btn.ghost { background: var(--card); color: var(--ink); border-color: var(--line); font-weight: 500; }
+.link { color: var(--ink-soft); font-size: 14px; text-decoration: none; }
+.link.u { text-decoration: underline; text-underline-offset: 3px; }
+
+/* The warm reply card, exactly the shipped gradient (ReplyCard.tsx) */
+.reply { border-radius: 18px; padding: 20px 22px; border: 1px solid var(--line); display: grid; gap: 12px;
+  background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,.9), rgba(244,196,160,0) 70%),
+              radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,.95), rgba(196,210,228,0) 70%),
+              radial-gradient(50% 70% at 88% 0%, rgba(238,212,204,.9), rgba(238,212,204,0) 72%), #f3efea; }
+.reply .mono { color: var(--ink-soft); }
+.reply .text { font-size: 17px; line-height: 1.45; white-space: pre-line; }
+.reply .basis { font-size: 13px; color: var(--ink-soft); }
+.reply .row { display: flex; align-items: center; gap: 12px; }
+.reply .row .quiet { margin-left: 6px; display: flex; gap: 16px; }
+
+/* ---- Today ---- */
+.today { display: grid; grid-template-columns: 400px 1fr; gap: 40px; margin-top: 28px; align-items: start; }
+.list { display: grid; }
+.person { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: start; padding: 14px 12px; border-top: 1px solid var(--line-2); cursor: pointer; border-radius: 12px; }
+.person.on { background: var(--card); border: 1px solid var(--line); border-top-color: var(--line); margin: -1px 0; }
+.person + .person.on { border-top: 1px solid var(--line); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--card-2); display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+.person .name { font-weight: 600; font-size: 15px; display: flex; gap: 8px; align-items: center; }
+.person .said { color: var(--ink-soft); font-size: 14px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.person .wait { font-size: 13px; color: var(--ink-faint); white-space: nowrap; padding-top: 2px; }
+.glyph { width: 13px; height: 10px; border: 1.3px solid var(--ink-faint); border-radius: 2px; display: inline-block; }
+.open { display: grid; gap: 18px; }
+.open .who { display: flex; align-items: baseline; gap: 10px; }
+.open .who b { font-size: 20px; font-weight: 600; }
+.open .who .sub { font-size: 13px; color: var(--ink-faint); }
+.msg { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; font-size: 16px; line-height: 1.5; white-space: pre-line; }
+.foot-line { margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--line-2); display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-faint); }
+.booked { font-size: 14px; color: var(--ink-soft); }
+.booked b { color: var(--ink); font-weight: 600; }
+
+/* ---- Customer page ---- */
+.cust { display: grid; grid-template-columns: 1fr 340px; gap: 44px; align-items: start; }
+.back { font-size: 13px; color: var(--ink-faint); margin-bottom: 14px; }
+.head { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.head .avatar { width: 44px; height: 44px; font-size: 14px; }
+.head h1 { font-size: 26px; }
+.head .sub { font-size: 13px; color: var(--ink-faint); }
+.daylabel { text-align: center; }
+.thread { display: grid; gap: 14px; }
+.from { font-size: 13px; color: var(--ink-faint); }
+.sidecol { display: grid; gap: 18px; padding-top: 6px; }
+.fact { display: grid; gap: 4px; }
+.fact .k { font-size: 12.5px; color: var(--ink-faint); }
+.fact .v { font-size: 15px; }
+.fact .v.needs::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--state-needs); margin-right: 8px; vertical-align: 2px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions .btn.ghost { padding: 9px 16px; font-size: 14px; }
+.details { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); font-size: 15px; }
+.details .chev { color: var(--ink-faint); }
+.sheet { border: 1px solid var(--line); border-radius: 14px; background: var(--card); overflow: hidden; }
+.sheet .srow { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line-2); font-size: 14px; }
+.sheet .srow:first-child { border-top: 0; }
+.sheet .srow .v { color: var(--ink-soft); }
+.sheet .srow.danger { color: var(--ink-faint); font-size: 13px; }
+
+/* ---- Settings ---- */
+.settings { max-width: 640px; display: grid; gap: 26px; margin-top: 22px; }
+.group { display: grid; gap: 8px; }
+.group .gl { font-size: 13px; color: var(--ink-faint); }
+.rows { border: 1px solid var(--line); border-radius: 14px; background: var(--card); overflow: hidden; }
+.rrow { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-top: 1px solid var(--line-2); font-size: 15px; }
+.rrow:first-child { border-top: 0; }
+.rrow .v { color: var(--ink-faint); font-size: 14px; display: flex; gap: 10px; align-items: center; }
+.rrow .v.ok::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sage); display: inline-block; }
+.rrow .chev { color: var(--ink-faint); margin-left: 8px; }
+.plan { border: 1px solid var(--line); border-radius: 14px; background: var(--card); overflow: hidden; }
+.plan .prow { display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--line-2); font-size: 15px; }
+.plan .prow:first-child { border-top: 0; }
+.plan .prow .k { color: var(--ink-faint); font-size: 14px; }
+.group .head2 { display: flex; justify-content: space-between; align-items: baseline; }
+</style>
+</head>
+<body>
+<div class="boards">
+
+<!-- ===================== TODAY ===================== -->
+<div class="board-title"><b>Today</b> · the first person open, the rest a list. Headline carries the only count. One black: Send.</div>
+<div class="screen" id="today">
+  <aside class="side">
+    <div class="biz"><span class="m">M</span>Maple Realty<span class="bell">◦</span></div>
+    <div class="search">Search customers</div>
+    <nav class="nav">
+      <a class="on"><span class="ic"></span>Today<span class="n">3</span></a>
+      <a><span class="ic"></span>Inbox</a>
+      <a><span class="ic"></span>Customers<span class="n">16</span></a>
+    </nav>
+    <div class="foot">
+      <a>Settings</a>
+      <a class="sub">Something broke?</a>
+      <a>Sign out</a>
+    </div>
+  </aside>
+  <main class="main">
+    <p class="date">Monday, October 6</p>
+    <h1>3 customers are waiting on you.</h1>
+
+    <div class="today">
+      <div class="list">
+        <div class="person on">
+          <span class="avatar">PS</span>
+          <div><div class="name">Priya Sharma <span class="glyph"></span></div><div class="said">“Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?”</div></div>
+          <span class="wait">2 days</span>
+        </div>
+        <div class="person">
+          <span class="avatar">DK</span>
+          <div><div class="name">Daniel Kim <span class="glyph"></span></div><div class="said">“What’s the asking price on the Queen St condo? And are the fees included?”</div></div>
+          <span class="wait">5 h</span>
+        </div>
+        <div class="person">
+          <span class="avatar">AO</span>
+          <div><div class="name">Amara Okafor <span class="glyph"></span></div><div class="said">“Thanks for the tour yesterday. We’d like to put in an offer, what’s next?”</div></div>
+          <span class="wait">40 min</span>
+        </div>
+        <p class="booked" style="margin:22px 12px 0">Booked call · <b>Priya Sharma</b>, Sat 10:30 AM</p>
+      </div>
+
+      <div class="open">
+        <div class="who"><b>Priya Sharma</b><span class="sub">Email · wrote 2 days ago</span></div>
+        <div class="msg">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?
+
+Thanks,
+Priya</div>
+        <div class="reply">
+          <div class="mono">Reply ready · waits for your OK</div>
+          <div class="text">Hi Priya,
+
+Yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing?
+
+Best,
+Sahil</div>
+          <div class="basis">Held because every reply waits for your OK. Based on Priya’s email.</div>
+          <div class="row">
+            <span class="btn big">Send</span>
+            <span class="btn ghost big">Edit</span>
+            <span class="quiet"><span class="link">Later</span><span class="link">Don’t send</span><span class="link">We talked</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot-line"><span>This week: 4 customers heard back in under 10 minutes · 2 booked a call</span><span>Numbers →</span></div>
+  </main>
+</div>
+
+<!-- ===================== CUSTOMER PAGE ===================== -->
+<div class="board-title"><b>Customer page</b> · the thread and reply as today. The side column is four facts, three actions and one Details. One black: Send.</div>
+<div class="screen" id="customer">
+  <aside class="side">
+    <div class="biz"><span class="m">M</span>Maple Realty<span class="bell">◦</span></div>
+    <div class="search">Search customers</div>
+    <nav class="nav">
+      <a><span class="ic"></span>Today<span class="n">3</span></a>
+      <a><span class="ic"></span>Inbox</a>
+      <a class="on"><span class="ic"></span>Customers<span class="n">16</span></a>
+    </nav>
+    <div class="foot"><a>Settings</a><a class="sub">Something broke?</a><a>Sign out</a></div>
+  </aside>
+  <main class="main">
+    <div class="cust">
+      <div>
+        <div class="back">← Customers</div>
+        <div class="head"><span class="avatar">PS</span><div><h1>Priya Sharma</h1><div class="sub">Email · first message 2 days ago</div></div></div>
+        <div class="thread">
+          <div class="mono daylabel">Thursday, Oct 2</div>
+          <div class="from">Priya · 5:54 PM</div>
+          <div class="msg">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?
+
+Thanks,
+Priya</div>
+          <div class="reply" style="margin-top:6px">
+            <div class="mono">Reply ready · waits for your OK</div>
+            <div class="text">Hi Priya,
+
+Yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing?
+
+Best,
+Sahil</div>
+            <div class="basis">Based on Priya’s email on Thursday.</div>
+            <div class="row">
+              <span class="btn big">Send</span>
+              <span class="btn ghost big">Edit</span>
+              <span class="quiet"><span class="link">Later</span><span class="link">Don’t send</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidecol">
+        <div class="fact"><span class="k">Why it’s here</span><span class="v needs">Every reply waits for your OK.</span></div>
+        <div class="fact"><span class="k">Waiting</span><span class="v">2 days</span></div>
+        <div class="fact"><span class="k">Came from</span><span class="v">Gmail · priya.s@…</span></div>
+        <div class="actions"><span class="btn ghost">We talked</span><span class="btn ghost">Copy booking link</span><span class="btn ghost">Email</span></div>
+        <div class="details"><span>Details</span><span class="chev">›</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===================== CUSTOMER PAGE, DETAILS OPEN ===================== -->
+<div class="board-title"><b>Customer page, Details open</b> · the same column with the machinery shown, only because the owner asked.</div>
+<div class="screen" id="customer-details">
+  <aside class="side">
+    <div class="biz"><span class="m">M</span>Maple Realty<span class="bell">◦</span></div>
+    <div class="search">Search customers</div>
+    <nav class="nav">
+      <a><span class="ic"></span>Today<span class="n">3</span></a>
+      <a><span class="ic"></span>Inbox</a>
+      <a class="on"><span class="ic"></span>Customers<span class="n">16</span></a>
+    </nav>
+    <div class="foot"><a>Settings</a><a class="sub">Something broke?</a><a>Sign out</a></div>
+  </aside>
+  <main class="main">
+    <div class="cust">
+      <div>
+        <div class="back">← Customers</div>
+        <div class="head"><span class="avatar">PS</span><div><h1>Priya Sharma</h1><div class="sub">Email · first message 2 days ago</div></div></div>
+        <div class="thread">
+          <div class="mono daylabel">Thursday, Oct 2</div>
+          <div class="from">Priya · 5:54 PM</div>
+          <div class="msg">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?
+
+Thanks,
+Priya</div>
+          <div class="reply" style="margin-top:6px">
+            <div class="mono">Reply ready · waits for your OK</div>
+            <div class="text">Hi Priya,
+
+Yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing?
+
+Best,
+Sahil</div>
+            <div class="basis">Based on Priya’s email on Thursday.</div>
+            <div class="row">
+              <span class="btn big">Send</span>
+              <span class="btn ghost big">Edit</span>
+              <span class="quiet"><span class="link">Later</span><span class="link">Don’t send</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidecol">
+        <div class="fact"><span class="k">Why it’s here</span><span class="v needs">Every reply waits for your OK.</span></div>
+        <div class="fact"><span class="k">Waiting</span><span class="v">2 days</span></div>
+        <div class="fact"><span class="k">Came from</span><span class="v">Gmail · priya.s@…</span></div>
+        <div class="actions"><span class="btn ghost">We talked</span><span class="btn ghost">Copy booking link</span><span class="btn ghost">Email</span></div>
+        <div class="details" style="border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom:0"><span>Details</span><span class="chev">⌃</span></div>
+        <div class="sheet" style="border-top-left-radius:0;border-top-right-radius:0;margin-top:-18px">
+          <div class="srow"><span>How it handles Priya</span><span class="v">Ask if risky ›</span></div>
+          <div class="srow"><span>Why it may write to her</span><span class="v">She emailed you first ›</span></div>
+          <div class="srow"><span>What FollowUp did</span><span class="v">Held a reply · Thu ›</span></div>
+          <div class="srow"><span>Follow-up plan</span><span class="v">Check in Oct 9 ›</span></div>
+          <div class="srow"><span>Stage</span><span class="v">New ›</span></div>
+          <div class="srow"><span>About Priya</span><span class="v">›</span></div>
+          <div class="srow danger"><span>Not a customer</span><span>Delete this customer</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===================== SETTINGS ===================== -->
+<div class="board-title"><b>Settings</b> · one column, five groups, the broken thing first. Nothing to read, only things to change.</div>
+<div class="screen" id="settings">
+  <aside class="side">
+    <div class="biz"><span class="m">M</span>Maple Realty<span class="bell">◦</span></div>
+    <div class="search">Search customers</div>
+    <nav class="nav">
+      <a><span class="ic"></span>Today<span class="n">3</span></a>
+      <a><span class="ic"></span>Inbox</a>
+      <a><span class="ic"></span>Customers<span class="n">16</span></a>
+    </nav>
+    <div class="foot"><a class="nav-on" style="background:var(--card);border:1px solid var(--line);border-radius:9px;font-weight:600">Settings</a><a class="sub">Something broke?</a><a>Sign out</a></div>
+  </aside>
+  <main class="main">
+    <h1>Settings</h1>
+    <div class="settings">
+      <div class="group">
+        <div class="head2"><span class="gl">Your follow-up plan</span><span class="link u">Change</span></div>
+        <div class="plan">
+          <div class="prow"><span class="k">Right away</span><span>A quick “got your message” reply.</span></div>
+          <div class="prow"><span class="k">Day 3, 7, 14, 30</span><span>A check-in, if they go quiet.</span></div>
+          <div class="prow"><span class="k">Always</span><span>Every reply waits for your OK.</span></div>
+        </div>
+      </div>
+      <div class="group">
+        <span class="gl">Where customers write</span>
+        <div class="rows">
+          <div class="rrow"><span>Email</span><span class="v ok">Gmail · sahil@maplerealty.ca<span class="chev">›</span></span></div>
+          <div class="rrow"><span>Website form</span><span class="v">Add it to your site<span class="chev">›</span></span></div>
+          <div class="rrow"><span>Instagram, Facebook, WhatsApp</span><span class="v">Not set up<span class="chev">›</span></span></div>
+        </div>
+      </div>
+      <div class="group">
+        <span class="gl">How it writes</span>
+        <div class="rows">
+          <div class="rrow"><span>Replies and check-ins</span><span class="v">Every reply waits for you<span class="chev">›</span></span></div>
+          <div class="rrow"><span>Booking hours</span><span class="v">Mon–Sat, 9–7, Toronto<span class="chev">›</span></span></div>
+          <div class="rrow"><span>Pause all sending</span><span class="v">Off<span class="chev">›</span></span></div>
+        </div>
+      </div>
+      <div class="group">
+        <span class="gl">Your business</span>
+        <div class="rows">
+          <div class="rrow"><span>Your business</span><span class="v">Maple Realty<span class="chev">›</span></span></div>
+          <div class="rrow"><span>Team</span><span class="v">Just you<span class="chev">›</span></span></div>
+          <div class="rrow"><span>Your plan</span><span class="v">Founding tester<span class="chev">›</span></span></div>
+        </div>
+      </div>
+      <div class="group">
+        <span class="gl">Account</span>
+        <div class="rows">
+          <div class="rrow"><span>Sign-ins and security</span><span class="v"><span class="chev">›</span></span></div>
+          <div class="rrow"><span>Your data</span><span class="v">Download or delete<span class="chev">›</span></span></div>
+          <div class="rrow"><span>Advanced: CRM, Zapier, routing</span><span class="v"><span class="chev">›</span></span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</div>
+</body>
+</html>

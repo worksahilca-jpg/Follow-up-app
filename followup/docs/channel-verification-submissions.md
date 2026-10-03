@@ -54,6 +54,13 @@ each console, in this order (per the Phase 0 checklist in the 2026-09-10 playboo
 **Where this happens:** Google Cloud Console → APIs & Services → OAuth consent
 screen → Publishing status → Prepare for verification.
 
+**Demo video (recorded 2026-10-03, Unlisted):** https://youtu.be/Ug0TO8Ok9Cw —
+3:29, captioned, one take plus a spliced calendar clip. Shows: landing page,
+Google sign-in, the consent screen held for several seconds, a Gmail enquiry
+found and shown on Today, the drafted reply sent on the owner's press, the
+same mail in Gmail's Sent folder, a booking through the customer link, the
+event FollowUp created on Google Calendar, and Disconnect.
+
 **Before you submit:** confirm the OAuth client's authorized domain matches
 `followupbase.io` exactly (not a Vercel preview URL) — a domain mismatch adds
 a full extra review cycle per the research on this.
@@ -77,8 +84,9 @@ a full extra review cycle per the research on this.
 > mail), uses AI to draft a suggested reply, and — only after the business
 > owner explicitly approves each draft, unless they've opted into automated
 > sending for low-risk replies — sends the reply from their own Gmail account.
-> It also creates calendar events when a lead requests to schedule a call or
-> meeting. No Gmail or Calendar data is shared with any other business using
+> Every customer also gets a booking link; when a customer books a call through
+> it, FollowUp creates that call as an event on the business owner's Google
+> Calendar. No Gmail or Calendar data is shared with any other business using
 > FollowUp, sold, or used to train AI models without being stripped of
 > personally identifying information first (see our privacy policy).
 
@@ -106,10 +114,15 @@ a full extra review cycle per the research on this.
 
 **`https://www.googleapis.com/auth/calendar.events`** (sensitive scope):
 
-> When a lead asks to schedule a call or meeting in their email, FollowUp can
-> create a calendar event on the business owner's calendar so the meeting
-> isn't missed. This is triggered only by an explicit scheduling request in a
-> lead's message, never created speculatively.
+> Every customer FollowUp replies to gets a booking link to the business's
+> own booking page. When a customer picks a time there, FollowUp creates that
+> call as a 30-minute event on the business owner's Google Calendar ("Call
+> with <customer>") and invites the customer, so the meeting isn't missed. If
+> the owner chooses, FollowUp also reads the owner's busy times before offering
+> slots, so the page never offers a time already taken. Events are created only
+> when a customer books; nothing is created speculatively or on a schedule.
+> The demo video shows exactly this: the booking, then the event on the
+> owner's calendar.
 
 **`https://www.googleapis.com/auth/userinfo.email`** (non-sensitive):
 

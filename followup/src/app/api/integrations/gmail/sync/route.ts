@@ -32,8 +32,12 @@ export async function POST() {
   }
 
   try {
-    const { count, scored, repliesDetected, leads } = await syncGmailForBusiness(ctx.businessId);
-    return NextResponse.json({ success: true, count, scored, repliesDetected, leads });
+    const { count, scored, repliesDetected, truncated, leads } = await syncGmailForBusiness(ctx.businessId);
+    // `truncated`: the pass hit its per-run classification budget and the
+    // automatic sync (every two minutes) finishes the rest. Returned so the
+    // button can say so instead of presenting a partial read as the whole
+    // inbox (bug hunt 2026-10-03).
+    return NextResponse.json({ success: true, count, scored, repliesDetected, truncated, leads });
   } catch (err) {
     const message = publicErrorMessage(err, "Gmail sync failed.", "integrations/gmail/sync");
     return NextResponse.json({ success: false, message }, { status: 500 });

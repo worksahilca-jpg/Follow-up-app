@@ -6,8 +6,11 @@ import { X, Upload } from "lucide-react";
 
 interface ImportResult {
   created: number;
+  /** Rows that were not imported. */
   skipped: number;
   skippedSamples: string[];
+  /** Rows that were imported with a field dropped — not skipped, so not counted above. */
+  notes: string[];
 }
 
 export default function ImportLeadsForm({ onClose }: { onClose: () => void }) {
@@ -31,7 +34,7 @@ export default function ImportLeadsForm({ onClose }: { onClose: () => void }) {
       const res = await fetch("/api/leads/import", { method: "POST", body });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Import failed — try again.");
-      setResult({ created: data.created, skipped: data.skipped, skippedSamples: data.skippedSamples ?? [] });
+      setResult({ created: data.created, skipped: data.skipped, skippedSamples: data.skippedSamples ?? [], notes: data.notes ?? [] });
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed — try again.");
@@ -102,7 +105,7 @@ export default function ImportLeadsForm({ onClose }: { onClose: () => void }) {
               )}
               .
             </p>
-            {result.skippedSamples.length > 0 && (
+            {(result.skippedSamples.length > 0 || result.notes.length > 0) && (
               <div className="rounded-[12px] bg-paper border border-line p-3 text-[13px] text-ink-soft space-y-1">
                 {result.skippedSamples.map((s, i) => (
                   <p key={i}>{s}</p>
@@ -110,6 +113,9 @@ export default function ImportLeadsForm({ onClose }: { onClose: () => void }) {
                 {result.skipped > result.skippedSamples.length && (
                   <p>…and {result.skipped - result.skippedSamples.length} more.</p>
                 )}
+                {result.notes.map((s, i) => (
+                  <p key={`note-${i}`}>{s}</p>
+                ))}
               </div>
             )}
             <button

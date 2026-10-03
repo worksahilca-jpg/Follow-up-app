@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { findMany, createManyAndReturn } = vi.hoisted(() => ({
   findMany: vi.fn(),
-  createManyAndReturn: vi.fn(async () => []),
+  createManyAndReturn: vi.fn(async (): Promise<Array<{ id: string; source: string }>> => []),
 }));
 
 vi.mock("@/lib/db", () => ({ prisma: { lead: { findMany, createManyAndReturn } } }));
@@ -59,6 +59,21 @@ describe("POST /api/leads/import — phone duplicate handling", () => {
     expect(body.skippedSamples[0]).toMatch(/duplicate phone/i);
     expect(createManyAndReturn).toHaveBeenCalledWith(
       expect.objectContaining({ data: [expect.objectContaining({ name: "Jamie Rivera" })] })
+    );
+  });
+
+  it("does not count a row imported without its bad email as skipped (bug hunt 2026-10-03)", async () => {
+    createManyAndReturn.mockResolvedValue([{ id: "l1", source: "CSV import" }]);
+    const { POST } = await import("@/app/api/leads/import/route");
+    const res = await POST(csvRequest("Name,Email\nJamie Rivera,not-an-email\n"));
+    const body = await res.json();
+    expect(body.created).toBe(1);
+    expect(body.skipped).toBe(0);
+    expect(body.skippedSamples).toEqual([]);
+    expect(body.notes).toHaveLength(1);
+    expect(body.notes[0]).toMatch(/imported without the email/i);
+    expect(createManyAndReturn).toHaveBeenCalledWith(
+      expect.objectContaining({ data: [expect.objectContaining({ name: "Jamie Rivera", email: null })] })
     );
   });
 

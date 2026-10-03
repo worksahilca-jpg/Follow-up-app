@@ -8657,3 +8657,15 @@ full day still reads "full". In the same change the confirm step re-checks the o
 slot being booked, and a database failure on booking is no longer reported as "someone else took it".
 - **Weak spots, named:** the closed-day test uses the customer's local weekday, which can differ from the
   business's across a midnight; cosmetic only. Not rendered, tests and typecheck only.
+
+## 2026-10-03 — Import and "Sync now" stop counting what they did as what they skipped
+
+Bug hunt. A CSV row whose email wasn't an email was imported (without the email) but counted as *skipped*, so a
+file of ten clean names with three bad addresses summarised as "Imported 10 leads, skipped 3". The count now
+means rows that did not come in; the dropped-email rows are listed under it in the same box as "imported without
+the email — ‹what was there› doesn't look like one", so the owner can fix the spreadsheet. Same box, no new
+surface. And "Sync now" on a big inbox stops at its per-run budget without saying so; the result line now ends
+"Still reading the rest — more will appear on their own." when that happened, because the automatic sync finishes
+the job within a couple of minutes and the owner should not press the button again.
+- **Weak spots, named:** both are copy-only and checked by tests and typecheck, not rendered. The import box lists
+  at most ten skipped rows and ten notes; a file with more of each says "…and N more" for rows only.

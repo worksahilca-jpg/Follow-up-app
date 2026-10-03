@@ -119,7 +119,14 @@ export async function POST(request: NextRequest) {
   ]);
 
   const toInsert: Prisma.LeadCreateManyInput[] = [];
+  // Rows that were NOT imported, one line each. `skipped` in the response
+  // is this list's length, so it must only ever hold whole rows.
   const skipped: string[] = [];
+  // Rows that WERE imported with one field dropped (an email that wasn't
+  // one). Shown beside the skipped rows, never counted with them: "Imported
+  // 10, skipped 3" over a file of 10 rows that all came in was the summary
+  // this used to produce (bug hunt 2026-10-03).
+  const fieldNotes: string[] = [];
   const seenEmailsInBatch = new Set<string>();
   const seenPhonesInBatch = new Set<string>();
   // Distributes the whole batch across the team in-memory (see
@@ -136,7 +143,7 @@ export async function POST(request: NextRequest) {
 
     const rawEmail = columnMap.email ? cleanText(row[columnMap.email]).toLowerCase() : "";
     if (rawEmail && !EMAIL_RE.test(rawEmail)) {
-      skipped.push(`Row ${rowNum} (${name}): invalid email, skipped that field`);
+      fieldNotes.push(`Row ${rowNum} (${name}): imported without the email — "${rawEmail.slice(0, 60)}" doesn't look like one`);
     }
     const email = rawEmail && EMAIL_RE.test(rawEmail) ? rawEmail : "";
     if (email && (existingEmails.has(email) || seenEmailsInBatch.has(email))) {
@@ -189,5 +196,8 @@ export async function POST(request: NextRequest) {
     created: created.length,
     skipped: skipped.length,
     skippedSamples: skipped.slice(0, 10),
+    // Separate from `skipped` so the summary line and the "…and N more"
+    // arithmetic in ImportLeadsForm stay about rows that were not imported.
+    notes: fieldNotes.slice(0, 10),
   });
 }

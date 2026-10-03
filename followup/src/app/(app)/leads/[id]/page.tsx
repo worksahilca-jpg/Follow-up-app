@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getLeadById, getLeadAuditTrail } from "@/lib/leads-data";
 import { getFreeTierStatus } from "@/lib/billing";
-import { formatCurrency, formatDate } from "@/lib/demo-data";
+import { formatCurrency, formatDate, PIPELINE_STAGES } from "@/lib/demo-data";
 import PriorityPill from "@/components/PriorityPill";
 import StageSelector from "@/components/StageSelector";
 import LeadAutomationToggle from "@/components/LeadAutomationToggle";
@@ -13,6 +13,7 @@ import LeadTrustPanel, { consentLabel, lastActionSummary } from "@/components/Le
 import AutomationStatusBadge from "@/components/AutomationStatusBadge";
 import WeTalkedButton from "@/components/WeTalkedButton";
 import CollapsibleSection from "@/components/CollapsibleSection";
+import DetailsFold from "@/components/app/DetailsFold";
 import { ChevronLeft } from "lucide-react";
 import { isSocialLeadId } from "@/lib/instagramId";
 import type { LeadLanguage } from "@/lib/leadLanguage";
@@ -25,7 +26,7 @@ import SiteReplyCard from "@/components/app/SiteReplyCard";
 import { siteReplyFor } from "@/lib/siteReply";
 import ReplyCard from "@/components/app/ReplyCard";
 import Thread from "@/components/app/Thread";
-import { Initials, StatePill, waitingFor } from "@/components/app/canvasBits";
+import { Initials, waitingFor } from "@/components/app/canvasBits";
 import { getSessionContext } from "@/lib/session";
 import { getPendingApprovals, type PendingApproval } from "@/lib/pendingApprovals";
 import { prisma } from "@/lib/db";
@@ -131,36 +132,17 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      {/* The side column as the PersonSide board draws it (A-069): the facts
-          in one card, three actions, the state in one calm line, and the
-          rest as quiet rows that open in place. How FollowUp handles this
-          customer is open by default: the trust research says the setting
-          must be legible at a glance, per customer, not buried. */}
-      <aside className="mt-10 min-w-0 lg:mt-0">
-        <dl className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-x-4 gap-y-2.5 rounded-[18px] border border-line bg-card px-5 py-4 text-[14.5px]">
-          <Details lead={lead} approval={approval} now={now} />
-          <dt className="text-ink-faint">Came from</dt>
-          <dd>{lead.source}</dd>
-          <dt className="text-ink-faint">Stage</dt>
-          <dd>
-            <StageSelector leadId={lead.id} stage={lead.stage} />
-          </dd>
-          <dt className="self-start pt-1 text-ink-faint">Assigned to</dt>
-          <dd>
-            <LeadAssignmentSelect leadId={lead.id} initialAssignedToId={lead.assignedToId} initialAssignedToName={lead.assignedTo} />
-          </dd>
-          {lead.dealValue > 0 && (
-            <>
-              <dt className="text-ink-faint">Worth</dt>
-              <dd>{formatCurrency(lead.dealValue)}</dd>
-            </>
-          )}
-        </dl>
+      {/* The side column as the one-decision board draws it (A-080): three
+          facts, three actions, one "Details" row with the machinery behind
+          it. Each fact once: the channel is in the header, the language
+          under "Why it may write". */}
+      <aside className="mt-10 grid min-w-0 content-start gap-[18px] lg:mt-0 lg:pt-1.5">
+        <Facts lead={lead} approval={approval} now={now} />
 
         {/* Three pills, as drawn. The third is Call when there is a number
             to call, and Email (their own mail app) when there isn't, so
             an email-only customer still has a way to reach them directly. */}
-        <div className="mt-3.5 flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {lead.automationStatus?.kind !== "closed" && (
             <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} onSite={Boolean(siteReply)} />
           )}
@@ -176,12 +158,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           ) : null}
         </div>
 
-        <div className="mt-3.5">
-          <AutomationStatusBadge status={lead.automationStatus} line onSite={Boolean(siteReply)} />
-        </div>
-
-        <div className="mt-4 overflow-hidden rounded-[18px] border border-line bg-card">
-          <CollapsibleSection row defaultOpen title={`How it handles ${firstName}`} status={TIER_WORDS[lead.automationTier] ?? undefined}>
+        <DetailsFold>
+          <CollapsibleSection row title={`How it handles ${firstName}`} status={TIER_WORDS[lead.automationTier] ?? undefined}>
             <LeadAutomationToggle
               leadId={lead.id}
               initialTier={lead.automationTier}
@@ -193,10 +171,31 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <LeadTrustPanel part="why" source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} languageRead={lead.languageRead as LeadLanguage | null} />
           </CollapsibleSection>
           <CollapsibleSection row title="What FollowUp did" status={lastActionSummary(auditTrail, now) ?? "Nothing yet"}>
-            <LeadTrustPanel part="did" source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} />
+            <AutomationStatusBadge status={lead.automationStatus} line onSite={Boolean(siteReply)} />
+            <div className="mt-3">
+              <LeadTrustPanel part="did" source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} />
+            </div>
           </CollapsibleSection>
           <CollapsibleSection row title="Follow-up plan" status={lead.nextFollowUp ? `Next ${formatDate(lead.nextFollowUp)}` : "None"}>
             <LeadWorkflowEnrollment leadId={lead.id} />
+          </CollapsibleSection>
+          <CollapsibleSection row title="Stage" status={stageLabel(lead.stage)}>
+            <dl className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-x-4 gap-y-2.5 text-[14.5px]">
+              <dt className="text-ink-faint">Stage</dt>
+              <dd>
+                <StageSelector leadId={lead.id} stage={lead.stage} />
+              </dd>
+              <dt className="self-start pt-1 text-ink-faint">Assigned to</dt>
+              <dd>
+                <LeadAssignmentSelect leadId={lead.id} initialAssignedToId={lead.assignedToId} initialAssignedToName={lead.assignedTo} />
+              </dd>
+              {lead.dealValue > 0 && (
+                <>
+                  <dt className="text-ink-faint">Worth</dt>
+                  <dd>{formatCurrency(lead.dealValue)}</dd>
+                </>
+              )}
+            </dl>
           </CollapsibleSection>
           <CollapsibleSection row title={`About ${firstName}`}>
             <div className="space-y-3 text-[14px]">
@@ -211,11 +210,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               {lead.notes && <p className="leading-relaxed text-ink-soft">{lead.notes}</p>}
             </div>
           </CollapsibleSection>
-        </div>
-
-        <div className="mt-4">
-          <DeleteLeadButton leadId={lead.id} leadName={lead.name} leadEmail={lead.email} />
-        </div>
+          <div className="border-t border-line-2 px-[18px] py-3 text-[13px]">
+            <DeleteLeadButton leadId={lead.id} leadName={lead.name} leadEmail={lead.email} />
+          </div>
+        </DetailsFold>
       </aside>
     </div>
   );
@@ -227,14 +225,17 @@ const PILL = "inline-flex h-[38px] items-center rounded-full border border-line 
 /** The per-customer setting in the same words as the control itself. */
 const TIER_WORDS: Record<string, string> = { off: "You do it", assisted: "Ask if risky", autonomous: "Handle it all" };
 
-/** State / Why it's here / Waiting / Language, as the canvas App board lists them. */
-function Details({ lead, approval, now }: { lead: Lead; approval: PendingApproval | null; now: Date }) {
+/**
+ * The three facts (A-080): why it's here (or the state when nothing
+ * waits), how long, and where they came from. Label above value, as the
+ * board draws them; the needs-you reason carries the one coloured dot.
+ */
+function Facts({ lead, approval, now }: { lead: Lead; approval: PendingApproval | null; now: Date }) {
   const lastIn = lastInbound(lead.conversation);
   const first = lead.name.split(" ")[0] ?? lead.name;
   const kind = lead.automationStatus?.kind;
-  const state = approval
-    ? "Needs you"
-    : kind === "closed"
+  const state =
+    kind === "closed"
       ? "Closed"
       : kind === "talked"
         ? lead.viaSite && !lead.email
@@ -243,35 +244,38 @@ function Details({ lead, approval, now }: { lead: Lead; approval: PendingApprova
         : isWaitingOnCustomer(lead)
           ? `Waiting on ${first}`
           : "Up to date";
-  const why = approval ? sentenceCase(approval.reason) + "." : null;
+  const contact = lead.email || (lead.phone && !isSocialLeadId(lead.phone) ? lead.phone : null);
   return (
     <>
-      <dt className="text-ink-faint">State</dt>
-      <dd>
-        <StatePill state={approval ? "needs" : kind === "closed" ? "done" : kind === "talked" ? "checked" : state.startsWith("Waiting") ? "waiting" : "done"} label={state} />
-      </dd>
-      {why && (
-        <>
-          <dt className="text-ink-faint">Why it&apos;s here</dt>
-          <dd className="text-ink-soft">{why}</dd>
-        </>
-      )}
-      {approval && (
-        <>
-          <dt className="text-ink-faint">Waiting</dt>
-          <dd>{waitingFor(approval.heldAt, now)}</dd>
-        </>
-      )}
-      {!approval && lastIn && (
-        <>
-          <dt className="text-ink-faint">Last wrote</dt>
-          <dd>{timeAgoWords(lastIn.date, now)}</dd>
-        </>
-      )}
-      <dt className="text-ink-faint">Language</dt>
-      <dd>{lead.languageRead ? languageName(lead.languageRead.language) : "Not read yet"}</dd>
+      <Fact label={approval ? "Why it's here" : "State"}>
+        {approval ? (
+          <>
+            <span aria-hidden className="mr-2 inline-block h-[7px] w-[7px] rounded-full align-[2px]" style={{ background: "var(--state-needs)" }} />
+            {sentenceCase(approval.reason).replace(/\.\s*$/, "")}.
+          </>
+        ) : (
+          state
+        )}
+      </Fact>
+      {approval ? <Fact label="Waiting">{waitingFor(approval.heldAt, now)}</Fact> : lastIn && <Fact label="Last wrote">{timeAgoWords(lastIn.date, now)}</Fact>}
+      <Fact label="Came from">
+        <span className="block truncate">{[lead.source, contact].filter(Boolean).join(" · ")}</span>
+      </Fact>
     </>
   );
+}
+
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[12.5px] text-ink-faint">{label}</p>
+      <p className="mt-1 text-[15px]">{children}</p>
+    </div>
+  );
+}
+
+function stageLabel(stage: Lead["stage"]): string {
+  return PIPELINE_STAGES.find((s) => s.id === stage)?.label ?? stage;
 }
 
 function lastInbound(messages: Message[]): Message | undefined {

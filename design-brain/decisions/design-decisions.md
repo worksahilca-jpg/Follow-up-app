@@ -8677,3 +8677,14 @@ Questions answer "Is my data safe? Can I leave?" said FollowUp reads the inboxes
 your own address, but never mentioned Calendar, which the consent screen asks for. One sentence added to that
 answer, in its voice: "If a customer books a call through your link, it puts that call on your Google
 Calendar." No new surface. Founder approved the sentence before it went in.
+
+## 2026-10-03 — Founder: "our product looks way too complicated" (research to follow)
+
+Said unprompted at the end of the Google-submission day, after seeing the app through the demo recording
+and the realtor's account. Screen and cause not yet named; a clarifying question is out (which screen, and
+density or words). Inferred reason, marked inferred: a day spent watching the product through a reviewer's
+eyes (two demo videos, caption writing) exposed how much a first-time owner is asked to read on Today and
+the customer page. Next: a research pass per `design-brain/workflows/research-workflow.md` with the
+question "what is the least a realtor needs on screen to trust the held reply and press Send", checked
+against `decisions/rejected.md` before proposing anything. The Monday realtor meeting is the first user
+observation for it.

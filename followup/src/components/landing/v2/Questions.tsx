@@ -37,7 +37,7 @@ export const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is my data safe? Can I leave?",
-    a: "It only reads the inboxes you connect, and replies go from your own address. Nothing is sold. Leave any time, and delete all of it whenever you want.",
+    a: "It only reads the inboxes you connect, and replies go from your own address. If a customer books a call through your link, it puts that call on your Google Calendar. Nothing is sold. Leave any time, and delete all of it whenever you want.",
   },
   {
     q: "Is it for a team, or just me?",

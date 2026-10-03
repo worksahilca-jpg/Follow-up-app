@@ -8681,8 +8681,8 @@ Calendar." No new surface. Founder approved the sentence before it went in.
 ## 2026-10-03 — Founder: "our product looks way too complicated" (research to follow)
 
 Said unprompted at the end of the Google-submission day, after seeing the app through the demo recording
-and the realtor's account. Screen and cause not yet named; a clarifying question is out (which screen, and
-density or words). Inferred reason, marked inferred: a day spent watching the product through a reviewer's
+and the realtor's account. Asked which screen and whether density or words: **"all of it, too much stuff"**
+(2026-10-03). So: density, every screen, desktop included. Recorded as R-026. Inferred reason, marked inferred: a day spent watching the product through a reviewer's
 eyes (two demo videos, caption writing) exposed how much a first-time owner is asked to read on Today and
 the customer page. Next: a research pass per `design-brain/workflows/research-workflow.md` with the
 question "what is the least a realtor needs on screen to trust the held reply and press Send", checked

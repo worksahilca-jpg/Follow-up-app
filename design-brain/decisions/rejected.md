@@ -577,3 +577,25 @@ logo"* — the mock had a drawn stand-in instead of the real lockup. Never again
 rose gradient on cream with the grain (`landing.module.css` `.washHero`). A notice email that is a white sheet with
 the wash as a 2cm band reads as a generic transactional template. The wash is the ground, the words sit on a card.
 **What replaced it:** take 2, the whole email on the hero wash with one white card.
+
+## R-026 — The app as it ships on 2026-10-03: too much on every screen ^R-026
+
+**Rejected:** 2026-10-03, founder, after a day of watching the product through a reviewer's eyes (two demo
+recordings) and through a realtor's account: *"our product looks way too complicated"*. Asked which screen and
+whether it is density or words: *"all of it, too much stuff"*.
+
+**What was rejected:** the amount on screen, across the app, desktop included. Not the words, not one screen.
+R-015 and brand principle 4 already said this for the phone ("one screen = one decision"); this extends it to the
+desktop, where Today, the customer page, Settings and the lists each carry several jobs at once.
+
+**Principle (founder's words plus inferred, marked):** fewer things on the screen beats a clearer explanation of
+many (principle 9, already written). *Inferred:* the desktop was allowed to keep what the phone was told to drop,
+on the theory that a bigger screen can hold more. The founder's reaction says the theory is wrong for this user:
+the owner is the same busy person at a desk, and extra panels, counts, chips and expanders read as work, not
+as help. Subtraction is the direction; what to subtract is the research question, answered per screen with the
+owner's one job on it, never by hiding things behind more chrome (an accordion is still stuff).
+
+**Do not propose again:** adding a panel, count, chip, section label or expander to an app screen without
+naming what it replaces. "More context" is not a reason. R-001 still stands: subtraction alone with no
+structural idea was rejected once; the structure must come from the owner's job on that screen, then subtract
+to it.

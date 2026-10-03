@@ -8720,3 +8720,20 @@ customer's words not in a card), both fixed and re-rendered.
   one row and a lot of cream. The "This week" foot line didn't render locally (no data) so it was not seen in
   this layout. The routine-pile box (two or more sources with routine drafts) sits above the list unchanged and
   has not been seen in the new layout. Not tested with a group heading (two sources) in the pane layout.
+
+## 2026-10-03 — Customer page built to the A-080 board
+
+The side column is now what the board draws: three facts stacked label-over-value (why it's here with the one
+needs-you dot, or the state when nothing waits; waiting, or last wrote; came from, as source and address), the
+three outline pills (We talked, Copy booking link, Call or Email), and one "Details" card (`DetailsFold`) that
+opens the rest as the quiet rows from A-069: how it handles this person, why it may write, what FollowUp did,
+the plan, stage (with assigned-to and worth inside), about, and the not-a-customer/delete line as the last faint
+row. Each fact once: the facts card no longer repeats the channel (header) or the language (inside "why it may
+write"); the state line that sat under the pills moved inside "What FollowUp did". The thread and the reply card
+are untouched; Send stays the one black element (checked in the browser). Rendered on a local production build
+beside `prototypes/2026-10-03-one-decision-desk.html#customer`; the first render had the column's rows spread
+over the page height (the aside stretched to the grid row) and a doubled full stop on the reason; both fixed.
+- **Weak spots, named:** "How it handles" is no longer open by default, so the per-customer setting is one click
+  further away than the trust research (A-069) wanted; the row still shows its value the moment Details opens.
+  A customer with nothing waiting shows "State · Waiting on Priya" as the first fact, which the board doesn't
+  draw. Stage is a row with a select inside it rather than the board's "New ›" that picks in place.

@@ -15,8 +15,8 @@ import { describeWait, describeWaitClause, startOfLocalDay } from "@/lib/calmTod
 import { countHandledToday } from "@/lib/handledToday";
 import { laterTodayAvailable } from "@/lib/later";
 import { loadComingUp } from "@/lib/comingUpData";
-import { isWaitingOnCustomer, medianReplyMs } from "@/lib/waitingOn";
-import { ComingUpList, ComingUpLine } from "@/components/ComingUp";
+import { medianReplyMs } from "@/lib/waitingOn";
+import { ComingUpLine } from "@/components/ComingUp";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
@@ -121,8 +121,13 @@ export default async function DashboardPage() {
   // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
   const comingUp = ctx && leads.length > 0 ? await loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null;
   const written = ctx ? await sentAsWritten(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000)) : { asWritten: 0, total: 0 };
-  // The middle of the three places (A-050): answered, not answered back.
-  const waitingOn = leads.filter((l) => !awaitingOk.has(l.id) && isWaitingOnCustomer(l)).length;
+  // A booked call is one line under the list (A-080), only when one exists.
+  const nextCall = upcomingBookings[0]
+    ? {
+        ...upcomingBookings[0],
+        when: new Date(upcomingBookings[0].scheduledAt).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: timezone }),
+      }
+    : null;
   const thisWeek = weekLine({
     heardBackMs: medianReplyMs(leads, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000), weekEnd),
     answered: answeredThisWeek,
@@ -250,9 +255,33 @@ export default async function DashboardPage() {
         <CantSendNotice reconnectEmail={"needsReconnect" in gmail && gmail.needsReconnect ? (gmail.email ?? "your inbox") : null} />
       )}
       {firstValue && <FirstValueNote title={firstValue.title} body={firstValue.body} />}
-      <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-7">
+      {/* One decision per screen (A-080): the queue is the page. The
+          Coming up card went; automated check-ins live on their own page,
+          and a booked call is the one line below. */}
+      <div className="mt-4">
       <div className="min-w-0">
-      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} waitingOn={waitingOn} holdAll={holdAll} />
+      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
+
+      {nextCall && (
+        <p className="mt-6 text-sm text-ink-soft">
+          Booked call ·{" "}
+          <Link href={`/leads/${nextCall.leadId}`} className="font-medium text-ink hover:underline">
+            {nextCall.leadName}
+          </Link>
+          , {nextCall.when}
+          {upcomingBookings.length > 1 && (
+            <>
+              {" · "}
+              <Link href="/coming-up" className="hover:underline">
+                {upcomingBookings.length - 1} more
+              </Link>
+            </>
+          )}
+        </p>
+      )}
+      {comingUp && comingUp.total > 0 && (
+        <ComingUpLine first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }} total={comingUp.total} />
+      )}
 
       {leads.length === 0 ? (
         <div className="mt-10">
@@ -416,45 +445,6 @@ export default async function DashboardPage() {
         </>
       )}
       </div>
-      {leads.length > 0 && (
-        <aside className="mt-8 min-w-0 lg:mt-[52px]">
-          {/* Coming up (A-046) as the canvas's right-hand card; one line on
-              the phone that opens the list (R-015). */}
-          <div className="hidden rounded-[20px] border border-line bg-card p-5 sm:block">
-            <Eyebrow>Coming up</Eyebrow>
-            {comingUp && comingUp.total > 0 ? (
-              <ComingUpList groups={comingUp.groups} holdAll={comingUp.holdAll} />
-            ) : (
-              <p className="mt-2 text-sm text-ink-soft">Nothing planned for the next seven days.</p>
-            )}
-            {upcomingBookings.length > 0 && (
-              <div className="mt-5 border-t border-line-2 pt-4">
-                <p className="text-xs font-medium text-ink-soft">Booked calls</p>
-                <ul className="mt-1">
-                  {upcomingBookings.map((b) => (
-                    <li key={b.id}>
-                      <Link href={`/leads/${b.leadId}`} className="flex items-baseline justify-between gap-3 py-2 hover:underline">
-                        <span className="text-sm font-medium">{b.leadName}</span>
-                        <span className="text-xs text-ink-soft">
-                          {new Date(b.scheduledAt).toLocaleString("en-US", {
-                            weekday: "short",
-                            hour: "numeric",
-                            minute: "2-digit",
-                            timeZone: timezone,
-                          })}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-          {comingUp && comingUp.total > 0 && (
-            <ComingUpLine first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }} total={comingUp.total} />
-          )}
-        </aside>
-      )}
       </div>
     </div>
   );

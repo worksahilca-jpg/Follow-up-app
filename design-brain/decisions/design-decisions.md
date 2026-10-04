@@ -8783,3 +8783,25 @@ study and the Gmail-only research (`followup/research/customers/2026-10-04-gmail
   within the minute the owner spends on step 2; a slow inbox needs a waiting line ("still reading, 2 of 6 so
   far"). The behaviour change (no business-details step, no explainer step) is product, so it waits for the
   founder's yes.
+
+## 2026-10-04 — Gmail-first landing page and setup built (A-081)
+
+Landing: the hero lede now says what it does on Gmail and keeps the one guarantee the trust tests pin ("when
+something needs your decision, like a price or a date, it hands it to you"); the picture is a listing inquiry in
+Gmail and the reply with Send, desk and phone; the button reads "Connect Gmail, start free"; "Works with" names
+Gmail with the others as coming; the demo's example channel is Gmail; the Instagram FAQ left; the page
+description dropped the "Only for owners" qualifier R-020 rejected. Rendered on a local production build at 1280
+and 390: the same shape as the boards. Setup: three steps as drawn (Connect Gmail with the four lines; how it
+should work, with "it's reading your inbox now" while the sync runs and the improve-from-replies consent moved
+here; the waiting customers, which now waits for the sync and says "still reading your inbox" meanwhile). The
+details form, the explainer and the sources list left; `OnboardingSources` and the resume helper were deleted as
+dead code. Step 1 rendered locally (including the failed-connect state); steps 2 and 3 could not be rendered here
+(they need a connected Gmail) and were checked by reading and by the trust-copy tests, which pin their promises.
+- **Kept against the board:** step 3 keeps the approved send-with-undo screen ("N people never got a reply", Send
+  all N, "Not now, keep them in Today") rather than the board's "Open Today and send them"; the shipped one is
+  tested and sends nothing unseen.
+- **Weak spots, named:** the business name stays whatever sign-in made of the Google account name; Today's
+  "Add details" step asks for the trade, so the first screen after setup carries one ask. Step 3's "still
+  reading" line has no count (the sync reports none). Steps 2 and 3 are unverified in a browser this session.
+- **Test changed, with the decision recorded:** `channelAvailability.test.ts` pinned "offers WhatsApp during
+  onboarding" (2026-09-21); it now pins "setup connects Gmail; WhatsApp stays in Settings with its connect flow".

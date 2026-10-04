@@ -267,26 +267,26 @@ describe("WhatsApp is set up without the carrier channels", () => {
   });
 
   /**
-   * The gap this closes.
+   * Where WhatsApp is offered.
    *
-   * Onboarding's "where do your leads come from?" step (2026-09-21) let a
-   * business connect email, Instagram and Facebook in place — and pointed
-   * WhatsApp at Settings, a screen it had not reached yet. A business that
-   * runs entirely on WhatsApp is squarely who that step was rebuilt for,
-   * so it was the one answer with no button and the worst line on the
-   * screen. Meta's Embedded Signup is a popup rather than a redirect,
-   * which is why it needed a shared hook rather than a link.
+   * From 2026-09-21 setup's "where do your leads come from?" step offered
+   * WhatsApp in place (Meta's Embedded Signup is a popup, hence the shared
+   * hook). On 2026-10-04 the founder made setup Gmail only (design brain
+   * A-081): one Connect Gmail button, Outlook as a quiet link, nothing
+   * else asked. So setup no longer offers WhatsApp, and the guarantee
+   * moves: the WhatsApp panel must stay reachable in Settings, with its
+   * connect flow intact, so a business that runs on WhatsApp can still
+   * connect it there. The two tests above pin the panel; this one pins
+   * that setup connects Gmail and still sends nobody to a dead end.
    */
-  it("offers WhatsApp during onboarding, not just in Settings", () => {
+  it("setup connects Gmail; WhatsApp stays in Settings with its connect flow", () => {
     const onboarding = stripComments(read("../src/components/OnboardingForm.tsx"));
-    expect(onboarding, "onboarding cannot start a WhatsApp connect").toContain("useWhatsAppSignup");
-    expect(onboarding, "onboarding has no WhatsApp row").toMatch(/name:\s*"WhatsApp"/);
+    expect(onboarding, "setup has no Connect Gmail").toContain("/api/integrations/gmail/connect");
+    expect(onboarding, "setup still offers WhatsApp (Gmail first, A-081)").not.toMatch(/name:\s*"WhatsApp"/);
 
-    // …and the step no longer tells anyone to go elsewhere for it.
-    const sources = stripComments(read("../src/components/OnboardingSources.tsx"));
-    expect(sources, "the sources step still sends WhatsApp to Settings").not.toMatch(
-      /WhatsApp[^\n]*from Settings/
-    );
+    const whatsapp = readWhatsappSetup();
+    expect(whatsapp, "the WhatsApp panel lost its connect flow").toContain("useWhatsAppSignup");
+    expect(readSettings(), "Settings no longer renders the WhatsApp panel").toContain("<WhatsAppConfig />");
   });
 
   it("offers no SMS or voice affordance from the WhatsApp panel", () => {

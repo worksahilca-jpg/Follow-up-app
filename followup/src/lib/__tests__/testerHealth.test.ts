@@ -30,30 +30,25 @@ function tester(over: Partial<TesterFacts> = {}): TesterFacts {
 }
 
 describe("judgeTester", () => {
-  it("passes all five when email and Meta are on, the inbox is fresh, drafts land, it learns and a customer came back", () => {
+  it("passes all five when Gmail is on, the inbox is fresh, drafts land, it learns and a customer came back", () => {
     const h = judgeTester(tester(), NOW);
     expect(h.score).toBe(5);
     expect(h.next).toBeNull();
-    expect(h.checks.connected.text).toBe("Gmail and Instagram");
+    expect(h.checks.connected.text).toBe("Gmail, and Instagram");
     expect(h.checks.inbox.text).toBe("Checked 4 min ago");
     expect(h.checks.drafts.text).toBe("7 of 10 as written");
     expect(h.checks.learning.text).toBe("Write like me · 42 replies");
     expect(h.checks.wonBack.text).toBe("2 customers");
   });
 
-  it("needs both an inbox and Meta to count as connected", () => {
-    expect(judgeTester(tester({ meta: { instagram: false, facebook: false } }), NOW).checks.connected).toEqual({
+  // Gmail first (2026-10-04): the inbox alone counts as connected; Meta is named when on, never required.
+  it("counts Gmail alone as connected, and names a Meta channel when it is on", () => {
+    expect(judgeTester(tester({ meta: { instagram: false, facebook: false } }), NOW).checks.connected).toEqual({ state: "ok", text: "Gmail" });
+    expect(judgeTester(tester({ inbox: null }), NOW).checks.connected).toEqual({ state: "no", text: "No email connected" });
+    expect(judgeTester(tester({ inbox: { provider: "gmail", status: "needs_reconnect", lastSyncedAt: null } }), NOW).checks.connected).toEqual({
       state: "no",
-      text: "Gmail only, no Instagram or Facebook",
+      text: "Gmail stopped",
     });
-    expect(judgeTester(tester({ inbox: null }), NOW).checks.connected.text).toBe("Instagram only, no email");
-    expect(judgeTester(tester({ inbox: { provider: "gmail", status: "needs_reconnect", lastSyncedAt: null } }), NOW).checks.connected.text).toBe(
-      "Instagram only, email stopped"
-    );
-    expect(
-      judgeTester(tester({ inbox: { provider: "gmail", status: "needs_reconnect", lastSyncedAt: null }, meta: { instagram: false, facebook: false } }), NOW)
-        .checks.connected.text
-    ).toBe("Gmail stopped");
     expect(judgeTester(tester({ signedIn: false }), NOW).checks.connected.text).toBe("Hasn't signed in");
   });
 
@@ -74,9 +69,9 @@ describe("judgeTester", () => {
   });
 
   it("names the first gap as the thing to help with next", () => {
-    const h = judgeTester(tester({ meta: { instagram: false, facebook: false }, writeLikeMe: { on: false, kept: 0 }, wonBack: 0 }), NOW);
-    expect(h.score).toBe(2);
-    expect(h.next).toBe("Email and Meta connected: Gmail only, no Instagram or Facebook");
+    const h = judgeTester(tester({ inbox: { provider: "gmail", status: "needs_reconnect", lastSyncedAt: null }, writeLikeMe: { on: false, kept: 0 }, wonBack: 0 }), NOW);
+    expect(h.score).toBe(1);
+    expect(h.next).toBe("Gmail connected: Gmail stopped");
   });
 });
 
@@ -85,14 +80,14 @@ describe("buildTesterHealth", () => {
     const report = buildTesterHealth(
       [
         tester({ id: "a", name: "Ana" }),
-        tester({ id: "b", name: "Ben", meta: { instagram: false, facebook: false }, wonBack: 0 }),
-        tester({ id: "c", name: "Cy", meta: { instagram: false, facebook: false } }),
+        tester({ id: "b", name: "Ben", inbox: null, wonBack: 0 }),
+        tester({ id: "c", name: "Cy", inbox: null }),
       ],
       NOW
     );
     expect(report.testers.map((t) => t.name)).toEqual(["Ben", "Cy", "Ana"]);
     expect(report.working).toBe(1);
-    expect(report.summary).toBe("1 of 3 testers have FollowUp fully working. Most common gap: email and Meta not both connected (2 of 3).");
+    expect(report.summary).toBe("1 of 3 testers have FollowUp fully working. Most common gap: Gmail not connected (2 of 3).");
   });
 
   it("says so when there are no testers", () => {

@@ -15,7 +15,7 @@ const DOT: Record<CheckState, string> = {
 };
 
 const GRID = "grid-cols-[minmax(0,11rem)_3.5rem_repeat(5,minmax(0,1fr))_3rem]";
-const COLUMNS = ["Email and Meta", "Inbox checked", "Drafts as written", "Learning", "Won back"] as const;
+const COLUMNS = ["Gmail", "Inbox checked", "Drafts as written", "Learning", "Won back"] as const;
 
 function CheckCell({ check }: { check: Check }) {
   return (

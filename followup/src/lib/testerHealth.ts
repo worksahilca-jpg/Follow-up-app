@@ -69,7 +69,7 @@ export type TesterHealthReport = {
 };
 
 const LABEL: Record<keyof TesterHealth["checks"], string> = {
-  connected: "Email and Meta connected",
+  connected: "Gmail connected",
   inbox: "Inbox checked lately",
   drafts: "Drafts sent as written",
   learning: "Learning their writing",
@@ -78,7 +78,7 @@ const LABEL: Record<keyof TesterHealth["checks"], string> = {
 
 /** Each check, said as the gap it leaves, for the summary sentence. */
 const GAP: Record<keyof TesterHealth["checks"], string> = {
-  connected: "email and Meta not both connected",
+  connected: "Gmail not connected",
   inbox: "inbox not checked lately",
   drafts: "too few drafts sent as written",
   learning: "Write like me off",
@@ -113,16 +113,14 @@ export function judgeTester(t: TesterFacts, now: Date): TesterHealth {
   const metaOn = t.meta.instagram || t.meta.facebook;
   const metaName = [t.meta.instagram && "Instagram", t.meta.facebook && "Facebook"].filter(Boolean).join(" and ");
 
-  const connected: Check =
-    !t.signedIn
-      ? { state: "no", text: "Hasn't signed in" }
-      : inboxOn && metaOn
-        ? { state: "ok", text: `${inboxName(t.inbox!.provider)} and ${metaName}` }
-        : inboxOn
-          ? { state: "no", text: `${inboxName(t.inbox!.provider)} only, no Instagram or Facebook` }
-          : metaOn
-            ? { state: "no", text: t.inbox ? `${metaName} only, email stopped` : `${metaName} only, no email` }
-            : { state: "no", text: t.inbox ? `${inboxName(t.inbox.provider)} stopped` : "Nothing connected" };
+  // Gmail first (founder, 2026-10-04: "yes change it to gmail connected"):
+  // until Meta approves Instagram and Messenger, the inbox alone is what
+  // "connected" means. A Meta channel already on is named, never required.
+  const connected: Check = !t.signedIn
+    ? { state: "no", text: "Hasn't signed in" }
+    : inboxOn
+      ? { state: "ok", text: metaOn ? `${inboxName(t.inbox!.provider)}, and ${metaName}` : inboxName(t.inbox!.provider) }
+      : { state: "no", text: t.inbox ? `${inboxName(t.inbox.provider)} stopped` : "No email connected" };
 
   const inbox: Check = !inboxOn
     ? { state: "no", text: t.inbox ? `${inboxName(t.inbox.provider)} stopped, not checked` : "No inbox to check" }

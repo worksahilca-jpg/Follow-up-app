@@ -8805,3 +8805,21 @@ dead code. Step 1 rendered locally (including the failed-connect state); steps 2
   reading" line has no count (the sync reports none). Steps 2 and 3 are unverified in a browser this session.
 - **Test changed, with the decision recorded:** `channelAvailability.test.ts` pinned "offers WhatsApp during
   onboarding" (2026-09-21); it now pins "setup connects Gmail; WhatsApp stays in Settings with its connect flow".
+
+## 2026-10-04 — Inbox folded into Customers; the signed-in email shown (A-082)
+
+**Why:** for every real account today the three lists showed the same names (research note above, §4). The founder
+saw it the morning after A-080 went live. Two places: Today to answer, Customers to find.
+
+**Built:** Sidebar places Today · Customers (phone tabs Today · Customers · Settings); `/inbox` → `/leads`,
+`?c=` → `?p=`; customer page back link to Customers; Customers' "everyone else" sorted newest message first; the
+signed-in email above Sign out (desk) and at the foot of Settings (phone). Checked at 1280 and 390 wide.
+
+**Self-review (design-review.md), honestly:**
+- *Weak:* on the phone, Customers now a main tab still opens with two full-width buttons (More, Add customer) above
+  the list, which pushes the people down. Fine for a page reached from Settings, heavy for a tab. Not changed here;
+  worth a follow-up board.
+- *Weak:* there is no search on the phone Customers screen (the sidebar search is desk-only), and finding one person
+  is half this screen's job. Same follow-up.
+- *Holds:* each person appears in two places, not three; Today keeps its end; old links still land.
+

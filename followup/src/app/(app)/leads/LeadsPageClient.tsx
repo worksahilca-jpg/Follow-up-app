@@ -232,9 +232,14 @@ export default function LeadsPageClient({
     }
 
     // "Sorted by who needs you first" (canvas): needs you, going quiet,
-    // waiting, then everyone else by score.
+    // waiting by score, then everyone else newest message first, the order
+    // the Inbox had before it folded in here (A-082).
     const rank = (id: string) => ({ needs: 0, quiet: 1, waiting: 2 })[placeOf.get(id) ?? "x" as never] ?? 3;
-    return list.sort((a, b) => rank(a.id) - rank(b.id) || b.score - a.score);
+    const lastAt = (l: (typeof list)[number]) => {
+      const m = l.conversation[l.conversation.length - 1];
+      return m ? new Date(m.date).getTime() : 0;
+    };
+    return list.sort((a, b) => rank(a.id) - rank(b.id) || (rank(a.id) === 3 ? lastAt(b) - lastAt(a) : b.score - a.score));
   }, [leads, filter, place, placeOf, query, session?.user?.id, activeSavedFilter, customCriteria]);
 
   // Counts for the three chips that used to have a stat tile each above them.

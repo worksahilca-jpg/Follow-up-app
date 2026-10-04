@@ -569,6 +569,9 @@ on "needs you" and the reminders keep coming (principle 1: the owner can always 
 
 ## A-027 — Three places on the phone, four on the desktop ^A-027
 
+**SUPERSEDED IN PART (2026-10-04)** by [A-082](#^A-082): Inbox left the nav; the phone tabs are Today · Customers ·
+Settings and the desk has Today · Customers. The 30-account guard still holds: the Inbox code is parked, not deleted.
+
 **Approved:** 2026-09-26, founder: "yes go with it", after the navigation research (appended to
 `research/ux-patterns/2026-09-26-calendly-one-job-simplicity.md`: Apple/Material 3–5 tabs, NN/g's cost of hidden
 navigation, peers, and our own usage counts).
@@ -1563,3 +1566,20 @@ going all in"*; research in `followup/research/customers/2026-10-04-gmail-only-w
   "How FollowUp works" explainer leaves (the landing page does that).
 - **Not changed:** the other channels' code and Settings pages; they are not promoted.
 **Supersedes, in part:** A-049's button label; the four-step setup as built on 2026-09-26.
+
+## A-082 — Two places: Today and Customers; Inbox folds in ^A-082
+
+**Approved:** 2026-10-04, founder: *"today and inbox is same no?"*, then *"yes"* to Today + Customers with Inbox gone
+(the name "Customers" for the everyone list, as proposed). Research:
+`research/ux-patterns/2026-10-04-today-inbox-customers.md`, concept C2.
+**What specifically:**
+- **Nav:** desk sidebar Today · Customers; phone tabs Today · Customers · Settings. Customers is the current tab on a
+  customer's own page too.
+- **Customers is the everyone list:** needs you, going quiet, waiting first (unchanged), then everyone else newest
+  message first (Inbox's old order, replacing score).
+- **/inbox redirects** to Customers; `/inbox?c=<id>` opens that customer beside the list. The customer page's back link
+  reads "Customers". The old Inbox screen is parked in `inbox/InboxList.tsx` under A-027's guard.
+- **Which account you're in** (founder, same day: *"I am not able to see which id I am logged in"*): the email sits
+  above Sign out in the desk sidebar, and as a full "Signed in as …" line at the end of Settings on the phone.
+**Supersedes, in part:** A-027's place list.
+

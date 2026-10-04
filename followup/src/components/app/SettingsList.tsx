@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { ChevronRight } from "lucide-react";
 import { describeBookingHours, describeTimeZone, type BookingHours } from "@/lib/bookingHours";
 import type { StateKey } from "./canvasBits";
@@ -71,6 +72,10 @@ export default function SettingsList({
     });
     get("/api/team").then((data: { members?: unknown[] }) => setTeam(Array.isArray(data?.members) ? data.members.length : null));
   }, []);
+
+  // Which account this is (founder, 2026-10-04: "I am not able to see which id I am logged in").
+  const { data: session } = useSession();
+  const signedInAs = session?.user?.email ?? "";
 
   const inbox = gmail.connected ? `Gmail${gmail.email ? ` · ${gmail.email}` : ""}` : outlook.connected ? `Outlook${outlook.email ? ` · ${outlook.email}` : ""}` : "Not set up";
 
@@ -189,6 +194,13 @@ export default function SettingsList({
           </div>
         </section>
       ))}
+
+      {/* In full, under the last group: a row status would cut it short on a phone. */}
+      {signedInAs && (
+        <p className="-mt-3 break-all px-1 text-[13.5px] text-ink-faint">
+          Signed in as <span className="text-ink-soft">{signedInAs}</span>
+        </p>
+      )}
     </div>
   );
 }

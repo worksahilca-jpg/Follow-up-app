@@ -74,7 +74,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       <div className="min-w-0">
         {/* Phone: the ThreadPhone header, back, name, where they wrote. */}
         <div className="-mx-5 -mt-3 flex items-center gap-1 border-b border-line px-2 pb-2.5 sm:-mx-8 lg:hidden">
-          <Link href="/inbox" aria-label="Back to Inbox" className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-ink">
+          <Link href="/leads" aria-label="Back to Customers" className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-ink">
             <ChevronLeft className="h-5 w-5" />
           </Link>
           <div className="min-w-0">
@@ -86,8 +86,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        <Link href="/inbox" className="hidden text-[13px] text-ink-faint hover:text-ink-soft lg:inline">
-          ← Inbox
+        <Link href="/leads" className="hidden text-[13px] text-ink-faint hover:text-ink-soft lg:inline">
+          ← Customers
         </Link>
         <div className="mt-3 hidden items-center gap-3.5 lg:flex">
           <Initials name={lead.name} size={44} />

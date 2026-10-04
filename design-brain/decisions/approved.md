@@ -1543,3 +1543,23 @@ rules this approval adopts.
 M ≥ 5), A-045 (the numbers line leaves Today), A-046's "Start with" line (the order already says it) and its
 "Coming up" card (a booked call becomes one line; automated check-ins stay on the Coming up page), A-069's side
 column as drawn (now three facts, three actions, one Details). Everything else in those entries stands.
+
+## A-081 — Gmail first: the landing hero and a three-step setup ^A-081
+
+**Approved:** 2026-10-04, founder: *"yes build it"*, on the boards in `prototypes/2026-10-04-gmail-first.html`
+(#landing, #landing-phone, #setup), after deciding to focus on Gmail only (*"let's just focus on email only… I'm
+going all in"*; research in `followup/research/customers/2026-10-04-gmail-only-why-they-would-use-it.md` and
+`…-does-the-solo-owner-have-this-problem.md`).
+**What specifically:**
+- **Landing:** headline unchanged. The lede says what it does on Gmail: reads the customers in your Gmail, answers in
+  your words within minutes, checks in if they go quiet, stops the moment they reply. The hero picture is a Gmail lead
+  (a listing inquiry) and the written reply with Send. The button reads "Connect Gmail, start free" (amends A-049's
+  label; the second link "See how it works" stays). "Works with" stays the one place channels appear (R-020) and
+  reads Gmail, with the others as coming.
+- **Setup, three steps:** Connect Gmail (what it reads, what it never does; Outlook as a quiet link); how it should
+  work, Assisted chosen (A-070), asked while the inbox is read; what it found, with the replies written, and one
+  button "Open Today and send them". A slow inbox shows "still reading, N of M so far". The business-details form
+  leaves the flow (the name comes from the Google account; the trade is asked later only if missing) and the
+  "How FollowUp works" explainer leaves (the landing page does that).
+- **Not changed:** the other channels' code and Settings pages; they are not promoted.
+**Supersedes, in part:** A-049's button label; the four-step setup as built on 2026-09-26.

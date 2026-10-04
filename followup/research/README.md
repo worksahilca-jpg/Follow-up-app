@@ -94,6 +94,7 @@ order and later ones assume the earlier fixes landed.
 | `2026-09-11-self-hosting-and-custom-voice-ai.md` | |
 | `2026-09-11-stripe-tier-billing-implementation.md` | |
 | `2026-09-11-tier-pricing-recommendation.md` | |
+| `2026-10-04-crm-study-why-followup.md` | **Start here for "why does this exist?"** — how CRMs work, the 2026 landscape (GoHighLevel, Leap, Follow Up Boss, HubSpot, Podium, Jobber…), is it valuable, can it scale, why buy FollowUp, how to make it work |
 
 ## `product/` — how the product should behave
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Sun, Inbox, Users, Settings, LogOut } from "lucide-react";
+import { Sun, Users, Settings, LogOut } from "lucide-react";
 import SidebarSearch from "@/components/app/SidebarSearch";
 import NotificationBell from "./NotificationBell";
 import FeedbackDialog from "./FeedbackDialog";
@@ -14,13 +14,15 @@ import LogoMark from "@/components/LogoMark";
  * (design-decisions 2026-09-27).
  *
  * Desktop: a warm grey column. The business is the header, its first
- * letter in a black square. A search box, then three places: Today, Inbox,
+ * letter in a black square. A search box, then two places: Today and
  * Customers. Settings sits at the foot. The current page is a white row
  * with a hairline edge.
  *
- * Phone: three tabs at the bottom (Today, Inbox, Settings), as on every
- * canvas phone board. Customers and the rest are reached from Settings
- * ("Everything else") and from search.
+ * Phone: three tabs at the bottom (Today, Customers, Settings).
+ *
+ * Two places, not three (A-082, founder 2026-10-04: "today and inbox is
+ * same no?"): Today is who needs you, Customers is everyone. Inbox showed
+ * the same people a third time; /inbox now redirects to Customers.
  *
  * Pipeline, Follow-up plans, Analytics and Activity are no longer in the
  * menu. The pages still exist and are linked from Settings.
@@ -29,13 +31,11 @@ type Counts = { today?: number; customers?: number };
 
 const places = [
   { href: "/dashboard", label: "Today", icon: Sun, count: "today" as const },
-  { href: "/inbox", label: "Inbox", icon: Inbox, count: null },
   { href: "/leads", label: "Customers", icon: Users, count: "customers" as const },
 ];
 
 function isActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
-  if (href === "/leads") return pathname === "/leads";
   return pathname === href || pathname.startsWith(href + "/");
 }
 
@@ -138,10 +138,16 @@ export default function Sidebar({ businessName = "", counts = {} }: { businessNa
             Settings
           </Link>
           <FeedbackDialog />
+          {/* Which account this is, always in view on the desk (founder,
+              2026-10-04). The phone shows it in Settings, on Sign-ins. */}
+          {session?.user?.email && (
+            <p className="mt-2 truncate border-t border-line px-2.5 pt-2.5 text-[12.5px] text-ink-faint" title={session.user.email}>
+              {session.user.email}
+            </p>
+          )}
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             className="flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-sm text-ink-soft hover:bg-card-2"
-            title={session?.user?.email ?? undefined}
           >
             <LogOut className="h-4 w-4" strokeWidth={1.8} />
             Sign out

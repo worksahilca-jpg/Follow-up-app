@@ -32,10 +32,6 @@ export const FAQS: { q: string; a: string }[] = [
     a: "A reminder tells you it's time. FollowUp does the follow-up itself, and tells you only what needs you.",
   },
   {
-    q: "What about Instagram's 24-hour rule?",
-    a: "Instagram lets apps reply for 24 hours after a customer's last message. After that, FollowUp writes one message you send with a tap.",
-  },
-  {
     q: "Is my data safe? Can I leave?",
     a: "It only reads the inboxes you connect, and replies go from your own address. If a customer books a call through your link, it puts that call on your Google Calendar. Nothing is sold. Leave any time, and delete all of it whenever you want.",
   },
@@ -45,7 +41,7 @@ export const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Can it answer my phone?",
-    a: "Not yet. It's built, but phone numbers need approval first, so nothing on your phone line is picked up today. It works with Gmail, Outlook, Instagram, Messenger, WhatsApp and your website form.",
+    a: "Not yet. It's built, but phone numbers need approval first, so nothing on your phone line is picked up today. Today it works with Gmail. Outlook, Instagram, Messenger, WhatsApp and a website form are coming; tell us which you need.",
   },
 ];
 

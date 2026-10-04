@@ -41,7 +41,7 @@ export const PLANS = [
     badge: "Recommended for one owner",
     items: [
       "Follows up on its own, on every channel",
-      "No DM missed on Instagram, Messenger or WhatsApp",
+      "Instagram, Messenger and WhatsApp, as they arrive",
       "Replies in the language they wrote in",
       "Your CRM contacts, followed up too",
       "Every Monday: who came back, who booked",

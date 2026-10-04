@@ -33,7 +33,7 @@ const CAPTIONS = [
 ];
 
 const STORY =
-  "Example: Sarah asks the price on Instagram. It comes to you with the reply written. After 30 minutes FollowUp tells her you are on it. You add $1,200 and send. On Friday it checks in, Sarah replies, and the check-ins stop.";
+  "Example: Sarah asks the price on Gmail. It comes to you with the reply written. After 30 minutes FollowUp tells her you are on it. You add $1,200 and send. On Friday it checks in, Sarah replies, and the check-ins stop.";
 
 function Dot({ tone }: { tone: string }) {
   return <span className={d.dot} style={{ background: tone }} />;
@@ -114,7 +114,7 @@ function Window() {
       <div className={d.body}>
         <div className={d.list}>
           <Row init="SJ" name="Sarah Johnson" on>
-            <Status k="kPNew" tone="var(--slate)">New · Instagram</Status>
+            <Status k="kPNew" tone="var(--slate)">New · Gmail</Status>
             <Status k="kPNeed" tone="var(--decision)">
               <b style={{ fontWeight: 600, color: "var(--ink)" }}>Needs you</b> · a price
             </Status>
@@ -143,7 +143,7 @@ function Window() {
           <div className={d.convHead}>
             <span className={`${d.av} ${d.convAv}`}>SJ</span>
             <span className={d.convTitle}>
-              <span className={d.convName}>Sarah Johnson</span> <span className={d.convVia}>· Instagram</span>
+              <span className={d.convName}>Sarah Johnson</span> <span className={d.convVia}>· Gmail</span>
             </span>
             <span className={d.convPills}>
               <Pill k="kPNew" tone="var(--slate)">New</Pill>
@@ -157,7 +157,7 @@ function Window() {
             </span>
           </div>
           <div className={d.thread}>
-            <Theirs k="kM1" when="Instagram · Tue 10:12">
+            <Theirs k="kM1" when="Gmail · Tue 10:12">
               Hi! What does your 3-month coaching package cost?
             </Theirs>
             <Sys k="kS1" tone="var(--decision)">

@@ -8737,3 +8737,25 @@ over the page height (the aside stretched to the grid row) and a doubled full st
   further away than the trust research (A-069) wanted; the row still shows its value the moment Details opens.
   A customer with nothing waiting shows "State · Waiting on Priya" as the first fact, which the board doesn't
   draw. Stage is a row with a select inside it rather than the board's "New ›" that picks in place.
+
+## 2026-10-04 — Settings built to the A-080 board
+
+One column, 640 wide: the follow-up plan card first (three rows: right away, the check-in days, always), then
+four groups of rows that each open their own page: Where customers write (Email; Website form; Instagram,
+Facebook, WhatsApp as one row), How it writes (Replies and check-ins; Booking hours; Pause all sending), Your
+business (Your business; Team, "Just you" or "N people"; Your plan), Account (Sign-ins and security; Your data;
+one "Advanced: CRM, Zapier, routing" row). The one broken thing shows first as a card, only when there is one.
+Gone: the two-column layout, the "Everything else" link grid, the "Everything you can change" heading and lede,
+the "For advanced setups" group, the "Tell us something" row (the sidebar's "Something broke?" is the same
+door), and the plan card's "Then · it stops" row (the Replies page says it). Three new pages: Booking hours
+(the card left the Email page), Pause all sending (the old Sending card, with its button), Advanced (CRM, the
+two webhooks, phone when offered, routing, on one page). Instagram, Facebook and WhatsApp share one page. Every
+old link (`#whatsapp`, `#crm`, `#billing`, `#phone`, `#alerts`) still lands on the right page; checked in the
+browser. Rendered on a local production build beside `prototypes/2026-10-03-one-decision-desk.html#settings`
+on desk and phone: the same shape, row for row. No black element on the list; Send stays the one black thing
+in the app.
+- **Weak spots, named:** with nothing connected, the "Nothing is connected" card and the Email row's "Not set
+  up" say the same thing twice (A-080 keeps the broken-thing card; it reads as the one thing to do). The Pause
+  page is one card on an otherwise empty page. The Advanced page is long; it is five sections in a row, which is
+  the point of hiding it, but it has not been reviewed as a page of its own. The list makes three more requests
+  on open (booking hours, team, the three social configs were already there).

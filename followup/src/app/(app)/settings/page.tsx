@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import SettingsOverview from "@/components/app/SettingsOverview";
 import SettingsList from "@/components/app/SettingsList";
 import { quietReminderDays, SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
 import Switch from "@/components/Switch";
@@ -31,8 +30,8 @@ import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AV
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 import { Mail, Calendar, Check, RefreshCw, CreditCard, Search } from "lucide-react";
 
-/** Section headings in More settings read like the overview's card labels
- *  above (SettingsOverview): small and quiet, the card under them carries it.
+/** Section headings on a setting's page read like the list's group labels
+ *  (SettingsList): small and quiet, the card under them carries it.
  *  Inline weight because the global h2 rule is unlayered. */
 const SECTION_LABEL = "text-sm text-ink-faint";
 const SECTION_STYLE = { fontWeight: 400, letterSpacing: 0 } as const;
@@ -61,19 +60,19 @@ type SettingsPage = { title: string; lede?: string; sections: string[] };
 const PAGES: Record<string, SettingsPage> = {
   email: { title: "Email", lede: "Connect Gmail or Outlook. FollowUp reads new customers’ emails and replies from your own address.", sections: ["integrations"] },
   website: { title: "Website form", lede: "A contact form for your own site. What people send lands in Today.", sections: ["website-widget"] },
-  social: { title: "Instagram and Facebook", lede: "Customers who message your Instagram or Facebook Page show up in Today.", sections: ["social"] },
-  whatsapp: { title: "WhatsApp", lede: "Your own WhatsApp Business number. Keep using the app on your phone as before.", sections: ["whatsapp"] },
-  phone: { title: "Phone and text", sections: ["phone"] },
+  social: { title: "Instagram, Facebook, WhatsApp", lede: "Customers who message your Instagram, your Facebook Page or your WhatsApp Business number show up in Today.", sections: ["social", "whatsapp"] },
   replies: { title: "Replies and check-ins", lede: "What FollowUp writes on its own, and when. Anything about a price or a date still comes to you.", sections: ["automation", "alerts"] },
+  booking: { title: "Booking hours", lede: "When customers can book a call through your link, and which calendar it checks.", sections: ["booking"] },
+  pause: { title: "Pause all sending", sections: ["pause"] },
   business: { title: "Your business", sections: ["business"] },
   team: { title: "Team", lede: "Admins can invite teammates, change roles and remove people.", sections: ["team"] },
   billing: { title: "Your plan", sections: ["billing"] },
   security: { title: "Sign-ins and security", sections: ["security"] },
   data: { title: "Your data", lede: "Download everything, or permanently delete this business.", sections: ["data"] },
   feedback: { title: "Tell us something", lede: "Not a support ticket. A place to tell us what’s working or what isn’t.", sections: ["feedback"] },
-  crm: { title: "Your CRM", sections: ["crm"] },
-  tools: { title: "Other tools", lede: "Zapier, Make, or any tool that can send or receive a webhook.", sections: ["lead-webhook", "outbound-webhook"] },
-  routing: { title: "New customers, by where they wrote", sections: ["lead-routing"] },
+  // One page for what most businesses never need (A-080): the CRM, other
+  // tools, phone, and routing by source.
+  advanced: { title: "Advanced", lede: "Your CRM, other tools like Zapier or Make, and where new customers go by the place they wrote. Most businesses never need these.", sections: ["crm", "lead-webhook", "outbound-webhook", "phone", "lead-routing"] },
 };
 /** Old section id (or a page id) → the page that shows it. */
 function pageFor(id: string): string | null {
@@ -939,30 +938,18 @@ function SettingsPageInner() {
   return (
     <div>
       {!page ? (
-        // The list (A-069): the plan and Pause on the left, as the overview
-        // already had them, and everything you can change beside it.
-        <div className="lg:grid lg:grid-cols-[minmax(0,520px)_minmax(0,560px)] lg:items-start lg:gap-14">
-          <div>
-            <h1 className="text-[32px] leading-[1.1]">Settings</h1>
-            <div className="mt-6">
-              <SettingsOverview
-                checkInDays={quietReminderDays(autoAfterDays)}
-                instantAck={instantAckOn}
-                holdAll={holdAllForApproval}
-                paused={sendingPaused}
-                pauseSaving={pauseSaving}
-                onPause={savePause}
-                isAdmin={isAdmin}
-              />
-            </div>
-          </div>
-          <div className="mt-10 lg:mt-0">
+        // The list (A-080): one column, the plan on top, five groups of
+        // rows, each opening its own page.
+        <div>
+          <h1 className="text-[32px] leading-[1.1]">Settings</h1>
+          <div className="mt-6">
             <SettingsList
               gmail={{ connected: gmailConnected, email: gmailEmail }}
               outlook={{ connected: outlookConnected, email: outlookEmail }}
-              carrierAvailable={CARRIER_CHANNELS_AVAILABLE}
+              checkInDays={quietReminderDays(autoAfterDays)}
+              instantAck={instantAckOn}
               holdAll={holdAllForApproval}
-              onlyAdminsSend={onlyAdminsSend}
+              paused={sendingPaused}
               planStatus={planStatus}
               onOpen={openMore}
             />
@@ -1032,9 +1019,6 @@ function SettingsPageInner() {
               calendar access.
             </p>
           )}
-          <div className="sm:ml-[52px]">
-            <BookingCalendarConfig />
-          </div>
           {gmailConnected && (
             <div className="sm:ml-[52px] mt-3 border-t border-line pt-3">
               <div className="flex items-center gap-3 flex-wrap">
@@ -1132,6 +1116,15 @@ function SettingsPageInner() {
         )}
       </section>
 
+      {/* Booking hours have their own page (A-080's "How it writes" group);
+          they used to sit inside the Email page under the Gmail row. */}
+      <section id="booking" hidden={!visible("booking")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Booking hours</h2>
+        <div className="mt-4">
+          <BookingCalendarConfig />
+        </div>
+      </section>
+
       {/* Was buried inside the "Instagram" section under the wrong name —
           it's a CRM sync, unrelated to social DMs. Grouped with Connect
           since it's about where leads/contacts come from, not a channel. */}
@@ -1189,15 +1182,8 @@ function SettingsPageInner() {
         </section>
       )}
 
-      {/* The three Meta channels sit together, in the order a business is
-          most likely to already have them. */}
-      <section id="whatsapp" hidden={!visible("whatsapp")} className="scroll-mt-16">
-        <h2 className={sectionLabel} style={SECTION_STYLE}>WhatsApp</h2>
-        <div className="mt-4">
-          <WhatsAppConfig />
-        </div>
-      </section>
-
+      {/* The three Meta channels sit together on one page, in the order a
+          business is most likely to already have them. */}
       <section id="social" hidden={!visible("social")} className="scroll-mt-16">
         <h2 className={sectionLabel} style={SECTION_STYLE}>Instagram &amp; Facebook</h2>
         {instagramError && (
@@ -1208,6 +1194,40 @@ function SettingsPageInner() {
         <div className="mt-4">
           <InstagramConfig />
           <FacebookConfig />
+        </div>
+      </section>
+
+      <section id="whatsapp" hidden={!visible("whatsapp")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>WhatsApp</h2>
+        <div className="mt-4">
+          <WhatsAppConfig />
+        </div>
+      </section>
+
+      {/* Pause all sending (A-041), on its own page since A-080: the list
+          shows Off or Paused; this is where it changes. */}
+      <section id="pause" hidden={!visible("pause")} className="scroll-mt-16">
+        <h2 className={sectionLabel} style={SECTION_STYLE}>Pause all sending</h2>
+        <div className="mt-4 flex items-center gap-3.5 rounded-[14px] border border-line bg-card px-4 py-3.5">
+          <div className="min-w-0 flex-1">
+            <div className="text-base">{sendingPaused ? "Sending is paused" : "Pause all sending"}</div>
+            <div className="mt-0.5 text-[13.5px] leading-snug text-ink-faint">
+              {sendingPaused
+                ? "Everything waits for your OK until you resume. Your settings stayed as they were."
+                : "Everything waits for your OK until you resume. Your settings stay."}
+            </div>
+          </div>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => savePause(!sendingPaused)}
+              disabled={pauseSaving}
+              className="h-11 shrink-0 rounded-full border bg-card px-[18px] text-[15px] font-medium disabled:opacity-60"
+              style={{ borderColor: "var(--line-strong)" }}
+            >
+              {pauseSaving ? "…" : sendingPaused ? "Resume" : "Pause"}
+            </button>
+          )}
         </div>
       </section>
 

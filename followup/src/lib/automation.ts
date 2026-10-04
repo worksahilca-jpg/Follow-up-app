@@ -56,6 +56,7 @@ import { isOptOutMessage, isOptInMessage } from "@/lib/optOutKeywords";
 import { ackGracePeriodMs } from "@/lib/acknowledge";
 import { heldSince } from "@/lib/pendingApprovals";
 import type { Message } from "@/lib/types";
+import { businessTrade } from "@/lib/tradePlaybooks";
 
 export const UNANSWERED_ACTION = "unanswered_reply";
 export const UNANSWERED_NAME = "Reply for me when I haven't";
@@ -1353,7 +1354,7 @@ export async function runAutomationForBusiness(
           quickReplies = dm.quickReplies;
           dmShapeFailed = dm.shapeFailed;
         } else {
-          const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples, messageHint, undefined, leadLanguageOf(lead));
+          const draft = await generateFollowUpMessage({ name: lead.name, conversation, trade: await businessTrade(lead.businessId) }, voiceSamples, messageHint, undefined, leadLanguageOf(lead));
           subject = draft.subject;
           // The same invariant the ack and the DM have always had, on the
           // one path that never had it: no price, date or figure the

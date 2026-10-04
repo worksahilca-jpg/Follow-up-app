@@ -20,6 +20,7 @@ import { escapeSlackText, notifySlack } from "@/lib/slack";
 import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import type { Message } from "@/lib/types";
 import { Prisma, type Priority as DbPriority } from "@prisma/client";
+import { businessTrade } from "@/lib/tradePlaybooks";
 
 // Cut-points come from @/lib/scoreThresholds, shared with ScoreBadge —
 // the two used to carry their own copies (70/40 here, 75/45 there) and
@@ -159,7 +160,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     // chips under a message that had two questions.
     suggestedQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
   } else {
-    const draft = await generateFollowUpMessage({ name: lead.name, conversation }, voiceSamples, undefined, undefined, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation, trade: await businessTrade(lead.businessId) }, voiceSamples, undefined, undefined, leadLanguage);
     suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
       languageSample: latestInboundText(conversation),
       leadLanguage,

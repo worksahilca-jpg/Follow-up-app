@@ -23,3 +23,15 @@ export const INDUSTRIES = [
   "Marketing agency",
   "Other",
 ] as const;
+
+/** One tap each in setup: the same values, in words that fit on a chip. */
+export const INDUSTRY_SHORT: Record<(typeof INDUSTRIES)[number], string> = {
+  "Real estate": "Real estate",
+  "Mortgage brokerage": "Mortgage",
+  "Home services (contractor, cleaning, etc.)": "Home services",
+  "Dental / medical clinic": "Clinic",
+  Legal: "Legal",
+  "Marketing agency": "Marketing",
+  Other: "Something else",
+};
+

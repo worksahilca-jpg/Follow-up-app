@@ -16,6 +16,7 @@ import { ungroundedSpecifics, unconfirmedClaim } from "@/lib/grounding";
 // The client and model name live in their own leaf module so this file
 // and leadLanguage.ts don't import each other — see openaiClient.ts.
 import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiClient";
+import { playbookFor } from "@/lib/tradePlaybooks";
 import { customerGreetingName } from "@/lib/leadName";
 
 /**
@@ -1233,7 +1234,8 @@ export interface FollowUpDraft {
 }
 
 export async function generateFollowUpMessage(
-  lead: Pick<Lead, "name" | "conversation">,
+  // `trade`: the business's line of work, for its playbook (tradePlaybooks.ts).
+  lead: Pick<Lead, "name" | "conversation"> & { trade?: string | null },
   voiceSamples: string[] = [],
   messageHint?: string,
   // When set, the draft is an Instagram/Messenger DM rather than an email:
@@ -1487,6 +1489,7 @@ export async function generateFollowUpMessage(
           HUMAN_VOICE_NOTICE +
           UNTRUSTED_CONVERSATION_NOTICE +
           VOICE_AGENT_TRUST_NOTICE +
+          (playbookFor(lead.trade) ? "\n\n" + playbookFor(lead.trade) : "") +
           languageDecisionBlock +
           voiceBlock +
           hintBlock,

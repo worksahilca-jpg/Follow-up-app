@@ -53,6 +53,8 @@ export default function SettingsList({
   const [social, setSocial] = useState<Social | null>(null);
   const [booking, setBooking] = useState<string | null>(null);
   const [team, setTeam] = useState<number | null>(null);
+  // What the business does; null once loaded means never told (setup asks since 2026-10-04).
+  const [trade, setTrade] = useState<string | null | undefined>(undefined);
   useEffect(() => {
     const get = (url: string) =>
       fetch(url)
@@ -69,6 +71,9 @@ export default function SettingsList({
       if (!data?.success || !data.days || data.startMinute === undefined || data.endMinute === undefined) return;
       const city = data.timezone ? describeTimeZone(data.timezone).replace(/\s*\(.*$/, "") : "";
       setBooking(describeBookingHours({ days: data.days, startMinute: data.startMinute, endMinute: data.endMinute }) + (city ? ` · ${city}` : ""));
+    });
+    get("/api/onboarding").then((data: { success?: boolean; industry?: string | null }) => {
+      if (data?.success) setTrade(data.industry ?? null);
     });
     get("/api/team").then((data: { members?: unknown[] }) => setTeam(Array.isArray(data?.members) ? data.members.length : null));
   }, []);
@@ -98,6 +103,8 @@ export default function SettingsList({
     needs.push({ page: "social", title: "Instagram isn’t sending messages here", text: "It’s connected, but no DMs reach FollowUp, so replies and check-ins there are paused. Open it to fix the link." });
   if (social && !gmail.connected && !outlook.connected && !social.instagram.connected && !social.facebook.connected && !social.whatsapp)
     needs.push({ page: "email", title: "Nothing is connected to send with", text: "FollowUp can take in customers, but it has no way to reply to them yet. Connect your email and it starts." });
+  if (trade === null)
+    needs.push({ page: "business", title: "Tell FollowUp what you do", text: "It uses your line of work to tell real customers from everyone else, and to write replies that fit it. One tap." });
   const need = needs[0];
 
   const days = checkInDays.length > 1 ? `Day ${checkInDays.slice(0, -1).join(", ")}, ${checkInDays[checkInDays.length - 1]}` : `Day ${checkInDays[0] ?? 3}`;

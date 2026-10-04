@@ -45,6 +45,7 @@ import type { Message } from "@/lib/types";
 import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 import { emailGreetingOf } from "@/lib/dmDrafts";
 import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
+import { businessTrade } from "@/lib/tradePlaybooks";
 
 export interface SequenceStepInput {
   /** Hours after the previous step (or enrollment). Preferred. */
@@ -826,7 +827,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           };
         }
         const draft = await generateFollowUpMessage(
-          { name: lead.name, conversation },
+          { name: lead.name, conversation, trade: await businessTrade(lead.businessId) },
           voiceSamples,
           channel === "email" ? step.messageHint ?? undefined : nonEmailStepHint(step.messageHint),
           undefined,

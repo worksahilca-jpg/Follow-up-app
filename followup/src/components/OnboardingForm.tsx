@@ -6,6 +6,7 @@ import { ArrowRight, Check, Loader2 } from "lucide-react";
 import LogoMark from "@/components/LogoMark";
 import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
 import { WARM_CARD } from "@/components/app/ReplyCard";
+import { INDUSTRIES, INDUSTRY_SHORT } from "@/lib/industries";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import UndoLine from "@/components/UndoLine";
 
@@ -244,12 +245,21 @@ function ConnectGmail({ outlookAvailable, error }: { outlookAvailable: boolean; 
  */
 function HowItShouldWork({ reading, onChosen }: { reading: boolean; onChosen: () => void }) {
   const [mode, setMode] = useState<"automatic" | "assisted" | null>("assisted");
+  const [trade, setTrade] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function choose() {
     setError(null);
-    if (!mode) return;
+    if (!mode || !trade) return;
+    // What they do (founder, 2026-10-04): it decides who counts as a
+    // customer and which playbook the replies follow. Best effort: a
+    // failed save never blocks setup, and Settings asks again if it's missing.
+    await fetch("/api/onboarding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ industry: trade }),
+    }).catch(() => {});
     if (mode === "assisted") {
       onChosen();
       return;
@@ -290,10 +300,39 @@ function HowItShouldWork({ reading, onChosen }: { reading: boolean; onChosen: ()
       <h1 className={H1}>How should FollowUp work?</h1>
       <p className={LEDE + (reading ? " flex items-center gap-2" : "")}>
         {reading && <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />}
-        {reading ? "It's reading your inbox now. Pick one; change it any time." : "Pick one; change it any time in Settings."}
+        {reading ? "It's reading your inbox now. Two quick choices; change them any time." : "Two quick choices; change them any time in Settings."}
       </p>
 
-      <div role="radiogroup" aria-label="How FollowUp works" className="mt-[22px] flex flex-col gap-3">
+      {/* What they do: one tap, asked while the inbox is read. */}
+      <div className="mt-[22px]">
+        <p id="trade-label" className="text-[15px] font-medium">What do you do?</p>
+        <div role="radiogroup" aria-labelledby="trade-label" className="mt-2.5 flex flex-wrap gap-2">
+          {INDUSTRIES.map((i) => {
+            const on = trade === i;
+            return (
+              <button
+                key={i}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => setTrade(i)}
+                className="min-h-10 rounded-full border px-3.5 text-[14.5px] transition-colors"
+                style={{
+                  borderColor: on ? "var(--ink)" : "var(--line)",
+                  background: on ? "var(--ink)" : "var(--card)",
+                  color: on ? "var(--paper)" : "var(--ink)",
+                  fontWeight: on ? 500 : 400,
+                }}
+              >
+                {INDUSTRY_SHORT[i]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <p className="mt-6 text-[15px] font-medium">How should it reply?</p>
+      <div role="radiogroup" aria-label="How FollowUp works" className="mt-2.5 flex flex-col gap-3">
         {options.map((o) => {
           const on = mode === o.id;
           return (
@@ -353,8 +392,10 @@ function HowItShouldWork({ reading, onChosen }: { reading: boolean; onChosen: ()
       )}
 
       <div className="mt-auto pb-7 pt-6">
-      {!mode && <p className="mb-2.5 text-center text-[13.5px] text-ink-faint">Choose one to continue.</p>}
-      <button onClick={choose} disabled={saving || !mode} className={PRIMARY + " disabled:opacity-50"} style={PRIMARY_STYLE}>
+      {(!mode || !trade) && (
+        <p className="mb-2.5 text-center text-[13.5px] text-ink-faint">{!trade ? "Choose what you do to continue." : "Choose one to continue."}</p>
+      )}
+      <button onClick={choose} disabled={saving || !mode || !trade} className={PRIMARY + " disabled:opacity-50"} style={PRIMARY_STYLE}>
         {/* A-053's curiosity action: the next screen is the list of who never got a reply. */}
         {saving ? "Saving…" : "Find who needs a reply"}
         {!saving && <ArrowRight className="h-4 w-4" />}

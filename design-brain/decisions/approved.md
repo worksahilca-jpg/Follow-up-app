@@ -1583,3 +1583,17 @@ going all in"*; research in `followup/research/customers/2026-10-04-gmail-only-w
   above Sign out in the desk sidebar, and as a full "Signed in as …" line at the end of Settings on the phone.
 **Supersedes, in part:** A-027's place list.
 
+## A-083 — Setup asks what you do; realtors get a realtor's playbook ^A-083
+
+**Approved:** 2026-10-04, founder: *"a realtor's account should be trained as a realtor assistant… different businesses,
+different kinds of replies"*, then *"yes do all"* to: ask the trade in setup, and a realtor playbook first.
+**What specifically:**
+- **Setup step 2** asks "What do you do?" as one row of chips (Real estate, Mortgage, Home services, Clinic, Legal,
+  Marketing, Something else) above "How should it reply?". One tap is required to continue. Amends A-081, which had
+  dropped the question; without it the customer-or-not classifier works blind.
+- **Settings** shows "Tell FollowUp what you do" as its top card when a business has no trade on file.
+- **Replies:** a real estate business's drafts carry a realtor playbook (offer a showing and ask which days suit, never
+  pick a time; never give a home value, market opinion, or mortgage/legal/tax advice; commission is a price). It sits
+  under every existing rule, never over one. Every other trade writes exactly as before.
+**Not yet:** playbooks for other trades; the proven-reply library.
+

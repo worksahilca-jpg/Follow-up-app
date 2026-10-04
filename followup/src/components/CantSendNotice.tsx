@@ -18,7 +18,7 @@ export default function CantSendNotice({ reconnectEmail }: { reconnectEmail: str
         <p className="text-sm font-medium">Replies and check-ins can&apos;t go out</p>
         <p className="text-[13px] text-ink-soft mt-0.5">
           {reconnectEmail
-            ? `FollowUp lost access to ${reconnectEmail}, so it can't write to anyone. In the beta, Google ends this access every seven days. Reconnecting takes a few seconds.`
+            ? `FollowUp lost access to ${reconnectEmail}, so it can't write to anyone. Connections made before October 3 ended after 7 days; reconnect once and it stays connected. It takes a few seconds.`
             : "Nothing is connected to send from, so FollowUp can't write to anyone."}
         </p>
       </div>

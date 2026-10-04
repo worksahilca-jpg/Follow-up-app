@@ -143,7 +143,7 @@ export async function notifyGmailAccessLost(businessId: string, snapshot: GmailS
   const message =
     `FollowUp lost access to ${inboxLabel(snapshot)}, so new emails there aren't being picked up. ` +
     `Reconnect Gmail in Settings to keep catching leads. ` +
-    `While FollowUp is in beta, Google asks for this every 7 days.`;
+    GMAIL_WHY;
   let admins: { id: string; email: string; business?: { timezone: string } | null }[];
   try {
     admins = await adminsOf(businessId);
@@ -200,6 +200,21 @@ async function emailGmailAccessLost(
  */
 export const GMAIL_GRANT_LIFETIME_MS: number | null = 7 * 24 * 60 * 60_000;
 
+/**
+ * When the live Google app ("My First Project", stately-synapse-507306-b8)
+ * left Testing for "In production": 2026-10-03, read from the console by
+ * the founder on 2026-10-04 (branding verified, data access under review).
+ * Grants made after it no longer expire after seven days; grants made
+ * before it still carry the Testing lifetime until their one reconnect.
+ * The end of Oct 3 UTC, so a grant made that day is treated as old: the
+ * worst case is one unneeded warning, never a missed one.
+ */
+export const GMAIL_PUBLISHED_AT = new Date("2026-10-04T00:00:00Z");
+
+/** The one sentence every reconnect notice uses for why (Gmail first, 2026-10-04). */
+export const GMAIL_WHY =
+  "Connections made before October 3 ended after 7 days while Google reviewed FollowUp. Reconnect once and it stays connected.";
+
 /** How far ahead of the end the owner is warned: a day, so there is time to see it. */
 export const GMAIL_ENDING_WARNING_MS = 24 * 60 * 60_000;
 
@@ -218,6 +233,8 @@ export const GMAIL_ENDING_MARKER = "ends within a day";
  */
 export function gmailAccessEndingSoon(connectedAt: Date | null | undefined, now: Date): boolean {
   if (GMAIL_GRANT_LIFETIME_MS === null || !connectedAt) return false;
+  // Made after the app went to production: Google no longer ends it weekly.
+  if (connectedAt.getTime() >= GMAIL_PUBLISHED_AT.getTime()) return false;
   const endsAt = connectedAt.getTime() + GMAIL_GRANT_LIFETIME_MS;
   return now.getTime() >= endsAt - GMAIL_ENDING_WARNING_MS && now.getTime() < endsAt;
 }
@@ -267,7 +284,7 @@ export async function warnGmailAccessEndingSoon(businessId: string, now: Date = 
     const message =
       `FollowUp's access to ${inbox} ${GMAIL_ENDING_MARKER}. ` +
       `Reconnect Gmail in Settings now so new emails keep being picked up without a gap. ` +
-      `While FollowUp is in beta, Google asks for this every 7 days.`;
+      GMAIL_WHY;
 
     // The "already warned?" check and the write happen under one
     // transaction-scoped advisory lock (the pattern in src/lib/rateLimit.ts
@@ -325,7 +342,7 @@ export function gmailEndingSoonEmail(p: { inbox: string; base: string; timeZone?
     title: "Reconnect Gmail today to keep catching customers",
     what: `FollowUp's access to ${p.inbox} ends within a day. Reconnect now and new customer emails keep coming in without a gap.`,
     how: "Reconnecting takes a few seconds: press the button and choose the same Google account.",
-    why: "While FollowUp is in beta, Google asks for this every 7 days. That's Google's rule for apps still being verified, not something you did.",
+    why: `${GMAIL_WHY} It's Google's rule, not something you did.`,
     once: "FollowUp sends this once, a day before the connection ends.",
   });
 }
@@ -338,7 +355,7 @@ export function gmailReconnectEmail(p: { inbox: string; base: string; timeZone?:
     title: "Reconnect Gmail to keep catching customers",
     what: `FollowUp can't read ${p.inbox} right now, so new customer emails there aren't being picked up.`,
     how: "Reconnecting takes a few seconds: press the button and choose the same Google account.",
-    why: "While FollowUp is in beta, Google asks for this every 7 days. That's Google's rule for apps still being verified, not something you did.",
+    why: "It can mean access was removed in your Google account or the password changed. Connections made before October 3 also ended after 7 days while Google reviewed FollowUp; one reconnect fixes that for good.",
     once: "FollowUp sends this once, only when the connection stops.",
   });
 }

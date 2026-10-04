@@ -152,6 +152,8 @@ import {
   SYNC_FAILING_NOTICE_AFTER_MS,
   gmailEndingSoonEmail,
   gmailReconnectEmail,
+  gmailAccessEndingSoon,
+  GMAIL_PUBLISHED_AT,
 } from "@/lib/gmailSyncNotices";
 
 const T0 = new Date("2026-09-25T09:00:00Z");
@@ -204,7 +206,7 @@ describe("the day the token dies", () => {
       expect(note.leadId).toBeNull();
       expect(note.message).toContain("info@samsplumbing.ca");
       expect(note.message).toContain("Reconnect Gmail in Settings");
-      expect(note.message).toContain("every 7 days");
+      expect(note.message).toContain("Reconnect once and it stays connected");
     }
   });
 
@@ -289,7 +291,7 @@ describe("the reconnect email (founder, 2026-09-28)", () => {
     expect(email.text).toContain("info@samsplumbing.ca");
     expect(email.text).toContain("https://www.followupbase.io/api/integrations/gmail/connect");
     expect(email.html).toContain('href="https://www.followupbase.io/api/integrations/gmail/connect"');
-    expect(email.text).toContain("every 7 days");
+    expect(email.text).toContain("one reconnect fixes that for good");
     // One key per admin per connection, so a retried tick can't send it twice.
     const keys = sendAlertEmail.mock.calls.map(([e]) => e.idempotencyKey);
     expect(new Set(keys).size).toBe(2);
@@ -433,7 +435,7 @@ describe("the day-6 warning (founder, 2026-09-28: warn before it stops)", () => 
       expect(note.leadId).toBeNull();
       expect(note.message).toContain("info@samsplumbing.ca");
       expect(note.message).toContain("Reconnect Gmail in Settings");
-      expect(note.message).toContain("every 7 days");
+      expect(note.message).toContain("Reconnect once and it stays connected");
     }
     const emails = warningEmails();
     expect(emails.map((e) => e.to).sort()).toEqual(["jo@samsplumbing.ca", "sam@samsplumbing.ca"]);
@@ -515,6 +517,16 @@ describe("the day-6 warning (founder, 2026-09-28: warn before it stops)", () => 
     const { html } = gmailEndingSoonEmail({ inbox: "<b>x</b>@y.ca", base: "https://www.followupbase.io" });
     expect(html).not.toContain("<b>x</b>");
     expect(html).toContain("&lt;b&gt;x&lt;/b&gt;@y.ca");
+  });
+
+  it("never warns a connection made after the app went to production (2026-10-03)", () => {
+    // Made the day after the switch, checked six and a half days later: an
+    // old Testing grant would be in its last day; this one doesn't end.
+    const made = new Date(GMAIL_PUBLISHED_AT.getTime() + 9 * HOUR);
+    expect(gmailAccessEndingSoon(made, new Date(made.getTime() + 6 * DAY + 12 * HOUR))).toBe(false);
+    // One made before the switch still gets its warning.
+    const old = new Date(GMAIL_PUBLISHED_AT.getTime() - 2 * DAY);
+    expect(gmailAccessEndingSoon(old, new Date(old.getTime() + 6 * DAY + 12 * HOUR))).toBe(true);
   });
 
   it("warns about the inbox that is ending when a business has two Gmails on different clocks (audit 2026-09-29)", async () => {

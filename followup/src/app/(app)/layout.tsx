@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import Sidebar from "@/components/Sidebar";
+import SeenPing from "@/components/SeenPing";
 import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +28,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen">
+      {/* One "opened today" record per person per day (src/lib/appOpens.ts). */}
+      <SeenPing />
       <Sidebar businessName={business.name ?? ""} counts={{ today, customers }} />
       <main className="flex-1 min-w-0">
         {/* Below lg: pt-20 clears the fixed top bar and pb-28 the three

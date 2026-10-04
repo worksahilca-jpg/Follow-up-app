@@ -23,6 +23,7 @@
 import { prisma } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import { getRescueReport } from "@/lib/rescued";
+import { APP_OPEN, localDay, summariseOpens, type Opened } from "@/lib/appOpens";
 
 export const WINDOW_DAYS = 30;
 /** The sync cron runs every two minutes; half an hour without a good sync is a stall, not a blip. */
@@ -44,6 +45,8 @@ export type TesterFacts = {
   drafts: { sent: number; asWritten: number };
   writeLikeMe: { on: boolean; kept: number };
   wonBack: number;
+  /** When they last opened FollowUp, and on how many of the last 7 days (src/lib/appOpens.ts). */
+  opened?: Opened;
 };
 
 export type TesterHealth = {
@@ -55,6 +58,8 @@ export type TesterHealth = {
   checks: { connected: Check; inbox: Check; drafts: Check; learning: Check; wonBack: Check };
   /** The first check not passed, in the order above: what to help with next. */
   next: string | null;
+  /** "Opened today · 5 of 7 days", or "Not opened since tracking began". Not part of the score. */
+  opened: string;
 };
 
 export type TesterHealthReport = {
@@ -87,6 +92,16 @@ function ago(from: Date, now: Date): string {
   const h = Math.round(min / 60);
   if (h < 48) return `${h} h ago`;
   return `${Math.round(h / 24)} days ago`;
+}
+
+/** The habit line: when they last opened it, and how many of the last seven days. */
+export function openedLine(o: Opened | undefined, now: Date): string {
+  if (!o?.last) return "Not opened since tracking began";
+  const tz = o.timeZone ?? "America/Toronto";
+  // Calendar days in the business's zone, so 11 pm yesterday is "yesterday".
+  const days = Math.round((Date.parse(localDay(now, tz)) - Date.parse(localDay(o.last, tz))) / (24 * 60 * 60_000));
+  const when = days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
+  return `Opened ${when} · ${o.daysOf7} of 7 days`;
 }
 
 function inboxName(provider: string): string {
@@ -143,6 +158,7 @@ export function judgeTester(t: TesterFacts, now: Date): TesterHealth {
     score,
     checks,
     next: firstGap ? `${LABEL[firstGap]}: ${checks[firstGap].text}` : null,
+    opened: openedLine(t.opened, now),
   };
 }
 
@@ -176,12 +192,14 @@ export async function getTesterHealth(now: Date = new Date()): Promise<TesterHea
     select: { id: true, name: true, email: true, business: true },
   });
   const users = testers.length
-    ? await prisma.user.findMany({ where: { email: { in: testers.map((t) => t.email) } }, select: { email: true, businessId: true } })
+    ? await prisma.user.findMany({ where: { email: { in: testers.map((t) => t.email) } }, select: { id: true, email: true, businessId: true } })
     : [];
+  const userIdByEmail = new Map(users.map((u) => [u.email, u.id]));
   const bizByEmail = new Map(users.map((u) => [u.email, u.businessId]));
   const bizIds = [...new Set(users.map((u) => u.businessId).filter((id): id is string => !!id))];
 
-  const [inboxes, businesses, draftRows, kept, rescued] = await Promise.all([
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60_000);
+  const [inboxes, businesses, draftRows, kept, rescued, opens, lastOpens] = await Promise.all([
     prisma.integration.findMany({
       where: { provider: { in: ["gmail", "outlook"] }, user: { businessId: { in: bizIds } } },
       // Column by column: src/lib/db.ts decrypts token columns on read.
@@ -189,7 +207,7 @@ export async function getTesterHealth(now: Date = new Date()): Promise<TesterHea
     }),
     prisma.business.findMany({
       where: { id: { in: bizIds } },
-      select: { id: true, instagramUserId: true, facebookPageId: true, pastRepliesAllowedAt: true },
+      select: { id: true, instagramUserId: true, facebookPageId: true, pastRepliesAllowedAt: true, timezone: true },
     }),
     // Two counts per tester business: groupBy can't reach through the
     // lead relation to the business, and there are at most 100 testers.
@@ -206,12 +224,21 @@ export async function getTesterHealth(now: Date = new Date()): Promise<TesterHea
     ),
     prisma.pastReply.groupBy({ by: ["businessId"], where: { businessId: { in: bizIds } }, _count: { _all: true } }),
     Promise.all(bizIds.map(async (businessId) => ({ businessId, rescued: (await getRescueReport(businessId, WINDOW_DAYS, now)).rescued }))),
+    // This week's opens, for the days count, and each person's newest ever.
+    prisma.auditEvent.findMany({
+      where: { action: APP_OPEN, userId: { in: users.map((u) => u.id) }, createdAt: { gte: weekAgo } },
+      select: { userId: true, createdAt: true },
+    }),
+    prisma.auditEvent.groupBy({ by: ["userId"], where: { action: APP_OPEN, userId: { in: users.map((u) => u.id) } }, _max: { createdAt: true } }),
   ]);
 
   const bizById = new Map(businesses.map((b) => [b.id, b]));
   const draftsBy = new Map(draftRows.map((d) => [d.businessId, d]));
   const keptBy = new Map(kept.map((k) => [k.businessId, k._count._all]));
   const rescuedBy = new Map(rescued.map((r) => [r.businessId, r.rescued]));
+  const opensBy = new Map<string, Date[]>();
+  for (const o of opens) if (o.userId) opensBy.set(o.userId, [...(opensBy.get(o.userId) ?? []), o.createdAt]);
+  const lastOpenBy = new Map(lastOpens.map((l) => [l.userId, l._max.createdAt]));
 
   const facts: TesterFacts[] = testers.map((t) => {
     const businessId = bizByEmail.get(t.email) ?? null;
@@ -231,6 +258,13 @@ export async function getTesterHealth(now: Date = new Date()): Promise<TesterHea
       drafts: { sent: d?.sent ?? 0, asWritten: d?.asWritten ?? 0 },
       writeLikeMe: { on: !!b?.pastRepliesAllowedAt, kept: (businessId && keptBy.get(businessId)) || 0 },
       wonBack: (businessId && rescuedBy.get(businessId)) || 0,
+      opened: (() => {
+        const userId = userIdByEmail.get(t.email);
+        if (!userId) return undefined;
+        const tz = b?.timezone ?? "America/Toronto";
+        const week = summariseOpens(opensBy.get(userId) ?? [], now, tz);
+        return { last: lastOpenBy.get(userId) ?? week.last, daysOf7: week.daysOf7, timeZone: tz };
+      })(),
     };
   });
 

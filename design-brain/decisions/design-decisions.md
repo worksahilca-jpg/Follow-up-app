@@ -8759,3 +8759,27 @@ in the app.
   page is one card on an otherwise empty page. The Advanced page is long; it is five sections in a row, which is
   the point of hiding it, but it has not been reviewed as a page of its own. The list makes three more requests
   on open (booking hours, team, the three social configs were already there).
+
+## 2026-10-04 — Gmail-first landing page and setup, drawn (proposed, not yet approved)
+
+The founder chose to focus on Gmail only ("let's just focus on email only… I'm going all in") after the CRM
+study and the Gmail-only research (`followup/research/customers/2026-10-04-gmail-only-why-they-would-use-it.md`,
+`…-does-the-solo-owner-have-this-problem.md`). Boards in `prototypes/2026-10-04-gmail-first.html`
+(#landing, #landing-phone, #setup).
+- **Landing:** the approved headline (A-022, A-063) stays. The lede says what it does on Gmail: reads the
+  customers in your Gmail, answers in your words within minutes, checks in if they go quiet, stops the moment
+  they reply (R-020: what it does, never who it's for). The hero picture is a Gmail lead (a listing inquiry) and
+  the written reply with Send, replacing the Instagram tap quote. The button reads "Connect Gmail, start free"
+  (a change to A-049's "Start free"; the founder's call). "Works with" stays the one place channels appear
+  (R-020) and now reads Gmail, with the others as "coming, say which you need".
+- **Setup, three steps instead of four:** Connect Gmail first (what it reads, what it never does, Outlook as a
+  quiet link); how it should work, Assisted chosen (A-070), asked while the inbox is being read; then what it
+  found ("6 people wrote to you about work. 3 never got an answer." with the replies written) and one button,
+  "Open Today and send them". "About your business" leaves the flow: the name comes from the Google account and
+  the trade is asked later only if missing. The "How FollowUp works" explainer leaves: the landing page did that.
+- **Weak spots, named:** the desk hero has three black elements (nav Start free, the hero button, Send in the
+  picture); the landing already had two, and the picture's Send is the product's own. "Coming, say which you
+  need" may read as "not ready" to an Instagram-first owner; it is honest. Step 3 assumes the first sync is done
+  within the minute the owner spends on step 2; a slow inbox needs a waiting line ("still reading, 2 of 6 so
+  far"). The behaviour change (no business-details step, no explainer step) is product, so it waits for the
+  founder's yes.

@@ -51,7 +51,7 @@ import { SITE_URL } from "@/lib/siteUrl";
 
 /** The metadata description, verbatim. One product, one sentence, one voice. */
 const DESCRIPTION =
-  "FollowUp watches your inbox, tells you who is going quiet and why, and writes the reply. Only for owners who have leads and don't have time to reply.";
+  "FollowUp reads the customers in your Gmail, answers them in your words within minutes, and checks in if they go quiet. It stops the moment they reply.";
 
 export function buildStructuredData() {
   const organization = {

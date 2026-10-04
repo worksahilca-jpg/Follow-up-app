@@ -32,7 +32,14 @@ import { realProof } from "@/lib/proof";
  * own (A-056).
  */
 
-const CHANNELS = ["Gmail", "Outlook", "Instagram", "Messenger", "WhatsApp", "Your website"];
+/**
+ * Gmail first (A-081, founder 2026-10-04): the page sells the one job on
+ * the one inbox. The other channels exist in the product and stay
+ * reachable from Settings; here they are named once, as coming, in the
+ * one place channels appear (R-020).
+ */
+const CHANNELS = ["Gmail"];
+const COMING = "Outlook, Instagram, Messenger, WhatsApp and a website form are coming. Tell us which you need.";
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return <div className={styles.mono}>{children}</div>;
@@ -90,50 +97,49 @@ export default function LandingPage() {
                 <br />
                 to follow up.
               </h1>
+              {/* Gmail first (A-081): the line says what it does on Gmail, never who it's for (R-020). */}
               <p className={styles.heroLede}>
                 <span className={styles.heroLedeLong}>
-                  FollowUp answers every customer and follows up on its own, in their language. When something needs your
-                  decision, like a price or a date, it hands it to you.
+                  FollowUp reads the customers in your Gmail, answers them in your words within minutes, and checks in if they
+                  go quiet. When something needs your decision, like a price or a date, it hands it to you.
                 </span>
                 <span className={styles.heroLedeShort}>
-                  It answers every customer and follows up on its own. Only the decisions come to you.
+                  It reads the customers in your Gmail, answers in your words within minutes, and checks in if they go quiet.
                 </span>
               </p>
 
-              {/* The phone's first screen shows the product doing its job (R-021, A-058). */}
+              {/* The phone's first screen shows the product doing its job (R-021, A-058): a Gmail lead, the reply written. */}
               <div
                 className={`${styles.phonePic} ${styles.washHero} ${styles.grain}`}
                 role="img"
-                aria-label="A customer asks for a quote on Instagram. FollowUp replies on its own in a minute. The price comes to you."
+                aria-label="A customer emails about a listing. A minute later the reply is written in the owner's words and waits for one tap to send from their own Gmail."
               >
                 <div className={styles.pc1}>
-                  <div className={`${styles.mono} ${styles.monoTight}`}>Instagram · now</div>
+                  <div className={`${styles.mono} ${styles.monoTight}`}>Gmail · 2 min ago</div>
                   <p className={styles.pcP} style={{ color: "var(--body-2)" }}>
-                    Hi! Can you quote a new kitchen tap this week?
+                    Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?
                   </p>
                 </div>
                 <div className={`${styles.pc2} ${styles.wash} ${styles.grain}`}>
                   <div className={styles.above}>
                     <div className={`${styles.mono} ${styles.monoTight}`} style={{ color: "var(--soft)" }}>
-                      Sent on its own · 1 min
+                      Reply written · 1 min · in your words
                     </div>
-                    <p className={styles.pcP}>Thanks! Happy to quote that. Could you send a photo of your current tap?</p>
+                    <p className={styles.pcP}>Yes, it&apos;s still available. Would Saturday morning work for a viewing?</p>
                   </div>
                 </div>
                 <div className={styles.pc3}>
-                  <span className={styles.dot} style={{ width: 8, height: 8, background: "var(--decision)" }} />
+                  <span className={styles.dot} style={{ width: 8, height: 8, background: "var(--ink)" }} />
                   <div>
-                    <div className={`${styles.mono} ${styles.monoTight}`} style={{ color: "var(--decision)" }}>
-                      Needs you · the price
-                    </div>
-                    <div style={{ marginTop: 3, fontSize: 14.5, lineHeight: 1.35 }}>Reply written. You add the number.</div>
+                    <div className={`${styles.mono} ${styles.monoTight}`}>Waits for your OK</div>
+                    <div style={{ marginTop: 3, fontSize: 14.5, lineHeight: 1.35 }}>Tap Send. It goes from your own Gmail.</div>
                   </div>
                 </div>
               </div>
 
               <div className={styles.heroActions}>
                 <Link href="/signin" className={styles.btn}>
-                  Start free <ArrowIcon />
+                  Connect Gmail, start free <ArrowIcon />
                 </Link>
                 <a href="#demo" className={styles.playLink}>
                   <span className={styles.playDot}>
@@ -152,27 +158,29 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Desktop picture: the message arrives, the reply goes on its own. */}
-            <div className={styles.heroPic} role="img" aria-label="A customer asks for a quote on Instagram, and FollowUp replies on its own a minute later, from the owner's own address.">
+            {/* Desktop picture (A-081): a Gmail lead arrives, the reply is written and waits for one tap. */}
+            <div className={styles.heroPic} role="img" aria-label="A customer emails about a listing. A minute later the reply is written in the owner's words and waits for one tap to send from their own Gmail.">
               <div className={`${styles.heroPicWash} ${styles.washHero} ${styles.grain}`} />
               <div className={styles.deck1} />
               <div className={styles.deck2} />
               <div className={`${styles.bubble} ${styles.heroMsg}`}>
-                <div className={`${styles.mono} ${styles.monoTight}`}>Instagram · 2 min ago</div>
+                <div className={`${styles.mono} ${styles.monoTight}`}>Gmail · 2 min ago · via your listing</div>
                 <p className={styles.heroP} style={{ color: "var(--soft)" }}>
-                  Hi! Can you quote a new kitchen tap this week?
+                  Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?
                 </p>
               </div>
               <div className={`${styles.wash} ${styles.grain} ${styles.heroReply}`}>
                 <div className={styles.above}>
                   <div className={`${styles.mono} ${styles.monoTight}`} style={{ color: "var(--soft)", display: "flex", alignItems: "center", gap: 8 }}>
                     <span className={styles.dot} style={{ background: "var(--ink)" }} />
-                    Sent on its own · 1 min
+                    Reply written · 1 min · in your words
                   </div>
-                  <p className={styles.heroP}>Thanks! Happy to quote that. Could you send a photo of your current tap?</p>
-                  <div className={styles.heroFoot}>
-                    <CheckIcon size={15} className={styles.check} />
-                    Sent from your own address
+                  <p className={styles.heroP}>Hi Priya, yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing?</p>
+                  <div className={styles.heroFoot} style={{ justifyContent: "space-between" }}>
+                    <span className={`${styles.btn} ${styles.btnSm}`} aria-hidden="true">
+                      Send
+                    </span>
+                    <span>Sent from your own Gmail</span>
                   </div>
                 </div>
               </div>
@@ -192,6 +200,7 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
+            <p className={styles.worksSoon}>{COMING}</p>
           </div>
         </section>
 
@@ -361,7 +370,7 @@ export default function LandingPage() {
           <div className={`${styles.washEnd} ${styles.grain} ${styles.startBox}`}>
             <div className={styles.startInner}>
               <h2 className={styles.startH}>Start free.</h2>
-              <p style={{ margin: "24px 0 0", fontSize: 19, lineHeight: 1.5, color: "var(--body-2)" }}>Connect your inbox. That&apos;s it.</p>
+              <p style={{ margin: "24px 0 0", fontSize: 19, lineHeight: 1.5, color: "var(--body-2)" }}>Connect your Gmail. That&apos;s it.</p>
               <Link href="/signin" className={styles.btn} style={{ marginTop: 34, fontSize: 17, padding: "17px 28px" }}>
                 Start free <ArrowIcon />
               </Link>
@@ -403,11 +412,8 @@ export default function LandingPage() {
             </div>
             <div className={styles.footCol}>
               <Eyebrow>Works with</Eyebrow>
-              {["Gmail", "Outlook", "Instagram", "Messenger", "WhatsApp", "Website form"].map((c) => (
-                <span key={c} style={{ color: "var(--soft)" }}>
-                  {c}
-                </span>
-              ))}
+              <span style={{ color: "var(--soft)" }}>Gmail</span>
+              <span style={{ color: "var(--dim)", fontSize: 14 }}>Outlook, Instagram, Messenger, WhatsApp, website form: coming</span>
             </div>
             <div className={styles.footCol}>
               <Eyebrow>Trust</Eyebrow>

@@ -130,6 +130,8 @@ order and later ones assume the earlier fixes landed.
 | `2026-09-08-sourcing-multilingual-test-coverage.md` | |
 | `2026-09-13-what-leads-actually-say-first-contact-patterns.md` | |
 | `2026-09-15-owner-interview-guide.md` | |
+| `2026-10-04-does-the-solo-owner-have-this-problem.md` | Under-10-person businesses are the slowest to answer and have no one to hire; few leads but each worth $500 to $28,000; no leads = wrong customer, qualify on the landing page; the first Gmail sync is the first-value moment |
+| `2026-10-04-gmail-only-why-they-would-use-it.md` | The Gmail-only focus (founder, Oct 4): the lead is in the inbox, owners lose it there, Gmail reminds but doesn't act, the add-ons are reminders; the one-sentence pitch and what "Gmail only" changes |
 
 ## `competitors/` — single-competitor deep dives
 

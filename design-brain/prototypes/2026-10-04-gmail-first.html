@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gmail-first boards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Public+Sans:wght@300;400;500;600&display=swap">
+<style>
+/* Boards for the Gmail-only focus (founder, 2026-10-04): the landing hero and the setup flow, drawn with the
+   landing page's real tokens (followup/src/components/landing/v2/landing.module.css) and the app's. */
+:root {
+  --paper: #fdfcfc; --card: #ffffff; --card-2: #f5f3f1; --board: #ecebe8;
+  --ink: #0a0a0a; --soft: #57534e; --dim: #736e68; --line: #e7e5e2; --line-2: #f0eeeb;
+  --decision: #b4532a; --sage: #0d6e3c;
+  --font: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--board); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.boards { display: grid; gap: 48px; padding: 32px 16px 64px; justify-items: center; }
+.board-title { font-size: 13px; color: var(--soft); width: 1280px; max-width: 100%; }
+.board-title b { color: var(--ink); font-weight: 600; }
+.mono { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--ink); color: #fff; font-size: 16px; font-weight: 500; padding: 15px 24px; border-radius: 999px; }
+.btn.ghost { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+.wash { background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,.95), rgba(196,210,228,0) 70%), #f7f3ee; }
+
+/* ---- Landing, desk ---- */
+.screen { width: 1280px; height: 900px; max-width: 100%; background: var(--paper); overflow: hidden; border: 1px solid var(--line); position: relative; }
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 56px; }
+.nav .logo { font-weight: 600; font-size: 17px; display: flex; gap: 8px; align-items: center; }
+.nav .logo i { width: 14px; height: 18px; background: var(--ink); border-radius: 3px 8px 3px 8px; display: inline-block; }
+.nav .links { display: flex; gap: 26px; font-size: 15px; color: var(--soft); align-items: center; }
+.nav .links .btn { padding: 10px 18px; font-size: 15px; }
+.hero { display: flex; justify-content: space-between; gap: 48px; padding: 60px 56px 0; }
+.heroText { max-width: 600px; }
+h1 { margin: 0; font-size: 64px; line-height: 1.02; letter-spacing: -0.035em; font-weight: 300; }
+.lede { margin: 22px 0 0; font-size: 19px; line-height: 1.5; color: var(--soft); max-width: 520px; }
+.actions { display: flex; align-items: center; gap: 22px; margin-top: 30px; }
+.play { display: inline-flex; align-items: center; gap: 10px; font-size: 16px; }
+.play i { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); display: inline-grid; place-items: center; font-size: 10px; }
+.trust { margin-top: 18px; font-size: 14px; color: var(--soft); }
+.heroPic { width: 480px; height: 500px; position: relative; flex-shrink: 0; }
+.heroPic .washBox { position: absolute; inset: 40px 0 60px; border-radius: 28px; opacity: .55; }
+.mail { position: absolute; left: 0; top: 0; width: 360px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; box-shadow: 0 18px 40px -10px rgba(26,20,15,.12); }
+.mail .from { display: flex; align-items: center; gap: 10px; }
+.mail .av { width: 30px; height: 30px; border-radius: 50%; background: #e9e4dc; color: var(--soft); font-size: 12px; display: grid; place-items: center; font-weight: 600; }
+.mail .who { font-size: 14px; font-weight: 600; }
+.mail .sub { font-size: 13px; color: var(--dim); }
+.mail p { margin: 12px 0 0; font-size: 15px; line-height: 1.45; color: var(--soft); }
+.reply { position: absolute; left: 104px; top: 236px; width: 376px; border-radius: 18px; padding: 20px; box-shadow: 0 26px 50px -6px rgba(26,20,15,.14); border: 1px solid rgba(10,10,10,.06); }
+.reply .mono { color: var(--soft); display: flex; gap: 8px; align-items: center; }
+.reply .mono b { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); display: inline-block; }
+.reply p { margin: 10px 0 0; font-size: 15.5px; line-height: 1.45; }
+.reply .foot { margin-top: 14px; display: flex; align-items: center; justify-content: space-between; }
+.reply .foot .btn { padding: 10px 20px; font-size: 15px; }
+.reply .foot span { font-size: 13px; color: var(--soft); }
+.works { position: absolute; left: 0; right: 0; bottom: 0; border-top: 1px solid var(--line); padding: 22px 56px; display: flex; align-items: center; gap: 30px; font-size: 16px; font-weight: 500; }
+.works .mono { margin-right: 10px; }
+.works .soon { font-weight: 400; color: var(--dim); font-size: 15px; margin-left: auto; }
+
+/* ---- Phone frames ---- */
+.phone { width: 390px; background: var(--paper); border: 1px solid var(--line); overflow: hidden; }
+.phone.tall { height: 1180px; }
+.pnav { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; }
+.pnav .logo { font-weight: 600; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+.pnav .logo i { width: 12px; height: 16px; background: var(--ink); border-radius: 3px 7px 3px 7px; display: inline-block; }
+.phero { padding: 22px 20px 0; }
+.phero h1 { font-size: 40px; }
+.phero .lede { font-size: 17px; margin-top: 14px; }
+.ppic { margin: 22px 0 0; border-radius: 22px; padding: 16px; display: grid; gap: 10px; }
+.pc { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.pc .mono { margin-bottom: 4px; }
+.pc p { margin: 0; font-size: 14.5px; line-height: 1.4; }
+.pc.r { background: transparent; border-color: rgba(10,10,10,.08); }
+.pc .row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.pc .row .btn { padding: 9px 18px; font-size: 14px; }
+.pc .row span { font-size: 13px; color: var(--soft); }
+.phero .btn.full { width: 100%; margin-top: 22px; padding: 16px; }
+.phero .play { margin-top: 14px; justify-content: center; width: 100%; }
+.phero .trust { text-align: center; }
+.pworks { border-top: 1px solid var(--line); margin-top: 28px; padding: 18px 20px; font-size: 15px; font-weight: 500; }
+.pworks .soon { font-weight: 400; color: var(--dim); display: block; margin-top: 6px; }
+
+/* ---- Setup, three phones on one board ---- */
+.setupBoard { width: 1280px; height: 900px; max-width: 100%; background: var(--board); display: flex; gap: 40px; justify-content: center; align-items: flex-start; padding: 28px 0; }
+.setup { width: 390px; height: 844px; background: var(--paper); border: 1px solid var(--line); display: flex; flex-direction: column; padding: 22px 22px 24px; }
+.setup .top { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--dim); }
+.setup .top .mark { width: 12px; height: 16px; background: var(--ink); border-radius: 3px 7px 3px 7px; }
+.setup .steps { display: flex; gap: 6px; margin-top: 12px; }
+.setup .steps i { height: 3px; flex: 1; border-radius: 2px; background: var(--line); }
+.setup .steps i.on { background: var(--ink); }
+.setup h2 { font-size: 28px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin: 34px 0 0; }
+.setup .p { color: var(--soft); font-size: 15.5px; line-height: 1.5; margin: 12px 0 0; }
+.setup .box { border: 1px solid var(--line); background: var(--card); border-radius: 14px; margin-top: 18px; overflow: hidden; }
+.setup .box .r { padding: 12px 16px; border-top: 1px solid var(--line-2); font-size: 14.5px; display: flex; gap: 10px; align-items: flex-start; }
+.setup .box .r:first-child { border-top: 0; }
+.setup .box .r b { font-weight: 600; }
+.setup .box .r .ok { color: var(--sage); }
+.setup .box .r .no { color: var(--dim); }
+.setup .choice { border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 14px 16px; margin-top: 12px; display: grid; gap: 4px; }
+.setup .choice.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.setup .choice .t { font-weight: 600; font-size: 15.5px; display: flex; justify-content: space-between; }
+.setup .choice .t span { font-size: 12.5px; color: var(--dim); font-weight: 400; }
+.setup .choice .d { font-size: 14px; color: var(--soft); line-height: 1.4; }
+.setup .found { margin-top: 18px; display: grid; gap: 10px; }
+.setup .found .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); background: var(--card); border-radius: 14px; }
+.setup .found .av { width: 34px; height: 34px; border-radius: 50%; background: #e9e4dc; color: var(--soft); font-size: 12px; display: grid; place-items: center; font-weight: 600; flex-shrink: 0; }
+.setup .found .n { font-weight: 600; font-size: 15px; }
+.setup .found .s { font-size: 13px; color: var(--dim); }
+.setup .found .s.needs { color: var(--decision); }
+.setup .spacer { flex: 1; }
+.setup .btn.full { width: 100%; padding: 16px; }
+.setup .skip { text-align: center; font-size: 14px; color: var(--soft); margin-top: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.setup .never { font-size: 13px; color: var(--dim); margin-top: 14px; line-height: 1.45; }
+</style>
+</head>
+<body>
+<div class="boards">
+
+<!-- ===================== LANDING, DESK ===================== -->
+<div class="board-title"><b>Landing, desk</b> · the hero is a Gmail lead and the reply, written and waiting for one tap. The channels appear once, at the foot, as "Works with".</div>
+<div class="screen" id="landing">
+  <div class="nav">
+    <div class="logo"><i></i>FollowUp</div>
+    <div class="links"><span>How it works</span><span>Prices</span><span>Questions</span><span>Sign in</span><span class="btn">Start free</span></div>
+  </div>
+  <div class="hero">
+    <div class="heroText">
+      <h1>Never lose a lead<br>because you forgot<br>to follow up.</h1>
+      <p class="lede">FollowUp reads the customers in your Gmail, answers them in your words within minutes, and checks in if they go quiet. It stops the moment they reply.</p>
+      <div class="actions"><span class="btn">Connect Gmail, start free →</span><span class="play"><i>▶</i>See how it works</span></div>
+      <div class="trust">✓ Free while in beta · No credit card · Nothing sends without your OK</div>
+    </div>
+    <div class="heroPic">
+      <div class="washBox wash"></div>
+      <div class="mail">
+        <div class="from"><span class="av">PS</span><div><div class="who">Priya Sharma</div><div class="sub">Gmail · 2 min ago · via your listing</div></div></div>
+        <p>Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p>
+      </div>
+      <div class="reply wash">
+        <div class="mono"><b></b>Reply written · 1 min · in your words</div>
+        <p>Hi Priya, yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing?</p>
+        <div class="foot"><span class="btn">Send</span><span>Sent from your own Gmail</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="works"><span class="mono">Works with</span><span>Gmail</span><span class="soon">Outlook, Instagram, Messenger, WhatsApp and a website form: coming, say which you need.</span></div>
+</div>
+
+<!-- ===================== LANDING, PHONE ===================== -->
+<div class="board-title"><b>Landing, phone</b> · the same claim, the picture under it, the one black button full width.</div>
+<div class="phone tall" id="landing-phone">
+  <div class="pnav"><div class="logo"><i></i>FollowUp</div><span style="font-size:14px;color:var(--soft)">Sign in</span></div>
+  <div class="phero">
+    <h1>Never lose a lead because you forgot to follow up.</h1>
+    <p class="lede">It reads the customers in your Gmail, answers in your words within minutes, and checks in if they go quiet. It stops the moment they reply.</p>
+    <div class="ppic wash">
+      <div class="pc"><div class="mono">Gmail · 2 min ago</div><p>Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p></div>
+      <div class="pc r"><div class="mono">Reply written · 1 min · in your words</div><p>Yes, it's still available. Would Saturday morning work for a viewing?</p><div class="row"><span class="btn">Send</span><span>from your own Gmail</span></div></div>
+    </div>
+    <span class="btn full">Connect Gmail, start free</span>
+    <span class="play"><i>▶</i>See how it works</span>
+    <div class="trust">Free in beta · No card · Nothing sends without your OK</div>
+  </div>
+  <div class="pworks"><span class="mono">Works with</span> &nbsp;Gmail<span class="soon">Outlook, Instagram, Messenger, WhatsApp, website form: coming.</span></div>
+</div>
+
+<!-- ===================== SETUP, THREE STEPS ===================== -->
+<div class="board-title"><b>Setup, three steps</b> · Connect Gmail first, choose how it works while it reads, then the people it found. Business name and trade come from the Google account and are asked only if missing.</div>
+<div class="setupBoard" id="setup">
+  <div class="setup">
+    <div class="top"><span class="mark"></span><span>Step 1 of 3</span></div>
+    <div class="steps"><i class="on"></i><i></i><i></i></div>
+    <h2>Connect your Gmail</h2>
+    <p class="p">FollowUp reads the emails from customers, writes the replies in your words, and sends from your own address.</p>
+    <div class="box">
+      <div class="r"><span class="ok">✓</span><span>Reads emails from customers and your replies to them</span></div>
+      <div class="r"><span class="ok">✓</span><span>Puts booked calls on your calendar</span></div>
+      <div class="r"><span class="no">✕</span><span>Never sends anything without your OK, unless you turn that on</span></div>
+      <div class="r"><span class="no">✕</span><span>Never reads newsletters, receipts or personal mail</span></div>
+    </div>
+    <div class="spacer"></div>
+    <span class="btn full">Connect Gmail</span>
+    <div class="skip">I use Outlook</div>
+    <p class="never">You can disconnect any time in Settings. Access ends the moment you do.</p>
+  </div>
+
+  <div class="setup">
+    <div class="top"><span class="mark"></span><span>Step 2 of 3</span></div>
+    <div class="steps"><i class="on"></i><i class="on"></i><i></i></div>
+    <h2>How should FollowUp work?</h2>
+    <p class="p">It's reading your inbox now. Pick one; change it any time.</p>
+    <div class="choice on">
+      <div class="t">Assisted <span>chosen</span></div>
+      <div class="d">Every reply is written and waits for your OK. You tap Send.</div>
+    </div>
+    <div class="choice">
+      <div class="t">Automatic</div>
+      <div class="d">Simple replies and check-ins go out on their own. Anything about a price or a date still comes to you.</div>
+    </div>
+    <div class="spacer"></div>
+    <span class="btn full">Continue</span>
+  </div>
+
+  <div class="setup">
+    <div class="top"><span class="mark"></span><span>Step 3 of 3</span></div>
+    <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+    <h2>6 people wrote to you about work. 3 never got an answer.</h2>
+    <p class="p">Replies are written for them. Here are the three.</p>
+    <div class="found">
+      <div class="row"><span class="av">PS</span><div><div class="n">Priya Sharma</div><div class="s needs">Asked about Maple Street · 2 days ago · reply written</div></div></div>
+      <div class="row"><span class="av">DK</span><div><div class="n">Daniel Kim</div><div class="s needs">Asked for a quote · 5 days ago · reply written</div></div></div>
+      <div class="row"><span class="av">AO</span><div><div class="n">Amara Okafor</div><div class="s needs">Asked to book · 8 days ago · reply written</div></div></div>
+    </div>
+    <div class="spacer"></div>
+    <span class="btn full">Open Today and send them</span>
+    <div class="skip">Not customers? Set them aside</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

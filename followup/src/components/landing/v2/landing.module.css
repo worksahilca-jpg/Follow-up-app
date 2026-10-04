@@ -296,3 +296,6 @@
 @media (prefers-reduced-motion: reduce) {
   .heroMsg, .heroReply, .pc1, .pc2, .pc3 { animation: none; }
 }
+
+/* Gmail first (A-081): the other channels named once, under the one that works. */
+.worksSoon { margin: 10px 0 0; text-align: center; font-size: 15px; line-height: 1.5; color: var(--soft); }

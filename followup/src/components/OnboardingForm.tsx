@@ -1,22 +1,15 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import { INDUSTRIES } from "@/lib/industries";
 import { useRouter, useSearchParams } from "next/navigation";
-// MessageCircle for Instagram and MessageSquare for Facebook are the
-// icons InstagramConfig and FacebookConfig already use — this lucide
-// version carries no brand marks, and a channel wearing a different
-// icon on each screen is the drift the design brain exists to stop.
-import { ArrowRight, Check, Globe, Loader2, Mail, MessageCircle, MessageSquare, Smartphone } from "lucide-react";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
 import LogoMark from "@/components/LogoMark";
 import ImproveFollowUpToggle from "@/components/ImproveFollowUpToggle";
-import OnboardingSources, { WebsiteFormPanel, type OnboardingSource } from "@/components/OnboardingSources";
-import { useWhatsAppSignup } from "@/lib/useWhatsAppSignup";
 import { WARM_CARD } from "@/components/app/ReplyCard";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import UndoLine from "@/components/UndoLine";
 
-/** The one full-width black button at the foot of each setup step (OnbConnect, OnbChoose, OnbOldCustomers). */
+/** The one full-width black button at the foot of each setup step. */
 const PRIMARY =
   "flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 text-base font-medium disabled:opacity-60";
 const PRIMARY_STYLE = { backgroundColor: "var(--ink)", color: "var(--on-accent)" } as const;
@@ -24,35 +17,28 @@ const H1 = "text-[30px] leading-[1.1] tracking-[-0.025em]";
 const LEDE = "mt-2.5 text-[15.5px] leading-relaxed text-ink-soft";
 
 /**
- * Five steps: who you are, how this works, where your leads come from,
- * how FollowUp should work (Automatic or Assisted), and the customers who
+ * Three steps (A-081, Gmail first, founder 2026-10-04): connect Gmail, choose
+ * how FollowUp should work while it reads the inbox, then the customers who
  * were already waiting.
  *
  * ## What this replaces, and why
  *
- * It was two steps: a details form, then "Connect Gmail" with an "I'll do
- * this later" underneath. Gmail was the only source onboarding had ever
- * heard of — so a business running on Instagram DMs had nothing to say yes
- * to, skipped, and was then told on Today, forever, to connect an inbox it
- * does not have.
- *
- * The founder's read, 2026-09-21, when asked whether that inbox step should
- * be made skippable: *"why to skip i mean they should have a proper
- * onboarding process where first we will let them know how this works and
- * thats totaly skipable then we will help them to connect the sources
- * easyly and skipable too if they dont want that source to be added"* —
- * which is the right diagnosis. The nag was the symptom; onboarding
- * deciding on the owner's behalf which channel mattered was the cause.
+ * It was five screens: a details form, an explainer, a list of every
+ * source, the Automatic/Assisted choice, and the waiting customers. The
+ * founder's Gmail-only decision (research:
+ * `research/customers/2026-10-04-gmail-only-why-they-would-use-it.md`) made
+ * the source list a single button, the landing page took over the
+ * explainer, and the details form left: the business name comes from the
+ * Google account at sign-in (auth.ts), and the trade is asked on Today
+ * only when it is missing (setupStatus.ts, the "Add details" step), which
+ * is also where the drafting falls back to a trade-neutral read
+ * (isUnknownTrade). The other channels stay in Settings, not promoted.
  *
  * ## Resume is derived, not stored
  *
- * Every connect button leaves the app entirely, and the trip back is a
- * fresh page load with no client state. Rather than add a column to
- * remember the step, the server works it out from facts it already holds:
- * no industry means step 1; a connected or attempted source means step 3;
- * otherwise step 2. `?gmail=error` and friends count as "attempted",
- * which is what stops a failed connect dropping someone back onto the
- * explainer with no sign of what went wrong.
+ * The Connect button leaves the app, and the trip back is a fresh page
+ * load with no client state. A connected inbox means step 2; a failed
+ * connect (`?gmail=error`) stays on step 1 with the provider's message.
  */
 
 export interface OnboardingSourceState {
@@ -61,20 +47,9 @@ export interface OnboardingSourceState {
   outlookAvailable: boolean;
   inboxEmail?: string;
   inboxProvider: "gmail" | "outlook" | null;
-  instagramConnected: boolean;
-  instagramAvailable: boolean;
-  facebookConnected: boolean;
-  facebookAvailable: boolean;
-  metaChannelsAvailable: boolean;
 }
 
 interface OnboardingFormProps {
-  initialName: string;
-  initialIndustry?: string | null;
-  initialTeamSize?: number | null;
-  step1Done: boolean;
-  /** True when the owner has already reached (and acted on) the sources step. */
-  resumeAtSources: boolean;
   sources: OnboardingSourceState;
 }
 
@@ -88,44 +63,23 @@ export default function OnboardingForm(props: OnboardingFormProps) {
   );
 }
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3;
 
-function OnboardingFormInner({
-  initialName,
-  initialIndustry,
-  initialTeamSize,
-  step1Done,
-  resumeAtSources,
-  sources,
-}: OnboardingFormProps) {
+function OnboardingFormInner({ sources }: OnboardingFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [step, setStep] = useState<Step>(!step1Done ? 1 : resumeAtSources ? 3 : 2);
-  // Five screens, four steps as the owner counts them (the canvas's "Step N of 4").
-  const shownStep = step <= 2 ? 1 : step - 1;
-  const [name, setName] = useState(initialName);
-  const [industry, setIndustry] = useState(initialIndustry || "");
-  const [teamSize, setTeamSize] = useState(initialTeamSize ?? 1);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const inboxConnected = sources.gmailConnected || sources.outlookConnected;
+  const [step, setStep] = useState<Step>(inboxConnected ? 2 : 1);
   const [finishing, setFinishing] = useState(false);
 
-  const inboxConnected = sources.gmailConnected || sources.outlookConnected;
-
-  // WhatsApp is the one source that connects without leaving the page —
-  // Meta drives it from a popup rather than a redirect — so its state is
-  // read live here rather than passed down from the server render.
-  const whatsapp = useWhatsAppSignup();
-
   // Fires once, right when a connected inbox first renders — pulls the
-  // first batch of leads in immediately rather than leaving the dashboard
-  // empty until someone finds "Sync now" in Settings later. Silent on
-  // failure (most commonly: no active subscription yet, which every
-  // brand-new signup lacks) — an onboarding screen is the wrong place to
-  // surprise someone with a billing wall.
+  // first batch of leads in immediately rather than leaving Today empty
+  // until someone finds "Sync now" in Settings later. Silent on failure
+  // (most commonly: no active subscription yet, which every brand-new
+  // signup lacks) — a setup screen is the wrong place to surprise someone
+  // with a billing wall. Step 2 says it is reading; step 3 waits for it.
   const [autoSyncState, setAutoSyncState] = useState<"idle" | "syncing" | "done">("idle");
-  const [autoSyncSummary, setAutoSyncSummary] = useState<string | null>(null);
   const autoSyncStarted = useRef(false);
 
   useEffect(() => {
@@ -133,97 +87,33 @@ function OnboardingFormInner({
     autoSyncStarted.current = true;
     setAutoSyncState("syncing");
     fetch(`/api/integrations/${sources.inboxProvider}/sync`, { method: "POST" })
-      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
-      .then(({ ok, data }) => {
-        if (ok && data.success) {
-          setAutoSyncSummary(
-            data.count === 0
-              ? "No sales conversations found yet — that's normal for a quiet inbox."
-              : `Found ${data.count} lead${data.count === 1 ? "" : "s"} already${data.scored > 0 ? `, ${data.scored} scored` : ""}.`
-          );
-        }
-      })
       .catch(() => {
         // Silent — see above.
       })
       .finally(() => setAutoSyncState("done"));
   }, [inboxConnected, sources.inboxProvider]);
 
-  // The website form has no connected state to read back from a server —
-  // it is a snippet someone pastes into their own site, and we only find
-  // out when a lead arrives. Opening the panel is the closest honest
-  // signal that they intend to use it, so it is what decides whether the
-  // widget step is dismissed on the way out.
-  const websiteFormTouched = useRef(false);
-
-  /** Whatever the provider said on the way back, per source. */
+  /** Whatever the provider said on the way back. */
   const errorFor = (key: string) =>
     searchParams.get(key) === "error" ? (searchParams.get("message") ?? `Couldn't connect ${key}.`) : null;
   const inboxError = errorFor("gmail") ?? errorFor("outlook");
 
-  async function handleStep1Submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) {
-      setError("Give your business a name to continue.");
-      return;
-    }
-    if (!industry) {
-      setError("Select an industry to continue.");
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, industry, teamSize }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't save — try again.");
-      setStep(2);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save — try again.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   /**
-   * Finish, and record which sources the owner passed over.
-   *
-   * The second half is the point. An untouched source here is not "not
-   * yet" — the founder was explicit that it means "I don't use this" and
-   * that asking again would be wrong, since Settings carries every source
-   * permanently. So anything the setup strip on Today would otherwise nag
-   * about is marked as not applicable on the way out.
-   *
-   * Only the website form is skippable here. The inbox is not: without one
-   * FollowUp cannot read or answer anyone, so the strip on Today keeps
-   * asking for it, and the server refuses to mark it skipped
-   * (DISMISSIBLE_SETUP_STEPS in src/lib/setupStatus.ts). This used to post
-   * that refusal anyway, one failed request per onboarding (local
-   * run-through, 2026-10-02). Billing and business details are not
-   * skippable by design either and are not touched here. The dismissal is
-   * best-effort: if it fails, the owner still finishes onboarding and the
-   * worst case is the old behaviour, a step on Today they can dismiss
-   * themselves.
+   * Finish. The website form is not offered here any more (Gmail first),
+   * so its step on Today is marked "I don't use this" on the way out, as
+   * an untouched source always was: Settings carries every source
+   * permanently, and asking again on Today would be the nag the founder
+   * ruled out (2026-09-21). Best-effort: if it fails, the owner still
+   * finishes and the worst case is a step on Today they can dismiss.
    */
   async function finishOnboarding() {
     setFinishing(true);
 
-    const skipped: string[] = [];
-    if (!websiteFormTouched.current) skipped.push("widget");
-
-    await Promise.all(
-      skipped.map((id) =>
-        fetch("/api/business/setup-step", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, dismissed: true }),
-        }).catch(() => undefined)
-      )
-    );
+    await fetch("/api/business/setup-step", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: "widget", dismissed: true }),
+    }).catch(() => undefined);
 
     try {
       const res = await fetch("/api/onboarding", {
@@ -242,93 +132,10 @@ function OnboardingFormInner({
     }
   }
 
-  const sourceList: OnboardingSource[] = [
-    {
-      id: "inbox",
-      name: "Email",
-      line: "Gmail or Outlook — where most enquiries already land.",
-      icon: Mail,
-      connected: inboxConnected,
-      connectedNote: sources.inboxEmail ? `Connected as ${sources.inboxEmail}` : undefined,
-      href: "/api/integrations/gmail/connect?next=onboarding",
-      altHref: sources.outlookAvailable ? "/api/integrations/outlook/connect?next=onboarding" : undefined,
-      altLabel: "Use Outlook instead",
-      error: inboxError,
-    },
-    ...(sources.metaChannelsAvailable && sources.instagramAvailable
-      ? [
-          {
-            id: "instagram",
-            name: "Instagram DMs",
-            line: "Messages sent to your professional account.",
-            icon: MessageCircle,
-            connected: sources.instagramConnected,
-            href: "/api/instagram/oauth/start?next=onboarding",
-            error: errorFor("instagram"),
-          } satisfies OnboardingSource,
-        ]
-      : []),
-    ...(sources.metaChannelsAvailable && sources.facebookAvailable
-      ? [
-          {
-            id: "facebook",
-            name: "Facebook Page",
-            line: "Messenger chats and Lead Ads forms.",
-            icon: MessageSquare,
-            connected: sources.facebookConnected,
-            href: "/api/facebook/oauth/start?next=onboarding",
-            error: errorFor("facebook"),
-            // Meta returned more than one Page and the picker lives in
-            // Settings. Say so plainly instead of leaving a half-finished
-            // connection looking finished.
-            note:
-              searchParams.get("facebook") === "choose_page"
-                ? "You have more than one Page — choose which one in Settings once you're through here."
-                : null,
-          } satisfies OnboardingSource,
-        ]
-      : []),
-    ...(whatsapp.available || whatsapp.connected
-      ? [
-          {
-            id: "whatsapp",
-            name: "WhatsApp",
-            line: "The number already in the WhatsApp Business app on your phone.",
-            // Smartphone, not the MessageSquare that WhatsAppConfig uses in
-            // Settings. Deliberate: FacebookConfig uses MessageSquare too,
-            // and in Settings they sit in separate panels where that never
-            // shows. Here they are adjacent rows in one list, and two
-            // identical icons next to each other say "these are the same
-            // kind of thing" — which is worse than the inconsistency.
-            // A phone is also the truer picture: this is the number already
-            // on the owner's handset, not a page or an inbox.
-            icon: Smartphone,
-            connected: whatsapp.connected,
-            connectedNote: whatsapp.displayNumber ? `Connected as ${whatsapp.displayNumber}` : undefined,
-            onConnect: whatsapp.start,
-            connecting: whatsapp.connecting,
-            error: whatsapp.error,
-          } satisfies OnboardingSource,
-        ]
-      : []),
-    {
-      id: "widget",
-      name: "Website form",
-      line: "One line pasted into your site, and its enquiries come here.",
-      icon: Globe,
-      connected: false,
-      expand: <WebsiteFormPanel />,
-      onExpand: () => {
-        websiteFormTouched.current = true;
-      },
-    },
-  ];
-
   return (
-    // As the canvas draws setup (OnbConnect, OnbChoose, OnbOldCustomers):
-    // the mark on the left, "Step N of 4" on the right, then a left-aligned
-    // title and one black button at the foot. Steps 1 and 2 (about you, how
-    // it works) share "Step 1".
+    // As the Gmail-first board draws setup (prototypes/2026-10-04-gmail-first.html,
+    // #setup): the mark on the left, "Step N of 3" on the right, three bars,
+    // a left-aligned title and one black button at the foot.
     <div className="min-h-[100dvh] bg-paper">
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col px-5">
         <header className="flex h-[60px] shrink-0 items-center justify-between">
@@ -337,14 +144,14 @@ function OnboardingFormInner({
             <span className="text-base font-semibold">FollowUp</span>
           </span>
           <span className="flex items-center gap-2.5">
-            <span className="text-[12.5px] text-ink-faint">Step {shownStep} of 4</span>
+            <span className="text-[12.5px] text-ink-faint">Step {step} of 3</span>
             {/* Ink, not the accent: the screen's one accent moment is its button (A-006). */}
             <span className="flex gap-1" aria-hidden="true">
-              {([1, 2, 3, 4] as const).map((n) => (
+              {([1, 2, 3] as const).map((n) => (
                 <span
                   key={n}
                   className="h-[3px] w-[18px] rounded-full"
-                  style={{ backgroundColor: shownStep >= n ? "var(--ink)" : "var(--line)" }}
+                  style={{ backgroundColor: step >= n ? "var(--ink)" : "var(--line)" }}
                 />
               ))}
             </span>
@@ -352,113 +159,9 @@ function OnboardingFormInner({
         </header>
 
         <main className="flex flex-1 flex-col pt-5">
-        {step === 1 && (
-          <>
-            <h1 className={H1}>About your business</h1>
-            <p className={LEDE}>A couple quick questions and you&apos;re set up.</p>
-            <form onSubmit={handleStep1Submit} className="mt-6 flex flex-1 flex-col gap-4">
-              <div>
-                <label htmlFor="onboarding-business-name" className="text-sm font-medium block mb-1.5">
-                  Business name
-                </label>
-                <input
-                  id="onboarding-business-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="h-12 w-full rounded-xl border border-line bg-card px-3.5 text-base"
-                  placeholder="e.g. Riverside Realty"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="onboarding-industry" className="text-sm font-medium block mb-1.5">
-                  What kind of business?
-                </label>
-                <select
-                  id="onboarding-industry"
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
-                  className="h-12 w-full rounded-xl border border-line bg-card px-3.5 text-base"
-                  required
-                >
-                  <option value="" disabled>
-                    Select an industry
-                  </option>
-                  {INDUSTRIES.map((i) => (
-                    <option key={i} value={i}>
-                      {i}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="onboarding-team-size" className="text-sm font-medium block mb-1.5">
-                  How many people on your team?
-                </label>
-                <input
-                  id="onboarding-team-size"
-                  type="number"
-                  min={1}
-                  max={500}
-                  value={teamSize}
-                  onChange={(e) => setTeamSize(Number(e.target.value))}
-                  className="h-12 w-24 rounded-xl border border-line bg-card px-3 text-center text-base"
-                />
-              </div>
-
-              {error && (
-                <p className="text-sm" style={{ color: "var(--coral)" }}>
-                  {error}
-                </p>
-              )}
-
-              <div className="mt-auto pb-7 pt-6">
-                <button type="submit" disabled={saving} className={PRIMARY} style={PRIMARY_STYLE}>
-                  {saving ? "Saving…" : "Continue"}
-                  {!saving && <ArrowRight className="h-4 w-4" />}
-                </button>
-              </div>
-            </form>
-          </>
-        )}
-
-        {step === 2 && <HowItWorks onContinue={() => setStep(3)} onSkip={() => setStep(3)} />}
-
-        {step === 3 && (
-          <div className="flex flex-1 flex-col">
-            <OnboardingSources sources={sourceList} onDone={() => setStep(4)} finishing={false}>
-
-            {inboxConnected && (
-              <>
-                {(autoSyncState === "syncing" || autoSyncSummary) && (
-                  <p className="mt-3 flex items-center gap-1.5 text-sm leading-relaxed text-ink-soft">
-                    {autoSyncState === "syncing" ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Pulling in your first leads…
-                      </>
-                    ) : (
-                      autoSyncSummary
-                    )}
-                  </p>
-                )}
-
-                {/* Asked once, here, where the owner has just connected an
-                    inbox — not buried in Settings they may never open. Off
-                    by default; the switch is the consent
-                    (docs/security-roadmap.md). */}
-                <div className="mt-4 rounded-[18px] border border-line bg-card px-4 py-3">
-                  <ImproveFollowUpToggle compact />
-                </div>
-              </>
-            )}
-            </OnboardingSources>
-          </div>
-        )}
-
-        {step === 4 && <HowItShouldWork onChosen={() => setStep(5)} />}
-
-        {step === 5 && <WaitingCustomers onDone={finishOnboarding} finishing={finishing} />}
+          {step === 1 && <ConnectGmail outlookAvailable={sources.outlookAvailable} error={inboxError} />}
+          {step === 2 && <HowItShouldWork reading={autoSyncState === "syncing"} onChosen={() => setStep(3)} />}
+          {step === 3 && <WaitingCustomers syncDone={autoSyncState !== "syncing"} onDone={finishOnboarding} finishing={finishing} />}
         </main>
       </div>
     </div>
@@ -466,104 +169,58 @@ function OnboardingFormInner({
 }
 
 /**
- * Step 2 — what the product actually does, before anyone is asked to hand
- * over an inbox.
- *
- * Skippable in full, per the founder's brief. Three beats, because
- * brand-principles.md #4 says the reader has ninety seconds and will not
- * read a paragraph.
- *
- * The third beat is the one that has to be exactly true. The old Connect
- * Gmail screen described a read-only product at the moment it asked for
- * send access, and the comment there recorded why that mattered: it is the
- * gap between a surprise and a betrayal. So this says plainly that
- * FollowUp writes and sends — and what stops it.
- *
- * No AI language anywhere on this screen, deliberately
- * ([[rejected#^S-13|S-13]], brand-principles.md #3): remove every
- * AI-referencing word and the screen still says what happens, because
- * there were none to remove.
+ * Step 1 — connect Gmail. What it reads and what it never does, in four
+ * lines, because this screen asks for the inbox at the moment it has to be
+ * exactly true (the old explainer's rule). Outlook is the quiet way in.
+ * No AI language anywhere on this screen, deliberately (S-13).
  */
-function HowItWorks({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => void }) {
-  const beats = [
-    {
-      title: "It watches where your customers write to you",
-      body: "Your inbox, your DMs, your website form — whichever of those you connect next.",
-    },
-    {
-      title: "When someone goes quiet, it writes the follow-up",
-      body: "Using what was actually said in that conversation, in the language they wrote in.",
-    },
-    {
-      // The beat this file's own header calls "the one that has to be
-      // exactly true", and it was not.
-      //
-      // It read: "Anything it isn't certain about waits for your OK […]
-      // and you can turn sending off for one person or for everyone."
-      // Both halves were wrong the moment holdAllForApproval became
-      // @default(true) for every account (2026-09-21):
-      //
-      //   - "anything it isn't certain about" says some things DO go out
-      //     without asking. Nothing does. Every draft waits, on every
-      //     account, and this screen is shown while asking for send
-      //     access — the exact moment the header says the gap between a
-      //     surprise and a betrayal opens.
-      //   - "turn sending off" is backwards. It is already off; the
-      //     decision a business makes is turning it ON (Settings →
-      //     Automation). And "for one person" was false too: holdAll
-      //     short-circuits ahead of a lead's own automation tier, so
-      //     even a lead set to autonomous is held.
-      //
-      // Now states today's truth, names the choice, and keeps the
-      // guarantee that survives either way.
-      // Made true again for the step that follows (founder, 2026-09-26):
-      // the owner now chooses, next, whether FollowUp sends on its own or
-      // asks first. Either way prices and dates wait for them.
-      title: "You choose how much it does",
-      body: "Next, you pick: it follows up on its own, or every reply waits for your OK. Either way, prices and dates come to you, and it stops the moment they reply.",
-    },
+function ConnectGmail({ outlookAvailable, error }: { outlookAvailable: boolean; error: string | null }) {
+  const lines: Array<{ ok: boolean; text: string }> = [
+    { ok: true, text: "Reads emails from customers, and your replies to them" },
+    { ok: true, text: "Puts booked calls on your calendar" },
+    { ok: false, text: "Never sends anything without your OK, unless you turn that on" },
+    { ok: false, text: "Never reads newsletters, receipts or personal mail" },
   ];
-
   return (
     <div className="flex flex-1 flex-col">
-      <h1 className={H1}>How FollowUp works</h1>
+      <h1 className={H1}>Connect your Gmail</h1>
+      <p className={LEDE}>FollowUp reads the emails from customers, writes the replies in your words, and sends from your own address.</p>
 
-      <ol className="mt-6 overflow-hidden rounded-[18px] border border-line bg-card">
-        {beats.map((beat, i) => (
-          <li key={beat.title} className={"flex gap-3 px-4 py-4" + (i ? " border-t border-line-2" : "")}>
-            {/* Numbered because this is a real sequence — a lead arrives,
-                then goes quiet, then gets written to. Not decoration. */}
-            <span
-              aria-hidden="true"
-              className="h-6 w-6 shrink-0 rounded-full flex items-center justify-center text-xs font-medium"
-              style={{ backgroundColor: "var(--card-2)", color: "var(--ink-soft)" }}
-            >
-              {i + 1}
+      <ul className="mt-[18px] overflow-hidden rounded-[14px] border border-line bg-card">
+        {lines.map((l, i) => (
+          <li key={l.text} className={"flex gap-3 px-4 py-3 text-[14.5px] leading-snug" + (i ? " border-t border-line-2" : "")}>
+            <span aria-hidden="true" className="w-4 shrink-0" style={{ color: l.ok ? "var(--sage)" : "var(--ink-faint)" }}>
+              {l.ok ? "✓" : "✕"}
             </span>
-            <div className="min-w-0">
-              <p className="text-[15px] font-medium">{beat.title}</p>
-              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-soft">{beat.body}</p>
-            </div>
+            <span>{l.text}</span>
           </li>
         ))}
-      </ol>
+      </ul>
+
+      {error && (
+        <p role="alert" className="mt-3 text-sm" style={{ color: "var(--coral)" }}>
+          {error}
+        </p>
+      )}
 
       <div className="mt-auto pb-7 pt-6">
-        <button onClick={onContinue} className={PRIMARY} style={PRIMARY_STYLE}>
-          Got it
+        <a href="/api/integrations/gmail/connect?next=onboarding" className={PRIMARY} style={PRIMARY_STYLE}>
+          Connect Gmail
           <ArrowRight className="h-4 w-4" />
-        </button>
-        <button
-          onClick={onSkip}
-          className="mt-1 inline-flex min-h-11 w-full items-center justify-center text-[15px] text-ink-soft transition-colors hover:text-ink"
-        >
-          Skip
-        </button>
+        </a>
+        {outlookAvailable && (
+          <a
+            href="/api/integrations/outlook/connect?next=onboarding"
+            className="mt-1 inline-flex min-h-11 w-full items-center justify-center text-[15px] text-ink-soft underline underline-offset-[3px] transition-colors hover:text-ink"
+          >
+            I use Outlook
+          </a>
+        )}
+        <p className="mt-2 text-center text-[13px] leading-relaxed text-ink-faint">You can disconnect any time in Settings. Access ends the moment you do.</p>
       </div>
     </div>
   );
 }
-
 /**
  * Step 4 — how FollowUp should work (founder, 2026-09-26: "in onboarding,
  * it will be asking the user whether they want the follow-up to follow up
@@ -585,7 +242,7 @@ function HowItWorks({ onContinue, onSkip }: { onContinue: () => void; onSkip: ()
  * asked for, never assumed (2026-09-22). Pressing the only button on the
  * screen can no longer switch automatic sending on unread.
  */
-function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
+function HowItShouldWork({ reading, onChosen }: { reading: boolean; onChosen: () => void }) {
   const [mode, setMode] = useState<"automatic" | "assisted" | null>("assisted");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -631,7 +288,10 @@ function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
   return (
     <div className="flex flex-1 flex-col">
       <h1 className={H1}>How should FollowUp work?</h1>
-      <p className={LEDE}>You can change this any time in Settings.</p>
+      <p className={LEDE + (reading ? " flex items-center gap-2" : "")}>
+        {reading && <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />}
+        {reading ? "It's reading your inbox now. Pick one; change it any time." : "Pick one; change it any time in Settings."}
+      </p>
 
       <div role="radiogroup" aria-label="How FollowUp works" className="mt-[22px] flex flex-col gap-3">
         {options.map((o) => {
@@ -676,8 +336,15 @@ function HowItShouldWork({ onChosen }: { onChosen: () => void }) {
 
       <p className="mt-[18px] flex items-start gap-2 text-sm leading-relaxed text-ink-soft">
         <Check className="mt-0.5 h-[15px] w-[15px] shrink-0 text-ink" strokeWidth={2.2} aria-hidden="true" />
-        <span>Either way, it stops the moment a customer replies, and every message goes from your own address.</span>
+        <span>Either way, it stops the moment they reply, and every message goes from your own Gmail.</span>
       </p>
+
+      {/* Asked once, here, where the owner has just connected an inbox —
+          not buried in Settings they may never open. Off by default; the
+          switch is the consent (docs/security-roadmap.md). */}
+      <div className="mt-4 rounded-[18px] border border-line bg-card px-4 py-3">
+        <ImproveFollowUpToggle compact />
+      </div>
 
       {error && (
         <p role="alert" className="text-sm mt-3" style={{ color: "var(--coral)" }}>
@@ -726,7 +393,7 @@ type WaitingSummary = {
  * account, or if writing them fails, the screen says so and moves on:
  * nobody should be stuck at the end of setup.
  */
-function WaitingCustomers({ onDone, finishing }: { onDone: () => void; finishing: boolean }) {
+function WaitingCustomers({ syncDone, onDone, finishing }: { syncDone: boolean; onDone: () => void; finishing: boolean }) {
   const [state, setState] = useState<"loading" | "ready">("loading");
   const [summary, setSummary] = useState<WaitingSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -758,7 +425,10 @@ function WaitingCustomers({ onDone, finishing }: { onDone: () => void; finishing
   });
 
   useEffect(() => {
-    if (started.current) return;
+    // A big inbox is still being read when the owner arrives here (the
+    // sync started on step 2). Wait for it, so the list below is the whole
+    // picture rather than the first few; the screen says so meanwhile.
+    if (!syncDone || started.current) return;
     started.current = true;
     (async () => {
       // Best effort: a failed or slow run leaves whatever is already
@@ -777,15 +447,15 @@ function WaitingCustomers({ onDone, finishing }: { onDone: () => void; finishing
       }
       setState("ready");
     })();
-  }, []);
+  }, [syncDone]);
 
   if (state === "loading") {
     return (
       <div className="flex flex-1 flex-col">
-        <h1 className={H1}>Finding who&apos;s waiting on a reply…</h1>
+        <h1 className={H1}>{syncDone ? "Finding who’s waiting on a reply…" : "Still reading your inbox…"}</h1>
         <p className={LEDE + " flex items-center gap-2"}>
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          Reading the last 90 days. Nothing is sent.
+          {syncDone ? "Reading the last 90 days. Nothing is sent." : "A big inbox takes a minute. Nothing is sent."}
         </p>
       </div>
     );

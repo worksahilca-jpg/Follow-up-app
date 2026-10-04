@@ -29,11 +29,11 @@ export const metadata: Metadata = {
   // host it happened to be served from.
   alternates: { canonical: "/" },
   description:
-    "FollowUp watches your inbox, tells you who is going quiet and why, and writes the reply. Only for owners who have leads and don't have time to reply.",
+    "FollowUp reads the customers in your Gmail, answers them in your words within minutes, and checks in if they go quiet. It stops the moment they reply.",
   openGraph: {
     title: "FollowUp — Never lose a lead because you forgot to follow up.",
     description:
-      "FollowUp watches your inbox, tells you who is going quiet and why, and writes the reply. Only for owners who have leads and don't have time to reply.",
+      "FollowUp reads the customers in your Gmail, answers them in your words within minutes, and checks in if they go quiet. It stops the moment they reply.",
     url: SITE_URL,
     siteName: "FollowUp",
     type: "website",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "FollowUp — Never lose a lead because you forgot to follow up.",
     description:
-      "FollowUp watches your inbox, tells you who is going quiet and why, and writes the reply. Only for owners who have leads and don't have time to reply.",
+      "FollowUp reads the customers in your Gmail, answers them in your words within minutes, and checks in if they go quiet. It stops the moment they reply.",
   },
 };
 

@@ -8823,3 +8823,17 @@ signed-in email above Sign out (desk) and at the foot of Settings (phone). Check
   is half this screen's job. Same follow-up.
 - *Holds:* each person appears in two places, not three; Today keeps its end; old links still land.
 
+## 2026-10-04 — "What do you do?" back in setup; a realtor playbook (A-083)
+
+**Why:** A-081 dropped the business-details form, and with it the trade. The trade is the classifier's most important
+input, so new Gmail testers would have been sorted blind. The founder also asked for replies that fit the trade.
+
+**Built:** chips above the reply-mode cards on step 2 (one required tap), a Settings card when the trade is missing,
+and `src/lib/tradePlaybooks.ts` (real estate only) passed to every follow-up draft. Checked at 390 wide.
+
+**Self-review, honestly:**
+- *Weak:* step 2 is now two decisions and a toggle on one screen, long on a phone (the button sits below the fold).
+  It uses the wait while the inbox is read, which is why it is here and not a fourth step, but it is heavier than
+  A-081's one decision per screen. Worth watching with the first new tester.
+- *Holds:* one tap, plain words, no free text; the chips reuse the existing pill pattern.
+

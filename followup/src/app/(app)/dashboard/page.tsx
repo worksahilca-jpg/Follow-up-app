@@ -346,8 +346,8 @@ export default async function DashboardPage() {
                     one-click fix. */}
                 <p className="text-lg leading-relaxed">
                   FollowUp has lost access to {gmail.email ?? "your inbox"}, so it isn&apos;t catching new leads
-                  right now. While FollowUp is in beta, Google expires this access every seven days — that is
-                  almost always what happened, and reconnecting takes a few seconds. It can also mean access was
+                  right now. Connections made before October 3 ended after 7 days while Google reviewed FollowUp;
+                  reconnect once and it stays connected. It takes a few seconds. It can also mean access was
                   removed in Google, or a password changed.
                 </p>
                 <div className="mt-4">

@@ -15,7 +15,7 @@ const DOT: Record<CheckState, string> = {
 };
 
 const GRID = "grid-cols-[minmax(0,11rem)_3.5rem_repeat(5,minmax(0,1fr))_3rem]";
-const COLUMNS = ["Email and Meta", "Inbox checked", "Drafts as written", "Learning", "Won back"] as const;
+const COLUMNS = ["Gmail", "Inbox checked", "Drafts as written", "Learning", "Won back"] as const;
 
 function CheckCell({ check }: { check: Check }) {
   return (
@@ -60,6 +60,7 @@ export default function TesterHealthSection({ report }: { report: TesterHealthRe
                   <span className="min-w-0">
                     <span className="block text-sm font-medium truncate">{t.name}</span>
                     <span className="block text-xs text-ink-soft truncate">{t.business ?? t.email}</span>
+                    <span className="block text-xs text-ink-soft truncate">{t.opened}</span>
                   </span>
                   <span className="text-right font-display text-xl tabular-nums">
                     {t.score}
@@ -85,6 +86,7 @@ export default function TesterHealthSection({ report }: { report: TesterHealthRe
                 <span className="min-w-0">
                   <span className="block text-sm font-medium truncate">{t.name}</span>
                   <span className={`block text-xs ${t.next ? "text-ink" : "text-ink-soft"}`}>{t.next ?? "All five passing"}</span>
+                  <span className="block text-xs text-ink-soft">{t.opened}</span>
                 </span>
                 <span className="font-display text-xl tabular-nums shrink-0">
                   {t.score}
@@ -98,7 +100,8 @@ export default function TesterHealthSection({ report }: { report: TesterHealthRe
             Inbox checked: the last successful look at their Gmail or Outlook, within 30 minutes. It shows FollowUp is
             watching, not that nothing was ever missed. Drafts as written: at least half of the replies sent from a FollowUp
             draft went out unedited, counted once 3 have been sent. Won back: a customer replied to a message FollowUp sent
-            on its own. Nothing here is sent to testers.
+            on its own. Opened: the last day they opened FollowUp, and on how many of the last 7 days; not part of the
+            score. Nothing here is sent to testers.
           </p>
         </>
       )}

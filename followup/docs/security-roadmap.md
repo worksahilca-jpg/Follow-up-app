@@ -96,13 +96,15 @@ checked and the re-audit checklist in `docs/security.md` passes.
 
 - [ ] External penetration test; fix everything it finds (task #69).
 - [ ] Supabase point-in-time recovery + a tested restore drill.
-- [ ] Incident response plan: who is paged, how customers are told, within what time.
+- [x] Incident response plan: who is paged, how customers are told, within what time
+      (`docs/incident-response.md`, 2026-10-05).
 - [ ] Data-processing agreements with Google, Twilio, OpenAI, Stripe, Meta, Vercel, Supabase.
 - [ ] Privacy policy and terms updated for: data used to improve models (opt-in),
       retention periods, sub-processors, CASL/PIPEDA/TCPA obligations of the business.
 - [ ] SOC 2 Type I when a customer asks for it; the audit trail and CI above are
       most of the evidence.
-- [ ] Bug bounty or at least a `security.txt` and a disclosure inbox.
+- [x] A `security.txt` and a disclosure inbox (`public/.well-known/security.txt`, contact@followupbase.io,
+      2026-10-05). A bug bounty can come later.
 
 ## Training on customer data — the rules (binding from today)
 

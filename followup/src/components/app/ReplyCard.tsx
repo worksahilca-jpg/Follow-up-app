@@ -72,7 +72,7 @@ export default function ReplyCard({
   const [text, setText] = useState(draft);
   const [subject, setSubject] = useState(draftSubject ?? "");
   const [price, setPrice] = useState("");
-  const [busy, setBusy] = useState<null | "skip" | Rewrite>(null);
+  const [busy, setBusy] = useState<null | "skip" | "fresh" | Rewrite>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<null | { kind: "sent"; template: string | null } | { kind: "skipped" }>(null);
   const [edited, setEdited] = useState(false);
@@ -113,6 +113,28 @@ export default function ReplyCard({
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't do that. Try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // A whole new reply from the conversation, with today's model and rules
+  // (founder, 2026-10-05: an old draft had invented facts and there was no
+  // way to ask for a fresh one). Saved as the draft, so Today shows it too.
+  async function writeFresh() {
+    setBusy("fresh");
+    setError(null);
+    try {
+      const res = await fetch(`/api/leads/${leadId}/regenerate`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success || typeof data.message !== "string") {
+        throw new Error(typeof data.message === "string" && !res.ok ? data.message : "Couldn't write a new one. Try again.");
+      }
+      setText(data.message);
+      if (typeof data.subject === "string") setSubject(data.subject);
+      setEdited(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't write a new one. Try again.");
     } finally {
       setBusy(null);
     }
@@ -198,7 +220,15 @@ export default function ReplyCard({
             className="w-full resize-y rounded-xl border border-line bg-card/80 p-3 text-base leading-relaxed focus:outline-none"
           />
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[13px] text-ink-soft">Rewrite it:</span>
+            <button
+              type="button"
+              onClick={writeFresh}
+              disabled={busy !== null}
+              className="h-8 rounded-full border border-line bg-card/70 px-3 text-[13px] font-medium disabled:opacity-60"
+            >
+              {busy === "fresh" ? "Writing…" : "Write a new one"}
+            </button>
+            <span className="text-[13px] text-ink-soft">or rewrite it:</span>
             {(
               [
                 ["shorter", "Shorter"],

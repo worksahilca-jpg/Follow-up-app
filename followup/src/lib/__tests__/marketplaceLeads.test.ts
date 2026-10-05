@@ -128,6 +128,17 @@ describe("isMarketplaceLeadNotice: the no-reply gate", () => {
     expect(isMarketplaceLeadNotice(notice(email, subject))).toBe(false);
   });
 
+  // The founder's own inbox, 2026-10-04: he had posted a request on Bark
+  // as a buyer, and Bark's mail to him about it became two "customers".
+  it.each([
+    ["Do this to boost your request, Sahil", "Your request is live. Pros sent you a message? Answer a few more questions so professionals will contact you sooner."],
+    ["Here's what to expect next", "Thanks, Sahil. Your request has been sent. Professionals will contact you within 24 hours, and Ana is interested in your project."],
+    ["3 responses to your request", "Marcus sent you a message about your web design request."],
+    ["You've been matched with 5 professionals", "They will reach out to you shortly."],
+  ])("keeps a notice about the owner's OWN request out: %s", (subject, body) => {
+    expect(isMarketplaceLeadNotice(notice("team@bark.com", subject, body))).toBe(false);
+  });
+
   it("never lets other no-reply mail through, however it is worded", () => {
     for (const email of ["notifications@github.com", "no-reply@northernbank.com", "noreply@marketweekly.example", "no-reply@accounts.google.com"]) {
       expect(isAutomatedAddress(email)).toBe(true);

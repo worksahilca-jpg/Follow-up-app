@@ -63,6 +63,29 @@ const appCsp = [
 ].join("; ");
 
 /**
+ * The same policy without 'unsafe-eval', sent as Report-Only (security review, CASA gap, 2026-10-05).
+ * Browsers enforce nothing from it; they report to Sentry what it WOULD have blocked. If a week
+ * of real use (WhatsApp signup included) reports no eval, 'unsafe-eval' comes out of appCsp.
+ * Reports go to Sentry's security endpoint, built from the public DSN; with no DSN, no header.
+ */
+function sentryCspReportUri(): string | null {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN ?? process.env.SENTRY_DSN;
+  if (!dsn) return null;
+  try {
+    const u = new URL(dsn);
+    const project = u.pathname.replace(/^\//, "");
+    if (!u.username || !project) return null;
+    return `${u.protocol}//${u.host}/api/${project}/security/?sentry_key=${u.username}`;
+  } catch {
+    return null;
+  }
+}
+const cspReportUri = sentryCspReportUri();
+const appCspReportOnly = cspReportUri && !isDev
+  ? `${appCsp.replace(" 'unsafe-eval'", "")}; report-uri ${cspReportUri}`
+  : null;
+
+/**
  * The public booking page (/book/[leadId]) — a lead arriving from a link
  * in an email, never a signed-in user on their way to Settings, so it
  * never needs Meta's SDK and never needs eval. Same policy as the app
@@ -149,6 +172,7 @@ const nextConfig: NextConfig = {
         headers: [
           ...commonHeaders,
           { key: "Content-Security-Policy", value: appCsp },
+          ...(appCspReportOnly ? [{ key: "Content-Security-Policy-Report-Only", value: appCspReportOnly }] : []),
           { key: "X-Frame-Options", value: "DENY" },
           // Cuts the link between this tab and any cross-origin page that
           // opened it (reverse tabnabbing, window.opener probing). The

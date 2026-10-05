@@ -95,9 +95,9 @@ export default function PastRepliesToggle() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Write like me</p>
           <p className="text-[13px] text-ink-soft mt-0.5">
-            Let FollowUp read the replies you sent from Gmail in the last year, so its drafts sound like you. Only your
-            own drafts use them, never anyone else&apos;s. Names, emails and phone numbers are taken out first. Turn it
-            off and they&apos;re all deleted.
+            {/* Shortened in the #16 cut (founder, 2026-10-05, A-094). */}
+            Learns your style from the Gmail replies you sent this past year. Only your drafts use it. Turn it off to
+            delete it.
           </p>
           {line && <p className="text-[13px] text-ink mt-1.5">{line}</p>}
           {error && (

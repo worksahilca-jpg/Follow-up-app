@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SettingsList from "@/components/app/SettingsList";
 import { quietReminderDays, SILENCE_DEFAULT_TRIGGER_DAYS } from "@/lib/reminderCadence";
-import Switch from "@/components/Switch";
 import TeamSection from "@/components/TeamSection";
+// A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
+import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 import BusinessProfileSection from "@/components/BusinessProfileSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
 import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
@@ -26,8 +27,6 @@ import SignInsSection from "@/components/SignInsSection";
 import YourRulesCard from "@/components/YourRulesCard";
 import RuleCard, { RuleNumber, type RuleRecordCounts } from "@/components/RuleCard";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
-// A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
-import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 import { Mail, Calendar, Check, RefreshCw, CreditCard, Search } from "lucide-react";
 
 /** Section headings on a setting's page read like the list's group labels
@@ -166,8 +165,6 @@ function SettingsPageInner() {
   const [automationOn, setAutomationOn] = useState(false);
   const [automationLoaded, setAutomationLoaded] = useState(false);
   const [automationSaving, setAutomationSaving] = useState(false);
-  const [runningNow, setRunningNow] = useState(false);
-  const [runResult, setRunResult] = useState<string | null>(null);
   const [automationError, setAutomationError] = useState<string | null>(null);
   const [instantAckOn, setInstantAckOn] = useState(true);
   const [instantAckSaving, setInstantAckSaving] = useState(false);
@@ -184,8 +181,7 @@ function SettingsPageInner() {
   // 2026-09-21. All FOUR rules below still run but send nothing; this said
   // "three of the four" while the instant acknowledgement was exempt, and
   // kept saying it for a day after the exemption was withdrawn.
-  // describeAutomationState() is the sentence that would otherwise claim
-  // a message went out, so it reads this.
+  // The thank-you rule's wording reads this ("writes" vs "thanks them").
   const [holdAllForApproval, setHoldAllForApproval] = useState(false);
 
   const [billingActive, setBillingActive] = useState(false);
@@ -264,12 +260,6 @@ function SettingsPageInner() {
     total: number;
     heldOnlyBySetting: number;
     wouldWaitAnyway: number;
-  } | null>(null);
-  const previousAutomationStateRef = useRef<{
-    automationOn: boolean;
-    instantAckOn: boolean;
-    unansweredOn: boolean;
-    deadLeadOn: boolean;
   } | null>(null);
 
   // Real connection state, fetched from the DB via the API route — not
@@ -545,119 +535,6 @@ function SettingsPageInner() {
     }
   }
 
-  function describeAutomationState(): string {
-    const clauses: string[] = [];
-    // On a holding account (Business.holdAllForApproval) every rule below
-    // still runs and still writes the message — it just lands in the
-    // approval queue rather than going out, so each clause's verb switches.
-    //
-    // This clause kept the unconditional "sends" until 2026-09-21, left
-    // behind when the instant acknowledgement stopped being exempt the day
-    // before. Every other clause had been switched; this one had not, so a
-    // holding account read "FollowUp sends an instant acknowledgement to
-    // every new lead ... Nothing above sends on its own" — a sentence
-    // contradicting itself about the one fact an owner most needs straight.
-    // The trailing sentence at the end of this function was doing the work
-    // of correcting a clause that should not have been wrong.
-    if (instantAckOn)
-      clauses.push(
-        holdAllForApproval
-          ? "drafts an instant acknowledgement for every new lead"
-          : "sends an instant acknowledgement to every new lead"
-      );
-    // The four-reminder calendar the engine actually uses (founder's
-    // follow-up strategy, 2026-09-25) — not one nudge after N days.
-    if (automationOn) clauses.push(`${holdAllForApproval ? "drafts" : "sends"} up to four reminders to a quiet lead, on days ${listDays(quietReminderDays(autoAfterDays))}`);
-    // Within minutes of a new message, at any hour (the fresh-replies cron,
-    // 2026-09-25). The hours field below is only the backstop for a message
-    // that minute check missed, so it is not what this sentence promises.
-    if (unansweredOn) {
-      clauses.push(
-        holdAllForApproval
-          ? "drafts a reply within minutes of a new message"
-          : "replies within minutes of a new message, holding anything about price or anything sensitive for you"
-      );
-    }
-    if (deadLeadOn)
-      clauses.push(
-        `${holdAllForApproval ? "drafts a reactivation message" : "switches to a reactivation message"} after ${deadLeadDays} days of silence on both sides`
-      );
-    if (clauses.length === 0) return "Off — nothing goes out on its own. Every reply is one you send yourself.";
-    const sentence =
-      clauses.length === 1
-        ? `Right now FollowUp ${clauses[0]}.`
-        : `Right now FollowUp ${clauses.slice(0, -1).join(", ")}, and ${clauses[clauses.length - 1]}.`;
-    // The one thing an owner most needs to know about their own account,
-    // and until 2026-09-20 the only place it appeared was two server
-    // files. "Waits for you" is the whole point of the beta setting, so
-    // it belongs in the sentence that claims to describe what is active.
-    // As of 2026-09-20 the instant acknowledgement is held too (founder:
-    // "don't send any replies without asking me"), so there is no longer
-    // an exception to carve out — every rule above produces a draft that
-    // waits. This sentence said the opposite for exactly one day.
-    if (!holdAllForApproval) return sentence;
-    return `${sentence} Nothing above sends on its own — every one of those is written for you and waits in Today until you press send.`;
-  }
-
-  const anyAutomationOn = automationOn || instantAckOn || unansweredOn || deadLeadOn;
-  const automationBusy = automationSaving || instantAckSaving || unansweredSaving || deadLeadSaving;
-
-  // The master switch doesn't have its own server-side flag — it's just all
-  // 4 rules at once. Turning it off remembers which ones were actually on
-  // so turning it back on restores exactly that, instead of guessing.
-  async function handleMasterToggle() {
-    if (anyAutomationOn) {
-      if (
-        !window.confirm(
-          "Turn off every automated follow-up? Nothing will go out on its own until you turn this back on — you can still reply to leads yourself any time."
-        )
-      )
-        return;
-      previousAutomationStateRef.current = { automationOn, instantAckOn, unansweredOn, deadLeadOn };
-      if (automationOn) {
-        setAutomationOn(false);
-        saveAutomationSettings(false, autoAfterDays);
-      }
-      if (instantAckOn) {
-        setInstantAckOn(false);
-        saveInstantAck(false);
-      }
-      if (unansweredOn) {
-        setUnansweredOn(false);
-        saveUnanswered(false, unansweredHours);
-      }
-      if (deadLeadOn) {
-        setDeadLeadOn(false);
-        saveDeadLead(false, deadLeadDays);
-      }
-    } else {
-      // Nothing was on to remember (e.g. this is the first toggle this
-      // visit) — the app's own default is everything on, so restore that.
-      const prev = previousAutomationStateRef.current ?? {
-        automationOn: true,
-        instantAckOn: true,
-        unansweredOn: true,
-        deadLeadOn: true,
-      };
-      if (prev.automationOn) {
-        setAutomationOn(true);
-        saveAutomationSettings(true, autoAfterDays);
-      }
-      if (prev.instantAckOn) {
-        setInstantAckOn(true);
-        saveInstantAck(true);
-      }
-      if (prev.unansweredOn) {
-        setUnansweredOn(true);
-        saveUnanswered(true, unansweredHours);
-      }
-      if (prev.deadLeadOn) {
-        setDeadLeadOn(true);
-        saveDeadLead(true, deadLeadDays);
-      }
-      previousAutomationStateRef.current = null;
-    }
-  }
 
   // Real subscription state, fetched from the DB via the API route.
   useEffect(() => {
@@ -749,28 +626,6 @@ function SettingsPageInner() {
     } catch (err) {
       setBillingError(err instanceof Error ? err.message : "Couldn't open billing portal.");
       setBillingBusy(false);
-    }
-  }
-
-  async function handleRunAutomationNow() {
-    setRunningNow(true);
-    setRunResult(null);
-    try {
-      const res = await fetch("/api/automation/run", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message ?? "Automation run failed.");
-      const heldNote = data.held > 0 ? `, held ${data.held} for review` : "";
-      const deferredNote = data.deferred > 0 ? `, waiting on ${data.deferred} until working hours` : "";
-      const reactivatedNote = data.reactivated > 0 ? `, ${data.reactivated} of those were cold leads reactivated` : "";
-      setRunResult(
-        data.checked === 0
-          ? "Checked — no leads are opted in and overdue right now."
-          : `Checked ${data.checked} opted-in lead${data.checked === 1 ? "" : "s"}, sent ${data.sent}${heldNote}${deferredNote}${reactivatedNote}.`
-      );
-    } catch (err) {
-      setRunResult(err instanceof Error ? err.message : "Automation run failed.");
-    } finally {
-      setRunningNow(false);
     }
   }
 
@@ -1583,21 +1438,14 @@ function SettingsPageInner() {
             a "Change the timings" expander. Now each rule says what
             happens, when it stops, and what it did this week, with its
             one number inside the sentence. Same settings, same saves. */}
-        <p className="mt-6 text-sm text-ink-soft">
-          {holdAllForApproval
-            ? "What FollowUp does on its own. Everything these write waits for your OK, apart from the short “let me check” when a price or date question has waited 30 minutes."
-            : "What FollowUp does on its own. Simple messages go by themselves; anything about price waits for you."}
-        </p>
-        <div className="mt-3 space-y-3">
+        {/* #16 (founder, 2026-10-05, A-094): each rule is its sentence, its number and one
+            "stops when" line. What every rule shares (price waits for you) is said once, in
+            the page's lede and "Your rules", not under every switch. */}
+        <div className="mt-6 space-y-3">
           <RuleCard
             when="When a new customer writes for the first time,"
             does={holdAllForApproval ? "FollowUp writes a short thank-you right away." : "FollowUp thanks them right away."}
-            stops={
-              <>
-                Once per lead, in their language. It never states a price, a date, a time or a number the lead
-                didn&apos;t write, and if a check has any doubt it falls back to a fixed, always-safe line.
-              </>
-            }
+            stops="Once per customer, in their language. Never if you've already replied."
             checked={instantAckOn}
             onToggle={() => {
               const next = !instantAckOn;
@@ -1609,17 +1457,12 @@ function SettingsPageInner() {
             exampleRule={"instant_ack"}
             record={ruleRecords?.instant_ack ?? null}
             error={instantAckError}
-          >
-            <p className="text-[13px] text-ink-soft mt-2">
-              On WhatsApp, Instagram and Messenger it waits two to three minutes first, so you can answer yourself.
-              Never if you&apos;ve already replied, and never to someone who asked us to stop.
-            </p>
-          </RuleCard>
+          />
 
           <RuleCard
             when="When a customer writes and you haven't answered,"
             does="FollowUp writes a reply within minutes."
-            stops="Anything about price or a tense conversation waits for you. It stops the moment anyone replies."
+            stops="It stops the moment anyone replies."
             checked={unansweredOn}
             onToggle={() => {
               const next = !unansweredOn;
@@ -1647,13 +1490,13 @@ function SettingsPageInner() {
                 hours.
               </p>
             )}
-            {/* Only while the number is actually being overridden. At 20 or
-                below the ceiling changes nothing, and a note that changes
-                nothing is noise (brand principle 8). */}
+            {/* Kept as one line through the #16 cut (A-094): without it the number above silently
+                means something else on three channels (brand principle 1). Only shown while it
+                changes something. */}
             {unansweredOn && unansweredHours > UNANSWERED_META_DM_MAX_HOURS && (
               <p className="text-[13px] text-ink-soft mt-2">
-                On Instagram, Messenger and WhatsApp, FollowUp steps in by {UNANSWERED_META_DM_MAX_HOURS} hours whatever
-                you set here. Meta only lets a business reply freely within a day of the lead&apos;s last message.
+                On Instagram, Messenger and WhatsApp it&apos;s {UNANSWERED_META_DM_MAX_HOURS} hours at most. Meta only
+                lets a business reply freely within a day of the lead&apos;s last message.
               </p>
             )}
           </RuleCard>
@@ -1675,7 +1518,7 @@ function SettingsPageInner() {
                 , then {listDays(quietReminderDays(autoAfterDays).slice(1))}.
               </>
             }
-            stops="It stops the moment they answer, or when you mark “Already spoke”. Only between 8am and 8pm, never more than one a day."
+            stops="Stops when they answer. 8am to 8pm, never more than one a day."
             checked={automationOn}
             onToggle={() => {
               const next = !automationOn;
@@ -1687,20 +1530,7 @@ function SettingsPageInner() {
             exampleRule={"silence"}
             record={ruleRecords?.silence ?? null}
             error={automationError}
-          >
-            {automationOn && (
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <button
-                  onClick={handleRunAutomationNow}
-                  disabled={runningNow}
-                  className="text-[13px] font-medium underline underline-offset-2 text-ink-soft disabled:opacity-60"
-                >
-                  {runningNow ? "Checking…" : "Check for anyone waiting, right now"}
-                </button>
-                {runResult && <span className="text-[13px] text-ink-soft">{runResult}</span>}
-              </div>
-            )}
-          </RuleCard>
+          />
 
           <RuleCard
             when="When nobody has written for"
@@ -1718,7 +1548,7 @@ function SettingsPageInner() {
                 days, FollowUp writes one welcome-back message.
               </>
             }
-            stops="Once per customer. It says how long it's been and leads with something worth their time, never a vague “just checking in”."
+            stops="Once per customer."
             checked={deadLeadOn}
             onToggle={() => {
               const next = !deadLeadOn;
@@ -1733,25 +1563,6 @@ function SettingsPageInner() {
           />
         </div>
 
-        {/* All four at once, below them: the one-press stop (and its exact
-            restore) that used to be the section's only visible control. */}
-        <div className="mt-3 box p-5">
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-medium text-sm">All four together</p>
-              <p className="text-[13px] text-ink-soft mt-1">{describeAutomationState()}</p>
-            </div>
-            <Switch
-              checked={anyAutomationOn}
-              onChange={handleMasterToggle}
-              disabled={!automationLoaded || automationBusy}
-              label="All automatic follow-ups"
-            />
-          </div>
-          <p className="text-[13px] text-ink-soft mt-3">
-            You can turn these off for one customer on their own page.
-          </p>
-        </div>
       </section>
 
       {/* Directly under Automation: that section decides that replies wait

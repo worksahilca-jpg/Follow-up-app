@@ -37,24 +37,20 @@ describe("the instant-reply promise", () => {
   // Each of these IS enforced, so each is fair to promise. If one is ever
   // removed from the code, this test is the reminder that the sentence
   // promising it has to go too.
+  // Since #16 (founder, 2026-10-05, A-094) the rule says less: its sentence and one "stops
+  // when" line. Fewer promises, but every one left must still be true. The price, fallback,
+  // opt-out and DM-delay sentences went with the cut, not because they stopped being true.
   it("keeps the promises the code actually enforces", () => {
     const copy = settings();
-    // checkAckShape: no digit, currency or time the lead didn't write.
-    expect(copy).toMatch(/price, a date, a time or a number/i);
-    // The fallback when either gate refuses.
-    expect(copy).toMatch(/falls back to a fixed, always-safe line/i);
     // The atomic claim on Lead.acknowledgedAt.
-    expect(copy).toMatch(/once per lead/i);
+    expect(copy).toMatch(/once per customer, in their language/i);
     // The prior-outbound check.
-    expect(copy).toMatch(/never if you&apos;ve already replied/i);
-    // The DM opt-out added 2026-09-16.
-    expect(copy).toMatch(/never to someone who asked us to stop/i);
+    expect(copy).toMatch(/never if you've already replied/i);
   });
 
   // The grace period made the old "within a minute" false on DM channels.
-  // 2-3 minutes is what the one-minute cron can actually deliver.
-  it("states the DM delay honestly", () => {
-    expect(settings()).toMatch(/two to three minutes/i);
+  it("never promises a timing the DM grace period breaks", () => {
+    expect(settings()).not.toMatch(/within a minute/i);
   });
 });
 
@@ -77,8 +73,7 @@ describe("the unanswered-rule promise", () => {
     // hours field is only the backstop. The summary sentence used to quote
     // that field — "if you haven't answered within 24 hours (20 on
     // Instagram and Messenger)" — which became untrue the day this shipped.
-    expect(settings()).toMatch(/drafts a reply within minutes of a new message/);
-    expect(settings()).toMatch(/replies within minutes of a new message, holding anything about price/);
+    expect(settings()).toMatch(/FollowUp writes a reply within minutes\./);
     expect(settings()).not.toMatch(/if you haven't answered within \$\{unansweredHours\}/);
   });
 
@@ -107,67 +102,19 @@ describe("the unanswered-rule promise", () => {
 });
 
 /**
- * The summary sentence must not contradict itself on a holding account.
- *
- * `describeAutomationState()` builds one sentence from four clauses, then
- * appends "Nothing above sends on its own" when
- * `Business.holdAllForApproval` is set. Three clauses switch their verb on
- * that flag. The instant-acknowledgement clause did not: it said "sends"
- * unconditionally, left behind when the acknowledgement stopped being
- * exempt from the hold on 2026-09-20.
- *
- * So a holding owner — which, since 2026-09-21, is every owner — read:
- *
- *   "Right now FollowUp SENDS an instant acknowledgement to every new
- *    lead, drafts a nudge for a quiet lead after 5 days of silence [...]
- *    Nothing above SENDS on its own."
- *
- * Two opposite claims about the same behaviour, one sentence apart. The
- * trailing correction was covering for a clause that should not have been
- * wrong, and an owner resolving the contradiction the wrong way believes
- * their leads are being answered while 23 drafts sit unread.
- *
- * Found on 2026-09-21 while verifying, for the founder, that nothing could
- * reach a teammate's leads without his approval. Nothing could — but
- * Settings told him otherwise, which is the same defect class as every
- * other test in this file: a true sentence that went stale when the code
- * moved underneath it.
+ * The summary sentence (describeAutomationState, "All four together") was removed with the #16
+ * cut (founder, 2026-10-05, A-094), so the self-contradiction it once had can't come back. The
+ * guarantee it carried ("nothing above sends on its own") now lives in "Your rules".
  */
-describe("the summary sentence on a holding account", () => {
-  const describeBody = () => {
-    const raw = readFileSync(join(__dirname, "..", "..", "app", "(app)", "settings", "page.tsx"), "utf8");
-    const at = raw.indexOf("function describeAutomationState()");
-    expect(at, "describeAutomationState() is gone from Settings").toBeGreaterThan(-1);
-    const end = raw.indexOf("\n  }", at);
-    return raw.slice(at, end);
-  };
+describe("the guarantee on a holding account", () => {
+  const yourRules = () => readFileSync(join(__dirname, "..", "yourRules.ts"), "utf8");
 
-  it("does not tell a holding owner their leads are being answered", () => {
-    // The specific regression: an unconditional push of the "sends"
-    // wording. Conditional on holdAllForApproval is what makes it honest.
-    const body = describeBody();
-    const unconditional = /clauses\.push\("sends an instant acknowledgement/;
-    expect(
-      body,
-      "the instant-acknowledgement clause says 'sends' regardless of holdAllForApproval, " +
-        "while the same sentence ends '— nothing above sends on its own'"
-    ).not.toMatch(unconditional);
+  it("is stated where the owner reads the rules", () => {
+    expect(yourRules()).toMatch(/if \(s\.holdAll\) rules\.push\("Every reply waits for your OK\."\)/);
   });
 
-  it("switches that clause's verb on the hold, like the other three", () => {
-    expect(describeBody()).toMatch(/holdAllForApproval[\s\S]{0,120}drafts an instant acknowledgement/);
-  });
-
-  it("still says 'sends' when the account is NOT holding", () => {
-    // The fix must not overcorrect into always saying "drafts": an owner
-    // who has deliberately turned the hold off is owed the true verb.
-    expect(describeBody()).toMatch(/sends an instant acknowledgement to every new lead/);
-  });
-
-  it("keeps the blanket reassurance at the foot", () => {
-    // Belt and braces alongside the per-clause verbs. Losing this would
-    // leave the owner inferring the guarantee from four separate verbs.
-    expect(settings()).toMatch(/Nothing above sends on its own/);
+  it("is not contradicted by a summary that says 'sends'", () => {
+    expect(settings()).not.toMatch(/sends an instant acknowledgement/);
   });
 });
 

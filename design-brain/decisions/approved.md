@@ -1732,3 +1732,18 @@ owner typed in looks exactly like a real one, so it is never guessed at.
   touched (same pattern as Disconnect Gmail).
 - **Server:** `GET/DELETE /api/leads/practice`, admin only, 10 an hour, every delete through `deleteLeadCascade` with
   the business id. Tests in `api/leads/practice/__tests__`.
+
+## A-094 — Settings switches: say less (check-up #16) ^A-094
+
+**Approved 2026-10-05**, founder: *"yes"* to the drawing (the real phone screens, words cut). Principle: if a switch
+needs explaining, change the words, not add a "More" (R-026: an expander is still stuff).
+- **Replies and check-ins:** each rule is its sentence, its number and one "stops when" line (A-044's shape). What all
+  rules share (anything about a price waits for you) is said once, in the page lede and "Your rules". The intro
+  paragraph above the rules, the "All four together" card and the "Check for anyone waiting, right now" link are gone;
+  "Pause all sending" already stops everything.
+- **Kept against the drawing, one line:** the Meta note ("On Instagram, Messenger and WhatsApp it's 20 hours at
+  most…"), shown only when the number is above 20. Without it the owner's number silently means something else on
+  three channels (brand principle 1); it was the drawing's named weak spot.
+- **Your data:** Help improve FollowUp and Write like me down to two short sentences each. They still say what is kept
+  and what never is, because they are consents.
+- **Fixed in passing:** "Your rules" still said "We talked"; now "Already spoke".

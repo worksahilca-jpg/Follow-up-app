@@ -8951,3 +8951,10 @@ so their numbers can be lower than Today's. Covered by a new test in `rescued.te
 Check-up #9 closed. Checked rendered on desktop: row, confirm text, the after state, and the local database (the one
 practice customer gone, the other 15 untouched). Weak spot: not looked at on the phone with a practice customer present;
 it is the same layout as the Export row, which wraps correctly there.
+
+## 2026-10-05 — Settings switches cut to their sentence (A-094)
+
+Check-up #16 closed. The drawing was made on the running app (words removed in the page) so it matched the real
+system. The Replies page went from about 2,900px to about 2,100px tall on a phone. `trustCopy.test.ts` was updated:
+it now checks that the promises that remain are true and that no summary says "sends" on a holding account; the
+guarantee moved to "Your rules". The proposal I first made ("short line + More") broke R-026 and was not drawn.

@@ -90,9 +90,9 @@ export default function ImproveFollowUpToggle({ compact = false }: { compact?: b
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Help improve FollowUp</p>
           <p className="text-[13px] text-ink-soft mt-0.5">
-            When on, FollowUp counts how often you change its replies, so we can see where its wording is off. For
-            texts and DMs it also keeps the draft next to what you sent, with names, emails, phone numbers and
-            addresses removed first. For email it never keeps the words. Nothing is shared outside FollowUp.
+            {/* Shortened in the #16 cut (founder, 2026-10-05, A-094); still says what is kept and what never is. */}
+            Counts how often you change FollowUp&apos;s replies. Never keeps the words of an email; texts and DMs are
+            kept with names and numbers taken out.
           </p>
           {error && (
             <p className="mt-1 text-[13px]" style={{ color: "var(--coral)" }}>

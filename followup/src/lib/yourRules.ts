@@ -38,7 +38,7 @@ export function yourRules(s: RulesState): string[] {
   }
 
   rules.push("When a customer answers, check-ins stop.");
-  rules.push("When you mark “We talked”, it stops until they write again.");
+  rules.push("When you mark “Already spoke”, it stops until they write again.");
   rules.push(s.onlyAdminsSend ? "Only admins can send. Teammates write and edit." : "Anyone on your team can send.");
   return rules;
 }

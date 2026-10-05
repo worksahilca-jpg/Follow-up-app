@@ -920,7 +920,10 @@ export default function ApprovalQueue({
           words, the reply, Send. Desk only; on a phone the row opens in
           place (R-015). Keyed by person so Later, We talked and the price
           blank start fresh each time. */}
-      <div className="hidden min-w-0 sm:block">
+      {/* It stays in view while the list scrolls (founder, 2026-10-05: "it
+          should float, otherwise when I scroll down and click on another
+          lead I need to scroll up"). Below lg the fixed top bar is 80px. */}
+      <div className="hidden min-w-0 sm:sticky sm:top-24 sm:block sm:max-h-[calc(100vh-7rem)] sm:overflow-y-auto lg:top-8 lg:max-h-[calc(100vh-4rem)]">
         {selected && (leaving[selected.leadId] ? (
           <p className="flex items-center gap-2 text-sm text-ink-soft" role="status">
             <Check className="h-4 w-4 shrink-0" aria-hidden="true" />

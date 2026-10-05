@@ -8837,3 +8837,11 @@ and `src/lib/tradePlaybooks.ts` (real estate only) passed to every follow-up dra
   A-081's one decision per screen. Worth watching with the first new tester.
 - *Holds:* one tap, plain words, no free text; the chips reuse the existing pill pattern.
 
+## 2026-10-05 — Today's pane floats (A-084)
+
+**Why:** the founder's own Today has 19 people. Clicking one far down the list opened their reply at the top of the
+page, out of sight. **Built:** the pane wrapper in `ApprovalQueue.tsx` is `position: sticky` (top 96px below lg for
+the fixed bar, 32px on lg), capped at the window height with its own scroll. Checked at 1280×760 with 15 people,
+scrolled 700px: the clicked person's reply sits beside them. **Self-review:** a sticky pane taller than the window
+scrolls inside itself, which is a second scroll area; acceptable for a long thread, rare for a reply card.
+

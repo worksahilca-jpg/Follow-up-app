@@ -21,6 +21,8 @@ import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import type { Message } from "@/lib/types";
 import { Prisma, type Priority as DbPriority } from "@prisma/client";
 import { businessTrade } from "@/lib/tradePlaybooks";
+import { recordAudit } from "@/lib/audit";
+import { heldSince } from "@/lib/pendingApprovals";
 
 // Cut-points come from @/lib/scoreThresholds, shared with ScoreBadge —
 // the two used to carry their own copies (70/40 here, 75/45 there) and
@@ -231,6 +233,31 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       aiPausedReason: null,
     },
   });
+
+  // Someone FollowUp is switched off for still shows up in Today when they
+  // write (founder, 2026-10-05: a friend's test email went to a person
+  // switched off in September, and he couldn't find it). The automation
+  // never touches an OFF lead, so it never held the reply and Today never
+  // listed it. Held here, for the owner only: nothing about OFF changes,
+  // nothing is sent, and "Send all routine" leaves it alone (medium).
+  if (lead.automationTier === "OFF" && suggestedMessage && newest.direction === "inbound") {
+    try {
+      if (!(await heldSince(lead.businessId, lead.id, new Date(newest.date)))) {
+        const first = lead.name.split(" ")[0] || lead.name;
+        await recordAudit({ businessId: lead.businessId, userId: null }, "ai.hold", {
+          targetType: "lead",
+          targetId: lead.id,
+          meta: {
+            reason: `FollowUp is switched off for ${first}, so this reply only goes when you send it`,
+            riskLevel: "medium",
+            trigger: "unanswered",
+          },
+        });
+      }
+    } catch (err) {
+      console.error(`Couldn't put switched-off lead ${lead.id} on Today:`, err);
+    }
+  }
 
   // Nobody assigned means nobody to hand this off to — same posture as
   // checkRapidEngagement() in src/lib/engagement.ts.

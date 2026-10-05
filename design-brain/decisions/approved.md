@@ -1613,3 +1613,13 @@ one" chip leads the rewrite row, before "or rewrite it: Shorter · Warmer · Mor
 from the conversation with the current model and rules, and saves it as the draft. The old MessageComposer's
 "Regenerate" had stopped being shown anywhere since the A-080 redesign.
 
+## A-086 — Anyone who writes shows up in Today, even with FollowUp switched off for them ^A-086
+
+**Approved:** 2026-10-05, founder: *"yes"*, after his friend's test email went to a person switched off in September
+and he could not find it ("I don't see his message").
+**What specifically:** when a customer FollowUp is switched off for writes again, the reply is written as before and
+the person is put on Today, held, with "Held because FollowUp is switched off for {first name}, so this reply only
+goes when you send it." Nothing is ever sent for them on its own, and "Send all routine" leaves them alone.
+**Principle:** whoever writes to the owner is never invisible. "Off" means FollowUp doesn't act, not that the owner
+doesn't see.
+

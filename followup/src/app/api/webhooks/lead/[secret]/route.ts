@@ -61,7 +61,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // ever would, but a misconfigured Zap that loops on itself (a genuinely
   // common failure mode) still needs a ceiling before it turns into an
   // unbounded pile of duplicate leads and OpenAI calls.
-  if (await tooManyRecentLeads(businessId, "Webhook", { windowMinutes: 10, max: 100 })) {
+  // And per day (security pass 2026-10-05): a looping Zap at 100 per 10 minutes is 14,400 leads
+  // and OpenAI calls a day. 500 is far above any real import a small business sends this way.
+  if (
+    (await tooManyRecentLeads(businessId, "Webhook", { windowMinutes: 10, max: 100 })) ||
+    (await tooManyRecentLeads(businessId, "Webhook, daily", { windowMinutes: 24 * 60, max: 500 }))
+  ) {
     return NextResponse.json(
       { success: false, message: "Too many requests right now — please try again in a few minutes." },
       { status: 429 }

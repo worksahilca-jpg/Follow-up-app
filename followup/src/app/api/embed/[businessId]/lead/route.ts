@@ -81,7 +81,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // campaign, a busy open house), tight enough to blunt a script hammering
   // this URL directly. See the file comment above for why this needs a cap
   // at all.
-  if (await tooManyRecentLeads(businessId, "Website form", { windowMinutes: 10, max: 20 })) {
+  // Plus a ceiling per day (security pass 2026-10-05): 20 per 10 minutes still let a patient
+  // script post about 2,900 leads a day, each one an OpenAI call on FollowUp's key. 150 a day is
+  // far above any small business's real form traffic.
+  if (
+    (await tooManyRecentLeads(businessId, "Website form", { windowMinutes: 10, max: 20 })) ||
+    (await tooManyRecentLeads(businessId, "Website form, daily", { windowMinutes: 24 * 60, max: 150 }))
+  ) {
     return NextResponse.json(
       { success: false, message: "Too many submissions right now — please try again in a few minutes." },
       { status: 429 }

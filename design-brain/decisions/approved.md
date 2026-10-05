@@ -1747,3 +1747,15 @@ needs explaining, change the words, not add a "More" (R-026: an expander is stil
 - **Your data:** Help improve FollowUp and Write like me down to two short sentences each. They still say what is kept
   and what never is, because they are consents.
 - **Fixed in passing:** "Your rules" still said "We talked"; now "Already spoke".
+
+## A-095 — Swipe a Today row left for "Later" (phone) ^A-095
+
+**Approved 2026-10-05**, founder: *"cool lets go"* to both ideas from the Macro study (swipe for Later, a phone speed
+check). Built on the phone's closed Today rows only.
+- **Swipe left past 96px and let go:** the person is set aside until Later today (2 pm) when that's still ahead,
+  otherwise tomorrow morning (9 am), the same two choices as the Later button. The line that replaces the row says
+  until when, and has Undo. A short pull springs back and does nothing.
+- **Behind the row:** one word, "Later", on the quiet `--card-2` fill. No colour, no icon.
+- **Never Send.** No swipe sends anything; Send stays a deliberate press on the open reply.
+- **An accelerant, not the only way:** tapping the row still opens it, and Later is still inside. Not a keyboard
+  shortcut (R-002 stands); swipe is the phone's own convention (Mail, Gmail).

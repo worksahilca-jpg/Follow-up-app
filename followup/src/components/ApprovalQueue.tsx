@@ -19,6 +19,9 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE, RESULT_HOLD_MS } from "@/lib/motion";
 import { fillPriceSlot, hasPriceSlot, splitAtPriceSlot } from "@/lib/priceSlot";
 
+/** How far a phone row must be pulled left before letting go sets it aside (A-095). */
+const SWIPE_FOR_LATER_PX = 96;
+
 /**
  * "Needs your OK" — research/product/2026-09-10-ux-simplification.md
  * §0.6 and §8, implementation plan item #1. This is the missing screen
@@ -156,6 +159,7 @@ function ApprovalCard({
   // "Later" (A-046): set aside until a time, back by itself or as soon as
   // the customer writes. Not "handled", so it never counts toward the day.
   const [laterOpen, setLaterOpen] = useState(false);
+  const swiped = useRef(false);
   const [laterUntil, setLaterUntil] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // The price blank (A-060): a price question's reply is written with a
@@ -417,10 +421,34 @@ function ApprovalCard({
       !open ? (
         // A closed row on the phone (A-087): the whole row opens it. No black
         // Review on every row, so Send on the open card is the one black thing.
-        <button
+        // Swipe left sets the person aside until Later (A-095, from the Macro study): the
+        // phone's own gesture for "not now", under the thumb. Never Send; the Later button
+        // inside the row stays, and the set-aside line that follows has its Undo.
+        <div className="relative overflow-hidden">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 flex items-center justify-end pr-5 text-[13.5px] text-ink-soft"
+            style={{ background: "var(--card-2)" }}
+          >
+            {/* One word: the row only slides about a third of the way, and the exact time is in the line that follows. */}
+            {busy === "later" ? "…" : "Later"}
+          </div>
+        <motion.button
           type="button"
-          onClick={() => setOpen(true)}
-          className="flex w-full items-center gap-3 px-[18px] py-3.5 text-left"
+          drag={phone && busy === null ? "x" : false}
+          dragDirectionLock
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={{ left: 0.7, right: 0 }}
+          dragSnapToOrigin
+          onDragStart={() => { swiped.current = true; }}
+          onDragEnd={(_e, info) => {
+            if (info.offset.x < -SWIPE_FOR_LATER_PX) void setLater(laterToday ? "later_today" : "tomorrow_morning");
+            // The click that ends a drag must not also open the row.
+            setTimeout(() => { swiped.current = false; }, 0);
+          }}
+          onClick={() => { if (!swiped.current) setOpen(true); }}
+          className="relative flex w-full items-center gap-3 px-[18px] py-3.5 text-left"
+          style={{ background: "var(--card)", touchAction: "pan-y" }}
         >
           <Initials name={item.leadName} size={30} />
           <span className="min-w-0 flex-1">
@@ -432,7 +460,8 @@ function ApprovalCard({
           </span>
           {item.wait && <span className="shrink-0 text-[12.5px] text-ink-faint tabular-nums">{item.wait.replace(/^Waiting /, "")}</span>}
           <ChevronRight className="h-4 w-4 shrink-0 text-ink-faint" aria-hidden="true" />
-        </button>
+        </motion.button>
+        </div>
       ) : (
       <div className="flex items-center gap-3 px-[18px] py-3.5">
         <Initials name={item.leadName} size={30} />

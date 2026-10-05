@@ -8975,3 +8975,13 @@ guarantee moved to "Your rules". The proposal I first made ("short line + More")
   word "Inbox" and trust in a draft.
 - **Security, Google's review:** the breach plan (`followup/docs/incident-response.md`); the stricter CSP
   (no 'unsafe-eval') runs as Report-Only to Sentry for a week before it's enforced.
+
+## 2026-10-05 — From the Macro study: swipe for Later (A-095) and a phone speed check
+
+- **Speed check (no change needed).** Under phone conditions on a local build (4x slower CPU, 150 ms mobile
+  network): pages paint in about 0.5 s; tapping a Today row shows Send in 0.2–0.4 s; opening a person from
+  Customers in about 0.5 s. The app server (Vercel's default, US East) and the database (Supabase us-east-1) are in
+  the same region. The live site couldn't be timed from here (blocked); a real-phone check by the founder would
+  confirm.
+- **Swipe for Later built** (A-095). Checked in a phone-sized browser: a full swipe sets the person aside with Undo;
+  a short one springs back. Weak spot: the reveal is one word because the row only slides about a third.

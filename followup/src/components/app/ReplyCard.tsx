@@ -76,6 +76,8 @@ export default function ReplyCard({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<null | { kind: "sent"; template: string | null } | { kind: "skipped" }>(null);
   const [edited, setEdited] = useState(false);
+  // The owner's own words: they typed, or asked for a rewrite. "Write a new one" is FollowUp's again.
+  const [mine, setMine] = useState(false);
 
   const needsPrice = !editing && hasPriceSlot(text);
   const message = needsPrice ? fillPriceSlot(text, price.trim()) : text;
@@ -133,6 +135,7 @@ export default function ReplyCard({
       setText(data.message);
       if (typeof data.subject === "string") setSubject(data.subject);
       setEdited(true);
+      setMine(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't write a new one. Try again.");
     } finally {
@@ -153,6 +156,7 @@ export default function ReplyCard({
       if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't rewrite it.");
       setText(data.text);
       setEdited(true);
+      setMine(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't rewrite it.");
     } finally {
@@ -188,7 +192,9 @@ export default function ReplyCard({
     );
   }
 
-  const label = waiting ? "Reply ready · waits for your OK" : draft ? "Reply ready" : "Write a reply";
+  // Who wrote it, at a glance (A-089, the Granola lesson): FollowUp's words until the owner changes them.
+  const author = mine ? "Edited by you" : "Written by FollowUp";
+  const label = waiting ? `${author} · waits for your OK` : draft ? author : "Write a reply";
 
   return (
     <div className={"relative overflow-hidden rounded-[20px] p-5" + (dense ? " lg:rounded-[16px] lg:px-5 lg:py-[18px]" : "")} style={WARM_CARD}>
@@ -213,6 +219,7 @@ export default function ReplyCard({
             onChange={(e) => {
               setText(e.target.value);
               setEdited(true);
+              setMine(true);
             }}
             rows={5}
             placeholder={`Write to ${first}…`}

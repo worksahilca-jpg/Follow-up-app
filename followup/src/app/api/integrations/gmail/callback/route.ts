@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionContext, requireAdmin } from "@/lib/session";
-import { ensureGmailWatch, exchangeCodeForTokens } from "@/lib/integrations/gmail";
+import { ensureGmailWatch, exchangeCodeForTokens, GMAIL_SEND_SCOPE } from "@/lib/integrations/gmail";
 import { recordAudit } from "@/lib/audit";
 import { publicErrorMessage } from "@/lib/publicError";
 
@@ -58,8 +58,19 @@ export async function GET(request: NextRequest) {
     void recordAudit(ctx, "integration.gmail.connect");
     // Best-effort: push is an accelerator, the poll still works without it.
     await ensureGmailWatch(ctx.businessId).catch(() => null);
-    returnTo.searchParams.set("gmail", "connected");
-    returnTo.searchParams.set("email", email);
+    // Google lists what the owner actually granted. Without "send", reading works and every
+    // reply would fail later, so say it now, while the owner is here to press Connect again.
+    const granted = searchParams.get("scope");
+    if (granted && !granted.split(/[\s,]+/).includes(GMAIL_SEND_SCOPE)) {
+      returnTo.searchParams.set("gmail", "error");
+      returnTo.searchParams.set(
+        "message",
+        `${email} is connected, but FollowUp isn't allowed to send from it, so your replies can't go out. Press Connect again and leave “Send email on your behalf” ticked on Google's screen.`
+      );
+    } else {
+      returnTo.searchParams.set("gmail", "connected");
+      returnTo.searchParams.set("email", email);
+    }
     res = NextResponse.redirect(returnTo);
   } catch (err) {
     returnTo.searchParams.set("gmail", "error");

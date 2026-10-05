@@ -1666,3 +1666,23 @@ page.
   (on a phone, the check and the bars).
 **Supersedes, in part:** A-045's week line on Today (its facts move to the end-of-day card, "sent without changing a
 word" leaves Today; it stays in Numbers and the Monday email).
+
+## A-089 — Round 3: phone Customers, "Already spoke", who wrote the reply, a faster Today ^A-089
+
+**Approved:** 2026-10-05, founder: *"can you keep doing it please i allow you the permission… build all"*, on the
+check-up list in the notes doc (round 3 items), with the rule that the PR waits for his "merge". No separate boards were
+drawn; the built screens were compared with the list's stated fixes and the A-087/A-088 boards' vocabulary.
+**What specifically:**
+- **Phone Customers (#7, #23):** title with two small round buttons (⋯ and +) on one row, a search box on top, then the
+  tabs and the people. Under a tab, rows no longer repeat that tab's label ("Needs you" under "Needs you"); in "All" the
+  labels stay, since they tell rows apart. The desk header is unchanged (More, then the one black "Add customer").
+- **"We talked" → "Already spoke" (#8)**, everywhere it shows (Today, the customer page, the undo, the activity line,
+  Settings' plan text). Same action.
+- **Who wrote the reply (#18, the Granola lesson):** the reply's label reads "Written by FollowUp · waits for your OK",
+  and "Edited by you · …" once the owner types or asks for a rewrite; "Write a new one" makes it FollowUp's again.
+- **A faster Today (#21):** its database reads run together in two rounds instead of eighteen in a row.
+- **Removed:** the unused red score badge (`ScoreBadge`, `FollowUpCard`), the one place red meant "high score".
+**Not done, his call or needs a drawing:** colours (#19/#20, A or B not chosen), clearing test customers (#9: "Clean up
+leads" exists for non-customers; telling test customers apart needs a rule), the six Settings switches (#16), two Gmail
+accounts for one person (#22: one Gmail per login today; a schema change), and counting replies to the owner's own
+sends as results.

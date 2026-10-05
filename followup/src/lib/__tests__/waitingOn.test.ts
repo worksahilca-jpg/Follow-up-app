@@ -52,7 +52,7 @@ describe("what happens next, by name", () => {
 
   it("says when FollowUp is waiting after a call", () => {
     const l = lead("Devon Ruiz", { automationStatus: { kind: "talked", at: NOW.toISOString() } });
-    expect(describeNext(l, rules, NOW, TZ)).toBe("You marked “We talked”. FollowUp waits for Devon.");
+    expect(describeNext(l, rules, NOW, TZ)).toBe("You marked “Already spoke”. FollowUp waits for Devon.");
   });
 
   it("says when nothing more is planned", () => {

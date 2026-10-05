@@ -168,6 +168,8 @@ function ApprovalCard({
   const [saved, setSaved] = useState(item.draftMessage);
   const [text, setText] = useState(item.draftMessage);
   const [edited, setEdited] = useState(false);
+  // The owner's own words: they typed, or asked for a rewrite. A fresh draft from "Write a new one" is FollowUp's again.
+  const [mine, setMine] = useState(false);
   const [rewriting, setRewriting] = useState<null | "fresh" | "shorter" | "warmer" | "formal">(null);
   const needsPrice = !editing && hasPriceSlot(text);
   const [price, setPrice] = useState("");
@@ -239,6 +241,7 @@ function ApprovalCard({
       setText(data.message);
       setSaved(data.message);
       setEdited(true);
+      setMine(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't write a new one. Try again.");
     } finally {
@@ -259,6 +262,7 @@ function ApprovalCard({
       if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't rewrite it.");
       setText(data.text);
       setEdited(true);
+      setMine(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't rewrite it.");
     } finally {
@@ -495,7 +499,9 @@ function ApprovalCard({
         </div>
       ) : (
       <div className="mt-3.5 rounded-[20px] p-4 sm:p-5" style={WARM_CARD}>
-        <Eyebrow>{sendLocked ? "Your reply · an admin sends it" : "Your reply · waits for your OK"}</Eyebrow>
+        {/* Who wrote it, at a glance (A-089, the Granola lesson): FollowUp's words until
+            the owner changes them, then theirs. */}
+        <Eyebrow>{`${mine ? "Edited by you" : "Written by FollowUp"} · ${sendLocked ? "an admin sends it" : "waits for your OK"}`}</Eyebrow>
         {item.draftSubject && <p className="mt-2 text-[15px] font-medium">{item.draftSubject}</p>}
         {editing ? (
           <div className="mt-2.5 space-y-2">
@@ -505,6 +511,7 @@ function ApprovalCard({
               onChange={(e) => {
                 setText(e.target.value);
                 setEdited(true);
+                setMine(true);
               }}
               rows={7}
               autoFocus
@@ -643,6 +650,7 @@ function ApprovalCard({
                     setEditing(false);
                     setText(saved);
                     setEdited(saved !== item.draftMessage);
+                    setMine(false);
                   }}
                   disabled={rewriting !== null}
                   className="flex min-h-11 items-center text-sm text-ink-soft disabled:opacity-60"
@@ -671,7 +679,7 @@ function ApprovalCard({
                 title={`You spoke with ${firstName} on a call or in person. FollowUp stops checking in until they write again.`}
                 className="flex min-h-11 items-center text-sm text-ink-soft disabled:opacity-60"
               >
-                {busy === "talked" ? "…" : "We talked"}
+                {busy === "talked" ? "…" : "Already spoke"}
               </button>}
             </div>
           </>

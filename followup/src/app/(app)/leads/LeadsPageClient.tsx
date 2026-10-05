@@ -15,7 +15,6 @@ import CleanupLeadsButton from "@/components/CleanupLeadsButton";
 import { motion } from "framer-motion";
 import { MOTION } from "@/lib/motion";
 import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, MoreHorizontal } from "lucide-react";
-import { PageHeader } from "@/components/PageHeader";
 import { Initials, restingState, shortAge, StatePill, type StateKey } from "@/components/app/canvasBits";
 import { ChannelIcon, channelFromSource } from "@/components/app/ChannelIcon";
 
@@ -88,10 +87,11 @@ function LeadsMoreMenu({ onLogCall, onImport }: { onLogCall: () => void; onImpor
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-line px-3.5 py-2 text-sm font-medium sm:w-auto"
+        aria-label="More"
+        className="inline-flex h-10 w-10 items-center justify-center gap-1.5 rounded-full border border-line bg-card text-sm font-medium sm:h-auto sm:w-auto sm:rounded-lg sm:bg-transparent sm:px-3.5 sm:py-2"
       >
         <MoreHorizontal className="h-4 w-4" />
-        More
+        <span className="hidden sm:inline">More</span>
       </button>
       {open && (
         /* No overflow-hidden. "Clean up leads" opens its own confirm panel,
@@ -260,26 +260,43 @@ export default function LeadsPageClient({
           underneath. One primary stays; the other three move into the menu,
           which is also the honest hierarchy — adding a lead is the thing
           someone came here to do, cleaning up is not. */}
-      <PageHeader
-        title="Customers"
-        subtitle={`${leads.length} ${leads.length === 1 ? "customer" : "customers"}.`}
-        actions={
-          <LeadsMoreMenu
-            onLogCall={() => setShowLogCall(true)}
-            onImport={() => setShowImport(true)}
-          />
-        }
-        primary={
+      {/* People first on a phone (A-089): the title and two small round
+          buttons on one row, then search, then the list. The two full-width
+          buttons that used to stack here pushed the people off the first
+          screen. On the desk the header is as it was: More, then the one
+          black "Add customer". */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-[32px] leading-[1.1]">Customers</h1>
+          <p className="text-ink-soft mt-1">{`${leads.length} ${leads.length === 1 ? "customer" : "customers"}.`}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 sm:whitespace-nowrap">
+          <LeadsMoreMenu onLogCall={() => setShowLogCall(true)} onImport={() => setShowImport(true)} />
           <button
             onClick={() => setShowAddLead(true)}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium"
-            style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+            aria-label="Add customer"
+            className="inline-flex h-10 w-10 items-center justify-center gap-1.5 rounded-full border border-line bg-card text-sm font-medium text-ink sm:h-auto sm:w-auto sm:rounded-lg sm:border-0 sm:bg-ink sm:px-3.5 sm:py-2 sm:text-paper"
           >
             <Plus className="h-4 w-4" />
-            Add customer
+            <span className="hidden sm:inline">Add customer</span>
           </button>
-        }
-      />
+        </div>
+      </div>
+
+      {/* Search on top on a phone (A-089): finding one person is half this
+          screen's job, and the desk's search lives in the sidebar. */}
+      <div className="relative mt-4 sm:hidden">
+        <Search className="h-4 w-4 absolute left-3 top-3 text-ink-soft" />
+        <input
+          id="customers-search"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search customers…"
+          aria-label="Search customers"
+          className="h-10 w-full rounded-full border border-line bg-card pl-9 pr-3 text-[15px]"
+        />
+      </div>
 
       {showAddLead && <AddLeadForm onClose={() => setShowAddLead(false)} />}
       {showImport && <ImportLeadsForm onClose={() => setShowImport(false)} />}
@@ -419,7 +436,7 @@ export default function LeadsPageClient({
             Custom filter
           </button>
         </div>
-        <div className="relative">
+        <div className="relative hidden sm:block">
           <Search className="h-4 w-4 absolute left-3 top-2.5 text-ink-soft" />
           <input
             value={query}
@@ -502,8 +519,10 @@ export default function LeadsPageClient({
                     {last ? (last.direction === "outbound" ? `You: ${last.body}` : last.body) : "—"}
                   </span>
                   <span className="hidden text-[13px] text-ink-faint tabular-nums md:block">{last ? shortAge(last.date) : "—"}</span>
+                  {/* A label only where it says something new (A-089): under the
+                      "Needs you" tab, "Needs you" on every row repeats the tab. */}
                   <span className="justify-self-end md:justify-self-start">
-                    <StatePill state={pill.state} label={pill.label} />
+                    {!(place !== "all" && where === place) && <StatePill state={pill.state} label={pill.label} />}
                   </span>
                 </Link>
               );

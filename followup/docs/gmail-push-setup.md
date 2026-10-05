@@ -40,3 +40,22 @@ Notes:
 - The Gmail API `watch` scope is covered by `gmail.readonly`, already requested.
 - If the OAuth app is still in Testing mode, watches work the same; the 7-day
   token expiry is the limit, not the watch.
+
+## Signed push instead of the URL secret (recommended; security review L8, 2026-10-05)
+
+The secret in the endpoint URL ends up in request logs. Google can sign each push instead, and
+the route checks that signature when two env vars are set. Until they are, the URL secret above
+keeps working.
+
+1. In Google Cloud → IAM → Service accounts, create one named `gmail-push` (no roles needed).
+2. Edit the push subscription:
+   - Tick **Enable authentication** and pick that service account.
+   - Audience: `https://www.followupbase.io/api/integrations/gmail/push`
+   - Endpoint URL: the same address, **without** `?secret=…`.
+3. Vercel env vars on `follow-up-app` (Production):
+   - `GMAIL_PUSH_AUDIENCE` = the audience above, exactly
+   - `GMAIL_PUSH_SERVICE_ACCOUNT` = the service account's email
+     (`gmail-push@stately-synapse-507306-b8.iam.gserviceaccount.com`)
+   Redeploy. From then on only Google's signed token is accepted; the URL secret is refused.
+4. Send yourself an email and check it shows up in Today within seconds. If it doesn't, remove
+   the two env vars and redeploy to go back to the secret.

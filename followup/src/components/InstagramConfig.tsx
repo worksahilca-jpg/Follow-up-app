@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, ChevronDown, MessageCircle } from "lucide-react";
 import ChannelNotReceiving from "@/components/ChannelNotReceiving";
+import { safeBannerText } from "@/lib/bannerText";
 
 /**
  * "Instagram" section of Settings. Two ways to connect:
@@ -51,7 +52,7 @@ export default function InstagramConfig() {
     oauthResult === "connected" && receiving
       ? { kind: "success" as const, text: "Instagram connected — real DMs will become leads automatically." }
       : oauthResult === "error"
-        ? { kind: "error" as const, text: searchParams.get("message") ?? "Couldn't connect Instagram." }
+        ? { kind: "error" as const, text: safeBannerText(searchParams.get("message"), "Couldn't connect Instagram.") }
         : null;
 
   function load() {

@@ -5,6 +5,7 @@ export type AuthFailureKind =
   | "voice_agent_callback"
   | "webhook_secret"
   | "gmail_push_secret"
+  | "gmail_push_token"
   | "cron_secret"
   | "meta_webhook_verify";
 

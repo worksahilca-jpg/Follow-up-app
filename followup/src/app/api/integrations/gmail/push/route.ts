@@ -4,6 +4,7 @@ import { z } from "zod";
 import { findBusinessIdByGmailAddress } from "@/lib/integrations/gmail";
 import { syncGmailForBusinessFromPush } from "@/lib/gmailSync";
 import { recordAuthFailure } from "@/lib/monitoring";
+import { google } from "googleapis";
 
 // Constant-time, matching every other shared-secret check in this codebase
 // (Twilio's signature, the cron secret, the unsubscribe token) — a plain
@@ -28,6 +29,26 @@ const pubSubPushSchema = z.object({
 export const maxDuration = 120;
 
 /**
+ * Google's signed push token (security review L8, 2026-10-05). With authentication turned on
+ * for the Pub/Sub subscription, Google signs every push with a short-lived token in the
+ * Authorization header, so no secret has to sit in the URL (where request logs keep it).
+ * Turned on by setting GMAIL_PUSH_AUDIENCE (the audience typed into the subscription) and
+ * GMAIL_PUSH_SERVICE_ACCOUNT (the service account it signs as); see docs/gmail-push-setup.md.
+ * While they are unset, the URL secret below is still the check.
+ */
+async function validGooglePushToken(authorization: string | null, audience: string, serviceAccount: string): Promise<boolean> {
+  const idToken = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
+  if (!idToken) return false;
+  try {
+    const ticket = await new google.auth.OAuth2().verifyIdToken({ idToken, audience });
+    const claims = ticket.getPayload();
+    return !!claims && claims.email === serviceAccount && claims.email_verified === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * POST /api/integrations/gmail/push?secret=GMAIL_PUSH_SECRET — the Pub/Sub
  * push subscription endpoint for Gmail watch notifications (see
  * ensureGmailWatch in src/lib/integrations/gmail.ts and
@@ -44,12 +65,22 @@ export const maxDuration = 120;
  * endpoint entirely.
  */
 export async function POST(request: NextRequest) {
-  const secret = process.env.GMAIL_PUSH_SECRET;
-  if (!secret) return NextResponse.json({ success: false }, { status: 404 });
-  const provided = request.nextUrl.searchParams.get("secret");
-  if (!provided || !secretsMatch(provided, secret)) {
-    recordAuthFailure("gmail_push_secret");
-    return NextResponse.json({ success: false }, { status: 403 });
+  const audience = process.env.GMAIL_PUSH_AUDIENCE;
+  const serviceAccount = process.env.GMAIL_PUSH_SERVICE_ACCOUNT;
+  if (audience && serviceAccount) {
+    // Signed push is on: only Google's token is accepted, the URL secret no longer is.
+    if (!(await validGooglePushToken(request.headers.get("authorization"), audience, serviceAccount))) {
+      recordAuthFailure("gmail_push_token");
+      return NextResponse.json({ success: false }, { status: 403 });
+    }
+  } else {
+    const secret = process.env.GMAIL_PUSH_SECRET;
+    if (!secret) return NextResponse.json({ success: false }, { status: 404 });
+    const provided = request.nextUrl.searchParams.get("secret");
+    if (!provided || !secretsMatch(provided, secret)) {
+      recordAuthFailure("gmail_push_secret");
+      return NextResponse.json({ success: false }, { status: 403 });
+    }
   }
 
   const rawPayload = await request.json().catch(() => null);

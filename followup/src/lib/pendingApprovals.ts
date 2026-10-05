@@ -111,6 +111,8 @@ export type PendingApproval = {
    * allowed to turn this into a yes.
    */
   draftRiskLevel: string | null;
+  /** What kind of check the risk judge asked for (Lead.suggestedRiskTopic): how the reason is said (plainHoldReason). */
+  riskTopic?: string | null;
   riskLevel: string;
   reason: string;
   trigger: string;
@@ -219,6 +221,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       suggestedSubject: true,
       suggestedMessage: true,
       suggestedRiskLevel: true,
+      suggestedRiskTopic: true,
       // One inbound message per conversation (the most recent), not the
       // whole thread — a lead can have several conversations across
       // channels (an old email thread plus a newer text, say), so the
@@ -327,6 +330,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       source: lead.source,
       score: lead.score,
       draftRiskLevel: lead.suggestedRiskLevel,
+      riskTopic: lead.suggestedRiskTopic,
       riskLevel: typeof meta.riskLevel === "string" ? meta.riskLevel : "medium",
       reason: typeof meta.reason === "string" ? meta.reason : "",
       trigger: typeof meta.trigger === "string" ? meta.trigger : "silence",

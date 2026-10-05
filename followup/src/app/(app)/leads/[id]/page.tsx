@@ -32,6 +32,7 @@ import { getPendingApprovals, type PendingApproval } from "@/lib/pendingApproval
 import { prisma } from "@/lib/db";
 import type { Lead, Message } from "@/lib/types";
 import { isWaitingOnCustomer } from "@/lib/waitingOn";
+import { plainHoldReason } from "@/lib/holdReasons";
 
 export const dynamic = "force-dynamic";
 
@@ -251,7 +252,7 @@ function Facts({ lead, approval, now }: { lead: Lead; approval: PendingApproval 
         {approval ? (
           <>
             <span aria-hidden className="mr-2 inline-block h-[7px] w-[7px] rounded-full align-[2px]" style={{ background: "var(--state-needs)" }} />
-            {sentenceCase(approval.reason).replace(/\.\s*$/, "")}.
+            {plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic }) ?? "Every reply waits for your OK."}
           </>
         ) : (
           state
@@ -303,10 +304,6 @@ function timeAgoWords(iso: string, now: Date): string {
   if (h < 48) return `${h} ${h === 1 ? "hour" : "hours"} ago`;
   const d = Math.floor(h / 24);
   return `${d} days ago`;
-}
-
-function sentenceCase(s: string): string {
-  return s ? s[0].toUpperCase() + s.slice(1) : s;
 }
 
 /** When the newest message from the lead on this page arrived — what the owner has "seen" when they press Send. */

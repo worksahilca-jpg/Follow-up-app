@@ -105,7 +105,14 @@ export function visibleCount(total: number, shown: number): number {
  * tolerance makes the two differ often enough to matter: at 12 total and
  * 5 shown, the next press reveals all 7 that are left, not 5.
  */
-export function nextStep(total: number, shown: number): number {
+export function nextStep(total: number, shown: number, step: number = QUEUE_PAGE_SIZE): number {
   const now = visibleCount(total, shown);
-  return visibleCount(total, shown + QUEUE_PAGE_SIZE) - now;
+  return visibleCount(total, shown + step) - now;
 }
+
+/**
+ * Rows shown before the tail is folded once Today is one list (A-087). Three was sized for a 509px card
+ * per source on a phone; a closed row is now one line of their words and a wait (about 70px on a phone,
+ * 90px on the desk), so eight is about one screen, which is what the drawing shows.
+ */
+export const ONE_LIST_PAGE_SIZE = 8;

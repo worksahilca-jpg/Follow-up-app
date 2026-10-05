@@ -1623,3 +1623,25 @@ goes when you send it." Nothing is ever sent for them on its own, and "Send all 
 **Principle:** whoever writes to the owner is never invisible. "Off" means FollowUp doesn't act, not that the owner
 doesn't see.
 
+
+## A-087 — Today round 1: one list, plain reasons, Edit in place, one black on the phone ^A-087
+
+**Approved:** 2026-10-05, founder: *"yes build it"*, on the boards in `prototypes/2026-10-05-today-round-1.html` shown
+beside today's screens (desk and phone). Follows the check-up in the "UI, UX and Navigation" notes (items #3, #4, #5,
+#13) and his *"merge and let fix all"*.
+**What specifically:**
+- **One list.** Today is everyone who needs the owner, longest waiting first, whatever channel they wrote on; the
+  channel is the small icon on the row. No source headings. Every routine draft is one pile with one "Send all".
+  Eight rows show before the tail folds (was three per source).
+- **Why it waits, in plain words.** One short line with the needs dot, saying what to check ("Check the number.
+  Nobody wrote it in this conversation.", "Read it before it goes: it promises something."). No line at all when the
+  every-reply-waits setting is the only reason, because the card already says "waits for your OK". Same words on the
+  customer page's "Why it's here". The stored reasons are unchanged (the safe pile matches them exactly); only how
+  they are said changed (`plainHoldReason`).
+- **Edit in place.** Edit turns the reply into a box inside the same card, with "Write a new one" and Shorter ·
+  Warmer · More formal (A-085's tools). Send sends what is in the box; Cancel goes back. Nothing leaves Today.
+- **Phone rows.** A closed row is their words, the wait and a chevron; the whole row opens it. No black "Review" on
+  every row, so Send is the one black thing (Von Restorff).
+**Supersedes, in part:** A-006's grouping by source and the founder's 2026-09-23 "sort according to the sources" (the
+order is now longest waiting, A-046); A-067's "solid black Review / Send" on rows; A-080's Edit going to the customer
+page.

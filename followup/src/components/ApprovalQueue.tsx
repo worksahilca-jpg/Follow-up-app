@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { ChannelIcon } from "@/components/app/ChannelIcon";
 import { WARM_CARD } from "@/components/app/ReplyCard";
-import { groupApprovalsBySource, isSafeToSendInBulk, summariseGroups, UNKNOWN_SOURCE_LABEL } from "@/lib/approvalGroups";
+import { isSafeToSendInBulk, oneQueue, summariseGroups, UNKNOWN_SOURCE_LABEL, WHOLE_QUEUE } from "@/lib/approvalGroups";
+import { plainHoldReason } from "@/lib/holdReasons";
 import { Eyebrow, Initials } from "@/components/app/canvasBits";
-import { QUEUE_PAGE_SIZE, nextStep, visibleCount } from "@/lib/queuePaging";
+import { ONE_LIST_PAGE_SIZE, nextStep, visibleCount } from "@/lib/queuePaging";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import SiteReplyCard from "@/components/app/SiteReplyCard";
 import type { PendingApproval } from "@/lib/pendingApprovals";
@@ -24,7 +25,7 @@ import { fillPriceSlot, hasPriceSlot, splitAtPriceSlot } from "@/lib/priceSlot";
  * that answers "what needs my OK right now": every lead whose most
  * recent AI decision is a held draft (src/lib/pendingApprovals.ts), each
  * with the actual drafted reply inline and a one-click resolution —
- * Approve & send, Edit (goes to the full lead page), or Don't send.
+ * Approve & send, Edit (in place, A-087), or Don't send.
  *
  * Reuses the same POST /api/leads/[id]/send that a human clicking
  * "Send now" in MessageComposer already uses — approving here IS sending
@@ -160,10 +161,19 @@ function ApprovalCard({
   // The price blank (A-060): a price question's reply is written with a
   // gap for the figure. Send stays off until it is filled, and the server
   // refuses the blank anyway (src/lib/priceSlot.ts).
-  const needsPrice = hasPriceSlot(item.draftMessage);
+  // Edit in place (A-087): the reply becomes a box inside the same card, so
+  // the owner never leaves Today to change a word. `saved` is the draft as
+  // FollowUp last wrote it (a "Write a new one" replaces it); Cancel goes back to it.
+  const [editing, setEditing] = useState(false);
+  const [saved, setSaved] = useState(item.draftMessage);
+  const [text, setText] = useState(item.draftMessage);
+  const [edited, setEdited] = useState(false);
+  const [rewriting, setRewriting] = useState<null | "fresh" | "shorter" | "warmer" | "formal">(null);
+  const needsPrice = !editing && hasPriceSlot(text);
   const [price, setPrice] = useState("");
   const priceMissing = needsPrice && !price.trim();
-  const message = needsPrice ? fillPriceSlot(item.draftMessage, price.trim()) : item.draftMessage;
+  const message = needsPrice ? fillPriceSlot(text, price.trim()) : text;
+  const plainReason = plainHoldReason(item.reason, { firstName, topic: item.riskTopic });
   // "We talked" (design brain A-039): the card stays for a few seconds
   // saying what happened, with Undo, then leaves the queue.
   const [talked, setTalked] = useState(false);
@@ -209,6 +219,52 @@ function ApprovalCard({
     },
     onNetworkError: () => setError("Couldn't reach FollowUp. Check your connection and try again."),
   });
+
+  function sendNow() {
+    setError(null);
+    setEditing(false);
+    send.start();
+  }
+
+  // The same two calls the customer page's editor makes (ReplyCard, A-085).
+  async function writeFresh() {
+    setRewriting("fresh");
+    setError(null);
+    try {
+      const res = await fetch(`/api/leads/${item.leadId}/regenerate`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success || typeof data.message !== "string") {
+        throw new Error(typeof data.message === "string" && !res.ok ? data.message : "Couldn't write a new one. Try again.");
+      }
+      setText(data.message);
+      setSaved(data.message);
+      setEdited(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't write a new one. Try again.");
+    } finally {
+      setRewriting(null);
+    }
+  }
+
+  async function rewrite(style: "shorter" | "warmer" | "formal") {
+    setRewriting(style);
+    setError(null);
+    try {
+      const res = await fetch(`/api/leads/${item.leadId}/rewrite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, style }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Couldn't rewrite it.");
+      setText(data.text);
+      setEdited(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't rewrite it.");
+    } finally {
+      setRewriting(null);
+    }
+  }
 
   async function dontSend() {
     setBusy("dismiss");
@@ -302,13 +358,13 @@ function ApprovalCard({
     );
   }
 
+  // A row says what they wrote. Why the reply waits is said once, on the
+  // open card (A-087), not squeezed onto every row and cut off mid-word.
   const why = routine
     ? `“${item.draftMessage.replace(/\s+/g, " ").slice(0, 90)}${item.draftMessage.length > 90 ? "…" : ""}”`
     : item.leadLastMessage
-      ? `“${item.leadLastMessage.replace(/\s+/g, " ").slice(0, 80)}${item.leadLastMessage.length > 80 ? "…" : ""}”${item.reason ? ` Held because ${item.reason.replace(/\.\s*$/, "")}.` : ""}`
-      : item.reason
-        ? `Held because ${item.reason.replace(/\.\s*$/, "")}.`
-        : "A reply is written for you.";
+      ? `“${item.leadLastMessage.replace(/\s+/g, " ").slice(0, 80)}${item.leadLastMessage.length > 80 ? "…" : ""}”`
+      : (plainReason ?? "A reply is written for you.");
   const channelAndWait = [CHANNEL_NAME[item.leadLastMessageChannel ?? ""] ?? item.source, item.wait?.toLowerCase()].filter(Boolean).join(" · ");
 
   // The desk row (A-080): the person, their own words, how long they have
@@ -354,6 +410,26 @@ function ApprovalCard({
           <span className="text-[13px] text-ink-faint">{channelAndWait}</span>
         </div>
       ) : (
+      !open ? (
+        // A closed row on the phone (A-087): the whole row opens it. No black
+        // Review on every row, so Send on the open card is the one black thing.
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex w-full items-center gap-3 px-[18px] py-3.5 text-left"
+        >
+          <Initials name={item.leadName} size={30} />
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5 text-[14.5px] font-medium">
+              {item.leadName}
+              <ChannelIcon channel={item.leadLastMessageChannel} />
+            </span>
+            <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-soft line-clamp-2">{why}</span>
+          </span>
+          {item.wait && <span className="shrink-0 text-[12.5px] text-ink-faint tabular-nums">{item.wait.replace(/^Waiting /, "")}</span>}
+          <ChevronRight className="h-4 w-4 shrink-0 text-ink-faint" aria-hidden="true" />
+        </button>
+      ) : (
       <div className="flex items-center gap-3 px-[18px] py-3.5">
         <Initials name={item.leadName} size={30} />
         <div className="min-w-0 flex-1">
@@ -363,39 +439,10 @@ function ApprovalCard({
             </Link>
             <ChannelIcon channel={item.leadLastMessageChannel} />
           </div>
-          {!open && <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft line-clamp-2">{why}</p>}
-          {open && <p className="mt-0.5 text-[13.5px] text-ink-faint">{channelAndWait}</p>}
+          <p className="mt-0.5 text-[13.5px] text-ink-faint">{channelAndWait}</p>
         </div>
-        {item.wait && (
-          <span className="hidden shrink-0 text-right text-[12.5px] text-ink-faint tabular-nums sm:block sm:w-[104px]">{item.wait}</span>
-        )}
-        {!open && (
-          <>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(true);
-                setLaterOpen(true);
-              }}
-              className="hidden h-8 shrink-0 px-2 text-[13px] text-ink-soft sm:block"
-            >
-              Later
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(true);
-                if (routine && !sendLocked) send.start();
-              }}
-              className="h-8 shrink-0 rounded-full px-3.5 text-[13px] font-medium"
-              style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-            >
-              {routine && !sendLocked ? "Send" : "Review"}
-            </button>
-          </>
-        )}
       </div>
-      )}
+      ))}
       <AnimatePresence initial={false}>
       {open && (
       // Opens from the row it came from (A-048: open in place).
@@ -450,9 +497,52 @@ function ApprovalCard({
       <div className="mt-3.5 rounded-[20px] p-4 sm:p-5" style={WARM_CARD}>
         <Eyebrow>{sendLocked ? "Your reply · an admin sends it" : "Your reply · waits for your OK"}</Eyebrow>
         {item.draftSubject && <p className="mt-2 text-[15px] font-medium">{item.draftSubject}</p>}
-        {needsPrice ? (
+        {editing ? (
+          <div className="mt-2.5 space-y-2">
+            <textarea
+              id={`reply-text-${item.leadId}`}
+              value={text}
+              onChange={(e) => {
+                setText(e.target.value);
+                setEdited(true);
+              }}
+              rows={7}
+              autoFocus
+              aria-label={`Your reply to ${firstName}`}
+              className="w-full resize-y rounded-xl border border-line bg-card/80 p-3 text-base leading-relaxed focus:outline-none"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={writeFresh}
+                disabled={rewriting !== null}
+                className="h-8 rounded-full border border-line bg-card/70 px-3 text-[13px] font-medium disabled:opacity-60"
+              >
+                {rewriting === "fresh" ? "Writing…" : "Write a new one"}
+              </button>
+              <span className="text-[13px] text-ink-soft">or rewrite it:</span>
+              {(
+                [
+                  ["shorter", "Shorter"],
+                  ["warmer", "Warmer"],
+                  ["formal", "More formal"],
+                ] as const
+              ).map(([style, name]) => (
+                <button
+                  key={style}
+                  type="button"
+                  onClick={() => rewrite(style)}
+                  disabled={rewriting !== null || !text.trim()}
+                  className="h-8 rounded-full border border-line bg-card/70 px-3 text-[13px] font-medium disabled:opacity-60"
+                >
+                  {rewriting === style ? "Rewriting…" : name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : needsPrice ? (
           <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">
-            {splitAtPriceSlot(item.draftMessage).map((part, i) =>
+            {splitAtPriceSlot(text).map((part, i) =>
               i === 0 ? (
                 <span key={i}>{part}</span>
               ) : (
@@ -478,13 +568,18 @@ function ApprovalCard({
             )}
           </p>
         ) : (
-          <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{item.draftMessage}</p>
+          <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{text}</p>
         )}
         {priceMissing && <p className="mt-2 text-[13px] text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
-        {item.reason && !priceMissing && (
-          <p className="mt-2 text-[13px] text-ink-soft">Held because {item.reason.replace(/\.\s*$/, "")}.</p>
+        {/* Why it waits, in the owner's words (A-087): what to check, or
+            nothing when the every-reply-waits setting is the only reason. */}
+        {plainReason && !priceMissing && !editing && !edited && (
+          <p className="mt-2.5 flex items-baseline gap-2 text-[13.5px] text-ink">
+            <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 -translate-y-px rounded-full" style={{ background: "var(--state-needs)" }} />
+            {plainReason}
+          </p>
         )}
-        {item.basis && <p className="mt-2 hidden text-[13px] text-ink-soft sm:block">{item.basis}</p>}
+        {item.basis && !editing && !edited && <p className="mt-2 hidden text-[13px] text-ink-soft sm:block">{item.basis}</p>}
         {error && (
           <p className="mt-2 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
             {error}
@@ -517,23 +612,44 @@ function ApprovalCard({
                   and Don't send, and is told who sends. */}
               {!sendLocked && (
                 <button
-                  onClick={send.start}
-                  disabled={busy !== null || send.busy || priceMissing}
+                  onClick={sendNow}
+                  disabled={busy !== null || send.busy || priceMissing || rewriting !== null || !message.trim()}
                   className="h-[52px] flex-1 rounded-full text-base font-semibold disabled:opacity-60 sm:h-11 sm:flex-none sm:px-7"
                   style={{ backgroundColor: "var(--accent)", color: "var(--on-accent)" }}
                 >
                   {send.busy ? "Sending…" : "Send"}
                 </button>
               )}
-              <Link
-                href={`/leads/${item.leadId}`}
-                className="inline-flex h-[52px] w-24 items-center justify-center rounded-full border text-base font-medium sm:h-11"
-                style={{ borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" }}
-              >
-                Edit
-              </Link>
+              {!editing && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(true);
+                    setLaterOpen(false);
+                  }}
+                  disabled={busy !== null || send.busy}
+                  className="inline-flex h-[52px] w-24 items-center justify-center rounded-full border text-base font-medium disabled:opacity-60 sm:h-11"
+                  style={{ borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" }}
+                >
+                  Edit
+                </button>
+              )}
             </div>
             <div className="mt-1 flex flex-wrap items-center justify-center gap-x-6 sm:justify-start sm:gap-x-4">
+              {editing && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(false);
+                    setText(saved);
+                    setEdited(saved !== item.draftMessage);
+                  }}
+                  disabled={rewriting !== null}
+                  className="flex min-h-11 items-center text-sm text-ink-soft disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+              )}
               <button
                 onClick={() => setLaterOpen((v) => !v)}
                 disabled={busy !== null || send.busy}
@@ -549,14 +665,14 @@ function ApprovalCard({
               >
                 {busy === "dismiss" ? "…" : "Don't send"}
               </button>
-              <button
+              {!editing && <button
                 onClick={() => weTalked(false)}
                 disabled={busy !== null || send.busy}
                 title={`You spoke with ${firstName} on a call or in person. FollowUp stops checking in until they write again.`}
                 className="flex min-h-11 items-center text-sm text-ink-soft disabled:opacity-60"
               >
                 {busy === "talked" ? "…" : "We talked"}
-              </button>
+              </button>}
             </div>
           </>
         )}
@@ -662,7 +778,7 @@ export default function ApprovalQueue({
   /**
    * How many needs-you cards each source has been asked to show.
    *
-   * Keyed by source name, absent meaning QUEUE_PAGE_SIZE — so a source
+   * Keyed by source name, absent meaning ONE_LIST_PAGE_SIZE — so a source
    * that appears later (the owner connects Instagram, a first DM lands)
    * starts folded like every other, with no entry to seed.
    *
@@ -734,17 +850,14 @@ export default function ApprovalQueue({
   }
 
   /*
-   * Grouped by source, ordered so the first thing on screen is the thing
-   * to deal with first — see @/lib/approvalGroups for the ordering and
-   * for what "safe" is allowed to mean.
-   *
-   * Structure follows A-006 and avoids S-09: the SOURCE is a heading, not
-   * a box, so the cards inside it stay the only box level. A box per
-   * source with boxes inside it is the card-in-card soup the design brain
-   * names, and it was already fixed here once.
+   * One list (A-087): everyone who needs the owner, longest waiting first,
+   * whatever channel they wrote on; the channel is the icon on the row.
+   * See @/lib/approvalGroups for what "safe" is allowed to mean. Grouping
+   * by source (A-006, founder 2026-09-23) put eight headings in front of
+   * an owner who lives in Gmail.
    */
-  const groups = groupApprovalsBySource(visible);
-  const summary = summariseGroups(groupApprovalsBySource(active));
+  const groups = oneQueue(visible);
+  const summary = summariseGroups(oneQueue(active));
   // How many sources actually contribute a routine draft — not how many
   // groups exist. A group that is all needs-you has no routine row, so
   // counting groups would keep the whole-queue box on screen beside a
@@ -802,7 +915,7 @@ export default function ApprovalQueue({
         {groups.map((group) => {
           // Rows set aside from the pane are off the list until Undo.
           const rows = group.needsYou.filter((i) => !setAsideIds.has(i.leadId));
-          const shownHere = visibleCount(rows.length, expanded[group.source] ?? QUEUE_PAGE_SIZE);
+          const shownHere = visibleCount(rows.length, expanded[group.source] ?? ONE_LIST_PAGE_SIZE);
           const hiddenHere = rows.length - shownHere;
           // Not counting a card that is saying "Sent to Priya" on its way out.
           const needHere = rows.filter((i) => !leaving[i.leadId]).length;
@@ -869,7 +982,7 @@ export default function ApprovalQueue({
                   </p>
                   <button
                     onClick={() =>
-                      setExpanded((prev) => ({ ...prev, [group.source]: shownHere + QUEUE_PAGE_SIZE }))
+                      setExpanded((prev) => ({ ...prev, [group.source]: shownHere + ONE_LIST_PAGE_SIZE }))
                     }
                     className="rounded-lg px-3.5 py-1.5 text-sm font-medium border border-line hover:bg-paper"
                   >
@@ -877,7 +990,7 @@ export default function ApprovalQueue({
                         one press often reveals more than the page size,
                         and a button that overstates what it will do is
                         the kind of small lie this product cannot afford. */}
-                    Show {nextStep(rows.length, shownHere)} more
+                    Show {nextStep(rows.length, shownHere, ONE_LIST_PAGE_SIZE)} more
                   </button>
                 </motion.div>
               )}
@@ -886,10 +999,10 @@ export default function ApprovalQueue({
                 <motion.div layout="position" transition={{ layout: MOTION.layout }} className="px-[18px] py-3 flex flex-wrap items-center justify-between gap-3 sm:px-[14px]">
                   <p className="text-sm text-ink-soft">
                     {group.safeToSend.length} routine {group.safeToSend.length === 1 ? "draft" : "drafts"}
-                    {group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
+                    {group.source === WHOLE_QUEUE ? "" : group.source === UNKNOWN_SOURCE_LABEL ? " added by hand" : ` from ${group.source}`}
                     {group.safeToSend[0] && <span className="text-ink"> — top is {group.safeToSend[0].leadName}</span>}
                   </p>
-                  {!sendLocked && <SafePileAction count={group.safeToSend.length} source={group.source} />}
+                  {!sendLocked && <SafePileAction count={group.safeToSend.length} source={group.source === WHOLE_QUEUE ? null : group.source} />}
                   {/* Full width, so opening it drops the sample below the
                       row rather than squeezing it between the sentence
                       and the button. Closed it is just a link at the end

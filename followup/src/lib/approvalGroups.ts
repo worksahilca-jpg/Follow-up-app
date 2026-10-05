@@ -184,6 +184,32 @@ export function groupApprovalsBySource(approvals: PendingApproval[]): ApprovalGr
 }
 
 /**
+ * The whole queue as one list (founder, 2026-10-05, A-087): everyone who needs the owner, longest
+ * waiting first, whatever channel they wrote on, and every routine draft in one pile. The grouping
+ * above asked an owner who lives in Gmail to read eight headings (Gmail, Website form, CSV import…)
+ * to find the next person; the channel is now the small icon on each row. One group, or none.
+ */
+export const WHOLE_QUEUE = "Everyone";
+
+export function oneQueue(approvals: PendingApproval[]): ApprovalGroup[] {
+  if (approvals.length === 0) return [];
+  const needsYou: PendingApproval[] = [];
+  const safeToSend: PendingApproval[] = [];
+  for (const a of approvals) (isSafeToSendInBulk(a) ? safeToSend : needsYou).push(a);
+  needsYou.sort(byLongestWaiting);
+  safeToSend.sort(byScoreThenRecency);
+  return [
+    {
+      source: WHOLE_QUEUE,
+      needsYou,
+      safeToSend,
+      topNeedsYouScore: needsYou.length > 0 ? needsYou[0].score : null,
+      topScore: Math.max(needsYou[0]?.score ?? -1, safeToSend[0]?.score ?? -1),
+    },
+  ];
+}
+
+/**
  * Newest first among equal scores. Score is the product's own answer to
  * "who matters" and leads with it; recency only decides between leads it
  * rates the same, which on a fresh account is most of them (an unscored

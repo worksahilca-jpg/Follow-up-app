@@ -1605,3 +1605,11 @@ otherwise when I scroll down and click on another lead I need to scroll up to ch
 the top of the window while the list on the left scrolls, and scrolls on its own if it is taller than the window.
 Nothing else about A-080's Today changes. The phone is unchanged (rows open in place, R-015).
 
+## A-085 — "Write a new one" in the reply editor ^A-085
+
+**Approved:** 2026-10-05, founder: *"there's no option to regenerate"*, then *"yes add it"*.
+**What specifically:** in the reply card's edit mode (the customer page, which Today's Edit opens), a "Write a new
+one" chip leads the rewrite row, before "or rewrite it: Shorter · Warmer · More formal". It writes a fresh reply
+from the conversation with the current model and rules, and saves it as the draft. The old MessageComposer's
+"Regenerate" had stopped being shown anywhere since the A-080 redesign.
+

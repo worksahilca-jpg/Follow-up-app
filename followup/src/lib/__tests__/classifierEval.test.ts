@@ -40,13 +40,14 @@ describe("EVAL_CASES, grown for the test businesses (2026-09-29)", () => {
 describe("EVAL_CASES, lead marketplaces (b007, 2026-09-30)", () => {
   const marketplace = EVAL_CASES.filter((c) => c.name.startsWith("marketplace:"));
 
-  // Canadian sites added 2026-09-30 (HomeStars, Kijiji, REALTOR.ca).
-  it("has 10-15 marketplace customers and 3-6 of the marketplaces' own mail", () => {
+  // Canadian sites added 2026-09-30 (HomeStars, Kijiji, REALTOR.ca); the
+  // owner's own buyer-side request added 2026-10-04 (the founder's inbox).
+  it("has 10-15 marketplace customers and 3-8 of the marketplaces' own mail", () => {
     const leads = marketplace.filter((c) => c.expectLead).length;
     expect(leads).toBeGreaterThanOrEqual(10);
     expect(leads).toBeLessThanOrEqual(15);
     expect(marketplace.length - leads).toBeGreaterThanOrEqual(3);
-    expect(marketplace.length - leads).toBeLessThanOrEqual(6);
+    expect(marketplace.length - leads).toBeLessThanOrEqual(8);
   });
 
   it("comes from the platform, not the person, and uses only invented addresses", () => {

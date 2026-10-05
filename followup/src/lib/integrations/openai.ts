@@ -529,7 +529,9 @@ const LEAD_MARKETPLACE_RULE =
   "true, with whoIsSelling \"sender wants to buy from this business\", even though the email comes from the " +
   "platform's own no-reply address and the person's contact details may be hidden behind it. The platform's OWN " +
   "mail stays false: receipts, invoices and billing for leads or ads, profile-view and performance reports, " +
-  "tips, promotions, offers to buy more leads or upgrade, and review notifications.";
+  "tips, promotions, offers to buy more leads or upgrade, and review notifications. So does any notice about a " +
+  "request the OWNER of this inbox made as a buyer on the platform ('your request', 'boost your request', 'what " +
+  "to expect next', 'professionals will contact you'): there the owner is the customer, not the business.";
 
 /**
  * Whose work would be paid for in this thread — the question the verdict

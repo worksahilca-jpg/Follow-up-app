@@ -134,6 +134,14 @@ const MARKETPLACE_HOUSEKEEPING = new RegExp(
     "free trial", "special offer", "limited time",
     // account and review notices
     "password", "verify", "verification", "reviews?", "rated you", "survey",
+    // the owner's OWN request, made as a buyer on the platform (founder's
+    // inbox, 2026-10-04: Bark's "Do this to boost your request, Sahil" and
+    // "Here's what to expect next" became customers). The person in these
+    // is the owner, not someone who wants to buy from them.
+    "boost your request", "your request (?:has been|was|is) (?:sent|received|posted|live|submitted)",
+    "what to expect next", "responses? to your request",
+    "(?:professionals?|pros|providers|businesses) (?:will|may|are going to|can now) (?:contact|reach out to|respond to|message) you",
+    "you(?:'ve| have) been matched with (?:\\d+ )?(?:professionals?|pros|providers|businesses)",
   ]
     .map((w) => `\\b${w}\\b`)
     .join("|"),

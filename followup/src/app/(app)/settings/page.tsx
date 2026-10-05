@@ -1675,7 +1675,7 @@ function SettingsPageInner() {
                 , then {listDays(quietReminderDays(autoAfterDays).slice(1))}.
               </>
             }
-            stops="It stops the moment they answer, or when you mark “We talked”. Only between 8am and 8pm, never more than one a day."
+            stops="It stops the moment they answer, or when you mark “Already spoke”. Only between 8am and 8pm, never more than one a day."
             checked={automationOn}
             onToggle={() => {
               const next = !automationOn;

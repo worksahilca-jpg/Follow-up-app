@@ -53,7 +53,7 @@ export default function WeTalkedButton({
           disabled={busy}
           className="inline-flex h-[38px] items-center rounded-full border border-line bg-card px-3.5 text-[14px] font-medium hover:bg-card-2 disabled:opacity-60"
         >
-          {busy ? "…" : onSite ? "Undo “Answered”" : "Undo “We talked”"}
+          {busy ? "…" : onSite ? "Undo “Answered”" : "Undo “Already spoke”"}
         </button>
       ) : (
         <button
@@ -63,7 +63,7 @@ export default function WeTalkedButton({
           title={`You spoke with ${first} on a call or in person. FollowUp stops checking in until ${first} writes again.`}
           className="inline-flex h-[38px] items-center rounded-full border border-line bg-card px-3.5 text-[14px] font-medium hover:bg-card-2 disabled:opacity-60"
         >
-          {busy ? "…" : "We talked"}
+          {busy ? "…" : "Already spoke"}
         </button>
       )}
       {error && (

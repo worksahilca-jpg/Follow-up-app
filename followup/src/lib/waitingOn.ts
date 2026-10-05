@@ -51,7 +51,7 @@ export function firstName(name: string): string {
 export function describeNext(lead: Lead, rules: BusinessAutomationRules, now: Date, timeZone: string): string {
   const first = firstName(lead.name);
   const status = lead.automationStatus;
-  if (status?.kind === "talked") return `You marked “We talked”. FollowUp waits for ${first}.`;
+  if (status?.kind === "talked") return `You marked “Already spoke”. FollowUp waits for ${first}.`;
   const next = rules.canSend ? nextFor(lead, rules, now) : null;
   if (next) {
     const day = dayLabel(next.at, now, timeZone);

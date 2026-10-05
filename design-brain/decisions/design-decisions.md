@@ -8891,3 +8891,17 @@ got replies, a second business with no customers).
 2. *"The fonts are too bold."* The boards fell back to a heavy system font because Google Fonts doesn't load in the
    local renderer; the real app uses Public Sans at normal weight. Next boards load the app's own font files, or say on
    the image that the font is a stand-in.
+
+## 2026-10-05 — Round 3 built while the founder was away (A-089)
+
+**Built:** see A-089. Checked at 390×844 (All, Needs you, a search) and 1280×900 (Customers unchanged, Today with an
+edited reply showing "Edited by you"). Speed measured locally on a throttled phone (4× CPU, 4G): Today 0.3 s warm,
+1.3 s cold; Customers 0.4 s; a customer page 0.3 s. Production is slower per database trip, which is why Today's
+reads were made concurrent rather than left as eighteen in a row.
+
+**Self-review, honestly:**
+- *Weak:* "Already spoke" is better than "We talked" but still two words carrying a whole action (stop check-ins until
+  they write). The hover title explains it on the desk; on a phone there is no hover. Watch whether testers use it.
+- *Weak:* the phone's ⋯ and + are icon-only. They have labels for screen readers, but a first-time owner may not guess
+  that ⋯ holds "Import CSV". Acceptable for low-frequency actions.
+- *Holds:* people are on the first screen on a phone; one black thing per screen on the phone; no new colour or token.

@@ -27,7 +27,7 @@ const ACTION_COPY: Record<string, (meta: Record<string, unknown> | null) => { la
   }),
   // "We talked" (src/lib/talked.ts, design brain A-039).
   "lead.talked": () => ({ label: "You talked with them", detail: "Check-ins stopped until they write again" }),
-  "lead.talked_undone": () => ({ label: "You undid \"We talked\"", detail: "Check-ins are back on" }),
+  "lead.talked_undone": () => ({ label: "You undid \"Already spoke\"", detail: "Check-ins are back on" }),
   // "I replied" on a lead site (b018, A-075).
   "lead.replied_on_site": (meta) => ({
     label: typeof meta?.site === "string" ? `You replied on ${meta.site}` : "You replied on the lead site",

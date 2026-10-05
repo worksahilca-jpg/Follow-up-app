@@ -59,33 +59,49 @@ export const dynamic = "force-dynamic";
  * of decisions, not a wall of numbers.
  */
 export default async function DashboardPage() {
-  const leads = await getLeads();
-  const upcomingBookings = await getUpcomingBookings();
-  const ctx = await getSessionContext();
-  const rescue = ctx ? await getRescueReport(ctx.businessId, 7) : null;
+  // Speed (check-up #21, A-089): Today used to make eighteen database trips one after another,
+  // each waiting for the last. The independent ones now go together in two rounds: everything
+  // that needs only the session, then everything that needs the business's time zone.
+  const [leads, upcomingBookings, ctx] = await Promise.all([getLeads(), getUpcomingBookings(), getSessionContext()]);
   // "This week" (design brain A-042, the Ramp study): customers, not
   // messages, the same count the Monday email uses.
   const weekEnd = new Date();
-  const answeredThisWeek = ctx
-    ? await countCustomersAnswered(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000), weekEnd)
-    : 0;
-  const approvals = ctx ? await getPendingApprovals(ctx.businessId) : [];
+  const weekStart = new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const [rescue, answeredThisWeek, approvals, setupSteps, business, me, gmail, outlook, firstSend] = await Promise.all([
+    ctx ? getRescueReport(ctx.businessId, 7) : null,
+    ctx ? countCustomersAnswered(ctx.businessId, weekStart, weekEnd) : 0,
+    ctx ? getPendingApprovals(ctx.businessId) : [],
+    // Passed straight through. This used to be re-mapped field by field,
+    // which dropped whatever the mapping had not been told about — see
+    // ApprovalItem's own note.
+    ctx ? getIncompleteSetupSteps(ctx.businessId) : [],
+    // The owner's own wall clock, for the greeting. This is a server
+    // component, so without it "Good morning" came from the server's
+    // clock — UTC on Vercel — and greeted a Toronto owner at 8pm with it.
+    ctx
+      ? prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true } })
+      : null,
+    // Pause all sending, and Only admins send (A-041). The role is read here
+    // rather than trusted from the session, which doesn't carry it.
+    ctx ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { role: true } }) : null,
+    ctx ? getGmailStatus(ctx.businessId) : ({ connected: false } as Awaited<ReturnType<typeof getGmailStatus>>),
+    ctx ? getOutlookStatus(ctx.businessId) : ({ connected: false } as Awaited<ReturnType<typeof getOutlookStatus>>),
+    // "Your first reply went out through FollowUp" (A-047): only on the day
+    // the business's first value happened, so it is said once with nothing stored.
+    ctx
+      ? prisma.followUp.findFirst({
+          where: { ...FIRST_VALUE_SEND, lead: { businessId: ctx.businessId } },
+          orderBy: { sentAt: "asc" },
+          select: { sentAt: true, channel: true, repliedAt: true, lead: { select: { name: true } } },
+        })
+      : null,
+  ]);
   // Each person once on Today (A-046): anyone already waiting for the
   // owner's OK is left out of "About to be lost".
   const awaitingOk = new Set(approvals.map((a) => a.leadId));
   // One count for the headline and the section's label (aboutToBeLost).
   const lost = aboutToBeLost(leads, awaitingOk);
   const atRisk = lost.shown;
-  // Passed straight through. This used to be re-mapped field by field,
-  // which dropped whatever the mapping had not been told about — see
-  // ApprovalItem's own note.
-  const setupSteps = ctx ? await getIncompleteSetupSteps(ctx.businessId) : [];
-  // The owner's own wall clock, for the greeting. This is a server
-  // component, so without it "Good morning" came from the server's
-  // clock — UTC on Vercel — and greeted a Toronto owner at 8pm with it.
-  const business = ctx
-    ? await prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, holdAllForApproval: true, sendingPausedAt: true, onlyAdminsSend: true } })
-    : null;
   const timezone = business?.timezone ?? "America/New_York";
   // "Based on" under each waiting reply, and "sent as written" (A-043).
   // "Waiting 5 h" on each card and in the "Start with" line (A-046), worked
@@ -93,7 +109,20 @@ export default async function DashboardPage() {
   const now = new Date();
   // Set aside with "Later" (A-046): off Today until it comes back.
   const setAside = approvals.filter((a) => a.laterUntil).length;
-  const approvalItems: ApprovalItem[] = (await withBasis(onTodayNow(approvals), timezone)).map((a) => ({
+  const [withBasisItems, handledToday, comingUp, workDone, filteredCount, anySendChannel] = await Promise.all([
+    withBasis(onTodayNow(approvals), timezone),
+    ctx ? countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0,
+    // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
+    ctx && leads.length > 0 ? loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null,
+    // Round 2 (A-088): what FollowUp did since yesterday.
+    ctx ? countWorkSince(ctx.businessId, startOfLocalDay(new Date(now.getTime() - 24 * 60 * 60 * 1000), timezone)) : null,
+    // A quiet inbox (A-088): whether FollowUp has read anything yet, so "no customers" can say what it checked.
+    ctx && leads.length === 0 ? prisma.filteredEmail.count({ where: { businessId: ctx.businessId } }) : 0,
+    // Nothing to send from: every rule still reads "on" in Settings, and none
+    // of them can do anything (A-044). Only asked once there are people.
+    ctx && leads.length > 0 ? hasAnySendChannel(ctx.businessId) : true,
+  ]);
+  const approvalItems: ApprovalItem[] = withBasisItems.map((a) => ({
     ...a,
     wait: describeWait(a, now),
     waitClause: describeWaitClause(a, now),
@@ -103,23 +132,11 @@ export default async function DashboardPage() {
       ? new Date(a.customerToldAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: timezone })
       : null,
   }));
-  const handledToday = ctx ? await countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0;
-  // "Your first reply went out through FollowUp" (A-047): only on the day
-  // the business's first value happened, so it is said once with nothing stored.
-  const firstSend = ctx
-    ? await prisma.followUp.findFirst({
-        where: { ...FIRST_VALUE_SEND, lead: { businessId: ctx.businessId } },
-        orderBy: { sentAt: "asc" },
-        select: { sentAt: true, channel: true, repliedAt: true, lead: { select: { name: true } } },
-      })
-    : null;
   const firstValue = firstValueNote(
     firstSend?.sentAt ? { sentAt: firstSend.sentAt, channel: firstSend.channel, repliedAt: firstSend.repliedAt, leadName: firstSend.lead.name } : null,
     now,
     timezone
   );
-  // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
-  const comingUp = ctx && leads.length > 0 ? await loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null;
   // A booked call is one line under the list (A-080), only when one exists.
   const nextCall = upcomingBookings[0]
     ? {
@@ -130,29 +147,21 @@ export default async function DashboardPage() {
   // Round 2 (A-088). What came of the week goes to the end of the day, where the owner finishes
   // (peak-end); the foot of a working Today says what FollowUp did since yesterday instead.
   const weekResults = resultsLine({
-    heardBackMs: medianReplyMs(leads, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000), weekEnd),
+    heardBackMs: medianReplyMs(leads, weekStart, weekEnd),
     answered: answeredThisWeek,
     cameBack: rescue?.rescued ?? 0,
     booked: rescue?.booked ?? 0,
   });
-  const work = ctx ? workLine(await countWorkSince(ctx.businessId, startOfLocalDay(new Date(now.getTime() - 24 * 60 * 60 * 1000), timezone))) : null;
-  // A quiet inbox (A-088): whether FollowUp has read anything yet, so "no customers" can say what it checked.
-  const checkedAny = ctx && leads.length === 0 ? (await prisma.filteredEmail.count({ where: { businessId: ctx.businessId } })) > 0 : false;
+  const work = workDone ? workLine(workDone) : null;
+  const checkedAny = filteredCount > 0;
   // Business.holdAllForApproval — as of 2026-09-20 this stops every
   // automated message including the instant reply, so it changes what
   // this screen can honestly promise.
   const holdAll = business?.holdAllForApproval ?? false;
-  // Pause all sending, and Only admins send (A-041). The role is read here
-  // rather than trusted from the session, which doesn't carry it.
-  const me = ctx ? await prisma.user.findUnique({ where: { id: ctx.userId }, select: { role: true } }) : null;
   const isAdmin = me?.role === "ADMIN";
   const sendingPaused = Boolean(business?.sendingPausedAt);
   const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
-  const gmail = ctx ? await getGmailStatus(ctx.businessId) : { connected: false };
-  const outlook = ctx ? await getOutlookStatus(ctx.businessId) : { connected: false };
-  // Nothing to send from: every rule still reads "on" in Settings, and none
-  // of them can do anything (A-044). Only asked once there are people.
-  const cantSend = ctx && leads.length > 0 ? !(await hasAnySendChannel(ctx.businessId)) : false;
+  const cantSend = !anySendChannel;
   // An inbox is connected if EITHER provider is. Checking only Gmail is what
   // made the empty state claim "FollowUp is watching your inbox" to a business
   // that had connected Outlook and never got the confirmation line, and to a

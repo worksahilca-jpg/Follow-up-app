@@ -21,7 +21,6 @@
 import { prisma } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/platformAdmin";
 import { TIER_MONTHLY_PRICE_USD, TIER_INFO } from "@/lib/pricing";
-import { agentIdentifiers, deidentifyText, leadIdentifiers } from "@/lib/deidentify";
 
 export interface WeekBucket {
   week: string;
@@ -73,12 +72,11 @@ export interface AccessRequestRow {
  * (FollowUp.draftText, src/lib/sending.ts).
  */
 export interface DraftChange {
-  id: string;
   businessName: string;
-  channel: string;
-  sentAt: Date;
-  draft: string;
-  sent: string;
+  /** Replies FollowUp wrote that the owner sent this week. */
+  sent: number;
+  /** How many of those the owner changed first. */
+  edited: number;
 }
 
 const DRAFT_CHANGES_DAYS = 7;
@@ -288,45 +286,25 @@ export async function getPlatformAdminData(): Promise<PlatformAdminData> {
     .sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9) || b.createdAt.getTime() - a.createdAt.getTime());
 
   // --- What testers changed this week ---
-  // Only rows with a stored draft exist for opted-in businesses, so the
-  // consent check is the column itself; the de-identification boundary is
-  // applied here, before any of this leaves the data layer.
+  // Numbers only (founder, 2026-10-05, security review H1): this page used to show each edited
+  // draft beside what was sent. Google's Workspace data policy doesn't allow a person to read
+  // Gmail-derived messages to improve a product, so it now counts, per business, and never
+  // reads a message's text.
   const since = new Date(Date.now() - DRAFT_CHANGES_DAYS * 24 * 60 * 60_000);
-  const editedRows = await prisma.followUp.findMany({
-    where: { draftEdited: true, draftText: { not: null }, sentAt: { gte: since } },
-    orderBy: { sentAt: "desc" },
-    take: DRAFT_CHANGES_LIMIT,
-    select: {
-      id: true,
-      channel: true,
-      sentAt: true,
-      message: true,
-      draftText: true,
-      lead: {
-        select: {
-          name: true,
-          email: true,
-          phone: true,
-          company: true,
-          assignedTo: { select: { name: true, email: true } },
-          business: { select: { name: true } },
-        },
-      },
-    },
+  const draftRows = await prisma.followUp.findMany({
+    where: { draftEdited: { not: null }, status: "sent", sentAt: { gte: since } },
+    select: { draftEdited: true, lead: { select: { business: { select: { name: true } } } } },
+    take: 5000,
   });
-  const draftChanges: DraftChange[] = editedRows
-    .filter((r) => r.draftText && r.message && r.sentAt)
-    .map((r) => {
-      const identifiers = [...leadIdentifiers(r.lead), ...agentIdentifiers(r.lead.assignedTo)];
-      return {
-        id: r.id,
-        businessName: r.lead.business.name,
-        channel: r.channel,
-        sentAt: r.sentAt!,
-        draft: deidentifyText(r.draftText!, identifiers),
-        sent: deidentifyText(r.message!, identifiers),
-      };
-    });
+  const draftByBusiness = new Map<string, DraftChange>();
+  for (const r of draftRows) {
+    const name = r.lead.business.name;
+    const row = draftByBusiness.get(name) ?? { businessName: name, sent: 0, edited: 0 };
+    row.sent += 1;
+    if (r.draftEdited) row.edited += 1;
+    draftByBusiness.set(name, row);
+  }
+  const draftChanges: DraftChange[] = [...draftByBusiness.values()].sort((a, b) => b.sent - a.sent).slice(0, DRAFT_CHANGES_LIMIT);
 
   const recentSignups: RecentSignup[] = recentBusinesses.map((b) => ({
     id: b.id,

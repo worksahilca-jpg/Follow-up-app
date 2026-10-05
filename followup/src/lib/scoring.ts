@@ -7,6 +7,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { tooManyRecentActions } from "@/lib/rateLimit";
 import { byTranscriptOrder } from "@/lib/transcript";
 import { scoreLead, generateFollowUpMessage } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
@@ -36,6 +37,10 @@ function priorityFromScore(score: number): DbPriority {
 }
 
 /** Scores one lead (by id) against its real conversation history and persists the result. Returns false if there's nothing to score yet (no messages), AI isn't configured, or the lead's Free-tier business has paused AI processing for it (over the monthly cap, or captured on a channel Free doesn't cover — see @/lib/billing). */
+/** At most this many AI runs for one customer, and for one business, in 24 hours (H2). */
+export const AI_RUNS_PER_LEAD_PER_DAY = { windowMinutes: 24 * 60, max: 30 } as const;
+export const AI_RUNS_PER_BUSINESS_PER_DAY = { windowMinutes: 24 * 60, max: 500 } as const;
+
 export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   if (!process.env.OPENAI_API_KEY) return false;
 
@@ -75,6 +80,24 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     // read above and here is a no-op instead of a thrown P2025 on what
     // is otherwise a clean, quiet refusal.
     await prisma.lead.updateMany({ where: { id: lead.id }, data: { aiPausedReason: eligible.ownerMessage } });
+    return false;
+  }
+
+  // Daily ceilings on AI runs (security review H2, 2026-10-05). Every new message from someone
+  // who is already a lead (email, text, DM) runs this, on FollowUp's own OpenAI key, and the plan
+  // cap above counts leads, not runs: one person looping messages could run it without end. The
+  // message is always saved; only the AI step waits, and the owner is told why.
+  const tooMany =
+    (await tooManyRecentActions(lead.businessId, `ai.run:${lead.id}`, AI_RUNS_PER_LEAD_PER_DAY)) ||
+    (await tooManyRecentActions(lead.businessId, "ai.run", AI_RUNS_PER_BUSINESS_PER_DAY));
+  if (tooMany) {
+    await prisma.lead.updateMany({
+      where: { id: lead.id },
+      data: {
+        aiPausedReason:
+          "FollowUp paused reading and replying here for today: far more messages than a real conversation, so it may be automated. Their messages are still saved; reply yourself if it's real.",
+      },
+    });
     return false;
   }
 

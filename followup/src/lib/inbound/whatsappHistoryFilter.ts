@@ -171,7 +171,8 @@ export async function judgeHistoryThread(
     // Fails open, the same as gmail.ts: better an untidy pipeline than a
     // lost customer, and a classifier outage must never quietly cost the
     // owner a lead they would have answered.
-    console.error(`WhatsApp history classification failed for ${contact.phone}:`, err);
+    // Never the number itself in a log (security review L5).
+    console.error("WhatsApp history classification failed for a contact:", err instanceof Error ? err.name : "UnknownError");
     return { import: true };
   }
 }

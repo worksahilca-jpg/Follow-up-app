@@ -165,6 +165,9 @@ export async function buildDeidentifiedTrainingSet(businessId: string): Promise<
     const identifiers = [...leadIdentifiers(lead), ...agentIdentifiers(lead.assignedTo)];
     const messages: TrainingMessage[] = [];
     for (const conversation of lead.conversations) {
+      // Never email (founder, 2026-10-05, security review H1): Google forbids using Gmail data
+      // to train or improve AI models beyond this one user's own use.
+      if (conversation.channel === "email") continue;
       for (const message of conversation.messages) {
         messages.push({
           role: message.direction === "inbound" ? "lead" : "business",

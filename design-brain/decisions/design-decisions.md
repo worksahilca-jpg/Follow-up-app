@@ -8916,3 +8916,16 @@ with "{email} is connected, but FollowUp isn't allowed to send from it, so your 
 and leave “Send email on your behalf” ticked on Google's screen." A send refused for that reason returns the same advice
 as a permanent failure (shown on the card), and the weekly email skips it without a Sentry error.
 **Founder action:** the tester reconnects Gmail with sending ticked when he is back.
+
+## 2026-10-05 — Security review: "Help improve FollowUp" never keeps email; /admin shows numbers only
+
+**Why:** the security agent's audit (H1): Google's Workspace data policy doesn't let people read Gmail-derived messages to
+improve a product, and /admin showed each edited email draft beside what was sent. The founder chose: *"yes"* to numbers
+only on /admin and email left out of "Help improve FollowUp".
+**Built:** email drafts are never stored (`sending.ts`), never in a training set (`deidentify.ts`); /admin's "What testers
+changed this week" is one row per business, "N of M sent unchanged"; the switch's words now say email is only counted.
+Also from the audit: daily AI ceilings per customer and per business (the owner sees "FollowUp paused reading and
+replying here for today…"), Export asks for a fresh sign-in like Delete, the form's day-long block removed (it could be
+used to switch a business's form off), Google access revoked when an account is deleted.
+**Left for later (low):** the error banner shows text from the URL; one shared cross-site check on writes; disconnect
+acting on one inbox; the CSP's unsafe-inline; an incident-response plan.

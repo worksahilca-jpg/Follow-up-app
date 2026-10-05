@@ -13,6 +13,7 @@ const { findUnique, update, updateMany } = vi.hoisted(() => ({
   update: vi.fn(async () => ({})),
   updateMany: vi.fn(async () => ({ count: 1 })),
 }));
+vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: vi.fn(async () => false) }));
 vi.mock("@/lib/db", () => ({ prisma: { lead: { findUnique, update, updateMany }, notification: { create: vi.fn() } } }));
 
 vi.mock("@/lib/integrations/openai", () => ({

@@ -92,6 +92,23 @@ a feature that's broken.
 - Found a bug that isn't yours to fix right now? File it — don't just mention it in passing and
   let it evaporate. A quick note in `#followup-alerts` or a GitHub issue is enough.
 
+## Security check before every merge (founder, 2026-10-05)
+
+*"Whatever features or whatever thing we are merging or adding in our app, make sure you check all these security
+gaps."* Every PR, human or agent, gets this pass before the founder is asked to merge, and the PR body says it was done:
+
+1. **Secrets:** nothing secret in the diff (gitleaks runs in CI; also read the diff), no new `NEXT_PUBLIC_` variable that
+   holds a secret, no secret read in a `"use client"` file.
+2. **Who can reach it:** every new API route checks the session (`getSessionContext`), admin-only ones
+   `requireAdmin`/`requirePlatformAdmin`, crons `requireCronSecret`, webhooks their signature or secret.
+3. **Whose data:** every lookup by id is checked against `ctx.businessId` (or goes through a helper that does).
+4. **Cost:** anything that calls OpenAI, sends a message or calls Google is rate-limited per business, and anything
+   reachable without a login has a per-10-minute and a per-day ceiling.
+5. **Privacy:** no customer message text, email or phone in logs, Sentry or analytics.
+6. **Packages:** `npm audit --omit=dev` shows no new high or critical issue.
+
+For a larger change, ask the `qa-security-agent` for an independent review as well.
+
 ## Design / UI work specifically
 
 Read `CLAUDE.md` and `design-brain/README.md` before starting any visual or UX change — this

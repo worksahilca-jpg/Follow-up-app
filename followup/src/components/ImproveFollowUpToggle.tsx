@@ -67,8 +67,8 @@ export default function ImproveFollowUpToggle({ compact = false }: { compact?: b
         <div className="min-w-0">
           <p className="text-sm font-medium">Help improve FollowUp</p>
           <p className="text-[13px] text-ink-soft mt-0.5">
-            Let us learn from the replies you edit. Names and contact details are removed first. Off unless you
-            turn it on; change it any time in Settings.
+            Let us learn from the replies you edit. For email we only count how often you change one, never the
+            words. Off unless you turn it on; change it any time in Settings.
           </p>
           {error && (
             <p className="mt-1 text-[13px]" style={{ color: "var(--coral)" }}>
@@ -90,9 +90,9 @@ export default function ImproveFollowUpToggle({ compact = false }: { compact?: b
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Help improve FollowUp</p>
           <p className="text-[13px] text-ink-soft mt-0.5">
-            When on, FollowUp keeps the draft it wrote next to what you actually sent, so we can see where its
-            wording was wrong and fix it. Names, emails, phone numbers and addresses are removed before anyone
-            reads it. Nothing is shared outside FollowUp, and no model is trained on it yet.
+            When on, FollowUp counts how often you change its replies, so we can see where its wording is off. For
+            texts and DMs it also keeps the draft next to what you sent, with names, emails, phone numbers and
+            addresses removed first. For email it never keeps the words. Nothing is shared outside FollowUp.
           </p>
           {error && (
             <p className="mt-1 text-[13px]" style={{ color: "var(--coral)" }}>

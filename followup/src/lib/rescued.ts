@@ -11,6 +11,11 @@ import { prisma } from "@/lib/db";
  * sent on its own (instant reply, unanswered-reply, silence follow-up, or a
  * workflow step). A reply to a MANUAL send is the owner's own work and is
  * deliberately not counted — the report must never flatter itself.
+ *
+ * The one exception is Today's "This week" line (founder, 2026-10-05, A-092: "yes"):
+ * owners press Send on most replies themselves, so `includeOwnerSends` also counts a reply
+ * to any message the owner sent through FollowUp. Its words, "came back after a follow-up",
+ * stay true either way; the weekly email and /analytics keep the strict count.
  */
 export interface RescuedLead {
   id: string;
@@ -40,13 +45,19 @@ export interface RescueReport {
  * this week's numbers beside last week's; a reply that came after `end`
  * belongs to the later window, not this one.
  */
-export async function getRescueReport(businessId: string, days = 7, end: Date = new Date()): Promise<RescueReport> {
+export async function getRescueReport(
+  businessId: string,
+  days = 7,
+  end: Date = new Date(),
+  { includeOwnerSends = false }: { includeOwnerSends?: boolean } = {}
+): Promise<RescueReport> {
   const since = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
 
   const sent = await prisma.followUp.findMany({
-    where: { automated: true, status: "sent", sentAt: { gte: since, lt: end }, lead: { businessId } },
+    where: { ...(includeOwnerSends ? {} : { automated: true }), status: "sent", sentAt: { gte: since, lt: end }, lead: { businessId } },
     select: {
       leadId: true,
+      automated: true,
       trigger: true,
       sentAt: true,
       repliedAt: true,
@@ -114,7 +125,8 @@ export async function getRescueReport(businessId: string, days = 7, end: Date = 
 
   return {
     days,
-    answeredForYou: sent.length,
+    // Always FollowUp's own sends, whichever replies are counted.
+    answeredForYou: sent.filter((f) => f.automated).length,
     rescued: leads.length,
     booked,
     won: won.length,

@@ -1682,7 +1682,53 @@ drawn; the built screens were compared with the list's stated fixes and the A-08
   and "Edited by you · …" once the owner types or asks for a rewrite; "Write a new one" makes it FollowUp's again.
 - **A faster Today (#21):** its database reads run together in two rounds instead of eighteen in a row.
 - **Removed:** the unused red score badge (`ScoreBadge`, `FollowUpCard`), the one place red meant "high score".
-**Not done, his call or needs a drawing:** colours (#19/#20, A or B not chosen), clearing test customers (#9: "Clean up
+**Not done, his call or needs a drawing:** colours (#19/#20: decided A, see A-090), clearing test customers (#9: "Clean up
 leads" exists for non-customers; telling test customers apart needs a rule), the six Settings switches (#16), two Gmail
 accounts for one person (#22: one Gmail per login today; a schema change), and counting replies to the owner's own
 sends as results.
+
+## A-090 — The app's ground stays white (colour A) ^A-090
+
+**Approved 2026-10-05**, founder: *"a is fine"*. He was shown Today on desktop and phone side by side: A, the current
+near-white ground (`--paper #fdfcfc`, white cards, `--sidebar #f9f8f6`), and B, a warm cream ground like the landing
+page's (`#f6f2ec`, sidebar `#efe9e1`, cards `#fffdfa`). He first said "b", then stopped the change before anything was
+edited and chose A.
+- **What stays:** every ground and surface token in `globals.css` as it is. The brand's warmth stays where A-079 put it,
+  on the landing wash and the reply card's gradient, not on the work screen's ground.
+- **Not decided:** making the "needs you" dot a clearer orange (`--state-needs` #b4532a to about #c96a1b). It was shown
+  only inside option B. If changed, keep it to the dot (it fails 4.5:1 as text) and measure it on white first.
+- **Why A (stated to him, matches the research):** calm, cool grounds for screens where people do serious work
+  (Elliot & Maier, `research/ux-patterns/2026-10-05-psychology-ease-results-return.md`), and cream grounds are a common
+  AI-template look.
+- **If cream comes back:** `--ink-faint #736e68` drops to 4.19:1 on a cream sidebar; it would need to go to about
+  `#6b665f`.
+
+## A-091 — The "needs you" dot is a clearer orange ^A-091
+
+**Approved 2026-10-05**, founder: *"yes"* to making the dot a clearer orange, so it reads as "your turn" and not as an
+error. `--state-needs` #b4532a → **#c96a1b** in `globals.css`; every needs-you dot uses the token (Today's reply
+card note, the customer page, PersonPanel, Settings, /admin tester health), so one value changes them all.
+- **A dot only.** 3.7:1 on white clears the 3:1 bar for a graphic, but not 4.5:1 for text. Never use it for words.
+- **Not changed:** the landing page's own `--decision` (#b4532a in `landing.module.css`), which nothing uses.
+- **Honest note:** at 7px the change is subtle; it reads more orange and less red-brown, not louder. If it still reads
+  as an error to testers, the next step is the dot's shape or its word, not more saturation.
+
+## A-092 — Today's "came back after a follow-up" counts the owner's sends too ^A-092
+
+**Approved 2026-10-05**, founder: *"yes"*. Owners press Send on most replies themselves, so counting only FollowUp's
+automatic sends undercounted the work. Today's "This week" line now counts a customer who replied to **any** message
+sent through FollowUp (`getRescueReport(..., { includeOwnerSends: true })`), and its "booked a call" follows the same
+set. "FollowUp answered N for you" still counts FollowUp's own sends only. The weekly email and /analytics keep the
+strict count ("what FollowUp saved you" must never flatter itself). The words stay true either way.
+
+## A-093 — "Practice customers" in Settings → Your data ^A-093
+
+**Approved 2026-10-05**, founder: *"yes"* to a button that removes only practice customers. The rule is the source and
+nothing else: `source = "Test lead"`, which only "See it work: send yourself a practice email" sets. A customer an
+owner typed in looks exactly like a real one, so it is never guessed at.
+- **Row:** between Export and Delete, same box as Export, slate eraser icon, outlined "Remove" (not black, not red:
+  it's tidying, not the page's main action and not a danger). Shown only while there are practice customers; after
+  removing it says "Removed N practice customers." A browser confirm names the count and says real customers are never
+  touched (same pattern as Disconnect Gmail).
+- **Server:** `GET/DELETE /api/leads/practice`, admin only, 10 an hour, every delete through `deleteLeadCascade` with
+  the business id. Tests in `api/leads/practice/__tests__`.

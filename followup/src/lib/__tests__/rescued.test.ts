@@ -19,6 +19,7 @@ const h = (hours: number) => new Date(Date.now() - hours * 3_600_000);
 function sentRow(leadId: string, over: Record<string, unknown> = {}) {
   return {
     leadId,
+    automated: true,
     trigger: "unanswered",
     sentAt: h(50),
     repliedAt: h(40),
@@ -36,6 +37,16 @@ describe("rescue report", () => {
     p.followUp.findMany.mockResolvedValue([]);
     await getRescueReport("biz1", 7);
     expect(p.followUp.findMany.mock.calls[0][0].where).toMatchObject({ automated: true, status: "sent" });
+  });
+
+  it("Today's line also counts replies to the owner's own sends, but 'answered for you' stays FollowUp's (A-092)", async () => {
+    p.followUp.findMany.mockResolvedValue([sentRow("a"), sentRow("b", { automated: false, trigger: null })]);
+    const r = await getRescueReport("biz1", 7, undefined, { includeOwnerSends: true });
+    const where = p.followUp.findMany.mock.calls[0][0].where;
+    expect(where).not.toHaveProperty("automated");
+    expect(where).toMatchObject({ status: "sent" });
+    expect(r.rescued).toBe(2);
+    expect(r.answeredForYou).toBe(1);
   });
 
   it("counts a lead once even if several automated messages got replies", async () => {

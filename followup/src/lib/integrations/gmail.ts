@@ -1456,6 +1456,25 @@ export async function getGmailReplyHeaders(
   }
 }
 
+/**
+ * Google lets an owner untick single permissions on its consent screen. An owner who unticks "Send
+ * email on your behalf" gets a connection that reads fine and cannot send (Sentry FOLLOW-UP-APP-1,
+ * 2026-10-05: a tester's weekly email failed with "Request had insufficient authentication scopes").
+ * These say so, in the owner's words, at connect time and at send time.
+ */
+export const GMAIL_SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send";
+export const GMAIL_CANT_SEND_MESSAGE =
+  "FollowUp can read this Gmail but isn't allowed to send from it. Reconnect Gmail in Settings and leave “Send email on your behalf” ticked on Google's screen.";
+
+/** True when Google refused a call because the token lacks a permission (as opposed to an expired token or a bad request). */
+export function isMissingScopeError(err: unknown): boolean {
+  const e = err as { message?: unknown; code?: unknown; status?: unknown; errors?: Array<{ reason?: unknown }> } | null;
+  if (!e) return false;
+  const message = typeof e.message === "string" ? e.message : "";
+  if (/insufficient authentication scopes|ACCESS_TOKEN_SCOPE_INSUFFICIENT/i.test(message)) return true;
+  return (e.code === 403 || e.status === 403) && Array.isArray(e.errors) && e.errors.some((x) => x?.reason === "insufficientPermissions");
+}
+
 export async function sendEmail(
   businessId: string,
   params: {
@@ -1523,10 +1542,17 @@ export async function sendEmail(
     .replace(/\//g, "_")
     .replace(/=+$/, "");
 
-  const res = await gmail.users.messages.send({
-    userId: "me",
-    requestBody: { raw: encoded, ...(params.threadId ? { threadId: params.threadId } : {}) },
-  });
+  let res;
+  try {
+    res = await gmail.users.messages.send({
+      userId: "me",
+      requestBody: { raw: encoded, ...(params.threadId ? { threadId: params.threadId } : {}) },
+    });
+  } catch (err) {
+    // Connected for reading, not for sending: nothing went out, and only the owner can fix it.
+    if (isMissingScopeError(err)) return { success: false, message: GMAIL_CANT_SEND_MESSAGE };
+    throw err;
+  }
 
   return { success: true, messageId: res.data.id ?? undefined };
 }

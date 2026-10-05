@@ -8905,3 +8905,14 @@ reads were made concurrent rather than left as eighteen in a row.
 - *Weak:* the phone's ⋯ and + are icon-only. They have labels for screen readers, but a first-time owner may not guess
   that ⋯ holds "Import CSV". Acceptable for low-frequency actions.
 - *Holds:* people are on the first screen on a phone; one black thing per screen on the phone; no new colour or token.
+
+## 2026-10-05 — Round 4 (with round 3, PR #438): a Gmail that can read but not send
+
+**Why:** Sentry FOLLOW-UP-APP-1. A tester's Monday email failed with "Request had insufficient authentication scopes".
+His Gmail (reconnected Sep 29) reads fine, but Google's consent screen let him untick "Send email on your behalf", so
+nothing can be sent from it: not the weekly email, not a reply he presses Send on.
+**Built:** the connect callback reads the scopes Google says were granted; without send it returns to Settings or setup
+with "{email} is connected, but FollowUp isn't allowed to send from it, so your replies can't go out. Press Connect again
+and leave “Send email on your behalf” ticked on Google's screen." A send refused for that reason returns the same advice
+as a permanent failure (shown on the card), and the weekly email skips it without a Sentry error.
+**Founder action:** the tester reconnects Gmail with sending ticked when he is back.

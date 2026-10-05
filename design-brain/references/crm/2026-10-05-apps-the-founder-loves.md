@@ -33,3 +33,20 @@ the check-up list as principles, not screens:
 - **#23 Plain lists, few labels:** the phone Customers list repeats a "Needs you" pill on every row, even under the
   "Needs you" tab; show a label only where it says something new (rides with check-up #7).
 Still out: keyboard-first (R-002).
+
+## Macro, studied (2026-10-05, founder: "yes i love its ui ux")
+
+**Evidence, honestly:** grade B. Macro's own README and pull requests on GitHub (macro-inc/macro, open source),
+plus search summaries. macro.com is blocked from this sandbox and Mobbin needs a paid plan, so **no Macro screen
+was seen**; the visual look is not studied yet (a screenshot from the founder would settle it).
+
+| What Macro does | Principle | For FollowUp |
+|---|---|---|
+| One inbox: email, chat, mentions, tasks in one list | One list, every channel | Already: Today is one list (A-087), Customers is everyone (A-082) |
+| The list split into **Signal** and **Noise** | What needs you is apart from everything else | Already: Today holds only who needs you; "set aside N emails that weren't customers" is the noise, one line (A-088) |
+| Keyboard-first: j/k, e, cmd+K | Fast for a desk power user | **Rejected for FollowUp (R-002):** the owner is on a phone, up a ladder. Not proposed. |
+| On phones: **swipe actions** on a row, pull to refresh | The common action under the thumb, no menu | **Candidate:** swipe a Today row for Later (never for Send). Buttons stay; swipe is the phone convention (Mail, Gmail), an accelerant, not the only way |
+| "Edits come in instantly"; built for speed | Speed you can feel | **Candidate:** a phone speed check (check-up #21's second half): time Today and a customer page on a mid phone, fix anything over a second |
+| Each surface "purpose-built for its job" | One job per screen | Already: A-080 |
+
+Sources: [macro-inc/macro README](https://github.com/macro-inc/macro) · [PR #6813, mobile inbox](https://github.com/macro-inc/macro/pull/6813) · [PR #6540, unified inbox](https://github.com/macro-inc/macro/pull/6540) · [Macro Mail](https://macro.com/email) (blocked here; from search summary)

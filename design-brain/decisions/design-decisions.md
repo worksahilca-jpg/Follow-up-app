@@ -8929,3 +8929,9 @@ replying here for today…"), Export asks for a fresh sign-in like Delete, the f
 used to switch a business's form off), Google access revoked when an account is deleted.
 **Left for later (low):** the error banner shows text from the URL; one shared cross-site check on writes; disconnect
 acting on one inbox; the CSP's unsafe-inline; an incident-response plan.
+
+## 2026-10-05 — Colour A: the app stays on its white ground (A-090)
+
+Check-up items #19/#20 closed. The founder compared A (white, as now) and B (warm cream) on Today, chose B, then said
+"wait … a is fine" before any edit. No token changed. The clearer orange "needs you" dot is still open; it was only
+shown inside B.

@@ -237,6 +237,12 @@ export async function deleteBusinessData(
     }
   }
 
+  // Cancel FollowUp's access at Google too (security review M2, 2026-10-05). Deleting the rows
+  // below removes our copy of the tokens, but the grant itself stayed live at Google, and copies
+  // in database backups stayed usable. Best-effort, like Stripe: Google being down never blocks
+  // a business's own request to be erased.
+  await revokeGoogleGrants(businessId);
+
   await prisma.$transaction([
     prisma.message.deleteMany({ where: { conversation: { lead: { businessId } } } }),
     prisma.conversation.deleteMany({ where: { lead: { businessId } } }),
@@ -321,4 +327,28 @@ export async function deleteBusinessData(
   });
 
   return { success: true };
+}
+
+/** Revoke every Google token this business holds (Gmail, Calendar), so the grant ends at Google, not just here. */
+async function revokeGoogleGrants(businessId: string): Promise<void> {
+  let rows: { accessToken: string | null; refreshToken: string | null }[] = [];
+  try {
+    rows = await prisma.integration.findMany({
+      where: { user: { businessId }, provider: { in: ["gmail", "google_calendar"] } },
+      select: { accessToken: true, refreshToken: true },
+    });
+  } catch (err) {
+    console.error(`Couldn't read Google connections for business ${businessId} during deletion:`, err instanceof Error ? err.name : "UnknownError");
+    return;
+  }
+  for (const row of rows) {
+    for (const token of [row.refreshToken, row.accessToken]) {
+      if (!token) continue;
+      try {
+        await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`, { method: "POST" });
+      } catch (err) {
+        console.error(`Google token revocation failed for business ${businessId} during deletion:`, err instanceof Error ? err.name : "UnknownError");
+      }
+    }
+  }
 }

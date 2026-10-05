@@ -100,7 +100,7 @@ describe("buildDeidentifiedTrainingSet", () => {
         assignedTo: { name: "Jordan Lee", email: "jordan@followupbase.io" },
         conversations: [
           {
-            channel: "email",
+            channel: "text",
             messages: [
               { direction: "inbound", body: "Hi, I'm Priya Sharma, call me at 860-935-8202.", sentAt: new Date("2026-01-01T00:00:00Z") },
               { direction: "outbound", body: "Thanks Priya, Jordan Lee here — I'll call you shortly.", sentAt: new Date("2026-01-01T01:00:00Z") },
@@ -130,5 +130,21 @@ describe("buildDeidentifiedTrainingSet", () => {
 
     const serialized = JSON.stringify(result);
     expect(serialized).not.toMatch(/Priya Sharma|priya\.sharma@example\.com|860.*935.*8202|Jordan Lee/i);
+  });
+
+  it("never includes email, even for an opted-in business (Google's Workspace data policy, security review H1)", async () => {
+    p.business.findUnique.mockResolvedValueOnce({ allowModelTraining: true, industry: null });
+    p.lead.findMany.mockResolvedValueOnce([
+      {
+        id: "lead1",
+        name: "Sam",
+        email: "sam@example.com",
+        phone: null,
+        company: null,
+        assignedTo: null,
+        conversations: [{ channel: "email", messages: [{ direction: "inbound", body: "Is it available?", sentAt: new Date("2026-01-01T00:00:00Z") }] }],
+      },
+    ]);
+    expect(await buildDeidentifiedTrainingSet("biz1")).toEqual([]);
   });
 });

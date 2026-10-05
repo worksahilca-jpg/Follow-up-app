@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 
   let res: NextResponse;
   try {
-    const { email } = await exchangeCodeForTokens(code, ctx.userId);
+    await exchangeCodeForTokens(code, ctx.userId);
     void recordAudit(ctx, "integration.gmail.connect");
     // Best-effort: push is an accelerator, the poll still works without it.
     await ensureGmailWatch(ctx.businessId).catch(() => null);
@@ -65,11 +65,11 @@ export async function GET(request: NextRequest) {
       returnTo.searchParams.set("gmail", "error");
       returnTo.searchParams.set(
         "message",
-        `${email} is connected, but FollowUp isn't allowed to send from it, so your replies can't go out. Press Connect again and leave “Send email on your behalf” ticked on Google's screen.`
+        "Your Gmail is connected, but FollowUp isn't allowed to send from it, so your replies can't go out. Press Connect again and leave “Send email on your behalf” ticked on Google's screen."
       );
     } else {
+      // Not the address itself: a URL lands in browser history and request logs (security review L4).
       returnTo.searchParams.set("gmail", "connected");
-      returnTo.searchParams.set("email", email);
     }
     res = NextResponse.redirect(returnTo);
   } catch (err) {

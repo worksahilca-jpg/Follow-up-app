@@ -9,6 +9,7 @@ const leadRow = vi.fn();
 const recordAudit = vi.fn(async () => true);
 const heldSince = vi.fn(async () => false);
 
+vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: vi.fn(async () => false) }));
 vi.mock("@/lib/db", () => ({
   prisma: {
     lead: { findUnique: (...a: unknown[]) => leadRow(...a), update: vi.fn(async () => ({})), updateMany: vi.fn(async () => ({})) },

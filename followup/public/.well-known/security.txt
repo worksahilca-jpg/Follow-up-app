@@ -1,0 +1,4 @@
+Contact: mailto:contact@followupbase.io
+Expires: 2027-10-05T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://www.followupbase.io/.well-known/security.txt

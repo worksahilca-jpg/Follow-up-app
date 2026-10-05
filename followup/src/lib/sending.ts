@@ -1005,7 +1005,10 @@ export async function sendFollowUpToLead(
     if (lead.suggestedMessage) {
       try {
         const consent = await prisma.business.findUnique({ where: { id: lead.businessId }, select: { allowModelTraining: true } });
-        keepDraft = !!consent?.allowModelTraining;
+        // Never for email (founder, 2026-10-05, security review H1): Google's Workspace data
+        // policy doesn't let people read Gmail-derived messages to improve a product, so an
+        // email draft is never kept, whatever the switch says. Whether it was edited still is.
+        keepDraft = !!consent?.allowModelTraining && channel !== "email";
       } catch {
         keepDraft = false;
       }

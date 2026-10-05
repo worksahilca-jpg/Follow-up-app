@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionContext, requireAdmin } from "@/lib/session";
+import { requireRecentAuth } from "@/lib/reauth";
 import { exportBusinessData } from "@/lib/businessData";
 import { recordAudit } from "@/lib/audit";
 
@@ -17,6 +18,10 @@ export async function GET() {
   if (!(await requireAdmin(ctx))) {
     return NextResponse.json({ success: false, message: "Only an admin can do this." }, { status: 403 });
   }
+
+  // The whole customer list in one file: a recent sign-in, not just a valid cookie (security review L3).
+  const reauth = requireRecentAuth(ctx);
+  if (reauth) return reauth;
 
   const data = await exportBusinessData(ctx.businessId);
   if (!data) return NextResponse.json({ success: false, message: "Business not found." }, { status: 404 });

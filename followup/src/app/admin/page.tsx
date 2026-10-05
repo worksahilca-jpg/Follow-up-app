@@ -88,33 +88,25 @@ export default async function AdminPage() {
       <section className="mt-10">
         <h2 className="font-display text-xl">What testers changed this week</h2>
         <p className="text-sm text-ink-soft mt-1">
-          Every draft a tester edited before sending, from businesses that turned on &quot;Help improve
-          FollowUp&quot;. Names and contact details are removed before this page sees them. Read the
-          difference, then fix the instructions.
+          How many of FollowUp&apos;s replies each business sent this week, and how many they changed first.
+          Numbers only: no message is shown here, so no one reads a customer&apos;s email.
         </p>
         <div className="mt-4 flex flex-col gap-3">
           {data.draftChanges.length === 0 ? (
             <div className="box p-5 text-sm text-ink-soft">
-              Nothing yet. This fills as testers with the switch on edit a draft and send it.
+              Nothing yet. This fills as testers send FollowUp&apos;s replies.
             </div>
           ) : (
-            data.draftChanges.map((c) => (
-              <div key={c.id} className="box p-5">
-                <p className="text-xs text-ink-soft">
-                  {c.businessName} · {channelLabel(c.channel)} · {formatFullDate(c.sentAt)}
-                </p>
-                <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs font-medium text-ink-soft mb-1">FollowUp wrote</p>
-                    <p className="text-sm whitespace-pre-wrap">{c.draft}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium mb-1">They sent</p>
-                    <p className="text-sm whitespace-pre-wrap">{c.sent}</p>
-                  </div>
+            <div className="box overflow-hidden">
+              {data.draftChanges.map((c) => (
+                <div key={c.businessName} className="flex items-center justify-between gap-4 border-t border-line-2 px-5 py-3 text-sm first:border-t-0">
+                  <span className="min-w-0 truncate">{c.businessName}</span>
+                  <span className="shrink-0 tabular-nums text-ink-soft">
+                    {c.sent - c.edited} of {c.sent} sent unchanged
+                  </span>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </section>

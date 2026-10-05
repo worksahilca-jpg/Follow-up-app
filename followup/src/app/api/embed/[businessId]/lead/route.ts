@@ -81,13 +81,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // campaign, a busy open house), tight enough to blunt a script hammering
   // this URL directly. See the file comment above for why this needs a cap
   // at all.
-  // Plus a ceiling per day (security pass 2026-10-05): 20 per 10 minutes still let a patient
-  // script post about 2,900 leads a day, each one an OpenAI call on FollowUp's key. 150 a day is
-  // far above any small business's real form traffic.
-  if (
-    (await tooManyRecentLeads(businessId, "Website form", { windowMinutes: 10, max: 20 })) ||
-    (await tooManyRecentLeads(businessId, "Website form, daily", { windowMinutes: 24 * 60, max: 150 }))
-  ) {
+  //
+  // No per-day block here, deliberately (security review M1, 2026-10-05): this counter records
+  // every attempt, so a day-long ceiling let a stranger switch a business's form off for a day
+  // with ~150 junk posts. The OpenAI spend a flood could cause is capped where the AI runs
+  // instead (AI_RUNS_PER_BUSINESS_PER_DAY in src/lib/scoring.ts), so real visitors keep getting
+  // through and the bill stays bounded.
+  if (await tooManyRecentLeads(businessId, "Website form", { windowMinutes: 10, max: 20 })) {
     return NextResponse.json(
       { success: false, message: "Too many submissions right now — please try again in a few minutes." },
       { status: 429 }

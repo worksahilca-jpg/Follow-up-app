@@ -23,6 +23,35 @@ export default function DataPrivacySection() {
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  // Every customer in one file, so the server asks for a fresh sign-in first, as Delete does
+  // (security review L3, 2026-10-05): a stolen week-old cookie shouldn't be enough to take it.
+  async function handleExport() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const res = await fetch("/api/business/export");
+      if (res.status === 401) {
+        const data = await res.json().catch(() => ({}));
+        if (await handleReauthRequired(res, data)) return;
+      }
+      if (!res.ok) throw new Error("Couldn't prepare the file. Try again.");
+      const blob = await res.blob();
+      const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "followup-export.json";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Couldn't prepare the file. Try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   useEffect(() => {
     fetch("/api/business/delete")
@@ -88,14 +117,21 @@ export default function DataPrivacySection() {
               Every lead, conversation, deal, and setting tied to your business, as one JSON file. Credentials and
               tokens are never included.
             </p>
+            {exportError && (
+              <p className="mt-1 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>
+                {exportError}
+              </p>
+            )}
           </div>
-          <a
-            href="/api/business/export"
-            className="shrink-0 text-sm font-medium rounded-full px-3.5 py-2"
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exporting}
+            className="shrink-0 text-sm font-medium rounded-full px-3.5 py-2 disabled:opacity-60"
             style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
           >
-            Download
-          </a>
+            {exporting ? "Preparing…" : "Download"}
+          </button>
         </div>
       </div>
 

@@ -14,6 +14,7 @@ const { findUnique, update, updateMany } = vi.hoisted(() => ({
   // The refusal path's one write — see "records WHY it skipped" below.
   updateMany: vi.fn(async () => ({ count: 1 })),
 }));
+vi.mock("@/lib/rateLimit", () => ({ tooManyRecentActions: vi.fn(async () => false) }));
 vi.mock("@/lib/db", () => ({ prisma: { lead: { findUnique, update, updateMany } } }));
 
 vi.mock("@/lib/integrations/openai", () => ({

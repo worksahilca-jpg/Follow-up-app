@@ -1597,3 +1597,11 @@ different kinds of replies"*, then *"yes do all"* to: ask the trade in setup, an
   under every existing rule, never over one. Every other trade writes exactly as before.
 **Not yet:** playbooks for other trades; the proven-reply library.
 
+## A-084 — Today's reply pane stays in view while the list scrolls ^A-084
+
+**Approved:** 2026-10-05, founder, using Today with a long list: *"the message should pop up, it should float,
+otherwise when I scroll down and click on another lead I need to scroll up to check what happened."*
+**What specifically:** on the desk, the right-hand pane (their words, the reply card, Send) is sticky: it stays at
+the top of the window while the list on the left scrolls, and scrolls on its own if it is taller than the window.
+Nothing else about A-080's Today changes. The phone is unchanged (rows open in place, R-015).
+

@@ -74,3 +74,13 @@ describe("reading the trade", () => {
     expect(await businessTrade("biz1")).toBeNull();
   });
 });
+
+describe("rules every business gets (founder's live test, 2026-10-05)", () => {
+  it("never claims something is available, and answers every question", async () => {
+    await generateFollowUpMessage({ name: "Priya Sharma", conversation, trade: "Other" });
+    const prompt = systemPrompt();
+    expect(prompt).toMatch(/Never say that something is or isn't available/);
+    expect(prompt).toMatch(/address every one of them/);
+  });
+});
+

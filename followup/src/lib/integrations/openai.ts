@@ -1353,7 +1353,12 @@ export async function generateFollowUpMessage(
       "said the thing and asked the question, stop. Open on the substance, so the first sentence is the actual " +
       "reason you are writing rather than a preamble to it. If the lead's most recent message asked a question, " +
       "the first sentence answers it, or says plainly that you'll confirm the specific thing they asked, before " +
-      "anything else; a follow-up that ignores the question they asked reads as a form letter. Ask at most one " +
+      "anything else; a follow-up that ignores the question they asked reads as a form letter. If it asked " +
+      // 2026-10-05, the founder's own live test: "Is it still available? Can
+      // I see it this weekend? What's the price?" got an answer to the first
+      // and the last, and nothing about the visit.
+      "several questions, address every one of them, briefly and in the order asked, even if that takes a third " +
+      "sentence; skipping one tells them nobody read it. Ask at most one " +
       "question in the whole message, and make it one a person answers in a few words. Complete sentences, proper capitalization, no " +
       "sentence fragments, no trailing off mid-thought, no run-on clauses joined by a dash. ";
   const languageSubject = dm ? "Write the message and every button title" : "Write both the subject and the body";
@@ -1391,6 +1396,11 @@ export async function generateFollowUpMessage(
           "conversation below. If the lead asked a factual question the conversation doesn't answer, acknowledge " +
           "the question and say you'll confirm the specifics for them — do not make up an answer, a number, a " +
           "date, or a detail to sound helpful. When in doubt, leave it out. " +
+          // The same live test: "The two-bedroom condo is still available"
+          // with nothing in the thread saying so. Only the owner knows.
+          "Never say that something is or isn't available, still on the market, in stock, open, free or bookable " +
+          "unless a message from the business in this conversation already says so; say you will confirm it for " +
+          "them instead. " +
           // The one exception, and it is not an invented number: a price
           // question gets the sentence that answers it, with a blank the
           // owner fills in on Today (src/lib/priceSlot.ts, A-060). Before

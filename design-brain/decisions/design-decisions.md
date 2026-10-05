@@ -8940,3 +8940,8 @@ shown inside B.
 
 `--state-needs` #b4532a → #c96a1b. Checked rendered on Today (desktop, 2x): the dot on the reply card's note reads
 orange on the peach-to-blue gradient. Contrast 3.7:1 on white, 3.4:1 on the #f5f3f1 fill; dot only.
+
+## 2026-10-05 — Results on Today include replies to the owner's sends (A-092)
+
+Product call by the founder ("yes"). Only Today's end-of-day line changes; the weekly email and /analytics are unchanged,
+so their numbers can be lower than Today's. Covered by a new test in `rescued.test.ts`.

@@ -68,7 +68,7 @@ export default async function DashboardPage() {
   const weekEnd = new Date();
   const weekStart = new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
   const [rescue, answeredThisWeek, approvals, setupSteps, business, me, gmail, outlook, firstSend] = await Promise.all([
-    ctx ? getRescueReport(ctx.businessId, 7) : null,
+    ctx ? getRescueReport(ctx.businessId, 7, undefined, { includeOwnerSends: true }) : null,
     ctx ? countCustomersAnswered(ctx.businessId, weekStart, weekEnd) : 0,
     ctx ? getPendingApprovals(ctx.businessId) : [],
     // Passed straight through. This used to be re-mapped field by field,

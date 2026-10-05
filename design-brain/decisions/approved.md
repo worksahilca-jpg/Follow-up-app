@@ -1712,3 +1712,11 @@ card note, the customer page, PersonPanel, Settings, /admin tester health), so o
 - **Not changed:** the landing page's own `--decision` (#b4532a in `landing.module.css`), which nothing uses.
 - **Honest note:** at 7px the change is subtle; it reads more orange and less red-brown, not louder. If it still reads
   as an error to testers, the next step is the dot's shape or its word, not more saturation.
+
+## A-092 — Today's "came back after a follow-up" counts the owner's sends too ^A-092
+
+**Approved 2026-10-05**, founder: *"yes"*. Owners press Send on most replies themselves, so counting only FollowUp's
+automatic sends undercounted the work. Today's "This week" line now counts a customer who replied to **any** message
+sent through FollowUp (`getRescueReport(..., { includeOwnerSends: true })`), and its "booked a call" follows the same
+set. "FollowUp answered N for you" still counts FollowUp's own sends only. The weekly email and /analytics keep the
+strict count ("what FollowUp saved you" must never flatter itself). The words stay true either way.

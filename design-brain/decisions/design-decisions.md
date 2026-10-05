@@ -8958,3 +8958,20 @@ Check-up #16 closed. The drawing was made on the running app (words removed in t
 system. The Replies page went from about 2,900px to about 2,100px tall on a phone. `trustCopy.test.ts` was updated:
 it now checks that the promises that remain are true and that no summary says "sends" on a holding account; the
 guarantee moved to "Your rules". The proposal I first made ("short line + More") broke R-026 and was not drawn.
+
+## 2026-10-05 — The research items no round had built (founder: "work on all")
+
+- **Learning from edits (Hooked's "investment"), built.** `getVoiceSamples` used to treat every reply sent
+  through FollowUp as machine-written, including the ones the owner rewrote, so the owner's corrections never
+  reached the next draft. Now a reply the owner edited (`draftEdited = true`) or typed from scratch inside
+  FollowUp (`automated = false`, `draftEdited = null`) counts as their writing. Unchanged drafts stay out, so
+  FollowUp never learns from itself. Per business only; nothing new is stored (it reads the sent messages
+  already kept). `pastReplies.ts` keeps the old rule.
+- **Proof number, decided to wait.** The per-owner proof is built (Today's "This week" line, A-088/A-092; the
+  weekly email; "Won back" on /admin). The landing-page number waits for real volume: on 2026-10-05, 30 days
+  across all testers was 29 replies sent and 5 customers who answered. Too small to print without looking
+  weak. Bar to revisit: about 50 customers answered in 30 days, and the testers' OK (A-023).
+- **Watching a tester:** `workflows/watch-a-tester.md`, five tasks that answer #10, the "This week" line, the
+  word "Inbox" and trust in a draft.
+- **Security, Google's review:** the breach plan (`followup/docs/incident-response.md`); the stricter CSP
+  (no 'unsafe-eval') runs as Report-Only to Sentry for a week before it's enforced.

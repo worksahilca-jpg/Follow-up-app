@@ -8845,3 +8845,27 @@ the fixed bar, 32px on lg), capped at the window height with its own scroll. Che
 scrolled 700px: the clicked person's reply sits beside them. **Self-review:** a sticky pane taller than the window
 scrolls inside itself, which is a second scroll area; acceptable for a long thread, rare for a reply card.
 
+
+## 2026-10-05 — Today round 1: one list, plain reasons, Edit in place (A-087)
+
+**Why:** the founder asked to fix everything on the check-up list. Before drawing, every screen was run locally and
+compared with the list: items #11, #12, #14 and #15 (customer page Details, Settings as one list, nothing above the
+first row, progress only at 5+) had already shipped on 2026-10-03 (A-080, PRs #423–#425). The list had been written
+from the 2026-10-03 Laws of UX pass, before that build; the founder was told and the notes corrected. What was still
+wrong on his real account (read-only check): eight source headings on Today (Gmail, Website form, Manual entry, CSV
+import, Instagram, Phone call, Messenger, WhatsApp), hold reasons that read as log lines or as the risk judge's essays,
+Edit leaving Today, and fifteen black "Review" buttons on the phone.
+
+**Built:** `oneQueue` (approvalGroups.ts), `plainHoldReason` (holdReasons.ts, with the risk topic now on
+`PendingApproval`), edit-in-place and tappable phone rows in `ApprovalQueue.tsx`, the plain line on the customer page
+and PersonPanel. Compared side by side with the boards at 1280×900 and 390×844.
+
+**Self-review (design-review.md), honestly:**
+- *Weak:* `plainHoldReason`'s fallback for older risk-judge reasons with no stored topic guesses from the words
+  (price, available, commit…). A reason that matches none shows its own words as a sentence, which can still be long.
+  New holds carry a topic, so this shrinks over time.
+- *Weak:* in edit mode the subject line can't be changed on Today (it can on the customer page). Rarely needed for a
+  reply in a thread; left out to keep the card to one box.
+- *Weak:* on the phone, an open card still ends with a small "Close" link, which the board didn't draw.
+- *Holds:* one black per screen on both widths; the reason is said once, on the card, not cut off on every row; the
+  routine pile still never includes an unjudged draft (unchanged `isSafeToSendInBulk`).

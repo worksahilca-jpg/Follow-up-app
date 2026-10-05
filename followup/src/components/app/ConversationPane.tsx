@@ -10,6 +10,7 @@ import Thread from "./Thread";
 import { Initials, StatePill } from "./canvasBits";
 import { ChannelIcon, channelFromSource } from "./ChannelIcon";
 import { ExternalLink } from "lucide-react";
+import { plainHoldReason } from "@/lib/holdReasons";
 
 /**
  * One conversation, as the right half of the desktop Inbox (canvas Inbox
@@ -109,9 +110,9 @@ export default function ConversationPane({
       {/* Pinned under the thread on desktop; on the phone it follows the thread, clear of the tab bar. */}
       <div className="bg-paper px-1 pb-6 pt-2 lg:sticky lg:bottom-0 lg:px-6">
         <div className={COLUMN}>
-          {approval && (
+          {approval && plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic }) && (
             <p className="mb-2 text-[13px] leading-snug text-ink-soft">
-              Held because {approval.reason.replace(/\.\s*$/, "")}.
+              {plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic })}
             </p>
           )}
           {siteReply ? (

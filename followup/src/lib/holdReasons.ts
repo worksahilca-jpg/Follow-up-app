@@ -24,6 +24,8 @@
  * applies to them and the test covers the shapes they produce.
  */
 
+import { PRICE_SLOT_REASON } from "@/lib/priceSlot";
+
 /** Business.holdAllForApproval, reached via the hourly silence check. */
 export const HOLD_ALL_AUTOMATION_REASON =
   "your account holds every automated message for you to approve before it goes out";
@@ -181,3 +183,64 @@ const HELD_ONLY_BY_SETTING: ReadonlySet<string> = new Set([
 export function isHeldOnlyByApprovalSetting(reason: string): boolean {
   return HELD_ONLY_BY_SETTING.has(reason);
 }
+
+/**
+ * Why a reply is waiting, said the way the owner would say it (founder, 2026-10-05: round 1 of the
+ * check-up, A-087). The clauses above finish "Held because …", which made every card read like a log
+ * line, and the risk judge's own sentences ("The draft references previous communication and offers
+ * tailored information, which could imply commitments…") were worse. This turns any stored reason into
+ * one short line that says what to check.
+ *
+ * Null means "say nothing": the only thing holding it is the account's every-reply-waits setting, and
+ * the card already says "waits for your OK". The stored reasons are left as they are, because the safe
+ * pile matches them exactly (isHeldOnlyByApprovalSetting); this is only how they are shown.
+ */
+export function plainHoldReason(reason: string, opts: { firstName: string; topic?: string | null }): string | null {
+  const r = reason.trim().replace(/\.\s*$/, "");
+  const first = opts.firstName;
+  if (r === BACKLOG_BEFORE_PERMISSION_REASON) return "This was waiting before you turned sending on.";
+  if (!r || isHeldOnlyByApprovalSetting(r)) return null;
+  const known = PLAIN_BY_REASON[r];
+  if (known) return known(first);
+  const off = /^FollowUp is switched off for (.+?), so this reply only goes when you send it$/.exec(r);
+  if (off) return `FollowUp is off for ${off[1]}, so this only goes when you send it.`;
+  // The risk judge's own words: say what kind of check it is, not its essay.
+  switch (opts.topic) {
+    case "price":
+      return "Check the price before it goes.";
+    case "date":
+      return "Check the day or time before it goes.";
+    case "tense":
+      return `${first} sounds unhappy. Read it before it goes.`;
+  }
+  if (/\b(price|cost|fee|\$|quote)/i.test(r)) return "Check the price before it goes.";
+  if (/\b(availab|schedul|booking|appointment)/i.test(r)) return "Check: it says what's available. Only you know that.";
+  if (/\b(frustrat|upset|angry|unhappy|complain)/i.test(r)) return `${first} sounds unhappy. Read it before it goes.`;
+  if (/\bsent\b/i.test(r) && /\b(confirm|claims?)/i.test(r)) return "Check: it says you already sent something. This conversation doesn't show that.";
+  if (/\b(commit|promis|impl(y|ies))/i.test(r)) return "Read it before it goes: it promises something.";
+  // Anything else (a Meta messaging window, a reason added later): its own words, as a sentence.
+  const sentence = r.replace(/ — check it before it goes$/, "");
+  return sentence.charAt(0).toUpperCase() + sentence.slice(1) + ".";
+}
+
+const PLAIN_BY_REASON: Record<string, (first: string) => string> = {
+  [UNTOUCHED_LEAD_REASON]: (first) => `You added ${first} yourself, so this is written from your notes only.`,
+  [NEVER_WROTE_REASON]: () => "They haven't messaged you yet, so the first message is yours to send.",
+  [FOUND_IN_SPAM_REASON]: () => "This came from your spam folder. Make sure it's a real customer.",
+  [IN_CRM_REASON]: () => "They're also in your CRM, which may send its own follow-up.",
+  [RISK_CHECK_FAILED_REASON]: () => "FollowUp couldn't check this one, so it's waiting to be safe.",
+  "this conversation was already in your inbox before FollowUp started watching it, so it hasn't seen what you may have already done about it":
+    () => "This was in your inbox before FollowUp started. Check you haven't already answered.",
+  [PRICE_SLOT_REASON]: () => "Add the price, then send.",
+  [UNGROUNDED_DRAFT_REASONS.digits]: () => "Check the number. Nobody wrote it in this conversation.",
+  [UNGROUNDED_DRAFT_REASONS.currency]: () => "Check the price. Nobody mentioned one here.",
+  [UNGROUNDED_DRAFT_REASONS.time]: () => "Check the time. Nobody gave one here.",
+  [UNGROUNDED_DRAFT_REASONS.calendar]: () => "Check the day. Nobody mentioned it here.",
+  [UNGROUNDED_DRAFT_REASONS.availability]: () => "Check: it says what's available. Only you know that.",
+  [UNGROUNDED_DRAFT_REASONS.booking]: () => "Check: it says a time is booked. Only you can confirm that.",
+  [UNGROUNDED_DRAFT_REASONS.done]: () => "Check: it says you already did something this conversation doesn't show.",
+  [UNGROUNDED_DRAFT_REASONS.policy]: () => "Check: it says what's free, included or guaranteed.",
+  [UNGROUNDED_DRAFT_REASONS.hours]: () => "Check: it says when you're open. Only you know that.",
+  [UNGROUNDED_DRAFT_REASONS.service]: () => "Check: it says what you offer. You haven't said that here.",
+  [UNGROUNDED_DRAFT_REASONS.link]: () => "Check the link or email address. You didn't write it.",
+};

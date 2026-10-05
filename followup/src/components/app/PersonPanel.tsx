@@ -9,6 +9,7 @@ import { siteReplyFor } from "@/lib/siteReply";
 import ReplyCard from "./ReplyCard";
 import { ChannelIcon, channelFromSource } from "./ChannelIcon";
 import { Eyebrow, Initials, StatePill, waitingFor, type StateKey } from "./canvasBits";
+import { plainHoldReason } from "@/lib/holdReasons";
 
 /**
  * One customer, opened beside the Customers list (A-025; the canvas App
@@ -97,17 +98,19 @@ export default function PersonPanel({
         quiet: !inbound,
       };
     });
+  // Said the way the owner would say it (A-087), not "Held because …".
+  const plain = approval ? plainHoldReason(approval.reason, { firstName: lead.name.split(" ")[0] || lead.name, topic: approval.riskTopic }) : null;
   if (approval) {
     entries.push({
       key: "held",
       who: "FollowUp",
       at: at.format(new Date(approval.heldAt)),
-      text: approval.reason ? `Wrote the reply. Held because ${approval.reason.replace(/\.\s*$/, "")}.` : "Wrote the reply. It waits for your OK.",
+      text: plain ? `Wrote the reply. ${plain}` : "Wrote the reply. It waits for your OK.",
       dot: "var(--state-needs)",
       quiet: true,
     });
   }
-  const why = approval?.reason ? approval.reason.charAt(0).toUpperCase() + approval.reason.slice(1).replace(/\.\s*$/, "") + "." : null;
+  const why = approval ? (plain ?? "Every reply waits for your OK.") : null;
 
   return (
     <div className="flex min-h-full flex-col">

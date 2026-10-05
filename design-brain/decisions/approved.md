@@ -1720,3 +1720,15 @@ automatic sends undercounted the work. Today's "This week" line now counts a cus
 sent through FollowUp (`getRescueReport(..., { includeOwnerSends: true })`), and its "booked a call" follows the same
 set. "FollowUp answered N for you" still counts FollowUp's own sends only. The weekly email and /analytics keep the
 strict count ("what FollowUp saved you" must never flatter itself). The words stay true either way.
+
+## A-093 — "Practice customers" in Settings → Your data ^A-093
+
+**Approved 2026-10-05**, founder: *"yes"* to a button that removes only practice customers. The rule is the source and
+nothing else: `source = "Test lead"`, which only "See it work: send yourself a practice email" sets. A customer an
+owner typed in looks exactly like a real one, so it is never guessed at.
+- **Row:** between Export and Delete, same box as Export, slate eraser icon, outlined "Remove" (not black, not red:
+  it's tidying, not the page's main action and not a danger). Shown only while there are practice customers; after
+  removing it says "Removed N practice customers." A browser confirm names the count and says real customers are never
+  touched (same pattern as Disconnect Gmail).
+- **Server:** `GET/DELETE /api/leads/practice`, admin only, 10 an hour, every delete through `deleteLeadCascade` with
+  the business id. Tests in `api/leads/practice/__tests__`.

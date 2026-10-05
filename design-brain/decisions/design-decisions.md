@@ -8945,3 +8945,9 @@ orange on the peach-to-blue gradient. Contrast 3.7:1 on white, 3.4:1 on the #f5f
 
 Product call by the founder ("yes"). Only Today's end-of-day line changes; the weekly email and /analytics are unchanged,
 so their numbers can be lower than Today's. Covered by a new test in `rescued.test.ts`.
+
+## 2026-10-05 — Practice customers can be removed (A-093)
+
+Check-up #9 closed. Checked rendered on desktop: row, confirm text, the after state, and the local database (the one
+practice customer gone, the other 15 untouched). Weak spot: not looked at on the phone with a practice customer present;
+it is the same layout as the Export row, which wraps correctly there.

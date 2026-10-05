@@ -17,7 +17,7 @@
 
 import { prisma } from "@/lib/db";
 import type { TeamRole } from "@prisma/client";
-import { sendEmail } from "@/lib/integrations/gmail";
+import { disconnectGmail, sendEmail } from "@/lib/integrations/gmail";
 import { inviteLink } from "@/lib/inviteToken";
 
 export interface TeamMemberSummary {
@@ -249,6 +249,11 @@ export async function removeMember(
     return { success: false, message: "Can't remove the only admin — promote someone else first." };
   }
 
+  // Their connected inboxes and calendars stop working for the business the moment they leave
+  // (an Integration belongs to the business through its user). The tokens used to stay stored and
+  // live at Google; now they are revoked and cleared first (security review L6, 2026-10-05).
+  await forgetLeavingMemberConnections(businessId, targetUserId);
+
   // Their leads shouldn't stay assigned to someone no longer on the team;
   // free them up rather than leaving a dangling "assigned to" that no
   // longer shows up anywhere real.
@@ -264,4 +269,37 @@ export async function removeMember(
       ? "This person had a connected integration (Gmail/Calendar) — that connection will stop working. Reconnect it under a remaining team member if your business relies on it."
       : undefined,
   };
+}
+
+/**
+ * Revoke and clear everything a leaving teammate connected. Gmail goes through disconnectGmail
+ * (stops the push watch too); Google Calendar is revoked at Google; anything else has its tokens
+ * cleared. Best effort per connection: a revoke that fails never blocks the removal, and the
+ * tokens are cleared here either way.
+ */
+async function forgetLeavingMemberConnections(businessId: string, userId: string): Promise<void> {
+  const rows = await prisma.integration.findMany({
+    where: { userId, status: "connected" },
+    select: { id: true, provider: true },
+  });
+  for (const row of rows) {
+    try {
+      if (row.provider === "gmail") {
+        await disconnectGmail(businessId, row.id);
+        continue;
+      }
+      if (row.provider === "google_calendar") {
+        const tokens = await prisma.integration.findUnique({ where: { id: row.id }, select: { accessToken: true, refreshToken: true } });
+        for (const token of [tokens?.refreshToken, tokens?.accessToken]) {
+          if (token) await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`, { method: "POST" }).catch(() => undefined);
+        }
+      }
+      await prisma.integration.update({
+        where: { id: row.id },
+        data: { status: "disconnected", accessToken: null, refreshToken: null },
+      });
+    } catch (err) {
+      console.error(`Couldn't disconnect a leaving member's ${row.provider} connection:`, err instanceof Error ? err.name : "UnknownError");
+    }
+  }
 }

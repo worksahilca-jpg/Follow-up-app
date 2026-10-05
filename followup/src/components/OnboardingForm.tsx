@@ -9,6 +9,7 @@ import { WARM_CARD } from "@/components/app/ReplyCard";
 import { INDUSTRIES, INDUSTRY_SHORT } from "@/lib/industries";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import UndoLine from "@/components/UndoLine";
+import { safeBannerText } from "@/lib/bannerText";
 
 /** The one full-width black button at the foot of each setup step. */
 const PRIMARY =
@@ -96,7 +97,7 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
 
   /** Whatever the provider said on the way back. */
   const errorFor = (key: string) =>
-    searchParams.get(key) === "error" ? (searchParams.get("message") ?? `Couldn't connect ${key}.`) : null;
+    searchParams.get(key) === "error" ? safeBannerText(searchParams.get("message"), `Couldn't connect ${key}.`) : null;
   const inboxError = errorFor("gmail") ?? errorFor("outlook");
 
   /**

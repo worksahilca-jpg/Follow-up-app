@@ -53,7 +53,10 @@ export async function GET() {
     prisma.business.count({ where: { id: ctx.businessId, twilioAuthToken: { not: null } } }),
   ]);
 
-  const secret = business?.twilioSecret ?? null;
+  // The three URLs carry this business's webhook secret. Only an admin can change the Twilio
+  // setup, so only an admin is shown them (security review L7, 2026-10-05), as the lead-webhook
+  // config already does. Twilio's signature check still guards the URLs either way.
+  const secret = (await requireAdmin(ctx)) ? business?.twilioSecret ?? null : null;
   return NextResponse.json({
     success: true,
     smsUrl: secret ? `${inboundBaseUrl()}/api/twilio/sms/${secret}` : null,

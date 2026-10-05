@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, ChevronDown, MessageSquare } from "lucide-react";
 import ChannelNotReceiving from "@/components/ChannelNotReceiving";
+import { safeBannerText } from "@/lib/bannerText";
 
 interface PendingPage {
   id: string;
@@ -53,7 +54,7 @@ export default function FacebookConfig() {
     oauthResult === "connected" && receiving
       ? { kind: "success" as const, text: "Facebook connected — Messenger DMs and lead-form submissions become leads automatically." }
       : oauthResult === "error"
-        ? { kind: "error" as const, text: searchParams.get("message") ?? "Couldn't connect Facebook." }
+        ? { kind: "error" as const, text: safeBannerText(searchParams.get("message"), "Couldn't connect Facebook.") }
         : null;
 
   function load() {

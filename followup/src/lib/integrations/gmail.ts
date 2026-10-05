@@ -294,12 +294,26 @@ async function getAuthedGmailClient(businessId: string, integrationId?: string) 
  * Disconnect: stop the push watch, revoke the tokens at Google (so they
  * are dead even if a database copy ever leaked), then clear them here.
  * Every step is best-effort except the final clear.
+ *
+ * Every connected inbox in the business, not just the oldest (security
+ * review L6, 2026-10-05): with two admins' Gmails connected, "Disconnect"
+ * used to leave the second one reading. Pass `integrationId` to disconnect
+ * one inbox only (a teammate leaving the team).
  */
-export async function disconnectGmail(businessId: string): Promise<void> {
-  const integration = await getGmailIntegration(businessId);
+export async function disconnectGmail(businessId: string, integrationId?: string): Promise<number> {
+  const inboxes = await prisma.integration.findMany({
+    where: { provider: "gmail", status: "connected", user: { businessId }, ...(integrationId ? { id: integrationId } : {}) },
+    select: { id: true },
+  });
+  for (const { id } of inboxes) await disconnectGmailInbox(businessId, id);
+  return inboxes.length;
+}
+
+async function disconnectGmailInbox(businessId: string, integrationId: string): Promise<void> {
+  const integration = await getGmailIntegration(businessId, integrationId);
   if (!integration) return;
   try {
-    const authed = await getAuthedGmailClient(businessId);
+    const authed = await getAuthedGmailClient(businessId, integration.id);
     if (authed && integration.watchExpiration) await authed.gmail.users.stop({ userId: "me" });
   } catch (err) {
     console.error(`Gmail watch stop failed for business ${businessId}:`, err);

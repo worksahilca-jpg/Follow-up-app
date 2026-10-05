@@ -28,6 +28,7 @@ import YourRulesCard from "@/components/YourRulesCard";
 import RuleCard, { RuleNumber, type RuleRecordCounts } from "@/components/RuleCard";
 import { TIER_INFO, VOICE_ADDON_INFO, VOICE_ADDON_AVAILABLE, CARRIER_CHANNELS_AVAILABLE, FREE_TIER_LEAD_CAP } from "@/lib/pricing";
 import { Mail, Calendar, Check, RefreshCw, CreditCard, Search } from "lucide-react";
+import { safeBannerText } from "@/lib/bannerText";
 
 /** Section headings on a setting's page read like the list's group labels
  *  (SettingsList): small and quiet, the card under them carries it.
@@ -632,9 +633,9 @@ function SettingsPageInner() {
   // Surface the outcome of the OAuth redirect (?gmail=connected|error) —
   // pure derivation from the URL, no state needed.
   const gmailError =
-    searchParams.get("gmail") === "error" ? searchParams.get("message") ?? "Couldn't connect Gmail." : null;
+    searchParams.get("gmail") === "error" ? safeBannerText(searchParams.get("message"), "Couldn't connect Gmail.") : null;
   const outlookError =
-    searchParams.get("outlook") === "error" ? searchParams.get("message") ?? "Couldn't connect Outlook." : null;
+    searchParams.get("outlook") === "error" ? safeBannerText(searchParams.get("message"), "Couldn't connect Outlook.") : null;
   // Instagram was missing from this list entirely.
   //
   // Found 2026-09-23, connecting a brand-new demo account: the OAuth
@@ -649,7 +650,7 @@ function SettingsPageInner() {
   // and they have no idea whether to wait, retry, or give up. The
   // channel then silently receives nothing forever.
   const instagramError =
-    searchParams.get("instagram") === "error" ? searchParams.get("message") ?? "Couldn't connect Instagram." : null;
+    searchParams.get("instagram") === "error" ? safeBannerText(searchParams.get("message"), "Couldn't connect Instagram.") : null;
   const billingRedirect = searchParams.get("billing"); // "success" | "canceled" | null
   // Just paid, but the webhook hasn't landed yet — the poll above is
   // already chasing it. Disable Subscribe during this window specifically

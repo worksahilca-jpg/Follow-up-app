@@ -5,6 +5,7 @@
  */
 
 import { getServerSession } from "next-auth";
+import { headers } from "next/headers";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -40,7 +41,27 @@ export async function requireAdmin(ctx: SessionContext): Promise<boolean> {
   return !!user && user.businessId === ctx.businessId && user.role === "ADMIN";
 }
 
+/**
+ * A script on another site calling our API with the owner's cookie (security review L2,
+ * 2026-10-05). The browser says where a request came from (Sec-Fetch-Site) and how
+ * (Sec-Fetch-Mode). A page load or an OAuth return is a "navigate" and stays allowed;
+ * a fetch from another site is refused here, in the one place every signed-in route
+ * already asks "who is this", so no route can forget it. The session cookie is
+ * SameSite=Lax as well; this is the second lock. "same-site" is allowed on purpose:
+ * followupbase.io and www.followupbase.io are the same site.
+ */
+export async function isCrossSiteScript(): Promise<boolean> {
+  try {
+    const h = await headers();
+    return h.get("sec-fetch-site") === "cross-site" && h.get("sec-fetch-mode") !== "navigate";
+  } catch {
+    // Outside a request (a cron job, a script): there is no browser to trick.
+    return false;
+  }
+}
+
 export async function getSessionContext(): Promise<SessionContext | null> {
+  if (await isCrossSiteScript()) return null;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !session.user.businessId || !session.user.email) return null;
   return {

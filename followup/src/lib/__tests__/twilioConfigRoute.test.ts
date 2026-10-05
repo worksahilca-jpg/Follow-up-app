@@ -13,7 +13,8 @@ const { businessFindUnique, businessCount } = vi.hoisted(() => ({
   businessCount: vi.fn(),
 }));
 
-vi.mock("@/lib/session", () => ({ getSessionContext: vi.fn(async () => ctx), requireAdmin: vi.fn(async () => false) }));
+const { requireAdmin } = vi.hoisted(() => ({ requireAdmin: vi.fn(async () => false) }));
+vi.mock("@/lib/session", () => ({ getSessionContext: vi.fn(async () => ctx), requireAdmin }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn() }));
 vi.mock("@/lib/db", () => ({ prisma: { business: { findUnique: businessFindUnique, count: businessCount } } }));
 
@@ -25,6 +26,18 @@ beforeEach(() => {
 });
 
 describe("GET /api/twilio/config", () => {
+  // Security review L7 (2026-10-05): the URLs carry the webhook secret.
+  it("shows the webhook URLs to an admin only", async () => {
+    businessCount.mockResolvedValue(0);
+    requireAdmin.mockResolvedValueOnce(false);
+    const asTeammate = await (await GET()).json();
+    expect(asTeammate.smsUrl).toBeNull();
+    expect(JSON.stringify(asTeammate)).not.toContain("s3cret");
+    requireAdmin.mockResolvedValueOnce(true);
+    const asAdmin = await (await GET()).json();
+    expect(asAdmin.smsUrl).toContain("/api/twilio/sms/s3cret");
+  });
+
   it("never selects the Auth Token", async () => {
     businessCount.mockResolvedValue(1);
     await GET();

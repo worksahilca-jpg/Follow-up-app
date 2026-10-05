@@ -61,7 +61,9 @@ function servePages(rows: Row[]) {
   });
 }
 
-function serveFollowUps(rows: { leadId: string; message: string | null; sentAt: Date | null }[]) {
+function serveFollowUps(
+  rows: { leadId: string; message: string | null; sentAt: Date | null; automated?: boolean; draftEdited?: boolean | null }[]
+) {
   p.followUp.findMany.mockImplementation(async (args: { where: { leadId: { in: string[] } } }) =>
     rows.filter((r) => args.where.leadId.in.includes(r.leadId))
   );
@@ -134,6 +136,36 @@ describe("getVoiceSamples — the corpus is human-written", () => {
     serveFollowUps([]);
     await getVoiceSamples("biz1");
     expect(p.followUp.findMany.mock.calls[0][0].where.leadId.in).toEqual(["lead1"]);
+  });
+});
+
+// Learning from edits (founder, 2026-10-05): a reply the owner changed, or typed, inside FollowUp
+// is their writing. Only what went out exactly as FollowUp wrote it stays out of the corpus.
+describe("getVoiceSamples — learns from the owner's edits", () => {
+  const at = new Date("2026-09-14T10:00:00Z");
+
+  it("keeps a reply the owner edited before sending", async () => {
+    servePages([{ id: "m1", body: HUMAN_A, sentAt: at, leadId: "lead1" }]);
+    serveFollowUps([{ leadId: "lead1", message: HUMAN_A, sentAt: at, automated: false, draftEdited: true }]);
+    expect(await getVoiceSamples("biz1")).toEqual([HUMAN_A]);
+  });
+
+  it("keeps a reply the owner typed from scratch inside FollowUp", async () => {
+    servePages([{ id: "m1", body: HUMAN_A, sentAt: at, leadId: "lead1" }]);
+    serveFollowUps([{ leadId: "lead1", message: HUMAN_A, sentAt: at, automated: false, draftEdited: null }]);
+    expect(await getVoiceSamples("biz1")).toEqual([HUMAN_A]);
+  });
+
+  it("still leaves out a draft sent unchanged, by the owner or on its own", async () => {
+    servePages([
+      { id: "m1", body: MACHINE, sentAt: at, leadId: "lead1" },
+      { id: "m2", body: `${MACHINE} `, sentAt: new Date("2026-09-13T10:00:00Z"), leadId: "lead2" },
+    ]);
+    serveFollowUps([
+      { leadId: "lead1", message: MACHINE, sentAt: at, automated: false, draftEdited: false },
+      { leadId: "lead2", message: `${MACHINE} `, sentAt: new Date("2026-09-13T10:00:00Z"), automated: true, draftEdited: null },
+    ]);
+    expect(await getVoiceSamples("biz1")).toEqual([]);
   });
 });
 

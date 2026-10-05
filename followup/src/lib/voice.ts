@@ -84,14 +84,19 @@ type Candidate = { leadId: string; body: string };
  * structurally, from the send record, rather than by judging the prose.
  * The timestamps cover the re-ingested-copy case above.
  */
-export async function machineSentIndex(leadIds: string[]) {
+export async function machineSentIndex(leadIds: string[], { ownerWordsAreHuman = false }: { ownerWordsAreHuman?: boolean } = {}) {
   const sends = await prisma.followUp.findMany({
     where: { leadId: { in: leadIds } },
-    select: { leadId: true, message: true, sentAt: true },
+    select: { leadId: true, message: true, sentAt: true, automated: true, draftEdited: true },
   });
 
   const index = new Map<string, { bodies: Set<string>; times: number[] }>();
   for (const s of sends) {
+    // Learning from edits (founder, 2026-10-05, the "investment" idea from Hooked): a reply the
+    // owner changed before sending, or typed themselves inside FollowUp, is their own writing,
+    // not the machine's. For the voice samples it counts as human, so FollowUp's next drafts
+    // learn from how the owner corrects them. Only what went out unchanged stays "machine".
+    if (ownerWordsAreHuman && (s.draftEdited === true || (!s.automated && s.draftEdited === null))) continue;
     let entry = index.get(s.leadId);
     if (!entry) {
       entry = { bodies: new Set(), times: [] };
@@ -184,7 +189,7 @@ export async function getVoiceSamples(businessId: string): Promise<string[]> {
     cursor = page[page.length - 1].id;
 
     const leadIds = [...new Set(page.map((m) => m.conversation.leadId))];
-    const machineSends = await machineSentIndex(leadIds);
+    const machineSends = await machineSentIndex(leadIds, { ownerWordsAreHuman: true });
 
     for (const m of page) {
       const leadId = m.conversation.leadId;

@@ -8869,3 +8869,25 @@ and PersonPanel. Compared side by side with the boards at 1280×900 and 390×844
 - *Weak:* on the phone, an open card still ends with a small "Close" link, which the board didn't draw.
 - *Holds:* one black per screen on both widths; the reason is said once, on the card, not cut off on every row; the
   routine pile still never includes an unjudged draft (unchanged `isSafeToSendInBulk`).
+
+## 2026-10-05 — Round 2 built; the psychology rules applied; two process lessons (A-088)
+
+**Built:** `src/lib/workDone.ts` (`countWorkSince`, `workLine`, `resultsLine`), the foot line and the end-of-day results
+on Today, the quiet-inbox sentence and one box instead of two, the practice-email label, the setup head start. Compared
+with the boards at 1280×900 and 390×844 on seeded data (15 customers, 39 set-aside emails, two automated follow-ups that
+got replies, a second business with no customers).
+
+**Self-review, honestly:**
+- *Weak:* "came back after a follow-up" counts replies to automated messages only (getRescueReport), so on an Assisted
+  account, where the owner presses Send, it reads low. Honest, but it undersells the owner's own sends.
+- *Weak:* the work line counts a held draft and an automatic send the same as "wrote a reply"; a reply rewritten twice
+  counts twice. Small, and it never invents work.
+- *Holds:* every number is a recorded row; zeros are never shown; no streaks, badges or urgency (A-038, A-046).
+
+**Process lessons (founder caught both):**
+1. *The before/after comparison images were blank* (a page loaded from memory may not read local files). Round 1 was
+   approved on the single boards only. Comparisons are now composed with PIL and every image is looked at before it is
+   sent.
+2. *"The fonts are too bold."* The boards fell back to a heavy system font because Google Fonts doesn't load in the
+   local renderer; the real app uses Public Sans at normal weight. Next boards load the app's own font files, or say on
+   the image that the font is a stand-in.

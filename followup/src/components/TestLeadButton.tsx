@@ -45,7 +45,7 @@ export default function TestLeadButton() {
             so it gets the same send glyph the composer uses, in the button's
             own text colour. */}
         <Send className="h-4 w-4" />
-        {state === "sending" ? "Sending…" : "Send a test lead to myself"}
+        {state === "sending" ? "Sending…" : "See it work: send yourself a practice email"}
       </button>
       {message && <p className="text-xs text-ink-soft mt-2 max-w-xs">{message}</p>}
     </div>

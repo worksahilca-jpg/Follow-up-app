@@ -1645,3 +1645,24 @@ beside today's screens (desk and phone). Follows the check-up in the "UI, UX and
 **Supersedes, in part:** A-006's grouping by source and the founder's 2026-09-23 "sort according to the sources" (the
 order is now longest waiting, A-046); A-067's "solid black Review / Send" on rows; A-080's Edit going to the customer
 page.
+
+## A-088 — Round 2: show the work, results at the end of the day, a quiet inbox, the setup head start ^A-088
+
+**Approved:** 2026-10-05, founder: *"show colours and yes"*, on the boards in `prototypes/2026-10-05-round-2.html`, then
+*"keep the psychology in and the strategy too"*. Built on the psychology study
+(`research/ux-patterns/2026-10-05-psychology-ease-results-return.md`).
+**What specifically:**
+- **Show the work (labour illusion).** At the foot of a working Today, one line in place of the "This week" line:
+  "Since yesterday, FollowUp found 3 customers, wrote 3 replies, and set aside 39 emails that weren't customers." Only
+  what is recorded (leads it found, not ones added by hand; held or automatically sent replies; FilteredEmail). Zero
+  parts are left out; nothing at all when everything is zero. It still opens Numbers.
+- **What came of it, at the end (peak-end).** The "nothing needs your OK" / "done for today" card carries the week's
+  outcomes: "This week: 11 customers answered · 2 came back after a follow-up · 1 booked a call · customers heard back
+  in 12 min." Real numbers only.
+- **A quiet inbox doesn't look broken.** With no customers yet and email already read: "FollowUp checked your email from
+  the last 90 days. No customer there is waiting…". One box, not two; the practice button reads "See it work: send
+  yourself a practice email".
+- **Setup head start (endowed progress).** Step 2's top line names the finished step: "✓ Gmail connected · Step 2 of 3"
+  (on a phone, the check and the bars).
+**Supersedes, in part:** A-045's week line on Today (its facts move to the end-of-day card, "sent without changing a
+word" leaves Today; it stays in Numbers and the Monday email).

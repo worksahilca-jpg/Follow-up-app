@@ -145,7 +145,16 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
             <span className="text-base font-semibold">FollowUp</span>
           </span>
           <span className="flex items-center gap-2.5">
-            <span className="text-[12.5px] text-ink-faint">Step {step} of 3</span>
+            {/* A head start (A-088, Nunes & Drèze): name the step already done, not only the ones left. */}
+            {step >= 2 && inboxConnected && (
+              <span className="flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-ink">
+                <Check className="h-3.5 w-3.5" style={{ color: "var(--sage)" }} aria-hidden="true" />
+                {sources.gmailConnected ? "Gmail" : "Outlook"} connected
+                <span className="hidden text-ink-faint sm:inline">·</span>
+              </span>
+            )}
+            {/* On a phone the bars say the step once the head start is shown; the words would wrap. */}
+            <span className={"whitespace-nowrap text-[12.5px] text-ink-faint" + (step >= 2 && inboxConnected ? " hidden sm:inline" : "")}>Step {step} of 3</span>
             {/* Ink, not the accent: the screen's one accent moment is its button (A-006). */}
             <span className="flex gap-1" aria-hidden="true">
               {([1, 2, 3] as const).map((n) => (

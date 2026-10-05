@@ -725,6 +725,7 @@ export default function ApprovalQueue({
   laterToday = true,
   setAside = 0,
   holdAll = false,
+  weekResults = null,
 }: {
   items: ApprovalItem[];
   /** Only admins send, and this person isn't one (A-041). */
@@ -743,6 +744,8 @@ export default function ApprovalQueue({
    * 2026-09-27).
    */
   holdAll?: boolean;
+  /** "This week: 11 customers answered · 2 came back…" (A-088): what came of it, said at the end of the day. */
+  weekResults?: string | null;
 }) {
   const [resolved, setResolved] = useState<Set<string>>(new Set());
   // A card that is done says what happened for a moment, then leaves and
@@ -843,6 +846,9 @@ export default function ApprovalQueue({
             {answeredForYou > 0 &&
               ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}
           </p>
+          {/* The end of the day is what the owner remembers (peak-end, A-088): real
+              outcomes only, nothing when they are all zero. */}
+          {weekResults && <p className="mt-2.5 text-sm text-ink tabular-nums">{weekResults}</p>}
         </div>
       </motion.div>
       </>

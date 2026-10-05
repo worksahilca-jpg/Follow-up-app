@@ -23,3 +23,13 @@ it comes from their own design write-ups, docs and reviews (sources below). Prin
 inboundrem.com/follow-up-boss-pros-and-cons · strategybreakdowns.com/p/how-attio-does-design ·
 support.monday.com (The Status Column) · github.com/mondaycom/monday-ui-style · medium.com/@jegainsl (Superhuman
 analysis) · blog.superhuman.com/inbox-zero-method
+
+## Macro, again (founder, 2026-10-05: "i love the macro design… keep what we can improve from this in our list")
+
+What he likes isn't pinned down yet (asked: the look, the one inbox, or the speed; a screenshot would settle it). Added to
+the check-up list as principles, not screens:
+- **#21 Speed you can feel:** time Today and a customer's page on a phone; anything over about 1 second is fixed first.
+- **#22 Several accounts, one inbox:** test an owner with two Gmails on the one list (A-087).
+- **#23 Plain lists, few labels:** the phone Customers list repeats a "Needs you" pill on every row, even under the
+  "Needs you" tab; show a label only where it says something new (rides with check-up #7).
+Still out: keyboard-first (R-002).

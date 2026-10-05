@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round Two Boards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Round 2 of the 2026-10-05 check-up (notes doc): show the work FollowUp did, the results at the end of the day, a
+   quiet inbox that does not look broken, and the setup head start. Built on the A-080 and A-087
+   boards (2026-10-03-one-decision-desk.html), same tokens, light only. */
+:root {
+  --paper: #fdfcfc; --card: #ffffff; --card-2: #f5f3f1; --sidebar: #f9f8f6; --board: #ecebe8;
+  --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68;
+  --line: #e7e5e2; --line-2: #f0eeeb; --line-strong: rgba(10,10,10,.18);
+  --state-needs: #b4532a; --state-waiting: #7a8699; --sage: #0d6e3c;
+  --font: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--board); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.boards { display: grid; gap: 48px; padding: 32px 16px 64px; justify-items: center; }
+.board-title { font-size: 13px; color: var(--ink-soft); width: 1280px; max-width: 100%; }
+.board-title b { color: var(--ink); font-weight: 600; }
+
+/* ---- Desktop shell, as it ships ---- */
+.screen { width: 1280px; height: 900px; max-width: 100%; background: var(--paper); display: grid; grid-template-columns: 232px 1fr; overflow: hidden; border: 1px solid var(--line); }
+.side { background: var(--sidebar); border-right: 1px solid var(--line); padding: 18px 12px; display: flex; flex-direction: column; gap: 10px; }
+.biz { display: flex; align-items: center; gap: 10px; padding: 0 4px 6px; font-weight: 600; font-size: 15px; }
+.biz .m { width: 26px; height: 26px; border-radius: 7px; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 13px; }
+.biz .bell { margin-left: auto; color: var(--ink-faint); font-size: 14px; }
+.search { border: 1px solid var(--line); background: var(--card); border-radius: 9px; padding: 8px 12px; color: var(--ink-faint); font-size: 14px; }
+.nav { display: grid; gap: 2px; margin-top: 6px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 9px; color: var(--ink); text-decoration: none; font-size: 15px; }
+.nav a.on { background: var(--card); border: 1px solid var(--line); font-weight: 600; }
+.nav a .n { margin-left: auto; color: var(--ink-faint); font-size: 13px; }
+.nav .ic { width: 16px; height: 16px; border: 1.5px solid var(--ink-soft); border-radius: 4px; opacity: .8; }
+.side .foot { margin-top: auto; display: grid; gap: 2px; }
+.side .foot a { display: flex; gap: 10px; align-items: center; padding: 8px 12px; color: var(--ink); text-decoration: none; font-size: 15px; }
+.side .foot a.sub { color: var(--ink-soft); padding-left: 24px; }
+.main { padding: 36px 56px; overflow: hidden; }
+
+.date { font-size: 13px; color: var(--ink-faint); margin: 0 0 4px; }
+h1 { font-size: 32px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin: 0; }
+.faint { color: var(--ink-faint); } .soft { color: var(--ink-soft); } .small { font-size: 13px; }
+.mono { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); font-weight: 500; }
+
+/* Buttons: one black per screen */
+.btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 11px 22px; font-size: 15px; font-weight: 600; border: 1px solid var(--ink); background: var(--ink); color: #fff; white-space: nowrap; }
+.btn.big { padding: 14px 28px; font-size: 16px; }
+.btn.ghost { background: var(--card); color: var(--ink); border-color: var(--line); font-weight: 500; }
+.link { color: var(--ink-soft); font-size: 14px; text-decoration: none; }
+.link.u { text-decoration: underline; text-underline-offset: 3px; }
+
+/* The warm reply card, exactly the shipped gradient (ReplyCard.tsx) */
+.reply { border-radius: 18px; padding: 20px 22px; border: 1px solid var(--line); display: grid; gap: 12px;
+  background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,.9), rgba(244,196,160,0) 70%),
+              radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,.95), rgba(196,210,228,0) 70%),
+              radial-gradient(50% 70% at 88% 0%, rgba(238,212,204,.9), rgba(238,212,204,0) 72%), #f3efea; }
+.reply .mono { color: var(--ink-soft); }
+.reply .text { font-size: 17px; line-height: 1.45; white-space: pre-line; }
+.reply .basis { font-size: 13px; color: var(--ink-soft); }
+.reply .row { display: flex; align-items: center; gap: 12px; }
+.reply .row .quiet { margin-left: 6px; display: flex; gap: 16px; }
+
+/* ---- Today ---- */
+.today { display: grid; grid-template-columns: 400px 1fr; gap: 40px; margin-top: 28px; align-items: start; }
+.list { display: grid; }
+.person { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: start; padding: 14px 12px; border-top: 1px solid var(--line-2); cursor: pointer; border-radius: 12px; }
+.person.on { background: var(--card); border: 1px solid var(--line); border-top-color: var(--line); margin: -1px 0; }
+.person + .person.on { border-top: 1px solid var(--line); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--card-2); display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+.person .name { font-weight: 600; font-size: 15px; display: flex; gap: 8px; align-items: center; }
+.person .said { color: var(--ink-soft); font-size: 14px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.person .wait { font-size: 13px; color: var(--ink-faint); white-space: nowrap; padding-top: 2px; }
+.glyph { width: 13px; height: 10px; border: 1.3px solid var(--ink-faint); border-radius: 2px; display: inline-block; }
+.open { display: grid; gap: 18px; }
+.open .who { display: flex; align-items: baseline; gap: 10px; }
+.open .who b { font-size: 20px; font-weight: 600; }
+.open .who .sub { font-size: 13px; color: var(--ink-faint); }
+.msg { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; font-size: 16px; line-height: 1.5; white-space: pre-line; }
+.foot-line { margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--line-2); display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-faint); }
+.booked { font-size: 14px; color: var(--ink-soft); }
+.booked b { color: var(--ink); font-weight: 600; }
+
+/* ---- Customer page ---- */
+.cust { display: grid; grid-template-columns: 1fr 340px; gap: 44px; align-items: start; }
+.back { font-size: 13px; color: var(--ink-faint); margin-bottom: 14px; }
+.head { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.head .avatar { width: 44px; height: 44px; font-size: 14px; }
+.head h1 { font-size: 26px; }
+.head .sub { font-size: 13px; color: var(--ink-faint); }
+.daylabel { text-align: center; }
+.thread { display: grid; gap: 14px; }
+.from { font-size: 13px; color: var(--ink-faint); }
+.sidecol { display: grid; gap: 18px; padding-top: 6px; }
+.fact { display: grid; gap: 4px; }
+.fact .k { font-size: 12.5px; color: var(--ink-faint); }
+.fact .v { font-size: 15px; }
+.fact .v.needs::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--state-needs); margin-right: 8px; vertical-align: 2px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions .btn.ghost { padding: 9px 16px; font-size: 14px; }
+.details { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); font-size: 15px; }
+.details .chev { color: var(--ink-faint); }
+.sheet { border: 1px solid var(--line); border-radius: 14px; background: var(--card); overflow: hidden; }
+.sheet .srow { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line-2); font-size: 14px; }
+.sheet .srow:first-child { border-top: 0; }
+.sheet .srow .v { color: var(--ink-soft); }
+.sheet .srow.danger { color: var(--ink-faint); font-size: 13px; }
+
+/* ---- Settings ---- */
+.settings { max-width: 640px; display: grid; gap: 26px; margin-top: 22px; }
+.group { display: grid; gap: 8px; }
+.group .gl { font-size: 13px; color: var(--ink-faint); }
+.rows { border: 1px solid var(--line); border-radius: 14px; background: var(--card); overflow: hidden; }
+.rrow { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-top: 1px solid var(--line-2); font-size: 15px; }
+.rrow:first-child { border-top: 0; }
+.rrow .v { color: var(--ink-faint); font-size: 14px; display: flex; gap: 10px; align-items: center; }
+.rrow .v.ok::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sage); display: inline-block; }
+.rrow .chev { color: var(--ink-faint); margin-left: 8px; }
+.plan { border: 1px solid var(--line); border-radius: 14px; background: var(--card); overflow: hidden; }
+.plan .prow { display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--line-2); font-size: 15px; }
+.plan .prow:first-child { border-top: 0; }
+.plan .prow .k { color: var(--ink-faint); font-size: 14px; }
+.group .head2 { display: flex; justify-content: space-between; align-items: baseline; }
+/* ---- Round 1 additions ---- */
+.why { font-size: 13.5px; color: var(--ink); display: flex; gap: 8px; align-items: baseline; }
+.why::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--state-needs); transform: translateY(-1px); }
+.glyph.chat { border-radius: 50% 50% 50% 2px; width: 11px; height: 11px; }
+textarea.edit { width: 100%; border: 1px solid var(--line); background: rgba(255,255,255,.8); border-radius: 12px; padding: 12px; font: inherit; font-size: 16px; line-height: 1.5; resize: none; height: 168px; color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip { border: 1px solid var(--line); background: rgba(255,255,255,.7); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 500; }
+.note { font-size: 13px; color: var(--ink-soft); }
+/* Phone */
+.phones { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; }
+.phone { width: 390px; height: 844px; background: var(--paper); border: 1px solid var(--line); overflow: hidden; position: relative; }
+.phone .top { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.phone .pm { padding: 16px 16px 0; }
+.phone h1 { font-size: 28px; margin-top: 2px; }
+.phone .card { margin-top: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); overflow: hidden; }
+.phone .first { padding: 16px; display: grid; gap: 12px; }
+.phone .first .who { display: flex; gap: 10px; align-items: center; }
+.phone .first .who b { font-size: 16px; }
+.phone .reply { padding: 16px; }
+.phone .reply .text { font-size: 16px; }
+.phone .reply .row { display: grid; grid-template-columns: 1fr 96px; gap: 10px; }
+.phone .reply .row .btn { padding: 13px 0; }
+.phone .quietrow { display: flex; justify-content: center; gap: 22px; }
+.prow2 { display: grid; grid-template-columns: 32px 1fr auto 10px; gap: 10px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line-2); }
+.prow2 .avatar { width: 32px; height: 32px; font-size: 11px; }
+.prow2 .name { font-weight: 600; font-size: 15px; display: flex; gap: 6px; align-items: center; }
+.prow2 .said { font-size: 14px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prow2 .wait { font-size: 12.5px; color: var(--ink-faint); }
+.prow2 .chev { color: var(--ink-faint); font-size: 16px; }
+.tabs { position: absolute; bottom: 0; left: 0; right: 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); background: var(--paper); padding: 10px 0 14px; text-align: center; font-size: 12px; color: var(--ink-faint); }
+.tabs b { color: var(--ink); font-weight: 600; }
+/* Reasons table */
+.words { width: 1280px; max-width: 100%; background: var(--paper); border: 1px solid var(--line); padding: 32px 40px; }
+.words table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.words th { text-align: left; font-weight: 500; color: var(--ink-faint); font-size: 13px; padding: 0 16px 10px 0; border-bottom: 1px solid var(--line); }
+.words td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+.words td.old { color: var(--ink-faint); width: 48%; }
+.words td.new { color: var(--ink); }
+.words td.new i { color: var(--ink-faint); font-style: normal; }
+.work { font-size: 14px; color: var(--ink-soft); margin: 26px 12px 0; line-height: 1.5; }
+.work b { color: var(--ink); font-weight: 600; }
+.done { margin-top: 28px; border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 22px 24px; display: grid; grid-template-columns: 36px 1fr; gap: 16px; max-width: 760px; }
+.done .tick { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-size: 15px; }
+.done p { margin: 0; }
+.done .t { font-size: 17px; font-weight: 600; }
+.done .s { margin-top: 6px; color: var(--ink-soft); font-size: 15px; line-height: 1.5; }
+.done .r { margin-top: 12px; font-size: 15px; line-height: 1.5; }
+.done .r b { font-weight: 600; }
+.ghostbtn { display: inline-flex; margin-top: 16px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 500; background: var(--card); }
+.setup { width: 640px; max-width: 100%; background: var(--paper); border: 1px solid var(--line); padding: 28px 40px 36px; }
+.setup .bar { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--ink-faint); }
+.setup .bar b { color: var(--ink); font-size: 16px; }
+.setup .gotit { margin-top: 26px; display: flex; gap: 10px; align-items: center; font-size: 14.5px; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.setup .gotit .ok { width: 20px; height: 20px; border-radius: 50%; background: var(--sage); color: #fff; display: grid; place-items: center; font-size: 12px; }
+.setup h1 { margin-top: 22px; font-size: 28px; }
+.setup .q { margin-top: 20px; font-weight: 500; font-size: 15px; }
+.setup .chips2 { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+.setup .chips2 span { border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 14.5px; background: var(--card); }
+.setup .more { margin-top: 18px; color: var(--ink-faint); font-size: 13.5px; }
+</style>
+</head>
+<body>
+<div class="boards">
+<!-- shared sidebar -->
+<!-- ===================== 1. TODAY WITH THE WORK SHOWN ===================== -->
+<div class="board-title"><b>1 · Today: what FollowUp did, in one line</b> · at the foot of the list, in place of the “This week” line (which moves to the end of the day, board 2). Only things FollowUp records: customers found, replies written, emails set aside as not customers.</div>
+<div class="screen" id="today-work">
+  <aside class="side">
+    <div class="biz"><span class="m">M</span>Maple Realty<span class="bell">◦</span></div>
+    <div class="search">Search customers</div>
+    <nav class="nav"><a class="on"><span class="ic"></span>Today<span class="n">3</span></a><a><span class="ic"></span>Customers<span class="n">23</span></a></nav>
+    <div class="foot"><a>Settings</a><a class="sub">Something broke?</a><a>Sign out</a></div>
+  </aside>
+  <main class="main">
+    <p class="date">Tuesday, October 6</p>
+    <h1>3 customers are waiting on you.</h1>
+    <div class="today">
+      <div class="list">
+        <div class="person on"><span class="avatar">IS</span><div><div class="name">Ivy Sohal <span class="glyph"></span></div><div class="said">“Hi, is the house on Elm St still available? Could you send the floor plan?”</div></div><span class="wait">9 h</span></div>
+        <div class="person"><span class="avatar">OS</span><div><div class="name">Owen Shah <span class="glyph"></span></div><div class="said">“Do you have anything 2-bed under 600k near the lake?”</div></div><span class="wait">5 h</span></div>
+        <div class="person"><span class="avatar">DK</span><div><div class="name">Daniel Kim <span class="glyph"></span></div><div class="said">“What’s the asking price on the Queen St condo?”</div></div><span class="wait">40 min</span></div>
+        <p class="work">Since yesterday, FollowUp read your Gmail, found <b>3 customers</b>, wrote <b>3 replies</b>, and set aside <b>39 emails</b> that weren’t customers.</p>
+      </div>
+      <div class="open">
+        <div class="who"><b>Ivy Sohal</b><span class="sub">Email · waiting 9 h</span></div>
+        <div class="msg">Hi, is the house on Elm St still available? Could you send the floor plan?
+
+Thanks, Ivy</div>
+        <div class="reply">
+          <div class="mono">Your reply · waits for your OK</div>
+          <div class="text">Hi Ivy,
+
+Thanks for asking about the house on Elm St. I’ll confirm it’s still available and send the floor plan today. Which days suit you for a showing?
+
+Best,
+Sahil</div>
+          <div class="row"><span class="btn big">Send</span><span class="btn ghost big">Edit</span><span class="quiet"><span class="link">Later</span><span class="link">Don’t send</span><span class="link">We talked</span></span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===================== 2. DONE FOR TODAY, WITH RESULTS ===================== -->
+<div class="board-title"><b>2 · The end of the day says what came of it</b> · the last thing the owner sees (peak-end). Real numbers only; any part that is zero is left out, and with nothing to say it stays as today.</div>
+<div class="screen" id="done">
+  <aside class="side">
+    <div class="biz"><span class="m">M</span>Maple Realty<span class="bell">◦</span></div>
+    <div class="search">Search customers</div>
+    <nav class="nav"><a class="on"><span class="ic"></span>Today</a><a><span class="ic"></span>Customers<span class="n">23</span></a></nav>
+    <div class="foot"><a>Settings</a><a class="sub">Something broke?</a><a>Sign out</a></div>
+  </aside>
+  <main class="main">
+    <p class="date">Tuesday, October 6</p>
+    <h1>No one is waiting on you.</h1>
+    <div class="done">
+      <span class="tick">✓</span>
+      <div>
+        <p class="t">You’re done for today.</p>
+        <p class="s">You answered 3 customers today. FollowUp keeps watching, and will tell you when someone writes.</p>
+        <p class="r">This week: <b>2 customers you answered wrote back</b> · <b>1 booked a call</b> · customers heard back in 12 minutes.</p>
+      </div>
+    </div>
+    <p class="booked" style="margin:22px 2px 0">Booked call · <b>Ivy Sohal</b>, Sat 10:30 AM</p>
+  </main>
+</div>
+
+<!-- ===================== 3. QUIET INBOX ===================== -->
+<div class="board-title"><b>3 · A quiet inbox doesn’t look broken</b> · a new tester with no customers yet. Say what FollowUp checked, then offer the practice email that already exists (“Send a test lead to myself”), in plainer words.</div>
+<div class="screen" id="quiet">
+  <aside class="side">
+    <div class="biz"><span class="m">M</span>Maple Realty<span class="bell">◦</span></div>
+    <div class="search">Search customers</div>
+    <nav class="nav"><a class="on"><span class="ic"></span>Today</a><a><span class="ic"></span>Customers</a></nav>
+    <div class="foot"><a>Settings</a><a class="sub">Something broke?</a><a>Sign out</a></div>
+  </aside>
+  <main class="main">
+    <p class="date">Tuesday, October 6</p>
+    <h1>No one is waiting on you.</h1>
+    <div class="done">
+      <span class="tick">✓</span>
+      <div>
+        <p class="t">FollowUp checked your email from the last 90 days.</p>
+        <p class="s">None of them is a customer still waiting for an answer, so there’s nothing to send. When a customer writes, their reply will be here within a few minutes.</p>
+        <span class="ghostbtn">See it work: send yourself a practice email</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===================== 4. SETUP HEAD START ===================== -->
+<div class="board-title" style="width:640px"><b>4 · Setup starts with what’s done</b> · the step line names the step already finished (“Gmail connected ✓”) instead of only counting. Nothing is added to a step that is already long (#10).</div>
+<div class="setup" id="setup">
+  <div class="bar"><b>FollowUp</b><span style="display:flex;gap:8px;align-items:center"><span class="ok" style="width:16px;height:16px;border-radius:50%;background:var(--sage);color:#fff;display:grid;place-items:center;font-size:10px">✓</span><span style="color:var(--ink)">Gmail connected</span> · Step 2 of 3</span></div>
+  <h1>How should FollowUp work?</h1>
+  <p class="soft" style="margin:6px 0 0">Two quick choices; change them any time in Settings.</p>
+  <p class="q">What do you do?</p>
+  <div class="chips2"><span>Real estate</span><span>Mortgage</span><span>Home services</span><span>Clinic</span><span>Legal</span><span>Marketing</span><span>Something else</span></div>
+  <p class="more">(How should it reply? and the rest of the step, as today)</p>
+</div>
+
+</div>
+</body>
+</html>

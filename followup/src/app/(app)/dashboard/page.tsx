@@ -9,8 +9,8 @@ import { getLeads, getUpcomingBookings } from "@/lib/leads-data";
 import { aboutToBeLost } from "@/lib/rescue";
 import { getRescueReport } from "@/lib/rescued";
 import { countCustomersAnswered } from "@/lib/weeklyDigest";
-import { withBasis, sentAsWritten } from "@/lib/showTheWork";
-import { weekLine } from "@/lib/weekLine";
+import { withBasis } from "@/lib/showTheWork";
+import { countWorkSince, resultsLine, workLine } from "@/lib/workDone";
 import { describeWait, describeWaitClause, startOfLocalDay } from "@/lib/calmToday";
 import { countHandledToday } from "@/lib/handledToday";
 import { laterTodayAvailable } from "@/lib/later";
@@ -120,7 +120,6 @@ export default async function DashboardPage() {
   );
   // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
   const comingUp = ctx && leads.length > 0 ? await loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null;
-  const written = ctx ? await sentAsWritten(ctx.businessId, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000)) : { asWritten: 0, total: 0 };
   // A booked call is one line under the list (A-080), only when one exists.
   const nextCall = upcomingBookings[0]
     ? {
@@ -128,14 +127,17 @@ export default async function DashboardPage() {
         when: new Date(upcomingBookings[0].scheduledAt).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: timezone }),
       }
     : null;
-  const thisWeek = weekLine({
+  // Round 2 (A-088). What came of the week goes to the end of the day, where the owner finishes
+  // (peak-end); the foot of a working Today says what FollowUp did since yesterday instead.
+  const weekResults = resultsLine({
     heardBackMs: medianReplyMs(leads, new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000), weekEnd),
     answered: answeredThisWeek,
     cameBack: rescue?.rescued ?? 0,
     booked: rescue?.booked ?? 0,
-    asWritten: written.asWritten,
-    sent: written.total,
   });
+  const work = ctx ? workLine(await countWorkSince(ctx.businessId, startOfLocalDay(new Date(now.getTime() - 24 * 60 * 60 * 1000), timezone))) : null;
+  // A quiet inbox (A-088): whether FollowUp has read anything yet, so "no customers" can say what it checked.
+  const checkedAny = ctx && leads.length === 0 ? (await prisma.filteredEmail.count({ where: { businessId: ctx.businessId } })) > 0 : false;
   // Business.holdAllForApproval — as of 2026-09-20 this stops every
   // automated message including the instant reply, so it changes what
   // this screen can honestly promise.
@@ -260,7 +262,11 @@ export default async function DashboardPage() {
           and a booked call is the one line below. */}
       <div className="mt-4">
       <div className="min-w-0">
-      <ApprovalQueue items={approvalItems} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
+      {/* With no customers at all, the box below says what FollowUp checked; a second
+          "Nothing needs your OK" card above it said the same thing twice (A-088). */}
+      {leads.length > 0 && (
+        <ApprovalQueue items={approvalItems} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
+      )}
 
       {nextCall && (
         <p className="mt-6 text-sm text-ink-soft">
@@ -315,7 +321,11 @@ export default async function DashboardPage() {
                     beta account a few hours later, when the instant
                     reply started waiting for approval too. */}
                 <p className="text-lg leading-relaxed">
-                  {holdAll
+                  {/* A quiet inbox says what was checked (A-088), so an empty
+                      Today reads as "nothing to do", not "it isn't working". */}
+                  {checkedAny
+                    ? `FollowUp checked your email from the last 90 days. No customer there is waiting for an answer, so there's nothing to send. When a customer writes, ${holdAll ? "their reply will be here for you to send" : "FollowUp answers and shows you here"} within a few minutes.`
+                    : holdAll
                     ? "FollowUp is watching your inbox. When a customer writes, FollowUp writes the reply and puts it in Today for you — nothing goes out until you send it."
                     : inbox.instant
                       ? "FollowUp is watching your inbox. The moment a customer writes, it replies within a minute and shows you here."
@@ -435,11 +445,13 @@ export default async function DashboardPage() {
             </section>
           )}
 
-          {/* Today's numbers, in one quiet line (A-045), at the foot of the
-              list; it opens Numbers. Desktop only (R-015). */}
-          {thisWeek && (
-            <Link href="/analytics" className="mt-6 hidden text-sm text-ink-soft tabular-nums hover:text-ink sm:block">
-              {thisWeek}
+          {/* What FollowUp did since yesterday, in one quiet line at the foot
+              of a working Today (A-088, the labour illusion); it opens
+              Numbers. The week's results moved to the end of the day.
+              Desktop only (R-015). */}
+          {work && approvalItems.length > 0 && (
+            <Link href="/analytics" className="mt-6 hidden max-w-[400px] text-sm leading-relaxed text-ink-soft tabular-nums hover:text-ink sm:block">
+              {work}
             </Link>
           )}
         </>

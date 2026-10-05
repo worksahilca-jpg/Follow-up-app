@@ -1702,3 +1702,13 @@ edited and chose A.
   AI-template look.
 - **If cream comes back:** `--ink-faint #736e68` drops to 4.19:1 on a cream sidebar; it would need to go to about
   `#6b665f`.
+
+## A-091 — The "needs you" dot is a clearer orange ^A-091
+
+**Approved 2026-10-05**, founder: *"yes"* to making the dot a clearer orange, so it reads as "your turn" and not as an
+error. `--state-needs` #b4532a → **#c96a1b** in `globals.css`; every needs-you dot uses the token (Today's reply
+card note, the customer page, PersonPanel, Settings, /admin tester health), so one value changes them all.
+- **A dot only.** 3.7:1 on white clears the 3:1 bar for a graphic, but not 4.5:1 for text. Never use it for words.
+- **Not changed:** the landing page's own `--decision` (#b4532a in `landing.module.css`), which nothing uses.
+- **Honest note:** at 7px the change is subtle; it reads more orange and less red-brown, not louder. If it still reads
+  as an error to testers, the next step is the dot's shape or its word, not more saturation.

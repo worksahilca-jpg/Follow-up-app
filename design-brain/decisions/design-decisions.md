@@ -8935,3 +8935,8 @@ acting on one inbox; the CSP's unsafe-inline; an incident-response plan.
 Check-up items #19/#20 closed. The founder compared A (white, as now) and B (warm cream) on Today, chose B, then said
 "wait … a is fine" before any edit. No token changed. The clearer orange "needs you" dot is still open; it was only
 shown inside B.
+
+## 2026-10-05 — Needs-you dot to a clearer orange (A-091)
+
+`--state-needs` #b4532a → #c96a1b. Checked rendered on Today (desktop, 2x): the dot on the reply card's note reads
+orange on the peach-to-blue gradient. Contrast 3.7:1 on white, 3.4:1 on the #f5f3f1 fill; dot only.

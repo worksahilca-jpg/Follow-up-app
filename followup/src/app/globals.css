@@ -67,7 +67,7 @@
      every canvas board. Lifted surfaces (a dialog, a menu) keep a soft
      shadow, because they float above the page. */
   /* State dots (A-029): the only colour on a state pill; the word always says the state. */
-  --state-needs: #b4532a;
+  --state-needs: #c96a1b; /* clearer orange, founder 2026-10-05 (A-091): "your turn", never an error. A dot only: 3.7:1 on white, not for text. */
   --state-quiet: #b8892b;
   --state-waiting: #7a8699;
   --state-sent: #4f7a5a;

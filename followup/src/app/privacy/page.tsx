@@ -9,7 +9,7 @@ export const metadata = {
   // lead because you forgot to follow up." (Founder, 2026-09-21.)
   title: "Privacy Policy",
   description:
-    "How FollowUp handles your data: what it collects from your connected inbox and social accounts, what it never does with it, how Google and Meta user data is used under their Limited Use rules, and how to export or delete everything.",
+    "How FollowUp handles your data: what it collects from your connected inbox and social accounts, what it never does with it, how Google and Meta user data is used under their Limited Use rules, how it is protected, and how to export or delete everything.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl">Privacy Policy</h1>
-        <p className="text-sm text-ink-soft mt-2">Last updated: September 28, 2026</p>
+        <p className="text-sm text-ink-soft mt-2">Last updated: October 6, 2026</p>
 
         <div className="mt-10 space-y-10 text-sm leading-relaxed text-ink-soft">
           <section>
@@ -193,6 +193,55 @@ export default function PrivacyPage() {
               de-identified form (names, email addresses and phone numbers removed) to improve how FollowUp
               writes. We do not train AI models on your data. You can turn it off at any time.
             </p>
+          </section>
+
+          {/* Added 2026-10-06: Google's verification review asked the policy to
+              say how sensitive data is protected. Every line was checked against
+              the code (src/lib/crypto.ts, src/lib/db.ts, next.config.ts) and the
+              live database before it went in; keep it that way. */}
+          <section>
+            <h2 className="font-display text-xl text-ink">How we protect your data</h2>
+            <ul className="mt-2 space-y-2 list-disc pl-5">
+              <li>
+                <strong className="text-ink">Encrypted in transit</strong> — every connection to FollowUp uses
+                HTTPS (TLS), and browsers are told never to connect to us without it.
+              </li>
+              <li>
+                <strong className="text-ink">Encrypted at rest</strong> — our database provider (Supabase) encrypts
+                everything we store. On top of that, the keys that let FollowUp reach your accounts (Gmail and
+                Outlook access, Instagram, Facebook and WhatsApp access, your Twilio auth token and CRM API keys)
+                are encrypted again by FollowUp with AES-256-GCM before they are saved, using a key that is kept
+                outside the database.
+              </li>
+              <li>
+                <strong className="text-ink">No passwords to steal</strong> — you sign in with Google, so FollowUp
+                never stores a password.
+              </li>
+              <li>
+                <strong className="text-ink">Each business&apos;s data is kept apart</strong> — every request is
+                checked against your signed-in account and your business before anything is read or changed, and
+                the database refuses direct outside access to every table.
+              </li>
+              <li>
+                <strong className="text-ink">Only real messages get in</strong> — messages from Google, Meta,
+                Twilio and Stripe are accepted only with that service&apos;s signature or a secret only it holds.
+              </li>
+              <li>
+                <strong className="text-ink">Less personal data in more places</strong> — error reports have email
+                addresses and phone numbers removed, and past replies kept for &quot;Write like me&quot; have names,
+                email addresses, phone numbers and street addresses removed before they are stored.
+              </li>
+              <li>
+                <strong className="text-ink">You can see who signed in</strong> — Settings lists recent sign-ins,
+                we email you when your account is signed in from a new device, and exporting or deleting your
+                data asks you to sign in again first.
+              </li>
+              <li>
+                <strong className="text-ink">If something goes wrong</strong> — we have a written plan for it. We
+                stop the problem, tell the affected businesses in plain words what happened and what to do, and
+                report it to the privacy regulator where the law requires.
+              </li>
+            </ul>
           </section>
 
           <section>

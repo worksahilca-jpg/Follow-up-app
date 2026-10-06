@@ -281,7 +281,7 @@ export default async function DashboardPage() {
         <ApprovalQueue items={approvalItems} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
       )}
 
-      {habitSuggestion && <HabitQuestion kind={habitSuggestion.kind} count={habitSuggestion.count} example={habitSuggestion.example} />}
+      {isAdmin && <HabitQuestion suggestion={habitSuggestion} />}
 
       {nextCall && (
         <p className="mt-6 text-sm text-ink-soft">

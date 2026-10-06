@@ -9033,3 +9033,15 @@ Both are read in the scoring call FollowUp already makes for each new message, s
 **Weak:** a customer who said no *before* this shipped isn't marked until they write again. The night case is
 intended behaviour (the instant reply goes any hour; follow-ups wait for 8am to 8pm), not a gap.
 
+
+## 2026-10-06 — FollowUp learns what you do (A-099)
+
+Built from the approved drawing. Evidence is the audit trail itself ("Don't send" on a thanks-only message, "Later"
+on a weekend message), so nothing new is stored until the owner answers. The thanks-only verdict comes from the
+scoring call FollowUp already makes, so it costs nothing extra. A yes applies to Today, the hourly unanswered rule and
+the five-minute fresh-reply pass. Checked in a real browser at phone and desktop size: Yes shows the confirmation,
+Settings lists it, Undo removes it, and the question is not asked again.
+**Weak, honestly:** (1) habits learned before this shipped don't count: evidence starts with the first "Don't send"
+recorded after deploy, so the first question takes a few weeks of real use. (2) Only two habits so far; each new
+habit needs its own evidence and its own sentence. (3) "Only said thanks" is the model's judgement; a thanks with a
+hidden question ("thanks, and is parking included?") should read as not-only-thanks, but that is the model's call.

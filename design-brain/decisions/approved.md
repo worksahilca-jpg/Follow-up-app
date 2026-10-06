@@ -1811,3 +1811,19 @@ it acts like it's totally a clone of the user."* Drawn first (before/after, Toda
 - Why: FollowUp can only promise "someone will get back to you personally"; before this nothing told the owner it
   had promised that.
 
+
+## A-099 — FollowUp learns what you do, and asks before doing it ^A-099
+
+**Approved 2026-10-06**, founder: *"yes build it"* to the drawing, after *"FollowUp should study the user and come to
+a point where it acts like it's totally a clone of the user"*.
+- **The rule:** FollowUp never changes what it does on its own. When the owner has done the same thing by hand 4
+  times in 30 days, Today asks once, in one quiet box: *"FollowUp noticed something"*, what they did with a short
+  example, one question, a black **Yes** and an outlined **No**, and *"Change it any time in Settings → Your
+  business."* No is remembered and never asked again. Admins only; one question at a time.
+- **Placement:** under the reply cards, above the booked-call line. After an answer, one plain line stays:
+  *"Done. FollowUp will do this for you from now on."*
+- **Settings → Your business → "How you work":** one row per yes (the rule in plain words, *"You chose this Oct 6,
+  after skipping 4 of them"*, and **Undo**). Hidden while empty.
+- **The two habits it learns today:** (1) "Don't send" on replies to messages that only say thanks → those get no
+  reply (the newest message only; anything they write after is answered as usual). (2) "Later" on weekend messages
+  → weekend messages wait off Today until Monday 9 am, like a Later (an explicit Later still wins).

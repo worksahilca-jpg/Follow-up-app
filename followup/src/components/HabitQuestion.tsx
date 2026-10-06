@@ -28,14 +28,19 @@ const COPY = {
   },
 } as const;
 
-export default function HabitQuestion({ kind, count, example }: HabitSuggestionProps) {
+/**
+ * Always mounted for an admin, with `suggestion` null when there is nothing
+ * to ask: after an answer the page refreshes (so a yes takes effect on Today
+ * at once) and the question is gone, and staying mounted is what keeps the
+ * one-line confirmation on screen through that refresh.
+ */
+export default function HabitQuestion({ suggestion }: { suggestion: HabitSuggestionProps | null }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [answered, setAnswered] = useState<"on" | "declined" | null>(null);
-  const copy = COPY[kind];
 
-  async function answer(decision: "on" | "declined") {
+  async function answer(kind: HabitSuggestionProps["kind"], decision: "on" | "declined") {
     setBusy(true);
     setError(null);
     try {
@@ -67,6 +72,10 @@ export default function HabitQuestion({ kind, count, example }: HabitSuggestionP
     );
   }
 
+  if (!suggestion) return null;
+  const { kind, count, example } = suggestion;
+  const copy = COPY[kind];
+
   return (
     <section className="mt-6 box p-5 max-w-3xl" aria-labelledby="habit-question-title">
       <p id="habit-question-title" className="text-sm font-medium">
@@ -94,7 +103,7 @@ export default function HabitQuestion({ kind, count, example }: HabitSuggestionP
         <button
           type="button"
           disabled={busy}
-          onClick={() => answer("on")}
+          onClick={() => answer(kind, "on")}
           className="h-11 rounded-full bg-ink px-4 text-sm font-medium text-paper disabled:opacity-60"
         >
           {copy.yes}
@@ -102,7 +111,7 @@ export default function HabitQuestion({ kind, count, example }: HabitSuggestionP
         <button
           type="button"
           disabled={busy}
-          onClick={() => answer("declined")}
+          onClick={() => answer(kind, "declined")}
           className="h-11 rounded-full border border-line px-4 text-sm font-medium disabled:opacity-60"
         >
           {copy.no}

@@ -59,6 +59,10 @@
     {
       "path": "/api/cron/past-replies",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/learn-facts",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

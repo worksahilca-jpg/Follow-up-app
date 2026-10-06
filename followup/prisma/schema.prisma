@@ -289,6 +289,8 @@ model Business {
   pastRepliesError     String?
   pastReplies          PastReply[]
   senderVerdicts       SenderVerdict[]
+  // What FollowUp knows about this business (src/lib/businessFacts.ts).
+  facts                BusinessFact[]
 
   // Live AI voice agent (src/app/api/twilio/voice/[secret]/route.ts +
   // the separate always-on audio-bridge service — see
@@ -645,6 +647,36 @@ model PastReply {
 
   @@unique([businessId, gmailMessageId])
   @@index([businessId, sentAt])
+}
+
+// One thing this business has told its customers — "Commission: 2.5%",
+// "Area you cover: Toronto and Mississauga" — so the next draft can say it
+// in the owner's own words instead of holding for it (founder, 2026-10-06:
+// "train the model according to the business", A-096). Learned from every
+// reply sent through FollowUp (src/lib/businessFacts.ts), or typed by the
+// owner in Settings → Your business. The value is always words the owner
+// sent or typed, never the model's: a learned value must appear word for
+// word in the reply it came from. This business only, never shared, never
+// used to train a model.
+model BusinessFact {
+  id           String   @id @default(cuid())
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId   String
+  // A short name for it, "Commission". Matched case-insensitively, so the
+  // newest reply about the same thing updates it instead of adding a twin.
+  label        String
+  value        String
+  // "reply": learned from a sent reply. "owner": typed or edited in
+  // Settings, and then never overwritten by a later reply.
+  source       String
+  // The customer whose reply it was learned from, for "Learned from your
+  // reply to Ivy". Not a relation: deleting that customer keeps the fact
+  // (it is about the business, not them) and the screen says "a reply".
+  sourceLeadId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([businessId])
 }
 
 // The owner's own call on a sender, remembered for this business only
@@ -1285,6 +1317,13 @@ model FollowUp {
   // whose language is later corrected must not silently re-file every
   // message they were already sent under the new answer.
   language    String?
+  // When src/lib/businessFacts.ts read this reply for things to remember
+  // (or decided not to: the owner unticked "Use ... next time"). Null
+  // means not read yet; the learning job picks those up.
+  factsCheckedAt DateTime?
+  // What the owner typed into the price blank before sending, so the
+  // learning job knows that figure is theirs and what it answered.
+  ownerFilled String?
   createdAt   DateTime  @default(now())
 
   @@index([leadId])
@@ -1294,6 +1333,8 @@ model FollowUp {
   // detectReplies()'s "sent, still waiting on a reply, for this business's
   // leads" query.
   @@index([status, repliedAt])
+  // The fact-learning job's "sent, not read yet" sweep.
+  @@index([status, factsCheckedAt])
 }
 
 /**

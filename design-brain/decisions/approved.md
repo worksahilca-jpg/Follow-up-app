@@ -1759,3 +1759,28 @@ check). Built on the phone's closed Today rows only.
 - **Never Send.** No swipe sends anything; Send stays a deliberate press on the open reply.
 - **An accelerant, not the only way:** tapping the row still opens it, and Later is still inside. Not a keyboard
   shortcut (R-002 stands); swipe is the phone's own convention (Mail, Gmail).
+
+## A-096 — "What FollowUp knows": learn the business from every sent reply ^A-096
+
+**Approved 2026-10-06**, founder: *"yes ticked, build it. It should train from every reply sent through FollowUp,
+either it is sent by user, edited or not"*, then *"FollowUp should study the user, and it should come to a point where
+it acts like it's totally a clone of the user."* Drawn first (before/after, Today and Settings), approved as drawn.
+- **On the reply card, after the owner fills a held price:** one ticked line above Send, *"Use **2.5%** next time
+  someone asks this"*, with *"Change it any time in Settings."* under it. **Ticked by default** (founder's call).
+  Unticked, that one reply is not learned from. The price draft's own hold line is no longer shown under it: the
+  blank's two lines (fill it, then remember it) say everything.
+- **Settings → Your business → "What FollowUp knows":** one quiet list under the name and trade. Each row is the
+  label (small, soft), the value (the owner's words), and where it came from (*"Learned from your reply to Owen Shah,
+  Oct 3"* / *"You wrote this, Oct 6"*). One Edit link per row; Remove lives inside Edit. One "Add something" button and
+  a line of examples. No icon tile (as drawn).
+- **Learning:** every reply that goes out through FollowUp, typed, edited or sent as written, is read once for facts
+  about the business (not the customer). Values must appear word for word in the reply; anything carrying the
+  customer's name, an email, a phone number or a street address is dropped. The newest reply updates a learned fact;
+  an owner-written one is never overwritten.
+- **Drafting:** facts go into every follow-up draft as data, to be used word for word when the customer asks. A
+  price fact replaces the [PRICE] blank. The made-up-number check and the risk check count a fact as the owner's own
+  words, so *"Anything that isn't here still waits for you"* is literally true.
+- **One wording change from the drawing (flagged to the founder):** the drawing said *"…asks about your commission"*;
+  built as *"…asks this"*, because FollowUp doesn't know the name of the thing at the moment the box shows, and
+  guessing it would be the one invented word on the card.
+

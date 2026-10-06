@@ -45,7 +45,7 @@ import type { Message } from "@/lib/types";
 import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
 import { emailGreetingOf } from "@/lib/dmDrafts";
 import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
-import { businessTrade } from "@/lib/tradePlaybooks";
+import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
 
 export interface SequenceStepInput {
   /** Hours after the previous step (or enrollment). Preferred. */
@@ -827,7 +827,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           };
         }
         const draft = await generateFollowUpMessage(
-          { name: lead.name, conversation, trade: await businessTrade(lead.businessId) },
+          { name: lead.name, conversation, ...(await draftingContext(lead.businessId)) },
           voiceSamples,
           channel === "email" ? step.messageHint ?? undefined : nonEmailStepHint(step.messageHint),
           undefined,
@@ -881,7 +881,7 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           risk = { riskLevel: "medium", reason: HOLD_ALL_SEQUENCE_REASON };
         } else {
           try {
-            risk = await assessSendRisk({ conversation }, message);
+            risk = await assessSendRisk({ conversation, facts: await getBusinessFacts(lead.businessId) }, message);
           } catch (err) {
             console.error(`Risk assessment failed for lead ${lead.id} (workflow step):`, err);
             risk = { riskLevel: "medium", reason: RISK_CHECK_FAILED_REASON };

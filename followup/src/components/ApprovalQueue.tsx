@@ -18,6 +18,7 @@ import UndoLine from "@/components/UndoLine";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE, RESULT_HOLD_MS } from "@/lib/motion";
 import { fillPriceSlot, hasPriceSlot, splitAtPriceSlot } from "@/lib/priceSlot";
+import { RememberPrice } from "@/components/app/RememberPrice";
 
 /** How far a phone row must be pulled left before letting go sets it aside (A-095). */
 const SWIPE_FOR_LATER_PX = 96;
@@ -177,6 +178,8 @@ function ApprovalCard({
   const [rewriting, setRewriting] = useState<null | "fresh" | "shorter" | "warmer" | "formal">(null);
   const needsPrice = !editing && hasPriceSlot(text);
   const [price, setPrice] = useState("");
+  // "Use <price> next time" (A-096): ticked by default.
+  const [remember, setRemember] = useState(true);
   const priceMissing = needsPrice && !price.trim();
   const message = needsPrice ? fillPriceSlot(text, price.trim()) : text;
   const plainReason = plainHoldReason(item.reason, { firstName, topic: item.riskTopic });
@@ -209,6 +212,7 @@ function ApprovalCard({
     body: JSON.stringify({
       message,
       ...(item.draftSubject ? { subject: item.draftSubject } : {}),
+      ...(needsPrice ? { learnFacts: remember } : {}),
       // The newest thing the lead had said when this card was drawn. If
       // they have written since, the server refuses with a 409 and says so,
       // instead of sending a reply to a message that is no longer the last
@@ -607,9 +611,19 @@ function ApprovalCard({
           <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{text}</p>
         )}
         {priceMissing && <p className="mt-2 text-[13px] text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
+        {needsPrice && !priceMissing && (
+          <RememberPrice
+            id={`remember-${item.leadId}`}
+            price={price.trim()}
+            checked={remember}
+            onChange={setRemember}
+            disabled={send.pending || send.busy}
+          />
+        )}
         {/* Why it waits, in the owner's words (A-087): what to check, or
-            nothing when the every-reply-waits setting is the only reason. */}
-        {plainReason && !priceMissing && !editing && !edited && (
+            nothing when the every-reply-waits setting is the only reason.
+            A price draft's reason is the blank, which the lines above say. */}
+        {plainReason && !needsPrice && !editing && !edited && (
           <p className="mt-2.5 flex items-baseline gap-2 text-[13.5px] text-ink">
             <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 -translate-y-px rounded-full" style={{ background: "var(--state-needs)" }} />
             {plainReason}

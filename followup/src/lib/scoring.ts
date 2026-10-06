@@ -21,7 +21,7 @@ import { escapeSlackText, notifySlack } from "@/lib/slack";
 import { isOptInMessage, isOptOutMessage } from "@/lib/optOutKeywords";
 import type { Message } from "@/lib/types";
 import { Prisma, type Priority as DbPriority } from "@prisma/client";
-import { businessTrade } from "@/lib/tradePlaybooks";
+import { draftingContext } from "@/lib/businessFacts";
 import { recordAudit } from "@/lib/audit";
 import { heldSince } from "@/lib/pendingApprovals";
 
@@ -185,7 +185,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     // chips under a message that had two questions.
     suggestedQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
   } else {
-    const draft = await generateFollowUpMessage({ name: lead.name, conversation, trade: await businessTrade(lead.businessId) }, voiceSamples, undefined, undefined, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)) }, voiceSamples, undefined, undefined, leadLanguage);
     suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
       languageSample: latestInboundText(conversation),
       leadLanguage,

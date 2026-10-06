@@ -4,8 +4,9 @@
  * step (src/lib/sequences.ts), a reactivation batch (src/lib/reactivationSend.ts).
  *
  * inventedSpecific (src/lib/dmDrafts.ts) is the rule and stays pure; this
- * adds the one input it can't compute from the thread — the business's own
- * configured details, which may appear as a link or address in the draft.
+ * adds the inputs it can't compute from the thread — the business's own
+ * configured details, which may appear as a link or address in the draft,
+ * and what the business has told customers before (src/lib/businessFacts.ts).
  * Fetched only when the draft has a link or address at all, so the common
  * plain draft costs no query.
  */
@@ -14,6 +15,8 @@ import { prisma } from "@/lib/db";
 import { appUrl } from "@/lib/stripe";
 import { inventedSpecific } from "@/lib/dmDrafts";
 import { scanLinks } from "@/lib/grounding";
+import { getBusinessFacts } from "@/lib/businessFacts";
+import { factsText } from "@/lib/factLines";
 import type { Message } from "@/lib/types";
 
 /**
@@ -62,5 +65,10 @@ export async function checkUnreviewedDraft(input: {
 }): Promise<string | null> {
   const hasLink = scanLinks(`${input.text}\n${input.greeting ?? ""}`).links.length > 0;
   const configured = hasLink ? await ownContactPoints(input.businessId, input.leadId) : [];
-  return inventedSpecific(input.text, input.conversation, input.locale, input.ownerHint, { configured, greeting: input.greeting });
+  // What the business has told customers (src/lib/businessFacts.ts) is the
+  // owner's own writing, like a step's note: a figure or link from it is
+  // grounded, not invented.
+  const facts = factsText(await getBusinessFacts(input.businessId));
+  const ownerHint = [input.ownerHint, facts].filter((t): t is string => !!t && t.trim().length > 0).join("\n") || null;
+  return inventedSpecific(input.text, input.conversation, input.locale, ownerHint, { configured, greeting: input.greeting });
 }

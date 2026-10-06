@@ -47,12 +47,26 @@ export function splitAtPriceSlot(text: string): string[] {
  * that comparison.
  */
 export function isFilledDraft(draft: string, sent: string): boolean {
+  return fillsOf(draft, sent) !== null;
+}
+
+/**
+ * What the owner typed into the blank, when `sent` is `draft` with only its
+ * blanks filled — "2.5%" — or null. Kept with the sent reply so the
+ * learning job (src/lib/businessFacts.ts) knows that figure is the owner's.
+ */
+export function filledPrice(draft: string, sent: string): string | null {
+  return fillsOf(draft, sent)?.[0]?.trim() || null;
+}
+
+function fillsOf(draft: string, sent: string): string[] | null {
   const squash = (t: string) => t.replace(/\s+/g, " ").trim();
   const escape = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const parts = splitAtPriceSlot(squash(draft));
-  if (parts.length < 2) return false;
+  if (parts.length < 2) return null;
   const pattern = new RegExp(`^${parts.map(escape).join("(.+?)")}$`);
   const m = squash(sent).match(pattern);
-  return Boolean(m) && m!.slice(1).every((fill) => !hasPriceSlot(fill));
+  if (!m || m.slice(1).some((fill) => hasPriceSlot(fill))) return null;
+  return m.slice(1);
 }
 

@@ -56,7 +56,7 @@ import { isOptOutMessage, isOptInMessage } from "@/lib/optOutKeywords";
 import { ackGracePeriodMs } from "@/lib/acknowledge";
 import { heldSince } from "@/lib/pendingApprovals";
 import type { Message } from "@/lib/types";
-import { businessTrade } from "@/lib/tradePlaybooks";
+import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
 
 export const UNANSWERED_ACTION = "unanswered_reply";
 export const UNANSWERED_NAME = "Reply for me when I haven't";
@@ -1354,7 +1354,7 @@ export async function runAutomationForBusiness(
           quickReplies = dm.quickReplies;
           dmShapeFailed = dm.shapeFailed;
         } else {
-          const draft = await generateFollowUpMessage({ name: lead.name, conversation, trade: await businessTrade(lead.businessId) }, voiceSamples, messageHint, undefined, leadLanguageOf(lead));
+          const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)) }, voiceSamples, messageHint, undefined, leadLanguageOf(lead));
           subject = draft.subject;
           // The same invariant the ack and the DM have always had, on the
           // one path that never had it: no price, date or figure the
@@ -1612,7 +1612,7 @@ export async function runAutomationForBusiness(
         } else if (process.env.OPENAI_API_KEY) {
           riskAssessed = true;
           try {
-            risk = await assessSendRisk({ conversation }, message);
+            risk = await assessSendRisk({ conversation, facts: await getBusinessFacts(lead.businessId) }, message);
           } catch (err) {
             // Can't tell if this one's safe — hold it rather than guess.
             // Sending something autonomously that shouldn't have gone out

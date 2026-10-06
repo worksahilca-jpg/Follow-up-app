@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE } from "@/lib/motion";
 import { useRouter } from "next/navigation";
 import { fillPriceSlot, hasPriceSlot, splitAtPriceSlot } from "@/lib/priceSlot";
+import { RememberPrice } from "@/components/app/RememberPrice";
 import { Eyebrow } from "./canvasBits";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import UndoLine from "@/components/UndoLine";
@@ -72,6 +73,8 @@ export default function ReplyCard({
   const [text, setText] = useState(draft);
   const [subject, setSubject] = useState(draftSubject ?? "");
   const [price, setPrice] = useState("");
+  // "Use <price> next time" (A-096): ticked by default.
+  const [remember, setRemember] = useState(true);
   const [busy, setBusy] = useState<null | "skip" | "fresh" | Rewrite>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<null | { kind: "sent"; template: string | null } | { kind: "skipped" }>(null);
@@ -85,7 +88,12 @@ export default function ReplyCard({
 
   const undoable = useUndoableSend({
     url: `/api/leads/${leadId}/send`,
-    body: JSON.stringify({ message, ...(isEmail && subject.trim() ? { subject: subject.trim() } : {}), ...(seenInboundAt ? { seenInboundAt } : {}) }),
+    body: JSON.stringify({
+      message,
+      ...(isEmail && subject.trim() ? { subject: subject.trim() } : {}),
+      ...(needsPrice ? { learnFacts: remember } : {}),
+      ...(seenInboundAt ? { seenInboundAt } : {}),
+    }),
     onResponse: async (res) => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
@@ -290,7 +298,10 @@ export default function ReplyCard({
       )}
       </AnimatePresence>
 
-      {needsPrice && <p className="mt-2 text-[13px] text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
+      {needsPrice && !price.trim() && <p className="mt-2 text-[13px] text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
+      {needsPrice && price.trim() && (
+        <RememberPrice id="reply-remember" price={price.trim()} checked={remember} onChange={setRemember} disabled={undoable.pending || undoable.busy} />
+      )}
       {basis && !edited && !editing && <p className="mt-2 text-[13px] text-ink-soft">{basis}</p>}
       {error && (
         <p className="mt-2 text-[13px]" role="alert" style={{ color: "var(--coral)" }}>

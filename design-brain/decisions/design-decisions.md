@@ -8985,3 +8985,30 @@ guarantee moved to "Your rules". The proposal I first made ("short line + More")
   confirm.
 - **Swipe for Later built** (A-095). Checked in a phone-sized browser: a full swipe sets the person aside with Undo;
   a short one springs back. Weak spot: the reveal is one word because the row only slides about a third.
+
+## 2026-10-06 — Teach FollowUp your business (A-096)
+
+**Asked:** *"we need to train the model according to the business"*, then, after the drawings, *"yes ticked, build
+it"*, learning *"from every reply sent through FollowUp"*, toward FollowUp acting *"like a clone of the user"*.
+
+**What it means today (honest scope):** FollowUp now learns the owner's **facts** (prices, areas, hours, how they
+work) from every reply it sends, and its **voice** keeps learning from the owner's own words (Write like me, A-072, and edited
+drafts, PR #446). Voice deliberately still skips drafts sent unchanged: those are FollowUp's words, and copying
+them would make the clone copy FollowUp, not the owner (src/lib/voice.ts). Facts learn from those too, because the
+owner approved every word by pressing Send.
+
+**Built:** BusinessFact table; a 10-minute job reading each sent reply once (customer details stripped before the
+model sees it, values word for word only, the owner's typed price kept even if the model fails); facts in every
+email draft, the made-up-number check and the risk judge; the ticked box on both reply cards; the Settings list.
+Replies from the last 60 days are read once at launch so FollowUp starts out knowing something.
+
+**Self-review (design-review.md):**
+- Calm, one action per row, no new colours or icons; reads in the owner's words. Matches the drawing.
+- **Weak:** "next time someone asks this" is vaguer than the drawn "about your commission" (see A-096).
+- **Weak:** the Settings list is oldest-first. Fine at 5 rows; at 30 it needs grouping or search. Not built (R-026:
+  no expanders before they're needed).
+- **Weak / residual risk:** a customer detail with no name, number or address in it (*"your condo on King St"*) is
+  kept out only by the model's instruction, not by a hard rule. Every fact is visible and removable in Settings.
+- Instagram/Messenger DM drafts don't use facts yet (their own shape check would refuse an unknown figure). Next step
+  if testers ask.
+

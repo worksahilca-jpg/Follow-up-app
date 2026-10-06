@@ -48,7 +48,7 @@ import { Prisma, type PipelineStage } from "@prisma/client";
 import { emailBodyOf, emailGreetingOf } from "@/lib/dmDrafts";
 import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
 import { UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
-import { businessTrade } from "@/lib/tradePlaybooks";
+import { draftingContext } from "@/lib/businessFacts";
 
 const OWNER_CONCLUDED_STAGES: PipelineStage[] = ["WON", "LOST"];
 
@@ -102,7 +102,7 @@ async function draftReactivation(
     (Date.now() - new Date(lead.lastContacted ?? lead.createdAt).getTime()) / 86_400_000
   );
   const draft = await generateFollowUpMessage(
-    { name: lead.name, conversation, trade: await businessTrade(lead.businessId) },
+    { name: lead.name, conversation, ...(await draftingContext(lead.businessId)) },
     voiceSamples,
     // "business": this batch only ever sends to COLD — we answered, they
     // went quiet (sendableWhere below). No apology for them; that is only

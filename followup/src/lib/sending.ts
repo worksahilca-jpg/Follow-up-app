@@ -42,7 +42,7 @@ import {
   rescheduleSend,
   retireSend,
 } from "@/lib/sendQueue";
-import { hasPriceSlot, isFilledDraft, PRICE_SLOT } from "@/lib/priceSlot";
+import { filledPrice, hasPriceSlot, isFilledDraft, PRICE_SLOT } from "@/lib/priceSlot";
 import { customerGreetingName } from "@/lib/leadName";
 
 /**
@@ -381,6 +381,10 @@ export async function sendFollowUpToLead(
     // when `automated` is set, so no cron, sequence, retry or auto-send
     // path can ever carry the tag, whatever it passes.
     humanSend?: { userId: string };
+    // false when the owner unticked "Use <price> next time" on Today: this
+    // reply is not read for things to remember (src/lib/businessFacts.ts).
+    // Every other reply sent through FollowUp is.
+    learnFacts?: boolean;
   } = {}
 ): Promise<SendResult> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
@@ -987,6 +991,13 @@ export async function sendFollowUpToLead(
   // that is a different message, and the draft it leaves is the real reply.
   const draftSpent = draftEdited === false || (trigger === "manual" && draftEdited !== null);
 
+  // Every reply sent through FollowUp teaches it what the business tells
+  // customers (founder, 2026-10-06, A-096) — typed, edited or not — unless
+  // the owner said not this one. The acknowledgement and the holding
+  // message are fixed sentences with nothing of the business in them.
+  const learnFromThis = options.learnFacts !== false && trigger !== "instant_ack" && trigger !== "holding";
+  const ownerFilled = lead.suggestedMessage ? filledPrice(lead.suggestedMessage, body) : null;
+
   try {
     await prisma.lead.update({
       where: { id: lead.id },
@@ -1071,6 +1082,8 @@ export async function sendFollowUpToLead(
         // measured against.
         language: lead.language ?? null,
         sentAt: new Date(),
+        factsCheckedAt: learnFromThis ? null : new Date(),
+        ownerFilled: learnFromThis ? ownerFilled?.slice(0, 120) ?? null : null,
       },
     });
   } catch (err) {

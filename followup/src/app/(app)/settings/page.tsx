@@ -8,6 +8,7 @@ import TeamSection from "@/components/TeamSection";
 // A leaf module, not @/lib/automation — that one imports Prisma, and this is a client component.
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 import BusinessProfileSection from "@/components/BusinessProfileSection";
+import BusinessFactsSection from "@/components/BusinessFactsSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
 import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 import SetupStepRestore from "@/components/SetupStepRestore";
@@ -1584,6 +1585,10 @@ function SettingsPageInner() {
         <h2 className={sectionLabel} style={SECTION_STYLE}>Your business</h2>
         <div className="mt-4">
           <BusinessProfileSection />
+        </div>
+        {/* What FollowUp knows (A-096): what it will say about the business on its own. */}
+        <div className="mt-4">
+          <BusinessFactsSection />
         </div>
       </section>
 

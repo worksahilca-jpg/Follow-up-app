@@ -59,6 +59,7 @@ vi.mock("@/lib/db", () => ({
     reactivationRun: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("reactivationRun") },
     pastReply: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("pastReply") },
     senderVerdict: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("senderVerdict") },
+    businessFact: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("businessFact") },
     auditEvent: {
       findMany: vi.fn(async () => []),
       updateMany: vi.fn(async () => {

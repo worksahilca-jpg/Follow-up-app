@@ -51,6 +51,7 @@ export interface BusinessExport {
   reactivationRuns: Record<string, unknown>[];
   pastReplies: Record<string, unknown>[];
   senderVerdicts: Record<string, unknown>[];
+  businessFacts: Record<string, unknown>[];
 }
 
 /**
@@ -91,6 +92,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     reactivationRuns,
     pastReplies,
     senderVerdicts,
+    businessFacts,
   ] = await Promise.all([
     prisma.user.findMany({
       where: { businessId },
@@ -124,6 +126,8 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     prisma.pastReply.findMany({ where: { businessId }, select: { body: true, sentAt: true, createdAt: true } }),
     // The owner's own "customer" / "not a customer" calls (src/lib/senderVerdicts.ts).
     prisma.senderVerdict.findMany({ where: { businessId }, select: { sender: true, verdict: true, subject: true, updatedAt: true } }),
+    // What FollowUp knows (src/lib/businessFacts.ts): the owner's own words.
+    prisma.businessFact.findMany({ where: { businessId }, select: { label: true, value: true, source: true, createdAt: true, updatedAt: true } }),
   ]);
 
   // Picked explicitly (rather than destructuring-and-omitting the secret
@@ -184,6 +188,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     reactivationRuns,
     pastReplies,
     senderVerdicts,
+    businessFacts,
   };
 }
 
@@ -284,6 +289,9 @@ export async function deleteBusinessData(
     prisma.pastReply.deleteMany({ where: { businessId } }),
     // The owner's corrections (src/lib/senderVerdicts.ts): senders' addresses, RESTRICT on Business.
     prisma.senderVerdict.deleteMany({ where: { businessId } }),
+    // What FollowUp knows (src/lib/businessFacts.ts). CASCADE on Business,
+    // but cleared here too so the erasure list stays the whole story.
+    prisma.businessFact.deleteMany({ where: { businessId } }),
     // Raw inbound payloads (phone numbers, message text, names) — not a
     // relation to Business on purpose (see schema.prisma), so it has to be
     // cleared explicitly here or a deleted business's inbound messages

@@ -12,7 +12,7 @@ import { dmChannelOf } from "@/lib/dmDrafts";
 import { draftDm } from "@/lib/dmDrafting";
 import { Prisma } from "@prisma/client";
 import { publicErrorMessage } from "@/lib/publicError";
-import { draftingContext } from "@/lib/businessFacts";
+import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
 
 // POST /api/leads/[id]/regenerate — asks the AI for a fresh draft against
 // this lead's real conversation, and saves it as the new suggested message.
@@ -95,7 +95,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     let newSubject: string | null;
     let newQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
     if (dmChannel) {
-      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined);
+      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, undefined, await getBusinessFacts(lead.businessId));
       newMessage = dm.body;
       newSubject = null;
       newQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;

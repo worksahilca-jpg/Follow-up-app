@@ -11,6 +11,7 @@ import type { LeadLanguage } from "@/lib/leadLanguage";
 import { businessText, checkDmDraftShape, conversationText, pickDmSituation, type DmTouch } from "@/lib/dmDrafts";
 import type { StoredQuickReplies } from "@/lib/quickReplies";
 import type { Message } from "@/lib/types";
+import { factsText, type FactLine } from "@/lib/factLines";
 
 /** Lead.suggestedQuickReplies as stored, or null for anything that isn't the shape. */
 export function readStoredQuickReplies(value: unknown): StoredQuickReplies | null {
@@ -39,14 +40,19 @@ export async function draftDm(
   touch: DmTouch = "reply",
   // How this lead writes, decided once (src/lib/leadLanguage.ts).
   // Passed straight through; absent changes nothing.
-  leadLanguage?: Partial<LeadLanguage> | null
+  leadLanguage?: Partial<LeadLanguage> | null,
+  // What the business has told customers (src/lib/businessFacts.ts, A-096):
+  // in the draft's instructions, and counted as the business's own words by
+  // the shape check, so "My commission is 2.5%" is grounded, not invented.
+  facts: readonly FactLine[] = []
 ): Promise<{ body: string; quickReplies: StoredQuickReplies; shapeFailed: string | null }> {
   const situation = pickDmSituation(conversation, touch);
-  const text = conversationText(conversation);
-  const saidByBusiness = businessText(conversation);
+  const known = factsText(facts);
+  const text = known ? `${conversationText(conversation)}\n${known}` : conversationText(conversation);
+  const saidByBusiness = known ? `${businessText(conversation)}\n${known}` : businessText(conversation);
   let lastRule: string | null = null;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const draft = await generateFollowUpMessage({ name: leadName, conversation }, voiceSamples, messageHint, situation, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts }, voiceSamples, messageHint, situation, leadLanguage);
     const buttons = draft.buttons ?? [];
     // The draft is written in the lead's language, so the calendar rule
     // has to read it in that language — an English-only day list would be

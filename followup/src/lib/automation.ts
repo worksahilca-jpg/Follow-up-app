@@ -1351,7 +1351,7 @@ export async function runAutomationForBusiness(
           // The lead's decided language/register, off the row already
           // loaded — so the day-3 follow-up uses the same usted/tú the
           // first reply did (src/lib/leadLanguage.ts).
-          const dm = await draftDm(lead.name, conversation, voiceSamples, messageHint, undefined, leadLanguageOf(lead));
+          const dm = await draftDm(lead.name, conversation, voiceSamples, messageHint, undefined, leadLanguageOf(lead), await getBusinessFacts(lead.businessId));
           message = dm.body;
           subject = undefined;
           quickReplies = dm.quickReplies;
@@ -2096,7 +2096,7 @@ export async function draftDmHandoffs(businessId: string, voiceSamples: string[]
     if (!(await checkAiEligibility(businessId, lead, tier)).ok) continue;
 
     try {
-      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, "handoff");
+      const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, "handoff", undefined, await getBusinessFacts(lead.businessId));
       await prisma.lead.update({
         where: { id: lead.id },
         data: {

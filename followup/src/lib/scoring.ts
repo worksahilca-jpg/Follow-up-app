@@ -259,6 +259,8 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
         ? {
             saidNoAt: scoreResult.saysNo ? latestInboundAt : null,
             askedIfPersonAt: scoreResult.asksIfAutomated ? latestInboundAt : null,
+            // Only "thanks" / "ok": what the skip_thanks habit keys on (src/lib/habits.ts).
+            thanksOnlyAt: scoreResult.onlyThanks ? latestInboundAt : null,
           }
         : {}),
       // Whatever was paused here isn't any more — this write IS the proof.

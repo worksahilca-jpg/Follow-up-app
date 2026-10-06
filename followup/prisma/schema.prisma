@@ -291,6 +291,8 @@ model Business {
   senderVerdicts       SenderVerdict[]
   // What FollowUp knows about this business (src/lib/businessFacts.ts).
   facts                BusinessFact[]
+  // What the owner always does, offered once and kept only on a yes (src/lib/habits.ts).
+  habits               OwnerHabit[]
 
   // Live AI voice agent (src/app/api/twilio/voice/[secret]/route.ts +
   // the separate always-on audio-bridge service — see
@@ -679,6 +681,30 @@ model BusinessFact {
   @@index([businessId])
 }
 
+// Something the owner always does, that FollowUp noticed and asked about
+// once (founder, 2026-10-06: "it should come to a point where it acts like a
+// clone of the user"; drawing approved "yes build it"). One row per kind per
+// business: "suggested" was never written (a suggestion is computed, not
+// stored), so a row only exists once the owner answered. "on" changes what
+// FollowUp does; "declined" means never ask again; "off" is Undo.
+model OwnerHabit {
+  id          String   @id @default(cuid())
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId  String
+  // "skip_thanks" | "weekend_wait" (HABIT_KINDS in src/lib/habits.ts).
+  kind        String
+  status      String
+  // How many times the owner had done it when they said yes, for the
+  // "after skipping 4 of them" line.
+  evidence    Int      @default(0)
+  decidedById String?
+  decidedAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([businessId, kind])
+}
+
 // The owner's own call on a sender, remembered for this business only
 // (founder, 2026-09-29: "learn from corrections"). Written when the owner
 // taps "this was a customer" on a set-aside email, or "Not a customer" on a
@@ -954,6 +980,10 @@ model Lead {
   // a bot. Set and cleared the same way. While set, the reply to it never
   // sends on its own: it waits for the owner on Today.
   askedIfPersonAt DateTime?
+  // Their newest message only said thanks or ok and asked for nothing.
+  // Set and cleared the same way. Used by the "skip_thanks" habit
+  // (src/lib/habits.ts) and to learn it from "Don't send".
+  thanksOnlyAt    DateTime?
 
   // A caller who hid their number (founder, 2026-09-30): each such call is
   // its own customer, found again by Twilio's id for that call, so the

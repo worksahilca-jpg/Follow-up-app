@@ -113,6 +113,13 @@ export const IN_CRM_REASON =
   "they're also in your CRM, which may send its own follow-ups, so FollowUp waits for you rather than risk a second message";
 
 /**
+ * The customer's newest message asked whether they're talking to a real
+ * person (Lead.askedIfPersonAt, situations audit 2026-10-06). The draft can
+ * only promise that someone will come back to them, so a person has to.
+ */
+export const ASKED_IF_PERSON_REASON = "they asked whether they're talking to a real person, so this one is for you to answer";
+
+/**
  * assessSendRisk threw. Held rather than sent, in both schedulers: an
  * unchecked message going out is worse than a review nobody needed.
  */
@@ -229,6 +236,7 @@ const PLAIN_BY_REASON: Record<string, (first: string) => string> = {
   [FOUND_IN_SPAM_REASON]: () => "This came from your spam folder. Make sure it's a real customer.",
   [IN_CRM_REASON]: () => "They're also in your CRM, which may send its own follow-up.",
   [RISK_CHECK_FAILED_REASON]: () => "FollowUp couldn't check this one, so it's waiting to be safe.",
+  [ASKED_IF_PERSON_REASON]: (first) => `${first} asked if they're talking to a real person. Answer this one yourself.`,
   "this conversation was already in your inbox before FollowUp started watching it, so it hasn't seen what you may have already done about it":
     () => "This was in your inbox before FollowUp started. Check you haven't already answered.",
   [PRICE_SLOT_REASON]: () => "Add the price, then send.",

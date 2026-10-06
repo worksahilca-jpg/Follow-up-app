@@ -42,7 +42,7 @@ import { recordAudit } from "@/lib/audit";
 import { isWithinSendWindow } from "@/lib/sendWindow";
 import type { AutomationTier, Prisma, SequenceAction, PipelineStage } from "@prisma/client";
 import type { Message } from "@/lib/types";
-import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
+import { HOLD_ALL_SEQUENCE_REASON, RISK_CHECK_FAILED_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON } from "@/lib/holdReasons";
 import { emailGreetingOf } from "@/lib/dmDrafts";
 import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
 import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
@@ -454,6 +454,8 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
       sequenceId: { not: null },
       sequenceStepDueAt: { lte: new Date() },
       stage: { notIn: ["WON", "LOST"] },
+      // They said no (Lead.saidNoAt): the workflow waits until they write again.
+      saidNoAt: null,
     },
     include: {
       sequence: { include: { steps: { orderBy: { order: "asc" } } } },
@@ -888,6 +890,8 @@ export async function runSequencesForBusiness(businessId: string): Promise<Seque
           }
         }
 
+        // They asked if they're talking to a real person: a person answers.
+        if (lead.askedIfPersonAt) risk = { riskLevel: "high", reason: ASKED_IF_PERSON_REASON };
         if (holdAll || risk.riskLevel !== "low") {
           // Unenrolled rather than left "stuck" on this step: the normal
           // approval-queue send (POST /api/leads/[id]/send) knows nothing

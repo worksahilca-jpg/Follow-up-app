@@ -943,6 +943,18 @@ model Lead {
   // side newer than this. See settledByDecline in src/lib/talked.ts.
   holdDismissedAt DateTime?
 
+  // The customer's newest message said no: not interested, went with
+  // someone else, please stop (situations audit, founder 2026-10-06).
+  // Set to that message's time by the scoring read (src/lib/scoring.ts),
+  // cleared when they write again and it doesn't. While set, no reminder,
+  // workflow step or win-back goes to them; the reply to their "no" still
+  // does, with the owner's OK.
+  saidNoAt        DateTime?
+  // Their newest message asked whether they're talking to a real person or
+  // a bot. Set and cleared the same way. While set, the reply to it never
+  // sends on its own: it waits for the owner on Today.
+  askedIfPersonAt DateTime?
+
   // A caller who hid their number (founder, 2026-09-30): each such call is
   // its own customer, found again by Twilio's id for that call, so the
   // voicemail lands on the right card. phone stays empty and nothing is

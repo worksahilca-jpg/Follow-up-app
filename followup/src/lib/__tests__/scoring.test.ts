@@ -343,3 +343,27 @@ describe("scoreAndDraftForLead — a consent keyword", () => {
     expect(update).toHaveBeenCalled();
   });
 });
+
+// Situations audit (founder, 2026-10-06): what their newest message said
+// that changes what FollowUp may do next, stored against that message.
+describe("scoreAndDraftForLead — a no, or 'am I talking to a person?'", () => {
+  it("stores both against the newest message's time", async () => {
+    const sentAt = new Date("2026-10-06T10:00:00Z");
+    findUnique.mockResolvedValue(
+      leadRow({ conversations: [{ channel: "email", messages: [{ id: "m1", direction: "inbound", body: "We went with someone else. Is this a bot?", sentAt, opened: false }] }] })
+    );
+    const { scoreLead } = await import("@/lib/integrations/openai");
+    (scoreLead as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ score: 5, reason: "Declined", factors: [], saysNo: true, asksIfAutomated: true });
+    await scoreAndDraftForLead("lead1");
+    const data = updateCalls().find((c) => "score" in c.data)!.data;
+    expect(data.saidNoAt).toEqual(sentAt);
+    expect(data.askedIfPersonAt).toEqual(sentAt);
+  });
+
+  it("clears both when the newest message says neither, so a customer who writes again is read again", async () => {
+    await scoreAndDraftForLead("lead1");
+    const data = updateCalls().find((c) => "score" in c.data)!.data;
+    expect(data.saidNoAt).toBeNull();
+    expect(data.askedIfPersonAt).toBeNull();
+  });
+});

@@ -172,6 +172,8 @@ describe("getPendingApprovals", () => {
         leadLastMessageAt: null,
         laterUntil: null,
         customerToldAt: null,
+        saidNo: false,
+        askedIfPerson: false,
         site: null,
       },
     ]);

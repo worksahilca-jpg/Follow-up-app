@@ -216,15 +216,28 @@ const SCORE_JSON_SCHEMA = {
         type: "integer",
         description: "0 (cold, no urgency) to 100 (extremely hot, follow up now). The factors' weights should add up to about this.",
       },
+      saysNo: {
+        type: "boolean",
+        description:
+          "True only when the LEAD's most recent message clearly turns the business down: not interested, went with " +
+          "someone else, no longer needed, or asks not to be contacted. False for 'not right now', 'maybe later', " +
+          "a question, a complaint, or anything unclear.",
+      },
+      asksIfAutomated: {
+        type: "boolean",
+        description:
+          "True only when the LEAD's most recent message asks, in any wording or language, whether they are talking " +
+          "to a real person, a bot, AI or an automated system, or whether the enquiry is genuine.",
+      },
     },
-    required: ["reason", "factors", "score"],
+    required: ["reason", "factors", "score", "saysNo", "asksIfAutomated"],
     additionalProperties: false,
   },
 } as const;
 
 export async function scoreLead(
   lead: Pick<Lead, "conversation" | "dealValue" | "lastContacted">
-): Promise<{ score: number; reason: string; factors: ScoreFactor[] }> {
+): Promise<{ score: number; reason: string; factors: ScoreFactor[]; saysNo: boolean; asksIfAutomated: boolean }> {
   const client = getClient();
 
   const daysSinceContact = Math.floor(
@@ -274,7 +287,14 @@ export async function scoreLead(
           "When the deal value is given as not known, judge urgency on the conversation alone and neither " +
           "reward nor penalise the lead for it; never treat an unknown value as a low-value deal. " +
           "Give 3-5 short factors explaining the score, each with a signed integer weight roughly summing to " +
-          "the score. Write the reason in plain, concrete language — no corporate jargon." +
+          "the score. Write the reason in plain, concrete language — no corporate jargon. " +
+          // Situations audit (founder, 2026-10-06): two facts about the
+          // newest message that change what FollowUp may do next, read in
+          // the same call so they cost nothing extra.
+          "Then answer two questions about the lead's most recent message only. saysNo: does it clearly turn the " +
+          "business down (not interested, went elsewhere, no longer needed, please stop)? A hesitation or 'not right " +
+          "now' is not a no. asksIfAutomated: does it ask whether they are talking to a real person, a bot, AI or an " +
+          "automated system? When unsure, answer false." +
           UNTRUSTED_CONVERSATION_NOTICE,
       },
       {
@@ -302,11 +322,13 @@ export async function scoreLead(
   const raw = completion.choices[0]?.message?.content;
   if (!raw) throw new Error("OpenAI returned no content for scoreLead.");
 
-  const parsed = JSON.parse(raw) as { score: number; reason: string; factors: ScoreFactor[] };
+  const parsed = JSON.parse(raw) as { score: number; reason: string; factors: ScoreFactor[]; saysNo?: unknown; asksIfAutomated?: unknown };
   return {
     score: Math.max(0, Math.min(100, Math.round(parsed.score))),
     reason: parsed.reason,
     factors: parsed.factors,
+    saysNo: parsed.saysNo === true,
+    asksIfAutomated: parsed.asksIfAutomated === true,
   };
 }
 

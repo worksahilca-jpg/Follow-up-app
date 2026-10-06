@@ -149,6 +149,8 @@ function sendableWhere(businessId: string, cutoff: Date) {
     // lead can reply, text STOP, or be marked won.
     optedOutAt: null,
     stage: { notIn: OWNER_CONCLUDED_STAGES },
+    // They said no (Lead.saidNoAt): never a win-back.
+    saidNoAt: null,
     lastContacted: { lte: cutoff },
   };
 }

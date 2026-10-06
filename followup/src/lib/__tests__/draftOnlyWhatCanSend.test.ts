@@ -298,3 +298,24 @@ describe("a workflow step never drafts for a channel that cannot send", () => {
     expect(results[0].advanced).toBe(1);
   });
 });
+
+// Situations audit (founder, 2026-10-06).
+describe("workflow steps and what the customer last said", () => {
+  it("never asks for a step for a customer who said no", async () => {
+    await runSequencesForBusiness("biz1");
+    expect(p.lead.findMany.mock.calls[0][0].where).toEqual(expect.objectContaining({ saidNoAt: null }));
+  });
+
+  it("holds a step for a person when the customer asked if they're talking to one", async () => {
+    canSend.mockResolvedValue(true);
+    send.mockResolvedValue({ success: true });
+    p.lead.findMany.mockResolvedValueOnce([enrolledEmailLead({ askedIfPersonAt: new Date() })]).mockResolvedValue([]);
+    await runSequencesForBusiness("biz1");
+    expect(send).not.toHaveBeenCalled();
+    expect(audit).toHaveBeenCalledWith(
+      expect.anything(),
+      "ai.hold",
+      expect.objectContaining({ meta: expect.objectContaining({ reason: expect.stringContaining("real person") }) })
+    );
+  });
+});

@@ -174,3 +174,13 @@ allowed only under these rules, enforced in code as they are built:
 - Every PR passes typecheck, lint, build, audit, and secret scan before merge.
 - A restore from backup has been rehearsed.
 - An outside tester has tried to break it and failed, in writing.
+
+## Dependency audit, 2026-10-06
+
+`npm audit --omit=dev`: **0 vulnerabilities**. The three Prisma CLI highs (deepmerge-ts < 8, via
+`@prisma/config`) and the brace-expansion highs (eslint, the Sentry build plugin) are closed with
+`overrides` in `package.json` (deepmerge-ts 8.0.2, brace-expansion 1.1.21 and 5.0.12), with no Prisma
+downgrade; `prisma generate`, `migrate status` and the build were checked. One remains in dev tooling
+only: `braces` (via eslint-config-next → fast-glob → micromatch), which has no fixed release at all
+(every version is listed). It parses our own lint globs, never input from outside. Re-check when
+`braces` or `eslint-config-next` ships a fix.

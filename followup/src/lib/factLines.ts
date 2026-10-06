@@ -86,6 +86,7 @@ export function acceptedFacts(candidates: unknown, reply: string, leadName: stri
     if (/\[[A-Z_]+\]/.test(value) || /\[[A-Z_]+\]/.test(label)) continue;
     if (nameParts.some((p) => hasWord(value, p) || hasWord(label, p))) continue;
     if (deidentifyText(value, []) !== value) continue;
+    if (!isSpecific(value)) continue;
     const key = labelKey(label);
     if (seen.has(key)) continue;
     seen.add(key);
@@ -93,6 +94,21 @@ export function acceptedFacts(candidates: unknown, reply: string, leadName: stri
     if (out.length >= MAX_PER_REPLY) break;
   }
   return out;
+}
+
+/**
+ * Says something a customer could act on: a number or price, a link, a
+ * place or name (a capitalised word past the first), or a whole statement
+ * of six words or more. The first day live learned "our services", "various
+ * packages" and "viewing": true words from real replies that tell a
+ * customer nothing, and a draft that "uses them word for word" says nothing.
+ */
+export function isSpecific(value: string): boolean {
+  if (/\p{Nd}|[$€£₹¥%]/u.test(value)) return true;
+  if (/https?:\/\/|www\.|\S+@\S+\.\S+/i.test(value)) return true;
+  const words = value.split(/\s+/).filter(Boolean);
+  if (words.slice(1).some((w) => /^\p{Lu}/u.test(w))) return true;
+  return words.length >= 6;
 }
 
 /** The sentence of `reply` that holds `figure`, for the fallback below. */

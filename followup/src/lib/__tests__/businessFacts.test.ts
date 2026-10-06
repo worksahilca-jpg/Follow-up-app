@@ -93,6 +93,29 @@ describe("a learned fact must be safe to show every later customer", () => {
   });
 });
 
+describe("a learned fact must say something", () => {
+  it("drops the vague phrases the first day live learned", () => {
+    const reply = "We offer our services and various packages, available for a visit any weekday or weekend, viewing on request.";
+    const vague = ["our services", "various packages", "available for a visit", "weekday or weekend", "viewing"].map((value) => ({ label: "X", value }));
+    expect(acceptedFacts(vague, reply, "Bo Lee")).toEqual([]);
+  });
+
+  it("keeps a figure, a place, a link, or a whole statement", () => {
+    const reply = "El costo será de $100. I cover Toronto and Mississauga. Book at https://cal.example.com/me. About half my clients are first-time buyers.";
+    const kept = acceptedFacts(
+      [
+        { label: "Precio", value: "El costo será de $100" },
+        { label: "Area", value: "Toronto and Mississauga" },
+        { label: "Booking", value: "https://cal.example.com/me" },
+        { label: "Buyers", value: "About half my clients are first-time buyers" },
+      ],
+      reply,
+      "Bo Lee"
+    );
+    expect(kept).toHaveLength(4);
+  });
+});
+
 describe("the draft's instructions", () => {
   it("say nothing at all when the business has no facts", () => {
     expect(factsPromptBlock([])).toBe("");

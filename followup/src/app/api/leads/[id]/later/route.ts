@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { getSessionContext } from "@/lib/session";
 import { parseJsonBody } from "@/lib/validation";
 import { recordAudit } from "@/lib/audit";
-import { laterTime, laterTodayAvailable } from "@/lib/later";
+import { isLocalWeekend, laterTime, laterTodayAvailable } from "@/lib/later";
 
 /**
  * POST /api/leads/[id]/later — set a waiting reply aside (A-046).
@@ -39,10 +39,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   });
   if (updated.count === 0) return NextResponse.json({ success: false, message: "Lead not found." }, { status: 404 });
 
+  // A Later on a weekend message, on the weekend, is what the weekend_wait
+  // habit learns from (src/lib/habits.ts).
+  let weekend = false;
+  if (until && isLocalWeekend(now, tz)) {
+    const latest = await prisma.message.findFirst({
+      where: { direction: "inbound", conversation: { leadId: id, lead: { businessId: ctx.businessId } } },
+      orderBy: { sentAt: "desc" },
+      select: { sentAt: true },
+    });
+    weekend = !!latest && isLocalWeekend(latest.sentAt, tz);
+  }
   void recordAudit(ctx, when === "clear" ? "lead.later_cleared" : "lead.later", {
     targetType: "lead",
     targetId: id,
-    ...(until ? { meta: { until: until.toISOString() } } : {}),
+    ...(until ? { meta: { until: until.toISOString(), ...(weekend ? { weekend: true } : {}) } } : {}),
   });
   return NextResponse.json({ success: true, until: until ? until.toISOString() : null });
 }

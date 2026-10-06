@@ -57,6 +57,7 @@ import { ackGracePeriodMs } from "@/lib/acknowledge";
 import { heldSince } from "@/lib/pendingApprovals";
 import type { Message } from "@/lib/types";
 import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
+import { getHabits, habitOn, thanksIsNewest } from "@/lib/habits";
 
 export const UNANSWERED_ACTION = "unanswered_reply";
 export const UNANSWERED_NAME = "Reply for me when I haven't";
@@ -632,7 +633,7 @@ export function deadLeadMessageHint(daysSinceContact: number, lastFrom: "lead" |
  * the same draft → risk gate → send/hold path as a silent one, and the
  * owner is told either way (a held draft is a reply waiting for one click).
  */
-async function findUnansweredLeads(businessId: string, hours: number, recheckCutoff: Date) {
+async function findUnansweredLeads(businessId: string, hours: number, recheckCutoff: Date, skipThanks = false) {
   // Captured once so every lead in the batch is judged against the same
   // instant rather than a clock that moves as the filter runs.
   const nowMs = Date.now();
@@ -701,6 +702,9 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
     if (settledByTalk(lead.talkedAt, last.sentAt)) return false;
     // "Don't send" since their last message: declined, not re-held daily.
     if (settledByDecline(lead.holdDismissedAt, lastMessageTime(lead.conversations.flatMap((c) => c.messages)))) return false;
+    // The owner's own rule (src/lib/habits.ts): a newest message that only
+    // says thanks has nothing to answer.
+    if (skipThanks && thanksIsNewest(lead.thanksOnlyAt, last.sentAt)) return false;
     // A lead with no substantive outbound reply yet gets the shorter
     // first-reply threshold; everyone already in a real back-and-forth
     // keeps the business's normal unanswered-reply window. "Substantive"
@@ -733,7 +737,7 @@ async function findUnansweredLeads(businessId: string, hours: number, recheckCut
  * Returns the message time per lead as well, because that is what the
  * claim is keyed on (see the claim in runAutomationForBusiness).
  */
-async function findFreshUnansweredLeads(businessId: string, leadIds: string[]) {
+async function findFreshUnansweredLeads(businessId: string, leadIds: string[], skipThanks = false) {
   if (leadIds.length === 0) return { leads: [], inboundAt: new Map<string, Date>() };
   const nowMs = Date.now();
   const candidates = await prisma.lead.findMany({
@@ -752,7 +756,8 @@ async function findFreshUnansweredLeads(businessId: string, leadIds: string[]) {
   const inboundAt = new Map<string, Date>();
   for (const lead of candidates) {
     const at = freshInboundToAnswer(lead, nowMs);
-    if (at) inboundAt.set(lead.id, at);
+    // Scored in-line on capture, so the thanks-only verdict is already here.
+    if (at && !(skipThanks && thanksIsNewest(lead.thanksOnlyAt, at))) inboundAt.set(lead.id, at);
   }
   if (inboundAt.size === 0) return { leads: [], inboundAt };
 
@@ -930,7 +935,9 @@ export async function runAutomationForBusiness(
   // The fresh pass looks at nothing but the leads it was handed: no quiet
   // leads, no cold ones — those are FollowUp reaching out, and they stay on
   // the hourly tick and inside the send window.
-  const freshFound = fresh ? await findFreshUnansweredLeads(businessId, options.freshLeadIds ?? []) : null;
+  // What the owner said yes to on Today (src/lib/habits.ts, A-099).
+  const skipThanks = habitOn(await getHabits(businessId), "skip_thanks");
+  const freshFound = fresh ? await findFreshUnansweredLeads(businessId, options.freshLeadIds ?? [], skipThanks) : null;
   if (freshFound && freshFound.leads.length === 0) return EMPTY_RESULT;
 
   const [quietCandidates, deadCandidates, voiceSamples, unanswered] = await Promise.all([
@@ -983,7 +990,7 @@ export async function runAutomationForBusiness(
     freshFound
       ? Promise.resolve(freshFound.leads)
       : unansweredEnabled
-        ? findUnansweredLeads(businessId, unansweredHours, recheckCutoff)
+        ? findUnansweredLeads(businessId, unansweredHours, recheckCutoff, skipThanks)
         : Promise.resolve([]),
   ]);
 

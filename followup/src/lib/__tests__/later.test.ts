@@ -10,6 +10,7 @@ vi.mock("@/lib/db", () => ({
     lead: { findMany: vi.fn(), updateMany: vi.fn() },
     message: { findMany: vi.fn() },
     business: { findUnique: vi.fn() },
+    ownerHabit: { findMany: vi.fn(async () => []) },
   },
 }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));

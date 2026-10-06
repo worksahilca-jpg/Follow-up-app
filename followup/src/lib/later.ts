@@ -50,3 +50,26 @@ export function laterTime(choice: LaterChoice, now: Date, timeZone: string): Dat
 export function laterTodayAvailable(now: Date, timeZone: string): boolean {
   return laterTime("later_today", now, timeZone).getTime() - now.getTime() >= HOUR / 2;
 }
+
+/** The day of the week at `instant` in `timeZone`: 0 = Sunday … 6 = Saturday. */
+export function localWeekday(instant: Date, timeZone: string): number {
+  const d = new Date(wallClockAsUtc(instant.getTime(), timeZone));
+  return d.getUTCDay();
+}
+
+/** Saturday or Sunday at `instant`, in the business's time zone. */
+export function isLocalWeekend(instant: Date, timeZone: string): boolean {
+  const day = localWeekday(instant, timeZone);
+  return day === 0 || day === 6;
+}
+
+/**
+ * 9 am on the Monday after a weekend `now` — what the "weekend_wait" habit
+ * (src/lib/habits.ts) holds weekend messages until. Only meaningful on a
+ * Saturday or Sunday; on any other day it is the next Monday.
+ */
+export function mondayMorning(now: Date, timeZone: string): Date {
+  const day = localWeekday(now, timeZone);
+  const ahead = day === 0 ? 1 : (8 - day) % 7 || 7;
+  return localTimeOn(now, ahead, 9, timeZone);
+}

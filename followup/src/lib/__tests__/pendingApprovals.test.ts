@@ -12,7 +12,9 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     auditEvent: { findMany: vi.fn() },
     lead: { findMany: vi.fn(), findFirst: vi.fn(), update: vi.fn(async () => ({})) },
-    message: { findMany: vi.fn() },
+    message: { findMany: vi.fn(), findFirst: vi.fn(async () => null) },
+    business: { findUnique: vi.fn(async () => ({ timezone: "America/Toronto" })) },
+    ownerHabit: { findMany: vi.fn(async () => []) },
   },
 }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => {}) }));
@@ -380,5 +382,61 @@ describe("onTodayNow — what Today and its sidebar number both count", () => {
     const { join } = await import("path");
     const layout = readFileSync(join(__dirname, "..", "..", "app", "(app)", "layout.tsx"), "utf8");
     expect(layout).toMatch(/onTodayNow\(a\)\.length/);
+  });
+});
+
+describe("habits the owner said yes to (A-099, src/lib/habits.ts)", () => {
+  const thanksAt = new Date("2026-09-10T11:00:00Z");
+  const withThanks = (overrides: Record<string, unknown> = {}) =>
+    lead({ thanksOnlyAt: thanksAt, conversations: [{ channel: "email", messages: [{ body: "Thanks!", sentAt: thanksAt }] }], ...overrides });
+
+  it("leaves a thank-you on Today until the owner says yes", async () => {
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([withThanks()]);
+    expect(await getPendingApprovals("biz1")).toHaveLength(1);
+  });
+
+  it("drops a customer whose newest message only says thanks once skip_thanks is on", async () => {
+    p.ownerHabit.findMany.mockResolvedValueOnce([{ kind: "skip_thanks", status: "on", evidence: 4, decidedAt: new Date() }]);
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    p.lead.findMany.mockResolvedValue([withThanks()]);
+    expect(await getPendingApprovals("biz1")).toHaveLength(0);
+  });
+
+  it("keeps them when they wrote again after the thanks", async () => {
+    p.ownerHabit.findMany.mockResolvedValueOnce([{ kind: "skip_thanks", status: "on", evidence: 4, decidedAt: new Date() }]);
+    p.auditEvent.findMany.mockResolvedValue([event()]);
+    const later = new Date("2026-09-10T11:30:00Z");
+    p.lead.findMany.mockResolvedValue([withThanks({ conversations: [{ channel: "email", messages: [{ body: "One more question", sentAt: later }] }] })]);
+    expect(await getPendingApprovals("biz1")).toHaveLength(1);
+  });
+
+  it("weekend_wait sets a weekend message aside until Monday 9 am", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-10T18:00:00Z")); // Saturday afternoon in Toronto
+    try {
+      p.ownerHabit.findMany.mockResolvedValueOnce([{ kind: "weekend_wait", status: "on", evidence: 5, decidedAt: new Date() }]);
+      p.auditEvent.findMany.mockResolvedValue([event({ createdAt: new Date("2026-10-10T16:30:00Z") })]);
+      const sat = new Date("2026-10-10T16:00:00Z");
+      p.lead.findMany.mockResolvedValue([lead({ conversations: [{ channel: "sms", messages: [{ body: "Is it still available?", sentAt: sat }] }] })]);
+      const [item] = await getPendingApprovals("biz1");
+      expect(item.laterUntil).toEqual(new Date("2026-10-12T13:00:00Z"));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("a Don't send on a thank-you is remembered as one (what skip_thanks learns from)", async () => {
+    p.lead.findFirst.mockResolvedValue({ id: "lead1", thanksOnlyAt: thanksAt });
+    p.message.findFirst.mockResolvedValue({ sentAt: thanksAt });
+    await dismissHold("lead1", "biz1", "user1");
+    expect(audit.mock.calls.at(-1)?.[2]).toMatchObject({ meta: { thanksOnly: true } });
+  });
+
+  it("but not when a newer message came in after the thanks", async () => {
+    p.lead.findFirst.mockResolvedValue({ id: "lead1", thanksOnlyAt: thanksAt });
+    p.message.findFirst.mockResolvedValue({ sentAt: new Date("2026-09-10T11:30:00Z") });
+    await dismissHold("lead1", "biz1", "user1");
+    expect(audit.mock.calls.at(-1)?.[2]).not.toHaveProperty("meta");
   });
 });

@@ -1,6 +1,7 @@
 import { siteReplyFrom, type SiteReply } from "@/lib/siteReply";
 import { HOLDING_TRIGGER, NOT_AN_ANSWER_TRIGGERS, isNotAnAnswer } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
+import { getHabits, habitOn, thanksIsNewest, weekendWaitUntil } from "@/lib/habits";
 import { recordAudit } from "@/lib/audit";
 import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
 
@@ -228,6 +229,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       suggestedRiskTopic: true,
       saidNoAt: true,
       askedIfPersonAt: true,
+      thanksOnlyAt: true,
       // One inbound message per conversation (the most recent), not the
       // whole thread — a lead can have several conversations across
       // channels (an old email thread plus a newer text, say), so the
@@ -299,6 +301,16 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
     if (!prev || m.sentAt > prev) lastSentByLead.set(id, m.sentAt);
   }
 
+  // What the owner said yes to on Today (src/lib/habits.ts, A-099).
+  const [habits, businessRow] = await Promise.all([
+    getHabits(businessId),
+    // A failed read keeps the default zone rather than losing the queue.
+    Promise.resolve(prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true } })).catch(() => null),
+  ]);
+  const skipThanks = habitOn(habits, "skip_thanks");
+  const weekendWait = habitOn(habits, "weekend_wait");
+  const timezone = businessRow?.timezone ?? "America/New_York";
+
   const approvals: PendingApproval[] = [];
   for (const event of held) {
     const lead = leadById.get(event.targetId as string);
@@ -324,10 +336,17 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
     const told = lastHoldingByLead.get(lead.id);
     const customerToldAt = told && lastInbound && told > lastInbound.sentAt ? told.toISOString() : null;
 
-    const later =
+    // skip_thanks: a customer whose newest message only says thanks has
+    // nothing to answer, by the owner's own rule.
+    if (skipThanks && thanksIsNewest(lead.thanksOnlyAt, lastInbound?.sentAt)) continue;
+
+    const ownLater =
       lead.laterUntil && lead.laterUntil > now && !(lastInbound && lead.laterSetAt && lastInbound.sentAt > lead.laterSetAt)
         ? lead.laterUntil
         : null;
+    // weekend_wait: a weekend message waits until Monday 9 am, like a Later
+    // the owner would have pressed. An explicit Later still wins.
+    const later = ownLater ?? (weekendWait && lastInbound ? weekendWaitUntil(lastInbound.sentAt, now, timezone) : null);
 
     approvals.push({
       laterUntil: later,
@@ -404,11 +423,25 @@ export async function dismissHold(
   businessId: string,
   userId: string | null
 ): Promise<{ success: boolean; message?: string }> {
-  const lead = await prisma.lead.findFirst({ where: { id: leadId, businessId }, select: { id: true } });
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, businessId }, select: { id: true, thanksOnlyAt: true } });
   if (!lead) return { success: false, message: "Lead not found." };
+  const newestInbound = lead.thanksOnlyAt
+    ? await prisma.message.findFirst({
+        where: { direction: "inbound", conversation: { leadId, lead: { businessId } } },
+        orderBy: { sentAt: "desc" },
+        select: { sentAt: true },
+      })
+    : null;
+  const thanksOnly = thanksIsNewest(lead.thanksOnlyAt, newestInbound?.sentAt);
   // Remembered on the lead so the automatic paths leave this customer alone
   // until the conversation moves (settledByDecline, founder 2026-09-30).
   await prisma.lead.update({ where: { id: leadId }, data: { holdDismissedAt: new Date() } });
-  await recordAudit({ businessId, userId }, "ai.hold_dismissed", { targetType: "lead", targetId: leadId });
+  // A "Don't send" on a reply to a thank-you is what the skip_thanks habit
+  // learns from (src/lib/habits.ts).
+  await recordAudit({ businessId, userId }, "ai.hold_dismissed", {
+    targetType: "lead",
+    targetId: leadId,
+    ...(thanksOnly ? { meta: { thanksOnly: true } } : {}),
+  });
   return { success: true };
 }

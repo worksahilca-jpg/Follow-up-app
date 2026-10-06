@@ -16,6 +16,8 @@ vi.mock("@/lib/db", () => ({
     // The decision events behind the approval queue (pendingApprovals.ts).
     // Nothing is waiting in the queue unless a test says so.
     auditEvent: { findMany: vi.fn(async () => []) },
+    // "How you work" (src/lib/habits.ts): nothing switched on unless a test says so.
+    ownerHabit: { findMany: vi.fn(async () => []) },
   },
 }));
 vi.mock("@/lib/integrations/openai", () => ({
@@ -296,6 +298,24 @@ describe("human-neglect trigger (lead wrote, nobody answered)", () => {
     const r = await runAutomationForBusiness("biz1");
     expect(r.unanswered).toBe(0);
     expect(r.checked).toBe(0);
+  });
+
+  it("skips a customer whose newest message only says thanks, once the owner said yes to that (A-099)", async () => {
+    const thanks = unansweredLead(30);
+    const lastAt = thanks.conversations[0].messages[1].sentAt;
+    p.ownerHabit.findMany.mockResolvedValueOnce([{ kind: "skip_thanks", status: "on", evidence: 4, decidedAt: new Date() }]);
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ ...thanks, thanksOnlyAt: lastAt }]);
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.unanswered).toBe(0);
+  });
+
+  it("still answers a thank-you while the owner hasn't said yes", async () => {
+    const thanks = unansweredLead(30);
+    const lastAt = thanks.conversations[0].messages[1].sentAt;
+    p.lead.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ ...thanks, thanksOnlyAt: lastAt }]);
+    risk.mockResolvedValue({ riskLevel: "medium", reason: "answers a factual question" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.unanswered).toBe(1);
   });
 
   it("waits the full window: an inbound newer than the window is not neglected yet", async () => {

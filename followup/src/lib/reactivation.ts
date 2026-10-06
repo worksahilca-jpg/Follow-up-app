@@ -156,6 +156,8 @@ function eligibilityWhere(businessId: string, cutoff: Date) {
   return {
     businessId,
     stage: { notIn: OWNER_CONCLUDED_STAGES },
+    // They said no (Lead.saidNoAt): never a win-back.
+    saidNoAt: null,
     quietOutcome: null,
     optedOutAt: null,
     lastContacted: { lte: cutoff },
@@ -433,6 +435,8 @@ export async function getReactivationBatch(
   const base = {
     businessId,
     stage: { notIn: OWNER_CONCLUDED_STAGES },
+    // They said no (Lead.saidNoAt): never a win-back.
+    saidNoAt: null,
     optedOutAt: null,
     lastContacted: { lte: cutoff },
   };

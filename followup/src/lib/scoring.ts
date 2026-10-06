@@ -195,6 +195,8 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   }
 
   const newPriority = priorityFromScore(scoreResult.score);
+  const latestInbound = [...conversation].reverse().find((m) => m.direction === "inbound");
+  const latestInboundAt = latestInbound ? new Date(latestInbound.date) : null;
   // "Handoff" — the explicit "this one's ready, go close it" moment the
   // product was missing (see PRODUCT_DIRECTION.md's mission: AI decides
   // qualified, business owner takes over). Fires only on a genuine
@@ -247,6 +249,16 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
             languageScript: detected.script,
             languageRegister: detected.register,
             languageSetAt: new Date(),
+          }
+        : {}),
+      // What their newest message said that changes what FollowUp may do
+      // (situations audit, 2026-10-06): a no stops every reminder, a "is
+      // this a real person?" keeps the reply from sending on its own. Read
+      // fresh every time, so a customer who writes again is read again.
+      ...(latestInboundAt
+        ? {
+            saidNoAt: scoreResult.saysNo ? latestInboundAt : null,
+            askedIfPersonAt: scoreResult.asksIfAutomated ? latestInboundAt : null,
           }
         : {}),
       // Whatever was paused here isn't any more — this write IS the proof.

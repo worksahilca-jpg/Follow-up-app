@@ -9022,3 +9022,14 @@ Etobicoke", a stranger's premise a draft had repeated). Five were empty phrases 
 same loop voice.ts already refuses, and I should have applied it here. Fix: learn only from replies a person sent
 (`humanSend`), keep only specific values (`isSpecific`), and remove everything learned before the fix (migration).
 
+## 2026-10-06 — Situations audit: 12 of 14 handled; two gaps fixed (A-097, A-098)
+
+The 14 situations: new customer by day; at night; asks the price; unhappy; goes quiet; another language; says
+stop; wants a time; not a customer; writes again while a reply waits; owner away; Gmail disconnects; "is this a
+bot?"; owner already answered from Gmail. All had code and a sensible screen except two:
+1. **Said no:** reminders continued unless the owner marked Lost (fixed, A-097).
+2. **"Real person?":** FollowUp promised a human reply and told no one (fixed, A-098).
+Both are read in the scoring call FollowUp already makes for each new message, so they cost nothing extra.
+**Weak:** a customer who said no *before* this shipped isn't marked until they write again. The night case is
+intended behaviour (the instant reply goes any hour; follow-ups wait for 8am to 8pm), not a gap.
+

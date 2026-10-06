@@ -132,6 +132,10 @@ export type PendingApproval = {
    * answered (daily-path audit 2026-09-25 F7).
    */
   leadLastMessageAt: string | null;
+  /** Their newest message said no (Lead.saidNoAt): Today says FollowUp won't remind them again. */
+  saidNo?: boolean;
+  /** Their newest message asked if they're talking to a real person (Lead.askedIfPersonAt). */
+  askedIfPerson?: boolean;
   /**
    * Set aside with "Later" (A-046) until this time, or null when it isn't.
    * Already null once the time has passed or the customer has written
@@ -222,6 +226,8 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       suggestedMessage: true,
       suggestedRiskLevel: true,
       suggestedRiskTopic: true,
+      saidNoAt: true,
+      askedIfPersonAt: true,
       // One inbound message per conversation (the most recent), not the
       // whole thread — a lead can have several conversations across
       // channels (an old email thread plus a newer text, say), so the
@@ -340,6 +346,8 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       leadLastMessage: lastInbound ? truncate(lastInbound.body, LEAD_MESSAGE_PREVIEW_LENGTH) : null,
       leadLastMessageChannel: lastInbound?.channel ?? null,
       leadLastMessageAt: lastInbound ? lastInbound.sentAt.toISOString() : null,
+      saidNo: lead.saidNoAt != null,
+      askedIfPerson: lead.askedIfPersonAt != null,
       customerToldAt,
       site: siteReplyFrom(lead, lastInbound?.body),
     });

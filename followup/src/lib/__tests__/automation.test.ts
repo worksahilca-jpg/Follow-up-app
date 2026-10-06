@@ -2319,3 +2319,34 @@ describe("the sentence on a backlog draft", () => {
     expect(result.heldReasons[0]).toContain("quotes a price nobody mentioned");
   });
 });
+
+// Situations audit (founder, 2026-10-06): a customer who said no is never
+// reminded, and a reply to "am I talking to a real person?" never sends on
+// its own, on any tier.
+describe("customers who said no, or asked if they're talking to a person", () => {
+  it("never asks for a reminder or win-back for a customer who said no", async () => {
+    p.lead.findMany.mockResolvedValue([]);
+    await runAutomationForBusiness("biz1");
+    expect(p.lead.findMany.mock.calls[0][0].where).toEqual(expect.objectContaining({ saidNoAt: null }));
+    expect(p.lead.findMany.mock.calls[1][0].where).toEqual(expect.objectContaining({ saidNoAt: null }));
+  });
+
+  it("holds the reply for a person, even on Autonomous and even when the risk check says low", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ automationTier: "AUTONOMOUS", askedIfPersonAt: new Date() })]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    const r = await runAutomationForBusiness("biz1");
+    expect(r.sent).toBe(0);
+    expect(send).not.toHaveBeenCalled();
+    expect(audit).toHaveBeenCalledWith(
+      expect.anything(),
+      "ai.hold",
+      expect.objectContaining({ targetId: "lead1", meta: expect.objectContaining({ reason: expect.stringContaining("real person") }) })
+    );
+  });
+
+  it("still sends as before when they didn't ask", async () => {
+    p.lead.findMany.mockResolvedValueOnce([lead({ askedIfPersonAt: null })]).mockResolvedValueOnce([]);
+    risk.mockResolvedValue({ riskLevel: "low", reason: "" });
+    expect((await runAutomationForBusiness("biz1")).sent).toBe(1);
+  });
+});

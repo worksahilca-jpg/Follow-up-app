@@ -620,10 +620,23 @@ function ApprovalCard({
             disabled={send.pending || send.busy}
           />
         )}
+        {/* They asked if they're talking to a real person (situations audit,
+            2026-10-06): said whatever the hold reason, because an account
+            that holds every reply would otherwise show nothing at all. */}
+        {item.askedIfPerson && !editing && (
+          <p className="mt-2.5 flex items-baseline gap-2 text-[13.5px] text-ink">
+            <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 -translate-y-px rounded-full" style={{ background: "var(--state-needs)" }} />
+            {firstName} asked if they&apos;re talking to a real person. Answer this one yourself.
+          </p>
+        )}
+        {/* They said no: information, not a task, so no dot. */}
+        {item.saidNo && !editing && (
+          <p className="mt-2.5 text-[13.5px] text-ink">{firstName} said no. After this reply, FollowUp won&apos;t remind them again.</p>
+        )}
         {/* Why it waits, in the owner's words (A-087): what to check, or
             nothing when the every-reply-waits setting is the only reason.
             A price draft's reason is the blank, which the lines above say. */}
-        {plainReason && !needsPrice && !editing && !edited && (
+        {plainReason && !needsPrice && !item.askedIfPerson && !editing && !edited && (
           <p className="mt-2.5 flex items-baseline gap-2 text-[13.5px] text-ink">
             <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 -translate-y-px rounded-full" style={{ background: "var(--state-needs)" }} />
             {plainReason}

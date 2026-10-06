@@ -82,7 +82,7 @@ export const UNANSWERED_FIRST_REPLY_HOURS = 3;
 import { META_DM_WINDOW_HOURS, META_HUMAN_AGENT_MAX_HOURS, UNANSWERED_CEILING_CHANNELS, UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 export { META_DM_WINDOW_HOURS, UNANSWERED_META_DM_MAX_HOURS };
 import { isInstagramLeadId, isMessengerLeadId } from "@/lib/instagramId";
-import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, SPAM_FOLDER_SOURCE, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS } from "@/lib/holdReasons";
+import { HOLD_ALL_AUTOMATION_REASON, BACKLOG_BEFORE_PERMISSION_REASON, RISK_CHECK_FAILED_REASON, UNTOUCHED_LEAD_REASON, NEVER_WROTE_REASON, FOUND_IN_SPAM_REASON, SPAM_FOLDER_SOURCE, IN_CRM_REASON, UNGROUNDED_DRAFT_REASONS, ASKED_IF_PERSON_REASON } from "@/lib/holdReasons";
 
 /**
  * How long this particular lead waits before the unanswered rule fires, in
@@ -957,6 +957,8 @@ export async function runAutomationForBusiness(
         // keys in one object is not a conjunction, it is the second one
         // silently winning.
         AND: [quietSince(cutoff, deadLeadEnabled ? deadCutoff : undefined)],
+        // They said no (Lead.saidNoAt): no reminder, ever, until they write again.
+        saidNoAt: null,
         OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
       },
       include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
@@ -969,6 +971,7 @@ export async function runAutomationForBusiness(
             stage: { notIn: ["WON", "LOST"] },
             sequenceId: null,
             AND: [quietSince(deadCutoff)],
+            saidNoAt: null,
             OR: [{ lastAutomationCheckedAt: null }, { lastAutomationCheckedAt: { lt: recheckCutoff } }],
           },
           include: { conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } } },
@@ -1553,7 +1556,10 @@ export async function runAutomationForBusiness(
       // blank has to send it through review here; otherwise the send layer
       // would refuse it and nobody would ever see it.
       const needsPrice = hasPriceSlot(message);
-      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice) {
+      // They asked if they're talking to a real person (Lead.askedIfPersonAt):
+      // the only honest reply is a person's, so it waits on every tier.
+      const askedIfPerson = lead.askedIfPersonAt != null;
+      if (holdAll || isUntouched || phoneNeverWrote || unconfirmedSpam || effectiveTier !== "AUTONOMOUS" || tier === "free" || needsPrice || askedIfPerson) {
         /**
          * Every draft that reaches here gets a verdict, including ones
          * that are going to be held no matter what it says.
@@ -1639,6 +1645,10 @@ export async function runAutomationForBusiness(
         // off this topic). Stored, because it is a true verdict.
         if (needsPrice) {
           risk = { riskLevel: "high", reason: PRICE_SLOT_REASON, topic: "price" };
+          riskAssessed = true;
+        }
+        if (askedIfPerson) {
+          risk = { riskLevel: "high", reason: ASKED_IF_PERSON_REASON, topic: "other" };
           riskAssessed = true;
         }
         if (riskAssessed) verdictToKeep = risk;

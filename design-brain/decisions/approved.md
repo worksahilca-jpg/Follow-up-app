@@ -1787,3 +1787,27 @@ it acts like it's totally a clone of the user."* Drawn first (before/after, Toda
   built as *"…asks this"*, because FollowUp doesn't know the name of the thing at the moment the box shows, and
   guessing it would be the one invented word on the card.
 
+## A-097 — A customer who said no is never reminded ^A-097
+
+**Approved 2026-10-06**, founder: *"yes both"* to the drawing from the situations audit.
+- **Behaviour:** when a customer's newest message clearly says no (not interested, went elsewhere, no longer needed,
+  please stop), no reminder (days 3/7/14/30), workflow step or win-back goes to them. The reply to their "no" still
+  goes, with the owner's OK. "Not right now" is not a no. If they write again, they're read again and everything
+  resumes on its own.
+- **On the reply card:** one plain line above Send, *"Ivy said no. After this reply, FollowUp won't remind them
+  again."* **No dot**: it's information, not a task.
+- Why: before this, only marking them Lost stopped the reminders, so a polite decline was followed by four
+  "still interested?" emails. That's the spam the product promises never to be.
+
+## A-098 — "Am I talking to a real person?" is always the owner's to answer ^A-098
+
+**Approved 2026-10-06**, founder: *"yes both"*.
+- **Behaviour:** when a customer's newest message asks if they're talking to a real person, a bot, AI or an
+  automated system, the reply never sends on its own, on any tier, in the rules or a workflow, and never in
+  "Send all".
+- **On the reply card:** an orange-dot line, *"Ivy asked if they're talking to a real person. Answer this one
+  yourself."*, shown whatever else the reply is waiting for (an account that holds every reply would otherwise
+  say nothing).
+- Why: FollowUp can only promise "someone will get back to you personally"; before this nothing told the owner it
+  had promised that.
+

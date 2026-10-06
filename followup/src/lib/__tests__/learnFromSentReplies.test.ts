@@ -1,8 +1,9 @@
 /**
- * Every reply sent through FollowUp is read once for what the business tells
- * customers (A-096, src/lib/businessFacts.ts), typed, edited or not, unless
- * the owner unticked "Use <price> next time". The fixed acknowledgement and
- * holding message carry nothing of the business, so they are never read.
+ * Every reply a person sends from FollowUp is read once for what the business
+ * tells customers (A-096, src/lib/businessFacts.ts), typed, edited or sent as
+ * written, unless the owner unticked "Use <price> next time". FollowUp's own
+ * unreviewed sends never are: on the first day live they fed its old
+ * invented details back in as facts.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -73,30 +74,47 @@ function withDraft(draft: string | null) {
   });
 }
 
+const PERSON = { humanSend: { userId: "u1" } };
+
 describe("which sent replies FollowUp learns from", () => {
-  it("learns from a draft sent as written", async () => {
+  it("learns from a draft a person sent as written", async () => {
     withDraft("We cover Toronto and Mississauga.");
-    await sendFollowUpToLead("lead1", "We cover Toronto and Mississauga.", { channel: "instagram" });
+    await sendFollowUpToLead("lead1", "We cover Toronto and Mississauga.", { channel: "instagram", trigger: "manual", ...PERSON });
     expect(recorded().factsCheckedAt).toBeNull();
   });
 
   it("learns from a reply the owner typed or edited", async () => {
     withDraft(null);
-    await sendFollowUpToLead("lead1", "Showings are weekdays after 4.", { channel: "instagram", trigger: "manual" });
+    await sendFollowUpToLead("lead1", "Showings are weekdays after 4.", { channel: "instagram", trigger: "manual", ...PERSON });
     expect(recorded().factsCheckedAt).toBeNull();
   });
 
   it("keeps what the owner typed into the price blank, so it is known to be theirs", async () => {
     withDraft("My commission is [PRICE], and that covers the photos.");
-    await sendFollowUpToLead("lead1", "My commission is 2.5%, and that covers the photos.", { channel: "instagram", trigger: "manual" });
+    await sendFollowUpToLead("lead1", "My commission is 2.5%, and that covers the photos.", { channel: "instagram", trigger: "manual", ...PERSON });
     expect(recorded()).toEqual(expect.objectContaining({ factsCheckedAt: null, ownerFilled: "2.5%" }));
   });
 
   it("skips a reply when the owner unticked the box", async () => {
     withDraft("My commission is [PRICE].");
-    await sendFollowUpToLead("lead1", "My commission is 2%.", { channel: "instagram", trigger: "manual", learnFacts: false });
+    await sendFollowUpToLead("lead1", "My commission is 2%.", { channel: "instagram", trigger: "manual", learnFacts: false, ...PERSON });
     expect(recorded().factsCheckedAt).toBeInstanceOf(Date);
     expect(recorded().ownerFilled).toBeNull();
+  });
+
+  it("never reads what FollowUp sent on its own", async () => {
+    withDraft("Will this be for a weekday or weekend?");
+    await sendFollowUpToLead("lead1", "Will this be for a weekday or weekend?", { channel: "instagram", automated: true, trigger: "unanswered" });
+    expect(recorded().factsCheckedAt).toBeInstanceOf(Date);
+  });
+
+  it("never reads the unread 'send all' pile, or a human tag on an automated send", async () => {
+    withDraft("Thanks, happy to help.");
+    await sendFollowUpToLead("lead1", "Thanks, happy to help.", { channel: "instagram", trigger: "manual" });
+    expect(recorded().factsCheckedAt).toBeInstanceOf(Date);
+    p.followUp.create.mockClear();
+    await sendFollowUpToLead("lead1", "Thanks, happy to help.", { channel: "instagram", automated: true, trigger: "unanswered", ...PERSON });
+    expect(recorded().factsCheckedAt).toBeInstanceOf(Date);
   });
 
   it("never reads the fixed acknowledgement or holding message", async () => {

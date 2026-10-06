@@ -1773,8 +1773,11 @@ it acts like it's totally a clone of the user."* Drawn first (before/after, Toda
   label (small, soft), the value (the owner's words), and where it came from (*"Learned from your reply to Owen Shah,
   Oct 3"* / *"You wrote this, Oct 6"*). One Edit link per row; Remove lives inside Edit. One "Add something" button and
   a line of examples. No icon tile (as drawn).
-- **Learning:** every reply that goes out through FollowUp, typed, edited or sent as written, is read once for facts
-  about the business (not the customer). Values must appear word for word in the reply; anything carrying the
+- **Learning:** every reply **a person sent** from FollowUp, typed, edited or sent as written, is read once for facts
+  about the business (not the customer). *Narrowed 2026-10-06, the same day:* at first FollowUp's own unreviewed sends
+  were read too, and the first live run learned its old mistakes back ("weekday or weekend", a stranger's "in
+  Etobicoke") plus empty phrases ("our services"). Now only person-sent replies, and only specific facts (a figure, a
+  place, a link, or a whole statement). Values must appear word for word in the reply; anything carrying the
   customer's name, an email, a phone number or a street address is dropped. The newest reply updates a learned fact;
   an owner-written one is never overwritten.
 - **Drafting:** facts go into every follow-up draft as data, to be used word for word when the customer asks. A

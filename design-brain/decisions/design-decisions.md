@@ -9012,3 +9012,13 @@ Replies from the last 60 days are read once at launch so FollowUp starts out kno
 - Instagram/Messenger DM drafts don't use facts yet (their own shape check would refuse an unknown figure). Next step
   if testers ask.
 
+## 2026-10-06 — First live run of A-096 learned junk; narrowed the same day
+
+Live within minutes: 30 recent replies read, 8 "facts" saved, and most were bad. Two were FollowUp's own old
+inventions coming back ("Availability: weekday or weekend", the Sept 20 invented question; "Area you cover: in
+Etobicoke", a stranger's premise a draft had repeated). Five were empty phrases ("our services", "various packages",
+"viewing"). Cause: learning from FollowUp's unreviewed sends, and no test for "says something".
+**Lesson for every future learning feature:** never let FollowUp learn from its own unreviewed output. That is the
+same loop voice.ts already refuses, and I should have applied it here. Fix: learn only from replies a person sent
+(`humanSend`), keep only specific values (`isSpecific`), and remove everything learned before the fix (migration).
+

@@ -991,11 +991,15 @@ export async function sendFollowUpToLead(
   // that is a different message, and the draft it leaves is the real reply.
   const draftSpent = draftEdited === false || (trigger === "manual" && draftEdited !== null);
 
-  // Every reply sent through FollowUp teaches it what the business tells
-  // customers (founder, 2026-10-06, A-096) — typed, edited or not — unless
-  // the owner said not this one. The acknowledgement and the holding
-  // message are fixed sentences with nothing of the business in them.
-  const learnFromThis = options.learnFacts !== false && trigger !== "instant_ack" && trigger !== "holding";
+  // Every reply a person sends teaches FollowUp what the business tells
+  // customers (founder, 2026-10-06, A-096: "sent by user, edited or not"),
+  // unless the owner said not this one. Only a reply a person sent on its
+  // own (`humanSend`, the one route where someone has the message in front
+  // of them): the first day live showed what learning from FollowUp's own
+  // unreviewed sends does — its old invented details ("weekday or weekend",
+  // a stranger's "Etobicoke") came back as facts. Automated sends, retries
+  // and the unread "send all" pile are never read.
+  const learnFromThis = !!options.humanSend && !options.automated && options.learnFacts !== false;
   const ownerFilled = lead.suggestedMessage ? filledPrice(lead.suggestedMessage, body) : null;
 
   try {

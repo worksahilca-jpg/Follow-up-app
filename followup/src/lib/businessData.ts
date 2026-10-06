@@ -52,6 +52,7 @@ export interface BusinessExport {
   pastReplies: Record<string, unknown>[];
   senderVerdicts: Record<string, unknown>[];
   businessFacts: Record<string, unknown>[];
+  ownerHabits: Record<string, unknown>[];
 }
 
 /**
@@ -93,6 +94,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     pastReplies,
     senderVerdicts,
     businessFacts,
+    ownerHabits,
   ] = await Promise.all([
     prisma.user.findMany({
       where: { businessId },
@@ -128,6 +130,8 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     prisma.senderVerdict.findMany({ where: { businessId }, select: { sender: true, verdict: true, subject: true, updatedAt: true } }),
     // What FollowUp knows (src/lib/businessFacts.ts): the owner's own words.
     prisma.businessFact.findMany({ where: { businessId }, select: { label: true, value: true, source: true, createdAt: true, updatedAt: true } }),
+    // "How you work" (src/lib/habits.ts): what the owner said yes or no to on Today.
+    prisma.ownerHabit.findMany({ where: { businessId }, select: { kind: true, status: true, evidence: true, decidedAt: true } }),
   ]);
 
   // Picked explicitly (rather than destructuring-and-omitting the secret
@@ -189,6 +193,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     pastReplies,
     senderVerdicts,
     businessFacts,
+    ownerHabits,
   };
 }
 
@@ -292,6 +297,8 @@ export async function deleteBusinessData(
     // What FollowUp knows (src/lib/businessFacts.ts). CASCADE on Business,
     // but cleared here too so the erasure list stays the whole story.
     prisma.businessFact.deleteMany({ where: { businessId } }),
+    // "How you work" (src/lib/habits.ts). CASCADE on Business, cleared here for the same reason.
+    prisma.ownerHabit.deleteMany({ where: { businessId } }),
     // Raw inbound payloads (phone numbers, message text, names) — not a
     // relation to Business on purpose (see schema.prisma), so it has to be
     // cleared explicitly here or a deleted business's inbound messages

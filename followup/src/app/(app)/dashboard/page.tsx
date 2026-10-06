@@ -27,6 +27,8 @@ import { ArrowRight } from "lucide-react";
 import { Eyebrow, Initials } from "@/components/app/canvasBits";
 import FirstValueNote from "@/components/FirstValueNote";
 import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
+import HabitQuestion from "@/components/HabitQuestion";
+import { findHabitSuggestion } from "@/lib/habits";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
 // no seconds) since this is a status line, not a live clock.
@@ -159,6 +161,8 @@ export default async function DashboardPage() {
   // this screen can honestly promise.
   const holdAll = business?.holdAllForApproval ?? false;
   const isAdmin = me?.role === "ADMIN";
+  // "FollowUp learns what you do" (A-099): asked of an admin only, once.
+  const habitSuggestion = ctx && isAdmin && leads.length > 0 ? await findHabitSuggestion(ctx.businessId, now) : null;
   const sendingPaused = Boolean(business?.sendingPausedAt);
   const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const cantSend = !anySendChannel;
@@ -276,6 +280,8 @@ export default async function DashboardPage() {
       {leads.length > 0 && (
         <ApprovalQueue items={approvalItems} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
       )}
+
+      {habitSuggestion && <HabitQuestion kind={habitSuggestion.kind} count={habitSuggestion.count} example={habitSuggestion.example} />}
 
       {nextCall && (
         <p className="mt-6 text-sm text-ink-soft">

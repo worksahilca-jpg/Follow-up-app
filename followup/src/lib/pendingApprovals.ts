@@ -1,7 +1,7 @@
 import { siteReplyFrom, type SiteReply } from "@/lib/siteReply";
 import { HOLDING_TRIGGER, NOT_AN_ANSWER_TRIGGERS, isNotAnAnswer } from "@/lib/notAnAnswer";
 import { prisma } from "@/lib/db";
-import { getHabits, habitOn, weekendWaitUntil } from "@/lib/habits";
+import { getHabits, habitOn, thanksIsNewest, weekendWaitUntil } from "@/lib/habits";
 import { recordAudit } from "@/lib/audit";
 import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
 
@@ -304,7 +304,8 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
   // What the owner said yes to on Today (src/lib/habits.ts, A-099).
   const [habits, businessRow] = await Promise.all([
     getHabits(businessId),
-    prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true } }).catch(() => null),
+    // A failed read keeps the default zone rather than losing the queue.
+    Promise.resolve(prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true } })).catch(() => null),
   ]);
   const skipThanks = habitOn(habits, "skip_thanks");
   const weekendWait = habitOn(habits, "weekend_wait");
@@ -337,7 +338,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
 
     // skip_thanks: a customer whose newest message only says thanks has
     // nothing to answer, by the owner's own rule.
-    if (skipThanks && lead.thanksOnlyAt) continue;
+    if (skipThanks && thanksIsNewest(lead.thanksOnlyAt, lastInbound?.sentAt)) continue;
 
     const ownLater =
       lead.laterUntil && lead.laterUntil > now && !(lastInbound && lead.laterSetAt && lastInbound.sentAt > lead.laterSetAt)
@@ -424,6 +425,14 @@ export async function dismissHold(
 ): Promise<{ success: boolean; message?: string }> {
   const lead = await prisma.lead.findFirst({ where: { id: leadId, businessId }, select: { id: true, thanksOnlyAt: true } });
   if (!lead) return { success: false, message: "Lead not found." };
+  const newestInbound = lead.thanksOnlyAt
+    ? await prisma.message.findFirst({
+        where: { direction: "inbound", conversation: { leadId, lead: { businessId } } },
+        orderBy: { sentAt: "desc" },
+        select: { sentAt: true },
+      })
+    : null;
+  const thanksOnly = thanksIsNewest(lead.thanksOnlyAt, newestInbound?.sentAt);
   // Remembered on the lead so the automatic paths leave this customer alone
   // until the conversation moves (settledByDecline, founder 2026-09-30).
   await prisma.lead.update({ where: { id: leadId }, data: { holdDismissedAt: new Date() } });
@@ -432,7 +441,7 @@ export async function dismissHold(
   await recordAudit({ businessId, userId }, "ai.hold_dismissed", {
     targetType: "lead",
     targetId: leadId,
-    ...(lead.thanksOnlyAt ? { meta: { thanksOnly: true } } : {}),
+    ...(thanksOnly ? { meta: { thanksOnly: true } } : {}),
   });
   return { success: true };
 }

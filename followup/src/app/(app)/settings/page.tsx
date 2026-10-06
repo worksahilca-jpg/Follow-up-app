@@ -9,6 +9,7 @@ import TeamSection from "@/components/TeamSection";
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 import BusinessProfileSection from "@/components/BusinessProfileSection";
 import BusinessFactsSection from "@/components/BusinessFactsSection";
+import HowYouWorkSection from "@/components/HowYouWorkSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
 import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
 import SetupStepRestore from "@/components/SetupStepRestore";
@@ -1589,6 +1590,10 @@ function SettingsPageInner() {
         {/* What FollowUp knows (A-096): what it will say about the business on its own. */}
         <div className="mt-4">
           <BusinessFactsSection />
+        </div>
+        {/* How you work (A-099): what FollowUp does for the owner because they said yes on Today. */}
+        <div className="mt-4 empty:hidden">
+          <HowYouWorkSection />
         </div>
       </section>
 

@@ -61,6 +61,17 @@ export function habitOn(habits: readonly HabitRow[], kind: HabitKind): boolean {
   return habits.some((h) => h.kind === kind && h.status === "on");
 }
 
+/**
+ * Is the customer's NEWEST message the thanks-only one? Lead.thanksOnlyAt is
+ * stamped with the time of the message it describes (scoring.ts), so a newer
+ * message that has not been read yet leaves it behind, and that customer is
+ * answered as usual until the next score says otherwise.
+ */
+export function thanksIsNewest(thanksOnlyAt: Date | null | undefined, newestInboundAt: Date | null | undefined): boolean {
+  if (!thanksOnlyAt || !newestInboundAt) return false;
+  return thanksOnlyAt.getTime() >= newestInboundAt.getTime();
+}
+
 /** How many times in the window the owner did the thing behind `kind`. */
 async function evidenceCount(businessId: string, kind: HabitKind, now: Date): Promise<number> {
   const { action, flag } = EVIDENCE[kind];

@@ -50,7 +50,11 @@ const appCsp = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://connect.facebook.net",
   "style-src 'self' 'unsafe-inline' https://vercel.live",
   "font-src 'self' https://assets.vercel.com data:",
-  "img-src 'self' data: blob: https:",
+  // No remote images anywhere in the app (every image is our own, a data:
+  // URI or a blob), so "any https site" was only attack surface: CASA's
+  // scanner flags it as a wildcard (practice scan, 2026-10-07). vercel.live /
+  // vercel.com: the team-only Vercel Toolbar's own images.
+  "img-src 'self' data: blob: https://vercel.live https://vercel.com",
   "connect-src 'self' https://vercel.live wss://ws-us3.pusher.com https://www.facebook.com https://graph.facebook.com",
   "frame-src https://vercel.live https://www.facebook.com https://web.facebook.com",
   "object-src 'none'",

@@ -9082,3 +9082,15 @@ twice (the heading and the box above the card); that predates this change and is
 (3) The "3 customers, all answered" line in the first drawing was an example, not built: the quiet-day heading
 already reports what FollowUp did. (4) Whether one question a day is the right pace can only be judged with the
 next testers.
+
+## 2026-10-07 — Research round 2 built (A-102)
+
+Built from the founder's "lets do all" and checked in the running app at phone size, light and dark: the underline on
+a real held draft ("tonight", "tomorrow", "10" in a reply to a customer who named none of them), the track record with
+seeded replies (removed afterwards), Customers with waiting times, every app screen in dark.
+**Weak, honestly:** (1) the underline is on Today only; the customer page's reply card does not have it yet. (2) "Tonight"
+and "tomorrow" count as words to check, which is right for a promise but will also catch a harmless "talk tomorrow".
+(3) The plan line only appears when FollowUp has a check-in scheduled; an account that holds everything and has nobody
+waiting on a reply sees the old card. (4) Dark colours are a first set, drawn once; contrast was checked by eye, not
+measured, and charts (Numbers) were not looked at in dark. (5) The quiet hours are fixed at 10 pm–7 am; an owner who
+wants night alerts cannot change it yet.

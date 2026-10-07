@@ -1865,3 +1865,24 @@ easy for them so that they don't find it boring or irritating"*.
 - **Honest psychology only:** value first, a tiny ask, the right moment, an easy way out. No streaks, counts,
   guilt or urgency.
 - The one-screen-at-a-time question step (/teach) stays, reachable only from Settings → What FollowUp knows.
+
+## A-102 — Research round 2: words to check, the plan, the track record, waiting time, dark ^A-102
+
+**Approved 2026-10-07**, founder: *"lets do all"* to the eight proposals in
+`research/ux-patterns/2026-10-07-psychology-attention-trust.md`, then *"merge and build it"* on five phone drawings.
+- **Words to check, underlined in the draft** (Today): the numbers, prices and days nobody wrote in the conversation
+  or in What FollowUp knows get an orange underline (`--state-needs`, 2px, offset 4px), and the line under the reply
+  reads *"Check the underlined words. Nobody wrote them in this conversation."* No "nothing to check" reassurance:
+  the detectors are not complete, and false assurance is the over-reliance this exists to prevent.
+- **A quiet Today ends with the plan:** the card leads with *"Next: FollowUp checks on Priya on Thursday, and on Noah
+  on Saturday."* (two people at most), keeps A-088's week results, and the separate "Coming up" count line is not
+  shown under it. Without anything planned, the card is as before.
+- **The track record lives in Settings → Replies and check-ins, never on Today:** *"You sent 18 of the last 20 as
+  FollowUp wrote them. You changed 2."* From five replies on. Counts only (the drawing's "a price, and a viewing time"
+  was not built: naming what changed reliably is its own job).
+- **Customers on a phone:** a customer who needs you shows the dot and how long they've waited ("3 days") instead of
+  "Needs you" on every row; the desktop State column keeps the word.
+- **Dark follows the device setting**, app screens only (the public site keeps its look). Tokens in globals.css under
+  `.theme-auto`; the wash, glass fields and scrims are tokens now. Light stays the default.
+- Also done under the same yes, no drawing needed: quiet hours for alerts (10 pm–7 am) and kept half-written replies
+  (PR #460); "the next customer arrives in place" already existed (A-048).

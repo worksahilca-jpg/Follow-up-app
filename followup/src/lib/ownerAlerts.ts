@@ -71,6 +71,52 @@ import { isUniqueViolation } from "@/lib/uniqueViolation";
 export const ALERT_RECENT_MS = 6 * 60 * 60_000;
 
 /**
+ * Quiet hours, in the business's own time (founder, 2026-10-07, research
+ * round 2: "no alerts at night"). Between 10 pm and 7 am nothing is sent:
+ * an owner woken at 2 am cannot usefully answer, and getting notifications
+ * in batches made people calmer and more productive than getting them as
+ * they came (Fitz et al. 2019). Nothing is lost: a customer who wrote in
+ * the night is still news at 7, and several at once arrive as one summary
+ * (the burst rule below). The morning still beats the speed-to-lead cliff
+ * at 24 hours.
+ */
+export const QUIET_START_HOUR = 22;
+export const QUIET_END_HOUR = 7;
+const QUIET_LENGTH_MS = ((24 - QUIET_START_HOUR + QUIET_END_HOUR) % 24) * 60 * 60_000;
+
+/** Minutes after local midnight where the business is. Null for an unknown timezone. */
+function localMinutes(now: Date, timeZone: string): number | null {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", { timeZone, hourCycle: "h23", hour: "2-digit", minute: "2-digit" }).formatToParts(now);
+    const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+    return (get("hour") % 24) * 60 + get("minute");
+  } catch {
+    return null;
+  }
+}
+
+/** Is it night where the business is? An unknown timezone is never quiet: missing a customer is worse. */
+export function inQuietHours(now: Date, timeZone: string): boolean {
+  const m = localMinutes(now, timeZone);
+  if (m === null) return false;
+  return m >= QUIET_START_HOUR * 60 || m < QUIET_END_HOUR * 60;
+}
+
+/**
+ * How far back a wait still counts as news. Normally ALERT_RECENT_MS; on the
+ * morning after quiet hours, far enough to reach back to when the night
+ * began, so a customer who wrote at 11 pm is announced at 7.
+ */
+export function newsSince(now: Date, timeZone: string): Date {
+  const usual = now.getTime() - ALERT_RECENT_MS;
+  const m = localMinutes(now, timeZone);
+  if (m === null) return new Date(usual);
+  const sinceQuietEnded = (m - QUIET_END_HOUR * 60) * 60_000;
+  if (sinceQuietEnded < 0 || sinceQuietEnded >= ALERT_RECENT_MS) return new Date(usual);
+  return new Date(Math.min(usual, now.getTime() - sinceQuietEnded - QUIET_LENGTH_MS));
+}
+
+/**
  * How far a customer's message may predate the lead row and still count as
  * arriving while FollowUp was watching.
  *
@@ -117,7 +163,8 @@ export function judgeWait(
     leadCreatedAt: Date;
     draftedFor: Date | null;
   },
-  now: Date
+  now: Date,
+  since: Date = new Date(now.getTime() - ALERT_RECENT_MS)
 ): WaitVerdict {
   if (!w.latestInboundAt) return { waiting: false, reason: "the customer never wrote" };
   if (w.lastReplyAt && w.lastReplyAt >= w.latestInboundAt) return { waiting: false, reason: "someone answered after they wrote" };
@@ -126,7 +173,7 @@ export function judgeWait(
   }
   if (!w.draftedFor || w.draftedFor < w.latestInboundAt) return { waiting: false, reason: "the draft is not a reply to their newest message" };
   const becameWaiting = Math.max(w.heldAt.getTime(), w.latestInboundAt.getTime());
-  if (becameWaiting < now.getTime() - ALERT_RECENT_MS) return { waiting: false, reason: "not new" };
+  if (becameWaiting < since.getTime()) return { waiting: false, reason: "not new" };
   return { waiting: true };
 }
 
@@ -140,7 +187,17 @@ const REPLY_WHERE: Prisma.MessageWhereInput = {
 };
 
 async function waitingCustomersFor(businessId: string, now: Date): Promise<WaitingCustomer[]> {
-  const since = now.getTime() - ALERT_RECENT_MS;
+  // Quiet hours: claim nothing tonight, so the morning tick finds them all.
+  let timeZone = "America/New_York";
+  try {
+    const biz = await prisma.business.findUnique({ where: { id: businessId }, select: { timezone: true } });
+    if (biz?.timezone) timeZone = biz.timezone;
+  } catch {
+    // The usual timezone, rather than no alert at all.
+  }
+  if (inQuietHours(now, timeZone)) return [];
+  const newsFrom = newsSince(now, timeZone);
+  const since = newsFrom.getTime();
   // Cheap first cut on what the queue already knows, so a backlog of fifty
   // old holds costs no per-lead queries on every tick.
   // A card set aside with "Later" (A-046) has been seen; it isn't news.
@@ -182,7 +239,8 @@ async function waitingCustomersFor(businessId: string, now: Date): Promise<Waiti
         leadCreatedAt: lead.createdAt,
         draftedFor: lead.suggestedDraftedFor,
       },
-      now
+      now,
+      newsFrom
     );
     if (!verdict.waiting) continue;
 
@@ -215,7 +273,8 @@ async function waitingCustomersFor(businessId: string, now: Date): Promise<Waiti
 
 /** Every waiting customer that is news, across every business with anything recent. */
 export async function findWaitingCustomers(now: Date = new Date()): Promise<WaitingCustomer[]> {
-  const since = new Date(now.getTime() - ALERT_RECENT_MS);
+  // Wide enough for the morning after quiet hours; each business narrows it.
+  const since = new Date(now.getTime() - ALERT_RECENT_MS - QUIET_LENGTH_MS);
   // Only businesses where something could have changed: a draft was held,
   // or a lead with a draft heard from someone. Everyone else is skipped
   // without touching their queue, which is what makes a one-minute tick

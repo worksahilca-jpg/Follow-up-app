@@ -107,11 +107,11 @@ export async function sendMessengerMessage(
  * it: both of its connect paths saved the token and stopped there.
  *
  * `messages` carries Messenger DMs, the thing this channel promises.
- * `leadgen` (Lead Ads) is left out for now: founder, 2026-09-28, the
- * Facebook review asks only for what Messenger needs, and Meta refuses
- * the whole subscription when `leadgen` is asked for without the
- * leads_retrieval permission. handlePageEvents() still reads leadgen, so
- * adding it back here and to the scopes is all Lead Ads needs later.
+ * `leadgen` (Lead Ads) is added only where Lead Ads is switched on
+ * (leadAdsEnabledFor): founder, 2026-09-28, the Facebook review asks only
+ * for what Messenger needs, and Meta refuses the whole subscription when
+ * `leadgen` is asked for without the leads_retrieval permission.
+ * handlePageEvents() reads leadgen.
  *
  * `message_echoes` carries what the Page itself sent: the owner answering
  * from the Page inbox or Meta Business Suite, and Meta's own Business AI.
@@ -130,12 +130,17 @@ export async function sendMessengerMessage(
  */
 export async function subscribeFacebookPageWebhooks(
   pageId: string,
-  pageAccessToken: string
+  pageAccessToken: string,
+  options: { leadAds?: boolean } = {}
 ): Promise<{ ok: true } | { ok: false; message: string }> {
+  // `leadgen` only where Lead Ads is switched on (leadAdsEnabledFor below):
+  // Meta refuses the WHOLE subscription when it is asked for without
+  // leads_retrieval, so asking for it everywhere would silence Messenger too.
+  const fields = options.leadAds ? "messages,message_echoes,leadgen" : "messages,message_echoes";
   const res = await fetch(`${GRAPH}/${encodeURIComponent(pageId)}/subscribed_apps`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ subscribed_fields: "messages,message_echoes", access_token: pageAccessToken }),
+    body: new URLSearchParams({ subscribed_fields: fields, access_token: pageAccessToken }),
   });
   if (res.ok) return { ok: true };
   const failure = await readMetaError(res, "Facebook refused the webhook subscription.", "Facebook subscribed_apps");
@@ -157,7 +162,7 @@ export async function activateFacebookPageWebhooks(
   pageId: string,
   pageAccessToken: string
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  const result = await subscribeFacebookPageWebhooks(pageId, pageAccessToken);
+  const result = await subscribeFacebookPageWebhooks(pageId, pageAccessToken, { leadAds: leadAdsEnabledFor(businessId) });
   if (result.ok) {
     await prisma.business.update({
       where: { id: businessId },
@@ -288,7 +293,9 @@ export async function fetchLeadgenLead(businessId: string, leadgenId: string): P
   if (!pt) return null;
   const res = await fetch(`${GRAPH}/${encodeURIComponent(leadgenId)}?fields=field_data,created_time,form_id&access_token=${encodeURIComponent(pt.token)}`);
   if (!res.ok) {
-    console.error(`Leadgen fetch failed for ${leadgenId}: ${res.status}`);
+    // Meta's own code and words (never the token), so a missing permission
+    // reads as one in the logs instead of a bare status.
+    await readMetaError(res, "Leadgen fetch failed", `Facebook leadgen ${leadgenId}`);
     return null;
   }
   const data = await res.json().catch(() => null);
@@ -346,16 +353,42 @@ export async function upsertLeadFromLeadgen(
 // wall.
 const FACEBOOK_OAUTH_SCOPES = "pages_show_list,pages_messaging,pages_manage_metadata,business_management";
 
+/**
+ * Lead Ads (founder, 2026-10-07: "yes", after the realtor team, whose 600
+ * leads a month come from ad forms). Reading a form submission needs
+ * leads_retrieval, and pages_read_engagement alongside it; neither is in
+ * the App Review now in progress, so they are asked for only where
+ * Lead Ads is switched on.
+ *
+ * Switched on per business by LEAD_ADS_BUSINESS_IDS (comma-separated
+ * Business ids, or "*" for everyone once Meta approves the permission).
+ * Until then it is the founder's own business: Meta lets a person with a
+ * role on the app use a permission before review, which is also how the
+ * review video gets recorded. Empty or unset: off everywhere, exactly as
+ * before.
+ */
+const LEAD_ADS_SCOPES = "leads_retrieval,pages_read_engagement";
+
+export function leadAdsEnabledFor(businessId: string | null | undefined, env: string | undefined = process.env.LEAD_ADS_BUSINESS_IDS): boolean {
+  const list = (env ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (list.includes("*")) return true;
+  return !!businessId && list.includes(businessId);
+}
+
+export function facebookOAuthScopes(businessId?: string | null): string {
+  return leadAdsEnabledFor(businessId) ? `${FACEBOOK_OAUTH_SCOPES},${LEAD_ADS_SCOPES}` : FACEBOOK_OAUTH_SCOPES;
+}
+
 export function facebookOAuthAvailable(): boolean {
   return !!process.env.FACEBOOK_APP_ID && !!process.env.FACEBOOK_APP_SECRET;
 }
 
-export function buildFacebookAuthUrl(redirectUri: string, state: string): string {
+export function buildFacebookAuthUrl(redirectUri: string, state: string, businessId?: string | null): string {
   const params = new URLSearchParams({
     client_id: process.env.FACEBOOK_APP_ID ?? "",
     redirect_uri: redirectUri,
     response_type: "code",
-    scope: FACEBOOK_OAUTH_SCOPES,
+    scope: facebookOAuthScopes(businessId),
     state,
   });
   return `https://www.facebook.com/v21.0/dialog/oauth?${params.toString()}`;

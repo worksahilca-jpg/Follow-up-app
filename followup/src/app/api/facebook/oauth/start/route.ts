@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   const state = randomBytes(24).toString("base64url");
   const redirectUri = `${appUrl()}/api/facebook/oauth/callback`;
-  const res = NextResponse.redirect(buildFacebookAuthUrl(redirectUri, state));
+  const res = NextResponse.redirect(buildFacebookAuthUrl(redirectUri, state, ctx.businessId));
   res.cookies.set("fb_oauth_state", state, OAUTH_COOKIE_OPTS);
   if (next) res.cookies.set(oauthNextCookie("fb"), next, OAUTH_COOKIE_OPTS);
   return res;

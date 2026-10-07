@@ -1839,6 +1839,7 @@ the business… asking questions about the business, and FollowUp will learn fro
   owner how short it is. Not a precedent for progress bars elsewhere on the phone.
 - **The end:** *"FollowUp knows N things about your business."*, the list, and *"You skipped 2. When a customer
   asks about one of them, FollowUp will ask you on Today, once."*
+- *SUPERSEDED IN PART (2026-10-07) by R-027:* no longer shown after setup; the questions come one at a time on Today (see the 2026-10-07 entry in design-decisions.md).
 - **Shown** once after setup (before Today), and any time from Settings → What FollowUp knows → *"Answer a few
   questions"*. Questions already answered are never asked again.
 - **On Today, the answer blank:** when a customer asks something about how the business works that FollowUp

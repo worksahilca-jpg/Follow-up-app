@@ -599,3 +599,20 @@ owner's one job on it, never by hiding things behind more chrome (an accordion i
 naming what it replaces. "More context" is not a reason. R-001 still stands: subtraction alone with no
 structural idea was rejected once; the structure must come from the owner's job on that screen, then subtract
 to it.
+
+## R-027 — A row of questions right after setup (the A-100 question step as the first thing a new owner sees) ^R-027
+
+**Rejected:** 2026-10-07, founder, after the first outside tester called it annoying: *"Too many questions might be
+unrelatable… make it more strategic or easy for them so that they don't find it boring or irritating answering
+those questions… after an hour, or whenever we need… play with their psychology."*
+
+**What was rejected:** sending a new owner from setup straight into six or seven questions in a row, before they
+have seen FollowUp do anything. Not the questions themselves, and not the answer blank on Today.
+
+**Principle (founder's words plus inferred, marked):** ask after FollowUp has shown it is useful, one question at a
+time, when the owner isn't busy. *Inferred:* a list of questions asked up front feels like homework for a product
+that hasn't earned it yet, and a general list reads as unrelatable to anyone it doesn't fit. "Psychology" here
+means the honest kind (value first, a tiny ask, the right moment, an easy "Not now"), never streaks, guilt,
+countdowns or fake urgency (brand principles 1, 2 and 7).
+
+**Do not propose again:** any multi-question form between setup and the owner's first look at Today.

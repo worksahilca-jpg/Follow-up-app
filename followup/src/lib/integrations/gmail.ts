@@ -44,6 +44,7 @@ import { isAutomatedAddress, leadMarketplaceFromQuery, threadCustomer } from "@/
 import type { InlineImage } from "@/lib/emailAssets";
 import { GMAIL_INBOX_ORDER } from "@/lib/gmailInboxOrder";
 import { isUniqueViolation } from "@/lib/uniqueViolation";
+import { isBulkMail, isNewsletterThread, NEWSLETTER_REASON } from "@/lib/bulkMail";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -668,6 +669,7 @@ async function processThreadRefs(
           body: extractPlainTextBody(m.payload).slice(0, 5000),
           sentAt: gmailMessageTime(m.internalDate, getHeader(m.payload?.headers, "Date")),
           messageIdHeader: getHeader(m.payload?.headers, "Message-ID") || undefined,
+          bulk: isBulkMail(m.payload?.headers),
         };
       });
     if (parsedMessages.length === 0) return null;
@@ -702,6 +704,27 @@ async function processThreadRefs(
     const alreadyKnown = !!known;
 
     const newestMessageAt = parsedMessages[parsedMessages.length - 1].sentAt;
+
+    // A newsletter is set aside before anything else, known sender or not
+    // (src/lib/bulkMail.ts): one let in by mistake used to pull every later
+    // thread from the same address in with it, unjudged.
+    if (!alreadyKnown && !options.skipClassification && isNewsletterThread(parsedMessages, counterpart)) {
+      await prisma.filteredEmail.upsert({
+        where: { businessId_threadId: { businessId, threadId: thread.id! } },
+        update: { reason: NEWSLETTER_REASON, lastMessageAt: newestMessageAt },
+        create: {
+          businessId,
+          threadId: thread.id!,
+          provider: "gmail",
+          senderName: counterpart.name,
+          senderEmail: counterpart.email,
+          subject: getHeader(gmailMessages[0]?.payload?.headers, "Subject") || null,
+          reason: NEWSLETTER_REASON,
+          lastMessageAt: newestMessageAt,
+        },
+      });
+      return null;
+    }
 
     // Gate on the AI prospect check before writing anything for this
     // thread. Without an API key there's no classifier to ask, so fall

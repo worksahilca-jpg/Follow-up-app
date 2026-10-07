@@ -9059,3 +9059,12 @@ step, skip, the summary and the Settings link.
 confirm) can only be judged on real conversations; watch the first testers' drafts. (2) Questions exist for four
 trades plus a general set; Legal and Marketing get the general set. (3) Instagram/Messenger DM drafts don't use
 the answer blank yet.
+
+## 2026-10-07 — First tester on the question step (A-100): "annoying"
+
+The first outside tester (a personal Gmail, trade "Other", so the 6 general questions) found the question step
+right after setup annoying; the founder relayed it as *"there were like six questions"* and *"That was
+annoying."* Recorded as a fact, not yet a principle: it is unclear whether it was the number of questions, that
+they came before the tester had seen the app, or that none of them applied to someone who isn't a business owner.
+One clarifying question asked. Until answered, do not add questions to the step; any change is drawn first.
+The same test found a newsletter becoming a lead (fixed in the Gmail sync, not a design change).

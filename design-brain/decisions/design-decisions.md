@@ -9094,3 +9094,20 @@ and "tomorrow" count as words to check, which is right for a promise but will al
 waiting on a reply sees the old card. (4) Dark colours are a first set, drawn once; contrast was checked by eye, not
 measured, and charts (Numbers) were not looked at in dark. (5) The quiet hours are fixed at 10 pm–7 am; an owner who
 wants night alerts cannot change it yet.
+
+## 2026-10-07 — The realtor team pilot built (A-103)
+
+From the founder's realtor conversation (600 ad leads a month, half never pick up and wait two months, 50% of booked
+meetings don't show) and GoHighLevel research (`followup/research/competitors/2026-10-07-gohighlevel.md`). Drawn on
+the real app first (four boards), approved, then built. Checked in the running app at phone and desktop: No answer on
+a customer writes the held text and plans the call; the reply card shows it with "Text to"; Undo removes the call, the
+text and the plan; the next day's card reads "2nd call" with "Your text asked for a good time. No reply yet."; This
+week counts per person and flags only the one behind; with the switch off, nothing shows and the route refuses.
+**Changed from the drawings, on purpose:** the last call is a line in the Call box, not a line in the conversation;
+the text has no "evenings" detail (that needs AI reading the form, and the trial runs on fixed words); calls sit above
+the replies on Today with a "Calls to make" label.
+**Weak, honestly:** (1) FollowUp only counts the calls someone taps for; a caller who forgets makes the team look idle.
+(2) Meetings are only the booking link's; GoHighLevel's calendar is invisible until a connection exists. (3) The
+sidebar's Today number doesn't include calls yet. (4) A text needs a Twilio number for the team, set up by the founder,
+with its per-text cost and Canadian consent rules (a lawyer's quick read before texting at volume). (5) "Later" is a
+fixed three hours. (6) Fixed English words; a customer writing in another language gets an English text.

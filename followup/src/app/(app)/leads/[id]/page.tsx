@@ -33,6 +33,8 @@ import { prisma } from "@/lib/db";
 import type { Lead, Message } from "@/lib/types";
 import { isWaitingOnCustomer } from "@/lib/waitingOn";
 import { plainHoldReason } from "@/lib/holdReasons";
+import CallBox from "@/components/app/CallBox";
+import { isCallablePhone } from "@/lib/callPlan";
 
 export const dynamic = "force-dynamic";
 
@@ -61,10 +63,23 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const [approval, business] = ctx
     ? await Promise.all([
         getPendingApprovals(ctx.businessId).then((all) => all.find((a) => a.leadId === lead.id) ?? null),
-        prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true } }),
+        prisma.business.findUnique({ where: { id: ctx.businessId }, select: { timezone: true, teamCalls: true } }),
       ])
     : [null, null];
   const timeZone = business?.timezone ?? "America/New_York";
+  // The Call box (A-103): only on a team that calls customers, and only for a number someone can dial.
+  const callable = Boolean(business?.teamCalls) && isCallablePhone(lead.phone) ? (lead.phone as string) : null;
+  const calls = callable && ctx
+    ? await prisma.lead.findFirst({
+        where: { id: lead.id, businessId: ctx.businessId },
+        select: { nextCallAt: true, callAttempts: { orderBy: { createdAt: "desc" }, take: 1, select: { outcome: true, createdAt: true, user: { select: { name: true } } } } },
+      })
+    : null;
+  const when = (d: Date) => d.toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone });
+  const lastCallAttempt = calls?.callAttempts[0] ?? null;
+  const lastCallWords = lastCallAttempt
+    ? [lastCallAttempt.outcome === "spoke" ? "spoke" : "no answer", lastCallAttempt.user?.name?.trim().split(" ")[0], when(lastCallAttempt.createdAt)].filter(Boolean).join(" · ")
+    : null;
   const firstName = lead.name.split(" ")[0] ?? lead.name;
   const firstMessage = lead.conversation[0];
   const channel = channelName(lastInbound(lead.conversation)?.channel ?? firstMessage?.channel ?? null, lead.source);
@@ -110,11 +125,26 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           <Thread messages={lead.conversation} leadName={lead.name} timeZone={timeZone} now={now} />
         </div>
 
+        {callable && (
+          <div className="mt-6">
+            <CallBox
+              leadId={lead.id}
+              leadName={lead.name}
+              phone={callable}
+              replyWaiting={Boolean(approval)}
+              lastCall={lastCallWords}
+              nextCallAt={calls?.nextCallAt ? when(calls.nextCallAt) : null}
+            />
+          </div>
+        )}
+
         <div className="mt-6">
           {siteReply ? (
             <SiteReplyCard key={lead.id} leadId={lead.id} leadName={lead.name} site={siteReply} draft={lead.suggestedMessage} waiting={Boolean(approval)} />
           ) : (
             <ReplyCard
+              // A new draft (a "No answer" text, A-103) is a new card: its text is held in the card's own state.
+              key={lead.suggestedMessage}
               leadId={lead.id}
               leadName={lead.name}
               leadEmail={lead.email || undefined}
@@ -125,6 +155,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               sendLocked={sendLocked}
               basis={basis}
               languageName={replyLanguage}
+              textTo={approval?.textTo ?? null}
             />
           )}
         </div>
@@ -144,11 +175,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             to call, and Email (their own mail app) when there isn't, so
             an email-only customer still has a way to reach them directly. */}
         <div className="flex flex-wrap items-center gap-2">
-          {lead.automationStatus?.kind !== "closed" && (
+          {/* With the Call box (A-103), Already spoke and Call live in it, once. */}
+          {lead.automationStatus?.kind !== "closed" && !callable && (
             <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} onSite={Boolean(siteReply)} />
           )}
           <CopyBookingLinkButton leadId={lead.id} />
-          {lead.phone && !isSocialLeadId(lead.phone) ? (
+          {callable ? null : lead.phone && !isSocialLeadId(lead.phone) ? (
             <a href={`tel:${lead.phone}`} className={PILL}>
               Call
             </a>

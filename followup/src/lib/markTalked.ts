@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
+import { recordSpoke } from "@/lib/calls";
 
 /**
  * The owner's tap, and its Undo. Scoped to the owner's own business, and
@@ -20,6 +21,9 @@ export async function markTalked(
   const talkedAt = undo ? null : new Date();
   await prisma.lead.update({ where: { id: leadId }, data: { talkedAt } });
   const action = onSite ? (undo ? "lead.replied_on_site_undone" : "lead.replied_on_site") : undo ? "lead.talked_undone" : "lead.talked";
+  // On a team that calls customers (A-103), "Already spoke" is also a call
+  // that reached them: counted on the Team page, and no further call planned.
+  if (!onSite) await recordSpoke(leadId, businessId, userId, undo);
   await recordAudit({ businessId, userId }, action, {
     targetType: "lead",
     targetId: leadId,

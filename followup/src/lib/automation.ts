@@ -55,6 +55,7 @@ import { greetingFirstName } from "@/lib/leadName";
 import { isOptOutMessage, isOptInMessage } from "@/lib/optOutKeywords";
 import { ackGracePeriodMs } from "@/lib/acknowledge";
 import { heldSince } from "@/lib/pendingApprovals";
+import { isNoAnswerDraft } from "@/lib/callPlan";
 import type { Message } from "@/lib/types";
 import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
 import { getHabits, habitOn, thanksIsNewest } from "@/lib/habits";
@@ -1105,6 +1106,13 @@ export async function runAutomationForBusiness(
       // Now runs on every tier, not just Free: Plus's 1,500/mo and Pro's
       // 10,000/mo ceilings were published and unenforced, so a paid account
       // had no upper bound on AI processing at all.
+      // A "No answer" text (A-103) waiting for a person's OK is the next
+      // message to this customer. Nothing automatic writes over it; when they
+      // write back, scoring clears the kind and everything resumes.
+      if (isNoAnswerDraft(lead.suggestedDraftKind) && (await stillWaitingOnOwner(lead, null))) {
+        return { kind: "held", note: `${lead.name}: the “No answer” text is waiting for an OK` };
+      }
+
       const aiEligible = await checkAiEligibility(businessId, lead, tier);
       if (!aiEligible.ok) {
         // Same reasoning as scoring.ts's copy of this gate: the run's

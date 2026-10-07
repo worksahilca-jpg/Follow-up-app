@@ -26,6 +26,8 @@ import FilteredEmails from "@/components/FilteredEmails";
 import DataPrivacySection from "@/components/DataPrivacySection";
 import AlertsSection from "@/components/AlertsSection";
 import OnlyAdminsSendSetting from "@/components/OnlyAdminsSendSetting";
+import TeamCallsSetting from "@/components/TeamCallsSetting";
+import TeamWeek from "@/components/TeamWeek";
 import SignInsSection from "@/components/SignInsSection";
 import YourRulesCard from "@/components/YourRulesCard";
 import RuleCard, { RuleNumber, type RuleRecordCounts } from "@/components/RuleCard";
@@ -236,6 +238,8 @@ function SettingsPageInner() {
   // depend on them.
   const [sendingPaused, setSendingPaused] = useState(false);
   const [onlyAdminsSend, setOnlyAdminsSend] = useState(false);
+  // Bumped when "Your team calls customers" changes, so This week appears or goes (A-103).
+  const [teamWeekKey, setTeamWeekKey] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pauseSaving, setPauseSaving] = useState(false);
   const [autonomousSaving, setAutonomousSaving] = useState(false);
@@ -1602,13 +1606,15 @@ function SettingsPageInner() {
 
       <section id="team" hidden={!visible("team")} className="scroll-mt-16">
         <h2 className={sectionLabel} style={SECTION_STYLE}>Team</h2>
-        <p className="mt-1 text-[14.5px] leading-relaxed text-ink-soft">
-          Admins can invite teammates, change roles, and remove people. Everyone can see who&apos;s on the team.
-        </p>
+        {/* "This week" (A-103): admins only, and only while the team calls customers. The page's own lede already says what admins can do, so it isn't said twice. */}
+        <div className="mt-4 empty:hidden">
+          <TeamWeek key={teamWeekKey} />
+        </div>
         <div className="mt-4">
           <TeamSection onlyAdminsSend={onlyAdminsSend} />
         </div>
         <OnlyAdminsSendSetting onChange={setOnlyAdminsSend} />
+        <TeamCallsSetting onChange={() => setTeamWeekKey((k) => k + 1)} />
       </section>
 
       <section id="lead-routing" hidden={!visible("lead-routing")} className="scroll-mt-16">

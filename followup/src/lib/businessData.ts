@@ -31,6 +31,7 @@ export interface BusinessExport {
   followUps: Record<string, unknown>[];
   tasks: Record<string, unknown>[];
   bookings: Record<string, unknown>[];
+  callAttempts: Record<string, unknown>[];
   sequences: Record<string, unknown>[];
   sourceRules: Record<string, unknown>[];
   savedFilters: Record<string, unknown>[];
@@ -77,6 +78,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     followUps,
     tasks,
     bookings,
+    callAttempts,
     sequences,
     sourceRules,
     savedFilters,
@@ -107,6 +109,8 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     prisma.followUp.findMany({ where: { lead: { businessId } } }),
     prisma.task.findMany({ where: { lead: { businessId } } }),
     prisma.booking.findMany({ where: { businessId } }),
+    // Calls someone tapped No answer or Already spoke for (A-103): who, when, what happened.
+    prisma.callAttempt.findMany({ where: { businessId } }),
     prisma.sequence.findMany({ where: { businessId }, include: { steps: true } }),
     prisma.sourceRule.findMany({ where: { businessId } }),
     prisma.savedFilter.findMany({ where: { businessId } }),
@@ -176,6 +180,7 @@ export async function exportBusinessData(businessId: string): Promise<BusinessEx
     followUps,
     tasks,
     bookings,
+    callAttempts,
     sequences,
     sourceRules,
     savedFilters,
@@ -271,6 +276,8 @@ export async function deleteBusinessData(
     prisma.sendClaim.deleteMany({ where: { lead: { businessId } } }),
     prisma.task.deleteMany({ where: { lead: { businessId } } }),
     prisma.booking.deleteMany({ where: { businessId } }),
+    // Before Lead and User, which it references (A-103).
+    prisma.callAttempt.deleteMany({ where: { businessId } }),
     prisma.lead.deleteMany({ where: { businessId } }),
     prisma.savedFilter.deleteMany({ where: { businessId } }),
     prisma.sourceRule.deleteMany({ where: { businessId } }),

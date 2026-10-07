@@ -38,6 +38,7 @@ vi.mock("@/lib/db", () => ({
     followUp: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("followUp") },
     task: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("task") },
     booking: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("booking") },
+    callAttempt: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("callAttempt") },
     sequence: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("sequence") },
     sourceRule: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("sourceRule") },
     savedFilter: { findMany: vi.fn(async () => []), deleteMany: trackedDeleteMany("savedFilter") },

@@ -55,6 +55,8 @@ const settingsSchema = z.object({
   autonomousAllowed: z.boolean().optional(),
   // Business.onlyAdminsSend (A-041). Saved on its own, like the two above.
   onlyAdminsSend: z.boolean().optional(),
+  // Business.teamCalls (A-103): "Your team calls customers". Saved on its own.
+  teamCalls: z.boolean().optional(),
   unansweredReply: z
     .object({
       enabled: z.boolean().optional(),
@@ -98,7 +100,7 @@ export async function GET() {
   // fact, so it is the one place that has to know.
   const business = await prisma.business.findUnique({
     where: { id: ctx.businessId },
-    select: { holdAllForApproval: true, autonomousAllowed: true, sendingPausedAt: true, onlyAdminsSend: true },
+    select: { holdAllForApproval: true, autonomousAllowed: true, sendingPausedAt: true, onlyAdminsSend: true, teamCalls: true },
   });
   return NextResponse.json({
     enabled: automation?.enabled ?? true,
@@ -113,6 +115,7 @@ export async function GET() {
     autonomousAllowed: business?.autonomousAllowed ?? false,
     sendingPaused: Boolean(business?.sendingPausedAt),
     onlyAdminsSend: business?.onlyAdminsSend ?? false,
+    teamCalls: business?.teamCalls ?? false,
     isAdmin: await requireAdmin(ctx),
   });
 }
@@ -192,6 +195,13 @@ export async function POST(request: NextRequest) {
     });
     void recordAudit(ctx, granted ? "automation.autonomous.granted" : "automation.autonomous.revoked");
     return NextResponse.json({ success: true, autonomousAllowed: granted });
+  }
+
+  if (typeof body.teamCalls === "boolean") {
+    const on = body.teamCalls;
+    await prisma.business.update({ where: { id: ctx.businessId }, data: { teamCalls: on } });
+    void recordAudit(ctx, on ? "team.calls.on" : "team.calls.off");
+    return NextResponse.json({ success: true, teamCalls: on });
   }
 
   if (typeof body.onlyAdminsSend === "boolean") {

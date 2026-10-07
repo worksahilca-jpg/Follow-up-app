@@ -1886,3 +1886,28 @@ easy for them so that they don't find it boring or irritating"*.
   `.theme-auto`; the wash, glass fields and scrims are tokens now. Light stays the default.
 - Also done under the same yes, no drawing needed: quiet hours for alerts (10 pm–7 am) and kept half-written replies
   (PR #460); "the next customer arrives in place" already existed (A-048).
+
+## A-103 — The realtor team pilot: No answer, calls to make, This week ^A-103
+
+**Approved 2026-10-07**, founder: *"Lets do it bro"* to a 2–3 person trial with a realtor's sales team, then *"yes
+frawings are fine"* on four boards (the Call box, after No answer, the next call on Today, This week on desktop and
+phone), and *"yes wait for trail"*: during the trial every "No answer" text waits for an OK.
+- **Behind one switch, "Your team calls customers"** (Team page, admins only, off by default). Off, nothing shows and
+  nothing is recorded: a business that never asked sees no change.
+- **The Call box on a customer with a phone number:** *Call {name} · {number}* (black only when no reply on the page is
+  waiting; otherwise outlined, so Send keeps the one black button), then *"After the call, tap one"* with **No answer**
+  and **Already spoke**. The last call and the next call are one line in the box. Already spoke and Call leave the
+  side column on these customers (once each).
+- **No answer:** records the call, plans the next one a day later at the same time, and stops planning after three in a
+  row. The first unanswered call of a run writes **one** short text, *"Hi Priya, it's Sam from Maple Realty. I just
+  tried to call you. When's a good time to talk?"* (an email when no text number is connected), held for an OK with the
+  reason *"No answer when you called. This asks Priya for a good time to talk."* The card says *"Text to {number}"* and
+  Send sends a text. Fixed words, no AI: nothing it can't know.
+- **Today, "Calls to make":** above the replies, as drawn. A call that came due, or a new customer with a number nobody
+  has called or written to. Dot line *"Call Priya again."*, the last call in plain words, Call, then No answer ·
+  Already spoke · Later (three hours). A teammate sees their own customers and the unassigned. The heading count
+  includes calls.
+- **This week (Team page, admins only):** one sentence for the team (calls, spoke with, meetings booked, same point last
+  week), then each person's three numbers; only someone calling with no meetings (from Wednesday, or sooner with
+  calls a day late) gets the orange dot. No charts. Meetings are the booking link's.
+- The duplicate sentence under Team ("Admins can invite…" twice) is gone, as drawn.

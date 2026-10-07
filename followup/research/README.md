@@ -137,6 +137,8 @@ order and later ones assume the earlier fixes landed.
 
 `2026-09-13-uplift-ai.md`
 
+`2026-10-07-gohighlevel.md` — a realtor team on GoHighLevel (600 leads a month, 50% no-shows even with reminders): GoHighLevel already has every feature they lack, but the owner must build each workflow; hard to learn; how FollowUp could connect later; build nothing yet
+
 ---
 
 ## Where related knowledge lives instead

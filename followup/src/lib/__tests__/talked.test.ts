@@ -9,6 +9,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/db", () => ({ prisma: { lead: { findFirst: vi.fn(), update: vi.fn() } } }));
 vi.mock("@/lib/audit", () => ({ recordAudit: vi.fn(async () => true) }));
+// "Already spoke" as a call (A-103) is tested in callsToMake/noAnswer; here it is a no-op.
+vi.mock("@/lib/calls", () => ({ recordSpoke: vi.fn(async () => {}) }));
 
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";

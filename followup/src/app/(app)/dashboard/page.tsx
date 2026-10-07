@@ -20,6 +20,9 @@ import { ComingUpLine } from "@/components/ComingUp";
 import { getSessionContext } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getPendingApprovals, onTodayNow } from "@/lib/pendingApprovals";
+import { getCallsToMake } from "@/lib/calls";
+import { ordinalCall } from "@/lib/callPlan";
+import CallsToMake, { type CallCard } from "@/components/app/CallsToMake";
 import { getIncompleteSetupSteps } from "@/lib/setupStatus";
 import { getGmailStatus } from "@/lib/integrations/gmail";
 import { getOutlookStatus } from "@/lib/integrations/outlook";
@@ -127,6 +130,24 @@ export default async function DashboardPage() {
     // of them can do anything (A-044). Only asked once there are people.
     ctx && leads.length > 0 ? hasAnySendChannel(ctx.businessId) : true,
   ]);
+  // Calls to make (A-103, the realtor team pilot): empty unless the business
+  // has "Your team calls customers" on. Anyone already waiting for an OK is
+  // left out: their text goes first (once each, A-046).
+  const callsDue = ctx && leads.length > 0 ? (await getCallsToMake(ctx.businessId, ctx.userId, now)).filter((c) => !awaitingOk.has(c.leadId)) : [];
+  const callCards: CallCard[] = callsDue.map((c) => {
+    const first = c.name.split(" ")[0] || c.name;
+    const tried = c.lastTriedAt
+      ? new Date(c.lastTriedAt).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: timezone })
+      : null;
+    return {
+      leadId: c.leadId,
+      name: c.name,
+      phone: c.phone,
+      sub: [c.source, ordinalCall(c.callNumber)].filter(Boolean).join(" · "),
+      todo: c.callNumber === 1 ? `Call ${first}. Nobody has called yet.` : `Call ${first} again.`,
+      last: tried ? `Last call ${tried}: no answer.${c.texted ? ` Your text asked for a good time. No reply yet.` : ""}` : null,
+    };
+  });
   const approvalItems: ApprovalItem[] = withBasisItems.map((a) => ({
     ...a,
     wait: describeWait(a, now),
@@ -158,6 +179,8 @@ export default async function DashboardPage() {
     booked: rescue?.booked ?? 0,
   });
   const work = workDone ? workLine(workDone) : null;
+  // Everyone waiting on the owner: replies for an OK, and calls to make (A-103).
+  const needYou = approvalItems.length + callCards.length;
   const checkedAny = filteredCount > 0;
   // Business.holdAllForApproval — as of 2026-09-20 this stops every
   // automated message including the instant reply, so it changes what
@@ -168,7 +191,7 @@ export default async function DashboardPage() {
   const habitSuggestion = ctx && isAdmin && leads.length > 0 ? await findHabitSuggestion(ctx.businessId, now) : null;
   // One question a day (A-101): only when nobody is waiting on the owner and
   // nothing else is being asked, so it never stands in front of real work.
-  const dailyQuestion = ctx && isAdmin && approvalItems.length === 0 && !habitSuggestion ? await todaysQuestion(ctx.businessId, now) : null;
+  const dailyQuestion = ctx && isAdmin && approvalItems.length === 0 && callCards.length === 0 && !habitSuggestion ? await todaysQuestion(ctx.businessId, now) : null;
   const sendingPaused = Boolean(business?.sendingPausedAt);
   const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const cantSend = !anySendChannel;
@@ -260,11 +283,11 @@ export default async function DashboardPage() {
         {new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now)}
       </div>
       <h1 className="mt-1.5 text-[30px] sm:text-[34px] leading-[1.1]">
-        {approvalItems.length > 0 ? (
+        {needYou > 0 ? (
           <>
             {/* The phone's shorter line, as TodayCalmPhone draws it. */}
-            <span className="sm:hidden">{`${approvalItems.length} ${approvalItems.length === 1 ? "customer needs" : "customers need"} you.`}</span>
-            <span className="hidden sm:inline">{`${approvalItems.length} ${approvalItems.length === 1 ? "customer is" : "customers are"} waiting on you.`}</span>
+            <span className="sm:hidden">{`${needYou} ${needYou === 1 ? "customer needs" : "customers need"} you.`}</span>
+            <span className="hidden sm:inline">{`${needYou} ${needYou === 1 ? "customer is" : "customers are"} waiting on you.`}</span>
           </>
         ) : (
           headline()
@@ -283,7 +306,9 @@ export default async function DashboardPage() {
       <div className="min-w-0">
       {/* With no customers at all, the box below says what FollowUp checked; a second
           "Nothing needs your OK" card above it said the same thing twice (A-088). */}
-      {leads.length > 0 && (
+      {/* Calls to make first, as drawn (A-103): on a team that calls customers the call is the job. The first Call is black only when no reply below has the black Send. */}
+      {callCards.length > 0 && <CallsToMake items={callCards} firstIsPrimary={approvalItems.length === 0} />}
+      {leads.length > 0 && (approvalItems.length > 0 || callCards.length === 0) && (
         <ApprovalQueue items={approvalItems} plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
       )}
 

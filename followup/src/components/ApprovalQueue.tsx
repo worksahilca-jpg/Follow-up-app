@@ -245,6 +245,8 @@ function ApprovalCard({
     body: JSON.stringify({
       message,
       ...(item.draftSubject ? { subject: item.draftSubject } : {}),
+      // The text a "No answer" wrote goes as a text (A-103).
+      ...(item.textTo ? { channel: "text" } : {}),
       ...(needsPrice ? { learnFacts: remember } : {}),
       // The newest thing the lead had said when this card was drawn. If
       // they have written since, the server refuses with a 409 and says so,
@@ -570,6 +572,7 @@ function ApprovalCard({
         {/* Who wrote it, at a glance (A-089, the Granola lesson): FollowUp's words until
             the owner changes them, then theirs. */}
         <Eyebrow>{`${mine ? "Edited by you" : "Written by FollowUp"} · ${sendLocked ? "an admin sends it" : "waits for your OK"}`}</Eyebrow>
+        {item.textTo && <p className="mt-1.5 text-[13px] text-ink-soft">Text to {item.textTo}</p>}
         {item.draftSubject && <p className="mt-2 text-[15px] font-medium">{item.draftSubject}</p>}
         {editing ? (
           <div className="mt-2.5 space-y-2">

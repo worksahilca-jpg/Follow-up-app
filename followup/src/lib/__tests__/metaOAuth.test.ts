@@ -23,6 +23,9 @@ import {
   buildFacebookAuthUrl,
   exchangeFacebookAuthCode,
   subscribeFacebookPageWebhooks,
+  leadAdsEnabledFor,
+  facebookOAuthScopes,
+  activateFacebookPageWebhooks,
 } from "@/lib/facebook";
 
 beforeEach(() => {
@@ -266,7 +269,7 @@ describe("Facebook one-click connect", () => {
     expect(facebookOAuthAvailable()).toBe(true);
   });
 
-  it("builds an authorize URL with the Page + Lead Ads scopes", () => {
+  it("builds an authorize URL with the Page scopes only, by default", () => {
     vi.stubEnv("FACEBOOK_APP_ID", "456");
     const url = new URL(buildFacebookAuthUrl("https://followupbase.io/api/facebook/oauth/callback", "nonce2"));
     expect(url.hostname).toBe("www.facebook.com");
@@ -306,6 +309,54 @@ describe("Facebook one-click connect", () => {
     // answered the customer on top of it.
     expect(body.get("subscribed_fields")).toBe("messages,message_echoes");
     expect(body.get("access_token")).toBe("EAAG-page-tok");
+  });
+
+  /**
+   * Lead Ads (founder, 2026-10-07): switched on per business by
+   * LEAD_ADS_BUSINESS_IDS, so the founder's own Page can use it (and record
+   * the review video) before Meta approves leads_retrieval for everyone.
+   */
+  describe("Lead Ads, per business", () => {
+    it("is off when the list is empty or unset, and for a business not on it", () => {
+      expect(leadAdsEnabledFor("biz1", undefined)).toBe(false);
+      expect(leadAdsEnabledFor("biz1", "")).toBe(false);
+      expect(leadAdsEnabledFor("biz1", "biz2, biz3")).toBe(false);
+      expect(leadAdsEnabledFor(null, "biz1")).toBe(false);
+    });
+
+    it("is on for a listed business, and for everyone with *", () => {
+      expect(leadAdsEnabledFor("biz2", "biz1, biz2")).toBe(true);
+      expect(leadAdsEnabledFor("anyone", "*")).toBe(true);
+    });
+
+    it("asks for leads_retrieval only where it's on", () => {
+      vi.stubEnv("LEAD_ADS_BUSINESS_IDS", "biz1");
+      expect(facebookOAuthScopes("biz1")).toBe("pages_show_list,pages_messaging,pages_manage_metadata,business_management,leads_retrieval,pages_read_engagement");
+      expect(facebookOAuthScopes("biz2")).toBe("pages_show_list,pages_messaging,pages_manage_metadata,business_management");
+      vi.stubEnv("FACEBOOK_APP_ID", "456");
+      const url = new URL(buildFacebookAuthUrl("https://followupbase.io/api/facebook/oauth/callback", "n", "biz1"));
+      expect(url.searchParams.get("scope")).toContain("leads_retrieval");
+    });
+
+    it("subscribes the Page to lead forms too, only when asked", async () => {
+      const fetchSpy = vi
+        .spyOn(global, "fetch")
+        .mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
+      expect(await subscribeFacebookPageWebhooks("90210", "EAAG-page-tok", { leadAds: true })).toEqual({ ok: true });
+      const body = new URLSearchParams(String((fetchSpy.mock.calls[0] as [string, RequestInit])[1].body));
+      expect(body.get("subscribed_fields")).toBe("messages,message_echoes,leadgen");
+    });
+
+    it("connecting a Page asks for lead forms for a listed business only", async () => {
+      vi.stubEnv("LEAD_ADS_BUSINESS_IDS", "biz1");
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      // A refusal, so nothing is written (prisma is not under test here).
+      const fetchSpy = vi.spyOn(global, "fetch").mockImplementation(async () => new Response(JSON.stringify({ error: { message: "no", code: 1 } }), { status: 400 }));
+      await activateFacebookPageWebhooks("biz1", "90210", "tok");
+      await activateFacebookPageWebhooks("biz2", "90210", "tok");
+      const fields = fetchSpy.mock.calls.map((c) => new URLSearchParams(String((c as [string, RequestInit])[1].body)).get("subscribed_fields"));
+      expect(fields).toEqual(["messages,message_echoes,leadgen", "messages,message_echoes"]);
+    });
   });
 
   it("reports Meta's own refusal rather than a generic failure", async () => {

@@ -5,13 +5,24 @@
  */
 import { prisma } from "@/lib/db";
 import { describeBasis } from "@/lib/basedOn";
+import { wordsToCheck } from "@/lib/grounding";
 
-/** Adds `basis` to each waiting reply, from that customer's own messages. */
+/**
+ * Adds `basis` to each waiting reply, from that customer's own messages, and
+ * `checkWords`: the numbers, prices and days in the draft that nobody wrote
+ * in the conversation or in what FollowUp knows (research round 2, #1), so
+ * the card can underline them.
+ */
 export async function withBasis<T extends { leadId: string; leadName: string; draftMessage: string }>(
   items: T[],
-  timeZone?: string
-): Promise<(T & { basis: string | null })[]> {
+  timeZone?: string,
+  businessId?: string
+): Promise<(T & { basis: string | null; checkWords: string[] })[]> {
   if (items.length === 0) return [];
+  // The owner's own facts are theirs to have written (A-096): never a word to check.
+  const factText = businessId
+    ? (await prisma.businessFact.findMany({ where: { businessId }, select: { value: true } }).catch(() => [])).map((f) => f.value).join("\n")
+    : "";
   const rows = await prisma.message.findMany({
     where: { conversation: { leadId: { in: items.map((i) => i.leadId) } } },
     orderBy: { sentAt: "desc" },
@@ -27,6 +38,7 @@ export async function withBasis<T extends { leadId: string; leadName: string; dr
   }
   return items.map((item) => ({
     ...item,
+    checkWords: wordsToCheck(item.draftMessage, `${(byLead.get(item.leadId) ?? []).map((m) => m.body).join("\n")}\n${factText}`),
     basis: describeBasis({
       draft: item.draftMessage,
       leadFirstName: item.leadName.split(" ")[0] ?? "",
@@ -61,4 +73,21 @@ export async function sentAsWritten(businessId: string, since: Date): Promise<{ 
     if (r.draftEdited === false) asWritten += r._count._all;
   }
   return { asWritten, total };
+}
+
+/**
+ * The owner's own track record with FollowUp's drafts (research round 2, #3):
+ * of the last `n` replies a person sent that started as a FollowUp draft,
+ * how many went out exactly as written. Trust grows from feedback on how the
+ * system actually performed (Lee & See 2004); this is that feedback, and the
+ * honest basis for any later "send these without asking". Real rows only.
+ */
+export async function recentTrackRecord(businessId: string, n = 20): Promise<{ asWritten: number; total: number }> {
+  const rows = await prisma.followUp.findMany({
+    where: { automated: false, status: "sent", draftEdited: { not: null }, lead: { businessId } },
+    orderBy: { sentAt: "desc" },
+    take: n,
+    select: { draftEdited: true },
+  });
+  return { asWritten: rows.filter((r) => r.draftEdited === false).length, total: rows.length };
 }

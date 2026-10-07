@@ -567,3 +567,44 @@ function hasWord(haystack: string, word: string): boolean {
 function isWordChar(ch: string): boolean {
   return ch !== "" && /[\p{L}\p{N}]/u.test(ch);
 }
+
+/**
+ * The exact words in a draft the owner should look at before sending
+ * (research round 2, #1): every number, currency word and day or month
+ * name that `source` never contained, in the order they appear, as written
+ * in the draft. The same rules as ungroundedSpecifics, returning the words
+ * instead of the rule's name, so the card can underline them inside the
+ * reply instead of describing them under it. Pointing at the specific
+ * decision reduces over-reliance on AI suggestions where explanations do
+ * not (Buçinca, Malaya & Gajos 2021).
+ *
+ * A price or answer blank is not a word to check; the owner fills it.
+ */
+export function wordsToCheck(draft: string, source: string, locale?: string | null): string[] {
+  const text = draft.replace(/\[[^\]\n]{1,60}\]/g, " ");
+  const known = new Set(source.match(NUMBER_RE) ?? []);
+  const lowerSource = source.toLowerCase();
+  const hits: { at: number; word: string }[] = [];
+
+  for (const m of text.matchAll(NUMBER_RE)) {
+    if (!known.has(m[0])) hits.push({ at: m.index ?? 0, word: m[0] });
+  }
+  for (const m of text.matchAll(CURRENCY_RE)) {
+    if (lowerSource.includes(m[0].toLowerCase())) continue;
+    // "$649,000": the figure is already underlined; the sign beside it adds nothing.
+    const at = m.index ?? 0;
+    if (/^[$€£₹¥%]$/.test(m[0]) && (/\p{Nd}/u.test(text[at + 1] ?? "") || /\p{Nd}/u.test(text[at - 1] ?? ""))) continue;
+    hits.push({ at, word: m[0] });
+  }
+  for (const word of ungroundedCalendarWords(text, source, locale)) {
+    const re = new RegExp(`(?<![\\p{L}\\p{Nd}])${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{Nd}])`, "iu");
+    const m = re.exec(text);
+    if (m) hits.push({ at: m.index, word: m[0] });
+  }
+
+  const seen = new Set<string>();
+  return hits
+    .sort((a, b) => a.at - b.at)
+    .map((h) => h.word)
+    .filter((w) => (seen.has(w) ? false : (seen.add(w), true)));
+}

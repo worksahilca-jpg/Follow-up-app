@@ -9,6 +9,7 @@ import TeamSection from "@/components/TeamSection";
 import { UNANSWERED_META_DM_MAX_HOURS } from "@/lib/metaWindow";
 import BusinessProfileSection from "@/components/BusinessProfileSection";
 import BusinessFactsSection from "@/components/BusinessFactsSection";
+import TrackRecord from "@/components/TrackRecord";
 import HowYouWorkSection from "@/components/HowYouWorkSection";
 import SourceRoutingSection from "@/components/SourceRoutingSection";
 import CopyEmbedSnippet from "@/components/CopyEmbedSnippet";
@@ -1091,6 +1092,8 @@ function SettingsPageInner() {
 
       <section id="automation" hidden={!visible("automation")} className="scroll-mt-16">
         <h2 className={sectionLabel} style={SECTION_STYLE}>Automation</h2>
+        {/* The owner's own record with the drafts (research round 2, #3), above the rules it informs. */}
+        <TrackRecord holdAll={holdAllForApproval} />
 
         {/* Permission to send, above the rules it governs — because it
             decides what all of them DO, and reading the timings first

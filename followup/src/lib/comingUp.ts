@@ -111,3 +111,27 @@ export function groupByDay(items: ComingUpItem[], now: Date, timeZone: string): 
   }
   return groups;
 }
+
+/**
+ * The plan, in one sentence, for a quiet Today (research round 2, #2):
+ * "Next: FollowUp checks on Priya on Thursday, and on Noah on Saturday."
+ * Making a plan for an unfinished goal quiets it as much as finishing does
+ * (Masicampo & Baumeister 2011), so the owner can stop thinking about who
+ * still needs a nudge. The first two people only; null when nothing is planned.
+ */
+export function planLine(groups: { day: string; items: ComingUpItem[] }[]): string | null {
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const g of groups) {
+    for (const it of g.items) {
+      if (seen.has(it.leadId) || parts.length >= 2) continue;
+      seen.add(it.leadId);
+      const who = it.name.trim().split(/\s+/)[0] || it.name;
+      const when = g.day === "Today" ? "later today" : g.day === "Tomorrow" ? "tomorrow" : `on ${g.day}`;
+      const verb = it.what === "A reply to their message" ? "replies to" : "checks on";
+      parts.push(parts.length === 0 ? `FollowUp ${verb} ${who} ${when}` : `${verb === "replies to" ? "replies to" : "on"} ${who} ${when}`);
+    }
+  }
+  if (parts.length === 0) return null;
+  return `Next: ${parts.join(", and ")}.`;
+}

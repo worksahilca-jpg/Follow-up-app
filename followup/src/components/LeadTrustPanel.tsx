@@ -213,7 +213,7 @@ export default function LeadTrustPanel({
         </div>
 
         {optedOutAt ? (
-          <div className="flex items-start gap-2 rounded-[12px] p-2 text-[13px]" style={{ backgroundColor: "rgba(217,95,79,0.08)" }}>
+          <div className="flex items-start gap-2 rounded-[12px] p-2 text-[13px]" style={{ backgroundColor: "var(--tint-bad)" }}>
             <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--coral)" }} />
             <span style={{ color: "var(--coral)" }}>
               Opted out of SMS/WhatsApp on {formatDate(optedOutAt)} (replied STOP) — texts and WhatsApp are blocked for
@@ -221,7 +221,7 @@ export default function LeadTrustPanel({
             </span>
           </div>
         ) : (
-          <div className="flex items-start gap-2 rounded-[12px] p-2 text-[13px]" style={{ backgroundColor: "rgba(122,157,127,0.08)" }}>
+          <div className="flex items-start gap-2 rounded-[12px] p-2 text-[13px]" style={{ backgroundColor: "var(--tint-good)" }}>
             <ShieldCheck className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--sage)" }} />
             <span style={{ color: "var(--sage)" }}>No opt-out on file — SMS and WhatsApp sends are allowed.</span>
           </div>

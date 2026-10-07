@@ -27,7 +27,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   ]);
 
   return (
-    <div className="flex min-h-screen">
+    // theme-auto: dark when the phone or computer is set to dark (research round 2, #8), app screens only.
+    <div className="theme-auto flex min-h-screen bg-paper text-ink">
       {/* One "opened today" record per person per day (src/lib/appOpens.ts). */}
       <SeenPing />
       <Sidebar businessName={business.name ?? ""} counts={{ today, customers }} />

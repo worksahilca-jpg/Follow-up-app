@@ -30,6 +30,7 @@ import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 import HabitQuestion from "@/components/HabitQuestion";
 import DailyQuestion from "@/components/DailyQuestion";
 import { todaysQuestion } from "@/lib/dailyQuestionData";
+import { planLine } from "@/lib/comingUp";
 import { findHabitSuggestion } from "@/lib/habits";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
@@ -114,7 +115,7 @@ export default async function DashboardPage() {
   // Set aside with "Later" (A-046): off Today until it comes back.
   const setAside = approvals.filter((a) => a.laterUntil).length;
   const [withBasisItems, handledToday, comingUp, workDone, filteredCount, anySendChannel] = await Promise.all([
-    withBasis(onTodayNow(approvals), timezone),
+    withBasis(onTodayNow(approvals), timezone, ctx?.businessId),
     ctx ? countHandledToday(ctx.businessId, startOfLocalDay(now, timezone)) : 0,
     // Who FollowUp writes to next (A-046), leaving out anyone already waiting for your OK.
     ctx && leads.length > 0 ? loadComingUp(ctx.businessId, leads, awaitingOk, timezone, now) : null,
@@ -283,7 +284,7 @@ export default async function DashboardPage() {
       {/* With no customers at all, the box below says what FollowUp checked; a second
           "Nothing needs your OK" card above it said the same thing twice (A-088). */}
       {leads.length > 0 && (
-        <ApprovalQueue items={approvalItems} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
+        <ApprovalQueue items={approvalItems} plan={approvalItems.length === 0 && comingUp ? planLine(comingUp.groups) : null} weekResults={weekResults} answeredForYou={rescue?.answeredForYou ?? 0} sendLocked={sendLocked} handledToday={handledToday} laterToday={laterTodayAvailable(now, timezone)} setAside={setAside} holdAll={holdAll} />
       )}
 
       {isAdmin && <HabitQuestion suggestion={habitSuggestion} />}
@@ -306,7 +307,8 @@ export default async function DashboardPage() {
           )}
         </p>
       )}
-      {comingUp && comingUp.total > 0 && (
+      {/* On a quiet Today the plan is in the card above, by name (#2), so the count line would say it twice. */}
+      {comingUp && comingUp.total > 0 && approvalItems.length > 0 && (
         <ComingUpLine first={{ day: comingUp.groups[0].day, count: comingUp.groups[0].items.length }} total={comingUp.total} />
       )}
 

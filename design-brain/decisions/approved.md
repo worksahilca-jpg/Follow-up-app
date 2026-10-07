@@ -1827,3 +1827,22 @@ a point where it acts like it's totally a clone of the user"*.
 - **The two habits it learns today:** (1) "Don't send" on replies to messages that only say thanks → those get no
   reply (the newest message only; anything they write after is answered as usual). (2) "Later" on weekend messages
   → weekend messages wait off Today until Monday 9 am, like a Later (an explicit Later still wins).
+
+## A-100 — Teach FollowUp your business: a few questions, then ask when it's needed ^A-100
+
+**Approved 2026-10-07**, founder: *"yes build it"* to the four drawings, after *"it will be trained according to
+the business… asking questions about the business, and FollowUp will learn from their replies"*.
+- **Not 23 questions up front.** About seven, chosen by trade (a realtor gets commission, area, showings, how to
+  book a viewing, evaluations, buyers/sellers, languages), **one per screen**: the question as the title, one line
+  of why, a box with a realistic example, a black **Next**, a quiet **Skip this one**, and **Finish later**.
+- **"2 of 7" is allowed here** (founder said yes to the drawing): a small plain-text count, no bar. It tells a busy
+  owner how short it is. Not a precedent for progress bars elsewhere on the phone.
+- **The end:** *"FollowUp knows N things about your business."*, the list, and *"You skipped 2. When a customer
+  asks about one of them, FollowUp will ask you on Today, once."*
+- **Shown** once after setup (before Today), and any time from Settings → What FollowUp knows → *"Answer a few
+  questions"*. Questions already answered are never asked again.
+- **On Today, the answer blank:** when a customer asks something about how the business works that FollowUp
+  doesn't know, the draft has a dashed box *"your answer on parking"* and the line *"Ivy asked about parking.
+  FollowUp doesn't know your answer yet, and never guesses. Add it, then send."* Once filled: the ticked
+  *"Use this next time someone asks about parking"*, the same pattern as the price blank (A-096). Never for
+  availability, dates or anything about one customer.

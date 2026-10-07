@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE } from "@/lib/motion";
 import { useRouter } from "next/navigation";
-import { fillPriceSlot, hasPriceSlot, splitAtPriceSlot } from "@/lib/priceSlot";
+import { fillPriceSlot, hasPriceSlot, slotOf, splitAtPriceSlot } from "@/lib/priceSlot";
 import { RememberPrice } from "@/components/app/RememberPrice";
 import { Eyebrow } from "./canvasBits";
 import { useUndoableSend } from "@/components/useUndoableSend";
@@ -83,6 +83,9 @@ export default function ReplyCard({
   const [mine, setMine] = useState(false);
 
   const needsPrice = !editing && hasPriceSlot(text);
+  // A price blank or an answer blank (A-100): "[ANSWER: parking]".
+  const blankTopic = needsPrice ? (slotOf(text) as { topic?: string } | null)?.topic : undefined;
+  const blankHint = blankTopic ? `your answer on ${blankTopic}` : "$ price";
   const message = needsPrice ? fillPriceSlot(text, price.trim()) : text;
   const canSend = message.trim().length > 0 && !(needsPrice && !price.trim());
 
@@ -273,21 +276,38 @@ export default function ReplyCard({
                 ) : (
                   <span key={i}>
                     {i === 1 ? (
-                      <input
-                        id="reply-price"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        // Fixed once Send is pressed, as on the Today card:
-                        // the countdown sends what was here at the press.
-                        disabled={undoable.pending || undoable.busy}
-                        placeholder="$ price"
-                        aria-label={`The price for ${first}`}
-                        autoComplete="off"
-                        className="mx-0.5 inline-block h-8 w-28 rounded-md border border-dashed bg-card px-2 align-baseline disabled:opacity-60"
-                        style={{ borderColor: price.trim() ? "var(--line)" : "var(--ink-soft)" }}
-                      />
+                      blankTopic ? (
+                        <textarea
+                          id="reply-price"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          // Fixed once Send is pressed, as on the Today card:
+                          // the countdown sends what was here at the press.
+                          disabled={undoable.pending || undoable.busy}
+                          placeholder={blankHint}
+                          aria-label={blankTopic ? `Your answer about ${blankTopic}, for ${first}` : `The price for ${first}`}
+                          autoComplete="off"
+                          rows={2}
+                          className={"my-1 block w-full resize-none rounded-md py-1.5 leading-snug border border-dashed bg-card px-2 align-baseline disabled:opacity-60"}
+                          style={{ borderColor: price.trim() ? "var(--line)" : "var(--ink-soft)" }}
+                        />
+                      ) : (
+                        <input
+                          id="reply-price"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          // Fixed once Send is pressed, as on the Today card:
+                          // the countdown sends what was here at the press.
+                          disabled={undoable.pending || undoable.busy}
+                          placeholder={blankHint}
+                          aria-label={blankTopic ? `Your answer about ${blankTopic}, for ${first}` : `The price for ${first}`}
+                          autoComplete="off"
+                          className={"w-28 mx-0.5 inline-block h-8 rounded-md border border-dashed bg-card px-2 align-baseline disabled:opacity-60"}
+                          style={{ borderColor: price.trim() ? "var(--line)" : "var(--ink-soft)" }}
+                        />
+                      )
                     ) : (
-                      <span>{price.trim() || "$ price"}</span>
+                      <span>{price.trim() || blankHint}</span>
                     )}
                     {part}
                   </span>
@@ -298,9 +318,15 @@ export default function ReplyCard({
       )}
       </AnimatePresence>
 
-      {needsPrice && !price.trim() && <p className="mt-2 text-[13px] text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
+      {needsPrice && !price.trim() && (
+        <p className="mt-2 text-[13px] text-ink-soft">
+          {blankTopic
+            ? `${first} asked about ${blankTopic}. FollowUp doesn't know your answer yet, and never guesses. Add it, then send.`
+            : "Add the price, then send. FollowUp never guesses one."}
+        </p>
+      )}
       {needsPrice && price.trim() && (
-        <RememberPrice id="reply-remember" price={price.trim()} checked={remember} onChange={setRemember} disabled={undoable.pending || undoable.busy} />
+        <RememberPrice id="reply-remember" price={price.trim()} topic={blankTopic} checked={remember} onChange={setRemember} disabled={undoable.pending || undoable.busy} />
       )}
       {basis && !edited && !editing && <p className="mt-2 text-[13px] text-ink-soft">{basis}</p>}
       {error && (

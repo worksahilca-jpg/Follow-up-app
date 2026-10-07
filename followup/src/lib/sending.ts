@@ -42,7 +42,7 @@ import {
   rescheduleSend,
   retireSend,
 } from "@/lib/sendQueue";
-import { filledPrice, hasPriceSlot, isFilledDraft, PRICE_SLOT } from "@/lib/priceSlot";
+import { filledAnswer, filledPrice, hasPriceSlot, isFilledDraft, PRICE_SLOT, slotOf } from "@/lib/priceSlot";
 import { customerGreetingName } from "@/lib/leadName";
 
 /**
@@ -397,7 +397,10 @@ export async function sendFollowUpToLead(
   if (hasPriceSlot(body) || hasPriceSlot(options.subject)) {
     return {
       success: false,
-      message: `Add the price first: the reply still says ${PRICE_SLOT} where the figure goes.`,
+      message:
+        slotOf(body ?? options.subject)?.kind === "answer"
+          ? "Add your answer first: the reply still has a blank where it goes."
+          : `Add the price first: the reply still says ${PRICE_SLOT} where the figure goes.`,
       failure: "refused",
     };
   }
@@ -1001,6 +1004,25 @@ export async function sendFollowUpToLead(
   // and the unread "send all" pile are never read.
   const learnFromThis = !!options.humanSend && !options.automated && options.learnFacts !== false;
   const ownerFilled = lead.suggestedMessage ? filledPrice(lead.suggestedMessage, body) : null;
+  // The owner's answer in a "[ANSWER: parking]" blank (A-100) is theirs to
+  // keep: saved now as a fact, labelled with what it was about, so the next
+  // customer who asks gets it. Never lets a send fail.
+  const answered = learnFromThis && lead.suggestedMessage ? filledAnswer(lead.suggestedMessage, body) : null;
+  if (answered) {
+    void (async () => {
+      try {
+        const [{ ownerAnswerFact }, { leadIdentifiers }, { saveLearnedFacts }] = await Promise.all([
+          import("@/lib/factLines"),
+          import("@/lib/deidentify"),
+          import("@/lib/businessFacts"),
+        ]);
+        const fact = ownerAnswerFact(answered.topic, answered.value, lead.name, leadIdentifiers(lead));
+        if (fact) await saveLearnedFacts(lead.businessId, lead.id, [fact]);
+      } catch (err) {
+        console.error(`Could not keep the answer sent to lead ${lead.id}:`, err);
+      }
+    })();
+  }
 
   try {
     await prisma.lead.update({

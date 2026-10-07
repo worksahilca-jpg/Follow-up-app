@@ -9045,3 +9045,17 @@ Settings lists it, Undo removes it, and the question is not asked again.
 recorded after deploy, so the first question takes a few weeks of real use. (2) Only two habits so far; each new
 habit needs its own evidence and its own sentence. (3) "Only said thanks" is the model's judgement; a thanks with a
 hidden question ("thanks, and is parking included?") should read as not-only-thanks, but that is the model's call.
+
+## 2026-10-07 — Teach FollowUp your business (A-100)
+
+The founder's idea was 23 onboarding questions. Built instead as ~7 per trade, then "ask when it's needed" on
+Today, because a long form at signup is where busy owners quit, and most of 23 questions wouldn't apply. The
+answer blank `[ANSWER: topic]` reuses every guarantee of the price blank: decided as "hold" before any model is
+asked, refused by the send funnel if unfilled, and filling it is not counted as an edit. A filled answer (ticked)
+is saved straight away as a fact, after a check that it carries no name, email, phone or address of this
+customer. Checked in a real browser at phone size: the blank, the wrapping answer box, the tick, the question
+step, skip, the summary and the Settings link.
+**Weak, honestly:** (1) whether the model uses `[ANSWER: …]` well (and not for things it should just say it will
+confirm) can only be judged on real conversations; watch the first testers' drafts. (2) Questions exist for four
+trades plus a general set; Legal and Marketing get the general set. (3) Instagram/Messenger DM drafts don't use
+the answer blank yet.

@@ -125,7 +125,8 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't finish — try again.");
-      router.push("/dashboard");
+      // A few questions customers ask most (A-100); skippable, then Today.
+      router.push("/teach");
       router.refresh();
     } catch {
       // Rare (a DB hiccup) — let them press again rather than stranding

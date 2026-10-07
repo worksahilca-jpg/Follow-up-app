@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { MOTION } from "@/lib/motion";
 import { useRouter } from "next/navigation";
-import { fillPriceSlot, hasPriceSlot } from "@/lib/priceSlot";
+import { fillPriceSlot, hasPriceSlot, slotOf } from "@/lib/priceSlot";
 import type { SiteReply } from "@/lib/siteReply";
 import { Eyebrow } from "./canvasBits";
 import { WARM_CARD } from "./ReplyCard";
@@ -48,6 +48,9 @@ export default function SiteReplyCard({
   const [done, setDone] = useState<null | "replied" | "skipped">(null);
 
   const needsPrice = hasPriceSlot(draft);
+  // A price blank or an answer blank (A-100).
+  const blankTopic = needsPrice ? (slotOf(draft) as { topic?: string } | null)?.topic : undefined;
+  const blankHint = blankTopic ? `your answer on ${blankTopic}` : "$ price";
   const words = needsPrice ? fillPriceSlot(draft, price.trim()) : draft;
   const canCopy = words.trim().length > 0 && !(needsPrice && !price.trim());
 
@@ -167,18 +170,18 @@ export default function SiteReplyCard({
       {draft ? (
         <>
           <p className="mt-2.5 whitespace-pre-wrap rounded-xl border px-3.5 py-3 text-[15px] leading-relaxed" style={{ background: "rgba(255,255,255,0.6)", borderColor: "rgba(10,10,10,0.06)" }}>
-            {needsPrice ? fillPriceSlot(draft, price.trim() || "$ price") : words}
+            {needsPrice ? fillPriceSlot(draft, price.trim() || blankHint) : words}
           </p>
           {needsPrice && (
             <label className="mt-2 flex items-center gap-2 text-[13px] text-ink-soft">
-              Add the price first:
+              {blankTopic ? "Add your answer first:" : "Add the price first:"}
               <input
                 id="site-reply-price"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                placeholder="$ price"
+                placeholder={blankHint}
                 autoComplete="off"
-                className="h-8 w-28 rounded-md border border-dashed bg-card px-2 text-[15px] text-ink"
+                className={(blankTopic ? "min-w-0 flex-1 " : "w-28 ") + "h-8 rounded-md border border-dashed bg-card px-2 text-[15px] text-ink"}
                 style={{ borderColor: price.trim() ? "var(--line)" : "var(--ink-soft)" }}
               />
             </label>

@@ -13,9 +13,12 @@ export function RememberPrice({
   checked,
   onChange,
   disabled,
+  topic,
 }: {
   id: string;
   price: string;
+  /** Set for an answer blank (A-100): "Use this next time someone asks about parking". */
+  topic?: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
@@ -32,7 +35,13 @@ export function RememberPrice({
         style={{ accentColor: "var(--ink)" }}
       />
       <span>
-        Use <span className="font-semibold">{price}</span> next time someone asks this
+        {topic ? (
+          <>Use this next time someone asks about {topic}</>
+        ) : (
+          <>
+            Use <span className="font-semibold">{price}</span> next time someone asks this
+          </>
+        )}
         <span className="mt-0.5 block text-ink-soft">Change it any time in Settings.</span>
       </span>
     </label>

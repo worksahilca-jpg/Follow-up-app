@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { parseJsonBody } from "@/lib/validation";
 import { tooManyRecentActions } from "@/lib/rateLimit";
-import { factInputSchema, labelKey, MAX_FACTS } from "@/lib/factLines";
+import { factInputSchema, MAX_FACTS } from "@/lib/factLines";
+import { saveOwnerFact } from "@/lib/businessFacts";
 
 /**
  * GET/POST /api/business/facts — "What FollowUp knows" in Settings → Your
@@ -42,18 +43,10 @@ export async function POST(request: NextRequest) {
   }
   const parsed = await parseJsonBody(request, factInputSchema);
   if (!parsed.ok) return parsed.response;
-  const label = parsed.data.label.replace(/\s+/g, " ");
-  const value = parsed.data.value.replace(/\s+/g, " ");
-
-  const existing = await prisma.businessFact.findMany({ where: { businessId: ctx.businessId }, select: { id: true, label: true } });
-  const same = existing.find((f) => labelKey(f.label) === labelKey(label));
-  if (!same && existing.length >= MAX_FACTS) {
+  const fact = await saveOwnerFact(ctx.businessId, parsed.data.label, parsed.data.value);
+  if (!fact) {
     return NextResponse.json({ success: false, message: `FollowUp keeps up to ${MAX_FACTS}. Remove one first.` }, { status: 409 });
   }
-  // The owner's word on a name that already exists replaces it, rather than a twin.
-  const fact = same
-    ? await prisma.businessFact.update({ where: { id: same.id }, data: { label, value, source: "owner", sourceLeadId: null } })
-    : await prisma.businessFact.create({ data: { businessId: ctx.businessId, label, value, source: "owner" } });
   void recordAudit(ctx, "business.fact.save", { targetType: "business_fact", targetId: fact.id });
   return NextResponse.json({ success: true, id: fact.id });
 }

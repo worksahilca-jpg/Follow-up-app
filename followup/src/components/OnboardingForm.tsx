@@ -125,8 +125,9 @@ function OnboardingFormInner({ sources }: OnboardingFormProps) {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't finish — try again.");
-      // A few questions customers ask most (A-100); skippable, then Today.
-      router.push("/teach");
+      // Straight to Today: no questions before FollowUp has shown it is
+      // useful (R-027). They come one a day on Today (A-101).
+      router.push("/dashboard");
       router.refresh();
     } catch {
       // Rare (a DB hiccup) — let them press again rather than stranding

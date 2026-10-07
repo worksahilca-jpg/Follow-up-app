@@ -32,6 +32,7 @@ import type { gmail_v1 } from "googleapis";
 import { prisma } from "@/lib/db";
 import { Lead, Message } from "@/lib/types";
 import { classifyWithSecondLook } from "@/lib/integrations/openai";
+import { getBusinessAbout } from "@/lib/businessFacts";
 import { OWNER_SAID_NOT_CUSTOMER, ownerSaidNotCustomer, recentCorrections } from "@/lib/senderVerdicts";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
@@ -609,7 +610,7 @@ async function processThreadRefs(
   // With the owner's own recent corrections, so the classifier judges the
   // way this owner does (src/lib/senderVerdicts.ts).
   const businessContext = business
-    ? { name: business.name, industry: business.industry, corrections: await recentCorrections(businessId) }
+    ? { name: business.name, industry: business.industry, about: await getBusinessAbout(businessId), corrections: await recentCorrections(businessId) }
     : null;
   // The business itself: this inbox and everyone on the team (see
   // ownAddressSet). Their mail is ours, never a customer's.

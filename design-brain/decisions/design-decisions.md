@@ -9068,3 +9068,17 @@ annoying."* Recorded as a fact, not yet a principle: it is unclear whether it wa
 they came before the tester had seen the app, or that none of them applied to someone who isn't a business owner.
 One clarifying question asked. Until answered, do not add questions to the step; any change is drawn first.
 The same test found a newsletter becoming a lead (fixed in the Gmail sync, not a design change).
+
+## 2026-10-07 — One question a day on Today (A-101), replacing the questions after setup (R-027)
+
+Drawn on the phone first (three screens: the first question, the next day's, after Save), approved, then built.
+The owner's answer to "what does your business do?" is also given to the lead check, quoted as data: on "Other"
+it replaces the unknown-trade rule, which is what let a newsletter look like a possible customer for the first
+tester. Checked in the running app at phone size: the card appears only with nobody waiting, Save keeps the
+confirmation through the refresh, and the card is gone after a reload. Not now is covered by tests.
+**Weak, honestly:** (1) an owner who always has someone waiting never sees a question; acceptable, because the
+answer blank asks on the day a customer does. (2) A quiet Today already says "Nothing needs your OK right now"
+twice (the heading and the box above the card); that predates this change and is worth one subtraction later.
+(3) The "3 customers, all answered" line in the first drawing was an example, not built: the quiet-day heading
+already reports what FollowUp did. (4) Whether one question a day is the right pace can only be judged with the
+next testers.

@@ -31,6 +31,7 @@ import { prisma } from "@/lib/db";
 import { getClient, MODEL } from "@/lib/integrations/openaiClient";
 import { deidentifyText, leadIdentifiers } from "@/lib/deidentify";
 import { tooManyRecentActions } from "@/lib/rateLimit";
+import { businessAbout } from "@/lib/dailyQuestion";
 import { businessTrade } from "@/lib/tradePlaybooks";
 import { acceptedFacts, labelKey, MAX_FACTS, MAX_PER_REPLY, PROMPT_FACTS, sentenceWith, squash, type FactLine } from "@/lib/factLines";
 
@@ -54,6 +55,37 @@ export async function getBusinessFacts(businessId: string): Promise<FactLine[]> 
   } catch (err) {
     console.error(`Could not read what FollowUp knows for business ${businessId}:`, err);
     return [];
+  }
+}
+
+/**
+ * A fact the owner typed (Settings, the question step, the question on
+ * Today). Their word on a name that already exists replaces it rather than
+ * adding a twin. Null when the list is full.
+ */
+export async function saveOwnerFact(businessId: string, label: string, value: string): Promise<{ id: string } | null> {
+  const name = label.replace(/\s+/g, " ").trim();
+  const words = value.replace(/\s+/g, " ").trim();
+  const existing = await prisma.businessFact.findMany({ where: { businessId }, select: { id: true, label: true } });
+  const same = existing.find((f) => labelKey(f.label) === labelKey(name));
+  if (!same && existing.length >= MAX_FACTS) return null;
+  const fact = same
+    ? await prisma.businessFact.update({ where: { id: same.id }, data: { label: name, value: words, source: "owner", sourceLeadId: null } })
+    : await prisma.businessFact.create({ data: { businessId, label: name, value: words, source: "owner" } });
+  return { id: fact.id };
+}
+
+/**
+ * The owner's own words for what the business does (the "What you do" fact,
+ * A-101), for the lead check. Null when they haven't said. Never throws: the
+ * inbox sync never stops over it.
+ */
+export async function getBusinessAbout(businessId: string): Promise<string | null> {
+  try {
+    const facts = await prisma.businessFact.findMany({ where: { businessId }, select: { label: true, value: true } });
+    return businessAbout(facts ?? []);
+  } catch {
+    return null;
   }
 }
 

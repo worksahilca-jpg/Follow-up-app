@@ -148,13 +148,14 @@ describe("the Gmail sync and the business's own people", () => {
     expect(acknowledgeNewLead).toHaveBeenCalledWith("lead1", expect.objectContaining({ hasHumanReply: true }));
   });
 
-  // Plus the owner's own corrections (src/lib/senderVerdicts.ts) — never the team's addresses.
+  // Plus the owner's own corrections (src/lib/senderVerdicts.ts) and their own
+  // description of the business (A-101) — never the team's addresses.
   it("the classifier still gets only the business's name and trade", async () => {
     threadsGet.mockResolvedValue({
       data: { id: "thread-1", messages: [gmailMessage("m1", "Jane Doe <jane@example.com>", t0, "Could you quote a kitchen reno?")] },
     });
     await fetchSalesConversations("biz1");
-    expect(classifyWithSecondLook.mock.calls[0][2]).toEqual({ name: "Sam's Plumbing", industry: "Plumbing", corrections: [] });
+    expect(classifyWithSecondLook.mock.calls[0][2]).toEqual({ name: "Sam's Plumbing", industry: "Plumbing", about: null, corrections: [] });
   });
 });
 

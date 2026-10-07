@@ -125,9 +125,12 @@ real-estate advertising rules is a legal question and is not answered here.
 
 ## 8. Recommendation
 
-1. **Build nothing for GoHighLevel now.** This team is a sales-team manager with callers, a
-   CRM and an assistant. That is a different buyer from FollowUp's owner who follows up
-   personally (`customers/2026-10-04-does-the-solo-owner-have-this-problem.md`).
+1. **Build no GoHighLevel connection now.** Correction (same day): an earlier draft said this
+   team is "a different buyer". That was wrong. `PRODUCT_DIRECTION.md` (2026-09-26) makes
+   teams first-class: "anyone with more leads than follow-up, solo or team". The team is in
+   scope; only the GoHighLevel *connection* waits. What a call-first team needs from
+   FollowUp itself (a one-tap "No answer" beside "We talked", rebooking no-shows, meetings
+   per person per week) is listed for the founder in the 2026-10-07 diary and is his call.
 2. **Revisit when 3 or more prospects or testers say they run on GoHighLevel.** Then the
    §5 integration is worth sizing. Until then, the evidence is one team.
 3. **Carry one general lesson:** reminders weren't enough here; no-shows stayed at 50% even

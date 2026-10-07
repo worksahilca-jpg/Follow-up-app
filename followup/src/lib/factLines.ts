@@ -125,3 +125,21 @@ export const factInputSchema = z.object({
   label: z.string().trim().min(1, "Say what it is, e.g. Commission.").max(MAX_LABEL, `Keep the name under ${MAX_LABEL} characters.`),
   value: z.string().trim().min(1, "Add what you tell customers.").max(MAX_VALUE, `Keep it under ${MAX_VALUE} characters.`),
 });
+
+/**
+ * The owner's own answer to a blank on Today (A-100, "[ANSWER: parking]"),
+ * as a fact: "Parking" → "One spot is included". They typed it and left
+ * "Use this next time" ticked, so it is kept even when it is short ("Yes,
+ * pets are welcome"), but never if it carries this customer's name, an email,
+ * a phone number or an address: a fact is shown to every later customer.
+ */
+export function ownerAnswerFact(topic: string, answer: string, leadName: string, identifiers: Parameters<typeof deidentifyText>[1] = []): FactLine | null {
+  const value = squash(answer);
+  const t = squash(topic);
+  const label = t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
+  if (!label || !value || label.length > MAX_LABEL || value.length > MAX_VALUE) return null;
+  if (deidentifyText(value, identifiers) !== value) return null;
+  const nameParts = leadName.split(/\s+/).filter((p) => p.length >= 2);
+  if (nameParts.some((p) => hasWord(value, p))) return null;
+  return { label, value };
+}

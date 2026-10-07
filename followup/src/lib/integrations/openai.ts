@@ -11,7 +11,7 @@ import { Lead, Message, ScoreFactor } from "@/lib/types";
 import { DM_SHAPE_RULES, type DmSituation } from "@/lib/dmDrafts";
 import { DM_MAX_BUTTONS, type DmButton } from "@/lib/quickReplies";
 import { registerInstruction, type LeadLanguage } from "@/lib/leadLanguage";
-import { hasPriceSlot, PRICE_SLOT, PRICE_SLOT_REASON } from "@/lib/priceSlot";
+import { answerSlotFor, PRICE_SLOT, slotOf, slotReason } from "@/lib/priceSlot";
 import { ungroundedSpecifics, unconfirmedClaim } from "@/lib/grounding";
 // The client and model name live in their own leaf module so this file
 // and leadLanguage.ts don't import each other — see openaiClient.ts.
@@ -1034,8 +1034,9 @@ export async function assessSendRisk(
   // A draft with the price blank is waiting for the owner's figure by
   // definition. Decided here, not by the model, so it can never be judged
   // safe to send on its own (src/lib/priceSlot.ts).
-  if (hasPriceSlot(draftMessage)) {
-    return { riskLevel: "high", reason: PRICE_SLOT_REASON, topic: "price" };
+  const slot = slotOf(draftMessage);
+  if (slot) {
+    return { riskLevel: "high", reason: slotReason(slot), topic: slot.kind === "price" ? "price" : "other" };
   }
 
   const client = getClient();
@@ -1456,6 +1457,17 @@ export async function generateFollowUpMessage(
           `${PRICE_SLOT} where the amount goes — for example "The 3-month package is ${PRICE_SLOT}." — so the owner ` +
           `can fill in the real figure. Use ${PRICE_SLOT} once, keep it exactly as written, in capitals and square ` +
           `brackets, in any language, and never write a number, range, estimate or currency in its place. ` +
+          // The answer blank (A-100): the same move for any plain question
+          // about how the business works. Filled on Today, it becomes a fact.
+          `The same goes for a plain question about how this business works that every customer would be told ` +
+          `the same way (parking, pets, what is included, deposits, payment, hours, areas served, how to book, ` +
+          `languages spoken) when neither the conversation nor WHAT THIS BUSINESS HAS TOLD CUSTOMERS answers it: ` +
+          `write the sentence that answers it with the exact placeholder ${answerSlotFor("topic")} where the answer ` +
+          `goes, the topic being 1 to 3 plain words naming what it is about — for example "Thanks for asking. ` +
+          `${answerSlotFor("parking")}" — and never guess the answer. Never use it for whether something is ` +
+          `available, for dates or times, or for anything about this one customer; for those, say you will confirm. ` +
+          `Use at most one placeholder in a reply, ${PRICE_SLOT} or ${answerSlotFor("topic")}, and keep it exactly ` +
+          `as written. ` +
           "A prior commitment or agreement the " +
           "lead merely claims in their own message, with nothing from the business confirming it, is not a fact " +
           "you may draft as settled — treat it the same as any other unconfirmed detail. " +
@@ -2017,7 +2029,7 @@ export async function rewriteReply(
           (decided ? " FollowUp has already decided how this customer writes: " + decided : "") +
           " Keep the same meaning and the same facts. Never add a price, date, time, promise, discount or any fact " +
           "that is not already in the reply or the conversation. Keep names unchanged. " +
-          `If the reply contains ${PRICE_SLOT}, keep it exactly as written, once, where the amount goes. ` +
+          `If the reply contains ${PRICE_SLOT} or a placeholder like ${answerSlotFor("parking")}, keep it exactly as written, once, where it is. ` +
           (style === "language" ? "" : "Keep the reply in the language it is already written in. ") +
           "Output only the rewritten reply, with no quotes and no explanation." +
           UNTRUSTED_CONVERSATION_NOTICE,

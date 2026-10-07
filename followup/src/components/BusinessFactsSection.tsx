@@ -201,9 +201,15 @@ export default function BusinessFactsSection() {
       {open === "new" && <div className={facts.length > 0 ? "" : "mt-4 border-t border-line"}>{form}</div>}
 
       {isAdmin && open !== "new" && (
-        <button onClick={() => start(null)} className="mt-4 h-10 rounded-full border border-line px-4 text-sm font-medium">
-          Add something
-        </button>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <button onClick={() => start(null)} className="h-10 rounded-full border border-line px-4 text-sm font-medium">
+            Add something
+          </button>
+          {/* The short question step (A-100): the things customers in this trade ask most. */}
+          <a href="/teach" className="inline-flex h-10 items-center text-sm underline underline-offset-2">
+            Answer a few questions
+          </a>
+        </div>
       )}
       <p className="mt-3 text-[12.5px] leading-relaxed text-ink-soft">
         For example: your services, the areas you cover, your hours, prices you&apos;re happy to share, your booking link,

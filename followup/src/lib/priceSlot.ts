@@ -18,8 +18,41 @@ export const PRICE_SLOT = "[PRICE]";
 /** Finishes Today's "Held because <reason>." */
 export const PRICE_SLOT_REASON = "the reply needs the price from you";
 
-/** Matches the blank however the model cased or spaced it: [PRICE], [ price ], [Price]. */
-const SLOT_RE = /\[\s*price\s*\]/gi;
+/**
+ * The answer blank (A-100, founder 2026-10-07: "FollowUp will be trained
+ * according to the business"). The price blank, for any plain question about
+ * how the business works that FollowUp has no fact for: "[ANSWER: parking]".
+ * The owner fills it on Today, and ticked, it becomes a fact (Settings →
+ * What FollowUp knows), so the next customer who asks gets it without asking.
+ * Same two guarantees as the price: always held, never sent unfilled.
+ */
+export const ANSWER_SLOT_REASON = "the reply needs your answer";
+export const answerSlotFor = (topic: string) => `[ANSWER: ${topic}]`;
+
+/**
+ * Matches either blank however the model cased or spaced it: [PRICE],
+ * [ price ], [ANSWER: parking], [answer:pets]. No capture groups: split and
+ * replace must not get the topic back as a piece of the text.
+ */
+const SLOT_RE = /\[\s*(?:price|answer\s*:[^\]\n]{1,40}?)\s*\]/gi;
+const ANSWER_RE = /\[\s*answer\s*:\s*([^\]\n]{1,40}?)\s*\]/i;
+
+export type Slot = { kind: "price" } | { kind: "answer"; topic: string };
+
+/** What the first blank in the text asks for, or null when there is none. */
+export function slotOf(text: string | null | undefined): Slot | null {
+  if (!hasPriceSlot(text)) return null;
+  SLOT_RE.lastIndex = 0;
+  const first = SLOT_RE.exec(text as string)?.[0] ?? "";
+  SLOT_RE.lastIndex = 0;
+  const answer = first.match(ANSWER_RE);
+  return answer ? { kind: "answer", topic: answer[1].trim().toLowerCase() } : { kind: "price" };
+}
+
+/** Today's reason for holding a draft with this blank. */
+export function slotReason(slot: Slot): string {
+  return slot.kind === "price" ? PRICE_SLOT_REASON : ANSWER_SLOT_REASON;
+}
 
 export function hasPriceSlot(text: string | null | undefined): boolean {
   if (!text) return false;
@@ -56,7 +89,16 @@ export function isFilledDraft(draft: string, sent: string): boolean {
  * learning job (src/lib/businessFacts.ts) knows that figure is the owner's.
  */
 export function filledPrice(draft: string, sent: string): string | null {
+  if (slotOf(draft)?.kind !== "price") return null;
   return fillsOf(draft, sent)?.[0]?.trim() || null;
+}
+
+/** What the owner typed into an answer blank, and what it was about, or null. */
+export function filledAnswer(draft: string, sent: string): { topic: string; value: string } | null {
+  const slot = slotOf(draft);
+  if (slot?.kind !== "answer") return null;
+  const value = fillsOf(draft, sent)?.[0]?.trim();
+  return value ? { topic: slot.topic, value } : null;
 }
 
 function fillsOf(draft: string, sent: string): string[] | null {

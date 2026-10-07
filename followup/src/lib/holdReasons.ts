@@ -24,7 +24,7 @@
  * applies to them and the test covers the shapes they produce.
  */
 
-import { PRICE_SLOT_REASON } from "@/lib/priceSlot";
+import { ANSWER_SLOT_REASON, PRICE_SLOT_REASON } from "@/lib/priceSlot";
 
 /** Business.holdAllForApproval, reached via the hourly silence check. */
 export const HOLD_ALL_AUTOMATION_REASON =
@@ -240,6 +240,7 @@ const PLAIN_BY_REASON: Record<string, (first: string) => string> = {
   "this conversation was already in your inbox before FollowUp started watching it, so it hasn't seen what you may have already done about it":
     () => "This was in your inbox before FollowUp started. Check you haven't already answered.",
   [PRICE_SLOT_REASON]: () => "Add the price, then send.",
+  [ANSWER_SLOT_REASON]: () => "Add your answer, then send.",
   [UNGROUNDED_DRAFT_REASONS.digits]: () => "Check the number. Nobody wrote it in this conversation.",
   [UNGROUNDED_DRAFT_REASONS.currency]: () => "Check the price. Nobody mentioned one here.",
   [UNGROUNDED_DRAFT_REASONS.time]: () => "Check the time. Nobody gave one here.",

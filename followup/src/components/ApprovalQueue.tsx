@@ -17,7 +17,7 @@ import SafePilePeek from "@/components/SafePilePeek";
 import UndoLine from "@/components/UndoLine";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE, RESULT_HOLD_MS } from "@/lib/motion";
-import { fillPriceSlot, hasPriceSlot, splitAtPriceSlot } from "@/lib/priceSlot";
+import { fillPriceSlot, hasPriceSlot, slotOf, splitAtPriceSlot } from "@/lib/priceSlot";
 import { RememberPrice } from "@/components/app/RememberPrice";
 
 /** How far a phone row must be pulled left before letting go sets it aside (A-095). */
@@ -177,6 +177,9 @@ function ApprovalCard({
   const [mine, setMine] = useState(false);
   const [rewriting, setRewriting] = useState<null | "fresh" | "shorter" | "warmer" | "formal">(null);
   const needsPrice = !editing && hasPriceSlot(text);
+  // A price blank or an answer blank (A-100): "[ANSWER: parking]".
+  const blankTopic = needsPrice ? (slotOf(text) as { topic?: string } | null)?.topic : undefined;
+  const blankHint = blankTopic ? `your answer on ${blankTopic}` : "$ price";
   const [price, setPrice] = useState("");
   // "Use <price> next time" (A-096): ticked by default.
   const [remember, setRemember] = useState(true);
@@ -588,19 +591,34 @@ function ApprovalCard({
               ) : (
                 <span key={i}>
                   {i === 1 ? (
-                    <input
-                      id={`price-${item.leadId}`}
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      disabled={send.pending || send.busy}
-                      placeholder="$ price"
-                      aria-label={`The price for ${firstName}`}
-                      autoComplete="off"
-                      className="mx-0.5 inline-block h-8 w-28 rounded-md border border-dashed bg-card px-2 align-baseline text-ink disabled:opacity-60"
-                      style={{ borderColor: price.trim() ? "var(--line)" : "var(--ink-soft)" }}
-                    />
+                    blankTopic ? (
+                      <textarea
+                        id={`price-${item.leadId}`}
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        disabled={send.pending || send.busy}
+                        placeholder={blankHint}
+                        aria-label={blankTopic ? `Your answer about ${blankTopic}, for ${firstName}` : `The price for ${firstName}`}
+                        autoComplete="off"
+                        rows={2}
+                        className={"my-1 block w-full resize-none rounded-md py-1.5 leading-snug border border-dashed bg-card px-2 align-baseline text-ink disabled:opacity-60"}
+                        style={{ borderColor: price.trim() ? "var(--line)" : "var(--ink-soft)" }}
+                      />
+                    ) : (
+                      <input
+                        id={`price-${item.leadId}`}
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        disabled={send.pending || send.busy}
+                        placeholder={blankHint}
+                        aria-label={blankTopic ? `Your answer about ${blankTopic}, for ${firstName}` : `The price for ${firstName}`}
+                        autoComplete="off"
+                        className={"w-28 mx-0.5 inline-block h-8 rounded-md border border-dashed bg-card px-2 align-baseline text-ink disabled:opacity-60"}
+                        style={{ borderColor: price.trim() ? "var(--line)" : "var(--ink-soft)" }}
+                      />
+                    )
                   ) : (
-                    <span>{price.trim() || "$ price"}</span>
+                    <span>{price.trim() || blankHint}</span>
                   )}
                   {part}
                 </span>
@@ -610,11 +628,18 @@ function ApprovalCard({
         ) : (
           <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{text}</p>
         )}
-        {priceMissing && <p className="mt-2 text-[13px] text-ink-soft">Add the price, then send. FollowUp never guesses one.</p>}
+        {priceMissing && (
+          <p className="mt-2 text-[13px] text-ink-soft">
+            {blankTopic
+              ? `${firstName} asked about ${blankTopic}. FollowUp doesn't know your answer yet, and never guesses. Add it, then send.`
+              : "Add the price, then send. FollowUp never guesses one."}
+          </p>
+        )}
         {needsPrice && !priceMissing && (
           <RememberPrice
             id={`remember-${item.leadId}`}
             price={price.trim()}
+            topic={blankTopic}
             checked={remember}
             onChange={setRemember}
             disabled={send.pending || send.busy}

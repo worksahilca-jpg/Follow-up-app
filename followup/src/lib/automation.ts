@@ -34,7 +34,7 @@ import { prisma } from "@/lib/db";
 import { byTranscriptOrder } from "@/lib/transcript";
 import { settledByTalk, settledByDecline, lastInboundTime, lastMessageTime } from "@/lib/talked";
 import { generateFollowUpMessage, assessSendRisk, type RiskTopic } from "@/lib/integrations/openai";
-import { hasPriceSlot, PRICE_SLOT_REASON } from "@/lib/priceSlot";
+import { slotOf, slotReason } from "@/lib/priceSlot";
 import { draftDm, readStoredQuickReplies } from "@/lib/dmDrafting";
 import { businessText, checkDmDraftShape, conversationText, emailBodyOf, emailGreetingOf } from "@/lib/dmDrafts";
 import { checkUnreviewedDraft } from "@/lib/unreviewedDraftCheck";
@@ -1562,7 +1562,8 @@ export async function runAutomationForBusiness(
       // owner's figure on every tier. AUTONOMOUS skips review below, so the
       // blank has to send it through review here; otherwise the send layer
       // would refuse it and nobody would ever see it.
-      const needsPrice = hasPriceSlot(message);
+      const blank = slotOf(message);
+      const needsPrice = blank !== null;
       // They asked if they're talking to a real person (Lead.askedIfPersonAt):
       // the only honest reply is a person's, so it waits on every tier.
       const askedIfPerson = lead.askedIfPersonAt != null;
@@ -1650,8 +1651,8 @@ export async function runAutomationForBusiness(
         // Whatever the branch above decided, a blank is a decision for the
         // owner and a price question (the 30-minute holding message keys
         // off this topic). Stored, because it is a true verdict.
-        if (needsPrice) {
-          risk = { riskLevel: "high", reason: PRICE_SLOT_REASON, topic: "price" };
+        if (blank) {
+          risk = { riskLevel: "high", reason: slotReason(blank), topic: blank.kind === "price" ? "price" : "other" };
           riskAssessed = true;
         }
         if (askedIfPerson) {

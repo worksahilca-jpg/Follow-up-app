@@ -47,7 +47,7 @@ export default function ImportLeadsForm({ onClose }: { onClose: () => void }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+      style={{ backgroundColor: "var(--scrim)" }}
       onClick={onClose}
     >
       <div

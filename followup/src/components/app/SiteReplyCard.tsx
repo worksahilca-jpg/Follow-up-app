@@ -145,7 +145,7 @@ export default function SiteReplyCard({
     );
   }
 
-  const soft: React.CSSProperties = { borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" };
+  const soft: React.CSSProperties = { borderColor: "var(--line-strong)", background: "var(--glass)" };
   const primary: React.CSSProperties = { background: "var(--accent)", color: "var(--on-accent)" };
   const bigButton = "inline-flex h-[52px] w-full items-center justify-center rounded-full text-base font-semibold";
   const smallButton =
@@ -169,7 +169,7 @@ export default function SiteReplyCard({
 
       {draft ? (
         <>
-          <p className="mt-2.5 whitespace-pre-wrap rounded-xl border px-3.5 py-3 text-[15px] leading-relaxed" style={{ background: "rgba(255,255,255,0.6)", borderColor: "rgba(10,10,10,0.06)" }}>
+          <p className="mt-2.5 whitespace-pre-wrap rounded-xl border px-3.5 py-3 text-[15px] leading-relaxed" style={{ background: "var(--glass-strong)", borderColor: "var(--wash-edge)" }}>
             {needsPrice ? fillPriceSlot(draft, price.trim() || blankHint) : words}
           </p>
           {needsPrice && (

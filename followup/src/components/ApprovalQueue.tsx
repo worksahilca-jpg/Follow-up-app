@@ -19,6 +19,7 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE, RESULT_HOLD_MS } from "@/lib/motion";
 import { fillPriceSlot, hasPriceSlot, slotOf, splitAtPriceSlot } from "@/lib/priceSlot";
 import { RememberPrice } from "@/components/app/RememberPrice";
+import MarkedText from "@/components/app/MarkedText";
 import { dropKeptEdit, keepEdit, readKeptEdit } from "@/lib/keptEdit";
 
 /** How far a phone row must be pulled left before letting go sets it aside (A-095). */
@@ -69,6 +70,8 @@ const SWIPE_FOR_LATER_PX = 96;
 /** A waiting reply, plus "Based on …" (A-043) when there is something to point at. */
 export type ApprovalItem = PendingApproval & {
   basis?: string | null;
+  /** Numbers, prices and days in the draft nobody wrote (research round 2, #1): underlined in place. */
+  checkWords?: string[];
   /** "Waiting 5 h" / "Quiet 6 days" (A-046), worked out on the server. */
   wait?: string | null;
   /** The same fact for the "Start with" line: "who has waited 5 hours". */
@@ -206,6 +209,13 @@ function ApprovalCard({
     if (restored.current) keepEdit(item.leadId, item.draftMessage, { text, mine, price });
   }, [item.leadId, item.draftMessage, text, mine, price]);
   const plainReason = plainHoldReason(item.reason, { firstName, topic: item.riskTopic });
+  // With the words underlined, the line under the reply points at them (#1).
+  const checkHint =
+    item.checkWords && item.checkWords.some((w) => text.includes(w))
+      ? item.checkWords.filter((w) => text.includes(w)).length === 1
+        ? "Check the underlined word. Nobody wrote it in this conversation."
+        : "Check the underlined words. Nobody wrote them in this conversation."
+      : null;
   // "We talked" (design brain A-039): the card stays for a few seconds
   // saying what happened, with Undo, then leaves the queue.
   const [talked, setTalked] = useState(false);
@@ -648,7 +658,9 @@ function ApprovalCard({
             )}
           </p>
         ) : (
-          <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{text}</p>
+          <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">
+            <MarkedText text={text} words={item.checkWords ?? []} />
+          </p>
         )}
         {priceMissing && (
           <p className="mt-2 text-[13px] text-ink-soft">
@@ -683,10 +695,10 @@ function ApprovalCard({
         {/* Why it waits, in the owner's words (A-087): what to check, or
             nothing when the every-reply-waits setting is the only reason.
             A price draft's reason is the blank, which the lines above say. */}
-        {plainReason && !needsPrice && !item.askedIfPerson && !editing && !edited && (
+        {(checkHint ?? plainReason) && !needsPrice && !item.askedIfPerson && !editing && !edited && (
           <p className="mt-2.5 flex items-baseline gap-2 text-[13.5px] text-ink">
             <span aria-hidden className="inline-block h-[7px] w-[7px] shrink-0 -translate-y-px rounded-full" style={{ background: "var(--state-needs)" }} />
-            {plainReason}
+            {checkHint ?? plainReason}
           </p>
         )}
         {item.basis && !editing && !edited && <p className="mt-2 hidden text-[13px] text-ink-soft sm:block">{item.basis}</p>}
@@ -705,7 +717,7 @@ function ApprovalCard({
             <button
               onClick={send.undo}
               className="h-9 rounded-full border px-4 text-sm font-medium"
-              style={{ borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" }}
+              style={{ borderColor: "var(--line-strong)", background: "var(--glass)" }}
             >
               Undo
             </button>
@@ -739,7 +751,7 @@ function ApprovalCard({
                   }}
                   disabled={busy !== null || send.busy}
                   className="inline-flex h-[52px] w-24 items-center justify-center rounded-full border text-base font-medium disabled:opacity-60 sm:h-11"
-                  style={{ borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" }}
+                  style={{ borderColor: "var(--line-strong)", background: "var(--glass)" }}
                 >
                   Edit
                 </button>
@@ -837,6 +849,7 @@ export default function ApprovalQueue({
   setAside = 0,
   holdAll = false,
   weekResults = null,
+  plan = null,
 }: {
   items: ApprovalItem[];
   /** Only admins send, and this person isn't one (A-041). */
@@ -857,6 +870,8 @@ export default function ApprovalQueue({
   holdAll?: boolean;
   /** "This week: 11 customers answered · 2 came back…" (A-088): what came of it, said at the end of the day. */
   weekResults?: string | null;
+  /** "Next: FollowUp checks on Priya on Thursday…" (research round 2, #2): the plan, on a quiet Today. */
+  plan?: string | null;
 }) {
   const [resolved, setResolved] = useState<Set<string>>(new Set());
   // A card that is done says what happened for a moment, then leaves and
@@ -947,12 +962,17 @@ export default function ApprovalQueue({
           <Check className="h-4 w-4" />
         </span>
         <div className="min-w-0">
-          <p className="font-medium">{done ? "You're done for today." : "Nothing needs your OK right now."}</p>
+          {/* The plan, not a second "nothing needs your OK" under the heading that
+              already says it (research round 2, #2): a plan for what is left
+              quiets it as much as finishing it does. */}
+          <p className="font-medium">{done ? "You're done for today." : plan ?? "Nothing needs your OK right now."}</p>
           <p className="mt-1 text-sm text-ink-soft">
             {done
-              ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today. FollowUp keeps watching, and will tell you when someone writes.`
+              ? `You handled ${handled} ${handled === 1 ? "person" : "people"} today.${plan ? ` ${plan}` : " FollowUp keeps watching, and will tell you when someone writes."}`
               : holdAll
-                ? "Every reply FollowUp writes shows up here first. Nothing goes out until you send it, apart from a short “let me check” when a price or date question has waited 30 minutes."
+                ? plan
+                  ? "You'll see each reply here before it goes, apart from a short “let me check” when a price or date question has waited 30 minutes."
+                  : "Every reply FollowUp writes shows up here first. Nothing goes out until you send it, apart from a short “let me check” when a price or date question has waited 30 minutes."
                 : "Anything FollowUp isn't sure about will show up here before it sends."}
             {answeredForYou > 0 &&
               ` It answered ${answeredForYou} ${answeredForYou === 1 ? "customer" : "customers"} on its own this week.`}

@@ -31,10 +31,8 @@ import { dropKeptEdit, keepEdit, readKeptEdit } from "@/lib/keptEdit";
  */
 export const WARM_CARD: React.CSSProperties = {
   background:
-    "radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%)," +
-    "radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%)," +
-    "radial-gradient(50% 70% at 88% 0%, rgba(238,212,204,0.9), rgba(238,212,204,0) 72%), #f3efea",
-  border: "1px solid rgba(10,10,10,0.06)",
+    "var(--wash)",
+  border: "1px solid var(--wash-edge)",
 };
 
 type Rewrite = "shorter" | "warmer" | "formal" | "language";
@@ -369,7 +367,7 @@ export default function ReplyCard({
             type="button"
             onClick={undoable.undo}
             className="h-9 rounded-full border px-4 text-sm font-medium"
-            style={{ borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" }}
+            style={{ borderColor: "var(--line-strong)", background: "var(--glass)" }}
           >
             Undo
           </button>
@@ -403,7 +401,7 @@ export default function ReplyCard({
             onClick={() => setEditing(true)}
             disabled={busy !== null}
             className={"h-[52px] w-24 rounded-full border text-base font-medium" + (dense ? " lg:h-[38px] lg:w-auto lg:px-4 lg:text-[14px] lg:font-semibold" : "")}
-            style={{ borderColor: "rgba(10,10,10,0.18)", background: "rgba(255,255,255,0.55)" }}
+            style={{ borderColor: "var(--line-strong)", background: "var(--glass)" }}
           >
             Edit
           </button>

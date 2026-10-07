@@ -166,7 +166,7 @@ export default function WorkflowsPage() {
                 <button
                   onClick={() => setPicked(plan)}
                   className="mt-3 h-10 rounded-full border px-4 text-sm font-medium"
-                  style={{ borderColor: "rgba(10,10,10,0.18)" }}
+                  style={{ borderColor: "var(--line-strong)" }}
                 >
                   Use this plan
                 </button>

@@ -15,7 +15,7 @@ import CleanupLeadsButton from "@/components/CleanupLeadsButton";
 import { motion } from "framer-motion";
 import { MOTION } from "@/lib/motion";
 import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, MoreHorizontal } from "lucide-react";
-import { Initials, restingState, shortAge, StatePill, type StateKey } from "@/components/app/canvasBits";
+import { Initials, restingState, shortAge, StatePill, waitingFor, type StateKey } from "@/components/app/canvasBits";
 import { ChannelIcon, channelFromSource } from "@/components/app/ChannelIcon";
 
 const CHANNEL_NAMES: Record<string, string> = {
@@ -522,7 +522,22 @@ export default function LeadsPageClient({
                   {/* A label only where it says something new (A-089): under the
                       "Needs you" tab, "Needs you" on every row repeats the tab. */}
                   <span className="justify-self-end md:justify-self-start">
-                    {!(place !== "all" && where === place) && <StatePill state={pill.state} label={pill.label} />}
+                    {/* On a phone, a customer who needs you shows how long they have
+                        waited, the one thing that differs row to row (research round 2,
+                        #4): "Needs you" on 15 of 16 rows carried no information. The
+                        dot keeps the state; the desktop's State column keeps the word. */}
+                    {where === "needs" && last && (
+                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13.5px] text-ink-soft tabular-nums md:hidden">
+                        <span aria-hidden className="h-[7px] w-[7px] rounded-full" style={{ backgroundColor: "var(--state-needs)" }} />
+                        <span className="sr-only">Needs you, waiting </span>
+                        {waitingFor(last.date)}
+                      </span>
+                    )}
+                    {!(place !== "all" && where === place) && (
+                      <span className={where === "needs" && last ? "hidden md:inline" : undefined}>
+                        <StatePill state={pill.state} label={pill.label} />
+                      </span>
+                    )}
                   </span>
                 </Link>
               );

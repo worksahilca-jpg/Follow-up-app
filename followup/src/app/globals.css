@@ -81,6 +81,79 @@
 
   /* Height of the fixed mobile top bar in components/Sidebar.tsx. */
   --app-header-h: 57px;
+
+  /* The reply card's warm wash (A-043), a soft glass field on it, and the
+     scrim behind a dialog: tokens so the dark theme can redraw them. */
+  --wash:
+    radial-gradient(70% 90% at 12% 10%, rgba(244, 196, 160, 0.9), rgba(244, 196, 160, 0) 70%),
+    radial-gradient(70% 90% at 92% 95%, rgba(196, 210, 228, 0.95), rgba(196, 210, 228, 0) 70%),
+    radial-gradient(50% 70% at 88% 0%, rgba(238, 212, 204, 0.9), rgba(238, 212, 204, 0) 72%), #f3efea;
+  --wash-edge: rgba(10, 10, 10, 0.06);
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-strong: rgba(255, 255, 255, 0.6);
+  --scrim: rgba(0, 0, 0, 0.4);
+  --tint-bad: rgba(217, 95, 79, 0.08);
+  --tint-good: rgba(122, 157, 127, 0.08);
+}
+
+/* ------------------------------------------------------------------
+   Dark, following the phone's own setting (research round 2, #8; drawn
+   and approved 2026-10-07: "merge and build it"). The app only: the
+   public site keeps its own look. Light stays the default because people
+   proofread better on a light ground at every age (NN/g, after
+   Piepenbrock et al.); dark is for the owner checking their phone in a
+   dark room. Same roles, redrawn: text still clears AA on its ground, the
+   orange dot is lifted so it still reads as "your turn" on dark.
+   ------------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  .theme-auto,
+  html:has(.theme-auto) {
+    color-scheme: dark;
+    --paper: #121110;
+    --card: #1b1a19;
+    --card-2: #232120;
+    --sidebar: #161514;
+    --ink: #f3f1ee;
+    --ink-soft: #b8b2ab;
+    --ink-faint: #958f88;
+    --line: #2e2c2a;
+    --line-2: #262422;
+    --line-strong: rgba(243, 241, 238, 0.22);
+    --accent: #f3f1ee;
+    --accent-deep: #d6d2cc;
+    --accent-soft: #2a2826;
+    --on-accent: #121110;
+    --slate: #b8b2ab;
+    --slate-soft: #232120;
+    --sage: #7fcf9f;
+    --sage-soft: #16291e;
+    --gold: #e3a95a;
+    --gold-soft: #2b2112;
+    --coral: #f08a9c;
+    --coral-soft: #2e1519;
+    --coral-fill: #c43c56;
+    --state-needs: #e0893d;
+    --state-quiet: #d0a24a;
+    --state-waiting: #93a0b4;
+    --state-sent: #7fa98a;
+    --state-checked: #8a847d;
+    --state-done: #4a4642;
+    --shadow-box-lift: 0 0 0 1px var(--line), 0 24px 48px -24px rgba(0, 0, 0, 0.6);
+    --wash:
+      radial-gradient(70% 90% at 12% 10%, rgba(150, 92, 52, 0.38), rgba(150, 92, 52, 0) 70%),
+      radial-gradient(70% 90% at 92% 95%, rgba(70, 88, 116, 0.42), rgba(70, 88, 116, 0) 70%),
+      radial-gradient(50% 70% at 88% 0%, rgba(120, 84, 76, 0.3), rgba(120, 84, 76, 0) 72%), #1f1d1b;
+    --wash-edge: rgba(243, 241, 238, 0.08);
+    --glass: rgba(255, 255, 255, 0.06);
+    --glass-strong: rgba(255, 255, 255, 0.08);
+    --scrim: rgba(0, 0, 0, 0.6);
+    --tint-bad: rgba(240, 138, 156, 0.1);
+    --tint-good: rgba(127, 207, 159, 0.1);
+  }
+  html:has(.theme-auto) body {
+    background: var(--paper);
+    color: var(--ink);
+  }
 }
 
 @theme inline {

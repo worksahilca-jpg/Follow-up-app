@@ -54,7 +54,7 @@ export default function FeedbackDialog() {
       {open && (
         <div
           className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4"
-          style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+          style={{ backgroundColor: "var(--scrim)" }}
           onClick={() => setOpen(false)}
         >
           <div className="box-lift w-full max-w-md p-5" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Send feedback">

@@ -96,7 +96,7 @@ export default function Thread({
                     "whitespace-pre-wrap " +
                     "rounded-[20px_20px_6px_20px] px-4 py-3 text-base leading-relaxed" + (dense ? " lg:rounded-[14px_14px_4px_14px] lg:px-3.5 lg:py-[11px] lg:text-[14.5px] lg:leading-normal" : "")
                   }
-                  style={{ background: "var(--accent-soft)", color: "#3f3a36" }}
+                  style={{ background: "var(--accent-soft)", color: "var(--ink-soft)" }}
                 >
                   {m.body}
                 </div>

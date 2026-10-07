@@ -34,15 +34,15 @@ model User {
   // app — an alert they have to find and switch on first reaches nobody.
   // Push has no column: a device is on exactly when it has a
   // PushSubscription row, and turning it off deletes the row.
-  alertEmailEnabled       Boolean           @default(true)
-  pushSubscriptions       PushSubscription[]
-  ownerAlerts             OwnerAlert[]
+  alertEmailEnabled Boolean            @default(true)
+  pushSubscriptions PushSubscription[]
+  ownerAlerts       OwnerAlert[]
 
   // Sign-ins and "Sign out everywhere" (design brain A-041). A session
   // whose Google sign-in happened before this moment is ended the next
   // time the JWT callback revalidates it (within REVALIDATE_INTERVAL_MS).
-  sessionsRevokedAt       DateTime?
-  signIns                 SignIn[]
+  sessionsRevokedAt DateTime?
+  signIns           SignIn[]
 
   // Every Gmail sync/automation lookup resolves the connected account via
   // "the user(s) on this business" — without this, that's a table scan.
@@ -115,29 +115,29 @@ enum TeamRole {
 }
 
 model Business {
-  id                    String            @id @default(cuid())
+  id                    String   @id @default(cuid())
   name                  String
   industry              String?
   teamSize              Int?
   avgDealValue          Float?
   primaryChannels       String[]
-  onboarded             Boolean           @default(false)
-  createdAt             DateTime          @default(now())
+  onboarded             Boolean  @default(false)
+  createdAt             DateTime @default(now())
   // IANA name, e.g. "America/Toronto" — drives which wall-clock hours
   // count as booking hours (src/lib/booking.ts) and the 8am–8pm sending
   // window (src/lib/sendWindow.ts). Set in Settings → the booking card
   // since 2026-10-01 (A-078); new accounts still start on New York until
   // the owner picks theirs.
-  timezone              String            @default("America/New_York")
+  timezone              String   @default("America/New_York")
   // When a customer can book a call through their link, in the business's
   // timezone (src/lib/bookingHours.ts). Days are JS weekday numbers, 0 =
   // Sunday; the hours are minutes from midnight on a 30-minute grid. The
   // default is Mon–Sat 9am–7pm (founder, 2026-10-01). Until then it was a
   // fixed Mon–Fri 9–5, and realtors show homes in the evening and at
   // the weekend.
-  bookingDays           Int[]             @default([1, 2, 3, 4, 5, 6])
-  bookingStartMinute    Int               @default(540)
-  bookingEndMinute      Int               @default(1140)
+  bookingDays           Int[]    @default([1, 2, 3, 4, 5, 6])
+  bookingStartMinute    Int      @default(540)
+  bookingEndMinute      Int      @default(1140)
   // "followup" (default): availability is just the fixed business-hours
   // grid minus FollowUp's own Booking rows, as it always was. "google":
   // ALSO excludes real busy blocks from the connected Google Calendar
@@ -145,7 +145,7 @@ model Business {
   // so a lead can't book over a meeting the owner already has. Only
   // meaningful when Gmail is connected; getAvailableSlots() falls back to
   // "followup" behavior if it isn't, rather than erroring.
-  bookingCalendarSource String            @default("followup")
+  bookingCalendarSource String   @default("followup")
 
   // Setup steps the owner has said do not apply to them (SetupStep.id in
   // src/lib/setupStatus.ts — "widget", "phone").
@@ -164,21 +164,21 @@ model Business {
   // would hide a real problem behind a tidy screen.
   dismissedSetupSteps String[] @default([])
 
-  users                 User[]
-  leads                 Lead[]
-  automations           Automation[]
-  reactivationRuns      ReactivationRun[]
-  suppressions          Suppression[]
-  outboundSends         OutboundSend[]
-  bookings              Booking[]
-  sequences             Sequence[]
-  sourceRules           SourceRule[]
-  invites               Invite[]
-  feedback              ProductFeedback[]
-  rateLimitHits         RateLimitHit[]
-  savedFilters          SavedFilter[]
-  filteredEmails        FilteredEmail[]
-  crmConnection         CrmConnection?
+  users            User[]
+  leads            Lead[]
+  automations      Automation[]
+  reactivationRuns ReactivationRun[]
+  suppressions     Suppression[]
+  outboundSends    OutboundSend[]
+  bookings         Booking[]
+  sequences        Sequence[]
+  sourceRules      SourceRule[]
+  invites          Invite[]
+  feedback         ProductFeedback[]
+  rateLimitHits    RateLimitHit[]
+  savedFilters     SavedFilter[]
+  filteredEmails   FilteredEmail[]
+  crmConnection    CrmConnection?
 
   // Billing (Stripe) — Free/Plus/Pro tiers plus an optional Voice add-on
   // (research/market/2026-09-11-tier-pricing-recommendation.md). subscriptionStatus
@@ -284,13 +284,18 @@ model Business {
   pastRepliesPageToken String?
   // Sent messages looked at so far (kept or not) — the import stops at a
   // ceiling so an account with years of mail stays a bounded job.
-  pastRepliesScanned   Int       @default(0)
+  pastRepliesScanned   Int             @default(0)
   // Why the import stopped early, in words the owner can act on.
   pastRepliesError     String?
   pastReplies          PastReply[]
   senderVerdicts       SenderVerdict[]
   // What FollowUp knows about this business (src/lib/businessFacts.ts).
   facts                BusinessFact[]
+  // One question a day on Today (A-101, src/lib/dailyQuestion.ts): no
+  // question before this time, and the questions the owner said "Not now"
+  // to, which are then left for when a real customer asks.
+  questionAfter        DateTime?
+  questionsSkipped     String[]        @default([])
   // What the owner always does, offered once and kept only on a yes (src/lib/habits.ts).
   habits               OwnerHabit[]
 
@@ -349,7 +354,7 @@ model Business {
   // An account should have to be told it may send unreviewed, not told to
   // be safe. Turning it off is a deliberate act in Settings, by an owner
   // who has decided to trust it.
-  holdAllForApproval   Boolean @default(true)
+  holdAllForApproval Boolean @default(true)
 
   // May any lead on this account be set to Auto — the one mode that skips
   // the risk check and sends price and tense conversations without review?
@@ -371,7 +376,7 @@ model Business {
   //
   // Read through isAutonomousAllowed (@/lib/autonomousPermission), never
   // directly, so every path that can reach Auto asks the same question.
-  autonomousAllowed    Boolean @default(false)
+  autonomousAllowed Boolean @default(false)
 
   // WHEN the permission above was granted. Null whenever it is off.
   //
@@ -392,7 +397,7 @@ model Business {
   //
   // Reset to null on revoke, so granting again starts a fresh "from now
   // on" rather than reaching back to the first time.
-  autonomousAllowedAt  DateTime?
+  autonomousAllowedAt DateTime?
 
   // WHEN the owner granted "send on my behalf" — i.e. when
   // holdAllForApproval was turned OFF. Null while it is on.
@@ -410,7 +415,7 @@ model Business {
   // would silently freeze a working account. So the guard applies only
   // where a grant was actually recorded — every grant from 2026-09-23 on.
   // (No account is in that older state today: all of them still hold.)
-  autoSendAllowedAt    DateTime?
+  autoSendAllowedAt DateTime?
 
   // "Pause all sending" (design brain A-041, the Mercury study). Set when
   // someone pauses an account that was sending by itself: the pause turns
@@ -418,13 +423,13 @@ model Business {
   // already reads, and this stamp is what remembers it was a pause rather
   // than a decision to stop for good, so the app can offer Resume. Null
   // whenever the account isn't paused.
-  sendingPausedAt      DateTime?
+  sendingPausedAt DateTime?
 
   // "Only admins send" (A-041). When true, a teammate with the SALES role
   // can still write, edit and hold replies, but the one route a person
   // sends through (POST /api/leads/[id]/send) refuses them. Off by
   // default: a team that never asked for it sees no change.
-  onlyAdminsSend       Boolean   @default(false)
+  onlyAdminsSend Boolean @default(false)
 
   // When Meta last confirmed this app is subscribed to the account's
   // `messages` webhook. Null on a connected account means the
@@ -439,7 +444,7 @@ model Business {
   // in its console. Kept as-is because the three Graph calls that key on
   // it — /{id}/messages, /{id}/conversations, /{id}/subscribed_apps — all
   // work with it today, and a real reply went out through it on 2026-09-19.
-  instagramUserId      String? @unique
+  instagramUserId              String?   @unique
   // The professional-account id (`user_id` from /me; the founder's is
   // 17841427527466039). This is what webhooks carry as `entry.id` and what
   // the Conversations API reports as a message's `from.id`, so it is the
@@ -451,15 +456,15 @@ model Business {
   // scripts/backfill-instagram-account-id.ts is run, and on a token for
   // which Meta returns no user_id. Unique for the same reason as the id
   // above: one Instagram account feeds one FollowUp account.
-  instagramAccountId   String? @unique
+  instagramAccountId           String?   @unique
   // The handle, as Meta reported it at connect time. Settings showed only
   // the numeric id until 2026-09-24, and an owner cannot tell from
   // "17841427527466039" whether the account they connected is the one they
   // meant. Display only: routing still keys on instagramUserId, which does
   // not change when a handle does. Null for anything connected before this
   // column existed; the card falls back to the id for those.
-  instagramUsername    String?
-  instagramAccessToken String?
+  instagramUsername            String?
+  instagramAccessToken         String?
   // How far the conversation poller has read (src/lib/instagramPoll.ts).
   // Meta's push delivery cannot be relied on — on 2026-09-19 a correctly
   // connected, correctly subscribed account received no webhook for a real
@@ -467,15 +472,15 @@ model Business {
   // also ASKS, every few minutes, exactly as it does for Gmail. Null means
   // never polled: the first tick reads a short window back, never the whole
   // history, so connecting an account can't acknowledge old conversations.
-  instagramSyncedAt    DateTime?
+  instagramSyncedAt            DateTime?
 
   // Facebook Page — Messenger DMs and Lead Ads (src/lib/facebook.ts). Same
   // Meta app and same webhook URL as Instagram; events for object "page"
   // route to the business whose Page ID matches entry.id. The Page access
   // token is encrypted at rest (src/lib/db.ts ENCRYPTED_FIELDS).
-  facebookPageId          String? @unique
-  facebookPageName        String?
-  facebookPageAccessToken String?
+  facebookPageId              String?   @unique
+  facebookPageName            String?
+  facebookPageAccessToken     String?
   // When Meta last confirmed this app is subscribed to the Page's
   // `messages` and `leadgen` webhooks. Null on a connected Page means the
   // subscription call never succeeded — the Page is saved and readable,
@@ -495,15 +500,15 @@ model Business {
   // back, encrypted at rest (src/lib/db.ts ENCRYPTED_FIELDS). Distinct from
   // the Twilio WhatsApp fields above, which stay for a business already on
   // that path; src/lib/sending.ts prefers this connection when both exist.
-  whatsappWabaId        String?
-  whatsappPhoneNumberId String? @unique
-  whatsappAccessToken   String?
+  whatsappWabaId                String?
+  whatsappPhoneNumberId         String? @unique
+  whatsappAccessToken           String?
   // "+1 416-555-0100" as Meta displays it — for Settings copy only.
-  whatsappDisplayNumber String?
+  whatsappDisplayNumber         String?
   // "coexistence" (connected from the WhatsApp Business app, the normal
   // path) or "cloud" (a number that lives only in the API). Copy differs:
   // only a coexistence number shows the owner's own phone replies here.
-  whatsappConnectMode   String?
+  whatsappConnectMode           String?
   // The approved utility template (WhatsApp Manager, this business's own
   // WABA) FollowUp may send past the 24-hour window — name + language code
   // as the API wants them, and the approved wording kept for reference,
@@ -626,7 +631,6 @@ model Suppression {
  * shared model (Google's Workspace API user data policy allows Gmail data
  * in a personalised feature for the same user, and forbids it in a
  * generalised one).
- *
  * Stored already cleaned and de-identified (src/lib/pastReplies.ts): quoted
  * history and signature cut off, the recipient's and the owner's names and
  * addresses replaced with placeholders, any other email, phone number or
@@ -778,21 +782,21 @@ enum AutomationTier {
 }
 
 model Lead {
-  id               String         @id @default(cuid())
-  business         Business       @relation(fields: [businessId], references: [id])
-  businessId       String
-  name             String
-  company          String?
-  email            String?
-  phone            String?
-  source           String?
-  stage            PipelineStage  @default(NEW)
-  dealValue        Float          @default(0)
-  score            Int            @default(0)
-  scoreReason      String?
-  scoreFactors     Json? // ScoreFactor[] — [{ label, weight }], from AI scoring
-  suggestedMessage String? // AI-drafted follow-up, edited/approved before sending
-  suggestedSubject String? // AI-drafted subject line for the same email, same edited/approved-before-sending path
+  id                    String         @id @default(cuid())
+  business              Business       @relation(fields: [businessId], references: [id])
+  businessId            String
+  name                  String
+  company               String?
+  email                 String?
+  phone                 String?
+  source                String?
+  stage                 PipelineStage  @default(NEW)
+  dealValue             Float          @default(0)
+  score                 Int            @default(0)
+  scoreReason           String?
+  scoreFactors          Json? // ScoreFactor[] — [{ label, weight }], from AI scoring
+  suggestedMessage      String? // AI-drafted follow-up, edited/approved before sending
+  suggestedSubject      String? // AI-drafted subject line for the same email, same edited/approved-before-sending path
   // The sentAt of the newest message the cached draft above was written
   // against. Null means "unknown" (any draft written before this column
   // existed), which is treated as stale so nothing silently reuses a draft
@@ -808,7 +812,7 @@ model Lead {
   // with time rather than with leads, and the mandatory hold on cold leads
   // guarantees a standing population of them
   // (research/product/2026-09-15-ai-cost-per-lead.md §5).
-  suggestedDraftedFor DateTime?
+  suggestedDraftedFor   DateTime?
   // The reply buttons drafted alongside suggestedMessage when that draft
   // is DM-shaped (the lead last wrote on Instagram or Messenger) — shape
   // { question, buttons: [{ title, exit }] }, see StoredQuickReplies in
@@ -836,8 +840,8 @@ model Lead {
   // unreviewed and nothing was going out at all. But that left every held
   // draft unjudged, so the approval queue could not say which ones are
   // routine, and an owner facing 600 of them had to read all 600.
-  suggestedRiskLevel  String?
-  suggestedRiskReason String?
+  suggestedRiskLevel    String?
+  suggestedRiskReason   String?
   // WHAT KIND of decision the risk check found, when it held the draft:
   // "price", "date", "tense" or "other" ("none" when it found nothing).
   // Stored beside the verdict it came with, and cleared with it.
@@ -849,12 +853,12 @@ model Lead {
   // never does — an automatic "I'm looking into it" can make an upset
   // person angrier — and the reason text alone cannot tell the two apart
   // reliably, so the classifier says which it is.
-  suggestedRiskTopic  String?
+  suggestedRiskTopic    String?
   // The inbound message a holding message already answered (its sentAt).
   // Written BEFORE the send as the claim, so two ticks racing on the same
   // lead cannot both send, and compared against the newest inbound so a
   // customer who writes again later can be covered again, once.
-  holdingSentFor      DateTime?
+  holdingSentFor        DateTime?
   // WHAT the cached draft above was written as, when FollowUp wrote it on
   // purpose for something other than a plain reply: "reminder_1" to
   // "reminder_4" (the quiet-lead cadence, src/lib/automation.ts),
@@ -868,7 +872,7 @@ model Lead {
   // different reminders (founder's follow-up strategy, 2026-09-25): a lead
   // whose step-1 nudge sat unapproved until day 45 has a draft that is
   // perfectly current and exactly the wrong message for a welcome back.
-  suggestedDraftKind  String?
+  suggestedDraftKind    String?
   // Why FollowUp did NOT read this lead or write anything for it — set
   // whenever checkAiEligibility (@/lib/billing) refuses, cleared the
   // moment a score/draft actually lands (src/lib/scoring.ts).
@@ -888,7 +892,7 @@ model Lead {
   // and is worse than the refusal itself
   // (design-brain/brand/brand-principles.md 6: show the reasoning, not
   // just the verdict).
-  aiPausedReason   String?
+  aiPausedReason        String?
   // How this lead writes, decided ONCE from their first inbound message
   // and then held steady — see src/lib/leadLanguage.ts.
   //
@@ -914,22 +918,22 @@ model Lead {
   //           answering in the wrong one reads as a machine.
   // register: "formal" | "informal" | "neutral". Never invented for a
   //           language that has no such distinction — see the parser.
-  language         String?
-  languageScript   String?
-  languageRegister String?
+  language              String?
+  languageScript        String?
+  languageRegister      String?
   // When the three above were decided. Their own "have we looked at
   // this" flag: all three can legitimately be null for a language with
   // no register distinction, so a null `language` cannot be the test.
-  languageSetAt    DateTime?
-  priority         Priority       @default(NONE)
-  lastContacted    DateTime?
-  nextFollowUp     DateTime?
-  notes            String?
-  automationTier   AutomationTier @default(ASSISTED)
-  assignedTo       User?          @relation("AssignedLeads", fields: [assignedToId], references: [id])
-  assignedToId     String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  languageSetAt         DateTime?
+  priority              Priority       @default(NONE)
+  lastContacted         DateTime?
+  nextFollowUp          DateTime?
+  notes                 String?
+  automationTier        AutomationTier @default(ASSISTED)
+  assignedTo            User?          @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  assignedToId          String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   // checkRapidEngagement()'s dedup marker (src/lib/engagement.ts) — set via
   // a conditional updateMany (WHERE null OR older than the window) instead
@@ -1060,10 +1064,10 @@ model Lead {
   // enrolled" — unrelated to automationTier's silence-based cadence above,
   // and the two are mutually exclusive per lead (see sequences.ts) so they
   // never both try to send on the same lead.
-  sequence            Sequence? @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
-  sequenceId          String?
-  sequenceStepIndex   Int       @default(0)
-  sequenceStepDueAt   DateTime?
+  sequence                Sequence?       @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
+  sequenceId              String?
+  sequenceStepIndex       Int             @default(0)
+  sequenceStepDueAt       DateTime?
   // When the CURRENT step was scheduled — enrollment for step 0, the
   // previous step's run for every later one. Stop-on-reply compares the
   // lead's newest inbound against this: only a message that arrived AFTER
@@ -1078,7 +1082,7 @@ model Lead {
   // plan ends by any route (founder, 2026-09-28: a customer is never left
   // switched off just because their plan finished). Null outside a plan,
   // and on rows enrolled before this column: those go back to ASSISTED.
-  tierBeforeSequence  AutomationTier?
+  tierBeforeSequence      AutomationTier?
   // Set once, in runSequencesForBusiness()'s "finished the last step"
   // branch — the only sequence exit path that gets a persisted timestamp.
   // Deliberately NOT set on early unenroll (manual, sequence deleted, or
@@ -1089,7 +1093,7 @@ model Lead {
   // on re-enrollment) so getAnalytics()'s sequence-health metric has a
   // real, honest "completed in the last 30 days" count instead of one
   // that conflates completion with every other kind of exit.
-  sequenceCompletedAt DateTime?
+  sequenceCompletedAt     DateTime?
 
   // TCPA/CTIA consent: set the moment a lead texts STOP (or an equivalent
   // opt-out keyword) on SMS or WhatsApp — see isOptOutMessage() in
@@ -1255,7 +1259,7 @@ model Message {
   // first-reply rule and the 20-hour Meta ceiling never fired for a lead
   // who wrote once and got the ack (audit 2026-09-16, F2). Backfilled by
   // matching FollowUp.message to Message.body per lead.
-  trigger        String?
+  trigger String?
 
   // Set on an INBOUND Instagram/Messenger message that was a tap on one of
   // FollowUp's reply buttons rather than typed: the chip's payload, as
@@ -1313,32 +1317,32 @@ model Deal {
 }
 
 model FollowUp {
-  id          String    @id @default(cuid())
-  lead        Lead      @relation(fields: [leadId], references: [id])
-  leadId      String
-  channel     String // email | call | text | whatsapp | instagram
-  message     String?
-  status      String    @default("pending") // pending | sent | dismissed | snoozed
-  automated   Boolean   @default(false)
-  scheduledAt DateTime?
-  sentAt      DateTime?
+  id             String    @id @default(cuid())
+  lead           Lead      @relation(fields: [leadId], references: [id])
+  leadId         String
+  channel        String // email | call | text | whatsapp | instagram
+  message        String?
+  status         String    @default("pending") // pending | sent | dismissed | snoozed
+  automated      Boolean   @default(false)
+  scheduledAt    DateTime?
+  sentAt         DateTime?
   // Outcome tracking, first-class from day one per the product's own
   // "core data moat" framing (see src/lib/outcomes.ts): set once the lead
   // replies to this specific follow-up. Null means "sent, no reply yet" —
   // distinct from never having sent one at all (sentAt null).
-  repliedAt   DateTime?
+  repliedAt      DateTime?
   // What produced this send — instant_ack | unanswered | silence | sequence
   // | manual. The attribution behind "what FollowUp saved you this week"
   // (src/lib/rescued.ts): a reply to an automated trigger is a rescued
   // conversation; a reply to a manual send is the owner's own work.
-  trigger     String?
+  trigger        String?
   // Did a person change the AI draft before this went out? Compared at
   // send time against Lead.suggestedMessage (whitespace-insensitive).
   // Null when there was no draft to compare against (a send typed from
   // scratch, an instant acknowledgement). The one quality number every
   // comparable AI-drafting product watches (accuracy research 2026-09-13,
   // finding 9); surfaced on /analytics as "Drafts sent as written".
-  draftEdited Boolean?
+  draftEdited    Boolean?
   // The AI draft exactly as it stood when this went out, kept ONLY for a
   // business that opted in to improving FollowUp (Business.allowModelTraining)
   // — null otherwise, whatever draftEdited says. Beside `message` (what was
@@ -1346,7 +1350,7 @@ model FollowUp {
   // drafting instructions: the one thing ten beta testers can teach that
   // no metric can. Read through the de-identification boundary
   // (src/lib/deidentify.ts) before it is shown anywhere.
-  draftText   String?
+  draftText      String?
   // The lead's language at the moment this went out (Lead.language,
   // copied, not joined). Without it the draft-versus-sent pairs above —
   // the most valuable per-language accuracy signal FollowUp will ever
@@ -1358,15 +1362,15 @@ model FollowUp {
   // historical record of what was true when the message was sent. A lead
   // whose language is later corrected must not silently re-file every
   // message they were already sent under the new answer.
-  language    String?
+  language       String?
   // When src/lib/businessFacts.ts read this reply for things to remember
   // (or decided not to: the owner unticked "Use ... next time"). Null
   // means not read yet; the learning job picks those up.
   factsCheckedAt DateTime?
   // What the owner typed into the price blank before sending, so the
   // learning job knows that figure is theirs and what it answered.
-  ownerFilled String?
-  createdAt   DateTime  @default(now())
+  ownerFilled    String?
+  createdAt      DateTime  @default(now())
 
   @@index([leadId])
   @@index([trigger, sentAt])
@@ -1383,7 +1387,6 @@ model FollowUp {
  * One automated outbound message that a provider refused for a reason that
  * resolves on its own — a Twilio 500, a Gmail rate limit, a socket that hung
  * up — held so it can be tried again instead of being lost.
- *
  * Why this is not a FollowUp row with status "queued"
  * --------------------------------------------------
  * FollowUp is the record of what WAS sent. It is read by the weekly report,
@@ -1396,13 +1399,11 @@ model FollowUp {
  * needs (subject, thread id, in-reply-to, audit meta) and none of the queue
  * mechanics (attempt count, backoff, lock), so it would have to grow them
  * anyway, on the one table the reporting layer depends on.
- *
  * The cost of the separate table is that two rows now describe one send: this
  * one until it lands, a FollowUp once it does. That is the trade accepted —
  * the queue stays entirely out of the way of every existing query, and
  * "delivered" remains a single unambiguous fact rather than a status filter
  * every caller has to remember.
- *
  * Never sent twice: a worker takes a row with the same atomic conditional
  * updateMany the rest of this codebase claims with (see
  * Lead.reactivationSentAt, Lead.lastAutomationCheckedAt) — WHERE status =
@@ -1940,7 +1941,7 @@ model InboundWebhookEvent {
   // sms | whatsapp | instagram_or_messenger | webhook_lead | embed_form —
   // which capture path replay should hand it back to. A string, not an
   // enum, so a new channel needs no type migration.
-  channel String
+  channel  String
 
   // The provider's own id for this delivery when it has one (a Twilio
   // MessageSid). Meta envelopes carry per-event ids inside the payload
@@ -1960,7 +1961,7 @@ model InboundWebhookEvent {
   // The failure that stopped processing, truncated. Recorded rather than
   // swallowed: several of these routes used to catch-and-continue, which
   // left no trace anywhere that a lead had been dropped.
-  error String?
+  error       String?
 
   // The replay query: everything not yet processed, oldest first.
   @@index([status, receivedAt])

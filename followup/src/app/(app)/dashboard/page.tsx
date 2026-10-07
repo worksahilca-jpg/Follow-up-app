@@ -28,6 +28,8 @@ import { Eyebrow, Initials } from "@/components/app/canvasBits";
 import FirstValueNote from "@/components/FirstValueNote";
 import { FIRST_VALUE_SEND, firstValueNote } from "@/lib/firstValue";
 import HabitQuestion from "@/components/HabitQuestion";
+import DailyQuestion from "@/components/DailyQuestion";
+import { todaysQuestion } from "@/lib/dailyQuestionData";
 import { findHabitSuggestion } from "@/lib/habits";
 
 // "last checked 2 minutes ago" — deliberately coarse (minutes/hours/days,
@@ -163,6 +165,9 @@ export default async function DashboardPage() {
   const isAdmin = me?.role === "ADMIN";
   // "FollowUp learns what you do" (A-099): asked of an admin only, once.
   const habitSuggestion = ctx && isAdmin && leads.length > 0 ? await findHabitSuggestion(ctx.businessId, now) : null;
+  // One question a day (A-101): only when nobody is waiting on the owner and
+  // nothing else is being asked, so it never stands in front of real work.
+  const dailyQuestion = ctx && isAdmin && approvalItems.length === 0 && !habitSuggestion ? await todaysQuestion(ctx.businessId, now) : null;
   const sendingPaused = Boolean(business?.sendingPausedAt);
   const sendLocked = Boolean(business?.onlyAdminsSend) && !isAdmin;
   const cantSend = !anySendChannel;
@@ -282,6 +287,7 @@ export default async function DashboardPage() {
       )}
 
       {isAdmin && <HabitQuestion suggestion={habitSuggestion} />}
+      {isAdmin && <DailyQuestion question={dailyQuestion} />}
 
       {nextCall && (
         <p className="mt-6 text-sm text-ink-soft">

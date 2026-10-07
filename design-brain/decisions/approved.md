@@ -1847,3 +1847,21 @@ the business… asking questions about the business, and FollowUp will learn fro
   FollowUp doesn't know your answer yet, and never guesses. Add it, then send."* Once filled: the ticked
   *"Use this next time someone asks about parking"*, the same pattern as the price blank (A-096). Never for
   availability, dates or anything about one customer.
+
+## A-101 — One question a day on Today, after FollowUp has shown it is useful ^A-101
+
+**Approved 2026-10-07**, founder: *"yes build it"* to three phone drawings, after the first tester found the
+questions right after setup annoying (R-027) and the founder asked for it *"after an hour, or whenever we need…
+easy for them so that they don't find it boring or irritating"*.
+- **Setup goes straight to Today.** No questions before the owner has seen FollowUp work.
+- **One small card at the end of Today:** *"One quick question"*, the question as a heading, one line of why, a box
+  with a realistic example, a black **Save**, a quiet **Not now**. After Save: *"Saved. FollowUp will use your
+  words when a customer asks."* and *"See what FollowUp knows"*.
+- **When:** never in the first hour after setup, at most one a day (an answer or a Not now waits ~20 hours), only
+  when nobody is waiting on the owner and no other question (A-099) is being asked. Admin only.
+- **Which:** *"In a few words, what does your business do?"* first for everyone (it fits any trade, and the lead
+  check reads it), then the trade's questions (A-100), minus what is known. **Not now** sets that question aside
+  for good: it comes back only as an answer blank, when a real customer asks it.
+- **Honest psychology only:** value first, a tiny ask, the right moment, an easy way out. No streaks, counts,
+  guilt or urgency.
+- The one-screen-at-a-time question step (/teach) stays, reachable only from Settings → What FollowUp knows.

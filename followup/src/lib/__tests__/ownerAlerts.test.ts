@@ -134,7 +134,7 @@ vi.mock("@/lib/webPush", () => ({
   sendPushToUser: h.sendPushToUser,
 }));
 
-import { runOwnerAlerts, judgeWait, quote, ALERT_QUOTE_LIMIT, ALERT_RECENT_MS, BACKFILL_SLACK_MS, DAILY_EMAIL_CAP } from "@/lib/ownerAlerts";
+import { runOwnerAlerts, judgeWait, quote, ALERT_QUOTE_LIMIT, ALERT_RECENT_MS, BACKFILL_SLACK_MS, DAILY_EMAIL_CAP, inQuietHours, newsSince } from "@/lib/ownerAlerts";
 import { __resetAlertEmailLogForTests } from "@/lib/alertEmail";
 
 const NOW = new Date("2026-09-25T15:00:00Z");
@@ -475,5 +475,42 @@ describe("what the owner reads", () => {
     const q = quote("line one\n\nline two ".repeat(40));
     expect(q.length).toBeLessThanOrEqual(ALERT_QUOTE_LIMIT);
     expect(q).not.toContain("\n");
+  });
+});
+
+// Research round 2 (2026-10-07): no alerts between 10 pm and 7 am in the
+// business's own time; a customer who wrote in the night is told at 7.
+describe("quiet hours", () => {
+  const TZ = "America/Toronto";
+
+  it("is night from 10 pm to 7 am where the business is, and never for an unknown timezone", () => {
+    expect(inQuietHours(new Date("2026-09-26T03:30:00Z"), TZ)).toBe(true); // 11:30 pm
+    expect(inQuietHours(new Date("2026-09-26T10:59:00Z"), TZ)).toBe(true); // 6:59 am
+    expect(inQuietHours(new Date("2026-09-26T11:00:00Z"), TZ)).toBe(false); // 7:00 am
+    expect(inQuietHours(new Date("2026-09-26T01:59:00Z"), TZ)).toBe(false); // 9:59 pm
+    expect(inQuietHours(new Date("2026-09-26T03:30:00Z"), "Not/AZone")).toBe(false);
+  });
+
+  it("sends nothing at night, and claims nothing, so the morning still has them", async () => {
+    addCustomer(1);
+    const night = new Date("2026-09-25T06:00:00Z"); // 2 am in New York, the default
+    const r = await runOwnerAlerts(night);
+    expect(r.customers).toBe(0);
+    expect(emails()).toHaveLength(0);
+    expect(h.sendPushToUser).not.toHaveBeenCalled();
+    expect(h.rows).toHaveLength(0);
+  });
+
+  it("at 7 am, a customer who wrote at 11 pm is still news, though it is eight hours old", () => {
+    const morning = new Date("2026-09-26T11:05:00Z"); // 7:05 am Toronto
+    const wrote = new Date("2026-09-26T03:00:00Z"); // 11 pm the night before
+    const w = { heldAt: wrote, latestInboundAt: wrote, lastReplyAt: null, leadCreatedAt: new Date("2026-09-20T00:00:00Z"), draftedFor: wrote };
+    expect(judgeWait(w, morning).waiting).toBe(false); // the usual six hours would drop it
+    expect(judgeWait(w, morning, newsSince(morning, TZ))).toEqual({ waiting: true });
+  });
+
+  it("by the afternoon, the window is the usual six hours again", () => {
+    const afternoon = new Date("2026-09-26T19:00:00Z"); // 3 pm Toronto
+    expect(newsSince(afternoon, TZ).getTime()).toBe(afternoon.getTime() - ALERT_RECENT_MS);
   });
 });

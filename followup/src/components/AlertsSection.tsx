@@ -268,6 +268,10 @@ export default function AlertsSection() {
             )}
           </div>
         )}
+        {/* Quiet hours (src/lib/ownerAlerts.ts): said where the owner sets alerts, so silence at night is never a surprise. */}
+        <p className="mt-4 border-t border-line pt-4 text-[13px] text-ink-soft">
+          No alerts between 10 pm and 7 am. Anyone who writes at night is in your first alert of the morning.
+        </p>
       </div>
     </section>
   );

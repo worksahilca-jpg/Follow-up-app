@@ -19,6 +19,7 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE, RESULT_HOLD_MS } from "@/lib/motion";
 import { fillPriceSlot, hasPriceSlot, slotOf, splitAtPriceSlot } from "@/lib/priceSlot";
 import { RememberPrice } from "@/components/app/RememberPrice";
+import { dropKeptEdit, keepEdit, readKeptEdit } from "@/lib/keptEdit";
 
 /** How far a phone row must be pulled left before letting go sets it aside (A-095). */
 const SWIPE_FOR_LATER_PX = 96;
@@ -185,6 +186,25 @@ function ApprovalCard({
   const [remember, setRemember] = useState(true);
   const priceMissing = needsPrice && !price.trim();
   const message = needsPrice ? fillPriceSlot(text, price.trim()) : text;
+  // A half-written reply is never lost (src/lib/keptEdit.ts): back after a
+  // refresh, a trip to another screen, or the phone dropping the tab.
+  // Restored after mount, because the server render cannot read the tab's storage.
+  const restored = useRef(false);
+  useEffect(() => {
+    const kept = readKeptEdit(item.leadId, item.draftMessage);
+    restored.current = true;
+    if (!kept) return;
+    // Browser-only state, read once after mount (the same exception as Settings' open page).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setText(kept.text);
+    setPrice(kept.price);
+    setMine(kept.mine);
+    setEdited(kept.text !== item.draftMessage);
+    if (kept.text !== item.draftMessage && !hasPriceSlot(kept.text)) setEditing(true);
+  }, [item.leadId, item.draftMessage]);
+  useEffect(() => {
+    if (restored.current) keepEdit(item.leadId, item.draftMessage, { text, mine, price });
+  }, [item.leadId, item.draftMessage, text, mine, price]);
   const plainReason = plainHoldReason(item.reason, { firstName, topic: item.riskTopic });
   // "We talked" (design brain A-039): the card stays for a few seconds
   // saying what happened, with Undo, then leaves the queue.
@@ -228,6 +248,7 @@ function ApprovalCard({
         setError(typeof data.message === "string" ? data.message : "Send failed.");
         return;
       }
+      dropKeptEdit(item.leadId);
       onResolved(item.leadId, `Sent to ${firstName}.`, true);
     },
     onNetworkError: () => setError("Couldn't reach FollowUp. Check your connection and try again."),
@@ -288,6 +309,7 @@ function ApprovalCard({
       const res = await fetch(`/api/leads/${item.leadId}/dismiss-hold`, { method: "POST" });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message ?? "Couldn't dismiss it.");
+      dropKeptEdit(item.leadId);
       onResolved(item.leadId, `Won't send to ${firstName}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't dismiss it.");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MOTION, OPEN_IN_PLACE } from "@/lib/motion";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { RememberPrice } from "@/components/app/RememberPrice";
 import { Eyebrow } from "./canvasBits";
 import { useUndoableSend } from "@/components/useUndoableSend";
 import UndoLine from "@/components/UndoLine";
+import { dropKeptEdit, keepEdit, readKeptEdit } from "@/lib/keptEdit";
 
 /**
  * The reply, as drawn on the canvas thread boards (Inbox, InboxAI,
@@ -89,6 +90,25 @@ export default function ReplyCard({
   const message = needsPrice ? fillPriceSlot(text, price.trim()) : text;
   const canSend = message.trim().length > 0 && !(needsPrice && !price.trim());
 
+  // A half-written reply is never lost (src/lib/keptEdit.ts); the same edit
+  // follows the owner between Today and this page in the same tab.
+  const restored = useRef(false);
+  useEffect(() => {
+    const kept = draft ? readKeptEdit(leadId, draft) : null;
+    restored.current = true;
+    if (!kept) return;
+    // Browser-only state, read once after mount (the same exception as Settings' open page).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setText(kept.text);
+    setPrice(kept.price);
+    setMine(kept.mine);
+    setEdited(kept.text !== draft);
+    if (kept.text !== draft && !hasPriceSlot(kept.text)) setEditing(true);
+  }, [leadId, draft]);
+  useEffect(() => {
+    if (restored.current && draft) keepEdit(leadId, draft, { text, mine, price });
+  }, [leadId, draft, text, mine, price]);
+
   const undoable = useUndoableSend({
     url: `/api/leads/${leadId}/send`,
     body: JSON.stringify({
@@ -103,6 +123,7 @@ export default function ReplyCard({
         setError(typeof data.message === "string" ? data.message : "Couldn't send. Try again.");
         return;
       }
+      dropKeptEdit(leadId);
       setDone({ kind: "sent", template: typeof data.sentTemplate === "string" ? data.sentTemplate : null });
       router.refresh();
     },
@@ -122,6 +143,7 @@ export default function ReplyCard({
       const res = await fetch(`/api/leads/${leadId}/dismiss-hold`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.success === false) throw new Error(typeof data.message === "string" ? data.message : "Couldn't do that. Try again.");
+      dropKeptEdit(leadId);
       setDone({ kind: "skipped" });
       router.refresh();
     } catch (err) {

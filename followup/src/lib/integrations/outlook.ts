@@ -33,6 +33,7 @@ import { classifyWithSecondLook } from "@/lib/integrations/openai";
 import { getBusinessAbout } from "@/lib/businessFacts";
 import { OWNER_SAID_NOT_CUSTOMER, ownerSaidNotCustomer, recentCorrections } from "@/lib/senderVerdicts";
 import { isAutomatedAddress, threadCustomer } from "@/lib/sharedSenders";
+import { isBulkMail, isNewsletterThread, NEWSLETTER_REASON } from "@/lib/bulkMail";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { pickAssignee } from "@/lib/assignment";
 import { notifyLeadEvent } from "@/lib/outboundWebhook";
@@ -370,6 +371,9 @@ type GraphMessage = {
   receivedDateTime?: string;
   sentDateTime?: string;
   isDraft?: boolean;
+  // Only when asked for in $select (conversationMessagesPath): read for the
+  // bulk-mail marks that tell a newsletter from a person (src/lib/bulkMail.ts).
+  internetMessageHeaders?: { name?: string; value?: string }[];
 };
 
 function stripHtml(html: string): string {
@@ -497,7 +501,7 @@ function graphMessageTime(m: GraphMessage): number {
  */
 export function conversationMessagesPath(conversationId: string): string {
   const filter = encodeURIComponent(`conversationId eq '${conversationId.replace(/'/g, "''")}'`);
-  return `/me/messages?$filter=${filter}&$select=id,conversationId,subject,bodyPreview,body,from,replyTo,toRecipients,receivedDateTime,sentDateTime,isDraft&$top=50`;
+  return `/me/messages?$filter=${filter}&$select=id,conversationId,subject,bodyPreview,body,from,replyTo,toRecipients,receivedDateTime,sentDateTime,isDraft,internetMessageHeaders&$top=50`;
 }
 
 export type OutlookSyncOptions = {
@@ -584,6 +588,7 @@ async function processConversations(
         body: messageText(m),
         sentAt,
         subject: m.subject,
+        bulk: isBulkMail(m.internetMessageHeaders),
       };
     });
 
@@ -609,6 +614,26 @@ async function processConversations(
     const alreadyKnown = !!known;
 
     const newestMessageAt = parsedMessages[parsedMessages.length - 1].sentAt;
+
+    // A newsletter is set aside before anything else, known sender or not,
+    // as in gmail.ts (src/lib/bulkMail.ts).
+    if (!alreadyKnown && !options.skipClassification && isNewsletterThread(parsedMessages, counterpart)) {
+      await prisma.filteredEmail.upsert({
+        where: { businessId_threadId: { businessId, threadId: conversationId } },
+        update: { reason: NEWSLETTER_REASON, lastMessageAt: newestMessageAt },
+        create: {
+          businessId,
+          threadId: conversationId,
+          provider: "outlook",
+          senderName: counterpart.name,
+          senderEmail: counterpart.email,
+          subject: parsedMessages[0]?.subject ?? null,
+          reason: NEWSLETTER_REASON,
+          lastMessageAt: newestMessageAt,
+        },
+      });
+      return null;
+    }
 
     // A known customer starting a NEW thread is still a known customer.
     // The check above is per thread, so without this their second thread

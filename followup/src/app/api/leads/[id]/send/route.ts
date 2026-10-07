@@ -22,6 +22,9 @@ const sendSchema = z.object({
   // false when the owner unticked "Use <price> next time" (A-096): this
   // reply is not learned from (src/lib/businessFacts.ts).
   learnFacts: z.boolean().optional(),
+  // "text" for the message a "No answer" wrote (A-103): it goes as a text
+  // even when the customer has an email, which is otherwise the default.
+  channel: z.enum(["text"]).optional(),
 });
 
 // POST /api/leads/[id]/send — the one place a real email actually goes out.
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const parsed = await parseJsonBody(request, sendSchema);
   if (!parsed.ok) return parsed.response;
-  const { message, subject, seenInboundAt, learnFacts } = parsed.data;
+  const { message, subject, seenInboundAt, learnFacts, channel } = parsed.data;
 
   // The lead wrote again after the owner last looked (daily-path audit
   // 2026-09-25 F7). The words being sent answer a conversation that has
@@ -77,7 +80,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // human-agent allowance: this route is the one place a signed-in person
   // has the whole message in front of them and tapped Send for it. The
   // acting user is recorded beside the tag below (api-facts §B5).
-  const result = await sendFollowUpToLead(id, message, { trigger: "manual", subject, humanSend: { userId: ctx.userId }, learnFacts });
+  const result = await sendFollowUpToLead(id, message, { trigger: "manual", subject: channel === "text" ? undefined : subject, humanSend: { userId: ctx.userId }, learnFacts, ...(channel ? { channel } : {}) });
   if (result.success) {
     void recordAudit(ctx, "lead.send", {
       targetType: "lead",

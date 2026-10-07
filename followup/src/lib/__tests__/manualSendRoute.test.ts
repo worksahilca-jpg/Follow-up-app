@@ -138,3 +138,25 @@ describe("only admins send", () => {
     expect(sendFollowUpToLead).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("the text a “No answer” wrote (A-103)", () => {
+  it("goes as a text when the card asks for one, with no subject", async () => {
+    await post({ message: "Hi Priya, it's Sam. I just tried to call you. When's a good time to talk?", subject: "ignored", channel: "text" });
+    const options = (sendFollowUpToLead.mock.calls[0] as unknown as [string, string, Record<string, unknown>])[2];
+    expect(options.channel).toBe("text");
+    expect(options.subject).toBeUndefined();
+    expect(options.humanSend).toEqual({ userId: "user1" });
+  });
+
+  it("refuses any other channel override", async () => {
+    const res = await post({ message: "Hi", channel: "instagram" });
+    expect(res.status).toBe(400);
+    expect(sendFollowUpToLead).not.toHaveBeenCalled();
+  });
+
+  it("keeps the email-first default when no channel is asked for", async () => {
+    await post({ message: "Hi" });
+    const options = (sendFollowUpToLead.mock.calls[0] as unknown as [string, string, Record<string, unknown>])[2];
+    expect(options.channel).toBeUndefined();
+  });
+});

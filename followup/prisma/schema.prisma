@@ -28,6 +28,7 @@ model User {
   notifications           Notification[]
   savedFilters            SavedFilter[]
   stoppedReactivationRuns ReactivationRun[] @relation("StoppedReactivationRuns")
+  callAttempts            CallAttempt[]
 
   // "Email me when a customer is waiting" (Settings → Alerts). On by
   // default because the whole point is reaching an owner who is NOT in the
@@ -171,6 +172,7 @@ model Business {
   suppressions     Suppression[]
   outboundSends    OutboundSend[]
   bookings         Booking[]
+  callAttempts     CallAttempt[]
   sequences        Sequence[]
   sourceRules      SourceRule[]
   invites          Invite[]
@@ -430,6 +432,13 @@ model Business {
   // sends through (POST /api/leads/[id]/send) refuses them. Off by
   // default: a team that never asked for it sees no change.
   onlyAdminsSend Boolean @default(false)
+
+  // "Your team calls customers" (A-103, the realtor team pilot, founder
+  // 2026-10-07). When true: a Call box with No answer / Already spoke on
+  // each customer with a phone number, the calls to make on Today, and
+  // "This week" on the Team page. Off by default, so a business that
+  // never asked for it sees no change.
+  teamCalls Boolean @default(false)
 
   // When Meta last confirmed this app is subscribed to the account's
   // `messages` webhook. Null on a connected account means the
@@ -995,6 +1004,11 @@ model Lead {
   // ever texted. See src/lib/hiddenCaller.ts.
   hiddenCallSid String? @unique
 
+  // When this customer should be called again after "No answer" (A-103,
+  // src/lib/calls.ts). Null when no call is planned. Only read while the
+  // business has teamCalls on.
+  nextCallAt DateTime?
+
   // The lead site that passed this customer on (Thumbtack, HomeStars,
   // Kijiji…) when it keeps their contact private, so the only way to answer
   // is on that site (backlog b018, design brain A-075). Set when the lead is
@@ -1174,6 +1188,7 @@ model Lead {
   tasks         Task[]
   insights      AIInsight[]
   bookings      Booking[]
+  callAttempts  CallAttempt[]
   outboundSends OutboundSend[]
   sendClaims    SendClaim[]
 
@@ -1506,6 +1521,26 @@ model Booking {
   // outright. The lead's own detail page lists its bookings by leadId.
   @@unique([businessId, scheduledAt])
   @@index([leadId])
+}
+
+// One phone call a person made to a customer and what happened (A-103, the
+// realtor team pilot): "no_answer" from the No answer button, "spoke" from
+// Already spoke. Counted per person on the Team page's "This week". Undo
+// deletes the row, so the count is always what stands. FollowUp cannot see
+// calls; these are only the ones someone tapped for.
+model CallAttempt {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId     String
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId     String?
+  outcome    String // "no_answer" | "spoke"
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, createdAt])
+  @@index([leadId, createdAt])
 }
 
 // A multi-step automated follow-up workflow, built visually in

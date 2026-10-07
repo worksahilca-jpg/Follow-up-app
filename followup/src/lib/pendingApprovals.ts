@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getHabits, habitOn, thanksIsNewest, weekendWaitUntil } from "@/lib/habits";
 import { recordAudit } from "@/lib/audit";
 import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
+import { NO_ANSWER_TEXT } from "@/lib/callPlan";
 
 /**
  * The approval queue — research/product/2026-09-10-ux-simplification.md
@@ -159,6 +160,12 @@ export type PendingApproval = {
    * A-075). Null for everyone else.
    */
   site?: SiteReply | null;
+  /**
+   * The number this reply goes to as a text, when it is the one "No answer"
+   * wrote (A-103): the card says "Text to …" and Send asks for a text, not
+   * the email-first default. Null for every other reply.
+   */
+  textTo?: string | null;
 };
 
 /**
@@ -227,6 +234,8 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       suggestedMessage: true,
       suggestedRiskLevel: true,
       suggestedRiskTopic: true,
+      suggestedDraftKind: true,
+      phone: true,
       saidNoAt: true,
       askedIfPersonAt: true,
       thanksOnlyAt: true,
@@ -369,6 +378,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       askedIfPerson: lead.askedIfPersonAt != null,
       customerToldAt,
       site: siteReplyFrom(lead, lastInbound?.body),
+      ...(lead.suggestedDraftKind === NO_ANSWER_TEXT ? { textTo: lead.phone } : {}),
     });
   }
   /*

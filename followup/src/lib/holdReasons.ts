@@ -117,6 +117,13 @@ export const IN_CRM_REASON =
  * person (Lead.askedIfPersonAt, situations audit 2026-10-06). The draft can
  * only promise that someone will come back to them, so a person has to.
  */
+/**
+ * "No answer" on a call (A-103, the realtor team pilot): FollowUp wrote one
+ * short message asking for a good time to talk. During the trial it always
+ * waits for a person to send it (founder, 2026-10-07).
+ */
+export const NO_ANSWER_REASON = "nobody picked up the call, so this asks for a good time to talk";
+
 export const ASKED_IF_PERSON_REASON = "they asked whether they're talking to a real person, so this one is for you to answer";
 
 /**
@@ -236,6 +243,7 @@ const PLAIN_BY_REASON: Record<string, (first: string) => string> = {
   [FOUND_IN_SPAM_REASON]: () => "This came from your spam folder. Make sure it's a real customer.",
   [IN_CRM_REASON]: () => "They're also in your CRM, which may send its own follow-up.",
   [RISK_CHECK_FAILED_REASON]: () => "FollowUp couldn't check this one, so it's waiting to be safe.",
+  [NO_ANSWER_REASON]: (first) => `No answer when you called. This asks ${first} for a good time to talk.`,
   [ASKED_IF_PERSON_REASON]: (first) => `${first} asked if they're talking to a real person. Answer this one yourself.`,
   "this conversation was already in your inbox before FollowUp started watching it, so it hasn't seen what you may have already done about it":
     () => "This was in your inbox before FollowUp started. Check you haven't already answered.",

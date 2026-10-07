@@ -49,6 +49,7 @@ export default function ReplyCard({
   basis,
   languageName,
   dense = false,
+  textTo = null,
 }: {
   leadId: string;
   leadName: string;
@@ -64,10 +65,12 @@ export default function ReplyCard({
   languageName?: string | null;
   /** On desktop, the Inbox board's smaller card (15px reply, 38px buttons). The phone keeps its 52px ones. */
   dense?: boolean;
+  /** The number this reply goes to as a text: the one a "No answer" wrote (A-103). */
+  textTo?: string | null;
 }) {
   const router = useRouter();
   const first = leadName.split(" ")[0] ?? leadName;
-  const isEmail = Boolean(leadEmail);
+  const isEmail = Boolean(leadEmail) && !textTo;
   const [editing, setEditing] = useState(!draft);
   const [text, setText] = useState(draft);
   const [subject, setSubject] = useState(draftSubject ?? "");
@@ -112,6 +115,7 @@ export default function ReplyCard({
     body: JSON.stringify({
       message,
       ...(isEmail && subject.trim() ? { subject: subject.trim() } : {}),
+      ...(textTo ? { channel: "text" } : {}),
       ...(needsPrice ? { learnFacts: remember } : {}),
       ...(seenInboundAt ? { seenInboundAt } : {}),
     }),
@@ -230,6 +234,7 @@ export default function ReplyCard({
   return (
     <div className={"relative overflow-hidden rounded-[20px] p-5" + (dense ? " lg:rounded-[16px] lg:px-5 lg:py-[18px]" : "")} style={WARM_CARD}>
       <Eyebrow>{label}</Eyebrow>
+      {textTo && <p className="mt-1.5 text-[13px] text-ink-soft">Text to {textTo}</p>}
 
       <AnimatePresence initial={false} mode="wait">
       {editing ? (

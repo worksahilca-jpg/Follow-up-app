@@ -10026,3 +10026,16 @@ reasoned, subtle effects look like a person's choices. **Built:** demo (New York
 street moving past) and a soft paper-coloured blend fading in from its top edge (soft-light); 7× card (Paris)
 tilt-shift, a calmer band across the middle; "1 minute" tag (Rome) a gentle zoom blur, i.e. speed; close (Bavaria)
 ribbed glass, like a shop window. All still green-toned and grainy (A-122). Made with Pillow (`gen/blurs.py`).
+
+## 2026-10-08 — Home v25: the whole process in the demo; sources; letter out; light motion blur only
+
+From comments: *"we are just going back and forth… answered, answered. Can we show the whole process anyway? Can we
+flip it, and we also have to show that we are collecting it from everywhere?"*, then *"dont stress we can tell them
+everything in that demo we will add it down too"*, R-053, R-054.
+**Built (prototype only):** a "From" strip at the top of the demo (Gmail, Outlook, Instagram, Messenger, WhatsApp, text,
+website form, Facebook ad form; all real channels in the app; plain line icons), the source lighting up as each message
+arrives; examples now come through those channels. After each example's reply, the card flips (3D, a quarter turn and
+back) to "What happened next · Name" and plays 3–4 steps: day-3 follow-up, they replied, booked, won; or a polite no and
+"Stopped, no more reminders". The right column is now "Handled" and shows outcomes (Won · $85, Booked, Stopped).
+Headline after the demo: "Reply faster. Follow up with everyone. *Close more deals.*" Letter removed. One light
+motion blur on every photo.

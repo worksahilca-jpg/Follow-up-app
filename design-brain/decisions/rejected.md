@@ -917,3 +917,15 @@ execution (a white list catching chips) did not match what he pictured.
 different pages, and it is not attached. Do something that feels connected… After getting the eyes on the opening
 page, we should directly hop into the Try It Yourself one."* The cause was the slide-over: screen one pinned while
 the demo block slid over it, plus a gap screen in between. Supersedes the "two screens" part of A-112.
+
+## R-053 — The letter idea anywhere on the page ^R-053
+
+**Rejected:** 2026-10-08, founder: *"keep that letter thing out. We just need to show them that reducing the reply time
+and following up with everyone can save their potential clients and help them to close more deals."* Removed in v25.
+Supersedes A-117 entirely. **Principle (his words):** the page argues one thing: faster replies plus following up with
+everyone keep leads and close deals.
+
+## R-054 — Several blur styles (tilt-shift, zoom, ribbed glass) ^R-054
+
+**Rejected:** 2026-10-08, founder, on v24: *"don't use all these blurs. Just use motion blur… A little bit, not that
+much."* Rule: one light motion blur on the photos.

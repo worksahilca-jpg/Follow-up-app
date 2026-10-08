@@ -437,3 +437,11 @@ Wispr Flow, Macro, Linear, Superhuman analysed from the existing screenshots, th
 company published about its design. Eight shared lessons; FollowUp misses one section template, a distinct headline
 face, rhythm and a menu that stays. File: `landing-page/2026-10-08-four-favourites-teardown.md`. Part 2 waits for
 full-page captures and motion GIFs from the founder's Chrome.
+
+## 2026-10-08 — Macro, part 2 (the whole page)
+The founder's Chrome captured all 12 screens of macro.com with measurements and four GIFs (Google Doc "FollowUp
+teardown – macro.com"). Key findings: the pitch is told by a scroll-driven morph (many apps → one) that freezes when
+you stop; colour appears only around the real product and for status; chapters are short chats between named people
+with one live demo each (a sheet you can type in; Pause/Replay on the self-playing one); the header button grows into
+the closing button and there is no footer. Six lessons and the not-to-copy list are in
+`landing-page/2026-10-08-four-favourites-teardown.md`. Linear still to capture.

@@ -109,3 +109,42 @@ per capability; a sticky "where you are" bar; outcome bullets; product clips pla
 **Positioning note:** Superhuman Mail's bullets include "Follow up on time, every time" and "Write with AI that
 sounds like you": our promise in their words. FollowUp's page must make the difference plain: it is for an owner's
 customers, it writes and checks in by itself, stops when they reply, and hands the owner the decisions.
+
+## Part 2 — Macro, the whole page (founder's Chrome, 12 screens, measured)
+
+Source: Google Doc "FollowUp teardown – macro.com" (2026-10-08), written by the founder's Claude in Chrome, read-only,
+at 1230 × 868 (the side panel blocked 1440). Grade A for screens 1–4 and the GIFs (watched live); B for screens 5–12,
+which are stills because Chrome hid the tab, so the three self-playing demos were not timed. No phone captures.
+Screenshots stay on the founder's Drive and the private canvas, not in the repo.
+
+**Measured.** Pure black ground; white text and white pill buttons (50% radius); body grey rgb(168,168,168).
+Headlines Roboto Slab Variable at weight 315: 55/62 px statements, 39/49 px chapter titles, 34/41 px captions,
+letter-spacing about −1.4 px. Body Inter 17/31 px, small 14/23 px. Columns 720–920 px; chapters 64 px top and bottom;
+68 px fixed header. Reveals opacity + transform 0.6 s `cubic-bezier(0.22, 1, 0.36, 1)`; hero icons 0.9 s same curve;
+hovers 0.18–0.2 s and nearly invisible. No animation library, no video, no canvas: all HTML and CSS, driven by scroll.
+
+**The page, in order.** Hero (icons fly into orbit, then still) → "Replace 27+ apps with a single system", where the
+outside apps shrink into the logo and Macro's 15 tools fan out, **tied to the scroll wheel** (freezes when you stop,
+replays backwards) → the real app in HTML inside the page's first colour (a soft purple/teal/amber frame), 6 steps with
+arrows, one caption each, never auto-advancing → quiet trust (GitHub stars, open source, investor, three badges, one
+orange star as the only colour) → five chapters on one template (title with hairlines, two grey lines, a short chat
+between named people, then a demo that plays once; one is a real spreadsheet you can type in, marked with a handwritten
+"Try it"; one has Pause/Replay and a narrating status line) → one headline-sized quote → "Macro vs …" blog posts →
+the header's "Open app" pill travels to the centre and grows ~3× into the final button; "Join 170k+ users. Free
+personal account. No credit card required."; **no footer**.
+
+**Lessons for FollowUp.**
+1. Let the motion tell the pitch, and tie it to the scroll so the visitor controls it (ours: unanswered customers
+   become answered as you scroll; it holds when you stop).
+2. Neutral page, colour only where the product is (ours: the wash on FollowUp's reply, as A5 does) and for status.
+3. Chapters as short exchanges between a customer and an owner with first names, labelled as examples (A-073's
+   "An example, not a real customer" rule stays).
+4. Hand over control: Pause/Replay and a status line on any self-playing demo; never auto-loop forever.
+5. A live demo inside the page is the strongest proof (supports A4/A5's "Try it"). Their sheet traps the mouse wheel;
+   ours must not.
+6. One button from top to bottom; the header pill can become the closing button.
+
+**Not to copy.** No footer (Google's OAuth verification needs a visible privacy-policy link on the home page; we keep
+a small footer). Investor and compliance strip (we have neither; the honest "not done yet" list stays). Handwritten
+"Try it" (R-017: no hand-drawn marks). The barely-there glow behind the icons (R-036: no shine). "Macro vs …" pages
+are a marketing decision for the founder.

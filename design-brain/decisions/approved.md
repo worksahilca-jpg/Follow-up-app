@@ -2077,3 +2077,16 @@ old-letter idea is in: postmarks and a "Then and now" section.
 **Approved:** 2026-10-08, founder: *"Just for one part, you can use that theme, and I like that. 'Good letter takes
 weeks. Now one minute is long.' That's a good one."* Keep the "Then and now" section (post → email → FollowUp, each
 with a postmark); the letter look appears nowhere else.
+
+## A-118 — Real photographs are welcome; human touch like Wispr ^A-118
+
+**Approved direction:** 2026-10-08, founder: *"if you want something, you can use real images that have been
+clicked, not AI-generated"* and *"Wispr is using real photos, right? I want this tool to have more of a human touch,
+not AI."*
+**What:** photographs taken by real photographers (licensed stock marked not-AI, or our own photos of real owners
+with permission), used the way Wispr uses people: real faces and hands, softly blurred behind product cards.
+**Source in use:** Adobe Stock free collection through the founder's Adobe connector; every result carries an
+`isGenTech` flag and only `false` (not AI) is used. Seven candidates licensed at no cost (florist at the counter,
+plumber in a kitchen, realtor outdoors, café owner, handyman on a call, pottery-shop owner, florist in a greenhouse);
+kept in the session scratchpad, not the repo, until chosen. He also selected some assets in the Adobe widget on his
+side; the tool does not pass his picks back, so he was asked which.

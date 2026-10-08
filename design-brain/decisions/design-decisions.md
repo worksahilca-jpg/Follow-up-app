@@ -9146,3 +9146,7 @@ Next: the founder's Chrome captures screenshots, motion notes and a design-facts
 (`design-facts.js`, read-only), then principles, then 2–3 drawn directions before any code.
 **Done the same day:** the capture landed (Google Doc "FollowUp design references"); findings and three directions in
 `research/landing-page/2026-10-08-nine-homepages-seen.md`. Waiting for the founder's pick and the surface question.
+**Founder's answer (2026-10-08):** *"both, draw D2 and D3"* and *"have you seen the design that the guys are using? I
+want that taste, though."* So: both surfaces read as dated; draw D2 and D3 for the landing page and the app; the
+target is the *taste* of the studied sites (principles, never their screens). The screenshots had not been seen in
+this session (the Drive reader returns text only), so they were asked for before drawing.

@@ -2150,3 +2150,10 @@ only these; the bar under the demo names them; everything else is explained furt
 line drawings, never the brands' own logos" choice for this strip. Logos come from Simple Icons (CC0 icon data; the
 trademarks stay their owners'); Outlook waits for Microsoft's own file; each brand's logo-use rules to be checked
 before launch.
+
+## A-126 — The v27 demo (side columns, see-through box, five steps, real logos), without any flip ^A-126
+
+**Approved:** 2026-10-08, founder, after v28 removed the side columns: *"Earlier, it was looking good, bro. I was just
+trying to make it simple in terms of not showing them everything; just the flip part was bad, else was good."*
+**Lesson (his words, generalised):** "keep it simple" meant fewer explanations, not fewer parts. Remove the part he names
+(the flip), keep the rest. Restored in v29, with the "Try it yourself" label he asked for in chat.

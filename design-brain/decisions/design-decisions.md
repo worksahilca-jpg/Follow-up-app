@@ -10065,3 +10065,7 @@ labels, and the frosted frame around them. The hint under the box is now just th
 streaming side columns of A-109 (the concept of a live, typed demo stays).
 **Asked again:** whether spam could break it or run up a bill; answered in chat (preview: viewer's own Claude; real
 site: server-side key, per-visitor and daily caps, fallback to fixed replies, plus his OpenAI monthly cap).
+
+## 2026-10-08 — Home v29: v27's demo restored, "Try it yourself" label kept (A-126)
+
+v28's removal of the side columns undone; no flip, flat slides, five-step story, real logos, label above the box.

@@ -679,3 +679,29 @@ light, warm, editorial ground of Wispr Flow (cream, near-black, flat colour bloc
 atmosphere; dark is fine as a near-black block (Wispr), not as a blue sky.
 
 **Do not propose again:** dark blue or navy grounds, night skies, sunrise/dawn gradients.
+
+## R-032 — Following Wispr's page as-is; the giant wordmark footer ^R-032
+
+**Rejected:** 2026-10-08, founder, on the "Around Wispr" Home: *"We don't have to copy as it is, bro. The thing that you
+have copied at the end, like a big FollowUp text, looks odd."*
+
+**What was rejected:** W1's section-by-section mirror of wisprflow.ai (hero device, colour band, pinned comparison,
+pinned three steps, lit list, trust card, FAQ, big closing) and specifically the footer's giant "FollowUp" wordmark.
+
+**Principle (his words, plus inference marked):** take Wispr's best techniques, not its page. *Inferred:* when a
+section exists only because Wispr has one there (the drifting logo band, the giant wordmark), it reads as copied and
+odd for FollowUp; every section must earn its place for our story.
+
+**Do not propose again:** a giant wordmark footer; Wispr's section order as our section order.
+
+## R-033 — W1's hero: a centred headline over two small cards ^R-033
+
+**Rejected:** 2026-10-08, founder: *"our first impression is very boring, very bad. We have to improve the first
+impression."*
+
+**What was rejected:** the "Around Wispr" first screen: label, centred serif headline, one line, one button, and the
+email → "1 min" → reply cards small and low on a plain paper ground.
+
+**Inferred principle (marked inferred):** the first screen needs one big, living moment that fills the screen and
+makes you feel the problem and the relief, not text with a small diagram under it. Scale, depth and motion belong in
+the first screen, inside the guardrails (no dashboard hero R-005/R-009, no person photo R-011, no dark blue R-031).

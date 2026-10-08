@@ -9360,3 +9360,11 @@ your Gmail, in your words, and hands you the decisions."), changing A-081's lede
 (R-030); (6) the structure follows Wispr's closely (hero device, colour band, pinned comparison, pinned three
 steps, lit list, trust card, FAQ, big closing, giant footer logo); the content and the hero device are ours, but the
 rhythm is recognisably Wispr's; (7) other pages not redrawn yet.
+
+## 2026-10-08 — W1 feedback: don't copy Wispr as-is (R-032); the first impression is boring (R-033)
+
+Next: two first-screen options, each one big living moment. **A · "Your pile, cleared":** headline left; on a large
+peach stage, a pile of customer emails; the top one flips over to show your reply on the wash, gets "Sent", slides
+onto the Answered pile, and the next one comes up. **B · "The clock":** one giant customer email with a "Waiting"
+timer ticking in the needs-you orange; FollowUp's reply slides up over it and the timer becomes "Answered in 1 min".
+Desktop and phone for both. The giant footer wordmark is removed from W1.

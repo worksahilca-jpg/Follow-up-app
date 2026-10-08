@@ -9524,3 +9524,21 @@ human phrase, the Gmail-first lede, one button); each composition is its own ide
 All have Pause and labelled examples; reduced motion shows the end. **Weak, honestly:** Night and Receipt carry the
 story best; the Poster's bubbles are small next to the type; the List's yellow is loud for "calm over urgent"; the
 Letter is the quietest of the five. Fonts beyond the current three remain exploration only.
+
+## 2026-10-08 — The first full page, done properly (A-106): https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E
+
+One scrolling page in the browser, not a canvas board (`prototypes/2026-10-08-home-page/followup-home.html`). Built
+from the four teardowns: dark first screen with the headline (A-013/A-104) and the **real Today screen** (sidebar,
+"Needs your OK", Priya's message, the warm reply card "Written by FollowUp · waits for your OK", Send/Edit/Later,
+"Sending to Priya in 7s · Undo", "Sent from your Gmail"; Coming up; What FollowUp knows) playing its story once and
+resting, with Replay (Linear); a statement that lights up word by word as you scroll; a short fade into the app's own
+paper; "How it works" as three steps on the left with a sticky stage on the right that follows the step you read
+(finds your customers, writes in your words, hands you the decisions with the fixed holding line); the check-in thread
+drawing across the week as you scroll; four promises and a working Pause all sending switch; an honest "What's new"
+from real releases (Oct 5 and 7, PRs #447, #449/#450, #458); a dark close where the Connect Gmail button grows as it
+arrives (Macro); a small footer with Privacy. No library: native scroll and IntersectionObserver. Reduced motion shows
+every end state. Phone: the window shows the main column only and each step carries its own picture.
+**Weak, honestly:** the real wow of the references also comes from made media (film, photography, custom
+illustration), which this page still does not have; the dark→light fade is a plain gradient band; the "How it
+works" stage is static cards that crossfade, not one continuous transforming object; Mobbin (for more reference
+sections) needs a paid plan, the founder's decision.

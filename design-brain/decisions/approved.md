@@ -1936,3 +1936,15 @@ stage right" (*"be creative, just use the info not the design"*). Layout A stays
 headline (A-104) large on the left with the line, one pill button and the trust line; a big rounded colour stage on
 the right holding the hero's moving picture; plain paper ground; a simple top bar. Option B (centred, the clock) was
 not chosen.
+
+
+## A-106 — Method: one real page, done properly, with the app's reply screen as the picture ^A-106
+
+**Approved:** 2026-10-08, founder, choosing between three methods after R-039 (*"not even close to those references"*):
+**"One real page, done properly"** over "add made visuals" and "hire a designer".
+**What specifically:** stop making batches of quick canvas options. Build one full home page in the browser that moves
+as you scroll (like the references), and use FollowUp's real reply screen, drawn in high detail, as the page's
+picture, the way Linear and Macro show their app. The option he picked said so in words: *"It means showing the app
+on the page; you said no dashboards before, so this would be the reply screen, not charts."*
+**Amends:** R-005 / R-009 in scope only: stats tiles, charts and dashboards stay out; the reply screen (a customer's
+message and the reply written for you) is now allowed as the hero picture.

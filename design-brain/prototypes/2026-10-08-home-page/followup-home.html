@@ -1,0 +1,477 @@
+<title>FollowUp Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+/* One page that steps into the product: a dark night where a customer writes, the real app lit inside it,
+   then the page turns into the app's own paper for how it works, and closes dark. Deliberately single-look. */
+:root {
+  color-scheme: light;
+  --night: #0a0a0b; --night-2: #151517; --moon: #f4f2ef; --moon-soft: #a8a49e; --moon-faint: #7a7671;
+  --paper: #fdfcfc; --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68; --line: #e9e5e0; --stage: #f2f1ef;
+  --dot: #c96a1b; --good: #2f6b4a;
+  --wash: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), radial-gradient(50% 70% at 88% 0%, rgba(238,212,204,0.9), rgba(238,212,204,0) 72%), #f3efea;
+  --serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --gut: clamp(16px, 4vw, 56px);
+}
+* { box-sizing: border-box }
+html { scroll-behavior: smooth }
+body { margin: 0; background: var(--night); color: var(--moon); font-family: var(--sans); font-weight: 420; font-size: 16px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility }
+a { color: inherit }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: var(--gut) }
+.mono { font-family: var(--mono) }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
+:focus-visible { outline: 2px solid var(--dot); outline-offset: 3px; border-radius: 6px }
+h1, h2, h3 { font-weight: 400; margin: 0; text-wrap: balance }
+em { font-style: italic }
+
+/* nav: words invert over dark and light; the pill reads on both */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; padding-top: env(safe-area-inset-top, 0px) }
+.nav .wrap { height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px }
+.nav .blend { display: flex; align-items: center; gap: 36px; color: #fff; mix-blend-mode: difference }
+.brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 18px; text-decoration: none }
+.nav-links { display: flex; gap: 26px; font-size: 14.5px }
+.nav-links a { text-decoration: none; opacity: .78 }
+.nav-links a:hover { opacity: 1 }
+.nav-right { display: flex; align-items: center; gap: 18px }
+.nav-right .signin { color: #fff; mix-blend-mode: difference; font-size: 14.5px; text-decoration: none }
+.pill { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 0 20px; border-radius: 999px; background: var(--paper); color: var(--ink); font-weight: 600; font-size: 14.5px; text-decoration: none; border: 1px solid rgba(10,10,10,.14); transition: transform .18s var(--ease), background .18s ease }
+.pill:hover { transform: translateY(-1px) }
+.pill.ink { background: var(--ink); color: var(--paper); border-color: var(--ink) }
+
+/* hero */
+.hero { background: var(--night); padding-top: 148px; overflow: hidden }
+.hero .kicker { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--moon-faint) }
+.hero .kicker i { width: 8px; height: 8px; border-radius: 999px; background: var(--dot); display: inline-block }
+.hero h1 { margin-top: 26px; font-family: var(--serif); font-size: clamp(54px, 9vw, 124px); line-height: .9; letter-spacing: -.035em; max-width: 13ch }
+.hero h1 em { color: var(--moon-soft) }
+.hero-row { margin-top: 36px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0, 440px); gap: 40px; align-items: end }
+.hero-note { font-family: var(--mono); font-size: 12.5px; line-height: 1.7; color: var(--moon-faint) }
+.hero-note b { color: var(--moon); font-weight: 500 }
+.hero-lede { margin: 0; font-size: 19px; line-height: 1.55; color: var(--moon-soft) }
+.hero-ctas { margin-top: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px }
+.hero-ctas .pill { min-height: 56px; padding: 0 28px; font-size: 16.5px }
+.hero-ctas .see { font-size: 15px; color: var(--moon-soft); text-decoration: none }
+.hero-ctas .see:hover { color: var(--moon) }
+.app-wrap { margin-top: 72px; transform-origin: 50% 0; will-change: transform }
+.app-caption { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 18px; font-size: 13px; color: var(--moon-faint) }
+.replay { font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--moon-soft); background: none; border: 1px solid #2c2c2f; border-radius: 999px; min-height: 34px; padding: 0 14px; cursor: pointer }
+.replay:hover { color: var(--moon); border-color: #4a4a4e }
+
+/* the app window: FollowUp's real Today screen */
+.app { background: var(--paper); color: var(--ink); border-radius: 20px; overflow: hidden; display: grid; grid-template-columns: 212px minmax(0,1fr) 290px; min-height: 600px; box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 70px 140px -50px rgba(0,0,0,1), 0 30px 60px -40px rgba(0,0,0,.8) }
+.side { background: #f6f4f1; border-right: 1px solid var(--line); padding: 20px 14px; display: flex; flex-direction: column; gap: 4px }
+.side .brand { font-size: 15.5px; padding: 4px 8px 16px }
+.side a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; font-size: 14px; color: var(--ink-soft); text-decoration: none }
+.side a.cur { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 0 0 1px var(--line) }
+.side .count { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 11.5px; display: inline-flex; align-items: center; justify-content: center }
+.side .status { margin-top: auto; display: flex; align-items: center; gap: 8px; padding: 10px; font-size: 12.5px; color: var(--ink-soft) }
+.side .status i { width: 7px; height: 7px; border-radius: 999px; background: var(--good) }
+.main { padding: 28px 32px; min-width: 0 }
+.main-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px }
+.main-head h4 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 38px; letter-spacing: -.02em }
+.main-head .mono { font-size: 11.5px; color: var(--ink-faint) }
+.main .eyebrow { margin-top: 20px }
+.item { margin-top: 10px; background: #fff; border-radius: 18px; padding: 18px 20px; box-shadow: 0 0 0 1px var(--line), 0 24px 48px -30px rgba(10,10,10,.25); transition: opacity .6s var(--ease), transform .6s var(--ease) }
+.item-top { display: flex; align-items: center; gap: 12px }
+.av { width: 34px; height: 34px; border-radius: 999px; background: #efe9e2; display: inline-flex; align-items: center; justify-content: center; font-weight: 650; font-size: 14px; flex: 0 0 auto }
+.item-top .who { font-weight: 650; font-size: 15px }
+.item-top .meta { font-size: 12.5px; color: var(--ink-faint) }
+.item-top .why { margin-left: auto; font-size: 12.5px; color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line) }
+.item .msg { margin: 12px 0 0; font-size: 15.5px; line-height: 1.5 }
+.reply { margin-top: 14px; border-radius: 18px; padding: 16px 18px; background: var(--wash); border: 1px solid rgba(10,10,10,.06); transition: opacity .6s var(--ease), transform .6s var(--ease) }
+.reply .eyebrow { margin: 0; color: #5d564f }
+.rc-subj { margin: 8px 0 0; font-weight: 600; font-size: 14.5px }
+.rc-body { margin: 6px 0 0; font-size: 15.5px; line-height: 1.5; min-height: 1.5em }
+.caret { display: inline-block; width: 2px; height: 1.05em; background: var(--ink); vertical-align: -2px; margin-left: 1px; animation: blink 1s steps(1) infinite }
+@keyframes blink { 50% { opacity: 0 } }
+.rc-btns { margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
+.btn-ink { display: inline-flex; align-items: center; min-height: 34px; padding: 0 16px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 13.5px; font-weight: 600 }
+.btn-line { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(10,10,10,.18); background: rgba(255,255,255,.55); font-size: 13.5px; font-weight: 600 }
+.btn-text { font-size: 13.5px; color: var(--ink-soft); padding: 0 6px }
+.btn-ink.press { animation: press 1s var(--ease) 1 }
+@keyframes press { 0% { box-shadow: 0 0 0 0 rgba(10,10,10,.35) } 60% { box-shadow: 0 0 0 8px rgba(10,10,10,0) } 100% { box-shadow: 0 0 0 0 rgba(10,10,10,0) } }
+.undo { margin-top: 12px; font-size: 13.5px; color: var(--ink-soft) }
+.undo .bar { margin-top: 6px; height: 3px; border-radius: 3px; background: rgba(10,10,10,.1); overflow: hidden }
+.undo .bar i { display: block; height: 100%; width: 100%; background: var(--ink); transform-origin: 0 50% }
+.sent { margin-top: 12px; display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: var(--good) }
+.right { border-left: 1px solid var(--line); padding: 28px 24px; display: flex; flex-direction: column; gap: 22px; background: #fbfaf9 }
+.cu { margin-top: 10px; display: flex; flex-direction: column; gap: 12px }
+.cu div { font-size: 13.5px; line-height: 1.45 }
+.cu .mono { display: block; font-size: 11px; color: var(--ink-faint); margin-bottom: 2px }
+.kn { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px }
+.kn div { display: flex; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line) }
+.kn div span:first-child { color: var(--ink-faint) }
+.small { margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-faint) }
+.is-hidden { opacity: 0; transform: translateY(12px) }
+.gone { display: none }
+
+/* statement */
+.statement { background: var(--night); padding-block: 150px 140px }
+.statement p { margin: 0; max-width: 23em; font-size: clamp(26px, 3.5vw, 46px); line-height: 1.16; letter-spacing: -.02em; font-weight: 400 }
+.statement .w { transition: color .35s ease }
+.statement.scrub .w { color: #3d3b39 }
+.statement.scrub .w.lit { color: var(--moon) }
+.statement .w.soft { font-family: var(--serif); font-style: italic; font-size: 1.08em }
+.ramp { height: 150px; background: linear-gradient(var(--night), var(--paper)) }
+.ramp.up { background: linear-gradient(var(--paper), var(--night)) }
+
+/* light chapters */
+.light { background: var(--paper); color: var(--ink) }
+.chap { padding-block: 40px 140px }
+.chap-head { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,.9fr); gap: 48px; align-items: end }
+.chap-head .eyebrow { margin-bottom: 18px }
+.chap-head h2 { font-family: var(--serif); font-size: clamp(42px, 6vw, 76px); line-height: .96; letter-spacing: -.03em }
+.chap-head p { margin: 0; font-size: clamp(18px, 1.6vw, 21px); line-height: 1.5; color: var(--ink-soft); max-width: 30em }
+.how-grid { margin-top: 40px; display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); gap: 64px }
+.step { min-height: 74vh; display: flex; flex-direction: column; justify-content: center; opacity: .3; transition: opacity .5s var(--ease) }
+.step.on { opacity: 1 }
+.step-n { font-family: var(--mono); font-size: 12px; color: var(--ink-faint) }
+.step h3 { margin-top: 12px; font-family: var(--serif); font-size: clamp(34px, 3.6vw, 48px); line-height: 1; letter-spacing: -.02em }
+.step p { margin: 14px 0 0; font-size: 18px; line-height: 1.55; color: var(--ink-soft); max-width: 27em }
+.panel-inline { display: none }
+.stage { position: sticky; top: 14vh; height: 72vh; min-height: 520px; border-radius: 32px; background: var(--stage); overflow: hidden }
+.stage .panel, .stage-inner { position: absolute; inset: 0; padding: 44px 44px 40px; transition: opacity .55s var(--ease), transform .55s var(--ease) }
+.stage .panel { opacity: 0; transform: translateY(18px); pointer-events: none }
+.stage .panel.on { opacity: 1; transform: none }
+.pcard { position: relative; background: #fff; border-radius: 22px; padding: 22px 24px; box-shadow: 0 0 0 1px var(--line), 0 30px 60px -36px rgba(10,10,10,.35); color: var(--ink) }
+.pcard.float { position: absolute; width: min(330px, 70%) }
+.fl-br { right: 28px; bottom: 30px }
+.pc-head { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-faint); padding-bottom: 10px; border-bottom: 1px solid var(--line) }
+.pc-head .mono { font-size: 11.5px }
+.ib ul { list-style: none; margin: 0; padding: 0 }
+.ib-row { display: grid; grid-template-columns: 92px minmax(0,1fr); grid-template-areas: "who sub" "who tag"; column-gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); color: #b3aea8 }
+.ib-row .ib-who { grid-area: who; font-weight: 600; font-size: 14px }
+.ib-row .ib-sub { grid-area: sub; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.ib-row .ib-tag { grid-area: tag; font-family: var(--mono); font-size: 11px; margin-top: 2px }
+.ib-row.cust { color: var(--ink) }
+.ib-row.cust .ib-tag { color: var(--ink) }
+.big-num { margin: 6px 0 0; font-family: var(--serif); font-size: 40px; line-height: 1 }
+.wash-card { background: var(--wash); box-shadow: 0 0 0 1px rgba(10,10,10,.06), 0 30px 60px -36px rgba(10,10,10,.35) }
+.wash-card .eyebrow { color: #5d564f }
+.knows { display: flex; flex-direction: column; gap: 8px }
+.kn-row { display: grid; grid-template-columns: 74px minmax(0,1fr) auto; gap: 10px; font-size: 13.5px; padding: 7px 0; border-bottom: 1px solid var(--line) }
+.kn-row span:first-child { color: var(--ink-faint) }
+.kn-used { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 11px; color: var(--good) }
+.needs { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 650; color: #9a4f12 }
+.dot { width: 8px; height: 8px; border-radius: 999px; background: var(--dot); display: inline-block }
+.cust-msg { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: #f6f4f1 }
+.cust-msg .mono { font-size: 11px; color: var(--ink-faint) }
+.cust-msg p { margin: 4px 0 0; font-size: 15px }
+.wash-mini { margin-top: 12px; border-radius: 16px; padding: 14px 16px; background: var(--wash) }
+.wash-mini p { margin: 0; font-size: 15px; line-height: 1.55 }
+.blank { display: inline-block; padding: 0 8px; border-radius: 8px; border: 1.5px dashed var(--dot); background: rgba(201,106,27,.06); font-weight: 600 }
+.hold p { margin: 6px 0 0; font-size: 15px; line-height: 1.45 }
+.hold .small { font-size: 12.5px }
+
+/* keeps going: one thread across the week */
+.thread { margin-top: 56px; border-radius: 32px; background: var(--stage); padding: 52px 48px 48px; position: relative }
+.thread .rail { position: absolute; left: 48px; right: 48px; top: 60px; height: 2px; background: #dcd8d2 }
+.thread .rail i { display: block; height: 100%; width: 100%; background: var(--ink); transform-origin: 0 50%; transform: scaleX(var(--p, 1)) }
+.t-cols { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 24px; position: relative }
+.t-col { padding-top: 34px; position: relative }
+.t-col::before { content: ""; position: absolute; top: 2px; left: 0; width: 14px; height: 14px; border-radius: 999px; background: var(--ink); box-shadow: 0 0 0 6px var(--stage) }
+.t-col.quiet::before { background: #c4beb6 }
+.t-col.done::before { background: var(--good) }
+.t-when { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint) }
+.t-what { margin-top: 6px; font-weight: 650; font-size: 16px }
+.t-card { margin-top: 12px; background: #fff; border-radius: 16px; padding: 14px 16px; font-size: 14.5px; line-height: 1.45; box-shadow: 0 0 0 1px var(--line), 0 20px 40px -30px rgba(10,10,10,.35) }
+.t-card.w { background: var(--wash); box-shadow: 0 0 0 1px rgba(10,10,10,.06), 0 20px 40px -30px rgba(10,10,10,.35) }
+.t-quiet { margin-top: 12px; font-size: 14.5px; line-height: 1.45; color: var(--ink-faint) }
+.t-stop { margin-top: 10px; display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; font-weight: 600; color: var(--good) }
+.t-note { margin: 18px 0 0; font-size: 13px; color: var(--ink-faint) }
+
+/* your control */
+.promises { margin-top: 56px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 28px }
+.promise { border-top: 1.5px solid var(--ink); padding-top: 18px }
+.promise h3 { font-family: var(--serif); font-size: 27px; line-height: 1.05; letter-spacing: -.01em }
+.promise p { margin: 10px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--ink-soft) }
+.switch-card { margin-top: 48px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 24px; align-items: center; border-radius: 26px; background: var(--stage); padding: 28px 32px }
+.switch-card h3 { font-size: 19px; font-weight: 650; font-family: var(--sans) }
+.switch-card p { margin: 6px 0 0; font-size: 15.5px; color: var(--ink-soft) }
+.switch-state { display: inline-flex; align-items: center; gap: 8px }
+.sw { position: relative; width: 60px; height: 34px; border-radius: 999px; border: 0; padding: 0; background: #cfcac3; cursor: pointer; transition: background .2s ease; flex: 0 0 auto }
+.sw span { position: absolute; top: 4px; left: 4px; width: 26px; height: 26px; border-radius: 999px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); transition: transform .22s var(--ease) }
+.sw[aria-checked="true"] { background: var(--dot) }
+.sw[aria-checked="true"] span { transform: translateX(26px) }
+.ctl-link { display: inline-block; margin-top: 18px; font-size: 15px; font-weight: 600; text-underline-offset: 4px }
+
+/* what's new */
+.news { margin-top: 48px; position: relative; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 32px; padding-top: 30px }
+.news::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: var(--line) }
+.news article { position: relative }
+.news article::before { content: ""; position: absolute; top: -30px; left: 0; width: 11px; height: 11px; border-radius: 999px; background: #cfcac3; box-shadow: 0 0 0 5px var(--paper) }
+.news article:first-child::before { background: var(--dot) }
+.news time { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; color: var(--ink-faint) }
+.news h3 { margin-top: 8px; font-family: var(--sans); font-size: 18px; font-weight: 650 }
+.news p { margin: 8px 0 0; font-size: 15px; line-height: 1.5; color: var(--ink-soft) }
+.news-foot { margin: 28px 0 0; font-size: 14px; color: var(--ink-faint) }
+
+/* close */
+.close { background: var(--night); padding-block: 170px 0; text-align: center }
+.close h2 { font-family: var(--serif); font-size: clamp(54px, 9.5vw, 140px); line-height: .9; letter-spacing: -.035em; max-width: 11ch; margin: 0 auto }
+.close h2 em { color: var(--moon-soft) }
+.big-cta { margin-top: 56px; display: inline-flex; align-items: center; gap: 18px; min-height: 92px; padding: 0 52px; border-radius: 999px; background: var(--paper); color: var(--ink); font-size: clamp(20px, 2.2vw, 28px); font-weight: 600; text-decoration: none; transform-origin: 50% 50%; will-change: transform; transition: background .2s ease }
+.big-cta:hover { background: #fff }
+.close .sub { margin: 22px 0 0; font-size: 15.5px; color: var(--moon-faint) }
+footer { margin-top: 170px; border-top: 1px solid #222224; padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; font-size: 14px; color: var(--moon-faint); text-align: left }
+footer nav { display: flex; flex-wrap: wrap; gap: 22px }
+footer a { text-decoration: none }
+footer a:hover { color: var(--moon) }
+
+@media (max-width: 1020px) {
+  .app { grid-template-columns: minmax(0,1fr) }
+  .side, .right { display: none }
+  .hero-row, .chap-head { grid-template-columns: minmax(0,1fr) }
+  .how-grid { grid-template-columns: minmax(0,1fr) }
+  .stage { display: none }
+  .step { min-height: 0; opacity: 1; padding-block: 28px }
+  .panel-inline { display: block; position: relative; margin-top: 24px; border-radius: 26px; background: var(--stage) }
+  .panel-inline .stage-inner { position: relative; inset: auto; padding: 24px 20px 28px }
+  .pcard.float { position: relative; right: auto; bottom: auto; width: auto; margin-top: 14px }
+  .t-cols { grid-template-columns: minmax(0,1fr) }
+  .thread .rail { display: none }
+  .promises, .news { grid-template-columns: minmax(0,1fr) }
+  .switch-card { grid-template-columns: minmax(0,1fr) }
+  .nav-links { display: none }
+}
+@media (max-width: 560px) {
+  .main { padding: 20px 18px }
+  .item { padding: 16px }
+  .nav .signin { display: none }
+  .thread { padding: 32px 20px }
+  .big-cta { min-height: 72px; padding: 0 30px }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto }
+  .caret { animation: none }
+  .item, .reply, .stage .panel, .step, .statement .w { transition: none }
+}
+</style>
+
+<header class="nav"><div class="wrap">
+<div class="blend"><a class="brand" href="#top"><svg width="12" height="19" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</a><nav class="nav-links" aria-label="Main"><a href="#how">How it works</a><a href="#control">Your control</a><a href="#new">What's new</a></nav></div>
+<div class="nav-right"><a class="signin" href="#signin">Sign in</a><a class="pill" href="#start">Start free</a></div>
+</div></header>
+
+<main id="top">
+<section class="hero" aria-labelledby="h1"><div class="wrap">
+<div class="kicker"><i></i>For Gmail · free while in beta</div>
+<h1 id="h1">Never lose a lead <em>because you forgot to follow up.</em></h1>
+<div class="hero-row">
+<p class="hero-note">TUESDAY, 11:48 PM<br><b>Priya just asked about a house.</b><br>You're asleep. FollowUp isn't.</p>
+<div><p class="hero-lede">FollowUp answers the customers in your Gmail in your words, checks in when they go quiet, and hands you the decisions.</p>
+<div class="hero-ctas"><a class="pill" href="#start">Connect Gmail, start free</a><a class="see" href="#how">See how it works ↓</a></div></div>
+</div>
+<figure class="app-wrap" style="margin-inline: 0; margin-bottom: 0" aria-label="FollowUp's Today screen: Priya's question and the reply FollowUp wrote, ready to send.">
+<div class="app">
+<aside class="side" aria-hidden="true">
+<span class="brand"><svg width="10" height="16" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<a class="cur"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>Today<span class="count">1</span></a>
+<a><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="3.2"></circle><path d="M3.5 19c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"></path><path d="M16 6.5a3 3 0 0 1 0 5.8M17.5 14.6c1.6.5 2.6 2 3 4.4"></path></svg>Customers</a>
+<a><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"></rect><path d="M4 9.5h16M8.5 3v4M15.5 3v4"></path></svg>Coming up</a>
+<a><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h10.5L19 8v11.5H5z"></path><path d="M8.5 11h7M8.5 14.5h5"></path></svg>What FollowUp knows</a>
+<a><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"></path></svg>Settings</a>
+<div class="status"><i></i>Sending is on</div>
+</aside>
+<div class="main">
+<div class="main-head"><h4>Today</h4><span class="mono">TUE · 11:49 PM</span></div>
+<div class="eyebrow">Needs your OK · 1</div>
+<div class="item" id="item">
+<div class="item-top"><span class="av">P</span><span><span class="who">Priya</span><br><span class="meta">New customer · Gmail · 11:48 PM</span></span><span class="why">Why it's here</span></div>
+<p class="msg">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p>
+<div class="reply" id="reply">
+<div class="eyebrow">Written by FollowUp · waits for your OK</div>
+<p class="rc-subj">Re: The 3-bedroom on Maple Street</p>
+<p class="rc-body" id="typed">Hi Priya, yes, it's still available! I'm showing it this Saturday between 10 and 2. Would one of those times suit you?</p>
+<p class="rc-body" id="sign">Alex</p>
+<div class="rc-btns" id="btns"><span class="btn-ink" id="send">Send</span><span class="btn-line">Edit</span><span class="btn-text">Later</span></div>
+<div class="undo gone" id="undo">Sending to Priya in 7s · <u>Undo</u><div class="bar"><i id="drain"></i></div></div>
+<div class="sent" id="sent"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Sent from your Gmail · 11:49 PM</div>
+</div>
+</div>
+</div>
+<aside class="right" aria-hidden="true">
+<div><div class="eyebrow">Coming up</div><div class="cu"><div><span class="mono">FRI 9:00 AM</span>Check in with Sam, quiet since Tuesday</div><div><span class="mono">THU 2:00 PM</span>Later: Daniel's sister, the 2-bed</div></div></div>
+<div><div class="eyebrow">What FollowUp knows</div><div class="kn"><div><span>Showings</span><span>Sat, 10 to 2</span></div><div><span>Area</span><span>Westside</span></div><div><span>Sign-off</span><span>Alex</span></div></div><p class="small">Learned from replies you sent.</p></div>
+</aside>
+</div>
+<figcaption class="app-caption"><span>An example, not a real customer. This is the real Today screen.</span><button class="replay" type="button" id="replay">Replay ↺</button></figcaption>
+</figure>
+</div></section>
+
+<section class="statement" aria-label="Why FollowUp"><div class="wrap">
+<p id="statement">A customer writes at 11:48 PM. You'll see it at breakfast, under everything else that came in overnight. <span class="soft-run">FollowUp answers in a minute, in your words. It checks in when they go quiet, stops when they reply, and hands you only the decisions.</span></p>
+</div></section>
+<div class="ramp" aria-hidden="true"></div>
+
+<section class="light chap" id="how" aria-labelledby="how-h"><div class="wrap">
+<div class="chap-head"><div><div class="eyebrow">How it works</div><h2 id="how-h">Three things, <em>while you're busy.</em></h2></div><p>Connect your Gmail once. FollowUp reads it the way a new assistant would, learns how you write, and starts with the customers who are already waiting.</p></div>
+<div class="how-grid">
+<div class="steps"><div class="step on" data-i="0"><div class="step-n">01</div><h3>It finds your customers.</h3><p>It reads your Gmail the way a new assistant would and picks out the people who need an answer. Newsletters, receipts and notifications stay where they are.</p><div class="panel-inline" aria-hidden="true"><div class="stage-inner"><div class="pcard ib"><div class="pc-head"><span>Your Gmail · Tuesday night</span><span class="mono">41 new</span></div><ul><li class="ib-row"><span class="ib-who">Realty Weekly</span><span class="ib-sub">This week's market digest</span><span class="ib-tag">Newsletter · set aside</span></li><li class="ib-row cust"><span class="ib-who">Priya</span><span class="ib-sub">Is the 3-bedroom on Maple Street still available?</span><span class="ib-tag">Customer · wants a viewing</span></li><li class="ib-row"><span class="ib-who">Uber</span><span class="ib-sub">Your Tuesday evening trip receipt</span><span class="ib-tag">Receipt · set aside</span></li><li class="ib-row cust"><span class="ib-who">Sam</span><span class="ib-sub">Following up on the condo on Elm Street</span><span class="ib-tag">Customer · went quiet</span></li><li class="ib-row"><span class="ib-who">LinkedIn</span><span class="ib-sub">You appeared in 9 searches this week</span><span class="ib-tag">Notification · set aside</span></li><li class="ib-row cust"><span class="ib-who">Daniel</span><span class="ib-sub">My sister is looking for a 2-bed too</span><span class="ib-tag">Customer · a referral</span></li></ul></div>
+<div class="pcard float fl-br"><div class="eyebrow">Found</div><p class="big-num">3 customers</p><p class="small">waiting, out of 41 new emails. The rest stay in Gmail, untouched.</p></div></div></div></div><div class="step" data-i="1"><div class="step-n">02</div><h3>It writes in your words.</h3><p>A minute after they write, the reply is ready: your tone, your hours, your sign-off, learned from the replies you've sent. Send it, change a word, or let it go on its own.</p><div class="panel-inline" aria-hidden="true"><div class="stage-inner"><div class="pcard wash-card"><div class="eyebrow">Written by FollowUp · waits for your OK</div><p class="rc-subj">Re: The 3-bedroom on Maple Street</p><p class="rc-body">Hi Priya, yes, it's still available! I'm showing it this Saturday between 10 and 2. Would one of those times suit you?</p><p class="rc-body">Alex</p><div class="rc-btns"><span class="btn-ink">Send</span><span class="btn-line">Edit</span><span class="btn-text">Later</span></div></div>
+<div class="pcard float fl-br knows"><div class="eyebrow">What FollowUp knows</div>
+<div class="kn-row used"><span>Showings</span><span>Saturdays, 10 to 2</span><span class="kn-used"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>used</span></div>
+<div class="kn-row"><span>Area</span><span>Westside and downtown</span><span></span></div>
+<div class="kn-row used"><span>Sign-off</span><span>Alex</span><span class="kn-used"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>used</span></div>
+<p class="small">Learned from replies you sent. Change any of it in Settings.</p></div></div></div></div><div class="step" data-i="2"><div class="step-n">03</div><h3>It hands you the decisions.</h3><p>A price, a date, or anything it isn't sure of comes to you first, with the reply already written. The customer isn't left in silence meanwhile.</p><div class="panel-inline" aria-hidden="true"><div class="stage-inner"><div class="pcard"><div class="needs"><span class="dot"></span>Comes to you first</div><p class="small" style="margin-top:4px">A price is yours to decide. The reply is written; it needs your number.</p>
+<div class="cust-msg"><span class="mono">Priya · Wed 2:15 PM</span><p>Is the asking price negotiable?</p></div>
+<div class="wash-mini"><p>Hi Priya, the seller would consider offers from <span class="blank">$ ______</span>. Would you like to talk it through?</p><div class="rc-btns"><span class="btn-ink">Send</span><span class="btn-line">Edit</span></div></div></div>
+<div class="pcard float fl-br hold"><div class="eyebrow">Meanwhile, at 2:45 PM</div><p>“Thanks for asking! Let me check and I'll send you the price soon.”</p><p class="small">Sent for you after 30 minutes. One fixed line: it never names a number or a day.</p></div></div></div></div></div>
+<div><div class="stage" aria-hidden="true"><div class="panel on" data-i="0"><div class="pcard ib"><div class="pc-head"><span>Your Gmail · Tuesday night</span><span class="mono">41 new</span></div><ul><li class="ib-row"><span class="ib-who">Realty Weekly</span><span class="ib-sub">This week's market digest</span><span class="ib-tag">Newsletter · set aside</span></li><li class="ib-row cust"><span class="ib-who">Priya</span><span class="ib-sub">Is the 3-bedroom on Maple Street still available?</span><span class="ib-tag">Customer · wants a viewing</span></li><li class="ib-row"><span class="ib-who">Uber</span><span class="ib-sub">Your Tuesday evening trip receipt</span><span class="ib-tag">Receipt · set aside</span></li><li class="ib-row cust"><span class="ib-who">Sam</span><span class="ib-sub">Following up on the condo on Elm Street</span><span class="ib-tag">Customer · went quiet</span></li><li class="ib-row"><span class="ib-who">LinkedIn</span><span class="ib-sub">You appeared in 9 searches this week</span><span class="ib-tag">Notification · set aside</span></li><li class="ib-row cust"><span class="ib-who">Daniel</span><span class="ib-sub">My sister is looking for a 2-bed too</span><span class="ib-tag">Customer · a referral</span></li></ul></div>
+<div class="pcard float fl-br"><div class="eyebrow">Found</div><p class="big-num">3 customers</p><p class="small">waiting, out of 41 new emails. The rest stay in Gmail, untouched.</p></div></div><div class="panel" data-i="1"><div class="pcard wash-card"><div class="eyebrow">Written by FollowUp · waits for your OK</div><p class="rc-subj">Re: The 3-bedroom on Maple Street</p><p class="rc-body">Hi Priya, yes, it's still available! I'm showing it this Saturday between 10 and 2. Would one of those times suit you?</p><p class="rc-body">Alex</p><div class="rc-btns"><span class="btn-ink">Send</span><span class="btn-line">Edit</span><span class="btn-text">Later</span></div></div>
+<div class="pcard float fl-br knows"><div class="eyebrow">What FollowUp knows</div>
+<div class="kn-row used"><span>Showings</span><span>Saturdays, 10 to 2</span><span class="kn-used"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>used</span></div>
+<div class="kn-row"><span>Area</span><span>Westside and downtown</span><span></span></div>
+<div class="kn-row used"><span>Sign-off</span><span>Alex</span><span class="kn-used"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>used</span></div>
+<p class="small">Learned from replies you sent. Change any of it in Settings.</p></div></div><div class="panel" data-i="2"><div class="pcard"><div class="needs"><span class="dot"></span>Comes to you first</div><p class="small" style="margin-top:4px">A price is yours to decide. The reply is written; it needs your number.</p>
+<div class="cust-msg"><span class="mono">Priya · Wed 2:15 PM</span><p>Is the asking price negotiable?</p></div>
+<div class="wash-mini"><p>Hi Priya, the seller would consider offers from <span class="blank">$ ______</span>. Would you like to talk it through?</p><div class="rc-btns"><span class="btn-ink">Send</span><span class="btn-line">Edit</span></div></div></div>
+<div class="pcard float fl-br hold"><div class="eyebrow">Meanwhile, at 2:45 PM</div><p>“Thanks for asking! Let me check and I'll send you the price soon.”</p><p class="small">Sent for you after 30 minutes. One fixed line: it never names a number or a day.</p></div></div></div></div>
+</div>
+</div></section>
+
+<section class="light chap" id="quiet" aria-labelledby="quiet-h"><div class="wrap">
+<div class="chap-head"><div><div class="eyebrow">When they go quiet</div><h2 id="quiet-h">It checks in <em>on the day you'd have forgotten.</em></h2></div><p>A short note in your words when a customer goes quiet. The moment they answer, it stops. No chasing someone who already replied.</p></div>
+<div class="thread" id="thread">
+<div class="rail" aria-hidden="true"><i></i></div>
+<div class="t-cols">
+<div class="t-col"><div class="t-when">WED 7:02 AM</div><div class="t-what">Your reply went out</div><div class="t-card">Hi Priya, yes, it's still available! I'm showing it this Saturday between 10 and 2…</div></div>
+<div class="t-col quiet"><div class="t-when">THURSDAY</div><div class="t-what">Quiet</div><p class="t-quiet">No answer yet. This is the day a lead usually slips away.</p></div>
+<div class="t-col"><div class="t-when">FRI 9:00 AM</div><div class="t-what">It checked in for you</div><div class="t-card w">Hi Priya, just checking in. Still keen to see the house this weekend?</div></div>
+<div class="t-col done"><div class="t-when">FRI 9:41 AM</div><div class="t-what">Priya answered</div><div class="t-card">Yes! Saturday at 10 works. See you there.</div><div class="t-stop"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Check-ins stopped. She replied.</div></div>
+</div>
+<p class="t-note">An example, not a real customer.</p>
+</div>
+</div></section>
+
+<section class="light chap" id="control" aria-labelledby="ctl-h"><div class="wrap">
+<div class="chap-head"><div><div class="eyebrow">Your control</div><h2 id="ctl-h">You stay <em>in charge.</em></h2></div><p>It follows up on its own, inside rules you can read. Four promises, and one switch that holds everything.</p></div>
+<div class="promises">
+<div class="promise"><h3>It stops the moment they reply.</h3><p>No chasing someone who already answered.</p></div>
+<div class="promise"><h3>Prices and dates come to you.</h3><p>Anything that's yours to decide waits for you, with the reply written.</p></div>
+<div class="promise"><h3>It writes down why.</h3><p>Every message it sends has a reason you can read.</p></div>
+<div class="promise"><h3>Delete everything, any time.</h3><p>Your data is yours. Deleting also disconnects your Gmail.</p></div>
+</div>
+<div class="switch-card"><div><h3>Pause all sending</h3><p id="sw-text"><span class="switch-state"><span class="dot" style="background: var(--good)"></span>Sending is on. Replies and check-ins go out the way you set them.</span></p></div>
+<button class="sw" id="sw" type="button" role="switch" aria-checked="false" aria-label="Pause all sending"><span></span></button></div>
+<a class="ctl-link" href="#data">How we protect your data ›</a>
+</div></section>
+
+<section class="light chap" id="new" aria-labelledby="new-h"><div class="wrap">
+<div class="chap-head"><div><div class="eyebrow">What's new</div><h2 id="new-h">It gets better <em>every week.</em></h2></div><p>Real updates from the last few days, in the order they shipped.</p></div>
+<div class="news">
+<article><time datetime="2026-10-07">OCT 7, 2026</time><h3>One question a day</h3><p>Instead of a long setup form, FollowUp asks you one quick question a day, so it learns your business at your pace.</p></article>
+<article><time datetime="2026-10-05">OCT 5, 2026</time><h3>It learns from every reply you send</h3><p>Facts you write in replies, like your showing hours, are remembered and used next time. Only from replies a person sent.</p></article>
+<article><time datetime="2026-10-05">OCT 5, 2026</time><h3>Swipe for Later on your phone</h3><p>On Today, swipe a customer to the left to come back to them later.</p></article>
+</div>
+<p class="news-foot">Free while in beta. Tell us what to build next: contact@followupbase.io</p>
+</div></section>
+<div class="ramp up" aria-hidden="true"></div>
+
+<section class="close" id="start" aria-labelledby="close-h"><div class="wrap">
+<h2 id="close-h">Your customers are writing. <em>Answer every one.</em></h2>
+<a class="big-cta" id="bigcta" href="#start">Connect Gmail, start free <span aria-hidden="true">→</span></a>
+<p class="sub">Free while in beta · No credit card · Works with Gmail today</p>
+<footer>
+<span style="display: inline-flex; align-items: center; gap: 12px"><span class="brand" style="color: var(--moon)"><svg width="10" height="16" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>So no customer gets forgotten.</span>
+<nav aria-label="Footer"><a href="#how">How it works</a><a href="#data">Your data</a><a href="#privacy">Privacy</a><a href="#terms">Terms</a><span>contact@followupbase.io</span></nav>
+<span>© 2026 FollowUp</span>
+</footer>
+</div></section>
+</main>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function (s) { return document.querySelector(s); };
+
+  /* ---- the hero plays FollowUp's story once, then rests (Linear's lesson) ---- */
+  var REPLY = "Hi Priya, yes, it's still available! I'm showing it this Saturday between 10 and 2. Would one of those times suit you?";
+  var item = $('#item'), reply = $('#reply'), typed = $('#typed'), sign = $('#sign'), btns = $('#btns'),
+      send = $('#send'), undo = $('#undo'), drain = $('#drain'), sent = $('#sent');
+  var timers = [];
+  function later(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  function reset() { timers.forEach(clearTimeout); timers = []; }
+  function play() {
+    reset();
+    if (reduce) return;
+    item.classList.add('is-hidden'); reply.classList.add('is-hidden');
+    typed.textContent = ''; sign.style.visibility = 'hidden'; btns.style.visibility = 'hidden';
+    undo.classList.add('gone'); sent.classList.add('gone'); send.classList.remove('press');
+    drain.style.transition = 'none'; drain.style.transform = 'scaleX(1)';
+    later(350, function () { item.classList.remove('is-hidden'); });
+    later(1300, function () { reply.classList.remove('is-hidden'); });
+    var words = REPLY.split(' ');
+    words.forEach(function (w, i) {
+      later(1800 + i * 70, function () { typed.innerHTML = words.slice(0, i + 1).join(' ') + (i < words.length - 1 ? '<span class="caret"></span>' : ''); });
+    });
+    var t = 1800 + words.length * 70;
+    later(t + 150, function () { sign.style.visibility = 'visible'; btns.style.visibility = 'visible'; });
+    later(t + 1100, function () { send.classList.add('press'); });
+    later(t + 1800, function () { btns.style.visibility = 'hidden'; undo.classList.remove('gone');
+      requestAnimationFrame(function () { drain.style.transition = 'transform 2.4s linear'; drain.style.transform = 'scaleX(0)'; }); });
+    later(t + 4300, function () { undo.classList.add('gone'); btns.classList.add('gone'); sent.classList.remove('gone'); });
+  }
+  $('#replay').addEventListener('click', function () { btns.classList.remove('gone'); play(); });
+  if (!reduce) { btns.classList.remove('gone'); play(); } else { btns.classList.add('gone'); }
+
+  /* ---- scroll-linked moments: the window settles, the statement reads itself, the thread draws, the button grows ---- */
+  var scrubs = [];
+  function scrub(el, fn) { if (el) scrubs.push([el, fn]); }
+  function tick() {
+    var vh = window.innerHeight;
+    scrubs.forEach(function (s) { var r = s[0].getBoundingClientRect(); s[1](r, vh); });
+  }
+  var clamp = function (v) { return Math.max(0, Math.min(1, v)); };
+  if (!reduce) {
+    var win = $('.app-wrap');
+    scrub(win, function (r, vh) { var q = clamp((vh - r.top) / (vh * 0.75)); win.style.transform = 'translateY(' + ((1 - q) * 48).toFixed(1) + 'px) scale(' + (0.95 + 0.05 * q).toFixed(4) + ')'; });
+    var st = $('#statement');
+    var html = st.innerHTML.replace('<span class="soft-run">', '').replace('</span>', '');
+    var soft = false, out = '';
+    html.split(/(\s+)/).forEach(function (tok) {
+      if (tok.indexOf('') > -1) { soft = true; tok = tok.replace('', ''); }
+      var end = tok.indexOf('') > -1; tok = tok.replace('', '');
+      out += /^\s+$/.test(tok) || !tok ? tok : '<span class="w' + (soft ? ' soft' : '') + '">' + tok + '</span>';
+      if (end) soft = false;
+    });
+    st.innerHTML = out; st.parentNode.parentNode.classList.add('scrub');
+    var words = Array.prototype.slice.call(st.querySelectorAll('.w'));
+    scrub(st, function (r, vh) { var q = clamp((vh * 0.82 - r.top) / (r.height + vh * 0.25)); var n = Math.round(q * words.length);
+      words.forEach(function (w, i) { w.classList.toggle('lit', i < n); }); });
+    var rail = $('#thread .rail i');
+    scrub($('#thread'), function (r, vh) { rail.parentNode.style.setProperty('--p', clamp((vh * 0.8 - r.top) / (r.height * 0.9)).toFixed(3)); });
+    var cta = $('#bigcta');
+    scrub(cta, function (r, vh) { var q = clamp((vh - r.top) / (vh * 0.6)); cta.style.transform = 'scale(' + (0.82 + 0.18 * q).toFixed(4) + ')'; });
+    var raf = 0;
+    window.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(function () { raf = 0; tick(); }); }, { passive: true });
+    window.addEventListener('resize', tick);
+    tick();
+  }
+
+  /* ---- how it works: the stage follows the step you're reading ---- */
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('.stage .panel'));
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (!e.isIntersecting) return; var i = +e.target.getAttribute('data-i');
+        steps.forEach(function (s, j) { s.classList.toggle('on', j === i); });
+        panels.forEach(function (p, j) { p.classList.toggle('on', j === i); }); });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    steps.forEach(function (s) { io.observe(s); });
+  }
+
+  /* ---- the real switch ---- */
+  var sw = $('#sw'), swText = $('#sw-text');
+  sw.addEventListener('click', function () {
+    var on = sw.getAttribute('aria-checked') !== 'true';
+    sw.setAttribute('aria-checked', on ? 'true' : 'false');
+    swText.innerHTML = on ? '<span class="switch-state"><span class="dot"></span>Everything is held. Nothing goes out until you turn sending back on.</span>'
+                          : '<span class="switch-state"><span class="dot" style="background: var(--good)"></span>Sending is on. Replies and check-ins go out the way you set them.</span>';
+  });
+})();
+</script>

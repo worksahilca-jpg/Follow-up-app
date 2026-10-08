@@ -833,3 +833,17 @@ in doubt: "our idea is fire".
 organise the first screen → *"Show me options"*. So no principle is recorded yet; the options page answers it.
 **Inferred, marked inferred:** three hues at once reads as a theme, not a brand; the headline needs room to be the
 hook (his comment earlier the same day: the hook first, the box second).
+
+## R-043 — The all-green theme (green blocks, green italics, green-family touches) and the letter everywhere ^R-043
+
+**Rejected:** 2026-10-08, founder, on home v11 with five references (Ruul, Table22, Harmoniq, Lunora, Aethera):
+*"we don't have to use that whole letter theme everywhere. Just for one part… this greenish touch is not something
+that I'm looking for because we can't use the whole green theme. I don't like it. We have to make it a professional
+theme. Not just the all-go green."*
+**What:** green as the main colour across the page (Leaf/Sage/Emerald blocks, green headline italics, lime and sage
+touches) and the postmark stamped on the live demo card.
+**Principle (from his references, inferred and marked so):** professional = a neutral page (off-white, ink, grey
+second lines), black buttons, one strong image or dark panel with the product floating on it, and accents so small
+they are almost absent (Ruul's single lime pill). Colour is rare; it does not carry the page.
+**Supersedes:** A-116 (green as the main colour), A-113/A-114's green blocks. Green stays only as the app's meaning
+("sent").

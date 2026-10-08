@@ -2071,3 +2071,9 @@ green read as heavy, "stressed"). The other colours come back only as light touc
 family (soft lime for warmth, sage for calm blocks); Mint stays buttons only; orange stays a "your turn" dot. The
 old-letter idea is in: postmarks and a "Then and now" section.
 **Supersedes in part:** A-115's removal of the touches.
+
+## A-117 — The letter, in one section only: "A letter took weeks. Today, a minute feels long." ^A-117
+
+**Approved:** 2026-10-08, founder: *"Just for one part, you can use that theme, and I like that. 'Good letter takes
+weeks. Now one minute is long.' That's a good one."* Keep the "Then and now" section (post → email → FollowUp, each
+with a postmark); the letter look appears nowhere else.

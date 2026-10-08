@@ -1,5 +1,5 @@
 <title>FollowUp Home</title>
-<script>document.documentElement.setAttribute('data-lay', '3'); document.documentElement.setAttribute('data-col', 'f'); (function () { var g = 'leaf'; try { g = localStorage.getItem('fu-green') || g; } catch (e) {} document.documentElement.setAttribute('data-green', g); var t = 'green'; try { t = localStorage.getItem('fu-touch') || t; } catch (e) {} document.documentElement.setAttribute('data-touch', t); })();</script>
+<script>document.documentElement.setAttribute('data-lay', '3'); document.documentElement.setAttribute('data-col', 'f'); document.documentElement.setAttribute('data-pro', '1');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
@@ -417,10 +417,6 @@ html[data-lay="3"] .fl-try { padding-top: 64px }
 .fl-ghost { position: fixed; z-index: 60; pointer-events: none; margin: 0; padding: 12px 15px; border-radius: 18px 18px 18px 6px; background: var(--stage); color: var(--ink); font-size: 16.5px; line-height: 1.38; box-shadow: 0 24px 44px -22px rgba(10,10,10,.45); white-space: nowrap; max-width: 380px; overflow: hidden; text-overflow: ellipsis }
 .fl-sent svg path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: fl-draw .55s .12s var(--fl-out) forwards }
 @keyframes fl-draw { to { stroke-dashoffset: 0 } }
-.fl-stamp { position: absolute; right: 16px; top: 50px; z-index: 2; color: var(--fl-stamp, #17603F); opacity: .82; transform: rotate(-9deg); pointer-events: none; animation: fl-stamp .7s var(--fl-spring) both }
-.fl-stamp svg { display: block; width: 78px; height: 78px }
-@keyframes fl-stamp { 0% { opacity: 0; transform: rotate(-22deg) scale(1.7) } 60% { opacity: .9 } 100% { opacity: .82; transform: rotate(-9deg) scale(1) } }
-@media (prefers-reduced-motion: reduce) { .fl-stamp { animation: none } }
 .fl-zone b.is-bump { animation: fl-bump .55s var(--fl-spring) }
 @keyframes fl-bump { from { transform: translateY(80%); opacity: 0 } to { transform: none; opacity: 1 } }
 @media (prefers-reduced-motion: reduce) {
@@ -612,6 +608,44 @@ html[data-touch="green"] .fl-hi .ic { background: linear-gradient(180deg, #F2F7E
 .env .pm.is-wait { opacity: 0; transform: rotate(-24deg) scale(1.7) }
 .env .pm { transition: opacity .35s ease, transform .6s var(--fl-spring); transition-delay: calc(var(--d, 0ms) + 500ms) }
 @media (max-width: 900px) { .env-row { grid-template-columns: minmax(0, 1fr) } .env-arrow { transform: rotate(90deg); justify-self: center } .env { min-height: 230px } }
+
+/* ---- theme v4, professional (R-043): a neutral page, ink buttons, grey second lines, one dark panel for the product,
+   colour only as meaning (green = sent, orange = your turn) and one tiny lime note ---- */
+html[data-pro] { --paper: #FFFFFF; --night: #F4F3EF; --night-2: #ECEAE4; --ink: #0E0E0C; --ink-soft: #6B6862; --ink-faint: #8A867F; --line: #E4E1DA;
+  --g-ink: #6B6862; --em: #6B6862; --em-light: #6B6862; --btn: #0E0E0C; --btn-fg: #FFFFFF;
+  --panel: radial-gradient(110% 120% at 18% 0%, #2C302D 0%, #1B1E1C 42%, #121413 100%);
+  --forest-lit: var(--panel); --stone: linear-gradient(180deg, #F1EFEA 0%, #E8E5DE 100%);
+  --stage-how: var(--stone); --stage-thread: var(--stone); --stage-ctl: var(--stone); --bed: var(--stone);
+  --close-bg: var(--panel); --close-fg: #FFFFFF; --close-soft: #C9C6BF; --close-faint: #A19D96; --close-dim: rgba(255,255,255,.14); --close-em: #A19D96; --close-btn: #FFFFFF; --close-btn-fg: #0E0E0C;
+  --ink-btn: linear-gradient(180deg, #2A2926 0%, #0E0E0C 100%); --ink-press: 0 10px 22px -12px rgba(14,14,12,.55), inset 0 -2px 0 rgba(255,255,255,.06);
+  --fl-hero-bg: #F4F3EF; --fl-em: #8A867F; --fl-btn: #0E0E0C; --fl-btn-fg: #fff;
+  --fl-zone-fg: #A19D96; --fl-zone-strong: #FFFFFF; --fl-meta: #C9C6BF; --fl-meta-b: #FFFFFF; --fl-meta-faint: #A19D96;
+  --fl-q-bg: #FFFFFF; --fl-q-fg: #0E0E0C; --fl-a-bg: #E9E6DF; --fl-a-fg: #0E0E0C; --fl-la-bg: #0E0E0C; --fl-la-fg: #FFFFFF;
+  --fl-tag-good: #8FD3A8; --fl-tag-needs: #F2A35E; --fl-avs-bg: rgba(255,255,255,.14); --fl-avs-fg: #fff;
+  --fl-fact-bg: var(--panel); --fl-fact-fg: #FFFFFF; --fl-fact-soft: #A19D96 }
+html[data-pro], html[data-pro] body, html[data-pro] .light, html[data-pro] .today-sec, html[data-pro] .fl-help, html[data-pro] .statement, html[data-pro] .letter, html[data-pro] .fl-intro { background: #F4F3EF }
+html[data-pro] .fl-h1 em, html[data-pro] .chap-head h2 em, html[data-pro] .fl-help h2 em, html[data-pro] .letter h2 em, html[data-pro] .today-sec h2 em { color: #8A867F }
+html[data-pro] .nav .pill, html[data-pro] .nav.light .pill, html[data-pro] .fl-go, html[data-pro] .fl-cta, html[data-pro] .fl-send { background: var(--ink-btn); color: #fff; box-shadow: var(--ink-press) }
+html[data-pro] .fl-stage .fl-cta { background: #FFFFFF; color: #0E0E0C; box-shadow: 0 10px 22px -12px rgba(0,0,0,.6) }
+html[data-pro] .big-cta { background: #FFFFFF; color: #0E0E0C; box-shadow: 0 14px 30px -16px rgba(0,0,0,.6) }
+html[data-pro] .fl-stage { box-shadow: 0 -30px 60px -44px rgba(14,14,12,.5), inset 0 -60px 90px -60px rgba(0,0,0,.5) }
+html[data-pro] .fl-stage .fl-hint, html[data-pro] .fl-stage .fl-next { color: #C9C6BF } html[data-pro] .fl-stage .fl-next b { color: #fff }
+html[data-pro] .fl-stage .fl-ex { color: #A19D96 } html[data-pro] .fl-stage .fl-ctl { color: #C9C6BF; border-color: rgba(255,255,255,.2) }
+html[data-pro] .fl-ask:focus-within { box-shadow: 0 0 0 2.5px #FFFFFF, 0 22px 44px -22px rgba(0,0,0,.6) }
+html[data-pro] .fl-you, html[data-pro] .fl-hi .ic { background: #EFEDE8; color: #0E0E0C; box-shadow: none }
+html[data-pro] .fl-slot .fl-a { background: linear-gradient(180deg, #F1EFEA, #E2DFD8); color: #0E0E0C }
+html[data-pro] .fl-fact { box-shadow: inset 0 -60px 90px -60px rgba(0,0,0,.45), 0 30px 60px -36px rgba(14,14,12,.45) }
+html[data-pro] .fl-fact b { color: #FFFFFF }
+html[data-pro] .app-bed { box-shadow: inset 0 -40px 70px -50px rgba(80,60,30,.18), 0 30px 60px -44px rgba(14,14,12,.28) }
+html[data-pro] .stage, html[data-pro] .switch-card, html[data-pro] .thread { box-shadow: inset 0 -50px 80px -60px rgba(80,60,30,.16), 0 30px 60px -44px rgba(14,14,12,.24) }
+html[data-pro] .t-col::before { box-shadow: 0 0 0 6px #EDEAE3 } html[data-pro] .t-card.w { background: #fff; box-shadow: 0 0 0 1.5px #0E0E0C, 0 18px 32px -20px rgba(14,14,12,.3) }
+html[data-pro] .env.now { background: var(--panel); box-shadow: inset 0 -60px 90px -60px rgba(0,0,0,.45), 0 30px 60px -36px rgba(14,14,12,.45) }
+html[data-pro] .env.now .how, html[data-pro] .env.now p { color: #C9C6BF } html[data-pro] .env.now .pm { color: #FFFFFF }
+html[data-pro] .close { background: var(--panel) }
+/* the one tiny accent, like Ruul's pill: a lime note above the headline */
+.fl-note-pill { display: none }
+html[data-pro] .fl-note-pill { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px; padding: 6px 14px; border-radius: 999px; background: #E4F6B8; color: #26330C; font-size: 13.5px; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(38,51,12,.08) }
+html[data-pro] .fl-note-pill i { width: 7px; height: 7px; border-radius: 999px; background: #5E8C1A }
 @media (prefers-reduced-motion: reduce) { .env, .env .pm { transition: none } }
 
 .today-sec { background: var(--paper); color: var(--ink); padding-block: 120px 40px }
@@ -666,6 +700,7 @@ html[data-touch="green"] .fl-hi .ic { background: linear-gradient(180deg, #F2F7E
 <section class="fl-hero" id="fl-hero" aria-labelledby="h1"><div class="wrap fl-grid">
 <div class="fl-intro">
 <div class="fl-head">
+<span class="fl-note-pill"><i></i>Free while in beta</span>
 <h1 id="h1" class="fl-h1" aria-label="Never lose a lead because you forgot to follow up."><span class="fl-w" style="--i:0">Never</span> <span class="fl-w" style="--i:1">lose</span> <span class="fl-w" style="--i:2">a</span> <span class="fl-w" style="--i:3">lead</span> <em><span class="fl-w" style="--i:4">because</span> <span class="fl-w" style="--i:5">you</span> <span class="fl-w" style="--i:6">forgot</span> <span class="fl-w" style="--i:7">to</span> <span class="fl-w" style="--i:8">follow</span> <span class="fl-w" style="--i:9">up.</span></em></h1>
 <p class="fl-sub">Every customer gets a reply, written in your words. Try it: you be the customer.</p>
 <a class="fl-cue" href="#fl-try">Try it yourself ↓</a>
@@ -837,7 +872,6 @@ html[data-touch="green"] .fl-hi .ic { background: linear-gradient(180deg, #F2F7E
 </footer>
 </div></section>
 </main>
-<div class="gpk" role="group" aria-label="Try the greens"><span>Green</span><button type="button" data-g="leaf" aria-pressed="false"><i style="background:#2E8A5C"></i>Leaf</button><button type="button" data-g="sage" aria-pressed="false"><i style="background:#5C9479"></i>Sage</button><button type="button" data-g="emerald" aria-pressed="false"><i style="background:#149467"></i>Emerald</button><button type="button" data-g="forest" aria-pressed="false"><i style="background:#0F4A33"></i>Before</button><i class="sep" aria-hidden="true"></i><span>Touches</span><button type="button" data-t="green" aria-pressed="false"><i style="background:#D9EF9A"></i>Greens</button><button type="button" data-t="warm" aria-pressed="false"><i style="background:#F8E3D2"></i>Sky + apricot</button></div>
 
 <script>
 (function () {
@@ -852,7 +886,7 @@ html[data-touch="green"] .fl-hi .ic { background: linear-gradient(180deg, #F2F7E
 /* ---- opening: the reply flow, type-first ---- */
 (function () {
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var CH = {"gmail": ["Gmail", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "outlook": ["Outlook", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "ig": ["Instagram", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"4.5\"></rect><circle cx=\"12\" cy=\"12\" r=\"3.6\"></circle><circle cx=\"16.6\" cy=\"7.4\" r=\".6\" fill=\"currentColor\"></circle></svg>"], "web": ["Website form", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.5\"></rect><path d=\"M3.5 8.5h17M7.5 12.5h9M7.5 15.5h5\"></path></svg>"], "quiet": ["Gone quiet", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.6 4.3v3.9h-3.9\"></path><path d=\"M12 8.6V12l2.4 1.5\"></path></svg>"]}, TICK = "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"></path></svg>", STAMP = "<svg width=\"78\" height=\"78\" viewBox=\"0 0 100 100\" fill=\"none\" aria-hidden=\"true\"><defs><path id=\"pmLenst\" d=\"M 17,50 A 33,33 0 1 1 83,50\"/><path id=\"pmLensb\" d=\"M 10,50 A 40,40 0 0 0 90,50\"/></defs><circle cx=\"50\" cy=\"50\" r=\"46\" stroke=\"currentColor\" stroke-width=\"2.4\"/><circle cx=\"50\" cy=\"50\" r=\"26\" stroke=\"currentColor\" stroke-width=\"1.4\"/><text font-family=\"IBM Plex Mono, ui-monospace, monospace\" font-size=\"9.5\" font-weight=\"600\" letter-spacing=\"2\" fill=\"currentColor\"><textPath href=\"#pmLenst\" startOffset=\"50%\" text-anchor=\"middle\">ANSWERED</textPath></text><text font-family=\"IBM Plex Mono, ui-monospace, monospace\" font-size=\"8.5\" font-weight=\"600\" letter-spacing=\"2\" fill=\"currentColor\"><textPath href=\"#pmLensb\" startOffset=\"50%\" text-anchor=\"middle\">FOLLOWUP</textPath></text><text x=\"50\" y=\"54.5\" text-anchor=\"middle\" font-family=\"IBM Plex Mono, ui-monospace, monospace\" font-size=\"11\" font-weight=\"700\" letter-spacing=\".5\" fill=\"currentColor\">1 MIN</text></svg>";
+  var CH = {"gmail": ["Gmail", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "outlook": ["Outlook", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "ig": ["Instagram", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"4.5\"></rect><circle cx=\"12\" cy=\"12\" r=\"3.6\"></circle><circle cx=\"16.6\" cy=\"7.4\" r=\".6\" fill=\"currentColor\"></circle></svg>"], "web": ["Website form", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.5\"></rect><path d=\"M3.5 8.5h17M7.5 12.5h9M7.5 15.5h5\"></path></svg>"], "quiet": ["Gone quiet", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.6 4.3v3.9h-3.9\"></path><path d=\"M12 8.6V12l2.4 1.5\"></path></svg>"]}, TICK = "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"></path></svg>";
   var D = [
     { ch: 'web', who: 'Omar', t: '6:40 AM', q: 'Do you do kitchen renovations?', r: 'We do! Could you send a photo of the space?', k: 'reply' },
     { ch: 'gmail', who: 'Ben', t: '5:55 AM', q: 'Are you taking new patients?', r: 'Yes, we are! Mornings or afternoons?', k: 'reply' },
@@ -927,7 +961,7 @@ html[data-touch="green"] .fl-hi .ic { background: linear-gradient(180deg, #F2F7E
     var a = $('fl-a'), foot = $('fl-foot');
     a.classList.remove('is-hide'); a.innerHTML = withBlank(it.r);
     if (it.k === 'needs') { foot.innerHTML = '<span class="fl-needs">A price: it waits for you</span>'; setStatus('Needs you', 'is-needs'); }
-    else { body.insertAdjacentHTML('beforeend', '<span class="fl-stamp" aria-hidden="true">' + STAMP + '</span>'); foot.innerHTML = '<span class="fl-sent">' + TICK + 'Sent ' + (it.ch === 'ig' ? 'on Instagram' : it.ch === 'outlook' ? 'from your Outlook' : 'from your Gmail') + '</span>'; setStatus('Sent', 'is-ok'); answered++; count.textContent = answered; count.classList.remove('is-bump'); void count.offsetWidth; count.classList.add('is-bump'); }
+    else { foot.innerHTML = '<span class="fl-sent">' + TICK + 'Sent ' + (it.ch === 'ig' ? 'on Instagram' : it.ch === 'outlook' ? 'from your Outlook' : 'from your Gmail') + '</span>'; setStatus('Sent', 'is-ok'); answered++; count.textContent = answered; count.classList.remove('is-bump'); void count.offsetWidth; count.classList.add('is-bump'); }
   }
   /* your turn: what you type shows here as you type it */
   function draft() { return seq[k] && seq[k].draft ? seq[k] : null; }
@@ -1092,15 +1126,6 @@ html[data-touch="green"] .fl-hi .ic { background: linear-gradient(180deg, #F2F7E
     var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.remove('is-pre'); var pm = e.target.querySelector('.pm'); if (pm) pm.classList.remove('is-wait'); io.unobserve(e.target); } }); }, { threshold: .3 });
     envs.forEach(function (el, i) { if (el.getBoundingClientRect().top > innerHeight) { el.style.setProperty('--d', (i * 160) + 'ms'); el.classList.add('is-pre'); var pm = el.querySelector('.pm'); if (pm) pm.classList.add('is-wait'); io.observe(el); } });
   })();
-  /* ---- review tool: the green picker ---- */
-  (function () {
-    var bs = [].slice.call(document.querySelectorAll('.gpk [data-g]')), ts = [].slice.call(document.querySelectorAll('.gpk [data-t]'));
-    function mark() { var r = document.documentElement, g = r.getAttribute('data-green'), t = r.getAttribute('data-touch'); bs.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-g') === g ? 'true' : 'false'); }); ts.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-t') === t ? 'true' : 'false'); }); }
-    ts.forEach(function (b) { b.addEventListener('click', function () { document.documentElement.setAttribute('data-touch', b.getAttribute('data-t')); try { localStorage.setItem('fu-touch', b.getAttribute('data-t')); } catch (e) {} mark(); }); });
-    bs.forEach(function (b) { b.addEventListener('click', function () { document.documentElement.setAttribute('data-green', b.getAttribute('data-g')); try { localStorage.setItem('fu-green', b.getAttribute('data-g')); } catch (e) {} mark(); }); });
-    mark();
-  })();
-
 
   /* ---- the Today screen plays its story once it's in view, then rests ---- */
   var REPLY = "Hi Priya, yes it is! I'm showing it Saturday, 10 to 2. Does that work?";

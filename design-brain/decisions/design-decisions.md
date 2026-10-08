@@ -9804,3 +9804,15 @@ from AI/CRM blue and purple; it sits well on warm paper; alternative offered: bl
   its own postmark that lands as you scroll to it.
 **Weak, honestly:** the lens stamp overlaps the customer's bubble a little (reads as a stamp, but busy on small
 screens); the envelope flaps are faint lines; images and the section-by-section redesign are still to come.
+
+## 2026-10-08 — Theme v4, professional and neutral (after R-043); references round 2
+
+After R-043 and five references (Ruul, Table22, Harmoniq, Lunora, Aethera) plus Dispatch (*"Look at all these
+references. How these guys are playing around"*; notes in `research/landing-page/2026-10-08-founder-references-round2.md`).
+**Built:** https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v12: paper `#F4F3EF` everywhere; ink text; grey second
+lines and italics `#8A867F`; black buttons (white ones on dark); one dark panel (`#2C302D`→`#121413`, lit top left)
+for the live flow, the 7× card, the "1 minute" envelope and the close; light blocks in stone (a deeper paper); green
+only as "Sent", orange only as "your turn"; one tiny lime note "Free while in beta" above the headline (Ruul's pill).
+The postmark left the live demo (A-117: the letter lives only in "Then and now"). The green picker removed.
+**Next (asked):** art-directed imagery in the dark panel and the letter section, generated with the founder's
+credits once he says yes.

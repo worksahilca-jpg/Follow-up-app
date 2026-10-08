@@ -9929,3 +9929,29 @@ his description of the new idea. He also selected assets in the Adobe widget twi
 so he was asked which.
 **Weak, said plainly:** the demo still runs its example stream on its own (with Pause); if that is the "video kind of
 thing" he meant, it goes next, on his word.
+
+## 2026-10-08 — Home v18: your question's whole journey; a transition into "try it"; green, grainy, varied photos
+
+**Asked:** *"don't use the same image for every single thing… make it a grainier thing… Add greens to it."* /
+*"When we are typing our question, it should visually tell them where this message went and what happened next…
+Tell them that we closed the deal… Tell them the workflow."* / *"add something like a transition from the opening
+page to that 'Try yourself' thing."*
+**Built (prototype only):**
+- **Journey.** After the visitor's reply is sent, the middle card keeps going as a time-lapse: *2 days later · no
+  reply yet* → a follow-up written and *sent on day 3* → *Day 3 · they replied* ("Yes please! Is Saturday OK?") →
+  the reply written in your words → *Viewing/Job/Appointment booked · Sat 10 AM* → *Deal won · $9,800, you marked
+  it*. The booking type and the deal value follow what was asked (a home → viewing, $9,800; a repair → job, $2,400;
+  a haircut → $85; a clinic → $320; otherwise a call, $1,200). Then: "That's the whole journey: caught, answered,
+  followed up, booked, won." Only the visitor's own question plays the journey; the examples stay short.
+- **Workflow rail** under the demo, always visible: Caught (from any inbox) → Answered (in your words) → Followed up
+  (if they go quiet) → Booked (on your calendar) → Won (you mark the deal). It lights up step by step during the
+  journey, each step's line replaced by what happened (now, 1 min, day 3, Sat 10 AM, $9,800).
+- **Transition.** As you scroll from the headline, the headline lifts and fades a little while the demo block widens
+  from an inset card to the full width and its photo drifts; with reduced motion it simply sits open.
+- **Photos.** A different street photo per block (demo: New York; 7× card: Paris; "1 minute" letter: Rome; close:
+  Bavaria), each blurred, toned towards forest green (half the photo, half a forest-to-sage duotone), with a heavier
+  film grain laid over it. The Place switch is gone. Headline italic in deep green.
+**Honesty:** every step is real: check-ins on days 3/7/14/30 stop on a reply; bookings come through the booking link;
+WON and the deal value are the owner's to set (the stage is never inferred), hence "you marked it".
+**Weak, said plainly:** the journey takes about 15 seconds, long for a skimmer (the rail summarises it in one look);
+"Deal won" values are invented examples, marked only by the demo's "Example" label.

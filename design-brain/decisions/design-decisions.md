@@ -9322,3 +9322,9 @@ transitions and animations, libraries, fonts; plus short GIFs of the motion). St
 what is common to all four. Step 3, FollowUp's own design from it. The v2 website (Home drawn, not published) is held
 until then. *Inferred:* when the founder says "we both don't know", the answer is evidence (measure the sites he
 loves) rather than more taste-driven drafts.
+
+## 2026-10-08 — Italic human phrase approved (A-104)
+
+Founder, after the Wispr teardown: *"yes slanted like wispr"*. Headlines: plain words upright, the human phrase in
+italic serif. A-022's "no serif italic" superseded for headlines. He also asked "is it just this that we got from
+Wispr?": answered with the full list of what FollowUp takes from Wispr (and what it doesn't), from the teardown.

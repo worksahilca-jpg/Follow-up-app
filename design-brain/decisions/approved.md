@@ -486,6 +486,9 @@ must be removed and re-added (iPhone: clear Safari website data first) before ju
 
 ## A-022 — The white hero (Hero v3 · light): black type, plain thin headline, the reply as the one black card ^A-022
 
+**PARTLY SUPERSEDED (2026-10-08) by [A-104](#^A-104):** the "no serif italic" part. The human phrase of a headline
+is set in italic serif again, as Wispr Flow does.
+
 **Headline weight reconfirmed (2026-09-26, [A-059](#^A-059)):** thin on both desktop and phone. A-058 briefly made the
 phone headline bold; that was reversed the same day.
 
@@ -1911,3 +1914,14 @@ phone), and *"yes wait for trail"*: during the trial every "No answer" text wait
   week), then each person's three numbers; only someone calling with no meetings (from Wednesday, or sooner with
   calls a day late) gets the orange dot. No charts. Meetings are the booking link's.
 - The duplicate sentence under Team ("Admins can invite…" twice) is gone, as drawn.
+
+## A-104 — Headlines: plain words, then the human phrase in italic serif (Wispr's rule) ^A-104
+
+**Approved:** 2026-10-08, founder, asked whether the headline should take Wispr Flow's italic: *"yes slanted like
+wispr"*.
+**What specifically:** every big headline on the site is set in the display serif (Instrument Serif, already loaded),
+with the plain part upright and the human part in italic, one rule everywhere, as on wisprflow.ai ("Don't type,
+*just speak.*"). The hero: "Never lose a lead *because you forgot to follow up.*" (A-013 wording unchanged). Body text
+stays Public Sans.
+**Supersedes:** A-022's "no serif italic ('keep it plain')", for headlines only.
+**Evidence:** `research/landing-page/2026-10-08-four-favourites-teardown.md` (Wispr part 2, "seen in the screenshots").

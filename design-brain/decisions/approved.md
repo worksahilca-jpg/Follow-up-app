@@ -1948,3 +1948,13 @@ picture, the way Linear and Macro show their app. The option he picked said so i
 on the page; you said no dashboards before, so this would be the reply screen, not charts."*
 **Amends:** R-005 / R-009 in scope only: stats tiles, charts and dashboards stay out; the reply screen (a customer's
 message and the reply written for you) is now allowed as the hero picture.
+
+## A-107 — The first full page: "much better… I like the animations and stuff" ^A-107
+
+**Approved (direction, not final):** 2026-10-08, founder, on https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E:
+*"much better but we need improvement i like the animations and stuff no lets choose the colours first."*
+**What specifically was liked:** the page's motion as a whole: the real Today screen playing its story once on load
+(message arrives, reply types itself, Send, the undo line drains, "Sent from your Gmail") with Replay; the statement
+lighting up word by word as you scroll; the "How it works" picture changing with the step you read; the check-in line
+drawing across the week; the closing button growing as it arrives. Structure kept as the base.
+**Still open:** colours (being chosen next, on the page itself), and further improvement he hasn't named yet.

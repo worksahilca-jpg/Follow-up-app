@@ -1925,3 +1925,11 @@ with the plain part upright and the human part in italic, one rule everywhere, a
 stays Public Sans.
 **Supersedes:** A-022's "no serif italic ('keep it plain')", for headlines only.
 **Evidence:** `research/landing-page/2026-10-08-four-favourites-teardown.md` (Wispr part 2, "seen in the screenshots").
+
+## A-105 — First screen layout A: headline left, one big colour stage right ^A-105
+
+**Approved:** 2026-10-08, founder, on the "First impression" page: *"I like the A1, but I don't like the concept."*
+**What specifically (inferred from "A1", marked inferred):** option A's layout and look, not its idea: the italic
+headline (A-104) large on the left with the line, one pill button and the trust line; a big rounded colour stage on
+the right holding the hero's moving picture; plain paper ground; a simple top bar. Option B (centred, the clock) was
+not chosen.

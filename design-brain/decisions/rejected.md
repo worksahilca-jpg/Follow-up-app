@@ -705,3 +705,16 @@ email → "1 min" → reply cards small and low on a plain paper ground.
 **Inferred principle (marked inferred):** the first screen needs one big, living moment that fills the screen and
 makes you feel the problem and the relief, not text with a small diagram under it. Scale, depth and motion belong in
 the first screen, inside the guardrails (no dashboard hero R-005/R-009, no person photo R-011, no dark blue R-031).
+
+## R-034 — The hero concept "your pile, cleared" (option A's pile of emails) ^R-034
+
+**Rejected:** 2026-10-08, founder: *"I like the A1, but I don't like the concept. It is good, but no, it's kind of
+boring."*
+
+**What was rejected:** the idea inside A's stage: a pile of customer emails, the top one flipping to the reply, a Sent
+stamp, the Answered pile. The layout stays (A-105).
+
+**Inferred principle (marked inferred):** one customer and one reply, however animated, still reads as "a message and
+a reply", which he has now seen many times (R-028, R-033). The hero needs a bigger idea than a single exchange.
+Note R-009's own words for what he wanted the hero to show: "leads are being caught from the sources and FollowUp is
+warming every lead."

@@ -9376,3 +9376,13 @@ over it and the clock becomes "Answer ready · 1:00"; labelled "the clock runs f
 Both use pill buttons (approved) and the italic human phrase (A-104). The giant wordmark is gone from W1's footer.
 **Weak, honestly:** A's pile is a metaphor (Gmail has no pile); B's sped-up clock must stay labelled; both heroes
 show only the reply moment, not check-ins.
+
+## 2026-10-08 — First screen: A's layout approved (A-105), its pile concept rejected (R-034); two new concepts
+
+Both in A's layout. **A2 · "Every lead, warmed":** nine customers who wrote, in cool blue-grey ("No reply · 7 h",
+"Quiet · 4 days"); one by one each warms to peach as FollowUp answers, checks in or books ("Answered · 1 min",
+"Checked in · he replied", "Booked · Sat 11:00"), one hands a price to you with the orange dot. The brand's own
+warm/cool wash becomes the meaning: warm = followed up. Built from R-009's words ("FollowUp is warming every lead").
+**A3 · "See it for your business":** pick a trade (realtor, plumber, hair salon, dental clinic); that customer's
+email arrives and the reply is written in that owner's words; it cycles by itself. Note R-020 (the line under the
+headline never says who it's for): here the trades are examples to try, not a positioning line.

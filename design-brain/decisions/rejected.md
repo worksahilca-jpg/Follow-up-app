@@ -616,3 +616,19 @@ means the honest kind (value first, a tiny ask, the right moment, an easy "Not n
 countdowns or fake urgency (brand principles 1, 2 and 7).
 
 **Do not propose again:** any multi-question form between setup and the owner's first look at Today.
+
+## R-028 — D2 and D3 (2026-10-08): a tidier version of the current page ^R-028
+
+**Rejected:** 2026-10-08, founder, on the canvas: *"BRO I THINK WE ARE GETTING THERE"* then *"NOT"*; then, shown the
+eight reference sites side by side: *"i love all these websites. That's why I have given you the references."*
+
+**What was rejected:** the D2/D3 boards as a whole (`prototypes/2026-10-08-taste-d2-d3/`): the same white page, the
+same Public Sans, the same wash, the same layout, tidied (slower story, floating menu, two-tone headings, a serif in
+D3). Not any single element.
+
+**Inferred principle (marked inferred):** when the founder hands over bold references and says he wants "that
+taste", a careful refinement of what ships is not an answer; the change has to be visible at a glance (scale, a
+committed colour, a display face, depth behind the product). Keep the guardrails (R-005, R-009, R-011, R-017,
+R-018), but don't spend the boldness budget on caution.
+
+**Do not propose again:** a "same page, finished" option as the main answer to a request for a new look.

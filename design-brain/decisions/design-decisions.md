@@ -9176,3 +9176,30 @@ Instrument Serif is common on AI-startup pages and may read as template. (3) The
 white page (A-022); R-010 was about the page changing tone, but it is the founder's call. (4) "1 min" must stay true
 in practice. (5) "See how it works · 40 sec" needs a real recording. (6) The app boards change type, scale and
 surfaces; the density work (R-026) is untouched. (7) Two-tone headlines restyle A-013/A-022's headline.
+
+## 2026-10-08 — Three landing pages mixing all eight references (L1–L3; for the founder's pick, nothing built)
+
+Founder: *"i love all these websites… Can you draw just the landing page a bit from these references? Design two
+or three, mixing and matching all these references."* D2/D3 recorded as R-028 (too safe). The 45 screenshots went
+onto the canvas's References page. Three landing pages drawn on the "Landing L1–L3" page of the same canvas (copy in
+`prototypes/2026-10-08-landing-l1-l3/`); all keep the approved words (A-013 headline, A-081 lede and button, the four
+A-063 promises), "An example, not a real customer", and the guardrails (no dashboard hero R-005/R-009, no person photo
+R-011, no handwriting R-017, the reply never a black card R-018):
+- **L1 "The reply, big"** (Wispr + Stripe + Attio): white page; a very large serif headline (Instrument Serif,
+  already loaded) centred and two-tone; under it the R-014 concept made small and crafted on a hairline grid: her
+  email → a moving dot and a "FollowUp writes it · 1 min" pill → the reply on the wash, then Sent; three big serif
+  numbers in ruled columns; a **deep green** rounded block for How it works with a four-step list and a one-week
+  timeline card; the promises in a ruled 2×2 grid; a wash closing panel.
+- **L2 "Morning light"** (Mercury + Granola + Superhuman): a full-width dawn-sky first screen made only of gradients
+  (no photo), Public Sans at weight 480; frosted cards that arrive one by one (her email, the reply, she writes
+  back); a sticky chapter list in the owner's words with a scene on a soft sky panel per chapter; promises in one
+  ruled box; a sky closing panel.
+- **L3 "Spotlight"** (Macro + Linear): near-black page, serif headline in white with grey, a soft breathing glow, the
+  email and the reply on the dark wash (`globals.css` dark tokens), white primary button; chapters as big centred
+  statements where only the one in view is lit; serif numbers; promises in ruled serif lines.
+**Weak, honestly:** (1) L1's deep green and L2's sky are new colours (`[TO DECIDE]` tokens, founder's call). (2) L3 is
+a dark landing page; R-010 asked for "full black with dark mode and white with light", so L3 may be the dark-mode
+face of whichever page wins rather than a page of its own. (3) Instrument Serif is common on startup pages. (4)
+L2's sky is gradients only; a real photo or render would carry it further but costs money and reopens R-011's
+spirit if people appear. (5) Prices and Questions are left out of all three; they follow whichever wins. (6) "1 min"
+must stay true. (7) Phone versions not drawn yet.

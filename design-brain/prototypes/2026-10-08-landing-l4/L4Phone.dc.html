@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp landing, L4 on a phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#070a12}
+a{color:inherit}
+:focus-visible{outline:2px solid #f2b48a;outline-offset:3px}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rise{animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+@media (prefers-reduced-motion: reduce){.rise{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; box-sizing: border-box; padding: 12px 16px 0; background: linear-gradient(180deg, #070a12 0%, #0d1322 34%, #231f33 60%, #4e3540 80%, #b77b66 95%, #d9a184 100%); color: #f6efe6; font-family: 'Public Sans', system-ui, sans-serif; font-weight: 420; -webkit-font-smoothing: antialiased">
+<div aria-hidden="true" style="position: absolute; inset: auto 0 0 0; height: 55%; background: radial-gradient(70% 50% at 50% 100%, rgba(242,180,138,0.7), rgba(242,180,138,0) 70%); pointer-events: none"></div>
+<div aria-hidden="true" style="position: absolute; left: 50%; bottom: -300px; width: 680px; height: 680px; transform: translateX(-50%); border-radius: 999px; border: 1px solid rgba(255,255,255,0.07); pointer-events: none"></div>
+
+<nav aria-label="Main" style="position: relative; display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 6px 18px; background: rgba(20,22,32,0.55); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px">
+<span style="font-weight: 600; font-size: 16px">FollowUp</span>
+<span style="display: flex; gap: 4px; align-items: center">
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 999px; background: #f6efe6; color: #0a0a0a; font-size: 14.5px; font-weight: 500; text-decoration: none">Start free</a>
+<span role="img" aria-label="Menu" style="width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f6efe6" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 8h16M4 16h16"></path></svg></span>
+</span>
+</nav>
+
+<div style="position: relative; padding-top: 40px; text-align: center">
+<div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 9px; border: 1px solid rgba(255,255,255,0.16); border-radius: 999px; background: rgba(255,255,255,0.06); font-size: 13px; color: #e6dfd6"><span style="width: 7px; height: 7px; border-radius: 999px; background: #f2b48a"></span>For Gmail · free while in beta</div>
+<h1 style="margin: 20px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 52px; line-height: 0.95; letter-spacing: -0.025em; text-wrap: balance">Never lose a lead <span style="color: #a39a93">because you forgot to follow up.</span></h1>
+<p style="margin: 18px auto 0; max-width: 21em; font-size: 16px; line-height: 1.5; color: #c9c3bb">FollowUp answers the customers in your Gmail in your words, and hands you anything you decide.</p>
+<div style="margin-top: 22px; display: flex; flex-direction: column; gap: 8px">
+<a href="#start" style="display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 999px; background: #f6efe6; color: #0a0a0a; font-weight: 500; font-size: 16px; text-decoration: none">Connect Gmail, start free</a>
+<a href="#watch" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); font-size: 16px; text-decoration: none">See how it works · 40 sec</a>
+</div>
+</div>
+
+<div role="img" aria-label="An example: a customer's email at night and the reply FollowUp wrote." style="position: relative; margin-top: 26px; display: flex; flex-direction: column; gap: 10px">
+<div style="align-self: flex-start; max-width: 270px; background: rgba(255,255,255,0.1); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.18); border-radius: 18px; padding: 12px 14px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #d9d2c9">Gmail · 11:48 PM</div>
+<p style="margin: 6px 0 0; font-size: 14.5px; line-height: 1.45">Is the 3-bedroom on Maple Street still available?</p>
+</div>
+<sc-if value="{{ showReply }}" hint-placeholder-val="{{ true }}">
+<div class="rise" style="align-self: flex-end; max-width: 300px; background: rgba(255,248,240,0.86); backdrop-filter: blur(22px); border-radius: 20px; padding: 14px 16px; color: #0a0a0a">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">In your words · waits for your OK</div>
+<p style="margin: 6px 0 0; font-size: 15px; line-height: 1.45">Hi Priya, yes, it's still available. Would Saturday morning work for a viewing?</p>
+</div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  state = { beat: 1 };
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    this.timer = setInterval(() => {
+      this.setState({ beat: this.state.beat >= 2 ? 0 : this.state.beat + 1 });
+    }, 3200);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    return { showReply: this.state.beat >= 1 };
+  }
+}
+</script>
+</body>
+</html>

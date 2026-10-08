@@ -9203,3 +9203,33 @@ face of whichever page wins rather than a page of its own. (3) Instrument Serif 
 L2's sky is gradients only; a real photo or render would carry it further but costs money and reopens R-011's
 spirit if people appear. (5) Prices and Questions are left out of all three; they follow whichever wins. (6) "1 min"
 must stay true. (7) Phone versions not drawn yet.
+
+## 2026-10-08 — L4: the founder's own mix (drawn for the founder's pick, nothing built)
+
+Founder: *"Can you mix Wispr, Linear, Superhuman, Mercury, and Macro? And a little bit of Alto, too. Hints from
+Granola as well."* "Alto" was read as **Attio** (one of the eight references; there is no Alto in the set) and said
+so in the reply. Drawn on the "L4 · The mix" page of the same canvas (copy in `prototypes/2026-10-08-landing-l4/`).
+What each reference gave (principle, not pixels):
+- **Superhuman + Mercury:** a cinematic first screen made only of gradients: night sky at the top, a warm dawn glow
+  at the horizon with faint rings. White serif headline, frosted cards that arrive one by one (her email at 11:48 PM →
+  the reply in the owner's words, waiting for OK → Sent at 7:02 AM → she writes back). The page literally goes from
+  night to morning.
+- **Linear + Mercury:** the dawn fades into the paper and the page "pushes in" to the real product, shown big and
+  bleeding off the right edge: Today with four customers and the written reply on the wash (below the hero, so
+  R-005/R-009 hold).
+- **Wispr:** big serif type throughout and one committed colour block (deep night-blue `#111a2e`) for How it works,
+  with the chapter list and a one-week timeline card.
+- **Granola:** the floating frosted menu pill; chapters named from the customer's side ("When they write", "While
+  you're busy", "When they go quiet", "When they come back").
+- **Macro:** a black band of three big statements with only one lit.
+- **Attio:** two-tone headings everywhere, hairline-ruled numbers and a hairline 2×2 promise grid, Pause all sending.
+- A dawn closing panel ("Wake up to replies already written.") echoes the hero.
+Approved words kept: A-013 headline, A-081 button pair, A-063 promises, "An example, not a real customer" logic (the
+hero's cards are an example; aria label says so).
+**Weak, honestly:** (1) dark hero → paper → navy block → black band → paper → dark close is a lot of tone changes;
+R-010 and A-022 (white page) are in tension with it; founder's call. (2) Night-blue `#111a2e`, the dawn gradient
+and the peach `#f2b48a` are new colours (`[TO DECIDE]`). (3) The reply card in the hero is frosted cream, not the
+wash; it is not black (R-018 holds) but it is a new surface. (4) Instrument Serif is common on AI-startup pages.
+(5) The hero's visible "An example" caption is only in the aria label; it needs a visible line before it ships.
+(6) "1 min" and "40 sec" must be true. (7) Prices and Questions still left out. (8) Phone shows the first screen
+only.

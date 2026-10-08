@@ -1961,6 +1961,9 @@ drawing across the week; the closing button growing as it arrives. Structure kep
 
 ## A-108 — The light-first page, and its colours from FollowUp's own soft colours ^A-108
 
+**QUESTIONED (2026-10-08):** the founder said *"I don't like the theme"* on the type-first opening; see R-042 and
+the options page in `design-decisions.md`. Light-first itself was not questioned.
+
 **Approved:** 2026-10-08, founder, on the light-first version of https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E:
 *"yes its good and we use that soft colours too so can we make those soft colours with our stuff."*
 **What specifically:** the light-first page (white ground, ink text, the app on a soft panel, one band at the end) is

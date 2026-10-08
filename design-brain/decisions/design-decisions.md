@@ -9702,3 +9702,24 @@ v8) and the reply-flow page (https://claude.ai/artifact/UpeWaG55sBhBLM19CYQN75, 
 **Weak, honestly:** the visitor's replies are canned; a free-form question can get a generic answer. On the real
 site this could be FollowUp actually writing the reply (with a daily cap), which is a product and cost decision.
 On a phone the stream's sides are reduced to three initials under "Waiting".
+
+## 2026-10-08 — Opening options: 3 layouts × 4 colours, with smoother motion
+
+After R-042 (*"our idea is fire"*, but the theme and the organisation of the first screen are not right; asked, he
+said "show me" for both) and *"we need to add a bit more animations, smooth animations like Wispr and Macro have,
+and the transition, like the button click"*.
+**Built:** https://claude.ai/artifact/4CTFfFCnWd9avFeJ5uLQC5 (copy in `prototypes/2026-10-08-opening-options/`). One
+working opening (A-109/A-110), switched from a bar at the bottom:
+- **Layouts.** 1 *Headline first*: only the headline and the box fill the first screen; on Send the stream slides up
+  under them. 2 *Side by side*: headline, one line and the box on the left; the stream on the right. 3 *Two
+  screens*: the headline alone, very large; "Try it yourself ↓"; then the box and the stream.
+- **Colours.** A *Now* (the soft wash, for comparison). B *Clean white* (white, black, the orange "needs you" dot,
+  depth from shadows only). C *Sage green* (the app's own green #0d6e3c: a deep green stage, white cards, mint
+  replies, green buttons and headline italic). D *Black stage* (white page, one black stage, white cards).
+- **Motion (Wispr/Macro-like, no shine):** the headline's words rise in one by one; the box and stage follow; buttons
+  spring on hover and press; Send's arrow launches; the typed question flies from the box into the middle card;
+  the Sent tick draws itself; the Answered count rolls; cards glide with a softer ease; the "how it helps" cards
+  rise in as you reach them. All of it off with reduced motion.
+**Recommendation given:** layout 1 with colour C: the hook owns the screen, and green is FollowUp's own "sent"
+colour, so the site and the app read as one product. **Weak, honestly:** layout 2 shows only the middle card of the
+stream (no room for its sides); layout 3 asks for a scroll before anything moves.

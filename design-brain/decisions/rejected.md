@@ -820,3 +820,16 @@ have something flowing according to their concept."
 The first look has to be the act of replying itself, moving and catchy, and the visitor should be able to touch it.
 Static type (1, 4), a diagram (2) and a still phone (3) all read as "about" the product, not the product working.
 **Do not propose again:** type-only openings; a timeline diagram as the opening; a phone mockup as the whole idea.
+
+## R-042 — The soft peach-and-blue theme on the type-first opening; the headline lost among things ^R-042
+
+**Rejected (in doubt):** 2026-10-08, founder, on the type-first opening (home v8): *"Bro, our idea is fire. Now, the
+colour… I think I'm a bit confused because I don't like the theme, and also 'never lose a lead because you forgot
+to follow' is a bit like hiding from all these things. We have to do something, like organise it in another way."*
+**What:** the A-108 soft wash (peach, blue and rose together) as the opening's colours, and the stacked layout
+where the headline, the box and the full stream all compete on one screen. The idea itself (A-109, A-110) is not
+in doubt: "our idea is fire".
+**Asked:** what bothers him about the colours (too many, too pale, wants dark) → *"Not sure, show me"*; how to
+organise the first screen → *"Show me options"*. So no principle is recorded yet; the options page answers it.
+**Inferred, marked inferred:** three hues at once reads as a theme, not a brand; the headline needs room to be the
+hook (his comment earlier the same day: the hook first, the box second).

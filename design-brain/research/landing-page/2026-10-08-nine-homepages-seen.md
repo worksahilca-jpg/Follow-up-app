@@ -13,7 +13,9 @@ canvas, motion libraries, running animations, page length) and notes on motion, 
 Limits it stated: motion noted from repeated stills, not recordings; Superhuman, Mercury and followupbase.io refuse
 framing, so their phone views are HTML copies (Mercury's first screen only); the orange `rgba(217, 119, 87…)` shadows
 are Chrome's own outline; macro.com's page height reads 1 because it scrolls inside a box (really about 11 screens).
-The screenshots were not viewed in this session (the Drive reader returns the text); the facts and notes were.
+The screenshots were then seen too, from the founder's PDF export of the Doc; all 45 sit on the References page of the
+private design canvas (claude.ai/artifact/Wtq91Jo56vW8fBzTxUWdgH), one board per site, and are deliberately not stored in
+this repository (other companies' pages, as with the logos in `references/design-systems/2026-09-27-reference-company-logos.md`).
 **Principles only.** No screen, layout, phrase or asset is to be reproduced (S-16).
 
 **Sites:** wisprflow.ai, granola.ai, linear.app, attio.com, superhuman.com, macro.com, stripe.com, mercury.com, and

@@ -796,3 +796,12 @@ small details. Our boards had none of the four: they were text-only scenes, stat
 scroll-drive, five at a time and fast. More rounds of the same method will not close the gap.
 
 **Do not propose again:** another batch of quick canvas options as the answer to "make it look like the references".
+
+## R-040 — All five palettes on the full page ^R-040
+
+**Rejected:** 2026-10-08, founder, after trying the picker on https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E:
+*"not any of these."*
+**What was rejected:** 1 Ink and paper, 2 Forest and lime, 3 Plum and lilac, 4 Wine and rose, 5 Black and orange.
+**Inferred (marked inferred):** all five were dark-first (a dark first screen and a dark close, light only in the
+middle). His favourite, Wispr, is light-first; the app's own ground is white (A-090); he has called black "too much"
+before (R-018) and loved a black-to-white page only once (A-009). The miss may be the darkness, not the hue. Asked.

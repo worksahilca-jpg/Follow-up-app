@@ -9750,3 +9750,16 @@ Following A-113. **Built:** https://claude.ai/artifact/91FEmxYBCMMTKk7NCHszXj (c
   card, Apricot 7×).
 **Weak, honestly:** the in-card Send is black (product UI) while website buttons are mint; Sky is defined but not yet
 on a section of this page; the "border with a lot of things" is still to come from the founder.
+
+## 2026-10-08 — Theme v1 (A-114) put on the whole home page, for the founder to confirm
+
+After *"colours are good bro"* (A-114) the founder asked *"what are the reason behind this"*; answered in chat, one
+line per colour (paper = calm and human, not software-white; ink = readable words; forest = the app's "sent"
+green, so the site says "answered" without words; mint = only buttons, so the next step is found at once; apricot
+= warmth for human moments; sky = calm for control and questions; orange = "your turn", as in the app; matte
+one-colour gradients = depth without cheap shine). Then: *"let me just confirm then we will redesign it around
+that."* **Done (recolour only, no redesign):** https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v9: the two-screen
+opening (A-112) with the theme; paper sections; How it works on a Sky stage; the quiet thread on an Apricot stage;
+Your control's switch on Sky; the Today screen on a Forest bed; the close as a Forest block with a Mint button; the
+colour picker gone. **Waiting:** his confirmation, then a section-by-section redesign around the theme (A-111),
+and the "border" idea.

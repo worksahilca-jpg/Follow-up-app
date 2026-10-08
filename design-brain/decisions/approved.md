@@ -2037,3 +2037,12 @@ blocks with big corners alternating with paper; gradients only inside one colour
 (lighter where the light falls, deeper underneath) for a soft 3D feel. **Still excluded:** shine, glows, glossy
 highlight edges (R-036), several hues blended in one gradient (R-042).
 **Supersedes in part:** A-108's soft peach-and-blue wash (already questioned by R-042). Light-first stays.
+
+## A-114 — Theme v1 colours ^A-114
+
+**Approved:** 2026-10-08, founder, on https://claude.ai/artifact/91FEmxYBCMMTKk7NCHszXj: *"colours are good bro"*.
+**What specifically:** the six colours and their jobs: Paper `#F8F6F1` (page), Ink `#0E0E0C` (words), Forest
+`#0F4A33` lit from the top left (heavy blocks), Mint `#CDEFD9` (only buttons), Apricot `#F4C49E` (warm highlights),
+Sky `#DCE6F3` (calm light blocks), with Sent `#0D6E3C` and Needs you `#C96A1B` kept as meanings; the matte 3D
+treatment (one-colour gradients lit from above, pressable buttons, lifted cards, the stream curving toward the
+middle). Supersedes A-108's colours (the soft peach-and-blue wash).

@@ -1,4 +1,5 @@
 <title>FollowUp Home</title>
+<script>document.documentElement.setAttribute('data-lay', '3'); document.documentElement.setAttribute('data-col', 'f');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
@@ -262,40 +263,50 @@ footer a:hover { color: var(--moon) }
 
 
 /* ---- opening: the reply flow, type-first ---- */
+:root {
+  --fl-hero-bg: radial-gradient(55% 62% at 10% 0%, rgba(244,196,160,.55), rgba(244,196,160,0) 70%), radial-gradient(50% 60% at 92% 4%, rgba(196,210,228,.75), rgba(196,210,228,0) 70%), radial-gradient(40% 40% at 55% -8%, rgba(238,212,204,.6), rgba(238,212,204,0) 72%), var(--paper);
+  --fl-river-bg: radial-gradient(60% 85% at 8% 0%, rgba(240,180,142,.85), rgba(240,180,142,0) 70%), radial-gradient(60% 95% at 96% 100%, rgba(158,182,214,.9), rgba(158,182,214,0) 70%), radial-gradient(45% 70% at 62% 0%, rgba(232,194,184,.75), rgba(232,194,184,0) 72%), #ece5de; --fl-river-shadow: inset 0 40px 60px -56px rgba(10,10,10,.4);
+  --fl-zone-fg: var(--ink-soft); --fl-zone-strong: var(--ink); --fl-meta: var(--ink-soft); --fl-meta-b: var(--ink); --fl-meta-faint: var(--ink-faint);
+  --fl-q-bg: var(--paper); --fl-q-fg: var(--ink); --fl-a-bg: var(--ink); --fl-a-fg: #fff; --fl-la-bg: var(--ink); --fl-la-fg: #fff;
+  --fl-tag-good: var(--good); --fl-tag-needs: var(--dot); --fl-btn: var(--ink); --fl-btn-fg: #fff; --fl-em: var(--ink-soft);
+  --fl-avs-bg: rgba(255,255,255,.8); --fl-avs-fg: var(--ink);
+  --fl-fact-bg: radial-gradient(70% 90% at 12% 10%, rgba(240,180,142,.8), rgba(240,180,142,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(158,182,214,.85), rgba(158,182,214,0) 70%), #ece5de; --fl-fact-fg: var(--ink); --fl-fact-soft: var(--ink-soft);
+  --fl-spring: cubic-bezier(.34, 1.56, .64, 1); --fl-out: cubic-bezier(.22, 1, .36, 1);
+}
 .fl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
-.fl-hero { --fl-slot: 262px; --fl-gap: 26px; --fl-lens: 430px; padding-top: calc(68px + env(safe-area-inset-top, 0px) + clamp(18px, 4vh, 44px)); padding-bottom: 36px; color: var(--ink); background: radial-gradient(55% 62% at 10% 0%, rgba(244,196,160,.55), rgba(244,196,160,0) 70%), radial-gradient(50% 60% at 92% 4%, rgba(196,210,228,.75), rgba(196,210,228,0) 70%), radial-gradient(40% 40% at 55% -8%, rgba(238,212,204,.6), rgba(238,212,204,0) 72%), var(--paper) }
+.fl-hero { --fl-slot: 262px; --fl-gap: 26px; --fl-lens: 430px; padding-top: calc(68px + env(safe-area-inset-top, 0px) + clamp(18px, 4vh, 44px)); padding-bottom: 36px; color: var(--ink); background: var(--fl-hero-bg) }
 .fl-h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(46px, 6.1vw, 94px); line-height: .9; letter-spacing: -.04em; text-align: center; text-wrap: balance; max-width: 20ch; margin: 0 auto }
-.fl-h1 em { font-style: italic; color: var(--ink-soft) }
-.fl-ask { position: relative; margin: clamp(22px, 3.6vh, 34px) auto 0; max-width: 760px; display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 8px 8px 8px 10px; border-radius: 999px; background: var(--paper); box-shadow: 0 0 0 1.5px var(--ink), 0 24px 50px -30px rgba(10,10,10,.45) }
+.fl-h1 em { font-style: italic; color: var(--fl-em) }
+.fl-ask { transition: box-shadow .3s ease, transform .45s var(--fl-out); position: relative; margin: clamp(22px, 3.6vh, 34px) auto 0; max-width: 760px; display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 8px 8px 8px 10px; border-radius: 999px; background: var(--paper); box-shadow: 0 0 0 1.5px var(--ink), 0 24px 50px -30px rgba(10,10,10,.45) }
 .fl-ask:focus-within { box-shadow: 0 0 0 2.5px var(--ink), 0 24px 50px -30px rgba(10,10,10,.45) }
 .fl-you { flex: none; width: 46px; height: 46px; border-radius: 999px; display: grid; place-items: center; background: var(--stage); font-size: 12.5px; font-weight: 650 }
 .fl-ask input { flex: 1; min-width: 0; height: 50px; border: 0; outline: 0; background: none; font: inherit; font-size: clamp(16px, 1.4vw, 19px); color: var(--ink) }
 .fl-ask input::placeholder { color: #8a847d }
-.fl-go { font: inherit; flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 22px 0 18px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 15.5px; cursor: pointer; transition: transform .15s ease }
-.fl-go:hover { transform: translateY(-1px) }
+.fl-go { font: inherit; flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 22px 0 18px; border: 0; border-radius: 999px; background: var(--fl-btn); color: var(--fl-btn-fg); font-weight: 600; font-size: 15.5px; cursor: pointer }
 .fl-hint { margin: 12px 0 0; text-align: center; font-size: 14.5px; color: var(--ink-faint) }
-.fl-river { position: relative; margin-top: clamp(22px, 3.4vh, 34px); height: 404px; border-radius: 32px; overflow: hidden; background: radial-gradient(60% 85% at 8% 0%, rgba(240,180,142,.85), rgba(240,180,142,0) 70%), radial-gradient(60% 95% at 96% 100%, rgba(158,182,214,.9), rgba(158,182,214,0) 70%), radial-gradient(45% 70% at 62% 0%, rgba(232,194,184,.75), rgba(232,194,184,0) 72%), #ece5de; box-shadow: inset 0 40px 60px -56px rgba(10,10,10,.4) }
-.fl-zone { position: absolute; top: 22px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft) }
+.fl-river { position: relative; margin-top: clamp(22px, 3.4vh, 34px); height: 404px; border-radius: 32px; overflow: hidden; background: var(--fl-river-bg); box-shadow: var(--fl-river-shadow) }
+.fl-zone { position: absolute; top: 22px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--fl-zone-fg) }
 .fl-zone.is-l { left: 28px } .fl-zone.is-r { right: 28px }
-.fl-zone b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums }
+.fl-zone b { display: inline-block; font-weight: 500; color: var(--fl-zone-strong); font-variant-numeric: tabular-nums }
 .fl-zone i { width: 26px; height: 1px; background: currentColor; opacity: .5 }
 .fl-avs { display: none; gap: 4px }
-.fl-avs span { width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; background: rgba(255,255,255,.8); font-family: var(--sans); font-size: 10.5px; font-weight: 650; letter-spacing: 0; color: var(--ink) }
+.fl-avs span { width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; background: var(--fl-avs-bg); font-family: var(--sans); font-size: 10.5px; font-weight: 650; letter-spacing: 0; color: var(--fl-avs-fg) }
 .fl-track { position: absolute; inset: 0; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%) }
-.fl-slot { position: absolute; top: 92px; left: 0; width: var(--fl-slot); transform-origin: 50% 0; transition: transform .9s var(--ease), opacity .7s ease; will-change: transform }
+.fl-slot { position: absolute; top: 92px; left: 0; width: var(--fl-slot); transform-origin: 50% 0; transition: transform 1s var(--fl-out), opacity .8s ease; will-change: transform }
 .fl-slot .fl-q { box-shadow: 0 0 0 1px rgba(10,10,10,.04), 0 18px 32px -22px rgba(10,10,10,.4) }
 .fl-slot .fl-a { box-shadow: 0 18px 32px -20px rgba(10,10,10,.55) }
 .fl-slot.is-instant { transition: none }
-.fl-meta { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-soft); white-space: nowrap; overflow: hidden }
-.fl-meta b { color: var(--ink); font-weight: 650 }
-.fl-meta .mono { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint) }
-.fl-q { margin-top: 8px; padding: 12px 15px; border-radius: 18px 18px 18px 6px; background: var(--paper); font-size: 15px; line-height: 1.38; box-shadow: 0 0 0 1px rgba(10,10,10,.05); overflow-wrap: anywhere }
+.fl-meta { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--fl-meta); white-space: nowrap; overflow: hidden }
+.fl-meta b { color: var(--fl-meta-b); font-weight: 650 }
+.fl-meta .mono { font-family: var(--mono); font-size: 11.5px; color: var(--fl-meta-faint) }
+.fl-lens .fl-meta { color: var(--ink-soft) } .fl-lens .fl-meta b { color: var(--ink) } .fl-lens .fl-meta .mono { color: var(--ink-faint) }
+.fl-q { margin-top: 8px; padding: 12px 15px; border-radius: 18px 18px 18px 6px; background: var(--fl-q-bg); color: var(--fl-q-fg); font-size: 15px; line-height: 1.38; box-shadow: 0 0 0 1px rgba(10,10,10,.05); overflow-wrap: anywhere }
 .fl-q.is-quiet { background: rgba(255,255,255,.55); color: var(--ink-soft); box-shadow: 0 0 0 1px rgba(10,10,10,.08) inset }
-.fl-a { margin: 10px 0 0 28px; padding: 12px 15px; border-radius: 18px 18px 6px 18px; background: var(--ink); color: #fff; font-size: 15px; line-height: 1.38 }
+.fl-a { margin: 10px 0 0 28px; padding: 12px 15px; border-radius: 18px 18px 6px 18px; background: var(--fl-a-bg); color: var(--fl-a-fg); font-size: 15px; line-height: 1.38 }
 .fl-blank { display: inline-block; min-width: 2.6em; border-bottom: 1.5px solid currentColor; opacity: .85 }
-.fl-tag { margin: 8px 0 0 28px; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 650; color: var(--good) }
-.fl-tag.is-needs { color: var(--dot) }
-.fl-tag.is-needs::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--dot) }
+.fl-tag { margin: 8px 0 0 28px; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 650; color: var(--fl-tag-good) }
+.fl-tag.is-needs { color: var(--fl-tag-needs) }
+.fl-tag.is-needs::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: currentColor }
 .fl-lens { position: absolute; z-index: 2; top: 60px; left: 50%; width: var(--fl-lens); margin-left: calc(var(--fl-lens) / -2); min-height: 296px; padding: 18px 22px 20px; border-radius: 26px; background: var(--paper); box-shadow: 0 0 0 1px rgba(10,10,10,.05), 0 24px 40px -26px rgba(10,10,10,.3), 0 60px 100px -46px rgba(10,10,10,.5) }
 .fl-lhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line) }
 .fl-lbrand { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; font-size: 14px }
@@ -305,22 +316,22 @@ footer a:hover { color: var(--moon) }
 .fl-status.is-ok { color: var(--good) } .fl-status.is-ok i { background: var(--good) }
 .fl-status.is-needs { color: var(--dot) } .fl-status.is-needs i { background: var(--dot) }
 @keyframes fl-pulse { 50% { transform: scale(.6) } }
-.fl-lbody { padding-top: 14px; transition: opacity .22s ease }
-.fl-lbody.is-fade { opacity: 0 }
-.fl-lens .fl-q { font-size: 16.5px; background: var(--stage); box-shadow: none }
+.fl-lbody { padding-top: 14px; transition: opacity .28s ease, transform .4s var(--fl-out) }
+.fl-lbody.is-fade { opacity: 0; transform: translateY(8px) }
+.fl-lens .fl-q { font-size: 16.5px; background: var(--stage); color: var(--ink); box-shadow: none }
 .fl-lens .fl-q.is-quiet { background: transparent; box-shadow: 0 0 0 1px var(--line) inset }
 .fl-lens .fl-q.is-ghost { color: #8a847d }
-.fl-lens .fl-a { margin-left: 44px; font-size: 16.5px; min-height: 48px }
+.fl-lens .fl-a { margin-left: 44px; font-size: 16.5px; min-height: 48px; background: var(--fl-la-bg); color: var(--fl-la-fg) }
 .fl-lens .fl-a.is-hide { visibility: hidden }
 .fl-lens .fl-a.is-ghost { background: transparent; color: #8a847d; box-shadow: 0 0 0 1.5px #d6d0c9 inset; font-size: 14.5px }
 .fl-caret { display: inline-block; width: 2px; height: 1.05em; margin-left: 2px; vertical-align: -2px; background: currentColor; animation: fl-blink 1s steps(1) infinite }
 .fl-q .fl-caret { background: var(--ink) }
 @keyframes fl-blink { 50% { opacity: 0 } }
-.fl-dots { display: inline-flex; gap: 4px; padding: 6px 0 } .fl-dots i { width: 6px; height: 6px; border-radius: 999px; background: #fff; animation: fl-dot 1s ease-in-out infinite } .fl-dots i:nth-child(2) { animation-delay: .15s } .fl-dots i:nth-child(3) { animation-delay: .3s }
+.fl-dots { display: inline-flex; gap: 4px; padding: 6px 0 } .fl-dots i { width: 6px; height: 6px; border-radius: 999px; background: currentColor; animation: fl-dot 1s ease-in-out infinite } .fl-dots i:nth-child(2) { animation-delay: .15s } .fl-dots i:nth-child(3) { animation-delay: .3s }
 @keyframes fl-dot { 0%, 100% { opacity: .3; transform: translateY(0) } 50% { opacity: 1; transform: translateY(-2px) } }
 .fl-lfoot { margin-top: 14px; margin-left: 44px; min-height: 40px; display: flex; align-items: center; gap: 12px }
-.fl-send { font: inherit; display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 14.5px; transition: transform .15s ease, opacity .25s ease }
-.fl-send.is-press { transform: scale(.93) }
+.fl-send { font: inherit; display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--fl-btn); color: var(--fl-btn-fg); font-weight: 600; font-size: 14.5px; transition: transform .45s var(--fl-spring), opacity .25s ease }
+.fl-send.is-press { transform: scale(.88); transition-duration: .12s }
 .fl-send.is-hide, .fl-note.is-hide { opacity: 0 }
 .fl-note { font-size: 13px; color: var(--ink-faint); transition: opacity .25s ease }
 .fl-sent { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; font-size: 14.5px; color: var(--good); animation: fl-rise .35s var(--ease) both }
@@ -331,7 +342,7 @@ footer a:hover { color: var(--moon) }
 .fl-next { display: flex; align-items: center; gap: 12px 18px; flex-wrap: wrap; font-size: 16px; color: var(--ink-soft); opacity: 0; transform: translateY(6px); transition: opacity .5s ease, transform .5s var(--ease); pointer-events: none }
 .fl-next.is-on { opacity: 1; transform: none; pointer-events: auto }
 .fl-next b { color: var(--ink); font-weight: 600 }
-.fl-cta { display: inline-flex; align-items: center; min-height: 50px; padding: 0 24px; border-radius: 999px; background: var(--ink); color: var(--paper); font-weight: 600; font-size: 15.5px; text-decoration: none }
+.fl-cta { display: inline-flex; align-items: center; min-height: 50px; padding: 0 24px; border-radius: 999px; background: var(--fl-btn); color: var(--fl-btn-fg); font-weight: 600; font-size: 15.5px; text-decoration: none }
 .fl-side { display: flex; align-items: center; gap: 14px; margin-left: auto }
 .fl-ex { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
 .fl-ctl { font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); background: none; border: 1px solid #d8d3cd; border-radius: 999px; min-height: 36px; padding: 0 14px; cursor: pointer }
@@ -349,6 +360,70 @@ footer a:hover { color: var(--moon) }
   .fl-lens .fl-a, .fl-lfoot { margin-left: 20px }
   .fl-slot { top: 84px }
 }
+
+/* colours: A is today's soft colours; B clean white; C the app's sage green; D a black stage */
+html[data-col="b"] { --fl-hero-bg: var(--paper); --fl-river-bg: #f1f0ee; --fl-river-shadow: inset 0 0 0 1px rgba(10,10,10,.05); --fl-fact-bg: #f1f0ee }
+html[data-col="c"] { --fl-hero-bg: radial-gradient(60% 60% at 50% 0%, rgba(220,245,229,.95), rgba(220,245,229,0) 72%), var(--paper);
+  --fl-river-bg: radial-gradient(70% 90% at 14% 0%, #157a4b, rgba(21,122,75,0) 70%), #0b4a2c; --fl-river-shadow: inset 0 40px 70px -50px rgba(0,0,0,.5);
+  --fl-zone-fg: #bfe3cd; --fl-zone-strong: #fff; --fl-meta: #bfe3cd; --fl-meta-b: #fff; --fl-meta-faint: #9ccbb0;
+  --fl-a-bg: #dcf5e5; --fl-a-fg: #0b2a1a; --fl-la-bg: #0d6e3c; --fl-la-fg: #fff; --fl-tag-good: #a8e6bf; --fl-tag-needs: #f6b06b;
+  --fl-btn: #0d6e3c; --fl-em: #0d6e3c; --fl-avs-bg: rgba(255,255,255,.16); --fl-avs-fg: #fff;
+  --fl-fact-bg: radial-gradient(80% 90% at 12% 10%, #c9eed7, rgba(201,238,215,0) 70%), #eef7f1 }
+html[data-col="d"] { --fl-hero-bg: var(--paper); --fl-river-bg: radial-gradient(70% 90% at 20% 0%, #2a2a2a, rgba(42,42,42,0) 70%), #0c0c0c; --fl-river-shadow: none;
+  --fl-zone-fg: #a8a29e; --fl-zone-strong: #fff; --fl-meta: #a8a29e; --fl-meta-b: #fff; --fl-meta-faint: #8a847d;
+  --fl-q-bg: #1f1f1f; --fl-q-fg: #f5f5f4; --fl-a-bg: #ffffff; --fl-a-fg: #0a0a0a; --fl-tag-good: #86d3a0; --fl-tag-needs: #f2a35e;
+  --fl-avs-bg: rgba(255,255,255,.14); --fl-avs-fg: #fff; --fl-fact-bg: radial-gradient(70% 90% at 20% 0%, #2a2a2a, rgba(42,42,42,0) 70%), #0c0c0c; --fl-fact-fg: #fff; --fl-fact-soft: #a8a29e }
+html[data-col="d"] .fl-slot .fl-q.is-quiet, html[data-col="c"] .fl-slot .fl-q.is-quiet { background: rgba(255,255,255,.1); color: #e7e5e4; box-shadow: 0 0 0 1px rgba(255,255,255,.14) inset }
+
+/* layouts: none = stacked (the home page today); 1 = the headline owns the first screen; 2 = side by side; 3 = two screens */
+.fl-sub, .fl-cue { display: none }
+html[data-lay="1"] .fl-intro { min-height: calc(100svh - 68px - 110px); display: flex; flex-direction: column; justify-content: center; transition: min-height 1s var(--fl-out) }
+html[data-lay="1"] .fl-h1 { font-size: clamp(50px, 7.4vw, 116px) }
+html[data-lay="1"] .fl-stage { max-height: 0; opacity: 0; transform: translateY(56px); overflow: hidden; transition: max-height 1.1s var(--fl-out), opacity .8s ease, transform 1.1s var(--fl-out) }
+html[data-lay="1"] .fl-hero.is-open .fl-intro { min-height: 0 }
+html[data-lay="1"] .fl-hero.is-open .fl-stage { max-height: 660px; opacity: 1; transform: none }
+html[data-lay="2"] .fl-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 620px); gap: 32px 56px; align-items: center; min-height: calc(100svh - 68px - 90px) }
+html[data-lay="2"] .fl-h1 { text-align: left; margin: 0; font-size: clamp(44px, 5.4vw, 86px); max-width: 11ch }
+html[data-lay="2"] .fl-sub { display: block; margin-top: 22px; font-size: 19px; line-height: 1.5; color: var(--ink-soft); max-width: 30ch }
+html[data-lay="2"] .fl-ask { margin: 30px 0 0 }
+html[data-lay="2"] .fl-hint { text-align: left; padding-left: 8px }
+html[data-lay="2"] .fl-river { margin-top: 0; height: 470px }
+html[data-lay="2"] .fl-hero { --fl-lens: min(440px, calc(100vw - 2 * var(--gut) - 40px)) }
+html[data-lay="2"] .fl-zone i { display: none } html[data-lay="2"] .fl-avs { display: inline-flex }
+html[data-lay="3"] .fl-head { position: relative; min-height: calc(100svh - 68px - 150px); display: flex; flex-direction: column; justify-content: center; align-items: center }
+html[data-lay="3"] .fl-h1 { font-size: clamp(46px, 6.6vw, 108px); max-width: 15ch }
+html[data-lay="3"] .fl-cue { display: inline-flex; position: absolute; bottom: 0; align-items: center; gap: 10px; min-height: 44px; padding: 0 18px; border-radius: 999px; font-size: 14.5px; font-weight: 600; text-decoration: none; color: var(--ink); background: var(--paper); box-shadow: 0 0 0 1px var(--line), 0 18px 36px -24px rgba(10,10,10,.4); animation: fl-bob 2.6s ease-in-out infinite }
+html[data-lay="3"] .fl-try { padding-top: 64px }
+@keyframes fl-bob { 50% { transform: translateY(6px) } }
+@media (max-width: 1000px) {
+  html[data-lay="2"] .fl-grid { grid-template-columns: minmax(0, 1fr); min-height: 0 }
+  html[data-lay="2"] .fl-h1, html[data-lay="2"] .fl-sub { text-align: center; margin-inline: auto }
+  html[data-lay="2"] .fl-hint { text-align: center; padding: 0 }
+}
+
+/* motion: words rise in, the box and the stage follow, buttons spring, the tick draws, the count rolls */
+.fl-w { display: inline-block; animation: fl-word .95s var(--fl-out) both; animation-delay: calc(var(--i) * 55ms + 120ms) }
+@keyframes fl-word { from { opacity: 0; transform: translateY(.42em); filter: blur(6px) } to { opacity: 1; transform: none; filter: blur(0) } }
+.fl-try { animation: fl-up .9s var(--fl-out) .6s both }
+.fl-sub { animation: fl-up .9s var(--fl-out) .5s both }
+.fl-stage > .fl-river { animation: fl-up 1.1s var(--fl-out) .8s both }
+@keyframes fl-up { from { opacity: 0; transform: translateY(26px) } to { opacity: 1; transform: none } }
+.fl-go, .fl-cta { transition: transform .45s var(--fl-spring), background .2s ease }
+.fl-go:hover, .fl-cta:hover { transform: translateY(-2px) }
+.fl-go:active, .fl-cta:active { transform: scale(.94); transition-duration: .1s }
+.fl-ask:focus-within { transform: translateY(-1px) }
+.fl-go.is-launch svg { animation: fl-launch .65s var(--fl-out) }
+@keyframes fl-launch { 0% { transform: none; opacity: 1 } 40% { transform: translateY(-16px); opacity: 0 } 41% { transform: translateY(14px); opacity: 0 } 100% { transform: none; opacity: 1 } }
+.fl-ghost { position: fixed; z-index: 60; pointer-events: none; margin: 0; padding: 12px 15px; border-radius: 18px 18px 18px 6px; background: var(--stage); color: var(--ink); font-size: 16.5px; line-height: 1.38; box-shadow: 0 24px 44px -22px rgba(10,10,10,.45); white-space: nowrap; max-width: 380px; overflow: hidden; text-overflow: ellipsis }
+.fl-sent svg path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: fl-draw .55s .12s var(--fl-out) forwards }
+@keyframes fl-draw { to { stroke-dashoffset: 0 } }
+.fl-zone b.is-bump { animation: fl-bump .55s var(--fl-spring) }
+@keyframes fl-bump { from { transform: translateY(80%); opacity: 0 } to { transform: none; opacity: 1 } }
+@media (prefers-reduced-motion: reduce) {
+  .fl-w, .fl-try, .fl-sub, .fl-stage > .fl-river, .fl-go.is-launch svg, .fl-sent svg path, .fl-zone b.is-bump, html[data-lay="3"] .fl-cue { animation: none }
+  .fl-sent svg path { stroke-dashoffset: 0 }
+  .fl-go, .fl-cta, .fl-ask, html[data-lay="1"] .fl-intro, html[data-lay="1"] .fl-stage { transition: none }
+}
 @media (prefers-reduced-motion: reduce) {
   .fl-slot, .fl-lbody, .fl-send, .fl-note, .fl-next { transition: none }
   .fl-status.is-busy i, .fl-caret, .fl-dots i, .fl-sent, .fl-needs { animation: none }
@@ -360,10 +435,13 @@ footer a:hover { color: var(--moon) }
 .fl-help h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(38px, 4.6vw, 68px); line-height: .95; letter-spacing: -.03em; max-width: 18ch; text-wrap: balance }
 .fl-help h2 em { font-style: italic; color: var(--ink-soft) }
 .fl-help-grid { margin-top: clamp(36px, 5vh, 56px); display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr); gap: 24px; align-items: stretch }
-.fl-fact { border-radius: 28px; padding: 30px 30px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; color: var(--ink); background: radial-gradient(70% 90% at 12% 10%, rgba(240,180,142,.8), rgba(240,180,142,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(158,182,214,.85), rgba(158,182,214,0) 70%), #ece5de; box-shadow: 0 30px 60px -40px rgba(10,10,10,.45) }
+.fl-fact { border-radius: 28px; padding: 30px 30px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; color: var(--fl-fact-fg); background: var(--fl-fact-bg); box-shadow: 0 30px 60px -40px rgba(10,10,10,.45) }
 .fl-fact b { display: block; font-family: var(--serif); font-weight: 400; font-size: clamp(88px, 10vw, 150px); line-height: .8; letter-spacing: -.05em }
 .fl-fact p { margin: 0; font-size: 17px; line-height: 1.45 }
-.fl-fact cite { font-style: normal; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft) }
+.fl-fact cite { font-style: normal; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--fl-fact-soft) }
+.fl-fact, .fl-hi { transition: opacity .8s ease, transform .9s var(--fl-out); transition-delay: var(--d, 0ms) }
+.fl-help .is-pre { opacity: 0; transform: translateY(30px) }
+@media (prefers-reduced-motion: reduce) { .fl-fact, .fl-hi { transition: none } }
 .fl-help-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px }
 .fl-hi { border-radius: 24px; padding: 26px 24px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), 0 26px 50px -36px rgba(10,10,10,.35) }
 .fl-hi .ic { width: 48px; height: 48px; border-radius: 999px; display: grid; place-items: center; background: var(--stage) }
@@ -371,6 +449,92 @@ footer a:hover { color: var(--moon) }
 .fl-hi p { margin: 10px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--ink-soft) }
 @media (max-width: 1000px) { .fl-help-grid { grid-template-columns: minmax(0, 1fr) } }
 @media (max-width: 700px) { .fl-help-list { grid-template-columns: minmax(0, 1fr) } }
+
+
+/* ---- FollowUp theme: Paper, Ink, Forest, Mint, Apricot, Sky; matte light, no shine ---- */
+:root { --paper: #F8F6F1; --ink: #0E0E0C; --stage: #F1EEE7; --line: #E6E1D8; --good: #0D6E3C; --dot: #C96A1B;
+  --forest-lit: radial-gradient(120% 100% at 20% 0%, #23785A 0%, #145A3E 38%, #0C412D 72%, #093322 100%);
+  --mint-lit: linear-gradient(180deg, #E4F8EB 0%, #BCE8CD 100%);
+  --apricot-lit: linear-gradient(160deg, #FBE3CF 0%, #F2C29C 55%, #E9A97A 100%);
+  --sky-lit: linear-gradient(170deg, #EEF3FA 0%, #D3E0F0 100%);
+  --card-lit: linear-gradient(180deg, #FFFFFF 0%, #F8F6F1 100%);
+  --lift: 0 1px 2px rgba(14,14,12,.06), 0 14px 28px -16px rgba(14,14,12,.28), 0 40px 70px -40px rgba(14,14,12,.35);
+  --press: 0 10px 22px -12px rgba(9,51,34,.55), inset 0 -3px 0 rgba(11,42,26,.14);
+}
+html[data-col="f"] { --fl-hero-bg: linear-gradient(180deg, #FBFAF6 0%, #F4F1EA 100%); --fl-em: #145A3E;
+  --fl-river-bg: linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.06)); --fl-river-shadow: inset 0 18px 40px -18px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.06);
+  --fl-zone-fg: #BFE3CD; --fl-zone-strong: #fff; --fl-meta: #BFE3CD; --fl-meta-b: #fff; --fl-meta-faint: #9CCBB0;
+  --fl-q-bg: #FFFFFF; --fl-q-fg: #0E0E0C; --fl-a-bg: #CDEFD9; --fl-a-fg: #0B2A1A; --fl-la-bg: #145A3E; --fl-la-fg: #fff;
+  --fl-tag-good: #A8E6BF; --fl-tag-needs: #F6B06B; --fl-btn: #CDEFD9; --fl-btn-fg: #0B2A1A; --fl-avs-bg: rgba(255,255,255,.16); --fl-avs-fg: #fff;
+  --fl-fact-bg: var(--apricot-lit); --fl-fact-fg: #2A1406; --fl-fact-soft: #7A4A26 }
+html[data-col="f"] body, html[data-col="f"] { background: var(--paper) }
+html[data-col="f"] .fl-hero { --fl-tilt: 16; overflow-x: clip }
+/* screen 1 stays put while screen 2 slides up over it, like a sheet of paper on a desk */
+html[data-col="f"] .fl-intro { position: sticky; top: 68px; z-index: 0 }
+html[data-col="f"] .fl-head { min-height: calc(100svh - 68px - 96px) }
+html[data-col="f"] .fl-stage { position: relative; z-index: 1; margin-inline: calc(50% - 50vw + 12px); padding: clamp(40px, 6vw, 72px) max(calc(50vw - 50% - 12px + var(--gut)), 16px) 36px;
+  border-radius: clamp(32px, 5vw, 64px); background: var(--forest-lit); color: #fff;
+  box-shadow: 0 -30px 60px -40px rgba(9,51,34,.5), inset 0 -60px 90px -60px rgba(0,0,0,.45) }
+html[data-col="f"] .fl-stage .fl-try { padding-top: 0 }
+html[data-col="f"] .fl-stage .fl-hint { color: #BFE3CD }
+html[data-col="f"] .fl-stage .fl-ex { color: #9CCBB0 }
+html[data-col="f"] .fl-stage .fl-ctl { color: #DCEFE3; border-color: rgba(255,255,255,.25) }
+html[data-col="f"] .fl-stage .fl-next { color: #DCEFE3 } html[data-col="f"] .fl-stage .fl-next b { color: #fff }
+html[data-col="f"] .fl-ask { background: var(--card-lit); box-shadow: 0 0 0 1px rgba(255,255,255,.4), 0 22px 44px -22px rgba(0,0,0,.6) }
+html[data-col="f"] .fl-ask:focus-within { box-shadow: 0 0 0 2.5px #CDEFD9, 0 22px 44px -22px rgba(0,0,0,.6) }
+html[data-col="f"] .fl-go, html[data-col="f"] .fl-cta, html[data-col="f"] .fl-send, html[data-col="f"] .nav-cta { background: var(--mint-lit); color: #0B2A1A; box-shadow: var(--press) }
+html[data-col="f"] .fl-go:active, html[data-col="f"] .fl-cta:active { box-shadow: 0 4px 10px -6px rgba(9,51,34,.55), inset 0 2px 4px rgba(11,42,26,.18) }
+html[data-col="f"] .nav-cta { box-shadow: 0 8px 18px -10px rgba(14,14,12,.35), inset 0 -3px 0 rgba(11,42,26,.12) }
+html[data-col="f"] .fl-lens { color: var(--ink); background: var(--card-lit); box-shadow: 0 0 0 1px rgba(255,255,255,.5), 0 30px 50px -26px rgba(0,0,0,.55), 0 70px 110px -50px rgba(0,0,0,.6) }
+html[data-col="f"] .fl-slot .fl-q { background: var(--card-lit); box-shadow: 0 16px 30px -18px rgba(0,0,0,.6) }
+html[data-col="f"] .fl-slot .fl-a { background: var(--mint-lit); box-shadow: 0 16px 30px -18px rgba(0,0,0,.6) }
+html[data-col="f"] .fl-track { perspective: 1400px }
+html[data-col="f"] .fl-lens .fl-send { background: linear-gradient(180deg, #2A2926, #0E0E0C); color: #fff; box-shadow: 0 8px 16px -8px rgba(14,14,12,.5) }
+@media (max-width: 640px) { html[data-col="f"] .fl-hero { --fl-lens: min(calc(100vw - 2 * var(--gut) - 64px), 420px) } }
+html[data-col="f"] .fl-cue { background: var(--card-lit); box-shadow: var(--lift) }
+html[data-col="f"] .fl-you { background: var(--mint-lit); color: #0B2A1A }
+/* how it helps: paper, lifted white cards, the 7x card in apricot */
+html[data-col="f"] .fl-help { background: var(--paper); position: relative; z-index: 1 }
+html[data-col="f"] .fl-hi { background: var(--card-lit); box-shadow: 0 0 0 1px var(--line), var(--lift) }
+html[data-col="f"] .fl-hi .ic { background: var(--mint-lit); box-shadow: inset 0 -2px 0 rgba(11,42,26,.1) }
+html[data-col="f"] .fl-fact { box-shadow: 0 30px 60px -36px rgba(122,74,38,.55), inset 0 -40px 70px -50px rgba(122,74,38,.35) }
+
+/* the theme sheet */
+.sheet { position: relative; z-index: 1; padding-block: 72px 160px; background: var(--paper) }
+.sheet h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(36px, 4.4vw, 60px); letter-spacing: -.03em; line-height: .95; max-width: 20ch }
+.sheet h2 em { font-style: italic; color: #145A3E }
+.sheet .lede { margin-top: 14px; font-size: 18px; color: var(--ink-soft); max-width: 62ch }
+.sw8 { margin-top: 34px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px }
+.sw8 div { border-radius: 24px; overflow: hidden; background: var(--card-lit); box-shadow: 0 0 0 1px var(--line), var(--lift) }
+.sw8 .c { height: 112px }
+.sw8 .t { padding: 14px 16px 16px } .sw8 b { display: block; font-size: 16px } .sw8 .mono { font-size: 11.5px; color: var(--ink-faint) } .sw8 p { margin: 6px 0 0; font-size: 14px; color: var(--ink-soft); line-height: 1.4 }
+.spec { margin-top: 28px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px }
+.spec > div { border-radius: 28px; padding: 26px; min-height: 190px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px }
+.spec .s1 { background: var(--forest-lit); color: #fff; box-shadow: inset 0 -50px 80px -50px rgba(0,0,0,.45), var(--lift) }
+.spec .s2 { background: var(--sky-lit); box-shadow: inset 0 -40px 70px -50px rgba(40,70,110,.25), var(--lift) }
+.spec .s3 { background: var(--apricot-lit); color: #2A1406; box-shadow: inset 0 -40px 70px -50px rgba(122,74,38,.35), var(--lift) }
+.spec small { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .75 }
+.spec .demo-btn { align-self: flex-start; display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; background: var(--mint-lit); color: #0B2A1A; font-weight: 600; box-shadow: var(--press) }
+.spec .demo-card { border-radius: 18px; padding: 14px 16px; background: var(--card-lit); color: var(--ink); box-shadow: 0 18px 32px -18px rgba(14,14,12,.4); font-size: 15px }
+.rules { margin-top: 28px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; list-style: none; padding: 0 }
+.rules li { padding-top: 14px; border-top: 1px solid var(--line); font-size: 15px; color: var(--ink-soft) } .rules b { display: block; color: var(--ink); font-size: 16px }
+@media (max-width: 900px) { .sw8 { grid-template-columns: repeat(2, minmax(0, 1fr)) } .spec, .rules { grid-template-columns: minmax(0, 1fr) } }
+
+
+/* ---- theme v1 (A-114) on the rest of the page: paper sections, Sky and Apricot light blocks, Forest for Today and the close, Mint buttons ---- */
+:root { --paper: #ffffff; --night: #F8F6F1; --night-2: #F3F0E8; --moon: #0E0E0C; --ink: #0E0E0C; --em: #145A3E; --em-light: #145A3E; --btn: #CDEFD9; --btn-fg: #0B2A1A;
+  --bed: var(--forest-lit); --stage-how: var(--sky-lit); --stage-thread: linear-gradient(170deg, #FDF0E4 0%, #F6D9C0 100%); --stage-ctl: var(--sky-lit);
+  --close-bg: var(--forest-lit); --close-fg: #FFFFFF; --close-soft: #BFE3CD; --close-faint: #9CCBB0; --close-dim: rgba(255,255,255,.16); --close-em: #CDEFD9; --close-btn: var(--mint-lit); --close-btn-fg: #0B2A1A; --close-tone: dark }
+html[data-col="f"], html[data-col="f"] body, .light, .today-sec, .fl-help, .statement { background: #F8F6F1 }
+.nav.light.solid { background: rgba(248,246,241,.92) }
+.nav .pill, .nav.light .pill { background: var(--mint-lit); color: #0B2A1A; border-color: transparent; box-shadow: 0 8px 18px -10px rgba(14,14,12,.35), inset 0 -3px 0 rgba(11,42,26,.12) }
+.app-bed { box-shadow: inset 0 -70px 100px -70px rgba(0,0,0,.5), 0 40px 80px -50px rgba(9,51,34,.5) }
+.stage, .switch-card { box-shadow: inset 0 -50px 80px -60px rgba(40,70,110,.3), 0 30px 60px -44px rgba(14,14,12,.3) }
+.thread { box-shadow: inset 0 -50px 80px -60px rgba(122,74,38,.3), 0 30px 60px -44px rgba(14,14,12,.3) }
+.t-col::before { box-shadow: 0 0 0 6px #FBE7D6 } .t-card { background: var(--card-lit) } .t-card.w { background: var(--mint-lit); box-shadow: 0 18px 32px -20px rgba(9,51,34,.45) }
+.close { border-radius: clamp(32px, 5vw, 64px) clamp(32px, 5vw, 64px) 0 0; margin-inline: 12px; box-shadow: inset 0 80px 120px -90px rgba(255,255,255,.0) }
+.big-cta { box-shadow: var(--press) } .big-cta:hover { filter: none; transform: translateY(-2px) }
+.fl-help h2 em { color: #145A3E }
 
 .today-sec { background: var(--paper); color: var(--ink); padding-block: 120px 40px }
 .today-sec .app-caption { color: var(--ink-faint) }
@@ -421,8 +585,14 @@ footer a:hover { color: var(--moon) }
 
 <main id="top">
 
-<section class="fl-hero" aria-labelledby="h1"><div class="wrap">
-<h1 id="h1" class="fl-h1">Never lose a lead <em>because you forgot to follow up.</em></h1>
+<section class="fl-hero" id="fl-hero" aria-labelledby="h1"><div class="wrap fl-grid">
+<div class="fl-intro">
+<div class="fl-head">
+<h1 id="h1" class="fl-h1" aria-label="Never lose a lead because you forgot to follow up."><span class="fl-w" style="--i:0">Never</span> <span class="fl-w" style="--i:1">lose</span> <span class="fl-w" style="--i:2">a</span> <span class="fl-w" style="--i:3">lead</span> <em><span class="fl-w" style="--i:4">because</span> <span class="fl-w" style="--i:5">you</span> <span class="fl-w" style="--i:6">forgot</span> <span class="fl-w" style="--i:7">to</span> <span class="fl-w" style="--i:8">follow</span> <span class="fl-w" style="--i:9">up.</span></em></h1>
+<p class="fl-sub">Every customer gets a reply, written in your words. Try it: you be the customer.</p>
+<a class="fl-cue" href="#fl-try">Try it yourself ↓</a>
+</div>
+<div class="fl-try" id="fl-try">
 <form class="fl-ask" id="fl-ask" autocomplete="off">
 <span class="fl-you" aria-hidden="true">You</span>
 <label class="fl-sr" for="fl-in">Write a message, as if you were a customer</label>
@@ -430,6 +600,9 @@ footer a:hover { color: var(--moon) }
 <button type="submit" class="fl-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg><span>Send</span></button>
 </form>
 <p class="fl-hint">You're the customer. Watch FollowUp write the reply.</p>
+</div>
+</div>
+<div class="fl-stage" id="fl-stage">
 <div class="fl-river" id="fl-river">
 <p class="fl-sr">An example of FollowUp at work. Customers' messages from Gmail, Outlook, Instagram and website forms wait on the left. One at a time they reach FollowUp in the middle, which writes the reply in the owner's words; the owner taps Send and the conversation moves to Answered on the right. A price question waits for the owner. What you type above appears in the middle and is answered the same way.</p>
 <div class="fl-zone is-l" aria-hidden="true">Waiting<i></i><span class="fl-avs" id="fl-wait"></span></div>
@@ -444,6 +617,7 @@ footer a:hover { color: var(--moon) }
 <div class="fl-next" id="fl-next" aria-live="polite"><span>That's FollowUp. <b>Your customers get this, every time.</b></span><a class="fl-cta" href="#start" tabindex="-1">Connect Gmail, start free</a></div>
 <div class="fl-side"><span class="fl-ex">Example</span><button class="fl-ctl" type="button" id="fl-pause">Pause</button></div>
 </div>
+</div>
 </div></section>
 
 
@@ -454,7 +628,7 @@ footer a:hover { color: var(--moon) }
 <div class="fl-help-list">
 <div class="fl-hi"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16h-1A.5.5 0 0 1 4 15.5z"></path><path d="M8 8.5h8M8 11.5h5"></path></svg></span><h3>Time back</h3><p>Replies are written for you, in your words. You just tap Send.</p></div>
 <div class="fl-hi"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="15.5" height="12.5" rx="2.5"></rect><path d="M4.5 7.5l7 5.2 7-5.2"></path><circle cx="19.2" cy="5.6" r="2.7" fill="currentColor" stroke="none"></circle></svg></span><h3>No lead wasted</h3><p>Every customer from your inbox, forms and ads gets an answer.</p></div>
-<div class="fl-hi"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"></path><path d="M19.6 4.3v3.9h-3.9"></path><path d="M12 8.6V12l2.4 1.5"></path></svg></span><h3>Follow-ups on time</h3><p>When they go quiet, it follows up. When they reply, it stops.</p></div>
+<div class="fl-hi"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"></path><path d="M19.6 4.3v3.9h-3.9"></path><path d="M12 8.6V12l2.4 1.5"></path></svg></span><h3>Follow&#8209;ups on time</h3><p>When they go quiet, it follows up. When they reply, it stops.</p></div>
 </div>
 </div>
 </div></section>
@@ -582,6 +756,9 @@ footer a:hover { color: var(--moon) }
 
 
 
+/* the box belongs on screen 2: move it into the green block before the flow starts */
+(function () { var t = document.getElementById('fl-try'), st = document.getElementById('fl-stage'); if (t && st) st.insertBefore(t, st.firstChild); })();
+
 /* ---- opening: the reply flow, type-first ---- */
 (function () {
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -597,6 +774,9 @@ footer a:hover { color: var(--moon) }
   ];
   var $ = function (id) { return document.getElementById(id); };
   var river = $('fl-river'), track = $('fl-track'), lens = $('fl-lens'), body = $('fl-lbody'), status = $('fl-status');
+  var hero = $('fl-hero'), stage = $('fl-stage'), goBtn = document.querySelector('.fl-go');
+  function lay() { return document.documentElement.getAttribute('data-lay') || '0'; }
+  function stageOn() { return lay() !== '1' || hero.classList.contains('is-open'); }
   var count = $('fl-count'), waitEl = $('fl-wait'), pauseBtn = $('fl-pause'), form = $('fl-ask'), input = $('fl-in'), nextBox = $('fl-next');
   var answered = 12, seq = [], ptr = 0, k = 0, SPAN = 4, timers = [], mode = 'turn', paused = false, idleT = 0, IDLE = 6500;
 
@@ -611,7 +791,7 @@ footer a:hover { color: var(--moon) }
   /* the stream around the middle: left waits, right is answered */
   var slots = [];
   for (var s = 0; s < SPAN * 2 + 1; s++) { var el = document.createElement('div'); el.className = 'fl-slot'; el.setAttribute('aria-hidden', 'true'); track.appendChild(el); slots.push({ el: el, j: null }); }
-  function geom() { var cs = getComputedStyle(river.parentNode.parentNode); return { w: river.clientWidth, slot: parseFloat(cs.getPropertyValue('--fl-slot')), gap: parseFloat(cs.getPropertyValue('--fl-gap')), lens: lens.offsetWidth }; }
+  function geom() { var cs = getComputedStyle(river.parentNode.parentNode); return { w: river.clientWidth, slot: parseFloat(cs.getPropertyValue('--fl-slot')), gap: parseFloat(cs.getPropertyValue('--fl-gap')), lens: lens.offsetWidth, tilt: parseFloat(cs.getPropertyValue('--fl-tilt')) || 0 }; }
   function xFor(r, g) {
     var c = g.w / 2; if (r === 0) return c - g.slot / 2;
     var off = g.lens / 2 + g.gap + g.slot / 2 + (Math.abs(r) - 1) * (g.slot + g.gap);
@@ -637,7 +817,8 @@ footer a:hover { color: var(--moon) }
       if (sl.j >= 0) fill(sl, item(sl.j), r > 0 ? 'done' : r < 0 ? 'waiting' : 'now');
       var d = Math.abs(r), sc = d <= 1 ? 1 : 1 - (d - 1) * 0.09, op = (r === 0 || sl.j < 0) ? 0 : r < 0 ? [0, .9, .66, .45, .3][d] : [0, 1, .78, .55, .35][d];
       sl.el.style.opacity = op;
-      sl.el.style.transform = 'translateX(' + xFor(r, g).toFixed(1) + 'px) scale(' + sc.toFixed(3) + ')';
+      var ry = r === 0 ? 0 : (r < 0 ? 1 : -1) * Math.min(d, 3) * g.tilt / 3;
+      sl.el.style.transform = 'translateX(' + xFor(r, g).toFixed(1) + 'px) rotateY(' + ry.toFixed(2) + 'deg) scale(' + sc.toFixed(3) + ')';
       if (jump) { void sl.el.offsetWidth; sl.el.classList.remove('is-instant'); }
     });
     var w = '';
@@ -656,7 +837,7 @@ footer a:hover { color: var(--moon) }
     var a = $('fl-a'), foot = $('fl-foot');
     a.classList.remove('is-hide'); a.innerHTML = withBlank(it.r);
     if (it.k === 'needs') { foot.innerHTML = '<span class="fl-needs">A price: it waits for you</span>'; setStatus('Needs you', 'is-needs'); }
-    else { foot.innerHTML = '<span class="fl-sent">' + TICK + 'Sent ' + (it.ch === 'ig' ? 'on Instagram' : it.ch === 'outlook' ? 'from your Outlook' : 'from your Gmail') + '</span>'; setStatus('Sent', 'is-ok'); answered++; count.textContent = answered; }
+    else { foot.innerHTML = '<span class="fl-sent">' + TICK + 'Sent ' + (it.ch === 'ig' ? 'on Instagram' : it.ch === 'outlook' ? 'from your Outlook' : 'from your Gmail') + '</span>'; setStatus('Sent', 'is-ok'); answered++; count.textContent = answered; count.classList.remove('is-bump'); void count.offsetWidth; count.classList.add('is-bump'); }
   }
   /* your turn: what you type shows here as you type it */
   function draft() { return seq[k] && seq[k].draft ? seq[k] : null; }
@@ -677,7 +858,7 @@ footer a:hover { color: var(--moon) }
   }
   function armIdle() {
     clearTimeout(idleT);
-    if (reduce || paused) return;
+    if (reduce || paused || !stageOn()) return;
     idleT = setTimeout(function () { if (mode === 'turn' && !input.value.trim()) startExamples(); }, IDLE);
   }
   function startExamples() {
@@ -686,11 +867,11 @@ footer a:hover { color: var(--moon) }
   }
 
   /* one conversation: read, write in your words, you tap Send, it flows on */
-  function run() {
+  function run(keep) {
     stopAll(); clearTimeout(idleT); mode = 'play';
     var it = item(k), txt = it.r;
-    body.classList.add('is-fade');
-    later(220, function () {
+    if (!keep) body.classList.add('is-fade');
+    later(keep ? 0 : 260, function () {
       paintItem(it); body.classList.remove('is-fade');
       if (reduce) { finish(it); later(600, function () { done(it); }); return; }
       setStatus(it.k === 'follow' ? 'Quiet for two days' : 'Reading', 'is-busy');
@@ -742,18 +923,45 @@ footer a:hover { color: var(--moon) }
     stopAll(); paintItem(it); finish(it); k++; layout(true); showTurn();
   }
   input.addEventListener('input', function () { stopPlaceholder(); interrupt(); mirror(); armIdle(); });
+  /* your question flies from the box into the middle card */
+  function fly(text, then) {
+    var m = $('fl-mirror');
+    if (reduce || !m || !m.getClientRects().length) { then(); return; }
+    m.textContent = text; m.classList.remove('is-ghost'); m.style.visibility = 'hidden';
+    var a = input.getBoundingClientRect(), b = m.getBoundingClientRect();
+    var g = document.createElement('div'); g.className = 'fl-ghost'; g.textContent = text; document.body.appendChild(g);
+    var x0 = a.left + 4, y0 = a.top + (a.height - g.offsetHeight) / 2;
+    g.style.left = x0 + 'px'; g.style.top = y0 + 'px';
+    var an = g.animate([
+      { transform: 'translate(0, 0) scale(.96)', opacity: 0 },
+      { transform: 'translate(0, -6px) scale(1)', opacity: 1, offset: .18 },
+      { transform: 'translate(' + (b.left - x0) + 'px, ' + (b.top - y0) + 'px) scale(1)', opacity: 1 }
+    ], { duration: 820, easing: 'cubic-bezier(.22, 1, .36, 1)' });
+    an.onfinish = function () { g.remove(); m.style.visibility = ''; then(); };
+  }
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var text = input.value.trim().slice(0, 140); if (!text) { input.focus(); return; }
-    var rr = replyFor(text); input.value = '';
+    var rr = replyFor(text); input.value = ''; stopPlaceholder();
+    goBtn.classList.remove('is-launch'); void goBtn.offsetWidth; goBtn.classList.add('is-launch');
     paused = false; pauseBtn.textContent = 'Pause';
     if (mode === 'play' && item(k).user) { seq.splice(k + 1, 0, { ch: 'web', who: 'You', t: 'now', q: text, r: rr.r, k: rr.k, user: true }); refresh(); layout(true); return; }
-    interrupt();
-    if (!draft()) showTurn();
-    var d = draft(); d.draft = false; d.q = text; d.r = rr.r; d.k = rr.k;
-    lens.setAttribute('aria-live', 'polite');
-    run();
+    function go() {
+      interrupt();
+      if (!draft()) showTurn();
+      fly(text, function () {
+        var d = draft(); d.draft = false; d.q = text; d.r = rr.r; d.k = rr.k;
+        lens.setAttribute('aria-live', 'polite');
+        run(true);
+      });
+    }
+    if (!stageOn()) {
+      hero.classList.add('is-open');
+      setTimeout(function () { layout(false); var r = stage.getBoundingClientRect(); if (r.bottom > innerHeight) window.scrollBy({ top: r.bottom - innerHeight + 24, behavior: reduce ? 'auto' : 'smooth' }); setTimeout(go, reduce ? 0 : 450); }, reduce ? 0 : 700);
+    } else go();
   });
+  /* a layout switch on the options page starts the opening fresh */
+  window.addEventListener('fl-relayout', function () { stopAll(); clearTimeout(idleT); hero.classList.remove('is-open'); paused = false; pauseBtn.textContent = 'Pause'; layout(false); showTurn(); });
   pauseBtn.addEventListener('click', function () {
     paused = !paused; pauseBtn.textContent = paused ? 'Play' : 'Pause';
     if (paused) { stopAll(); clearTimeout(idleT); } else if (mode === 'play') run(); else armIdle();
@@ -775,8 +983,16 @@ footer a:hover { color: var(--moon) }
 
   /* start: two answered on the right, the stream waiting on the left, the middle is yours */
   k = 2; item(SPAN * 2 + 4); layout(false); showTurn();
-  if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) { try { input.focus({ preventScroll: true }); } catch (e) {} }
+  if (lay() !== '3' && window.matchMedia && window.matchMedia('(pointer: fine)').matches) { try { input.focus({ preventScroll: true }); } catch (e) {} }
   var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { layout(false); }, 120); });
+})();
+
+/* ---- how it helps: cards below the first screen rise in as you reach them; on screen at load, they just show ---- */
+(function () {
+  if (!('IntersectionObserver' in window) || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  var els = [].slice.call(document.querySelectorAll('.fl-help .fl-fact, .fl-help .fl-hi'));
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.remove('is-pre'); io.unobserve(e.target); } }); }, { threshold: .2 });
+  els.forEach(function (el, i) { if (el.getBoundingClientRect().top > innerHeight) { el.style.setProperty('--d', (i * 90) + 'ms'); el.classList.add('is-pre'); io.observe(el); } });
 })();
 
 

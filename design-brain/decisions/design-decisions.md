@@ -9284,3 +9284,14 @@ spotlight and the player cycle on a timer in the drawing; built, the spotlight f
 example invents small details (a parking spot, "3 came back, 2 booked"), marked as an example. (8) Phone versions of
 How it works, Prices and Your data not drawn; the app (Today) not redrawn with the kit yet. (9) The Google button
 shows a plain "G"; the real one uses Google's own mark.
+
+## 2026-10-08 — Founder on the reframed website: "We are getting close"; wants photographs, not only message cards
+
+*"We are getting close. What else can we do here? Rather than showing it working, I mean just the text messages. Can
+we use some photographs or something like these guys are using? They have cool pages and a cool interface."* Said
+while looking at the References page. Not an approval of specifics. **Inferred:** pictures made only of message
+cards read as plain next to the references; he wants richer imagery. What fits the brain: photos as **mood behind the
+product** (Wispr, Granola, Mercury do this), never a person as the subject (R-011), and they can carry the "one
+customer's day" idea (a night street with a lit window, rooftops at sunrise, a morning table, a house in daylight).
+Photos can't be downloaded from this environment; they have to come from the founder (Drive or upload) or from an
+image tool on his accounts (costs his credits, and must not look fake). Asked him which.

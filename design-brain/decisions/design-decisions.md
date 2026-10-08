@@ -9597,3 +9597,13 @@ quiet, and asks you only when it matters." The real Today screen (A-106) moved t
 playing when it scrolls into view. Pause, labelled examples, reduced motion shows the end state.
 **Honest note:** the pill is a brand device that illustrates what happens; it is not a Gmail add-on. The states it
 shows all exist in the product. **Weak, honestly:** the six labels are tight at 1440 px; the side cards are static.
+
+## 2026-10-08 — "simplify please": the first screen cut to one story and four symbols
+
+Founder's reaction to the six-symbol, two-story first screen: *"simplify please."* Cut: the two side customers, the
+second story (the price), and two symbols. Kept: one customer (Priya), the FollowUp pill under her email, and four
+symbols in the step bar: **writes in your words, sends from your Gmail, checks in when quiet, stops when they reply**.
+Four calm steps of about 2–3.6 s; the price hand-off now lives only in "How it works" (step 3). The symbols "finds the
+customer" and "hands you decisions" stay drawn for later use.
+**Principle (his word, generalised):** the first screen carries one story and one moving thing. Everything else
+waits for the scroll.

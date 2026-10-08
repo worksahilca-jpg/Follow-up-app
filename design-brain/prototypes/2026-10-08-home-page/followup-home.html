@@ -266,7 +266,7 @@ footer a:hover { color: var(--moon) }
 .hero h1 { margin-top: 14px; font-size: clamp(44px, 5.3vw, 78px); line-height: .95; max-width: none }
 .hero-side .hero-lede { font-size: 18px }
 .hstage { margin-top: 28px; background: var(--bed); border-radius: 36px; padding: 18px var(--bed-pad) 14px; position: relative; overflow: hidden }
-.h-row { margin-top: 18px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,560px) minmax(0,1fr); gap: 28px; align-items: start; min-height: 300px }
+.h-row { margin-top: 22px; display: grid; grid-template-columns: minmax(0,580px); justify-content: center; min-height: 300px }
 .h-card { background: #fff; color: var(--ink); border-radius: 20px; padding: 16px 18px; box-shadow: 0 0 0 1px rgba(10,10,10,.06), 0 28px 56px -34px rgba(10,10,10,.4) }
 .h-card p { margin: 8px 0 0; font-size: 15.5px; line-height: 1.45 }
 .h-meta { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--ink-soft) }
@@ -299,7 +299,7 @@ footer a:hover { color: var(--moon) }
 .fp-dots i { width: 5px; height: 5px; border-radius: 999px; background: #fff; animation: fpd 1s ease-in-out infinite }
 .fp-dots i:nth-child(2) { animation-delay: .15s } .fp-dots i:nth-child(3) { animation-delay: .3s }
 @keyframes fpd { 0%, 100% { opacity: .25; transform: translateY(0) } 50% { opacity: 1; transform: translateY(-2px) } }
-.legend { list-style: none; margin: 0; padding: 6px; display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 4px; border-radius: 999px; background: rgba(255,255,255,.45) }
+.legend { list-style: none; margin: 0 auto; max-width: 760px; padding: 6px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 4px; border-radius: 999px; background: rgba(255,255,255,.45) }
 .legend li { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 6px 8px; border-radius: 999px; font-size: 12px; line-height: 1.2; color: rgba(10,10,10,.45); transition: color .35s ease, background .35s ease, box-shadow .35s ease; white-space: nowrap }
 .legend .lg-ic { width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto }
 .legend li.on { color: var(--ink); font-weight: 600; background: #fff; box-shadow: 0 8px 18px -12px rgba(10,10,10,.5) }
@@ -363,20 +363,18 @@ footer a:hover { color: var(--moon) }
 <div class="hero-ctas"><a class="pill" href="#start">Connect Gmail, start free</a><a class="see" href="#how">See how it works ↓</a></div></div>
 </div>
 <div class="hstage" role="img" aria-label="What FollowUp does with each customer email, shown as an example: it finds the customer, writes the reply in your words, sends it from your Gmail, checks in when they go quiet, hands you decisions like a price, and stops when they reply.">
-<ul class="legend" aria-hidden="true"><li data-sym="caught"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="15.5" height="12.5" rx="2.5"></rect><path d="M4.5 7.5l7 5.2 7-5.2"></path><circle cx="19.2" cy="5.6" r="2.7" fill="currentColor" stroke="none"></circle></svg></span><span>Finds the customer</span></li><li data-sym="write"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16h-1A.5.5 0 0 1 4 15.5z"></path><path d="M8 8.5h8M8 11.5h5"></path></svg></span><span>Writes in your words</span></li><li data-sym="sent"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 3.5L3.5 10.5l7 2.6 2.6 7z"></path><path d="M10.5 13.1l4.2-4.2"></path></svg></span><span>Sends from your Gmail</span></li><li data-sym="checkin"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"></path><path d="M19.6 4.3v3.9h-3.9"></path><path d="M12 8.6V12l2.4 1.5"></path></svg></span><span>Checks in when quiet</span></li><li data-sym="needs"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.2"></circle><circle cx="12" cy="12" r="3.3" fill="#c96a1b" stroke="none"></circle></svg></span><span>Hands you decisions</span></li><li data-sym="stop"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2.5 2.5 0 0 1 2.5-2.5h8A2.5 2.5 0 0 1 17 7v4.5a2.5 2.5 0 0 1-2.5 2.5H9.2l-3.7 3v-3h-1A.5.5 0 0 1 4 13.5z"></path><path d="M7.8 9.2l1.9 1.9 3.5-3.5"></path><path d="M19.6 10.5v4a2 2 0 0 1-2 2h-.6V19l-3-2.5"></path></svg></span><span>Stops when they reply</span></li></ul>
+<ul class="legend" aria-hidden="true"><li data-sym="write"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16h-1A.5.5 0 0 1 4 15.5z"></path><path d="M8 8.5h8M8 11.5h5"></path></svg></span><span>Writes in your words</span></li><li data-sym="sent"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 3.5L3.5 10.5l7 2.6 2.6 7z"></path><path d="M10.5 13.1l4.2-4.2"></path></svg></span><span>Sends from your Gmail</span></li><li data-sym="checkin"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"></path><path d="M19.6 4.3v3.9h-3.9"></path><path d="M12 8.6V12l2.4 1.5"></path></svg></span><span>Checks in when quiet</span></li><li data-sym="stop"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2.5 2.5 0 0 1 2.5-2.5h8A2.5 2.5 0 0 1 17 7v4.5a2.5 2.5 0 0 1-2.5 2.5H9.2l-3.7 3v-3h-1A.5.5 0 0 1 4 13.5z"></path><path d="M7.8 9.2l1.9 1.9 3.5-3.5"></path><path d="M19.6 10.5v4a2 2 0 0 1-2 2h-.6V19l-3-2.5"></path></svg></span><span>Stops when they reply</span></li></ul>
 <div class="h-row">
-<div class="h-side h-left" aria-hidden="true"><div class="h-card"><div class="h-meta"><span class="av sm">M</span><span><b>Mia</b> · Hair salon</span></div><p>Do you do balayage? I've never had it done.</p></div><div class="mini-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 3.5L3.5 10.5l7 2.6 2.6 7z"></path><path d="M10.5 13.1l4.2-4.2"></path></svg>Answered · 1 min</div></div>
 <div class="h-center">
 <div class="h-card h-mail"><div class="h-meta"><span class="av" id="hv">P</span><span><b id="hw">Priya</b> · <span id="ht">Realtor's customer</span></span><span class="mono h-when" id="hn">TUE 11:48 PM</span></div><p id="hm">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p></div>
-<div class="fu-pill" id="pill"><span class="fp-ic" id="pic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="15.5" height="12.5" rx="2.5"></rect><path d="M4.5 7.5l7 5.2 7-5.2"></path><circle cx="19.2" cy="5.6" r="2.7" fill="currentColor" stroke="none"></circle></svg></span><span class="fp-tx" id="ptx">New customer · wants a viewing</span><span class="fp-dots" id="pdots"><i></i><i></i><i></i></span><span class="fp-meta mono" id="pme"></span></div>
+<div class="fu-pill" id="pill"><span class="fp-ic" id="pic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16h-1A.5.5 0 0 1 4 15.5z"></path><path d="M8 8.5h8M8 11.5h5"></path></svg></span><span class="fp-tx" id="ptx">Writing in your words</span><span class="fp-dots" id="pdots"><i></i><i></i><i></i></span><span class="fp-meta mono" id="pme"></span></div>
 <div class="h-card h-reply" id="hr"><div class="eyebrow" id="hre">Written by FollowUp · in your words</div><p id="hrt">Hi Priya, yes, it's still available! When would suit you for a viewing?</p></div>
 <div class="h-bubble h-ci" id="hc"><span class="mono">FRI 9:00 AM · CHECK-IN</span><p id="hct">Just checking in. Still keen to see the house this weekend?</p></div>
 <div class="h-bubble h-ans" id="ha"><span class="mono" id="han">PRIYA · FRI 9:41 AM</span><p id="hat">Yes! Saturday at 10 works.</p></div>
 </div>
-<div class="h-side h-right" aria-hidden="true"><div class="h-card"><div class="h-meta"><span class="av sm">S</span><span><b>Sam</b> · Dental clinic</span></div><p>Do you have evening appointments?</p></div><div class="mini-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"></path><path d="M19.6 4.3v3.9h-3.9"></path><path d="M12 8.6V12l2.4 1.5"></path></svg>Checking in · Thu</div></div>
 </div>
 
-<div class="h-foot"><span>Examples, not real customers.</span><button class="replay" type="button" id="hpause">Pause</button></div>
+<div class="h-foot"><span>An example, not a real customer.</span><button class="replay" type="button" id="hpause">Pause</button></div>
 </div>
 </div></section>
 
@@ -508,16 +506,11 @@ footer a:hover { color: var(--moon) }
   /* ---- first screen: one customer's story, told by the FollowUp pill and the symbols ---- */
   var SYM = {"caught": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"6\" width=\"15.5\" height=\"12.5\" rx=\"2.5\"></rect><path d=\"M4.5 7.5l7 5.2 7-5.2\"></path><circle cx=\"19.2\" cy=\"5.6\" r=\"2.7\" fill=\"currentColor\" stroke=\"none\"></circle></svg>", "write": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16h-1A.5.5 0 0 1 4 15.5z\"></path><path d=\"M8 8.5h8M8 11.5h5\"></path></svg>", "sent": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20.5 3.5L3.5 10.5l7 2.6 2.6 7z\"></path><path d=\"M10.5 13.1l4.2-4.2\"></path></svg>", "checkin": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.6 4.3v3.9h-3.9\"></path><path d=\"M12 8.6V12l2.4 1.5\"></path></svg>", "needs": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8.2\"></circle><circle cx=\"12\" cy=\"12\" r=\"3.3\" fill=\"#c96a1b\" stroke=\"none\"></circle></svg>", "stop": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 7a2.5 2.5 0 0 1 2.5-2.5h8A2.5 2.5 0 0 1 17 7v4.5a2.5 2.5 0 0 1-2.5 2.5H9.2l-3.7 3v-3h-1A.5.5 0 0 1 4 13.5z\"></path><path d=\"M7.8 9.2l1.9 1.9 3.5-3.5\"></path><path d=\"M19.6 10.5v4a2 2 0 0 1-2 2h-.6V19l-3-2.5\"></path></svg>"};
   var ST = [
-    { v: 'P', w: 'Priya', t: "Realtor's customer", n: 'TUE 11:48 PM', m: 'Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?',
+    { v: 'P', w: 'Priya', t: 'a new customer', n: 'TUE 11:48 PM', m: 'Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?',
       re: 'Written by FollowUp · in your words', r: "Hi Priya, yes, it's still available! When would suit you for a viewing?",
       ci: 'Just checking in. Still keen to see the house this weekend?', an: 'PRIYA · FRI 9:41 AM', a: 'Yes! Saturday at 10 works.',
-      steps: [['caught', 'New customer · wants a viewing', '', 1400], ['write', 'Writing in your words', '', 1500, 'reply'], ['sent', 'Sent from your Gmail', '1 min', 1700],
-              ['checkin', 'Quiet since Wednesday · checking in', 'Fri 9:00', 1900, 'ci'], ['stop', 'She replied · check-ins stopped', 'Fri 9:41', 2600, 'ans']] },
-    { v: 'B', w: 'Ben', t: "Plumber's customer", n: 'MON 7:12 AM', m: 'My kitchen sink is leaking. How much would it cost to fix?',
-      re: 'Sent for you · one fixed line', r: "Thanks for asking! Let me check and I'll send you the price soon.",
-      ci: '', an: '', a: '',
-      steps: [['caught', 'New customer · asks a price', '', 1400], ['write', 'Reading what he needs', '', 1300], ['needs', 'A price · it comes to you first', '', 1900, 'need'],
-              ['sent', 'Meanwhile, a short note went out', '30 min', 1900, 'reply'], ['needs', "Your price, whenever you're ready", 'waiting for you', 2800]] }
+      steps: [['write', 'Writing in your words', '', 2000, 'reply'], ['sent', 'Sent from your Gmail', '1 min', 2200],
+              ['checkin', 'Quiet for two days · checking in', 'Fri 9:00', 2400, 'ci'], ['stop', 'She replied · all done', 'Fri 9:41', 3600, 'ans']] }
   ];
   var hm = $('#hm'), hr = $('#hr'), hrt = $('#hrt'), hre = $('#hre'), hc = $('#hc'), hct = $('#hct'), ha = $('#ha'), hat = $('#hat'), han = $('#han'),
       pill = $('#pill'), pic = $('#pic'), ptx = $('#ptx'), pdots = $('#pdots'), pme = $('#pme'), hpause = $('#hpause');
@@ -528,8 +521,9 @@ footer a:hover { color: var(--moon) }
   function setStep(k) {
     var S = ST[hs.story], st = S.steps[k];
     pic.innerHTML = SYM[st[0]]; ptx.classList.add('swap');
-    setTimeout(function () { ptx.textContent = st[1]; ptx.classList.remove('swap'); }, 160);
-    pme.textContent = st[2]; pdots.classList.toggle('on', st[0] === 'write');
+    pme.classList.add('swap'); pme.style.transition = 'opacity .25s ease'; pme.style.opacity = '0';
+    setTimeout(function () { ptx.textContent = st[1]; ptx.classList.remove('swap'); pme.textContent = st[2]; pme.style.opacity = '1'; }, 160);
+    pdots.classList.toggle('on', st[0] === 'write');
     pill.classList.toggle('need', st[0] === 'needs');
     var seen = S.steps.slice(0, k).map(function (x) { return x[0]; });
     legend.forEach(function (li) { var key = li.getAttribute('data-sym'); li.classList.toggle('on', key === st[0]); li.classList.toggle('done', key !== st[0] && seen.indexOf(key) > -1); });
@@ -554,7 +548,7 @@ footer a:hover { color: var(--moon) }
     hs.step += 1; setStep(hs.step); hs.t = setTimeout(next, S.steps[hs.step][3]);
   }
   hpause.addEventListener('click', function () { hs.paused = !hs.paused; hpause.textContent = hs.paused ? 'Play' : 'Pause'; if (!hs.paused) next(); else clearTimeout(hs.t); });
-  if (reduce) { loadStory(0); hs.step = 4; setStep(4); show(hr, false); show(hc, true); show(ha, true); hpause.style.display = 'none'; }
+  if (reduce) { loadStory(0); hs.step = 3; setStep(3); show(hr, false); show(hc, true); show(ha, true); hpause.style.display = 'none'; }
   else { loadStory(0); hs.t = setTimeout(next, 600); }
 
   /* ---- the Today screen plays its story once it's in view, then rests ---- */

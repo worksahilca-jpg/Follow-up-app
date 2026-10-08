@@ -9840,3 +9840,22 @@ Letter* and *Girl Reading a Letter at an Open Window*, Hammershøi's quiet grey 
 or a commissioned painting from a real illustrator for the opening; real owners' photos later. Museum and Wikimedia
 sites are blocked from this session's network, so he downloads the chosen works and attaches them in chat.
 Colour waits for the art: in his references the colour comes from the image (R-044).
+
+## 2026-10-08 — Home v13: the live demo on a real photo (A-118 applied); colour from the photo
+
+**Asked:** *"are we using these photos directly, or are we going to make it grainy and blurry … like Wispr Flow
+does?"*, then *"why we doing this"*, then *"yes"* to trying one photo behind the type box.
+**Why photos (as told to him):** R-044 said too plain, no colour, no images; he wants a human touch, not AI (R-045);
+a visitor recognises "someone like me" before reading. The reply flow stays the hero; photos support it and are cut
+if they pull attention from the type box.
+**Photo treatment (one house look, never raw stock):** a little warmer, a little less saturated, softer contrast,
+lifted blacks, fine grain; blurred (≈6–9 px at 1,300–1,600 px wide) when a product card sits on top; sharp only
+when the person is the point. Processed with Pillow in the build script, so the photo is adjustable.
+**Built (v13, prototype only):** the café photo (Adobe Stock 247196493, free licence, not AI) fills the second
+screen behind the type box and the live flow, with a warm espresso scrim top and bottom; the flow box is a light
+espresso tint. Colours sampled from the photo replace the black panel everywhere: walnut-to-caramel panel
+(`#8E6545`→`#4E3726`) for the "1 minute" envelope, the 7× card and the close; caramel `#8C5F3B` italics; espresso
+buttons; the lime note became a latte note. Green still only means "Sent", orange only "your turn".
+**Weak, said plainly:** the photo's person sits behind the type box and the reply card, so she reads as a blurred
+owner in an apron, not a face; warm cream + serif + brown italics is close to a common template look, and what keeps
+it ours is the real photo and the live product. Waiting for his reaction before the plumber and florist photos.

@@ -9431,3 +9431,15 @@ warmed: R-009's own words, made literal). On desktop the reply card breaks past 
 front of the panel. Only the first screen is dark; the rest of the page stays light (R-018: no black everywhere).
 **Weak, honestly:** dark grounds were loved once (A-009) and called "too black" once (R-018), so this is a test of
 which way he leans now; the glow must stay warm and soft, never neon; the breakout card needs care at narrower widths.
+
+## 2026-10-08 — Founder on A5: "This is not bad, though. The colours of the design can be better."
+
+**Read as:** the depth direction (dark first screen, one warm light, layering) is not rejected; the colour is the open
+question. Not an approval yet. He gave no reason for "better", and R-004 showed he recognises his colour on a finished
+page, not in a swatch, so three finished A5s were drawn instead of asking (bottom row of "First impression · depth"):
+**Charcoal** (`#1e1e20`, the ground he picked from the Aer reference on 2026-09-18) with a soft peach light; **Ink**
+(clean near-black `#0c0b0b`) with an ember light, the most contrast; **Plum** (deep aubergine `#170f18`) with peach
+and rose light, the warmest and most unusual. Same layout, words and demo in all three; only the colour tokens change
+(`gen/a5x.py` swaps them). The first A5 (warm brown-black `#151210`) stays on top for comparison.
+**Weak, honestly:** the brown-black of the first A5 may be what read as "could be better" (it can look muddy next to
+peach); Plum is the riskiest (purple can turn cheap if the glow gets stronger).

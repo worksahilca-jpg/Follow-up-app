@@ -9144,3 +9144,5 @@ descriptions only, because the sites are blocked from the build environment (wis
 granola.ai, superhuman.com all refused on 2026-10-08). No reference site's screens or motion have actually been seen.
 Next: the founder's Chrome captures screenshots, motion notes and a design-facts readout per site
 (`design-facts.js`, read-only), then principles, then 2–3 drawn directions before any code.
+**Done the same day:** the capture landed (Google Doc "FollowUp design references"); findings and three directions in
+`research/landing-page/2026-10-08-nine-homepages-seen.md`. Waiting for the founder's pick and the surface question.

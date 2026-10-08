@@ -9306,3 +9306,19 @@ evening; the result (a for-sale sign or keys at a door). Candid, ordinary places
 screens; never captioned or named as a FollowUp customer (A-023). These sit in the sections, not as the first
 picture, so R-011 (no person photo as the hero) holds; if the founder wants a person in the hero, R-011 needs his
 explicit supersede.
+
+## 2026-10-08 — Founder: analyse the references deeply first, then design ours; his favourites ranked
+
+*"Can we deeply analyse all of these designs, then we will create our own? Because I don't know anything about
+UI/UX, I guess we both don't know. Our FollowUp page is not that cool, but I love Wispr Flow, and I got to love
+Macro. Wispr Flow is overall the best. I love the user interface for that, the best experience. I like Linear as
+the organised stuff. Macro is also very organised. I like Superhuman, according to their design."*
+**His favourites, in his words:** Wispr Flow first (overall best: the interface and the experience); Macro and
+Linear (organised); Superhuman (the design). Granola, Attio, Stripe and Mercury were not named this time.
+**What changes:** no more drawing from five stills per site. Step 1, the founder's Chrome captures the four
+favourites completely (every screen at desktop width, measured with `research/landing-page/tools/design-teardown.js`,
+a read-only snippet: section order and heights, type, colours, buttons, container widths, sticky elements,
+transitions and animations, libraries, fonts; plus short GIFs of the motion). Step 2, a deep teardown of each, and
+what is common to all four. Step 3, FollowUp's own design from it. The v2 website (Home drawn, not published) is held
+until then. *Inferred:* when the founder says "we both don't know", the answer is evidence (measure the sites he
+loves) rather than more taste-driven drafts.

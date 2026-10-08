@@ -9971,3 +9971,25 @@ examples, as before. Replies are fixed examples, never generated.
 and formality from the first message and holds them for every message after.
 **Not yet checked by native speakers:** the Punjabi and Hindi lines (written by Claude); the founder was asked to
 check the Punjabi before this ships. Formal "usted/Sie/vous/Lei" is used where the customer's own words don't say.
+
+## 2026-10-08 — Home v20: six artifact comments from the founder, all applied
+
+1. **Header** ("This looks very simple"): a floating rounded bar of soft frosted glass (the only glass on the page),
+   a round green logo mark, a highlight that slides between the links on hover, an arrow that nudges on "Start
+   free"; it tightens on scroll and turns dark over dark sections.
+2. **English first** ("we are targeting an English audience mainly"): the demo opens with three English customers,
+   then Punjabi, French, Hindi, Spanish, German, Italian; the box's rotating hints start with three English lines.
+3. **Depth** ("we don't need the same grains… create a depth"): the demo's inner box is frosted (blurs the grainy
+   photo behind it), carries only a fine light grain, a top highlight and a shadow underneath.
+4. **Bottom bar** ("highlight these things as it changes… doing something automatically"): the current step gets a
+   white tag with what happened and a soft ring on its dot; a dot travels the line; a line under the bar says what
+   FollowUp just did; it now follows every example, not only the visitor's question.
+5. **Accurate answers** ("so it does not feel like we are writing anything just to show them"): a typed question is
+   answered by Claude through the page's `sample` capability (the viewer's own Claude, consent asked once), in the
+   customer's language and letters, with the rest of the story (day-3 follow-up, their yes, booking reply, booking
+   kind, a fitting deal value); never a price ("$___"). Everything returned is escaped or checked against a list.
+   Declined or unavailable: the fixed examples answer.
+6. **Cost and safety** (question, thread left open for his answer): this preview spends the viewer's own Claude, not
+   our OpenAI key. For the real site, proposed: key server-side only; 3 questions per visitor a day; a site-wide daily
+   cap (e.g. 300) after which the fixed examples answer; 140-character limit; a small model; the demo endpoint sees no
+   customer data. Cost per answer estimated, not measured, at a fraction of a cent. Waiting for his OK.

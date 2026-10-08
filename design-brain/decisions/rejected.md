@@ -730,3 +730,19 @@ then the switch to "With FollowUp" and the cards warming to peach.
 **Reason:** not given. Asked in the thread which part (the grid of cards, the cold/warm colours, or the
 lost-customers story). *Inferred, not confirmed:* a grid of small cards reads like a dashboard or a list (R-005/R-009
 territory) rather than one big, felt moment.
+
+## R-036 — Shine: glows, light halos and glossy highlights ^R-036
+
+**Rejected:** 2026-10-08, founder, looking at A5 and its Charcoal version: *"Don't add that shiny thing, bro."*
+
+**What was rejected:** A5's lighting effects: the peach/amber light glowing behind the reply (and brightening when it
+was written), the rose haze, the coloured glow shadow under the reply card, the glow round the orange dot, the peach
+glow under the "Connect Gmail" button, and the thin highlight edges on the panel and the customer's bubble.
+
+**Reason:** "shiny" is his word. *Inferred (marked inferred):* he wants the depth and contrast he saw on Macro, but not
+by lighting tricks; glows read as effects, not as the product (close to the standing "no neon, no cheap gradients").
+Not asked which one he meant, because all of them were removed together.
+
+**Do not propose again:** glows, halos, light sources, coloured or glowing shadows, glossy highlight edges. Depth comes
+from contrast (dark ground, light text, the light button), plain dark shadows, one thing in front of another, and far
+things being smaller and fainter.

@@ -9443,3 +9443,10 @@ and rose light, the warmest and most unusual. Same layout, words and demo in all
 (`gen/a5x.py` swaps them). The first A5 (warm brown-black `#151210`) stays on top for comparison.
 **Weak, honestly:** the brown-black of the first A5 may be what read as "could be better" (it can look muddy next to
 peach); Plum is the riskiest (purple can turn cheap if the glow gets stronger).
+
+## 2026-10-08 — "Don't add that shiny thing": A5 without shine (R-036)
+
+All four A5 boards and the A5 phone redrawn without any glow or highlight: no light behind the reply, no rose haze,
+no glowing dot or button, no highlight edges; panels one flat colour. What stays: the dark ground, the high contrast,
+the reply card sitting in front of the panel with a plain dark shadow that deepens as it lifts when written, and the
+far/near customer questions. The colour question (Charcoal, Ink, Plum, or the first brown-black) is still open.

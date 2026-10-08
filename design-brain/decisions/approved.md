@@ -2143,3 +2143,10 @@ thing". Built in v19 (see design-decisions). Wording stays "in your customer's l
 
 **Direction:** 2026-10-08, founder (R-055). Every conversation, example or the visitor's own, shows these five and
 only these; the bar under the demo names them; everything else is explained further down.
+
+## A-125 — Real channel logos where we name the channels we collect from ^A-125
+
+**Direction:** 2026-10-08, founder, on the "From" strip: *"Add the actual logos here."* Supersedes the earlier "plain
+line drawings, never the brands' own logos" choice for this strip. Logos come from Simple Icons (CC0 icon data; the
+trademarks stay their owners'); Outlook waits for Microsoft's own file; each brand's logo-use rules to be checked
+before launch.

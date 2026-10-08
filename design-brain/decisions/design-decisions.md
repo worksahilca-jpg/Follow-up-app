@@ -10046,3 +10046,9 @@ After the reply is sent, three lines appear in the card one by one (Followed up 
 while the bar lights the same steps; the right column shows "Won · $X". Removed: the flip, typed-out follow-ups and
 customer replies, the note line under the bar, the default sub-labels under the steps. Kept: the "From" strip (he asked
 for it one comment earlier), languages, real answers to typed questions, the type box.
+
+## 2026-10-08 — Home v27: real logos in the "From" strip; no 3D turn (A-125, R-056)
+
+Gmail, Instagram, Messenger, WhatsApp and Facebook logos in their brand colours on small white chips (the active one
+grows briefly with a soft ring); Outlook a plain envelope until we have Microsoft's file; text and website-form plain
+icons. The demo's cards slide flat (`--fl-tilt: 0`).

@@ -935,3 +935,8 @@ much."* Rule: one light motion blur on the photos.
 **Rejected:** 2026-10-08, founder, on v25: *"now we made it very complex. Let's just show this: 1. caught 2. answered
 3. followed up 4. booked 5. won. Don't make it very complicated. We'll explain it further on our website."*
 **Principle (his words):** the demo shows the five steps and nothing more; detail belongs further down the page.
+
+## R-056 — Cards that turn or flip in 3D as they move ^R-056
+
+**Rejected:** 2026-10-08, founder, on the demo's middle card: *"Do not flip this. It looks very odd."* Supersedes the
+matte-3D tilt of A-113 for the demo's cards; they slide flat.

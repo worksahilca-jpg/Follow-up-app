@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp theme 1, signal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Geist:wght@300..700&amp;family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&amp;family=Inter+Tight:ital,wght@0,400..700;1,400..700&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a0a}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+.rv{transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1)}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+.caret{animation:blink 1s steps(1) infinite}
+.fall,.out{position:absolute;left:350px;top:400px;white-space:nowrap;padding:9px 15px;border-radius:999px;font-size:14.5px;animation-duration:6s;animation-iteration-count:infinite;animation-timing-function:cubic-bezier(.22,1,.36,1);animation-play-state:var(--play);opacity:0}
+.fall{background:#161616;border:1px solid #2a2a2a;color:#e8e8e8;animation-name:fall}
+.out{font-weight:600;animation-name:out}
+@keyframes fall{0%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y)))}12%{opacity:1}55%{opacity:1;transform:translate(calc(-50% + var(--x) * 0.3),calc(-50% + var(--y) * 0.3))}72%{opacity:0;transform:translate(-50%,-50%) scale(.5)}100%{opacity:0;transform:translate(-50%,-50%) scale(.5)}}
+@keyframes out{0%,50%{opacity:0;transform:translate(-50%,-50%) scale(.5)}62%{opacity:1;transform:translate(-50%,calc(-50% + 70px)) scale(1)}88%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y)))}}
+.still{display:none}
+@media (prefers-reduced-motion: reduce){.fall,.out{display:none}.still{display:block}}
+@media (prefers-reduced-motion: reduce){.caret{animation:none}.rv{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 900px; background: #0a0a0a; color: #ffffff; font-family: 'Geist', 'Public Sans', sans-serif; overflow: hidden; --play: {{ play }}">
+<header style="position: absolute; top: 22px; left: 64px; right: 64px; display: flex; justify-content: space-between; align-items: center; z-index: 5">
+<span style="display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 19px"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<nav aria-label="Main" style="display: flex; gap: 28px; align-items: center; font-size: 15px"><a href="#how" style="text-decoration: none; color: #a3a3a3">How it works</a><a href="#prices" style="text-decoration: none; color: #a3a3a3">Prices</a><a href="#data" style="text-decoration: none; color: #a3a3a3">Your data</a><a href="#signin" style="text-decoration: none">Sign in</a><a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: #ffffff; color: #0a0a0a; font-weight: 600; text-decoration: none">Start free</a></nav>
+</header>
+<div style="position: absolute; left: 64px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; z-index: 3">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #7c7c7c; display: flex; gap: 10px; align-items: center"><span style="width: 8px; height: 8px; border-radius: 999px; background: #ff6a1f"></span>For Gmail · free while in beta</div>
+<h1 style="margin: 22px 0 0; font-weight: 500; font-size: 74px; line-height: 0.98; letter-spacing: -0.045em">Never lose a lead <em style="font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 84px; letter-spacing: -0.02em; color: #ff6a1f">because you forgot to follow up.</em></h1>
+<p style="margin: 24px 0 0; max-width: 28em; font-size: 18px; line-height: 1.5; color: #a3a3a3">FollowUp answers the customers in your Gmail in your words, checks in when they go quiet, and hands you the decisions.</p>
+<div style="margin-top: 30px; display: flex; align-items: center; gap: 18px"><a href="#start" style="display: inline-flex; align-items: center; min-height: 56px; padding: 0 28px; border-radius: 999px; background: #ffffff; color: #0a0a0a; font-weight: 600; font-size: 16.5px; text-decoration: none">Connect Gmail, start free</a><span style="font-size: 14.5px; color: #7c7c7c">No credit card</span></div>
+</div>
+<div role="img" aria-label="Customers' questions arrive from Gmail, are caught by FollowUp in the middle, and leave as answers written in the owner's words. A price question leaves as 'comes to you' instead of an answer." style="position: absolute; left: 700px; top: 84px; width: 700px; height: 790px">
+<div style="position: absolute; left: 0; right: 0; top: 18px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #7c7c7c">Your Gmail, tonight</div>
+<div aria-hidden="true" style="position: absolute; left: 350px; top: 400px; width: 480px; height: 480px; transform: translate(-50%,-50%); border-radius: 999px; border: 1px solid #1c1c1c"></div>
+<div aria-hidden="true" style="position: absolute; left: 350px; top: 400px; width: 320px; height: 320px; transform: translate(-50%,-50%); border-radius: 999px; border: 1px solid #222"></div>
+<div aria-hidden="true" style="position: absolute; left: 350px; top: 400px; width: 190px; height: 190px; transform: translate(-50%,-50%); border-radius: 999px; border: 1px solid #2a2a2a"></div>
+<div class="fall" style="--x: -260px; --y: -360px; animation-delay: 0s"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #7c7c7c; margin-right: 8px">11:48 PM</span>Is it still available?</div><div class="fall" style="--x: 150px; --y: -390px; animation-delay: 1s"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #7c7c7c; margin-right: 8px">11:52 PM</span>Can you come today?</div><div class="fall" style="--x: -60px; --y: -420px; animation-delay: 2s"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #7c7c7c; margin-right: 8px">12:07 AM</span>How much for a full colour?</div><div class="fall" style="--x: 250px; --y: -340px; animation-delay: 3s"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #7c7c7c; margin-right: 8px">12:31 AM</span>Do you take new patients?</div><div class="fall" style="--x: -210px; --y: -300px; animation-delay: 4s"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #7c7c7c; margin-right: 8px">1:02 AM</span>Still keen, can we talk?</div><div class="fall" style="--x: 60px; --y: -370px; animation-delay: 5s"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #7c7c7c; margin-right: 8px">1:40 AM</span>Any openings tomorrow?</div><div class="out" style="--x: 140px; --y: 330px; animation-delay: 0s; background: #ff6a1f; color: #160b04; border: 1px solid #ff6a1f">Yes! When would suit you for a viewing?</div><div class="out" style="--x: 40px; --y: 370px; animation-delay: 1s; background: #ff6a1f; color: #160b04; border: 1px solid #ff6a1f">Sorry about that. What's the best number to reach you?</div><div class="out" style="--x: 180px; --y: 300px; animation-delay: 2s; background: transparent; color: #ff6a1f; border: 1px solid #ff6a1f"><span style="display: inline-block; width: 7px; height: 7px; border-radius: 999px; background: #ff6a1f; margin-right: 8px; vertical-align: 1px"></span>A price · comes to you</div><div class="out" style="--x: 40px; --y: 340px; animation-delay: 3s; background: #ff6a1f; color: #160b04; border: 1px solid #ff6a1f">Yes, we do. Would you like to come in?</div><div class="out" style="--x: 150px; --y: 360px; animation-delay: 4s; background: #ff6a1f; color: #160b04; border: 1px solid #ff6a1f">Great to hear! I'll call you tomorrow.</div><div class="out" style="--x: 60px; --y: 310px; animation-delay: 5s; background: #ff6a1f; color: #160b04; border: 1px solid #ff6a1f">Let me check and get back to you.</div><div class="still" style="position: absolute; left: 140px; top: 130px; padding: 9px 15px; border-radius: 999px; background: #161616; border: 1px solid #2a2a2a; font-size: 14.5px">Is it still available?</div><div class="still" style="position: absolute; left: 420px; top: 640px; padding: 9px 15px; border-radius: 999px; background: #ff6a1f; color: #160b04; font-weight: 600; font-size: 14.5px">Yes! When would suit you for a viewing?</div>
+<div style="position: absolute; left: 350px; top: 400px; width: 112px; height: 112px; transform: translate(-50%,-50%); border-radius: 999px; background: #ffffff; display: flex; align-items: center; justify-content: center; z-index: 2"><svg width="34" height="52" viewBox="0 0 76.77 120" fill="#ff6a1f" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg></div>
+<div style="position: absolute; left: 0; bottom: 30px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #7c7c7c">Answered tonight</div>
+<div aria-live="off" style="margin-top: 4px; font-size: 48px; font-weight: 500; letter-spacing: -0.03em; font-variant-numeric: tabular-nums">{{ count }}</div>
+</div>
+<div style="position: absolute; right: 0; bottom: 34px; display: flex; gap: 12px; align-items: center"><span style="font-size: 12.5px; color: #7c7c7c">Examples, not real customers.</span><button type="button" onClick="{{ toggle }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #333; background: transparent; color: #ffffff; font-size: 13px; font-weight: 600">{{ pauseLabel }}</button></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  state = { count: 14, paused: false };
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ paused: true }); return; }
+    this.timer = setInterval(() => { if (!this.state.paused) this.setState({ count: this.state.count >= 60 ? 14 : this.state.count + 1 }); }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    return { count: this.state.count, play: this.state.paused ? 'paused' : 'running',
+      pauseLabel: this.state.paused ? 'Play' : 'Pause', toggle: () => this.setState({ paused: !this.state.paused }) };
+  }
+}
+</script>
+</body>
+</html>

@@ -9475,3 +9475,31 @@ in its column; no phone version yet; "It writes down why" must be checked agains
 Asked with four choices; he picked colours and not impressive, not "boring, same old" or "too long". Next: finished
 first screens in a few confident colour worlds (R-004: he recognises colour on a finished page, not in a swatch), each
 with a second screen that keeps the impact (big type, the story at full size).
+
+## 2026-10-08 — Five themes, each with its own moving story
+
+Founder, right after R-037: *"look they have used animations, transitions also the motions, they have built a story in
+the landing page"* and *"give me 5 different themes and don't copy our old design, let be creative, take help from
+references"*. Drawn on the canvas page "Five themes" (`prototypes/2026-10-08-five-themes/`), first screen only so he can
+choose a world before the whole page is built in it. Same words in all five (A-013 headline with the italic human
+phrase, A-104; Gmail-first lede; one button), everything else different:
+1. **Signal** (black and orange, Geist + serif italic; Macro's discipline): customers' questions fall into FollowUp
+   in the middle and leave as orange answers; a price question leaves as an outlined "comes to you". A live count.
+   It is R-009's own request ("leads being caught… FollowUp is warming every lead") as motion.
+2. **Greenhouse** (forest and lime, Fraunces): the conversation in big type: the customer's question, then the reply
+   typing itself in lime, four businesses in turn (Wispr's text-as-hero).
+3. **Lilac** (light lilac and violet, Instrument Serif): a night compressed into 15 seconds; a clock runs 6 PM to 9 AM,
+   questions arrive at their times and are answered; a price waits for you with the fixed holding line; "9:00 AM.
+   You wake up to 3 customers answered, and 1 price waiting for you."
+4. **Blocks** (near-white with clay, sage, lilac and butter cards, Inter Tight): four colour cards turn like a deck,
+   one customer's story in four beats (Wispr/Superhuman colour blocks).
+5. **Ledger** (white, hairline grid, Inter Tight; Linear's precision): one thread across a week draws itself:
+   asked Monday night, answered in a minute, quiet Wednesday, checked in Friday, booked, check-ins stop.
+Every story has Pause (Ledger also Replay), labels its examples, and shows the end state under reduced motion.
+No glow (R-036), no dark blue (R-031), no charcoal/sand/peach (R-037), no dashboard (R-005/R-009), no photos.
+**Fixed honestly in the examples:** replies FollowUp sends on its own no longer offer days or times (a date is a
+decision, A-056); the price reply is the product's fixed holding line.
+**Not decided (needs the founder):** Geist, Fraunces and Inter Tight are used only to explore; adopting one is a font
+decision (CLAUDE.md "ask first"). **Weak, honestly:** Signal's falling pills are CSS loops, so in the real build they
+need a reduced-motion still (drawn) and must not distract from the headline; Blocks' cards have empty space in the
+middle; Lilac and Blocks are the most "pretty", Signal and Ledger the most "story".

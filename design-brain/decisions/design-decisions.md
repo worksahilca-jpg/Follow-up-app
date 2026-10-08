@@ -9410,3 +9410,24 @@ when nobody touches it. Scripted examples, labelled ("In your account it uses yo
 **Open for the founder:** a live version answering a visitor's own question with the real AI (cost and limits:
 product call). **Weak, honestly:** scripted replies can't answer what a visitor types; the drifting text must stay
 faint enough to read the headline.
+
+## 2026-10-08 — Founder: "these guys have depth and contrast … our whole thing looks very flat"
+
+Said while watching Chrome capture macro.com (black ground, glowing hub, raised icon circles). **Why ours reads flat
+(diagnosis):** paper `#faf7f2`, white cards and the peach stage sit within a few percent of the same lightness, the
+shadows are soft, and there is no light source, so nothing comes forward. **Why theirs reads deep:** near-black ground
+with white type and a white button (maximum contrast, the button is the brightest object), one light glowing from the
+centre, objects getting smaller and dimmer with distance, raised surfaces with a thin top highlight, a coloured glow
+behind the product.
+**Principle (founder's words, generalised):** a first screen needs a value range, not one lightness. Depth comes from
+contrast, one light source, layering (something in front of something), and distance cues (far = small, dim, soft).
+Answer drawn: **A5 · "Try it, with depth"** (page "First impression · depth"; `prototypes/2026-10-08-first-impression/
+HeroA5.dc.html`, `PhoneA5.dc.html`). Same working demo as A4, now on a warm near-black (`#151210`, our ink warmed;
+never blue, R-031). Cream headline with the italic phrase in peach `#f3cfb3`; cream "Connect Gmail" pill as the
+brightest thing on the left. The drifting customer questions are cold and far: small, dim, slightly blurred at the
+edges, larger and clearer near the middle. The customer's message is a dark, cool bubble; FollowUp's reply is the warm
+wash card, lit from behind by one peach light that **brightens and lifts when the reply is finished** (the lead is
+warmed: R-009's own words, made literal). On desktop the reply card breaks past the panel's left edge, so it sits in
+front of the panel. Only the first screen is dark; the rest of the page stays light (R-018: no black everywhere).
+**Weak, honestly:** dark grounds were loved once (A-009) and called "too black" once (R-018), so this is a test of
+which way he leans now; the glow must stay warm and soft, never neon; the breakout card needs care at narrower widths.

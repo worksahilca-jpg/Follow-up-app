@@ -9895,3 +9895,22 @@ Three other trade-neutral candidates were licensed free (403748411, 518856668, 4
 scratchpad only. **Weak, said plainly:** a "your week" card is close to a dashboard tile, which earlier heroes
 avoided (R-005, R-009); it stays one card with six plain lines. Screen one is no longer "the headline alone" (A-112),
 at his request for something that shows the product's work.
+
+## 2026-10-08 — Home v16: messages thrown in and caught; colour from fully blurred photos (A-120, R-050)
+
+**Built (prototype only):** under the headline, a block filled with a blurred-photo colour field. Customers' messages
+fly in from the top-left and top-right corners, tumbling in 3D (turning on all three axes, coming towards the
+viewer, then settling), and land on one white surface tilted slightly back. Each lands at the top of a list of five,
+the others slide down, three dots show it being written, then its result pops in: *Answered · 1 min* (green),
+*Booked · Fri 2 PM*, *Needs you · price* (orange dot), *Followed up · day 3* for a customer who went quiet.
+Newsletters, receipts and promos stop just above the surface, turn into *Skipped · newsletter*, and are flicked away
+and fall. No logo, no title. One message every 1.5–2.2 s, only while on screen; still with reduced motion.
+**Colour, three options to choose from** (a [TO DECIDE] token, so proposed, not decided): **Forest** (recommended:
+deep green, the most professional; green already means "sent" in the app), **Moss** (olive with a lime light, his
+earlier lime ask), **Plum** (aubergine to mauve). Each is a real photo (Adobe Stock 328242925 leaves, 321971810 leaves
+in sun, 509912453 peonies; free licences, not AI) shrunk and blurred until nothing shows. The same field, darker,
+fills screen two, the "1 minute" envelope and the close. Page stays neutral paper; buttons ink; the italic takes the
+palette's deep tone. A small "Colour" switch sits bottom-left (prototype only).
+**Weak, said plainly:** forest green on screen two plus green italics comes close to R-043's all-green; the field
+is calm but carries little variation; the flights are quick (1.1–1.25 s), so a first-time visitor may need two or
+three to read what is happening.

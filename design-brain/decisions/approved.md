@@ -2093,7 +2093,20 @@ side; the tool does not pass his picks back, so he was asked which.
 
 ## A-119 — The photo look of home v13: treated photo behind sharp cards, colour from the photo ^A-119
 
+**PARTLY SUPERSEDED (2026-10-08)**: the brown colours by R-050; photos are now blurred to colour only (A-120).
+
 **Approved (mildly):** 2026-10-08, founder, on home v13: *"looks good, not bad"* (in the same breath as R-046).
 **What specifically:** a real photo, warmer, less saturated, fine grain, blurred behind the live demo while the
 cards stay sharp on top; the page's colour sampled from the photo (walnut-to-caramel panel, caramel italics,
 espresso buttons, a latte note) in place of the black panel (R-044). What was *not* liked is the subject (R-046).
+
+## A-120 — Photos only as blurred colour; the hero shows messages thrown in and caught, no logo ^A-120
+
+**Direction:** 2026-10-08, founder: *"we'll be using irrelevant photos just to get the colour, like Wispr does, right?
+We'll be blurring every single thing. We don't want any context from the photos, just to use it as the background."*
+And: *"The messages are throwing up from the top-right corner or top-left corner, and they have been held by
+followup. Don't add followup's logo and stuff. Just show visually with animations, 3D motions, or whatever you can
+use to show what the direction of the product is, what we do, what we aim for."*
+**What:** (1) real photos (licensed, not AI), blurred until only colour is left, used as the background of blocks;
+(2) under the headline, customers' messages fly in from the top corners in 3D and are caught on one calm surface
+where each is handled; junk is thrown away; no logo or brand mark in the motion; almost no words.

@@ -651,6 +651,9 @@ FollowUp system, not as a page per reference.
 
 ## R-030 — Mood photos that mean nothing (sunset skies, rooftops, a coffee by a window) ^R-030
 
+**PARTLY SUPERSEDED (2026-10-08)** by [[approved#^A-120|A-120]]: unrelated photos are now wanted, but only blurred until
+nothing in them is recognisable, as colour fields. A *visible* photo that means nothing stays rejected.
+
 **Rejected:** 2026-10-08, founder, as the first five Unsplash photos arrived (sunrise sky over rooftops, pink sky
 over houses, two coffee-by-the-window shots, red roofs under a blue sky): *"Bro, we got to use the photos that are
 relevant, not the irrelevant ones. What does the sunset mean, bro? Nothing."*
@@ -894,3 +897,8 @@ concept: whoever will come, if the cafe owner comes, it will become a cafe. No, 
 pictures. I just want it to be used like Wispr Flow does."*
 **Principle (from our Wispr teardown, which matches his words):** Wispr puts photos inside a framed photo card (big
 corners, the product floating on it), never as the background of a whole section. A-119's treatment still applies.
+
+## R-050 — The brown (walnut, caramel, espresso) colours of v13–v15 ^R-050
+
+**Rejected:** 2026-10-08, founder: *"brown looks good but not professional"*. Supersedes the colour half of A-119.
+**Principle (his words):** warm and pleasant is not enough; the colour must read professional.

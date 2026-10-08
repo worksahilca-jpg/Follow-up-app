@@ -764,3 +764,19 @@ the first screen: big type, big moments, the product's story told at full size, 
 
 **Do not propose again:** the charcoal + sand + peach-wash palette as the site's colours; chapters drawn as small
 cards on beige rounded panels.
+
+## R-038 — Five "themes" that were one layout in five colours ^R-038
+
+**Rejected:** 2026-10-08, founder, on the "Five themes" page: *"bro why you using the same design be creative bro just
+use the info not the design."*
+
+**What was rejected:** Signal, Greenhouse, Lilac, Blocks and Ledger as a set: all five shared one composition (top
+menu, headline and lede on the left, button, a moving demo on the right or below). Only colour, font and the demo
+changed.
+
+**Principle (his words):** keep the information (what FollowUp does, the headline, the button, the story), and make the
+*design* new each time. Variety has to be in the composition and the idea, not in the paint.
+**Inferred (marked inferred):** "layout A" (A-105, headline left and a stage right) has become a habit he's tired of;
+he wants each first screen to be a different picture, the way Wispr, Macro and Superhuman each look like nothing else.
+
+**Do not propose again:** a set of options that share one skeleton; headline-left/demo-right as the default answer.

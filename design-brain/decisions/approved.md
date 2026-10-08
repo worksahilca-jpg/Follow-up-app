@@ -1928,6 +1928,9 @@ stays Public Sans.
 
 ## A-105 — First screen layout A: headline left, one big colour stage right ^A-105
 
+**PARTLY SUPERSEDED (2026-10-08)** by [[rejected#^R-038|R-038]]: the founder asked for compositions beyond "headline left,
+stage right" (*"be creative, just use the info not the design"*). Layout A stays a valid option, not the default.
+
 **Approved:** 2026-10-08, founder, on the "First impression" page: *"I like the A1, but I don't like the concept."*
 **What specifically (inferred from "A1", marked inferred):** option A's layout and look, not its idea: the italic
 headline (A-104) large on the left with the line, one pill button and the trust line; a big rounded colour stage on

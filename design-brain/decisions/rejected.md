@@ -718,3 +718,15 @@ stamp, the Answered pile. The layout stays (A-105).
 a reply", which he has now seen many times (R-028, R-033). The hero needs a bigger idea than a single exchange.
 Note R-009's own words for what he wanted the hero to show: "leads are being caught from the sources and FollowUp is
 warming every lead."
+
+## R-035 — A2 "Without, then with FollowUp" (the grid of nine customer cards) ^R-035
+
+**Rejected:** 2026-10-08, founder, in a canvas comment anchored on A2's stage ("Who wrote this week / Without
+FollowUp / With FollowUp"): *"I don't like this."*
+
+**What was rejected:** A2's picture: a 3×3 grid of customer cards in cool grey-blue, four dropping away as "Lost",
+then the switch to "With FollowUp" and the cards warming to peach.
+
+**Reason:** not given. Asked in the thread which part (the grid of cards, the cold/warm colours, or the
+lost-customers story). *Inferred, not confirmed:* a grid of small cards reads like a dashboard or a list (R-005/R-009
+territory) rather than one big, felt moment.

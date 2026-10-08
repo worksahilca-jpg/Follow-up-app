@@ -664,3 +664,18 @@ meaning from it without a caption. *Inferred, not confirmed:* the night-to-dawn 
 may read the same way ("what does the sky mean?") and should be justified by what it shows, not by a metaphor.
 
 **Do not propose again:** skies, sunsets, landscapes, coffee cups, plants or other decorative photos as imagery.
+
+## R-031 — The dark blue night-to-sunrise look ^R-031
+
+**Rejected:** 2026-10-08, founder: *"we don't want to use that dark bluish sunrise kind of thing. It was looking good,
+but not my type."*
+
+**What was rejected:** the night-sky-to-dawn gradient heroes and the deep night-blue blocks: L2 "Morning light", L4,
+the "Website · reframed" pages (night hero, dawn closing panel, Sign in sky) and the deep blue stage (`#0f1a2c`) of
+the held v2 Home.
+
+**Principle (his words, plus inference marked):** it looked good but it isn't his taste. *Inferred:* he prefers the
+light, warm, editorial ground of Wispr Flow (cream, near-black, flat colour blocks) to cinematic dark-blue
+atmosphere; dark is fine as a near-black block (Wispr), not as a blue sky.
+
+**Do not propose again:** dark blue or navy grounds, night skies, sunrise/dawn gradients.

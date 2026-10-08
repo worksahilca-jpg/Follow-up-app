@@ -9328,3 +9328,10 @@ loves) rather than more taste-driven drafts.
 Founder, after the Wispr teardown: *"yes slanted like wispr"*. Headlines: plain words upright, the human phrase in
 italic serif. A-022's "no serif italic" superseded for headlines. He also asked "is it just this that we got from
 Wispr?": answered with the full list of what FollowUp takes from Wispr (and what it doesn't), from the teardown.
+
+## 2026-10-08 — Founder: redraw the website around Wispr; no dark blue sunrise (R-031)
+
+*"Till Superhuman and others are done, can you please make something around Wispr for our website, and let's just
+reframe it again? … we don't want to use that dark bluish sunrise kind of thing. It was looking good, but not my
+type."* Next: a Wispr-structured Home (and phone first screen) on a new canvas page, built from the Wispr teardown's
+14 takeaways and A-104 (italic human phrase), in FollowUp's own light palette.

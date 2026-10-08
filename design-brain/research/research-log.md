@@ -453,3 +453,6 @@ button in the hero, the real app plays its story once and rests; one paragraph d
 four chapters on one template with overlapping, edge-faded product cards for depth; a changelog as proof of pace;
 two bright quote cards as the only colour after 7,000 px of near-black; the first ask comes 8,000 px down. Added to
 the four-sites report (all four now complete) and `landing-page/2026-10-08-four-favourites-teardown.md`.
+
+- 2026-10-08 · Wispr Flow colour study (how, why, gradients, three FollowUp palettes) →
+  `landing-page/2026-10-08-wispr-colour-study.md`

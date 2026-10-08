@@ -2015,3 +2015,13 @@ interaction, a motion idea, the order of a story) and rebuild it with FollowUp's
 real product screens. Never take their images, illustrations, video, copy, logos or the exact look of a screen.
 **Note:** this loosens CLAUDE.md's "Never copy a reference… extract the principle" from principle-only to
 pattern-level borrowing. CLAUDE.md itself is unchanged until the founder confirms the wording.
+
+## A-112 — Layout 3: two screens (the headline alone, then the box and the flow) ^A-112
+
+**Approved:** 2026-10-08, founder, on https://claude.ai/artifact/4CTFfFCnWd9avFeJ5uLQC5: *"I like the two-screen one,
+but we have to make that header a bit smaller in the centre… this concept is good."*
+**What specifically:** screen one is the headline alone, centred, with "Try it yourself ↓"; screen two is the type
+box and the reply flow (A-109/A-110). **Change asked:** the headline a bit smaller. **Pending, not yet explained:**
+*"we have to create a border with a lot of things. I'll be telling you later on"*: do not guess it; wait.
+**Colours:** still open (R-042); he asked for research on how Wispr Flow uses colour, to be "more professional, like
+Wispr is".

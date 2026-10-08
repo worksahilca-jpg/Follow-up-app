@@ -9723,3 +9723,13 @@ working opening (A-109/A-110), switched from a bar at the bottom:
 **Recommendation given:** layout 1 with colour C: the hook owns the screen, and green is FollowUp's own "sent"
 colour, so the site and the app read as one product. **Weak, honestly:** layout 2 shows only the middle card of the
 stream (no room for its sides); layout 3 asks for a scroll before anything moves.
+
+## 2026-10-08 — Layout 3 picked (A-112); headline smaller; Wispr colour research
+
+Founder: *"I like the two-screen one, but we have to make that header a bit smaller in the centre… this concept is
+good"*, then asked for research on how Wispr Flow uses colour and why, *"we can play with gradients too… then we'll
+decide the proper colours"*. **Done:** layout 3's headline reduced (max ~108 px, was ~158 px) on
+https://claude.ai/artifact/4CTFfFCnWd9avFeJ5uLQC5 (v2). Research page https://claude.ai/artifact/Mi2ateBbv2oxiKwPhHPpWV
+with three palettes on Wispr's role skeleton (Forest recommended, Ink, Mint light); details in
+`research/landing-page/2026-10-08-wispr-colour-study.md`. **Pending from him:** the "border with a lot of things"
+(he will explain) and the palette choice.

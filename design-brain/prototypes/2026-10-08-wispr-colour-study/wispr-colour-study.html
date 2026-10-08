@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wispr Colour Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@400..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+:root { --paper: #FAF8F3; --ink: #0E0E0C; --soft: #57534E; --faint: #736E68; --line: #E7E3DC; --card: #FFFFFF; --green: #0F4A33; --mint: #CDEFD9;
+  --serif: 'Instrument Serif', Georgia, serif; --sans: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace }
+* { box-sizing: border-box }
+html, body { background: var(--paper) }
+body { margin: 0; color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased }
+.wrap { max-width: 1160px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 48px) }
+h1, h2, h3, p { margin: 0 }
+h1, h2 { font-family: var(--serif); font-weight: 400; letter-spacing: -.03em; text-wrap: balance }
+h1 { font-size: clamp(44px, 6vw, 80px); line-height: .95 }
+h2 { font-size: clamp(32px, 3.6vw, 48px); line-height: 1 }
+h1 em, h2 em { color: var(--soft) }
+.mono { font-family: var(--mono); font-size: 12px; color: var(--faint) }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint) }
+section { padding-block: clamp(48px, 7vw, 88px) }
+.lede { margin-top: 18px; font-size: 19px; color: var(--soft); max-width: 60ch }
+.top { padding-top: 56px }
+.brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 650 }
+.block { background: var(--green); color: #fff; border-radius: clamp(28px, 4vw, 56px); margin-inline: clamp(8px, 1.5vw, 20px); background-image: radial-gradient(90% 120% at 12% 0%, #1F7350 0%, rgba(31,115,80,0) 60%) }
+.block h2 em, .block .eyebrow { color: #BFE3CD }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px 48px; margin-top: 36px }
+.sws { display: grid; gap: 14px }
+.sw { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 14px; align-items: start }
+.chip { width: 52px; height: 52px; border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(10,10,10,.1) }
+.sw b { font-weight: 650 } .sw p { margin-top: 2px; font-size: 15px; color: var(--soft) }
+.block .sw p { color: #D7EBDF } .block .mono { color: #BFE3CD }
+.quotes { display: grid; gap: 16px }
+blockquote { margin: 0; padding: 20px 22px; border-radius: 20px; background: rgba(255,255,255,.08); font-family: var(--serif); font-size: 24px; line-height: 1.2 }
+blockquote cite { display: block; margin-top: 10px; font-family: var(--mono); font-style: normal; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #BFE3CD }
+.points { list-style: none; margin: 32px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 40px }
+.points li { padding-top: 16px; border-top: 1px solid var(--line) }
+.points b { display: block; font-size: 17px } .points span { color: var(--soft); font-size: 15.5px }
+.gr { margin-top: 32px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px }
+.gr div { border-radius: 20px; padding: 16px; min-height: 150px; display: flex; flex-direction: column; justify-content: flex-end; font-size: 14px; line-height: 1.4 }
+.gr b { display: block; font-size: 15px; margin-bottom: 2px }
+.gr .no { position: relative } .gr .no::after { content: "Not for us"; position: absolute; top: 12px; right: 12px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; background: #fff; color: #9A3412; padding: 3px 8px; border-radius: 999px }
+.gr .yes::after { content: "Yes"; position: absolute; top: 12px; right: 12px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; background: #fff; color: #0D6E3C; padding: 3px 8px; border-radius: 999px }
+.gr .yes { position: relative }
+.pals { margin-top: 36px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px }
+.pal { border-radius: 26px; padding: 18px; background: var(--card); box-shadow: 0 0 0 1px var(--line), 0 30px 60px -44px rgba(10,10,10,.45) }
+.pal.rec { box-shadow: 0 0 0 2px var(--ink), 0 30px 60px -40px rgba(10,10,10,.5) }
+.pal header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px }
+.pal h3 { font-family: var(--serif); font-weight: 400; font-size: 30px; letter-spacing: -.02em }
+.tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: #F1EEE8 }
+.pal.rec .tag { background: var(--ink); color: #fff }
+.why { margin-top: 14px; font-size: 15px; color: var(--soft) }
+.roles { margin-top: 14px; display: grid; gap: 7px }
+.rc { display: grid; grid-template-columns: 16px 76px minmax(0, 1fr); gap: 8px; align-items: center; font-size: 13px; color: var(--soft) }
+.rc i { width: 16px; height: 16px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(10,10,10,.12) } .rc b { color: var(--ink); font-weight: 650 }
+/* the tiny two-screen page */
+.mini { border-radius: 18px; overflow: hidden; background: var(--p); box-shadow: inset 0 0 0 1px rgba(10,10,10,.08) }
+.m1 { padding: 10px 14px 22px; color: var(--i); text-align: center }
+.mnav { display: flex; justify-content: space-between; align-items: center; font-size: 8px; font-weight: 700 } .mnav span { display: inline-flex; gap: 3px; align-items: center } .mnav i { width: 30px; height: 10px; border-radius: 99px; background: var(--i) }
+.mh { margin: 26px auto 0; max-width: 15ch; font-family: var(--serif); font-size: 25px; line-height: .95; letter-spacing: -.03em } .mh em { opacity: .62 }
+.mcue { display: inline-block; margin-top: 16px; font-size: 8px; font-weight: 700; padding: 4px 8px; border-radius: 99px; background: #fff; box-shadow: 0 0 0 1px rgba(10,10,10,.1) }
+.m2 { background: var(--b); border-radius: 22px 22px 0 0; padding: 16px 14px 18px; position: relative; color: var(--ob) }
+.mbox { display: flex; align-items: center; gap: 6px; padding: 4px; border-radius: 99px; background: #fff; color: #0E0E0C; font-size: 8px }
+.mbox .you { width: 18px; height: 18px; border-radius: 99px; background: #F1EEE8; display: grid; place-items: center; font-weight: 700; font-size: 6px } .mbox .ph { flex: 1; color: #8A847D }
+.mbox .go { padding: 4px 9px; border-radius: 99px; background: var(--ac); color: var(--aci); font-weight: 700 }
+.mlens { margin: 12px auto 0; width: 76%; border-radius: 12px; background: #fff; color: #0E0E0C; padding: 8px 9px; font-size: 8px; box-shadow: 0 16px 26px -16px rgba(0,0,0,.6) }
+.lh { display: flex; justify-content: space-between; padding-bottom: 5px; border-bottom: 1px solid #EEE } .lh span { display: inline-flex; gap: 3px; align-items: center; color: #0D6E3C; font-weight: 700 } .lh i { width: 5px; height: 5px; border-radius: 99px; background: #0D6E3C }
+.lq { margin-top: 6px; padding: 5px 7px; border-radius: 8px 8px 8px 3px; background: #F3F2F0 }
+.la { margin: 5px 0 0 16px; padding: 5px 7px; border-radius: 8px 8px 3px 8px; background: var(--rp); color: var(--rpi) }
+.lt { margin: 5px 0 0 16px; color: #0D6E3C; font-weight: 700 } .nd { color: #C96A1B }
+.mz { display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--mono); font-size: 6.5px; letter-spacing: .1em; color: var(--obs) }
+.map { margin-top: 28px; display: grid; gap: 10px }
+.map div { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 18px; padding: 14px 18px; border-radius: 16px; background: var(--card); box-shadow: 0 0 0 1px var(--line); font-size: 15.5px }
+.map b { font-weight: 650 }
+.src { font-size: 14px; color: var(--soft) } .src a { color: var(--ink) } .src li { margin-top: 6px }
+@media (max-width: 900px) { .grid2, .pals, .points, .gr { grid-template-columns: minmax(0, 1fr) } .map div { grid-template-columns: minmax(0, 1fr); gap: 4px } }
+</style></head><body>
+<div class="wrap top"><span class="brand"><svg width="10" height="16" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span> <span class="mono">&middot; colour research &middot; Oct 8, 2026</span></div>
+
+<section><div class="wrap">
+<div class="eyebrow">How Wispr Flow uses colour</div>
+<h1>Few colours. <em>Each one has a single job.</em></h1>
+<p class="lede">Wispr looks professional because it uses only a handful of colours and never mixes their jobs. Warm paper for reading, one deep colour for weight, one soft colour that only ever means &ldquo;press me&rdquo;.</p>
+<div class="grid2"><div class="sws"><div class="sw"><span class="chip" style="background:#FFFFEB"></span><div><b>Cream paper</b> <span class="mono">#FFFFEB</span><p>The page itself: warm, like paper, never pure white.</p></div></div><div class="sw"><span class="chip" style="background:#1A1A1A"></span><div><b>Near-black</b> <span class="mono">#1A1A1A</span><p>Words. Big serif headlines, plain sans text.</p></div></div><div class="sw"><span class="chip" style="background:#034F46"></span><div><b>Deep teal-green</b> <span class="mono">#034F46</span><p>The heavy blocks: dark sections and panels that give the cream contrast.</p></div></div><div class="sw"><span class="chip" style="background:#F0D7FF"></span><div><b>Lavender</b> <span class="mono">#F0D7FF</span><p>Only one job: “press me”. Every main button, nothing else.</p></div></div><div class="sw"><span class="chip" style="background:#FFA946"></span><div><b>Warm orange</b> <span class="mono">#FFA946</span><p>Tiny warm highlights, used rarely.</p></div></div><div class="sw"><span class="chip" style="background:#7F1C34"></span><div><b>Wine</b> <span class="mono">#7F1C34</span><p>A rare deep accent in a few cards.</p></div></div></div>
+<div><ul class="points" style="grid-template-columns:minmax(0,1fr);margin-top:0">
+<li><b>Paper, not white</b><span>A warm cream page feels like a journal, not a dashboard. It calms the page down.</span></li>
+<li><b>One heavy colour, used in blocks</b><span>Whole sections turn deep green, with very round corners, and slide over each other as you scroll. That is where the depth comes from.</span></li>
+<li><b>The button colour is never used for anything else</b><span>Lavender only appears on things you press, so your eye learns it in one second.</span></li>
+<li><b>Warm on purpose</b><span>They chose warm colours to stand apart from the cold blue-and-purple look of most AI tools.</span></li>
+</ul></div></div>
+</div></section>
+
+<section class="block"><div class="wrap">
+<div class="eyebrow">Why they did it, in their own words</div>
+<h2>It worked in the app, <em>but nobody remembered it.</em></h2>
+<div class="grid2"><div class="quotes">
+<blockquote>&ldquo;The palette worked well in product, but fell short in the wild. It wasn&rsquo;t recognizable in a feed, and it wasn&rsquo;t memorable in a moment.&rdquo;<cite>Wispr, &ldquo;Rebranding Flow&rdquo;</cite></blockquote>
+<blockquote>&ldquo;Soft neutrals and thoughtful contrast lean away from the clinical palettes common in AI startups.&rdquo;<cite>Wispr, &ldquo;Rebranding Flow&rdquo;</cite></blockquote>
+</div><div class="quotes">
+<blockquote>&ldquo;Every visual, every blur, every curve or cue echoes the same idea: voice, in motion.&rdquo;<cite>Wispr, &ldquo;Rebranding Flow&rdquo;</cite></blockquote>
+<blockquote style="font-family:var(--sans);font-size:16px;line-height:1.5">They looked at icy blues and purples with gradient overlays (&ldquo;precision, technology, the future&rdquo;) and went warm instead. The whole rebrand took six weeks, done by about two and a half people in-house.<cite>Same post</cite></blockquote>
+</div></div>
+</div></section>
+
+<section><div class="wrap">
+<div class="eyebrow">Gradients</div>
+<h2>Wispr is mostly flat. <em>The softness comes from blur, not gradients.</em></h2>
+<p class="lede">Their sections are solid blocks of one colour. What feels soft is blurred photography behind the product cards. The gradient-heavy site is Superhuman: every product has its own gradient mood. So gradients can work for us, if we keep them to one colour family and use them like light.</p>
+<div class="gr">
+<div class="yes" style="background:radial-gradient(90% 120% at 15% 0%, #1F7350 0%, rgba(31,115,80,0) 60%), #0F4A33;color:#fff"><b>Light falling on a block</b>One colour, lighter where the light hits. Adds depth, stays calm.</div>
+<div class="yes" style="background:linear-gradient(170deg, #E3F6EA, #B9E2C9)"><b>One-colour fade</b>Mint to sage. Soft, fresh, still one colour.</div>
+<div class="no" style="background:radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,.95), rgba(196,210,228,0) 70%), #f3efea"><b>Many colours at once</b>Peach, blue and pink together: our current theme, the one you didn&rsquo;t like.</div>
+<div class="no" style="background:linear-gradient(120deg,#7c3aed,#2563eb,#06b6d4);color:#fff"><b>Neon / rainbow</b>The cheap AI-startup look Wispr ran away from.</div>
+</div>
+</div></section>
+
+<section><div class="wrap">
+<div class="eyebrow">For FollowUp &middot; the same skeleton, our own colours</div>
+<h2>Three palettes to choose from. <em>Same roles, different mood.</em></h2>
+<p class="lede">Each uses your two-screen layout: screen one is the headline on paper, screen two slides up as a colour block holding the box and the live reply. Green and orange keep the meaning they already have in the app: green is &ldquo;sent&rdquo;, orange is &ldquo;needs you&rdquo;.</p>
+<div class="pals"><article class="pal rec"><header><h3>Forest</h3><span class="tag">Recommended</span></header><div class="mini" style="--p:#FAF8F3;--i:#0E0E0C;--b:radial-gradient(90% 120% at 15% 0%, #1F7350 0%, rgba(31,115,80,0) 60%), #0F4A33;--ob:#FFFFFF;--obs:#BFE3CD;--ac:#CDEFD9;--aci:#0B2A1A;--rp:#0F4A33;--rpi:#FFFFFF">
+<div class="m1"><div class="mnav"><span><svg width="5" height="8" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span><i></i></div><div class="mh">Never lose a lead <em>because you forgot to follow up.</em></div><div class="mcue">Try it yourself &darr;</div></div>
+<div class="m2"><div class="mbox"><span class="you">You</span><span class="ph">Type a customer's question…</span><span class="go">Send</span></div>
+<div class="mlens"><div class="lh"><b><svg width="4" height="7" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg> FollowUp</b><span><i></i>Sent</span></div><div class="lq">Is the house still available?</div><div class="la">Hi Priya, yes it is! Want to see it Saturday?</div><div class="lt">&#10003; Sent &middot; <span class="nd">&bull; price waits for you</span></div></div>
+<div class="mz"><span>WAITING</span><span>ANSWERED 13</span></div></div>
+</div><p class="why">Our own “Sent” green made deep. Strong contrast like Wispr, and green already means “answered” in the app.</p><div class="roles"><span class="rc"><i style="background:#FAF8F3"></i><b>Paper</b><span>the page</span></span><span class="rc"><i style="background:#0E0E0C"></i><b>Ink</b><span>words</span></span><span class="rc"><i style="background:#0F4A33"></i><b>Block</b><span>screen 2 and every other section</span></span><span class="rc"><i style="background:#CDEFD9"></i><b>Action</b><span>Send and Start free, nothing else</span></span><span class="rc"><i style="background:#0D6E3C"></i><b>Sent</b><span>answered, done</span></span><span class="rc"><i style="background:#C96A1B"></i><b>Needs you</b><span>a dot only</span></span></div></article><article class="pal"><header><h3>Ink</h3><span class="tag">Most minimal</span></header><div class="mini" style="--p:#FAF8F3;--i:#0E0E0C;--b:radial-gradient(90% 120% at 15% 0%, #2B2B29 0%, rgba(43,43,41,0) 60%), #111110;--ob:#FFFFFF;--obs:#A8A29E;--ac:#CDEFD9;--aci:#0B2A1A;--rp:#0E0E0C;--rpi:#FFFFFF">
+<div class="m1"><div class="mnav"><span><svg width="5" height="8" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span><i></i></div><div class="mh">Never lose a lead <em>because you forgot to follow up.</em></div><div class="mcue">Try it yourself &darr;</div></div>
+<div class="m2"><div class="mbox"><span class="you">You</span><span class="ph">Type a customer's question…</span><span class="go">Send</span></div>
+<div class="mlens"><div class="lh"><b><svg width="4" height="7" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg> FollowUp</b><span><i></i>Sent</span></div><div class="lq">Is the house still available?</div><div class="la">Hi Priya, yes it is! Want to see it Saturday?</div><div class="lt">&#10003; Sent &middot; <span class="nd">&bull; price waits for you</span></div></div>
+<div class="mz"><span>WAITING</span><span>ANSWERED 13</span></div></div>
+</div><p class="why">Black blocks on warm paper, like Macro and Linear. Very professional; the mint button is the only colour.</p><div class="roles"><span class="rc"><i style="background:#FAF8F3"></i><b>Paper</b><span>the page</span></span><span class="rc"><i style="background:#0E0E0C"></i><b>Ink</b><span>words</span></span><span class="rc"><i style="background:#111110"></i><b>Block</b><span>screen 2 and every other section</span></span><span class="rc"><i style="background:#CDEFD9"></i><b>Action</b><span>Send and Start free, nothing else</span></span><span class="rc"><i style="background:#0D6E3C"></i><b>Sent</b><span>answered, done</span></span><span class="rc"><i style="background:#C96A1B"></i><b>Needs you</b><span>a dot only</span></span></div></article><article class="pal"><header><h3>Mint light</h3><span class="tag">Gradient, light</span></header><div class="mini" style="--p:#F7F9F5;--i:#0E0E0C;--b:linear-gradient(170deg, #E3F6EA 0%, #B9E2C9 100%);--ob:#0B2A1A;--obs:#2F6B4A;--ac:#0E0E0C;--aci:#FFFFFF;--rp:#0D6E3C;--rpi:#FFFFFF">
+<div class="m1"><div class="mnav"><span><svg width="5" height="8" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span><i></i></div><div class="mh">Never lose a lead <em>because you forgot to follow up.</em></div><div class="mcue">Try it yourself &darr;</div></div>
+<div class="m2"><div class="mbox"><span class="you">You</span><span class="ph">Type a customer's question…</span><span class="go">Send</span></div>
+<div class="mlens"><div class="lh"><b><svg width="4" height="7" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg> FollowUp</b><span><i></i>Sent</span></div><div class="lq">Is the house still available?</div><div class="la">Hi Priya, yes it is! Want to see it Saturday?</div><div class="lt">&#10003; Sent &middot; <span class="nd">&bull; price waits for you</span></div></div>
+<div class="mz"><span>WAITING</span><span>ANSWERED 13</span></div></div>
+</div><p class="why">A light block with a one-colour gradient (mint to sage). Soft and fresh; depth comes from shadows, not darkness.</p><div class="roles"><span class="rc"><i style="background:#F7F9F5"></i><b>Paper</b><span>the page</span></span><span class="rc"><i style="background:#0E0E0C"></i><b>Ink</b><span>words</span></span><span class="rc"><i style="background:#CFEBDB"></i><b>Block</b><span>screen 2 and every other section</span></span><span class="rc"><i style="background:#0E0E0C"></i><b>Action</b><span>Send and Start free, nothing else</span></span><span class="rc"><i style="background:#0D6E3C"></i><b>Sent</b><span>answered, done</span></span><span class="rc"><i style="background:#C96A1B"></i><b>Needs you</b><span>a dot only</span></span></div></article></div>
+</div></section>
+
+<section><div class="wrap">
+<div class="eyebrow">Where each colour goes</div>
+<h2>A page that alternates, <em>like Wispr&rsquo;s.</em></h2>
+<div class="map">
+<div><b>Screen 1</b><span>Paper. Only the headline (smaller, centred) and &ldquo;Try it yourself &darr;&rdquo;.</span></div>
+<div><b>Screen 2</b><span>The block colour slides up over screen 1 with big round corners. The white box and the white middle card sit on it, so they pop.</span></div>
+<div><b>How it helps</b><span>Back to paper. White cards, the big &ldquo;7&times;&rdquo; on a block-coloured card.</span></div>
+<div><b>Today screen</b><span>Block colour again, the real app in white on top.</span></div>
+<div><b>Your control, What&rsquo;s new</b><span>Paper.</span></div>
+<div><b>Closing</b><span>Block colour, the big &ldquo;Connect Gmail, start free&rdquo; in the action colour.</span></div>
+<div><b>Buttons</b><span>Only the action colour, everywhere. Nothing else uses it.</span></div>
+</div>
+</div></section>
+
+<section><div class="wrap">
+<div class="eyebrow">Sources</div>
+<ul class="src">
+<li><a href="https://wisprflow.ai/rebrand">Wispr, &ldquo;Rebranding Flow&rdquo;</a> (their own post; read through search results, the site itself is blocked from this session)</li>
+<li><a href="https://design.withfudge.com/share/wisprflow.ai-design">Fudge: wisprflow.ai fonts, colours and UI patterns</a> (cream #FFFFEB, teal #034F46, lavender #F0D7FF)</li>
+<li><a href="https://styles.refero.design/style/ac53825c-1e06-4ae0-8489-cace5c5e0339">Refero: Wispr Flow design system</a> (lavender for primary actions, teal for inner accents)</li>
+<li><a href="https://www.webdesignhot.com/design.md/wispr-flow/">webdesignhot: Wispr Flow</a> (orange #FFA946, wine #7F1C34)</li>
+<li>Our own measured teardown of wisprflow.ai, from your Chrome (design-brain, Oct 8): lavender rgb(240,215,255) on every main button, deep green rgb(3,79,70) blocks, 80px corners, blurred photos behind demo cards.</li>
+</ul>
+</div></section>
+</body></html>

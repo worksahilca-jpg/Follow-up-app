@@ -9627,3 +9627,28 @@ Kept unchanged: the headline (A-013/A-104), "Connect Gmail, start free" (A-081),
 **Principle:** added to brand principle 9 — people skim; a heading plus one short line, pictures carry the detail.
 **Weak, honestly:** the real Today screen picture is still dense (it is the real app, so its words stay); "How it
 works" leaves a lot of empty scroll between steps now that the text is short.
+
+## 2026-10-08 — "It's still way complicated": four new opening screens, one page with a switcher
+
+Founder, on the home page after the word cut: *"It's still way complicated. Try new temp formats for the opening page,
+please."* Read as: the first screen has too many pieces (kicker, headline, lede, two buttons, four labelled symbols, an
+email card, the pill, two reply cards, a footnote, a Pause button), not only too many words.
+**Built:** https://claude.ai/artifact/1D4MG89T9aLMXVqE8buHpP (copy in `prototypes/2026-10-08-opening-screens/`). Four
+opening screens, each a different picture (R-038), each only: the approved headline (A-013/A-104), at most one short
+line, "Connect Gmail, start free" (A-081), and one moving thing. Built as real, full-size, working screens in our
+light, soft colours (A-108), with motion (A-107), not as quick canvas boards (R-039). Desktop and phone checked.
+1. **One line:** the headline very large, then one sentence that changes every three seconds ("11:48 PM · Priya asked
+   about the house → Answered in 1 min", then followed up, waiting for you, follow-ups stopped). Marked "Example" so it
+   never reads as a fake live feed.
+2. **Day and night:** headline centred, "Customers write at all hours. FollowUp answers every one.", then a
+   full-width day from 6 AM to 6 AM; a line sweeps across, four customers appear and each is answered a minute later,
+   one of them while "You're asleep". Plays once, then rests; Replay.
+3. **Your phone:** the headline split either side of a phone showing the Today screen (Needs you, Done for you,
+   Coming up); a new customer arrives, "Writing a reply" turns into "Replied · just now".
+4. **Three words:** the headline small, then "Replies. Follows up. Stops." very large, one lighting at a time, each
+   with two-to-four words ("in your words", "when they go quiet", "when they reply").
+Checked against rejected.md: not the single message-and-reply (R-034), no card grid (R-035), no shine (R-036), not
+charcoal/sand/peach or small cards on beige (R-037), four different compositions (R-038), not dark (R-040).
+**Honest notes:** the phone's "Done for you" heading is an illustration, not a section the app has today. "Answered a
+minute later" assumes sending is on for that kind of message. **Weak, honestly:** 1 and 4 are both type-led; 2's day
+band is a gradient, the one decorative choice here; 3 crops the phone, so the Coming up rows sit low.

@@ -9816,3 +9816,27 @@ only as "Sent", orange only as "your turn"; one tiny lime note "Free while in be
 The postmark left the live demo (A-117: the letter lives only in "Then and now"). The green picker removed.
 **Next (asked):** art-directed imagery in the dark panel and the letter section, generated with the founder's
 credits once he says yes.
+
+## 2026-10-08 — R-044 asked: what is wrong with the neutral page; image style examples
+
+Asked after *"i dont like it"* (R-044). His answers: **"Too plain, no colour"**, **"The black panel"**, **"No images"**
+(not "the whole layout"). On image style: *"lets see give me examples"*.
+**Principle (his answers, generalised):** neutral must not mean colourless; dark panels read heavy; the page needs
+human imagery before its colour can be judged. Colour should come back, but not as all-green (R-043).
+**Doing:** example images of one subject (an owner after hours while a customer's message lights the phone) in
+different styles, generated with ElevenLabs (about 2 cents each; Higgsfield had no credits): painted (Dispatch),
+cinematic photo (Lunora), documentary owner portrait (Table22). A fourth, soft storybook illustration (Harmoniq), hit
+ElevenLabs' free daily image limit. Images stay out of the repo until chosen (private references rule applies to
+others' screenshots; these are our own, but unchosen drafts are not kept).
+
+## 2026-10-08 — No AI images (R-045); real art instead
+
+The three AI examples (ElevenLabs, ~5.5 cents in total) were deleted from the workspace and never published; they
+remain in the founder's ElevenLabs account (flow "qNf3jQ3WSkMAgketARgI") for him to delete if he wishes.
+**Proposed instead, waiting for his pick:** public-domain paintings of people writing and reading letters (made by
+people, free to use, and exactly the "Then and now" idea), e.g. Gabriël Metsu's pair *Man Writing a Letter* /
+*Woman Reading a Letter* (one writes, one waits: a message and its reply), Vermeer's *Woman in Blue Reading a
+Letter* and *Girl Reading a Letter at an Open Window*, Hammershøi's quiet grey interiors (closest to "professional");
+or a commissioned painting from a real illustrator for the opening; real owners' photos later. Museum and Wikimedia
+sites are blocked from this session's network, so he downloads the chosen works and attaches them in chat.
+Colour waits for the art: in his references the colour comes from the image (R-044).

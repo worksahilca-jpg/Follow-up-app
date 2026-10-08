@@ -847,3 +847,21 @@ second lines), black buttons, one strong image or dark panel with the product fl
 they are almost absent (Ruul's single lime pill). Colour is rare; it does not carry the page.
 **Supersedes:** A-116 (green as the main colour), A-113/A-114's green blocks. Green stays only as the app's meaning
 ("sent").
+
+## R-044 — Theme v4, the professional neutral page (paper, ink, black buttons, one dark panel) ^R-044
+
+**Rejected:** 2026-10-08, founder, on https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v12: *"i dont like it"*.
+**What:** paper `#F4F3EF` everywhere, grey second lines, black buttons, a near-black panel for the live flow, the 7×
+card, the "1 minute" envelope and the close; colour only as meaning; one lime pill.
+**Reason:** not given; asked which part (see the next design-decisions entry). *Inferred, not confirmed:* with the
+green gone and no imagery yet, the page lost its warmth and reads flat and dark, the opposite of the references he
+sent, whose colour comes from one strong human image.
+
+## R-045 — AI-generated images, of any style ^R-045
+
+**Rejected:** 2026-10-08, founder, while three AI example images (painted, cinematic, owner portrait; ElevenLabs)
+were being placed: *"I don't want any AI images. Arts are good, but not AI."* The examples were never published.
+**Rule:** no AI-generated imagery on FollowUp's site or product. Art is welcome when it is made by people: licensed
+or public-domain artwork, commissioned illustration, real photographs of real owners (with permission).
+**Inferred, marked inferred:** a product that writes in your words cannot show faked people or faked art; it reads
+as fake and costs trust (brand principle 1).

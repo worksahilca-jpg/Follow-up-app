@@ -189,3 +189,7 @@ carry the detail, not paragraphs.
 **Added 2026-10-08, founder (A-110):** *"We have to let them try this thing."* On a public page, doing beats
 reading: the first action a visitor can take is the product itself (type a customer's question and watch it get
 answered), with no competing choice next to it. Explanations come after the try, not before.
+
+**Added 2026-10-08, founder (R-045):** *"I don't want any AI images. Arts are good, but not AI."* Every image on
+FollowUp is made by a person: public-domain or licensed art, commissioned illustration, or real photos of real
+owners with their permission. Never AI-generated pictures, in any style.

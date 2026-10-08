@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp idea 5, the receipt</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Geist:wght@300..700&amp;family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&amp;family=Inter+Tight:ital,wght@0,400..700;1,400..700&amp;display=swap">
+<style>
+body{margin:0;background:#ff6a1f}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+.rv{transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1)}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+.caret{animation:blink 1s steps(1) infinite}
+
+@media (prefers-reduced-motion: reduce){.caret{animation:none}.rv{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 900px; background: #ff6a1f; color: #1a0d05; font-family: 'Geist', 'Public Sans', sans-serif; overflow: hidden">
+<header style="position: absolute; top: 22px; left: 64px; right: 64px; display: flex; justify-content: space-between; align-items: center; z-index: 10; font-family: 'Geist', sans-serif; color: #1a0d05">
+<span style="display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 19px"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<nav aria-label="Main" style="display: flex; gap: 28px; align-items: center; font-size: 15px"><a href="#how" style="text-decoration: none; color: #4a2410">How it works</a><a href="#prices" style="text-decoration: none; color: #4a2410">Prices</a><a href="#data" style="text-decoration: none; color: #4a2410">Your data</a><a href="#signin" style="text-decoration: none">Sign in</a><a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: #1a0d05; color: #ffffff; font-weight: 650; text-decoration: none">Start free</a></nav>
+</header>
+<div style="position: absolute; left: 64px; top: 0; bottom: 0; width: 640px; display: flex; flex-direction: column; justify-content: center">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; letter-spacing: 0.14em; color: #4a2410">WHILE YOU SLEPT</div>
+<h1 style="margin: 18px 0 0; font-weight: 600; font-size: 78px; line-height: 0.95; letter-spacing: -0.05em">Never lose a lead <em style="font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 86px; letter-spacing: -0.015em">because you forgot to follow up.</em></h1>
+<p style="margin: 24px 0 0; max-width: 28em; font-size: 18px; line-height: 1.5; color: #4a2410">FollowUp answers the customers in your Gmail in your words, checks in when they go quiet, and hands you the decisions.</p>
+<div style="margin-top: 28px; display: flex; gap: 16px; align-items: center"><a href="#start" style="display: inline-flex; align-items: center; min-height: 56px; padding: 0 28px; border-radius: 999px; background: #1a0d05; color: #ffffff; font-weight: 600; font-size: 16.5px; text-decoration: none">Connect Gmail, start free</a><span style="font-size: 14.5px; color: #4a2410">Free in beta · No card</span></div>
+</div>
+<div aria-hidden="true" style="position: absolute; left: 820px; top: 112px; width: 470px; height: 22px; border-radius: 11px; background: #1a0d05; z-index: 3"></div>
+<div role="img" aria-label="A receipt of one night, printing line by line: Priya answered at 11:48 PM, Ben at 1:12 AM, Mia at 6:30 AM, each within a minute; Priya's price question at 7:55 AM went to the owner. Three answered, none left waiting, one decision for you." style="position: absolute; left: 845px; top: 122px; width: 420px; height: 690px; overflow: hidden; z-index: 2">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: {{ paper }}; overflow: hidden; transition: height .55s cubic-bezier(.22,1,.36,1)">
+<div style="background: #fbfaf7; padding: 30px 30px 18px; font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; line-height: 1.5; color: #1a0d05; box-shadow: 0 20px 40px -30px rgba(0,0,0,0.6)">
+<div style="text-align: center"><div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'Geist', sans-serif; font-weight: 650; font-size: 18px"><svg width="11" height="17" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</div><div style="margin-top: 4px; font-size: 12px; color: #6b5a4c">TUE OCT 6, 6:00 PM → WED OCT 7, 9:00 AM</div></div>
+<div style="margin: 14px 0; border-top: 1.5px dashed #c9c3b8"></div>
+<div style="display: grid; grid-template-columns: 92px 64px 1fr; height: 30px; align-items: center"><span>11:48 PM</span><span>Priya</span><span style="text-align: right">Answered · 1 min</span></div>
+<div style="display: grid; grid-template-columns: 92px 64px 1fr; height: 30px; align-items: center"><span>01:12 AM</span><span>Ben</span><span style="text-align: right">Answered · 1 min</span></div>
+<div style="display: grid; grid-template-columns: 92px 64px 1fr; height: 30px; align-items: center"><span>06:30 AM</span><span>Mia</span><span style="text-align: right">Answered · 1 min</span></div>
+<div style="display: grid; grid-template-columns: 92px 64px 1fr; height: 30px; align-items: center; font-weight: 600"><span>07:55 AM</span><span>Priya</span><span style="text-align: right; display: inline-flex; justify-content: flex-end; align-items: center; gap: 8px">Price → you <span style="width: 9px; height: 9px; border-radius: 999px; background: #e35a0f"></span></span></div>
+<div style="margin: 14px 0; border-top: 1.5px dashed #c9c3b8"></div>
+<div style="display: flex; justify-content: space-between; height: 28px; align-items: center"><span>CUSTOMERS ANSWERED</span><span>3</span></div>
+<div style="display: flex; justify-content: space-between; height: 28px; align-items: center"><span>LEFT WAITING</span><span>0</span></div>
+<div style="display: flex; justify-content: space-between; height: 28px; align-items: center; font-weight: 600"><span>DECISIONS FOR YOU</span><span>1</span></div>
+<div style="margin: 14px 0; border-top: 1.5px dashed #c9c3b8"></div>
+<div style="font-size: 12.5px; color: #6b5a4c">SENT FOR YOU 8:25 AM, TO PRIYA:</div>
+<div style="margin-top: 4px; font-family: 'Instrument Serif', serif; font-size: 21px; line-height: 1.2">“Thanks for asking! Let me check and I'll send you the price soon.”</div>
+<div style="margin-top: 20px; text-align: center; font-weight: 600; letter-spacing: 0.08em">NOBODY WAS FORGOTTEN.</div>
+</div>
+<svg aria-hidden="true" width="420" height="12" viewBox="0 0 420 12" preserveAspectRatio="none" style="display: block"><path d="M0 0 L5 12 L10 0 L15 12 L20 0 L25 12 L30 0 L35 12 L40 0 L45 12 L50 0 L55 12 L60 0 L65 12 L70 0 L75 12 L80 0 L85 12 L90 0 L95 12 L100 0 L105 12 L110 0 L115 12 L120 0 L125 12 L130 0 L135 12 L140 0 L145 12 L150 0 L155 12 L160 0 L165 12 L170 0 L175 12 L180 0 L185 12 L190 0 L195 12 L200 0 L205 12 L210 0 L215 12 L220 0 L225 12 L230 0 L235 12 L240 0 L245 12 L250 0 L255 12 L260 0 L265 12 L270 0 L275 12 L280 0 L285 12 L290 0 L295 12 L300 0 L305 12 L310 0 L315 12 L320 0 L325 12 L330 0 L335 12 L340 0 L345 12 L350 0 L355 12 L360 0 L365 12 L370 0 L375 12 L380 0 L385 12 L390 0 L395 12 L400 0 L405 12 L410 0 L415 12 L420 0 Z" fill="#fbfaf7"></path></svg>
+</div>
+</div>
+<div style="position: absolute; left: 845px; width: 420px; bottom: 36px; display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: #4a2410"><span>Examples, not real customers.</span><button type="button" onClick="{{ toggle }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #1a0d05; background: transparent; color: #1a0d05; font-size: 13px; font-weight: 600">{{ pauseLabel }}</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const H = [0, 96, 126, 156, 186, 216, 246, 274, 302, 330, 360, 430, 480, 664];
+class Component extends DCLogic {
+  state = { k: 0, paused: false };
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ k: H.length - 1, paused: true }); return; }
+    this.timer = setInterval(() => { if (!this.state.paused) this.setState({ k: this.state.k >= H.length + 8 ? 0 : this.state.k + 1 }); }, 650);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() { return { paper: H[Math.min(this.state.k, H.length - 1)] + 'px', pauseLabel: this.state.paused ? 'Play' : 'Pause', toggle: () => this.setState({ paused: !this.state.paused }) }; }
+}
+</script>
+</body>
+</html>

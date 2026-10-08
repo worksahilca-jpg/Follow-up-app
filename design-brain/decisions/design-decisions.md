@@ -9503,3 +9503,24 @@ decision, A-056); the price reply is the product's fixed holding line.
 decision (CLAUDE.md "ask first"). **Weak, honestly:** Signal's falling pills are CSS loops, so in the real build they
 need a reduced-motion still (drawn) and must not distract from the headline; Blocks' cards have empty space in the
 middle; Lilac and Blocks are the most "pretty", Signal and Ledger the most "story".
+
+## 2026-10-08 — Five ideas: same information, five different pictures (after R-038)
+
+Canvas page "Five ideas" (`prototypes/2026-10-08-five-ideas/`). Same words everywhere (A-013 headline with the italic
+human phrase, the Gmail-first lede, one button); each composition is its own idea:
+1. **Night** (near-black): the whole screen is a phone's lock screen. A big clock runs from 11:40 PM to 7 AM;
+   customers' emails stack up and each gets "Answered in your words · 1 min"; at 7:00 one quiet FollowUp note: "While
+   you slept: 3 customers answered. 1 price is waiting for you." Honest to the product: alerts stay quiet at night
+   and bursts become one (shipped in PR #461).
+2. **The list** (bold yellow): the follow-ups in your head as a giant to-do list that ticks itself off, struck through
+   with "Done by FollowUp · time"; the price row stays open: "Yours to decide · she got 'Let me check'".
+3. **The letter** (cool grey, white sheet): the reply itself as a real email, typing in, with typed notes in the
+   margin (in red, like an editor's): sent a minute after she wrote; your tone; it asks, it doesn't promise; it checks
+   in Friday and stops when she answers. Not hand-drawn (R-017).
+4. **The poster** (full lilac): the headline is the picture, enormous across the screen, and example customers'
+   questions and FollowUp's replies appear beside it.
+5. **The receipt** (orange): your night printed as a receipt, line by line: three answered within a minute, one price
+   to you, "Left waiting 0", the holding line that was sent, "Nobody was forgotten."
+All have Pause and labelled examples; reduced motion shows the end. **Weak, honestly:** Night and Receipt carry the
+story best; the Poster's bubbles are small next to the type; the List's yellow is loud for "calm over urgent"; the
+Letter is the quietest of the five. Fonts beyond the current three remain exploration only.

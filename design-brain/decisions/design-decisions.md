@@ -9150,3 +9150,29 @@ Next: the founder's Chrome captures screenshots, motion notes and a design-facts
 want that taste, though."* So: both surfaces read as dated; draw D2 and D3 for the landing page and the app; the
 target is the *taste* of the studied sites (principles, never their screens). The screenshots had not been seen in
 this session (the Drive reader returns text only), so they were asked for before drawing.
+
+## 2026-10-08 — D2 and D3 drawn, after seeing the eight sites (for the founder's pick; nothing built)
+
+The founder's PDF of the Google Doc gave the 45 screenshots; seen this time (`research/landing-page/2026-10-08-nine-homepages-seen.md`).
+Honest read of ours beside them: not broken, **plain** — one thin grey face for everything, small product cards, no
+committed colour, no depth, no scale. Drawn on a Design canvas (claude.ai/artifact/Wtq91Jo56vW8fBzTxUWdgH, private to
+the founder; copy in `prototypes/2026-10-08-taste-d2-d3/`), six boards:
+- **D2 landing (whole page):** a floating pill menu that stays; headline two-tone (claim black, the rest grey), bigger;
+  the hero is the one before → after, playing slowly (about 3.6 s a beat, four beats, Pause / Replay, still for
+  reduced motion): Priya's Gmail question → the reply in your words, waiting → sent from your own Gmail → she writes
+  back and check-ins stop. Then Works with; three honest numbers (2 min to connect, 1 min for a reply, 1 tap to send);
+  How it works with a sticky chapter list in the owner's words and one scene per chapter (the price handed to you,
+  one polite check-in, it stops when they reply); "What it will and won't do" in a deep warm-ink rounded panel with
+  the four approved promise lines and Pause all sending; a closing line and button.
+- **D3 landing (top half):** the same with Instrument Serif (already loaded for one italic word) as the display face,
+  upright, for headlines, numbers and chapter titles; body stays Public Sans.
+- **Phones, D2 and D3:** first screen each.
+- **App Today, D2 and D3:** two-tone headline ("4 customers are waiting on you. A reply is written for each."), hairline
+  rows with the customer's own words, the selected one lifted; the pane shows her message, then the reply on the wash
+  with Send, Edit and the quiet actions. D3 sets the headline and the name in the display face.
+**Weak, honestly:** (1) the hero is again a conversation playing under the headline, the device R-007 called awkward
+on 2026-09-18 (inferred then: too much theatre); it is slower and pausable now, but it is the same family. (2)
+Instrument Serif is common on AI-startup pages and may read as template. (3) The dark panel is a dark block on the
+white page (A-022); R-010 was about the page changing tone, but it is the founder's call. (4) "1 min" must stay true
+in practice. (5) "See how it works · 40 sec" needs a real recording. (6) The app boards change type, scale and
+surfaces; the density work (R-026) is untouched. (7) Two-tone headlines restyle A-013/A-022's headline.

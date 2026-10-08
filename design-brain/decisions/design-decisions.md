@@ -9295,3 +9295,14 @@ product** (Wispr, Granola, Mercury do this), never a person as the subject (R-01
 customer's day" idea (a night street with a lit window, rooftops at sunrise, a morning table, a house in daylight).
 Photos can't be downloaded from this environment; they have to come from the founder (Drive or upload) or from an
 image tool on his accounts (costs his credits, and must not look fake). Asked him which.
+
+## 2026-10-08 — Photos: relevant only (R-030); a new shot list from the owner's real day
+
+The five mood photos (sunrise skies, rooftops, coffee by a window) were rejected before being placed (R-030). New
+shot list, each photo paired with what FollowUp is doing at that moment: a realtor showing a home (a customer
+writes, the reply is written meanwhile); a tradesperson with both hands busy (the "up a ladder" context in brand
+principle 4); an owner between jobs glancing at their phone (Today); a customer typing an enquiry at home in the
+evening; the result (a for-sale sign or keys at a door). Candid, ordinary places, no posing, no logos or readable
+screens; never captioned or named as a FollowUp customer (A-023). These sit in the sections, not as the first
+picture, so R-011 (no person photo as the hero) holds; if the founder wants a person in the hero, R-011 needs his
+explicit supersede.

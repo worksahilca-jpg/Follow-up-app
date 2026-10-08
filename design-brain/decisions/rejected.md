@@ -648,3 +648,19 @@ the work is the whole site (every public page), not the landing page alone, and 
 FollowUp system, not as a page per reference.
 
 **Do not propose again:** "pick one site and follow it", in any wording.
+
+## R-030 — Mood photos that mean nothing (sunset skies, rooftops, a coffee by a window) ^R-030
+
+**Rejected:** 2026-10-08, founder, as the first five Unsplash photos arrived (sunrise sky over rooftops, pink sky
+over houses, two coffee-by-the-window shots, red roofs under a blue sky): *"Bro, we got to use the photos that are
+relevant, not the irrelevant ones. What does the sunset mean, bro? Nothing."*
+
+**What was rejected:** photographs used as atmosphere behind the product (the Wispr/Granola "mood" technique),
+chosen to carry an abstract idea (the time of day) rather than anything in the owner's or the customer's world.
+
+**Principle (his words):** a photo has to be **relevant**: it must show something real about the work FollowUp
+serves (an owner busy on a job, between jobs, a customer writing, the deal that follows), so that a visitor gets a
+meaning from it without a caption. *Inferred, not confirmed:* the night-to-dawn colour idea of the reframed website
+may read the same way ("what does the sky mean?") and should be justified by what it shows, not by a metaphor.
+
+**Do not propose again:** skies, sunsets, landscapes, coffee cups, plants or other decorative photos as imagery.

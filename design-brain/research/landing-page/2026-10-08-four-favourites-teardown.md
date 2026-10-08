@@ -51,3 +51,34 @@ A menu that stays; a sticky "where you are". Product clips from the real app wit
 work behind our cards (R-030: never decorative). Not taken: Superhuman's mood film of people (R-011).
 **Open for the founder:** a Macro-style "Try it" (a visitor types a customer message, sees FollowUp's reply), which
 runs our AI for strangers (cost, limits): a product call.
+
+## Part 2 — Wispr Flow, the whole page (from the founder's Chrome, 21 screens, measured)
+
+Doc: "FollowUp teardown – wisprflow.ai" (founder's Drive). Grade A for structure and measurements, B for motion
+(screens taken a second apart plus the hover GIF).
+
+| Part | Height | What happens |
+|---|---|---|
+| Hero (cream) | 792 | EB Garamond 96 px, one lilac button (`rgb(240,215,255)`, 8 px corners, 16×24, Figtree 16 w600); speech streams through the pill non-stop |
+| Logo band (dark) | 375 | slides over the hero with 80 px rounded top corners; logos drift (40 s loop) |
+| "4x faster" (green, pinned) | 6,691 | panel pinned; the Flow card (blurred photo) grows and squeezes the Keyboard card |
+| Hand-over | — | the same photo card travels into the next section, wide → tall, background green → cream ("the strongest moment on the page") |
+| 3 steps (pinned, scroll-snapping) | inside | Speak naturally → Edits as you speak → Use it anywhere; one sentence said → cleaned (filler words coloured, then removed) → sent; then cycles through apps |
+| Features | 1,834 | only the middle item is dark (0.3 s colour fade); a demo card swaps to match |
+| Privacy | 408 | one calm card, three lines, three badges |
+| Customers (dark) | 4,680 | tilted cards drift diagonally; real names, photos, two numbers each; the last card sits straight |
+| Questions | 865 | the FAQ is a chat: question as your message, answer as a reply bubble |
+| Closing | 864 | the hero recipe louder: 120 px serif over a blurred photo, a small joke, the same button |
+| Footer | 1,150 | link columns, then the logo across the full width |
+
+Type scale 120/96/75/48/32 serif, 20/16/14 sans; content width 1,240 px; 80 px corners on every colour block;
+transitions 0.2–0.3 s with a springy overshoot (`cubic-bezier(0.34,1.56,0.64,1)`), colour fades 0.3 s; GSAP +
+ScrollTrigger (pinning, scrubbing, snapping); hover: the button label ripples letter by letter (0.3 s).
+
+**Why it is "the best experience":** (1) pinning, one change per scroll step; (2) one object carries you across
+sections, so the page reads as one film; (3) one sentence tells the whole story; (4) colour blocks slide over each
+other with big corners; (5) even small parts speak the product's language (the FAQ is a conversation).
+**For FollowUp:** pin the hero story and let scroll advance it (she writes → the reply is written → you tap Send →
+she answers, one message throughout); the reply card travels from the hero into the Today screen; colour blocks
+with big corners; **the FAQ as a conversation** (the question arrives like a customer's email, the answer comes back
+as a reply written for you). Not taken: the hand-drawn underline (R-017/R-020).

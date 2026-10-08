@@ -9969,5 +9969,5 @@ the whole journey (the day-3 follow-up, their "yes", the reply that books it). A
 examples, as before. Replies are fixed examples, never generated.
 **True to the product:** `src/lib/leadLanguage.ts` reads language, script ("Hindi typed in English letters is Latn")
 and formality from the first message and holds them for every message after.
-**Not yet checked by native speakers:** the Punjabi and Hindi lines (written by Claude); the founder asked to check
-the Punjabi before this ships. Formal "usted/Sie/vous/Lei" is used where the customer's own words don't say.
+**Not yet checked by native speakers:** the Punjabi and Hindi lines (written by Claude); the founder was asked to
+check the Punjabi before this ships. Formal "usted/Sie/vous/Lei" is used where the customer's own words don't say.

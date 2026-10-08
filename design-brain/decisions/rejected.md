@@ -865,3 +865,11 @@ were being placed: *"I don't want any AI images. Arts are good, but not AI."* Th
 or public-domain artwork, commissioned illustration, real photographs of real owners (with permission).
 **Inferred, marked inferred:** a product that writes in your words cannot show faked people or faked art; it reads
 as fake and costs trust (brand principle 1).
+
+## R-046 — One trade's photo as the page's photo ^R-046
+
+**Rejected:** 2026-10-08, founder, on home v13 (café photo behind the live demo): *"now I feel like I'm building this
+for a cafe"*. The look itself was liked (A-119).
+**Principle (his words plus `PRODUCT_DIRECTION.md`, "Who it's for", 2026-09-26: examples mixed so no reader thinks
+"this is for plumbers only"):** one business's photo makes FollowUp read as a tool for that business. Imagery must
+be mixed across trades or show no trade at all. The café was also a mismatch: none of the demo's customers is a café.

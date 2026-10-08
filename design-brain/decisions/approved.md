@@ -2090,3 +2090,10 @@ with permission), used the way Wispr uses people: real faces and hands, softly b
 plumber in a kitchen, realtor outdoors, café owner, handyman on a call, pottery-shop owner, florist in a greenhouse);
 kept in the session scratchpad, not the repo, until chosen. He also selected some assets in the Adobe widget on his
 side; the tool does not pass his picks back, so he was asked which.
+
+## A-119 — The photo look of home v13: treated photo behind sharp cards, colour from the photo ^A-119
+
+**Approved (mildly):** 2026-10-08, founder, on home v13: *"looks good, not bad"* (in the same breath as R-046).
+**What specifically:** a real photo, warmer, less saturated, fine grain, blurred behind the live demo while the
+cards stay sharp on top; the page's colour sampled from the photo (walnut-to-caramel panel, caramel italics,
+espresso buttons, a latte note) in place of the black panel (R-044). What was *not* liked is the subject (R-046).

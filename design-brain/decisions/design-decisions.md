@@ -9577,3 +9577,23 @@ italics in the app's soft grey, the orange "needs you" dot unchanged. The closin
 stays dark over it. The picker keeps White, White and green, White and lilac, White and orange to compare.
 **Weak, honestly:** five soft tones on one page can drift toward pastel sameness; the italic grey is quiet, so the
 headline's human phrase reads softer than in the colour palettes.
+
+## 2026-10-08 — First screen: FollowUp's own symbols and the FollowUp pill
+
+Founder: *"make the first screen more impressive… look at Wispr, they have their thing going on and I can understand
+easily… Macro, how organised and accurate… let's make our own symbols or things like Wispr has… if anyone lands or
+if I pitch, they get to know what this product is all about in the first impression… user friendly."*
+**Built:** six symbols drawn for FollowUp in one line style (24 px grid, 1.8 stroke, round ends): **finds the customer**
+(an envelope with a new-dot), **writes in your words** (a speech bubble with lines), **sends from your Gmail** (a paper
+plane), **checks in when quiet** (a turning arrow round a clock hand), **hands you decisions** (a ring with the orange
+"needs you" dot, A-091), **stops when they reply** (two bubbles and a tick). They sit as a step bar at the top of the
+first screen's soft panel and light up in order. Under the customer's email, the **FollowUp pill** (our answer to
+Wispr's floating bar: ink capsule, symbol, words, time) says what is happening now ("Writing in your words…", "Sent from
+your Gmail · 1 min", "Quiet since Wednesday · checking in · Fri 9:00", "She replied · check-ins stopped"). Two stories
+alternate: a realtor's customer (the whole loop) and a plumber's customer asking a price (it comes to you first; the
+fixed holding line goes out at 30 minutes). Two other customers sit at the sides in other states (answered, checking
+in), Macro's organised calm. The lede is shorter: "It answers your customers in your words, checks in when they go
+quiet, and asks you only when it matters." The real Today screen (A-106) moved to the section right below and starts
+playing when it scrolls into view. Pause, labelled examples, reduced motion shows the end state.
+**Honest note:** the pill is a brand device that illustrates what happens; it is not a Gmail add-on. The states it
+shows all exist in the product. **Weak, honestly:** the six labels are tight at 1440 px; the side cards are static.

@@ -259,6 +259,66 @@ footer a:hover { color: var(--moon) }
 .picker .sw2 i { width: 16px; height: 16px; border-radius: 999px; display: inline-block; box-shadow: 0 0 0 1.5px rgba(255,255,255,.25) }
 .picker .sw2 i + i { margin-left: -5px }
 @media (max-width: 560px) { .picker .lbl { display: none } .picker button { padding: 0 10px 0 6px } .picker .nm { display: none } }
+
+/* first screen: the FollowUp pill tells one customer's story; the symbols light up as it goes */
+.hero { padding-top: 104px }
+.hero-top { display: grid; grid-template-columns: minmax(0,1fr) minmax(0, 390px); gap: 48px; align-items: end }
+.hero h1 { margin-top: 14px; font-size: clamp(44px, 5.3vw, 78px); line-height: .95; max-width: none }
+.hero-side .hero-lede { font-size: 18px }
+.hstage { margin-top: 28px; background: var(--bed); border-radius: 36px; padding: 18px var(--bed-pad) 14px; position: relative; overflow: hidden }
+.h-row { margin-top: 18px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,560px) minmax(0,1fr); gap: 28px; align-items: start; min-height: 300px }
+.h-card { background: #fff; color: var(--ink); border-radius: 20px; padding: 16px 18px; box-shadow: 0 0 0 1px rgba(10,10,10,.06), 0 28px 56px -34px rgba(10,10,10,.4) }
+.h-card p { margin: 8px 0 0; font-size: 15.5px; line-height: 1.45 }
+.h-meta { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--ink-soft) }
+.h-meta b { color: var(--ink) }
+.h-when { margin-left: auto; font-size: 11px; color: var(--ink-faint) }
+.av.sm { width: 26px; height: 26px; font-size: 12px }
+.h-side { opacity: .62; transform: scale(.94); display: flex; flex-direction: column; gap: 10px; align-items: flex-start }
+.h-left { align-items: flex-end }
+.mini-pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; background: #fff; color: var(--ink); font-size: 12.5px; font-weight: 600; box-shadow: 0 0 0 1px rgba(10,10,10,.07) }
+.h-center { position: relative; display: flex; flex-direction: column; gap: 10px }
+.h-reply { margin-left: 36px; background: #fffaf6; border-radius: 20px 20px 6px 20px }
+.h-reply .eyebrow { color: #8a6a55 }
+.h-reply.need { box-shadow: 0 0 0 1.5px var(--dot), 0 28px 56px -34px rgba(10,10,10,.4) }
+.h-bubble { max-width: 78%; border-radius: 16px; padding: 10px 14px; font-size: 14.5px; line-height: 1.4; background: rgba(255,255,255,.82); box-shadow: 0 0 0 1px rgba(10,10,10,.06) }
+.h-bubble .mono { font-size: 10.5px; color: var(--ink-faint) }
+.h-bubble p { margin: 3px 0 0 }
+.h-ci { align-self: flex-end }
+.h-ans { align-self: flex-start; background: #fff }
+.hx { opacity: 0; transform: translateY(10px); transition: opacity .5s var(--ease), transform .5s var(--ease) }
+.hx.off { display: none }
+.hx.in { opacity: 1; transform: none }
+.fu-pill { position: relative; z-index: 2; margin: -8px auto 2px; width: max-content; max-width: 100%; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 18px 0 8px; border-radius: 999px; background: var(--ink); color: #fff; box-shadow: 0 20px 40px -20px rgba(10,10,10,.6); font-size: 14.5px; font-weight: 600; transition: background .35s ease }
+.fu-pill.need { background: #2a1608 }
+.fp-ic { width: 34px; height: 34px; border-radius: 999px; background: rgba(255,255,255,.12); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto }
+.fp-tx { transition: opacity .25s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.fp-tx.swap { opacity: 0 }
+.fp-meta { font-size: 12px; font-weight: 500; color: rgba(255,255,255,.62) }
+.fp-dots { display: none; gap: 4px }
+.fp-dots.on { display: inline-flex }
+.fp-dots i { width: 5px; height: 5px; border-radius: 999px; background: #fff; animation: fpd 1s ease-in-out infinite }
+.fp-dots i:nth-child(2) { animation-delay: .15s } .fp-dots i:nth-child(3) { animation-delay: .3s }
+@keyframes fpd { 0%, 100% { opacity: .25; transform: translateY(0) } 50% { opacity: 1; transform: translateY(-2px) } }
+.legend { list-style: none; margin: 0; padding: 6px; display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 4px; border-radius: 999px; background: rgba(255,255,255,.45) }
+.legend li { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 6px 8px; border-radius: 999px; font-size: 12px; line-height: 1.2; color: rgba(10,10,10,.45); transition: color .35s ease, background .35s ease, box-shadow .35s ease; white-space: nowrap }
+.legend .lg-ic { width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto }
+.legend li.on { color: var(--ink); font-weight: 600; background: #fff; box-shadow: 0 8px 18px -12px rgba(10,10,10,.5) }
+
+.legend li.done { color: rgba(10,10,10,.68) }
+.h-foot { margin-top: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: rgba(10,10,10,.55) }
+.h-foot .replay { color: var(--ink); border-color: rgba(10,10,10,.2) }
+.today-sec { background: var(--paper); color: var(--ink); padding-block: 120px 40px }
+.today-sec .app-caption { color: var(--ink-faint) }
+.today-sec .replay { color: var(--ink-soft); border-color: var(--line) }
+@media (max-width: 1020px) {
+  .hero-top { grid-template-columns: minmax(0,1fr) }
+  .h-row { grid-template-columns: minmax(0,1fr) }
+  .h-side { display: none }
+  .legend { display: flex; overflow-x: auto; border-radius: 18px; justify-content: flex-start }
+  .legend li { flex: 0 0 auto }
+}
+@media (max-width: 560px) { .h-reply { margin-left: 14px } .fu-pill { font-size: 13px } .fp-meta { display: none } }
+@media (prefers-reduced-motion: reduce) { .hx { transition: none } .fp-dots i { animation: none } }
 @media (max-width: 1020px) {
   .app { grid-template-columns: minmax(0,1fr) }
   .side, .right { display: none }
@@ -296,13 +356,32 @@ footer a:hover { color: var(--moon) }
 
 <main id="top">
 <section class="hero" aria-labelledby="h1"><div class="wrap">
-<div class="kicker"><i></i>For Gmail · free while in beta</div>
-<h1 id="h1">Never lose a lead <em>because you forgot to follow up.</em></h1>
-<div class="hero-row">
-<p class="hero-note">TUESDAY, 11:48 PM<br><b>Priya just asked about a house.</b><br>You're asleep. FollowUp isn't.</p>
-<div><p class="hero-lede">FollowUp answers the customers in your Gmail in your words, checks in when they go quiet, and hands you the decisions.</p>
+<div class="hero-top">
+<div><div class="kicker"><i></i>For Gmail · free while in beta</div>
+<h1 id="h1">Never lose a lead <em>because you forgot to follow up.</em></h1></div>
+<div class="hero-side"><p class="hero-lede">It answers your customers in your words, checks in when they go quiet, and asks you only when it matters.</p>
 <div class="hero-ctas"><a class="pill" href="#start">Connect Gmail, start free</a><a class="see" href="#how">See how it works ↓</a></div></div>
 </div>
+<div class="hstage" role="img" aria-label="What FollowUp does with each customer email, shown as an example: it finds the customer, writes the reply in your words, sends it from your Gmail, checks in when they go quiet, hands you decisions like a price, and stops when they reply.">
+<ul class="legend" aria-hidden="true"><li data-sym="caught"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="15.5" height="12.5" rx="2.5"></rect><path d="M4.5 7.5l7 5.2 7-5.2"></path><circle cx="19.2" cy="5.6" r="2.7" fill="currentColor" stroke="none"></circle></svg></span><span>Finds the customer</span></li><li data-sym="write"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16h-1A.5.5 0 0 1 4 15.5z"></path><path d="M8 8.5h8M8 11.5h5"></path></svg></span><span>Writes in your words</span></li><li data-sym="sent"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 3.5L3.5 10.5l7 2.6 2.6 7z"></path><path d="M10.5 13.1l4.2-4.2"></path></svg></span><span>Sends from your Gmail</span></li><li data-sym="checkin"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"></path><path d="M19.6 4.3v3.9h-3.9"></path><path d="M12 8.6V12l2.4 1.5"></path></svg></span><span>Checks in when quiet</span></li><li data-sym="needs"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.2"></circle><circle cx="12" cy="12" r="3.3" fill="#c96a1b" stroke="none"></circle></svg></span><span>Hands you decisions</span></li><li data-sym="stop"><span class="lg-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2.5 2.5 0 0 1 2.5-2.5h8A2.5 2.5 0 0 1 17 7v4.5a2.5 2.5 0 0 1-2.5 2.5H9.2l-3.7 3v-3h-1A.5.5 0 0 1 4 13.5z"></path><path d="M7.8 9.2l1.9 1.9 3.5-3.5"></path><path d="M19.6 10.5v4a2 2 0 0 1-2 2h-.6V19l-3-2.5"></path></svg></span><span>Stops when they reply</span></li></ul>
+<div class="h-row">
+<div class="h-side h-left" aria-hidden="true"><div class="h-card"><div class="h-meta"><span class="av sm">M</span><span><b>Mia</b> · Hair salon</span></div><p>Do you do balayage? I've never had it done.</p></div><div class="mini-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 3.5L3.5 10.5l7 2.6 2.6 7z"></path><path d="M10.5 13.1l4.2-4.2"></path></svg>Answered · 1 min</div></div>
+<div class="h-center">
+<div class="h-card h-mail"><div class="h-meta"><span class="av" id="hv">P</span><span><b id="hw">Priya</b> · <span id="ht">Realtor's customer</span></span><span class="mono h-when" id="hn">TUE 11:48 PM</span></div><p id="hm">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p></div>
+<div class="fu-pill" id="pill"><span class="fp-ic" id="pic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="15.5" height="12.5" rx="2.5"></rect><path d="M4.5 7.5l7 5.2 7-5.2"></path><circle cx="19.2" cy="5.6" r="2.7" fill="currentColor" stroke="none"></circle></svg></span><span class="fp-tx" id="ptx">New customer · wants a viewing</span><span class="fp-dots" id="pdots"><i></i><i></i><i></i></span><span class="fp-meta mono" id="pme"></span></div>
+<div class="h-card h-reply" id="hr"><div class="eyebrow" id="hre">Written by FollowUp · in your words</div><p id="hrt">Hi Priya, yes, it's still available! When would suit you for a viewing?</p></div>
+<div class="h-bubble h-ci" id="hc"><span class="mono">FRI 9:00 AM · CHECK-IN</span><p id="hct">Just checking in. Still keen to see the house this weekend?</p></div>
+<div class="h-bubble h-ans" id="ha"><span class="mono" id="han">PRIYA · FRI 9:41 AM</span><p id="hat">Yes! Saturday at 10 works.</p></div>
+</div>
+<div class="h-side h-right" aria-hidden="true"><div class="h-card"><div class="h-meta"><span class="av sm">S</span><span><b>Sam</b> · Dental clinic</span></div><p>Do you have evening appointments?</p></div><div class="mini-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"></path><path d="M19.6 4.3v3.9h-3.9"></path><path d="M12 8.6V12l2.4 1.5"></path></svg>Checking in · Thu</div></div>
+</div>
+
+<div class="h-foot"><span>Examples, not real customers.</span><button class="replay" type="button" id="hpause">Pause</button></div>
+</div>
+</div></section>
+
+<section class="today-sec" aria-labelledby="today-h"><div class="wrap">
+<div class="chap-head"><div><div class="eyebrow">Your Today screen</div><h2 id="today-h">Open it to <em>one calm list.</em></h2></div><p>Who needs you, the replies already written, and what's coming up. This is the real app.</p></div>
 <figure class="app-wrap" style="margin-inline: 0; margin-bottom: 0" aria-label="FollowUp's Today screen: Priya's question and the reply FollowUp wrote, ready to send.">
 <div class="app-bed"><div class="app">
 <aside class="side" aria-hidden="true">
@@ -425,7 +504,60 @@ footer a:hover { color: var(--moon) }
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $ = function (s) { return document.querySelector(s); };
 
-  /* ---- the hero plays FollowUp's story once, then rests (Linear's lesson) ---- */
+
+  /* ---- first screen: one customer's story, told by the FollowUp pill and the symbols ---- */
+  var SYM = {"caught": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"6\" width=\"15.5\" height=\"12.5\" rx=\"2.5\"></rect><path d=\"M4.5 7.5l7 5.2 7-5.2\"></path><circle cx=\"19.2\" cy=\"5.6\" r=\"2.7\" fill=\"currentColor\" stroke=\"none\"></circle></svg>", "write": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16h-1A.5.5 0 0 1 4 15.5z\"></path><path d=\"M8 8.5h8M8 11.5h5\"></path></svg>", "sent": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20.5 3.5L3.5 10.5l7 2.6 2.6 7z\"></path><path d=\"M10.5 13.1l4.2-4.2\"></path></svg>", "checkin": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.6 4.3v3.9h-3.9\"></path><path d=\"M12 8.6V12l2.4 1.5\"></path></svg>", "needs": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8.2\"></circle><circle cx=\"12\" cy=\"12\" r=\"3.3\" fill=\"#c96a1b\" stroke=\"none\"></circle></svg>", "stop": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 7a2.5 2.5 0 0 1 2.5-2.5h8A2.5 2.5 0 0 1 17 7v4.5a2.5 2.5 0 0 1-2.5 2.5H9.2l-3.7 3v-3h-1A.5.5 0 0 1 4 13.5z\"></path><path d=\"M7.8 9.2l1.9 1.9 3.5-3.5\"></path><path d=\"M19.6 10.5v4a2 2 0 0 1-2 2h-.6V19l-3-2.5\"></path></svg>"};
+  var ST = [
+    { v: 'P', w: 'Priya', t: "Realtor's customer", n: 'TUE 11:48 PM', m: 'Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?',
+      re: 'Written by FollowUp · in your words', r: "Hi Priya, yes, it's still available! When would suit you for a viewing?",
+      ci: 'Just checking in. Still keen to see the house this weekend?', an: 'PRIYA · FRI 9:41 AM', a: 'Yes! Saturday at 10 works.',
+      steps: [['caught', 'New customer · wants a viewing', '', 1400], ['write', 'Writing in your words', '', 1500, 'reply'], ['sent', 'Sent from your Gmail', '1 min', 1700],
+              ['checkin', 'Quiet since Wednesday · checking in', 'Fri 9:00', 1900, 'ci'], ['stop', 'She replied · check-ins stopped', 'Fri 9:41', 2600, 'ans']] },
+    { v: 'B', w: 'Ben', t: "Plumber's customer", n: 'MON 7:12 AM', m: 'My kitchen sink is leaking. How much would it cost to fix?',
+      re: 'Sent for you · one fixed line', r: "Thanks for asking! Let me check and I'll send you the price soon.",
+      ci: '', an: '', a: '',
+      steps: [['caught', 'New customer · asks a price', '', 1400], ['write', 'Reading what he needs', '', 1300], ['needs', 'A price · it comes to you first', '', 1900, 'need'],
+              ['sent', 'Meanwhile, a short note went out', '30 min', 1900, 'reply'], ['needs', "Your price, whenever you're ready", 'waiting for you', 2800]] }
+  ];
+  var hm = $('#hm'), hr = $('#hr'), hrt = $('#hrt'), hre = $('#hre'), hc = $('#hc'), hct = $('#hct'), ha = $('#ha'), hat = $('#hat'), han = $('#han'),
+      pill = $('#pill'), pic = $('#pic'), ptx = $('#ptx'), pdots = $('#pdots'), pme = $('#pme'), hpause = $('#hpause');
+  var legend = Array.prototype.slice.call(document.querySelectorAll('.legend li'));
+  [hr, hc, ha].forEach(function (el) { el.classList.add('hx'); });
+  var hs = { story: 0, step: -1, paused: false, t: 0 };
+  function show(el, on) { if (on) { el.classList.remove('off'); requestAnimationFrame(function () { el.classList.add('in'); }); } else { el.classList.remove('in'); el.classList.add('off'); } }
+  function setStep(k) {
+    var S = ST[hs.story], st = S.steps[k];
+    pic.innerHTML = SYM[st[0]]; ptx.classList.add('swap');
+    setTimeout(function () { ptx.textContent = st[1]; ptx.classList.remove('swap'); }, 160);
+    pme.textContent = st[2]; pdots.classList.toggle('on', st[0] === 'write');
+    pill.classList.toggle('need', st[0] === 'needs');
+    var seen = S.steps.slice(0, k).map(function (x) { return x[0]; });
+    legend.forEach(function (li) { var key = li.getAttribute('data-sym'); li.classList.toggle('on', key === st[0]); li.classList.toggle('done', key !== st[0] && seen.indexOf(key) > -1); });
+    if (st[4] === 'reply') show(hr, true);
+    if (st[4] === 'need') { show(hr, true); hr.classList.add('need'); hre.textContent = 'Comes to you first · a price is yours to decide'; hrt.textContent = 'Hi Ben, a fix like this usually costs $____. Would tomorrow morning work?'; }
+    if (st[4] === 'reply' && hs.story === 1) { hr.classList.remove('need'); hre.textContent = S.re; hrt.textContent = S.r; }
+    if (st[4] === 'ci') { show(hr, false); show(hc, true); }
+    if (st[4] === 'ans') show(ha, true);
+  }
+  function loadStory(i) {
+    var S = ST[i]; hs.story = i; hs.step = -1;
+    $('#hv').textContent = S.v; $('#hw').textContent = S.w; $('#ht').textContent = S.t; $('#hn').textContent = S.n; hm.textContent = S.m;
+    hre.textContent = S.re; hrt.textContent = S.r; hr.classList.remove('need');
+    hct.textContent = S.ci; han.textContent = S.an; hat.textContent = S.a;
+    show(hr, false); show(hc, false); show(ha, false);
+
+  }
+  function next() {
+    clearTimeout(hs.t); if (hs.paused) return;
+    var S = ST[hs.story];
+    if (hs.step + 1 >= S.steps.length) { loadStory((hs.story + 1) % ST.length); hs.t = setTimeout(next, 500); return; }
+    hs.step += 1; setStep(hs.step); hs.t = setTimeout(next, S.steps[hs.step][3]);
+  }
+  hpause.addEventListener('click', function () { hs.paused = !hs.paused; hpause.textContent = hs.paused ? 'Play' : 'Pause'; if (!hs.paused) next(); else clearTimeout(hs.t); });
+  if (reduce) { loadStory(0); hs.step = 4; setStep(4); show(hr, false); show(hc, true); show(ha, true); hpause.style.display = 'none'; }
+  else { loadStory(0); hs.t = setTimeout(next, 600); }
+
+  /* ---- the Today screen plays its story once it's in view, then rests ---- */
   var REPLY = "Hi Priya, yes, it's still available! I'm showing it this Saturday between 10 and 2. Would one of those times suit you?";
   var item = $('#item'), reply = $('#reply'), typed = $('#typed'), sign = $('#sign'), btns = $('#btns'),
       send = $('#send'), undo = $('#undo'), drain = $('#drain'), sent = $('#sent');
@@ -453,7 +585,7 @@ footer a:hover { color: var(--moon) }
     later(t + 4300, function () { undo.classList.add('gone'); btns.classList.add('gone'); sent.classList.remove('gone'); });
   }
   $('#replay').addEventListener('click', function () { btns.classList.remove('gone'); play(); });
-  if (!reduce) { btns.classList.remove('gone'); play(); } else { btns.classList.add('gone'); }
+  if (!reduce && 'IntersectionObserver' in window) { var started = false; var tio = new IntersectionObserver(function (es) { if (!started && es[0].isIntersecting) { started = true; btns.classList.remove('gone'); play(); tio.disconnect(); } }, { threshold: 0.35 }); tio.observe(document.querySelector('.app-wrap')); } else { btns.classList.add('gone'); }
 
   /* ---- scroll-linked moments: the window settles, the statement reads itself, the thread draws, the button grows ---- */
   var scrubs = [];

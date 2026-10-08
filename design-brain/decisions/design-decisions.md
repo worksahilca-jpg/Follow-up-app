@@ -10016,3 +10016,13 @@ main goal is to tell them that reducing the reply time can save their potential 
 **Built:** right after the demo, "The faster you reply, *the more leads you keep.*" with the HBR 7× card first, then Time
 back / No lead wasted / Follow-ups on time. The letter moved to just before the close as one small line with three
 small tags (Weeks → A day. Or never. → 1 minute); stamps, flap lines and card text hidden.
+
+## 2026-10-08 — Home v24: a different blur per photo; a soft blend on the demo photo
+
+Founder: *"if we can blending touch in that image and a kind of motion blur just little and for others, we should
+use different blurs, not all the round ones. Just be creative… We don't have to be that creative, too. That feels
+unprofessional, but it should feel like a human."* **Principle:** one filter everywhere looks machine-made; varied,
+reasoned, subtle effects look like a person's choices. **Built:** demo (New York) a slight sideways motion blur (the
+street moving past) and a soft paper-coloured blend fading in from its top edge (soft-light); 7× card (Paris)
+tilt-shift, a calmer band across the middle; "1 minute" tag (Rome) a gentle zoom blur, i.e. speed; close (Bavaria)
+ribbed glass, like a shop window. All still green-toned and grainy (A-122). Made with Pillow (`gen/blurs.py`).

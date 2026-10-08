@@ -2040,9 +2040,22 @@ highlight edges (R-036), several hues blended in one gradient (R-042).
 
 ## A-114 — Theme v1 colours ^A-114
 
+**PARTLY SUPERSEDED (2026-10-08) by A-115:** Sky and Apricot removed; Mint kept to buttons only.
+
 **Approved:** 2026-10-08, founder, on https://claude.ai/artifact/91FEmxYBCMMTKk7NCHszXj: *"colours are good bro"*.
 **What specifically:** the six colours and their jobs: Paper `#F8F6F1` (page), Ink `#0E0E0C` (words), Forest
 `#0F4A33` lit from the top left (heavy blocks), Mint `#CDEFD9` (only buttons), Apricot `#F4C49E` (warm highlights),
 Sky `#DCE6F3` (calm light blocks), with Sent `#0D6E3C` and Needs you `#C96A1B` kept as meanings; the matte 3D
 treatment (one-colour gradients lit from above, pressable buttons, lifted cards, the stream curving toward the
 middle). Supersedes A-108's colours (the soft peach-and-blue wash).
+
+## A-115 — Theme v2: fewer colours, no contradictions, a paper grain ^A-115
+
+**Direction:** 2026-10-08, founder: *"we gotta play with few colours whatever is contradicting let remove that colour
+we can add grainsh touch"*.
+**What:** Paper `#F8F6F1`, Ink `#0E0E0C`, Forest `#0F4A33` (lit), Mint `#CDEFD9` on buttons only; meanings Sent
+`#0D6E3C` and Needs you `#C96A1B` (a dot). Removed: **Sky** (a cool blue against warm paper, and the AI-tool blue we
+said to avoid) and **Apricot** (too close to the orange "needs you", so it blurred that meaning). Mint taken off
+everything that is not a button (the "You" badge, the help icons, the follow-up card, the stream's replies, now a
+green that means "sent"). Light blocks are a deeper paper ("stone"), not a new hue. A faint paper grain over the
+whole page. Published: https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v10. Not yet confirmed by the founder.

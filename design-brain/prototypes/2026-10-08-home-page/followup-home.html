@@ -536,6 +536,20 @@ html[data-col="f"], html[data-col="f"] body, .light, .today-sec, .fl-help, .stat
 .big-cta { box-shadow: var(--press) } .big-cta:hover { filter: none; transform: translateY(-2px) }
 .fl-help h2 em { color: #145A3E }
 
+/* ---- theme v2: fewer colours, no contradictions. Sky and Apricot removed; Mint only on buttons; light grain over everything ---- */
+:root { --stone: linear-gradient(180deg, #F2EEE6 0%, #E9E3D8 100%); --stage-how: var(--stone); --stage-thread: var(--stone); --stage-ctl: var(--stone) }
+html[data-col="f"] { --fl-a-bg: #2A7A55; --fl-a-fg: #FFFFFF; --fl-fact-bg: var(--forest-lit); --fl-fact-fg: #FFFFFF; --fl-fact-soft: #BFE3CD }
+html[data-col="f"] .fl-slot .fl-a { background: linear-gradient(180deg, #2F8259 0%, #236B48 100%) }
+html[data-col="f"] .fl-you, html[data-col="f"] .fl-hi .ic { background: var(--stone); color: #145A3E; box-shadow: none }
+html[data-col="f"] .fl-fact { box-shadow: inset 0 -60px 90px -60px rgba(0,0,0,.45), 0 30px 60px -36px rgba(9,51,34,.5) }
+html[data-col="f"] .fl-fact b { color: #CDEFD9 }
+.stage, .switch-card, .thread { box-shadow: inset 0 -50px 80px -60px rgba(80,60,30,.22), 0 30px 60px -44px rgba(14,14,12,.28) }
+.t-col::before { box-shadow: 0 0 0 6px #EDE8DE }
+.t-card.w { background: var(--card-lit); box-shadow: 0 0 0 1.5px #145A3E, 0 18px 32px -20px rgba(9,51,34,.35) }
+/* grain: a faint paper texture over the whole page, like a printed letter */
+body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-events: none; background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 220px 220px; opacity: .09; mix-blend-mode: multiply }
+@media (prefers-reduced-transparency: reduce) { body::after { display: none } }
+
 .today-sec { background: var(--paper); color: var(--ink); padding-block: 120px 40px }
 .today-sec .app-caption { color: var(--ink-faint) }
 .today-sec .replay { color: var(--ink-soft); border-color: var(--line) }

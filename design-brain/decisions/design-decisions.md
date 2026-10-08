@@ -9763,3 +9763,27 @@ opening (A-112) with the theme; paper sections; How it works on a Sky stage; the
 Your control's switch on Sky; the Today screen on a Forest bed; the close as a Forest block with a Mint button; the
 colour picker gone. **Waiting:** his confirmation, then a section-by-section redesign around the theme (A-111),
 and the "border" idea.
+
+## 2026-10-08 — Theme v2 (A-115), and three ideas the founder raised
+
+Founder: *"can we add a concept of how old times people use to write on paper and mail them it takes a long just
+keep it in mind… let me know if we can play around this too… then we gotta play with few colours whatever is
+contradicting let remove that colour we can add grainsh touch and how wisper uses images right we can also go with
+that concept to make it feel more human… and then we can also take professionalism and organised reffrence from the
+other tools and website that we studies"*. Also asked *"what the reason behind all the colours why we using these
+only"* (answered in chat: each colour has a job; fewer colours read as professional; blue/purple, red, neon and
+blended hues work against calm and trust; the site should match the app).
+**Done:** theme v2 (A-115) on the home page, v10.
+**Proposed, waiting for his pick:**
+- *The letter (old post vs a minute):* (1) postmark stamps as the page's small detail (every timestamp a round stamp:
+  "RECEIVED 11:48 PM", "ANSWERED 11:49 PM"), fits the paper and grain; (2) one short section, "From weeks to a
+  minute": a letter by post (weeks), an email you forget (a day, maybe never), FollowUp (a minute), leading into the
+  7× fact; (3) the opening as an envelope that opens into the green block (most striking, highest risk of gimmick).
+  Recommended 1 + 2. No handwriting (R-017/R-020).
+- *Human images like Wispr:* photos must mean something (R-030): busy owners at work while the phone buzzes (a
+  plumber under a sink, a realtor at a showing, a stylist with a client), softly blurred like Wispr's, never presented
+  as customers. Sources: AI-generated now (uses the founder's image credits; ask first), licensed stock (costs per
+  image), or real photos of real users with consent before launch. Recommended: generated now, real before launch.
+- *Organisation from the references (A-111):* one section template everywhere (Macro/Linear: eyebrow + title left,
+  one sentence right, one scene below), one spacing scale, Superhuman's sticky "where you are" bar, the product in
+  high fidelity; done in the section-by-section redesign once he confirms the theme.

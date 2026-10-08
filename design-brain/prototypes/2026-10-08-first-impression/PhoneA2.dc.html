@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp phone A2, every lead warmed</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#faf7f2}
+a{color:inherit}
+:focus-visible{outline:2px solid #c96a1b;outline-offset:3px}
+@keyframes warmIn{0%{opacity:.4;transform:scale(.96)}60%{transform:scale(1.03)}100%{opacity:1}}
+.warmIn{animation:warmIn .7s cubic-bezier(.34,1.4,.64,1) both}
+@keyframes lostOut{from{opacity:1;transform:none}to{opacity:.62}}
+.lostOut{animation:lostOut .9s ease both}
+@media (prefers-reduced-motion: reduce){.warmIn,.lostOut{animation:none}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; overflow: hidden; box-sizing: border-box; padding: 14px 16px 0; background: #faf7f2; color: #141312; font-family: 'Public Sans', system-ui, sans-serif; font-weight: 450; -webkit-font-smoothing: antialiased">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<span style="display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 17px"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<span style="display: flex; align-items: center; gap: 2px"><a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; background: #141312; color: #faf7f2; font-size: 14.5px; font-weight: 600; text-decoration: none">Start free</a><span role="img" aria-label="Menu" style="width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#141312" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 8h16M4 16h16"></path></svg></span></span>
+</div>
+<h1 style="margin: 24px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 48px; line-height: 0.94; letter-spacing: -0.025em">Never lose a lead <em>because you forgot to follow up.</em></h1>
+<p style="margin: 12px 0 0; font-size: 16px; line-height: 1.45; color: #2b2724">It answers the customers in your Gmail in your words, and checks in when they go quiet.</p>
+<a href="#start" style="margin-top: 16px; display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 999px; background: #141312; color: #faf7f2; font-weight: 600; font-size: 16px; text-decoration: none">Connect Gmail, start free</a>
+<div role="img" aria-label="An example: six customers turn from cool to warm as FollowUp follows up." style="margin-top: 16px; border-radius: 28px; background: #efe8df; padding: 14px 12px">
+<div style="display: flex; justify-content: center; padding: 0 0 10px"><span style="display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(255,255,255,0.7); font-size: 12.5px">
+<sc-if value="{ without }" hint-placeholder-val="{ false }"><span style="padding: 6px 11px; border-radius: 999px; background: #141312; color: #faf7f2; font-weight: 600">Without FollowUp</span><span style="padding: 6px 11px; color: #5b4a3c">With FollowUp</span></sc-if>
+<sc-if value="{ withF }" hint-placeholder-val="{ true }"><span style="padding: 6px 11px; color: #5b4a3c">Without FollowUp</span><span style="padding: 6px 11px; border-radius: 999px; background: #141312; color: #faf7f2; font-weight: 600">With FollowUp</span></sc-if>
+</span></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px">
+<div><sc-if value="{{ c0 }}" hint-placeholder-val="{{ true }}"><div style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: #e2e8ef; border: 1px solid #d3dbe5; transform: rotate(-1.2deg); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #cfd8e3; color: #4d5866; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">PS</span><span style="font-size: 13.5px; font-weight: 650; color: #4d5866">Priya S.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #6b7684">Is the 3-bedroom still available?</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #d3dbe5; color: #4d5866; font-size: 11.5px; font-weight: 600">No reply · 7 h</span></div>
+</div></sc-if><sc-if value="{{ w0 }}" hint-placeholder-val="{{ false }}"><div class="warmIn" style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: radial-gradient(90% 100% at 12% 8%, rgba(244,196,160,0.95), rgba(244,196,160,0) 72%), radial-gradient(80% 90% at 95% 100%, rgba(196,210,228,0.7), rgba(196,210,228,0) 70%), #f8efe6; border: 1px solid rgba(201,140,100,0.25); transform: rotate(-1.2deg) translateY(-3px); box-shadow: 0 18px 30px -18px rgba(150,80,30,0.45); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #ffffff; color: #141312; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">PS</span><span style="font-size: 13.5px; font-weight: 650; color: #141312">Priya S.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #3f3a36">Is the 3-bedroom still available?</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #ffffff; color: #141312; font-size: 11.5px; font-weight: 650"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Answered · 1 min</span></div>
+</div></sc-if></div><div><sc-if value="{{ c1 }}" hint-placeholder-val="{{ true }}"><div style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: #e2e8ef; border: 1px solid #d3dbe5; transform: rotate(0.8deg); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #cfd8e3; color: #4d5866; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">MT</span><span style="font-size: 13.5px; font-weight: 650; color: #4d5866">Mark T.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #6b7684">The sink is leaking under the cabinet.</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #d3dbe5; color: #4d5866; font-size: 11.5px; font-weight: 600">Unread · 2 h</span></div>
+</div></sc-if><sc-if value="{{ l1 }}" hint-placeholder-val="{{ false }}"><div class="lostOut" style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: #ece8e3; border: 1.5px dashed #cfc7bd; transform: rotate(2.4000000000000004deg) translateY(10px); opacity: 0.62; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #ddd6cd; color: #8b847c; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">MT</span><span style="font-size: 13.5px; font-weight: 650; color: #8b847c; text-decoration: line-through">Mark T.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #a8a199">The sink is leaking under the cabinet.</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #ddd6cd; color: #6f675f; font-size: 11.5px; font-weight: 600">Lost · called another plumber</span></div>
+</div></sc-if><sc-if value="{{ w1 }}" hint-placeholder-val="{{ false }}"><div class="warmIn" style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: radial-gradient(90% 100% at 12% 8%, rgba(244,196,160,0.95), rgba(244,196,160,0) 72%), radial-gradient(80% 90% at 95% 100%, rgba(196,210,228,0.7), rgba(196,210,228,0) 70%), #f8efe6; border: 1px solid rgba(201,140,100,0.25); transform: rotate(0.8deg) translateY(-3px); box-shadow: 0 18px 30px -18px rgba(150,80,30,0.45); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #ffffff; color: #141312; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">MT</span><span style="font-size: 13.5px; font-weight: 650; color: #141312">Mark T.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #3f3a36">The sink is leaking under the cabinet.</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #ffffff; color: #141312; font-size: 11.5px; font-weight: 650"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Answered · 1 min</span></div>
+</div></sc-if></div><div><sc-if value="{{ c3 }}" hint-placeholder-val="{{ true }}"><div style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: #e2e8ef; border: 1px solid #d3dbe5; transform: rotate(1.1deg); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #cfd8e3; color: #4d5866; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">DK</span><span style="font-size: 13.5px; font-weight: 650; color: #4d5866">Daniel K.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #6b7684">Are the condo fees included?</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #d3dbe5; color: #4d5866; font-size: 11.5px; font-weight: 600">No reply · 1 day</span></div>
+</div></sc-if><sc-if value="{{ l3 }}" hint-placeholder-val="{{ false }}"><div class="lostOut" style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: #ece8e3; border: 1.5px dashed #cfc7bd; transform: rotate(3.3000000000000003deg) translateY(10px); opacity: 0.62; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #ddd6cd; color: #8b847c; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">DK</span><span style="font-size: 13.5px; font-weight: 650; color: #8b847c; text-decoration: line-through">Daniel K.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #a8a199">Are the condo fees included?</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #ddd6cd; color: #6f675f; font-size: 11.5px; font-weight: 600">Lost · bought elsewhere</span></div>
+</div></sc-if><sc-if value="{{ w3 }}" hint-placeholder-val="{{ false }}"><div class="warmIn" style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: radial-gradient(90% 100% at 12% 8%, rgba(244,196,160,0.95), rgba(244,196,160,0) 72%), radial-gradient(80% 90% at 95% 100%, rgba(196,210,228,0.7), rgba(196,210,228,0) 70%), #f8efe6; border: 1px solid rgba(201,140,100,0.25); transform: rotate(1.1deg) translateY(-3px); box-shadow: 0 18px 30px -18px rgba(150,80,30,0.45); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #ffffff; color: #141312; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">DK</span><span style="font-size: 13.5px; font-weight: 650; color: #141312">Daniel K.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #3f3a36">Are the condo fees included?</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #ffffff; color: #9a4f12; font-size: 11.5px; font-weight: 650"><span style="width: 7px; height: 7px; border-radius: 999px; background: #c96a1b"></span>Needs you · a price</span></div>
+</div></sc-if></div><div><sc-if value="{{ c5 }}" hint-placeholder-val="{{ true }}"><div style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: #e2e8ef; border: 1px solid #d3dbe5; transform: rotate(0.5deg); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #cfd8e3; color: #4d5866; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">LB</span><span style="font-size: 13.5px; font-weight: 650; color: #4d5866">Lucas B.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #6b7684">Is the Elm St house still on?</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #d3dbe5; color: #4d5866; font-size: 11.5px; font-weight: 600">Quiet · 4 days</span></div>
+</div></sc-if><sc-if value="{{ w5 }}" hint-placeholder-val="{{ false }}"><div class="warmIn" style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: radial-gradient(90% 100% at 12% 8%, rgba(244,196,160,0.95), rgba(244,196,160,0) 72%), radial-gradient(80% 90% at 95% 100%, rgba(196,210,228,0.7), rgba(196,210,228,0) 70%), #f8efe6; border: 1px solid rgba(201,140,100,0.25); transform: rotate(0.5deg) translateY(-3px); box-shadow: 0 18px 30px -18px rgba(150,80,30,0.45); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #ffffff; color: #141312; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">LB</span><span style="font-size: 13.5px; font-weight: 650; color: #141312">Lucas B.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #3f3a36">Is the Elm St house still on?</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #ffffff; color: #141312; font-size: 11.5px; font-weight: 650"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Checked in · he replied</span></div>
+</div></sc-if></div><div><sc-if value="{{ c2 }}" hint-placeholder-val="{{ true }}"><div style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: #e2e8ef; border: 1px solid #d3dbe5; transform: rotate(-0.4deg); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #cfd8e3; color: #4d5866; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">AK</span><span style="font-size: 13.5px; font-weight: 650; color: #4d5866">Aisha K.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #6b7684">Anything Saturday for a cut?</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #d3dbe5; color: #4d5866; font-size: 11.5px; font-weight: 600">No reply · 5 h</span></div>
+</div></sc-if><sc-if value="{{ w2 }}" hint-placeholder-val="{{ false }}"><div class="warmIn" style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: radial-gradient(90% 100% at 12% 8%, rgba(244,196,160,0.95), rgba(244,196,160,0) 72%), radial-gradient(80% 90% at 95% 100%, rgba(196,210,228,0.7), rgba(196,210,228,0) 70%), #f8efe6; border: 1px solid rgba(201,140,100,0.25); transform: rotate(-0.4deg) translateY(-3px); box-shadow: 0 18px 30px -18px rgba(150,80,30,0.45); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #ffffff; color: #141312; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">AK</span><span style="font-size: 13.5px; font-weight: 650; color: #141312">Aisha K.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #3f3a36">Anything Saturday for a cut?</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #ffffff; color: #141312; font-size: 11.5px; font-weight: 650"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Booked · Sat 11:00</span></div>
+</div></sc-if></div><div><sc-if value="{{ c8 }}" hint-placeholder-val="{{ true }}"><div style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: #e2e8ef; border: 1px solid #d3dbe5; transform: rotate(-1.0deg); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #cfd8e3; color: #4d5866; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">JO</span><span style="font-size: 13.5px; font-weight: 650; color: #4d5866">James O.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #6b7684">Thanks, I'll think about it.</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #d3dbe5; color: #4d5866; font-size: 11.5px; font-weight: 600">Quiet · 1 week</span></div>
+</div></sc-if><sc-if value="{{ l8 }}" hint-placeholder-val="{{ false }}"><div class="lostOut" style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: #ece8e3; border: 1.5px dashed #cfc7bd; transform: rotate(-3.0deg) translateY(10px); opacity: 0.62; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #ddd6cd; color: #8b847c; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">JO</span><span style="font-size: 13.5px; font-weight: 650; color: #8b847c; text-decoration: line-through">James O.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #a8a199">Thanks, I'll think about it.</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #ddd6cd; color: #6f675f; font-size: 11.5px; font-weight: 600">Lost · went quiet for good</span></div>
+</div></sc-if><sc-if value="{{ w8 }}" hint-placeholder-val="{{ false }}"><div class="warmIn" style="min-height: 118px; box-sizing: border-box; border-radius: 18px; padding: 12px 13px; background: radial-gradient(90% 100% at 12% 8%, rgba(244,196,160,0.95), rgba(244,196,160,0) 72%), radial-gradient(80% 90% at 95% 100%, rgba(196,210,228,0.7), rgba(196,210,228,0) 70%), #f8efe6; border: 1px solid rgba(201,140,100,0.25); transform: rotate(-1.0deg) translateY(-3px); box-shadow: 0 18px 30px -18px rgba(150,80,30,0.45); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #ffffff; color: #141312; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 650">JO</span><span style="font-size: 13.5px; font-weight: 650; color: #141312">James O.</span></div>
+<div style="font-size: 13px; line-height: 1.35; color: #3f3a36">Thanks, I'll think about it.</div>
+<div style="margin-top: auto"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #ffffff; color: #141312; font-size: 11.5px; font-weight: 650"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Checked in · back in touch</span></div>
+</div></sc-if></div>
+</div>
+<p style="margin: 10px 4px 0; font-size: 11.5px; color: #5b4a3c">An example, not real customers.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  state = { tick: 0 };
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ tick: 26 }); return; }
+    this.timer = setInterval(() => { this.setState({ tick: this.state.tick >= 30 ? 0 : this.state.tick + 1 }); }, 650);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const step = [0, 4, 2, 7, 1, 5, 8, 3, 6], lostAt = [99, 7, 99, 3, 99, 99, 5, 99, 9];
+    const t = this.state.tick, withF = t >= 13, u = t - 14;
+    const warm = (i) => withF && step[i] < u;
+    const lost = (i) => !withF && lostAt[i] <= t;
+    const cold = (i) => !warm(i) && !lost(i);
+    return { without: !withF, withF, c0: cold(0), l0: lost(0), w0: warm(0), c1: cold(1), l1: lost(1), w1: warm(1), c2: cold(2), l2: lost(2), w2: warm(2), c3: cold(3), l3: lost(3), w3: warm(3), c4: cold(4), l4: lost(4), w4: warm(4), c5: cold(5), l5: lost(5), w5: warm(5), c6: cold(6), l6: lost(6), w6: warm(6), c7: cold(7), l7: lost(7), w7: warm(7), c8: cold(8), l8: lost(8), w8: warm(8) };
+  }
+}
+</script>
+</body>
+</html>

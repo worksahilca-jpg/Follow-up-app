@@ -9386,3 +9386,12 @@ warm/cool wash becomes the meaning: warm = followed up. Built from R-009's words
 **A3 · "See it for your business":** pick a trade (realtor, plumber, hair salon, dental clinic); that customer's
 email arrives and the reply is written in that owner's words; it cycles by itself. Note R-020 (the line under the
 headline never says who it's for): here the trades are examples to try, not a positioning line.
+Founder, mid-way: *"We need to do something creative that will impact the user after landing on our page."* So A2
+became a two-act story: **without FollowUp** (a busy week: nine customers wait in cool grey-blue and four drop away,
+dashed and greyed, "Lost · called another plumber", "Lost · bought elsewhere"; caption "A busy week. *Four of them
+went somewhere else.*"), then the switch flips to **with FollowUp** (the same nine warm to peach one by one, none
+lost; "Every customer answered, *checked in, or handed to you.*"). A3 ("See it for your business") drawn as planned.
+Both on the "First impression · round 2" page, desktop and phone (`prototypes/2026-10-08-first-impression/`).
+**Weak, honestly:** A2's "four of nine lost" is a dramatised example, never a statistic, and must stay labelled; the
+loss half is the most emotional thing on the site and must not tip into fear-selling (brand principle 2, calm over
+urgent); A3's chips can't be clicked in the drawing.

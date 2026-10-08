@@ -13,9 +13,10 @@
   --paper: #ffffff; --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68; --line: #e8e5e1; --stage: #f3f2f0;
   --dot: #c96a1b; --good: #2f6b4a;
   --em: #57534e; --em-light: #57534e; --btn: #0a0a0a; --btn-fg: #ffffff;
-  --bed: #f1efec; --bed-pad: clamp(14px, 3.6vw, 52px);
+  --bed: var(--wash); --bed-pad: clamp(14px, 3.6vw, 52px);
+  --apricot: #fbeee4; --mist: #eef2f8; --rose: #f8eeea; --stage-how: var(--mist); --stage-thread: var(--apricot); --stage-ctl: var(--rose); --close-tone: light;
   --app-ring: rgba(10,10,10,.08); --app-shadow: 0 50px 100px -50px rgba(10,10,10,.38), 0 18px 40px -30px rgba(10,10,10,.25);
-  --close-bg: #0a0a0a; --close-fg: #f4f2ef; --close-soft: #a8a49e; --close-faint: #7a7671; --close-dim: #2a2a2b; --close-em: #a8a49e; --close-btn: #ffffff; --close-btn-fg: #0a0a0a;
+  --close-bg: var(--wash); --close-fg: #0a0a0a; --close-soft: #57534e; --close-faint: #6b665f; --close-dim: rgba(10,10,10,.14); --close-em: #57534e; --close-btn: #0a0a0a; --close-btn-fg: #ffffff;
   --wash: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), radial-gradient(50% 70% at 88% 0%, rgba(238,212,204,0.9), rgba(238,212,204,0) 72%), #f3efea;
   --serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
   --sans: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -23,20 +24,20 @@
   --ease: cubic-bezier(.22, 1, .36, 1);
   --gut: clamp(16px, 4vw, 56px);
 }
-:root[data-pal="green"] { --night: #fbfbf9; --night-2: #f2f4f1; --moon: #10231b; --moon-soft: #4d5e55; --moon-faint: #6c7b72; --dim: #d5ddd7;
+:root[data-pal="white"] { --bed: #f1efec; --stage-how: #f3f2f0; --stage-thread: #f3f2f0; --stage-ctl: #f3f2f0; --close-tone: dark;
+  --close-bg: #0a0a0a; --close-fg: #f4f2ef; --close-soft: #a8a49e; --close-faint: #7a7671; --close-dim: #2a2a2b; --close-em: #a8a49e; --close-btn: #ffffff; --close-btn-fg: #0a0a0a; }
+:root[data-pal="green"] { --stage-how: #edf2ee; --stage-thread: #edf2ee; --stage-ctl: #edf2ee; --close-tone: dark; --night: #fbfbf9; --night-2: #f2f4f1; --moon: #10231b; --moon-soft: #4d5e55; --moon-faint: #6c7b72; --dim: #d5ddd7;
   --paper: #fbfbf9; --ink: #10231b; --ink-soft: #4d5e55; --ink-faint: #6c7b72; --line: #e1e8e2; --stage: #edf2ee;
   --em: #1f6b4a; --em-light: #1f6b4a; --btn: #10231b; --btn-fg: #ffffff; --bed: #e2ece4;
   --close-bg: #0f3d2e; --close-fg: #f2f6ef; --close-soft: #b5c9bb; --close-faint: #8aa597; --close-dim: #21503f; --close-em: #c8e6a0; --close-btn: #f2f6ef; --close-btn-fg: #0f3d2e; }
-:root[data-pal="lilac"] { --night: #fdfcff; --night-2: #f6f3fe; --moon: #141020; --moon-soft: #5a5368; --moon-faint: #7b7489; --dim: #dcd6e8;
+:root[data-pal="lilac"] { --stage-how: #f3f0fb; --stage-thread: #f3f0fb; --stage-ctl: #f3f0fb; --close-tone: dark; --night: #fdfcff; --night-2: #f6f3fe; --moon: #141020; --moon-soft: #5a5368; --moon-faint: #7b7489; --dim: #dcd6e8;
   --paper: #fdfcff; --ink: #141020; --ink-soft: #5a5368; --ink-faint: #7b7489; --line: #e9e4f4; --stage: #f3f0fb;
   --em: #5b47c9; --em-light: #5b47c9; --btn: #141020; --btn-fg: #ffffff; --bed: #ebe5fd;
   --close-bg: #141020; --close-fg: #f6f3fb; --close-soft: #b9b0c9; --close-faint: #8d849c; --close-dim: #2a2338; --close-em: #c9b8ff; --close-btn: #c9b8ff; --close-btn-fg: #141020; }
-:root[data-pal="orange"] { --night: #ffffff; --night-2: #f6f6f6; --moon: #0b0b0b; --moon-soft: #555555; --moon-faint: #737373; --dim: #dddddd;
+:root[data-pal="orange"] { --stage-how: #f3f3f3; --stage-thread: #f3f3f3; --stage-ctl: #f3f3f3; --close-tone: dark; --night: #ffffff; --night-2: #f6f6f6; --moon: #0b0b0b; --moon-soft: #555555; --moon-faint: #737373; --dim: #dddddd;
   --paper: #ffffff; --ink: #0b0b0b; --ink-soft: #555555; --ink-faint: #737373; --line: #e8e8e8; --stage: #f3f3f3;
   --em: #e0560e; --em-light: #e0560e; --btn: #ff6a1f; --btn-fg: #160b04; --bed: #f2f2f2;
   --close-bg: #0b0b0b; --close-fg: #ffffff; --close-soft: #a3a3a3; --close-faint: #7c7c7c; --close-dim: #2a2a2a; --close-em: #ff6a1f; --close-btn: #ff6a1f; --close-btn-fg: #160b04; }
-:root[data-pal="soft"] { --bed: var(--wash); --stage: #f5f2ef; --em: #8a5a3b; --em-light: #8a5a3b;
-  --close-bg: var(--wash); --close-fg: #0a0a0a; --close-soft: #57534e; --close-faint: #6b665f; --close-dim: rgba(10,10,10,.14); --close-em: #8a5a3b; --close-btn: #0a0a0a; --close-btn-fg: #ffffff; }
 * { box-sizing: border-box }
 html { scroll-behavior: smooth }
 body { margin: 0; background: var(--night); color: var(--moon); font-family: var(--sans); font-weight: 420; font-size: 16px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility }
@@ -160,7 +161,7 @@ em { font-style: italic }
 .step h3 { margin-top: 12px; font-family: var(--serif); font-size: clamp(34px, 3.6vw, 48px); line-height: 1; letter-spacing: -.02em }
 .step p { margin: 14px 0 0; font-size: 18px; line-height: 1.55; color: var(--ink-soft); max-width: 27em }
 .panel-inline { display: none }
-.stage { position: sticky; top: 14vh; height: 72vh; min-height: 520px; border-radius: 32px; background: var(--stage); overflow: hidden }
+.stage { position: sticky; top: 14vh; height: 72vh; min-height: 520px; border-radius: 32px; background: var(--stage-how); overflow: hidden }
 .stage .panel, .stage-inner { position: absolute; inset: 0; padding: 44px 44px 40px; transition: opacity .55s var(--ease), transform .55s var(--ease) }
 .stage .panel { opacity: 0; transform: translateY(18px); pointer-events: none }
 .stage .panel.on { opacity: 1; transform: none }
@@ -195,12 +196,12 @@ em { font-style: italic }
 .hold .small { font-size: 12.5px }
 
 /* keeps going: one thread across the week */
-.thread { margin-top: 56px; border-radius: 32px; background: var(--stage); padding: 52px 48px 48px; position: relative }
+.thread { margin-top: 56px; border-radius: 32px; background: var(--stage-thread); padding: 52px 48px 48px; position: relative }
 .thread .rail { position: absolute; left: 48px; right: 48px; top: 60px; height: 2px; background: var(--line) }
 .thread .rail i { display: block; height: 100%; width: 100%; background: var(--ink); transform-origin: 0 50%; transform: scaleX(var(--p, 1)) }
 .t-cols { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 24px; position: relative }
 .t-col { padding-top: 34px; position: relative }
-.t-col::before { content: ""; position: absolute; top: 2px; left: 0; width: 14px; height: 14px; border-radius: 999px; background: var(--ink); box-shadow: 0 0 0 6px var(--stage) }
+.t-col::before { content: ""; position: absolute; top: 2px; left: 0; width: 14px; height: 14px; border-radius: 999px; background: var(--ink); box-shadow: 0 0 0 6px var(--stage-thread) }
 .t-col.quiet::before { background: #c4beb6 }
 .t-col.done::before { background: var(--good) }
 .t-when { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint) }
@@ -216,7 +217,7 @@ em { font-style: italic }
 .promise { border-top: 1.5px solid var(--ink); padding-top: 18px }
 .promise h3 { font-family: var(--serif); font-size: 27px; line-height: 1.05; letter-spacing: -.01em }
 .promise p { margin: 10px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--ink-soft) }
-.switch-card { margin-top: 48px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 24px; align-items: center; border-radius: 26px; background: var(--stage); padding: 28px 32px }
+.switch-card { margin-top: 48px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 24px; align-items: center; border-radius: 26px; background: var(--stage-ctl); padding: 28px 32px }
 .switch-card h3 { font-size: 19px; font-weight: 650; font-family: var(--sans) }
 .switch-card p { margin: 6px 0 0; font-size: 15.5px; color: var(--ink-soft) }
 .switch-state { display: inline-flex; align-items: center; gap: 8px }
@@ -265,7 +266,7 @@ footer a:hover { color: var(--moon) }
   .how-grid { grid-template-columns: minmax(0,1fr) }
   .stage { display: none }
   .step { min-height: 0; opacity: 1; padding-block: 28px }
-  .panel-inline { display: block; position: relative; margin-top: 24px; border-radius: 26px; background: var(--stage) }
+  .panel-inline { display: block; position: relative; margin-top: 24px; border-radius: 26px; background: var(--stage-how) }
   .panel-inline .stage-inner { position: relative; inset: auto; padding: 24px 20px 28px }
   .pcard.float { position: relative; right: auto; bottom: auto; width: auto; margin-top: 14px }
   .t-cols { grid-template-columns: minmax(0,1fr) }
@@ -418,7 +419,7 @@ footer a:hover { color: var(--moon) }
 </div></section>
 </main>
 
-<div class="picker" role="group" aria-label="Pick the colours"><span class="lbl">Colours</span><button type="button" data-pal="white" aria-pressed="true"><span class="sw2" aria-hidden="true"><i style="background: #ffffff"></i><i style="background: #0a0a0a"></i></span><span>1</span><span class="nm">White</span></button><button type="button" data-pal="green" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #fbfbf9"></i><i style="background: #1f6b4a"></i></span><span>2</span><span class="nm">White and green</span></button><button type="button" data-pal="lilac" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #fdfcff"></i><i style="background: #5b47c9"></i></span><span>3</span><span class="nm">White and lilac</span></button><button type="button" data-pal="orange" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #ffffff"></i><i style="background: #ff6a1f"></i></span><span>4</span><span class="nm">White and orange</span></button><button type="button" data-pal="soft" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #ffffff"></i><i style="background: #f4c4a0"></i></span><span>5</span><span class="nm">White with soft colour</span></button></div>
+<div class="picker" role="group" aria-label="Pick the colours"><span class="lbl">Colours</span><button type="button" data-pal="ours" aria-pressed="true"><span class="sw2" aria-hidden="true"><i style="background: #f4c4a0"></i><i style="background: #c4d2e4"></i></span><span>1</span><span class="nm">Our soft colours</span></button><button type="button" data-pal="white" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #ffffff"></i><i style="background: #0a0a0a"></i></span><span>2</span><span class="nm">White</span></button><button type="button" data-pal="green" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #fbfbf9"></i><i style="background: #1f6b4a"></i></span><span>3</span><span class="nm">White and green</span></button><button type="button" data-pal="lilac" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #fdfcff"></i><i style="background: #5b47c9"></i></span><span>4</span><span class="nm">White and lilac</span></button><button type="button" data-pal="orange" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #ffffff"></i><i style="background: #ff6a1f"></i></span><span>5</span><span class="nm">White and orange</span></button></div>
 <script>
 (function () {
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -504,19 +505,20 @@ footer a:hover { color: var(--moon) }
   /* ---- the colour picker: the whole page changes, so colours are judged on the real thing ---- */
   var pbtns = Array.prototype.slice.call(document.querySelectorAll('.picker button'));
   function setPal(k) {
-    if (k === 'white') document.documentElement.removeAttribute('data-pal'); else document.documentElement.setAttribute('data-pal', k);
+    if (k === 'ours') document.documentElement.removeAttribute('data-pal'); else document.documentElement.setAttribute('data-pal', k);
     pbtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-pal') === k ? 'true' : 'false'); });
-    try { localStorage.setItem('fu-pal-light', k); } catch (e) {}
+    try { localStorage.setItem('fu-pal-ours', k); } catch (e) {}
+    if (nav) navTone();
   }
   pbtns.forEach(function (b) { b.addEventListener('click', function () { setPal(b.getAttribute('data-pal')); }); });
-  try { var saved = localStorage.getItem('fu-pal-light'); if (saved) setPal(saved); } catch (e) {}
+  try { var saved = localStorage.getItem('fu-pal-ours'); if (saved) setPal(saved); } catch (e) {}
 
 
   /* ---- the menu takes the colour of the section under it ---- */
   var nav = document.querySelector('.nav');
   var lights = Array.prototype.slice.call(document.querySelectorAll('[data-tone="light"]'));
   function navTone() {
-    var y = 34, cr = document.querySelector('.close').getBoundingClientRect(), onLight = !(cr.top <= y && cr.bottom >= y);
+    var y = 34, cr = document.querySelector('.close').getBoundingClientRect(), darkClose = getComputedStyle(document.documentElement).getPropertyValue('--close-tone').trim() === 'dark', onLight = !(darkClose && cr.top <= y && cr.bottom >= y);
     nav.classList.toggle('light', onLight); nav.classList.toggle('solid', window.scrollY > 40);
   }
   window.addEventListener('scroll', navTone, { passive: true }); navTone();

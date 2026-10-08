@@ -9566,3 +9566,14 @@ close), **2 White and green** (deep green italics and close band, sage panel), *
 lilac panel, lilac button on the dark close), **4 White and orange** (orange italics and buttons, black close), **5 White
 with soft colour** (the approved landing wash, A-032, as the panel and the close). The orange "needs you" dot is
 unchanged in all five. The first screen was tightened so the app window shows in the first view.
+
+## 2026-10-08 — The page in FollowUp's own soft colours (A-108)
+
+The default palette is now **"Our soft colours"**, built from the app's reply-card wash (A-043) and nothing else: the
+full wash (apricot, rose-sand, dusty blue on #f3efea) behind the app window in the first screen and as the closing band;
+its three tones split into pale section panels: dusty blue `#eef2f8` for "How it works", apricot `#fbeee4` for the
+check-in thread, rose-sand `#f8eeea` for "Your control". White page, ink text, ink buttons (the app's own accent),
+italics in the app's soft grey, the orange "needs you" dot unchanged. The closing band is light, so the top menu
+stays dark over it. The picker keeps White, White and green, White and lilac, White and orange to compare.
+**Weak, honestly:** five soft tones on one page can drift toward pastel sameness; the italic grey is quiet, so the
+headline's human phrase reads softer than in the colour palettes.

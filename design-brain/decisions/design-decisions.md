@@ -9395,3 +9395,18 @@ Both on the "First impression · round 2" page, desktop and phone (`prototypes/2
 **Weak, honestly:** A2's "four of nine lost" is a dramatised example, never a statistic, and must stay labelled; the
 loss half is the most emotional thing on the site and must not tip into fear-selling (brand principle 2, calm over
 urgent); A3's chips can't be clicked in the drawing.
+
+## 2026-10-08 — Founder: "the whole page looks very boring … the references are very interactive and impactful"
+
+Canvas comment on A2's text column. Answer drawn: **A4 · "Try it"**, a first screen you use, not watch (on the
+"First impression · try it" page; `prototypes/2026-10-08-first-impression/HeroA4.dc.html`, `PhoneA4.dc.html`).
+Layout A kept (A-105). Behind everything, faint italic lines of what customers ask drift slowly upward ("Is it still
+available?", "Can you come today?"): the murmur of an inbox, text only, no cards (R-035). The right panel is a working
+demo: pick a business (realtor, plumber, hair salon, dental clinic), click one of three real-sounding questions or
+type your own; the reply writes itself word by word in the owner's words, then Send/Edit. Price questions show
+"Comes to you first" with the orange dot and the short holding note (A-056, holdingMessage). A typed question it
+can't know says so and hands it to the owner ("When FollowUp isn't sure, it doesn't guess…"). It cycles by itself
+when nobody touches it. Scripted examples, labelled ("In your account it uses your own hours, prices and facts").
+**Open for the founder:** a live version answering a visitor's own question with the real AI (cost and limits:
+product call). **Weak, honestly:** scripted replies can't answer what a visitor types; the drifting text must stay
+faint enough to read the headline.

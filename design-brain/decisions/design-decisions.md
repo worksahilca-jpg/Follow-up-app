@@ -9469,3 +9469,9 @@ send you the price soon.", `holdingMessage.ts`).
 a timer here, while the real page should start each one as it scrolls into view (and Macro's scroll-driven story is
 not tried yet); the sticky bar doesn't yet show which chapter you're in; the 96 px hero headline runs to five lines
 in its column; no phone version yet; "It writes down why" must be checked against the product before it ships.
+
+## 2026-10-08 — Home v3 rejected: "Colours" and "Not impressive" (R-037)
+
+Asked with four choices; he picked colours and not impressive, not "boring, same old" or "too long". Next: finished
+first screens in a few confident colour worlds (R-004: he recognises colour on a finished page, not in a swatch), each
+with a second screen that keeps the impact (big type, the story at full size).

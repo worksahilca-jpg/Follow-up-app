@@ -746,3 +746,21 @@ Not asked which one he meant, because all of them were removed together.
 **Do not propose again:** glows, halos, light sources, coloured or glowing shadows, glossy highlight edges. Depth comes
 from contrast (dark ground, light text, the light button), plain dark shadows, one thing in front of another, and far
 things being smaller and fainter.
+
+## R-037 — Home v3: the charcoal + beige + peach palette, and a page with no "wow" after the first screen ^R-037
+
+**Rejected:** 2026-10-08, founder, on the "Website · v3" page: *"i didnt like this broooo."* Asked what (four
+choices, more than one allowed), he picked **"Colours"** and **"Not impressive"** (nothing makes you say wow after the
+first screen; it doesn't feel like Wispr, Macro or Linear). He did not pick "boring, same old" or "too long".
+
+**What was rejected:** the colour system of v3 and A5 (charcoal `#1e1e20`, warm paper `#faf7f2`, sand stages
+`#ebe3d7`, the peach/slate wash, peach italic) and the page's middle: small cards on sand panels, chapter by chapter.
+The structure (one story in chapters, the promises, questions as replies, one button) was not named as the problem.
+
+**Principle (inferred, marked inferred):** warm cream + serif + soft peach is a safe, common look and reads as
+generic, not premium; his four favourites each commit to a confident colour world (Macro black/white, Linear black,
+Wispr cream with a strong dark and a lilac button, Superhuman's saturated moods). And the "wow" has to continue past
+the first screen: big type, big moments, the product's story told at full size, not in small cards.
+
+**Do not propose again:** the charcoal + sand + peach-wash palette as the site's colours; chapters drawn as small
+cards on beige rounded panels.

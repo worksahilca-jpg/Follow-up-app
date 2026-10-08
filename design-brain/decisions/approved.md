@@ -2025,3 +2025,15 @@ box and the reply flow (A-109/A-110). **Change asked:** the headline a bit small
 *"we have to create a border with a lot of things. I'll be telling you later on"*: do not guess it; wait.
 **Colours:** still open (R-042); he asked for research on how Wispr Flow uses colour, to be "more professional, like
 Wispr is".
+
+## A-113 — Direction: our own multi-colour theme on Wispr's pattern, with a little matte 3D ^A-113
+
+**Approved direction:** 2026-10-08, founder, after the Wispr colour study: *"As Wispr is using a lot of colours,
+they are making more sense. We'll be using these kinds of patterns, and we'll be creating our own theme. I want a
+bit of a gradientish touch in that, not just proper, but a little bit, something that looks like a 3D kind of
+thing."*
+**What it means in practice:** several colours, each with one job (Wispr's pattern, A-111), our own values; solid
+blocks with big corners alternating with paper; gradients only inside one colour family, used as matte light
+(lighter where the light falls, deeper underneath) for a soft 3D feel. **Still excluded:** shine, glows, glossy
+highlight edges (R-036), several hues blended in one gradient (R-042).
+**Supersedes in part:** A-108's soft peach-and-blue wash (already questioned by R-042). Light-first stays.

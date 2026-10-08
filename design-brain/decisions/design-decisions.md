@@ -9733,3 +9733,20 @@ https://claude.ai/artifact/4CTFfFCnWd9avFeJ5uLQC5 (v2). Research page https://cl
 with three palettes on Wispr's role skeleton (Forest recommended, Ink, Mint light); details in
 `research/landing-page/2026-10-08-wispr-colour-study.md`. **Pending from him:** the "border with a lot of things"
 (he will explain) and the palette choice.
+
+## 2026-10-08 — Theme v1: six colours with jobs, matte 3D, on the two-screen opening
+
+Following A-113. **Built:** https://claude.ai/artifact/91FEmxYBCMMTKk7NCHszXj (copy in `prototypes/2026-10-08-theme-v1/`).
+- **Colours and jobs:** Paper `#F8F6F1` (the page), Ink `#0E0E0C` (words), Forest `#0F4A33` lit from the top left
+  (heavy blocks: screen 2, Today, closing), Mint `#CDEFD9` (only "press me", every main button incl. the menu's
+  Start free), Apricot `#F4C49E` (warm highlights: the 7× card), Sky `#DCE6F3` (calm light blocks: control,
+  questions); meanings kept from the app: Sent `#0D6E3C`, Needs you `#C96A1B` (a dot).
+- **Matte 3D:** one-colour gradients lit from above; buttons with a soft bottom edge and a dark drop shadow (they
+  look pressable; pressing sinks them); white cards fading to paper with layered shadows; the stream curves in 3D
+  (cards turn toward the middle, up to 16°); the green block casts a soft shadow upward as it slides.
+- **Layout 3 made real:** screen 1 (paper, the smaller headline, "Try it yourself ↓") stays put while screen 2, a
+  near-full-width Forest block with 64 px corners, slides up over it, holding the box and the flow.
+- A theme sheet at the end shows every colour, its job, and the three specimens (Forest block + button, Sky block +
+  card, Apricot 7×).
+**Weak, honestly:** the in-card Send is black (product UI) while website buttons are mint; Sky is defined but not yet
+on a section of this page; the "border with a lot of things" is still to come from the founder.

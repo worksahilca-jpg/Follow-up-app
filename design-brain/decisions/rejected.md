@@ -632,3 +632,19 @@ committed colour, a display face, depth behind the product). Keep the guardrails
 R-018), but don't spend the boldness budget on caution.
 
 **Do not propose again:** a "same page, finished" option as the main answer to a request for a new look.
+
+## R-029 — One reference site as the base of the new website ^R-029
+
+**Rejected:** 2026-10-08, founder, right after it was proposed: *"Bro. I didn't tell you to copy Wispr Flow or
+something, but what you should do is get the best things that they are using on our side, and then we'll design it
+according to our website. Let's try to reframe the whole website too."*
+
+**What was rejected:** the proposal to pick one of the eight references (Wispr Flow recommended) as the skeleton of
+the new landing page and follow its format and motion closely.
+
+**Principle (his words, plus inference marked):** take the **best technique** from each reference, bring it to
+FollowUp's side, and design FollowUp's own website with it. The references are a toolbox, not a base. *Inferred:*
+the work is the whole site (every public page), not the landing page alone, and the result should read as one
+FollowUp system, not as a page per reference.
+
+**Do not propose again:** "pick one site and follow it", in any wording.

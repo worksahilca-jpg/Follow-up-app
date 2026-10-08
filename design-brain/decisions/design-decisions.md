@@ -9243,3 +9243,44 @@ because a lookalike reads as a copycat, which costs trust. **Inferred (not confi
 the references; mixing seven sites into one page diluted every one of them. Proposed next: one reference as the
 skeleton, followed closely in format and motion, with FollowUp's words, colours and product, plus one or two details
 from the others. Motion can't be read from screenshots; it needs a description from the founder's browser.
+
+## 2026-10-08 — Founder: take the best things from all of them, design our own, reframe the whole website
+
+*"I didn't tell you to copy Wispr Flow… get the best things that they are using on our side, and then we'll design
+it according to our website. Let's try to reframe the whole website too."* The one-skeleton proposal in the entry
+above is rejected (R-029). Next: a kit of the best technique from each reference turned into FollowUp's own, and the
+whole public site redrawn with it (home, how it works, prices, your data, sign in, phone).
+
+## 2026-10-08 — The whole website reframed with a kit of the best techniques (drawn for the founder's pick)
+
+On the "Website · reframed" page of the design canvas (copy in `prototypes/2026-10-08-website-reframed/`). Not one
+reference as a base (R-029): a **kit** of the best technique from each, turned into FollowUp's own, then every public
+page redrawn with it.
+**The idea that holds it together:** the site moves through one customer's day. Night when they write (the home
+hero), first light when the reply is waiting (our approved wash is the dawn: peach and blue), daylight when you're in
+control (paper). Real times in mono (Tue 11:48 PM, Wed 7:02 AM) are the subject-only detail.
+**The kit (best thing → ours):** Wispr, the one before → after on a slow loop (email at night → reply written → sent →
+she answers), with Pause. Granola, sections named after the customer's week; a floating menu pill. Linear, real
+product screens as the only pictures. Attio, the **time rail** (a sticky list of times that lights the one you're
+reading, with the A-091 orange dot), two-tone headings, hairline rules. Superhuman, frosted cards over a night sky
+(no people, no film) and a small player with Pause. Macro, a spotlight: the four promises big, only the one being
+read in black, on paper not black. Stripe, three true numbers lit one at a time (2 min, 1 min, 1 tap). Mercury, the
+sky fades into morning and the Today screen grows; the menu goes to real pages.
+**The site, reframed:** Home (hero, the Today screen, numbers, the week in four moments, promises, prices strip,
+start), **How it works** (new page: the week in six moments on the time rail, a 40-second film slot, Underneath,
+questions), **Prices** (new page: three plans in ruled columns, Plus lifted on the wash, money questions), **Your
+data** (was Security; same facts, sticky chapter list), **Sign in** (dawn panel with the reply, the same words),
+phone home first screen and the phone week.
+**Kept:** A-013 headline, A-081 lede and buttons, A-063 promises and Pause, the wash (A-032), the orange dot
+(A-091), every fact and price as live; "An example, not a real customer" visible. Guardrails held: no dashboard hero
+(R-005/R-009), no person photo (R-011), no handwriting (R-017), no black reply card (R-018).
+**Weak, honestly:** (1) Night `#0b1220` is a new colour (`[TO DECIDE]`) and a dark hero reopens A-022's white page;
+the dark is now only the top of Home, the Sign in panel and the closing panel. (2) Instrument Serif as the display
+face everywhere reopens A-022's "plain thin headline" (no new font, it is already loaded). (3) Splitting the one page
+into Home + How it works + Prices, and renaming Security to "Your data", change A-063's structure: founder's call.
+(4) Plus still lists Instagram, Messenger and WhatsApp while the site says Gmail first and the rest are coming; the
+live site has the same contradiction; product call. (5) The 40-second film doesn't exist yet. (6) The promise
+spotlight and the player cycle on a timer in the drawing; built, the spotlight follows the scroll. (7) The week's
+example invents small details (a parking spot, "3 came back, 2 booked"), marked as an example. (8) Phone versions of
+How it works, Prices and Your data not drawn; the app (Today) not redrawn with the kit yet. (9) The Google button
+shows a plain "G"; the real one uses Google's own mark.

@@ -9879,3 +9879,19 @@ month).
 **Weak, said plainly:** four moving rows are close to R-007's "too much congested"; the headline still dominates, but
 it is busy; on a phone the rows are sparse because each message is wide. The café photo (R-046) is still on screen
 two until he chooses the changing photos or a no-trade photo.
+
+## 2026-10-08 — Home v15: one photo card with FollowUp's week; the rows and the full photo removed
+
+After R-047, R-048 and R-049. **Built (prototype only):** under the headline, one photo in a rounded frame (Adobe
+Stock 293359980, free licence, not AI: hands typing on a phone in warm outdoor light, no trade visible), treated per
+A-119 (warmer, softer, grain, a light blur). On it floats FollowUp's **"Your week"** card, marked *Example*: 46
+customers answered (avg. 1 min), 18 followed up after going quiet, 9 meetings booked, $14,600 in open deals, 212
+newsletters and receipts skipped, 2 prices waiting for you. Each line is something the app shows (meetings booked
+through the booking link and active revenue exist on the team screens); the figures are an example week. The numbers
+count up once when seen, then tick gently: newsletters skipped most often, a customer answered now and then. Screen
+one pins only after the photo card is fully on screen, then screen two (now a plain walnut block, A-119's colour)
+slides over it. The café photo is gone.
+Three other trade-neutral candidates were licensed free (403748411, 518856668, 490836759) and kept in the session
+scratchpad only. **Weak, said plainly:** a "your week" card is close to a dashboard tile, which earlier heroes
+avoided (R-005, R-009); it stays one card with six plain lines. Screen one is no longer "the headline alone" (A-112),
+at his request for something that shows the product's work.

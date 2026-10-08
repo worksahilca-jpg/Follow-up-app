@@ -873,3 +873,24 @@ for a cafe"*. The look itself was liked (A-119).
 **Principle (his words plus `PRODUCT_DIRECTION.md`, "Who it's for", 2026-09-26: examples mixed so no reader thinks
 "this is for plumbers only"):** one business's photo makes FollowUp read as a tool for that business. Imagery must
 be mixed across trades or show no trade at all. The café was also a mismatch: none of the demo's customers is a café.
+
+## R-047 — Rows of messages flowing around the headline (home v14) ^R-047
+
+**Rejected:** 2026-10-08, founder: *"those rows that are just flowing … on the top and at the bottom of that page. I
+don't like that format. We'll be using that moving structure with the companies that will be using this or the
+reviews that we are getting … Let's create something else so that it justifies our product."*
+**Principle (his words):** a moving band reads as social proof (logos, reviews), so it is kept for that and not used
+to explain the product. The band waits for real customers and real reviews: no invented logos or quotes (A-023).
+
+## R-048 — A photo that changes with each customer or visitor ^R-048
+
+**Rejected:** 2026-10-08, founder, on the proposal to change the photo with each example customer: *"leave this
+concept: whoever will come, if the cafe owner comes, it will become a cafe. No, we need just one."*
+**Rule:** one photo for everyone; with R-046 it shows no single trade.
+
+## R-049 — A photo filling the whole demo block ^R-049
+
+**Rejected:** 2026-10-08, founder, on v13: *"For the opening one, we don't want to use whole photos like these
+pictures. I just want it to be used like Wispr Flow does."*
+**Principle (from our Wispr teardown, which matches his words):** Wispr puts photos inside a framed photo card (big
+corners, the product floating on it), never as the background of a whole section. A-119's treatment still applies.

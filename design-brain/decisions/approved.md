@@ -2124,3 +2124,15 @@ in every single language, right?"*
 answers every message in it, keeping the same formality (tu/vous, du/Sie, tú/usted): `src/lib/leadLanguage.ts`,
 `src/lib/scoring.ts`. Wording to use: "in your customer's language", not "every language" (accuracy has not been
 reviewed by native speakers in every language).
+
+## A-122 — Home v18 as a whole ^A-122
+
+**Approved:** 2026-10-08, founder: *"looks way better"*, on v18: the journey after Send (followed up, booked, won),
+the five-step workflow rail, the scroll transition into the demo, and a different green-toned grainy photo per block.
+He did not single out one part; recorded as the whole version.
+
+## A-123 — The demo speaks the customer's language; Punjabi in English letters first ^A-123
+
+**Direction:** 2026-10-08, founder: *"when someone doesn't text a question… show them that we are following up in
+every single language we have right now… English, Punjabi in English. We have to show them."* He called it "the main
+thing". Built in v19 (see design-decisions). Wording stays "in your customer's language" (A-121).

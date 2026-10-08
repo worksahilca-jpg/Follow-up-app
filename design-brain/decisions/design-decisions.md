@@ -9955,3 +9955,19 @@ page to that 'Try yourself' thing."*
 WON and the deal value are the owner's to set (the stage is never inferred), hence "you marked it".
 **Weak, said plainly:** the journey takes about 15 seconds, long for a skimmer (the rail summarises it in one look);
 "Deal won" values are invented examples, marked only by the demo's "Example" label.
+
+## 2026-10-08 — Home v19: the demo in the customer's language (A-123)
+
+**Built (prototype only):** the examples that play when nobody types now come in English, **Punjabi typed in English
+letters**, Hindi typed in English letters, French, Spanish, German and Italian, plus a Punjabi follow-up for a quiet
+customer. Each message carries a small language tag; the card says "Writing in Punjabi, in English letters" and
+"Sent from your Gmail · in Punjabi". The box's hint reads "You're the customer. Ask in English, Punjabi, Hindi, French
+or Spanish." and its rotating placeholder includes Punjabi, French, Hindi and Spanish lines. If the visitor types in one
+of the seven, a small word list recognises it (two matching words, or one greeting such as "sat sri akal",
+"namaste", "bonjour", "hola") and the fixed example reply comes back in that language and those letters, and so does
+the whole journey (the day-3 follow-up, their "yes", the reply that books it). Anything else gets the English
+examples, as before. Replies are fixed examples, never generated.
+**True to the product:** `src/lib/leadLanguage.ts` reads language, script ("Hindi typed in English letters is Latn")
+and formality from the first message and holds them for every message after.
+**Not yet checked by native speakers:** the Punjabi and Hindi lines (written by Claude); the founder asked to check
+the Punjabi before this ships. Formal "usted/Sie/vous/Lei" is used where the customer's own words don't say.

@@ -91,3 +91,21 @@ line behind the step tour; customer cards use a third face (bold condensed caps)
 one flat colour each; the FAQ is a deep green question list inside a sage card, answers as chat bubbles signed by the
 Flow icon. **Not honest for FollowUp:** famous customers' faces/quotes (A-023, none yet) and compliance badges (we have
 none; /security says so). **Asked the founder:** the italic human phrase reopens A-022 ("keep it plain").
+
+## Part 2 — Superhuman, the whole page (founder's Chrome, 8 screens, measured)
+
+Doc: "FollowUp teardown – superhuman.com". Grade A for structure and CSS timings; motion mostly read from CSS (Chrome
+reported the tab hidden after first load); no phone captures (window would not resize).
+Order: announcement pill → sticky 67 px menu → hero (27 s looping film, no pause; frosted product cards; one
+headline "Superpowers, everywhere you work" 64 px w540; one line; one dark button with a slowly rotating gradient
+border, 10 s) → logos on warm paper `rgb(242,240,235)` in hairline boxes with hatched gutters → "Your Superhuman
+suite" header + Mail / Grammarly / Docs / Go tabs, sticky (169 px) with scroll-spy → four identical product cards
+(label, 48 px headline, one sentence, one link, four outcome bullets, a square demo clip that plays once with a
+32 px "Pause animation" button; each product its own gradient mood) → deep teal story band → sky closing that
+repeats the hero promise → maroon footer, tone-on-tone giant wordmark. 6.8 screens.
+Motion: fades 0.3–0.5 s (`cubic-bezier(0.191,0.703,0.704,0.952)`), colour 0.2 s, no bounce, no lifts, no libraries.
+**Lessons:** the calmest motion of the four (fits brand principle 2 better than Wispr's spring); one card template
+per capability; a sticky "where you are" bar; outcome bullets; product clips play once with Pause.
+**Positioning note:** Superhuman Mail's bullets include "Follow up on time, every time" and "Write with AI that
+sounds like you": our promise in their words. FollowUp's page must make the difference plain: it is for an owner's
+customers, it writes and checks in by itself, stops when they reply, and hands the owner the decisions.

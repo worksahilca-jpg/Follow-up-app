@@ -9607,3 +9607,23 @@ Four calm steps of about 2–3.6 s; the price hand-off now lives only in "How it
 customer" and "hands you decisions" stay drawn for later use.
 **Principle (his word, generalised):** the first screen carries one story and one moving thing. Everything else
 waits for the scroll.
+
+## 2026-10-08 — "use simple information so that they read it, it's too much": the home page's words cut
+
+Founder's reaction to the simplified home page: *"use simple information so that they read it its too much."*
+**Done:** visible words cut from about 1,400 to about 800 (part of what is left is the real Today screen picture, the
+phone copy of the panels and the colour picker). Every section now has a heading and at most one short line.
+- **First screen:** lede "FollowUp replies to your customers in your words, and follows up when they go quiet." The four
+  symbols are labelled in one word each: Writes, Sends, Follows up, Stops. Priya's email is one line ("Is the house on
+  Maple Street still available?"); the reply, follow-up and answer are one short line each. The pill says "Writing a
+  reply" → "Sent" → "Following up · 2 days later" → "She replied". Footnote: "Example".
+- **Statement:** "A customer writes at 11 PM. You see it the next morning. FollowUp has already answered."
+- **How it works:** "Connect Gmail once. That's all the setup." Steps: finds your customers / writes in your words /
+  asks you first, one line each. Panels trimmed (four inbox rows tagged Customer or Skipped; two facts; the price card
+  without its explanation; the holding line kept word for word).
+- **Quiet, control, what's new, close:** one line each; promises have two-to-four-word subtitles; the close says
+  "Free in beta · No card needed".
+Kept unchanged: the headline (A-013/A-104), "Connect Gmail, start free" (A-081), the exact holding line.
+**Principle:** added to brand principle 9 — people skim; a heading plus one short line, pictures carry the detail.
+**Weak, honestly:** the real Today screen picture is still dense (it is the real app, so its words stay); "How it
+works" leaves a lot of empty scroll between steps now that the text is short.

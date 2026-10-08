@@ -178,3 +178,10 @@ CRM, integration, real-time). Fewer things on the screen beats a clearer explana
 
 **Test:** read the section aloud to someone who runs a shop and has never used a CRM. If they
 ask "what does that mean?", the line is wrong, not the reader.
+
+**Reinforced 2026-10-08, website home page:** *"use simple information so that they read it its
+too much."* People skim a website; they do not read it. A line longer than about ten words, or
+a second sentence under a heading, mostly goes unread. **In practice:** a heading plus at most
+one short line; labels of one or two words ("Writes", "Sends", "Follows up", "Stops"); example
+messages as short as a real text ("Is the house still available?"); pictures of the product
+carry the detail, not paragraphs.

@@ -10052,3 +10052,16 @@ for it one comment earlier), languages, real answers to typed questions, the typ
 Gmail, Instagram, Messenger, WhatsApp and Facebook logos in their brand colours on small white chips (the active one
 grows briefly with a soft ring); Outlook a plain envelope until we have Microsoft's file; text and website-form plain
 icons. The demo's cards slide flat (`--fl-tilt: 0`).
+
+## 2026-10-08 — Home v28: "Try it yourself", very simple
+
+Founder: *"The Try It Yourself feature: just keep it simple. We'll just show them how accurate this is, how this works,
+and how it helps you to close more leads… we'll be adding other stuff at the bottom of the page… Just keep it very
+simple… mention it: this is Try It Yourself, so they should click and try some typing."*
+**Built (prototype only):** a clear label above the box ("● Try it yourself / Type a question, as if you were a
+customer.", the dot softly pulsing); the box; one card in the middle that answers (real answers when allowed); the
+"From" logos above it; the five steps under it. Removed from view: the side columns of other customers and their
+labels, and the frosted frame around them. The hint under the box is now just the languages. Supersedes the
+streaming side columns of A-109 (the concept of a live, typed demo stays).
+**Asked again:** whether spam could break it or run up a bill; answered in chat (preview: viewer's own Claude; real
+site: server-side key, per-visitor and daily caps, fallback to fixed replies, plus his OpenAI monthly cap).

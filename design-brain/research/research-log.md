@@ -445,3 +445,11 @@ you stop; colour appears only around the real product and for status; chapters a
 with one live demo each (a sheet you can type in; Pause/Replay on the self-playing one); the header button grows into
 the closing button and there is no footer. Six lessons and the not-to-copy list are in
 `landing-page/2026-10-08-four-favourites-teardown.md`. Linear still to capture.
+
+## 2026-10-08 — Linear, part 2 (the whole page)
+The founder's Chrome captured all 12 screens of linear.app with measurements and three GIFs (Google Doc "FollowUp
+teardown – linear.app"); only the first 90 seconds were watched live (the window was covered after). Findings: no
+button in the hero, the real app plays its story once and rests; one paragraph does title and body (white then grey);
+four chapters on one template with overlapping, edge-faded product cards for depth; a changelog as proof of pace;
+two bright quote cards as the only colour after 7,000 px of near-black; the first ask comes 8,000 px down. Added to
+the four-sites report (all four now complete) and `landing-page/2026-10-08-four-favourites-teardown.md`.

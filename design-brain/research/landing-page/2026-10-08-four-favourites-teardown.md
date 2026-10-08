@@ -148,3 +148,22 @@ personal account. No credit card required."; **no footer**.
 a small footer). Investor and compliance strip (we have neither; the honest "not done yet" list stays). Handwritten
 "Try it" (R-017: no hand-drawn marks). The barely-there glow behind the icons (R-036: no shine). "Macro vs …" pages
 are a marketing decision for the founder.
+
+## Part 2 — Linear, the whole page (founder's Chrome, 12 screens, measured)
+
+Source: Google Doc "FollowUp teardown – linear.app" (2026-10-08). Grade A for the first screen and GIF (a); B for the
+rest (stills taken while Chrome's window was covered; motion read from the CSS). No phone captures.
+**Measured.** Near-black rgb(8,9,10), text rgb(247,248,248). Inter Variable throughout: hero 64/64 at weight 510
+(−1.4 px tracking), chapter titles 48/48, closing line 40/44, chapter paragraphs 24/32 in rgb(208,214,224), detail
+13–15 px grey; Berkeley Mono for dates and captions. Light pill buttons rgb(229,229,230), 44 px tall. Content max
+1364 px; chapters 128 px top and bottom; 73 px fixed nav. Hovers 0.1–0.16 s; slow moves 0.7 s on
+cubic-bezier(0.32, 0.72, 0, 1). No library, no video, no canvas.
+**The page.** Hero without a button; the real app plays a scripted story once (activity, an agent asked for help,
+"Changed 2 files") and rests → logos → one two-tone paragraph → three FIG-captioned line drawings → four chapters on
+one template (title left, paragraph right, two overlapping product cards with faded edges, a "Features +" index) → a
+changelog timeline (newest with a red dot) → two bright quote cards → one centred ask → a five-column word footer.
+**Lessons for FollowUp.** Let the product tell its story once and rest; statements as one paragraph, claim in ink and
+explanation in grey; depth from overlapping product pieces, not glow (R-036); an honest "What's new" from our real
+releases as proof of pace; colour only with a meaning; ask late and calmly.
+**Not to copy.** Customer logos and quotes (we have none yet); a hero with no button (our Gmail button is approved,
+A-081).

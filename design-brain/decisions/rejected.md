@@ -780,3 +780,19 @@ changed.
 he wants each first screen to be a different picture, the way Wispr, Macro and Superhuman each look like nothing else.
 
 **Do not propose again:** a set of options that share one skeleton; headline-left/demo-right as the default answer.
+
+## R-039 — The "Five ideas" boards: "these designs look shit… not even close to those references" ^R-039
+
+**Rejected:** 2026-10-08, founder, on the "Five ideas" page (Night, The list, The letter, The poster, The receipt):
+*"tese designes looks shit man"* and *"bro its not even close to those refrences"*.
+
+**What was rejected:** the five boards, and with them the method behind every round today (A2–A5, v3, five themes,
+five ideas): quick first screens hand-drawn as HTML on the canvas, made of type, flat shapes and small cards.
+
+**Principle (inferred, marked inferred):** the gap is craft, not concept. Wispr, Macro, Linear and Superhuman reach
+their level through (1) the real product rendered in high fidelity as the picture, (2) art-directed media made by a
+team (film, photography, custom illustration), (3) scroll-driven motion across the whole page, and (4) hundreds of
+small details. Our boards had none of the four: they were text-only scenes, static frames on a canvas that cannot
+scroll-drive, five at a time and fast. More rounds of the same method will not close the gap.
+
+**Do not propose again:** another batch of quick canvas options as the answer to "make it look like the references".

@@ -9676,3 +9676,29 @@ replies chosen by keywords, labelled "Example"; nothing is generated. **To fix o
 Instagram should only appear on the public site once Meta's review passes.
 **Weak, honestly:** on a phone only the middle card shows (the stream's sides fall off-screen); the far-left waiting
 card is a half-faded fragment; the visitor's replies are canned, so an odd question gets a generic answer.
+
+## 2026-10-08 — A-109 approved; the opening made type-first, with depth, and a "how it helps" section
+
+Founder on the reply flow: *"Bro, this is a cool concept. Let's go. We should have this."* (A-109), then, while it
+was being built: make them type, no other choice, like Spotify (A-110); the hook first, the box second, then how it
+saves time and money (artifact comment); no "Connect Gmail" next to "Start free" (artifact comment); *"we need to
+play with our colours too… It looks like a 2D opening page… We had depth between all these things… minimal but
+attractive"*; and borrow from the references in our style (A-111).
+**Built:** one shared part (`flowpart`) used by the home page (https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E,
+v8) and the reply-flow page (https://claude.ai/artifact/UpeWaG55sBhBLM19CYQN75, v2).
+- **Order:** the headline, centred and larger; one box, "Type a customer's question…", focused on desktop, with
+  example questions typing themselves into the placeholder until someone types; "You're the customer. Watch
+  FollowUp write the reply." What is typed appears in the middle card live; Send runs the flow; afterwards "That's
+  FollowUp. Your customers get this, every time." and "Connect Gmail, start free" appear under it. If nobody types
+  for about six seconds, the example stream plays; typing takes the middle back at once.
+- **Depth without shine (R-036):** our soft colours behind the hook; a deeper peach-and-blue stage with a plain
+  inner shadow; cards further from the middle smaller and fainter; the middle card in front with a plain, layered
+  shadow; shadows under the cards and the dark replies.
+- **How it helps:** "Less time in your inbox. No lead you paid for, wasted." A large "7×" card (leads that hear back
+  within an hour are about seven times as likely to turn into a real conversation, HBR 2011, from our research)
+  and three cards: Time back, No lead wasted, Follow-ups on time.
+- **Also:** the colour picker removed from the home page (colours settled, A-108); the statement now says "FollowUp
+  has already written the reply" (it overstated the default before).
+**Weak, honestly:** the visitor's replies are canned; a free-form question can get a generic answer. On the real
+site this could be FollowUp actually writing the reply (with a daily cap), which is a product and cost decision.
+On a phone the stream's sides are reduced to three initials under "Waiting".

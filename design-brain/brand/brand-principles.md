@@ -185,3 +185,7 @@ a second sentence under a heading, mostly goes unread. **In practice:** a headin
 one short line; labels of one or two words ("Writes", "Sends", "Follows up", "Stops"); example
 messages as short as a real text ("Is the house still available?"); pictures of the product
 carry the detail, not paragraphs.
+
+**Added 2026-10-08, founder (A-110):** *"We have to let them try this thing."* On a public page, doing beats
+reading: the first action a visitor can take is the product itself (type a customer's question and watch it get
+answered), with no competing choice next to it. Explanations come after the try, not before.

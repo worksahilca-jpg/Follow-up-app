@@ -1967,3 +1967,48 @@ drawing across the week; the closing button growing as it arrives. Structure kep
 good. Next: take the page's colours from FollowUp's own soft colours, the ones the app already uses on the reply card
 (the A-043 wash: apricot, rose-sand, dusty blue on #f3efea), so the website and the app are one family.
 **Inferred (marked inferred):** "with our stuff" = with the app's own colours and pieces, not new ones.
+
+## A-109 — The opening screen is a live reply flow ^A-109
+
+**Approved:** 2026-10-08, founder, on https://claude.ai/artifact/UpeWaG55sBhBLM19CYQN75: *"Bro, this is a cool
+concept. Let's go. We should have this."*
+**What specifically:** under the headline, one wide soft panel where customers' messages stream in from the left
+("Waiting"), each reaches FollowUp in the middle, the reply is typed live in the owner's words, Send is tapped, and
+the conversation flows on to the right ("Answered", with a counter that goes up). The stream mixes kinds of
+business and channels (Gmail, Outlook, Instagram, a website form), includes one customer who went quiet (a
+follow-up is written) and one price question (the price is left blank and it waits: "Needs you"). Interactive:
+click a waiting customer to answer them next, or "Try it as a customer" by typing a question. The lede: "Every
+customer gets a reply, written in your words. You just tap Send."
+**Why it works (his words, from R-041):** a quick look says "Oh yeah, someone is replying", and shows the main job,
+why to use it and how it helps; it flows like Wispr Flow's concept and you can touch it.
+**Keep:** the owner's tap on Send stays in the animation (the default holds every reply for approval); prices wait
+for the owner; visitor replies are labelled examples, never presented as live.
+
+## A-110 — Type-first: the visitor tries it before anything else ^A-110
+
+**Approved:** 2026-10-08, founder: *"let's try to make them type something. We don't have to give them any other
+choice. They should come, land on the page, and they should directly try a feature… 'Type whatever you want to
+ask'… As a lead. Like Spotify does… 'Okay, let's just play'… We have to let them try this thing."* And, on the
+page: *"never lose a lead because you forgot to follow up. That should be the main hook… then the second eye should
+catch on to this example… so that they should just directly go and type the question, and they get the result.
+Then we'll say how we'll be helping them… how this is going to save them money and time."* And: *"There is 'Start
+free' right there, and we are saying 'Connect Gmail' and 'Start free' again in the same corner… We don't have to do
+that."*
+**What specifically:** the order of the first screen is (1) the headline as the hook, big and centred; (2) one box,
+"Type a customer's question…", with no chips, no second button and no other choice; what is typed appears in the
+middle card as it is typed, and Send runs the reply flow (A-109) on it; (3) "Connect Gmail, start free" appears
+only after the visitor has tried it, under the flow; the menu keeps "Start free". Then a section on how it helps:
+time, money (leads already paid for), follow-ups, with one sourced fact.
+**Keep:** visitor replies are fixed examples chosen by keywords, labelled "Example"; the stream plays on its own only
+when nobody is typing.
+
+## A-111 — Borrow from the references, in our own style ^A-111
+
+**Approved direction:** 2026-10-08, founder: *"We have to copy things from other references… We have to convert it
+into our own style… we don't have time to build everything from scratch… we'll move that reference thing into our
+own follow-up model or the direction that we are following."*
+**How it is applied (so it stays safe and ours):** take a reference's *pattern* directly (a section's layout, an
+interaction, a motion idea, the order of a story) and rebuild it with FollowUp's colours, type, words, symbols and
+real product screens. Never take their images, illustrations, video, copy, logos or the exact look of a screen.
+**Note:** this loosens CLAUDE.md's "Never copy a reference… extract the principle" from principle-only to
+pattern-level borrowing. CLAUDE.md itself is unchanged until the founder confirms the wording.

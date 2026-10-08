@@ -9450,3 +9450,22 @@ All four A5 boards and the A5 phone redrawn without any glow or highlight: no li
 no glowing dot or button, no highlight edges; panels one flat colour. What stays: the dark ground, the high contrast,
 the reply card sitting in front of the panel with a plain dark shadow that deepens as it lifts when written, and the
 far/near customer questions. The colour question (Charcoal, Ink, Plum, or the first brown-black) is still open.
+
+## 2026-10-08 — Home v3, the whole page from the research (Linear still running)
+
+Founder: *"Linear is running, pull the others up and start working."* Drawn on the canvas page "Website · v3"
+(`prototypes/2026-10-08-home-v3/Home.dc.html`), following the draft rules in
+`research/landing-page/2026-10-08-website-rules-draft.md`:
+A5's first screen (Charcoal, no shine, the working Try-it) → a sticky chapter bar → three chapters telling one
+example customer's story (Priya: she writes at 11:48 PM and the reply is ready; she asks the price and it comes to
+you, she gets the fixed holding line at 30 minutes, you add the price; she goes quiet and it checks in Friday, she
+answers, it stops), each with Pause/Replay and a status line → "You stay in charge" (four promises and a working
+Pause all sending switch) → Questions answered as replies → "Works with Gmail today" → a dark close with one big
+"Connect Gmail" button and a small footer. About 5,850 px (~6.5 screens), in line with A-063's lean target.
+**Fixed in passing:** the Try-it drawings (A4, A5 and its colours) had price replies promising "today"; the product's
+fixed holding line never names a time, so they now use its exact words ("Thanks for asking! Let me check and I'll
+send you the price soon.", `holdingMessage.ts`).
+**Weak, honestly:** the colour is still unchosen (Charcoal is used because it was recommended); the chapters play on
+a timer here, while the real page should start each one as it scrolls into view (and Macro's scroll-driven story is
+not tried yet); the sticky bar doesn't yet show which chapter you're in; the 96 px hero headline runs to five lines
+in its column; no phone version yet; "It writes down why" must be checked against the product before it ships.

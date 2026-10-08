@@ -1958,3 +1958,12 @@ message and the reply written for you) is now allowed as the hero picture.
 lighting up word by word as you scroll; the "How it works" picture changing with the step you read; the check-in line
 drawing across the week; the closing button growing as it arrives. Structure kept as the base.
 **Still open:** colours (being chosen next, on the page itself), and further improvement he hasn't named yet.
+
+## A-108 — The light-first page, and its colours from FollowUp's own soft colours ^A-108
+
+**Approved:** 2026-10-08, founder, on the light-first version of https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E:
+*"yes its good and we use that soft colours too so can we make those soft colours with our stuff."*
+**What specifically:** the light-first page (white ground, ink text, the app on a soft panel, one band at the end) is
+good. Next: take the page's colours from FollowUp's own soft colours, the ones the app already uses on the reply card
+(the A-043 wash: apricot, rose-sand, dusty blue on #f3efea), so the website and the app are one family.
+**Inferred (marked inferred):** "with our stuff" = with the app's own colours and pieces, not new ones.

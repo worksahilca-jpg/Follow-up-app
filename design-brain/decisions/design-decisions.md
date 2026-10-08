@@ -9127,6 +9127,8 @@ when it can be dialled, a second email or phone stays as an answer. Meta's place
 "(test answer)" answers. The customer page's dates and "Based on" time use the business's time zone.
 **Weak, honestly:** (1) The score is still shown as a priority word, not a number; that is by design, but a Meta
 reviewer looking for "lead scored" sees "Medium priority". (2) A form with no custom questions gives the drafter
-nothing but "Submitted a Facebook lead form.", so the reply stays generic. (3) "FollowUp hasn't read a message from
-them yet" still shows for a form lead, because no language can be read from a form. (4) The weekly email has no form
-picture; a lead form row there has no icon.
+nothing but "Submitted a Facebook lead form.", so the reply stays generic. (3) The weekly email has no form picture;
+a lead form row there has no icon.
+**Also fixed in the same PR (founder: "merge and fix everything"):** "FollowUp hasn't read a message from them yet"
+contradicted the reply already written for a form lead; with no language read it now says what is always true,
+"Replies are written in the language they write in."

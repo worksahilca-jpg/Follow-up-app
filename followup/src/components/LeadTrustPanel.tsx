@@ -156,7 +156,7 @@ export default function LeadTrustPanel({
         <p>
           {language
             ? `Their last message read as ${language} FollowUp replies to match it.`
-            : "FollowUp hasn\u2019t read a message from them yet. Replies will match whatever they write."}
+            : "Replies are written in the language they write in."}
         </p>
       </div>
     );
@@ -260,7 +260,7 @@ export default function LeadTrustPanel({
             </>
           ) : (
             <span className="text-ink-soft">
-              FollowUp hasn&apos;t read a message from this lead yet. Replies will match whatever they write.
+              Replies are written in the language they write in.
             </span>
           )}
         </p>

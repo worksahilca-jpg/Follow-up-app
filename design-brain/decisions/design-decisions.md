@@ -9233,3 +9233,13 @@ wash; it is not black (R-018 holds) but it is a new surface. (4) Instrument Seri
 (5) The hero's visible "An example" caption is only in the aria label; it needs a visible line before it ships.
 (6) "1 min" and "40 sec" must be true. (7) Prices and Questions still left out. (8) Phone shows the first screen
 only.
+
+## 2026-10-08 — Founder: "why don't you copy their design, formats, template and animations?"
+
+Asked while looking at L4. Answer given: copy the **format** (layout, section order, sizes, spacing, type scale,
+kinds of motion and their timing), never the **page** (their code, photos, videos, illustrations, paid fonts, or a
+screen someone would recognise as theirs), per the CLAUDE.md rule "References are principles, not templates" and
+because a lookalike reads as a copycat, which costs trust. **Inferred (not confirmed):** L1–L4 drifted too far from
+the references; mixing seven sites into one page diluted every one of them. Proposed next: one reference as the
+skeleton, followed closely in format and motion, with FollowUp's words, colours and product, plus one or two details
+from the others. Motion can't be read from screenshots; it needs a description from the founder's browser.

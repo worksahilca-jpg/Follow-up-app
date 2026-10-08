@@ -82,3 +82,12 @@ other with big corners; (5) even small parts speak the product's language (the F
 she answers, one message throughout); the reply card travels from the hero into the Today screen; colour blocks
 with big corners; **the FAQ as a conversation** (the question arrives like a customer's email, the answer comes back
 as a reply written for you). Not taken: the hand-drawn underline (R-017/R-020).
+
+**Seen in the screenshots** (the doc exported as PDF from Drive; 21 desktop screens; the images stay out of the repo):
+the italic is always the human part of each headline ("Don't type, *just speak.*", "4x faster *than typing*",
+"Your voice *stays yours.*", "Good *questions.*", "Now, *two.*"); the button is lilac with a thin dark outline,
+everywhere; demo cards sit on a muted sage-grey with large corners and plain white UI inside; a very faint thick wavy
+line behind the step tour; customer cards use a third face (bold condensed caps) for names only, big serif quotes,
+one flat colour each; the FAQ is a deep green question list inside a sage card, answers as chat bubbles signed by the
+Flow icon. **Not honest for FollowUp:** famous customers' faces/quotes (A-023, none yet) and compliance badges (we have
+none; /security says so). **Asked the founder:** the italic human phrase reopens A-022 ("keep it plain").

@@ -9914,3 +9914,18 @@ palette's deep tone. A small "Colour" switch sits bottom-left (prototype only).
 **Weak, said plainly:** forest green on screen two plus green italics comes close to R-043's all-green; the field
 is calm but carries little variation; the flights are quick (1.1–1.25 s), so a first-time visitor may need two or
 three to read what is happening.
+
+## 2026-10-08 — Home v17: one connected page; the animation removed; city photos (R-051, R-052, A-121)
+
+**Built (prototype only):** the thrown-and-caught animation is gone (R-051); the space under the headline is plain.
+Screen one no longer pins or gets slid over: the headline sits in the upper part of the first view and the type box
+sits right below it, *straddling the top edge of the demo block* (half on the paper, half on the block), so the eye
+runs headline → box → live demo as one piece (R-052). No "Try it yourself ↓" cue; the box is the invitation. The
+demo block's background is a softly blurred street photo, one of four to choose from with a small "Place" switch:
+New York (default: North America, the market), Paris, Rome, Bavaria (Adobe Stock 260838977, 227974770, 280196621,
+283582172; free licences, not AI). The headline's italic takes a deep tone from the chosen place.
+**Not yet on the page:** the "in your customer's language" message (it lived in the removed animation); waiting for
+his description of the new idea. He also selected assets in the Adobe widget twice; the widget only reports counts,
+so he was asked which.
+**Weak, said plainly:** the demo still runs its example stream on its own (with Pause); if that is the "video kind of
+thing" he meant, it goes next, on his word.

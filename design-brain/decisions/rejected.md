@@ -902,3 +902,18 @@ corners, the product floating on it), never as the background of a whole section
 
 **Rejected:** 2026-10-08, founder: *"brown looks good but not professional"*. Supersedes the colour half of A-119.
 **Principle (his words):** warm and pleasant is not enough; the colour must read professional.
+
+## R-051 — The thrown-and-caught messages animation (home v16) ^R-051
+
+**Rejected:** 2026-10-08, founder: *"The animation that we're using, the example that you have added as a video kind
+of thing, is not even close. Just remove the whole thing. I'll be telling you what we're going to do. Keep it plain
+for now."* Removed in v17. Do not rebuild a version of it on a guess: he will describe what he wants.
+*Inferred, not confirmed:* the idea (messages arriving from everywhere and being held) still stands (A-120); the
+execution (a white list catching chips) did not match what he pictured.
+
+## R-052 — Screen one and the demo feeling like two separate pages ^R-052
+
+**Rejected:** 2026-10-08, founder: *"when I'm scrolling up to try it myself, the page feels like they both are
+different pages, and it is not attached. Do something that feels connected… After getting the eyes on the opening
+page, we should directly hop into the Try It Yourself one."* The cause was the slide-over: screen one pinned while
+the demo block slid over it, plus a gap screen in between. Supersedes the "two screens" part of A-112.

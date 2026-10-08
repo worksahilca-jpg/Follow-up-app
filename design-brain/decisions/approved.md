@@ -2018,6 +2018,8 @@ pattern-level borrowing. CLAUDE.md itself is unchanged until the founder confirm
 
 ## A-112 — Layout 3: two screens (the headline alone, then the box and the flow) ^A-112
 
+**PARTLY SUPERSEDED (2026-10-08)** by R-052: the headline must lead straight into the box, one connected page.
+
 **Approved:** 2026-10-08, founder, on https://claude.ai/artifact/4CTFfFCnWd9avFeJ5uLQC5: *"I like the two-screen one,
 but we have to make that header a bit smaller in the centre… this concept is good."*
 **What specifically:** screen one is the headline alone, centred, with "Try it yourself ↓"; screen two is the type
@@ -2110,3 +2112,15 @@ use to show what the direction of the product is, what we do, what we aim for."*
 **What:** (1) real photos (licensed, not AI), blurred until only colour is left, used as the background of blocks;
 (2) under the headline, customers' messages fly in from the top corners in 3D and are caught on one calm surface
 where each is handled; junk is thrown away; no logo or brand mark in the motion; almost no words.
+
+## A-121 — Aesthetic city photos (North America, Paris, Italy, Germany), softly blurred; say "in their language" ^A-121
+
+**Direction:** 2026-10-08, founder: *"I want aesthetic photos that have a North American touch, or maybe Italy's, or
+Paris, maybe Europe's, Germany's… It should say something about every language too, so we are covering this thing
+in every single language, right?"*
+**What:** real photos of streets (licensed, not AI), blurred softly enough that only the feel of the place remains
+(refines A-120's "blur everything"). One photo for everyone (R-048); he picks which.
+**Language, checked against the code:** true. FollowUp reads the customer's language from their first message and
+answers every message in it, keeping the same formality (tu/vous, du/Sie, tú/usted): `src/lib/leadLanguage.ts`,
+`src/lib/scoring.ts`. Wording to use: "in your customer's language", not "every language" (accuracy has not been
+reviewed by native speakers in every language).

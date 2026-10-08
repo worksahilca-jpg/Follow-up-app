@@ -9132,3 +9132,15 @@ a lead form row there has no icon.
 **Also fixed in the same PR (founder: "merge and fix everything"):** "FollowUp hasn't read a message from them yet"
 contradicted the reply already written for a form lead; with no language read it now says what is always true,
 "Replies are written in the language they write in."
+
+## 2026-10-08 — Founder: the design feels dated (feedback, not yet a decision)
+
+Founder: *"I'm uncertain about our design. It feels outdated, reminiscent of the 1990s, and not as user-friendly as I'd
+like… I want our design to be premium, user-friendly, and easy to understand, but it seems to be lagging."* Asked to
+study Wispr Flow and others for motion, photos, video. **Which surface** (landing page, app, or both) and **which
+example** reads as 1990s is asked, not yet answered: recorded as a fact, not generalised into a principle yet.
+**Found while answering:** nearly every reference in `references/` and `research/` was studied from written
+descriptions only, because the sites are blocked from the build environment (wisprflow.ai, linear.app, attio.com,
+granola.ai, superhuman.com all refused on 2026-10-08). No reference site's screens or motion have actually been seen.
+Next: the founder's Chrome captures screenshots, motion notes and a design-facts readout per site
+(`design-facts.js`, read-only), then principles, then 2–3 drawn directions before any code.

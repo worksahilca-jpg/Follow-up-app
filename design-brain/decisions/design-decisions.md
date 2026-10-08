@@ -9859,3 +9859,23 @@ buttons; the lime note became a latte note. Green still only means "Sent", orang
 **Weak, said plainly:** the photo's person sits behind the type box and the reply card, so she reads as a blurred
 owner in an apron, not a face; warm cream + serif + brown italics is close to a common template look, and what keeps
 it ours is the real photo and the live product. Waiting for his reaction before the plumber and florist photos.
+
+## 2026-10-08 — Home v14: a border of messages around the headline (his ask)
+
+**Asked:** *"on the opening page, can we throw a lot of messages that FollowUp is handling, sorting out, arranging,
+and following up? … show we are generating revenue … we have followed up with every single lead, and we are
+filtering out potential leads too … animations or texts that are popping up or flowing"*.
+**Built (v14, prototype only):** screen one keeps the headline in the centre (A-112) and gains two rows of messages
+above it and two below, full width, fading at both edges. Customers' messages (Gmail, Outlook, Instagram, website
+form, gone-quiet customers) drift in from the left, pass under a small FollowUp mark in the middle, and come out
+handled: *Answered · 1 min*, *Followed up · day 3/7/14*, *Booked · Fri 2 PM*, *Said yes · $2,400 job*, *Needs you ·
+price* (orange dot), *Holding note sent*, *Stopped · they said no*; newsletters, receipts and promos come out
+*Skipped* and drop away. Calm speed (32–42 px/s), runs only while on screen, stands still with reduced motion.
+**Honesty:** every outcome is something the product does (check-in days 3/7/14, the holding note, no reminders after
+a no, newsletters and receipts skipped). Money appears only as single example jobs; no total "revenue made with
+FollowUp" figure, because we have no real number yet (the landing proof number waits for ~50 answered customers a
+month).
+**Possibly his "border with a lot of things" (A-112); asked him, not assumed.**
+**Weak, said plainly:** four moving rows are close to R-007's "too much congested"; the headline still dominates, but
+it is busy; on a phone the rows are sparse because each message is wide. The café photo (R-046) is still on screen
+two until he chooses the changing photos or a no-trade photo.

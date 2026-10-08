@@ -9368,3 +9368,11 @@ peach stage, a pile of customer emails; the top one flips over to show your repl
 onto the Answered pile, and the next one comes up. **B · "The clock":** one giant customer email with a "Waiting"
 timer ticking in the needs-you orange; FollowUp's reply slides up over it and the timer becomes "Answered in 1 min".
 Desktop and phone for both. The giant footer wordmark is removed from W1.
+Drawn on the "First impression" page (copy in `prototypes/2026-10-08-first-impression/`): A (headline left; on a big
+peach stage a pile of customer emails, the top one turns over to the reply on the wash, gets a "Sent" stamp, lands on
+the Answered pile, the next customer comes up; Waiting/Answered counts) and B (centred headline; one giant customer
+email with a "Waiting for an answer" clock in the needs-you orange, running fast to 1:00, then the reply slides up
+over it and the clock becomes "Answer ready · 1:00"; labelled "the clock runs fast here"). Phone versions of both.
+Both use pill buttons (approved) and the italic human phrase (A-104). The giant wordmark is gone from W1's footer.
+**Weak, honestly:** A's pile is a metaphor (Gmail has no pile); B's sped-up clock must stay labelled; both heroes
+show only the reply moment, not check-ins.

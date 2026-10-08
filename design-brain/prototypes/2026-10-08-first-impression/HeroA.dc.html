@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp first screen A, the pile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#faf7f2}
+a{color:inherit}
+:focus-visible{outline:2px solid #c96a1b;outline-offset:3px}
+@keyframes flipIn{from{opacity:0;transform:perspective(1400px) rotateY(-80deg) rotate(1deg)}to{opacity:1;transform:perspective(1400px) rotateY(0) rotate(1deg)}}
+@keyframes comeUp{from{opacity:0;transform:translateY(26px) rotate(-1deg)}to{opacity:1;transform:rotate(-1deg)}}
+@keyframes stamp{0%{opacity:0;transform:scale(1.4) rotate(-8deg)}60%{opacity:1;transform:scale(0.95) rotate(-8deg)}100%{transform:scale(1) rotate(-8deg)}}
+@keyframes land{from{opacity:0;transform:translate(-120px,-60px) rotate(6deg)}to{opacity:1;transform:rotate(3deg)}}
+.flipIn{animation:flipIn .8s cubic-bezier(.2,.8,.2,1) both}
+.comeUp{animation:comeUp .7s cubic-bezier(.34,1.3,.64,1) both}
+.stamp{animation:stamp .5s cubic-bezier(.34,1.56,.64,1) both}
+.land{animation:land .7s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion: reduce){.flipIn,.comeUp,.stamp,.land{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; min-height: 900px; background: #faf7f2; color: #141312; font-family: 'Public Sans', system-ui, sans-serif; font-weight: 450; -webkit-font-smoothing: antialiased; overflow: hidden">
+
+<header style="position: absolute; top: 20px; left: 0; right: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; padding: 0 56px">
+<span style="display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 19px"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span>
+<nav aria-label="Main" style="display: flex; align-items: center; gap: 28px; font-size: 15px">
+<a href="#how" style="text-decoration: none; color: #3f3a36">How it works</a>
+<a href="#prices" style="text-decoration: none; color: #3f3a36">Prices</a>
+<a href="#data" style="text-decoration: none; color: #3f3a36">Your data</a>
+<a href="#signin" style="text-decoration: none">Sign in</a>
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: #141312; color: #faf7f2; font-weight: 600; text-decoration: none">Start free</a>
+</nav>
+</header>
+
+<div style="position: absolute; left: 56px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #57534e; display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #c96a1b"></span>For Gmail · free while in beta</div>
+<h1 style="margin: 22px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 96px; line-height: 0.93; letter-spacing: -0.03em">Never lose a lead <em>because you forgot to follow up.</em></h1>
+<p style="margin: 26px 0 0; max-width: 26em; font-size: 20px; line-height: 1.45; color: #2b2724">FollowUp works through the customers in your Gmail, one by one. It answers them in your words and hands you the decisions.</p>
+<div style="margin-top: 32px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap">
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 58px; padding: 0 30px; border-radius: 999px; background: #141312; color: #faf7f2; font-weight: 600; font-size: 17px; text-decoration: none">Connect Gmail, start free</a>
+<a href="#how" style="font-size: 16.5px; font-weight: 600; text-decoration: none">See how it works ›</a>
+</div>
+<p style="margin: 18px 0 0; font-size: 14.5px; color: #736e68">No credit card · Replies go from your own Gmail</p>
+</div>
+
+<div role="img" aria-label="An example: a pile of customer emails. The top one turns over to show the reply written in the owner's words, it gets sent, and lands on the Answered pile; the next customer comes up." style="position: absolute; right: 40px; top: 96px; bottom: 40px; width: 680px; border-radius: 48px; background: #f3cfb3; overflow: hidden">
+<div style="position: absolute; top: 28px; left: 32px; right: 32px; display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5b4a3c">
+<span>Waiting on you · <sc-if value="{{ w3 }}" hint-placeholder-val="{{ true }}"><span>3</span></sc-if><sc-if value="{{ w2 }}" hint-placeholder-val="{{ false }}"><span>2</span></sc-if></span>
+<span>Your Gmail, this morning</span>
+</div>
+
+<div aria-hidden="true" style="position: absolute; left: 96px; top: 132px; width: 470px; height: 300px; border-radius: 22px; background: #ffffff; box-shadow: 0 2px 0 rgba(20,19,18,0.06); transform: rotate(4deg); opacity: 0.85"></div>
+<div aria-hidden="true" style="position: absolute; left: 92px; top: 124px; width: 470px; height: 300px; border-radius: 22px; background: #ffffff; box-shadow: 0 2px 0 rgba(20,19,18,0.06); transform: rotate(-3deg); opacity: 0.92"></div>
+<div aria-hidden="true" style="position: absolute; left: 100px; top: 118px; width: 470px; height: 300px; border-radius: 22px; background: #ffffff; box-shadow: 0 2px 0 rgba(20,19,18,0.06); transform: rotate(1.5deg)"></div>
+
+<div style="position: absolute; left: 86px; top: 104px; width: 500px">
+<sc-if value="{{ front1 }}" hint-placeholder-val="{{ true }}">
+<div class="comeUp" style="border-radius: 24px; background: #ffffff; padding: 28px 30px 30px; box-shadow: 0 40px 70px -40px rgba(60,36,20,0.55); transform: rotate(-1deg)">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px"><span style="font-size: 18px; font-weight: 650">Priya Sharma</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.05em; color: #736e68">GMAIL · TUE 11:48 PM</span></div>
+<p style="margin: 18px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 34px; line-height: 1.12">"Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?"</p>
+<div style="margin-top: 20px; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #c96a1b; font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 999px; background: #c96a1b"></span>Unanswered · 7 hours</div>
+</div>
+</sc-if>
+<sc-if value="{{ back1 }}" hint-placeholder-val="{{ false }}">
+<div class="flipIn" style="position: relative; border-radius: 24px; padding: 28px 30px 30px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.98), rgba(196,210,228,0) 70%), #f6f2ec; box-shadow: 0 40px 70px -40px rgba(60,36,20,0.55); transform: rotate(1deg)">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px"><span style="font-size: 18px; font-weight: 650">To Priya</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.05em; color: #57534e">WRITTEN IN YOUR WORDS · 1 MIN</span></div>
+<p style="margin: 18px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 34px; line-height: 1.12">Hi Priya, yes, it's still available. Would Saturday morning work for a viewing?</p>
+<sc-if value="{{ unsent }}" hint-placeholder-val="{{ true }}"><div style="margin-top: 20px; display: flex; align-items: center; gap: 14px"><span style="display: inline-flex; align-items: center; min-height: 46px; padding: 0 26px; border-radius: 999px; background: #141312; color: #faf7f2; font-size: 16px; font-weight: 600">Send</span><span style="font-size: 15px; color: #57534e">Edit</span></div></sc-if>
+<sc-if value="{{ sentStamp }}" hint-placeholder-val="{{ false }}"><div class="stamp" style="position: absolute; right: 26px; bottom: 22px; padding: 8px 16px; border: 2px solid #2f6b4a; border-radius: 12px; color: #2f6b4a; font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(255,255,255,0.6)">Sent · 7:02 AM</div><div style="margin-top: 20px; font-size: 15px; color: #3f3a36">From your own Gmail.</div></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ front2 }}" hint-placeholder-val="{{ false }}">
+<div class="comeUp" style="border-radius: 24px; background: #ffffff; padding: 28px 30px 30px; box-shadow: 0 40px 70px -40px rgba(60,36,20,0.55); transform: rotate(-1deg)">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px"><span style="font-size: 18px; font-weight: 650">Daniel Kim</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.05em; color: #736e68">GMAIL · WED 6:15 AM</span></div>
+<p style="margin: 18px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 34px; line-height: 1.12">"Are the condo fees included in the Elm Street price?"</p>
+<div style="margin-top: 20px; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #c96a1b; font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 999px; background: #c96a1b"></span>Unanswered · 1 hour</div>
+</div>
+</sc-if>
+</div>
+
+<div style="position: absolute; right: 30px; bottom: 30px; width: 230px; height: 150px">
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: 16px; background: #fbefe4; transform: rotate(-4deg)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: 16px; background: #fbefe4; transform: rotate(2deg)"></div>
+<sc-if value="{{ landed }}" hint-placeholder-val="{{ false }}"><div class="land" aria-hidden="true" style="position: absolute; inset: 0; border-radius: 16px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.98), rgba(196,210,228,0) 70%), #f6f2ec; transform: rotate(3deg); padding: 14px; box-sizing: border-box; font-size: 12.5px; color: #3f3a36">To Priya · Sent 7:02 AM</div></sc-if>
+<div style="position: absolute; left: 0; right: 0; bottom: -2px; transform: translateY(100%); padding-top: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5b4a3c; text-align: right">Answered · <sc-if value="{{ a1 }}" hint-placeholder-val="{{ false }}"><span>5</span></sc-if><sc-if value="{{ a0 }}" hint-placeholder-val="{{ true }}"><span>4</span></sc-if></div>
+</div>
+<p style="position: absolute; left: 32px; bottom: 26px; margin: 0; font-size: 12.5px; color: #5b4a3c">An example, not real customers.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  state = { beat: 0 };
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ beat: 2 }); return; }
+    this.timer = setInterval(() => { this.setState({ beat: this.state.beat >= 4 ? 0 : this.state.beat + 1 }); }, 2600);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const b = this.state.beat;
+    return {
+      front1: b === 0, back1: b === 1 || b === 2, unsent: b === 1, sentStamp: b === 2,
+      front2: b >= 3, landed: b >= 3, a0: b < 3, a1: b >= 3, w3: b < 3, w2: b >= 3
+    };
+  }
+}
+</script>
+</body>
+</html>

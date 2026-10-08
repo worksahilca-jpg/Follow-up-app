@@ -2138,3 +2138,8 @@ He did not single out one part; recorded as the whole version.
 **Direction:** 2026-10-08, founder: *"when someone doesn't text a question… show them that we are following up in
 every single language we have right now… English, Punjabi in English. We have to show them."* He called it "the main
 thing". Built in v19 (see design-decisions). Wording stays "in your customer's language" (A-121).
+
+## A-124 — The demo's story is five steps: Caught, Answered, Followed up, Booked, Won ^A-124
+
+**Direction:** 2026-10-08, founder (R-055). Every conversation, example or the visitor's own, shows these five and
+only these; the bar under the demo names them; everything else is explained further down.

@@ -10039,3 +10039,10 @@ back) to "What happened next · Name" and plays 3–4 steps: day-3 follow-up, th
 "Stopped, no more reminders". The right column is now "Handled" and shows outcomes (Won · $85, Booked, Stopped).
 Headline after the demo: "Reply faster. Follow up with everyone. *Close more deals.*" Letter removed. One light
 motion blur on every photo.
+
+## 2026-10-08 — Home v26: one short five-step story (A-124, R-055)
+
+After the reply is sent, three lines appear in the card one by one (Followed up · day 3, Booked · Sat 10 AM, Won · $X)
+while the bar lights the same steps; the right column shows "Won · $X". Removed: the flip, typed-out follow-ups and
+customer replies, the note line under the bar, the default sub-labels under the steps. Kept: the "From" strip (he asked
+for it one comment earlier), languages, real answers to typed questions, the type box.

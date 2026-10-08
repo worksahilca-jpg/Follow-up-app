@@ -9554,3 +9554,15 @@ you", A-091). No dark blue (R-031), no charcoal + sand + peach (R-037), no glow 
 takes the colour of the section under it (it vanished over light sections).
 **Note for later:** palettes 2–5 tint FollowUp's reply card to match; if one is chosen, the app's own reply card
 colour (A-043 wash) becomes a separate decision.
+
+## 2026-10-08 — Light-first, like Wispr (after R-040)
+
+Asked which direction (four choices), the founder picked **"Light, like Wispr"**: a white or soft off-white page with
+black text, colour only in a few places, maybe one dark band at the end. The page was rebuilt light-first: white
+ground and ink text everywhere, the real Today screen sitting on a soft coloured panel (Wispr's demo-on-a-muted-card
+lesson, so the light page keeps depth), the statement lighting up from pale grey to ink, no dark-to-light fades, and
+one dark band at the close. The picker now holds five light versions: **1 White** (neutral panel, grey italics, black
+close), **2 White and green** (deep green italics and close band, sage panel), **3 White and lilac** (violet italics,
+lilac panel, lilac button on the dark close), **4 White and orange** (orange italics and buttons, black close), **5 White
+with soft colour** (the approved landing wash, A-032, as the panel and the close). The orange "needs you" dot is
+unchanged in all five. The first screen was tightened so the app window shows in the first view.

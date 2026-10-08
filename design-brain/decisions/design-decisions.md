@@ -10000,3 +10000,10 @@ Founder, on v20's frosted box: *"This looks way odd. Add a little grain, not tha
 It should feel like it is a part of this game."* **Rule learned:** depth between layers comes from a light blur and a
 thin edge, not a heavy frosted slab; the inner layer must stay part of the same scene. **Built:** blur 22 → 6 px,
 tint .34 → .12, grain alpha .2 → .1 and finer, highlight and shadow softened.
+
+## 2026-10-08 — Home v22: logo symbol only (the green badge removed)
+
+Founder: *"this logo feels too odd. Can you just add the symbol and remove that background from the logo?"* v20 had put
+the mark on a green round badge, which broke an existing rule in `rejected.md` (the logo sits on the page's own
+surface, never on a sticker). **Fixed:** the symbol alone, slightly larger (12×19), in the word's colour (ink on
+light, white over dark). **Lesson:** check `rejected.md` for the logo before touching the header.

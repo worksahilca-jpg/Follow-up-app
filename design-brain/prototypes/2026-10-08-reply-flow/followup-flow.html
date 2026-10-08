@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FollowUp Reply Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+:root {
+  --paper: #ffffff; --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68; --line: #e8e5e1; --stage: #f3f2f0;
+  --dot: #c96a1b; --good: #2f6b4a;
+  --wash: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), radial-gradient(50% 70% at 88% 0%, rgba(238,212,204,0.9), rgba(238,212,204,0) 72%), #f3efea;
+  --serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --gut: clamp(16px, 4vw, 56px); --ease: cubic-bezier(.2, .7, .2, 1);
+  --slot: 262px; --gap: 26px; --lens: 430px;
+}
+* { box-sizing: border-box }
+html, body { background: var(--paper) }
+body { margin: 0; color: var(--ink); font-family: var(--sans); font-weight: 420; font-size: 16px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overflow-x: hidden }
+a { color: inherit }
+h1, p { margin: 0 }
+.mono { font-family: var(--mono) }
+.wrap { max-width: 1360px; margin: 0 auto; padding-inline: var(--gut) }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+:focus-visible { outline: 2px solid var(--dot); outline-offset: 3px; border-radius: 8px }
+
+/* menu */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 30; padding-top: env(safe-area-inset-top, 0px); background: rgba(255,255,255,.88); -webkit-backdrop-filter: saturate(1.4) blur(10px); backdrop-filter: saturate(1.4) blur(10px) }
+.nav .wrap { height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px }
+.nav-l { display: flex; align-items: center; gap: 36px }
+.brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 18px; text-decoration: none }
+.links { display: flex; gap: 26px; font-size: 14.5px }
+.links a, .signin { text-decoration: none; opacity: .78 }
+.links a:hover, .signin:hover { opacity: 1 }
+.nav-r { display: flex; align-items: center; gap: 18px; font-size: 14.5px }
+.nav-cta { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: var(--ink); color: var(--paper); font-weight: 600; text-decoration: none }
+
+/* words */
+.hero { padding-top: calc(68px + env(safe-area-inset-top, 0px) + clamp(20px, 4.5vh, 48px)); padding-bottom: 40px }
+.top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: 24px 64px; align-items: end }
+h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(44px, 5.2vw, 78px); line-height: .92; letter-spacing: -.035em; text-wrap: balance }
+h1 em { font-style: italic; color: var(--ink-soft) }
+.lede { font-size: clamp(17px, 1.35vw, 19px); line-height: 1.5; color: var(--ink-soft) }
+.lede b { color: var(--ink); font-weight: 600 }
+.ctas { margin-top: 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px }
+.cta { display: inline-flex; align-items: center; min-height: 54px; padding: 0 26px; border-radius: 999px; background: var(--ink); color: var(--paper); font-weight: 600; font-size: 16px; text-decoration: none; transition: transform .18s var(--ease) }
+.cta:hover { transform: translateY(-1px) }
+.free { font-size: 14px; color: var(--ink-faint) }
+
+/* the flow */
+.river { position: relative; margin-top: clamp(24px, 4vh, 40px); height: 404px; border-radius: 32px; background: var(--wash); overflow: hidden }
+.zone { position: absolute; top: 22px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft) }
+.zone.l { left: 28px } .zone.r { right: 28px }
+.zone b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums }
+.zone i { width: 26px; height: 1px; background: currentColor; opacity: .5 }
+.track { position: absolute; inset: 0; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%) }
+.slot { position: absolute; top: 92px; left: 0; width: var(--slot); transition: transform .9s var(--ease), opacity .6s ease; will-change: transform; cursor: default }
+.slot.waiting { opacity: .78; cursor: pointer }
+.slot.waiting:hover { opacity: 1 }
+.slot.waiting:hover .q { box-shadow: 0 0 0 1.5px var(--ink) }
+.slot.now { opacity: 0; pointer-events: none }
+.slot.gone { opacity: 0 }
+.slot.instant { transition: none }
+.meta { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-soft); white-space: nowrap; overflow: hidden }
+.meta b { color: var(--ink); font-weight: 650 }
+.meta .mono { font-size: 11.5px; color: var(--ink-faint) }
+.q { margin-top: 8px; padding: 12px 15px; border-radius: 18px 18px 18px 6px; background: var(--paper); font-size: 15px; line-height: 1.38; box-shadow: 0 0 0 1px rgba(10,10,10,.05) }
+.q.quiet { background: rgba(255,255,255,.55); color: var(--ink-soft); font-style: normal; box-shadow: 0 0 0 1px rgba(10,10,10,.08) inset }
+.a { margin: 10px 0 0 28px; padding: 12px 15px; border-radius: 18px 18px 6px 18px; background: var(--ink); color: #fff; font-size: 15px; line-height: 1.38 }
+.blank { display: inline-block; min-width: 2.6em; border-bottom: 1.5px solid currentColor; opacity: .85 }
+.done-tag { margin: 8px 0 0 28px; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 650; color: var(--good) }
+.done-tag.needs { color: var(--dot) }
+.done-tag.needs::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--dot) }
+
+/* the middle: where the reply is written */
+.lens { position: absolute; z-index: 2; top: 60px; left: 50%; width: var(--lens); margin-left: calc(var(--lens) / -2); min-height: 296px; padding: 18px 22px 20px; border-radius: 26px; background: var(--paper); box-shadow: 0 0 0 1px rgba(10,10,10,.06), 0 40px 70px -36px rgba(10,10,10,.38) }
+.l-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line) }
+.l-brand { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; font-size: 14px }
+.l-status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); transition: color .3s }
+.l-status i { width: 8px; height: 8px; border-radius: 999px; background: #b9b3ac; transition: background .3s }
+.l-status.busy i { background: var(--ink); animation: pulse 1s ease-in-out infinite }
+.l-status.ok { color: var(--good) } .l-status.ok i { background: var(--good) }
+.l-status.needs { color: var(--dot) } .l-status.needs i { background: var(--dot) }
+@keyframes pulse { 50% { transform: scale(.6) } }
+.l-body { padding-top: 14px; transition: opacity .22s ease }
+.l-body.fade { opacity: 0 }
+.lens .q { font-size: 16.5px; background: var(--stage); box-shadow: none }
+.lens .q.quiet { background: transparent; box-shadow: 0 0 0 1px var(--line) inset }
+.lens .a { margin-left: 44px; font-size: 16.5px; min-height: 48px }
+.lens .a.hide { visibility: hidden }
+.caret { display: inline-block; width: 2px; height: 1.05em; margin-left: 2px; vertical-align: -2px; background: #fff; animation: blink 1s steps(1) infinite }
+@keyframes blink { 50% { opacity: 0 } }
+.dots { display: inline-flex; gap: 4px; padding: 6px 0 } .dots i { width: 6px; height: 6px; border-radius: 999px; background: #fff; animation: dot 1s ease-in-out infinite } .dots i:nth-child(2) { animation-delay: .15s } .dots i:nth-child(3) { animation-delay: .3s }
+@keyframes dot { 0%, 100% { opacity: .3; transform: translateY(0) } 50% { opacity: 1; transform: translateY(-2px) } }
+.l-foot { margin-top: 14px; margin-left: 44px; min-height: 40px; display: flex; align-items: center; gap: 12px }
+.send { font: inherit; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 14.5px; transition: transform .15s ease, opacity .25s ease }
+.send.press { transform: scale(.93) }
+.send.hide, .l-note.hide { opacity: 0; pointer-events: none }
+.l-note { font-size: 13px; color: var(--ink-faint); transition: opacity .25s ease }
+.sent { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; font-size: 14.5px; color: var(--good); animation: rise .35s var(--ease) both }
+.needs-tag { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 14px; color: var(--dot); animation: rise .35s var(--ease) both }
+.needs-tag::before { content: ""; width: 9px; height: 9px; border-radius: 999px; background: var(--dot) }
+@keyframes rise { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+
+/* under the flow: try it yourself */
+.under { margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px 24px; flex-wrap: wrap }
+.try { flex: 1 1 520px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
+.try-l { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap }
+.box { flex: 1 1 300px; display: flex; align-items: center; gap: 6px; min-height: 52px; padding: 5px 5px 5px 20px; border-radius: 999px; background: var(--paper); box-shadow: 0 0 0 1px #dcd7d1 }
+.box:focus-within { box-shadow: 0 0 0 2px var(--ink) }
+.box input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 16px; color: var(--ink) }
+.box input::placeholder { color: #8a847d }
+.box button { font: inherit; flex: none; min-height: 42px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 14.5px; cursor: pointer }
+.chips { display: flex; gap: 8px; flex-wrap: wrap }
+.chip { font: inherit; min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--stage); color: var(--ink); font-size: 14px; cursor: pointer }
+.chip:hover { background: #ebe8e4 }
+.side { display: flex; align-items: center; gap: 14px }
+.ex { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint) }
+.ctl { font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); background: none; border: 1px solid #d8d3cd; border-radius: 999px; min-height: 36px; padding: 0 14px; cursor: pointer }
+.ctl:hover { color: var(--ink); border-color: var(--ink-faint) }
+
+@media (max-width: 1000px) {
+  .links { display: none }
+  .top { grid-template-columns: minmax(0, 1fr); align-items: start }
+}
+@media (max-width: 640px) {
+  :root { --slot: 210px; --gap: 14px; --lens: min(calc(100vw - 2 * var(--gut) - 24px), 420px) }
+  .signin { display: none }
+  .river { height: 452px; border-radius: 24px }
+  .zone { top: 18px } .zone.l { left: 18px } .zone.r { right: 18px }
+  .lens { top: 50px; padding: 16px 16px 18px }
+  .lens .a, .l-foot { margin-left: 20px }
+  .slot { top: 84px }
+  .try-l { width: 100% }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slot, .l-body, .send, .l-note { transition: none }
+  .l-status.busy i, .caret, .dots i, .sent, .needs-tag { animation: none }
+}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+<div class="nav-l"><a class="brand" href="#top"><svg width="12" height="19" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</a><nav class="links" aria-label="Main"><a href="#how">How it works</a><a href="#control">Your control</a><a href="#new">What's new</a></nav></div>
+<div class="nav-r"><a class="signin" href="#signin">Sign in</a><a class="nav-cta" href="#start">Start free</a></div>
+</div></header>
+<main id="top">
+<section class="hero" aria-labelledby="h1"><div class="wrap">
+<div class="top">
+<h1 id="h1">Never lose a lead <em>because you forgot to follow up.</em></h1>
+<div><p class="lede">Every customer gets a reply, written in your words. <b>You just tap Send.</b></p>
+<div class="ctas"><a class="cta" href="#start">Connect Gmail, start free</a><span class="free">Free while in beta</span></div></div>
+</div>
+<div class="river" id="river">
+<p class="sr">An example of FollowUp at work: customers' messages from Gmail, Outlook, Instagram and website forms wait on the left. One by one they reach FollowUp in the middle, which writes the reply in the owner's words; the owner taps Send and the conversation moves to Answered on the right. A price question waits for the owner. You can write in below as a customer.</p>
+<div class="zone l" aria-hidden="true">Waiting<i></i></div>
+<div class="zone r" aria-hidden="true"><i></i>Answered <b id="answered">12</b></div>
+<div class="track" id="track"></div>
+<div class="lens" id="lens">
+<div class="l-head"><span class="l-brand"><svg width="9" height="14" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</span><span class="l-status" id="l-status"><i></i>Reading</span></div>
+<div class="l-body" id="l-body"></div>
+</div>
+</div>
+<div class="under">
+<form class="try" id="try" autocomplete="off"><span class="try-l">Try it as a customer</span>
+<label class="box"><span class="sr">Your message</span><input id="try-q" name="q" maxlength="140" placeholder="Are you open on Saturday?"><button type="submit">Send</button></label>
+<span class="chips"><button class="chip" type="button">How much is it?</button><button class="chip" type="button">Where are you?</button></span>
+</form>
+<div class="side"><span class="ex">Example</span><button class="ctl" type="button" id="pause">Pause</button></div>
+</div>
+</div></section>
+</main>
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var CH = {"gmail": ["Gmail", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "outlook": ["Outlook", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "ig": ["Instagram", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"4.5\"></rect><circle cx=\"12\" cy=\"12\" r=\"3.6\"></circle><circle cx=\"16.6\" cy=\"7.4\" r=\".6\" fill=\"currentColor\"></circle></svg>"], "web": ["Website form", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.5\"></rect><path d=\"M3.5 8.5h17M7.5 12.5h9M7.5 15.5h5\"></path></svg>"], "quiet": ["Gone quiet", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.6 4.3v3.9h-3.9\"></path><path d=\"M12 8.6V12l2.4 1.5\"></path></svg>"]}, DONE_ICON = "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"></path></svg>", LOGO_ICON = "<svg width=\"9\" height=\"14\" viewBox=\"0 0 76.77 120\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z\"></path><path d=\"M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z\"></path></svg>";
+  // the stream: a mix of businesses, channels and times; one has gone quiet, one asks a price
+  var D = [
+    { ch: 'web', who: 'Omar', t: '6:40 AM', q: 'Do you do kitchen renovations?', r: 'We do! Could you send a photo of the space?', k: 'reply' },
+    { ch: 'gmail', who: 'Ben', t: '5:55 AM', q: 'Are you taking new patients?', r: 'Yes, we are! Mornings or afternoons?', k: 'reply' },
+    { ch: 'gmail', who: 'Priya', t: '11:48 PM', q: 'Is the house on Maple Street still available?', r: 'Hi Priya, yes it is! Want to see it Saturday at 10?', k: 'reply' },
+    { ch: 'web', who: 'Marcus', t: '7:02 AM', q: 'Can someone fix a leaking tap today?', r: 'Yes, I can be there by 3 PM today. Does that work?', k: 'reply' },
+    { ch: 'quiet', who: 'Sam', t: '2 days', q: 'No reply for two days', r: 'Hi Sam, still keen to see the condo this week?', k: 'follow' },
+    { ch: 'ig', who: 'Lena', t: '9:15 PM', q: 'Any spots for a haircut on Friday?', r: 'Yes! 2 PM or 4 PM, which suits you?', k: 'reply' },
+    { ch: 'outlook', who: 'Ella', t: '10:30 PM', q: 'How much is a full car detail?', r: 'Hi Ella, a full detail is $___. Want to book a time?', k: 'needs' }
+  ];
+  var river = document.getElementById('river'), track = document.getElementById('track');
+  var lensBody = document.getElementById('l-body'), status = document.getElementById('l-status'), lens = document.getElementById('lens');
+  var countEl = document.getElementById('answered'), pauseBtn = document.getElementById('pause');
+  var answered = 12, paused = false, timers = [], seq = [], ptr = 0, k = 0, SPAN = 4;
+  function item(j) { while (seq.length <= j) { var d = D[ptr++ % D.length]; seq.push({ ch: d.ch, who: d.who, t: d.t, q: d.q, r: d.r, k: d.k }); } return seq[j]; }
+  function later(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  function stopAll() { timers.forEach(clearTimeout); timers = []; }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function withBlank(s) { return esc(s).replace('$___', '<span class="blank">$</span>'); }
+  function meta(it) {
+    var c = CH[it.ch];
+    return '<div class="meta">' + c[1] + '<b>' + esc(it.who) + '</b><span>' + c[0] + '</span><span class="mono">' + esc(it.t) + '</span></div>';
+  }
+  function qHtml(it) { return '<div class="q' + (it.k === 'follow' ? ' quiet' : '') + '">' + esc(it.q) + '</div>'; }
+
+  /* ---- the stream: slots placed around the middle; left waits, right is answered ---- */
+  var slots = [];
+  for (var s = 0; s < SPAN * 2 + 1; s++) { var el = document.createElement('div'); el.className = 'slot'; track.appendChild(el); slots.push({ el: el, j: null, state: '' }); }
+  function geom() {
+    var cs = getComputedStyle(document.documentElement);
+    return { w: river.clientWidth, slot: parseFloat(cs.getPropertyValue('--slot')), gap: parseFloat(cs.getPropertyValue('--gap')), lens: lens.offsetWidth };
+  }
+  function xFor(r, g) {
+    var c = g.w / 2;
+    if (r === 0) return c - g.slot / 2;
+    var off = g.lens / 2 + g.gap + g.slot / 2 + (Math.abs(r) - 1) * (g.slot + g.gap);
+    return c + (r > 0 ? off : -off) - g.slot / 2;
+  }
+  function fill(sl, it, state) {
+    if (sl.j === sl.filledJ && sl.state === state) return;
+    sl.filledJ = sl.j; sl.state = state;
+    var h = meta(it) + qHtml(it);
+    if (state === 'done') {
+      h += '<div class="a">' + withBlank(it.r) + '</div>';
+      h += it.k === 'needs' ? '<div class="done-tag needs">Needs you</div>' : '<div class="done-tag">' + DONE_ICON + 'Sent</div>';
+    }
+    sl.el.innerHTML = h;
+    sl.el.classList.toggle('waiting', state === 'waiting');
+    if (state === 'waiting') { sl.el.setAttribute('role', 'button'); sl.el.setAttribute('tabindex', '0'); sl.el.setAttribute('aria-label', 'Answer ' + it.who + ' next'); }
+    else { sl.el.removeAttribute('role'); sl.el.removeAttribute('tabindex'); sl.el.removeAttribute('aria-label'); }
+  }
+  function layout(animate) {
+    var g = geom();
+    slots.forEach(function (sl) {
+      if (sl.j === null) sl.j = k - (slots.indexOf(sl) - SPAN);
+      var r = k - sl.j, jump = false;
+      if (r > SPAN) { sl.j = k + SPAN; r = -SPAN; jump = true; sl.filledJ = null; }
+      if (r < -SPAN) { sl.j = k - SPAN; r = SPAN; jump = true; sl.filledJ = null; }
+      sl.el.classList.toggle('instant', !animate || jump);
+      sl.el.classList.toggle('gone', sl.j < 0);
+      sl.el.classList.toggle('now', r === 0);
+      if (sl.j >= 0) fill(sl, item(sl.j), r > 0 ? 'done' : r < 0 ? 'waiting' : 'now');
+      sl.el.style.transform = 'translateX(' + xFor(r, g).toFixed(1) + 'px)';
+      if (jump) { void sl.el.offsetWidth; sl.el.classList.remove('instant'); }
+    });
+  }
+
+  /* ---- the middle: read, write in your words, you tap Send ---- */
+  function setStatus(txt, cls) { status.className = 'l-status ' + (cls || ''); status.innerHTML = '<i></i>' + txt; }
+  function paintLens(it) {
+    lensBody.innerHTML = meta(it) + qHtml(it) +
+      '<div class="a hide" id="l-a"></div>' +
+      '<div class="l-foot" id="l-foot"><button class="send hide" type="button" id="l-send" tabindex="-1">Send</button><span class="l-note hide" id="l-note">You tap Send</span></div>';
+  }
+  function finish(it) {
+    var a = document.getElementById('l-a'), foot = document.getElementById('l-foot');
+    a.classList.remove('hide'); a.innerHTML = withBlank(it.r);
+    if (it.k === 'needs') { foot.innerHTML = '<span class="needs-tag">A price: it waits for you</span>'; setStatus('Needs you', 'needs'); }
+    else { foot.innerHTML = '<span class="sent">' + DONE_ICON + 'Sent ' + (it.ch === 'ig' ? 'on Instagram' : it.ch === 'outlook' ? 'from your Outlook' : 'from your Gmail') + '</span>'; setStatus('Sent', 'ok'); }
+  }
+  function run() {
+    stopAll();
+    var it = item(k), a, txt = it.r;
+    lensBody.classList.add('fade');
+    later(220, function () {
+      paintLens(it); lensBody.classList.remove('fade');
+      if (it.user) lens.setAttribute('aria-live', 'polite'); else lens.removeAttribute('aria-live');
+      if (reduce) { finish(it); if (it.k !== 'needs') countUp(); return; }
+      setStatus(it.k === 'follow' ? 'Quiet for two days' : 'Reading', 'busy');
+      a = document.getElementById('l-a');
+      later(800, function () {
+        setStatus(it.k === 'follow' ? 'Writing a follow-up' : it.k === 'needs' ? 'Writing, leaving the price to you' : 'Writing in your words', 'busy');
+        a.classList.remove('hide'); a.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>';
+        var t0 = 750, i;
+        for (i = 1; i <= txt.length; i++) (function (i) {
+          later(t0 + i * 30, function () { a.innerHTML = withBlank(txt.slice(0, i)) + (i < txt.length ? '<span class="caret"></span>' : ''); });
+        })(i);
+        var tEnd = t0 + txt.length * 30;
+        if (it.k === 'needs') {
+          later(tEnd + 400, function () { finish(it); });
+          later(tEnd + 2600, next);
+        } else {
+          later(tEnd + 300, function () { setStatus('Ready for you'); document.getElementById('l-send').classList.remove('hide'); document.getElementById('l-note').classList.remove('hide'); });
+          later(tEnd + 1300, function () { document.getElementById('l-send').classList.add('press'); });
+          later(tEnd + 1500, function () { finish(it); countUp(); });
+          later(tEnd + 3000, next);
+        }
+      });
+    });
+  }
+  function countUp() { answered++; countEl.textContent = answered; }
+  function next() { if (paused) return; k++; layout(true); run(); }
+
+  /* ---- touch it: pick a waiting customer, or write in yourself ---- */
+  function bringNext(j) {
+    var it = seq[j]; seq.splice(j, 1); seq.splice(k + 1, 0, it);
+    slots.forEach(function (sl) { sl.filledJ = null; });
+    paused = false; if (!reduce) pauseBtn.textContent = 'Pause';
+    stopAll(); next();
+  }
+  track.addEventListener('click', function (e) {
+    var el = e.target.closest('.slot.waiting'); if (!el) return;
+    var sl = slots.filter(function (x) { return x.el === el; })[0]; if (sl) bringNext(sl.j);
+  });
+  track.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var el = e.target.closest('.slot.waiting'); if (!el) return; e.preventDefault(); el.click();
+  });
+  function replyFor(q) {
+    var s = q.toLowerCase();
+    if (/(price|cost|how much|\$|quote|rate|fee|charge|expensive|cheap)/.test(s)) return { r: 'Thanks for asking! It comes to $___. Want me to book you in?', k: 'needs' };
+    if (/(where|address|location|located|area|near|parking)/.test(s)) return { r: "We're on Maple Street, near the station. Want me to send directions?", k: 'reply' };
+    if (/(open|available|availability|today|tonight|tomorrow|weekend|saturday|sunday|monday|tuesday|wednesday|thursday|friday|book|appointment|slot|time|when|come)/.test(s)) return { r: 'Yes, we are! Does 10 AM or 2 PM work for you?', k: 'reply' };
+    if (/(thank|thanks|great|perfect|ok|okay)/.test(s)) return { r: "You're welcome! See you soon.", k: 'reply' };
+    return { r: 'Hi! Thanks for getting in touch. Happy to help. When would suit you?', k: 'reply' };
+  }
+  function ask(text) {
+    text = (text || '').trim().slice(0, 140); if (!text) return;
+    var rr = replyFor(text);
+    seq.splice(k + 1, 0, { ch: 'web', who: 'You', t: 'now', q: text, r: rr.r, k: rr.k, user: true });
+    slots.forEach(function (sl) { sl.filledJ = null; });
+    paused = false; if (!reduce) pauseBtn.textContent = 'Pause';
+    stopAll(); next();
+  }
+  var form = document.getElementById('try'), input = document.getElementById('try-q');
+  form.addEventListener('submit', function (e) { e.preventDefault(); ask(input.value); input.value = ''; });
+  [].slice.call(document.querySelectorAll('.chip')).forEach(function (c) { c.addEventListener('click', function () { ask(c.textContent); }); });
+  pauseBtn.addEventListener('click', function () {
+    if (reduce) { k++; layout(false); run(); return; }
+    paused = !paused; pauseBtn.textContent = paused ? 'Play' : 'Pause';
+    if (paused) stopAll(); else run();
+  });
+
+  /* ---- start: two already answered on the right, the first customer in the middle ---- */
+  item(0); k = 2; layout(false); run();
+  if (reduce) pauseBtn.textContent = 'Next';
+  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { layout(false); }, 120); });
+})();
+</script>
+</body>
+</html>

@@ -805,3 +805,18 @@ scroll-drive, five at a time and fast. More rounds of the same method will not c
 **Inferred (marked inferred):** all five were dark-first (a dark first screen and a dark close, light only in the
 middle). His favourite, Wispr, is light-first; the app's own ground is white (A-090); he has called black "too much"
 before (R-018) and loved a black-to-white page only once (A-009). The miss may be the darkness, not the hue. Asked.
+
+## R-041 — Four opening screens (One line, Day and night, Your phone, Three words) ^R-041
+
+**Rejected:** 2026-10-08, founder, on https://claude.ai/artifact/1D4MG89T9aLMXVqE8buHpP: *"no one i dont like the
+concept, we have to make something catchy."*
+**What was rejected:** the four concepts as a set: a headline with one changing sentence; a 24-hour day line with
+customers answered; the headline split around a phone; "Replies. Follows up. Stops." in big type.
+**What he asked for instead (his words):** "If someone lands on our page, it should just give a quick look that says,
+'Oh yeah, someone is replying,' or 'What's the main job of FollowUp? Why should they use it? How is this going to
+help?' Not everything, but this should be the goal… Make it a bit more interactive too… like Wispr Flow, where they
+have something flowing according to their concept."
+**Inferred principle (marked inferred):** the four were quiet and explained FollowUp; none of them *showed the act*.
+The first look has to be the act of replying itself, moving and catchy, and the visitor should be able to touch it.
+Static type (1, 4), a diagram (2) and a still phone (3) all read as "about" the product, not the product working.
+**Do not propose again:** type-only openings; a timeline diagram as the opening; a phone mockup as the whole idea.

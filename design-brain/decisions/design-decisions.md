@@ -9652,3 +9652,27 @@ charcoal/sand/peach or small cards on beige (R-037), four different compositions
 **Honest notes:** the phone's "Done for you" heading is an illustration, not a section the app has today. "Answered a
 minute later" assumes sending is on for that kind of message. **Weak, honestly:** 1 and 4 are both type-led; 2's day
 band is a gradient, the one decorative choice here; 3 crops the phone, so the Coming up rows sit low.
+
+## 2026-10-08 — The four openings rejected (R-041); the opening becomes a live reply flow
+
+Founder: *"no one i dont like the concept, we have to make something catchy… a quick look that says, 'Oh yeah, someone
+is replying'… What's the main job of FollowUp? Why should they use it? How is this going to help?… Make it a bit
+more interactive too… like Wispr Flow, where they have something flowing according to their concept."* Logged as
+R-041.
+**Built:** https://claude.ai/artifact/UpeWaG55sBhBLM19CYQN75 (copy in `prototypes/2026-10-08-reply-flow/`). Under the
+headline, one wide soft panel (A-108 colours) is a stream: customers' messages wait on the left ("Waiting"), each one
+in turn reaches FollowUp in the middle, the reply is typed live in the owner's words, the Send button is pressed, and
+the conversation flows on to the right ("Answered", a counter that goes up). The stream mixes businesses (a realtor,
+a plumber, a salon, a contractor, a dentist, a car detailer), channels (Gmail, Outlook, Instagram, a website form),
+one customer who went quiet (FollowUp writes the follow-up) and one price question (the reply leaves the price
+blank and waits: "Needs you"). **Interactive:** click any waiting customer to answer them next; or "Try it as a
+customer": type a question (or tap "How much is it?" / "Where are you?") and it joins the stream as "You" and is
+answered in the middle. Pause/Play; reduced motion steps with a Next button. Lede: "Every customer gets a reply,
+written in your words. You just tap Send."
+**Honest by design:** the owner taps Send in the animation, because holding every reply for approval is the default
+(holdAllForApproval, since 2026-09-21); prices wait for the owner (the risk check). Visitor replies are fixed example
+replies chosen by keywords, labelled "Example"; nothing is generated. **To fix on the home page later:** its statement
+"FollowUp has already answered" overstates the default; it should say the reply is written and waiting for you.
+Instagram should only appear on the public site once Meta's review passes.
+**Weak, honestly:** on a phone only the middle card shows (the stream's sides fall off-screen); the far-left waiting
+card is a half-faded fragment; the visitor's replies are canned, so an odd question gets a generic answer.

@@ -9993,3 +9993,10 @@ check the Punjabi before this ships. Formal "usted/Sie/vous/Lei" is used where t
    our OpenAI key. For the real site, proposed: key server-side only; 3 questions per visitor a day; a site-wide daily
    cap (e.g. 300) after which the fixed examples answer; 140-character limit; a small model; the demo endpoint sees no
    customer data. Cost per answer estimated, not measured, at a fraction of a cent. Waiting for his OK.
+
+## 2026-10-08 — Home v21: the inner demo box made see-through
+
+Founder, on v20's frosted box: *"This looks way odd. Add a little grain, not that much, and keep it more transparent.
+It should feel like it is a part of this game."* **Rule learned:** depth between layers comes from a light blur and a
+thin edge, not a heavy frosted slab; the inner layer must stay part of the same scene. **Built:** blur 22 → 6 px,
+tint .34 → .12, grain alpha .2 → .1 and finer, highlight and shadow softened.

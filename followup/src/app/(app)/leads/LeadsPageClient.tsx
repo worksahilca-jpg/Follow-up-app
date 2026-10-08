@@ -17,6 +17,7 @@ import { MOTION } from "@/lib/motion";
 import { Search, Plus, Upload, Phone, Inbox, SlidersHorizontal, X, MoreHorizontal } from "lucide-react";
 import { Initials, restingState, shortAge, StatePill, waitingFor, type StateKey } from "@/components/app/canvasBits";
 import { ChannelIcon, channelFromSource } from "@/components/app/ChannelIcon";
+import { displayChannel } from "@/lib/displayChannel";
 
 const CHANNEL_NAMES: Record<string, string> = {
   email: "Email",
@@ -26,6 +27,7 @@ const CHANNEL_NAMES: Record<string, string> = {
   instagram: "Instagram",
   messenger: "Messenger",
   web: "Website form",
+  lead_form: "Facebook lead form",
 };
 
 /**
@@ -512,8 +514,8 @@ export default function LeadsPageClient({
                     </span>
                   </span>
                   <span className="hidden min-w-0 items-center gap-2 text-[13.5px] text-ink-soft md:flex">
-                    <ChannelIcon channel={last?.channel ?? channelFromSource(lead.source)} />
-                    <span className="truncate">{CHANNEL_NAMES[last?.channel ?? ""] ?? lead.source}</span>
+                    <ChannelIcon channel={displayChannel(last?.channel, lead.source) ?? channelFromSource(lead.source)} />
+                    <span className="truncate">{CHANNEL_NAMES[displayChannel(last?.channel, lead.source) ?? ""] ?? lead.source}</span>
                   </span>
                   <span className="hidden truncate text-[13.5px] text-ink-soft md:block">
                     {last ? (last.direction === "outbound" ? `You: ${last.body}` : last.body) : "—"}

@@ -475,8 +475,13 @@ export function formatCurrency(n: number): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
-export function formatDate(dateIso: string): string {
-  return new Date(dateIso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+/**
+ * "Oct 7". Pass Business.timezone from a server component: the server's
+ * clock is UTC, so a lead at 8:58 PM in New York read "Oct 8" (founder's
+ * first Lead Ad test, 2026-10-07).
+ */
+export function formatDate(dateIso: string, timeZone?: string): string {
+  return new Date(dateIso).toLocaleDateString("en-US", { month: "short", day: "numeric", ...(timeZone ? { timeZone } : {}) });
 }
 
 /**

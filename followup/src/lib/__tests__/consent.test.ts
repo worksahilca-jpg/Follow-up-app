@@ -8,6 +8,14 @@ describe("deriveConsentBasis", () => {
     expect(c.explanation).toMatch(/filled out a form/i);
   });
 
+  it("reads a Facebook Lead Ad as a form they filled in, not a message to the Page", () => {
+    const c = deriveConsentBasis("Facebook Lead Ad");
+    expect(c.label).toBe("Filled in your Facebook form");
+    expect(c.explanation).toMatch(/lead form/);
+    // Messenger stays a message.
+    expect(deriveConsentBasis("Facebook Messenger").label).toBe("Messaged your page");
+  });
+
   it("recognizes inbound email as its own consent basis", () => {
     expect(deriveConsentBasis("Gmail").label).toBe("Emailed you first");
     expect(deriveConsentBasis("Gmail (spam)").label).toBe("Emailed you first");

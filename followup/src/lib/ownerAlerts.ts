@@ -332,6 +332,8 @@ const CHANNEL_PHRASE: Record<string, string> = {
   whatsapp: "on WhatsApp",
   instagram: "on Instagram",
   messenger: "on Messenger",
+  web: "on your website form",
+  lead_form: "on your Facebook form",
 };
 
 type EmailContent = { subject: string; text: string; html: string };

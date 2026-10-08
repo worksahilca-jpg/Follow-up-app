@@ -1,4 +1,5 @@
-import { Globe, Mail, MessageCircle, Phone } from "lucide-react";
+import { ClipboardList, Globe, Mail, MessageCircle, Phone } from "lucide-react";
+import { LEAD_FORM } from "@/lib/displayChannel";
 
 /**
  * The small channel glyph the canvas rows draw after a name or before a
@@ -9,6 +10,7 @@ export function ChannelIcon({ channel, className = "h-3.5 w-3.5 shrink-0 text-in
   if (channel === "email") return <Mail className={className} strokeWidth={1.8} aria-label="Email" />;
   if (channel === "call" || channel === "text") return <Phone className={className} strokeWidth={1.8} aria-label={channel === "call" ? "Phone" : "Text"} />;
   if (channel === "web") return <Globe className={className} strokeWidth={1.8} aria-label="Website form" />;
+  if (channel === LEAD_FORM) return <ClipboardList className={className} strokeWidth={1.8} aria-label="Facebook lead form" />;
   if (channel === "instagram")
     return (
       <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-label="Instagram" role="img">
@@ -27,6 +29,7 @@ export function channelFromSource(source: string | null | undefined): string | n
   if (/gmail|outlook|mail/.test(s)) return "email";
   if (/instagram/.test(s)) return "instagram";
   if (/whatsapp/.test(s)) return "whatsapp";
+  if (/facebook lead ad/.test(s)) return LEAD_FORM;
   if (/messenger|facebook/.test(s)) return "messenger";
   if (/website|form|widget/.test(s)) return "web";
   if (/call|voice|phone/.test(s)) return "call";

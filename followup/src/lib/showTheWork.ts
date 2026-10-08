@@ -6,6 +6,7 @@
 import { prisma } from "@/lib/db";
 import { describeBasis } from "@/lib/basedOn";
 import { wordsToCheck } from "@/lib/grounding";
+import { displayChannel } from "@/lib/displayChannel";
 
 /**
  * Adds `basis` to each waiting reply, from that customer's own messages, and
@@ -13,7 +14,7 @@ import { wordsToCheck } from "@/lib/grounding";
  * in the conversation or in what FollowUp knows (research round 2, #1), so
  * the card can underline them.
  */
-export async function withBasis<T extends { leadId: string; leadName: string; draftMessage: string }>(
+export async function withBasis<T extends { leadId: string; leadName: string; draftMessage: string; source?: string | null }>(
   items: T[],
   timeZone?: string,
   businessId?: string
@@ -47,7 +48,7 @@ export async function withBasis<T extends { leadId: string; leadName: string; dr
         body: m.body,
         sentAt: m.sentAt,
         source: m.source,
-        channel: m.conversation.channel,
+        channel: displayChannel(m.conversation.channel, item.source),
       })),
       timeZone,
     }),

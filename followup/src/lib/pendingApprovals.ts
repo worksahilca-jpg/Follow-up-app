@@ -5,6 +5,7 @@ import { getHabits, habitOn, thanksIsNewest, weekendWaitUntil } from "@/lib/habi
 import { recordAudit } from "@/lib/audit";
 import { isHeldOnlyByApprovalSetting } from "@/lib/holdReasons";
 import { NO_ANSWER_TEXT } from "@/lib/callPlan";
+import { displayChannel } from "@/lib/displayChannel";
 
 /**
  * The approval queue — research/product/2026-09-10-ux-simplification.md
@@ -127,6 +128,7 @@ export type PendingApproval = {
   // conversation yet). Without this, approving a draft meant judging it
   // with no visible context for what it's actually replying to.
   leadLastMessage: string | null;
+  /** As a screen names it (src/lib/displayChannel.ts): "lead_form" for a Facebook Lead Ad, never stored. */
   leadLastMessageChannel: string | null;
   /**
    * When that message arrived (ISO). Sent back with Approve & send as
@@ -372,7 +374,7 @@ export async function getPendingApprovals(businessId: string, now: Date = new Da
       draftSubject: lead.suggestedSubject,
       draftMessage: lead.suggestedMessage,
       leadLastMessage: lastInbound ? truncate(lastInbound.body, LEAD_MESSAGE_PREVIEW_LENGTH) : null,
-      leadLastMessageChannel: lastInbound?.channel ?? null,
+      leadLastMessageChannel: displayChannel(lastInbound?.channel, lead.source),
       leadLastMessageAt: lastInbound ? lastInbound.sentAt.toISOString() : null,
       saidNo: lead.saidNoAt != null,
       askedIfPerson: lead.askedIfPersonAt != null,

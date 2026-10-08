@@ -10,6 +10,7 @@
   --night: #0a0a0b; --night-2: #151517; --moon: #f4f2ef; --moon-soft: #a8a49e; --moon-faint: #7a7671;
   --paper: #fdfcfc; --ink: #0a0a0a; --ink-soft: #57534e; --ink-faint: #736e68; --line: #e9e5e0; --stage: #f2f1ef;
   --dot: #c96a1b; --good: #2f6b4a;
+  --dim: #3d3b39; --em: #a8a49e; --em-light: #57534e; --btn: #fdfcfc; --btn-fg: #0a0a0a;
   --wash: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), radial-gradient(50% 70% at 88% 0%, rgba(238,212,204,0.9), rgba(238,212,204,0) 72%), #f3efea;
   --serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
   --sans: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -17,6 +18,20 @@
   --ease: cubic-bezier(.22, 1, .36, 1);
   --gut: clamp(16px, 4vw, 56px);
 }
+
+/* five colour worlds, switched with the picker at the bottom */
+:root[data-pal="forest"] { --night: #0d2419; --night-2: #13301f; --moon: #f2f4ec; --moon-soft: #b3c2b2; --moon-faint: #869a8a; --dim: #2c4636;
+  --paper: #f7f8f3; --stage: #e7ede2; --ink: #0f2419; --ink-soft: #4c5d50; --ink-faint: #6b7b6e; --line: #dce4d7;
+  --em: #d4f27a; --em-light: #2f6b3f; --btn: #d4f27a; --btn-fg: #0d2419; --wash: #ebf3cf; }
+:root[data-pal="plum"] { --night: #170f1c; --night-2: #22172a; --moon: #f6f2f8; --moon-soft: #bcaec5; --moon-faint: #8f8298; --dim: #3b2d44;
+  --paper: #fbf9fc; --stage: #efeaf4; --ink: #1a1220; --ink-soft: #5c5163; --ink-faint: #7b7083; --line: #e6dfec;
+  --em: #c9b8ff; --em-light: #5b47c9; --btn: #c9b8ff; --btn-fg: #170f1c; --wash: #ebe4ff; }
+:root[data-pal="wine"] { --night: #240b11; --night-2: #331219; --moon: #f8f1ef; --moon-soft: #c9aaa8; --moon-faint: #9b7c7b; --dim: #4a2a2f;
+  --paper: #fcf9f7; --stage: #f3ebe8; --ink: #1f0d10; --ink-soft: #604c4c; --ink-faint: #806b6a; --line: #ebe1dd;
+  --em: #f2b8b5; --em-light: #9b2c3c; --btn: #f2b8b5; --btn-fg: #240b11; --wash: #f8e2df; }
+:root[data-pal="signal"] { --night: #0b0b0b; --night-2: #161616; --moon: #ffffff; --moon-soft: #a3a3a3; --moon-faint: #7c7c7c; --dim: #333333;
+  --paper: #ffffff; --stage: #f2f2f2; --ink: #0b0b0b; --ink-soft: #555555; --ink-faint: #737373; --line: #e6e6e6;
+  --em: #ff6a1f; --em-light: #e0560e; --btn: #ff6a1f; --btn-fg: #160b04; --wash: #ffe7d9; }
 * { box-sizing: border-box }
 html { scroll-behavior: smooth }
 body { margin: 0; background: var(--night); color: var(--moon); font-family: var(--sans); font-weight: 420; font-size: 16px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility }
@@ -29,15 +44,20 @@ h1, h2, h3 { font-weight: 400; margin: 0; text-wrap: balance }
 em { font-style: italic }
 
 /* nav: words invert over dark and light; the pill reads on both */
-.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; padding-top: env(safe-area-inset-top, 0px) }
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; padding-top: env(safe-area-inset-top, 0px); color: var(--moon); transition: background .3s ease, color .3s ease, border-color .3s ease; border-bottom: 1px solid transparent }
+.nav.solid { background: var(--night); border-bottom-color: var(--dim) }
+.nav.light { color: var(--ink) }
+.nav.light.solid { background: var(--paper); border-bottom-color: var(--line) }
+.nav .pill { transition: background .3s ease, color .3s ease }
+.nav.light .pill { background: var(--ink); color: var(--paper); border-color: var(--ink) }
 .nav .wrap { height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px }
-.nav .blend { display: flex; align-items: center; gap: 36px; color: #fff; mix-blend-mode: difference }
+.nav .blend { display: flex; align-items: center; gap: 36px }
 .brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 18px; text-decoration: none }
 .nav-links { display: flex; gap: 26px; font-size: 14.5px }
 .nav-links a { text-decoration: none; opacity: .78 }
 .nav-links a:hover { opacity: 1 }
 .nav-right { display: flex; align-items: center; gap: 18px }
-.nav-right .signin { color: #fff; mix-blend-mode: difference; font-size: 14.5px; text-decoration: none }
+.nav-right .signin { font-size: 14.5px; text-decoration: none }
 .pill { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 0 20px; border-radius: 999px; background: var(--paper); color: var(--ink); font-weight: 600; font-size: 14.5px; text-decoration: none; border: 1px solid rgba(10,10,10,.14); transition: transform .18s var(--ease), background .18s ease }
 .pill:hover { transform: translateY(-1px) }
 .pill.ink { background: var(--ink); color: var(--paper); border-color: var(--ink) }
@@ -47,19 +67,19 @@ em { font-style: italic }
 .hero .kicker { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--moon-faint) }
 .hero .kicker i { width: 8px; height: 8px; border-radius: 999px; background: var(--dot); display: inline-block }
 .hero h1 { margin-top: 26px; font-family: var(--serif); font-size: clamp(54px, 9vw, 124px); line-height: .9; letter-spacing: -.035em; max-width: 13ch }
-.hero h1 em { color: var(--moon-soft) }
+.hero h1 em { color: var(--em) }
 .hero-row { margin-top: 36px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0, 440px); gap: 40px; align-items: end }
 .hero-note { font-family: var(--mono); font-size: 12.5px; line-height: 1.7; color: var(--moon-faint) }
 .hero-note b { color: var(--moon); font-weight: 500 }
 .hero-lede { margin: 0; font-size: 19px; line-height: 1.55; color: var(--moon-soft) }
 .hero-ctas { margin-top: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px }
-.hero-ctas .pill { min-height: 56px; padding: 0 28px; font-size: 16.5px }
+.hero-ctas .pill { min-height: 56px; padding: 0 28px; font-size: 16.5px; background: var(--btn); color: var(--btn-fg); border-color: var(--btn) }
 .hero-ctas .see { font-size: 15px; color: var(--moon-soft); text-decoration: none }
 .hero-ctas .see:hover { color: var(--moon) }
 .app-wrap { margin-top: 72px; transform-origin: 50% 0; will-change: transform }
 .app-caption { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 18px; font-size: 13px; color: var(--moon-faint) }
-.replay { font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--moon-soft); background: none; border: 1px solid #2c2c2f; border-radius: 999px; min-height: 34px; padding: 0 14px; cursor: pointer }
-.replay:hover { color: var(--moon); border-color: #4a4a4e }
+.replay { font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--moon-soft); background: none; border: 1px solid var(--dim); border-radius: 999px; min-height: 34px; padding: 0 14px; cursor: pointer }
+.replay:hover { color: var(--moon); border-color: var(--moon-faint) }
 
 /* the app window: FollowUp's real Today screen */
 .app { background: var(--paper); color: var(--ink); border-radius: 20px; overflow: hidden; display: grid; grid-template-columns: 212px minmax(0,1fr) 290px; min-height: 600px; box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 70px 140px -50px rgba(0,0,0,1), 0 30px 60px -40px rgba(0,0,0,.8) }
@@ -113,7 +133,7 @@ em { font-style: italic }
 .statement { background: var(--night); padding-block: 150px 140px }
 .statement p { margin: 0; max-width: 23em; font-size: clamp(26px, 3.5vw, 46px); line-height: 1.16; letter-spacing: -.02em; font-weight: 400 }
 .statement .w { transition: color .35s ease }
-.statement.scrub .w { color: #3d3b39 }
+.statement.scrub .w { color: var(--dim) }
 .statement.scrub .w.lit { color: var(--moon) }
 .statement .w.soft { font-family: var(--serif); font-style: italic; font-size: 1.08em }
 .ramp { height: 150px; background: linear-gradient(var(--night), var(--paper)) }
@@ -124,6 +144,7 @@ em { font-style: italic }
 .chap { padding-block: 40px 140px }
 .chap-head { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,.9fr); gap: 48px; align-items: end }
 .chap-head .eyebrow { margin-bottom: 18px }
+.chap-head h2 em { color: var(--em-light) }
 .chap-head h2 { font-family: var(--serif); font-size: clamp(42px, 6vw, 76px); line-height: .96; letter-spacing: -.03em }
 .chap-head p { margin: 0; font-size: clamp(18px, 1.6vw, 21px); line-height: 1.5; color: var(--ink-soft); max-width: 30em }
 .how-grid { margin-top: 40px; display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); gap: 64px }
@@ -169,7 +190,7 @@ em { font-style: italic }
 
 /* keeps going: one thread across the week */
 .thread { margin-top: 56px; border-radius: 32px; background: var(--stage); padding: 52px 48px 48px; position: relative }
-.thread .rail { position: absolute; left: 48px; right: 48px; top: 60px; height: 2px; background: #dcd8d2 }
+.thread .rail { position: absolute; left: 48px; right: 48px; top: 60px; height: 2px; background: var(--line) }
 .thread .rail i { display: block; height: 100%; width: 100%; background: var(--ink); transform-origin: 0 50%; transform: scaleX(var(--p, 1)) }
 .t-cols { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 24px; position: relative }
 .t-col { padding-top: 34px; position: relative }
@@ -213,15 +234,24 @@ em { font-style: italic }
 /* close */
 .close { background: var(--night); padding-block: 170px 0; text-align: center }
 .close h2 { font-family: var(--serif); font-size: clamp(54px, 9.5vw, 140px); line-height: .9; letter-spacing: -.035em; max-width: 11ch; margin: 0 auto }
-.close h2 em { color: var(--moon-soft) }
-.big-cta { margin-top: 56px; display: inline-flex; align-items: center; gap: 18px; min-height: 92px; padding: 0 52px; border-radius: 999px; background: var(--paper); color: var(--ink); font-size: clamp(20px, 2.2vw, 28px); font-weight: 600; text-decoration: none; transform-origin: 50% 50%; will-change: transform; transition: background .2s ease }
-.big-cta:hover { background: #fff }
+.close h2 em { color: var(--em) }
+.big-cta { margin-top: 56px; display: inline-flex; align-items: center; gap: 18px; min-height: 92px; padding: 0 52px; border-radius: 999px; background: var(--btn); color: var(--btn-fg); font-size: clamp(20px, 2.2vw, 28px); font-weight: 600; text-decoration: none; transform-origin: 50% 50%; will-change: transform; transition: background .2s ease }
+.big-cta:hover { filter: brightness(1.06) }
 .close .sub { margin: 22px 0 0; font-size: 15.5px; color: var(--moon-faint) }
-footer { margin-top: 170px; border-top: 1px solid #222224; padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; font-size: 14px; color: var(--moon-faint); text-align: left }
+footer { margin-top: 170px; border-top: 1px solid var(--dim); padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; font-size: 14px; color: var(--moon-faint); text-align: left }
 footer nav { display: flex; flex-wrap: wrap; gap: 22px }
 footer a { text-decoration: none }
 footer a:hover { color: var(--moon) }
 
+
+.picker { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 70; display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 999px; background: #111112; border: 1px solid #2a2a2c; box-shadow: 0 18px 40px -16px rgba(0,0,0,.6); max-width: calc(100vw - 32px); overflow-x: auto }
+.picker .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #8a8782; padding: 0 8px 0 10px; white-space: nowrap }
+.picker button { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px 0 8px; border-radius: 999px; border: 1px solid transparent; background: transparent; color: #e9e7e3; font: 600 13px/1 var(--sans); cursor: pointer; white-space: nowrap }
+.picker button[aria-pressed="true"] { background: #f4f2ef; color: #0a0a0a }
+.picker .sw2 { display: inline-flex }
+.picker .sw2 i { width: 16px; height: 16px; border-radius: 999px; display: inline-block; box-shadow: 0 0 0 1.5px rgba(255,255,255,.25) }
+.picker .sw2 i + i { margin-left: -5px }
+@media (max-width: 560px) { .picker .lbl { display: none } .picker button { padding: 0 10px 0 6px } .picker .nm { display: none } }
 @media (max-width: 1020px) {
   .app { grid-template-columns: minmax(0,1fr) }
   .side, .right { display: none }
@@ -308,7 +338,7 @@ footer a:hover { color: var(--moon) }
 </div></section>
 <div class="ramp" aria-hidden="true"></div>
 
-<section class="light chap" id="how" aria-labelledby="how-h"><div class="wrap">
+<section class="light chap" data-tone="light" id="how" aria-labelledby="how-h"><div class="wrap">
 <div class="chap-head"><div><div class="eyebrow">How it works</div><h2 id="how-h">Three things, <em>while you're busy.</em></h2></div><p>Connect your Gmail once. FollowUp reads it the way a new assistant would, learns how you write, and starts with the customers who are already waiting.</p></div>
 <div class="how-grid">
 <div class="steps"><div class="step on" data-i="0"><div class="step-n">01</div><h3>It finds your customers.</h3><p>It reads your Gmail the way a new assistant would and picks out the people who need an answer. Newsletters, receipts and notifications stay where they are.</p><div class="panel-inline" aria-hidden="true"><div class="stage-inner"><div class="pcard ib"><div class="pc-head"><span>Your Gmail · Tuesday night</span><span class="mono">41 new</span></div><ul><li class="ib-row"><span class="ib-who">Realty Weekly</span><span class="ib-sub">This week's market digest</span><span class="ib-tag">Newsletter · set aside</span></li><li class="ib-row cust"><span class="ib-who">Priya</span><span class="ib-sub">Is the 3-bedroom on Maple Street still available?</span><span class="ib-tag">Customer · wants a viewing</span></li><li class="ib-row"><span class="ib-who">Uber</span><span class="ib-sub">Your Tuesday evening trip receipt</span><span class="ib-tag">Receipt · set aside</span></li><li class="ib-row cust"><span class="ib-who">Sam</span><span class="ib-sub">Following up on the condo on Elm Street</span><span class="ib-tag">Customer · went quiet</span></li><li class="ib-row"><span class="ib-who">LinkedIn</span><span class="ib-sub">You appeared in 9 searches this week</span><span class="ib-tag">Notification · set aside</span></li><li class="ib-row cust"><span class="ib-who">Daniel</span><span class="ib-sub">My sister is looking for a 2-bed too</span><span class="ib-tag">Customer · a referral</span></li></ul></div>
@@ -334,7 +364,7 @@ footer a:hover { color: var(--moon) }
 </div>
 </div></section>
 
-<section class="light chap" id="quiet" aria-labelledby="quiet-h"><div class="wrap">
+<section class="light chap" data-tone="light" id="quiet" aria-labelledby="quiet-h"><div class="wrap">
 <div class="chap-head"><div><div class="eyebrow">When they go quiet</div><h2 id="quiet-h">It checks in <em>on the day you'd have forgotten.</em></h2></div><p>A short note in your words when a customer goes quiet. The moment they answer, it stops. No chasing someone who already replied.</p></div>
 <div class="thread" id="thread">
 <div class="rail" aria-hidden="true"><i></i></div>
@@ -348,7 +378,7 @@ footer a:hover { color: var(--moon) }
 </div>
 </div></section>
 
-<section class="light chap" id="control" aria-labelledby="ctl-h"><div class="wrap">
+<section class="light chap" data-tone="light" id="control" aria-labelledby="ctl-h"><div class="wrap">
 <div class="chap-head"><div><div class="eyebrow">Your control</div><h2 id="ctl-h">You stay <em>in charge.</em></h2></div><p>It follows up on its own, inside rules you can read. Four promises, and one switch that holds everything.</p></div>
 <div class="promises">
 <div class="promise"><h3>It stops the moment they reply.</h3><p>No chasing someone who already answered.</p></div>
@@ -361,7 +391,7 @@ footer a:hover { color: var(--moon) }
 <a class="ctl-link" href="#data">How we protect your data ›</a>
 </div></section>
 
-<section class="light chap" id="new" aria-labelledby="new-h"><div class="wrap">
+<section class="light chap" data-tone="light" id="new" aria-labelledby="new-h"><div class="wrap">
 <div class="chap-head"><div><div class="eyebrow">What's new</div><h2 id="new-h">It gets better <em>every week.</em></h2></div><p>Real updates from the last few days, in the order they shipped.</p></div>
 <div class="news">
 <article><time datetime="2026-10-07">OCT 7, 2026</time><h3>One question a day</h3><p>Instead of a long setup form, FollowUp asks you one quick question a day, so it learns your business at your pace.</p></article>
@@ -384,6 +414,7 @@ footer a:hover { color: var(--moon) }
 </div></section>
 </main>
 
+<div class="picker" role="group" aria-label="Pick the colours"><span class="lbl">Colours</span><button type="button" data-pal="ink" aria-pressed="true"><span class="sw2" aria-hidden="true"><i style="background: #0a0a0b"></i><i style="background: #fdfcfc"></i></span><span>1</span><span class="nm">Ink and paper</span></button><button type="button" data-pal="forest" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #0d2419"></i><i style="background: #d4f27a"></i></span><span>2</span><span class="nm">Forest and lime</span></button><button type="button" data-pal="plum" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #170f1c"></i><i style="background: #c9b8ff"></i></span><span>3</span><span class="nm">Plum and lilac</span></button><button type="button" data-pal="wine" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #240b11"></i><i style="background: #f2b8b5"></i></span><span>4</span><span class="nm">Wine and rose</span></button><button type="button" data-pal="signal" aria-pressed="false"><span class="sw2" aria-hidden="true"><i style="background: #0b0b0b"></i><i style="background: #ff6a1f"></i></span><span>5</span><span class="nm">Black and orange</span></button></div>
 <script>
 (function () {
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -464,6 +495,27 @@ footer a:hover { color: var(--moon) }
     }, { rootMargin: '-45% 0px -45% 0px' });
     steps.forEach(function (s) { io.observe(s); });
   }
+
+
+  /* ---- the colour picker: the whole page changes, so colours are judged on the real thing ---- */
+  var pbtns = Array.prototype.slice.call(document.querySelectorAll('.picker button'));
+  function setPal(k) {
+    if (k === 'ink') document.documentElement.removeAttribute('data-pal'); else document.documentElement.setAttribute('data-pal', k);
+    pbtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-pal') === k ? 'true' : 'false'); });
+    try { localStorage.setItem('fu-pal', k); } catch (e) {}
+  }
+  pbtns.forEach(function (b) { b.addEventListener('click', function () { setPal(b.getAttribute('data-pal')); }); });
+  try { var saved = localStorage.getItem('fu-pal'); if (saved) setPal(saved); } catch (e) {}
+
+
+  /* ---- the menu takes the colour of the section under it ---- */
+  var nav = document.querySelector('.nav');
+  var lights = Array.prototype.slice.call(document.querySelectorAll('[data-tone="light"]'));
+  function navTone() {
+    var y = 34, onLight = lights.some(function (el) { var r = el.getBoundingClientRect(); return r.top <= y && r.bottom >= y; });
+    nav.classList.toggle('light', onLight); nav.classList.toggle('solid', window.scrollY > 40);
+  }
+  window.addEventListener('scroll', navTone, { passive: true }); navTone();
 
   /* ---- the real switch ---- */
   var sw = $('#sw'), swText = $('#sw-text');

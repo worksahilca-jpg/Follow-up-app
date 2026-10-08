@@ -9542,3 +9542,15 @@ every end state. Phone: the window shows the main column only and each step carr
 illustration), which this page still does not have; the dark→light fade is a plain gradient band; the "How it
 works" stage is static cards that crossfade, not one continuous transforming object; Mobbin (for more reference
 sections) needs a paid plan, the founder's decision.
+
+## 2026-10-08 — Choosing colours on the real page: five palettes and a picker
+
+Founder: *"lets choose the colours first."* Following R-004's lesson (he recognises colour on a finished page, not in
+a swatch), the colour choice is built into the page itself: a small picker at the bottom switches the whole page
+between five worlds, remembered in his browser. **1 Ink and paper** (the first version: near-black and the app's own
+paper), **2 Forest and lime**, **3 Plum and lilac**, **4 Wine and rose**, **5 Black and orange**. Each changes the night,
+the paper, the italic accent, the main button and the reply card's tint; the orange dot keeps its one job ("needs
+you", A-091). No dark blue (R-031), no charcoal + sand + peach (R-037), no glow (R-036). Also fixed: the top menu now
+takes the colour of the section under it (it vanished over light sections).
+**Note for later:** palettes 2–5 tint FollowUp's reply card to match; if one is chosen, the app's own reply card
+colour (A-043 wash) becomes a separate decision.

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FollowUp home, around Wispr</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#faf7f2}
+a{color:inherit}
+:focus-visible{outline:2px solid #c96a1b;outline-offset:3px}
+em{font-style:italic}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.rise{animation:rise .7s cubic-bezier(.34,1.3,.64,1) both}
+.drift{animation:drift 40s linear infinite}
+@media (prefers-reduced-motion: reduce){.rise,.drift{animation:none}}
+</style>
+</helmet>
+<div style="background: #faf7f2; color: #141312; font-family: 'Public Sans', system-ui, sans-serif; font-weight: 450; -webkit-font-smoothing: antialiased; overflow: hidden">
+
+<header style="position: sticky; top: 16px; z-index: 10; display: flex; justify-content: center; padding: 16px 16px 0">
+<nav aria-label="Main" style="width: 100%; max-width: 980px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 8px 8px 20px; background: #fffdf9; border: 1px solid #e6e0d6; border-radius: 16px; box-shadow: 0 8px 24px -16px rgba(20,19,18,0.25)">
+<a href="#top" style="display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 18px; text-decoration: none"><svg width="13" height="20" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</a>
+<div style="display: flex; gap: 26px; font-size: 15px; color: #57534e; flex-wrap: wrap">
+<a href="#how" style="text-decoration: none">How it works</a>
+<a href="#prices" style="text-decoration: none">Prices</a>
+<a href="#data" style="text-decoration: none">Your data</a>
+</div>
+<div style="display: flex; gap: 4px; align-items: center">
+<a href="#signin" style="font-size: 15px; padding: 12px 14px; text-decoration: none">Sign in</a>
+<a href="#start" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 10px; background: #141312; color: #faf7f2; font-size: 15px; font-weight: 600; text-decoration: none">Start free</a>
+</div>
+</nav>
+</header>
+
+<section id="top" aria-label="FollowUp" style="max-width: 1240px; margin: 0 auto; padding: 88px 24px 150px; text-align: center; box-sizing: border-box">
+<div class="rise" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #57534e">FollowUp for Gmail</div>
+<h1 class="rise" style="margin: 20px auto 0; max-width: 9.6em; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: clamp(64px, 8.4vw, 116px); line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance; animation-delay: .06s">Never lose a lead <em>because you forgot to follow up.</em></h1>
+<p class="rise" style="margin: 26px auto 0; max-width: 28em; font-size: 20px; line-height: 1.4; color: #2b2724; animation-delay: .12s">It answers the customers in your Gmail, in your words, and hands you the decisions.</p>
+<div class="rise" style="margin-top: 32px; animation-delay: .18s"><a href="#start" style="display: inline-flex; align-items: center; min-height: 56px; padding: 0 28px; border-radius: 12px; background: #141312; color: #faf7f2; font-weight: 600; font-size: 17px; text-decoration: none">Connect Gmail, start free</a></div>
+<p class="rise" style="margin: 16px 0 0; font-size: 14.5px; color: #736e68; animation-delay: .22s">Free while in beta · No credit card · Works with Gmail</p>
+
+<div role="img" aria-label="An example, playing slowly: a customer's email at 11:48 PM, FollowUp writes the reply in your words, you tap Send at 7:02 AM, she answers." style="position: relative; margin: 64px auto 0; max-width: 1080px; display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1.2fr); align-items: center; gap: 0; text-align: left; min-height: 280px">
+<div style="background: #ffffff; border: 1px solid #e6e0d6; border-radius: 20px; padding: 18px 20px; box-shadow: 0 20px 40px -30px rgba(20,19,18,0.4); transform: rotate(-1.5deg)">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">Gmail · Tue 11:48 PM</div>
+<p style="margin: 10px 0 0; font-size: 17px; line-height: 1.5">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p>
+<p style="margin: 10px 0 0; font-size: 14px; color: #736e68">Priya</p>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+<svg width="150" height="20" viewBox="0 0 150 20" aria-hidden="true"><path d="M4 10 H140 M132 3 L141 10 L132 17" fill="none" stroke="#141312" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 5"></path></svg>
+<sc-if value="{{ showChip }}" hint-placeholder-val="{{ true }}"><span class="rise" style="display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: #141312; color: #faf7f2; font-size: 12.5px; font-weight: 600; white-space: nowrap"><svg width="9" height="14" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>1 min</span></sc-if>
+</div>
+<div style="position: relative; min-height: 230px">
+<sc-if value="{{ showReply }}" hint-placeholder-val="{{ true }}">
+<div class="rise" style="border-radius: 22px; padding: 22px 24px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.9), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), #f3efea; box-shadow: 0 30px 60px -36px rgba(20,19,18,0.5); transform: rotate(1deg)">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Written in your words · waits for your OK</div>
+<p style="margin: 10px 0 0; font-size: 18px; line-height: 1.5">Hi Priya, yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing?</p>
+<sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}"><div style="margin-top: 16px; display: flex; align-items: center; gap: 12px"><span style="display: inline-flex; align-items: center; min-height: 42px; padding: 0 22px; border-radius: 10px; background: #141312; color: #faf7f2; font-size: 15px; font-weight: 600">Send</span><span style="font-size: 14.5px; color: #57534e">Edit</span></div></sc-if>
+<sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}"><div class="rise" style="margin-top: 16px; display: flex; align-items: center; gap: 8px; font-size: 14.5px; color: #2b2724"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Sent Wed 7:02 AM, from your own Gmail</div></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="position: absolute; right: -36px; bottom: -64px; width: 260px; background: #ffffff; border: 1px solid #e6e0d6; border-radius: 18px; padding: 14px 16px; box-shadow: 0 20px 40px -30px rgba(20,19,18,0.5); transform: rotate(-2deg)">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">Priya · 7:20 AM</div>
+<p style="margin: 6px 0 0; font-size: 15px; line-height: 1.45">Saturday at 10 works. See you there!</p>
+</div>
+</sc-if>
+</div>
+</div>
+<p style="margin: 70px 0 0; font-size: 13px; color: #736e68">An example, not a real customer.</p>
+</section>
+
+<section aria-label="Works with" style="position: relative; background: #141312; color: #faf7f2; border-radius: 64px 64px 0 0; padding: 40px 0 150px">
+<div style="text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #b5aea6">Works with your inbox</div>
+<div style="margin-top: 26px; overflow: hidden; white-space: nowrap">
+<div class="drift" style="display: inline-flex; gap: 72px; font-size: 26px; font-weight: 600; color: #faf7f2; padding-left: 72px">
+<span>Gmail</span><span style="color: #8a837c">Outlook · soon</span><span style="color: #8a837c">Instagram · soon</span><span style="color: #8a837c">WhatsApp · soon</span><span style="color: #8a837c">Website form · soon</span><span>Gmail</span><span style="color: #8a837c">Outlook · soon</span><span style="color: #8a837c">Instagram · soon</span><span style="color: #8a837c">WhatsApp · soon</span><span style="color: #8a837c">Website form · soon</span>
+</div>
+</div>
+</section>
+
+<section aria-label="Answered while you're busy" style="position: relative; margin-top: -110px; background: #f3cfb3; border-radius: 64px; padding: 110px 40px 80px; text-align: center">
+<h2 style="margin: 0 auto; max-width: 11em; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: clamp(56px, 7vw, 100px); line-height: 0.95; letter-spacing: -0.03em">Answered <em>while you're busy.</em></h2>
+<p style="margin: 22px auto 0; max-width: 32em; font-size: 20px; line-height: 1.45; color: #2b2724">A customer writes while you're with a client. A minute later the reply is written, in your words, waiting for one tap.</p>
+<div style="margin: 56px auto 0; max-width: 1180px; display: grid; grid-template-columns: minmax(0, 0.32fr) minmax(0, 1fr); gap: 14px; text-align: left">
+<div style="border-radius: 36px; border: 1.5px solid rgba(20,19,18,0.18); padding: 32px 26px; display: flex; flex-direction: column; justify-content: space-between; min-height: 460px">
+<div><div style="font-size: 16px; font-weight: 600">On your own</div><div style="margin-top: 8px; font-family: 'Instrument Serif', Georgia, serif; font-size: 52px; line-height: 0.95">6:40 PM</div></div>
+<p style="margin: 0; font-size: 15.5px; line-height: 1.45; color: #3f3a36">When you finally see it, after the last showing.</p>
+</div>
+<div role="img" aria-label="Photo to add: a realtor showing a home, softly blurred, with FollowUp's written reply on top, at 11:03 AM." style="position: relative; border-radius: 36px; overflow: hidden; min-height: 460px; background: #5b4a3c">
+<div aria-hidden="true" style="position: absolute; inset: -60px; background: radial-gradient(30% 45% at 28% 45%, #c9a27e, rgba(201,162,126,0) 70%), radial-gradient(26% 50% at 64% 50%, #7d8a95, rgba(125,138,149,0) 70%), radial-gradient(40% 30% at 80% 18%, #efe2cf, rgba(239,226,207,0) 70%), radial-gradient(30% 40% at 42% 92%, #7a5a44, rgba(122,90,68,0) 70%), #5b4a3c; filter: blur(26px)"></div>
+<div style="position: absolute; top: 18px; left: 18px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.28); border-radius: 999px; padding: 6px 11px">Photo · a realtor showing a home</div>
+<div style="position: absolute; top: 34px; left: 0; right: 0; text-align: center; color: #ffffff"><div style="font-size: 16px; font-weight: 600">With FollowUp</div><div style="margin-top: 8px; font-family: 'Instrument Serif', Georgia, serif; font-size: 52px; line-height: 0.95">11:03 AM</div></div>
+<div style="position: absolute; left: 50%; bottom: 32px; transform: translateX(-50%); width: min(460px, 86%); border-radius: 20px; padding: 18px 20px; background: #ffffff; box-shadow: 0 30px 60px -30px rgba(0,0,0,0.6)">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">Written in your words · 11:03 AM</div>
+<p style="margin: 8px 0 0; font-size: 16px; line-height: 1.5">Hi Daniel, yes, the Elm Street condo is still for sale. Would you like to see it this week?</p>
+<div style="margin-top: 12px; display: flex; align-items: center; gap: 12px"><span style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 20px; border-radius: 10px; background: #141312; color: #faf7f2; font-size: 14.5px; font-weight: 600">Send</span><span style="font-size: 14px; color: #57534e">one tap, between showings</span></div>
+</div>
+</div>
+</div>
+<p style="margin: 18px 0 0; font-size: 13px; color: #5b4a3c">The panel stays still while you scroll: the FollowUp card grows and pushes "On your own" aside. Then the reply card travels down into the next section.</p>
+</section>
+
+<section id="how" aria-label="How it works" style="max-width: 1240px; margin: 0 auto; padding: 150px 24px 0; box-sizing: border-box">
+<h2 style="margin: 0 auto; text-align: center; max-width: 12em; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: clamp(52px, 6vw, 84px); line-height: 0.96; letter-spacing: -0.025em">One message, <em>from start to finish.</em></h2>
+<div style="margin-top: 64px; display: grid; grid-template-columns: 240px minmax(0, 1fr) 300px; gap: 48px; align-items: center">
+<nav aria-label="Steps" style="display: flex; flex-direction: column; gap: 2px; font-family: 'Instrument Serif', Georgia, serif; font-size: 25px">
+<sc-if value="{{ s0 }}" hint-placeholder-val="{{ true }}"><span style="padding: 8px 0 8px 16px; border-left: 3px solid #c96a1b">It reads your inbox</span></sc-if><sc-if value="{{ ns0 }}" hint-placeholder-val="{{ false }}"><span style="padding: 8px 0 8px 16px; border-left: 3px solid #e6e0d6; color: #a8a199">It reads your inbox</span></sc-if>
+<sc-if value="{{ s1 }}" hint-placeholder-val="{{ false }}"><span style="padding: 8px 0 8px 16px; border-left: 3px solid #c96a1b">It writes in your words</span></sc-if><sc-if value="{{ ns1 }}" hint-placeholder-val="{{ true }}"><span style="padding: 8px 0 8px 16px; border-left: 3px solid #e6e0d6; color: #a8a199">It writes in your words</span></sc-if>
+<sc-if value="{{ s2 }}" hint-placeholder-val="{{ false }}"><span style="padding: 8px 0 8px 16px; border-left: 3px solid #c96a1b">You tap Send</span></sc-if><sc-if value="{{ ns2 }}" hint-placeholder-val="{{ true }}"><span style="padding: 8px 0 8px 16px; border-left: 3px solid #e6e0d6; color: #a8a199">You tap Send</span></sc-if>
+</nav>
+<div role="img" aria-label="Photo to add: a customer at home in the evening on her phone, softly blurred. On top, one message moves through three steps: her email, the reply written, the reply sent." style="position: relative; border-radius: 32px; overflow: hidden; height: 560px; background: #3d332e">
+<div aria-hidden="true" style="position: absolute; inset: -60px; background: radial-gradient(28% 40% at 66% 30%, #d8a874, rgba(216,168,116,0) 70%), radial-gradient(40% 50% at 30% 62%, #6b5d55, rgba(107,93,85,0) 70%), radial-gradient(30% 30% at 50% 88%, #8a6650, rgba(138,102,80,0) 70%), #3d332e; filter: blur(26px)"></div>
+<div style="position: absolute; top: 18px; left: 18px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.28); border-radius: 999px; padding: 6px 11px">Photo · a customer writing at home</div>
+<div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(400px, 84%)">
+<sc-if value="{{ s0 }}" hint-placeholder-val="{{ true }}"><div class="rise" style="background: #ffffff; border-radius: 20px; padding: 18px 20px; box-shadow: 0 30px 60px -30px rgba(0,0,0,0.6)"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">New customer · Gmail · 11:48 PM</div><p style="margin: 8px 0 0; font-size: 16px; line-height: 1.5">Hi, is the 3-bedroom on Maple Street still available? Could I see it this weekend?</p><div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap"><span style="font-size: 12.5px; padding: 5px 10px; border-radius: 999px; background: #f3efea">A customer, not a newsletter</span><span style="font-size: 12.5px; padding: 5px 10px; border-radius: 999px; background: #f3efea">Wants a viewing</span></div></div></sc-if>
+<sc-if value="{{ s1 }}" hint-placeholder-val="{{ false }}"><div class="rise" style="border-radius: 20px; padding: 18px 20px; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), #f3efea; box-shadow: 0 30px 60px -30px rgba(0,0,0,0.6)"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e">Written in your words · 11:49 PM</div><p style="margin: 8px 0 0; font-size: 16px; line-height: 1.5">Hi Priya, yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing?</p><div style="margin-top: 10px; font-size: 13px; color: #57534e">Your hours, your tone, your facts.</div></div></sc-if>
+<sc-if value="{{ s2 }}" hint-placeholder-val="{{ false }}"><div class="rise" style="background: #ffffff; border-radius: 20px; padding: 18px 20px; box-shadow: 0 30px 60px -30px rgba(0,0,0,0.6)"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">Today · 7:02 AM</div><p style="margin: 8px 0 0; font-size: 16px; line-height: 1.5">Hi Priya, yes, the 3-bedroom on Maple Street is still available. Would Saturday morning work for a viewing?</p><div style="margin-top: 14px; display: flex; align-items: center; gap: 10px"><span style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 20px; border-radius: 10px; background: #141312; color: #faf7f2; font-size: 14.5px; font-weight: 600">Sent</span><span style="font-size: 13.5px; color: #57534e">from your own Gmail</span></div></div></sc-if>
+</div>
+</div>
+<div>
+<sc-if value="{{ s0 }}" hint-placeholder-val="{{ true }}"><div><h3 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 40px; line-height: 1">It reads <em>your inbox.</em></h3><p style="margin: 14px 0 0; font-size: 16.5px; line-height: 1.55; color: #3f3a36">It spots the customers among the newsletters and receipts, and what each one wants.</p></div></sc-if>
+<sc-if value="{{ s1 }}" hint-placeholder-val="{{ false }}"><div><h3 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 40px; line-height: 1">It writes <em>in your words.</em></h3><p style="margin: 14px 0 0; font-size: 16.5px; line-height: 1.55; color: #3f3a36">Within a minute, with your facts and your tone. It learns from every reply you send.</p></div></sc-if>
+<sc-if value="{{ s2 }}" hint-placeholder-val="{{ false }}"><div><h3 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 40px; line-height: 1">You <em>tap Send.</em></h3><p style="margin: 14px 0 0; font-size: 16.5px; line-height: 1.55; color: #3f3a36">It goes from your own Gmail. Change a word first if you like.</p></div></sc-if>
+</div>
+</div>
+<p style="margin: 18px 0 0; text-align: center; font-size: 13.5px; color: #736e68">Pinned while you scroll, snapping to each step. The same message all the way through.</p>
+</section>
+
+<section aria-label="After the first reply" style="max-width: 1240px; margin: 0 auto; padding: 160px 24px 0; box-sizing: border-box">
+<h2 style="margin: 0 auto; text-align: center; max-width: 11em; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: clamp(52px, 6vw, 84px); line-height: 0.96; letter-spacing: -0.025em">It keeps going <em>when you can't.</em></h2>
+<div style="margin-top: 72px; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 64px; align-items: center">
+<div style="border-radius: 32px; background: #ebe5db; padding: 40px 32px; min-height: 340px; display: flex; flex-direction: column; justify-content: center; gap: 12px">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #736e68">Fri 9:00 AM · two days of quiet</div>
+<div style="background: #ffffff; border-radius: 18px; padding: 16px 18px; font-size: 16px; line-height: 1.5">Hi Priya, just checking in. Still keen to see the house this weekend?</div>
+<div style="align-self: flex-end; background: #ffffff; border-radius: 18px; padding: 14px 16px; font-size: 15.5px; line-height: 1.45; max-width: 80%">Yes! Booking the viewing now.</div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #3f3a36"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Check-ins stopped. She replied.</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 34px">
+<sc-if value="{{ f0 }}" hint-placeholder-val="{{ true }}"><div><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 44px; line-height: 1">It checks in when they go quiet</div><p style="margin: 10px 0 0; font-size: 16.5px; line-height: 1.55; color: #3f3a36">A short note in your words, on the day you'd have forgotten.</p></div></sc-if>
+<sc-if value="{{ nf0 }}" hint-placeholder-val="{{ false }}"><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 44px; line-height: 1; color: #bfb8b0">It checks in when they go quiet</div></sc-if>
+<sc-if value="{{ f1 }}" hint-placeholder-val="{{ false }}"><div><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 44px; line-height: 1">It hands you prices and dates</div><p style="margin: 10px 0 0; font-size: 16.5px; line-height: 1.55; color: #3f3a36">Anything you decide comes to you first. She hears "let me check" meanwhile.</p></div></sc-if>
+<sc-if value="{{ nf1 }}" hint-placeholder-val="{{ true }}"><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 44px; line-height: 1; color: #bfb8b0">It hands you prices and dates</div></sc-if>
+<sc-if value="{{ f2 }}" hint-placeholder-val="{{ false }}"><div><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 44px; line-height: 1">It stops the moment they reply</div><p style="margin: 10px 0 0; font-size: 16.5px; line-height: 1.55; color: #3f3a36">No chasing someone who already answered.</p></div></sc-if>
+<sc-if value="{{ nf2 }}" hint-placeholder-val="{{ true }}"><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 44px; line-height: 1; color: #bfb8b0">It stops the moment they reply</div></sc-if>
+<sc-if value="{{ f3 }}" hint-placeholder-val="{{ false }}"><div><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 44px; line-height: 1">It tells you your week</div><p style="margin: 10px 0 0; font-size: 16.5px; line-height: 1.55; color: #3f3a36">Every Monday: who came back, who booked.</p></div></sc-if>
+<sc-if value="{{ nf3 }}" hint-placeholder-val="{{ true }}"><div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 44px; line-height: 1; color: #bfb8b0">It tells you your week</div></sc-if>
+</div>
+</div>
+</section>
+
+<section id="data" aria-label="You stay in charge" style="max-width: 1240px; margin: 140px auto 0; padding: 0 24px; box-sizing: border-box">
+<div style="border-radius: 40px; background: #ebe5db; padding: 44px 48px; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 36px; align-items: center">
+<h2 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 52px; line-height: 0.98; letter-spacing: -0.02em">You stay <em>in charge.</em></h2>
+<div style="font-size: 16px; line-height: 1.6; color: #2b2724">It stops when a customer replies. It asks when it isn't sure. It writes down why it sent each message. Delete everything, any time.<div style="margin-top: 12px"><a href="#data-page" style="font-weight: 600; text-decoration: none">How we protect your data ›</a></div></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #ffffff; border-radius: 20px; padding: 18px 20px">
+<div><div style="font-size: 17px; font-weight: 600">Pause all sending</div><div style="margin-top: 3px; font-size: 14.5px; color: #57534e">One tap holds everything.</div></div>
+<span aria-hidden="true" style="flex: 0 0 auto; width: 50px; height: 30px; border-radius: 999px; background: #d8d1c6; position: relative"><span style="position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 999px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.2)"></span></span>
+</div>
+</div>
+</section>
+
+<section aria-label="Questions" style="position: relative; margin-top: 140px; background: #141312; color: #faf7f2; border-radius: 64px 64px 0 0; padding: 120px 24px 200px">
+<div style="max-width: 1100px; margin: 0 auto">
+<h2 style="margin: 0; text-align: center; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: clamp(56px, 7vw, 96px); line-height: 0.95; letter-spacing: -0.03em">Straight <em>answers.</em></h2>
+<p style="margin: 18px auto 0; text-align: center; max-width: 30em; font-size: 18px; line-height: 1.5; color: #c9c2ba">Ask like a customer would. The answer comes back the way FollowUp replies: written for you.</p>
+<div style="margin-top: 56px; display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 16px; background: #24211f; border-radius: 36px; padding: 16px">
+<div style="background: #faf7f2; color: #141312; border-radius: 26px; padding: 22px 16px">
+<div style="padding: 0 10px 12px; font-family: 'Instrument Serif', Georgia, serif; font-size: 26px">Questions</div>
+<div style="padding: 13px 12px; border-radius: 14px; background: #ebe5db; font-size: 15.5px; font-weight: 600">Will it send things on its own?</div>
+<div style="padding: 13px 12px; font-size: 15.5px; color: #3f3a36">Why not just set a reminder?</div>
+<div style="padding: 13px 12px; font-size: 15.5px; color: #3f3a36">Is my data safe? Can I leave?</div>
+<div style="padding: 13px 12px; font-size: 15.5px; color: #3f3a36">What happens when the beta ends?</div>
+<div style="padding: 13px 12px; font-size: 15.5px; color: #3f3a36">Is it for a team, or just me?</div>
+<div style="padding: 13px 12px; font-size: 15.5px; color: #3f3a36">Can it answer my phone?</div>
+</div>
+<div style="padding: 22px 10px 22px 6px; display: flex; flex-direction: column; gap: 14px">
+<div style="align-self: flex-start; max-width: 85%; background: #ffffff; color: #141312; border-radius: 20px 20px 20px 6px; padding: 14px 16px"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #736e68">You asked</div><div style="margin-top: 6px; font-size: 16px">Will it send things on its own?</div></div>
+<div style="align-self: flex-end; max-width: 90%; border-radius: 20px 20px 6px 20px; padding: 16px 18px; color: #141312; background: radial-gradient(70% 90% at 12% 10%, rgba(244,196,160,0.95), rgba(244,196,160,0) 70%), radial-gradient(70% 90% at 92% 95%, rgba(196,210,228,0.95), rgba(196,210,228,0) 70%), #f3efea">
+<div style="display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #57534e"><svg width="9" height="14" viewBox="0 0 76.77 120" fill="currentColor" aria-hidden="true"><path d="M76.77 0 L73.12 20.29 C69.27 41.68 63.3 49.13 43.26 57.55 L9.78 71.61 L13.43 51.32 C17.29 29.93 23.26 22.48 43.3 14.06 Z"></path><path d="M41.97 67.16 L38 89.21 C35.69 102.04 32.11 106.51 20.08 111.56 L0 120 L3.97 97.95 C6.28 85.12 9.86 80.64 21.89 75.59 Z"></path></svg>FollowUp</div>
+<p style="margin: 8px 0 0; font-size: 16px; line-height: 1.55">If you choose Automatic when you set up, yes: thanks, answers it is sure of, and check-ins. A price, a date or anything tense comes to you first. It stops the moment a customer answers. Prefer to check everything? Choose Assisted, or switch any time in Settings.</p>
+</div>
+<div style="font-size: 14px; color: #a8a199">A real person on email too: contact@followupbase.io</div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="start" aria-label="Start free" style="position: relative; margin-top: -120px; background: #f3cfb3; border-radius: 64px 64px 0 0; padding: 140px 24px 150px; text-align: center">
+<h2 style="margin: 0 auto; max-width: 9em; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: clamp(64px, 9vw, 128px); line-height: 0.92; letter-spacing: -0.03em">Your customers are writing. <em>Answer every one.</em></h2>
+<p style="margin: 26px auto 0; font-size: 20px; color: #2b2724">Connect your Gmail. That's it.</p>
+<div style="margin-top: 32px"><a href="#start" style="display: inline-flex; align-items: center; min-height: 56px; padding: 0 28px; border-radius: 12px; background: #141312; color: #faf7f2; font-weight: 600; font-size: 17px; text-decoration: none">Connect Gmail, start free</a></div>
+<p style="margin: 16px 0 0; font-size: 14.5px; color: #5b4a3c">Free while in beta · No credit card</p>
+</section>
+
+<footer style="background: #faf7f2; border-radius: 64px 64px 0 0; margin-top: -64px; position: relative; padding: 72px 40px 32px">
+<div style="max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; font-size: 15px">
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #736e68">Product</span><a href="#how" style="text-decoration: none">How it works</a><a href="#prices" style="text-decoration: none">Prices</a><a href="#signin" style="text-decoration: none">Sign in</a></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #736e68">Works with</span><span>Gmail</span><span style="color: #736e68; font-size: 14px">Outlook, Instagram, Messenger, WhatsApp, website form: coming</span></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #736e68">Trust</span><a href="#data" style="text-decoration: none">Your data</a><a href="#privacy" style="text-decoration: none">Privacy</a><a href="#terms" style="text-decoration: none">Terms</a></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #736e68">Talk to us</span><a href="#contact" style="text-decoration: none">contact@followupbase.io</a></div>
+</div>
+<div aria-hidden="true" style="max-width: 1240px; margin: 72px auto 0; display: flex; align-items: center; gap: 2.4vw; color: #141312">
+<svg style="height: 14vw; max-height: 200px; width: auto" viewBox="0 0 77.7 120" fill="currentColor"><path d="M77.7 0 L74.68 16.75 C70.08 42.32 62.94 51.22 38.99 61.28 L8.31 74.17 L11.33 57.42 C15.93 31.85 23.07 22.94 47.02 12.88 Z"></path><path d="M41.65 66.03 L37.83 87.27 C35.21 101.85 31.14 106.92 17.49 112.66 L0 120 L3.82 98.76 C6.45 84.19 10.51 79.11 24.17 73.38 Z"></path></svg>
+<span style="font-size: min(15vw, 216px); font-weight: 650; letter-spacing: -0.05em; line-height: 0.8">FollowUp</span>
+</div>
+<div style="max-width: 1240px; margin: 40px auto 0; display: flex; justify-content: space-between; font-size: 13.5px; color: #736e68"><span>© 2026 FollowUp · So no customer gets forgotten.</span><span>Privacy · Terms</span></div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":6300}}'>
+class Component extends DCLogic {
+  state = { beat: 0 };
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ beat: 3 }); return; }
+    this.timer = setInterval(() => {
+      this.setState({ beat: this.state.beat >= 11 ? 0 : this.state.beat + 1 });
+    }, 3000);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const h = Math.min(this.state.beat % 6, 4);
+    const s = this.state.beat % 3;
+    const f = this.state.beat % 4;
+    return {
+      showChip: h >= 1, showReply: h >= 2, notSent: h < 3, sent: h >= 3, showBack: h >= 4,
+      s0: s === 0, ns0: s !== 0, s1: s === 1, ns1: s !== 1, s2: s === 2, ns2: s !== 2,
+      f0: f === 0, nf0: f !== 0, f1: f === 1, nf1: f !== 1, f2: f === 2, nf2: f !== 2, f3: f === 3, nf3: f !== 3
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -9335,3 +9335,28 @@ Wispr?": answered with the full list of what FollowUp takes from Wispr (and what
 reframe it again? … we don't want to use that dark bluish sunrise kind of thing. It was looking good, but not my
 type."* Next: a Wispr-structured Home (and phone first screen) on a new canvas page, built from the Wispr teardown's
 14 takeaways and A-104 (italic human phrase), in FollowUp's own light palette.
+
+## 2026-10-08 — Home "around Wispr" drawn (W1; for the founder's pick, nothing built)
+
+On the "Around Wispr" page of the design canvas (copy in `prototypes/2026-10-08-around-wispr/`). Built from the Wispr
+teardown's takeaways, A-104 (italic human phrase) and R-031 (no dark blue): warm paper `#faf7f2`, near-black
+`#141312`, one committed peach block `#f3cfb3` (from the approved wash), a muted warm grey `#ebe5db` for card
+grounds, the A-091 orange as the step marker, black buttons. Instrument Serif headlines with the human phrase in
+italic; Public Sans body at weight 450.
+**Sections:** floating menu card → hero (label, headline with italic, one short line, one button; the loop: her email
+→ "1 min" → your reply → sent → she answers, tilted cards) → near-black "Works with" band sliding over with 64 px
+corners (Gmail, the rest marked "soon", drifting) → peach block overlapping it, "Answered *while you're busy.*": On your
+own 6:40 PM vs With FollowUp 11:03 AM on a blurred photo slot (pinned, the FollowUp card grows) → "One message, *from
+start to finish.*": pinned three-step tour with the orange marker (It reads your inbox / It writes in your words /
+You tap Send), one message throughout, on a blurred photo slot → "It keeps going *when you can't.*": a check-in
+scene on a muted card, four lines lit one at a time → "You stay *in charge.*" one calm card with the promises and
+Pause all sending → near-black "Straight *answers.*": the FAQ as a conversation (question as your message, answer as
+a FollowUp reply on the wash) → peach closing, "Your customers are writing. *Answer every one.*" → footer with the
+giant wordmark. Phone first screen to match.
+**Weak, honestly / founder's call:** (1) the hero line is shortened to one sentence ("It answers the customers in
+your Gmail, in your words, and hands you the decisions."), changing A-081's lede; (2) buttons are rounded rectangles
+(10–12 px) like Wispr's, not the approved pills; (3) the closing headline is new copy; (4) paper `#faf7f2` and peach
+`#f3cfb3` are new tokens (`[TO DECIDE]`); (5) the two photo slots are placeholders until relevant photos arrive
+(R-030); (6) the structure follows Wispr's closely (hero device, colour band, pinned comparison, pinned three
+steps, lit list, trust card, FAQ, big closing, giant footer logo); the content and the hero device are ours, but the
+rhythm is recognisably Wispr's; (7) other pages not redrawn yet.

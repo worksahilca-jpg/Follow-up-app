@@ -10007,3 +10007,12 @@ Founder: *"this logo feels too odd. Can you just add the symbol and remove that 
 the mark on a green round badge, which broke an existing rule in `rejected.md` (the logo sits on the page's own
 surface, never on a sticker). **Fixed:** the symbol alone, slightly larger (12×19), in the word's colour (ink on
 light, white over dark). **Lesson:** check `rejected.md` for the logo before touching the header.
+
+## 2026-10-08 — Home v23: the speed message first; the letter shrunk to an aside
+
+Founder, on the letter section: *"Keep this a very small part, not here, because this is not what we are saying. Our
+main goal is to tell them that reducing the reply time can save their potential clients or leads."*
+**Principle (his words):** the page's main argument is speed: a faster reply keeps the lead. Everything else supports it.
+**Built:** right after the demo, "The faster you reply, *the more leads you keep.*" with the HBR 7× card first, then Time
+back / No lead wasted / Follow-ups on time. The letter moved to just before the close as one small line with three
+small tags (Weeks → A day. Or never. → 1 minute); stamps, flap lines and card text hidden.

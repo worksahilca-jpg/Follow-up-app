@@ -9787,3 +9787,20 @@ blended hues work against calm and trust; the site should match the app).
 - *Organisation from the references (A-111):* one section template everywhere (Macro/Linear: eyebrow + title left,
   one sentence right, one scene below), one spacing scale, Superhuman's sticky "where you are" bar, the product in
   high fidelity; done in the section-by-section redesign once he confirms the theme.
+
+## 2026-10-08 — Theme v3: good greens to choose from, green-family touches, the old letter
+
+Following A-116 (and the founder's question *"why we using green as the main colour"*, answered in chat: it already
+means "sent" in the app; green is "done", the result we sell; calm and trustworthy, not salesy; it stands apart
+from AI/CRM blue and purple; it sits well on warm paper; alternative offered: black main, green only for "sent").
+**Built:** https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v11, with a review bar at the bottom:
+- **Green:** Leaf (default; fresh, `#2E8A5C` lit to `#44A574`), Sage (soft, muted), Emerald (richer), Before (the dark
+  forest). Every green-tinted text (headline italics, the in-card reply) follows the chosen green.
+- **Touches:** Greens (default: soft lime `#E6F1C6`–`#C4E37A` on the quiet thread and the 7× card, sage tint on How
+  it works and the switch) or Sky + apricot (the earlier tints, lighter), to compare.
+- **The old letter:** a postmark ("ANSWERED · 1 MIN · FOLLOWUP") stamps onto the middle card the moment a reply is
+  sent; a new section after the opening, "Then and now": "A letter took weeks. *Today, a minute feels long.*" with
+  three envelope cards (By post: Weeks / By email: A day. Or never. / With FollowUp: 1 minute, in green), each with
+  its own postmark that lands as you scroll to it.
+**Weak, honestly:** the lens stamp overlaps the customer's bubble a little (reads as a stamp, but busy on small
+screens); the envelope flaps are faint lines; images and the section-by-section redesign are still to come.

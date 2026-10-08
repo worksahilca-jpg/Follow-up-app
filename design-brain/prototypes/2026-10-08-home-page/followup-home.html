@@ -1,5 +1,5 @@
 <title>FollowUp Home</title>
-<script>document.documentElement.setAttribute('data-lay', '3'); document.documentElement.setAttribute('data-col', 'f');</script>
+<script>document.documentElement.setAttribute('data-lay', '3'); document.documentElement.setAttribute('data-col', 'f'); (function () { var g = 'leaf'; try { g = localStorage.getItem('fu-green') || g; } catch (e) {} document.documentElement.setAttribute('data-green', g); var t = 'green'; try { t = localStorage.getItem('fu-touch') || t; } catch (e) {} document.documentElement.setAttribute('data-touch', t); })();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Public+Sans:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
@@ -417,6 +417,10 @@ html[data-lay="3"] .fl-try { padding-top: 64px }
 .fl-ghost { position: fixed; z-index: 60; pointer-events: none; margin: 0; padding: 12px 15px; border-radius: 18px 18px 18px 6px; background: var(--stage); color: var(--ink); font-size: 16.5px; line-height: 1.38; box-shadow: 0 24px 44px -22px rgba(10,10,10,.45); white-space: nowrap; max-width: 380px; overflow: hidden; text-overflow: ellipsis }
 .fl-sent svg path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: fl-draw .55s .12s var(--fl-out) forwards }
 @keyframes fl-draw { to { stroke-dashoffset: 0 } }
+.fl-stamp { position: absolute; right: 16px; top: 50px; z-index: 2; color: var(--fl-stamp, #17603F); opacity: .82; transform: rotate(-9deg); pointer-events: none; animation: fl-stamp .7s var(--fl-spring) both }
+.fl-stamp svg { display: block; width: 78px; height: 78px }
+@keyframes fl-stamp { 0% { opacity: 0; transform: rotate(-22deg) scale(1.7) } 60% { opacity: .9 } 100% { opacity: .82; transform: rotate(-9deg) scale(1) } }
+@media (prefers-reduced-motion: reduce) { .fl-stamp { animation: none } }
 .fl-zone b.is-bump { animation: fl-bump .55s var(--fl-spring) }
 @keyframes fl-bump { from { transform: translateY(80%); opacity: 0 } to { transform: none; opacity: 1 } }
 @media (prefers-reduced-motion: reduce) {
@@ -550,6 +554,66 @@ html[data-col="f"] .fl-fact b { color: #CDEFD9 }
 body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-events: none; background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 220px 220px; opacity: .09; mix-blend-mode: multiply }
 @media (prefers-reduced-transparency: reduce) { body::after { display: none } }
 
+/* ---- theme v3: a good green (lighter, fresher, not the heavy dark one), with sky and apricot back as light touches ---- */
+html[data-green="leaf"] { --forest-lit: radial-gradient(120% 100% at 20% 0%, #44A574 0%, #2E8A5C 36%, #22754C 70%, #1B6440 100%); --g-ink: #17603F; --g-reply: linear-gradient(180deg, #3F9C6E, #2F855B) }
+html[data-green="sage"] { --forest-lit: radial-gradient(120% 100% at 20% 0%, #78AD90 0%, #5C9479 36%, #4B8068 70%, #3E6E58 100%); --g-ink: #35664F; --g-reply: linear-gradient(180deg, #6EA587, #5A8F73) }
+html[data-green="emerald"] { --forest-lit: radial-gradient(120% 100% at 20% 0%, #2BB383 0%, #149467 36%, #0D7B55 70%, #0A6646 100%); --g-ink: #0A6646; --g-reply: linear-gradient(180deg, #26A87A, #138A60) }
+html[data-green="forest"] { --g-ink: #145A3E; --g-reply: linear-gradient(180deg, #2F8259 0%, #236B48 100%) }
+:root { --em: var(--g-ink); --em-light: var(--g-ink);
+  --sky-tint: linear-gradient(170deg, #F2F6FB 0%, #E3EBF5 100%); --apricot-tint: linear-gradient(170deg, #FDF4EC 0%, #F8E3D2 100%);
+  --stage-how: var(--sky-tint); --stage-ctl: var(--sky-tint); --stage-thread: var(--apricot-tint) }
+html[data-col="f"] { --fl-em: var(--g-ink); --fl-la-bg: var(--g-ink); --fl-meta: #E3F3E9; --fl-zone-fg: #E3F3E9; --fl-meta-faint: #C9E6D4;
+  --fl-fact-bg: var(--apricot-lit); --fl-fact-fg: #2A1406; --fl-fact-soft: #7A4A26 }
+html[data-col="f"] .fl-slot .fl-a { background: var(--g-reply) }
+html[data-col="f"] .fl-stage .fl-hint { color: #E3F3E9 }
+html[data-col="f"] .fl-you, html[data-col="f"] .fl-hi .ic { color: var(--g-ink) }
+html[data-col="f"] .fl-fact { box-shadow: 0 30px 60px -36px rgba(122,74,38,.45), inset 0 -40px 70px -50px rgba(122,74,38,.3) }
+html[data-col="f"] .fl-fact b { color: inherit }
+.fl-help h2 em { color: var(--g-ink) }
+.stage, .switch-card { box-shadow: inset 0 -50px 80px -60px rgba(40,70,110,.18), 0 30px 60px -44px rgba(14,14,12,.26) }
+.thread { box-shadow: inset 0 -50px 80px -60px rgba(122,74,38,.2), 0 30px 60px -44px rgba(14,14,12,.26) }
+.t-col::before { box-shadow: 0 0 0 6px #FAEADB }
+.t-card.w { box-shadow: 0 0 0 1.5px var(--g-ink), 0 18px 32px -20px rgba(9,51,34,.3) }
+/* review tool: try the greens */
+.gpk { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 95; display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 999px; background: #111; color: #fff; box-shadow: 0 18px 40px -16px rgba(0,0,0,.55); max-width: calc(100vw - 20px) }
+.gpk span { padding: 0 8px 0 12px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: #a8a29e }
+.gpk button { font: inherit; display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: #e7e5e4; font-size: 13.5px; font-weight: 600; cursor: pointer }
+.gpk button i { width: 14px; height: 14px; border-radius: 999px } .gpk button[aria-pressed="true"] { background: #fff; color: #0a0a0a }
+@media (max-width: 560px) { .gpk span { display: none } .gpk button { padding: 0 10px } }
+
+/* ---- touches from the green family: soft lime for warmth, sage for calm blocks (default); sky + apricot to compare ---- */
+html[data-touch="green"] { --stage-how: linear-gradient(170deg, #F2F7EF 0%, #E1ECDB 100%); --stage-ctl: linear-gradient(170deg, #F2F7EF 0%, #E1ECDB 100%); --stage-thread: linear-gradient(170deg, #F7FBE9 0%, #E6F1C6 100%) }
+html[data-touch="green"][data-col="f"] { --fl-fact-bg: linear-gradient(160deg, #EFF9D2 0%, #D9EF9A 55%, #C4E37A 100%); --fl-fact-fg: #1D3410; --fl-fact-soft: #4A6A2A }
+html[data-touch="green"] .fl-fact { box-shadow: 0 30px 60px -36px rgba(70,100,30,.45), inset 0 -40px 70px -50px rgba(70,100,30,.28) }
+html[data-touch="green"] .t-col::before { box-shadow: 0 0 0 6px #EEF5DA }
+html[data-touch="green"] .thread { box-shadow: inset 0 -50px 80px -60px rgba(80,110,40,.22), 0 30px 60px -44px rgba(14,14,12,.26) }
+html[data-touch="green"] .stage, html[data-touch="green"] .switch-card { box-shadow: inset 0 -50px 80px -60px rgba(40,90,50,.2), 0 30px 60px -44px rgba(14,14,12,.26) }
+html[data-touch="green"] .fl-hi .ic { background: linear-gradient(180deg, #F2F7EF, #E1ECDB) }
+.gpk .sep { width: 1px; height: 24px; background: #333; margin: 0 4px; padding: 0 }
+
+/* ---- then and now: the old letter ---- */
+.letter { background: #F8F6F1; padding-block: clamp(80px, 11vh, 130px) 20px; position: relative; z-index: 1; overflow-x: clip }
+.letter .eyebrow { margin-bottom: 18px }
+.letter h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(40px, 5.4vw, 72px); line-height: .95; letter-spacing: -.03em; max-width: 16ch; text-wrap: balance }
+.letter h2 em { color: var(--g-ink) }
+.env-row { margin-top: clamp(36px, 5vh, 56px); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 18px; align-items: stretch }
+.env { position: relative; border-radius: 26px; padding: 28px 26px 26px; min-height: 290px; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F6F2EA 100%); box-shadow: 0 0 0 1px #E6E1D8, 0 26px 50px -34px rgba(14,14,12,.35); transition: opacity .8s ease, transform .9s var(--fl-out); transition-delay: var(--d, 0ms) }
+.env::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 120px; border-radius: 26px 26px 0 0; background: linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(14,14,12,.12) 50%, transparent calc(50% + 1px)) left / 50.5% 100% no-repeat, linear-gradient(to bottom left, transparent calc(50% - 1px), rgba(14,14,12,.12) 50%, transparent calc(50% + 1px)) right / 50.5% 100% no-repeat }
+.env .how { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint) }
+.env .big { font-family: var(--serif); font-size: clamp(40px, 4.4vw, 60px); line-height: .95; letter-spacing: -.03em }
+.env p { margin: 0; font-size: 15.5px; line-height: 1.45; color: var(--ink-soft) }
+.env .pm { position: absolute; top: 18px; right: 18px; color: rgba(14,14,12,.55); transform: rotate(-10deg) }
+.env.now { background: var(--forest-lit); color: #fff; box-shadow: inset 0 -60px 90px -60px rgba(0,0,0,.4), 0 30px 60px -36px rgba(9,51,34,.5) }
+.env.now::before { background: linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(255,255,255,.22) 50%, transparent calc(50% + 1px)) left / 50.5% 100% no-repeat, linear-gradient(to bottom left, transparent calc(50% - 1px), rgba(255,255,255,.22) 50%, transparent calc(50% + 1px)) right / 50.5% 100% no-repeat }
+.env.now .how { color: #E3F3E9 } .env.now p { color: #E3F3E9 } .env.now .pm { color: #CDEFD9 }
+.env-arrow { align-self: center; font-size: 22px; color: var(--ink-faint) }
+.env.is-pre { opacity: 0; transform: translateY(30px) }
+.env .pm.is-wait { opacity: 0; transform: rotate(-24deg) scale(1.7) }
+.env .pm { transition: opacity .35s ease, transform .6s var(--fl-spring); transition-delay: calc(var(--d, 0ms) + 500ms) }
+@media (max-width: 900px) { .env-row { grid-template-columns: minmax(0, 1fr) } .env-arrow { transform: rotate(90deg); justify-self: center } .env { min-height: 230px } }
+@media (prefers-reduced-motion: reduce) { .env, .env .pm { transition: none } }
+
 .today-sec { background: var(--paper); color: var(--ink); padding-block: 120px 40px }
 .today-sec .app-caption { color: var(--ink-faint) }
 .today-sec .replay { color: var(--ink-soft); border-color: var(--line) }
@@ -634,6 +698,17 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-event
 </div>
 </div></section>
 
+<section class="letter" aria-labelledby="letter-h"><div class="wrap">
+<div class="eyebrow">Then and now</div>
+<h2 id="letter-h">A letter took weeks. <em>Today, a minute feels long.</em></h2>
+<div class="env-row">
+<div class="env"><span class="pm"><svg width="84" height="84" viewBox="0 0 100 100" fill="none" aria-hidden="true"><defs><path id="pmAt" d="M 17,50 A 33,33 0 1 1 83,50"/><path id="pmAb" d="M 10,50 A 40,40 0 0 0 90,50"/></defs><circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="2.4"/><circle cx="50" cy="50" r="26" stroke="currentColor" stroke-width="1.4"/><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="9.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmAt" startOffset="50%" text-anchor="middle">POSTED</textPath></text><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="8.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmAb" startOffset="50%" text-anchor="middle">BY POST</textPath></text><text x="50" y="54.5" text-anchor="middle" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="11" font-weight="700" letter-spacing=".5" fill="currentColor">WEEKS</text></svg></span><span class="how">By post</span><span class="big">Weeks</span><p>Write it, post it, wait.</p></div>
+<span class="env-arrow" aria-hidden="true">&rarr;</span>
+<div class="env"><span class="pm"><svg width="84" height="84" viewBox="0 0 100 100" fill="none" aria-hidden="true"><defs><path id="pmBt" d="M 17,50 A 33,33 0 1 1 83,50"/><path id="pmBb" d="M 10,50 A 40,40 0 0 0 90,50"/></defs><circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="2.4"/><circle cx="50" cy="50" r="26" stroke="currentColor" stroke-width="1.4"/><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="9.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmBt" startOffset="50%" text-anchor="middle">RECEIVED</textPath></text><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="8.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmBb" startOffset="50%" text-anchor="middle">BY EMAIL</textPath></text><text x="50" y="54.5" text-anchor="middle" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="11" font-weight="700" letter-spacing=".5" fill="currentColor">1 DAY?</text></svg></span><span class="how">By email</span><span class="big">A day. Or never.</span><p>Forget once, and they ask someone else.</p></div>
+<span class="env-arrow" aria-hidden="true">&rarr;</span>
+<div class="env now"><span class="pm"><svg width="84" height="84" viewBox="0 0 100 100" fill="none" aria-hidden="true"><defs><path id="pmCt" d="M 17,50 A 33,33 0 1 1 83,50"/><path id="pmCb" d="M 10,50 A 40,40 0 0 0 90,50"/></defs><circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="2.4"/><circle cx="50" cy="50" r="26" stroke="currentColor" stroke-width="1.4"/><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="9.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmCt" startOffset="50%" text-anchor="middle">ANSWERED</textPath></text><text font-family="IBM Plex Mono, ui-monospace, monospace" font-size="8.5" font-weight="600" letter-spacing="2" fill="currentColor"><textPath href="#pmCb" startOffset="50%" text-anchor="middle">FOLLOWUP</textPath></text><text x="50" y="54.5" text-anchor="middle" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="11" font-weight="700" letter-spacing=".5" fill="currentColor">1 MIN</text></svg></span><span class="how">With FollowUp</span><span class="big">1 minute</span><p>Written in your words. You tap Send.</p></div>
+</div>
+</div></section>
 
 <section class="fl-help" aria-labelledby="help-h"><div class="wrap">
 <h2 id="help-h">Less time in your inbox. <em>No lead you paid for, wasted.</em></h2>
@@ -762,6 +837,7 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-event
 </footer>
 </div></section>
 </main>
+<div class="gpk" role="group" aria-label="Try the greens"><span>Green</span><button type="button" data-g="leaf" aria-pressed="false"><i style="background:#2E8A5C"></i>Leaf</button><button type="button" data-g="sage" aria-pressed="false"><i style="background:#5C9479"></i>Sage</button><button type="button" data-g="emerald" aria-pressed="false"><i style="background:#149467"></i>Emerald</button><button type="button" data-g="forest" aria-pressed="false"><i style="background:#0F4A33"></i>Before</button><i class="sep" aria-hidden="true"></i><span>Touches</span><button type="button" data-t="green" aria-pressed="false"><i style="background:#D9EF9A"></i>Greens</button><button type="button" data-t="warm" aria-pressed="false"><i style="background:#F8E3D2"></i>Sky + apricot</button></div>
 
 <script>
 (function () {
@@ -776,7 +852,7 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-event
 /* ---- opening: the reply flow, type-first ---- */
 (function () {
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var CH = {"gmail": ["Gmail", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "outlook": ["Outlook", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "ig": ["Instagram", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"4.5\"></rect><circle cx=\"12\" cy=\"12\" r=\"3.6\"></circle><circle cx=\"16.6\" cy=\"7.4\" r=\".6\" fill=\"currentColor\"></circle></svg>"], "web": ["Website form", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.5\"></rect><path d=\"M3.5 8.5h17M7.5 12.5h9M7.5 15.5h5\"></path></svg>"], "quiet": ["Gone quiet", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.6 4.3v3.9h-3.9\"></path><path d=\"M12 8.6V12l2.4 1.5\"></path></svg>"]}, TICK = "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"></path></svg>";
+  var CH = {"gmail": ["Gmail", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "outlook": ["Outlook", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5.5\" width=\"17\" height=\"13\" rx=\"2.5\"></rect><path d=\"M4.5 7l7.5 5.5L19.5 7\"></path></svg>"], "ig": ["Instagram", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"4.5\"></rect><circle cx=\"12\" cy=\"12\" r=\"3.6\"></circle><circle cx=\"16.6\" cy=\"7.4\" r=\".6\" fill=\"currentColor\"></circle></svg>"], "web": ["Website form", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.5\"></rect><path d=\"M3.5 8.5h17M7.5 12.5h9M7.5 15.5h5\"></path></svg>"], "quiet": ["Gone quiet", "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.6 4.3v3.9h-3.9\"></path><path d=\"M12 8.6V12l2.4 1.5\"></path></svg>"]}, TICK = "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"></path></svg>", STAMP = "<svg width=\"78\" height=\"78\" viewBox=\"0 0 100 100\" fill=\"none\" aria-hidden=\"true\"><defs><path id=\"pmLenst\" d=\"M 17,50 A 33,33 0 1 1 83,50\"/><path id=\"pmLensb\" d=\"M 10,50 A 40,40 0 0 0 90,50\"/></defs><circle cx=\"50\" cy=\"50\" r=\"46\" stroke=\"currentColor\" stroke-width=\"2.4\"/><circle cx=\"50\" cy=\"50\" r=\"26\" stroke=\"currentColor\" stroke-width=\"1.4\"/><text font-family=\"IBM Plex Mono, ui-monospace, monospace\" font-size=\"9.5\" font-weight=\"600\" letter-spacing=\"2\" fill=\"currentColor\"><textPath href=\"#pmLenst\" startOffset=\"50%\" text-anchor=\"middle\">ANSWERED</textPath></text><text font-family=\"IBM Plex Mono, ui-monospace, monospace\" font-size=\"8.5\" font-weight=\"600\" letter-spacing=\"2\" fill=\"currentColor\"><textPath href=\"#pmLensb\" startOffset=\"50%\" text-anchor=\"middle\">FOLLOWUP</textPath></text><text x=\"50\" y=\"54.5\" text-anchor=\"middle\" font-family=\"IBM Plex Mono, ui-monospace, monospace\" font-size=\"11\" font-weight=\"700\" letter-spacing=\".5\" fill=\"currentColor\">1 MIN</text></svg>";
   var D = [
     { ch: 'web', who: 'Omar', t: '6:40 AM', q: 'Do you do kitchen renovations?', r: 'We do! Could you send a photo of the space?', k: 'reply' },
     { ch: 'gmail', who: 'Ben', t: '5:55 AM', q: 'Are you taking new patients?', r: 'Yes, we are! Mornings or afternoons?', k: 'reply' },
@@ -851,7 +927,7 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-event
     var a = $('fl-a'), foot = $('fl-foot');
     a.classList.remove('is-hide'); a.innerHTML = withBlank(it.r);
     if (it.k === 'needs') { foot.innerHTML = '<span class="fl-needs">A price: it waits for you</span>'; setStatus('Needs you', 'is-needs'); }
-    else { foot.innerHTML = '<span class="fl-sent">' + TICK + 'Sent ' + (it.ch === 'ig' ? 'on Instagram' : it.ch === 'outlook' ? 'from your Outlook' : 'from your Gmail') + '</span>'; setStatus('Sent', 'is-ok'); answered++; count.textContent = answered; count.classList.remove('is-bump'); void count.offsetWidth; count.classList.add('is-bump'); }
+    else { body.insertAdjacentHTML('beforeend', '<span class="fl-stamp" aria-hidden="true">' + STAMP + '</span>'); foot.innerHTML = '<span class="fl-sent">' + TICK + 'Sent ' + (it.ch === 'ig' ? 'on Instagram' : it.ch === 'outlook' ? 'from your Outlook' : 'from your Gmail') + '</span>'; setStatus('Sent', 'is-ok'); answered++; count.textContent = answered; count.classList.remove('is-bump'); void count.offsetWidth; count.classList.add('is-bump'); }
   }
   /* your turn: what you type shows here as you type it */
   function draft() { return seq[k] && seq[k].draft ? seq[k] : null; }
@@ -1008,6 +1084,22 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-event
   var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.remove('is-pre'); io.unobserve(e.target); } }); }, { threshold: .2 });
   els.forEach(function (el, i) { if (el.getBoundingClientRect().top > innerHeight) { el.style.setProperty('--d', (i * 90) + 'ms'); el.classList.add('is-pre'); io.observe(el); } });
 })();
+
+  /* ---- then and now: each envelope rises in, then its postmark lands ---- */
+  (function () {
+    if (!('IntersectionObserver' in window) || reduce) return;
+    var envs = [].slice.call(document.querySelectorAll('.env'));
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.remove('is-pre'); var pm = e.target.querySelector('.pm'); if (pm) pm.classList.remove('is-wait'); io.unobserve(e.target); } }); }, { threshold: .3 });
+    envs.forEach(function (el, i) { if (el.getBoundingClientRect().top > innerHeight) { el.style.setProperty('--d', (i * 160) + 'ms'); el.classList.add('is-pre'); var pm = el.querySelector('.pm'); if (pm) pm.classList.add('is-wait'); io.observe(el); } });
+  })();
+  /* ---- review tool: the green picker ---- */
+  (function () {
+    var bs = [].slice.call(document.querySelectorAll('.gpk [data-g]')), ts = [].slice.call(document.querySelectorAll('.gpk [data-t]'));
+    function mark() { var r = document.documentElement, g = r.getAttribute('data-green'), t = r.getAttribute('data-touch'); bs.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-g') === g ? 'true' : 'false'); }); ts.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-t') === t ? 'true' : 'false'); }); }
+    ts.forEach(function (b) { b.addEventListener('click', function () { document.documentElement.setAttribute('data-touch', b.getAttribute('data-t')); try { localStorage.setItem('fu-touch', b.getAttribute('data-t')); } catch (e) {} mark(); }); });
+    bs.forEach(function (b) { b.addEventListener('click', function () { document.documentElement.setAttribute('data-green', b.getAttribute('data-g')); try { localStorage.setItem('fu-green', b.getAttribute('data-g')); } catch (e) {} mark(); }); });
+    mark();
+  })();
 
 
   /* ---- the Today screen plays its story once it's in view, then rests ---- */

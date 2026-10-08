@@ -2059,3 +2059,15 @@ said to avoid) and **Apricot** (too close to the orange "needs you", so it blurr
 everything that is not a button (the "You" badge, the help icons, the follow-up card, the stream's replies, now a
 green that means "sent"). Light blocks are a deeper paper ("stone"), not a new hue. A faint paper grain over the
 whole page. Published: https://claude.ai/artifact/4nhihQ1jNDy8w5e97PgX4E v10. Not yet confirmed by the founder.
+
+## A-116 — Green stays the main colour; a good green; the others as light touches; the old-letter idea ^A-116
+
+**Approved direction:** 2026-10-08, founder: *"okay green is good make it more like good green not like the stresed
+one then you just removed all other colours keep them as minimal touch you know"*, *"and we should use old letter
+idea too"*, *"cant we use lime and stuff family colours of green and the one that feels the same direction we are
+aiming"*.
+**What:** green remains the main colour, but fresher and lighter than the dark forest (inferred: the near-black
+green read as heavy, "stressed"). The other colours come back only as light touches, preferably from the green
+family (soft lime for warmth, sage for calm blocks); Mint stays buttons only; orange stays a "your turn" dot. The
+old-letter idea is in: postmarks and a "Then and now" section.
+**Supersedes in part:** A-115's removal of the touches.

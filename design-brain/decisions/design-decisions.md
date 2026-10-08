@@ -9111,3 +9111,22 @@ the replies on Today with a "Calls to make" label.
 sidebar's Today number doesn't include calls yet. (4) A text needs a Twilio number for the team, set up by the founder,
 with its per-text cost and Canadian consent rules (a lawyer's quick read before texting at volume). (5) "Later" is a
 fixed three hours. (6) Fixed English words; a customer writing in another language gets an English text.
+
+## 2026-10-07 — A Facebook lead form says so (Lead Ads, first real test)
+
+The first Lead Ad test reached FollowUp two minutes after the leadgen webhook was switched on, and a read-only look at
+the review account (Claude in Chrome) found it read wrong: "Website form" on Today and in the conversation header while
+"Came from" said Facebook; "Why it may write" said "Messaged your page"; Meta's test placeholder became the name
+("Hi <test,") and sat behind the Call button as a phone number; "this morning" and "Oct 8" for 8:58 PM Oct 7 in New York.
+Founder: *"yes do it"* to the fix list.
+**What changed:** a Lead Ad's web conversation is named **"Facebook lead form"** (form icon, not the globe) on Today,
+the customer page, Customers, alerts, the weekly email and the "Based on…" line, through one helper
+(`src/lib/displayChannel.ts`); sending still reads the stored channel. "Why it may write": **"Filled in your Facebook
+form"**. Every form answer is kept as a readable line ("When are you looking to buy? 1–3 months"); a phone is kept only
+when it can be dialled, a second email or phone stays as an answer. Meta's placeholders make a **"Test Lead"** with
+"(test answer)" answers. The customer page's dates and "Based on" time use the business's time zone.
+**Weak, honestly:** (1) The score is still shown as a priority word, not a number; that is by design, but a Meta
+reviewer looking for "lead scored" sees "Medium priority". (2) A form with no custom questions gives the drafter
+nothing but "Submitted a Facebook lead form.", so the reply stays generic. (3) "FollowUp hasn't read a message from
+them yet" still shows for a form lead, because no language can be read from a form. (4) The weekly email has no form
+picture; a lead form row there has no icon.

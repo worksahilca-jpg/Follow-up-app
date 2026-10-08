@@ -88,6 +88,7 @@ const CHANNEL_NAME: Record<string, string> = {
   instagram: "Instagram",
   messenger: "Messenger",
   web: "Website form",
+  lead_form: "Facebook lead form",
 };
 
 const CHANNEL_LABEL: Record<string, string> = {
@@ -98,6 +99,7 @@ const CHANNEL_LABEL: Record<string, string> = {
   instagram: "Instagram",
   messenger: "Messenger",
   web: "your website form",
+  lead_form: "your Facebook lead form",
 };
 
 /**

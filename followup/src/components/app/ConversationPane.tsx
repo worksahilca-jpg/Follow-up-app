@@ -9,6 +9,7 @@ import ReplyCard from "./ReplyCard";
 import Thread from "./Thread";
 import { Initials, StatePill } from "./canvasBits";
 import { ChannelIcon, channelFromSource } from "./ChannelIcon";
+import { displayChannel } from "@/lib/displayChannel";
 import { ExternalLink } from "lucide-react";
 import { plainHoldReason } from "@/lib/holdReasons";
 
@@ -30,6 +31,7 @@ const CHANNEL: Record<string, string> = {
   instagram: "Instagram",
   messenger: "Messenger",
   web: "Website form",
+  lead_form: "Facebook lead form",
 };
 
 export default function ConversationPane({
@@ -47,7 +49,8 @@ export default function ConversationPane({
 }) {
   const first = lead.conversation[0];
   const lastIn = [...lead.conversation].reverse().find((m: Message) => m.direction === "inbound");
-  const channel = CHANNEL[(lastIn ?? first)?.channel ?? ""] ?? lead.source;
+  const channelKey = displayChannel((lastIn ?? first)?.channel, lead.source) ?? channelFromSource(lead.source);
+  const channel = CHANNEL[channelKey ?? ""] ?? lead.source;
   // A lead site that keeps the contact private: answered there (b018, A-075).
   const siteReply = siteReplyFor(lead);
   const basis = lead.suggestedMessage
@@ -59,14 +62,14 @@ export default function ConversationPane({
           body: m.body,
           sentAt: new Date(m.date),
           source: m.source ?? null,
-          channel: m.channel,
+          channel: displayChannel(m.channel, lead.source),
         })),
+        timeZone,
       })
     : null;
   const replyLanguage = lead.languageRead && lead.languageRead.language !== "en" ? languageName(lead.languageRead.language) : null;
   const since = first ? ago(first.date, now) : null;
   const meta = [channel, since ? `first message ${since}` : null].filter(Boolean).join(" · ");
-  const channelKey = (lastIn ?? first)?.channel ?? channelFromSource(lead.source);
 
   return (
     <div className="flex min-h-full flex-col">

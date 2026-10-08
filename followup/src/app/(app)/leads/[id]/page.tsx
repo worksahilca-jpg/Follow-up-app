@@ -34,7 +34,8 @@ import type { Lead, Message } from "@/lib/types";
 import { isWaitingOnCustomer } from "@/lib/waitingOn";
 import { plainHoldReason } from "@/lib/holdReasons";
 import CallBox from "@/components/app/CallBox";
-import { isCallablePhone } from "@/lib/callPlan";
+import { isCallablePhone, telHref } from "@/lib/callPlan";
+import { displayChannel } from "@/lib/displayChannel";
 
 export const dynamic = "force-dynamic";
 
@@ -47,13 +48,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   // "Based on" and the "In <language>" rewrite (A-043).
   // A lead site that keeps the contact private: answered there (b018, A-075).
   const siteReply = siteReplyFor(lead);
-  const basis = lead.suggestedMessage
-    ? describeBasis({
-        draft: lead.suggestedMessage,
-        leadFirstName: lead.name.split(" ")[0] ?? "",
-        messages: lead.conversation.map((m) => ({ direction: m.direction === "inbound" ? "inbound" : "outbound", body: m.body, sentAt: new Date(m.date), source: m.source ?? null, channel: m.channel })),
-      })
-    : null;
   const replyLanguage = lead.languageRead && lead.languageRead.language !== "en" ? languageName(lead.languageRead.language) : null;
 
   // The canvas conversation (App, Inbox, InboxAI, ThreadPhone boards):
@@ -67,6 +61,14 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       ])
     : [null, null];
   const timeZone = business?.timezone ?? "America/New_York";
+  const basis = lead.suggestedMessage
+    ? describeBasis({
+        draft: lead.suggestedMessage,
+        leadFirstName: lead.name.split(" ")[0] ?? "",
+        messages: lead.conversation.map((m) => ({ direction: m.direction === "inbound" ? "inbound" : "outbound", body: m.body, sentAt: new Date(m.date), source: m.source ?? null, channel: displayChannel(m.channel, lead.source) })),
+        timeZone,
+      })
+    : null;
   // The Call box (A-103): only on a team that calls customers, and only for a number someone can dial.
   const callable = Boolean(business?.teamCalls) && isCallablePhone(lead.phone) ? (lead.phone as string) : null;
   const calls = callable && ctx
@@ -82,7 +84,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     : null;
   const firstName = lead.name.split(" ")[0] ?? lead.name;
   const firstMessage = lead.conversation[0];
-  const channel = channelName(lastInbound(lead.conversation)?.channel ?? firstMessage?.channel ?? null, lead.source);
+  const channel = channelName(displayChannel(lastInbound(lead.conversation)?.channel ?? firstMessage?.channel, lead.source), lead.source);
   const now = new Date();
 
   return (
@@ -180,8 +182,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <WeTalkedButton leadId={lead.id} leadName={lead.name} talked={lead.automationStatus?.kind === "talked"} onSite={Boolean(siteReply)} />
           )}
           <CopyBookingLinkButton leadId={lead.id} />
-          {callable ? null : lead.phone && !isSocialLeadId(lead.phone) ? (
-            <a href={`tel:${lead.phone}`} className={PILL}>
+          {callable ? null : isCallablePhone(lead.phone) ? (
+            <a href={telHref(lead.phone)} className={PILL}>
               Call
             </a>
           ) : lead.email ? (
@@ -209,7 +211,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               <LeadTrustPanel part="did" source={lead.source} optedOutAt={lead.optedOutAt} auditTrail={auditTrail} />
             </div>
           </CollapsibleSection>
-          <CollapsibleSection row title="Follow-up plan" status={lead.nextFollowUp ? `Next ${formatDate(lead.nextFollowUp)}` : "None"}>
+          <CollapsibleSection row title="Follow-up plan" status={lead.nextFollowUp ? `Next ${formatDate(lead.nextFollowUp, timeZone)}` : "None"}>
             <LeadWorkflowEnrollment leadId={lead.id} />
           </CollapsibleSection>
           <CollapsibleSection row title="Stage" status={stageLabel(lead.stage)}>
@@ -237,7 +239,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               </div>
               <p className="flex justify-between gap-3">
                 <span className="text-ink-faint">Last contacted</span>
-                <span>{formatDate(lead.lastContacted)}</span>
+                <span>{formatDate(lead.lastContacted, timeZone)}</span>
               </p>
               <p className="leading-relaxed text-ink-soft">{lead.scoreReason || "FollowUp hasn't reviewed this customer yet."}</p>
               {lead.notes && <p className="leading-relaxed text-ink-soft">{lead.notes}</p>}
@@ -325,6 +327,7 @@ function channelName(channel: string | null, source: string): string {
     instagram: "Instagram",
     messenger: "Messenger",
     web: "Website form",
+    lead_form: "Facebook lead form",
   };
   return (channel && names[channel]) || source || "";
 }

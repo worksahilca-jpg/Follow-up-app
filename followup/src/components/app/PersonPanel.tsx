@@ -8,6 +8,7 @@ import SiteReplyCard from "@/components/app/SiteReplyCard";
 import { siteReplyFor } from "@/lib/siteReply";
 import ReplyCard from "./ReplyCard";
 import { ChannelIcon, channelFromSource } from "./ChannelIcon";
+import { displayChannel } from "@/lib/displayChannel";
 import { Eyebrow, Initials, StatePill, waitingFor, type StateKey } from "./canvasBits";
 import { plainHoldReason } from "@/lib/holdReasons";
 
@@ -25,6 +26,7 @@ const CHANNEL: Record<string, string> = {
   instagram: "Instagram",
   messenger: "Messenger",
   web: "Website form",
+  lead_form: "Facebook lead form",
 };
 
 function lastInbound(messages: Message[]): Message | undefined {
@@ -61,7 +63,7 @@ export default function PersonPanel({
 }) {
   const first = lead.conversation[0];
   const lastIn = lastInbound(lead.conversation);
-  const channelKey = (lastIn ?? first)?.channel ?? channelFromSource(lead.source);
+  const channelKey = displayChannel((lastIn ?? first)?.channel, lead.source) ?? channelFromSource(lead.source);
   const channel = CHANNEL[channelKey ?? ""] ?? lead.source;
   // A lead site that keeps the contact private: answered there (b018, A-075).
   const siteReply = siteReplyFor(lead);
@@ -74,8 +76,9 @@ export default function PersonPanel({
           body: m.body,
           sentAt: new Date(m.date),
           source: m.source ?? null,
-          channel: m.channel,
+          channel: displayChannel(m.channel, lead.source),
         })),
+        timeZone,
       })
     : null;
   const replyLanguage = lead.languageRead && lead.languageRead.language !== "en" ? languageName(lead.languageRead.language) : null;

@@ -38,6 +38,7 @@ const CHANNEL_NAME: Record<string, string> = {
   instagram: "Instagram",
   messenger: "Messenger",
   web: "your website form",
+  lead_form: "your Facebook lead form",
   call: "a call",
 };
 

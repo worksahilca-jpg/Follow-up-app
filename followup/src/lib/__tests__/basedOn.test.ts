@@ -49,3 +49,16 @@ describe("describeBasis", () => {
     expect(describeBasis({ draft: "Hi!", leadFirstName: "Ana", messages: [], now, timeZone: tz })).toBeNull();
   });
 });
+
+describe("describeBasis, a Facebook lead form at night", () => {
+  // The founder's first Lead Ad test (2026-10-07): 8:58 PM in New York is
+  // 00:58 UTC the next day, and the line said "this morning".
+  const evening = new Date("2026-10-08T00:58:00Z");
+  const msgs = [{ direction: "inbound" as const, body: "Submitted a Facebook lead form.", sentAt: evening, channel: "lead_form" }];
+
+  it("names the form, at the business's own time of day", () => {
+    expect(describeBasis({ draft: "Hi Test,", leadFirstName: "Test", messages: msgs, now: new Date("2026-10-08T01:10:00Z"), timeZone: "America/New_York" })).toBe(
+      "Based on Test's message on your Facebook lead form this evening."
+    );
+  });
+});

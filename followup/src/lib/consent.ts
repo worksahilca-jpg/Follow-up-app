@@ -26,6 +26,16 @@ export interface ConsentBasis {
 
 const RULES: Array<{ test: RegExp; basis: ConsentBasis }> = [
   {
+    // Before the social rule below: a Lead Ad's source names Facebook, but
+    // the person filled in a form, they didn't message the Page (founder's
+    // first Lead Ad test, 2026-10-07).
+    test: /facebook lead ad/i,
+    basis: {
+      label: "Filled in your Facebook form",
+      explanation: "They filled in your Facebook lead form and gave their contact details expecting a reply.",
+    },
+  },
+  {
     test: /website form|widget|webhook|zapier|make\.com/i,
     basis: {
       label: "Submitted a form",

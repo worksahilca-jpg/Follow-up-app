@@ -261,10 +261,35 @@ export interface LeadgenFields {
 }
 
 /**
+ * Meta's own Lead Ads Testing Tool fills every field with a placeholder,
+ * "<test lead: dummy data for full_name>". The founder's first test showed
+ * it as the customer's name ("Hi <test,"), and as a phone number behind the
+ * Call button (2026-10-07). A placeholder is never a real answer.
+ */
+const META_TEST_PLACEHOLDER = /^<test lead: dummy data for [^>]*>$/i;
+
+/** What a test lead is called, so it reads as one and the greeting stays plain ("Hi Test,"). */
+export const META_TEST_LEAD_NAME = "Test Lead";
+
+/** "when_are_you_looking_to_buy?" → "When are you looking to buy?": Meta keys a custom question by its words. */
+function questionLabel(key: string): string {
+  const words = key.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : "Answer";
+}
+
+/** A number someone could dial: 7 to 15 digits, as callPlan's isCallablePhone counts them. */
+function looksLikePhone(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  return digits.length >= 7 && digits.length <= 15 && !/[a-z]/i.test(value.replace(/ext\.?/i, ""));
+}
+
+/**
  * Meta returns a Lead Ad submission as [{ name, values: [] }]. Field names
  * are whatever the advertiser called them, so this matches loosely:
  * anything that looks like an email/phone/name is lifted out, the rest is
- * kept verbatim as the lead's "message" so nothing they typed is lost.
+ * kept as the lead's "message" so nothing they typed is lost. A second
+ * email or phone, or a phone that isn't a number, stays in the message
+ * instead of being dropped or put behind the Call button.
  */
 export function parseLeadgenFields(fieldData: Array<{ name?: string; values?: string[] }>): LeadgenFields {
   let first = "";
@@ -272,19 +297,33 @@ export function parseLeadgenFields(fieldData: Array<{ name?: string; values?: st
   let full = "";
   let email: string | null = null;
   let phone: string | null = null;
+  let isTest = false;
   const rest: string[] = [];
   for (const f of fieldData) {
     const key = (f.name ?? "").toLowerCase();
-    const value = (f.values ?? []).filter(Boolean).join(", ").trim();
+    let value = (f.values ?? []).filter(Boolean).join(", ").trim();
     if (!value) continue;
-    if (key === "email" || key.includes("email")) email = email ?? value.toLowerCase();
-    else if (key === "phone_number" || key.includes("phone")) phone = phone ?? value;
-    else if (key === "full_name" || key === "name") full = full || value;
+    if (META_TEST_PLACEHOLDER.test(value)) {
+      isTest = true;
+      // Name, phone and email have no test value worth keeping; a question's
+      // answer still shows, plainly marked, so the form's shape is visible.
+      if (key.includes("email") || key.includes("phone") || ["full_name", "name", "first_name", "last_name"].includes(key)) continue;
+      value = "(test answer)";
+    }
+    const label = questionLabel(f.name ?? "");
+    const line = /[?:]$/.test(label) ? `${label} ${value}` : `${label}: ${value}`;
+    if (key.includes("email")) {
+      if (!email && value.includes("@")) email = value.toLowerCase();
+      else rest.push(line);
+    } else if (key.includes("phone")) {
+      if (!phone && looksLikePhone(value)) phone = value;
+      else rest.push(line);
+    } else if (key === "full_name" || key === "name") full = full || value;
     else if (key === "first_name") first = value;
     else if (key === "last_name") last = value;
-    else rest.push(`${f.name}: ${value}`);
+    else rest.push(line);
   }
-  const name = (full || `${first} ${last}`.trim() || email || phone || "Facebook lead").trim();
+  const name = (full || `${first} ${last}`.trim() || (isTest ? META_TEST_LEAD_NAME : "") || email || phone || "Facebook lead").trim();
   return { name, email, phone, details: rest.join("\n") };
 }
 

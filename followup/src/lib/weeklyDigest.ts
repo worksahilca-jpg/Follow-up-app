@@ -50,6 +50,8 @@ const CHANNEL_NAME: Record<string, string> = {
   whatsapp: "WhatsApp",
   instagram: "Instagram",
   messenger: "Messenger",
+  web: "Website form",
+  lead_form: "Facebook lead form",
 };
 
 // The icon before each channel, as the app's ChannelIcon picks it.

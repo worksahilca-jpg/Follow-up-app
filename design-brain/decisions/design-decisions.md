@@ -10591,3 +10591,28 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
   - The room is close to R-073's overlapping pages.
   - Snapping can feel like the page moving itself (A-155 asks for the reader's pace).
 - **Waiting on:** his reaction.
+
+## 2026-10-09 — Preview 5: Nadia's week (our own device, after R-097)
+
+- **Feedback:** *"going better… it should not say that we copied Wispr… be more creative from our side."*
+- **Kept:** one customer, start to finish, and the order. Lost, then answered, then the four approved steps, then
+  Today.
+- **New device, from FollowUp's own world:** time. The left side is a large serif clock, a day label and a Tue–Sat
+  week strip; the scroll moves the clock.
+  - **The wait:** 7:02 AM Tuesday runs to 12:19 PM Wednesday and turns red. Her "Thanks, we found another agent"
+    arrives, and the lead is marked Lost.
+  - **The rewind:** the clock runs back to 7:02 as the lost messages blur away.
+  - **With FollowUp:** the reply comes at 7:11 AM, a natural few minutes later (A-187).
+  - **Then the four steps happen inside her real conversation:**
+    1. Tue 7:26: her answer, with the facts highlighted in lime in her own words, and FollowUp's "What she needs"
+       card.
+    2. Thu 6:40: her weekend question, and the reply using your showing times.
+    3. Thu 6:42: booked and handed to you.
+    4. Sat 11:15: "Did it close?" turns into "Closed · confirmed by you".
+- **The right side** is a light conversation window: a product picture, the only frame (R-096). Her bubbles are grey,
+  yours are green, and FollowUp's cards sit inside the thread.
+- **Not used:** a colour room, a photo card, the left list with right text, snapping (reader's pace, A-155).
+- **Phone:** the clock row and caption sit on top, and the conversation fills the rest.
+- **Weak spots:**
+  - During the wait, the window is mostly empty. That is meant (silence), but it may read as unfinished.
+  - The clock running fast could feel busy. Reduced motion turns off every transition.

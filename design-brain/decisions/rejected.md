@@ -1241,3 +1241,24 @@ in tiles. Each one had a fill, a radius and a shadow.
 lines. A frame is kept only for things that are pictures of the product: the app window, message cards, the Settings
 sheet and the How it works stage. A colour room has no edges: the whole page changes colour behind the content, so it is
 never a card. Same family as R-094: replacing the photo box with a coloured box is still a box.
+
+## R-097 — Preview 4 read as a copy of Wispr ^R-097
+
+**Rejected:** 2026-10-09, founder, on preview 4 (A-203): *"Going better but we don't have to copy everything, it
+should not say that we copied Wispr, so we have to be more creative from our side."*
+
+The direction stayed: one customer, start to finish. What gave the copy away was Wispr's signature moves, taken
+whole:
+- a deep-green room that lifts away with a rounded bottom edge;
+- one photo card held in the centre;
+- a step list on the left and text on the right;
+- each step snapping into place.
+
+**Principle (same as R-092, now broader):** a reference gives a *reason* ("one thing your eye can hold while the page
+changes"), never its *form*. If a visitor who knows the reference would recognise the move, it is wrong (CLAUDE.md,
+rule 6). Build the device from FollowUp's own world: time, the conversation, the day and week, the Today list.
+
+**Also wrong in preview 4, caught in the same pass:**
+- "She hears back in a minute" and a 7:03 reply broke A-187 (*"'Reply in a minute'… sounds like AI"*; it's the
+  right moment, a natural few minutes later).
+- Preview 5 uses 7:11.

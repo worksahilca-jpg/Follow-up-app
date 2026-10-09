@@ -3196,6 +3196,8 @@ The boxes are rejected ([[rejected#^R-096]]). Building it into the home page wai
 
 ## A-203 — One customer's message holds the middle of the page (direction, preview 4) ^A-203
 
+*Form SUPERSEDED (2026-10-09) by [[rejected#^R-097]] and the preview 5 entry in design-decisions: same direction (one customer, start to finish), told with our own device, a clock the scroll moves and her real conversation.*
+
 **Approved direction:** 2026-10-09, founder, after the Wispr scroll read: *"yes build it with nadia show me"*. This
 approves the direction and the choice of Nadia; how it looks waits for his reaction to the preview.
 

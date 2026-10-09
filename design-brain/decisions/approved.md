@@ -3193,3 +3193,37 @@ reaction is still to come.
 11. the footer
 
 The boxes are rejected ([[rejected#^R-096]]). Building it into the home page waits for his yes.
+
+## A-203 — One customer's message holds the middle of the page (direction, preview 4) ^A-203
+
+**Approved direction:** 2026-10-09, founder, after the Wispr scroll read: *"yes build it with nadia show me"*. This
+approves the direction and the choice of Nadia; how it looks waits for his reaction to the preview.
+
+**The chapter, built in the preview** (claude.ai/artifact/QFyv7Uq2XnexzmaLAoDEn8, version 5):
+- Nadia's message sits in one card that stays still in the middle of the screen. The page changes around it.
+- **On a deep-green room**, "Every hour you wait, they cool off.":
+  - As you scroll, the wait grows: 5 minutes, 1 hour, 4 hours, a whole day.
+  - The bar drains, then turns red.
+  - The next day she writes "Thanks, we found another agent" and is marked Lost.
+  - The Harvard Business Review line sits under the card.
+- **Same room**, "She hears back in a minute.":
+  - The card goes back to 7:02, and the reply arrives at 7:03 ("you tapped Send").
+  - Chips say it checks in on day 3 and day 7, and stops when she answers.
+- **The hand-over:** the room lifts away, and its bottom edge rounds to 80 px. "Four steps, while you're busy." comes up
+  from below, behind the card.
+- **The four approved steps** play inside the same card, now all about Nadia:
+  1. Qualify.
+  2. Answer: her weekend question, Saturday 10 to 2, "Would 10:30 work?".
+  3. Booked, Saturday 10:30.
+  4. Close.
+  - The step list sits on the left, the step's text on the right.
+  - Each step snaps into place.
+- The ticker and Today follow, and Today already shows Nadia.
+
+**What this replaced in the preview:**
+- the race and the lime check-in band (both folded into the room);
+- the separate How it works section;
+- Mateo, who became Nadia.
+
+**Watch for:** the lifting room is close to the overlapping pages of R-073. If he says it feels like that, change the
+lift to a plain colour fade behind the card.

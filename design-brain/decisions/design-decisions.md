@@ -10572,3 +10572,22 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
   - The page turns deep green while the four steps of How it works are pinned. It turns back before Your control comes
     in. The menu bar changes with the page.
 - **Waiting on:** his reaction, and the notes from his recording.
+
+## 2026-10-09 — Preview 4: one customer, start to finish (A-203)
+
+- **Built** from the Wispr scroll read: Nadia's message card holds the middle of the page for about six screens.
+  - Wait, then lost, then answered at 7:03, all on a deep-green room.
+  - The room lifts away and "Four steps" comes up behind the card.
+  - The four approved step pictures play inside the same card.
+- **How it's built:** sticky stage, 700vh track, the room lifted by scroll. The step pictures are clones of the approved
+  How it works pictures, with their CSS re-scoped. Snapping happens only between the four steps, and not with reduced
+  motion.
+- **On phones** the same stage works: the card is 88vw wide, the step list is hidden, and the step text sits under the
+  card.
+- **Content change:** Mateo in step 2 became Nadia ("Could we see the house on Maple Street this weekend?"), so one
+  customer runs through the whole page.
+- **Weak spots, honestly:**
+  - The menu bar stays light over the deep-green room.
+  - The room is close to R-073's overlapping pages.
+  - Snapping can feel like the page moving itself (A-155 asks for the reader's pace).
+- **Waiting on:** his reaction.

@@ -2517,3 +2517,24 @@ nearer message comes into focus; a note pops under it, amber "Gone quiet · $X a
 booked · $X saved"; a small counter under the headline adds money and time ("… and 1 h 15 min of your time", 15 min a
 follow-up), marked "example". Example job values only; never a promise of earnings.
 
+## A-164 — The problem first, with the newest checked data (v66) ^A-164
+
+**Direction:** 2026-10-09, founder (thread e086a25c): *"use the latest data as much as you can, or don't mention it was
+from 2011… State the actual problem… make [lost / saved] smoother, more accurate, as minimal as we can."* Under the
+headline: "Most leads aren't lost to a no. They're lost to no reply." then "63% of businesses never answered a new
+enquiry. The rest took over a day." (RevenueHero, a 2024 test of 1,000 companies; replies averaged 1 day 5 hours). The
+race uses 29 hours and 63%. Older studies (HBR's 1.25 million leads, the MIT / InsideSales study) keep their names, not
+their years. The pop: the message eases into focus and one chip cross-fades from red "No follow-up · $X lost" to green
+"✓ Followed up · $X saved"; each message carries a believable value for its kind of job (a realtor's commission
+$8,500, a trade job $2,400, a table or appointment $180, a shop order $140, otherwise $650). **Caveat to remember:**
+RevenueHero tested B2B companies' demo-request forms; the page says "companies", not "small businesses".
+
+## A-165 — Languages drift by; quick questions in English for three trades (v67) ^A-165
+
+**Direction:** 2026-10-09, founder (threads c79e407b, 56d45547): *"Why are we just showing three languages? Let's keep
+moving the languages from left to right"* and *"all three [quick questions] should be in English only, but targeting
+different niches."* "Ask in your language" beside a slow, edge-faded strip of 24 languages in their own scripts,
+drifting left to right (70 s loop; still for reduced motion). Supersedes A-130's "English, Punjabi or Hindi" line.
+Chips: a realtor ("Is the 2-bed still available?"), a car detailer ("How much for a car detail?"), a plumber ("Can you
+fix a leaking tap today?").
+

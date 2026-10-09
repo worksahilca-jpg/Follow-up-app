@@ -10873,3 +10873,23 @@ hard cut to a dark footer both read as "a different website".
 
 **Open:** which section the body-anchored "add motion here" meant was inferred (Your control) and asked.
 
+## 2026-10-09 — Preview version 25: numbers in glass; the footer on a photo
+
+**Founder:**
+- on the numbers bar: *"little darkish gradient kind of background… pop these numbers up in transparent bubbles,
+  like Apple or iOS or Mac style"*. This likely explains the earlier "this background is not suiting our theme": the
+  white bar.
+- on the footer: *"this dark-coloured theme is looking very odd. Can we add a background image here too, or maybe
+  lines that Wispr uses… strips or our trademark."*
+
+**Built:**
+- **Numbers bar:** a dark panel (`#1D2622` → `#0F1513` → `#18221D`) with two soft light pools (lime at the top left,
+  white at the bottom right).
+  - Each number sits in a frosted-glass bubble: 7% white, 16 px blur, a 1 px inner edge, 16 px corners and a 10 px gap.
+  - Numbers are white; "won, by you" is lime `#C2F09A`.
+  - The film's day pill is white on dark.
+  - This is his explicit ask: one glass panel, not glass everywhere (CLAUDE.md "no excessive glassmorphism").
+- **Footer:** the closing panel's approved blurred city photo, under a dark wash (55% → 80%), inside the rounded panel.
+  - Not Wispr's lines (R-097) and not a giant wordmark (R-032, R-092).
+  - Offered: a leaf-mark pattern if he prefers.
+

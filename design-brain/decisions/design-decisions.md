@@ -10120,3 +10120,25 @@ invent a slot ("Saturday at 10") as an example.
 
 Public Sans 300–700 and IBM Plex Mono 400/500 embedded for text and labels; Tinos kept for headings. The "From" bar now
 names every channel; Outlook on a blue tile; SMS tile with "SMS" in the bubble.
+
+## 2026-10-09 — Home v34–v37: sections that explain themselves, a truth pass, varied people, a tidy close
+
+From ~20 comments. **Cold leads:** a plain question ("How fast do you reply?") with five buttons instead of a
+self-playing slider; one plain sentence per answer; opens on "1 day"; a different, specific customer each visit
+(Marcus the plumber, Lena's salon, Ella's car detail, Sam's dental clinic, Priya the realtor) with "Another example";
+the card is frosted green glass. **Why FollowUp:** one scene plays the night (11:04 PM Daniel writes on Messenger,
+11:05 PM the reply is written, the photo turns to morning, 7:30 AM Send). **How it works:** three cards side by side,
+each a small loop (inbox sorted, reply typed with a fact used, price left blank then Send), one screen tall.
+**Today:** pins and steps removed ("covered by our dashboard"). **The week:** Jordan's kitchen quote for a contractor;
+future days hidden, each day appears in order, loops. **Control:** the data promise is its own lit panel; the main card
+states the two real modes (Automatic: answers and follows up on its own, prices/dates/tense wait; Assisted: everything
+waits). **What's new:** no defensive wording ("It learns your business", "What it learns stays yours"). **Close:** a
+contained photo card, the eight logos in glass circles around "Every one answered", one ripple. **Footer:** brand + three
+short columns + base line; no logos; no "built for" line. **Demo track:** one side card each side, two lines, no
+channel names or times; the middle card sits clear of the From bar. **Try it:** fixed replies rewritten and tested on 28
+questions (keeps the customer's words, answers the exact question, blanks what only the owner knows, passes price
+negotiation to the owner).
+**Truth pass:** every claim checked against the code and the app's own pages. One over-correction made and undone the
+same hour: the app's onboarding offers Automatic (recommended), so "followed up automatically" is true.
+**Weak spots:** the page is ~1.3 MB (embedded photos repeated per section; the real site should serve them as files);
+the colourful-logos question is open with him (recommended: colour only in the From bar).

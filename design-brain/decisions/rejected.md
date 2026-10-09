@@ -972,3 +972,15 @@ plays, photo cards), and the words shrink to labels. A paragraph or a fact list 
 **Rejected:** 2026-10-09, founder: *"I don't know why this whole page is too big."* Headings, spacing and the scroll
 length were too large for a laptop. v32 brought the section headings to at most 60px, the hero to 82px, and cut the
 empty space. **Inferred:** size, not length alone — to confirm if it still feels big.
+
+## R-062 — The same person and trade in every section ^R-062
+
+**Rejected:** 2026-10-09, founder: *"see same name and same industry"*, and on the cold-lead card: *"be more specific,
+we should be using different examples every time."* **Instead:** each section has its own person and trade (mixed
+examples, as PRODUCT_DIRECTION already asks), and repeating examples rotate.
+
+## R-063 — Defensive wording about data and AI ^R-063
+
+**Rejected:** 2026-10-09, founder, on "It gets better every week": *"This is sounding like I'm defending."* Say what it
+does, positively ("It learns your business", "What it learns stays yours"); the plain data promises live once, in the
+data panel.

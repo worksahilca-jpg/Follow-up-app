@@ -10281,3 +10281,20 @@ Design points 4–14 are built on the draft ([[approved#^A-186]]). Still to do:
 
 **How:** the old scroll script still looked for `#statement`; it now gets a detached stand-in instead of crashing.
 
+## 2026-10-09 — Home v96–v100: the wave, shorter sections, data band, no price
+
+- **Hero.** Junk is skipped and leads move through to "Closed by you". Every 15 s a wave of 12 messages from up to 8
+  channels shows FollowUp handling a rush: junk drops out, 5 leads come out tagged "Caught", and the strip reports the
+  wave for a few seconds.
+- **Shorter page:**
+  - the gap section is one highlighted line and four stops;
+  - How it works defaults to a 2 × 2 grid;
+  - Today says "Nothing to learn. Connect and it works."
+- **Your control.** Readable words on a frosted panel. The promises are a list in the left column. The data band runs
+  full width with sliding points.
+- **The "Start free" row** became a slow band of what FollowUp does (R-047 exception).
+- **The price line** is removed until he decides.
+- **Two draft compare rows** are still on the page (try box, How it works format). Remove the losers once he picks.
+- **Why:** his comments asked for less reading, the main point highlighted, and proof that FollowUp handles volume
+  accurately. Details: A-188, R-089.
+

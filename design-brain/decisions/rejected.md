@@ -885,6 +885,10 @@ reviews that we are getting … Let's create something else so that it justifies
 **Principle (his words):** a moving band reads as social proof (logos, reviews), so it is kept for that and not used
 to explain the product. The band waits for real customers and real reviews: no invented logos or quotes (A-023).
 
+> **EXCEPTION (2026-10-09):** the founder asked for a moving band of what FollowUp does in place of the "Start free" row
+> after the follow-ups (thread b589f2df, A-188). That one band is allowed. The rest of this rule stands: no other
+> explanatory bands, and reviews or logos only when real.
+
 ## R-048 — A photo that changes with each customer or visitor ^R-048
 
 **Rejected:** 2026-10-08, founder, on the proposal to change the photo with each example customer: *"leave this
@@ -1165,4 +1169,13 @@ signature or quote unless he asks.
 **Rejected:** 2026-10-09, founder: *"I don't know why you're saying 'in a test of 1,300+ law firms…' Let's just show them
 later on. Let's just remove that part."* Any study figure in the first screen. Facts live further down (the gap
 picture's one sentence).
+
+## R-089 — The try-it box as one white card (v93–v95) ^R-089
+
+**Rejected:** 2026-10-09, founder (thread da6c7a35): *"This got too bad, bro. Earlier, it was good."*
+**What it was:** a serif "Try it yourself" title, a large field with the green edge, light chips and the languages,
+all in one white card across the demo's edge.
+**Principle (inferred):** the older half-and-half box already worked. Restyling a working, approved element into a
+bigger standalone card made it louder without making it clearer. Offer alternatives side by side and let him choose;
+never replace an approved element outright.
 

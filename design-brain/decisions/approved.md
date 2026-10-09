@@ -2798,6 +2798,9 @@ Built on the home draft:
 
 ## A-187 — Confused messages in, tidy leads out; right time, not fast; qualify first, close last (v93–v95) ^A-187
 
+> **PARTLY SUPERSEDED (2026-10-09)** by A-188: the white try-it card was rejected (R-089); the right-hand cards now
+> move through Qualified → Hot · to you → Booked → Closed by you.
+
 **Direction:** 2026-10-09, founder, in artifact comments.
 - Thread 1a2a32f2: *"show the confused messages… and FollowUp catching and converting them into leads… like Wispr Flow…
   there, but not as catchy stuff"*, *"'Reply in a minute' is not what we are aiming for… it will sound like AI"*, and
@@ -2837,4 +2840,46 @@ Built on the home draft:
 
 **Build list:** what the page now promises but the app doesn't fully do is in
 `followup/research/product/website-promises-to-build.md`.
+
+## A-188 — Home v96–v100: junk skipped, the wave, shorter sections, data band ^A-188
+
+**Direction:** 2026-10-09, founder, in artifact comments (published as Version 83).
+
+**Built:**
+- **Hero flow (thread 435186c5).** Real enquiries and junk drift in together. Junk (Uber, newsletter, promo, bank,
+  LinkedIn) greys out, is tagged "Skipped" and drops away. Only leads come out on the right: Qualified → Hot · to you →
+  Booked → Closed by you. The strip's money reads "saved by FollowUp".
+- **The wave (thread dd51f5f1).** *"show that that wave kind of thing is coming… a lot of messages and a lot of
+  sources… it will catch that accurately."*
+  - Every 15 s, 12 messages from up to 8 channels arrive in two ranks with a curved front.
+  - The 7 junk ones drop out of the band; the 5 leads reach FollowUp and come out on the right as cards tagged "Caught".
+  - The background flow dims while a wave passes.
+  - For about 5 s the strip label reads "Just now: 12 messages from 7 places · 5 leads caught · 7 skipped", and the
+    counters add the five.
+  - Off on phones and with reduced motion.
+- **Try-it box (thread da6c7a35).** The older box is the default again. A draft "Compare" row offers A (phone-style
+  chat) and B (big AI-style prompt). Waiting for his pick.
+- **The gap section (thread 386bbd9f).** *"be to the point… highlight the main thing."* One line, with the main phrase
+  marked: "Reply within the hour and you're **nearly 7× more likely** to reach them than an hour later." Then four
+  stops: 7:02 they ask; 7:11 FollowUp replies; the gap where leads go cold; next day, "Already got someone." Source on
+  one small line.
+- **Ticker (thread b589f2df).** The "Start free" row after the follow-ups became a slow band of what FollowUp does (8
+  items, 60 s loop). This is an explicit exception to R-047, asked for by the founder.
+- **Today section (thread e55b8164).** "Nothing to learn. *Connect and it works.*" Three steps: Connect your inbox →
+  It starts working → Check one list.
+- **How it works (thread febb7d49).** *"too much scrolling."* Three formats behind a draft "Format" row:
+  - Grid (default): 2 × 2, picture above the words, about half the height.
+  - Tabs: the index switches one step and advances on its own until clicked.
+  - Original.
+  - Waiting for his pick; recommended Grid.
+- **Your control:**
+  - Thread 85daca2a: the words on the photo card sit on a dark frosted panel.
+  - Thread 173b4fee: the promises left the gap between two photo cards and became a hairline list under "You stay in
+    charge"; the photo card grows to the same height.
+- **Your data (thread 053e8709).** A full-width band, same height. "Your data stays yours." is large on the left; the
+  four points slide left to right (pause on hover); the "How we protect your data" link stays.
+- **Price (thread aa04feb7).** *"Remove that price factor for now."* No price anywhere on the page; the closing card
+  keeps "Free while in beta · No card needed".
+
+**Open:** try box (Older / A / B), How it works format (Grid / Tabs / Original).
 

@@ -2597,3 +2597,13 @@ pill made bigger (58 px, 18 px type, a thin light ring on the dark card). It fli
 view and back up into the bar when you scroll away (up or past); the bar's button is hidden only while the big one is on
 screen. "Connect Gmail" moves out of the button; the line under it still says how to start.
 
+## A-172 — The money moves into the strip; text stays readable (v74) ^A-172
+
+**Direction:** 2026-10-09, founder (thread a6ab8b71, on the strip): *"This is good. Keep it smoother and slow… connect it
+with the background that is running: we saved, this will catch those dollars… if we lost something, how to present
+that… add something behind the text so it is readable."* One message every ~7.6 s. Red moment: "No follow-up · $X lost"
+and a small red "−$X" slips down and fades. Green moment: "✓ Followed up · $X saved" and a green "+$X" flies from the
+message into the strip's saved figure, which then counts up (1.3 s). The lines under the headline sit on a soft frosted
+panel; the headline and the try-it lines carry a halo in the page's own colour. **Principle:** a number that changes
+should visibly come from somewhere on the page.
+

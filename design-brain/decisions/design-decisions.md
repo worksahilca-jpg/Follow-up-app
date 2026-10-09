@@ -10829,3 +10829,26 @@ seen FollowUp; name the action ("quoting", "following up"), not the setting.
   "Never pushy: no more reminders once they answer". **Rule:** state the benefit, then the mechanism; if the founder
   has to ask, a visitor won't.
 
+## 2026-10-09 — Preview version 21: Two endings, calm; the footer grows out of the page
+
+**Founder:**
+- on Two endings: *"make it more aesthetic"*. This also answers thread 0094b8f6, *"feels off the page but the
+  information is good"*;
+- on the footer: *"add a gradient here, the last page looks way odd, it feels like I'm landing on a different
+  website… make it feel connected"*.
+
+**Built:**
+- **Two endings** became two hairline rows, with no boxes or icon circles. The reply time leads in big display type:
+  - "14 h", red, "with no reply": Lost by tomorrow. She booked with the agent who answered first.
+  - "9 min", green, "to the first reply": Booked by Thursday. A viewing on Saturday at 10:30, handed to you.
+  - Colour sits only on the number and its label; the outcome line is ink.
+  - "9 min" grows 6% when the chat reaches Booked.
+  - Supersedes A-205's tinted blocks; the fear-versus-relief content stays.
+- **Footer:** a tonal fade, page ground → soft green → `#2C5A45` → the footer's `#0B1510`, over about 270 px in the gap
+  below the close. Footer content starts below the fade.
+  - It is a fade within one hue family, for continuity; not a decorative gradient (CLAUDE.md "no cheap gradients"
+    respected).
+
+**Principle (founder, inferred, marked inferred):** sections must look like one family. Alert-style tinted boxes and a
+hard cut to a dark footer both read as "a different website".
+

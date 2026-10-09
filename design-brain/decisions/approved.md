@@ -3251,6 +3251,8 @@ again.
 
 ## A-205 — "Two endings": fear in red, relief in green (preview v13) ^A-205
 
+*SUPERSEDED in form (2026-10-09, preview v21): the tinted red/green blocks read as alert banners ("feels off the page", "make it more aesthetic"). The content stays, now set as two hairline rows led by the reply time (14 h vs 9 min). See design-decisions 2026-10-09 v21.*
+
 **Asked:** 2026-10-09, founder (thread 7587cebb): *"this part should be highlighted, they should be scared without
 follow-up, and with FollowUp they should feel yes, we help them close more or book more leads."*
 **Built:** two full-width blocks under "Two endings.":

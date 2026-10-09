@@ -1230,3 +1230,14 @@ Every message card got a dark photo panel with dark text on it. **Fix:** that ru
 for future sessions:** prefix new class names per version or variant. Check every screen that shows messages after a
 CSS change, not just the section you edited.
 
+
+## R-096 — Boxes and containers everywhere (new-order preview 1) ^R-096
+
+**Rejected:** 2026-10-09, founder, on the new-order preview: *"this also looks good but too much boxes and stuff
+everywhere."* The order was liked ([[approved#^A-202]]). The problem was the way each section was held: the race sat in a
+white card, the check-ins in a lime card, Your control in a deep-green card, Your data in a quiet card, It gets better
+in tiles. Each one had a fill, a radius and a shadow.
+**Principle (inferred, not yet confirmed by him):** content sits straight on the page, separated by space and thin
+lines. A frame is kept only for things that are pictures of the product: the app window, message cards, the Settings
+sheet and the How it works stage. A colour room has no edges: the whole page changes colour behind the content, so it is
+never a card. Same family as R-094: replacing the photo box with a coloured box is still a box.

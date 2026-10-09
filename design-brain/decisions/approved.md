@@ -3175,3 +3175,21 @@ reaction is still to come.
 
 **Supersedes** the v119 picks in A-198 (already reverted).
 
+
+## A-202 — The new order of the home page (preview, not yet built) ^A-202
+
+**Approved in part:** 2026-10-09, founder, on the new-order preview (claude.ai/artifact/QFyv7Uq2XnexzmaLAoDEn8):
+*"this also looks good but too much boxes."* What he liked is the order:
+1. hero
+2. try it
+3. Leads go cold, ending in the check-ins
+4. Today
+5. How it works
+6. Your control
+7. Your data
+8. It gets better
+9. a new Questions section (5 plain answers)
+10. the close
+11. the footer
+
+The boxes are rejected ([[rejected#^R-096]]). Building it into the home page waits for his yes.

@@ -10545,3 +10545,30 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
   - The close and the footer are unchanged.
 - **Waiting on:** his yes to build it into the home page, or his changes.
 
+
+## 2026-10-09 — Fewer boxes, then connected the way Wispr connects (previews 2 and 3)
+
+- **Preview 2, after "too much boxes" (R-096):** the race and the check-ins sit straight on the page. Your control drops
+  its deep-green box, and only the Settings sheet stays framed. Your data is plain rows with thin lines. It gets better
+  goes back to the open format. Frames kept: the try-it stage, the How it works stage, the Today window, message cards,
+  the close.
+- **Then he said:** *"look at Wispr, how they designed their page connecting with each other"*. He sent a screen
+  recording of Wispr's whole page with *"observe deeply"*.
+- **What Wispr does, from the teardown doc in his Drive:**
+  1. The page colour changes behind the content. It goes green to cream, with no edge.
+  2. One object carries you across. The same photo card travels from the green section into the next.
+  3. One story is told the whole way: said, cleaned, sent.
+  4. The headline stays while one thing changes per scroll step.
+  5. The close repeats the hero.
+- **Not taken:**
+  - Wispr's rounded colour sheets sliding over each other (R-073).
+  - A line joining the sections (R-069).
+  - Anything that moves along with the scroll (A-173).
+- **Preview 3, built under those rules:**
+  - The page colour turns lime as you reach "No reply? FollowUp checks in". Above it sits a small label: "Same customer,
+    with FollowUp".
+  - Tomás's message flies from "Every hour you wait" onto the band's Day 1 dot. It plays once, the A-167 way, and is
+    not tied to the scroll.
+  - The page turns deep green while the four steps of How it works are pinned. It turns back before Your control comes
+    in. The menu bar changes with the page.
+- **Waiting on:** his reaction, and the notes from his recording.

@@ -10415,3 +10415,34 @@ every business. And also in every language."*
   - The summaries are in English even when the customer wrote in another language. The quotes stay in theirs.
 - **Not yet:** other business types; owner-set must-haves; "Was it ready?" feedback for measuring accuracy. A
   cancelled booking still shows as booked until the next message.
+
+## 2026-10-09 — Home v116: four sections offered as formats to pick (Version 89)
+
+**Founder:** *"I don't know, let's reframe, try two or three other things, I will select"* (the cold-lead picture). Then
+the same ask for Your control (*"a lot of empty space"*), the data band (*"feels that someone pasted this"*) and What's new
+(*"let's be creative"*).
+
+Each section has a draft **Format** row: three new options plus **Current**. Nothing is decided until he picks.
+
+| Section | A | B | C |
+|---|---|---|---|
+| Leads go cold | Drag the clock: one message cools as the wait grows | Two endings: same question, answered in the hour vs the next day | Your busy morning: the calendar fills while their message sits unread |
+| Your control | Live preview: the mode switch changes a real reply card | Settings: an iPhone-style list with the rules | Three choices: one card per mode, each showing what happens |
+| Your data | One quiet line, no band | The controls: Download / Delete as in Settings | At a glance: a fact-panel label |
+| What's new | Day 1 to week 3: the same reply, before and after it learns | Learning feed: "Learned" and "New" cards rise one by one | How well it knows you: a bar fills as things are learned |
+
+**Rules kept:**
+- Every option shows rather than tells (R-060).
+- The cold-lead options show *not* replying, never FollowUp failing (R-090).
+- Proof stays one line (R-082).
+- Photo panels, not gradients (R-084).
+- Data wording is plain, not defensive (R-063).
+- A new name in each place (R-062): Tomás, Lena, Bea, Chloe.
+
+**Self-review:**
+- **Strong:** "Two endings" and "Live preview" explain themselves without reading.
+- **Weak:**
+  - "Your busy morning" asks the most of the eye (a calendar plus a feed).
+  - "At a glance" borrows a familiar label form, so it's close to a convention but still original.
+
+**Waiting for:** his pick per section, and which part of the page was hard to read.

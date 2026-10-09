@@ -3062,3 +3062,27 @@ photo can show inside the app after Google sign-in.
 - **A booked call:** the title is "Nadia is ready" (not "ready to view"), because the booking link books a call, not a
   viewing.
 - **One Call button.** When the card shows, the side column's own Call pill is hidden.
+
+## A-195 — Home v116: a light closing button, a Mac-style bin, messages on open, a wait that shows its steps ^A-195
+
+**Direction:** 2026-10-09, founder, in artifact comments (published as Version 89).
+
+**Built:**
+- **Closing "Start free" (threads cc92f443, f14ac190).** *"the colour should be same."* It's white with dark text in the
+  card and while it flies down from the bar. v115's white never showed: an older `html[data-pro] …` rule out-ranked it.
+- **Messages on open (thread ee83cd1a).** *"as soon as we open the site it should pop up 2 or 3 msgs."* Three caught
+  messages pop in during the first 1.5 s; then the calm stream continues (A-193's pace is unchanged).
+- **The bin (thread 07cfcda6).** *"align this with the bar and use that Mac's bin and the animation of throwing waste."*
+  - It sits level with the numbers bar, to its left.
+  - It's a silver wire basket, drawn here in the spirit of the desktop bin, not Apple's artwork.
+  - Each junk card crumples into a paper ball that arcs into the bin; the bin wobbles and shows paper.
+- **Headline to the try box (thread 44ca9d2c).** *"make the transition … more good."* On scroll, the headline fades a
+  little, lifts and shrinks slightly while the try box comes forward.
+- **The wait for a typed answer (thread 052a40ee).** *"it takes too long … some animation so that it does not feel like
+  stuck … use thinking."*
+  - Moving dots, a seconds counter and four honest steps: "Reading their message", "Working out what they need",
+    "Matching their language", "Writing it in your words".
+  - After 10 s the built-in reply is used.
+  - The price blank reads "your price" in a dashed box instead of "$ ,".
+- **Readability (thread 356d09ce).** *"not readable … hard to read."* Secondary text is darker (#2F3532) and the smallest
+  labels are bigger. Asked which part was hardest; open until he says.

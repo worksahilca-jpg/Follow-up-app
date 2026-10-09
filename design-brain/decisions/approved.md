@@ -2529,6 +2529,8 @@ follow-up), marked "example". Example job values only; never a promise of earnin
 
 ## A-164 — The problem first, with the newest checked data (v66) ^A-164
 
+*Data part SUPERSEDED (2026-10-09) by [[#^A-182]]: the 2024 test is off the page; the founder calls it too old.*
+
 **Direction:** 2026-10-09, founder (thread e086a25c): *"use the latest data as much as you can, or don't mention it was
 from 2011… State the actual problem… make [lost / saved] smoother, more accurate, as minimal as we can."* Under the
 headline: "Most leads aren't lost to a no. They're lost to no reply." then "63% of businesses never answered a new
@@ -2686,6 +2688,8 @@ nothing in it asks to be read one by one.
 
 ## A-180 — The first hour, in big numbers; then one lead followed up until it's won (v82) ^A-180
 
+*Big-numbers part SUPERSEDED (2026-10-09) by [[#^A-183]] and [[rejected#^R-082]]; Marcus's follow-ups stay.*
+
 **Direction:** 2026-10-09, founder (thread 6c9f046d): *"without FollowUp, with FollowUp, what is this?… 1.2 million
 leads… you have written it very small. Highlight them… if they didn't reply, then you followed up again and again. You
 made them warm, and that helped you to book the call and close the deal… show something like that"* and (thread
@@ -2704,4 +2708,27 @@ up." and Jordan's week, told by scroll) repeated Marcus's follow-ups in the firs
 section goes, giant line included, since alone it would repeat the same point. How it works, step 3, now links up to
 Marcus ("See Marcus's follow-ups above ↑", `#fj`). The page now runs: opening → first hour and Marcus → Today screen →
 statement → How it works → Your control → What's new → close. Applies [[#^A-170]].
+
+## A-182 — A strip that never changes size; the newest checked fact (v85) ^A-182
+
+**Direction:** 2026-10-09, founder (thread edcd43f5): *"Give this bar more space so that it does not adjust… while
+collecting or changing the numbers, and make the animation more smooth… I've told you to change the 2024 test. It is
+old, very old, so we can't mention that."* (and thread 73b89a86: *"It's 2 years old, and AI has revolutionised a lot."*)
+The strip has a set width (900 px at most, four equal columns), so a changing figure moves nothing (measured: 0 px over
+16 s); figures roll (1.2 s, ease in-out) and glow softly green instead of bouncing. The opening fact is now: "In a 2025
+test of 1,300+ law firms, 26% never answered an online enquiry at all. Only 1 in 4 replied within 5 minutes." (Hennessey
+Digital, 2025 study of US law firms' online enquiry forms), named as law firms. **Rule:** no study older than about a
+year is dated on the page; older classics (HBR, the MIT/InsideSales study) appear without years. FollowUp's own numbers
+replace the opening fact once the beta has about 50 answered customers a month.
+
+## A-183 — Why fast replies matter, as one picture of the gap (v86) ^A-183
+
+**Direction:** 2026-10-09, founder (thread 77c58215, on the three big figures): *"too much… nobody is going to watch this
+or scroll through this for this information. We should just tell them that fast reply will help them… [the earlier one]
+was telling at least about fast replies, the time… the gap that we are filling, and the pain that we're solving."* One
+line, read at a glance: 7:02 AM they ask → 7:03 AM FollowUp replies, in 1 minute (green) → a long stretch fading to red,
+"The gap where the lead goes cold: they keep searching, and ask someone else" → next day, a late reply, and "Thanks,
+already got someone." One sentence under it carries the checked figures (nearly 7×, over 60×, Harvard Business Review).
+Drawn once when in view; vertical on phones. Marcus's follow-ups follow. **Principle:** show the pain as a moment in
+time, not as statistics; one sentence of proof is enough.
 

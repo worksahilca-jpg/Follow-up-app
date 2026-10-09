@@ -1120,3 +1120,10 @@ the action away.
 **Rejected:** 2026-10-09, founder: *"you stopped the messages that were just floating."* Drift of ±34 px over 20–34 s.
 **Principle:** "quiet" means faint and smooth, not still; the background has to read as alive.
 
+## R-082 — Three big statistic cards (nearly 7×, over 60×, 21×) (v82) ^R-082
+
+**Rejected:** 2026-10-09, founder: *"I still don't understand the idea behind this… it's too much, and I don't think
+anybody is going to watch this or scroll through this for this information."* Three large figure cards with captions
+under a "1.25 million leads" line. **Principle (his words, generalised):** visitors won't study numbers; say "fast
+replies win" with one picture of the gap and the pain, and keep the proof to one sentence.
+

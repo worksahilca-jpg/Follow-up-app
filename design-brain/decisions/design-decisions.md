@@ -10458,3 +10458,29 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
 - **Weak spot:** at 46 px the far-wall detail is barely visible. The grid of holes and the white rim carry the look.
 - **Records:** A-197, R-093.
 
+## 2026-10-09 — Home v119: one format per section, art behind Your control, It learns played out (Version 92)
+
+- **Why:** the founder said in chat that every section was the same photo box (R-094). His comments in five threads
+  asked for graffiti or art in Your control, the three choices plus settings, "the controls" for data, motion to
+  explain learning, and the message cards back to the Mac look.
+- **What changed:**
+  - **Section formats.** Photo cards stay for the demo, How it works and the close. Leads go cold is now open on the
+    page. The Today screen sits on the page and rises as you scroll. Your data is on the page ground.
+  - **Your control.** Three choices plus an Always-on sheet (A-198). Behind it is a "Behind it" row: Graffiti wall
+    (default), Shapes, or Photo.
+    - The wall is our own composition: four tags ("your rules", "you decide", "ask me first", "pause any time") in
+      lime, white, sky and pink, with drips. They sit in bands above and below the cards so they can be read.
+    - The tags use Sedgwick Ave Display, an open-licence (OFL) font drawn by graffiti writers, embedded in the draft.
+      Per CLAUDE.md a new font needs his yes before it ships.
+    - Shapes is a set of flat circles and arches in the same colours.
+  - **It learns.** Option D, "Watch it learn" (A-200).
+  - **Message cards.** Fixed back to the Mac notification look (A-199, R-095).
+- **Weak spots, honestly:**
+  - Graffiti is the riskiest look for a trust product. It reads loud next to the calm sections. Shapes is the quieter
+    fallback.
+  - The three choice cards are still tall, with empty space under the text on desktop.
+  - The It learns scene takes about 15 seconds; someone scrolling fast sees only the first draft.
+  - The cold-lead section is open now, but its second card still has a pale photo.
+- **Open:** his pick of wall, shapes or photo; a yes on the graffiti font; whether the open Today screen still feels
+  premium to him.
+

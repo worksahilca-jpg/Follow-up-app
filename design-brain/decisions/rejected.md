@@ -1208,3 +1208,23 @@ uses."*
 look-alike from an older version or a generic "nice bin" reads as wrong. Check what the real thing looks like before
 drawing it. See A-197.
 
+## R-094 — The same photo box for every section ^R-094
+
+**Rejected:** 2026-10-09, founder: *"we are using the same background box style format for every single page. Look how
+Wispr is creative, and other software. Be more creative."* Thread 6836d372 said the same: *"it looks like we're using
+that photo background everywhere."* By v118, six sections were a rounded dark box on a blurred photo: the demo, Leads go
+cold, the Today screen, How it works, Your control and the close.
+**Principle:** the photos stay premium (R-084 still holds: no flat gradient in their place), but only where a photo
+card earns it. Neighbouring sections must use different formats: open on the page, the product on its own, art, or
+motion. **v119:** photo cards are kept for the demo, How it works and the close. Leads go cold and the Today screen sit
+open on the page (the Today screen rises out of it as you scroll). Your control gets art. It learns is played out.
+Same family as R-067 and R-069 ("different templates for every other thing").
+
+## R-095 — Dark, see-through message cards (v116–v118, a bug) ^R-095
+
+**Rejected:** 2026-10-09, founder (threads 449ed1c5 and 792d6642): *"do not change the messages background"*, *"not
+readable, too dark."* The v116 learning-feed option reused the class name `.nb`, which the notification cards also use.
+Every message card got a dark photo panel with dark text on it. **Fix:** that rule is scoped to its own option. **Lesson
+for future sessions:** prefix new class names per version or variant. Check every screen that shows messages after a
+CSS change, not just the section you edited.
+

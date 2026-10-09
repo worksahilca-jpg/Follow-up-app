@@ -3121,3 +3121,36 @@ shiny wire basket.
 - once a message is thrown in, crumpled paper shows inside through the holes and above the rim.
 
 **Status:** built from his direction; his reaction is still to come.
+
+## A-198 — Your control: three choices with an Always-on sheet; Your data: "The controls" (v119) ^A-198
+
+**Approved:** 2026-10-09, founder.
+- **Your control (thread 6836d372):** *"this third choice is good, or maybe we can use settings too."* The three
+  choices (Automatic · Assisted · Paused) are the default. Under them is an "Always on" settings sheet: stops when they
+  reply, prices and dates ask you first, writes down why, download or delete your data. It replaces the four promise
+  lines.
+- **Your data (thread 05eb7627):** *"the controls are good."* Option B is the default: the line on the left, the
+  Download / Delete settings card on the right. It now sits on the light page ground, not on a photo.
+
+## A-199 — Message cards are always the light Mac notification (v119) ^A-199
+
+**Asked:** 2026-10-09, founder (thread 449ed1c5): *"do not change the messages background, make it same as Apple and Mac
+style."* The same day (thread 792d6642): *"this part is not readable, too dark."*
+**Built:** wherever a message arrives as a card, it is the frosted white macOS-style notification: app icon, name,
+time, the message in dark text, and an Answered or Waits-for-your-OK pill. This covers the closing box and the messages
+around the headline. The background never changes with state or section. The dark cards were a bug: a v116 style
+shared the cards' class name. See R-095.
+
+## A-200 — It learns, played out: "Watch it learn" (v119, option D, default) ^A-200
+
+**Asked:** 2026-10-09, founder (thread 33a6105f): *"be more creative, use animations, motion and visuals to explain."*
+**Built:** a short scene that plays when you reach it:
+1. Chloe asks a question and FollowUp writes a plain draft.
+2. The owner fixes it once (the vague line is erased; the hours and sign-off are typed in) and presses Send.
+3. The two fixed phrases fly into "What FollowUp knows" as chips.
+4. Ben asks the same thing; the draft writes itself with both facts, and the chips light up as they are used.
+
+Four numbered steps beside it light up in turn. Reduced motion shows the finished state. It is our own mechanic;
+nothing is taken from Wispr (see the "Do not copy wispr" rejection). **Status:** built from his direction; his
+reaction is still to come.
+

@@ -220,3 +220,11 @@ company's whole screen (R-029, references are principles).
   that lands carries the counter's own name ("Qualified" lands on "qualified").
 
 - **Scroll, not drag (2026-10-09).** *"nobody will be dragging this."* A picture that only tells its story when someone drags a control will go unseen. Drive it with the scroll, and keep dragging as an extra.
+
+## No two neighbouring sections in the same format (2026-10-09)
+
+The founder: *"we are using the same background box style format for every single page… be more creative."* A page
+where every section is the same box reads like a template, however good each box is. Before adding a section, look at
+the one above and the one below. Pick a different format: a photo card, open on the page, the product on its own, art,
+or a short scene that plays. Keep photo cards for the places they earn it. See R-094.
+

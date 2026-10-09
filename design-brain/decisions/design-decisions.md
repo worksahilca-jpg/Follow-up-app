@@ -10335,3 +10335,18 @@ Design points 4–14 are built on the draft ([[approved#^A-186]]). Still to do:
 
 **Waiting for:** Sahil's reaction.
 
+## 2026-10-09 — Home v103–v105: every number has a visible cause
+
+- **Hero cards** end as Booked and Deal done, then fly into the strip and land on their own counters. Numbers only
+  move when something lands.
+- **The try box** is settled: the older layout, a soft edge, a chat composer and a paper-plane send.
+- **The gap** has an amber band, the HBR comparison chip, and the "Already got someone." fear moment.
+- **"7× more leads"** was declined as inaccurate; the line uses "qualify the lead".
+- **Elsewhere:**
+  - steps slide inside a box;
+  - the promises are four frosted lines;
+  - a bigger shield;
+  - the closing notes no longer pause;
+  - the footer opens with "Help us improve" and "Follow us everywhere".
+- Details: A-190.
+

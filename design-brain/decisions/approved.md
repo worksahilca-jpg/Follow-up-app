@@ -2748,6 +2748,9 @@ used once, to lift the one idea that matters.
 
 ## A-185 — The hook: one action on the first screen, and the answer brought on screen (v88) ^A-185
 
+> **PARTLY SUPERSEDED (2026-10-09)** by A-190: the try box keeps the older layout but trades the green edge for a soft
+> lift and a chat-style composer; the "no sign-up" label is gone (A-189).
+
 **Direction:** 2026-10-09, founder (chat): *"land them on the page, and they're like, 'Oh yeah, boom, this is what I'm
 looking for. Let's just try this out.' … big companies … make the user click on that option only."* Research:
 `research/landing-page/2026-10-09-hook-psychology.md`. Built:
@@ -2926,4 +2929,38 @@ Built on the home draft:
 - Use app icons owners recognise, not abstract ones.
 
 **Open:** try box (Older/A/B), edge (Lift/Ink/Green), How it works format (Scroll/Grid/Tabs/Original).
+
+## A-190 — Home v103–v105: deals fly into the numbers, chat try box, the fear moment, slides in a box ^A-190
+
+**Direction:** 2026-10-09, founder, in artifact comments (published as Version 85).
+
+**Built:**
+- **Hero (thread 3fc9d410).**
+  - The worked-through cards end as "Booked" and "Deal done".
+  - Each then flies out of the hero, down the right side and into the strip, landing on its own number.
+  - On landing: the number rolls, the cell lights softly, and a "+1" or "+$2,400" receipt drops out under it.
+  - Bookings, deals and money only move when a card lands. The background ticker keeps messages caught and time.
+- **Try box (thread 1350ea5f).** Picks: the older box and the soft-lift edge; the compare rows are removed. It reads
+  like a chat composer: fully rounded, "Type a message…", and a round green send button with a paper-plane icon. The
+  icon is drawn for FollowUp; Meta's logo is not used.
+- **The gap.**
+  - Thread 120d9646: the line turns amber across "The gap where leads go cold".
+  - A chip under the headline reads "Compared with replying an hour later · Harvard Business Review · 1.25 million
+    leads".
+  - The headline is "Nearly 7× more likely to qualify the lead". The founder asked for "7× more leads"; that isn't
+    what the study measured, so the study's own word is used.
+  - Thread aa8bd916: "Already got someone." is a red speech bubble with a "Lead lost" tag, popping in last.
+- **The two cards (thread 463e8705).** Both have the same green hairline. The follow-up card's photo is Rome at blue
+  hour.
+- **How it works (thread 0acce577).** The Scroll format sits in one white box. Steps slide up in and up out, reversed
+  on scroll back, with a "2 / 4" counter and a progress line.
+- **Promises (thread 5e22bc65).** Four lines, one per promise, on a see-through frosted panel across the photo's edge.
+- **Data band (thread 1579875b).** A bigger, filled shield in a lime ring.
+- **Closing card (thread aef7da78).** The notes start before the card is on screen, the first arrives at once, and
+  they keep rotating.
+- **Footer (thread d98b01b2).** Two tiles open it: "Help us improve FollowUp" (light green, "Share an idea") and
+  "Follow us everywhere" (dark, large social buttons). The real handles are still needed.
+
+**Open:** How it works format (Scroll is the default; Grid, Tabs and Original are still in the draft row); social
+handles.
 

@@ -10798,3 +10798,14 @@ unanswered. My guess is the app screenshot in Nothing to learn.
 **Note:** the Today app screenshot and the FAQ are gone from this preview. If he wants proof of "how easy it is",
 bring back one simple picture, not the full app screen. Thread 99c33d5a is still unanswered.
 
+## 2026-10-09 — Preview version 18: the trust line in plain words
+
+**Founder (thread e2229f27):** *"make it more sensible."* The lines "Prices and dates always ask you first" and "Stops
+the moment they reply" assumed the visitor already knew the product.
+**Now:**
+- "Asks you before quoting a price or a date"
+- "Stops following up once they reply"
+- "Free in beta, no card needed"
+The close uses the same wording. **Rule:** a promise in the first screen has to make sense to someone who has never
+seen FollowUp; name the action ("quoting", "following up"), not the setting.
+

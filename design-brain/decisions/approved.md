@@ -2542,6 +2542,8 @@ fix a leaking tap today?").
 
 ## A-166 — The reply in a minute, then the first hour (v68) ^A-166
 
+*Timeline part SUPERSEDED (2026-10-09) by [[#^A-169]]; the FollowUp conversation stays.*
+
 **Direction:** 2026-10-09, founder (thread e694c18d): *"focus more on a ready reply in 1 minute: an accurate reply
 according to the question… Show them that 1 hour is the best time, or 30 minutes. Focus more on 'you with FollowUp'…
 make it more readable… It feels like just the bar rolling on."* Left: the FollowUp side as a conversation that plays
@@ -2558,4 +2560,21 @@ free' in the top bar. I have seen this animation somewhere."* When the closing c
 the bar's button arcs down into it (0.9 s), growing and turning from dark to white, then the real button shows; the
 bar's button steps aside while the big one is on screen and returns when you scroll away, so it can play again. Absolute
 page coordinates (the v51 lesson), reduced motion: no flight.
+
+## A-168 — The result as a strip under the headline; the messages at every width (v70) ^A-168
+
+**Direction:** 2026-10-09, founder (chat): *"The messy messages… are not showing up… highlight it with a strip on the
+background or make it bigger… How is FollowUp helping? We saved their time, helped them close deals and catch all the
+potential leads. It should be mentioned there… catch their eye… readable."* The messages around the headline had only
+shown at 1180 px and wider; now at every width (fewer on smaller screens; on phones only above and below the words). The
+small "saved" line became a light-green strip with four large figures: messages caught, deals booked, saved by
+following up, time back, which keep counting as messages are followed up. Seeded and labelled as "an example week".
+
+## A-169 — The same message, without and with FollowUp (v71) ^A-169
+
+**Direction:** 2026-10-09, founder (thread a991c722): *"Readable, and also show them what they are missing, like we used
+to show in the first one. I don't know if we need to show them the reply bar here."* The timeline went. Two cards side by
+side with Marcus's same 7:02 AM question. Without FollowUp: no reply that day, a sorry-for-the-late-reply at 12:19 PM
+the next day, "Thanks, already got someone", "✕ The job went to whoever answered first". With FollowUp: the reply at
+7:03 answering exactly what he asked, his yes, "✓ Booked for 2 PM". One line of highlighted facts above. Plays once.
 

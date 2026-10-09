@@ -1134,3 +1134,17 @@ them to stress and read the whole stuff out to understand a simple logic."* Marc
 bubbles with a "How warm Marcus is" bar. **Principle (his words):** a simple logic must be understood without reading;
 if it needs a list of messages, it is too much.
 
+## R-084 — A flat dark gradient in place of the photo panels (v89) ^R-084
+
+**Rejected:** 2026-10-09, founder: *"this gradient thing looks very odd. The photos were looking very premium."* The deep
+green radial gradient replacing the photo panels (Today frame, How it works pictures, Your control, the data card,
+What's new, the closing card). **Principle (his words):** the blurred photos are what make the page feel premium; a
+gradient reads as cheap next to them. Dark panels carry a photo under a dark veil (the follow-up card now too), never
+a bare gradient. Also no to "cheap gradients" in CLAUDE.md.
+
+## R-085 — An explanatory sentence under the headline (v89) ^R-085
+
+**Rejected:** 2026-10-09, founder: *"It looks too informative. It should be straight to the point."* "FollowUp has a reply
+ready for every new enquiry in a minute, in your words, and follows up until they book." **Instead:** "A reply in a
+minute. Follow-ups until they book." **Principle:** the line under the headline is a punch, not a description.
+

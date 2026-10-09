@@ -2331,7 +2331,7 @@ evening (307866397, How it works), Paris Montmartre café street at night (55115
 
 ## A-145 — The founder's own photo picks, one per panel ^A-145
 
-*On the home draft, SUPERSEDED (2026-10-09) by [[#^A-186]] point 10 (one dark surface instead of photo panels; the demo stage keeps its photo). Flagged to the founder to confirm; easy to restore.*
+*Briefly replaced on the home draft by a dark green surface (A-186 point 10); RESTORED the same day, founder: "The photos were looking very premium." See [[rejected#^R-084]].*
 
 **Approved:** 2026-10-09, founder, picking in the Adobe Stock grids (a screen recording showed his ticks). All free
 licences, not AI. Placement (v49): light streaks 307728189 behind the demo; New York street at night 658429701 behind
@@ -2770,8 +2770,9 @@ Status: built on the draft for the founder's reaction, not yet confirmed by him.
 those 17 points."* Also decided: **sign-up opens before the new page goes live** (point 1; see design-decisions).
 Built on the home draft:
 - **4 · Phones:** the try-it box is on the first screen (the example strip is left out on phones).
-- **5 · Under the headline:** "FollowUp has a reply ready for every new enquiry in a minute, in your words, and follows
-  up until they book." The fact is one line: "In a 2025 test of 1,300+ law firms, 26% never answered an online enquiry
+- **5 · Under the headline:** first "FollowUp has a reply ready for every new enquiry in a minute, in your words, and
+  follows up until they book.", then, after the founder's *"too informative. It should be straight to the point"*: **"A reply in
+  a minute. Follow-ups until they book."** The fact is one line: "In a 2025 test of 1,300+ law firms, 26% never answered an online enquiry
   at all."
 - **6 · The strip** opens with a visible tag, "An example week with FollowUp".
 - **7 · Phones** show 10 floating messages instead of 16.
@@ -2781,7 +2782,7 @@ Built on the home draft:
   - the closing card's "Answered" notifications.
   Desktop goes from 9.6 to 9.1 screens and phone from 13.7 to 12.3; about 1,430 words instead of 1,570.
 - **9 · One button wording:** "Start free".
-- **10 · One dark surface:** the follow-up card's deep green replaces the photo panels (Today frame, How it works
+- **10 · (undone, R-084) One dark surface:** the follow-up card's deep green replaces the photo panels (Today frame, How it works
   pictures, Your control, the data card, What's new, the closing card). The demo stage keeps its photo, which the
   founder parked (thread b2a68af1). On that dark surface the button is lime with dark text.
 - **11 · Readable small text:** labels at 12–12.5 px, greys darkened to #5C635E. Text under 12.5 px went from 52 to 31

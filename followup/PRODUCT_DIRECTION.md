@@ -612,3 +612,31 @@ What this adds to the direction above (it confirms "only decisions go to the own
   not go deeper there (the demo and the drafts pass negotiation to the owner).
 - **Accuracy keeps improving** through what the owner teaches (facts from sent replies, edits) and weekly product work.
   This is not training an AI model on customer data (see `src/app/security/page.tsx`).
+
+## Timing, qualification and closing, as the website now promises them (founder, 2026-10-09)
+
+Said on the home-page draft (artifact comments), in his words:
+
+> "'Reply in a minute' is not what we are aiming for. If we reply in a minute, it will sound like AI. We'll be telling
+> them that we'll be using strategies so that we'll be using proper time gaps and the strategies according to the
+> customers… We'll be doing that for real too."
+
+> "We're trying to use a proper strategy to qualify the leads. We will get as much information as we can ourselves
+> before handing it to the user to close the deal… the whole qualification will be handled by FollowUp only… end it
+> like we just booked it, and then… 'Moved: the lead is closed, confirmed by the user.'"
+
+> "You don't have to teach it; it will teach itself and reply as you want, in your own tone or language, or in the
+> professionalism that they use."
+
+What this adds:
+- **Reply timing is a strategy, not a speed.** It extends the 2026-09-19 rule ("1 or 2 mins so that it feels real"):
+  the gap is chosen per customer and situation, never instant, always within the window where they're still looking.
+- **FollowUp qualifies before it hands over.** It asks the questions a good assistant would (what they need, when,
+  budget, readiness) and hands the owner a qualified lead.
+- **The end is the owner's.** FollowUp books; the owner closes and confirms it ("Moved: closed, confirmed by you"),
+  matching the 2026-10-09 goal above.
+- **It learns tone, language and formality by itself.** There is no setup to teach it.
+
+What is built and what isn't is tracked in `research/product/website-promises-to-build.md`. The founder asked that
+anything the site promises which the app doesn't do yet goes on that list.
+

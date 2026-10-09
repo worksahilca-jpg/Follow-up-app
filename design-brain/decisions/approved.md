@@ -2796,3 +2796,45 @@ Built on the home draft:
   that are going cold… A business owner should not lose a lead because of not following up, not following up in time,
   or not following up correctly." Signed "Sahil, founder of FollowUp". Awaiting his OK on the wording.
 
+## A-187 — Confused messages in, tidy leads out; right time, not fast; qualify first, close last (v93–v95) ^A-187
+
+**Direction:** 2026-10-09, founder, in artifact comments.
+- Thread 1a2a32f2: *"show the confused messages… and FollowUp catching and converting them into leads… like Wispr Flow…
+  there, but not as catchy stuff"*, *"'Reply in a minute' is not what we are aiming for… it will sound like AI"*, and
+  remove the law-firm fact.
+- Thread b1b5f906: the try-it box should make people want to type, and be more aesthetic.
+- Thread 1e3a4a33: *"keep adding money too. Make it smooth."*
+- Thread 502abce9: qualify first; end on *"closed, confirmed by the user"*.
+- Thread c2cd0d4e: an image that feels in charge.
+- Thread 1120fc8b: the promise cards "just floating".
+- Thread e672dccf: "it will teach itself".
+- Threads 85222483 and a9924fcc: remove the "Ideas?" line and the founder line.
+
+**Built:**
+- **The hero background.** Faint, tilted, blurred messages with no ticks drift in from the left and vanish behind the
+  headline. Seven tidy lead cards (name and status: Replied, Checked in, Booked, Warm, Quote sent, Viewing Sat, Won)
+  slide out on the right, one per row, above the strip. The strip ticks every 3.4 s: +1 caught and +4 min each time,
+  and every third tick is a booking that adds a job value, rolling smoothly (1.4 s). Phones keep the quiet scatter.
+- **Under the headline:** "The right reply, at the right time. Until they book."
+- **Timing wording.** The section heading is "Answer while they're still looking." The gap picture reads "7:11 AM,
+  FollowUp replies at the right moment, a natural few minutes later". Day 1 is "Replied the same hour". The demo rail
+  says "8 min".
+- **The try-it box** is one white card: a serif "Try it yourself", "Type what your customers ask. No sign-up.", a large
+  field with the green edge, light chips, and the languages.
+- **How it works** has four steps:
+  1. "It qualifies them first" (Looking for / Moving / Budget → Qualified, ready for you), on Toronto at night.
+  2. Writes in your words.
+  3. Asks you first.
+  4. "Booked. Then closed, by you." with *Moved: Closed · confirmed by you*.
+- **Photos:**
+  - Your control: a calm blue-hour New York avenue.
+  - The follow-up card: Manhattan at evening.
+  - No photo is used twice.
+- **Promises:** grouped under "What FollowUp promises you", each with a label: Never pushy · You set the price ·
+  Nothing hidden · Your data.
+- **What's new:** "You don't have to teach it. It picks up your tone, your language and how formal you are."
+- **Removed:** the "Ideas?" line and the founder quote.
+
+**Build list:** what the page now promises but the app doesn't fully do is in
+`followup/research/product/website-promises-to-build.md`.
+

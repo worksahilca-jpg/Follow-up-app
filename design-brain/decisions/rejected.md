@@ -1148,3 +1148,21 @@ a bare gradient. Also no to "cheap gradients" in CLAUDE.md.
 ready for every new enquiry in a minute, in your words, and follows up until they book." **Instead:** "A reply in a
 minute. Follow-ups until they book." **Principle:** the line under the headline is a punch, not a description.
 
+## R-086 — "Reply in a minute" as the promise (v85–v92) ^R-086
+
+**Rejected:** 2026-10-09, founder: *"'Reply in a minute' is not what we are aiming for. If we reply in a minute, it will
+sound like AI."* Any copy that sells speed in minutes ("in a minute", "1 minute", "1 min"). **Instead:** the right reply at
+the right time, a natural gap while the customer is still looking. Facts about replying within the hour can stay.
+
+## R-087 — A founder quote on the home page (v89) ^R-087
+
+**Rejected:** 2026-10-09, founder: *"What is this, bro? Sahil, founder of FollowUp? Why?"* A centred quote from his
+product notes signed with his name. **Principle (inferred):** the page speaks as FollowUp, not as a person; no founder
+signature or quote unless he asks.
+
+## R-088 — Statistics in the opening (v66–v92) ^R-088
+
+**Rejected:** 2026-10-09, founder: *"I don't know why you're saying 'in a test of 1,300+ law firms…' Let's just show them
+later on. Let's just remove that part."* Any study figure in the first screen. Facts live further down (the gap
+picture's one sentence).
+

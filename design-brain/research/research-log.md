@@ -462,3 +462,10 @@ the four-sites report (all four now complete) and `landing-page/2026-10-08-four-
   `landing-page/2026-10-09-hook-psychology.md`
 
 - 2026-10-09 — Page organisation study (how top product sites order and differentiate sections; FollowUp page map). `research/landing-page/2026-10-09-page-organisation-study.md`. Grade A from the 10-07/08 Chrome captures, grade C from web write-ups (live sites and Mobbin unreachable from the container).
+
+## 2026-10-09 — Wispr Flow's home page, read scroll by scroll
+The live page was rendered here (wisprflow.ai plus three asset hosts allowed by the founder). 115 frames were taken
+every 150 px, plus a 100 px pass through the hand-over, along with the page's own scroll-trigger map. Finding: one
+photo card stays in the centre for about seven screens while the green room lifts away (its edge rounds from 0 to
+80 px) and the next title passes behind it. Six techniques are recorded. →
+[[landing-page/2026-10-09-wispr-scroll-read]]

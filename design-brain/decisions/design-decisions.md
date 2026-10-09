@@ -10245,3 +10245,9 @@ resets it). **Weak spots:** phones still show the older stage; the list's order 
 rows jump between steps; three long pinned moments remain (How it works, reply speed, the week); watch that they
 don't add up to "stuck".
 
+## 2026-10-09 — Parked: the demo's background when the theme changes
+
+Founder (thread b2a68af1, on the demo card): *"When we change the theme and stuff, we might have to change the
+background… Don't change anything yet. I will let you know later."* Nothing changed. When the theme work starts, the
+demo stage's photo (warm New York street, A-148) is to be revisited with it; show options first.
+

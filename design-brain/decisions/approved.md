@@ -2780,7 +2780,9 @@ Built on the home draft:
 - **8 · Repeats removed:**
   - the 11 PM statement;
   - How it works step 3, so it is now "Three steps";
-  - the closing card's "Answered" notifications.
+  - the closing card's "Answered" notifications (RESTORED the same day, founder, thread 76062a7a: *"adding small
+    text notifications on the right-hand side… was looking good. Keep them moving like the animation that we were
+    using before."*).
   Desktop goes from 9.6 to 9.1 screens and phone from 13.7 to 12.3; about 1,430 words instead of 1,570.
 - **9 · One button wording:** "Start free".
 - **10 · (undone, R-084) One dark surface:** the follow-up card's deep green replaces the photo panels (Today frame, How it works

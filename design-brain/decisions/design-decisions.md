@@ -10115,3 +10115,8 @@ replies now echo the question ("Yes, the 2-bed on King Street is still available
 less refined than Public Sans at body sizes, which I'd flag if he ever wants it tighter; the page is now ~1 MB because
 fonts and photos are embedded (fine for a prototype, the real site should serve them as files); the fixed replies still
 invent a slot ("Saturday at 10") as an example.
+
+## 2026-10-09 — Home v33: text font back to Public Sans (A-134), named logos (A-135)
+
+Public Sans 300–700 and IBM Plex Mono 400/500 embedded for text and labels; Tinos kept for headings. The "From" bar now
+names every channel; Outlook on a blue tile; SMS tile with "SMS" in the bubble.

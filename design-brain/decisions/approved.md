@@ -2195,6 +2195,8 @@ them only when he asks.
 
 ## A-131 — Fonts: the ones in the preview screenshots (Tinos headings, DejaVu Sans text) ^A-131
 
+**PARTLY SUPERSEDED (2026-10-09) by A-134:** the text font went back to Public Sans; Tinos stays for headings.
+
 **Direction:** 2026-10-09, founder, after seeing screenshots: *"Bro, let's use this font that you just showed me right now."*
 **What it was:** the preview machine couldn't load the page's web fonts, so the screenshots showed Liberation Serif
 (headings) and DejaVu Sans / DejaVu Sans Mono (text and labels). Web equivalents now ship inside the page: **Tinos**
@@ -2216,3 +2218,17 @@ disappointed."* The bar for every demo answer: it names the exact thing asked (t
 yes where it reasonably can, ends on one easy next step, sounds like the owner typing on a phone, never refuses,
 never quotes a price ($___). Typing is uneven with small pauses after commas and full stops. Same instructions in the
 prototype and in the real endpoint (PR #465).
+
+## A-134 — Text back in Public Sans; headings stay in Tinos ^A-134
+
+**Direction:** 2026-10-09, founder, minutes after A-131: *"the font that we are using right now has more width. I don't
+want that width, so make it simpler like we were using earlier."* DejaVu Sans is a wide face; the text, labels and
+buttons go back to **Public Sans** (labels: **IBM Plex Mono**), embedded. Headings keep **Tinos** (the serif from the
+screenshots he picked). **Lesson:** he reacts to width; prefer narrower faces for running text.
+
+## A-135 — Every logo in the "From" bar carries its name ^A-135
+
+**Direction:** 2026-10-09, founder, on the Outlook mark: *"Can you please make it more clear? I don't understand this."*
+and on the text-message icon: *"Don't feel like an SMS."* Each channel shows its name under the logo (Gmail, Outlook,
+Instagram, WhatsApp, Messenger, Text, Web form, Facebook ads); Outlook's mark is white on a blue tile; text messages
+are a green tile with a bubble that says "SMS". Names hide on phones.

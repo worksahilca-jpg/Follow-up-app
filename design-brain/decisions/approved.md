@@ -2301,3 +2301,10 @@ vivid abstract photo, a big faded numeral). **Limits that still hold:** Granola'
 2026-10-08 measurement) is paid, so a free look-alike (four offered, his pick pending); take techniques, not the page
 (R-032); drawn lines live inside the art panels, never on the words (R-020); no AI images (R-045); no dashboard as the
 hero (R-009). granola.ai cannot be opened from Claude's container; captures will come from his Chrome.
+
+## A-142 — Headings in Fraunces ^A-142
+
+**Approved:** 2026-10-09, founder, choosing from four free serifs that resemble Granola's (A-141): *"C, go with
+Fraunces."* Headings use Fraunces (variable, optical size follows the type size, SOFT 0, WONK 0; OFL 1.1), embedded in
+the page. Body text stays Public Sans, labels IBM Plex Mono. **Supersedes** the "headings stay in Tinos" part of A-131 and
+A-134. The app's re-theme (done in a side worktree with Tinos) must switch to Fraunces before it ships.

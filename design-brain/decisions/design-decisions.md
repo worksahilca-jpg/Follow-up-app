@@ -10852,3 +10852,24 @@ seen FollowUp; name the action ("quoting", "following up"), not the setting.
 **Principle (founder, inferred, marked inferred):** sections must look like one family. Alert-style tinted boxes and a
 hard cut to a dark footer both read as "a different website".
 
+## 2026-10-09 — Preview version 23: the week as a film; the settings show themselves; photos on theme
+
+**Founder:**
+- on the numbers bar: *"make this cinematic"*;
+- on Your control: *"can we add motion here"* and *"same need motion"* (on the settings card);
+- *"this background is not suiting our theme"*.
+
+**Built:**
+- **The week, as a film:** on load the bar rises in. Its label runs Monday → Sunday (ink pill) while a 2 px line sweeps
+  across the top, and every number rolls from 0 to the week's total over about 5.6 s, easing out. Then the label returns
+  to "An example week with FollowUp" and the live numbers carry on. Plays once; skipped with reduced motion.
+- **The settings card plays itself once on arrival:**
+  1. How it sends slides to Auto and back to Ask me.
+  2. Pause everything flips on, then off.
+  3. The Always-on ticks pop in, 0.18 s apart.
+  The row in use gets a faint highlight, and the controls stay clickable.
+- **Photo panels on theme:** the "Try it yourself" and "Your data stays yours" photos were blended in luminosity over
+  `#1A2420`. They keep the photo's light and texture without the brown/orange cast (R-050, R-103).
+
+**Open:** which section the body-anchored "add motion here" meant was inferred (Your control) and asked.
+

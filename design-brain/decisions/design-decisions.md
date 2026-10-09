@@ -10511,3 +10511,20 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
 - **Lesson:** on a near-black ground, 13–14px soft grey reads as unreadable to him, even though it passes the contrast
   check. Body-size text and near-white links are the floor on dark (see R-095 and the earlier "too dark" threads).
 
+## 2026-10-09 — How the best pages are organised: a page map, nothing built
+
+- **Asked:** the founder: *"Let's pull the research again… how they differentiate… our theme colours look best now, we
+  just need to organise it properly."*
+- **Study:** research/landing-page/2026-10-09-page-organisation-study.md, with a readable page at
+  claude.ai/artifact/BTNeLePiYBWBFLtsmTUkWB.
+- **Finding:** the best pages answer the visitor's questions in order. They use about six section types and take them
+  in turns, so two neighbours never share a type. Photos are one type among several.
+- **Our page now:** seven of eleven sections are the same photo box, four of them in a row.
+- **Proposed map, same colours:** 12 sections. Photos stay for the demo, How it works and the close. Leads go cold is
+  open on the page, the check-ins sit in a lime room, Today is the product alone, Your control is on deep green, Your
+  data is a quiet card, It gets better is a grid, and there is an optional Questions section.
+- **Waiting on him for three answers:**
+  1. Is the order right?
+  2. Should Your control sit on deep green instead of a photo?
+  3. Should there be a Questions section, and in which style?
+

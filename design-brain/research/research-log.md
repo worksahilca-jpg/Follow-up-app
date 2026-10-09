@@ -460,3 +460,5 @@ the four-sites report (all four now complete) and `landing-page/2026-10-08-four-
 - 2026-10-09 · The hook: first-ten-seconds psychology (50 ms judgement, one action, the aha on screen, IKEA effect and
   labour illusion, framing, warm/cool colour roles), an audit of the home draft and what v88 changed →
   `landing-page/2026-10-09-hook-psychology.md`
+
+- 2026-10-09 — Page organisation study (how top product sites order and differentiate sections; FollowUp page map). `research/landing-page/2026-10-09-page-organisation-study.md`. Grade A from the 10-07/08 Chrome captures, grade C from web write-ups (live sites and Mobbin unreachable from the container).

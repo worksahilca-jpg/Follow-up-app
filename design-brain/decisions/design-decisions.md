@@ -10500,3 +10500,14 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
 - The other draft rows are still open: the cold-lead format and What's new.
 - Nothing else changed.
 
+## 2026-10-09 — Footer made readable (Version 95)
+
+- **Asked:** the founder, thread e6c6f8b7: *"this is not readable."*
+- **Done:**
+  - On the dark base, links are 16px near-white (#E6EEE9).
+  - The lime labels are 12.5px, the small print is 14px, and the follow card's line is 16px.
+  - The social buttons have a clearer edge.
+- **Kept:** the dark base itself, from his v111 "differentiated" ask. I offered a light footer if he prefers.
+- **Lesson:** on a near-black ground, 13–14px soft grey reads as unreadable to him, even though it passes the contrast
+  check. Body-size text and near-white links are the floor on dark (see R-095 and the earlier "too dark" threads).
+

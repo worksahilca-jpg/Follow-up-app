@@ -230,3 +230,9 @@ where every section is the same box reads like a template, however good each box
 the one above and the one below. Pick a different format: a photo card, open on the page, the product on its own, art,
 or a short scene that plays. Keep photo cards for the places they earn it. See R-094.
 
+## On dark, go bigger and brighter than the contrast check asks (2026-10-09)
+
+He flagged dark areas as "not readable" three times in one day: the dark message cards, "too dark", and the footer.
+Each one passed or nearly passed the contrast check. On a dark ground, use at least 16px for anything meant to be read,
+and near-white text, not soft grey. Keep small labels for real labels only.
+

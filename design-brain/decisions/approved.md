@@ -3086,3 +3086,23 @@ photo can show inside the app after Google sign-in.
   - The price blank reads "your price" in a dashed box instead of "$ ,".
 - **Readability (thread 356d09ce).** *"not readable … hard to read."* Secondary text is darker (#2F3532) and the smallest
   labels are bigger. Asked which part was hardest; open until he says.
+
+## A-196 — How it works: Scroll is the format; the steps are tabs rising out of the box (v117–v118) ^A-196
+
+**Approved:** 2026-10-09, founder (thread 14fcbe1b): *"scroll is good."* The Scroll format (A-189, the box that turns its
+pages as you scroll) is final. The draft Format row is hidden; Grid, Tabs and Original are retired.
+
+**Built from his direction** (Version 90):
+- **Tabs (thread 8e142301).** *"make these tabs coming out of this window and as smooth as you can make."*
+  - The four step names sit on the box's top edge like folder tabs.
+  - They slide up out of it, one after another, when the section arrives.
+  - The current step is the tab joined to the box, and a highlight glides between tabs on the damped Apple curve.
+- **Option A of the cold-lead picture (thread a8f4a244).** *"what if we do scrolling stuff here because nobody will be
+  dragging this."* The clock follows the scroll; dragging still works. **Principle:** visitors scroll, they don't drag. A
+  control that needs dragging to tell its story is a story nobody sees.
+- **The bin (thread ef1348e5).** *"this bin is not same as Mac's bin."* Redrawn as today's desktop bin: white frosted
+  body, vertical grooves, light rim. Our own drawing.
+- **The try box (thread b1492223).** *"keep shuffling the send message, like first WhatsApp then Insta and all."* The
+  badge in the box shows the app the next message arrives from (WhatsApp first) and turns after each send.
+- **Under the demo (thread d5c7a8e3).** *"this looks congested."* One centred line, the button under it, and
+  Example · Pause on their own quiet row.

@@ -219,3 +219,4 @@ company's whole screen (R-029, references are principles).
 - **Every number moves for a visible reason.** A counter only changes when something visibly lands on it, and the thing
   that lands carries the counter's own name ("Qualified" lands on "qualified").
 
+- **Scroll, not drag (2026-10-09).** *"nobody will be dragging this."* A picture that only tells its story when someone drags a control will go unseen. Drive it with the scroll, and keep dragging as an extra.

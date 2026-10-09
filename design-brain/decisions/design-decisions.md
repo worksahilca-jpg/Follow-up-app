@@ -10809,3 +10809,20 @@ the moment they reply" assumed the visitor already knew the product.
 The close uses the same wording. **Rule:** a promise in the first screen has to make sense to someone who has never
 seen FollowUp; name the action ("quoting", "following up"), not the setting.
 
+## 2026-10-09 — Preview version 19: a light close; the language promise up top
+
+**Founder:**
+- *"these both the designs look similar, can we change so we can differentiate between them"*;
+- *"let's add the factor too that it replies in the same language the lead messages in."*
+
+**Built:**
+- **The close is light green:** `#E4F0E7` with dark text, a green "Answer every one." and a black Start free button.
+  - "Your data stays yours" is now the only dark photo panel. Since the questions section was cut, the two had sat
+    side by side looking alike.
+  - This changes the close's dark photo and white button (A-195); he asked for the difference.
+  - *Inferred:* he meant those two. That was asked in the thread, not confirmed.
+- **Language in the first screen:**
+  - The hero line now reads "The right reply, in their language, at the right time. Until they book."
+  - What it does, row 2: "Replies in the language they wrote in."
+  - The try box's "Ask in your language" list already proves it.
+

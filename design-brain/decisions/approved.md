@@ -2276,3 +2276,13 @@ section after the hero is a sheet with a rounded top that overlaps the one befor
 #F4F5F3 page), its corners flattening from 88px to 24px as it lands (CSS view timeline; off for reduced motion); the
 heading rises in. Layouts: Today heading left; How it works centred; It checks in heading right; Your control in a
 sticky left column with the cards on the right.
+
+## A-140 — Patterned grounds, kept faint ^A-140
+
+**Direction:** 2026-10-09, founder: *"Rather than having plain backgrounds, we can also use a Granola kind of thing.
+They are using stripes and different designs in the background theme… We'll be keeping it as minimal as we can, but it
+should look good."* v44 draws three patterns in CSS, each faded out where the words sit: fine vertical pinstripes at
+the top edge of every sage sheet (one material for the sage sheets), a small dot grid towards the edges (first screen,
+How it works, the close), and fine diagonal hatching in the side gutters (Today, Your control). Lines at 7% ink, dots
+at 16%. Never grain (R-071), never behind body text. Not checked against granola.ai itself (we have no captures of its
+patterns); built from his description.

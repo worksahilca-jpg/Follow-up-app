@@ -10185,3 +10185,9 @@ the side thread removed (R-069) for sheets that slide over each other at each ne
 (A-139); photo panels dark again in light mode, light grade parked for dark mode (A-138). **Weak spots:** the sheets add
 ~44px overlaps and rounded tops everywhere; on a phone they are smaller (32px) but may still feel busy. "Your control" in
 a side column squeezes its cards on 1100–1300px screens. The page has no dark mode, so half of A-138 is waiting.
+
+## 2026-10-09 — Home v44: patterned grounds
+
+A-140. Pinstripes, dots and hatching as CSS `::before` layers behind each section (`isolation: isolate`, z-index −1),
+masked to the edges. **Weak spot:** at laptop distance they are barely visible on purpose; if he wants them to read,
+raise the ink from 7% to ~10% rather than adding more patterns.

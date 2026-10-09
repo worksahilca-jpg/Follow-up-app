@@ -2425,3 +2425,14 @@ No giant wordmark.
    the box; an ink underline draws under "Answer every one." Ink draws in once when seen. Flat paper, no grain (R-071),
    no background patterns (R-072).
 
+## A-155 — "How fast do you reply?" moves with the scroll (v57) ^A-155
+
+**Direction:** 2026-10-09, founder (thread b9ccebcf): *"I think we should make a scrollable feature for this one. I'm not
+able to get all the information or the message that we are trying to convey."* The timer-driven version (A-? v43,
+after R-070) moved before it could be read. v57, on a computer: the panel holds still mid-screen while the scroll moves
+the time on (1 minute → 1 hour → 1 day → 42 hours → never), then snaps back to "1 minute · With FollowUp" lit in light
+green; scrolling back reverses it; a one-line cue ("Keep scrolling to let the time pass ↓") fades as you start. About
+1.7 screens of scroll. Tapping a time still works. Phones keep the slow autoplay (the panel is taller than the screen).
+**Principle (his words, generalised):** a demonstration that carries the page's message must go at the reader's pace;
+scroll-driven beats timer-driven. Same rule as the teardown's Questrade warning.
+

@@ -10350,3 +10350,13 @@ Design points 4–14 are built on the draft ([[approved#^A-186]]). Still to do:
   - the footer opens with "Help us improve" and "Follow us everywhere".
 - Details: A-190.
 
+## 2026-10-09 — Home v106–v108: steady stream, Apple motion, causal story
+
+- **The hero** became a steady stream whose every step lands on its namesake counter (six numbers).
+- **One Apple-style motion language** across the page.
+- **The visitor's demo message** arrives on WhatsApp.
+- **The gap picture** now shows not replying (R-090), on a deep green layer, with the HBR chip under the line.
+- **The follow-up card's photo** went back to Manhattan (R-091).
+- **The ticker** is a dark band, centred.
+- Details: A-191.
+

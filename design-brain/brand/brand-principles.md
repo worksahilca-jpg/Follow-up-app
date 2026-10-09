@@ -212,4 +212,10 @@ company's whole screen (R-029, references are principles).
   readable in one glance.
 - **Use the apps owners know.** *"do not try to use the webhook logo. Use… WhatsApp, Gmail, Instagram, Messenger, so that
   they can relate."* Show familiar channels, not abstract or technical icons.
+- **Motion speaks Apple.** *"everything should follow iOS- and Mac-based transition themes… I don't want any
+  out-of-the-box animation."*
+  - One damped spring (cubic-bezier(.32,.72,0,1)), 0.35–0.6 s, no overshoot or wobble.
+  - Badges, notifications and sent messages behave the way they do on an iPhone or a Mac.
+- **Every number moves for a visible reason.** A counter only changes when something visibly lands on it, and the thing
+  that lands carries the counter's own name ("Qualified" lands on "qualified").
 

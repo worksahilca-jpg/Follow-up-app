@@ -1179,3 +1179,17 @@ all in one white card across the demo's edge.
 bigger standalone card made it louder without making it clearer. Offer alternatives side by side and let him choose;
 never replace an approved element outright.
 
+## R-090 — A story where FollowUp replies and the lead is still lost (v97–v105) ^R-090
+
+**Rejected:** 2026-10-09, founder (thread 8c7276f7): *"Why follow-up replies, and then why does it go to someone else,
+bro? It should be like you don't reply."*
+**Principle:** a cause-and-effect picture must be causal. The cost-of-waiting picture shows *not* replying. FollowUp
+appears only as the fix, never inside the failure.
+
+## R-091 — Rome at blue hour for the follow-up card (v104) ^R-091
+
+**Rejected:** 2026-10-09, founder: *"the photo that you have changed for the bottom one is also not looking that
+good."* The card went back to Manhattan at evening.
+**Principle (inferred):** pink and blue light trails read busier than the calm city light he approved earlier. Prefer
+calm, even night light behind text.
+

@@ -2964,3 +2964,33 @@ Built on the home draft:
 **Open:** How it works format (Scroll is the default; Grid, Tabs and Original are still in the draft row); social
 handles.
 
+## A-191 — Home v106–v108: a steady stream, Apple motion, the no-reply story, a dark ticker ^A-191
+
+**Direction:** 2026-10-09, founder, in artifact comments (published as Version 86).
+
+**Built:**
+- **Hero (thread 576a2bb0).** *"continuous leads coming in… rather than spam"*, *"Qualified should go to Qualified. Deal
+  Done should go to Deal Done. Add the money… the time… the message."*
+  - One message every 1.5 s from familiar apps. Junk drops away.
+  - Each lead appears on the right as "Caught" and is worked through. Each step lands on its namesake number: tags
+    fly to "qualified" and "booked"; the whole card flies to "deals done" and adds the money.
+  - The strip has six numbers: messages caught · qualified · booked · deals done · saved by FollowUp · time saved.
+  - Waves are withdrawn (superseding that part of A-188).
+- **Motion (thread 6067aaa4).** *"everything should follow iOS- and Mac-based transition themes."*
+  - One damped spring curve (cubic-bezier(.32,.72,0,1)), 0.35–0.6 s, with no overshoot anywhere.
+  - An iOS-style badge, a single icon nudge, typing dots that fade, sent messages that rise into place.
+  - The glow ring is gone; there is a breathing dot on "Try it yourself"; the notifications stack like an iPhone.
+- **The visitor's message (thread daee974f)** arrives as WhatsApp, not a website form. The web-form icon left the
+  "From" row.
+- **The gap (thread 8c7276f7).**
+  - The timeline shows not replying: They ask → "No reply. You're busy." → the amber gap → "Already got someone."
+    (Lead lost). FollowUp appears only in the card below, as the fix.
+  - The HBR comparison chip sits under the line, highlighted.
+  - The layer behind both cards is deep forest green over a faint, blurred night street.
+  - The follow-up card is back on Manhattan.
+- **Ticker (thread 77ab013e).** A dark band (near-black green, light serif, lime dots), centred with 88 px either side,
+  on a slower GPU loop.
+
+**Answered, not built (thread d1a8a657):** a website can't read the visitor's browser profile or photo. Their Google
+photo can show inside the app after Google sign-in.
+

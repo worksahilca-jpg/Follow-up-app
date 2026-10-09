@@ -1048,3 +1048,10 @@ slider read as "just playing", v34): what works is motion that is *labelled* (ti
 **Rejected:** 2026-10-09, founder, on the demo block under "Try it yourself": *"It's too grainy. It doesn't match the
 background."* The SVG noise layer over the stage photo. **Instead:** smooth blurred photos only; frosted strips where
 controls sit on a photo, the same glass as the demo panel.
+
+## R-072 — The v44 patterns (pinstripes, dot grid, side hatching) ^R-072
+
+**Rejected:** 2026-10-09, founder, minutes after asking for "a Granola kind of thing… stripes and different designs in
+the background": *"Not these ones, bro. I will send you examples later."* Removed in v45. **Inferred (marked
+inferred):** what he means by Granola's "stripes and designs" is its art: collage panels and drawn lines inside images,
+not a texture laid over the page ground. Wait for his examples before drawing patterns again.

@@ -2278,6 +2278,7 @@ heading rises in. Layouts: Today heading left; How it works centred; It checks i
 sticky left column with the cards on the right.
 
 ## A-140 — Patterned grounds, kept faint ^A-140
+**SUPERSEDED (2026-10-09)** by [[rejected#^R-072|R-072]]: he rejected the patterns as drawn and will send examples.
 
 **Direction:** 2026-10-09, founder: *"Rather than having plain backgrounds, we can also use a Granola kind of thing.
 They are using stripes and different designs in the background theme… We'll be keeping it as minimal as we can, but it
@@ -2286,3 +2287,17 @@ the top edge of every sage sheet (one material for the sage sheets), a small dot
 How it works, the close), and fine diagonal hatching in the side gutters (Today, Your control). Lines at 7% ink, dots
 at 16%. Never grain (R-071), never behind body text. Not checked against granola.ai itself (we have no captures of its
 patterns); built from his description.
+
+## A-141 — Granola is the reference he loves; what he wants from it ^A-141
+
+**Direction:** 2026-10-09, founder, with a screenshot of granola.ai's first screen: *"Bro, check out Granola's design. I
+love it. I want to make it something like that: their font, their animations, their way of explaining things, the
+images that they have used, the graffities (the lines and whatever they have used, the art kind of things)."*
+What the screenshot shows: a big left-aligned serif headline ("The AI notepad for back-to-back meetings"), a two-line
+subhead with a twist ("Notes, actions and memory. Without a meeting bot."), one olive-green button, an "Available for…"
+line, a lime "New" pill; on the right a Mac-style app window (traffic lights) with a "My notes / Enhanced" toggle, set on
+a collage of art panels (a lime-green paper block, a black-and-white textured photo with drawn white lines and dots, a
+vivid abstract photo, a big faded numeral). **Limits that still hold:** Granola's own typeface (Quadrant, per our
+2026-10-08 measurement) is paid, so a free look-alike (four offered, his pick pending); take techniques, not the page
+(R-032); drawn lines live inside the art panels, never on the words (R-020); no AI images (R-045); no dashboard as the
+hero (R-009). granola.ai cannot be opened from Claude's container; captures will come from his Chrome.

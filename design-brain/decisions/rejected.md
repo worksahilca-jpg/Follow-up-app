@@ -1077,3 +1077,13 @@ showing messages. Keep it very light in the background, with blur, and keep it k
 notification cards that went from "No reply yet" to "✓ Answered". **Instead (v50):** the same messages as soft,
 blurred, light cards drifting slowly behind the headline, with no statuses or times. Not the scrolling rows of R-047:
 each floats on its own.
+
+## R-076 — Hand-drawn ink and paper notes (v55) ^R-076
+
+**Rejected:** 2026-10-09, founder: *"I think we should remove the scribble"*; asked which, he chose **all the ink**. Gone:
+the two paper notes (a light-green ticked list, an off-white clock at 11:04) on the demo's corners and above the closing
+card, the curly ink arrow to the try-it box, and the ink underline under "Answer every one." **Inferred principle
+(inferred):** Granola's hand-made print material doesn't translate to FollowUp; on our page it reads as decoration, not
+as calm or trust. Learn from Granola's motion and explaining, not its artwork. Don't re-propose scribbles, doodles,
+sketched icons or paper collages in another form.
+

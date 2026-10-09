@@ -2420,7 +2420,7 @@ No giant wordmark.
    you're busy." The new third example shows Tue reply, Wed–Thu quiet, a Friday check-in, the reply, "Follow-ups stopped."
 3. **One giant line, "It follows up.":** sticks in the middle of the screen while the dark week panel slides over it;
    then "It checks in on the day you'd have forgotten." The only transition of its kind on the page.
-4. **Paper and ink, twice:** a light-green note with a hand-drawn ticked list and an off-white note with a hand-drawn clock
+4. *REJECTED 2026-10-09, see [[rejected#^R-076]].* **Paper and ink, twice:** a light-green note with a hand-drawn ticked list and an off-white note with a hand-drawn clock
    at 11:04 sit on the demo's top corners (and peek above the closing card); an ink arrow curls from "Try it yourself" to
    the box; an ink underline draws under "Answer every one." Ink draws in once when seen. Flat paper, no grain (R-071),
    no background patterns (R-072).

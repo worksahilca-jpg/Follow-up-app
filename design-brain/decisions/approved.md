@@ -2719,8 +2719,9 @@ old, very old, so we can't mention that."* (and thread 73b89a86: *"It's 2 years 
 The strip has a set width (900 px at most, four equal columns), so a changing figure moves nothing (measured: 0 px over
 16 s); figures roll (1.2 s, ease in-out) and glow softly green instead of bouncing. The opening fact is now: "In a 2025
 test of 1,300+ law firms, 26% never answered an online enquiry at all. Only 1 in 4 replied within 5 minutes." (Hennessey
-Digital, 2025 study of US law firms' online enquiry forms), named as law firms. **Rule:** no study older than about a
-year is dated on the page; older classics (HBR, the MIT/InsideSales study) appear without years. FollowUp's own numbers
+Digital, 2025 study of US law firms' online enquiry forms), named as law firms. **Rule (tightened 2026-10-09, founder: *"I don't know why you are adding 2025… It's almost 2027"*):** no study
+year appears on the page at all; every fact keeps its source ("Hennessey Digital", "Harvard Business Review") but not its
+date. Opening line now: "In a test of 1,300+ law firms, 26% never answered an online enquiry at all." FollowUp's own numbers
 replace the opening fact once the beta has about 50 answered customers a month.
 
 ## A-183 — Why fast replies matter, as one picture of the gap (v86) ^A-183

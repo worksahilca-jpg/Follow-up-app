@@ -1280,3 +1280,19 @@ scenes with Replay are the default. Draft website rule 8 ("nothing traps the mou
 something that I want."* The two-reply before/after (generic reply on day 1, your hours and sign-off by week 3) was
 rejected in full and in its simplified form. **Instead:** "it learns from your replies" becomes one of the key
 features in a new "What it does" section (founder's strategy, 2026-10-09).
+
+## R-100 — The "Not leads" bin in the hero ^R-100
+
+**Rejected:** 2026-10-09, founder (thread 3abab155): *"remove this bin concept."* The bin had been asked for in thread
+b7a6b56f and redrawn three times as the Mac Trash (A-193, A-197, R-093). **Principle (inferred, marked inferred):**
+after three attempts the bin drew attention to itself and to a detail (what a Mac Trash looks like) that doesn't sell
+FollowUp; the hero should show leads being handled, not junk being thrown away. **Instead:** junk is tagged "Skipped" and
+sinks away; leads sort themselves (A-204). **Do not propose again:** a bin, trash can or wastebasket for non-leads.
+
+## R-101 — "What it does" as six notification cards in a grid ^R-101
+
+**Rejected (inferred, marked inferred):** 2026-10-09, founder, on the six-note grid: *"a good concept or the format we
+can use so they get to know what we do"*, then *"keep it simple, minimal and to the point."* He didn't call it bad, but
+asked for a new format. *Inferred:* six framed notes, each with a title, read as six things to study rather than one
+idea. **Instead:** one list that ticks itself off (A-206).
+

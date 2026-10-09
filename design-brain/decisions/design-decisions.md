@@ -10692,3 +10692,30 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
 - **How it looks:** no tiles. The notes are the only frames, as product pictures (R-096). The notes rise one after
   another on arrival. The nav "What's new" now reads "What it does".
 - **Waiting on:** his reaction, a Dock screenshot for the Trash, and Mac/iPhone notification screenshots.
+
+## 2026-10-09 — Preview version 13: simpler, sorted
+
+**Founder's comments, in order:**
+- "What it does": *"a good concept or format so they get to know what we do"* and *"keep it simple, minimal and to the
+  point"*;
+- *"remove this bin concept"*;
+- *"is it possible to show sorting animation"* (on the headline);
+- "Two endings": *"they should be scared without follow-up… with FollowUp… yes, we help them close more"*;
+- *"let's be more simple and creative too."*
+
+**Built:**
+- **Hero:** the bin is gone (R-100). The lead cards sort themselves, most ready on top, under a small label (A-204).
+- **Two endings:** a red block (lost, 14 hours, someone else answered first) and a green block (booked, 9 minutes,
+  Saturday 10:30). The green one lights when the story reaches Booked (A-205).
+- **What it does:** a self-ticking list of six outcomes with times of day; the notification grid is out (A-206, R-101).
+
+**Checked:**
+- desktop 1440 and phone 390 render;
+- no script errors;
+- contrast all at least 4.5:1 (only the 12.5–13 px mono labels sit under 13.5 px, as before).
+
+**Weak spots, named:**
+- the sorting label sits near the faint background messages at the top right;
+- the list's times are illustrative;
+- the 14-hour and 9-minute figures belong to the example story, not measured data.
+

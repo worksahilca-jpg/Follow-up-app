@@ -3023,7 +3023,7 @@ photo can show inside the app after Google sign-in.
   - One message every 3.2 s; each step is about 1.7× slower.
   - About 1 deal in 8 leads (one every ~40 s).
   - "Messages caught" rises without a receipt.
-- **Bin (thread b7a6b56f).** A "Not leads" bin with a count at the hero's bottom-left. Junk shrinks into it.
+- **Bin (thread b7a6b56f).** A "Not leads" bin with a count at the hero's bottom-left. Junk shrinks into it. *SUPERSEDED (2026-10-09) by R-100: no bin; junk is tagged "Skipped" and sinks away.*
 - **Visitor's message (thread 960d9b03).** It rotates WhatsApp → Instagram → Gmail → Messenger → Text.
 - **Send button (thread 27912846).** FollowUp ink with a paper plane, not WhatsApp green.
 - **Follow-up card (thread 2ef1ef59).** The Manhattan photo is now the layer behind both cards. The card itself is light
@@ -3108,6 +3108,8 @@ pages as you scroll) is final. The draft Format row is hidden; Grid, Tabs and Or
   Example · Pause on their own quiet row.
 
 ## A-197 — The "Not leads" bin is drawn like the Mac's Trash: frosted white, grid of square holes (v118) ^A-197
+
+**SUPERSEDED (2026-10-09) by R-100:** the founder removed the bin concept entirely ("remove this bin concept"). The Trash drawing is no longer needed; the screenshot request in thread 82bc7ecd is moot.
 
 *Questioned (2026-10-09, thread 82bc7ecd on the preview): "check the latest trash bin that mac uses, this is not the same one." The square-hole bin is the 2014–2024 Trash; the newest macOS redrew its icons in the glass style. No reliable picture of the new Trash was found online, so a screenshot of his own Dock was asked for before redrawing. Do not redraw from memory.*
 
@@ -3233,3 +3235,48 @@ approves the direction and the choice of Nadia; how it looks waits for his react
 
 **Watch for:** the lifting room is close to the overlapping pages of R-073. If he says it feels like that, change the
 lift to a plain colour fade behind the card.
+
+## A-204 — Hero: the leads sort themselves, most ready on top; junk is skipped, not binned (preview v13) ^A-204
+
+**Asked:** 2026-10-09, founder, on the headline (thread edcbd8cb): *"is it possible to show sorting animation"*, 20 seconds
+after *"remove this bin concept"* (thread 3abab155).
+**Built** (preview version 13):
+- the lead cards on the right of the headline re-order themselves whenever their status changes, under a small label
+  "Sorted · most ready on top": Booked rises above Qualified, Qualified above Caught, and "Checking in" drops to the
+  bottom;
+- the move uses the page's one spring curve (0.6 s), with no new speed;
+- receipts and promos get the existing "Skipped" tag and sink 56 px while fading; there is no bin.
+**Status:** built from his request; his reaction is still to come. If "sorting" meant something else, ask, don't guess
+again.
+
+## A-205 — "Two endings": fear in red, relief in green (preview v13) ^A-205
+
+**Asked:** 2026-10-09, founder (thread 7587cebb): *"this part should be highlighted, they should be scared without
+follow-up, and with FollowUp they should feel yes, we help them close more or book more leads."*
+**Built:** two full-width blocks under "Two endings.":
+- **Without FollowUp:** soft red ground, red ✕, "Lost by tomorrow." with *"No reply for 14 hours. She booked with the
+  agent who answered first."*;
+- **With FollowUp:** soft green ground, green ✓, "Booked by Thursday." with *"Answered in 9 minutes. Viewing on Saturday
+  at 10:30."*;
+- the green block lights (a 2 px ring) when Nadia's conversation reaches "Booked".
+**Why it works (hook research 2.6):** a concrete moment of loss (14 hours, someone else answered) scares more than a
+slogan. Colour roles follow A-185: warm red is the cost of waiting, green is what FollowUp gets you.
+**Status:** built; reaction to come.
+
+## A-206 — "What it does": your follow-up list, ticking itself off (preview v13) ^A-206
+
+**Asked:** 2026-10-09, founder (thread 942f96a9): *"a good concept or the format we can use so they get to know what we
+do"*, then *"keep it simple, minimal and to the point"*, and on the page *"let's be more simple and creative too."*
+**Built:** heading "What it does *while you're busy.*" with one line, "Your follow-up list, done by itself.", beside a
+plain list of six rows. Each row has a time of day, one short outcome and a tick. As the section arrives, the ticks
+fill green one after another, about 0.4 s apart:
+- 9:14 AM: Answers every message, from every app.
+- 10:02 AM: Writes in your words, in their language.
+- 11:40 AM: Follows up until they answer.
+- 1:25 PM: Spots who's ready to buy.
+- 2:03 PM: Books them, then hands them to you.
+- 4:51 PM: Learns from every reply you send.
+**Why:** a checklist that ticks itself is the product's promise in one picture: the work gets done without you. The
+times say "while you're busy". No cards or tiles (R-096), nothing scroll-driven (R-098).
+**Status:** built; reaction to come.
+

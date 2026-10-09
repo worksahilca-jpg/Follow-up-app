@@ -10663,3 +10663,32 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
   - Asked whether he meant one spot in particular.
 - **Thread 82bc7ecd:** the square-hole Trash is the 2014–2024 Mac one. Asked for a screenshot of his Dock before
   redrawing (see the A-197 note).
+
+## 2026-10-09 — The page strategy, and "What it does" (preview versions 10–11)
+
+- **The strategy he asked for** (*"how we help them, what makes it unique, convert directly, show the key features,
+  not a CRM, nothing to learn"*). The page answers the owner's seven questions in order:
+  1. What is it?
+  2. Does it work for me? (try it, sign-up at the answer)
+  3. Why do I need it? (Nadia's week)
+  4. What does it do? (key features)
+  5. Is it hard? (nothing to learn)
+  6. Can I trust it? (control, data)
+  7. How do I start? (questions, close)
+- **The three things that make FollowUp different, repeated:** it *does* the follow-up (not a CRM where you do the
+  work); every app and language in one place; you stay in charge.
+- **Nadia's week (version 10)** is now one normal section after R-098:
+  - On the left, without vs with FollowUp, with five tappable moments.
+  - On the right, her conversation plays once, 1.1s per moment, when it comes into view, with Replay.
+  - Nothing is pinned and nothing captures the wheel.
+- **"What it does while you're busy" (version 11)** replaces It gets better (R-099) and the ticker. It shows six
+  features, each as the note FollowUp sends you after doing it, timed through a normal Tuesday:
+  - every app, one list;
+  - your words, their language;
+  - follows up until they answer;
+  - knows who's serious;
+  - books it, hands it to you;
+  - learns as you go.
+- **How it looks:** no tiles. The notes are the only frames, as product pictures (R-096). The notes rise one after
+  another on arrival. The nav "What's new" now reads "What it does".
+- **Waiting on:** his reaction, a Dock screenshot for the Trash, and Mac/iPhone notification screenshots.

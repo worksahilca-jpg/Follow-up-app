@@ -10142,3 +10142,25 @@ negotiation to the owner).
 same hour: the app's onboarding offers Automatic (recommended), so "followed up automatically" is true.
 **Weak spots:** the page is ~1.3 MB (embedded photos repeated per section; the real site should serve them as files);
 the colourful-logos question is open with him (recommended: colour only in the From bar).
+
+## 2026-10-09 — Home v38–v40: the chat card in app colours, the caught message, a connected page, a light close
+
+**v38–v39** (four comments): the night scene keeps its dark photo all the way (*"keep it same, the dark one looks
+good"*); the demo's chat card uses the app's colours (question in cool light grey, reply in soft green with dark text,
+the sent steps as one small timeline ending "You closed it · Won"); the catch animation now pops the customer's own
+message out of its logo and lands it on the question. Recommended against copying WhatsApp/Instagram screens in the
+demo card (our rule on references, and trademarks); offered a thin channel-colour accent instead, awaiting his "yes".
+
+**v40** (five comments + one chat note): **names** — one name per place (R-062); **photos** — regraded cool grey-sage
+with the warm colour removed first (R-065); Today, How it works, the week, "Only for you" and the close are light;
+**connected** — a thread down the left gutter (laptop widths) with a dot per section, filled as you read; the main
+picture of each section settles in with a scroll-linked rise (CSS view timeline, off for reduced motion); gaps cut
+(R-067); **close** — on the page ground, the ring replaced by a stack of message notifications that arrive every ~3 s
+and turn "✓ Answered" (a price question says "Waits for your OK") (R-064); **bar** — short, centred, raised, shows the
+current section (R-066); **lime** — A-136.
+**Weak spots:** the thread is a new device and could read as decoration; asked him to say if it feels like too much.
+The light week panel is softer than the dark one was; check it still reads as "the week plays". The notification cards
+are generic (no phone frame) on purpose, to stay clear of R-041's "phone mockup as the whole idea".
+**App theme (side work):** a helper re-themed the app's tokens to match (Tinos headings, faintly green #F4F5F3 ground,
+green wash, neutral greys) in a separate worktree, not pushed. It conflicts with A-090 ("the app's ground stays white")
+— to ask Sahil before it goes anywhere.

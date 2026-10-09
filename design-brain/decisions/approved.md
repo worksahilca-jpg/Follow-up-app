@@ -2232,3 +2232,11 @@ screenshots he picked). **Lesson:** he reacts to width; prefer narrower faces fo
 and on the text-message icon: *"Don't feel like an SMS."* Each channel shows its name under the logo (Gmail, Outlook,
 Instagram, WhatsApp, Messenger, Text, Web form, Facebook ads); Outlook's mark is white on a blue tile; text messages
 are a green tile with a bubble that says "SMS". Names hide on phones.
+
+## A-136 — A lemon-lime accent, in a few small places ^A-136
+
+**Direction:** 2026-10-09, founder: *"Let's also add a little lime or lemon green light colour in very minimal places,
+very few, but it should look like a good theme."* v40 uses #D4F36B (on dark panels) and a pale #EEF8C8 pill (on the
+light page) in four places only: the "Free while in beta" pill, the "1 minute · With FollowUp" choice, the "The main
+thing" tag, and the ticks on "Your data stays yours". Never a fill bigger than a pill, never body text. This fits R-043's
+own principle (accents so small they are almost absent); green stays the app's meaning ("sent", "answered").

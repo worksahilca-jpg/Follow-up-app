@@ -978,9 +978,41 @@ empty space. **Inferred:** size, not length alone — to confirm if it still fee
 **Rejected:** 2026-10-09, founder: *"see same name and same industry"*, and on the cold-lead card: *"be more specific,
 we should be using different examples every time."* **Instead:** each section has its own person and trade (mixed
 examples, as PRODUCT_DIRECTION already asks), and repeating examples rotate.
+**Said again:** 2026-10-09, founder: *"use a variety of names, not just Priya."* One name on several sections is the
+same failure. v40 keeps any one name to one place on the page (Priya only in the hero's rotation).
 
 ## R-063 — Defensive wording about data and AI ^R-063
 
 **Rejected:** 2026-10-09, founder, on "It gets better every week": *"This is sounding like I'm defending."* Say what it
 does, positively ("It learns your business", "What it learns stays yours"); the plain data promises live once, in the
 data panel.
+
+## R-064 — The ring of logos at the close ^R-064
+
+**Rejected:** 2026-10-09, founder: *"The circle theme looks very odd. Can we improve this with something that looks more
+familiar for them? It's too bold and thingy. We can change the concept too."* The eight channel logos on an orbit
+around an "Every one answered" badge (v34–v39). **Principle (inferred, marked inferred):** an abstract diagram asks the
+visitor to decode it; owners trust what they already recognise from their own day. Show the thing itself (messages
+arriving, each answered), not a symbol of it. **Instead:** v40's stack of message notifications.
+
+## R-065 — Dark olive photo panels (brown, again) ^R-065
+
+**Rejected:** 2026-10-09, founder, on the whole page: *"Again, we are not using this dark brown theme. Can we just reduce
+this?"* The green-toned photos kept the warm buildings of the originals; darkened under a green-black veil they read
+olive, which reads brown (R-050, R-057). Ten of the page's panels were dark photos, plus a dark close. **Principle:** take
+the warm colour out of a photo before toning it, and keep dark panels few (the demo, the cold-lead panel, the night, the
+control and data panels in v40); the rest of the page is light.
+
+## R-066 — The full-width bar ^R-066
+
+**Rejected:** 2026-10-09, founder, on the header: *"It feels too 2D, like it's very '90s design. Let's get our references
+out here."* A pale capsule stretched across the whole screen with the items spread to its ends. **Instead (v40):** a
+short floating bar that hugs its contents, centred, lifted by a plain shadow (no shine, R-036), showing which part of
+the page you are in.
+
+## R-067 — Sections that read like separate pages ^R-067
+
+**Rejected:** 2026-10-09, founder: *"Let's try to keep connecting all the pages when we are scrolling. It's like we're just
+scrolling a regular PDF."* Every section was the same template (heading left, line right, one framed picture) with a big
+gap and nothing carrying from one to the next. Same family as R-052. **Instead (v40):** one thread down the page that
+fills as you read, pictures that settle in as you arrive, smaller gaps, no hard switch to dark at the end.

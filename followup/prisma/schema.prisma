@@ -1680,6 +1680,21 @@ model RateLimitHit {
   @@index([businessId, action, createdAt])
 }
 
+// One live answer on the home page's "Try it yourself" demo (founder 2026-10-08,
+// "yes build those these limits too"). Not tied to a business: the visitor is
+// anonymous, so RateLimitHit (which needs one) can't hold it. Only tries that
+// were let through are written, so the table holds at most a day's site cap.
+// `visitor` is a keyed hash of the IP address, never the address itself.
+// Pruned after two days by the hourly cron (pruneDemoTries).
+model DemoTry {
+  id        String   @id @default(cuid())
+  visitor   String
+  createdAt DateTime @default(now())
+
+  @@index([visitor, createdAt])
+  @@index([createdAt])
+}
+
 // A saved, named lead-list filter ("Smart View" in Close's terms — see
 // research/market/2026-09-05-competitor-feature-gaps.md #2.1) — persists
 // a custom combination of criteria (src/lib/savedFilters.ts's Criteria

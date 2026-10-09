@@ -43,6 +43,8 @@ vi.mock("@/lib/staleApprovals", () => ({ remindStaleApprovalsForAllBusinesses: r
 const { pruneSetAside } = vi.hoisted(() => ({ pruneSetAside: vi.fn(async () => ({ cleared: 0 })) }));
 vi.mock("@/lib/inboundEvents", () => ({ pruneInboundWebhookEvents: prune, pruneSetAsideThreads: pruneSetAside }));
 vi.mock("@/lib/rateLimit", () => ({ pruneRateLimitHits: pruneHits }));
+const { pruneDemo } = vi.hoisted(() => ({ pruneDemo: vi.fn(async () => ({ deleted: 0 })) }));
+vi.mock("@/lib/demoReply", () => ({ pruneDemoTries: pruneDemo }));
 vi.mock("@/lib/cronAuth", () => ({ requireCronSecret: cronAuth }));
 
 import { GET } from "@/app/api/cron/automation/route";
@@ -179,6 +181,15 @@ describe("the smaller jobs", () => {
     expect(body.pruned).toEqual({ deleted: 7 });
     expect(body.prunedRateLimitHits).toEqual({ deleted: 0 });
     expect(body.errors[0]).toContain("rate-limit hit pruning");
+  });
+
+  it("a failed demo-try prune does not fail the tick either", async () => {
+    pruneDemo.mockRejectedValueOnce(new Error("nope"));
+    const { status, body } = await call();
+    expect(status).toBe(200);
+    expect(body.prunedRateLimitHits).toEqual({ deleted: 40 });
+    expect(body.prunedDemoTries).toEqual({ deleted: 0 });
+    expect(body.errors[0]).toContain("demo try pruning");
   });
 });
 

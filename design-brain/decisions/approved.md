@@ -2555,6 +2555,8 @@ live in the legend, never on the axis, so nothing collides. **Principle:** show 
 
 ## A-167 — The bar's "Start free" travels into the closing card (v69) ^A-167
 
+*Amended 2026-10-09 by [[#^A-171]]: same words and look, and it flies back up.*
+
 **Direction:** 2026-10-09, founder (thread 02aae9b9): *"This button should come from the top button that has 'Start
 free' in the top bar. I have seen this animation somewhere."* When the closing card's button is fully in view, a copy of
 the bar's button arcs down into it (0.9 s), growing and turning from dark to white, then the real button shows; the
@@ -2586,4 +2588,12 @@ keeps its title and one line plus "See a real week below ↓" (the week tells Jo
 4 and "You stay in charge" (the line by the reply panel's button lost it); "63%" stays under the headline only (above
 the chats: "Most businesses miss that window."). **Rule:** before adding a fact or example, search the page for it; if
 it is already there, point to it instead of saying it again.
+
+## A-171 — The closing button is the bar's "Start free", both ways (v73) ^A-171
+
+**Direction:** 2026-10-09, founder (thread 54e739f8): *"The button should say 'Start free'. It should be the same as the
+button that is up… If you scroll up, it should go back up."* The closing button reads "Start free →", the bar's dark
+pill made bigger (58 px, 18 px type, a thin light ring on the dark card). It flies down from the bar when the card is in
+view and back up into the bar when you scroll away (up or past); the bar's button is hidden only while the big one is on
+screen. "Connect Gmail" moves out of the button; the line under it still says how to start.
 

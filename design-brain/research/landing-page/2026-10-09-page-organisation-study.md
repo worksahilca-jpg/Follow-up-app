@@ -24,6 +24,36 @@ page be organised without changing the colours?
 
   Their details (hex values, section orders) are approximate. None measured whether varied rhythm converts better.
 
+## From the founder's research docs, re-read in full (2026-10-09, "use all the research doc too")
+
+**Read:** the Drive teardowns of wisprflow.ai, granola.ai + questrade.com, linear.app, superhuman.com and macro.com,
+and "FollowUp design references" (nine sites). The Drive "Research" doc was also read. It is a list of Instagram content
+references for a different business, not about web design, so it is not used here. Also read: every file in
+`research/landing-page/`.
+
+**Each page's order, mapped by section type.** "Same-layout ×N" marks chapters that share one layout.
+
+- **Wispr:** open hero → dark logos → green room (pinned "4× faster") → pinned 3-step tour → open feature list (one lit
+  at a time) → privacy card → dark customers → questions as chat → close on a photo → footer.
+- **Granola:** hero on art → 3 benefits → giant line under a dark logo band → pinned before / during / after → lime chat
+  band → dark customers → feature rows (same-layout ×5) → connectors → the hero art returns behind the close → footer.
+- **Linear:** dark hero with the product playing → logos and a two-tone statement → 3 principles → chapters
+  (same-layout ×4: title left, paragraph right, product picture, feature index) → changelog → two bright quote cards,
+  the only colour → one calm, late ask → footer.
+- **Superhuman:** hero film → logos on paper → product cards under sticky tabs (same-layout ×4, each its own gradient)
+  → teal story band → sky close → maroon footer.
+- **Macro:** black hero → apps-become-one scroll morph → product in a colour frame → quiet trust → chapters
+  (same-layout ×5) → one quote → the header button grows into the final ask.
+- **Questrade (warnings):** pins for about 3 screens and feels stuck; carousels move on a timer; the hero never says
+  what it is; the see-through header lets text pass under the logo.
+
+**What this adds to the strategies below (the main finding).** "Organised" comes from one block of 4 or 5 chapters
+that share an identical layout. Variety comes from the breaks around that block, each in a different format. The
+background changes only 2 to 4 times over the whole page. Photos and art book-end the page. In between, the product is
+the picture. FollowUp's page is the inverse: every section has its own inner layout, yet all sit in the same photo
+box. For FollowUp, How it works (approved, with tabs) is the natural same-layout block. Everything around it should be
+a different kind of break.
+
 ## What they all do (the strategies)
 
 1. **The page answers the visitor's questions in order.**

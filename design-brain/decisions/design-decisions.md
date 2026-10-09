@@ -10211,3 +10211,14 @@ size, blur and opacity (`alternate` keyframes, so no jumps), masked out behind t
 sit near "Try it yourself" and the input, which softens that line; one card clips at the hero's left edge. Fine for a
 trial; fix when his design arrives.
 
+## 2026-10-09 — Home v53–v54: where the reply lands, the week's Today frame, "Your control", the footer
+
+v53: A-151, the line under "Sent on …" says where the customer gets the reply. v54: three notes. **The week's Today frame
+(bug, thread 3dbbac78):** it was placed by `calc()` from assumed padding and gaps, so on the current layout it drifted
+off its day and its ring sat on the day's text. It is now measured from the real day column on every step and on
+resize, padded 7px each side, with a faint fill; the label is centred. Lesson for the real site: anything that
+highlights a column must measure the column, never re-derive its geometry. **"Your control"** (A-152) and **the footer**
+(A-153). **Weak spots:** the main card is now wide, so its paragraph runs ~60 characters, which is at the limit; the
+footer's "Works with" row repeats the From bar's icons, which is on purpose (the last thing seen is "it works where your
+customers already write") but it is the third time the icons appear.
+

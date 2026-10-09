@@ -2392,3 +2392,19 @@ follows the channel: "right in Messenger", "right in Instagram", "as a normal te
 email inbox" (Gmail, Outlook, web form). The card stays FollowUp's own design: app icon, channel bubble colour, no
 other app's wallpaper or header.
 
+## A-152 — "Your control": full-width main card, promises two by two (v54) ^A-152
+
+**Direction:** 2026-10-09, founder (thread c70721a1): *"fix this looks bit odd"*. The four promise cards had been
+squeezed into thin columns beside the main card (titles breaking over three or four lines). v54 keeps the words in their
+own left column (A-139's different layouts) and stacks the right side: the main card full width (words left, the
+"Pause all sending" switch right), then the four promises two by two (icon beside a one-line title), then "Your data
+stays yours". Inferred principle: a layout variation must never squeeze cards so that short titles wrap into stacks.
+
+## A-153 — The footer, v54 ^A-153
+
+**Direction:** 2026-10-09, founder (thread c091b135): *"enhance this"*. The line "So no customer gets forgotten." large
+in the headline font with the italic green on its second half; the email as an outlined round button; the Product, Trust
+and Account link columns; a "Works with" row showing the eight app icons with names (Gmail, Outlook, Instagram, WhatsApp,
+Messenger, Text, Web forms, Facebook ads); a base line with the light-green "Free while in beta" pill and "Back to top ↑".
+No giant wordmark.
+

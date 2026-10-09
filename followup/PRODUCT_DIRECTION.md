@@ -690,3 +690,15 @@ review. 2 of 12 businesses had it on (2026-10-09).
 
 All three are tracked in `research/product/website-promises-to-build.md` #12.
 
+**Added the same day (founder):** *"we have to be accurate for every single business to qualify and reply as well… the
+proper strategy of qualifying the leads, filtering them out, and then the reply should be very accurate… strategic
+according to every business. And also in every language."*
+
+So the qualification design must:
+- work per business type, each with its own template;
+- read customers in any language: the proof quote stays in the customer's own words and language, and the summary is
+  written for the owner;
+- keep the filter step (not a lead → set aside) ahead of qualification.
+
+Realtors ship first. The other templates follow once the realtor version is measured.
+

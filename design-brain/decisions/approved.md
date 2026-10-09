@@ -3013,3 +3013,24 @@ photo can show inside the app after Google sign-in.
   - The ideas tile is lime: "Built with the owners who use it." + "Share an idea". "Follow us" is an outlined tile.
   - The links are light on dark, with a large faint "FollowUp" sign-off.
 
+## A-193 — Home v112–v115: a calm stream, a "Not leads" bin, rotating sources, a mode picker ^A-193
+
+**Direction:** 2026-10-09, founder, in artifact comments (published as Version 88).
+
+**Built:**
+- **Calm pace (thread bb39c244).** *"it should feel like it's a calm website… The numbers should sound like the actual
+  numbers."*
+  - One message every 3.2 s; each step is about 1.7× slower.
+  - About 1 deal in 8 leads (one every ~40 s).
+  - "Messages caught" rises without a receipt.
+- **Bin (thread b7a6b56f).** A "Not leads" bin with a count at the hero's bottom-left. Junk shrinks into it.
+- **Visitor's message (thread 960d9b03).** It rotates WhatsApp → Instagram → Gmail → Messenger → Text.
+- **Send button (thread 27912846).** FollowUp ink with a paper plane, not WhatsApp green.
+- **Follow-up card (thread 2ef1ef59).** The Manhattan photo is now the layer behind both cards. The card itself is light
+  (a sunrise over rooftops under a white veil, dark text).
+- **Step 2 typing (thread 9c7bcc44).** It starts only when that slide comes in.
+- **Your control (thread 8179ed8b).** The white pause card became an iOS-style segmented control (Automatic ·
+  Assisted · Paused) with one changing line under it.
+- **Closing button (thread 6e90b7c7).** White with dark text.
+- **Footer wordmark (thread c9e7eb16).** Removed (R-092).
+

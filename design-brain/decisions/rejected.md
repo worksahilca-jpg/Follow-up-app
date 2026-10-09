@@ -1193,3 +1193,9 @@ good."* The card went back to Manhattan at evening.
 **Principle (inferred):** pink and blue light trails read busier than the calm city light he approved earlier. Prefer
 calm, even night light behind text.
 
+## R-092 — A giant faint wordmark at the bottom of the footer (v111) ^R-092
+
+**Rejected:** 2026-10-09, founder (thread c9e7eb16): *"Do not copy wispr for this thing."*
+**Principle:** a device that one reference is known for reads as copying it, however faint. Studied references give
+principles, never signature moves.
+

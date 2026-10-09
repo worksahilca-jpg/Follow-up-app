@@ -10719,3 +10719,23 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
 - the list's times are illustrative;
 - the 14-hour and 9-minute figures belong to the example story, not measured data.
 
+## 2026-10-09 — Preview version 14: the trust line
+
+**Asked:** founder, *"let's fix the missing things"*, after my honest read that the page lacks:
+- real proof;
+- safety near the button;
+- a shorter page.
+
+**Built: safety beside the action.**
+- A row of three ticks under the hero numbers, in the first screen, right above "Try it yourself": "Prices and dates
+  always ask you first", "Stops the moment they reply", "Free in beta, no card".
+- The close's small line now ends "· Prices and dates always ask you first".
+- Wording is kept to what the product guarantees in every mode (PRODUCT_DIRECTION rule 3 and the FAQ). It does **not**
+  say "nothing sends without your OK": Automatic mode and the holding message both send without an OK.
+
+**Real proof: waiting on the founder.** Quotes are never invented. The ask is one sentence from 2–3 beta owners, with
+permission, credited by trade and area only (no names on the public page).
+
+**Page length: measured, not cut.** Seven sections, about 7.5 screens at 1440 × 900. My earlier "it's still long" was
+overstated. The heaviest block is the hero with the try-it panel (about 2 screens), and it is the hook, so it stays.
+

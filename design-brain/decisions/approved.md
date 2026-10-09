@@ -3162,6 +3162,8 @@ reaction is still to come.
 
 ## A-201 — Your control is B · Settings; Your data is B · The controls (v121) ^A-201
 
+*Reconfirmed (2026-10-09, thread 8f11846d on the preview):* *"This part feels very congested, and the theme that we were using for 'Your Data Stays Yours' was the good one."* The preview's plain-lines version of Your data (from R-096's de-boxing) is undone. **Lesson:** the "no boxes" rule (R-096) does not reach this panel; the photo panel with the white settings card is the approved look.
+
 **Approved:** 2026-10-09, founder, on the version that was restored after v119 was reverted.
 - Thread 22e2d5f5: *"B settings is good."* "You stay in charge" uses the settings sheet:
   - **Sending:** How it sends (Auto · Ask me · Off) and Pause everything.

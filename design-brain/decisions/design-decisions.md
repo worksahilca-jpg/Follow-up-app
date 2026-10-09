@@ -10616,3 +10616,13 @@ Each section has a draft **Format** row: three new options plus **Current**. Not
 - **Weak spots:**
   - During the wait, the window is mostly empty. That is meant (silence), but it may read as unfinished.
   - The clock running fast could feel busy. Reduced motion turns off every transition.
+
+## 2026-10-09 — Preview comments: Your data back to the photo panel; It gets better lined up
+
+- **Thread 8f11846d**, on Your data: *"very congested… the theme we were using… was the good one."* The preview's
+  plain-lines version is undone. A-201's photo panel is back (noted under A-201).
+- **Thread a812ab5d**, on It gets better: *"feels odd"*, with no reason given.
+  - The visible fault is fixed: Day 1 and Week 3 were centred against each other, so their tags and cards sat at
+    different heights. They are now top-aligned, with the arrow level with the cards.
+  - Asked him whether the layout or the Day 1 → Week 3 idea is the problem, and offered formats B and C. The thread
+    stays open.

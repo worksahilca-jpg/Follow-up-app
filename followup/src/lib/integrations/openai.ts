@@ -19,6 +19,7 @@ import { MODEL, TRANSCRIBE_MODEL, getClient } from "@/lib/integrations/openaiCli
 import { playbookFor } from "@/lib/tradePlaybooks";
 import { factsPromptBlock, factsText, type FactLine } from "@/lib/factLines";
 import { customerGreetingName } from "@/lib/leadName";
+import { qualifyPromptBlock, type Criterion, type CriterionKey, type ExtractedItem } from "@/lib/qualification";
 
 /**
  * What a prompt says in place of a lead's first name when FollowUp does
@@ -1292,7 +1293,13 @@ export interface FollowUpDraft {
 export async function generateFollowUpMessage(
   // `trade`: the business's line of work, for its playbook (tradePlaybooks.ts).
   // `facts`: what the business has told customers (src/lib/businessFacts.ts).
-  lead: Pick<Lead, "name" | "conversation"> & { trade?: string | null; facts?: readonly FactLine[] },
+  // `qualify`: the one thing still to learn from this customer, if any
+  // (src/lib/qualification.ts); the reply may end by asking about it.
+  lead: Pick<Lead, "name" | "conversation"> & {
+    trade?: string | null;
+    facts?: readonly FactLine[];
+    qualify?: Criterion | null;
+  },
   voiceSamples: string[] = [],
   messageHint?: string,
   // When set, the draft is an Instagram/Messenger DM rather than an email:
@@ -1568,6 +1575,7 @@ export async function generateFollowUpMessage(
           UNTRUSTED_CONVERSATION_NOTICE +
           VOICE_AGENT_TRUST_NOTICE +
           (playbookFor(lead.trade) ? "\n\n" + playbookFor(lead.trade) : "") +
+          qualifyPromptBlock(lead.qualify ?? null) +
           factsPromptBlock(lead.facts ?? []) +
           languageDecisionBlock +
           voiceBlock +
@@ -2090,4 +2098,94 @@ export async function summarizeConversation(conversation: Message[], leadFirstNa
   });
   const out = completion.choices[0]?.message?.content?.trim() ?? "";
   return out ? out.slice(0, 500) : null;
+}
+
+/**
+ * What this customer has said about each item on their checklist
+ * (src/lib/qualification.ts), read from the conversation.
+ *
+ * The model proposes; it never decides. Every item comes back with the
+ * customer's own words, and mergeQualification keeps it only when those
+ * words really are in one of their messages, so a confident invention is
+ * dropped rather than shown to the owner as fact. The quote stays in the
+ * language the customer wrote in, so this works the same in any language;
+ * the summary is in English for the owner, like summarizeConversation.
+ *
+ * Null when OpenAI isn't configured. Throws on a bad response: the caller
+ * treats any failure as "learned nothing this time", never as a reason to
+ * hold up the reply.
+ */
+export async function extractQualificationFacts(
+  conversation: Message[],
+  criteria: readonly Criterion[]
+): Promise<ExtractedItem[] | null> {
+  if (!process.env.OPENAI_API_KEY || conversation.length === 0 || criteria.length === 0) return null;
+  const keys = criteria.map((c) => c.key);
+  const client = getClient();
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You read a conversation between a small business and a customer and note what the customer has told " +
+          "the business about each item below. Give exactly one entry per item.\n\n" +
+          criteria.map((c) => `- ${c.key}: ${c.find}`).join("\n") +
+          "\n\nAn item is known only when the CUSTOMER said it, in a line marked inbound. Something only the " +
+          "business said, assumed or offered is not known. Never guess and never infer from tone: when the " +
+          "customer has not clearly said it, known is false, and value and quote are empty. If they changed " +
+          "their mind, use what they said last.\n\n" +
+          "value: a short plain-English summary the owner can read at a glance, at most 8 words, e.g. " +
+          "\"Pre-approved to $650k\" or \"Moving in March\". quote: the customer's exact words that show it, " +
+          "copied character for character from one inbound line, in the language they wrote in, never " +
+          "translated, shortened inside or reworded; a short phrase is enough." +
+          UNTRUSTED_CONVERSATION_NOTICE,
+      },
+      { role: "user", content: formatTranscript(conversation) },
+    ],
+    // The same answer for the same conversation: this is a record, read
+    // again on every message, and a sampled reading would flicker.
+    temperature: 0,
+    max_tokens: 400,
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "qualification_facts",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            items: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  key: { type: "string", enum: keys },
+                  known: { type: "boolean" },
+                  value: { type: "string" },
+                  quote: { type: "string" },
+                },
+                required: ["key", "known", "value", "quote"],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ["items"],
+          additionalProperties: false,
+        },
+      },
+    },
+  });
+
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("OpenAI returned no content for extractQualificationFacts.");
+  const parsed = JSON.parse(raw) as { items?: unknown };
+  if (!Array.isArray(parsed.items)) throw new Error("OpenAI returned no items for extractQualificationFacts.");
+  // Validated, not cast: anything off-shape is dropped, never stored.
+  return parsed.items.flatMap((it): ExtractedItem[] => {
+    const i = it as Record<string, unknown>;
+    if (!keys.includes(i.key as CriterionKey)) return [];
+    if (typeof i.known !== "boolean" || typeof i.value !== "string" || typeof i.quote !== "string") return [];
+    return [{ key: i.key as CriterionKey, known: i.known, value: i.value, quote: i.quote }];
+  });
 }

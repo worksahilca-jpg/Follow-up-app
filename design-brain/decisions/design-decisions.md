@@ -10390,5 +10390,28 @@ only the result with the checklist behind one tap: *"yes redraw it that way"*.
 - The checklist is FollowUp's working notes (funnel steps 4–6), never a task for the owner.
 - The earlier "Is this right?" and "Was she ready?" taps are dropped from the main view, so no extra steps.
 
-**Waiting for:** Sahil's OK to build it.
+**Waiting for:** Sahil's OK to build it. Given 2026-10-09 ("build it"); built, see the entry below.
 
+
+## 2026-10-09 — The Ready card, built (realtors)
+
+**Founder:** *"build it"*, then: *"we have to be accurate for every single business to qualify and reply… according to
+every business. And also in every language."*
+
+**Built (PR, not merged):**
+- **The checklist:** what they want, when, budget, viewing.
+- **Reading the conversation:** a model reads it after each customer message. An item is kept only when its quote is
+  found word for word in the customer's own messages, in any language. A booked call counts as the viewing.
+- **The reply:** it may end with one question about the first missing thing, once, after answering everything. If
+  they don't answer, it moves on and never asks twice.
+- **When all four are known:** one alert, and the Ready card on the customer's page. Details: A-194.
+
+**Self-review (design-review.md), honestly:**
+- **Strong:** the card reads in one glance (pill, title, when, why, two actions). The proof is one tap away, and every
+  line is checkable against the conversation above it. Light and dark both hold. No horizontal scroll at 390 px.
+- **Weak:**
+  - The "why" line is three summaries joined by dots, not a sentence. Accurate, but less warm than the drawing.
+  - The fold on not-ready customers is plain; it may be ignored, which is acceptable.
+  - The summaries are in English even when the customer wrote in another language. The quotes stay in theirs.
+- **Not yet:** other business types; owner-set must-haves; "Was it ready?" feedback for measuring accuracy. A
+  cancelled booking still shows as booked until the next message.

@@ -9,7 +9,7 @@
 import { prisma } from "@/lib/db";
 import { tooManyRecentActions } from "@/lib/rateLimit";
 import { byTranscriptOrder } from "@/lib/transcript";
-import { scoreLead, generateFollowUpMessage } from "@/lib/integrations/openai";
+import { scoreLead, generateFollowUpMessage, extractQualificationFacts } from "@/lib/integrations/openai";
 import { composeFollowUpEmail, latestInboundText } from "@/lib/sender";
 import { dmChannelOf } from "@/lib/dmDrafts";
 import { draftDm } from "@/lib/dmDrafting";
@@ -24,6 +24,19 @@ import { Prisma, type Priority as DbPriority } from "@prisma/client";
 import { draftingContext, getBusinessFacts } from "@/lib/businessFacts";
 import { recordAudit } from "@/lib/audit";
 import { heldSince } from "@/lib/pendingApprovals";
+import {
+  bookingWhen,
+  customerTexts,
+  isReady,
+  markOffered,
+  readyWhy,
+  mergeQualification,
+  nextToAsk,
+  readQualification,
+  templateFor,
+  type Criterion,
+  type Qualification,
+} from "@/lib/qualification";
 
 // Cut-points come from @/lib/scoreThresholds, shared with ScoreBadge —
 // the two used to carry their own copies (70/40 here, 75/45 there) and
@@ -48,7 +61,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     where: { id: leadId },
     include: {
       conversations: { include: { messages: { orderBy: { sentAt: "asc" } } } },
-      business: { select: { tier: true, name: true } },
+      business: { select: { tier: true, name: true, industry: true, timezone: true } },
     },
   });
   if (!lead) return false;
@@ -148,7 +161,15 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   // Runs in the same Promise.all as the score, so it costs latency only
   // when it is the slowest of the three, and it sits AFTER the
   // eligibility gate above, so a paused lead never pays for it.
-  const [scoreResult, voiceSamples, detected] = await Promise.all([
+  //
+  // The qualification read rides along for a line of work that has a
+  // checklist (src/lib/qualification.ts; real estate only, for now), and
+  // only when the customer is the one who just wrote: nothing anyone else
+  // says can teach FollowUp what the customer wants. It can never cost
+  // the reply: a failure is "learned nothing this time".
+  const template = templateFor(lead.business.industry);
+  const customerJustWrote = newest.direction === "inbound";
+  const [scoreResult, voiceSamples, detected, extracted, booking] = await Promise.all([
     scoreLead({
       conversation,
       dealValue: lead.dealValue,
@@ -156,7 +177,41 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     }),
     getVoiceSamples(lead.businessId),
     detectLeadLanguage(latestInboundText(conversation) ?? ""),
+    template && customerJustWrote
+      ? extractQualificationFacts(conversation, template.criteria).catch((err) => {
+          console.error(`Qualification read failed for lead ${lead.id}:`, err);
+          return null;
+        })
+      : Promise.resolve(null),
+    template
+      ? prisma.booking
+          .findFirst({
+            where: { leadId: lead.id, businessId: lead.businessId, status: "confirmed", scheduledAt: { gte: new Date() } },
+            orderBy: { scheduledAt: "asc" },
+            select: { scheduledAt: true },
+          })
+          .catch(() => null)
+      : Promise.resolve(null),
   ]);
+
+  // What FollowUp now knows, and the one thing this reply may ask about.
+  // Each thing is asked about once (Qualification.offered), and only in a
+  // reply to something the customer just wrote — never in a message
+  // FollowUp starts on its own.
+  let qualification: Qualification | null = null;
+  let qualify: Criterion | null = null;
+  if (template) {
+    qualification = mergeQualification(
+      template,
+      readQualification(lead.qualification),
+      extracted,
+      customerTexts(conversation),
+      booking ? bookingWhen(booking.scheduledAt, lead.business.timezone ?? "America/New_York") : null
+    );
+    qualify = customerJustWrote ? nextToAsk(template, qualification) : null;
+    if (qualify) qualification = markOffered(qualification, qualify.key);
+  }
+  const becameReady = Boolean(template && !lead.qualifiedAt && isReady(template, qualification));
 
   // The newest reading wins. Falling back to the stored one only covers
   // the case where THIS message was too short to judge ("ok", "thanks")
@@ -177,7 +232,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
   let suggestedSubject: string | null;
   let suggestedQuickReplies: Prisma.InputJsonValue | typeof Prisma.JsonNull;
   if (dmChannel) {
-    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage, await getBusinessFacts(lead.businessId));
+    const dm = await draftDm(lead.name, conversation, voiceSamples, undefined, undefined, leadLanguage, await getBusinessFacts(lead.businessId), qualify);
     suggestedMessage = dm.body;
     suggestedSubject = null;
     // Buttons only when the draft passed the shape check — an owner may
@@ -185,7 +240,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
     // chips under a message that had two questions.
     suggestedQuickReplies = (dm.shapeFailed ? { question: dm.quickReplies.question, buttons: [] } : dm.quickReplies) as unknown as Prisma.InputJsonValue;
   } else {
-    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)) }, voiceSamples, undefined, undefined, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: lead.name, conversation, ...(await draftingContext(lead.businessId)), qualify }, voiceSamples, undefined, undefined, leadLanguage);
     suggestedMessage = await composeFollowUpEmail(lead.name.split(" ")[0], lead.businessId, draft.body, {
       languageSample: latestInboundText(conversation),
       leadLanguage,
@@ -263,6 +318,7 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
             thanksOnlyAt: scoreResult.onlyThanks ? latestInboundAt : null,
           }
         : {}),
+      ...(qualification ? { qualification: qualification as unknown as Prisma.InputJsonValue } : {}),
       // Whatever was paused here isn't any more — this write IS the proof.
       // Clearing it anywhere else (a billing webhook, an upgrade handler)
       // would be a second place that has to stay right; clearing it at the
@@ -270,6 +326,13 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
       aiPausedReason: null,
     },
   });
+
+  // The moment the owner is told "Nadia is ready" (src/lib/ownerAlerts.ts).
+  // Stamped once, and only where nothing stamped it first, so two passes
+  // racing on the same lead agree on one moment and the owner hears once.
+  if (becameReady) {
+    await prisma.lead.updateMany({ where: { id: lead.id, qualifiedAt: null }, data: { qualifiedAt: new Date() } });
+  }
 
   // Someone FollowUp is switched off for still shows up in Today when they
   // write (founder, 2026-10-05: a friend's test email went to a person
@@ -298,7 +361,13 @@ export async function scoreAndDraftForLead(leadId: string): Promise<boolean> {
 
   // Nobody assigned means nobody to hand this off to — same posture as
   // checkRapidEngagement() in src/lib/engagement.ts.
-  if (becameHot && lead.assignedToId) {
+  // Ready says more than hot, so on the pass that makes someone ready the
+  // bell says that instead: one notification, not two about the same person.
+  if (becameReady && lead.assignedToId) {
+    await prisma.notification.create({
+      data: { userId: lead.assignedToId, leadId: lead.id, message: `${lead.name} is ready — ${qualification ? readyWhy(qualification) : "everything FollowUp needed to know is in"}` },
+    });
+  } else if (becameHot && lead.assignedToId) {
     await prisma.notification.create({
       data: {
         userId: lead.assignedToId,

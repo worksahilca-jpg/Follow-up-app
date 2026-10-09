@@ -3034,3 +3034,31 @@ photo can show inside the app after Google sign-in.
 - **Closing button (thread 6e90b7c7).** White with dark text.
 - **Footer wordmark (thread c9e7eb16).** Removed (R-092).
 
+
+## A-194 — The Ready card, built for realtors ^A-194
+
+**Direction:** 2026-10-09, founder: *"build it"*, on the simplified prototype
+(`prototypes/2026-10-09-qualification-card/index.html`, Version 2). Built in `followup/` (PR, not merged).
+
+**What was approved and built:**
+- **One alert, only when it matters.** Push and email say "Nadia is ready", with the viewing and a one-line why. Never
+  the customer's own words. Quiet hours and the "only if it's news" window apply, as for waiting customers. If the same
+  customer is also waiting for a reply, the ready alert is the only one sent.
+- **The card on her page** (`src/components/app/ReadyCard.tsx`):
+  - a green "Ready" pill;
+  - "Nadia is ready to view";
+  - the viewing on a sand row with a calendar icon;
+  - "Why:" and the line;
+  - Call (ink) and Message (outline, jumps to the reply);
+  - "How FollowUp knows" folded, with four ticks, each with her own words.
+  - On phones it sits first, under the header. On desktop it tops the side column.
+- **Not ready yet:** nothing asks for attention. The side column has a folded "What FollowUp knows so far · 1 of 4".
+- **Nothing to set up or fill in.** Real estate only; every other business sees nothing new.
+
+**Where it differs from the drawing, and why:**
+- **The "why" line** uses " · " between the summaries instead of a sentence
+  ("Pre-approved to $650k · Moving in March · 3 bedrooms on Maple Street"). Each summary starts with its own capital,
+  and some start with a place name, so a lowercased sentence would break names.
+- **A booked call:** the title is "Nadia is ready" (not "ready to view"), because the booking link books a call, not a
+  viewing.
+- **One Call button.** When the card shows, the side column's own Call pill is hidden.

@@ -12,6 +12,7 @@ import { businessText, checkDmDraftShape, conversationText, pickDmSituation, typ
 import type { StoredQuickReplies } from "@/lib/quickReplies";
 import type { Message } from "@/lib/types";
 import { factsText, type FactLine } from "@/lib/factLines";
+import type { Criterion } from "@/lib/qualification";
 
 /** Lead.suggestedQuickReplies as stored, or null for anything that isn't the shape. */
 export function readStoredQuickReplies(value: unknown): StoredQuickReplies | null {
@@ -44,7 +45,10 @@ export async function draftDm(
   // What the business has told customers (src/lib/businessFacts.ts, A-096):
   // in the draft's instructions, and counted as the business's own words by
   // the shape check, so "My commission is 2.5%" is grounded, not invented.
-  facts: readonly FactLine[] = []
+  facts: readonly FactLine[] = [],
+  // The one thing still to learn from this customer (src/lib/qualification.ts),
+  // which the reply may end by asking about. Null asks nothing new.
+  qualify: Criterion | null = null
 ): Promise<{ body: string; quickReplies: StoredQuickReplies; shapeFailed: string | null }> {
   const situation = pickDmSituation(conversation, touch);
   const known = factsText(facts);
@@ -52,7 +56,7 @@ export async function draftDm(
   const saidByBusiness = known ? `${businessText(conversation)}\n${known}` : businessText(conversation);
   let lastRule: string | null = null;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts }, voiceSamples, messageHint, situation, leadLanguage);
+    const draft = await generateFollowUpMessage({ name: leadName, conversation, facts, qualify }, voiceSamples, messageHint, situation, leadLanguage);
     const buttons = draft.buttons ?? [];
     // The draft is written in the lead's language, so the calendar rule
     // has to read it in that language — an English-only day list would be

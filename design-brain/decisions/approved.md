@@ -2270,6 +2270,7 @@ with white words; the light grade (blurs lifted toward the page colour, ink word
 prototype has no dark mode yet; offered as a next step.
 
 ## A-139 — Topics change as sheets; each topic its own layout ^A-139
+**PARTLY SUPERSEDED (2026-10-09)** by [[rejected#^R-073|R-073]]: the overlapping sheets are gone; the per-topic layouts stay.
 
 **Direction:** 2026-10-09, founder (R-069): transitions when the concept changes, and different templates. v43: every
 section after the hero is a sheet with a rounded top that overlaps the one before (alternating #EBF0EC sage and the
@@ -2308,3 +2309,11 @@ hero (R-009). granola.ai cannot be opened from Claude's container; captures will
 Fraunces."* Headings use Fraunces (variable, optical size follows the type size, SOFT 0, WONK 0; OFL 1.1), embedded in
 the page. Body text stays Public Sans, labels IBM Plex Mono. **Supersedes** the "headings stay in Tinos" part of A-131 and
 A-134. The app's re-theme (done in a side worktree with Tinos) must switch to Fraunces before it ships.
+
+## A-143 — City photos in colour, a little dark ^A-143
+
+**Direction:** 2026-10-09, founder (R-074). Photo panels use the blurred city photos in their own colours (Rome's
+orange walls and blue sky, New York's dark street with amber lights, Bavaria's red and white facades with green,
+Paris's cream and pink), brightness about 0.75–0.8 (the night scene 0.5), saturation slightly up, red pulled down and
+blue up a touch so nothing turns brown. White words on top keep the existing dark veil. Refines A-138 (dark in light
+mode) and replaces R-065's grey grade.

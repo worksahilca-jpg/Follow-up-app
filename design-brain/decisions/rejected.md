@@ -1055,3 +1055,17 @@ controls sit on a photo, the same glass as the demo panel.
 the background": *"Not these ones, bro. I will send you examples later."* Removed in v45. **Inferred (marked
 inferred):** what he means by Granola's "stripes and designs" is its art: collage panels and drawn lines inside images,
 not a texture laid over the page ground. Wait for his examples before drawing patterns again.
+
+## R-073 — Sections that overlap like sliding sheets (v43) ^R-073
+
+**Rejected:** 2026-10-09, founder: *"Don't use that thing that overlaps each page. That feels very odd. Just try to
+connect like… how Granola connected its pages while scrolling and animations… remove that thing."* The rounded,
+overlapping sheets of A-139 (the per-topic layouts stay). **Instead:** wait for the Granola captures and copy its
+*technique* for hand-overs between sections.
+
+## R-074 — Grey photos (the v40 grey-sage grade) ^R-074
+
+**Rejected:** 2026-10-09, founder: *"I've told you to use the dark pictures, not just the black and white. It should not
+be that very dark, but it should be colourful… the city pictures."* The desaturated cool grade read as black and white.
+**Instead (v47):** each city photo rebuilt from its original in its own colour, a little darker, nudged slightly cool
+so warm walls don't go brown (A-143).

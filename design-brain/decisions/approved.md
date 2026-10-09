@@ -2338,7 +2338,7 @@ rain 331799498 on the second card; a street hung with garlands 185828193 on the 
 behind the week; a Naples alley at night 1879096924 on "You decide what it sends"; a winter street at night 430131401
 behind "Your data stays yours"; a lit restaurant door 392339565 on "What it learns stays yours"; a Paris café terrace
 542067500 on the closing card; the dark New York night scene (260838977) unchanged. Manhattan at evening 307866397 is
-kept for the How-it-works stage. Two more picks from the first grid weren't visible in the recording.
+kept for the How-it-works stage. Two more picks from the first grid weren't visible in the recording. *Placement amended 2026-10-09 by [[#^A-148]]: the demo and "How fast do you reply?" swapped photos.*
 
 ## A-146 — The top bar, v50 ^A-146
 
@@ -2346,3 +2346,29 @@ kept for the How-it-works stage. Two more picks from the first grid weren't visi
 (64px once scrolled, with a see-through ground and a hairline); links at 15px in full ink, medium weight; the current
 section marked by a small green dot under its link; on the right two buttons of equal height, "Sign in" outlined and
 "Start free" filled. On phones, Start free only.
+
+## A-147 — Handled messages rising behind the headline (v51) ^A-147
+
+**Direction:** 2026-10-09, founder (thread a3dcbf35): *"Keep all the text moving and make it look like a lot of messages
+that have been handled by follow-up."* Builds on v50's drift (after [[rejected#^R-075]]). v51: 18 small, light message
+cards (app icon, first name, a short line) rise slowly in four lanes, two each side of the headline, and fade out at
+the top, looping. Each icon carries a small green tick: handled. Near lanes larger, sharper and faster; far lanes
+smaller, blurrier and slower. Never behind the headline; no statuses, no times; still free-floating, not rows (R-047).
+Reduced motion: they stand still.
+
+## A-148 — A warm photo behind the demo (v51) ^A-148
+
+**Direction:** 2026-10-09, founder (thread b5a8ad7e): *"Let's use a warm photo that has something orangeish… New York
+touch kind of thing."* The demo block now uses his pick 658429701 (a New York street at night with an orange street
+lamp), graded warm (red up, blue down) instead of the cool nudge the other photos get. The light streaks (307728189)
+moved to "How fast do you reply?". Only this one photo is warm.
+
+## A-149 — Sending feels like a messaging app (v51) ^A-149
+
+**Direction:** 2026-10-09, founder (thread 859dcc65): *"Can we use those animations that WhatsApp or other platforms use
+to send messages, like the 'message is really sent' kind of thing?"* Two moments. (1) The visitor's question leaves the
+box as an outgoing chat bubble: it pops up with a slight overshoot, a tick draws (sent), then a second (delivered), and
+it glides into FollowUp's card, its tail moving from the right side to the left as it becomes the customer's incoming
+message. (2) FollowUp's reply settles with a small bounce; the line under it reads "Sending…" then "Sent from your Gmail"
+/ "Sent on WhatsApp" while a double tick draws in. Ticks in our green, not any one app's colour. Reduced motion: no
+movement, ticks shown drawn.

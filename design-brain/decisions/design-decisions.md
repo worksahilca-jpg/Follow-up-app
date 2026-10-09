@@ -10191,3 +10191,16 @@ a side column squeezes its cards on 1100–1300px screens. The page has no dark 
 A-140. Pinstripes, dots and hatching as CSS `::before` layers behind each section (`isolation: isolate`, z-index −1),
 masked to the edges. **Weak spot:** at laptop distance they are barely visible on purpose; if he wants them to read,
 raise the ink from 7% to ~10% rather than adding more patterns.
+
+## 2026-10-09 — Home v51: handled messages rising, a warm demo photo, "really sent" ticks, a scroll bug
+
+Four notes. Handled messages rise in lanes behind the headline (A-147); the demo gets the warm New York street (A-148);
+sending gets chat-style ticks in two places (A-149). **Bug fixed:** the notification that hops into FollowUp's card was
+`position: fixed`, so scrolling mid-hop left it floating over other sections; it is now placed in page coordinates
+(`position: absolute` + scroll offsets) and scrolls with the card. **Second bug found while looking:** the app icons
+use SVG gradients with fixed ids; when the first copy of an id sat in a hidden element (`display: none`), every other
+copy lost its colour. Each copy now gets its own ids. The real site must do the same for any icon that repeats on a
+page. **Weak spots:** 18 moving cards is the most motion the page has had; if it reads as busy, cut to 12 before
+cutting the speed. The warm photo is the only warm one, so the demo now stands apart from the cool panels. That is on
+purpose, but watch it next to the closing card.
+

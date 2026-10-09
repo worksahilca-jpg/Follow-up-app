@@ -10069,3 +10069,15 @@ site: server-side key, per-visitor and daily caps, fallback to fixed replies, pl
 ## 2026-10-08 — Home v29: v27's demo restored, "Try it yourself" label kept (A-126)
 
 v28's removal of the side columns undone; no flip, flat slides, five-step story, real logos, label above the box.
+
+## 2026-10-09 — Home v30: the From bar, the hop, the five steps in plain words, one-tap questions
+
+From four comments. **From bar:** see-through like the five-step bar, no white chips, "From" bold with a divider,
+current full-colour logos (gilbarbara/logos via @iconify-json/logos, CC0: Gmail M, Messenger, WhatsApp, Facebook;
+Instagram's glyph given Instagram's gradient); Outlook still a plain envelope (no open file); the bar rises in and the
+logos pop in one by one when scrolled to. **The steps, in his words:** each example's message hops out of its logo
+into the card ("New message"); the card says "Sorted: a real customer"; every few, a "Weekly newsletter" hops in and is
+dropped ("Skipped · newsletter"); then "Followed up automatically · day 3", "Booked for you · Sat 10 AM", "You closed
+it · Won $X"; the bar's tags match (sorted, automatically, for you, $X). **Try it (A-127):** specific rotating
+questions (a listing, a tap repair, a car detail, a haircut slot, a clinic; Punjabi, Hindi, French) and three one-tap
+questions under the box.

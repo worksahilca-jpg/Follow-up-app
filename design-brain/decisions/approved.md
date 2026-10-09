@@ -2157,3 +2157,9 @@ before launch.
 trying to make it simple in terms of not showing them everything; just the flip part was bad, else was good."*
 **Lesson (his words, generalised):** "keep it simple" meant fewer explanations, not fewer parts. Remove the part he names
 (the flip), keep the rest. Restored in v29, with the "Try it yourself" label he asked for in chat.
+
+## A-127 — "Try it yourself" is the heart of the page ^A-127
+
+**Approved:** 2026-10-09, founder: *"The main thing will be to let them hop on here, on this 'Try Yourself' part. This is
+the very interactive part. I loved it. Let's just make it more accurate."* Keep it front and centre; improve accuracy
+(real answers, real example questions), not breadth.

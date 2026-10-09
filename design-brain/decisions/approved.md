@@ -2410,6 +2410,8 @@ No giant wordmark.
 
 ## A-154 — Granola's lessons, in FollowUp's own form (v55 draft) ^A-154
 
+*Giant-line part ("It follows up.") SUPERSEDED (2026-10-09) by [[#^A-181]]: it went with the week section.*
+
 *Item 1 (scroll hand-off) SUPERSEDED (2026-10-09) by [[#^A-173]]: the messages no longer move with the scroll.*
 
 **Direction:** 2026-10-09, founder: *"yes go ahead"*, on four proposals drawn from the Granola + Questrade teardown
@@ -2453,6 +2455,8 @@ slow steps still show the loss. **Rule kept:** every figure is a real one, worde
 sales conversation" for "qualify", not "a customer").
 
 ## A-157 — The week is told by the scroll, and ends in a booking (v60) ^A-157
+
+*SUPERSEDED (2026-10-09) by [[#^A-181]]: the week section was cut; Marcus's story in [[#^A-180]] tells it once.*
 
 **Direction:** 2026-10-09, founder (thread c478ef16): *"what happened to this part? Why is it not moving… let them
 visualise: it actually followed up after no reply, and then it helped me to book it, by talking to the lead."* The
@@ -2692,4 +2696,12 @@ sources right under. Then "Then keep following up until they're ready.": Marcus 
 is" bar rises with each reply and check-in and dips while he is quiet; steps play once, in order, when in view. "FollowUp
 stops following up the moment he says no." The 2024 line above the panel is gone (the opening says it, [[#^A-170]]).
 **Open:** the week section ("It follows up") tells part of the same story; asked whether to cut it back.
+
+## A-181 — The week section is cut; the follow-up story is told once (v84) ^A-181
+
+**Direction:** 2026-10-09, founder, in chat: *"yes cut the week section back"*, after being told the week ("It follows
+up." and Jordan's week, told by scroll) repeated Marcus's follow-ups in the first-hour panel ([[#^A-180]]). The whole
+section goes, giant line included, since alone it would repeat the same point. How it works, step 3, now links up to
+Marcus ("See Marcus's follow-ups above ↑", `#fj`). The page now runs: opening → first hour and Marcus → Today screen →
+statement → How it works → Your control → What's new → close. Applies [[#^A-170]].
 

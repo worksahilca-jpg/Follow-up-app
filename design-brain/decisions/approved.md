@@ -2493,6 +2493,8 @@ the details (font, bubbles, icons, notifications), not borrowing a whole window.
 
 ## A-161 — Reply speed as a race (v64) ^A-161
 
+*SUPERSEDED (2026-10-09) by [[#^A-166]]: the rolling bars became the reply plus a still timeline.*
+
 **Direction:** 2026-10-09, founder (threads 45fc9da1): *"make them feel that 1 minute or following up within an hour is
 the best thing, and show them the average… after 2 days"* and *"never means they have lost a lot of sales."* One
 picture: three lanes on one honest log time line (message, 1 hour, 1 day, 2 days), the same message (Marcus, 7:02 AM).
@@ -2537,4 +2539,23 @@ different niches."* "Ask in your language" beside a slow, edge-faded strip of 24
 drifting left to right (70 s loop; still for reduced motion). Supersedes A-130's "English, Punjabi or Hindi" line.
 Chips: a realtor ("Is the 2-bed still available?"), a car detailer ("How much for a car detail?"), a plumber ("Can you
 fix a leaking tap today?").
+
+## A-166 — The reply in a minute, then the first hour (v68) ^A-166
+
+**Direction:** 2026-10-09, founder (thread e694c18d): *"focus more on a ready reply in 1 minute: an accurate reply
+according to the question… Show them that 1 hour is the best time, or 30 minutes. Focus more on 'you with FollowUp'…
+make it more readable… It feels like just the bar rolling on."* Left: the FollowUp side as a conversation that plays
+once in view. Marcus's question (7:02), typing dots, FollowUp's reply that answers exactly that question (today, the
+tap, a 2–4 PM window, a yes/no ask) at 7:03 with "you tapped Send", Marcus's yes, "✓ Booked for 2 PM". Right: "The first
+hour decides it.", highlighted facts, one still log timeline with the first hour shaded "Best: the first hour", a green
+dot at 1 minute and a white dot at 29 hours, and a three-line legend (you / the average business / 63% never). Labels
+live in the legend, never on the axis, so nothing collides. **Principle:** show the product's answer, not a meter.
+
+## A-167 — The bar's "Start free" travels into the closing card (v69) ^A-167
+
+**Direction:** 2026-10-09, founder (thread 02aae9b9): *"This button should come from the top button that has 'Start
+free' in the top bar. I have seen this animation somewhere."* When the closing card's button is fully in view, a copy of
+the bar's button arcs down into it (0.9 s), growing and turning from dark to white, then the real button shows; the
+bar's button steps aside while the big one is on screen and returns when you scroll away, so it can play again. Absolute
+page coordinates (the v51 lesson), reduced motion: no flight.
 

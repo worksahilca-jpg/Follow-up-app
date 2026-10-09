@@ -1087,3 +1087,10 @@ card, the curly ink arrow to the try-it box, and the ink underline under "Answer
 as calm or trust. Learn from Granola's motion and explaining, not its artwork. Don't re-propose scribbles, doodles,
 sketched icons or paper collages in another form.
 
+## R-077 — The demo as a Mac app window (v62) ^R-077
+
+**Rejected:** 2026-10-09, founder: *"you have changed the whole concept… You are showing the Mac or the iOS thing, the
+red, green, and yellow button… but this is not our actual dashboard that we're going to be building."* The window
+chrome, sidebar and conversation list. **Principle (his words):** the demo shows our product, not an imitation of
+another app; make the familiar feel come from details, not from a borrowed window.
+

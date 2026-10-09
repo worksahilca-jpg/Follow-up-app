@@ -2427,6 +2427,8 @@ No giant wordmark.
 
 ## A-155 — "How fast do you reply?" moves with the scroll (v57) ^A-155
 
+*SUPERSEDED (2026-10-09) by [[#^A-161]]: the five-step chooser became one race picture.*
+
 **Direction:** 2026-10-09, founder (thread b9ccebcf): *"I think we should make a scrollable feature for this one. I'm not
 able to get all the information or the message that we are trying to convey."* The timer-driven version (A-? v43,
 after R-070) moved before it could be read. v57, on a computer: the panel holds still mid-screen while the scroll moves
@@ -2459,6 +2461,8 @@ while you scroll. Scroll back and it rewinds.
 
 ## A-158 — The live demo is a Mac app window (v62) ^A-158
 
+*SUPERSEDED (2026-10-09) by [[#^A-160]]: the window was taken back out; see [[rejected#^R-077]].*
+
 **Direction:** 2026-10-09, founder (thread 0a2e81a7): *"This feels like I'm using a different interface. I want it to feel
 to the user that they're using their own stuff… because they see the iOS or the Mac thing daily. Customise it
 properly."* On a computer the demo is a window on the photo "desktop": a title bar with the three window buttons and
@@ -2476,4 +2480,40 @@ on cards; the five-dot lifecycle bar under the demo removed (the window shows it
 works only the current step moves; the two scroll-told stories shortened (reply speed +120vh, the week +150vh); a new
 message lights its inbox row instead of bouncing. **Principle:** every moving thing must have one job a visitor can
 name; anything else stands still.
+
+## A-160 — The side-by-side demo, kept and polished (v64) ^A-160
+
+**Direction:** 2026-10-09, founder (thread d00e8401): *"this is not our actual dashboard… Let's have something like what
+we had earlier… side by side… I just wanted you to improve that one. I want that bar: Caught… Won."* The side-by-side
+stage (waiting cards left, FollowUp's card in the middle, handled right, the From bar on top) and the Caught → Answered
+→ Followed up → Booked → Won bar are back. Polish only: sentence-case labels in the system font ("Waiting" with a blue
+dot, "Handled" with a count pill), cards fade at the panel's edges instead of being cut, system font on every card.
+**Principle:** the demo must look like the product we are building, not like another company's app; "familiar" means
+the details (font, bubbles, icons, notifications), not borrowing a whole window.
+
+## A-161 — Reply speed as a race (v64) ^A-161
+
+**Direction:** 2026-10-09, founder (threads 45fc9da1): *"make them feel that 1 minute or following up within an hour is
+the best thing, and show them the average… after 2 days"* and *"never means they have lost a lot of sales."* One
+picture: three lanes on one honest log time line (message, 1 hour, 1 day, 2 days), the same message (Marcus, 7:02 AM).
+You with FollowUp: reply ready in 1 minute, "✓ Marcus is talking to you". The average business: the bar runs with the
+scroll and a clock counts the wait to 42 hours, "Marcus already hired someone else". No reply at all: a fading dashed
+line, "A lost sale", with "23% of businesses never reply". Nothing pins. Sources under it.
+
+## A-162 — Checked facts, lightly highlighted (v64) ^A-162
+
+**Direction:** 2026-10-09, founder (thread 7ad04ff3): *"use a lot of fact-based data and keep highlighting them. Not in
+a very big way."* A light-green highlighter under key figures, a small source line each, only figures checked against
+their studies: HBR 2011 (1.25 million leads: ~7× within the hour vs an hour later, 60×+ vs 24 h; audit of 2,241
+companies: 37% within an hour, average 42 hours, 23% never) and the Lead Response Management Study (MIT and
+InsideSales.com, 2007: 21× for 5 minutes vs 30). One fact line under the headline. **Rule:** no figure goes on the page
+without a source we have checked; when in doubt, leave it out and ask.
+
+## A-163 — At risk → saved, around the headline (v64) ^A-163
+
+**Direction:** 2026-10-09, founder (thread dfb35840): *"convey that they are losing leads if they're not following up…
+you followed up… closed the deal… you saved actual money"* and *"you are saving a lot of your time."* Every ~5 s one
+nearer message comes into focus; a note pops under it, amber "Gone quiet · $X at risk", then green "✓ Followed up ·
+booked · $X saved"; a small counter under the headline adds money and time ("… and 1 h 15 min of your time", 15 min a
+follow-up), marked "example". Example job values only; never a promise of earnings.
 

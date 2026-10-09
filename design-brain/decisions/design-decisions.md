@@ -10081,3 +10081,16 @@ dropped ("Skipped · newsletter"); then "Followed up automatically · day 3", "B
 it · Won $X"; the bar's tags match (sorted, automatically, for you, $X). **Try it (A-127):** specific rotating
 questions (a listing, a tap repair, a car detail, a haircut slot, a clinic; Punjabi, Hindi, French) and three one-tap
 questions under the box.
+
+## 2026-10-09 — Home v31: "Leads go cold fast", rotating languages (A-128), calm-list kept (A-129)
+
+**The section after the demo** (his comment: "make them worry here… we'll be throwing facts… they should just click on
+Start"): heading "Leads go cold fast. *Answer in a minute and keep them warm.*"; a three-bar chart of the chance of
+turning an inquiry into a real conversation (within an hour = best; an hour later 7× lower; a day later 60× lower;
+HBR 2011, 1.25 M leads); three facts: 42 hours average reply (HBR 2011), 48% of real-estate agents never answered
+(WAV Group 2014), "about a day" a new lead stays warm (the founder's own conversations with realtors, credited only as
+"our conversations with realtors", no names). Ends on "Start free. Answer every lead in a minute." Grade-C numbers
+(47 hours for firms under 10, the Finnish test) left out on purpose. The bars grow when scrolled to; static under
+reduced motion. Replaces "Reply faster. Follow up with everyone. Close more deals." and its three items.
+**Weak spot (self-review):** the realtor line is our own anecdote beside two published studies; it is labelled as
+such, but it should be swapped for a sourced number or a quote he has permission to use before launch.

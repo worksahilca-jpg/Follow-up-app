@@ -2163,3 +2163,18 @@ trying to make it simple in terms of not showing them everything; just the flip 
 **Approved:** 2026-10-09, founder: *"The main thing will be to let them hop on here, on this 'Try Yourself' part. This is
 the very interactive part. I loved it. Let's just make it more accurate."* Keep it front and centre; improve accuracy
 (real answers, real example questions), not breadth.
+
+## A-128 — The demo's language changes on every message, English first ^A-128
+
+**Direction:** 2026-10-09, founder, on the message list: *"we need to keep changing the language every time. I just
+noticed that we were showing the messages in English only, so let's just keep rotating every time."* The old order
+(three English first, A-123 / the "start with English" comment) meant most visitors never saw another language. Now:
+English opens, then the language changes with every message (English, Punjabi, English, French, English, Hindi,
+English, German, English, Spanish, Italian, Punjabi, loop); neighbours never share a language or a channel.
+Partly supersedes the ordering in A-123; "in your customer's language" (A-121) is unchanged.
+
+## A-129 — Keep "Open it to one calm list": the section that shows how easy the app is ^A-129
+
+**Direction:** 2026-10-09, founder: *"Then here, we will be showing how user-friendly we are. That's a good point, but
+we'll be updating this dashboard here. We'll be keeping this concept too."* The section stays; the app screen in it
+is replaced once he has updated the dashboard. Don't redesign it before then.

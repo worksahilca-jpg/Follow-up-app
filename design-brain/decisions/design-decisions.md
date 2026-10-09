@@ -10176,3 +10176,12 @@ notifications use the same style. **Weak spots:** notifications now appear in th
 watch that the page doesn't feel repetitive. The system font means the page looks slightly different per device, on
 purpose. **Technical note:** CSS later in the prototype re-sets the bar and headline, so v42's rules are raised with
 `html body`; the real site should not inherit this layering.
+
+## 2026-10-09 — Home v43: dark photos again, sheets between topics, a reply-time demo that plays itself
+
+Six notes in four minutes. No grain on the demo block (R-071) and its questions in one frosted strip; the language
+line names three languages; the reply-time demo plays on its own with a time bar and snaps back to "1 minute" (R-070);
+the side thread removed (R-069) for sheets that slide over each other at each new topic and four different layouts
+(A-139); photo panels dark again in light mode, light grade parked for dark mode (A-138). **Weak spots:** the sheets add
+~44px overlaps and rounded tops everywhere; on a phone they are smaller (32px) but may still feel busy. "Your control" in
+a side column squeezes its cards on 1100–1300px screens. The page has no dark mode, so half of A-138 is waiting.

@@ -2192,6 +2192,8 @@ screenshot shows, word for word: the "Free while in beta" pill; the headline "Ne
 follow up.*" (second half in green italic); the label "Try it yourself" with "Type a question, as if you were a
 customer."; the "Or tap one:" questions; "Ask in English, Punjabi, Hindi, French or Spanish." Keep these words; change
 them only when he asks.
+**Amended 2026-10-09** (founder: *"I will just mention a few languages here"*): the line is now "Ask in English, Punjabi
+or Hindi."
 
 ## A-131 — Fonts: the ones in the preview screenshots (Tinos headings, DejaVu Sans text) ^A-131
 
@@ -2258,3 +2260,19 @@ iOS."* Built in v42:
   Apple green; email stays FollowUp green); the customer's bubble is Apple's grey.
 **Line held:** no copy of a whole WhatsApp/Messenger screen (wallpaper, header, layout). Put to him as "go further?"
 in thread b962b7e0, with the recommendation to stay here.
+
+## A-138 — Photo panels: dark in light mode, light in dark mode ^A-138
+
+**Direction:** 2026-10-09, founder: *"Try to use dark background images rather than using the light ones, because the
+other theme is the light one. When it is in dark mode, it should use the light images. When it is in light mode, it
+should use dark background images."* On the light page every photo panel uses the deep, cool grade (R-065: never olive)
+with white words; the light grade (blurs lifted toward the page colour, ink words) belongs to a dark-mode page. The
+prototype has no dark mode yet; offered as a next step.
+
+## A-139 — Topics change as sheets; each topic its own layout ^A-139
+
+**Direction:** 2026-10-09, founder (R-069): transitions when the concept changes, and different templates. v43: every
+section after the hero is a sheet with a rounded top that overlaps the one before (alternating #EBF0EC sage and the
+#F4F5F3 page), its corners flattening from 88px to 24px as it lands (CSS view timeline; off for reduced motion); the
+heading rises in. Layouts: Today heading left; How it works centred; It checks in heading right; Your control in a
+sticky left column with the cards on the right.

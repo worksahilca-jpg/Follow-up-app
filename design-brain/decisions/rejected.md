@@ -1002,6 +1002,8 @@ this?"* The green-toned photos kept the warm buildings of the originals; darkene
 olive, which reads brown (R-050, R-057). Ten of the page's panels were dark photos, plus a dark close. **Principle:** take
 the warm colour out of a photo before toning it, and keep dark panels few (the demo, the cold-lead panel, the night, the
 control and data panels in v40); the rest of the page is light.
+**PARTLY SUPERSEDED (2026-10-09)** by [[approved#^A-138|A-138]]: the cool grade stays, but in light mode the photo panels go
+back to dark; the light grade is kept for a dark-mode page.
 
 ## R-066 — The full-width bar ^R-066
 
@@ -1024,3 +1026,25 @@ Flow, maybe."* The centred capsule that hugged its contents. **Instead (v42):** 
 links centred, Sign in and Start free right) that gains a soft see-through ground and a hairline only once you
 scroll. **Lesson (inferred):** both capsules (wide and short) read as a widget sitting on the page; the references
 he likes keep the bar quiet and part of the page.
+
+## R-069 — A thread line down the side to "connect" the sections ^R-069
+
+**Rejected:** 2026-10-09, founder, on v40: *"this bar that we have added on the left side doesn't mean we are connecting
+every single page. I just meant to add transitions when we are changing the concept or the information… we should use
+different templates too for every other thing."* **Instead (v43):** no line; each new topic arrives as a sheet sliding
+over the last (A-139), and sections use different layouts. **Lesson:** "connected" meant *transitions between ideas*,
+not a device that links them; and sameness of layout was half of the "PDF" feeling (R-067).
+
+## R-070 — A reply-time demo that waits for clicks ^R-070
+
+**Rejected:** 2026-10-09, founder, on "How fast do you reply?" (five buttons): *"They will be clicking on everything,
+so can we just use animation or something to make them feel like faster replies are the best one?"* **Instead (v43):**
+the times play on their own (a bar fills as time since the customer wrote runs out, the customer cools, the odds
+fall), then it snaps back to "1 minute · With FollowUp"; a tap takes over. Note the earlier swing (a self-playing
+slider read as "just playing", v34): what works is motion that is *labelled* (time visibly passing), not motion alone.
+
+## R-071 — Grain texture on the photo blocks ^R-071
+
+**Rejected:** 2026-10-09, founder, on the demo block under "Try it yourself": *"It's too grainy. It doesn't match the
+background."* The SVG noise layer over the stage photo. **Instead:** smooth blurred photos only; frosted strips where
+controls sit on a photo, the same glass as the demo panel.
